@@ -58,11 +58,11 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
-                                                 const ItemPointer &location) {
+                                      ItemPointer *location) {
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key, new ItemPointer(location));
+  std::pair<KeyType, ValueType> entry(index_key, location);
 
   {
     index_lock.WriteLock();
@@ -78,7 +78,7 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
-                                                 const ItemPointer &location) {
+                                      const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -120,7 +120,7 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                          const ItemPointer &location,
+                                          ItemPointer *location,
                                           std::function<bool(const ItemPointer &)> predicate) {
 
   KeyType index_key;
@@ -128,8 +128,6 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
 
   {
     index_lock.WriteLock();
-
-
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
@@ -146,7 +144,7 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
 
     // Insert the key, val pair
     container.insert(
-        std::pair<KeyType, ValueType>(index_key, new ItemPointer(location)));
+        std::pair<KeyType, ValueType>(index_key, location));
 
     index_lock.Unlock();
   }

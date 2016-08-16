@@ -219,7 +219,7 @@ class Index : public Printable {
 
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
-                           const ItemPointer &location) = 0;
+                           ItemPointer *location) = 0;
 
   // delete the index entry linked to given tuple and location
   virtual bool DeleteEntry(const storage::Tuple *key,
@@ -231,7 +231,7 @@ class Index : public Printable {
   // into the index and return true.
   // This function should be called for all primary/unique index insert
   virtual bool CondInsertEntry(const storage::Tuple *key,
-                               const ItemPointer &location,
+                               ItemPointer *location,
                                std::function<bool(const ItemPointer &)> \
                                  predicate) = 0;
 
