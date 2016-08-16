@@ -18,7 +18,6 @@
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
-#include "expression/function_expression.h"
 #include "expression/parser_expression.h"
 
 #include "parser/statements.h"
