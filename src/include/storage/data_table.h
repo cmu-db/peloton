@@ -96,7 +96,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // insert version in table
   ItemPointer InsertEmptyVersion(const Tuple *tuple);
-  ItemPointer InsertVersion(const Tuple *tuple);
+  ItemPointer InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
   // insert tuple in table
   ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **index_entry_ptr = nullptr);
 
@@ -245,8 +245,7 @@ class DataTable : public AbstractTable {
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
 
-  bool InsertInSecondaryIndexes(const storage::Tuple *tuple,
-                                ItemPointer location);
+  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints
   bool CheckForeignKeyConstraints(const storage::Tuple *tuple);

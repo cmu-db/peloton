@@ -130,9 +130,12 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
+      ItemPointer *indirection = tile_group_header->GetIndirection(old_location.offset);
+      ItemPointer new_location = target_table_->InsertVersion(new_tuple.get(), &(project_info_->GetTargetList()), indirection);
+
       // finally insert updated tuple into the table
-      ItemPointer new_location =
-          target_table_->InsertVersion(new_tuple.get());
+      // ItemPointer new_location =
+          // target_table_->InsertVersion(new_tuple.get());
 
       // FIXME: PerformUpdate() will not be executed if the insertion failed,
       // There is a write lock acquired, but since it is not in the write set,
