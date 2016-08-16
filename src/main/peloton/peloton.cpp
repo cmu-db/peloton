@@ -31,10 +31,6 @@ int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
   peloton::PelotonConfiguration configuration;
   peloton::wire::Server server(configuration);
 
-//  peloton::wire::StartServer(configuration, &server);
-//  peloton::wire::HandleConnections<peloton::wire::PacketManager,
-//                                   peloton::wire::PktBuf>(&server);
-
 
 
   // Teardown
