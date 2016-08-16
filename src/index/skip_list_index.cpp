@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "index/skip_list_index.h"
 #include "index/index_key.h"
 #include "index/index_util.h"
@@ -21,18 +20,15 @@ namespace peloton {
 namespace index {
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
-SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::SkipListIndex(
-    IndexMetadata *metadata)
-    : Index(metadata),
-      container(),
-      equals(),
-      comparator(){}
+          class KeyEqualityChecker>
+SkipListIndex<KeyType, ValueType, KeyComparator,
+              KeyEqualityChecker>::SkipListIndex(IndexMetadata *metadata)
+    : Index(metadata), container(), equals(), comparator() {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
+          class KeyEqualityChecker>
 SkipListIndex<KeyType, ValueType, KeyComparator,
-KeyEqualityChecker>::~SkipListIndex() {
+              KeyEqualityChecker>::~SkipListIndex() {
 
   // we should not rely on shared_ptr to reclaim memory.
   // this is because the underlying index can split or merge leaf nodes,
@@ -44,14 +40,14 @@ KeyEqualityChecker>::~SkipListIndex() {
     delete iterator->second;
     iterator->second = nullptr;
   }
-
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
-bool SkipListIndex<KeyType, ValueType, KeyComparator,
-KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
-                                 const ItemPointer &location) {
+          class KeyEqualityChecker>
+bool
+SkipListIndex<KeyType, ValueType, KeyComparator,
+              KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
+                                               const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -62,19 +58,19 @@ KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
+          class KeyEqualityChecker>
 bool SkipListIndex<KeyType, ValueType, KeyComparator,
-KeyEqualityChecker>::DeleteEntry(const storage::Tuple *,
-                                 const ItemPointer&) {
+                   KeyEqualityChecker>::DeleteEntry(const storage::Tuple *,
+                                                    const ItemPointer &) {
   // Dummy erase
   return true;
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
+          class KeyEqualityChecker>
 bool SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
-CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
-                std::function<bool(const ItemPointer &)>) {
+    CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                    std::function<bool(const ItemPointer &)>) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -86,12 +82,13 @@ CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
+          class KeyEqualityChecker>
 void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction,
-    std::vector<ItemPointer *> &result) {
+    std::vector<ItemPointer *> &result,
+    const ConjunctionScanPredicate *csp_p) {
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   //  oid_t leading_column_id = 0;
@@ -105,25 +102,26 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   // There are two more types, one is aligned, another is not aligned.
   // Aligned example: A > 0, B >= 15, c > 4
   // Not Aligned example: A >= 15, B < 30
+  
+  (void)csp_p;
 
   // Check if suitable for point query
-  bool point_query = true;
+  bool point_query = key_column_ids.size() == metadata->GetKeyAttrs().size();
   for (auto key_column_ids_itr = key_column_ids.begin();
-      key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
+       key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
 
-    if (expr_types[offset] != EXPRESSION_TYPE_COMPARE_EQUAL){
+    if (expr_types[offset] != EXPRESSION_TYPE_COMPARE_EQUAL) {
       point_query = false;
     }
   }
 
   // Check if suitable for partial scan
   bool partial_scan_candidate = true;
-  if(point_query == false) {
+  if (point_query == false) {
 
     for (auto key_column_ids_itr = key_column_ids.begin();
-        key_column_ids_itr != key_column_ids.end();
-        key_column_ids_itr++) {
+         key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
       auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
 
       if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
@@ -133,7 +131,6 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         partial_scan_candidate = false;
       }
     }
-
   }
 
   LOG_TRACE("Point query : %d ", point_query);
@@ -149,12 +146,16 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     LOG_TRACE("%s", "Constructing key");
 
     for (auto key_column_ids_itr = key_column_ids.begin();
-        key_column_ids_itr != key_column_ids.end();
-        key_column_ids_itr++) {
-      auto column_offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+         key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
+      LOG_TRACE("%s", "one key column id!");
+      auto column_offset =
+          std::distance(key_column_ids.begin(), key_column_ids_itr);
+      LOG_TRACE("%s", "here!");
       find_key->SetValue(column_offset, values[column_offset], GetPool());
+      LOG_TRACE("%s", "set one key column id!");
     }
 
+    LOG_TRACE("%s", "done");
     LOG_TRACE("Find key : %s", find_key->GetInfo().c_str());
 
     KeyType find_index_key;
@@ -163,7 +164,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     // Check if key exists in index
     auto find_itr = container.Contains(find_index_key);
 
-    if(find_itr != container.end()){
+    if (find_itr != container.end()) {
       ItemPointer *location_header = find_itr->second;
       result.push_back(location_header);
     }
@@ -178,19 +179,13 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     oid_t leading_column_id = key_column_ids[leading_column_offset];
     std::vector<std::pair<Value, Value>> intervals;
 
-    ConstructIntervals(leading_column_id,
-                       values,
-                       key_column_ids,
-                       expr_types,
+    ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
                        intervals);
 
     // For non-leading columns, find the max and min
     std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
 
-    FindMaxMinInColumns(leading_column_id,
-                        values,
-                        key_column_ids,
-                        expr_types,
+    FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                         non_leading_columns);
 
     auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
@@ -202,13 +197,17 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         continue;
       }
 
-      if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
+      if (non_leading_columns.find(key_column_id) ==
+          non_leading_columns.end()) {
         auto key_schema = metadata->GetKeySchema();
-        auto type = key_schema->GetColumn(non_leading_column_offset).column_type;
+        LOG_TRACE("non leading offset %d; key schema size: %d",
+                  non_leading_column_offset, key_schema->GetColumnCount());
+        auto type =
+            key_schema->GetColumn(non_leading_column_offset).column_type;
         std::pair<Value, Value> range(Value::GetMinValue(type),
                                       Value::GetMaxValue(type));
-        std::pair<oid_t, std::pair<Value, Value>> key_value(non_leading_column_offset,
-                                                            range);
+        std::pair<oid_t, std::pair<Value, Value>> key_value(
+            non_leading_column_offset, range);
 
         non_leading_columns.insert(key_value);
       }
@@ -232,10 +231,10 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
       LOG_TRACE("%s", "Constructing start/end keys");
 
-      LOG_TRACE("Leading Column: column id : %u left bound %s\t\t right bound %s",
-                leading_column_id,
-                interval.first.GetInfo().c_str(),
-                interval.second.GetInfo().c_str());
+      LOG_TRACE(
+          "Leading Column: column id : %u left bound %s\t\t right bound %s",
+          leading_column_id, interval.first.GetInfo().c_str(),
+          interval.second.GetInfo().c_str());
 
       start_key->SetValue(leading_column_offset, interval.first, GetPool());
       end_key->SetValue(leading_column_offset, interval.second, GetPool());
@@ -243,10 +242,11 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       for (const auto &k_v : non_leading_columns) {
         start_key->SetValue(k_v.first, k_v.second.first, GetPool());
         end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-        LOG_TRACE("Non Leading Column: column id : %u left bound %s\t\t right bound %s",
-                  k_v.first,
-                  k_v.second.first.GetInfo().c_str(),
-                  k_v.second.second.GetInfo().c_str());
+        LOG_TRACE(
+            "Non Leading Column: column id : %u left bound %s\t\t right bound "
+            "%s",
+            k_v.first, k_v.second.first.GetInfo().c_str(),
+            k_v.second.second.GetInfo().c_str());
       }
 
       KeyType start_index_key;
@@ -260,18 +260,16 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       scan_begin_itr = container.Contains(start_index_key);
       scan_end_itr = container.Contains(end_index_key);
 
-      if(scan_begin_itr == container.end()){
+      if (scan_begin_itr == container.end()) {
         LOG_TRACE("Did not find start key -- so setting to lower bound");
         scan_begin_itr = container.begin();
-      }
-      else {
+      } else {
         LOG_TRACE("Found start key");
       }
 
-      if(scan_end_itr == container.end()){
+      if (scan_end_itr == container.end()) {
         LOG_TRACE("Did not find end key");
-      }
-      else {
+      } else {
         LOG_TRACE("Found end key");
       }
 
@@ -280,9 +278,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         case SCAN_DIRECTION_TYPE_BACKWARD: {
 
           // Scan the index entries in forward direction
-          for (auto scan_itr = scan_begin_itr;
-              scan_itr != scan_end_itr;
-              ++scan_itr) {
+          for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
+               ++scan_itr) {
             auto scan_current_key = scan_itr->first;
             auto tuple = scan_current_key.GetTupleForComparison(
                 metadata->GetKeySchema());
@@ -294,12 +291,9 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               ItemPointer *location_header = scan_itr->second;
               result.push_back(location_header);
             }
-
           }
 
-        }
-        break;
-
+        } break;
 
         case SCAN_DIRECTION_TYPE_INVALID:
         default:
@@ -318,12 +312,11 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       case SCAN_DIRECTION_TYPE_FORWARD:
       case SCAN_DIRECTION_TYPE_BACKWARD: {
         // Scan the index entries in forward direction
-        for (auto scan_itr = scan_begin_itr;
-            scan_itr != scan_end_itr;
-            ++scan_itr) {
+        for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
+             ++scan_itr) {
           auto scan_current_key = scan_itr->first;
-          auto tuple = scan_current_key.GetTupleForComparison(
-              metadata->GetKeySchema());
+          auto tuple =
+              scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
           // Compare the current key in the scan with "values" based on
           // "expression types"
@@ -343,14 +336,13 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   }
 
   LOG_TRACE("Scan matched tuple count : %lu", result.size());
-
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
-void SkipListIndex<KeyType, ValueType, KeyComparator,
-KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer *> &
-                                 result) {
+          class KeyEqualityChecker>
+void SkipListIndex<
+    KeyType, ValueType, KeyComparator,
+    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer *> &result) {
 
   // scan all entries
   auto iterator = container.begin();
@@ -358,52 +350,55 @@ KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer *> &
     ItemPointer *location = iterator->second;
     result.push_back(location);
   }
-
 }
 
 /**
  * @brief Return all locations related to this key.
  */
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
-void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
+          class KeyEqualityChecker>
+void
+SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     const storage::Tuple *key, std::vector<ItemPointer *> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
   // find the <key, location> pair
   auto iterator = container.Contains(index_key);
-  if(iterator != container.end()) {
+  if (iterator != container.end()) {
     result.push_back(iterator->second);
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-class KeyEqualityChecker>
+          class KeyEqualityChecker>
 std::string SkipListIndex<KeyType, ValueType, KeyComparator,
-KeyEqualityChecker>::GetTypeName() const {
+                          KeyEqualityChecker>::GetTypeName() const {
   return "Btree";
 }
 
 // Explicit template instantiation
 
-template class SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparatorRaw<4>,
-GenericEqualityChecker<4>>;
-template class SkipListIndex<GenericKey<8>, ItemPointer *, GenericComparatorRaw<8>,
-GenericEqualityChecker<8>>;
-template class SkipListIndex<GenericKey<16>, ItemPointer *, GenericComparatorRaw<16>,
-GenericEqualityChecker<16>>;
-template class SkipListIndex<GenericKey<64>, ItemPointer *, GenericComparatorRaw<64>,
-GenericEqualityChecker<64>>;
+template class SkipListIndex<GenericKey<4>, ItemPointer *,
+                             GenericComparatorRaw<4>,
+                             GenericEqualityChecker<4>>;
+template class SkipListIndex<GenericKey<8>, ItemPointer *,
+                             GenericComparatorRaw<8>,
+                             GenericEqualityChecker<8>>;
+template class SkipListIndex<GenericKey<16>, ItemPointer *,
+                             GenericComparatorRaw<16>,
+                             GenericEqualityChecker<16>>;
+template class SkipListIndex<GenericKey<64>, ItemPointer *,
+                             GenericComparatorRaw<64>,
+                             GenericEqualityChecker<64>>;
 template class SkipListIndex<GenericKey<256>, ItemPointer *,
-GenericComparatorRaw<256>, GenericEqualityChecker<256>>;
+                             GenericComparatorRaw<256>,
+                             GenericEqualityChecker<256>>;
 
 template class SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparatorRaw,
-TupleKeyEqualityChecker>;
-
+                             TupleKeyEqualityChecker>;
 
 }  // End index namespace
 }  // End peloton namespace

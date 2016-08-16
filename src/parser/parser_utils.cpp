@@ -112,7 +112,8 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
       break;
     case EXPRESSION_TYPE_COLUMN_REF:
       // TODO: Fix this
-      // inprint((expr)->GetName(), num_indent);
+      inprint((expr)->GetName(), num_indent);
+      if (expr->GetColumn() != NULL) inprint((expr)->GetColumn(), num_indent);
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
       // TODO: Fix this

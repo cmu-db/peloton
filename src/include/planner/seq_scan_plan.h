@@ -44,22 +44,21 @@ class SeqScanPlan : public AbstractScan {
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {
-	  LOG_INFO("Creating a Sequential Scan Plan");
-	  target_table_ = table;
-	  where_ = predicate;
-	  if(predicate != nullptr)
-		  where_with_params_ = predicate->Copy();
+    LOG_DEBUG("Creating a Sequential Scan Plan");
+    target_table_ = table;
+    if (predicate != nullptr) where_ = predicate->Copy();
+    if (predicate != nullptr) where_with_params_ = predicate->Copy();
   }
 
   SeqScanPlan(parser::SelectStatement *select_node);
 
-  SeqScanPlan() : AbstractScan() { }
+  SeqScanPlan() : AbstractScan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-  void SetParameterValues(std::vector<Value>* values);
+  void SetParameterValues(std::vector<Value> *values);
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization

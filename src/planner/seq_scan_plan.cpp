@@ -50,7 +50,7 @@ namespace planner {
  */
 
 SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
-  LOG_INFO("Creating a Sequential Scan Plan");
+  LOG_DEBUG("Creating a Sequential Scan Plan");
   target_table_ = static_cast<storage::DataTable *>(
       catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
           DEFAULT_DB_NAME, select_node->from_table->name));
@@ -76,7 +76,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
         EXPRESSION_TYPE_STAR) {
       for (auto col : *select_node->select_list) {
         LOG_TRACE("ExpressionType: %s",
-                 ExpressionTypeToString(col->GetExpressionType()).c_str());
+                  ExpressionTypeToString(col->GetExpressionType()).c_str());
         auto col_name = col->GetName();
         oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
         SetColumnId(col_id);
@@ -302,9 +302,8 @@ void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
   delete where_;
   where_ = where_with_params_->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(where_,
-		  values,
-		  target_table_->GetSchema());
+  expression::ExpressionUtil::ConvertParameterExpressions(
+      where_, values, target_table_->GetSchema());
   SetPredicate(where_->Copy());
 
   for (auto &child_plan : GetChildren()) {
