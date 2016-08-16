@@ -132,7 +132,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
+        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -192,13 +192,13 @@ Result Catalog::CreateIndex(const std::string &database_name,
         // Check if unique index or not
         if(unique == false){
         index_metadata = new index::IndexMetadata(
-                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
+                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
                 INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
         }
 
         else {
         index_metadata = new index::IndexMetadata(
-                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
+                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
                 INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true); 
         }
 

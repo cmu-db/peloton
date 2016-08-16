@@ -117,7 +117,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
-    LOG_INFO("Not NULL constraint violated");
+    LOG_TRACE("Not NULL constraint violated");
     throw ConstraintException("Not NULL constraint violated : " +
                               std::string(tuple->GetInfo()));
     return false;
@@ -232,7 +232,11 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
   }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
-
+  
+  auto index_count = GetIndexCount();
+  if (index_count == 0) {
+    return location;
+  }
   // Index checks and updates
   if (InsertInIndexes(tuple, location, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
@@ -250,16 +254,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
 
-  // Increase the indexes' number of tuples by 1 as well
-  auto index_count = GetIndexCount();
-
-  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-    auto index = GetIndex(index_itr);
-
-    // Update index count
-    index_count = GetIndexCount();
-  }
-
   return location;
 }
 
@@ -274,9 +268,11 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
  */
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location, ItemPointer **index_entry_ptr) {
-  *index_entry_ptr = new ItemPointer(location);
   
   int index_count = GetIndexCount();
+
+  *index_entry_ptr = new ItemPointer(location);
+  
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -811,9 +807,7 @@ std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
 }
 
 oid_t DataTable::GetIndexCount() const {
-  size_t index_count;
-
-  index_count = indexes_.GetSize();
+  size_t index_count = indexes_.GetSize();
 
   return index_count;
 }
