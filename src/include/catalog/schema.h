@@ -54,7 +54,10 @@ class Schema : public Printable {
 
   // Copy subset of columns in the given schema
   static Schema *CopySchema(const Schema *schema,
-                            const std::vector<oid_t> &set);
+                            const std::vector<oid_t> &index_list);
+                            
+  static Schema *FilterSchema(const Schema *schema,
+                              const std::vector<oid_t> &set);
 
   // Append two schema objects
   static Schema *AppendSchema(Schema *first, Schema *second);
