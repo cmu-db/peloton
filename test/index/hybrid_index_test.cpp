@@ -410,61 +410,61 @@ void BuildIndex(std::shared_ptr<index::Index> index,
 }
 
 
-TEST_F(HybridIndexTests, SeqScanTest) {
-  std::unique_ptr<storage::DataTable> hyadapt_table;
-  CreateTable(hyadapt_table, false);
-  LoadTable(hyadapt_table);
+// TEST_F(HybridIndexTests, SeqScanTest) {
+//   std::unique_ptr<storage::DataTable> hyadapt_table;
+//   CreateTable(hyadapt_table, false);
+//   LoadTable(hyadapt_table);
 
-  for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
-    LaunchSeqScan(hyadapt_table);
-  }
-}
+//   for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
+//     LaunchSeqScan(hyadapt_table);
+//   }
+// }
 
-TEST_F(HybridIndexTests, IndexScanTest) {
-  std::unique_ptr<storage::DataTable> hyadapt_table;
-  CreateTable(hyadapt_table, true);
-  LoadTable(hyadapt_table);
+// TEST_F(HybridIndexTests, IndexScanTest) {
+//   std::unique_ptr<storage::DataTable> hyadapt_table;
+//   CreateTable(hyadapt_table, true);
+//   LoadTable(hyadapt_table);
 
-  for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
-    LaunchIndexScan(hyadapt_table);
-  }
-}
+//   for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
+//     LaunchIndexScan(hyadapt_table);
+//   }
+// }
 
-TEST_F(HybridIndexTests, HybridScanTest) {
-  std::unique_ptr<storage::DataTable> hyadapt_table;
-  CreateTable(hyadapt_table, false);
-  LoadTable(hyadapt_table);
+// TEST_F(HybridIndexTests, HybridScanTest) {
+//   std::unique_ptr<storage::DataTable> hyadapt_table;
+//   CreateTable(hyadapt_table, false);
+//   LoadTable(hyadapt_table);
 
-  std::vector<oid_t> key_attrs;
+//   std::vector<oid_t> key_attrs;
 
-  auto tuple_schema = hyadapt_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
+//   auto tuple_schema = hyadapt_table->GetSchema();
+//   catalog::Schema *key_schema;
+//   index::IndexMetadata *index_metadata;
+//   bool unique;
 
-  key_attrs = {0};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
+//   key_attrs = {0};
+//   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+//   key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
+//   unique = true;
 
-  index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+//   index_metadata = new index::IndexMetadata(
+//       "primary_index", 123, INDEX_TYPE_BWTREE,
+//       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+//   std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
-  hyadapt_table->AddIndex(pkey_index);
+//   hyadapt_table->AddIndex(pkey_index);
 
-  std::thread index_builder = std::thread(BuildIndex, pkey_index,
-                                          hyadapt_table.get());
+//   std::thread index_builder = std::thread(BuildIndex, pkey_index,
+//                                           hyadapt_table.get());
 
-  for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
-    LaunchHybridScan(hyadapt_table);
-  }
+//   for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
+//     LaunchHybridScan(hyadapt_table);
+//   }
 
-  index_builder.join();
-}
+//   index_builder.join();
+// }
 
 }  // namespace hybrid_index_test
 }  // namespace test

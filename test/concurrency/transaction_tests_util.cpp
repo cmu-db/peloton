@@ -64,7 +64,7 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INDEX_TYPE_BTREE,
+      "primary_btree_index", 1234, INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
@@ -107,7 +107,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INDEX_TYPE_BTREE,
+      "primary_btree_index", 1234, INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
@@ -121,7 +121,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
   auto index_metadata2 = new index::IndexMetadata(
-      "unique_btree_index", 1235, INDEX_TYPE_BTREE,
+      "unique_btree_index", 1235, INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, key_attrs2, unique2);
 
   std::shared_ptr<index::Index> ukey_index(index::IndexFactory::GetInstance(index_metadata2));
@@ -164,7 +164,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", index_oid, INDEX_TYPE_BTREE,
+      "primary_btree_index", index_oid, INDEX_TYPE_BWTREE,
       need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY
                          : INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
