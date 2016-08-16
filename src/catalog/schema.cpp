@@ -112,6 +112,7 @@ std::shared_ptr<const Schema> Schema::CopySchema(
   return std::shared_ptr<Schema>(new Schema(columns));
 }
 
+
 // Backward compatible for raw pointers
 // Copy schema
 Schema *Schema::CopySchema(const Schema *schema) {
@@ -124,12 +125,74 @@ Schema *Schema::CopySchema(const Schema *schema) {
   return CopySchema(schema, set);
 }
 
-// Copy subset of columns in the given schema
+/*
+ * CopySchema() - Copies the schema into a new schema object with index_list
+ *                as indices to copy
+ *
+ * This function essentially does a "Gathering" operation, in a sense that it
+ * collects columns indexed by elements inside index_list in the given order
+ * and store them inside a newly created schema object
+ *
+ * If there are duplicates in index_list then the columns will be duplicated
+ * (i.e. no dup checking will be done)
+ *
+ * If the indices inside index_list >= the size of the column list then behavior
+ * is undefined (and is likely to crash)
+ *
+ * The returned schema is created by new operator, and the caller is responsible
+ * for destroying it.
+ */
 Schema *Schema::CopySchema(const Schema *schema,
-                           const std::vector<oid_t> &set) {
+                           const std::vector<oid_t> &index_list) {
+  std::vector<Column> column_list{};
+  
+  // Reserve some space to avoid multiple ma110c() calls
+  // But for future push_back() this is not optimized since the
+  // memory chunk may not be properly sized and aligned
+  column_list.reserve(index_list.size());
+
+  // For each column index, push the column
+  for(oid_t column_index : index_list) {
+    // Make sure the index does not refer to invalid element
+    PL_ASSERT(column_index < schema->columns.size());
+    
+    column_list.push_back(schema->columns[column_index]);
+  }
+
+  Schema *ret_schema = new Schema(column_list);
+
+  return ret_schema;
+}
+
+/*
+ * FilterSchema() - Returns a filtered schema using the given base schema
+ *                  and index array in the argument
+ *
+ * This function performs a "Filtering" operation on the schema given in the
+ * argument using the index list into a newly created schema object. The
+ * returned schema remains the order inside the base schema, no matter how
+ * indices are arranged in the index list.
+ *
+ * If there are duplicated indices in the set, it is guaranteed that only
+ * one column will be copied into the returned schema. This is achieved by
+ * only traversing the underlying schema once and searches for the column
+ * index inside the index list
+ *
+ * Please note that the new schame is created on the heap, and the caller
+ * is responsible for destroying it.
+ */
+Schema *Schema::FilterSchema(const Schema *schema,
+                             const std::vector<oid_t> &set) {
   oid_t column_count = schema->GetColumnCount();
   std::vector<Column> columns;
 
+  // It could only be smaller but not larger, here we use
+  // the size of the set (might have duplication) as an estimation
+  columns.reserve(set.size());
+
+  // For each column in the base schema, if the column id
+  // appears inside the set then push it into the column list
+  // for later construction of the new schema
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if (std::find(set.begin(), set.end(), column_itr) != set.end()) {
@@ -138,6 +201,7 @@ Schema *Schema::CopySchema(const Schema *schema,
   }
 
   Schema *ret_schema = new Schema(columns);
+  
   return ret_schema;
 }
 

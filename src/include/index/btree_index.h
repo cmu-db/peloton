@@ -23,6 +23,7 @@
 #include "index/index.h"
 
 #include "stx/btree_multimap.h"
+#include "index/scan_optimizer.h"
 
 namespace peloton {
 namespace index {
@@ -52,11 +53,12 @@ class BTreeIndex : public Index {
   bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
                        std::function<bool(const ItemPointer &)> predicate);
 
-  void Scan(const std::vector<Value> &values,
-            const std::vector<oid_t> &key_column_ids,
-            const std::vector<ExpressionType> &exprs,
+  void Scan(const std::vector<Value> &value_list,
+            const std::vector<oid_t> &tuple_column_id_list,
+            const std::vector<ExpressionType> &expr_list,
             const ScanDirectionType &scan_direction,
-            std::vector<ItemPointer *> &result);
+            std::vector<ItemPointer *> &result,
+            const ConjunctionScanPredicate *csp_p);
 
   void ScanAllKeys(std::vector<ItemPointer *> &result);
 
