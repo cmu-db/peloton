@@ -56,11 +56,28 @@ BWTREE_INDEX_TYPE::~BWTreeIndex() {
 BWTREE_TEMPLATE_ARGUMENTS
 bool
 BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
-                               ItemPointer *location) {
+                               ItemPointer *location_ptr) {
   KeyType index_key;
   index_key.SetFromKey(key);
   
-  bool ret = container.Insert(index_key, location);
+  bool ret = container.Insert(index_key, location_ptr);
+
+  return ret;
+}
+
+/*
+ * InsertEntry() - insert a key-value pair into the map
+ *
+ * If the key value pair already exists in the map, just return false
+ */
+BWTREE_TEMPLATE_ARGUMENTS
+bool
+BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
+                               const ItemPointer &location) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+  
+  bool ret = container.Insert(index_key, new ItemPointer(location));
 
   return ret;
 }

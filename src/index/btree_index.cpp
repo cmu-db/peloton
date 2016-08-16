@@ -58,11 +58,31 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
-                                      ItemPointer *location) {
+                                      ItemPointer *location_ptr) {
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key, location);
+  std::pair<KeyType, ValueType> entry(index_key, location_ptr);
+
+  {
+    index_lock.WriteLock();
+
+    // Insert the key, val pair
+    container.insert(entry);
+
+    index_lock.Unlock();
+  }
+
+  return true;
+}
+
+BTREE_TEMPLATE_ARGUMENT
+bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
+                                      const ItemPointer &location) {
+  KeyType index_key;
+
+  index_key.SetFromKey(key);
+  std::pair<KeyType, ValueType> entry(index_key, new ItemPointer(location));
 
   {
     index_lock.WriteLock();
