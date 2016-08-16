@@ -108,7 +108,7 @@ void ExecuteTileGroupTest() {
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
+        "primary_index", 123, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));

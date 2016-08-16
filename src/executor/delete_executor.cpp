@@ -71,14 +71,15 @@ bool DeleteExecutor::DExecute() {
   if (!children_[0]->Execute()) {
     return false;
   }
+
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-
   auto tile_group_id = tile_group->GetTileGroupId();
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -111,7 +112,7 @@ bool DeleteExecutor::DExecute() {
       // transaction.
     	LOG_TRACE("Thread is not the owner of the tuple, but still visible");
       if (transaction_manager.AcquireOwnership(tile_group_header, physical_tuple_id) == false) {
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
       // if it is the latest version and not locked by other threads, then
@@ -124,11 +125,11 @@ bool DeleteExecutor::DExecute() {
           tile_group, physical_tuple_id);
 
       // finally insert updated tuple into the table
-      ItemPointer new_location =
-          target_table_->InsertEmptyVersion(new_tuple.get());
+      ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
 
       if (new_location.IsNull() == true) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+        transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }

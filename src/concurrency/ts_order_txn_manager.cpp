@@ -344,12 +344,12 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
                                       const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
 
-  auto transaction_id = current_txn->GetTransactionId();
-
   auto tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
+
+  auto transaction_id = current_txn->GetTransactionId();
 
   assert(GetLastReaderCid(tile_group_header, old_location.offset) <= current_txn->GetBeginCommitId());
 
@@ -394,6 +394,7 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
     // Set the header information for the new version
     ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(old_location.offset);
 
+    // if there's no primary index on a table, then index_entry_ptry == nullptr.
     if (index_entry_ptr != nullptr) {
       new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
 

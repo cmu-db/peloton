@@ -76,32 +76,32 @@ TEST_F(CatalogTests, DroppingTable) {
   catalog::Bootstrapper::global_catalog->PrintCatalogs();
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
 
-  // // Try to drop again
-  // txn_manager.BeginTransaction();
-  // catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "department_table");
-  // txn_manager.CommitTransaction();
-  // EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
+  // Try to drop again
+  txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "department_table");
+  txn_manager.CommitTransaction();
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
 
-  // // Drop a table that does not exist
-  // txn_manager.BeginTransaction();
-  // catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "void_table");
-  // txn_manager.CommitTransaction();
-  // EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
+  // Drop a table that does not exist
+  txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "void_table");
+  txn_manager.CommitTransaction();
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
 
-  // // Drop the other table
-  // txn_manager.BeginTransaction();
-  // catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "emp_table");
-  // txn_manager.CommitTransaction();
-  // EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 1);
+  // Drop the other table
+  txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "emp_table");
+  txn_manager.CommitTransaction();
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 1);
 }
 
-// TEST_F(CatalogTests, DroppingDatabase){
-// 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-// 	txn_manager.BeginTransaction();
-// 	catalog::Bootstrapper::global_catalog->DropDatabase("EMP_DB");
-// 	EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB"), nullptr);
-// 	txn_manager.CommitTransaction();
-// }
+TEST_F(CatalogTests, DroppingDatabase){
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
+	catalog::Bootstrapper::global_catalog->DropDatabase("EMP_DB");
+	EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB"), nullptr);
+	txn_manager.CommitTransaction();
+}
 
 }  // End test namespace
 }  // End peloton namespace

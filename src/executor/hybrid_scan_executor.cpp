@@ -210,7 +210,7 @@ bool HybridScanExecutor::SeqScanUtil() {
       }
 
       // Check transaction visibility
-      if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+      if (transaction_manager.IsVisible(tile_group_header, tuple_id) == VISIBILITY_OK) {
         // If the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
@@ -387,7 +387,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       ++chain_length;
 
       if (transaction_manager.IsVisible(tile_group_header,
-                                        tuple_location.offset)) {
+                                        tuple_location.offset) == VISIBILITY_OK) {
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         auto res = transaction_manager.PerformRead(tuple_location);
         if (!res) {
