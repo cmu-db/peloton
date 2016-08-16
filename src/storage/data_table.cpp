@@ -235,6 +235,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
   
   auto index_count = GetIndexCount();
   if (index_count == 0) {
+    // Increase the table's number of tuples by 1
+    IncreaseTupleCount(1);
     return location;
   }
   // Index checks and updates
