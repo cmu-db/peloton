@@ -382,41 +382,40 @@ TTInt Value::s_maxInt64AsDecimal(TTInt(INT64_MAX) * kMaxScaleFactor);
 TTInt Value::s_minInt64AsDecimal(TTInt(-INT64_MAX) * kMaxScaleFactor);
 
 std::string Value::ToString() {
-	const ValueType type = GetValueType();
-	const char *ptr;
-	switch (type) {
-	    case VALUE_TYPE_BOOLEAN:
-	    	if(GetBoolean()) {
-	    		return "true";
-	    	}
-	    	else {
-	    		return "false";
-	    	}
-	    case VALUE_TYPE_TINYINT:
-	      return std::to_string(static_cast<int32_t>(GetTinyInt()));
-	    case VALUE_TYPE_SMALLINT:
-	      return std::to_string(GetSmallInt());
-	    case VALUE_TYPE_DATE:
-	    case VALUE_TYPE_INTEGER:
-	    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
-	      return std::to_string(GetInteger());
-	    case VALUE_TYPE_BIGINT:
-	    case VALUE_TYPE_TIMESTAMP:
-	      return std::to_string(GetBigInt());
-	    case VALUE_TYPE_REAL:
-	    case VALUE_TYPE_DOUBLE:
-	    	return std::to_string(GetDouble());
-	    case VALUE_TYPE_VARCHAR:
-	      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-	      return std::string(ptr, GetObjectLengthWithoutNull());
-	    case VALUE_TYPE_VARBINARY:
-	      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-	      return std::string(ptr, GetObjectLengthWithoutNull());
-	    case VALUE_TYPE_DECIMAL:
-	      return CreateStringFromDecimal();
-	    default:
-	      return "(no details)";
-	  }
+  const ValueType type = GetValueType();
+  const char *ptr;
+  switch (type) {
+    case VALUE_TYPE_BOOLEAN:
+      if (GetBoolean()) {
+        return "true";
+      } else {
+        return "false";
+      }
+    case VALUE_TYPE_TINYINT:
+      return std::to_string(static_cast<int32_t>(GetTinyInt()));
+    case VALUE_TYPE_SMALLINT:
+      return std::to_string(GetSmallInt());
+    case VALUE_TYPE_DATE:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
+      return std::to_string(GetInteger());
+    case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_TIMESTAMP:
+      return std::to_string(GetBigInt());
+    case VALUE_TYPE_REAL:
+    case VALUE_TYPE_DOUBLE:
+      return std::to_string(GetDouble());
+    case VALUE_TYPE_VARCHAR:
+      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+      return std::string(ptr, GetObjectLengthWithoutNull());
+    case VALUE_TYPE_VARBINARY:
+      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+      return std::string(ptr, GetObjectLengthWithoutNull());
+    case VALUE_TYPE_DECIMAL:
+      return CreateStringFromDecimal();
+    default:
+      return "(no details)";
+  }
 }
 
 /*
@@ -445,8 +444,10 @@ const std::string Value::GetInfo() const {
       break;
     case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
       buffer << GetInteger();
+      break;
+    case VALUE_TYPE_PARAMETER_OFFSET:
+      buffer << "NOT BINDED @ " << GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
@@ -457,11 +458,25 @@ const std::string Value::GetInfo() const {
       buffer << GetDouble();
       break;
     case VALUE_TYPE_VARCHAR:
-      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-      addr = reinterpret_cast<int64_t>(ptr);
-      out_val = std::string(ptr, GetObjectLengthWithoutNull());
-      buffer << "[" << GetObjectLengthWithoutNull() << "]";
-      buffer << "\"" << out_val << "\"[@" << addr << "]";
+      // For VARCHAR type we should take care since it is not consistent
+      // with other Value types
+      //
+      // VARCHAR min value has 1 byte payload '\0' with length being 1
+      // VARCHAR max value has nullptr as payoad pointer with length
+      // VARCHAR_MAX_INDICATOR
+      if (GetObjectLengthWithoutNull() == VARCHAR_MAX_INDICATOR) {
+        buffer << "[0]*VARCHAR_MAX*";
+      } else if ((GetObjectLengthWithoutNull() == 1) &&
+                 (((char *)GetObjectValueWithoutNull())[0] == '\0')) {
+        buffer << "[0]*VARCHAR_MIN*";
+      } else {
+        ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+        addr = reinterpret_cast<int64_t>(ptr);
+        out_val = std::string(ptr, GetObjectLengthWithoutNull());
+        buffer << "[" << GetObjectLengthWithoutNull() << "]";
+        buffer << "\"" << out_val << "\"[@" << addr << "]";
+      }
+
       break;
     case VALUE_TYPE_VARBINARY:
       ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
@@ -812,7 +827,7 @@ static void throwTimestampFormatError(const std::string &str) {
   // No space separator for between the date and time
   snprintf(message, 4096,
            "Attempted to cast \'%s\' to type %s failed. Supported format: "
-           "\'YYYY-MM-DD HH:MM:SS.UUUUUU\'"
+           "\'YYYY-MM-DD HH:MM:SS.UUUUUU(+/-)ZZ\'"
            "or \'YYYY-MM-DD\'",
            str.c_str(), ValueTypeToString(VALUE_TYPE_TIMESTAMP).c_str());
   throw Exception(message);
@@ -838,13 +853,14 @@ int64_t Value::parseTimestampString(const std::string &str) {
   int minute = 0;
   int second = 0;
   int micro = 1000000;
+  int time_zone = 0;
   // time_str
   std::string time_str;
   std::string number_string;
   const char *pch;
 
   switch (date_str.size()) {
-    case 26:
+    case 29:
       sep_pos = date_str.find(' ');
       if (sep_pos != 10) {
         throwTimestampFormatError(str);
@@ -856,7 +872,7 @@ int64_t Value::parseTimestampString(const std::string &str) {
           time_str.begin(),
           std::find_if(time_str.begin(), time_str.end(),
                        std::not1(std::ptr_fun<int, int>(std::isspace))));
-      if (time_str.length() != 15) {
+      if (time_str.length() != 18) {
         throwTimestampFormatError(str);
       }
 
@@ -925,6 +941,15 @@ int64_t Value::parseTimestampString(const std::string &str) {
       if (micro >= 2000000 || micro < 1000000) {
         throwTimestampFormatError(str);
       }
+
+      // Get the time zone
+      number_string = time_str.substr(15, 3);
+      pch = number_string.c_str();
+      time_zone = atoi(pch);
+
+      if (time_zone > 12 || time_zone < -12) {
+        throwTimestampFormatError(str);
+      }
     case 10:
       if (date_str.at(4) != '-' || date_str.at(7) != '-') {
         throwTimestampFormatError(str);
@@ -989,7 +1014,7 @@ int64_t Value::parseTimestampString(const std::string &str) {
   try {
     result = epoch_microseconds_from_components(
         (unsigned short int)year, (unsigned short int)month,
-        (unsigned short int)day, hour, minute, second);
+        (unsigned short int)day, hour + time_zone, minute, second);
   }
   catch (const std::out_of_range &bad) {
     throwTimestampFormatError(str);

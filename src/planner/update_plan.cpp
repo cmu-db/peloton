@@ -30,7 +30,7 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       project_info_(std::move(project_info)),
       updates_(NULL),
       where_(NULL) {
-	LOG_TRACE("Creating an Update Plan");
+  LOG_TRACE("Creating an Update Plan");
 }
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
@@ -41,8 +41,8 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
-  for(auto update_clause : *parse_tree->updates) {
-	  updates_->push_back(update_clause->Copy());
+  for (auto update_clause : *parse_tree->updates) {
+    updates_->push_back(update_clause->Copy());
   }
   TargetList tlist;
   DirectMapList dmlist;
@@ -54,7 +54,9 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);
-    tlist.emplace_back(col_id, update->value->Copy());
+    auto update_expr = update->value->Copy();
+    ReplaceColumnExpressions(target_table_->GetSchema(), update_expr);
+    tlist.emplace_back(col_id, update_expr);
   }
 
   for (uint i = 0; i < schema->GetColumns().size(); i++) {
@@ -71,7 +73,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   ReplaceColumnExpressions(target_table_->GetSchema(), where_);
 
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, where_, columns));
+      new planner::SeqScanPlan(target_table_, where_->Copy(), columns));
   AddChild(std::move(seq_scan_node));
 }
 
@@ -89,7 +91,9 @@ void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);
-    tlist.emplace_back(col_id, update->value->Copy());
+    auto update_expr = update->value->Copy();
+    ReplaceColumnExpressions(target_table_->GetSchema(), update_expr);
+    tlist.emplace_back(col_id, update_expr);
   }
 
   for (uint i = 0; i < schema->GetColumns().size(); i++) {
@@ -98,8 +102,10 @@ void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
       dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
   }
 
-  auto new_proj_info = new planner::ProjectInfo(std::move(tlist), std::move(dmlist));
-  new_proj_info->transformParameterToConstantValueExpression(values, target_table_->GetSchema());
+  auto new_proj_info =
+      new planner::ProjectInfo(std::move(tlist), std::move(dmlist));
+  new_proj_info->transformParameterToConstantValueExpression(
+      values, target_table_->GetSchema());
   project_info_.reset(new_proj_info);
 
   LOG_TRACE("Setting values for parameters in where");

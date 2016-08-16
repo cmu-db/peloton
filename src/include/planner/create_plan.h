@@ -71,6 +71,8 @@ class CreatePlan : public AbstractPlan {
 
   bool IsUnique() const { return unique; }
 
+  IndexType GetIndexType() const { return index_type; }
+
   std::vector<std::string> GetIndexAttributes() const { return index_attrs;}
 
  private:
@@ -91,6 +93,9 @@ class CreatePlan : public AbstractPlan {
   
   // IndexName
   std::string index_name;
+
+  //Index Tyoe specified from parser (Default: SKIPLIST)
+  IndexType index_type;
 
   //UNIQUE INDEX flag
   bool unique;

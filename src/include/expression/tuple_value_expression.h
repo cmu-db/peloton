@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/abstract_tuple.h"
@@ -75,7 +74,9 @@ class TupleValueExpression : public AbstractExpression {
   }
 
  protected:
-  const int tuple_idx_;  // which tuple. defaults to tuple1
+  // This indicates which side of the expression the tuple is on. If it's 0,
+  // then it's referring to the left tuple. 1 refers to the right tuple.
+  const int tuple_idx_;  // which tuple. defaults to tuple1.
   const int value_idx_;  // which (offset) column of the tuple
 };
 

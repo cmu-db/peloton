@@ -56,6 +56,14 @@ namespace peloton {
 #define OBJECT_CONTINUATION_BIT static_cast<char>(1 << 7)
 #define OBJECT_MAX_LENGTH_SHORT_LENGTH 63
 
+// We use 0x3FFFFFFF instead of 0x7FFFFFFF (i.e. INT_MAX) as the
+// VARCHAR MAX value indicator in the length field because the
+// highest two bits are used as continuiation and null flag
+// respectively, if we convert the complicated length field
+// inside Varlen object back to an int32_t then the highest two
+// bits will be lost
+#define VARCHAR_MAX_INDICATOR ((int32_t)0x3FFFFFFF)
+
 #define FULL_STRING_IN_MESSAGE_THRESHOLD 100
 
 // The int used for storage and return values
@@ -668,7 +676,7 @@ class Value {
       case VALUE_TYPE_BIGINT:
       case VALUE_TYPE_DATE:
       case VALUE_TYPE_TIMESTAMP:
-      case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+      case VALUE_TYPE_PARAMETER_OFFSET:
         rt = s_intPromotionTable[vtb];
         break;
 
@@ -851,8 +859,10 @@ class Value {
 
   int8_t SetObjectLength(int32_t length) {
     *reinterpret_cast<int32_t *>(&m_data[8]) = length;
+    
     int8_t lengthLength = GetAppropriateObjectLengthLength(length);
     SetObjectLengthLength(lengthLength);
+    
     return lengthLength;
   }
 
@@ -961,14 +971,14 @@ class Value {
   const int32_t &GetInteger() const {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
               GetValueType() == VALUE_TYPE_DATE ||
-              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+              GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
               GetValueType() == VALUE_TYPE_DATE ||
-              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+              GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
@@ -1652,6 +1662,7 @@ class Value {
     PL_ASSERT(IsNull() == false);
     Value retval(VALUE_TYPE_DECIMAL);
     const ValueType type = GetValueType();
+    LOG_TRACE("Cast %s to Decimal.", ValueTypeToString(type).c_str());
     if (IsNull()) {
       retval.SetNull();
       return retval;
@@ -2435,7 +2446,7 @@ class Value {
   }
 
   static Value GetBindingOnlyIntegerValue(int32_t value) {
-    Value retval(VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+    Value retval(VALUE_TYPE_PARAMETER_OFFSET);
     retval.GetInteger() = value;
     if (value == INT32_NULL) {
       retval.tagAsNull();
@@ -2539,7 +2550,15 @@ class Value {
 
   static Value GetMaxTempStringValue() {
     Value retval(VALUE_TYPE_VARCHAR);
-    retval.SetObjectLength(INT_MAX);
+
+    // Set byte 8 9 10 11 to VARCHAR_MAX_INDICATOR
+    // This also sets lengthlrngth which is 4 at byte 12
+    // because INT_MAX has exceeded short length of an object (which is 64)
+    retval.SetObjectLength(VARCHAR_MAX_INDICATOR);
+    
+    // Set byte 0 1 2 3 4 5 6 7 to nullptr
+    retval.SetObjectValue(nullptr);
+
     return retval;
   }
 
@@ -2966,8 +2985,22 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
-      if (GetObjectLengthWithoutNull() == INT_MAX) {
-        LOG_INFO("Variable length with INT_MAX");
+      
+      // Special treatment for VARCHAR: Always treat it as non-inlined value
+      // and allocate a special object only sufficient for holding
+      // the length of the object (should be 4 bytes)
+      if (GetObjectLengthWithoutNull() == VARCHAR_MAX_INDICATOR) {
+        LOG_TRACE("SerializeToTupleStorageAllocateForObjects(): "
+                  "Variable length with VARCHAR_MAX_INDICATOR "
+                  "(VARCHAR Maximum Value)");
+                 
+        // There must be enough space to hold at least a pointer inside
+        // the storage we are serializing into
+        PL_ASSERT((size_t)maxLength >= sizeof(void *));
+        
+        // VARCHAR MAX could not be NULL object
+        PL_ASSERT(IsNull() == false);
+                 
         int32_t objLength = GetObjectLengthWithoutNull();
 
         const int8_t lengthLength = GetObjectLengthLength();
@@ -2975,10 +3008,16 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
         const int32_t minLength = lengthLength + zeroLength;
         Varlen *sref = Varlen::Create(minLength, varlen_pool);
         char *copy = sref->Get();
+        
+        // It must be 4 since the length is VARCHAR_MAX_INDICATOR
+        PL_ASSERT(minLength == 4);
+        
+        // Set the 4-byte length field of Varlen object to be INT_MAX
         SetObjectLengthToLocation(objLength, copy);
         *reinterpret_cast<Varlen **>(storage) = sref;
+        
         break;
-      }
+      } // if is VARCHAR MAX
 
       // Potentially non-inlined type requires special handling
       if (isInlined) {
@@ -3387,7 +3426,7 @@ inline void Value::SerializeToExportWithoutNull(ExportSerializeOutput &io)
       return;
     }
     case VALUE_TYPE_DATE:
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
     case VALUE_TYPE_INTEGER: {
       io.WriteInt(GetInteger());
       return;
