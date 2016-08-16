@@ -203,13 +203,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         if (predicate_ == nullptr) {
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-          // if (is_blind_write_ == false && concurrency::current_txn->IsStaticReadOnlyTxn() == false) {
-          //   auto res = transaction_manager.PerformRead(tuple_location);
-          //   if (!res) {
-          //     transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          //     return res;
-          //   }
-          // }
+          auto res = transaction_manager.PerformRead(tuple_location);
+          if (!res) {
+            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            return res;
+          }
+          
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(
             tile_group.get(), tuple_location.offset);
@@ -218,13 +217,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           if (eval == true) {
             visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-            // if (is_blind_write_ == false && concurrency::current_txn->IsStaticReadOnlyTxn() == false) {
-            //   auto res = transaction_manager.PerformRead(tuple_location);
-            //   if (!res) {
-            //     transaction_manager.SetTransactionResult(RESULT_FAILURE);
-            //     return res;
-            //   }
-            // }
+            auto res = transaction_manager.PerformRead(tuple_location);
+            if (!res) {
+              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              return res;
+            }
+            
           }
         }
         break;

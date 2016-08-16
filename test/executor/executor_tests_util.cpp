@@ -217,8 +217,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    UNUSED_ATTRIBUTE bool status = txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
-    PL_ASSERT(status == true);
+    txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
   }
 }
 
