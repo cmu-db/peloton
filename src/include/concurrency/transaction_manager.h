@@ -81,7 +81,7 @@ class TransactionManager {
 
   // The index_entry_ptr is the address of the head node of the version chain, 
   // which is directly pointed by the primary index.
-  virtual void PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) = 0;
+  virtual void PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(const ItemPointer &location) = 0;
 
@@ -117,10 +117,6 @@ class TransactionManager {
   virtual Result CommitTransaction() = 0;
 
   virtual Result AbortTransaction() = 0;
-
-  // virtual ItemPointer *GetHeadPtr(
-  //   const storage::TileGroupHeader *const tile_group_header,
-  //   const oid_t tuple_id) = 0;
 
   void ResetStates() {
     next_txn_id_ = START_TXN_ID;

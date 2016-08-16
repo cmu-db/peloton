@@ -63,19 +63,6 @@ bool TsOrderTxnManager::SetLastReaderCid(
   }
 }
 
-
-// ItemPointer *TsOrderTxnManager::GetHeadPtr(
-//     const storage::TileGroupHeader *const tile_group_header, 
-//     const oid_t tuple_id) {
-//   return *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id) + ITEM_POINTER_OFFSET));
-// }
-
-// void TsOrderTxnManager::SetHeadPtr(
-//     const storage::TileGroupHeader *const tile_group_header, 
-//     const oid_t tuple_id, ItemPointer *item_ptr) {
-//   *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id) + ITEM_POINTER_OFFSET)) = item_ptr;
-// }
-
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
   static TsOrderTxnManager txn_manager;
   return txn_manager;
@@ -256,7 +243,6 @@ void TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *
 
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
-  // SetHeadPtr(tile_group_header, tuple_id, index_entry_ptr);
 
 }
 
@@ -315,12 +301,6 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   if (old_prev.IsNull() == true) {
     // if we are updating the latest version.
     // Set the header information for the new version
-    // auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
-
-    // assert(head_ptr != nullptr);
-    
-    // SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
-
     ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(old_location.offset);
 
     assert(index_entry_ptr != nullptr);
@@ -412,12 +392,6 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
   if (old_prev.IsNull() == true) {
     // if we are deleting the latest version.
     // Set the header information for the new version
-    // auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
-
-    // assert(head_ptr != nullptr);
-
-    // SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
-
     ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(old_location.offset);
 
     assert(index_entry_ptr != nullptr);
@@ -599,7 +573,6 @@ Result TsOrderTxnManager::AbortTransaction() {
           // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
-          // auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
           ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(tuple_slot);
           auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
           assert(res == true);
@@ -649,8 +622,6 @@ Result TsOrderTxnManager::AbortTransaction() {
           // before we unlink the aborted version from version list
           ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(tuple_slot);
           auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-          // auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
-          // auto res = AtomicUpdateItemPointer(head_ptr, ItemPointer(tile_group_id, tuple_slot));
           assert(res == true);
           (void) res;
         }
