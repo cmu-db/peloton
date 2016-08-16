@@ -122,7 +122,7 @@ void IndexTuner::BuildIndex(storage::DataTable *table,
       tile_group->CopyTuple(tuple_id, tuple_ptr.get());
 
       // Set the location
-      ItemPointer *location = new ItemPointer(tile_group_id, tuple_id);
+      ItemPointer location(tile_group_id, tuple_id);
 
       // Set the key
       key->SetFromTuple(tuple_ptr.get(), indexed_columns, index->GetPool());

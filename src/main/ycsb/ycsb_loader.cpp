@@ -110,7 +110,7 @@ void CreateYCSBDatabase() {
   index_metadata = new index::IndexMetadata(
       "primary_index",
       user_table_pkey_index_oid,
-      INDEX_TYPE_SKIPLIST,
+      INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
       tuple_schema,
       key_schema,
