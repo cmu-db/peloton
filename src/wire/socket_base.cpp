@@ -99,8 +99,6 @@ bool SocketManager<B>::CanRead() {
 	uint32_t header_size = sizeof(int32_t) + 1;  // Size of header (msg type + size)
 	uint32_t pkt_size = 0;
 	size_t window = rbuf.buf_size - rbuf.buf_ptr;  // Size of available data for read
-//	LOG_INFO("window = %d", (int)window);
-//	LOG_INFO("header_size = %d", (int)header_size);
 	// If can read header
 	if(header_size <= window) {
 		PktBuf dummy_pkt;
@@ -111,7 +109,6 @@ bool SocketManager<B>::CanRead() {
 	    std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
 	              reinterpret_cast<uchar *>(&pkt_size));
 	    pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-//	    LOG_INFO("pkt_size = %d", (int)pkt_size);
 	    // If header and size is larger than window, don't read untill receive a
 	    // read callback and buffer is refilled
 	    if(header_size + pkt_size > window) {

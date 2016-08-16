@@ -681,11 +681,8 @@ bool PacketManager::ManagePacket() {
   bool status;
   bool can_read_more = true;
   while(can_read_more) {
-	LOG_INFO("Read packet");
 	ReadPacket(&pkt, true, &client);
-	LOG_INFO("Process packet");
 	status = ProcessPacket(&pkt, responses);
-	LOG_INFO("Write response");
 	if (!WritePackets(responses, &client) || !status) {
 	  // close client on write failure or status failure
 	  CloseClient();

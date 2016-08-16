@@ -45,7 +45,6 @@ bool SetNonBlocking(int fd) {
 
 
 void ReadCallback(int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
-	LOG_INFO("Read callback on socket %d", fd);
 	SocketManager<PktBuf>* socket_manager = (SocketManager<PktBuf>*)arg;
 	if(socket_manager->assigned_to_pkt_manager == false) {
 		PacketManager* pkt_manager = new PacketManager(socket_manager);
