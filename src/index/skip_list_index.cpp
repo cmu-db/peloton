@@ -51,12 +51,12 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 class KeyEqualityChecker>
 bool SkipListIndex<KeyType, ValueType, KeyComparator,
 KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
-                                 const ItemPointer &location) {
+                                 ItemPointer *location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
   // Insert the key, val pair
-  auto status = container.Insert(index_key, new ItemPointer(location));
+  auto status = container.Insert(index_key, location);
 
   return status;
 }
@@ -73,14 +73,14 @@ KeyEqualityChecker>::DeleteEntry(const storage::Tuple *,
 template <typename KeyType, typename ValueType, class KeyComparator,
 class KeyEqualityChecker>
 bool SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
-CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+CondInsertEntry(const storage::Tuple *key, ItemPointer *location,
                 std::function<bool(const ItemPointer &)>) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
   // Insert the key if it does not exist
   const bool bInsert = false;
-  auto status = container.Update(index_key, new ItemPointer(location), bInsert);
+  auto status = container.Update(index_key, location, bInsert);
 
   return status;
 }

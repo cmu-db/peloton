@@ -87,12 +87,12 @@ class BWTreeIndex : public Index {
 
   ~BWTreeIndex();
 
-  bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
+  bool InsertEntry(const storage::Tuple *key, ItemPointer *location);
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
   bool CondInsertEntry(const storage::Tuple *key,
-                       const ItemPointer &location,
+                       ItemPointer *location,
                        std::function<bool(const ItemPointer &)> predicate);
 
   void Scan(const std::vector<Value> &values,
