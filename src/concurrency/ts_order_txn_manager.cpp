@@ -394,17 +394,17 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
     // Set the header information for the new version
     ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(old_location.offset);
 
-    assert(index_entry_ptr != nullptr);
+    if (index_entry_ptr != nullptr) {
+      new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
 
-    new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
-
-    // Set the index header in an atomic way.
-    // We do it atomically because we don't want any one to see a half-down pointer
-    // In case of contention, no one can update this pointer when we are updating it
-    // because we are holding the write lock. This update should success in its first trial.
-    auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
-    assert(res == true);
-    (void) res;
+      // Set the index header in an atomic way.
+      // We do it atomically because we don't want any one to see a half-down pointer
+      // In case of contention, no one can update this pointer when we are updating it
+      // because we are holding the write lock. This update should success in its first trial.
+      auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
+      assert(res == true);
+      (void) res;
+    }
   }
   
   current_txn->RecordDelete(old_location);

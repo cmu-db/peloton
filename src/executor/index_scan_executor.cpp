@@ -230,7 +230,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // if the tuple is not visible.
       else {
 
-        // Break for new to old
         if (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
           // See an invisible version that does not belong to any one in a new to old version chain
