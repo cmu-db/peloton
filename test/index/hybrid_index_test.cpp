@@ -68,7 +68,7 @@ static double predicate_offset = 0.9;
 static double tuple_start_offset = predicate_offset * tuple_count;
 static double tuple_end_offset = (selectivity + predicate_offset) * tuple_count;
 
-static size_t query_count = 10;
+// static size_t query_count = 10;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
                  bool build_indexes) {
