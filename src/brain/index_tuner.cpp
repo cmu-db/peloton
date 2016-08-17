@@ -452,7 +452,7 @@ void PrintIndexInformation(storage::DataTable* table) {
 
     // Get index
     auto index = table->GetIndex(index_itr);
-    auto index_metadata = index->GetMetadata();
+    UNUSED_ATTRIBUTE auto index_metadata = index->GetMetadata();
 
     auto indexed_tile_group_offset = index->GetIndexedTileGroupOff();
 

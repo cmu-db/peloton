@@ -154,8 +154,11 @@ class PacketManager {
    * packet */
   bool ProcessPacket(Packet* pkt, ResponseBuffer& responses);
 
-  /* Protocol manager */
-  void ManagePackets();
+  /* Manage the startup packet */
+  bool ManageFirstPacket();
+
+  /* Manage subsequent packets */
+  bool ManagePacket();
 
 };
 
