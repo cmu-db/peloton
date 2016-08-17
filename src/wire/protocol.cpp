@@ -125,14 +125,12 @@ void PacketManager::PutTupleDescriptor(
 
   if (tuple_descriptor.empty()) return;
 
-  LOG_TRACE("Put TupleDescriptor");
 
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'T';
   PacketPutInt(pkt, tuple_descriptor.size(), 2);
 
   for (auto col : tuple_descriptor) {
-    LOG_TRACE("column name: %s", std::get<0>(col).c_str());
     PacketPutString(pkt, std::get<0>(col));
     // TODO: Table Oid (int32)
     PacketPutInt(pkt, 0, 4);
@@ -153,10 +151,8 @@ void PacketManager::PutTupleDescriptor(
 void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
                                  int &rows_affected,
                                  ResponseBuffer &responses) {
-  LOG_TRACE("result size: %ld, colcount: %d", results.size(), colcount);
   if (!results.size() || !colcount) return;
 
-  LOG_TRACE("Flatten result size: %lu", results.size());
   size_t numrows = results.size() / colcount;
 
   // 1 packet per row
@@ -173,7 +169,6 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
     responses.push_back(std::move(pkt));
   }
   rows_affected = numrows;
-  LOG_TRACE("Rows affected: %d", rows_affected);
 }
 
 /* Gets the first token of a query */
@@ -202,7 +197,6 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows,
     tag += " 0 " + std::to_string(rows);
   else
     tag += " " + std::to_string(rows);
-  LOG_TRACE("complete command tag: %s", tag.c_str());
   PacketPutString(pkt, tag);
 
   responses.push_back(std::move(pkt));
@@ -235,7 +229,6 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
 
-  LOG_INFO("Query Received: %s \n", q_str.c_str());
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
@@ -269,7 +262,6 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     // check status
     if (status == Result::RESULT_FAILURE) {
       SendErrorResponse({{'M', error_message}}, responses);
-      LOG_TRACE("Error Response Sent!");
       break;
     }
 
@@ -289,15 +281,12 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
  * exec_parse_message - handle PARSE message
  */
 void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
-  LOG_DEBUG("Parse message");
   std::string error_message, statement_name, query_string, query_type;
   GetStringToken(pkt, statement_name);
 
   // Read prepare statement name
-  LOG_DEBUG("Prep stmt: %s", statement_name.c_str());
   // Read query string
   GetStringToken(pkt, query_string);
-  LOG_DEBUG("Parse Query: %s", query_string.c_str());
   skipped_stmt_ = false;
   query_type = get_query_type(query_string);
   if (!HardcodedExecuteFilter(query_type)) {
@@ -305,7 +294,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     skipped_stmt_ = true;
     skipped_query_string_ = std::move(query_string);
     skipped_query_type_ = std::move(query_type);
-    LOG_TRACE("Statement to be skipped");
 
     // Send Parse complete response
     std::unique_ptr<Packet> response(new Packet());
@@ -326,7 +314,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read number of params
   int num_params = PacketGetInt(pkt, 2);
-  LOG_TRACE("NumParams: %d", num_params);
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
@@ -344,10 +331,8 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   if (unnamed_query) {
     unnamed_statement = statement;
   } else {
-    LOG_TRACE("Setting named statement with name : %s", statement_name.c_str());
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
-    LOG_TRACE("CACHE SIZE: %d", (int)statement_cache_.size());
   }
   // Send Parse complete response
   std::unique_ptr<Packet> response(new Packet());
@@ -358,11 +343,8 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
-  LOG_DEBUG("Bind Message");
   GetStringToken(pkt, portal_name);
-  LOG_TRACE("Portal name: %s", portal_name.c_str());
   GetStringToken(pkt, statement_name);
-  LOG_TRACE("Prep stmt name: %s", statement_name.c_str());
 
   if (skipped_stmt_) {
     // send bind complete
@@ -374,7 +356,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read parameter format
   int num_params_format = PacketGetInt(pkt, 2);
-
+  
   // get the format of each parameter
   std::vector<int16_t> formats(num_params_format);
   for (int i = 0; i < num_params_format; i++) {
@@ -421,15 +403,12 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   const auto &query_string = statement->GetQueryString();
   const auto &query_type = statement->GetQueryType();
 
-  LOG_TRACE("Query string: %s", query_string.c_str());
-  LOG_TRACE("Query type: %s", query_type.c_str());
 
   // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
   if (!HardcodedExecuteFilter(query_type)) {
     skipped_stmt_ = true;
     skipped_query_string_ = query_string;
-    LOG_TRACE("Statement skipped: %s", skipped_query_string_.c_str());
     std::unique_ptr<Packet> response(new Packet());
     // Send Parse complete response
     response->msg_type = '2';
@@ -456,9 +435,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
       if (formats[param_idx] == 0) {
         // TEXT mode
-        LOG_TRACE("param %d type: %d", param_idx, param_types[param_idx]);
         std::string param_str = std::string(std::begin(param), std::end(param));
-        LOG_TRACE("Text content: %s", param_str.c_str());
         bind_parameters.push_back(
             std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
         param_values->push_back(
@@ -466,7 +443,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
                 .CastAs(PostgresValueTypeToPelotonValueType(
                      (PostgresValueType)param_types[param_idx])));
       } else {
-        LOG_TRACE("param %d type: %d", param_idx, param_types[param_idx]);
         // BINARY mode
         switch (param_types[param_idx]) {
           case POSTGRES_VALUE_TYPE_INTEGER: {
@@ -497,7 +473,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             bind_parameters.push_back(std::make_pair(
                 ValueType::VALUE_TYPE_DOUBLE, std::to_string(float_val)));
             param_values->push_back(ValueFactory::GetDoubleValue(float_val));
-            // LOG_TRACE("Bind param (size: %d) : %lf", param_len, float_val);
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -508,10 +483,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
   // Construct a portal
 
-  LOG_TRACE("Size of param values vector: %lu", param_values->size());
-
   if (param_values->size() > 0) {
-    LOG_TRACE("Setting Parameter Values...");
     statement->GetPlanTree()->SetParameterValues(param_values);
   }
 
@@ -537,11 +509,8 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
                                         ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
-  LOG_TRACE("Describe message");
   PacketGetBytes(pkt, 1, mode);
-  LOG_TRACE("mode %c", mode[0]);
   GetStringToken(pkt, portal_name);
-  LOG_TRACE("portal name: %s", portal_name.c_str());
   if (mode[0] == 'P') {
 
     auto portal_itr = portals_.find(portal_name);
@@ -569,7 +538,6 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // EXECUTE message
-  LOG_DEBUG("Execute message");
   std::vector<ResultType> results;
   std::string error_message, portal_name;
   int rows_affected = 0;
@@ -578,7 +546,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
   // execute them
   if (skipped_stmt_) {
-    LOG_TRACE("Statement skipped: %s", skipped_query_string_.c_str());
     CompleteCommand(skipped_query_type_, rows_affected, responses);
     skipped_stmt_ = false;
     return;
@@ -645,7 +612,9 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
-      LOG_TRACE("Closing client");
+      return false;
+    } break;
+    case NULL: {
       return false;
     } break;
     default: {
@@ -680,7 +649,6 @@ void PacketManager::SendErrorResponse(
 
 void PacketManager::SendReadyForQuery(uchar txn_status,
                                       ResponseBuffer &responses) {
-  LOG_DEBUG("Send Read for Query");
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'Z';
 
@@ -689,39 +657,43 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
   responses.push_back(std::move(pkt));
 }
 
-/*
- * PacketManager - Main wire protocol logic.
- *    Always return with a closed socket.
- */
-void PacketManager::ManagePackets() {
+bool PacketManager::ManageFirstPacket() {
   Packet pkt;
   ResponseBuffer responses;
   bool status;
-
   // fetch the startup packet
   if (!ReadPacket(&pkt, false, &client)) {
     CloseClient();
-    return;
+    return false;
   }
-
   status = ProcessStartupPacket(&pkt, responses);
   if (!WritePackets(responses, &client) || !status) {
     // close client on write failure or status failure
     CloseClient();
-    return;
+    return false;
   }
-
-  pkt.Reset();
-  while (ReadPacket(&pkt, true, &client)) {
-    status = ProcessPacket(&pkt, responses);
-    if (!WritePackets(responses, &client) || !status) {
-      // close client on write failure or status failure
-      CloseClient();
-      return;
-    }
-    pkt.Reset();
-  }
+  return true;
 }
+
+bool PacketManager::ManagePacket() {
+  Packet pkt;
+  ResponseBuffer responses;
+  bool status;
+  bool can_read_more = true;
+  while(can_read_more) {
+	ReadPacket(&pkt, true, &client);
+	status = ProcessPacket(&pkt, responses);
+	if (!WritePackets(responses, &client) || !status) {
+	  // close client on write failure or status failure
+	  CloseClient();
+	  return false;
+	}
+	can_read_more = CanRead(&client);
+	pkt.Reset();
+  }
+  return true;
+}
+
 
 }  // End wire namespace
 }  // End peloton namespace
