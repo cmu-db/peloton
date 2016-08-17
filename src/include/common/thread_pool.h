@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// thread_pool.h
+// worker_thread_pool.h
 //
-// Identification: src/include/common/thread_pool.h
+// Identification: src/include/common/worker_thread_pool.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,56 +13,58 @@
 
 #pragma once
 
-#include <vector>
-#include <queue>
-#include <memory>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <future>
-#include <functional>
-#include <stdexcept>
+#include <boost/asio/io_service.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+
+#include "common/macros.h"
 
 namespace peloton {
-
+// a wrapper for boost worker thread pool.
 class ThreadPool {
-
  public:
+  ThreadPool() : pool_size_(0), work_(io_service_) {}
+  ThreadPool(const size_t &pool_size)
+      : pool_size_(pool_size), work_(io_service_) {}
 
-  ThreadPool();
+  ~ThreadPool() {
+    io_service_.stop();
+    thread_pool_.join_all();
+  }
 
-  ThreadPool(size_t num_threads);
+  void Initialize(const size_t &pool_size) {
+    pool_size_ = pool_size;
+    PL_ASSERT(pool_size_ != 0);
+    for (size_t i = 0; i < pool_size_; ++i) {
+      // add thread to thread pool.
+      thread_pool_.create_thread(
+          boost::bind(&boost::asio::io_service::run, &io_service_));
+    }
+  }
 
-  // Enqueue Task
-  template<class F, class... Args>
-  auto Enqueue(F&& f, Args&&... args) ->
-  std::future<typename std::result_of<F(Args...)>::type>;
-
-  ~ThreadPool();
-
-  size_t GetNumThreads() const {
-    return num_threads;
+  // submit task to thread pool.
+  // it accepts a function and a set of function parameters as parameters.
+  template <typename FunctionType, typename... ParamTypes>
+  void SubmitTask(FunctionType &&func, const ParamTypes &&... params) {
+    // add task to thread pool.
+    io_service_.post(std::bind(func, params...));
   }
 
  private:
+  ThreadPool(const ThreadPool &);
+  ThreadPool &operator=(const ThreadPool &);
 
-  // need to keep track of threads so we can join them
-  std::vector< std::thread > workers;
-
-  // the task queue
-  std::queue< std::function<void()> > tasks;
-
-  // synchronization
-  std::mutex queue_mutex;
-
-  std::condition_variable condition;
-
-  bool stop;
-
-  // number of threads
-  size_t num_threads;
-
+ private:
+  // number of threads in the thread pool.
+  size_t pool_size_;
+  // real thread pool that holds a set of threads.
+  boost::thread_group thread_pool_;
+  // io_service provides IO functionality of asynchronize services.
+  boost::asio::io_service io_service_;
+  // io_service::work is responsible for starting the io_service processing
+  // loop.
+  boost::asio::io_service::work work_;
 };
-
 
 }  // End peloton namespace

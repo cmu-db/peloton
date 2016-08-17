@@ -21,7 +21,7 @@
 
 namespace peloton {
 
-WorkerThreadPool thread_pool;
+ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
 
