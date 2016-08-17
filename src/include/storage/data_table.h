@@ -35,6 +35,8 @@ extern LayoutType peloton_layout_mode;
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
+const int NUM_PREALLOCATION = 10;
+
 namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
@@ -106,9 +108,6 @@ class DataTable : public AbstractTable {
 
   // coerce into adding a new tile group with a tile group id
   void AddTileGroupWithOidForRecovery(const oid_t &tile_group_id);
-
-  // add a tile group to table
-  void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
@@ -220,6 +219,7 @@ class DataTable : public AbstractTable {
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **index_entry_ptr);
 
  protected:
+
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
@@ -234,7 +234,8 @@ class DataTable : public AbstractTable {
 
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
-
+  oid_t AddDefaultTileGroup(const size_t &cache_id);
+  
   // get a partitioning with given layout type
   column_map_type GetTileGroupLayout(LayoutType layout_type);
 
@@ -262,6 +263,8 @@ class DataTable : public AbstractTable {
   LockFreeArray<oid_t> tile_groups_;
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
+
+  std::shared_ptr<storage::TileGroup> cached_tile_groups_[NUM_PREALLOCATION];
 
   // data table mutex
   std::mutex data_table_mutex_;
