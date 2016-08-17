@@ -2,7 +2,7 @@
 set(Peloton_LINKER_LIBS "")
 
 # ---[ Boost
-find_package(Boost 1.46 REQUIRED COMPONENTS system filesystem thread-mt)
+find_package(Boost 1.46 REQUIRED COMPONENTS system filesystem thread)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${Boost_LIBRARIES})
 
