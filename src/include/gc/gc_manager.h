@@ -20,86 +20,142 @@
 
 #include "common/types.h"
 #include "common/logger.h"
-#include "container/queue.h"
+#include "container/lock_free_queue.h"
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace gc {
 
-//===--------------------------------------------------------------------===//
-// GC Manager
-//===--------------------------------------------------------------------===//
+struct GarbageContext {
+  std::vector<TupleMetadata> garbages;
+  cid_t timestamp;
+
+  GarbageContext() : garbages(), timestamp(INVALID_CID) {}
+};
+
+extern thread_local GarbageContext *current_garbage_context;
 
 #define MAX_ATTEMPT_COUNT 100000
 #define MAX_QUEUE_LENGTH 100000
 
 #define GC_PERIOD_MILLISECONDS 100
-class GCBuffer {
- public:
-  GCBuffer(oid_t tid) : table_id(tid), garbage_tuples() {}
-  ~GCBuffer();
-  inline void AddGarbage(const ItemPointer &itemptr) {
-    garbage_tuples.push_back(itemptr);
-  }
 
- private:
-  oid_t table_id;
-  std::vector<ItemPointer> garbage_tuples;
-};
-
+//===--------------------------------------------------------------------===//
+// GC Manager
+//===--------------------------------------------------------------------===//
 class GCManager {
- public:
-  GCManager(const GCManager &) = delete;
-  GCManager &operator=(const GCManager &) = delete;
-  GCManager(GCManager &&) = delete;
-  GCManager &operator=(GCManager &&) = delete;
+public:
+  GCManager(int thread_count)
+    : is_running_(true),
+      gc_thread_count_(thread_count),
+      gc_threads_(thread_count),
+      unlink_queues_(),
+      local_unlink_queues_(),
+      reclaim_maps_(thread_count) {
 
-  GCManager(const GCType type)
-      : is_running_(true), gc_type_(type), reclaim_queue_(MAX_QUEUE_LENGTH) {
+    unlink_queues_.reserve(thread_count);
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>> unlink_queue(
+        new LockFreeQueue<std::shared_ptr<GarbageContext>>(MAX_QUEUE_LENGTH)
+      );
+      unlink_queues_.push_back(unlink_queue);
+      local_unlink_queues_.emplace_back();
+    }
     StartGC();
   }
 
   ~GCManager() { StopGC(); }
 
+  static GCManager& GetInstance(int thread_count = 1) {
+    static GCManager gcManager(thread_count);
+    return gcManager;
+  }
+
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->is_running_; }
+  virtual bool GetStatus() { return this->is_running_; }
 
-  void StartGC();
+  virtual void StartGC() {
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      StartGC(i);
+    }
+  };
 
-  void StopGC();
+  virtual void StopGC() {
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      StopGC(i);
+    }
+  }
 
-  void RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                        const oid_t &tuple_id, const cid_t &tuple_end_cid);
+  virtual void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                                   const oid_t &tuple_id, const cid_t &tuple_end_cid);
 
-  ItemPointer ReturnFreeSlot(const oid_t &table_id);
+  virtual void RecycleInvalidTupleSlot(const oid_t &table_id __attribute__((unused)),
+                                       const oid_t &tile_group_id __attribute__((unused)),
+                                       const oid_t &tuple_id __attribute__((unused))) {
+    assert(false);
+  }
 
- private:
-  void Running();
+  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
+
+  virtual void RegisterTable(oid_t table_id) {
+    // Insert a new entry for the table
+    if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
+      LOG_TRACE("register table %d to garbage collector", (int)table_id);
+      std::shared_ptr<LockFreeQueue<TupleMetadata>> recycle_queue(new LockFreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+      recycle_queue_map_[table_id] = recycle_queue;
+    }
+  }
+
+  virtual void CreateGCContext();
+
+  virtual void EndGCContext(cid_t ts);
+
+private:
+  void StartGC(int thread_id);
+
+  void StopGC(int thread_id);
+
+  inline unsigned int HashToThread(const cid_t &ts) {
+    return (unsigned int)ts % gc_thread_count_;
+  }
+
+  void ClearGarbage(int thread_id);
+
+  void Running(int thread_id);
+
+  void Reclaim(int thread_id, const cid_t &max_cid);
+
+  void Unlink(int thread_id, const cid_t &max_cid);
+
+  void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
 
   bool ResetTuple(const TupleMetadata &);
 
- private:
-  //===--------------------------------------------------------------------===//
-  // Private methods
-  //===--------------------------------------------------------------------===//
-  void ClearGarbage();
+  void DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata);
 
-  void AddToRecycleMap(TupleMetadata tuple_metadata);
-
+private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
-  GCType gc_type_;
 
-  std::unique_ptr<std::thread> gc_thread_;
+  const int gc_thread_count_;
+
+  std::vector<std::unique_ptr<std::thread>> gc_threads_;
+
+  std::vector<std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>> unlink_queues_;
+  std::vector<std::list<std::shared_ptr<GarbageContext>>> local_unlink_queues_;
+
+  // Map of actual grabage.
+  // The key is the timestamp when the garbage is identified, value is the
+  // metadata of the garbage.
+  // TODO: use shared pointer to reduce memory copy
+  std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>> reclaim_maps_;
 
   // TODO: use shared pointer to reduce memory copy
-  Queue<TupleMetadata> reclaim_queue_;
-
-  // TODO: use shared pointer to reduce memory copy
-  cuckoohash_map<oid_t, std::shared_ptr<Queue<TupleMetadata>>>
-      recycle_queue_map_;
+  // table_id -> queue
+  //cuckoohash_map<oid_t, std::shared_ptr<LockFreeQueue<TupleMetadata>>> recycle_queue_map_;
+  std::unordered_map<oid_t, std::shared_ptr<peloton::LockFreeQueue<TupleMetadata>>> recycle_queue_map_;
 };
 
 }  // namespace gc
