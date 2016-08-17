@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include "common/worker_thread_pool.h"
+#include "common/thread_pool.h"
 
 namespace peloton {
 
-extern WorkerThreadPool thread_pool;
+extern ThreadPool thread_pool;
 
 //===--------------------------------------------------------------------===//
 // Global Setup and Teardown

@@ -26,10 +26,6 @@ class ThreadPoolTests : public PelotonTest {};
 
 TEST_F(ThreadPoolTests, BasicTest) {
 
-  ThreadPool thread_pool;
-
-  auto num_threads = thread_pool.GetNumThreads();
-  LOG_INFO("Num threads : %lu", num_threads);
 
 }
 
