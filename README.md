@@ -8,15 +8,16 @@
 
 ## What Is Peloton?
 
-Peloton is an in-memory DBMS designed for real-time analytics. It can handle both fast ACID transactions and complex analytical queries on the same database. 
+* Peloton is a self-driving in-memory relational DBMS. 
+* It contains domain-specific AI for automatically adapting to evolving real-world workloads. 
+* It is designed from the ground up to leverage the unique characteristics of fast non-volatile memory technologies.
+* It can handle both fast ACID transactions and complex analytical queries on the same database. 
 
 ## What Problem Does Peloton Solve?
 
-The current trend is to use specialized systems that are optimized for only one of these workloads, and thus require an organization to maintain separate copies of the database. This adds additional cost to deploying a database application in terms of both storage and administration overhead. We present a hybrid DBMS architecture that efficiently supports varied workloads on the same database.
+The current trend is to manually tune the DBMS configuration for evolving real-world workloads. This approach requires the database administrator to constantly adapt the DBMS based on the current query workload. The adminstrator needs to understand the subtle interactions between the different knobs exposed by the system to do this kind of black-box tuning. Further, it is often the case that several critical parameters used within the DBMS are not exposed as knobs to the administrator.
 
-## How Does Peloton Accomplish Its Goals?
-
-Our approach differs from previous methods in that we use a single execution engine that is oblivious to the storage layout of data without sacrificing the performance benefits of the specialized systems. This obviates the need to maintain separate copies of the database in multiple independent systems.
+Peloton is designed to automate some of the critical tasks performed by the database administrator. Using novel physical design algorithms and domain-specific AI, it can automatically and incrementally adapt the storage layout, access methods, and data placement policy employed inside the DBMS in tandem with workload shifts. 
 
 For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
 
@@ -26,7 +27,7 @@ Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki
 
 ## Development / Contributing
 
-We invite you to help us build the future of self-driving DBMSs. This is the best moment to participate, as everyone can make an impact. Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
+We invite you to help us build the future of self-driving DBMSs. Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ## Issues
 
