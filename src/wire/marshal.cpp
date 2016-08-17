@@ -23,9 +23,7 @@ namespace wire {
 
 // checks for parsing overflows
 void CheckOverflow(Packet *pkt, size_t size) {
-//	LOG_INFO("pkt->ptr: %d", (int)pkt->ptr);
-//	LOG_INFO("size: %d", (int) size);
-//	LOG_INFO("pkt->len: %d", (int)pkt->len);
+
   if (pkt->ptr + size - 1 >= pkt->len) {
     // overflow case, throw error
     LOG_WARN("Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
@@ -40,7 +38,6 @@ PktBuf::iterator GetEndItr(Packet *pkt, int len) {
 
 int PacketGetInt(Packet *pkt, uchar base) {
   int value = 0;
-
   CheckOverflow(pkt, base);
 
   switch (base) {
