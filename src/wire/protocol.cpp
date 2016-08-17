@@ -356,7 +356,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read parameter format
   int num_params_format = PacketGetInt(pkt, 2);
-
+  
   // get the format of each parameter
   std::vector<int16_t> formats(num_params_format);
   for (int i = 0; i < num_params_format; i++) {

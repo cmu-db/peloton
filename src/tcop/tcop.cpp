@@ -192,6 +192,18 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
           }
         } else if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
           auto func_expr = (expression::ParserExpression *)expr;
+          if(expr->alias != nullptr){
+            std::string col_name = std::string(expr->alias);
+            LOG_INFO("This is the alias ---------> %s", col_name.c_str());
+            if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_AVG){
+              t_desc.push_back(std::make_tuple(col_name, 701, 8));
+            }
+            else{
+              t_desc.push_back(std::make_tuple(col_name, 23, 4));
+            }
+
+          }
+          else{
           if (func_expr->expr->GetExpressionType() ==
               EXPRESSION_TYPE_COLUMN_REF) {
             std::string col_name = std::string(func_expr->GetName()) + "(" +
@@ -222,6 +234,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
             t_desc.push_back(std::make_tuple(col_name, 701, 8));
           }
         }
+      }
       }
     } else {
       t_desc.push_back(std::make_tuple(query_tokens[1], 23, 4));
