@@ -16,7 +16,6 @@
 #include <event2/listener.h>
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
-#include "../common/thread_pool.h"
 
 namespace peloton {
 namespace networking {
