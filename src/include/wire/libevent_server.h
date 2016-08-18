@@ -31,38 +31,35 @@
 #include "wire/wire.h"
 #include "wire/socket_base.h"
 
-
 namespace peloton {
 
 namespace wire {
 
 class Server {
 
-public:
+ public:
+  Server();
 
-	Server(const PelotonConfiguration& config);
+  inline ~Server() {
+    for (auto socket_manager : socket_manager_vector_) {
+      free(socket_manager);
+    }
+  }
 
-	inline ~Server() {
-		for(auto socket_manager : socket_manager_vector_) {
-			free(socket_manager);
-		}
-	}
+  inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
+    socket_manager_vector_.push_back(socket_manager);
+  }
 
-	inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
-		socket_manager_vector_.push_back(socket_manager);
-	}
+  static std::vector<SocketManager<PktBuf>*>
+      socket_manager_vector_;  // To keep track of socket managers for deletion
 
-	static std::vector<SocketManager<PktBuf>*> socket_manager_vector_;  // To keep track of socket managers for deletion
-
-private:
-	// For logging purposes
-	static void LogCallback(int severity, const char* msg);
-	int port_;  // port number
-	int max_connections_;  // maximum number of connections
+ private:
+  // For logging purposes
+  static void LogCallback(int severity, const char* msg);
+  int port_;             // port number
+  int max_connections_;  // maximum number of connections
 };
 
-std::vector<SocketManager<PktBuf>*> Server::socket_manager_vector_ = { };
-
-}
-
-}
+std::vector<SocketManager<PktBuf>*> Server::socket_manager_vector_ = {};
+}  // namespace wire
+}  // namespace peloton

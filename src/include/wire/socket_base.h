@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <array>
@@ -46,7 +45,7 @@ typedef unsigned char uchar;
 // use array as memory for the socket buffers can be fixed
 typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
 
-//struct Server {
+// struct Server {
 //  int port;
 //  int server_fd;
 //  int max_connections;
@@ -82,7 +81,6 @@ class SocketManager {
   Buffer rbuf;  // socket's read buffer
   Buffer wbuf;  // socket's write buffer
 
-
  private:
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
@@ -94,8 +92,8 @@ class SocketManager {
   std::unique_ptr<PacketManager> socket_pkt_manager;
   struct event *ev_read;  // the read event
 
-  inline SocketManager(int sock_fd) : sock_fd(sock_fd),
-		  assigned_to_pkt_manager(false), ev_read(NULL){}
+  inline SocketManager(int sock_fd)
+      : sock_fd(sock_fd), assigned_to_pkt_manager(false), ev_read(NULL) {}
 
   // Check if there is data to read from buffer
   bool CanRead();
@@ -111,9 +109,6 @@ class SocketManager {
 
   void CloseSocket();
 };
-
-extern void StartServer(const PelotonConfiguration& configuration,
-                        Server *server);
 
 // Thread function created per client
 template <typename P, typename B>
@@ -133,8 +128,8 @@ void HandleConnections(Server *server);
  * (P) and STL container type for the protocol's buffer (B)
  */
 
-//template <typename P, typename B>
-//void HandleConnections(Server *server) {
+// template <typename P, typename B>
+// void HandleConnections(Server *server) {
 //  int connfd, clilen;
 //  struct sockaddr_in cli_addr;
 //  clilen = sizeof(cli_addr);
@@ -161,8 +156,8 @@ void HandleConnections(Server *server);
  * 		Takes the protocol's PacketManager (P) and STL container
  * 		type for the protocol's buffer (B)
  */
-//template <typename P, typename B>
-//void ClientHandler(std::unique_ptr<int> clientfd) {
+// template <typename P, typename B>
+// void ClientHandler(std::unique_ptr<int> clientfd) {
 //  int fd = *clientfd;
 //  LOG_TRACE("Client fd: %d", fd);
 //  SocketManager<B> sm(fd);
