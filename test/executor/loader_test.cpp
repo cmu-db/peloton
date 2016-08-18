@@ -131,22 +131,22 @@ TEST_F(LoaderTests, LoadingTest) {
   auto expected_tile_group_count = 0;
 
   int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
-  int max_cached_tuple_count = TEST_TUPLES_PER_TILEGROUP * NUM_CACHED_TG;
-  int max_unfill_cached_tuple_count = (TEST_TUPLES_PER_TILEGROUP - 1) * NUM_CACHED_TG;
+  int max_cached_tuple_count = TEST_TUPLES_PER_TILEGROUP * ACTIVE_TILEGROUP_COUNT;
+  int max_unfill_cached_tuple_count = (TEST_TUPLES_PER_TILEGROUP - 1) * ACTIVE_TILEGROUP_COUNT;
 
   if (total_tuple_count - max_cached_tuple_count <= 0) {
     if (total_tuple_count <= max_unfill_cached_tuple_count) {
-      expected_tile_group_count = NUM_CACHED_TG;
+      expected_tile_group_count = ACTIVE_TILEGROUP_COUNT;
     } else {
-      expected_tile_group_count = NUM_CACHED_TG + total_tuple_count - max_unfill_cached_tuple_count; 
+      expected_tile_group_count = ACTIVE_TILEGROUP_COUNT + total_tuple_count - max_unfill_cached_tuple_count; 
     }
   } else {
-    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * NUM_CACHED_TG;
+    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * ACTIVE_TILEGROUP_COUNT;
     
     if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
-      expected_tile_group_count = filled_tile_group_count + NUM_CACHED_TG;
+      expected_tile_group_count = filled_tile_group_count + ACTIVE_TILEGROUP_COUNT;
     } else {
-      expected_tile_group_count = filled_tile_group_count + NUM_CACHED_TG + (total_tuple_count - filled_tile_group_count - max_unfill_cached_tuple_count); 
+      expected_tile_group_count = filled_tile_group_count + ACTIVE_TILEGROUP_COUNT + (total_tuple_count - filled_tile_group_count - max_unfill_cached_tuple_count); 
     }
   }
 
