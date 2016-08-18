@@ -466,7 +466,6 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
           int i_second = 1 + ltm->tm_sec;
           std::string second = std::to_string(i_second);
           
-          //TODO: Change to real number after cast fix
           std::string new_time = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
           row.push_back(new_time);
         }
