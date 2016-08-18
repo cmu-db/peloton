@@ -99,6 +99,7 @@ class DataTable : public AbstractTable {
   // insert an empty version in table. designed for delete operation.
   ItemPointer InsertEmptyVersion(const Tuple *tuple);
   // insert an version in table. designed for update operation.
+  // as we implement logical-pointer indexing mechanism, targets_ptr is required.
   ItemPointer InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
   // insert tuple in table. the pointer to the index entry is returned as index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **index_entry_ptr = nullptr);
@@ -235,9 +236,10 @@ class DataTable : public AbstractTable {
   ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
                                 bool check_constraint = true);
 
-  // add a default unpartitioned tile group to table
+  // add a tile group to the table
   oid_t AddDefaultTileGroup();
-  oid_t AddDefaultTileGroup(const size_t &cache_id);
+  // add a tile group to the table. replace the active_tile_group_id-th active tile group.
+  oid_t AddDefaultTileGroup(const size_t &active_tile_group_id);
   
   // get a partitioning with given layout type
   column_map_type GetTileGroupLayout(LayoutType layout_type);
@@ -249,7 +251,9 @@ class DataTable : public AbstractTable {
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
 
-  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
+  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, 
+                                const TargetList *targets_ptr, 
+                                ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints
   bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
@@ -267,7 +271,7 @@ class DataTable : public AbstractTable {
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  std::shared_ptr<storage::TileGroup> cached_tile_groups_[ACTIVE_TILEGROUP_COUNT];
+  std::shared_ptr<storage::TileGroup> active_tile_groups_[ACTIVE_TILEGROUP_COUNT];
 
   // data table mutex
   std::mutex data_table_mutex_;
@@ -287,10 +291,10 @@ class DataTable : public AbstractTable {
   // # of unique constraints
   std::atomic<oid_t> unique_constraint_count_ = ATOMIC_VAR_INIT(START_OID);
 
-  // # of tuples
+  // # of tuples. must be atomic as multiple transactions can perform insert concurrently.
   std::atomic<size_t> number_of_tuples_ = ATOMIC_VAR_INIT(0);
 
-  // dirty flag
+  // dirty flag. for detecting whether the tile group has been used.
   bool dirty_ = false;
 
   //===--------------------------------------------------------------------===//
