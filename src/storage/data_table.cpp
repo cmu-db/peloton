@@ -589,6 +589,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &cache_id) {
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   PL_ASSERT(tile_group.get());
+  
   cached_tile_groups_[cache_id] = tile_group;
 
   tile_group_id = tile_group->GetTileGroupId();
@@ -649,6 +650,30 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   }
 
 }
+
+// NOTE: This function is only used in test cases.
+void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
+
+  size_t cache_id = concurrency::current_txn->GetTransactionId() % NUM_PREALLOCATION;
+
+  cached_tile_groups_[cache_id] = tile_group;
+
+  oid_t tile_group_id = tile_group->GetTileGroupId();
+
+  tile_groups_.Append(tile_group_id);
+
+  // add tile group in catalog
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
+  // we must guarantee that the compiler always add tile group before adding
+  // tile_group_count_.
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_count_++;
+
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
+}
+
 
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 
