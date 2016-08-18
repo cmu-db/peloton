@@ -383,7 +383,7 @@ enum ExpressionType {
 
 enum ConcurrencyType {
   CONCURRENCY_TYPE_INVALID = 0,
-  CONCURRENCY_TYPE_TO = 1  // timestamp ordering
+  CONCURRENCY_TYPE_TIMESTAMP_ORDERING = 1  // timestamp ordering
 };
 
 //===--------------------------------------------------------------------===//

@@ -25,7 +25,7 @@ namespace test {
 class TsOrderTxnManagerTests : public PelotonTest {};
 
 TEST_F(TsOrderTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_TO);
+  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_TIMESTAMP_ORDERING);
   EXPECT_TRUE(true);
 }
 
