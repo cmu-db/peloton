@@ -38,7 +38,7 @@ TEST_F(ThreadPoolTests, BasicTest) {
   thread_pool.SubmitTask([](int *var){*var = *var / *var;}, &var4);
 
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   
   EXPECT_EQ(2, var1);
   EXPECT_EQ(0, var2);

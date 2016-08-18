@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "common/thread_pool.h"
-
 namespace peloton {
+
+class ThreadPool;
 
 extern ThreadPool thread_pool;
 
