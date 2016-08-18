@@ -27,7 +27,7 @@ namespace test {
 class MVCCTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_TO
+    CONCURRENCY_TYPE_TIMESTAMP_ORDERING
 };
 
 

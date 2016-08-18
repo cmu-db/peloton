@@ -22,7 +22,7 @@ class TransactionManagerFactory {
   static TransactionManager &GetInstance() {
     switch (protocol_) {
 
-      case CONCURRENCY_TYPE_TO:
+      case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
         return TsOrderTxnManager::GetInstance();
 
       default:
