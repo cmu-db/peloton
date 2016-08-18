@@ -84,7 +84,7 @@ TEST_F(AppendTests, AppendTwoTest) {
   txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * NUM_CACHED_TG, false,
                                    false, false);
   txn_manager.CommitTransaction();
 

@@ -114,8 +114,8 @@ TEST_F(LoaderTests, LoadingTest) {
   bool build_indexes = false;
 
   // Control the scale
-  oid_t loader_threads_count = 2;
-  oid_t tilegroup_count_per_loader = 1;
+  oid_t loader_threads_count = 1;
+  oid_t tilegroup_count_per_loader = 1002;
 
   // Each tuple size ~40 B.
   oid_t tuple_size = 41;
@@ -128,8 +128,28 @@ TEST_F(LoaderTests, LoadingTest) {
   LaunchParallelTest(loader_threads_count, InsertTuple, data_table.get(),
                      testing_pool, tilegroup_count_per_loader);
 
-  auto expected_tile_group_count =
-      loader_threads_count * tilegroup_count_per_loader + 1;
+  auto expected_tile_group_count = 0;
+
+  int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
+  int max_cached_tuple_count = TEST_TUPLES_PER_TILEGROUP * NUM_CACHED_TG;
+  int max_unfill_cached_tuple_count = (TEST_TUPLES_PER_TILEGROUP - 1) * NUM_CACHED_TG;
+
+  if (total_tuple_count - max_cached_tuple_count <= 0) {
+    if (total_tuple_count <= max_unfill_cached_tuple_count) {
+      expected_tile_group_count = NUM_CACHED_TG;
+    } else {
+      expected_tile_group_count = NUM_CACHED_TG + total_tuple_count - max_unfill_cached_tuple_count; 
+    }
+  } else {
+    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * NUM_CACHED_TG;
+    
+    if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
+      expected_tile_group_count = filled_tile_group_count + NUM_CACHED_TG;
+    } else {
+      expected_tile_group_count = filled_tile_group_count + NUM_CACHED_TG + (total_tuple_count - filled_tile_group_count - max_unfill_cached_tuple_count); 
+    }
+  }
+
   auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
