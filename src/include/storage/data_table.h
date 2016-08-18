@@ -109,6 +109,8 @@ class DataTable : public AbstractTable {
   // coerce into adding a new tile group with a tile group id
   void AddTileGroupWithOidForRecovery(const oid_t &tile_group_id);
 
+  void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
+
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
       const std::size_t &tile_group_offset) const;
