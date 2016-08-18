@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "concurrency/ts_order_txn_manager.h"
+#include "concurrency/timestamp_ordering_transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -23,10 +23,10 @@ class TransactionManagerFactory {
     switch (protocol_) {
 
       case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
-        return TsOrderTxnManager::GetInstance();
+        return TimestampOrderingTransactionManager::GetInstance();
 
       default:
-        return TsOrderTxnManager::GetInstance();
+        return TimestampOrderingTransactionManager::GetInstance();
     }
   }
 
