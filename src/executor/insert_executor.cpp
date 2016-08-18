@@ -101,9 +101,12 @@ bool InsertExecutor::DExecute() {
                         executor_pool);
       }
 
+      // insert tuple into the table.
       ItemPointer *index_entry_ptr = nullptr;
       peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), &index_entry_ptr);
 
+      // it is possible that some concurrent transactions have inserted the same tuple.
+      // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
         transaction_manager.SetTransactionResult(
             peloton::Result::RESULT_FAILURE);
