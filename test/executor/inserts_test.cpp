@@ -51,7 +51,6 @@ TEST_F(InsertTests, InsertRecord) {
 
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
-  printf("line 54\n");
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->CreateTable(
       DEFAULT_DB_NAME, "TEST_TABLE", std::move(table_schema));
@@ -61,7 +60,6 @@ TEST_F(InsertTests, InsertRecord) {
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  printf("line 64\n");
   auto insert_node = new parser::InsertStatement(INSERT_TYPE_VALUES);
   std::string name = "TEST_TABLE";
 

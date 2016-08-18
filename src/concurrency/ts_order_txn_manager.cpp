@@ -24,12 +24,15 @@
 namespace peloton {
 namespace concurrency {
 
-
+// timestamp ordering requires a spinlock field for protecting the atomic access
+// to txn_id field and last_reader_cid field.
 Spinlock *TsOrderTxnManager::GetSpinlockField(
     const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
   return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
+// in timestamp ordering, the last_reader_cid records the timestamp of the last transaction
+// that reads the tuple.
 cid_t TsOrderTxnManager::GetLastReaderCid(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -42,6 +45,7 @@ bool TsOrderTxnManager::SetLastReaderCid(
 
   PL_ASSERT(IsOwner(tile_group_header, tuple_id) == false);
 
+  // get the pointer to the last_reader_cid field.
   cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
   
   cid_t current_cid = current_txn->GetBeginCommitId();
@@ -51,9 +55,13 @@ bool TsOrderTxnManager::SetLastReaderCid(
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   
   if(tuple_txn_id != INITIAL_TXN_ID) {
+    // if the write lock has already been acquired by some concurrent transactions,
+    // then return without setting the last_reader_cid.
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
     return false;
   } else {
+    // if current_cid is larger than the current value of last_reader_cid field,
+    // then set last_reader_cid to current_cid.
     if (*ts_ptr < current_cid) {
       *ts_ptr = current_cid;
     }
@@ -76,8 +84,11 @@ VisibilityType TsOrderTxnManager::IsVisible(
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
+  // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  // the tuple has already been committed.
   bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  // the tuple is not visible.
   bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
 
   if (tuple_txn_id == INVALID_TXN_ID || CidIsInDirtyRange(tuple_begin_cid)) {
@@ -91,7 +102,7 @@ VisibilityType TsOrderTxnManager::IsVisible(
     }
   }
 
-  // there are exactly two versions that can be owned by a transaction.
+  // there are exactly two versions that can be owned by a transaction,
   // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
@@ -156,6 +167,8 @@ bool TsOrderTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
+  // to acquire the ownership, we must guarantee that no other transactions that has read
+  // the tuple has a larger timestamp than the current transaction.
   GetSpinlockField(tile_group_header, tuple_id)->Lock();
   // change timestamp
   cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
@@ -205,16 +218,17 @@ bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
+  // if the current transaction has already owned this tuple, then perform read directly.
   if (IsOwner(tile_group_header, tuple_id) == true) {
-    // it is possible to be a blind write.
     PL_ASSERT(GetLastReaderCid(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
     return true;
   }
-
+  // if the current transaction does not own this tuple, then attemp to set last reader cid.
   if (SetLastReaderCid(tile_group_header, tuple_id) == true) {
     current_txn->RecordRead(location);
     return true;
   } else {
+    // if the tuple has been owned by some concurrent transactions, then read fails.
     return false;
   }
 }
@@ -227,7 +241,8 @@ void TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
-  // Set MVCC info
+  // check MVCC info
+  // the tuple slot must be empty.
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
@@ -311,9 +326,8 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
     // We do it atomically because we don't want any one to see a half-done pointer.
     // In case of contention, no one can update this pointer when we are updating it
     // because we are holding the write lock. This update should success in its first trial.
-    auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
+    UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
     PL_ASSERT(res == true);
-    (void) res;
   }
 
   // Add the old tuple into the update set
@@ -402,9 +416,8 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
       // We do it atomically because we don't want any one to see a half-down pointer
       // In case of contention, no one can update this pointer when we are updating it
       // because we are holding the write lock. This update should success in its first trial.
-      auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
+      UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
       PL_ASSERT(res == true);
-      (void) res;
     }
   }
   
@@ -445,6 +458,10 @@ Result TsOrderTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
+  // install everything.
+  // 1. install a new version for update operations;
+  // 2. install an empty version for delete operations;
+  // 3. install a new tuple for insert operations.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -530,12 +547,12 @@ Result TsOrderTxnManager::CommitTransaction() {
     }
   }
 
-  Result ret = current_txn->GetResult();
+  Result result = current_txn->GetResult();
 
   // gc::GCManagerFactory::GetInstance().EndGCContext(end_commit_id);
   EndTransaction();
 
-  return ret;
+  return result;
 }
 
 Result TsOrderTxnManager::AbortTransaction() {
@@ -566,18 +583,19 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         COMPILER_MEMORY_FENCE;
 
-        // reset the item pointers.
+        // as the aborted version has already been placed in the version chain,
+        // we need to unlink it by resetting the item pointers.
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
+        // check whether the previous version exists.
         if (old_prev.IsNull() == true) {
           PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
           // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
           ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(tuple_slot);
-          auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+          UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
           PL_ASSERT(res == true);
-          (void) res;
         }
         //////////////////////////////////////////////////
 
@@ -614,17 +632,18 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         COMPILER_MEMORY_FENCE;
 
-        // reset the item pointers.
+        // as the aborted version has already been placed in the version chain,
+        // we need to unlink it by resetting the item pointers.
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
+        // check whether the previous version exists.
         if (old_prev.IsNull() == true) {
           // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
           ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(tuple_slot);
-          auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+          UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
           PL_ASSERT(res == true);
-          (void) res;
         }
         //////////////////////////////////////////////////
 
