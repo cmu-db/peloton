@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "catalog/manager.h"
 
 namespace peloton {
 namespace executor {

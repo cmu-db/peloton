@@ -21,7 +21,6 @@
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction.h"
 #include "concurrency/epoch_manager.h"
-#include "catalog/manager.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -30,6 +29,11 @@ class ItemPointer;
 
 namespace storage {
 class DataTable;
+class TileGroupHeader;
+}
+
+namespace catalog {
+class Manager;
 }
 
 namespace concurrency {
@@ -60,19 +64,23 @@ class TransactionManager {
 
   cid_t GetCurrentCommitId() { return next_cid_.load(); }
 
-  bool IsOccupied(const ItemPointer &position);
+  // This method is used for avoiding concurrent inserts.
+  virtual bool IsOccupied(const ItemPointer &position) = 0;
 
   virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
+  // This method test whether the current transaction is the owner of a tuple.
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
+  // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
+  // This method is used to acquire the ownership of a tuple for a transaction.
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) = 0;
 
