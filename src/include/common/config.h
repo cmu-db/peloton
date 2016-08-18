@@ -38,7 +38,7 @@ class PelotonConfiguration {
  protected:
 
   // Peloton port
-  int port = 5432;
+  int port = 12345;
 
   // Maximum number of connections
   int max_connections = 64;

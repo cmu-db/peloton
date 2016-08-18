@@ -107,9 +107,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
-  auto t_desc = GenerateTupleDescriptor(query_string);
-
-  statement->SetTupleDescriptor(t_desc);
+  if(sql_stmt->GetType() == STATEMENT_TYPE_SELECT){
+    auto t_desc = GenerateTupleDescriptor(query_string);
+    statement->SetTupleDescriptor(t_desc);
+  }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_TRACE("Statement Prepared!");
@@ -136,12 +137,22 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     auto sql_stmt = peloton_parser.BuildParseTree(query);
 
     auto select_stmt = (parser::SelectStatement *)sql_stmt.get();
-
-    if (select_stmt->from_table->list == NULL) {
-      auto target_table = static_cast<storage::DataTable *>(
+    storage::DataTable *target_table = nullptr;
+       if (select_stmt->from_table->list == NULL) {
+        target_table = static_cast<storage::DataTable *>(
           catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
               DEFAULT_DB_NAME, select_stmt->from_table->name));
+      }
 
+      else{
+        for(auto table_name : *select_stmt->from_table->list){
+          //pick the first table for now.
+          //Method needs huge refactoring
+          target_table = static_cast<storage::DataTable *>(
+          catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+              DEFAULT_DB_NAME, table_name->name));
+        }
+      }
       auto columns = target_table->GetSchema()->GetColumns();
 
       for (auto expr : *select_stmt->select_list) {
@@ -156,6 +167,9 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
             } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
               t_desc.push_back(
                   std::make_tuple(columns[i].column_name, 25, 255));
+            } else if (columns[i].column_type == VALUE_TYPE_TIMESTAMP) {
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 1114, 64));
             } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
               t_desc.push_back(
                   std::make_tuple(columns[i].column_name, 1700, 16));
@@ -182,6 +196,9 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
               } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
                 t_desc.push_back(
                     std::make_tuple(columns[i].column_name, 1700, 16));
+              } else if (columns[i].column_type == VALUE_TYPE_TIMESTAMP) {
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 1114, 64));
               } else {
                 LOG_ERROR("Unrecognized column type: %d",
                           columns[i].column_type);
@@ -192,6 +209,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
           }
         } else if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
           auto func_expr = (expression::ParserExpression *)expr;
+          LOG_INFO("This is the function expression type ---------> %d" , func_expr->expr->GetExpressionType());
           if(expr->alias != nullptr){
             std::string col_name = std::string(expr->alias);
             LOG_INFO("This is the alias ---------> %s", col_name.c_str());
@@ -239,7 +257,6 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     } else {
       t_desc.push_back(std::make_tuple(query_tokens[1], 23, 4));
     }
-  }
 
   return t_desc;
 }
