@@ -139,7 +139,7 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
 
   for (size_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
 
@@ -149,11 +149,12 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
       tuple.SetValue(col_itr, value, nullptr);
     }
 
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
-    txn->RecordInsert(tuple_slot_id);
+    txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
   }
 
   txn_manager.CommitTransaction();
