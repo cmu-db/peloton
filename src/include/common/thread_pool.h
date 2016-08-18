@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// worker_thread_pool.h
+// thread_pool.h
 //
 // Identification: src/include/common/worker_thread_pool.h
 //
