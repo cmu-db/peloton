@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// ts_order_txn_manager.h
+// timestamp_ordering_transaction_manager.h
 //
-// Identification: src/include/concurrency/ts_order_txn_manager.h
+// Identification: src/include/concurrency/timestamp_ordering_transaction_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,13 +23,13 @@ namespace concurrency {
 // timestamp ordering
 //===--------------------------------------------------------------------===//
 
-class TsOrderTxnManager : public TransactionManager {
+class TimestampOrderingTransactionManager : public TransactionManager {
  public:
-  TsOrderTxnManager() {}
+  TimestampOrderingTransactionManager() {}
 
-  virtual ~TsOrderTxnManager() {}
+  virtual ~TimestampOrderingTransactionManager() {}
 
-  static TsOrderTxnManager &GetInstance();
+  static TimestampOrderingTransactionManager &GetInstance();
 
   virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
