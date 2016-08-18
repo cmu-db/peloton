@@ -100,21 +100,18 @@ class TimestampOrderingTransactionManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header, 
       const oid_t &tuple_id);
 
-  cid_t GetLastReaderCid(
+  cid_t GetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  bool SetLastReaderCid(
+  bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  // Init reserved area of a tuple
-  static void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
-    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
-
-    new ((reserved_area + LOCK_OFFSET)) Spinlock();
-    *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
-  }
+  // Initiate reserved area of a tuple
+  void InitTupleReserved(
+      const storage::TileGroupHeader *const tile_group_header, 
+      const oid_t tuple_id);
 
 };
 }
