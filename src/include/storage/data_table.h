@@ -35,7 +35,7 @@ extern LayoutType peloton_layout_mode;
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
-const int NUM_PREALLOCATION = 10;
+const int NUM_CACHED_TG = 1;
 
 namespace peloton {
 
@@ -266,7 +266,7 @@ class DataTable : public AbstractTable {
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  std::shared_ptr<storage::TileGroup> cached_tile_groups_[NUM_PREALLOCATION];
+  std::shared_ptr<storage::TileGroup> cached_tile_groups_[NUM_CACHED_TG];
 
   // data table mutex
   std::mutex data_table_mutex_;
@@ -287,7 +287,7 @@ class DataTable : public AbstractTable {
   std::atomic<oid_t> unique_constraint_count_ = ATOMIC_VAR_INIT(START_OID);
 
   // # of tuples
-  size_t number_of_tuples_ = 0.0;
+  std::atomic<size_t> number_of_tuples_ = ATOMIC_VAR_INIT(0);
 
   // dirty flag
   bool dirty_ = false;

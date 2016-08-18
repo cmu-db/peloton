@@ -57,6 +57,7 @@ void RunTest(executor::LimitExecutor &executor, size_t expected_num_tiles,
 
   size_t actual_num_tuples_returned = 0;
   for (auto &tile : result_tiles) {
+    printf("tuple count = %d\n", (int)tile->GetTupleCount());
     actual_num_tuples_returned += tile->GetTupleCount();
   }
 

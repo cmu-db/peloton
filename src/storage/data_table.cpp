@@ -61,7 +61,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
   // Create a tile group.
-  for (size_t i = 0; i < NUM_PREALLOCATION; ++i) {
+  for (size_t i = 0; i < NUM_CACHED_TG; ++i) {
     AddDefaultTileGroup(i);
   }
 }
@@ -139,7 +139,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
 
-  size_t cache_id = concurrency::current_txn->GetTransactionId() % NUM_PREALLOCATION;
+  size_t cache_id = number_of_tuples_ % NUM_CACHED_TG;
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
@@ -575,7 +575,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
 }
 
 oid_t DataTable::AddDefaultTileGroup() {
-  size_t cache_id = concurrency::current_txn->GetTransactionId() % NUM_PREALLOCATION;
+  size_t cache_id = number_of_tuples_ % NUM_CACHED_TG;
   return AddDefaultTileGroup(cache_id);
 }
 
@@ -654,7 +654,7 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 // NOTE: This function is only used in test cases.
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
-  size_t cache_id = concurrency::current_txn->GetTransactionId() % NUM_PREALLOCATION;
+  size_t cache_id = number_of_tuples_ % NUM_CACHED_TG;
 
   cached_tile_groups_[cache_id] = tile_group;
 
