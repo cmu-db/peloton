@@ -449,7 +449,6 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
           struct tm *ltm = localtime(&new_time_stamp);
           
           long long i_year = 1900 + ltm->tm_year;
-
           std::string year = std::to_string(i_year);
           
           int i_month = 1 + ltm->tm_mon;
