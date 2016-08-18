@@ -68,10 +68,10 @@ enum ReplicationType {
   SEMISYNC_REPLICATION
 };
 
-enum GCType {
-  GC_TYPE_INVALID = 0,
-  GC_TYPE_OFF = 1,  // turn off GC
-  GC_TYPE_ON = 2  // turn on GC
+enum GarbageCollectionType {
+  GARBAGE_COLLECTION_TYPE_INVALID = 0,
+  GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
+  GARBAGE_COLLECTION_TYPE_ON = 2  // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
