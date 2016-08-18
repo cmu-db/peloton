@@ -21,7 +21,7 @@
 #include "wire/socket_base.h"
 
 // Peloton process begins execution here.
-int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
+int main(int argc, char *argv[]) {
 
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
@@ -39,6 +39,8 @@ int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
 
   // Teardown
   peloton::PelotonInit::Shutdown();
+
+  ::google::ShutDownCommandLineFlags();
 
   return 0;
 }

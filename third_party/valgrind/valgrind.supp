@@ -1,10 +1,10 @@
 {
-    Handle pthread leaks
+    Handle GFLAGS leaks
         Memcheck:Leak
-        match-leak-kinds: possible
-        fun:calloc
-        fun:allocate_dtv
-        fun:_dl_allocate_tls
-        fun:allocate_stack
+        ...
+        fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+        fun:_ZNSsC1EPKcRKSaIcE
+        fun:_ZN3fLS25dont_pass0toDEFINE_stringEPcPKc
+        ...
 }
 
