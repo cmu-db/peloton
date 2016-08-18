@@ -50,6 +50,7 @@ public:
 		}
 	}
 
+	// Remove socket manager with the same fd and add the new one
 	inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
 		// If a socket manager with the same file descriptor exists, remove it first
 		auto it = std::begin(socket_manager_vector_);

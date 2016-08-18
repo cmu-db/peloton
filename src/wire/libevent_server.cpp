@@ -71,14 +71,14 @@ void ManageRead(SocketManager<PktBuf>** socket_manager) {
 
 void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
   // Threads
-  if(((SocketManager<PktBuf>*)arg)->execution_mutex.try_lock()) {
-	((SocketManager<PktBuf>*)arg)->self = (SocketManager<PktBuf>*)arg;
-    thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf>*)arg)->self);
-  }
+//  if(((SocketManager<PktBuf>*)arg)->execution_mutex.try_lock()) {
+//	((SocketManager<PktBuf>*)arg)->self = (SocketManager<PktBuf>*)arg;
+//    thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf>*)arg)->self);
+//  }
 
 	// No threads
-//	SocketManager<PktBuf>* socket_manager = (SocketManager<PktBuf>*)arg;
-//    ManageRead(&socket_manager);
+	SocketManager<PktBuf>* socket_manager = (SocketManager<PktBuf>*)arg;
+    ManageRead(&socket_manager);
 }
 
 
