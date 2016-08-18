@@ -589,36 +589,28 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
-    	fs << "ExecQueryMessage" << std::endl;
       ExecQueryMessage(pkt, responses);
     } break;
     case 'P': {
-    	fs << "ExecParseMessage" << std::endl;
       ExecParseMessage(pkt, responses);
     } break;
     case 'B': {
-    	fs << "ExecBindMessage" << std::endl;
       ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
-    	fs << "ExecDescribeMessage" << std::endl;
       ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
-    	fs << "ExecExecuteMessage" << std::endl;
       ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
       // SYNC message
-    	fs << "Sync" << std::endl;
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
-    	fs << "X" << std::endl;
       return false;
     } break;
     case NULL: {
-    	fs << "NULL" << std::endl;
       return false;
     } break;
     default: {
