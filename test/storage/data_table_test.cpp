@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "storage/data_table.h"
@@ -80,12 +79,13 @@ TEST_F(DataTableTests, GlobalTableTest) {
 
   data_table_test_table.reset(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(data_table_test_table.get(), tuple_count, false, false,
-                                   true);
+  ExecutorTestsUtil::PopulateTable(data_table_test_table.get(), tuple_count,
+                                   false, false, true);
 
   txn_manager.CommitTransaction();
 
-  data_table_test_table.release();
+  auto data_table_pointer = data_table_test_table.release();
+  delete data_table_pointer;
 }
 
 }  // End test namespace
