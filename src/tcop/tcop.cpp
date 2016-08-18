@@ -117,6 +117,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   return std::move(statement);
 }
 
+
+// This function returns the tuple descriptor that will be sent
+// to the client
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     std::string query) {
 
@@ -161,22 +164,22 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
           for (oid_t i = 0; i < columns.size(); ++i) {
 
             if (columns[i].column_type == VALUE_TYPE_INTEGER) {
-              t_desc.push_back(std::make_tuple(columns[i].column_name, 23, 4));
+              t_desc.push_back(std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
             } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
-              t_desc.push_back(std::make_tuple(columns[i].column_name, 701, 8));
+              t_desc.push_back(std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
             } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
               t_desc.push_back(
-                  std::make_tuple(columns[i].column_name, 25, 255));
+                  std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
             } else if (columns[i].column_type == VALUE_TYPE_TIMESTAMP) {
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 1114, 64));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64));
             } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
               t_desc.push_back(
-                  std::make_tuple(columns[i].column_name, 1700, 16));
+                  std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16));
             } else {
               LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
               t_desc.push_back(
-                  std::make_tuple(columns[i].column_name, 25, 255));
+                  std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
             }
           }
         } else if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
@@ -186,38 +189,38 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
 
               if (columns[i].column_type == VALUE_TYPE_INTEGER) {
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 23, 4));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
               } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 701, 8));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
               } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 25, 255));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
               } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 1700, 16));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16));
               } else if (columns[i].column_type == VALUE_TYPE_TIMESTAMP) {
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 1114, 64));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64));
               } else {
                 LOG_ERROR("Unrecognized column type: %d",
                           columns[i].column_type);
                 t_desc.push_back(
-                    std::make_tuple(columns[i].column_name, 25, 255));
+                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
               }
             }
           }
         } else if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
           auto func_expr = (expression::ParserExpression *)expr;
-          LOG_INFO("This is the function expression type ---------> %d" , func_expr->expr->GetExpressionType());
           if(expr->alias != nullptr){
             std::string col_name = std::string(expr->alias);
-            LOG_INFO("This is the alias ---------> %s", col_name.c_str());
+          
             if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_AVG){
-              t_desc.push_back(std::make_tuple(col_name, 701, 8));
+              t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
             }
+          
             else{
-              t_desc.push_back(std::make_tuple(col_name, 23, 4));
+              t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
             }
 
           }
@@ -227,35 +230,35 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
             std::string col_name = std::string(func_expr->GetName()) + "(" +
                                    std::string(func_expr->expr->GetName()) +
                                    ")";
-            t_desc.push_back(std::make_tuple(col_name, 23, 4));
+            t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
           } else if (func_expr->expr->GetExpressionType() ==
                      EXPRESSION_TYPE_AGGREGATE_AVG) {
             std::string col_name = std::string(func_expr->GetName()) + "(" +
                                    std::string(func_expr->expr->GetName()) +
                                    ")";
-            t_desc.push_back(std::make_tuple(col_name, 701, 8));
+            t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
           } else if (func_expr->expr->GetExpressionType() ==
                      EXPRESSION_TYPE_AGGREGATE_MAX) {
             std::string col_name = std::string(func_expr->GetName()) + "(" +
                                    std::string(func_expr->expr->GetName()) +
                                    ")";
-            t_desc.push_back(std::make_tuple(col_name, 25, 4));
+            t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
           } else if (func_expr->expr->GetExpressionType() ==
                      EXPRESSION_TYPE_AGGREGATE_MIN) {
             std::string col_name = std::string(func_expr->GetName()) + "(" +
                                    std::string(func_expr->expr->GetName()) +
                                    ")";
-            t_desc.push_back(std::make_tuple(col_name, 25, 4));
+            t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
           } else if (func_expr->expr->GetExpressionType() ==
                      EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
             std::string col_name = "COUNT(*)";
-            t_desc.push_back(std::make_tuple(col_name, 701, 8));
+            t_desc.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
           }
         }
       }
       }
     } else {
-      t_desc.push_back(std::make_tuple(query_tokens[1], 23, 4));
+      t_desc.push_back(std::make_tuple(query_tokens[1], POSTGRES_VALUE_TYPE_INTEGER, 4));
     }
 
   return t_desc;
