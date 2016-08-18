@@ -27,9 +27,11 @@
 #include <iostream>
 #include <vector>
 
+#include "common/logger.h"
 #include "common/config.h"
 #include "wire/wire.h"
 #include "wire/socket_base.h"
+#include "common/worker_thread_pool.h"
 
 
 namespace peloton {
@@ -49,19 +51,31 @@ public:
 	}
 
 	inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
+		// If a socket manager with the same file descriptor exists, remove it first
+		auto it = std::begin(socket_manager_vector_);
+		while(it != std::end(socket_manager_vector_)) {
+			if((*it)->GetSocketFD() == socket_manager->GetSocketFD()) {
+			  LOG_INFO("Removing socket manager on existing fd");
+			  free(*it);
+			  it = socket_manager_vector_.erase(it);
+			}
+			else {
+			  ++it;
+			}
+		}
 		socket_manager_vector_.push_back(socket_manager);
 	}
 
 	static std::vector<SocketManager<PktBuf>*> socket_manager_vector_;  // To keep track of socket managers for deletion
+	static unsigned int socket_manager_id;  // socket manager id cntr
 
 private:
 	// For logging purposes
 	static void LogCallback(int severity, const char* msg);
 	int port_;  // port number
 	int max_connections_;  // maximum number of connections
-};
 
-std::vector<SocketManager<PktBuf>*> Server::socket_manager_vector_ = { };
+};
 
 }
 

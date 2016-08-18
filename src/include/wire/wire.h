@@ -144,6 +144,13 @@ class PacketManager {
   void CloseClient();
 
  public:
+  /* Statement cache */
+  Cache<std::string, Statement> statement_cache_;
+
+  /* Portals */
+  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
+
+
   inline PacketManager(SocketManager<PktBuf>* sock)
       : client(sock), txn_state(TXN_IDLE) {}
 

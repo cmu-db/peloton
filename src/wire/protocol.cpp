@@ -31,14 +31,10 @@
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
+
 namespace peloton {
 namespace wire {
 
-// Prepares statment cache
-thread_local peloton::Cache<std::string, Statement> statement_cache_;
-
-// Query portal handler
-thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
@@ -593,28 +589,36 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
+    	fs << "ExecQueryMessage" << std::endl;
       ExecQueryMessage(pkt, responses);
     } break;
     case 'P': {
+    	fs << "ExecParseMessage" << std::endl;
       ExecParseMessage(pkt, responses);
     } break;
     case 'B': {
+    	fs << "ExecBindMessage" << std::endl;
       ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
+    	fs << "ExecDescribeMessage" << std::endl;
       ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
+    	fs << "ExecExecuteMessage" << std::endl;
       ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
       // SYNC message
+    	fs << "Sync" << std::endl;
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
+    	fs << "X" << std::endl;
       return false;
     } break;
     case NULL: {
+    	fs << "NULL" << std::endl;
       return false;
     } break;
     default: {

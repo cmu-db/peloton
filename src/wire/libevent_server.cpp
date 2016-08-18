@@ -9,13 +9,18 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#include <fstream>
 #include "wire/libevent_server.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "common/init.h"
 
 namespace peloton {
 namespace wire {
+
+
+std::vector<SocketManager<PktBuf>*> Server::socket_manager_vector_ = { };
+unsigned int Server::socket_manager_id = 0;
 
 void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd, UNUSED_ATTRIBUTE short what, void *arg) {
   struct event_base *base = (event_base*) arg;
@@ -43,48 +48,61 @@ bool SetNonBlocking(int fd) {
 	}
 }
 
-
-void ReadCallback(int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
-	SocketManager<PktBuf>* socket_manager = (SocketManager<PktBuf>*)arg;
-	if(socket_manager->assigned_to_pkt_manager == false) {
-		PacketManager* pkt_manager = new PacketManager(socket_manager);
-		socket_manager->socket_pkt_manager.reset(pkt_manager);
-		if(!socket_manager->socket_pkt_manager->ManageFirstPacket()) {
-			close(fd);
-			event_del(socket_manager->ev_read);
+void ManageRead(SocketManager<PktBuf>** socket_manager) {
+	if((*socket_manager)->first_packet == false) {
+		if(!(*socket_manager)->socket_pkt_manager->ManageFirstPacket()) {
+			close((*socket_manager)->GetSocketFD());
+			event_del((*socket_manager)->ev_read);
+			(*socket_manager)->execution_mutex.unlock();
 			return;
 		}
-		socket_manager->assigned_to_pkt_manager = true;
+		(*socket_manager)->first_packet = true;
 	}
 	else {
-		if(!socket_manager->socket_pkt_manager->ManagePacket()) {
-			close(fd);
-			event_del(socket_manager->ev_read);
+		if(!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
+			close((*socket_manager)->GetSocketFD());
+			event_del((*socket_manager)->ev_read);
+			(*socket_manager)->execution_mutex.unlock();
 			return;
 		}
 	}
+	(*socket_manager)->execution_mutex.unlock();
+}
+
+void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
+  // Threads
+  if(((SocketManager<PktBuf>*)arg)->execution_mutex.try_lock()) {
+	((SocketManager<PktBuf>*)arg)->self = (SocketManager<PktBuf>*)arg;
+    thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf>*)arg)->self);
+  }
+
+	// No threads
+//	SocketManager<PktBuf>* socket_manager = (SocketManager<PktBuf>*)arg;
+//    ManageRead(&socket_manager);
 }
 
 
 /**
- * This function will be called by libevent when there is a connpeloton::wire::SocketManagerection
+ * This function will be called by libevent when there is a connection
  * ready to be accepted.
  */
 void AcceptCallback(struct evconnlistener *listener,
 	    evutil_socket_t client_fd, UNUSED_ATTRIBUTE struct sockaddr *address, UNUSED_ATTRIBUTE int socklen,
 		UNUSED_ATTRIBUTE void *ctx) {
-	LOG_INFO("New connection on socket %d", int(client_fd));
+	LOG_INFO("New connection on fd %d", int(client_fd));
 	// Get the event base
 	struct event_base *base = evconnlistener_get_base(listener);
 
 	// Set the client socket to non-blocking mode.
 	if (!SetNonBlocking(client_fd))
 		LOG_INFO("failed to set client socket non-blocking");
-	SetTCPNoDelay(client_fd);
 
+	SetTCPNoDelay(client_fd);
 	/* We've accepted a new client, allocate a socket manager to
 	   maintain the state of this client. */
-	SocketManager<PktBuf>* socket_manager = new SocketManager<PktBuf>(client_fd);
+	SocketManager<PktBuf>* socket_manager = new SocketManager<PktBuf>(client_fd, ++Server::socket_manager_id);
+	socket_manager->socket_pkt_manager.reset(new PacketManager(socket_manager));
+
 	Server::AddSocketManager(socket_manager);
 
 	/* Setup the read event, libevent will call ReadCallback whenever
@@ -105,6 +123,7 @@ Server::Server(const PelotonConfiguration& config) {
   struct event *evstop;
   port_ = config.GetPort();
   max_connections_ = config.GetMaxConnections();
+  socket_manager_id = 0;
 
   // For logging purposes
 //  event_enable_debug_mode();
