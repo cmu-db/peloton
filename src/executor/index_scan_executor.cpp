@@ -138,7 +138,7 @@ bool IndexScanExecutor::DExecute() {
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   LOG_TRACE("Exec primary index lookup");
-  assert(!done_);
+  PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
@@ -149,7 +149,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   auto key_column_ids_ = node.GetKeyColumnIds();
   auto expr_types_ = node.GetExprTypes();
 
-  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -234,7 +234,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
           // See an invisible version that does not belong to any one in a new to old version chain
           // Wire back
-          // tuple_location = *(transaction_manager.GetHeadPtr(tile_group_header, tuple_location.offset));
           tuple_location = *(tile_group_header->GetIndirection(tuple_location.offset));
           tile_group = manager.GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
