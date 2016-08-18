@@ -681,15 +681,15 @@ bool PacketManager::ManagePacket() {
   bool status;
   bool can_read_more = true;
   while(can_read_more) {
-	ReadPacket(&pkt, true, &client);
-	status = ProcessPacket(&pkt, responses);
-	if (!WritePackets(responses, &client) || !status) {
-	  // close client on write failure or status failure
-	  CloseClient();
-	  return false;
-	}
-	can_read_more = CanRead(&client);
-	pkt.Reset();
+  ReadPacket(&pkt, true, &client);
+  status = ProcessPacket(&pkt, responses);
+  if (!WritePackets(responses, &client) || !status) {
+    // close client on write failure or status failure
+    CloseClient();
+    return false;
+  }
+  can_read_more = CanRead(&client);
+  pkt.Reset();
   }
   return true;
 }
