@@ -359,6 +359,10 @@ class ConjunctionScanPredicate {
       oid_t bind_ret = BindValueToIndexKey(
           index_p, value_list[bind_item.second], index_key_p, bind_item.first);
 
+      LOG_TRACE("bind item: %d", bind_item.second);
+      LOG_TRACE("bind value: %s",
+                value_list[bind_item.second].GetInfo().c_str());
+
       // This could not be other values since all values must be
       // valid during the binding stage
       PL_ASSERT(bind_ret == INVALID_OID);
