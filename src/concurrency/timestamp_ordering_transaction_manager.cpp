@@ -33,13 +33,13 @@ Spinlock *TimestampOrderingTransactionManager::GetSpinlockField(
 
 // in timestamp ordering, the last_reader_cid records the timestamp of the last transaction
 // that reads the tuple.
-cid_t TimestampOrderingTransactionManager::GetLastReaderCid(
+cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   return *(cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
 }
 
-bool TimestampOrderingTransactionManager::SetLastReaderCid(
+bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
 
@@ -70,6 +70,18 @@ bool TimestampOrderingTransactionManager::SetLastReaderCid(
     return true;
   }
 }
+
+  // Initiate reserved area of a tuple
+void TimestampOrderingTransactionManager::InitTupleReserved(
+    const storage::TileGroupHeader *const tile_group_header, 
+    const oid_t tuple_id) {
+  auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+  new ((reserved_area + LOCK_OFFSET)) Spinlock();
+  *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
+}
+
+
 
 TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetInstance() {
   static TimestampOrderingTransactionManager txn_manager;
@@ -232,7 +244,7 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   // the tuple has a larger timestamp than the current transaction.
   GetSpinlockField(tile_group_header, tuple_id)->Lock();
   // change timestamp
-  cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  cid_t last_reader_cid = GetLastReaderCommitId(tile_group_header, tuple_id);
 
   if (last_reader_cid > current_txn->GetBeginCommitId()) {
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
@@ -281,11 +293,11 @@ bool TimestampOrderingTransactionManager::PerformRead(const ItemPointer &locatio
 
   // if the current transaction has already owned this tuple, then perform read directly.
   if (IsOwner(tile_group_header, tuple_id) == true) {
-    PL_ASSERT(GetLastReaderCid(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
+    PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
     return true;
   }
   // if the current transaction does not own this tuple, then attemp to set last reader cid.
-  if (SetLastReaderCid(tile_group_header, tuple_id) == true) {
+  if (SetLastReaderCommitId(tile_group_header, tuple_id) == true) {
     current_txn->RecordRead(location);
     return true;
   } else {
@@ -426,7 +438,7 @@ void TimestampOrderingTransactionManager::PerformDelete(const ItemPointer &old_l
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  PL_ASSERT(GetLastReaderCid(tile_group_header, old_location.offset) <= current_txn->GetBeginCommitId());
+  PL_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) <= current_txn->GetBeginCommitId());
 
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
