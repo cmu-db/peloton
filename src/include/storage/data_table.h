@@ -35,7 +35,7 @@ extern LayoutType peloton_layout_mode;
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
-const int NUM_CACHED_TG = 1;
+const int ACTIVE_TILEGROUP_COUNT = 1;
 
 namespace peloton {
 
@@ -96,10 +96,11 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
-  // insert version in table
+  // insert an empty version in table. designed for delete operation.
   ItemPointer InsertEmptyVersion(const Tuple *tuple);
+  // insert an version in table. designed for update operation.
   ItemPointer InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
-  // insert tuple in table
+  // insert tuple in table. the pointer to the index entry is returned as index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **index_entry_ptr = nullptr);
 
   //===--------------------------------------------------------------------===//
@@ -266,7 +267,7 @@ class DataTable : public AbstractTable {
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  std::shared_ptr<storage::TileGroup> cached_tile_groups_[NUM_CACHED_TG];
+  std::shared_ptr<storage::TileGroup> cached_tile_groups_[ACTIVE_TILEGROUP_COUNT];
 
   // data table mutex
   std::mutex data_table_mutex_;
