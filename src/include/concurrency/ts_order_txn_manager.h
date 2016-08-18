@@ -35,6 +35,8 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
+  virtual bool IsOccupied(const ItemPointer &position);
+
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 

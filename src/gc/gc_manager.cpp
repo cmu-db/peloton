@@ -16,6 +16,7 @@
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "catalog/manager.h"
 
 #include <list>
 
