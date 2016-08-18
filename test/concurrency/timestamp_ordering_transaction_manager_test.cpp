@@ -22,9 +22,9 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class TsOrderTxnManagerTests : public PelotonTest {};
+class TimestampOrderingTransactionManagerTests : public PelotonTest {};
 
-TEST_F(TsOrderTxnManagerTests, Test) {
+TEST_F(TimestampOrderingTransactionManagerTests, Test) {
   concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_TIMESTAMP_ORDERING);
   EXPECT_TRUE(true);
 }
