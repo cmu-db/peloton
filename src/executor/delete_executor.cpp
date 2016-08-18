@@ -127,6 +127,11 @@ bool DeleteExecutor::DExecute() {
       // finally insert updated tuple into the table
       ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
 
+      // PerformUpdate() will not be executed if the insertion failed.
+      // There is a write lock acquired, but since it is not in the write set,
+      // because we haven't yet put them into the write set.
+      // the acquired lock can't be released when the txn is aborted.
+      // the YieldOwnership() function helps us release the acquired write lock.
       if (new_location.IsNull() == true) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);

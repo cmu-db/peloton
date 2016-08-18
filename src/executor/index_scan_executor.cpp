@@ -184,6 +184,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
     size_t chain_length = 0;
 
+    // the following code traverses the version chain until a certain visible version is found.
+    // we should always find a visible version from a version chain.
     while (true) {
       ++chain_length;
 
@@ -194,7 +196,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
         break;
       }
-        // if the tuple is visible.
+      // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                  tuple_location.offset);
@@ -227,13 +229,19 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         break;
       }
-        // if the tuple is not visible.
+      // if the tuple is not visible.
       else {
+        PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
+        
+        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
 
-        if (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
-          && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
-          // See an invisible version that does not belong to any one in a new to old version chain
-          // Wire back
+        bool is_acquired = (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID);
+        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId());
+        if (is_acquired && is_alive) {
+          // See an invisible version that does not belong to any one in the version chain.
+          // this means that some other transactions have modified the version chain.
+          // Wire back because the current version is expired. have to search from scratch.
           tuple_location = *(tile_group_header->GetIndirection(tuple_location.offset));
           tile_group = manager.GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
@@ -251,21 +259,20 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             break;
           }
 
-          // If we have traversed through the chain and still can not fulfill one of the above conditions,
-          // something wrong must happen.
-          // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
-          // timestamp update. In such case, we just return false and abort the txn.
+          // in most cases, there should exist a visible version. 
+          // if we have traversed through the chain and still can not fulfill one of the above conditions,
+          // then return result_failure.
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
           return false;
         }
 
-
-        // if it is vacuum GC or no GC.
+        // search for next version.
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
         continue;
       }
     }
+    LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
 
 
@@ -327,69 +334,31 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
   for (auto tuple_location_ptr : tuple_location_ptrs) {
+
     ItemPointer tuple_location = *tuple_location_ptr;
 
     auto &manager = catalog::Manager::GetInstance();
-
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
 
     size_t chain_length = 0;
 
+    // the following code traverses the version chain until a certain visible version is found.
+    // we should always find a visible version from a version chain.
+    // different from primary key index lookup, we have to compare the secondary key to
+    // guarantee the correctness of the result.
     while (true) {
-      // check the version chain
       ++chain_length;
 
       auto visibility = transaction_manager.IsVisible(tile_group_header, tuple_location.offset);
 
+      // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
         break;
       }
-      if (visibility == VISIBILITY_INVISIBLE) {
-        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
-                  tuple_location.offset);
-
-
-        // Break for new to old
-        if (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
-            && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
-          // See an invisible version that does not belong to any one in a new to old version chain
-          // Wire back
-          tuple_location = *(tile_group_header->GetIndirection(tuple_location.offset));
-          tile_group = manager.GetTileGroup(tuple_location.block);
-          tile_group_header = tile_group.get()->GetHeader();
-          //chain_length = 0;
-          continue;
-        }
-
-        ItemPointer old_item = tuple_location;
-        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
-
-        // there must exist a visible version.
-
-        if(tuple_location.IsNull()) {
-          // FIXME:
-          // For an index scan on a version chain, the result should be one of the following:
-          //    (1) find a visible version
-          //    (2) find a deleted version
-          //    (3) find an aborted version with chain length equal to one
-          if (chain_length == 1) {
-            break;
-          }
-
-          // If we have traversed through the chain and still can not fulfill one of the above conditions,
-          // something wrong must happen.
-          // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
-          // timestamp update. In such case, we just return false and abort the txn.
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          return false;
-        }
-
-        tile_group = manager.GetTileGroup(tuple_location.block);
-        tile_group_header = tile_group.get()->GetHeader();
-      } else {
-        PL_ASSERT(visibility == VISIBILITY_OK);
+      // if the tuple is visible.
+      else if (visibility == VISIBILITY_OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
@@ -440,6 +409,50 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
         break;
       }
+      // if the tuple is not visible.
+      else {
+        PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
+        
+        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
+
+        bool is_acquired = (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID);
+        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId());
+        if (is_acquired && is_alive) {
+          // See an invisible version that does not belong to any one in the version chain.
+          // this means that some other transactions have modified the version chain.
+          // Wire back because the current version is expired. have to search from scratch.
+          tuple_location = *(tile_group_header->GetIndirection(tuple_location.offset));
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          chain_length = 0;
+          continue;
+        }
+
+        ItemPointer old_item = tuple_location;
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+
+
+        if(tuple_location.IsNull()) {
+          // For an index scan on a version chain, the result should be one of the following:
+          //    (1) find a visible version
+          //    (2) find a deleted version
+          //    (3) find an aborted version with chain length equal to one
+          if (chain_length == 1) {
+            break;
+          }
+
+          // in most cases, there should exist a visible version. 
+          // if we have traversed through the chain and still can not fulfill one of the above conditions,
+          // then return result_failure.
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          return false;
+        }
+
+        // search for next version.
+        tile_group = manager.GetTileGroup(tuple_location.block);
+        tile_group_header = tile_group.get()->GetHeader();
+      } 
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }

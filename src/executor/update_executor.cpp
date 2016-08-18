@@ -100,12 +100,13 @@ bool UpdateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> new_tuple(
           new storage::Tuple(target_table_->GetSchema(), true));
       // Execute the projections
-      // FIXME: reduce memory copy by doing inplace update
+      // TODO: reduce memory copy by doing inplace update
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
-
+      // overwrite the tuple in place.
       tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
+      
       transaction_manager.PerformUpdate(old_location);
 
     } else if (transaction_manager.IsOwnable(tile_group_header,
@@ -113,7 +114,9 @@ bool UpdateExecutor::DExecute() {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireOwnership(tile_group_header, physical_tuple_id) == false) {
+      bool acquire_ownership_success = transaction_manager.AcquireOwnership(tile_group_header, physical_tuple_id);
+
+      if (acquire_ownership_success == false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
@@ -134,10 +137,11 @@ bool UpdateExecutor::DExecute() {
       // finally insert updated tuple into the table
       ItemPointer new_location = target_table_->InsertVersion(new_tuple.get(), &(project_info_->GetTargetList()), indirection);
 
-      // PerformUpdate() will not be executed if the insertion failed,
+      // PerformUpdate() will not be executed if the insertion failed.
       // There is a write lock acquired, but since it is not in the write set,
       // because we haven't yet put them into the write set.
       // the acquired lock can't be released when the txn is aborted.
+      // the YieldOwnership() function helps us release the acquired write lock.
       if (new_location.IsNull() == true) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
