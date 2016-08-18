@@ -139,7 +139,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
 
-  size_t cache_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
+  size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
@@ -147,7 +147,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   // get valid tuple.
   while (true) {
     // get the last tile group.
-    tile_group = cached_tile_groups_[cache_id];
+    tile_group = active_tile_groups_[active_tile_group_id];
 
     tuple_slot = tile_group->InsertTuple(tuple);
 
@@ -161,7 +161,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
-    AddDefaultTileGroup(cache_id);
+    AddDefaultTileGroup(active_tile_group_id);
   }
 
   LOG_TRACE("tile group count: %lu, tile group id: %u, address: %p",
@@ -575,11 +575,11 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
 }
 
 oid_t DataTable::AddDefaultTileGroup() {
-  size_t cache_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
-  return AddDefaultTileGroup(cache_id);
+  size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
+  return AddDefaultTileGroup(active_tile_group_id);
 }
 
-oid_t DataTable::AddDefaultTileGroup(const size_t &cache_id) {
+oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   column_map_type column_map;
   oid_t tile_group_id = INVALID_OID;
 
@@ -590,7 +590,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &cache_id) {
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   PL_ASSERT(tile_group.get());
   
-  cached_tile_groups_[cache_id] = tile_group;
+  active_tile_groups_[active_tile_group_id] = tile_group;
 
   tile_group_id = tile_group->GetTileGroupId();
 
@@ -654,9 +654,9 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 // NOTE: This function is only used in test cases.
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
-  size_t cache_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
+  size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
 
-  cached_tile_groups_[cache_id] = tile_group;
+  active_tile_groups_[active_tile_group_id] = tile_group;
 
   oid_t tile_group_id = tile_group->GetTileGroupId();
 
