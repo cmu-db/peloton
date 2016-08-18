@@ -45,9 +45,9 @@ class SeqScanPlan : public AbstractScan {
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {
     LOG_DEBUG("Creating a Sequential Scan Plan");
-    target_table_ = table;
-    if (predicate != nullptr) where_ = predicate->Copy();
-    if (predicate != nullptr) where_with_params_ = predicate->Copy();
+    if (predicate != nullptr)
+      predicate_with_params_ =
+          std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
   }
 
   SeqScanPlan(parser::SelectStatement *select_node);
@@ -78,12 +78,6 @@ class SeqScanPlan : public AbstractScan {
   }
 
  private:
-  // Target Table
-  storage::DataTable *target_table_ = nullptr;
-  // The Where condition
-  expression::AbstractExpression *where_ = nullptr;
-  // The Where condition with parameter value expression
-  expression::AbstractExpression *where_with_params_ = nullptr;
 };
 
 }  // namespace planner
