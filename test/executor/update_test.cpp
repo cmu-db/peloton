@@ -154,6 +154,8 @@ TEST_F(UpdateTests, Updating) {
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction();
 
+
+  // Deleting now
   txn_manager.BeginTransaction();
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");

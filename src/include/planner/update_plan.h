@@ -16,15 +16,11 @@
 #include "planner/project_info.h"
 #include "common/types.h"
 #include "parser/table_ref.h"
+#include "parser/statement_update.h"
 #include "catalog/schema.h"
 
 namespace peloton {
 
-namespace parser {
-class UpdateStatement;
-class UpdateClause;
-class TableRef;
-}
 
 namespace expression {
 class Expression;
@@ -48,6 +44,13 @@ class UpdatePlan : public AbstractPlan {
                       std::unique_ptr<const planner::ProjectInfo> project_info);
 
   explicit UpdatePlan(parser::UpdateStatement *parse_tree);
+
+  inline ~UpdatePlan() {
+    delete(where_);
+    for(size_t i = 0; i < updates_.size(); ++i) {
+    	delete(updates_[i]);
+    }
+  }
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
@@ -76,7 +79,7 @@ class UpdatePlan : public AbstractPlan {
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   // Vector of Update clauses
-  std::vector<parser::UpdateClause *> *updates_;
+  std::vector<parser::UpdateClause *> updates_;
 
   // The where condition
   expression::AbstractExpression *where_;
