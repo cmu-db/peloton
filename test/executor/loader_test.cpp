@@ -102,7 +102,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
     executor.Execute();
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(LoaderTests, LoadingTest) {

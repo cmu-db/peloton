@@ -139,7 +139,7 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   for (size_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
 
@@ -150,14 +150,14 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
     }
 
     ItemPointer *index_entry_ptr = nullptr;
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple, &index_entry_ptr);
+    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple, txn, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
-    txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 expression::AbstractExpression *GetPredicate() {
@@ -287,7 +287,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   ExecuteTest(&hybrid_scan_executor);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
@@ -334,7 +334,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   ExecuteTest(&hybrid_scan_executor);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
@@ -384,11 +384,15 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
 
   ExecuteTest(&hybrid_scan_executor);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void BuildIndex(std::shared_ptr<index::Index> index,
                 storage::DataTable *table) {
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
@@ -404,10 +408,12 @@ void BuildIndex(std::shared_ptr<index::Index> index,
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
       ItemPointer *index_entry_ptr = nullptr;
-      table->InsertInIndexes(tuple_ptr.get(), location, &index_entry_ptr);
+      table->InsertInIndexes(tuple_ptr.get(), location, txn, &index_entry_ptr);
     }
     index->IncrementIndexedTileGroupOffset();
   }
+  
+  txn_manager.CommitTransaction(txn);
 }
 
 

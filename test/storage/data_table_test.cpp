@@ -32,12 +32,12 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
 
   // Create a table and wrap it in logical tiles
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false, false,
-                                   true);
-  txn_manager.CommitTransaction();
+                                   true, txn);
+  txn_manager.CommitTransaction(txn);
 
   // Create the new column map
   storage::column_map_type column_map;
@@ -76,14 +76,14 @@ TEST_F(DataTableTests, GlobalTableTest) {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   data_table_test_table.reset(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table_test_table.get(), tuple_count, false, false,
-                                   true);
+                                   true, txn);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   data_table_test_table.release();
 }

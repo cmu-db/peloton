@@ -136,15 +136,15 @@ void ExecuteTileGroupTest() {
     }
 
     ItemPointer  *index_entry_ptr = nullptr;
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, &index_entry_ptr);
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, txn, &index_entry_ptr);
     
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
     
-    txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /////////////////////////////////////////////////////////
   // Do a seq scan with predicate on top of the table
@@ -203,7 +203,7 @@ void ExecuteTileGroupTest() {
 
   EXPECT_FALSE(mat_executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(TileGroupLayoutTest, RowLayout) {

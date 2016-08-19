@@ -46,7 +46,7 @@ TEST_F(UpdateTests, Updating) {
 
   LOG_INFO("Bootstrapping...");
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
 
@@ -68,12 +68,12 @@ TEST_F(UpdateTests, Updating) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
   LOG_INFO("Table created!");
 
   // Inserting a tuple end-to-end
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
   std::unique_ptr<Statement> statement;
@@ -92,10 +92,10 @@ TEST_F(UpdateTests, Updating) {
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // Now Updating end-to-end
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating a tuple...");
   LOG_INFO("Query: UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
   statement.reset(new Statement("UPDATE", "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1"));
@@ -110,9 +110,9 @@ TEST_F(UpdateTests, Updating) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
   statement.reset(new Statement("DELETE", "DELETE FROM department_table WHERE dept_name = 'CS'"));
@@ -127,7 +127,7 @@ TEST_F(UpdateTests, Updating) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // End test namespace

@@ -59,7 +59,7 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Bootstrapping...");
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
 
@@ -81,7 +81,7 @@ TEST_F(DeleteTests, VariousOperations) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
   LOG_INFO("Table created!");
 

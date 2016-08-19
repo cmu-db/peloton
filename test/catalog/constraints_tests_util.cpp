@@ -118,7 +118,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
  * @param num_rows Number of tuples to insert.
  */
 void ConstraintsTestsUtil::PopulateTable(
-    UNUSED_ATTRIBUTE concurrency::Transaction *transaction,
+    concurrency::Transaction *transaction,
     storage::DataTable *table, int num_rows) {
   // Ensure that the tile group is as expected.
   UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
@@ -264,7 +264,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   auto txn = txn_manager.BeginTransaction();
   ConstraintsTestsUtil::PopulateTable(txn, table,
                                       tuple_count * DEFAULT_TILEGROUP_COUNT);
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return table;
 }

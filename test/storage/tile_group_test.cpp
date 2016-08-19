@@ -113,21 +113,21 @@ TEST_F(TileGroupTests, BasicTest) {
 
   EXPECT_EQ(0, tile_group->GetActiveTupleCount());
 
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   auto tuple_slot = tile_group->InsertTuple(tuple1);
-  txn_manager.PerformInsert(
+  txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
   tuple_slot = tile_group->InsertTuple(tuple2);
-  txn_manager.PerformInsert(
+  txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
   tuple_slot = tile_group->InsertTuple(tuple1);
-  txn_manager.PerformInsert(
+  txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(3, tile_group->GetActiveTupleCount());
 
@@ -146,7 +146,7 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   auto pool = tile_group->GetTilePool(1);
 
@@ -160,11 +160,11 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     ItemPointer *index_entry_ptr = nullptr;
     auto tuple_slot = tile_group->InsertTuple(tuple);
-    txn_manager.PerformInsert(
+    txn_manager.PerformInsert(txn,
         ItemPointer(tile_group->GetTileGroupId(), tuple_slot), index_entry_ptr);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   delete tuple;
 }
@@ -403,7 +403,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
       tile_group_header, *schema, nullptr, tuple_count);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   // txn_id_t txn_id1 = txn->GetTransactionId();
   oid_t tuple_slot_id = INVALID_OID;
   auto pool = tile->GetPool();
@@ -436,19 +436,19 @@ TEST_F(TileGroupTests, TileCopyTest) {
   tile->InsertTuple(2, tuple3);
 
   tuple_slot_id = tile_group->InsertTuple(tuple1);
-  txn_manager.PerformInsert(
+  txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(0, tuple_slot_id);
   tuple_slot_id = tile_group->InsertTuple(tuple2);
-  txn_manager.PerformInsert(
+  txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(1, tuple_slot_id);
   tuple_slot_id = tile_group->InsertTuple(tuple3);
-  txn_manager.PerformInsert(
+  txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(2, tuple_slot_id);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   LOG_INFO("\t Original Tile Details ...");
   LOG_INFO("%s", tile->GetInfo().c_str());

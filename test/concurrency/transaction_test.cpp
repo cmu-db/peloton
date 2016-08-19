@@ -33,16 +33,16 @@ void TransactionTest(concurrency::TransactionManager *txn_manager,
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
-    txn_manager->BeginTransaction();
+    auto txn = txn_manager->BeginTransaction();
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
       std::this_thread::sleep_for(sleep_time);
     }
 
     if (txn_itr % 25 != 0) {
-      txn_manager->CommitTransaction();
+      txn_manager->CommitTransaction(txn);
     } else {
-      txn_manager->AbortTransaction();
+      txn_manager->AbortTransaction(txn);
     }
   }
 }
