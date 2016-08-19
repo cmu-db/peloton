@@ -41,14 +41,15 @@ cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
 
 bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id) {
+    const oid_t &tuple_id, 
+    const cid_t &current_cid) {
 
   PL_ASSERT(IsOwner(tile_group_header, tuple_id) == false);
 
   // get the pointer to the last_reader_cid field.
   cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
   
-  cid_t current_cid = current_txn->GetBeginCommitId();
+  // cid_t current_cid = current_txn->GetBeginCommitId();
 
   GetSpinlockField(tile_group_header, tuple_id)->Lock();
   
@@ -90,7 +91,9 @@ TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetIns
 
 
 
-bool TimestampOrderingTransactionManager::IsOccupied(const ItemPointer &position) {
+bool TimestampOrderingTransactionManager::IsOccupied(
+    Transaction *const current_txn, 
+    const ItemPointer &position) {
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
   auto tuple_id = position.offset;
@@ -151,6 +154,7 @@ bool TimestampOrderingTransactionManager::IsOccupied(const ItemPointer &position
 
 // Visibility check
 VisibilityType TimestampOrderingTransactionManager::IsVisible(
+    Transaction *const current_txn, 
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -218,6 +222,7 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
 // check whether the current transaction owns the tuple.
 // this function is called by update/delete executors.
 bool TimestampOrderingTransactionManager::IsOwner(
+    Transaction *const current_txn, 
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -229,6 +234,7 @@ bool TimestampOrderingTransactionManager::IsOwner(
 // transaction.
 // this function is called by update/delete executors.
 bool TimestampOrderingTransactionManager::IsOwnable(
+    Transaction *const current_txn, 
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -237,7 +243,9 @@ bool TimestampOrderingTransactionManager::IsOwnable(
 }
 
 bool TimestampOrderingTransactionManager::AcquireOwnership(
-    const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
+    Transaction *const current_txn, 
+    const storage::TileGroupHeader *const tile_group_header, 
+    const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
   // to acquire the ownership, we must guarantee that no other transactions that has read
@@ -247,15 +255,15 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   cid_t last_reader_cid = GetLastReaderCommitId(tile_group_header, tuple_id);
 
   if (last_reader_cid > current_txn->GetBeginCommitId()) {
+    
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
     
-    SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   } else {
     if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {    
+      
       GetSpinlockField(tile_group_header, tuple_id)->Unlock();
-    
-      SetTransactionResult(Result::RESULT_FAILURE);
+
       return false;
     } else {
       
@@ -273,8 +281,10 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
 // ownership before return false to upper layer.
 // It should not be called if the tuple is in the write set as commit and abort
 // will release the write lock anyway.
-void TimestampOrderingTransactionManager::YieldOwnership(const oid_t &tile_group_id,
-  const oid_t &tuple_id) {
+void TimestampOrderingTransactionManager::YieldOwnership(
+    Transaction *const current_txn, 
+    const oid_t &tile_group_id,
+    const oid_t &tuple_id) {
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -282,7 +292,10 @@ void TimestampOrderingTransactionManager::YieldOwnership(const oid_t &tile_group
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
 
-bool TimestampOrderingTransactionManager::PerformRead(const ItemPointer &location) {
+bool TimestampOrderingTransactionManager::PerformRead(
+    Transaction *const current_txn, 
+    const ItemPointer &location) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -297,7 +310,7 @@ bool TimestampOrderingTransactionManager::PerformRead(const ItemPointer &locatio
     return true;
   }
   // if the current transaction does not own this tuple, then attemp to set last reader cid.
-  if (SetLastReaderCommitId(tile_group_header, tuple_id) == true) {
+  if (SetLastReaderCommitId(tile_group_header, tuple_id, current_txn->GetBeginCommitId()) == true) {
     current_txn->RecordRead(location);
     return true;
   } else {
@@ -306,7 +319,11 @@ bool TimestampOrderingTransactionManager::PerformRead(const ItemPointer &locatio
   }
 }
 
-void TimestampOrderingTransactionManager::PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) {
+void TimestampOrderingTransactionManager::PerformInsert(
+    Transaction *const current_txn, 
+    const ItemPointer &location, 
+    ItemPointer *index_entry_ptr) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -335,8 +352,11 @@ void TimestampOrderingTransactionManager::PerformInsert(const ItemPointer &locat
 }
 
 
-void TimestampOrderingTransactionManager::PerformUpdate(const ItemPointer &old_location,
-                                      const ItemPointer &new_location) {
+void TimestampOrderingTransactionManager::PerformUpdate(
+    Transaction *const current_txn, 
+    const ItemPointer &old_location,
+    const ItemPointer &new_location) {
+
   LOG_TRACE("Performing Write old tuple %u %u", old_location.block, old_location.offset);
   LOG_TRACE("Performing Write new tuple %u %u", new_location.block, new_location.offset);
 
@@ -407,7 +427,10 @@ void TimestampOrderingTransactionManager::PerformUpdate(const ItemPointer &old_l
   current_txn->RecordUpdate(old_location);
 }
 
-void TimestampOrderingTransactionManager::PerformUpdate(const ItemPointer &location) {
+void TimestampOrderingTransactionManager::PerformUpdate(
+    Transaction *const current_txn, 
+    const ItemPointer &location) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -427,8 +450,11 @@ void TimestampOrderingTransactionManager::PerformUpdate(const ItemPointer &locat
   }
 }
 
-void TimestampOrderingTransactionManager::PerformDelete(const ItemPointer &old_location,
-                                      const ItemPointer &new_location) {
+void TimestampOrderingTransactionManager::PerformDelete(
+    Transaction *const current_txn, 
+    const ItemPointer &old_location,
+    const ItemPointer &new_location) {
+
   LOG_TRACE("Performing Delete");
 
   auto tile_group_header = catalog::Manager::GetInstance()
@@ -497,7 +523,10 @@ void TimestampOrderingTransactionManager::PerformDelete(const ItemPointer &old_l
   current_txn->RecordDelete(old_location);
 }
 
-void TimestampOrderingTransactionManager::PerformDelete(const ItemPointer &location) {
+void TimestampOrderingTransactionManager::PerformDelete(
+    Transaction *const current_txn, 
+    const ItemPointer &location) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -521,7 +550,7 @@ void TimestampOrderingTransactionManager::PerformDelete(const ItemPointer &locat
   }
 }
 
-Result TimestampOrderingTransactionManager::CommitTransaction() {
+Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const current_txn) {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -628,7 +657,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction() {
   return result;
 }
 
-Result TimestampOrderingTransactionManager::AbortTransaction() {
+Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const current_txn) {
   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
@@ -778,7 +807,9 @@ Result TimestampOrderingTransactionManager::AbortTransaction() {
 
   // Need to change next_commit_id to INVALID_CID if disable the recycle of aborted version
   // gc::GCManagerFactory::GetInstance().EndGCContext(next_commit_id);
-  EndTransaction();
+  
+  EndTransaction(current_txn);
+
   return Result::RESULT_ABORTED;
 }
 
