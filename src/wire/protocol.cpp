@@ -656,24 +656,17 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
 }
 
 bool PacketManager::ManageFirstPacket() {
-  std::ofstream fs;
-  std::stringstream ss;
-  ss << "Msg_Log_" << client.sock->GetSocketFD() << ".txt";
-  fs.open(ss.str(), std::ios_base::app);
   Packet pkt;
   ResponseBuffer responses;
   bool status;
   // fetch the startup packet
   if (!ReadPacket(&pkt, false, &client)) {
-    fs << "First Packet. Can't Write or status: " << status << std::endl;
-    std::cout << "First Packet. Can't Write or status: " << status << std::endl;
     CloseClient();
     return false;
   }
   status = ProcessStartupPacket(&pkt, responses);
   if (!WritePackets(responses, &client) || !status) {
     // close client on write failure or status failure
-	fs << "First Packet. Can't Write or status: " << status << std::endl;
 	std::cout << "First Packet. Can't Write or status: " << status << std::endl;
     CloseClient();
     return false;
