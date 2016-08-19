@@ -338,7 +338,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std::ofstream* fs) {
+void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
   GetStringToken(pkt, portal_name);
@@ -349,7 +349,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std:
     std::unique_ptr<Packet> response(new Packet());
     response->msg_type = '2';
     responses.push_back(std::move(response));
-    *fs << "Skipped Statement" << std::endl;
     return;
   }
 
@@ -368,7 +367,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std:
     std::string error_message =
         "Malformed request: num_params_format is not equal to num_params";
     SendErrorResponse({{'M', error_message}}, responses);
-    *fs << "Malformed request: num_params_format is not equal to num_params" << std::endl;
     return;
   }
 
@@ -383,7 +381,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std:
       std::string error_message = "Invalid unnamed statement";
       LOG_ERROR("%s", error_message.c_str());
       SendErrorResponse({{'M', error_message}}, responses);
-      *fs << "Invalid unnamed statement" << std::endl;
       return;
     }
   } else {
@@ -397,7 +394,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std:
       std::string error_message = "Prepared statement name already exists";
       LOG_ERROR("%s", error_message.c_str());
       SendErrorResponse({{'M', error_message}}, responses);
-      *fs << "Prepared statement name already exists" << std::endl;
       return;
     }
   }
@@ -415,7 +411,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std:
     // Send Parse complete response
     response->msg_type = '2';
     responses.push_back(std::move(response));
-    *fs << "Skipped statement" << std::endl;
     return;
   }
 
@@ -506,7 +501,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses, std:
   std::unique_ptr<Packet> response(new Packet());
   response->msg_type = '2';
   responses.push_back(std::move(response));
-  *fs << "Bind complete" << std::endl;
 }
 
 void PacketManager::ExecDescribeMessage(Packet *pkt,
@@ -540,7 +534,7 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
   }
 }
 
-void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses, std::ofstream* fs) {
+void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // EXECUTE message
   std::vector<ResultType> results;
   std::string error_message, portal_name;
@@ -586,12 +580,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses, s
   }
   // put_row_desc(portal->rowdesc, responses);
   auto tuple_descriptor = statement->GetTupleDescriptor();
-  *fs << "Tuple Descriptor size: " << tuple_descriptor.size() << std::endl;
-  *fs << "Result: " << std::endl;
-  for(auto result : results) {
-	  *fs << std::string(result.first.begin(),result.first.end()) << ",";
-	  *fs << std::string(result.second.begin(),result.second.end()) << std::endl;
-  }
   SendDataRows(results, tuple_descriptor.size(), rows_affected, responses);
   CompleteCommand(query_type, rows_affected, responses);
 }
@@ -600,43 +588,34 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses, s
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses, std::ofstream* fs) {
+bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
-    	*fs << cntr << " ExecQueryMessage" << std::endl;
       ExecQueryMessage(pkt, responses);
     } break;
     case 'P': {
-    	*fs << cntr << " ExecParseMessage" << std::endl;
       ExecParseMessage(pkt, responses);
     } break;
     case 'B': {
-    	*fs << cntr << " ExecBindMessage" << std::endl;
-      ExecBindMessage(pkt, responses, fs);
+      ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
-    	*fs << cntr << " ExecDescribeMessage" << std::endl;
       ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
-    	*fs << cntr << " ExecExecuteMessage" << std::endl;
-      ExecExecuteMessage(pkt, responses, fs);
+      ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
       // SYNC message
-    	*fs << cntr << " SendReadyForQuery" << std::endl;
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
-    	*fs << cntr << " X" << std::endl;
       return false;
     } break;
     case NULL: {
-    	*fs << cntr << " NULL" << std::endl;
       return false;
     } break;
     default: {
-    	*fs << cntr << " Packet type not supported yet: " << pkt->msg_type << std::endl;
       LOG_ERROR("Packet type not supported yet: %d (%c)", pkt->msg_type,
                 pkt->msg_type);
     }
@@ -677,24 +656,6 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
 }
 
 bool PacketManager::ManageFirstPacket() {
-  Packet pkt;
-  ResponseBuffer responses;
-  bool status;
-  // fetch the startup packet
-  if (!ReadPacket(&pkt, false, &client)) {
-    CloseClient();
-    return false;
-  }
-  status = ProcessStartupPacket(&pkt, responses);
-  if (!WritePackets(responses, &client) || !status) {
-    // close client on write failure or status failure
-    CloseClient();
-    return false;
-  }
-  return true;
-}
-
-bool PacketManager::ManagePacket() {
   std::ofstream fs;
   std::stringstream ss;
   ss << "Msg_Log_" << client.sock->GetSocketFD() << ".txt";
@@ -702,24 +663,46 @@ bool PacketManager::ManagePacket() {
   Packet pkt;
   ResponseBuffer responses;
   bool status;
+  // fetch the startup packet
+  if (!ReadPacket(&pkt, false, &client)) {
+    fs << "First Packet. Can't Write or status: " << status << std::endl;
+    std::cout << "First Packet. Can't Write or status: " << status << std::endl;
+    CloseClient();
+    return false;
+  }
+  status = ProcessStartupPacket(&pkt, responses);
+  if (!WritePackets(responses, &client) || !status) {
+    // close client on write failure or status failure
+	fs << "First Packet. Can't Write or status: " << status << std::endl;
+	std::cout << "First Packet. Can't Write or status: " << status << std::endl;
+    CloseClient();
+    return false;
+  }
+  return true;
+}
+
+bool PacketManager::ManagePacket() {
+  Packet pkt;
+  ResponseBuffer responses;
+  bool status;
   bool can_read_more = true;
   while(can_read_more) {
-	ReadPacket(&pkt, true, &client);
-	++cntr;
-	fs << std::this_thread::get_id() << std::endl;
-	status = ProcessPacket(&pkt, responses, &fs);
-	if (!WritePackets(responses, &client) || !status) {
-	  fs << "Can't Write or status: " << status << std::endl;
-	  std::cout << "Can't Write or status: " << status << std::endl;
-	  fs.close();
-	  // close client on write failure or status failure
-	  CloseClient();
-	  return false;
+	if(ReadPacket(&pkt, true, &client)) {
+		++cntr;
+		status = ProcessPacket(&pkt, responses);
+		if (!WritePackets(responses, &client) || !status) {
+		  std::cout << "Can't Write or status: " << status << std::endl;
+		  // close client on write failure or status failure
+		  CloseClient();
+		  return false;
+		}
+		can_read_more = CanRead(&client);
+		pkt.Reset();
+    }
+	else {
+		break;
 	}
-	can_read_more = CanRead(&client);
-	pkt.Reset();
   }
-  fs.close();
   return true;
 }
 

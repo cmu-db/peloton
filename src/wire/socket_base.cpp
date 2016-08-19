@@ -129,6 +129,13 @@ bool SocketManager<B>::FlushWriteBuffer() {
   // we are ok
   return true;
 }
+
+template <typename B>
+void SocketManager<B>::PrintStats() {
+	std::cout << "Read buffer pointer: " << rbuf.buf_ptr << std::endl;
+	std::cout << "Read buffer size: " << rbuf.buf_size << std::endl;
+}
+
 template <typename B>
 bool SocketManager<B>::CanRead() {
 	uint32_t header_size = sizeof(int32_t) + 1;  // Size of header (msg type + size)
