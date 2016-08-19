@@ -106,7 +106,7 @@ void LoadTable() {
     txn->RecordInsert(tuple_slot_id);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {
