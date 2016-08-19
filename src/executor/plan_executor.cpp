@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "common/logger.h"
@@ -45,7 +44,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
                                          const std::vector<Value> &params,
-										 std::vector<ResultType> &result) {
+                                         std::vector<ResultType> &result) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -97,35 +96,38 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     if (status == false) {
 
       std::unique_ptr<executor::LogicalTile> logical_tile(
-    	     executor_tree->GetOutput());
+          executor_tree->GetOutput());
       // Some executors don't return logical tiles (e.g., Update).
       if (logical_tile.get() != nullptr) {
-    	  LOG_TRACE("Final Answer: %s", logical_tile->GetInfo().c_str());  // Printing the answers
-    	  auto output_schema = logical_tile->GetPhysicalSchema();  // Physical schema of the tile
-    	  auto answer_tuples = logical_tile->GetAllValuesAsStrings();
+        LOG_TRACE("Final Answer: %s",
+                  logical_tile->GetInfo().c_str());  // Printing the answers
+        auto output_schema =
+            logical_tile->GetPhysicalSchema();  // Physical schema of the tile
+        auto answer_tuples = logical_tile->GetAllValuesAsStrings();
 
-    	  // Construct the returned results
-    	  result.clear();
-    	  for(auto tuple : answer_tuples) {
-    		  unsigned int col_index = 0;
-			  for(auto column : output_schema->GetColumns()) {
-				  auto column_name = column.GetName();
-				  auto res = ResultType();
-				  PlanExecutor::copyFromTo(column_name.c_str(), res.first);
-				  PlanExecutor::copyFromTo(tuple[col_index++].c_str(), res.second);
-				  result.push_back(res);
-			  }
-    	  }
-    	  /*LOG_TRACE("Final Answer (returned): ");
-    	  for(auto res : result) {
-    		  LOG_TRACE("First: %s, Second: %s", std::string(res.first.begin(), res.first.end()).c_str(),
-    				  std::string(res.second.begin(), res.second.end()).c_str());
-    	  }*/
+        // Construct the returned results
+        result.clear();
+        for (auto tuple : answer_tuples) {
+          unsigned int col_index = 0;
+          for (auto column : output_schema->GetColumns()) {
+            auto column_name = column.GetName();
+            auto res = ResultType();
+            PlanExecutor::copyFromTo(column_name.c_str(), res.first);
+            PlanExecutor::copyFromTo(tuple[col_index++].c_str(), res.second);
+            result.push_back(res);
+          }
+        }
+
+        delete output_schema;
+        /*LOG_TRACE("Final Answer (returned): ");
+        for(auto res : result) {
+            LOG_TRACE("First: %s, Second: %s", std::string(res.first.begin(),
+        res.first.end()).c_str(),
+                    std::string(res.second.begin(), res.second.end()).c_str());
+        }*/
       }
       break;
     }
-
-
 
     // Go over the logical tile
   }
@@ -146,14 +148,14 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-    	LOG_TRACE("Commit Transaction");
+        LOG_TRACE("Commit Transaction");
         p_status.m_result = txn_manager.CommitTransaction();
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-    	LOG_TRACE("Abort Transaction");
+        LOG_TRACE("Abort Transaction");
         p_status.m_result = txn_manager.AbortTransaction();
     }
   }
@@ -273,12 +275,13 @@ cleanup:
 void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
                              std::string prefix) {
   if (plan == nullptr) {
-	  LOG_TRACE("Plan is null");
-	  return;
+    LOG_TRACE("Plan is null");
+    return;
   }
 
   prefix += "  ";
-  LOG_TRACE("Plan Type: %s", PlanNodeTypeToString(plan->GetPlanNodeType()).c_str());
+  LOG_TRACE("Plan Type: %s",
+            PlanNodeTypeToString(plan->GetPlanNodeType()).c_str());
   LOG_TRACE("%s->Plan Info :: %s ", prefix.c_str(), plan->GetInfo().c_str());
 
   auto &children = plan->GetChildren();
@@ -320,84 +323,84 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
-    	LOG_TRACE("Adding Sequential Scan Executer");
+      LOG_TRACE("Adding Sequential Scan Executer");
       child_executor = new executor::SeqScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INDEXSCAN:
-    	LOG_TRACE("Adding Index Scan Executer");
+      LOG_TRACE("Adding Index Scan Executer");
       child_executor = new executor::IndexScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INSERT:
-    	LOG_TRACE("Adding Insert Executer");
+      LOG_TRACE("Adding Insert Executer");
       child_executor = new executor::InsertExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_DELETE:
-    	LOG_TRACE("Adding Delete Executer");
+      LOG_TRACE("Adding Delete Executer");
       child_executor = new executor::DeleteExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_UPDATE:
-    	LOG_TRACE("Adding Update Executer");
+      LOG_TRACE("Adding Update Executer");
       child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_LIMIT:
-    	LOG_TRACE("Adding Limit Executer");
+      LOG_TRACE("Adding Limit Executer");
       child_executor = new executor::LimitExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-    	LOG_TRACE("Adding Nested Loop Joing Executer");
+      LOG_TRACE("Adding Nested Loop Joing Executer");
       child_executor =
           new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_MERGEJOIN:
-    	LOG_TRACE("Adding Merge Join Executer");
+      LOG_TRACE("Adding Merge Join Executer");
       child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_HASH:
-    	LOG_TRACE("Adding Hash Executer");
+      LOG_TRACE("Adding Hash Executer");
       child_executor = new executor::HashExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_HASHJOIN:
-    	LOG_TRACE("Adding Hash Join Executer");
+      LOG_TRACE("Adding Hash Join Executer");
       child_executor = new executor::HashJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
-    	LOG_TRACE("Adding Projection Executer");
+      LOG_TRACE("Adding Projection Executer");
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_MATERIALIZE:
-    	LOG_TRACE("Adding Materialization Executer");
+      LOG_TRACE("Adding Materialization Executer");
       child_executor =
           new executor::MaterializationExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_AGGREGATE_V2:
-    	LOG_TRACE("Adding Aggregate Executer");
+      LOG_TRACE("Adding Aggregate Executer");
       child_executor = new executor::AggregateExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_ORDERBY:
-    	LOG_TRACE("Adding Order By Executer");
+      LOG_TRACE("Adding Order By Executer");
       child_executor = new executor::OrderByExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_DROP:
-    	LOG_TRACE("Adding Drop Executer");
+      LOG_TRACE("Adding Drop Executer");
       child_executor = new executor::DropExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_CREATE:
-    	LOG_TRACE("Adding Create Executer");
+      LOG_TRACE("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
 
