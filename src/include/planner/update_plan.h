@@ -49,6 +49,13 @@ class UpdatePlan : public AbstractPlan {
 
   explicit UpdatePlan(parser::UpdateStatement *parse_tree);
 
+  inline ~UpdatePlan() {
+    delete(where_);
+    while(!updates_.empty()) {
+    	updates_.pop_back();
+    }
+  }
+
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
@@ -76,7 +83,7 @@ class UpdatePlan : public AbstractPlan {
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   // Vector of Update clauses
-  std::vector<parser::UpdateClause *> *updates_;
+  std::vector<parser::UpdateClause *> updates_;
 
   // The where condition
   expression::AbstractExpression *where_;
