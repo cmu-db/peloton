@@ -110,6 +110,7 @@ class IndexScanPlan : public AbstractScan {
     for (auto expr : runtime_keys_) {
       delete expr;
     }
+    LOG_TRACE("Destroyed a index scan plan!");
   }
 
   std::shared_ptr<index::Index> GetIndex() const { return index_; }

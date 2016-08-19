@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 #include "common/harness.h"
 
@@ -42,6 +41,8 @@ namespace test {
 
 class ConstraintsTests : public PelotonTest {};
 
+// FIXME: see the explanation rpc_client_test and rpc_server_test
+TEST_F(ConstraintsTests, BlankTest) {}
 /*
 #ifdef NOTNULL_TEST
 TEST_F(ConstraintsTests, NOTNULLTest) {

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/init.h"
 
 #include "libcds/cds/init.h"
@@ -29,7 +28,6 @@ void PelotonInit::Initialize() {
   cds::Initialize();
 
   thread_pool.Initialize(std::thread::hardware_concurrency());
-
 }
 
 void PelotonInit::Shutdown() {
@@ -39,21 +37,18 @@ void PelotonInit::Shutdown() {
 
   // shutdown protocol buf library
   google::protobuf::ShutdownProtobufLibrary();
-
 }
 
 void PelotonInit::SetUpThread() {
 
   // Attach thread to cds
   cds::threading::Manager::attachThread();
-
 }
 
 void PelotonInit::TearDownThread() {
 
   // Detach thread from cds
   cds::threading::Manager::detachThread();
-
 }
 
 }  // End peloton namespace
