@@ -25,7 +25,7 @@ void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tupl
   auto txn = peloton::concurrency::current_txn;
   bool single_statement_txn = false;
   if (txn == nullptr) {
-	single_statement_txn = true;
+    single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
   std::unique_ptr<executor::ExecutorContext> context(

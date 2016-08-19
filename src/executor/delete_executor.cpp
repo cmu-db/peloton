@@ -100,53 +100,65 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
-        true) {
+    bool is_owner = 
+        transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
+
+    if (is_owner == true) {
       // if the thread is the owner of the tuple, then directly update in place.
       LOG_TRACE("Thread is owner of the tuple");
       transaction_manager.PerformDelete(old_location);
 
-    } else if (transaction_manager.IsOwnable(tile_group_header,
-                                             physical_tuple_id) == true) {
-      // if the tuple is not owned by any transaction and is visible to current
-      // transaction.
-    	LOG_TRACE("Thread is not the owner of the tuple, but still visible");
-      if (transaction_manager.AcquireOwnership(tile_group_header, physical_tuple_id) == false) {
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-        return false;
-      }
-      // if it is the latest version and not locked by other threads, then
-      // insert a new version.
-      std::unique_ptr<storage::Tuple> new_tuple(
-          new storage::Tuple(target_table_->GetSchema(), true));
-
-      // Make a copy of the original tuple and allocate a new tuple
-      expression::ContainerTuple<storage::TileGroup> old_tuple(
-          tile_group, physical_tuple_id);
-
-      // finally insert updated tuple into the table
-      ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
-
-      // PerformUpdate() will not be executed if the insertion failed.
-      // There is a write lock acquired, but since it is not in the write set,
-      // because we haven't yet put them into the write set.
-      // the acquired lock can't be released when the txn is aborted.
-      // the YieldOwnership() function helps us release the acquired write lock.
-      if (new_location.IsNull() == true) {
-        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-        transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-        return false;
-      }
-      transaction_manager.PerformDelete(old_location, new_location);
-
-      executor_context_->num_processed += 1;  // deleted one
-
     } else {
-      // transaction should be aborted as we cannot update the latest version.
-      LOG_TRACE("Fail to update tuple. Set txn failure.");
-      transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-      return false;
+
+      bool is_ownable = 
+          transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
+
+      if (is_ownable == true) {
+        // if the tuple is not owned by any transaction and is visible to current
+        // transaction.
+      	LOG_TRACE("Thread is not the owner of the tuple, but still visible");
+
+        bool acquire_ownership_success = 
+            transaction_manager.AcquireOwnership(current_txn, tile_group_header, physical_tuple_id);
+
+
+        if (acquire_ownership_success == false) {
+          transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
+          return false;
+        }
+        // if it is the latest version and not locked by other threads, then
+        // insert a new version.
+        std::unique_ptr<storage::Tuple> new_tuple(
+            new storage::Tuple(target_table_->GetSchema(), true));
+
+        // Make a copy of the original tuple and allocate a new tuple
+        expression::ContainerTuple<storage::TileGroup> old_tuple(
+            tile_group, physical_tuple_id);
+
+        // finally insert updated tuple into the table
+        ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
+
+        // PerformUpdate() will not be executed if the insertion failed.
+        // There is a write lock acquired, but since it is not in the write set,
+        // because we haven't yet put them into the write set.
+        // the acquired lock can't be released when the txn is aborted.
+        // the YieldOwnership() function helps us release the acquired write lock.
+        if (new_location.IsNull() == true) {
+          LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
+          transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+          return false;
+        }
+        transaction_manager.PerformDelete(old_location, new_location);
+
+        executor_context_->num_processed += 1;  // deleted one
+
+      } else {
+        // transaction should be aborted as we cannot update the latest version.
+        LOG_TRACE("Fail to update tuple. Set txn failure.");
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        return false;
+      }
     }
   }
 

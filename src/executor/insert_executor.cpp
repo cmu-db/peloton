@@ -64,9 +64,10 @@ bool InsertExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
+  auto current_txn = executor_context_->GetTransaction();
+
   if(!target_table) {
-	  transaction_manager.SetTransactionResult(
-	             peloton::Result::RESULT_FAILURE);
+	  transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
 	         return false;
   }
 
@@ -108,12 +109,11 @@ bool InsertExecutor::DExecute() {
       // it is possible that some concurrent transactions have inserted the same tuple.
       // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
-        transaction_manager.SetTransactionResult(
-            peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
         return false;
       }
 
-      transaction_manager.PerformInsert(location, index_entry_ptr);
+      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
 
       executor_context_->num_processed += 1;  // insert one
     }
@@ -161,11 +161,11 @@ bool InsertExecutor::DExecute() {
 
       if (location.block == INVALID_OID) {
         LOG_TRACE("Failed to Insert. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
         return false;
       }
 
-      transaction_manager.PerformInsert(location, index_entry_ptr);
+      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
       
       LOG_TRACE("Number of tuples in table after insert: %lu",
                 target_table->GetTupleCount());

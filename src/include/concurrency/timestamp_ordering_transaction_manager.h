@@ -31,44 +31,66 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   static TimestampOrderingTransactionManager &GetInstance();
 
+  // This method is used for avoiding concurrent inserts.
+  virtual bool IsOccupied(
+      Transaction *const current_txn, 
+      const ItemPointer &position);
+
   virtual VisibilityType IsVisible(
+      Transaction *const current_txn, 
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  virtual bool IsOccupied(const ItemPointer &position);
+  // This method test whether the current transaction is the owner of a tuple.
+  virtual bool IsOwner(
+      Transaction *const current_txn, 
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
-                       const oid_t &tuple_id);
-
+  // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
+      Transaction *const current_txn, 
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
+  // This method is used to acquire the ownership of a tuple for a transaction.
   virtual bool AcquireOwnership(
-      const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id);
+      Transaction *const current_txn, 
+      const storage::TileGroupHeader *const tile_group_header, 
+      const oid_t &tuple_id);
 
-  virtual void YieldOwnership(const oid_t &tile_group_id,
-    const oid_t &tuple_id);
+  // This method is used by executor to yield ownership after the acquired ownership.
+  virtual void YieldOwnership(
+      Transaction *const current_txn, 
+      const oid_t &tile_group_id, 
+      const oid_t &tuple_id);
 
   // The index_entry_ptr is the address of the head node of the version chain, 
   // which is directly pointed by the primary index.
-  virtual void PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr);
+  virtual void PerformInsert(Transaction *const current_txn, 
+                             const ItemPointer &location, 
+                             ItemPointer *index_entry_ptr = nullptr);
 
-  virtual bool PerformRead(const ItemPointer &location);
+  virtual bool PerformRead(Transaction *const current_txn, 
+                           const ItemPointer &location);
 
-  virtual void PerformUpdate(const ItemPointer &old_location,
+  virtual void PerformUpdate(Transaction *const current_txn, 
+                             const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual void PerformDelete(const ItemPointer &old_location,
+  virtual void PerformDelete(Transaction *const current_txn, 
+                             const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const ItemPointer &location);
+  virtual void PerformUpdate(Transaction *const current_txn, 
+                             const ItemPointer &location);
 
-  virtual void PerformDelete(const ItemPointer &location);
+  virtual void PerformDelete(Transaction *const current_txn, 
+                             const ItemPointer &location);
 
-  virtual Result CommitTransaction();
+  virtual Result CommitTransaction(Transaction *const current_txn);
 
-  virtual Result AbortTransaction();
+  virtual Result AbortTransaction(Transaction *const current_txn);
 
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();
@@ -77,13 +99,11 @@ class TimestampOrderingTransactionManager : public TransactionManager {
     
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
-    
-    current_txn = txn;
 
     return txn;
   }
 
-  virtual void EndTransaction() {
+  virtual void EndTransaction(Transaction *current_txn) {
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
@@ -106,7 +126,8 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   bool SetLastReaderCommitId(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+      const oid_t &tuple_id,
+      const cid_t &current_cid);
 
   // Initiate reserved area of a tuple
   void InitTupleReserved(
