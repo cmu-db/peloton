@@ -107,6 +107,8 @@ class DataTable : public AbstractTable {
   ItemPointer InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
   // insert tuple in table. the pointer to the index entry is returned as index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple, concurrency::Transaction *transaction, ItemPointer **index_entry_ptr = nullptr);
+  // designed for tables without primary key. e.g., output table used by aggregate_executor.
+  ItemPointer InsertTuple(const Tuple *tuple);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP

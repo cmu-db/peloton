@@ -39,25 +39,27 @@ bool CreateExecutor::DInit() {
 bool CreateExecutor::DExecute() {
   LOG_TRACE("Executing Create...");
   const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
+  auto current_txn = context->GetTransaction();
   
   // Check if query was for creating table
   if(node.GetCreateType() == CreateType::CREATE_TYPE_TABLE){
-  std::string table_name = node.GetTableName();
-  std::unique_ptr<catalog::Schema> schema(node.GetSchema());
+    std::string table_name = node.GetTableName();
+    std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
-  Result result = catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, table_name, std::move(schema));
-  context->GetTransaction()->SetResult(result);
 
-  if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
-    LOG_TRACE("Creating table succeeded!");
+    Result result = catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, table_name, std::move(schema), current_txn);
+    current_txn->SetResult(result);
+
+    if(current_txn->GetResult() == Result::RESULT_SUCCESS){
+      LOG_TRACE("Creating table succeeded!");
+    }
+    else if(current_txn->GetResult() == Result::RESULT_FAILURE) {
+      LOG_TRACE("Creating table failed!");
+    }
+    else {
+      LOG_TRACE("Result is: %d", current_txn->GetResult());
+    }
   }
-  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
-    LOG_TRACE("Creating table failed!");
-  }
-  else {
-    LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
-  }
- }
   
   // Check if query was for creating index
   if(node.GetCreateType() == CreateType::CREATE_TYPE_INDEX){
@@ -68,16 +70,16 @@ bool CreateExecutor::DExecute() {
     auto index_attrs = node.GetIndexAttributes();
 
     Result result = catalog::Bootstrapper::global_catalog->CreateIndex(DEFAULT_DB_NAME, table_name, index_attrs , index_name , unique_flag);
-    context->GetTransaction()->SetResult(result);
+    current_txn->SetResult(result);
 
-    if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
+    if(current_txn->GetResult() == Result::RESULT_SUCCESS){
       LOG_TRACE("Creating table succeeded!");
     }
-    else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
+    else if(current_txn->GetResult() == Result::RESULT_FAILURE) {
       LOG_TRACE("Creating table failed!");
     }
     else {
-      LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
+      LOG_TRACE("Result is: %d", current_txn->GetResult());
     }
 
   }
