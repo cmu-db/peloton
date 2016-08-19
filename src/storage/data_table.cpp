@@ -342,6 +342,8 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   int index_count = GetIndexCount();
   auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
 
+  // this function is used for conditional insertion.
+  // this helps avoid duplicated insertion caused by concurrent transactions.
   std::function<bool(const ItemPointer &)> fn =
     std::bind(&concurrency::TransactionManager::IsOccupied,
               &transaction_manager, std::placeholders::_1);
