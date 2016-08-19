@@ -33,7 +33,7 @@ namespace tcop {
 TrafficCop &TrafficCop::GetInstance(void) {
   static TrafficCop traffic_cop;
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   return traffic_cop;
 }
 

@@ -104,7 +104,7 @@ bool InsertExecutor::DExecute() {
 
       // insert tuple into the table.
       ItemPointer *index_entry_ptr = nullptr;
-      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), &index_entry_ptr);
+      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), current_txn, &index_entry_ptr);
 
       // it is possible that some concurrent transactions have inserted the same tuple.
       // in this case, abort the transaction.

@@ -268,6 +268,24 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   return location;
 }
 
+// insert tuple into a table that is without index.
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
+
+  ItemPointer location = GetEmptyTupleSlot(tuple);
+  if (location.block == INVALID_OID) {
+    LOG_TRACE("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
+  
+  auto index_count = GetIndexCount();
+  PL_ASSERT (index_count == 0);
+  // Increase the table's number of tuples by 1
+  IncreaseTupleCount(1);
+  return location;
+}
+
 /**
  * @brief Insert a tuple into all indexes. If index is primary/unique,
  * check visibility of existing

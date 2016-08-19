@@ -40,21 +40,23 @@ bool DropExecutor::DExecute() {
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   std::string table_name = node.GetTableName();
 
-  Result result = catalog::Bootstrapper::global_catalog->DropTable(DEFAULT_DB_NAME, table_name);
-  context->GetTransaction()->SetResult(result);
+  auto current_txn = context->GetTransaction();
 
-  if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
+  Result result = catalog::Bootstrapper::global_catalog->DropTable(DEFAULT_DB_NAME, table_name, current_txn);
+  current_txn->SetResult(result);
+
+  if(current_txn->GetResult() == Result::RESULT_SUCCESS){
 	  LOG_TRACE("Dropping table succeeded!");
   }
-  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE && node.IsMissing()) {
-	  context->GetTransaction()->SetResult(Result::RESULT_SUCCESS);
+  else if(current_txn->GetResult() == Result::RESULT_FAILURE && node.IsMissing()) {
+	  current_txn->SetResult(Result::RESULT_SUCCESS);
 	  LOG_TRACE("Dropping table Succeeded!");
   }
-  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE && !node.IsMissing()){
+  else if(current_txn->GetResult() == Result::RESULT_FAILURE && !node.IsMissing()){
 	  LOG_TRACE("Dropping table Failed!");
   }
   else {
-	  LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
+	  LOG_TRACE("Result is: %d", current_txn->GetResult());
   }
 
   return false;
