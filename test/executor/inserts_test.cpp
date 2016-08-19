@@ -36,7 +36,7 @@ class InsertTests : public PelotonTest {};
 
 TEST_F(InsertTests, InsertRecord) {
 
-  catalog::Bootstrapper::bootstrap();
+  auto catalog = catalog::Bootstrapper::bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
@@ -90,6 +90,13 @@ TEST_F(InsertTests, InsertRecord) {
   EXPECT_TRUE(executor.Execute());
 
   txn_manager.CommitTransaction();
+
+  // free the database just created
+  txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
+  txn_manager.CommitTransaction();
+
+  delete catalog;
 }
 
 }  // End test namespace

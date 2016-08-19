@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <unistd.h>
 #include <iostream>
 
@@ -22,19 +21,26 @@
 #include "wire/socket_base.h"
 
 // Peloton process begins execution here.
-int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
+int main(int argc, char *argv[]) {
+
+  ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
+
+  if (FLAGS_help || FLAGS_h) {
+    FLAGS_help = true;
+    ::google::SetUsageMessage("Usage Info: \n");
+    ::google::HandleCommandLineHelpFlags();
+  }
 
   // Setup
   peloton::PelotonInit::Initialize();
 
   // Launch server
-  peloton::PelotonConfiguration configuration;
-  peloton::wire::Server server(configuration);
-
-
+  peloton::wire::Server server;
 
   // Teardown
   peloton::PelotonInit::Shutdown();
+
+  ::google::ShutDownCommandLineFlags();
 
   return 0;
 }

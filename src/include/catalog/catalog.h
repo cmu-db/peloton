@@ -58,7 +58,9 @@ class Catalog {
                             const std::string &table_name);
 
   Result CreateIndex(const std::string &database_name,
-                              const std::string &table_name,  std::vector<std::string> index_attr , std::string index_name , bool unique , IndexType index_type);
+                     const std::string &table_name,
+                     std::vector<std::string> index_attr,
+                     std::string index_name, bool unique, IndexType index_type);
 
   // Drop a database
   Result DropDatabase(std::string database_name);
@@ -97,6 +99,9 @@ class Catalog {
 
   // Get a new id for database, table, etc.
   oid_t GetNewID();
+
+  // Deconstruct the catalog database when destroy the catalog.
+  ~Catalog();
 
  private:
   // A vector of the database pointers in the catalog

@@ -594,14 +594,8 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   auto predicate3 = new expression::ComparisonExpression<expression::CmpLt>(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, ol_o_id_1, params[2]);
 
-  auto predicate4 =
-      new expression::OperatorExpression<peloton::expression::OpMinus>(
-          peloton::EXPRESSION_TYPE_OPERATOR_MINUS, params[3]->GetValueType(),
-          params[3], new expression::ConstantValueExpression(
-                         ValueFactory::GetIntegerValue(20)));
-
   auto predicate5 = new expression::ComparisonExpression<expression::CmpGte>(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, predicate4);
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, params[3]);
 
   auto predicate6 =
       new expression::ConjunctionExpression<expression::ConjunctionAnd>(

@@ -33,22 +33,20 @@
 #include "wire/socket_base.h"
 #include "common/worker_thread_pool.h"
 
-
 namespace peloton {
 
 namespace wire {
 
 class Server {
 
-public:
+ public:
+  Server();
 
-	Server(const PelotonConfiguration& config);
-
-	inline ~Server() {
-		for(auto socket_manager : socket_manager_vector_) {
-			free(socket_manager);
-		}
-	}
+  inline ~Server() {
+    for (auto socket_manager : socket_manager_vector_) {
+      free(socket_manager);
+    }
+  }
 
 	// Remove socket manager with the same fd and add the new one
 	inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
@@ -81,3 +79,4 @@ private:
 }
 
 }
+
