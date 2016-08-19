@@ -77,7 +77,6 @@ foreach(test_src ${test_srcs} )
 	
 endforeach(test_src ${test_srcs})
 
-file(GLOB perf_srcs ${PROJECT_SOURCE_DIR}/test/performance/*.abc)
 # Compile and run performance tests separately
 foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
