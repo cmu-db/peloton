@@ -44,7 +44,7 @@ class Server {
 
   inline ~Server() {
     for (auto socket_manager : socket_manager_vector_) {
-      free(socket_manager);
+      delete(socket_manager);
     }
   }
 
@@ -55,7 +55,7 @@ class Server {
 		while(it != std::end(socket_manager_vector_)) {
 			if((*it)->GetSocketFD() == socket_manager->GetSocketFD()) {
 			  LOG_INFO("Removing socket manager on existing fd");
-			  free(*it);
+			  delete(*it);
 			  it = socket_manager_vector_.erase(it);
 			}
 			else {
