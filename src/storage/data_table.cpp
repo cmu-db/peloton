@@ -220,10 +220,10 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, const TargetLi
 
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **index_entry_ptr) {
-  // First, do integrity checks and claim a slot
+  // the upper layer may not pass a index_entry_ptr (default value: nullptr) into the function.
+  // in this case, we have to create a temp_ptr to hold the content.
   ItemPointer *temp_ptr = nullptr;
 
-  // Upper layer don't want to know infomation about index
   if (index_entry_ptr == nullptr) {
     index_entry_ptr = &temp_ptr;
   }
@@ -254,7 +254,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
     return INVALID_ITEMPOINTER;
   }
 
-  PL_ASSERT((*index_entry_ptr)->block == location.block && (*index_entry_ptr)->offset == location.offset);
+  PL_ASSERT((*index_entry_ptr)->block == location.block && 
+    (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -285,8 +286,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, std::placeholders::_1);
 
-  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
-
+  // Since this is NOT protected by a lock, concurrent insert may happen.
   bool res = true;
   int success_count = 0;
 
@@ -299,14 +299,14 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
-        // TODO: get unique tuple from primary index.
+        // get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       }
         break;
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // TODO: get unique tuple from primary index.
+        // get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
         // res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
@@ -347,14 +347,17 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
               &transaction_manager, std::placeholders::_1);
 
   // Transaform the target list into a hash set
+  // when attempting to perform insertion to a secondary index,
+  // we must check whether the updated column is a secondary index column.
+  // insertion happens only if the updated column is a secondary index column.
   std::unordered_set<oid_t> targets_set;
   for (auto target : *targets_ptr) {
     targets_set.insert(target.first);
   }
 
 
-  // (A) Check existence for primary/unique indexes
-  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
+  // Check existence for primary/unique indexes
+  // Since this is NOT protected by a lock, concurrent insert may happen.
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
     auto index_schema = index->GetKeySchema();

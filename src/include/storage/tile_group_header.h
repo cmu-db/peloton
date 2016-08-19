@@ -38,13 +38,24 @@ class TileGroup;
  * This contains information related to MVCC.
  * It is shared by all tiles in a tile group.
  *
- * Layout :
- *
+ *  Layout :
+ *  
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
  *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
  *  | Indirection (8 bytes) | ReservedField (24 bytes)
  *  -----------------------------------------------------------------------------
+ *
+ *  FIELD DESCRIPTIONS: 
+ *  ===================
+ *  TxnID: serve as a write lock on the tuple version.
+ *  BeginTimeStamp: the lower bound of the version visibility range.
+ *  EndTimeStamp: the upper bound of the version visibility range.
+ *  NextItemPointer: the pointer pointing to the next (older) version in the version chain. 
+ *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
+ *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
+ *  ReservedField: unused space for future usage.
+ *
  */
 
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
@@ -184,7 +195,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline void SetIndirection(const oid_t &tuple_slot_id,
-                             const ItemPointer *indirection) {
+                             const ItemPointer *indirection) const {
     *((const ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset)) = indirection;
   }
 
