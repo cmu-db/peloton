@@ -16,15 +16,13 @@
 
 #include <sys/un.h>
 #include <string>
-#include <fstream>
 
 namespace peloton {
 namespace wire {
 
+
 template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
-  std::ofstream fs;
-  fs.open("Bytes_Log.txt", std::ios::app);
   ssize_t bytes_read;
 
   // our buffer is to be emptied
@@ -35,8 +33,6 @@ bool SocketManager<B>::RefillReadBuffer() {
     //  try to fill the available space in the buffer
     bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                       SOCKET_BUFFER_SIZE - rbuf.buf_size);
-    fs << bytes_read << "\n";
-    fs.close();
 
     if (bytes_read < 0) {
 		// Some other error occurred, close the socket, remove
@@ -67,7 +63,45 @@ bool SocketManager<B>::FlushWriteBuffer() {
   // still outstanding bytes
   while (wbuf.buf_size - written_bytes > 0) {
     written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+    fsync(sock_fd);
     if (written_bytes < 0) {
+      switch(errno) {
+      case EINTR:
+    	  continue;
+    	  break;
+      case EAGAIN:
+    	  LOG_INFO("Error Writing: EAGAIN");
+    	  break;
+      case EBADF:
+    	  LOG_INFO("Error Writing: EBADF");
+    	  break;
+      case EDESTADDRREQ:
+    	  LOG_INFO("Error Writing: EDESTADDRREQ");
+    	  break;
+      case EDQUOT:
+    	  LOG_INFO("Error Writing: EDQUOT");
+    	  break;
+      case EFAULT:
+    	  LOG_INFO("Error Writing: EFAULT");
+    	  break;
+      case EFBIG:
+    	  LOG_INFO("Error Writing: EFBIG");
+    	  break;
+      case EINVAL:
+    	  LOG_INFO("Error Writing: EINVAL");
+    	  break;
+      case EIO:
+    	  LOG_INFO("Error Writing: EIO");
+    	  break;
+      case ENOSPC:
+    	  LOG_INFO("Error Writing: ENOSPC");
+    	  break;
+      case EPIPE:
+    	  LOG_INFO("Error Writing: EPIPE");
+    	  break;
+      default:
+    	  LOG_INFO("Error Writing: UNKNOWN");
+      }
       if (errno == EINTR) {
         // interrupts are ok, try again
         continue;
@@ -79,6 +113,7 @@ bool SocketManager<B>::FlushWriteBuffer() {
 
     // weird edge case?
     if (written_bytes == 0 && wbuf.buf_size != 0) {
+    	LOG_INFO("Not all data is written");
       // fatal
       return false;
     }
@@ -94,6 +129,13 @@ bool SocketManager<B>::FlushWriteBuffer() {
   // we are ok
   return true;
 }
+
+template <typename B>
+void SocketManager<B>::PrintStats() {
+	std::cout << "Read buffer pointer: " << rbuf.buf_ptr << std::endl;
+	std::cout << "Read buffer size: " << rbuf.buf_size << std::endl;
+}
+
 template <typename B>
 bool SocketManager<B>::CanRead() {
 	uint32_t header_size = sizeof(int32_t) + 1;  // Size of header (msg type + size)

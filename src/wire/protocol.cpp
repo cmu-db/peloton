@@ -31,14 +31,12 @@
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
+
+unsigned int cntr = 0;
+
 namespace peloton {
 namespace wire {
 
-// Prepares statment cache
-thread_local peloton::Cache<std::string, Statement> statement_cache_;
-
-// Query portal handler
-thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
@@ -658,17 +656,25 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
 }
 
 bool PacketManager::ManageFirstPacket() {
+  std::ofstream fs;
+  std::stringstream ss;
+  ss << "Msg_Log_" << client.sock->GetSocketFD() << ".txt";
+  fs.open(ss.str(), std::ios_base::app);
   Packet pkt;
   ResponseBuffer responses;
   bool status;
   // fetch the startup packet
   if (!ReadPacket(&pkt, false, &client)) {
+    fs << "First Packet. Can't Write or status: " << status << std::endl;
+    std::cout << "First Packet. Can't Write or status: " << status << std::endl;
     CloseClient();
     return false;
   }
   status = ProcessStartupPacket(&pkt, responses);
   if (!WritePackets(responses, &client) || !status) {
     // close client on write failure or status failure
+	fs << "First Packet. Can't Write or status: " << status << std::endl;
+	std::cout << "First Packet. Can't Write or status: " << status << std::endl;
     CloseClient();
     return false;
   }
@@ -681,15 +687,21 @@ bool PacketManager::ManagePacket() {
   bool status;
   bool can_read_more = true;
   while(can_read_more) {
-  ReadPacket(&pkt, true, &client);
-  status = ProcessPacket(&pkt, responses);
-  if (!WritePackets(responses, &client) || !status) {
-    // close client on write failure or status failure
-    CloseClient();
-    return false;
-  }
-  can_read_more = CanRead(&client);
-  pkt.Reset();
+	if(ReadPacket(&pkt, true, &client)) {
+		++cntr;
+		status = ProcessPacket(&pkt, responses);
+		if (!WritePackets(responses, &client) || !status) {
+		  std::cout << "Can't Write or status: " << status << std::endl;
+		  // close client on write failure or status failure
+		  CloseClient();
+		  return false;
+		}
+		can_read_more = CanRead(&client);
+		pkt.Reset();
+    }
+	else {
+		break;
+	}
   }
   return true;
 }
