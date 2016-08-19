@@ -132,13 +132,13 @@ class PacketManager {
   void ExecParseMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the BIND message of the extended query protocol */
-  void ExecBindMessage(Packet* pkt, ResponseBuffer& responses);
+  void ExecBindMessage(Packet* pkt, ResponseBuffer& responses, std::ofstream* fs);
 
   /* Process the DESCRIBE message of the extended query protocol */
   void ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response);
+  void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response, std::ofstream* fs);
 
   /* closes the socket connection with the client */
   void CloseClient();
@@ -159,7 +159,7 @@ class PacketManager {
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet */
-  bool ProcessPacket(Packet* pkt, ResponseBuffer& responses);
+  bool ProcessPacket(Packet* pkt, ResponseBuffer& responses, std::ofstream* fs);
 
   /* Manage the startup packet */
   bool ManageFirstPacket();
