@@ -164,7 +164,8 @@ std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(
  * @param num_rows Number of tuples to insert.
  */
 void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
-                                      bool mutate, bool random, bool group_by) {
+                                      bool mutate, bool random, bool group_by, 
+                                      concurrency::Transaction *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
 
@@ -212,12 +213,12 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     tuple.SetValue(3, string_value, testing_pool);
 
     ItemPointer *index_entry_ptr = nullptr;
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, &index_entry_ptr);
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, current_txn, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
+    txn_manager.PerformInsert(current_txn, tuple_slot_id, index_entry_ptr);
   }
 }
 
@@ -239,7 +240,7 @@ void ExecutorTestsUtil::PopulateTiles(
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  txn_manager.BeginTransaction();
+  auto current_txn = txn_manager.BeginTransaction();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
@@ -257,10 +258,12 @@ void ExecutorTestsUtil::PopulateTiles(
     ItemPointer *index_entry_ptr = nullptr;
     oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
     txn_manager.PerformInsert(
-        ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id), index_entry_ptr);
+        current_txn,
+        ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id), 
+        index_entry_ptr);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(current_txn);
 }
 
 /**
@@ -388,10 +391,10 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT,
-                                    false, false, false);
-  txn_manager.CommitTransaction();
+                                    false, false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   return table;
 }

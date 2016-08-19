@@ -83,12 +83,12 @@ TEST_F(LimitTests, NonLeafLimitOffsetTest) {
 
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false);
-  txn_manager.CommitTransaction();
+                                   false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -124,12 +124,12 @@ TEST_F(LimitTests, NonLeafSkipAllTest) {
 
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false);
-  txn_manager.CommitTransaction();
+                                   false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -165,12 +165,12 @@ TEST_F(LimitTests, NonLeafReturnAllTest) {
 
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false);
-  txn_manager.CommitTransaction();
+                                   false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -206,13 +206,13 @@ TEST_F(LimitTests, NonLeafHugeLimitTest) {
 
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 3, false,
-                                   false, false);
-  txn_manager.CommitTransaction();
+                                   false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));

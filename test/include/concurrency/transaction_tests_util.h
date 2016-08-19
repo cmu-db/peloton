@@ -285,12 +285,12 @@ class TransactionThread {
         LOG_INFO("Txn %d Abort", schedule->schedule_id);
         // Assert last operation
         PL_ASSERT(cur_seq == (int)schedule->operations.size());
-        schedule->txn_result = txn_manager->AbortTransaction();
+        schedule->txn_result = txn_manager->AbortTransaction(txn);
         txn = NULL;
         break;
       }
       case TXN_OP_COMMIT: {
-        schedule->txn_result = txn_manager->CommitTransaction();
+        schedule->txn_result = txn_manager->CommitTransaction(txn);
         LOG_INFO("Txn %d commits: %s", schedule->schedule_id,
                  schedule->txn_result == RESULT_SUCCESS ? "Success" : "Fail");
         txn = NULL;
@@ -310,7 +310,7 @@ class TransactionThread {
     }
 
     if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
-      txn_manager->AbortTransaction();
+      txn_manager->AbortTransaction(txn);
       txn = NULL;
       LOG_TRACE("ABORT NOW");
       if (execute_result == false) LOG_TRACE("Executor returns false");

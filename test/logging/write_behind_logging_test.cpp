@@ -82,7 +82,7 @@ int SeqScanCount(storage::DataTable *table,
     tuple_cnt += result_logical_tile->GetTupleCount();
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return tuple_cnt;
 }
@@ -97,69 +97,69 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
   txn_manager.SetNextCid(1);
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   auto tuple = ExecutorTestsUtil::GetTuple(table.get(), 1, pool.get());
   index_entry_ptr = nullptr;
-  auto visible1 = table->InsertTuple(tuple.get(), &index_entry_ptr);
-  txn_manager.PerformInsert(visible1, index_entry_ptr);
-  txn_manager.CommitTransaction();
-  // got cid 2
+  auto visible1 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
+  txn_manager.PerformInsert(txn, visible1, index_entry_ptr);
+  txn_manager.CommitTransaction(txn);
 
-  txn_manager.BeginTransaction();
+  // got cid 2
+  txn = txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 2, pool.get());
   index_entry_ptr = nullptr;
-  auto visible2 = table->InsertTuple(tuple.get(), &index_entry_ptr);
-  txn_manager.PerformInsert(visible2, index_entry_ptr);
-  txn_manager.CommitTransaction();
+  auto visible2 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
+  txn_manager.PerformInsert(txn, visible2, index_entry_ptr);
+  txn_manager.CommitTransaction(txn);
+  
   // got cid 3
-
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 3, pool.get());
   index_entry_ptr = nullptr;
-  auto invisible1 = table->InsertTuple(tuple.get(), &index_entry_ptr);
-  txn_manager.PerformInsert(invisible1, index_entry_ptr);
-  txn_manager.CommitTransaction();
+  auto invisible1 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
+  txn_manager.PerformInsert(txn, invisible1, index_entry_ptr);
+  txn_manager.CommitTransaction(txn);
+  
   // got cid 4
-
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 4, pool.get());
   index_entry_ptr = nullptr;
-  auto invisible2 = table->InsertTuple(tuple.get(), &index_entry_ptr);
-  txn_manager.PerformInsert(invisible2, index_entry_ptr);
-  txn_manager.CommitTransaction();
+  auto invisible2 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
+  txn_manager.PerformInsert(txn, invisible2, index_entry_ptr);
+  txn_manager.CommitTransaction(txn);
+  
   // got cid 5
-
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 5, pool.get());
   index_entry_ptr = nullptr;
-  auto visible3 = table->InsertTuple(tuple.get(), &index_entry_ptr);
-  txn_manager.PerformInsert(visible3, index_entry_ptr);
-  txn_manager.CommitTransaction();
+  auto visible3 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
+  txn_manager.PerformInsert(txn, visible3, index_entry_ptr);
+  txn_manager.CommitTransaction(txn);
+  
   // got cid 6
-
   std::vector<oid_t> column_ids;
   column_ids.push_back(0);
   column_ids.push_back(1);
   column_ids.push_back(2);
   column_ids.push_back(3);
 
-  txn_manager.BeginTransaction();
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible1.block)->GetHeader(), visible1.offset) == VISIBILITY_OK);
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible2.block)->GetHeader(), visible2.offset) == VISIBILITY_OK);
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible1.block)->GetHeader(), invisible1.offset) == VISIBILITY_OK);
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible2.block)->GetHeader(), invisible2.offset) == VISIBILITY_OK);
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible3.block)->GetHeader(), visible3.offset) == VISIBILITY_OK);
-  txn_manager.AbortTransaction();
+  txn = txn_manager.BeginTransaction();
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(visible1.block)->GetHeader(), visible1.offset) == VISIBILITY_OK);
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(visible2.block)->GetHeader(), visible2.offset) == VISIBILITY_OK);
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(invisible1.block)->GetHeader(), invisible1.offset) == VISIBILITY_OK);
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(invisible2.block)->GetHeader(), invisible2.offset) == VISIBILITY_OK);
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(visible3.block)->GetHeader(), visible3.offset) == VISIBILITY_OK);
+  txn_manager.AbortTransaction(txn);
 
   txn_manager.SetDirtyRange(std::make_pair(2, 4));
 
-  txn_manager.BeginTransaction();
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible1.block)->GetHeader(), visible1.offset) == VISIBILITY_OK);
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible2.block)->GetHeader(), visible2.offset) == VISIBILITY_OK);
-  EXPECT_FALSE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible1.block)->GetHeader(), invisible1.offset) == VISIBILITY_OK);
-  EXPECT_FALSE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible2.block)->GetHeader(), invisible2.offset) == VISIBILITY_OK);
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible3.block)->GetHeader(), visible3.offset) == VISIBILITY_OK);
-  txn_manager.AbortTransaction();
+  txn = txn_manager.BeginTransaction();
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(visible1.block)->GetHeader(), visible1.offset) == VISIBILITY_OK);
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(visible2.block)->GetHeader(), visible2.offset) == VISIBILITY_OK);
+  EXPECT_FALSE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(invisible1.block)->GetHeader(), invisible1.offset) == VISIBILITY_OK);
+  EXPECT_FALSE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(invisible2.block)->GetHeader(), invisible2.offset) == VISIBILITY_OK);
+  EXPECT_TRUE(txn_manager.IsVisible(txn, catalog_manager.GetTileGroup(visible3.block)->GetHeader(), visible3.offset) == VISIBILITY_OK);
+  txn_manager.AbortTransaction(txn);
 }
 
 }  // End test namespace

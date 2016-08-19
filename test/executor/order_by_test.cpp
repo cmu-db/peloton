@@ -93,13 +93,13 @@ TEST_F(OrderByTests, IntAscTest) {
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false);
-  txn_manager.CommitTransaction();
+                                   random, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -139,13 +139,13 @@ TEST_F(OrderByTests, IntDescTest) {
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false);
-  txn_manager.CommitTransaction();
+                                   random, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -185,13 +185,13 @@ TEST_F(OrderByTests, StringDescTest) {
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false);
-  txn_manager.CommitTransaction();
+                                   random, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -231,13 +231,13 @@ TEST_F(OrderByTests, IntAscStringDescTest) {
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false);
-  txn_manager.CommitTransaction();
+                                   random, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -280,13 +280,13 @@ TEST_F(OrderByTests, StringDescIntAscTest) {
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   bool random = true;
   ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 2, false,
-                                   random, false);
-  txn_manager.CommitTransaction();
+                                   random, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));

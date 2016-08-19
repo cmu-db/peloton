@@ -77,7 +77,7 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   for (int i = 0; i < 10; i++) {
     ExecuteInsert(txn, table, i, i);
   }
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return table;
 }
@@ -134,7 +134,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   for (int i = 0; i < 10; i++) {
     ExecuteInsert(txn, table, i, i);
   }
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return table;
 }
@@ -186,7 +186,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
   for (int i = 0; i < num_key; i++) {
     ExecuteInsert(txn, table, i, 0);
   }
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return table;
 }
