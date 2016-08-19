@@ -117,8 +117,6 @@ TEST_F(InsertTests, LoadingTest) {
 
   LOG_INFO("Duration: %.2lf", duration);
 
-  //EXPECT_LE(duration, 0.2);
-
   auto expected_tile_group_count = 0;
 
   int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
