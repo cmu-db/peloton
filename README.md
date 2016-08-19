@@ -1,22 +1,24 @@
 <a href="http://pelotondb.org/"><img src="http://db.cs.cmu.edu/wordpress/wp-content/uploads/2016/07/peloton.jpg" alt="Peloton Logo"></a>
 -----------------
-[![Join the chat at https://gitter.im/cmu-db/peloton](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/cmu-db/peloton?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Version](https://img.shields.io/badge/version-0.0.3-red.svg)](http://pelotondb.org/)
 [![Travis Status](https://travis-ci.org/cmu-db/peloton.svg?branch=master)](https://travis-ci.org/cmu-db/peloton)
-[![GitHub license](https://img.shields.io/badge/license-apache-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Jenkins Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
+[![Join the chat at https://gitter.im/cmu-db/peloton](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/cmu-db/peloton?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 <!---[![Coverage Status](https://coveralls.io/repos/github/cmu-db/peloton/badge.svg?branch=master)](https://coveralls.io/github/cmu-db/peloton?branch=master)--->
 
 ## What Is Peloton?
 
-Peloton is an in-memory DBMS designed for real-time analytics. It can handle both fast ACID transactions and complex analytical queries on the same database. 
+* Peloton is a self-driving in-memory relational DBMS for real-time analytics. 
+* It contains domain-specific AI for automatically adapting to evolving real-world workloads. 
+* It is designed from the ground up to leverage the characteristics of <a href="https://www.engadget.com/2015/07/28/intel-3d-memory-1000-times-faster/">fast non-volatile memory technologies</a>.
+* It can handle both fast ACID transactions and complex analytical queries on the same database. 
 
 ## What Problem Does Peloton Solve?
 
-The current trend is to use specialized systems that are optimized for only one of these workloads, and thus require an organization to maintain separate copies of the database. This adds additional cost to deploying a database application in terms of both storage and administration overhead. We present a hybrid DBMS architecture that efficiently supports varied workloads on the same database.
+The current trend is to manually tune the DBMS configuration for evolving real-world workloads. This approach requires the database administrator to constantly adapt the DBMS based on the current query workload. The adminstrator needs to understand the subtle interactions between the different knobs exposed by the system to do this kind of black-box tuning. Further, it is often the case that several critical parameters used within the DBMS are not exposed as knobs to the administrator.
 
-## How Does Peloton Accomplish Its Goals?
-
-Our approach differs from previous methods in that we use a single execution engine that is oblivious to the storage layout of data without sacrificing the performance benefits of the specialized systems. This obviates the need to maintain separate copies of the database in multiple independent systems.
+Peloton is designed to automate some of the critical tasks performed by the database administrator. Using novel physical design algorithms and domain-specific AI, it can automatically and incrementally adapt the storage layout, access methods, and data placement policy employed inside the DBMS in tandem with workload shifts. 
 
 For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
 
@@ -26,7 +28,7 @@ Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki
 
 ## Development / Contributing
 
-We invite you to help us build the future of self-driving DBMSs. This is the best moment to participate, as everyone can make an impact. Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
+We invite you to help us build the future of self-driving DBMSs. Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ## Issues
 
