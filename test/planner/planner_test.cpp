@@ -27,12 +27,19 @@ namespace test {
 // Planner Tests
 //===--------------------------------------------------------------------===//
 
-class PlannerTests : public PelotonTest {};
+class PlannerTests : public PelotonTest {
+ protected:
+  virtual void SetUp() {
+    PelotonTest::SetUp();
+    static std::unique_ptr<catalog::Catalog> catalog_(
+        catalog::Bootstrapper::bootstrap());
+  }
+};
 
 TEST_F(PlannerTests, DeletePlanTestParameter) {
 
   // Bootstrapping peloton
-  auto catalog = catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::bootstrap();
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 
   // Create table
@@ -80,14 +87,12 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
-
-  delete catalog;
 }
 
 TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   // Bootstrapping peloton
-  auto catalog = catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::bootstrap();
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 
   // Create table
@@ -148,13 +153,11 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
-
-  delete catalog;
 }
 
 TEST_F(PlannerTests, InsertPlanTestParameter) {
   // Bootstrapping peloton
-  auto catalog = catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::bootstrap();
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 
   // Create table
@@ -204,8 +207,6 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
-
-  delete catalog;
 }
 
 }  // End test namespace
