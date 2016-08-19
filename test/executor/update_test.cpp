@@ -129,7 +129,7 @@ TEST_F(UpdateTests, Updating) {
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction();
 
-/*  txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   LOG_INFO("Updating another tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET manager_id = manager_id + 1 WHERE "
@@ -180,7 +180,7 @@ TEST_F(UpdateTests, Updating) {
   // free the database just created
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();*/
+  txn_manager.CommitTransaction();
 
   delete catalog;
 }

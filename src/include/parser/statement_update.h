@@ -27,6 +27,7 @@ class UpdateClause {
   expression::AbstractExpression* value;
 
   ~UpdateClause() {
+	  std::cout << "I'M HERE";
 	delete column;
     delete value;
   }
