@@ -439,6 +439,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
   auto children = root->GetChildren();
   for (auto child : children) {
     CleanExecutorTree(child);
+    delete child;
   }
 }
 
