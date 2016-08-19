@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <array>
@@ -72,7 +71,6 @@ class SocketManager {
   Buffer rbuf;  // socket's read buffer
   Buffer wbuf;  // socket's write buffer
 
-
  private:
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
@@ -110,9 +108,6 @@ class SocketManager {
   void CloseSocket();
 };
 
-extern void StartServer(const PelotonConfiguration& configuration,
-                        Server *server);
-
 // Thread function created per client
 template <typename P, typename B>
 void ClientHandler(std::unique_ptr<int> clientfd);
@@ -120,7 +115,6 @@ void ClientHandler(std::unique_ptr<int> clientfd);
 // Server's "accept loop"
 template <typename P, typename B>
 void HandleConnections(Server *server);
-
 
 }
 }

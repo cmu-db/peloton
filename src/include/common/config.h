@@ -10,42 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <string>
+#include <gflags/gflags.h>
 
-namespace peloton {
+// Peloton port
+DECLARE_uint64(port);
 
-class PelotonConfiguration {
+// Maximum number of connections
+DECLARE_uint64(max_connections);
 
- public:
+// Socket family (AF_UNIX, AF_INET)
+DECLARE_string(socket_family);
 
-  static void PrintHelp();
-
-  int GetPort() const;
-
-  void SetPort(const int port);
-
-  int GetMaxConnections() const;
-
-  void SetMaxConnections(const int max_connections);
-
-  std::string GetSocketFamily() const;
-
-  void SetSocketFamily(const std::string& socket_family);
-
- protected:
-
-  // Peloton port
-  int port = 5432;
-
-  // Maximum number of connections
-  int max_connections = 64;
-
-  // Socket family (AF_UNIX, AF_INET)
-  std::string socket_family = "AF_INET";
-
-};
-
-}  // End peloton namespace
+// Both for showing the help info
+DECLARE_bool(h);
+DECLARE_bool(help);

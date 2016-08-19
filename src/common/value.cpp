@@ -834,6 +834,8 @@ static void throwTimestampFormatError(const std::string &str) {
 }
 
 int64_t Value::parseTimestampString(const std::string &str) {
+  LOG_TRACE("parsing timestamp: %s", str.c_str());
+
   // date_str
   std::string date_str(str);
   // This is the std:string API for "ltrim" and "rtrim".
@@ -1012,9 +1014,12 @@ int64_t Value::parseTimestampString(const std::string &str) {
 
   int64_t result = 0;
   try {
+    LOG_TRACE("parsed timestamp: %d %d %d %d %d %d %d", year, month, day, hour,
+              minute, second, time_zone);
     result = epoch_microseconds_from_components(
         (unsigned short int)year, (unsigned short int)month,
         (unsigned short int)day, hour + time_zone, minute, second);
+    LOG_TRACE("unix epoch number: %ld", result);
   }
   catch (const std::out_of_range &bad) {
     throwTimestampFormatError(str);

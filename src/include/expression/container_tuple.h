@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <functional>
@@ -110,6 +109,34 @@ class ContainerTuple : public AbstractTuple {
     return true;
   }
 
+  // Is the column value null ?
+  inline bool IsNull(const uint64_t column_id) const {
+    return GetValue(column_id).IsNull();
+  }
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const {
+
+    std::stringstream os;
+
+    size_t column_count;
+    if (column_ids_ != nullptr)
+      column_count = column_ids_->size();
+    else
+      column_count = container_->GetColumnMap().size();
+    for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
+      os << "(";
+      if (IsNull(column_itr)) {
+        os << "<NULL>";
+      } else {
+        os << GetValue(column_itr);
+      }
+      os << ")";
+    }
+
+    return os.str();
+  }
+
  private:
   /** @brief Underlying container behind this tuple interface. */
   T *container_;
@@ -196,8 +223,8 @@ class ContainerTuple<std::vector<Value>> : public AbstractTuple {
   /** @brief Compare whether this tuple equals to other value-wise.
    * Assume the schema of other tuple.Is the same as this. No check.
    */
-  bool EqualsNoSchemaCheck(
-      const ContainerTuple<std::vector<Value>> &other) const {
+  bool EqualsNoSchemaCheck(const ContainerTuple<std::vector<Value>> &other)
+      const {
     PL_ASSERT(container_->size() == other.container_->size());
 
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
