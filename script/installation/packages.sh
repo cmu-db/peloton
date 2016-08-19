@@ -5,6 +5,7 @@ apt-get --ignore-missing -y install \
     git \
     g++ \
     cmake \
+    libgflags-dev \
     libprotobuf-dev \
     protobuf-compiler \
     bison \
