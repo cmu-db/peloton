@@ -155,7 +155,7 @@ bool InsertExecutor::DExecute() {
 
       // Carry out insertion
       ItemPointer *index_entry_ptr = nullptr;
-      ItemPointer location = target_table->InsertTuple(tuple, &index_entry_ptr);
+      ItemPointer location = target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
 

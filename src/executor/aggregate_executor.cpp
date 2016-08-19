@@ -94,6 +94,8 @@ bool AggregateExecutor::DExecute() {
     }
   }
 
+  auto current_txn = executor_context_->GetTransaction();
+
   // Grab info from plan node
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
 
@@ -153,7 +155,7 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      auto location = output_table->InsertTuple(tuple.get());
+      auto location = output_table->InsertTuple(tuple.get(), current_txn);
       PL_ASSERT(location.block != INVALID_OID);
 
       auto &manager = catalog::Manager::GetInstance();
