@@ -155,7 +155,7 @@ void LoadYCSBDatabase() {
     executor.Execute();
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace ycsb
