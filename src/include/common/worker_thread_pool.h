@@ -18,6 +18,8 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
+#include "common/macros.h"
+
 namespace peloton {
 // a wrapper for boost worker thread pool.
 class WorkerThreadPool {
@@ -31,9 +33,9 @@ class WorkerThreadPool {
     thread_pool_.join_all();
   }
 
-  void InstantiatePool(const size_t &pool_size) {
+  void Initialize(const size_t &pool_size) {
     pool_size_ = pool_size;
-    ALWAYS_ASSERT(pool_size_ != 0);
+    PL_ASSERT(pool_size_ != 0);
     for (size_t i = 0; i < pool_size_; ++i) {
       // add thread to thread pool.
       thread_pool_.create_thread(

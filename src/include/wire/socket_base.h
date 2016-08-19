@@ -45,16 +45,6 @@ typedef unsigned char uchar;
 // use array as memory for the socket buffers can be fixed
 typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
 
-// struct Server {
-//  int port;
-//  int server_fd;
-//  int max_connections;
-//
-//  inline Server(const PelotonConfiguration& config)
-//      : port(config.GetPort()),
-//        server_fd(0),
-//        max_connections(config.GetMaxConnections()) {}
-//};
 
 // Buffers used to batch meesages at the socket
 struct Buffer {
@@ -88,12 +78,20 @@ class SocketManager {
   bool RefillReadBuffer();
 
  public:
-  bool assigned_to_pkt_manager;
+  unsigned int id;
+  bool first_packet;
   std::unique_ptr<PacketManager> socket_pkt_manager;
   struct event *ev_read;  // the read event
+  std::mutex execution_mutex;  // only one thread executing
+  SocketManager<B>* self;
 
-  inline SocketManager(int sock_fd)
-      : sock_fd(sock_fd), assigned_to_pkt_manager(false), ev_read(NULL) {}
+  inline SocketManager(int sock_fd, unsigned int assigned_id) : sock_fd(sock_fd),
+		  id(assigned_id), first_packet(false), ev_read(NULL), self(NULL) { }
+
+  int GetSocketFD() { return sock_fd; }
+
+  // Print buffer length and ptr
+  void PrintStats();
 
   // Check if there is data to read from buffer
   bool CanRead();
@@ -118,51 +116,5 @@ void ClientHandler(std::unique_ptr<int> clientfd);
 template <typename P, typename B>
 void HandleConnections(Server *server);
 
-/*
- * Functions defined here for template visibility
- *
- */
-
-/*
- * handle_connections - Server's accept loop. Takes the protocol's PacketManager
- * (P) and STL container type for the protocol's buffer (B)
- */
-
-// template <typename P, typename B>
-// void HandleConnections(Server *server) {
-//  int connfd, clilen;
-//  struct sockaddr_in cli_addr;
-//  clilen = sizeof(cli_addr);
-//
-//  for (;;) {
-//    // block and wait for incoming connection
-//    connfd = accept(server->server_fd, (struct sockaddr *)&cli_addr,
-//                    (socklen_t *)&clilen);
-//    if (connfd < 0) {
-//      LOG_ERROR("Server error: Connection not established");
-//      exit(EXIT_FAILURE);
-//    }
-//
-//    std::unique_ptr<int> clientfd(new int(connfd));
-//
-//    LOG_TRACE("LAUNCHING NEW THREAD");
-//    std::thread client_thread(ClientHandler<P, B>, std::move(clientfd));
-//    client_thread.detach();
-//  }
-//}
-
-/*
- * client_handler - Thread function to handle a client.
- * 		Takes the protocol's PacketManager (P) and STL container
- * 		type for the protocol's buffer (B)
- */
-// template <typename P, typename B>
-// void ClientHandler(std::unique_ptr<int> clientfd) {
-//  int fd = *clientfd;
-//  LOG_TRACE("Client fd: %d", fd);
-//  SocketManager<B> sm(fd);
-//  P p(&sm);
-//  p.ManagePackets();
-//}
 }
 }
