@@ -95,7 +95,7 @@ TEST_F(InsertTests, LoadingTest) {
 
   // Control the scale
   oid_t loader_threads_count = 1;
-  oid_t tilegroup_count_per_loader = 997;
+  oid_t tilegroup_count_per_loader = 1000;
 
   // Each tuple size ~40 B.
   oid_t tuple_size = 41;
