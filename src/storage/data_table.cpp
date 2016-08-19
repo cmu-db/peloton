@@ -21,6 +21,7 @@
 #include "common/platform.h"
 #include "catalog/foreign_key.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "logging/log_manager.h"
@@ -197,7 +198,9 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   return location;
 }
 
-ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr) {
+ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, 
+                                     const TargetList *targets_ptr, 
+                                     ItemPointer *index_entry_ptr) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetEmptyTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
@@ -219,7 +222,9 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, const TargetLi
 }
 
 
-ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **index_entry_ptr) {
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, 
+                                   concurrency::Transaction *transaction, 
+                                   ItemPointer **index_entry_ptr) {
   // the upper layer may not pass a index_entry_ptr (default value: nullptr) into the function.
   // in this case, we have to create a temp_ptr to hold the content.
   ItemPointer *temp_ptr = nullptr;
@@ -243,7 +248,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
     return location;
   }
   // Index checks and updates
-  if (InsertInIndexes(tuple, location, index_entry_ptr) == false) {
+  if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
@@ -273,7 +278,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
  *primary/unique).
  */
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
-                                ItemPointer location, ItemPointer **index_entry_ptr) {
+                                ItemPointer location, 
+                                concurrency::Transaction *transaction,
+                                ItemPointer **index_entry_ptr) {
   
   int index_count = GetIndexCount();
 
@@ -284,7 +291,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   std::function<bool(const ItemPointer &)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
-                &transaction_manager, std::placeholders::_1);
+                &transaction_manager, transaction, std::placeholders::_1);
 
   // Since this is NOT protected by a lock, concurrent insert may happen.
   bool res = true;
@@ -340,13 +347,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
               const TargetList *targets_ptr, ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
-  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   // this function is used for conditional insertion.
   // this helps avoid duplicated insertion caused by concurrent transactions.
-  std::function<bool(const ItemPointer &)> fn =
-    std::bind(&concurrency::TransactionManager::IsOccupied,
-              &transaction_manager, std::placeholders::_1);
+
+  // TODO: handle unique index.
+  // std::function<bool(const ItemPointer &)> fn =
+  //   std::bind(&concurrency::TransactionManager::IsOccupied,
+  //             &transaction_manager, std::placeholders::_1);
 
   // Transaform the target list into a hash set
   // when attempting to perform insertion to a secondary index,

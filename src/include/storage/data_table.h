@@ -57,6 +57,10 @@ namespace logging {
 class LogManager;
 }
 
+namespace concurrency {
+class Transaction;
+}
+
 namespace storage {
 
 class Tuple;
@@ -102,7 +106,7 @@ class DataTable : public AbstractTable {
   // as we implement logical-pointer indexing mechanism, targets_ptr is required.
   ItemPointer InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
   // insert tuple in table. the pointer to the index entry is returned as index_entry_ptr.
-  ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **index_entry_ptr = nullptr);
+  ItemPointer InsertTuple(const Tuple *tuple, concurrency::Transaction *transaction, ItemPointer **index_entry_ptr = nullptr);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -220,7 +224,10 @@ class DataTable : public AbstractTable {
 
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new tuple.
-  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **index_entry_ptr);
+  bool InsertInIndexes(const storage::Tuple *tuple, 
+                       ItemPointer location, 
+                       concurrency::Transaction *transaction, 
+                       ItemPointer **index_entry_ptr);
 
  protected:
 

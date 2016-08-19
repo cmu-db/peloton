@@ -44,8 +44,6 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     const oid_t &tuple_id, 
     const cid_t &current_cid) {
 
-  PL_ASSERT(IsOwner(tile_group_header, tuple_id) == false);
-
   // get the pointer to the last_reader_cid field.
   cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
   
@@ -288,7 +286,7 @@ void TimestampOrderingTransactionManager::YieldOwnership(
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  PL_ASSERT(IsOwner(tile_group_header, tuple_id));
+  PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id));
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
 
@@ -305,7 +303,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
   auto tile_group_header = tile_group->GetHeader();
 
   // if the current transaction has already owned this tuple, then perform read directly.
-  if (IsOwner(tile_group_header, tuple_id) == true) {
+  if (IsOwner(current_txn, tile_group_header, tuple_id) == true) {
     PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
     return true;
   }
@@ -652,7 +650,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
   Result result = current_txn->GetResult();
 
   // gc::GCManagerFactory::GetInstance().EndGCContext(end_commit_id);
-  EndTransaction();
+  EndTransaction(current_txn);
 
   return result;
 }

@@ -167,6 +167,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   auto &transaction_manager =
     concurrency::TransactionManagerFactory::GetInstance();
 
+  auto current_txn = executor_context_->GetTransaction();
+
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
   // for every tuple that is found in the index.
@@ -185,7 +187,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     while (true) {
       ++chain_length;
 
-      auto visibility = transaction_manager.IsVisible(tile_group_header, tuple_location.offset);
+      auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
@@ -201,9 +203,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         if (predicate_ == nullptr) {
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-          auto res = transaction_manager.PerformRead(tuple_location);
+          auto res = transaction_manager.PerformRead(current_txn, tuple_location);
           if (!res) {
-            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
             return res;
           }
           
@@ -215,9 +217,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           if (eval == true) {
             visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-            auto res = transaction_manager.PerformRead(tuple_location);
+            auto res = transaction_manager.PerformRead(current_txn, tuple_location);
             if (!res) {
-              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
               return res;
             }
             
@@ -233,7 +235,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                   tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID);
-        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId());
+        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= current_txn->GetBeginCommitId());
         if (is_acquired && is_alive) {
           // See an invisible version that does not belong to any one in the version chain.
           // this means that some other transactions have modified the version chain.
@@ -258,7 +260,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // in most cases, there should exist a visible version. 
           // if we have traversed through the chain and still can not fulfill one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return false;
         }
 
@@ -321,7 +323,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   }
 
   auto &transaction_manager =
-    concurrency::TransactionManagerFactory::GetInstance();
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  auto current_txn = executor_context_->GetTransaction();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
@@ -342,7 +346,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     while (true) {
       ++chain_length;
 
-      auto visibility = transaction_manager.IsVisible(tile_group_header, tuple_location.offset);
+      auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
@@ -378,9 +382,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         if (predicate_ == nullptr) {
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-          auto res = transaction_manager.PerformRead(tuple_location);
+          auto res = transaction_manager.PerformRead(current_txn, tuple_location);
           if (!res) {
-            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
             return res;
           }
           
@@ -392,9 +396,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           if (eval == true) {
             visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-            auto res = transaction_manager.PerformRead(tuple_location);
+            auto res = transaction_manager.PerformRead(current_txn, tuple_location);
             if (!res) {
-              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
               return res;
             }
           }
@@ -409,7 +413,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                   tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID);
-        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId());
+        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= current_txn->GetBeginCommitId());
         if (is_acquired && is_alive) {
           // See an invisible version that does not belong to any one in the version chain.
           // this means that some other transactions have modified the version chain.
@@ -437,7 +441,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           // in most cases, there should exist a visible version. 
           // if we have traversed through the chain and still can not fulfill one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return false;
         }
 

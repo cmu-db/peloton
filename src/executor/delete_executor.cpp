@@ -83,6 +83,8 @@ bool DeleteExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
+  auto current_txn = executor_context_->GetTransaction();
+
   LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
 
@@ -106,7 +108,7 @@ bool DeleteExecutor::DExecute() {
     if (is_owner == true) {
       // if the thread is the owner of the tuple, then directly update in place.
       LOG_TRACE("Thread is owner of the tuple");
-      transaction_manager.PerformDelete(old_location);
+      transaction_manager.PerformDelete(current_txn, old_location);
 
     } else {
 
@@ -145,18 +147,18 @@ bool DeleteExecutor::DExecute() {
         // the YieldOwnership() function helps us release the acquired write lock.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-          transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
-          transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+          transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
+          transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
           return false;
         }
-        transaction_manager.PerformDelete(old_location, new_location);
+        transaction_manager.PerformDelete(current_txn, old_location, new_location);
 
         executor_context_->num_processed += 1;  // deleted one
 
       } else {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
         return false;
       }
     }
