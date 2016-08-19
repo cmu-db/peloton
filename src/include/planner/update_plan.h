@@ -16,15 +16,11 @@
 #include "planner/project_info.h"
 #include "common/types.h"
 #include "parser/table_ref.h"
+#include "parser/statement_update.h"
 #include "catalog/schema.h"
 
 namespace peloton {
 
-namespace parser {
-class UpdateStatement;
-class UpdateClause;
-class TableRef;
-}
 
 namespace expression {
 class Expression;
@@ -51,8 +47,8 @@ class UpdatePlan : public AbstractPlan {
 
   inline ~UpdatePlan() {
     delete(where_);
-    while(!updates_.empty()) {
-    	updates_.pop_back();
+    for(size_t i = 0; i < updates_.size(); ++i) {
+    	delete(updates_[i]);
     }
   }
 

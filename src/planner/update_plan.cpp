@@ -69,12 +69,6 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   project_info_ = std::move(project_info);
 
   where_ = parse_tree->where->Copy();
-  std::cout << "Address of where_ " << where_ << std::endl;
-  std::cout << "Address of where_.left " << where_->GetLeft() << std::endl;
-  std::cout << "Address of where_.right " << where_->GetRight() << std::endl;
-  LOG_INFO("where_: %s", where_->GetInfo().c_str());
-  LOG_INFO("where_.left: %s", where_->GetLeft()->GetInfo().c_str());
-  LOG_INFO("where_.right: %s", where_->GetRight()->GetInfo().c_str());
   ReplaceColumnExpressions(target_table_->GetSchema(), where_);
 
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(

@@ -43,9 +43,9 @@ class DeletePlan : public AbstractPlan {
 
   explicit DeletePlan(parser::DeleteStatement *parse_tree);
 
-//  inline ~DeletePlan() {
-//	  delete(expr_);
-//  }
+  inline ~DeletePlan() {
+	  delete(expr_);
+  }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 

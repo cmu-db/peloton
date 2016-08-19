@@ -76,13 +76,6 @@ void AbstractPlan::ReplaceColumnExpressions(
                   .c_str());
     if (expression->GetLeft()->GetExpressionType() ==
         EXPRESSION_TYPE_COLUMN_REF) {
-    	LOG_INFO("BEFORE REPLACE");
-    	  std::cout << "Address of where_ " << expression << std::endl;
-    	  std::cout << "Address of where_.left " << expression->GetLeft() << std::endl;
-    	  std::cout << "Address of where_.right " << expression->GetRight() << std::endl;
-    	  LOG_INFO("where_: %s", expression->GetInfo().c_str());
-    	  LOG_INFO("where_.left: %s", expression->GetLeft()->GetInfo().c_str());
-    	  LOG_INFO("where_.right: %s", expression->GetRight()->GetInfo().c_str());
       auto expr = expression->GetModifiableLeft();
       std::string col_name(expr->GetName());
       LOG_TRACE("Column name: %s", col_name.c_str());
@@ -90,13 +83,6 @@ void AbstractPlan::ReplaceColumnExpressions(
       expression->setLeftExpression(
           expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
                                                                     col_name));
-      LOG_INFO("AFTER REPLACE");
-	  std::cout << "Address of where_ " << expression << std::endl;
-	  std::cout << "Address of where_.left " << expression->GetLeft() << std::endl;
-	  std::cout << "Address of where_.right " << expression->GetRight() << std::endl;
-	  LOG_INFO("where_: %s", expression->GetInfo().c_str());
-	  LOG_INFO("where_.left: %s", expression->GetLeft()->GetInfo().c_str());
-	  LOG_INFO("where_.right: %s", expression->GetRight()->GetInfo().c_str());
 
     } else {
       ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
