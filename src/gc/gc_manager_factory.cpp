@@ -16,7 +16,7 @@
 namespace peloton {
 namespace gc {
 
-GCType GCManagerFactory::gc_type_ = GC_TYPE_OFF;
+GarbageCollectionType GCManagerFactory::gc_type_ = GARBAGE_COLLECTION_TYPE_OFF;
 
 }  // namespace gc
 }  // namespace peloton

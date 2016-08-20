@@ -20,7 +20,7 @@ int peloton_layout_mode = LAYOUT_TYPE_ROW;
 LoggingType peloton_logging_mode = LOGGING_TYPE_INVALID;
 
 // GC mode
-GCType peloton_gc_mode;
+GarbageCollectionType peloton_gc_mode;
 
 // Checkpoint mode
 CheckpointType peloton_checkpoint_mode;

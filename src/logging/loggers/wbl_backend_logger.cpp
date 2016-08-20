@@ -19,6 +19,8 @@
 #include "logging/frontend_logger.h"
 #include "logging/loggers/wbl_backend_logger.h"
 
+#include "catalog/manager.h"
+
 namespace peloton {
 namespace logging {
 

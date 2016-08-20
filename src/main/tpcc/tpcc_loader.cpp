@@ -1535,7 +1535,7 @@ void LoadItems() {
     executor.Execute();
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void LoadWarehouses() {
@@ -1556,7 +1556,7 @@ void LoadWarehouses() {
     executor::InsertExecutor warehouse_executor(&warehouse_node, context.get());
     warehouse_executor.Execute();
 
-    txn_manager.CommitTransaction();
+    txn_manager.CommitTransaction(txn);
 
     // DISTRICTS
     for (auto district_itr = 0; district_itr < state.districts_per_warehouse;
@@ -1571,7 +1571,7 @@ void LoadWarehouses() {
       executor::InsertExecutor district_executor(&district_node, context.get());
       district_executor.Execute();
 
-      txn_manager.CommitTransaction();
+      txn_manager.CommitTransaction(txn);
 
       // CUSTOMERS
       for (auto customer_itr = 0; customer_itr < state.customers_per_district;
@@ -1599,7 +1599,7 @@ void LoadWarehouses() {
         executor::InsertExecutor history_executor(&history_node, context.get());
         history_executor.Execute();
 
-        txn_manager.CommitTransaction();
+        txn_manager.CommitTransaction(txn);
 
       }  // END CUSTOMERS
 
@@ -1646,7 +1646,7 @@ void LoadWarehouses() {
           order_line_executor.Execute();
         }
 
-        txn_manager.CommitTransaction();
+        txn_manager.CommitTransaction(txn);
       }
 
     }  // END DISTRICTS
@@ -1662,7 +1662,7 @@ void LoadWarehouses() {
       executor::InsertExecutor stock_executor(&stock_node, context.get());
       stock_executor.Execute();
 
-      txn_manager.CommitTransaction();
+      txn_manager.CommitTransaction(txn);
     }
 
   }  // END WAREHOUSES

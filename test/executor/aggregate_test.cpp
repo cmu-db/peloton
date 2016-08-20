@@ -50,13 +50,13 @@ TEST_F(AggregateTests, SortedDistinctTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, true);
-  txn_manager.CommitTransaction();
+                                   false, true, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -98,9 +98,9 @@ TEST_F(AggregateTests, SortedDistinctTest) {
                               output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -119,7 +119,7 @@ TEST_F(AggregateTests, SortedDistinctTest) {
 
   EXPECT_TRUE(executor.Init());
   EXPECT_TRUE(executor.Execute());
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -147,13 +147,13 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, true);
-  txn_manager.CommitTransaction();
+                                   false, true, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -198,9 +198,9 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
                               output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -221,7 +221,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -248,13 +248,13 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
 
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   false, true);
-  txn_manager.CommitTransaction();
+                                   false, true, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -303,9 +303,9 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
                               output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -326,7 +326,7 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -355,13 +355,14 @@ TEST_F(AggregateTests, HashDistinctTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
                                    true,
-                                   true);  // let it be random
-  txn_manager.CommitTransaction();
+                                   true, 
+                                   txn);  // let it be random
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -403,9 +404,9 @@ TEST_F(AggregateTests, HashDistinctTest) {
                               output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -425,7 +426,7 @@ TEST_F(AggregateTests, HashDistinctTest) {
   EXPECT_TRUE(executor.Init());
 
   EXPECT_TRUE(executor.Execute());
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -445,12 +446,12 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true);
-  txn_manager.CommitTransaction();
+                                   true, true, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -495,9 +496,9 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
                               output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -518,7 +519,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -534,13 +535,13 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true);
-  txn_manager.CommitTransaction();
+                                   true, true, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -591,9 +592,9 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
                               output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -614,7 +615,7 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -642,13 +643,13 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
 
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(data_table.get(), 2 * tuple_count, false,
-                                   true, true);
-  txn_manager.CommitTransaction();
+                                   true, true, txn);
+  txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -704,9 +705,9 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
                               output_table_schema, AGGREGATE_TYPE_PLAIN);
 
   // Create and set up executor
-  auto txn2 = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn2));
+      new executor::ExecutorContext(txn));
 
   executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
@@ -727,7 +728,7 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
 
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /* Verify result */
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());

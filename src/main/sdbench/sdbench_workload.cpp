@@ -487,7 +487,7 @@ void RunDirectTest() {
               index_columns_accessed,
               selectivity);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void RunInsertTest() {
@@ -550,7 +550,7 @@ void RunInsertTest() {
               index_columns_accessed,
               selectivity);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 static void RunAdaptTest() {

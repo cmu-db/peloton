@@ -119,6 +119,8 @@ bool SeqScanExecutor::DExecute() {
     concurrency::TransactionManager &transaction_manager =
         concurrency::TransactionManagerFactory::GetInstance();
 
+    auto current_txn = executor_context_->GetTransaction();
+
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -133,14 +135,17 @@ bool SeqScanExecutor::DExecute() {
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
+
+        auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_id);
+
         // check transaction visibility
-        if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+        if (visibility == VISIBILITY_OK) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-            auto res = transaction_manager.PerformRead(location);
+            auto res = transaction_manager.PerformRead(current_txn, location);
             if (!res) {
-              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
               return res;
             }
           } else {
@@ -150,9 +155,9 @@ bool SeqScanExecutor::DExecute() {
                             .IsTrue();
             if (eval == true) {
               position_list.push_back(tuple_id);
-              auto res = transaction_manager.PerformRead(location);
+              auto res = transaction_manager.PerformRead(current_txn, location);
               if (!res) {
-                transaction_manager.SetTransactionResult(RESULT_FAILURE);
+                transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
                 return res;
               }
               else {
