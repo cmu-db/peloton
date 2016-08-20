@@ -107,7 +107,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
-  if(sql_stmt->GetType() == STATEMENT_TYPE_SELECT){
+  if(sql_stmt->GetStatements().at(0)->GetType() == STATEMENT_TYPE_SELECT){
     auto t_desc = GenerateTupleDescriptor(query_string);
     statement->SetTupleDescriptor(t_desc);
   }
@@ -139,7 +139,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     auto &peloton_parser = parser::Parser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query);
 
-    auto select_stmt = (parser::SelectStatement *)sql_stmt.get();
+    auto select_stmt = (parser::SelectStatement *)sql_stmt->GetStatements().at(0);
     storage::DataTable *target_table = nullptr;
        if (select_stmt->from_table->list == NULL) {
         target_table = static_cast<storage::DataTable *>(
