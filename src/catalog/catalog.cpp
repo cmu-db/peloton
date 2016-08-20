@@ -44,7 +44,7 @@ void Catalog::CreateCatalogDatabase() {
 }
 
 // Create a database
-Result Catalog::CreateDatabase(std::string database_name) {
+Result Catalog::CreateDatabase(std::string database_name, concurrency::Transaction *txn) {
   // Check if a database with the same name exists
   for (auto database : databases) {
     if (database->GetDBName() == database_name) {
@@ -58,6 +58,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
   databases.push_back(database);
   // Update catalog_db with this database info
 
+<<<<<<< HEAD
   auto tuple =
       GetDatabaseCatalogTuple(databases[START_OID]
                                   ->GetTableWithName(DATABASE_CATALOG_NAME)
@@ -66,6 +67,12 @@ Result Catalog::CreateDatabase(std::string database_name) {
   catalog::InsertTuple(
       databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
       std::move(tuple));
+=======
+  auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
+      database_id,
+      database_name);
+  catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple), txn);
+>>>>>>> master
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
@@ -73,7 +80,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
 
 // Create a table in a database
 Result Catalog::CreateTable(std::string database_name, std::string table_name,
-                            std::unique_ptr<catalog::Schema> schema) {
+                            std::unique_ptr<catalog::Schema> schema, concurrency::Transaction *txn) {
   bool own_schema = true;
   bool adapt_table = false;
   oid_t table_id = GetNewID();
@@ -99,7 +106,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     //  Another way of insertion using transaction manager
     catalog::InsertTuple(
         databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
-        std::move(tuple));
+        std::move(tuple), txn);
     return Result::RESULT_SUCCESS;
   } else {
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
@@ -190,12 +197,27 @@ Result Catalog::CreateIndex(const std::string &database_name,
     // that came out of the parser
     if (key_attrs.size() != index_attr.size()) {
 
+<<<<<<< HEAD
       LOG_TRACE("Some columns are missing");
       return Result::RESULT_FAILURE;
     }
 
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
+=======
+        // Check if unique index or not
+        if(unique == false){
+        index_metadata = new index::IndexMetadata(
+                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
+                INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
+        }
+
+        else {
+        index_metadata = new index::IndexMetadata(
+                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
+                INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true); 
+        }
+>>>>>>> master
 
     // Check if unique index or not
     if (unique == false) {
@@ -221,7 +243,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
 }
 
 // Drop a database
-Result Catalog::DropDatabase(std::string database_name) {
+Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction *txn) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
@@ -229,7 +251,7 @@ Result Catalog::DropDatabase(std::string database_name) {
     LOG_TRACE("Deleting tuple from catalog");
     catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
                              ->GetTableWithName(DATABASE_CATALOG_NAME),
-                         database->GetOid());
+                         database->GetOid(), txn);
     oid_t database_offset = 0;
     for (auto database : databases) {
       if (database->GetDBName() == database_name) {
@@ -251,7 +273,7 @@ Result Catalog::DropDatabase(std::string database_name) {
 }
 
 // Drop a table
-Result Catalog::DropTable(std::string database_name, std::string table_name) {
+Result Catalog::DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn) {
 
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
             database_name.c_str());
@@ -265,7 +287,7 @@ Result Catalog::DropTable(std::string database_name, std::string table_name) {
       LOG_TRACE("Deleting tuple from catalog!");
       catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
                                ->GetTableWithName(TABLE_CATALOG_NAME),
-                           table_id);
+                           table_id, txn);
       LOG_TRACE("Deleting table!");
       database->DropTableWithOid(table_id);
       return Result::RESULT_SUCCESS;

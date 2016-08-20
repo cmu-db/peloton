@@ -339,9 +339,9 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   catalog::Manager::GetInstance().AddDatabase(&test_db);
   concurrency::TransactionManager &txn_manager =
       concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
-  ExecutorTestsUtil::PopulateTable(table, 5, true, false, false);
-  txn_manager.CommitTransaction();
+  auto txn = txn_manager.BeginTransaction();
+  ExecutorTestsUtil::PopulateTable(table, 5, true, false, false, txn);
+  txn_manager.CommitTransaction(txn);
   peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
 
   log_manager.SetSyncCommit(true);

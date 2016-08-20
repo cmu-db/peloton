@@ -300,7 +300,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
   // Start DeleteTest1
   ///////////////////////////////////////////////////////////////////
   
-  if(index_type != INDEX_TYPE_SKIPLIST) {
+  if(index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
     LaunchParallelTest(num_thread, DeleteTest1, index.get(), num_thread, num_key);
@@ -319,7 +319,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
              (int)index_type,
              timer.GetDuration());
   } else {
-    LOG_INFO("INDEX_TYPE_SKIPLIST (type = %d) does not"
+    LOG_INFO("INDEX_TYPE_BWTREE (type = %d) does not"
              " support the following tests",
              (int)index_type);
   }
@@ -328,7 +328,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
   // Start InsertTest2
   ///////////////////////////////////////////////////////////////////
   
-  if(index_type != INDEX_TYPE_SKIPLIST) {
+  if(index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
     LaunchParallelTest(num_thread, InsertTest2, index.get(), num_thread, num_key);
@@ -347,7 +347,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
              (int)index_type,
              timer.GetDuration());
   } else {
-    LOG_INFO("INDEX_TYPE_SKIPLIST (type = %d) does not"
+    LOG_INFO("INDEX_TYPE_BWTREE (type = %d) does not"
              " support the following tests",
              (int)index_type);
   }
@@ -356,7 +356,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
   // Start DeleteTest2
   ///////////////////////////////////////////////////////////////////
 
-  if(index_type != INDEX_TYPE_SKIPLIST) {
+  if(index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
     LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread, num_key);
@@ -375,7 +375,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
              (int)index_type,
              timer.GetDuration());
   } else {
-    LOG_INFO("INDEX_TYPE_SKIPLIST (type = %d) does not"
+    LOG_INFO("INDEX_TYPE_BWTREE (type = %d) does not"
              " support the following tests",
              (int)index_type);
   }
@@ -390,7 +390,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
 }
 
 TEST_F(IndexPerformanceTests, MultiThreadedTest) {
-  std::vector<IndexType> index_types = {INDEX_TYPE_BTREE, INDEX_TYPE_SKIPLIST, INDEX_TYPE_BWTREE};
+  std::vector<IndexType> index_types = {INDEX_TYPE_BTREE};
 
   // Run the test suite for each types of index
   for(auto index_type : index_types) {

@@ -480,7 +480,7 @@ void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
-    index->InsertEntry(key.get(), target_location);
+    index->InsertEntry(key.get(), new ItemPointer(target_location));
     // Increase the indexes' number of tuples by 1 as well
     index->IncreaseNumberOfTuplesBy(1);
   }

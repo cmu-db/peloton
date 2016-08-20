@@ -63,9 +63,11 @@ bool InsertExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  if (!target_table) {
-    transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
-    return false;
+  auto current_txn = executor_context_->GetTransaction();
+
+  if(!target_table) {
+	  transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
+	         return false;
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
@@ -94,22 +96,24 @@ bool InsertExecutor::DExecute() {
                                                         tuple_id);
 
       // Materialize the logical tile tuple
-      for (oid_t column_itr = 0; column_itr < column_count; column_itr++)
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
         tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr),
                         executor_pool);
+      }
 
-      peloton::ItemPointer location = target_table->InsertTuple(tuple.get());
+      // insert tuple into the table.
+      ItemPointer *index_entry_ptr = nullptr;
+      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), current_txn, &index_entry_ptr);
+
+      // it is possible that some concurrent transactions have inserted the same tuple.
+      // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
-        transaction_manager.SetTransactionResult(
-            peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location);
-      if (!res) {
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
-        return res;
-      }
+      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+
       executor_context_->num_processed += 1;  // insert one
     }
 
@@ -149,7 +153,8 @@ bool InsertExecutor::DExecute() {
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
 
       // Carry out insertion
-      ItemPointer location = target_table->InsertTuple(tuple);
+      ItemPointer *index_entry_ptr = nullptr;
+      ItemPointer location = target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
       if (tuple->GetColumnCount() > 2) {
@@ -158,15 +163,12 @@ bool InsertExecutor::DExecute() {
 
       if (location.block == INVALID_OID) {
         LOG_TRACE("Failed to Insert. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location);
-      if (!res) {
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
-        return res;
-      }
+      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+      
       LOG_TRACE("Number of tuples in table after insert: %lu",
                 target_table->GetTupleCount());
 

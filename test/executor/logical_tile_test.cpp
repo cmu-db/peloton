@@ -67,21 +67,22 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   // txn_id_t txn_id = txn->GetTransactionId();
 
   auto tuple_id1 = tile_group->InsertTuple(&tuple1);
   auto tuple_id2 = tile_group->InsertTuple(&tuple2);
   auto tuple_id3 = tile_group->InsertTuple(&tuple1);
 
-  txn_manager.PerformInsert(
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id1));
-  txn_manager.PerformInsert(
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id2));
-  txn_manager.PerformInsert(
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id3));
+  ItemPointer *index_entry_ptr = nullptr;
+  txn_manager.PerformInsert(txn,
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id1), index_entry_ptr);
+  txn_manager.PerformInsert(txn,
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id2), index_entry_ptr);
+  txn_manager.PerformInsert(txn,
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id3), index_entry_ptr);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (1 BASE TILE)

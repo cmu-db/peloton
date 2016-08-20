@@ -108,7 +108,7 @@ void ExecuteTileGroupTest() {
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
+        "primary_index", 123, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
@@ -135,13 +135,16 @@ void ExecuteTileGroupTest() {
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
+    ItemPointer  *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, txn, &index_entry_ptr);
+    
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    txn_manager.PerformInsert(tuple_slot_id);
+    
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   /////////////////////////////////////////////////////////
   // Do a seq scan with predicate on top of the table
@@ -200,7 +203,7 @@ void ExecuteTileGroupTest() {
 
   EXPECT_FALSE(mat_executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(TileGroupLayoutTest, RowLayout) {
