@@ -56,7 +56,9 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
   // DELETE FROM department_table WHERE id = $0
   parser::DeleteStatement *delete_statement = new parser::DeleteStatement();
-  delete_statement->table_name = "department_table";
+  auto name = new char[strlen("department_table") + 1]();
+  strcpy(name, "department_table");
+  delete_statement->table_name = name;
   Value val =
       ValueFactory::GetNullValue();  // The value is not important at this point
 
@@ -84,9 +86,12 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   del_plan->SetParameterValues(values);
 
   // free the database just created
-  txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
+
+  delete values;
+  delete del_plan;
+  delete delete_statement;
 }
 
 TEST_F(PlannerTests, UpdatePlanTestParameter) {
@@ -111,14 +116,18 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   parser::UpdateStatement *update_statement = new parser::UpdateStatement();
   parser::TableRef *table_ref =
       new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
-  table_ref->name = "department_table";
+  auto name = new char[strlen("department_table") + 1]();
+  strcpy(name, "department_table");
+  table_ref->name = name;
   update_statement->table = table_ref;
   Value val =
       ValueFactory::GetNullValue();  // The value is not important at this point
 
   // name = $0
   auto update = new parser::UpdateClause();
-  update->column = "name";
+  auto column = new char[5]();
+  strcpy(column, "name");
+  update->column = column;
   auto parameter_expr = new expression::ParameterValueExpression(0, val);
   update->value = parameter_expr;
   auto updates = new std::vector<parser::UpdateClause *>();
@@ -150,9 +159,12 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   update_plan->SetParameterValues(values);
 
   // free the database just created
-  txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
+
+  delete values;
+  delete update_statement;
+  delete update_plan;
 }
 
 TEST_F(PlannerTests, InsertPlanTestParameter) {
@@ -175,7 +187,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   // INSERT INTO department_table VALUES ($0, $1)
   auto insert_statement =
       new parser::InsertStatement(peloton::INSERT_TYPE_VALUES);
-  insert_statement->table_name = "department_table";
+  auto name = new char[strlen("department_table") + 1]();
+  strcpy(name, "department_table");
+  insert_statement->table_name = name;
   std::vector<char *> *columns = NULL;  // will not be used
   insert_statement->columns = columns;
 
@@ -204,9 +218,12 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   insert_plan->SetParameterValues(values);
 
   // free the database just created
-  txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
+
+  delete values;
+  delete insert_plan;
+  delete insert_statement;
 }
 
 }  // End test namespace
