@@ -47,8 +47,8 @@ class UpdatePlan : public AbstractPlan {
 
   inline ~UpdatePlan() {
     delete(where_);
-    for(size_t i = 0; i < updates_.size(); ++i) {
-    	delete(updates_[i]);
+    for(size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
+    	delete(updates_[update_itr]);
     }
   }
 

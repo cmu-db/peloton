@@ -49,7 +49,7 @@ AbstractExpression::~AbstractExpression() {
   if (m_right != nullptr) {
     delete m_right;
   }
-
+  // Parser variables need to be cleaned too
   delete name;
   delete column;
   delete alias;

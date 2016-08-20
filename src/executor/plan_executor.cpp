@@ -119,12 +119,6 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
         }
 
         delete output_schema;
-        /*LOG_TRACE("Final Answer (returned): ");
-        for(auto res : result) {
-            LOG_TRACE("First: %s, Second: %s", std::string(res.first.begin(),
-        res.first.end()).c_str(),
-                    std::string(res.second.begin(), res.second.end()).c_str());
-        }*/
       }
       break;
     }
