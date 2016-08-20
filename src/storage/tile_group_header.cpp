@@ -55,9 +55,6 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
     SetEndCommitId(tuple_slot_id, MAX_CID);
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
-
-    SetInsertCommit(tuple_slot_id, false);  // unused
-    SetDeleteCommit(tuple_slot_id, false);  // unused
   }
 }
 
@@ -86,8 +83,6 @@ const std::string TileGroupHeader::GetInfo() const {
     txn_id_t txn_id = GetTransactionId(header_itr);
     cid_t beg_commit_id = GetBeginCommitId(header_itr);
     cid_t end_commit_id = GetEndCommitId(header_itr);
-    bool insert_commit = GetInsertCommit(header_itr);
-    bool delete_commit = GetDeleteCommit(header_itr);
 
     int width = 10;
     os << "\t txn id : ";
@@ -107,18 +102,6 @@ const std::string TileGroupHeader::GetInfo() const {
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
-
-    os << " insert commit : ";
-    if (insert_commit == true)
-      os << "O";
-    else
-      os << "X";
-
-    os << " delete commit : ";
-    if (delete_commit == true)
-      os << "O";
-    else
-      os << "X";
 
     peloton::ItemPointer location = GetNextItemPointer(header_itr);
     peloton::ItemPointer location2 = GetPrevItemPointer(header_itr);
@@ -153,8 +136,6 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     txn_id_t txn_id = GetTransactionId(header_itr);
     cid_t beg_commit_id = GetBeginCommitId(header_itr);
     cid_t end_commit_id = GetEndCommitId(header_itr);
-    bool insert_commit = GetInsertCommit(header_itr);
-    bool delete_commit = GetDeleteCommit(header_itr);
 
     int width = 10;
 
@@ -177,18 +158,6 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
       os << std::setw(width) << "MAX_CID";
     else
       os << std::setw(width) << end_commit_id;
-
-    os << " insert commit : ";
-    if (insert_commit == true)
-      os << "O";
-    else
-      os << "X";
-
-    os << " delete commit : ";
-    if (delete_commit == true)
-      os << "O";
-    else
-      os << "X";
 
     peloton::ItemPointer location = GetNextItemPointer(header_itr);
     os << " prev : "

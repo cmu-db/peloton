@@ -217,6 +217,10 @@ class Index : public Printable {
   // Point Modification
   ///////////////////////////////////////////////////////////////////
 
+  // designed for secondary indexes.
+  virtual bool InsertEntry(const storage::Tuple *key,
+                           ItemPointer *location_ptr) = 0;
+
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
                            const ItemPointer &location) = 0;
@@ -231,7 +235,7 @@ class Index : public Printable {
   // into the index and return true.
   // This function should be called for all primary/unique index insert
   virtual bool CondInsertEntry(const storage::Tuple *key,
-                               const ItemPointer &location,
+                               ItemPointer *location,
                                std::function<bool(const ItemPointer &)> \
                                  predicate) = 0;
 

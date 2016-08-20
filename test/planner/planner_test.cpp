@@ -35,11 +35,11 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
 	// Bootstrapping peloton
 	catalog::Bootstrapper::bootstrap();
-	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
 	// Create table
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-	txn_manager.BeginTransaction();
+	auto txn = txn_manager.BeginTransaction();
 	auto id_column =
 	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
 		                      "id", true);
@@ -49,7 +49,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
 	std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
 	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME,
-			"department_table", std::move(table_schema));
+			"department_table", std::move(table_schema), txn);
 
 	// DELETE FROM department_table WHERE id = $0
 	parser::DeleteStatement *delete_statement = new parser::DeleteStatement();
@@ -77,6 +77,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
 	// bind values to parameters in plan
 	del_plan->SetParameterValues(values);
+	txn_manager.CommitTransaction(txn);
 
 }
 
@@ -85,11 +86,11 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
 	// Bootstrapping peloton
 	catalog::Bootstrapper::bootstrap();
-	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
 	// Create table
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-	txn_manager.BeginTransaction();
+	auto txn = txn_manager.BeginTransaction();
 	auto id_column =
 	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
 		                      "id", true);
@@ -99,7 +100,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
 	std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
 	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME,
-			"department_table", std::move(table_schema));
+			"department_table", std::move(table_schema), txn);
 
 	// UPDATE department_table SET name = $0 WHERE id = $1
 	parser::UpdateStatement *update_statement = new parser::UpdateStatement();
@@ -138,17 +139,18 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
 	// bind values to parameters in plan
 	update_plan->SetParameterValues(values);
+	txn_manager.CommitTransaction(txn);
 
 }
 
 TEST_F(PlannerTests, InsertPlanTestParameter) {
 	// Bootstrapping peloton
 	catalog::Bootstrapper::bootstrap();
-	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
 	// Create table
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-	txn_manager.BeginTransaction();
+	auto txn = txn_manager.BeginTransaction();
 	auto id_column =
 	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
 		                      "id", true);
@@ -158,7 +160,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
 	std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
 	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME,
-			"department_table", std::move(table_schema));
+			"department_table", std::move(table_schema), txn);
 
 	// INSERT INTO department_table VALUES ($0, $1)
 	auto insert_statement = new parser::InsertStatement(peloton::INSERT_TYPE_VALUES);
@@ -188,6 +190,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 	LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
 	// bind values to parameters in plan
 	insert_plan->SetParameterValues(values);
+	txn_manager.CommitTransaction(txn);
 
 }
 

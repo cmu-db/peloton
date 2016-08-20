@@ -114,7 +114,7 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_SKIPLIST,
+        "primary_index", 123, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
         tuple_schema,
         key_schema,
@@ -149,14 +149,15 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
       tuple.SetValue(col_itr, value, nullptr);
     }
 
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple, txn, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
-    txn->RecordInsert(tuple_slot_id);
+    txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 expression::AbstractExpression *GetPredicate() {
@@ -286,7 +287,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   ExecuteTest(&hybrid_scan_executor);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
@@ -333,7 +334,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   ExecuteTest(&hybrid_scan_executor);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
@@ -383,11 +384,15 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
 
   ExecuteTest(&hybrid_scan_executor);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void BuildIndex(std::shared_ptr<index::Index> index,
                 storage::DataTable *table) {
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
@@ -402,10 +407,13 @@ void BuildIndex(std::shared_ptr<index::Index> index,
       tile_group->CopyTuple(tuple_id, tuple_ptr.get());
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
-      table->InsertInIndexes(tuple_ptr.get(), location);
+      ItemPointer *index_entry_ptr = nullptr;
+      table->InsertInIndexes(tuple_ptr.get(), location, txn, &index_entry_ptr);
     }
     index->IncrementIndexedTileGroupOffset();
   }
+  
+  txn_manager.CommitTransaction(txn);
 }
 
 
@@ -448,7 +456,7 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_SKIPLIST,
+      "primary_index", 123, INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
@@ -468,3 +476,4 @@ TEST_F(HybridIndexTests, HybridScanTest) {
 }  // namespace hybrid_index_test
 }  // namespace test
 }  // namespace peloton
+

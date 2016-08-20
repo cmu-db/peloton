@@ -38,14 +38,24 @@ class TileGroup;
  * This contains information related to MVCC.
  * It is shared by all tiles in a tile group.
  *
- * Layout :
- *
+ *  Layout :
+ *  
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | IndexCount(4
- *bytes) |
- *  | ReservedField (24 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte)
+ *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
+ *  | Indirection (8 bytes) | ReservedField (24 bytes)
  *  -----------------------------------------------------------------------------
+ *
+ *  FIELD DESCRIPTIONS: 
+ *  ===================
+ *  TxnID: serve as a write lock on the tuple version.
+ *  BeginTimeStamp: the lower bound of the version visibility range.
+ *  EndTimeStamp: the upper bound of the version visibility range.
+ *  NextItemPointer: the pointer pointing to the next (older) version in the version chain. 
+ *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
+ *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
+ *  ReservedField: unused space for future usage.
+ *
  */
 
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
@@ -122,13 +132,10 @@ class TileGroupHeader : public Printable {
 
   // Getters
 
-  // DOUBLE CHECK: whether we need atomic load???
   // it is possible that some other transactions are modifying the txn_id,
   // but the current transaction reads the txn_id.
   // the returned value seems to be uncertain.
   inline txn_id_t GetTransactionId(const oid_t &tuple_slot_id) const {
-    // txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    // return __atomic_load_n(txn_id_ptr, __ATOMIC_RELAXED);
     return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
@@ -148,22 +155,13 @@ class TileGroupHeader : public Printable {
     return *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset));
   }
 
+  inline ItemPointer * GetIndirection(const oid_t &tuple_slot_id) const {
+    return *(ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset);
+  }
+
   // constraint: at most 24 bytes.
   inline char *GetReservedFieldRef(const oid_t &tuple_slot_id) const {
     return (char *)(TUPLE_HEADER_LOCATION + reserved_field_offset);
-  }
-
-  inline bool GetInsertCommit(const oid_t &tuple_slot_id) const {
-    return *((bool *)(TUPLE_HEADER_LOCATION + insert_commit_offset));
-  }
-
-  inline bool GetDeleteCommit(const oid_t &tuple_slot_id) const {
-    return *((bool *)(TUPLE_HEADER_LOCATION + delete_commit_offset));
-  }
-
-  // used only by occ_rb_txn_manager
-  inline char *GetPrevItempointerField(const oid_t &tuple_slot_id) const {
-    return (char *)(TUPLE_HEADER_LOCATION + prev_pointer_offset);
   }
 
   // Setters
@@ -172,7 +170,7 @@ class TileGroupHeader : public Printable {
     this->tile_group = tile_group;
   }
   inline void SetTransactionId(const oid_t &tuple_slot_id,
-                               const txn_id_t &transaction_id) {
+                               const txn_id_t &transaction_id) const {
     *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
   }
 
@@ -196,19 +194,9 @@ class TileGroupHeader : public Printable {
     *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset)) = item;
   }
 
-  inline void SetInsertCommit(const oid_t &tuple_slot_id,
-                              const bool commit) const {
-    *((bool *)(TUPLE_HEADER_LOCATION + insert_commit_offset)) = commit;
-  }
-
-  inline void SetDeleteCommit(const oid_t &tuple_slot_id,
-                              const bool commit) const {
-    *((bool *)(TUPLE_HEADER_LOCATION + delete_commit_offset)) = commit;
-  }
-
-  // Getters for addresses
-  inline txn_id_t *GetTransactionIdLocation(const oid_t &tuple_slot_id) const {
-    return ((txn_id_t *)(TUPLE_HEADER_LOCATION));
+  inline void SetIndirection(const oid_t &tuple_slot_id,
+                             const ItemPointer *indirection) const {
+    *((const ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset)) = indirection;
   }
 
   inline txn_id_t SetAtomicTransactionId(const oid_t &tuple_slot_id,
@@ -241,34 +229,19 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  static inline size_t GetReservedSize() { return reserverd_size; }
-  // *
-  // -----------------------------------------------------------------------------
-  // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
-  // *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
-  // ReservedField (24 bytes)
-  // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
-  // *
-  // -----------------------------------------------------------------------------
+  static inline size_t GetReservedSize() { return reserved_size; }
 
   // header entry size is the size of the layout described above
-  static const size_t reserverd_size = 24;
-  // FIXME: there is no space reserved for index count?
+  static const size_t reserved_size = 24;
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          2 * sizeof(ItemPointer) +
-                                          reserverd_size + 2 * sizeof(bool);
+                                          2 * sizeof(ItemPointer) + sizeof(ItemPointer*) + reserved_size;
   static const size_t txn_id_offset = 0;
-  static const size_t begin_cid_offset = sizeof(txn_id_t);
+  static const size_t begin_cid_offset = txn_id_offset + sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
   static const size_t next_pointer_offset = end_cid_offset + sizeof(cid_t);
-  static const size_t prev_pointer_offset =
-      next_pointer_offset + sizeof(ItemPointer);
-  static const size_t reserved_field_offset =
-      prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t insert_commit_offset =
-      reserved_field_offset + reserverd_size;
-  static const size_t delete_commit_offset =
-      insert_commit_offset + sizeof(bool);
+  static const size_t prev_pointer_offset = next_pointer_offset + sizeof(ItemPointer);
+  static const size_t indirection_offset = prev_pointer_offset + sizeof(ItemPointer);
+  static const size_t reserved_field_offset = indirection_offset + sizeof(ItemPointer);
 
  private:
   //===--------------------------------------------------------------------===//

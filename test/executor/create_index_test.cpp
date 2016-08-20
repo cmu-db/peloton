@@ -46,14 +46,14 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Bootstrapping...");
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
 
   // Create a table first
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id INT, dept_name TEXT);");
   std::unique_ptr<Statement> statement;
@@ -72,12 +72,12 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Table Created");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
   // Inserting a tuple end-to-end
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO department_table(dept_id,student_id ,dept_name) VALUES (1,52,'hello_1');");
   statement.reset(new Statement("INSERT", "INSERT INTO department_table(dept_id, student_id, dept_name) VALUES (1,52,'hello_1');"));
@@ -92,10 +92,10 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // Now Updating end-to-end
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Creating and Index");
   LOG_INFO("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement("CREATE", "CREATE INDEX saif ON department_table (student_id);"));
@@ -110,7 +110,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("INDEX CREATED!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   auto target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, "department_table"); 

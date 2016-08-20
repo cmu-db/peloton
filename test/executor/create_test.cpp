@@ -34,7 +34,7 @@ class CreateTests : public PelotonTest {};
 TEST_F(CreateTests, CreatingTable) {
 
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Insert a table first
   auto id_column =
@@ -55,7 +55,7 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Init();
   executor.Execute();
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
 }

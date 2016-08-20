@@ -22,17 +22,17 @@ namespace gc {
 class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
-    static GCManager gc_manager(GC_TYPE_OFF);
+    static GCManager gc_manager(GARBAGE_COLLECTION_TYPE_OFF);
     return gc_manager;
   }
 
-  static void Configure(GCType gc_type) { gc_type_ = gc_type; }
+  static void Configure(GarbageCollectionType gc_type) { gc_type_ = gc_type; }
 
-  static GCType GetGCType() { return gc_type_; }
+  static GarbageCollectionType GetGCType() { return gc_type_; }
 
  private:
   // GC type
-  static GCType gc_type_;
+  static GarbageCollectionType gc_type_;
 };
 
 }  // namespace gc
