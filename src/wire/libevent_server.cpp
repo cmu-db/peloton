@@ -165,8 +165,35 @@ Server::Server() {
   }
   // This socket family code is not implemented yet
   else if (FLAGS_socket_family == "AF_UNIX") {
-    LOG_INFO("The AF_UNIX socket family is not implemented");
-    exit(EXIT_FAILURE);
+	struct sockaddr_un serv_addr;
+	int len;
+
+	std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(port_);
+	memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sun_family = AF_UNIX;
+    strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
+            sizeof(serv_addr.sun_path) - 1);
+    unlink(serv_addr.sun_path);
+    len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
+
+    listener = evconnlistener_new_bind(
+        base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
+        -1, (struct sockaddr *)&serv_addr, len);
+    if (!listener) {
+      LOG_INFO("Couldn't create listener");
+      exit(EXIT_FAILURE);
+    }
+
+    event_base_dispatch(base);
+
+    evconnlistener_free(listener);
+    event_free(evstop);
+    event_base_free(base);
+
+  }
+  else {
+	  LOG_ERROR("Socket family %s not supported", FLAGS_socket_family.c_str());
+	  exit(EXIT_FAILURE);
   }
 }
 
