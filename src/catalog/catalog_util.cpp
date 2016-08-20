@@ -43,14 +43,6 @@ void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tupl
 
 void DeleteTuple(storage::DataTable *table, oid_t id, concurrency::Transaction *txn){
   PL_ASSERT(txn != nullptr);
-	// auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
- //  // auto txn = peloton::concurrency::current_txn;
- //  bool single_statement_txn = false;
- //  if (txn == nullptr) {
- //    single_statement_txn = true;
- //    txn = txn_manager.BeginTransaction();
- //  }
-
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
