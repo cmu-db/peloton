@@ -70,9 +70,22 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   const storage::AbstractTable *table_ = nullptr;
 
+  // columns to be returned as results
+  std::vector<oid_t> column_ids_;
+
+  // columns for key accesses.
+  std::vector<oid_t> key_column_ids_;
+
+  // all the columns in a table.
+  std::vector<oid_t> full_column_ids_;
+
+  // expression types ( >, <, =, ...)
+  std::vector<ExpressionType> expr_types_;
+
+  // values for evaluation.
   std::vector<peloton::Value> values_;
 
-  std::vector<oid_t> full_column_ids_;
+  std::vector<expression::AbstractExpression *> runtime_keys_;
 
   bool key_ready_ = false;
 };

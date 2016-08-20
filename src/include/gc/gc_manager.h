@@ -54,7 +54,7 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager(const GCType type)
+  GCManager(const GarbageCollectionType type)
       : is_running_(true), gc_type_(type), reclaim_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
@@ -90,7 +90,7 @@ class GCManager {
   // Data members
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
-  GCType gc_type_;
+  GarbageCollectionType gc_type_;
 
   std::unique_ptr<std::thread> gc_thread_;
 

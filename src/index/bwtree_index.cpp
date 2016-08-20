@@ -56,18 +56,28 @@ BWTREE_INDEX_TYPE::~BWTreeIndex() {
 BWTREE_TEMPLATE_ARGUMENTS
 bool
 BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
+                               ItemPointer *location_ptr) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+  
+  bool ret = container.Insert(index_key, location_ptr);
+
+  return ret;
+}
+
+/*
+ * InsertEntry() - insert a key-value pair into the map
+ *
+ * If the key value pair already exists in the map, just return false
+ */
+BWTREE_TEMPLATE_ARGUMENTS
+bool
+BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
                                const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
   
-  ItemPointer *item_p = new ItemPointer{location};
-  
-  bool ret = container.Insert(index_key, item_p);
-  // If insertion fails we just delete the new value and return false
-  // to notify the caller
-  if(ret == false) {
-    delete item_p;
-  }
+  bool ret = container.Insert(index_key, new ItemPointer(location));
 
   return ret;
 }
@@ -106,19 +116,18 @@ BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
 BWTREE_TEMPLATE_ARGUMENTS
 bool
 BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                   const ItemPointer &location,
+                                   ItemPointer *location,
                                    std::function<bool(const ItemPointer &)> predicate) {
   KeyType index_key;
   index_key.SetFromKey(key);
   
-  ItemPointer *item_p = new ItemPointer{location};
   bool predicate_satisfied = false;
   
   // This function will complete them in one step
   // predicate will be set to nullptr if the predicate
   // returns true for some value
   bool ret = container.ConditionalInsert(index_key,
-                                         item_p,
+                                         location,
                                          predicate,
                                          &predicate_satisfied);
 
@@ -128,8 +137,6 @@ BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
     assert(ret == true);
   } else {
     assert(ret == false);
-    
-    delete item_p;
   }
 
   return ret;

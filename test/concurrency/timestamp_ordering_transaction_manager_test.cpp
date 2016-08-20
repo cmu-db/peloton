@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// ts_order_txn_manager_test.cpp
+// timestamp_ordering_transaction_manager_test.cpp
 //
-// Identification: test/concurrency/ts_order_txn_manager_test.cpp
+// Identification: test/concurrency/timestamp_ordering_transaction_manager_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,10 +22,10 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class TsOrderTxnManagerTests : public PelotonTest {};
+class TimestampOrderingTransactionManagerTests : public PelotonTest {};
 
-TEST_F(TsOrderTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_TO);
+TEST_F(TimestampOrderingTransactionManagerTests, Test) {
+  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_TIMESTAMP_ORDERING);
   EXPECT_TRUE(true);
 }
 
