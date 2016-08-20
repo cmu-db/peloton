@@ -58,7 +58,6 @@ Result Catalog::CreateDatabase(std::string database_name, concurrency::Transacti
   databases.push_back(database);
   // Update catalog_db with this database info
 
-<<<<<<< HEAD
   auto tuple =
       GetDatabaseCatalogTuple(databases[START_OID]
                                   ->GetTableWithName(DATABASE_CATALOG_NAME)
@@ -66,13 +65,7 @@ Result Catalog::CreateDatabase(std::string database_name, concurrency::Transacti
                               database_id, database_name);
   catalog::InsertTuple(
       databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
-      std::move(tuple));
-=======
-  auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
-      database_id,
-      database_name);
-  catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple), txn);
->>>>>>> master
+      std::move(tuple), txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
@@ -197,27 +190,12 @@ Result Catalog::CreateIndex(const std::string &database_name,
     // that came out of the parser
     if (key_attrs.size() != index_attr.size()) {
 
-<<<<<<< HEAD
       LOG_TRACE("Some columns are missing");
       return Result::RESULT_FAILURE;
     }
 
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
-=======
-        // Check if unique index or not
-        if(unique == false){
-        index_metadata = new index::IndexMetadata(
-                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
-                INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
-        }
-
-        else {
-        index_metadata = new index::IndexMetadata(
-                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
-                INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true); 
-        }
->>>>>>> master
 
     // Check if unique index or not
     if (unique == false) {
