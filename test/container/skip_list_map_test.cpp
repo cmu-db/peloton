@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "container/skip_list_map.h"
 
 #include "common/harness.h"
@@ -31,8 +30,8 @@ class SkipListMapTest : public PelotonTest {};
 ItemPointer foo(23, 47);
 ItemPointer bar;
 
-typedef index::GenericKey<4>  key_type;
-typedef ItemPointer *  value_type;
+typedef index::GenericKey<4> key_type;
+typedef ItemPointer *value_type;
 typedef index::GenericComparatorRaw<4> key_comparator;
 
 // Test basic functionality
@@ -40,10 +39,11 @@ TEST_F(SkipListMapTest, BasicTest) {
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
   columns.push_back(column1);
   catalog::Schema *schema(new catalog::Schema(columns));
-  std::vector<storage::Tuple*> tuples;
+  std::vector<storage::Tuple *> tuples;
 
   storage::Tuple *tuple1(new storage::Tuple(schema, true));
   tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), nullptr);
@@ -63,7 +63,7 @@ TEST_F(SkipListMapTest, BasicTest) {
 
   size_t const element_count = tuples.size();
 
-  for (size_t element = 0; element < element_count; ++element ) {
+  for (size_t element = 0; element < element_count; ++element) {
     key_type key;
     key.SetFromKey(tuples[element]);
 
@@ -74,7 +74,7 @@ TEST_F(SkipListMapTest, BasicTest) {
     EXPECT_FALSE(status);
   }
 
-  for (size_t element = 0; element < element_count; ++element ) {
+  for (size_t element = 0; element < element_count; ++element) {
     key_type key;
     key.SetFromKey(tuples[element]);
 
@@ -85,7 +85,7 @@ TEST_F(SkipListMapTest, BasicTest) {
     LOG_INFO("bar : %d %d", value->block, value->offset);
   }
 
-  for(auto tuple : tuples) {
+  for (auto tuple : tuples) {
     delete tuple;
   }
   delete schema;
@@ -97,7 +97,8 @@ const std::size_t base_scale = 1000;
 const std::size_t max_scale_factor = 10000;
 
 // INSERT HELPER FUNCTION
-void InsertTest(size_t scale_factor, catalog::Schema *schema, uint64_t thread_itr) {
+void InsertTest(size_t scale_factor, catalog::Schema *schema,
+                uint64_t thread_itr) {
 
   uint32_t base = thread_itr * base_scale * max_scale_factor;
   uint32_t tuple_count = scale_factor * base_scale;
@@ -118,7 +119,6 @@ void InsertTest(size_t scale_factor, catalog::Schema *schema, uint64_t thread_it
 
     delete tuple;
   }
-
 }
 
 // Test multithreaded functionality
@@ -126,10 +126,11 @@ TEST_F(SkipListMapTest, MultithreadedTest) {
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
   columns.push_back(column1);
   catalog::Schema *schema(new catalog::Schema(columns));
-  std::vector<storage::Tuple*> tuples;
+  std::vector<storage::Tuple *> tuples;
 
   // Parallel Test
   size_t num_threads = 4;
@@ -141,8 +142,7 @@ TEST_F(SkipListMapTest, MultithreadedTest) {
 
   size_t num_entries = 0;
   for (auto iterator = test_skip_list_map.begin();
-      iterator != test_skip_list_map.end();
-      ++iterator) {
+       iterator != test_skip_list_map.end(); ++iterator) {
     num_entries++;
   }
 
@@ -150,6 +150,7 @@ TEST_F(SkipListMapTest, MultithreadedTest) {
 
   EXPECT_EQ(num_entries, num_threads * scale_factor * base_scale);
 
+  delete schema;
 }
 
 }  // End test namespace
