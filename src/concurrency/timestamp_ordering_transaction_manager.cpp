@@ -280,7 +280,7 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
 // It should not be called if the tuple is in the write set as commit and abort
 // will release the write lock anyway.
 void TimestampOrderingTransactionManager::YieldOwnership(
-    Transaction *const current_txn, 
+    UNUSED_ATTRIBUTE Transaction *const current_txn, 
     const oid_t &tile_group_id,
     const oid_t &tuple_id) {
 
