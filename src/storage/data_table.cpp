@@ -138,15 +138,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(
     const storage::Tuple *tuple, UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
 
-<<<<<<< HEAD
-  // Check constraints
-  // if (check_constraint == true && CheckConstraints(tuple) == false) {
-  //  return INVALID_ITEMPOINTER;
-  //}
-
-=======
   size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
->>>>>>> master
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
@@ -274,39 +266,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   return location;
 }
 
-<<<<<<< HEAD
-/**
- * @brief Insert a tuple into a specific index.
- * If index is primary/unique, check visibility of existing index entries.
- *
- * @returns True on success, false if a visible entry exists (in case of
- *primary/unique).
- */
-bool DataTable::InsertInIndex(oid_t index_offset, const storage::Tuple *tuple,
-                              ItemPointer location) {
-
-  // (A) Check existence for primary/unique indexes
-  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
-  auto index = GetIndex(index_offset);
-  auto index_schema = index->GetKeySchema();
-  auto indexed_columns = index_schema->GetIndexedColumns();
-  std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-  key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-
-  switch (index->GetIndexType()) {
-    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-      // TODO: get unique tuple from primary index.
-      // if in this index there has been a visible or uncommitted
-      // <key, location> pair, this constraint is violated
-      index->InsertEntry(key.get(), location);
-    } break;
-
-    case INDEX_CONSTRAINT_TYPE_DEFAULT:
-    default:
-      index->InsertEntry(key.get(), location);
-      break;
-=======
 // insert tuple into a table that is without index.
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
 
@@ -314,7 +273,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
->>>>>>> master
   }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
@@ -347,13 +305,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-<<<<<<< HEAD
-  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-    auto status = InsertInIndex(index_itr, tuple, location);
-    if (status == false) {
-      return false;
-    }
-=======
   std::function<bool(const ItemPointer &)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, transaction, std::placeholders::_1);
@@ -404,7 +355,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       success_count += 1;
     }
     LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
->>>>>>> master
   }
 
   return true;
