@@ -63,14 +63,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   std::shared_ptr<planner::AbstractPlan> plan_tree;
 
   // Base Case
-  if (parse_tree.get() == nullptr) return plan_tree;
+  if (parse_tree->GetStatements().size() == 0) return plan_tree;
 
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // One to one Mapping
-  if(parse_tree->GetStatements().size() > 0){
-    LOG_INFO("************** WE GOT ONE **************");
-  }
   auto parse_item_node_type = parse_tree->GetStatements().at(0)->GetType();
 
   auto parse_tree2 = parse_tree->GetStatements().at(0);
