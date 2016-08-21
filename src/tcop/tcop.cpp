@@ -225,10 +225,6 @@ FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , V
     return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
   }
 
-  if(column_type == VALUE_TYPE_VARCHAR){
-    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
-  }
-
   if(column_type == VALUE_TYPE_DECIMAL){
     return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DECIMAL , 16);
   }
