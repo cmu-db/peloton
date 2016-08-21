@@ -199,32 +199,25 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                  tuple_location.offset);
 
-        // perform predicate evaluation.
-        if (predicate_ == nullptr) {
-          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-
+        bool eval = true;
+        // if having predicate, then perform evaluation.
+        if (predicate_ != nullptr) {
+          expression::ContainerTuple<storage::TileGroup> tuple(
+            tile_group.get(), tuple_location.offset);
+          eval =
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+        }
+        // if passed evaluation, then perform write.
+        if (eval == true) {
           auto res = transaction_manager.PerformRead(current_txn, tuple_location);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
             return res;
           }
-          
-        } else {
-          expression::ContainerTuple<storage::TileGroup> tuple(
-            tile_group.get(), tuple_location.offset);
-          auto eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          if (eval == true) {
-            visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-
-            auto res = transaction_manager.PerformRead(current_txn, tuple_location);
-            if (!res) {
-              transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
-              return res;
-            }
-            
-          }
+          // if perform read is successful, then add to visible tuple vector.
+          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         }
+
         break;
       }
       // if the tuple is not visible.
@@ -378,31 +371,27 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           break;
         }
 
-        // perform predicate evaluation.
-        if (predicate_ == nullptr) {
-          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-
+        bool eval = true;
+        // if having predicate, then perform evaluation.
+        if (predicate_ != nullptr) {
+          expression::ContainerTuple<storage::TileGroup> tuple(
+            tile_group.get(), tuple_location.offset);
+          eval =
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+        }
+        // if passed evaluation, then perform write.
+        if (eval == true) {
           auto res = transaction_manager.PerformRead(current_txn, tuple_location);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
             return res;
           }
-          
-        } else {
-          expression::ContainerTuple<storage::TileGroup> tuple(
-            tile_group.get(), tuple_location.offset);
-          auto eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          if (eval == true) {
-            visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-
-            auto res = transaction_manager.PerformRead(current_txn, tuple_location);
-            if (!res) {
-              transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
-              return res;
-            }
-          }
+          // if perform read is successful, then add to visible tuple vector.
+          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         }
+
+        break;
+
         break;
       }
       // if the tuple is not visible.
