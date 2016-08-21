@@ -11,6 +11,7 @@ apt-get --ignore-missing -y install \
     flex \
     libevent-dev \
     libboost-dev \
+    libboost-thread-dev \
     libboost-filesystem-dev \
     libjemalloc-dev \
     valgrind \

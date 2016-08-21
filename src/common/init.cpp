@@ -12,17 +12,24 @@
 
 
 #include "common/init.h"
+#include "common/thread_pool.h"
 
 #include "libcds/cds/init.h"
 
 #include <google/protobuf/stubs/common.h>
 
+#include <thread>
+
 namespace peloton {
+
+ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
 
   // Initialize CDS library
   cds::Initialize();
+
+  thread_pool.Initialize(std::thread::hardware_concurrency());
 
 }
 

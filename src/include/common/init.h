@@ -15,6 +15,10 @@
 
 namespace peloton {
 
+class ThreadPool;
+
+extern ThreadPool thread_pool;
+
 //===--------------------------------------------------------------------===//
 // Global Setup and Teardown
 //===--------------------------------------------------------------------===//
