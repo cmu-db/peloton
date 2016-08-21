@@ -221,23 +221,23 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   size_t right_table_tile_group_count = 2;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   // Left table has 3 tile groups
   std::unique_ptr<storage::DataTable> left_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(
       left_table.get(), tile_group_size * left_table_tile_group_count, false,
-      false, false);
+      false, false, txn);
 
   // Right table has 2 tile groups
   std::unique_ptr<storage::DataTable> right_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(
       right_table.get(), tile_group_size * right_table_tile_group_count, false,
-      false, false);
+      false, false, txn);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   LOG_TRACE("%s", left_table->GetInfo().c_str());
   LOG_TRACE("%s", right_table->GetInfo().c_str());

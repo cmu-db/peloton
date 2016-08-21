@@ -80,7 +80,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void UpdateTuple(storage::DataTable *table,
@@ -137,7 +137,7 @@ void UpdateTuple(storage::DataTable *table,
   while (update_executor.Execute())
     ;
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
 }
 
@@ -180,7 +180,7 @@ void DeleteTuple(storage::DataTable *table,
   EXPECT_TRUE(delete_executor.Init());
   EXPECT_TRUE(delete_executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
 }
 
@@ -222,7 +222,7 @@ TEST_F(MutateTests, StressTests) {
     LOG_ERROR("%s", ce.what());
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
   LOG_TRACE("%s", table->GetInfo().c_str());
@@ -325,7 +325,7 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_TRUE(executor.Execute());
   EXPECT_FALSE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // We have inserted all the tuples in this logical tile
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 2);
@@ -356,7 +356,7 @@ TEST_F(MutateTests, DeleteTest) {
         seq_scan_executor.GetOutput());
     tuple_cnt += result_logical_tile->GetTupleCount();
   }
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(tuple_cnt, 6);
   delete table;
   tuple_id = 0;
@@ -382,7 +382,7 @@ static int SeqScanCount(storage::DataTable *table,
     tuple_cnt += result_logical_tile->GetTupleCount();
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return tuple_cnt;
 }

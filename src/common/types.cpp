@@ -388,11 +388,11 @@ BackendType GetBackendType(const LoggingType& logging_type) {
   return backend_type;
 }
 
-void AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
+bool AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
   PL_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
   int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
   int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);
-  __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr, *cast_value_ptr);
+  return __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr, *cast_value_ptr);
 }
 
 //===--------------------------------------------------------------------===//
@@ -638,7 +638,6 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_INVALID: { return "INVALID"; }
     case INDEX_TYPE_BTREE: { return "BTREE"; }
     case INDEX_TYPE_BWTREE: { return "BWTREE"; }
-    case INDEX_TYPE_SKIPLIST: { return "SKIPLIST"; }
     case INDEX_TYPE_HASH: { return "HASH"; }
   }
   return "INVALID";
@@ -651,8 +650,6 @@ IndexType StringToIndexType(const std::string& str) {
     return INDEX_TYPE_BTREE;
   } else if (str == "BWTREE") {
     return INDEX_TYPE_BWTREE;
-  } else if (str == "SKIPLIST") {
-    return INDEX_TYPE_SKIPLIST;
   } else if (str == "HASH") {
     return INDEX_TYPE_HASH;
   }

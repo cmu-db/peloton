@@ -326,7 +326,7 @@ static bool EndTransaction(concurrency::Transaction *txn) {
 
   // transaction passed execution.
   if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
+    result = txn_manager.CommitTransaction(txn);
 
     if (result == Result::RESULT_SUCCESS) {
       // transaction committed
@@ -342,7 +342,7 @@ static bool EndTransaction(concurrency::Transaction *txn) {
   else {
     PL_ASSERT(result == Result::RESULT_ABORTED ||
               result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
+    result = txn_manager.AbortTransaction(txn);
     return false;
   }
 }

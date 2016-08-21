@@ -70,7 +70,8 @@ class ExecutorTestsUtil {
   static storage::DataTable *CreateAndPopulateTable();
 
   static void PopulateTable(storage::DataTable *table, int num_rows,
-                            bool mutate, bool random, bool group_by);
+                            bool mutate, bool random, bool group_by,
+                            concurrency::Transaction *current_txn);
 
   static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
                             int num_rows);

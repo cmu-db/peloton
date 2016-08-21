@@ -19,7 +19,6 @@
 #include "index/index_key.h"
 #include "index/btree_index.h"
 #include "index/bwtree_index.h"
-#include "index/skip_list_index.h"
 
 namespace peloton {
 namespace index {
@@ -57,31 +56,6 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
     } else {
       return new BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
                             TupleKeyEqualityChecker>(metadata);
-    }
-  } else if (index_type == INDEX_TYPE_SKIPLIST) {
-    if (key_size <= 4) {
-      return new SkipListIndex<GenericKey<4>, ItemPointer *,
-                               GenericComparatorRaw<4>,
-                               GenericEqualityChecker<4>>(metadata);
-    } else if (key_size <= 8) {
-      return new SkipListIndex<GenericKey<8>, ItemPointer *,
-                               GenericComparatorRaw<8>,
-                               GenericEqualityChecker<8>>(metadata);
-    } else if (key_size <= 16) {
-      return new SkipListIndex<GenericKey<16>, ItemPointer *,
-                               GenericComparatorRaw<16>,
-                               GenericEqualityChecker<16>>(metadata);
-    } else if (key_size <= 64) {
-      return new SkipListIndex<GenericKey<64>, ItemPointer *,
-                               GenericComparatorRaw<64>,
-                               GenericEqualityChecker<64>>(metadata);
-    } else if (key_size <= 256) {
-      return new SkipListIndex<GenericKey<256>, ItemPointer *,
-                               GenericComparatorRaw<256>,
-                               GenericEqualityChecker<256>>(metadata);
-    } else {
-      return new SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparatorRaw,
-                               TupleKeyEqualityChecker>(metadata);
     }
   } else if (index_type == INDEX_TYPE_BWTREE) {
     if (key_size <= 4) {
