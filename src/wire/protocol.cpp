@@ -32,8 +32,6 @@
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
 
-unsigned int cntr = 0;
-
 namespace peloton {
 namespace wire {
 
@@ -681,7 +679,6 @@ bool PacketManager::ManagePacket() {
   bool can_read_more = true;
   while(can_read_more) {
 	if(ReadPacket(&pkt, true, &client)) {
-		++cntr;
 		status = ProcessPacket(&pkt, responses);
 		if (!WritePackets(responses, &client) || !status) {
 		  std::cout << "Can't Write or status: " << status << std::endl;
