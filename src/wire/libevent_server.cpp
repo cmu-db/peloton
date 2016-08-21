@@ -22,6 +22,9 @@ namespace wire {
 std::vector<SocketManager<PktBuf>*> Server::socket_manager_vector_ = { };
 unsigned int Server::socket_manager_id = 0;
 
+/**
+ * Stop signal handling
+ */
 void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd, UNUSED_ATTRIBUTE short what, void *arg) {
   struct event_base *base = (event_base*) arg;
   LOG_INFO("stop");
@@ -45,7 +48,11 @@ bool SetNonBlocking(int fd) {
   }
 }
 
+/**
+ * Process refill the buffer and process all packets that can be processed
+ */
 void ManageRead(SocketManager<PktBuf>** socket_manager) {
+	// Startup packet
 	if((*socket_manager)->first_packet == false) {
 		if(!(*socket_manager)->socket_pkt_manager->ManageFirstPacket()) {
 			close((*socket_manager)->GetSocketFD());
@@ -55,6 +62,7 @@ void ManageRead(SocketManager<PktBuf>** socket_manager) {
 		}
 		(*socket_manager)->first_packet = true;
 	}
+	// Regular packet
 	else {
 		if(!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
 			close((*socket_manager)->GetSocketFD());
@@ -63,19 +71,16 @@ void ManageRead(SocketManager<PktBuf>** socket_manager) {
 			return;
 		}
 	}
+	// Unlock the socket manager mutex
 	(*socket_manager)->execution_mutex.unlock();
 }
 
 void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
-  // Threads
+  // Assign a thread if the socket manager is not executing
   if(((SocketManager<PktBuf>*)arg)->execution_mutex.try_lock()) {
 	((SocketManager<PktBuf>*)arg)->self = (SocketManager<PktBuf>*)arg;
     thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf>*)arg)->self);
   }
-
-	// No threads
-//	SocketManager<PktBuf>* socket_manager = (SocketManager<PktBuf>*)arg;
-//    ManageRead(&socket_manager);
 }
 
 /**
@@ -88,10 +93,6 @@ void AcceptCallback(struct evconnlistener *listener,
 	LOG_INFO("New connection on fd %d", int(client_fd));
 	// Get the event base
 	struct event_base *base = evconnlistener_get_base(listener);
-
-	// Set the client socket to non-blocking mode.
-	if (!SetNonBlocking(client_fd))
-		LOG_INFO("failed to set client socket non-blocking");
 
 	SetTCPNoDelay(client_fd);
 	/* We've accepted a new client, allocate a socket manager to
@@ -140,6 +141,7 @@ Server::Server() {
     LOG_INFO("Couldn't open event base");
     exit(EXIT_FAILURE);
   }
+  // Add hang up signal event
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
 
