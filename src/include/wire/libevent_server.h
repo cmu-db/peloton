@@ -39,7 +39,7 @@ namespace wire {
 
 class Server {
 
- public:
+  public:
   Server();
 
   inline ~Server() {
@@ -49,30 +49,37 @@ class Server {
   }
 
 	// Remove socket manager with the same fd and add the new one
-	inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
-		// If a socket manager with the same file descriptor exists, remove it first
-		auto it = std::begin(socket_manager_vector_);
-		while(it != std::end(socket_manager_vector_)) {
-			if((*it)->GetSocketFD() == socket_manager->GetSocketFD()) {
-			  LOG_INFO("Removing socket manager on existing fd");
-			  delete(*it);
-			  it = socket_manager_vector_.erase(it);
-			}
-			else {
-			  ++it;
-			}
-		}
-		socket_manager_vector_.push_back(socket_manager);
+  inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
+  // If a socket manager with the same file descriptor exists, remove it first
+    auto it = std::begin(socket_manager_vector_);
+    while(it != std::end(socket_manager_vector_)) {
+	  if((*it)->GetSocketFD() == socket_manager->GetSocketFD()) {
+		  LOG_INFO("Removing socket manager on existing fd");
+		  delete(*it);
+		  it = socket_manager_vector_.erase(it);
+	  }
+	  else {
+	    ++it;
+	  }
 	}
+	socket_manager_vector_.push_back(socket_manager);
+  }
 
-	static std::vector<SocketManager<PktBuf>*> socket_manager_vector_;  // To keep track of socket managers for deletion
-	static unsigned int socket_manager_id;  // socket manager id cntr
+  // To keep track of socket managers for deletion
+  static std::vector<SocketManager<PktBuf>*> socket_manager_vector_;
+
+  // socket manager id cntr
+  static unsigned int socket_manager_id;
 
 private:
-	// For logging purposes
-	static void LogCallback(int severity, const char* msg);
-	int port_;  // port number
-	int max_connections_;  // maximum number of connections
+  // For logging purposes
+  static void LogCallback(int severity, const char* msg);
+
+  // port number
+  int port_;
+
+  // maximum number of connections
+  int max_connections_;
 
 };
 

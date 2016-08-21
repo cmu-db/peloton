@@ -34,7 +34,6 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   LOG_TRACE("Creating an Update Plan");
-//  updates_ = new std::vector<parser::UpdateClause *>();
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
