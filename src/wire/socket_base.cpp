@@ -131,37 +131,32 @@ bool SocketManager<B>::FlushWriteBuffer() {
 }
 
 template <typename B>
-void SocketManager<B>::PrintStats() {
-	std::cout << "Read buffer pointer: " << rbuf.buf_ptr << std::endl;
-	std::cout << "Read buffer size: " << rbuf.buf_size << std::endl;
-}
-
-template <typename B>
 bool SocketManager<B>::CanRead() {
-	uint32_t header_size = sizeof(int32_t) + 1;  // Size of header (msg type + size)
-	uint32_t pkt_size = 0;
-	size_t window = rbuf.buf_size - rbuf.buf_ptr;  // Size of available data for read
-	// If can read header
-	if(header_size <= window) {
-		PktBuf dummy_pkt;
-		// Read the header size
-		dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
-                std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
-		// Get size of message
-	    std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
-	              reinterpret_cast<uchar *>(&pkt_size));
-	    pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-	    // If header and size is larger than window, don't read untill receive a
-	    // read callback and buffer is refilled
-	    if(header_size + pkt_size > window) {
-	    	return false;
-	    }
+  // Size of header (msg type + size)
+  uint32_t header_size = sizeof(int32_t) + 1;
+  uint32_t pkt_size = 0;
+  // Size of available data for read
+  size_t window = rbuf.buf_size - rbuf.buf_ptr;
+  // If can read header
+  if(header_size <= window) {
+    PktBuf dummy_pkt;
+	// Read the header size
+	dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
+            std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
+	// Get size of message
+	std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
+	        reinterpret_cast<uchar *>(&pkt_size));
+	pkt_size = ntohl(pkt_size) - sizeof(int32_t);
+	// If header and size is larger than window, don't read untill receive a
+	// read callback and buffer is refilled
+	if(header_size + pkt_size > window) {
+	  	return false;
 	}
-	else {
-		return false;
-	}
-
-	return true;
+  }
+  else {
+	return false;
+  }
+  return true;
 }
 
 /*
