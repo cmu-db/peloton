@@ -636,6 +636,8 @@ class Value {
 
   std::string ToString();
 
+  std::string FormatTimestamp(std::string timestamp);
+
   /* Return a string full of arcana and wonder. */
   const std::string GetInfo() const;
 

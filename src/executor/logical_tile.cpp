@@ -12,8 +12,6 @@
 
 
 #include <iostream>
-#include <ctime>
-#include <chrono>
 
 #include "catalog/schema.h"
 #include "common/value.h"
@@ -439,36 +437,7 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
 	      if (base_tuple_id == NULL_OID) {
 	        row.push_back(ValueFactory::GetNullValueByType(
 	                  cp.base_tile->GetSchema()->GetType(cp.origin_column_id)).ToString());
-	      } else if(cp.base_tile->GetSchema()->GetType(cp.origin_column_id) == VALUE_TYPE_TIMESTAMP){
-          auto time_str = cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id).ToString();
-          
-          long long epoch = std::stoll(time_str);
-
-          time_t new_time_stamp = static_cast<time_t>(epoch/1000000);
-          
-          struct tm *ltm = localtime(&new_time_stamp);
-          
-          long long i_year = 1900 + ltm->tm_year;
-          std::string year = std::to_string(i_year);
-          
-          int i_month = 1 + ltm->tm_mon;
-          std::string month = std::to_string(i_month);
-          
-          std::string day = std::to_string(ltm->tm_mday);
-          
-          int i_hour = 1 + ltm->tm_hour;
-          std::string hour = std::to_string(i_hour);
-          
-          int i_minute = 1 + ltm->tm_min;
-          std::string minute = std::to_string(i_minute);
-
-          int i_second = 1 + ltm->tm_sec;
-          std::string second = std::to_string(i_second);
-          
-          std::string new_time = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
-          row.push_back(new_time);
-        }
-        else {
+	      }else {
 	        row.push_back(cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id).ToString());
 	      }
 	    }
