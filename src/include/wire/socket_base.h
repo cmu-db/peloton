@@ -90,9 +90,6 @@ class SocketManager {
 
   int GetSocketFD() { return sock_fd; }
 
-  // Print buffer length and ptr
-  void PrintStats();
-
   // Check if there is data to read from buffer
   bool CanRead();
 

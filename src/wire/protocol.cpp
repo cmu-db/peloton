@@ -147,7 +147,7 @@ void PacketManager::PutTupleDescriptor(
 void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
                                  int &rows_affected,
                                  ResponseBuffer &responses) {
-  if (!results.size() || !colcount) return;
+  if (results.empty() || colcount == 0) return;
 
   size_t numrows = results.size() / colcount;
 
@@ -665,7 +665,6 @@ bool PacketManager::ManageFirstPacket() {
   status = ProcessStartupPacket(&pkt, responses);
   if (!WritePackets(responses, &client) || !status) {
     // close client on write failure or status failure
-	std::cout << "First Packet. Can't Write or status: " << status << std::endl;
     CloseClient();
     return false;
   }
@@ -677,18 +676,24 @@ bool PacketManager::ManagePacket() {
   ResponseBuffer responses;
   bool status;
   bool can_read_more = true;
+  // While can process more packets from buffer
   while(can_read_more) {
 	if(ReadPacket(&pkt, true, &client)) {
+
+		// Process the read packet
 		status = ProcessPacket(&pkt, responses);
+
+		// Write response
 		if (!WritePackets(responses, &client) || !status) {
-		  std::cout << "Can't Write or status: " << status << std::endl;
 		  // close client on write failure or status failure
 		  CloseClient();
 		  return false;
 		}
+		// Can read more?
 		can_read_more = CanRead(&client);
 		pkt.Reset();
     }
+	// Read failed
 	else {
 		break;
 	}

@@ -4,7 +4,7 @@
 //
 // delete_test.cpp
 //
-// Identification: test/executor/delete_test.cpp
+// Identification: test/executor/create_index_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -60,16 +60,20 @@ TEST_F(CreateIndexTests, CreatingIndex) {
                                 "CREATE TABLE department_table(dept_id INT "
                                 "PRIMARY KEY, student_id INT, dept_name "
                                 "TEXT);"));
+
   auto& peloton_parser = parser::Parser::GetInstance();
+
   LOG_INFO("Building parse tree...");
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
       "dept_name TEXT);");
   LOG_INFO("Building parse tree completed!");
+
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(create_stmt));
   LOG_INFO("Building plan tree completed!");
+
   std::vector<Value> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
@@ -85,6 +89,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
                 ->GetTableCount(),
             1);
 
+
   // Inserting a tuple end-to-end
   txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
@@ -95,16 +100,19 @@ TEST_F(CreateIndexTests, CreatingIndex) {
                                 "INSERT INTO department_table(dept_id, "
                                 "student_id, dept_name) VALUES "
                                 "(1,52,'hello_1');"));
+
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,student_id,dept_name) VALUES "
       "(1,52,'hello_1');");
   LOG_INFO("Building parse tree completed!");
+
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+
   LOG_INFO("Executing plan...");
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result);
@@ -118,15 +126,18 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement(
       "CREATE", "CREATE INDEX saif ON department_table (student_id);"));
+
   LOG_INFO("Building parse tree...");
   auto update_stmt = peloton_parser.BuildParseTree(
       "CREATE INDEX saif ON department_table (student_id);");
   LOG_INFO("Building parse tree completed!");
+
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+
   LOG_INFO("Executing plan...");
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result);

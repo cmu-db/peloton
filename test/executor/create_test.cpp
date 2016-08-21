@@ -32,6 +32,7 @@ class CreateTests : public PelotonTest {};
 
 TEST_F(CreateTests, CreatingTable) {
 
+  // Bootstrap
   auto catalog = catalog::Bootstrapper::bootstrap();
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 
@@ -41,14 +42,20 @@ TEST_F(CreateTests, CreatingTable) {
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, 32, "dept_name", false);
 
+  // Schema
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
+
+  // Create plans
   planner::CreatePlan node("department_table", std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
+
+  // Create executer
   executor::CreateExecutor executor(&node, context.get());
 
   executor.Init();
