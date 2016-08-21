@@ -23,8 +23,10 @@
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
 
+  // Parse the command line flags using GFLAGS
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
+  // If "-h" or "-help" is passed in, set up the help messages.
   if (FLAGS_help || FLAGS_h) {
     FLAGS_help = true;
     ::google::SetUsageMessage("Usage Info: \n");
@@ -40,6 +42,7 @@ int main(int argc, char *argv[]) {
   // Teardown
   peloton::PelotonInit::Shutdown();
 
+  // Shut down GFLAGS.
   ::google::ShutDownCommandLineFlags();
 
   return 0;
