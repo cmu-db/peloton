@@ -44,7 +44,8 @@ TEST_F(UpdateTests, Updating) {
 
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
+                                                        nullptr);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -67,15 +68,16 @@ TEST_F(UpdateTests, Updating) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
                                                        DEFAULT_DB_NAME)
                 ->GetTableCount(),
             1);
+
   LOG_INFO("Table created!");
 
   // Inserting a tuple end-to-end
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,manager_id,dept_name) "
@@ -103,10 +105,10 @@ TEST_F(UpdateTests, Updating) {
       statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // Now Updating end-to-end
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating a tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
@@ -127,9 +129,9 @@ TEST_F(UpdateTests, Updating) {
                                              params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating another tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET manager_id = manager_id + 1 WHERE "
@@ -152,11 +154,10 @@ TEST_F(UpdateTests, Updating) {
                                              params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction();
-
+  txn_manager.CommitTransaction(txn);
 
   // Deleting now
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
   statement.reset(new Statement(
@@ -175,12 +176,12 @@ TEST_F(UpdateTests, Updating) {
                                              params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
-  txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   delete catalog;
 }

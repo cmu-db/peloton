@@ -16,6 +16,7 @@
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "catalog/manager.h"
 
 #include <list>
 
@@ -38,7 +39,7 @@ GCBuffer::~GCBuffer() {
 
 void GCManager::StartGC() {
   LOG_TRACE("Starting GC");
-  if (this->gc_type_ == GC_TYPE_OFF) {
+  if (this->gc_type_ == GARBAGE_COLLECTION_TYPE_OFF) {
     return;
   }
   this->is_running_ = true;
@@ -47,7 +48,7 @@ void GCManager::StartGC() {
 
 void GCManager::StopGC() {
   LOG_TRACE("Stopping GC");
-  if (this->gc_type_ == GC_TYPE_OFF) {
+  if (this->gc_type_ == GARBAGE_COLLECTION_TYPE_OFF) {
     return;
   }
   this->is_running_ = false;
@@ -199,7 +200,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
                                  const cid_t &tuple_end_cid) {
-  if (this->gc_type_ == GC_TYPE_OFF) {
+  if (this->gc_type_ == GARBAGE_COLLECTION_TYPE_OFF) {
     return;
   }
 
@@ -219,7 +220,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
-  if (this->gc_type_ == GC_TYPE_OFF) {
+  if (this->gc_type_ == GARBAGE_COLLECTION_TYPE_OFF) {
     return INVALID_ITEMPOINTER;
   }
 

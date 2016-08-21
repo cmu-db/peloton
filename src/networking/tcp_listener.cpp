@@ -23,7 +23,6 @@
 #include <pthread.h>
 
 #include <functional>
-#include "../include/common/thread_pool.h"
 
 namespace peloton {
 namespace networking {

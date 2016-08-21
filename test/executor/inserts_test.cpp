@@ -39,7 +39,7 @@ TEST_F(InsertTests, InsertRecord) {
   auto catalog = catalog::Bootstrapper::bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   // Insert a table first
   auto id_column = catalog::Column(
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "dept_id", true);
@@ -49,15 +49,15 @@ TEST_F(InsertTests, InsertRecord) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->CreateTable(
-      DEFAULT_DB_NAME, "TEST_TABLE", std::move(table_schema));
-  txn_manager.CommitTransaction();
+      DEFAULT_DB_NAME, "TEST_TABLE", std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
 
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -94,12 +94,12 @@ TEST_F(InsertTests, InsertRecord) {
   EXPECT_TRUE(executor.Init());
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
-  txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   delete catalog;
 }

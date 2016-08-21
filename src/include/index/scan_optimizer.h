@@ -274,9 +274,9 @@ class ConjunctionScanPredicate {
     // value_index_list should be of the same length as the index key
     // schema, since it maps index key column to indices inside value_list
     PL_ASSERT(metadata_p->GetColumnCount() == value_index_list_.size());
-
-    LOG_DEBUG("Constructing scan interval. Point query = %d", is_point_query_);
-
+    
+    LOG_TRACE("Constructing scan interval. Point query = %d", is_point_query_);
+    
     // For each column in the index key, if there is not a bound
     // representable as Value object then we use min and max of the
     // corresponding type

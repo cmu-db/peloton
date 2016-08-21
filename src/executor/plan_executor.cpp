@@ -56,12 +56,12 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   bool single_statement_txn = false;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = peloton::concurrency::current_txn;
+  // auto txn = peloton::concurrency::current_txn;
   // This happens for single statement queries in PG
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  // if (txn == nullptr) {
+  single_statement_txn = true;
+  auto txn = txn_manager.BeginTransaction();
+  // }
   PL_ASSERT(txn);
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
@@ -149,14 +149,14 @@ cleanup:
       case Result::RESULT_SUCCESS:
         // Commit
         LOG_TRACE("Commit Transaction");
-        p_status.m_result = txn_manager.CommitTransaction();
+        p_status.m_result = txn_manager.CommitTransaction(txn);
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
         LOG_TRACE("Abort Transaction");
-        p_status.m_result = txn_manager.AbortTransaction();
+        p_status.m_result = txn_manager.AbortTransaction(txn);
     }
   }
 
@@ -185,13 +185,13 @@ int PlanExecutor::ExecutePlan(
   bool single_statement_txn = false;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = peloton::concurrency::current_txn;
+  // auto txn = peloton::concurrency::current_txn;
 
   // This happens for single statement queries in PG
-  if (txn == nullptr) {
-    single_statement_txn = true;
-    txn = txn_manager.BeginTransaction();
-  }
+  // if (txn == nullptr) {
+  single_statement_txn = true;
+  auto txn = txn_manager.BeginTransaction();
+  // }
   PL_ASSERT(txn);
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());

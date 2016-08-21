@@ -58,7 +58,27 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
-                                                 const ItemPointer &location) {
+                                      ItemPointer *location_ptr) {
+  KeyType index_key;
+
+  index_key.SetFromKey(key);
+  std::pair<KeyType, ValueType> entry(index_key, location_ptr);
+
+  {
+    index_lock.WriteLock();
+
+    // Insert the key, val pair
+    container.insert(entry);
+
+    index_lock.Unlock();
+  }
+
+  return true;
+}
+
+BTREE_TEMPLATE_ARGUMENT
+bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
+                                      const ItemPointer &location) {
   KeyType index_key;
 
   index_key.SetFromKey(key);
@@ -78,7 +98,7 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
-                                                 const ItemPointer &location) {
+                                      const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -120,8 +140,9 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                          const ItemPointer &location,
+                                          ItemPointer *location,
                                           std::function<bool(const ItemPointer &)> predicate) {
+
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -136,13 +157,14 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
       if (predicate(item_pointer)) {
         // this key is already visible or dirty in the index
         index_lock.Unlock();
+
         return false;
       }
     }
 
     // Insert the key, val pair
     container.insert(
-        std::pair<KeyType, ValueType>(index_key, new ItemPointer(location)));
+        std::pair<KeyType, ValueType>(index_key, location));
 
     index_lock.Unlock();
   }
@@ -330,3 +352,4 @@ template class BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
 
 }  // End index namespace
 }  // End peloton namespace
+

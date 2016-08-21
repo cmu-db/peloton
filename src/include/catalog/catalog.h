@@ -47,11 +47,11 @@ class Catalog {
   void CreateCatalogDatabase(void);
 
   // Create a database
-  Result CreateDatabase(std::string database_name);
+  Result CreateDatabase(std::string database_name, concurrency::Transaction *txn);
 
   // Create a table in a database
   Result CreateTable(std::string database_name, std::string table_name,
-                     std::unique_ptr<catalog::Schema>);
+                     std::unique_ptr<catalog::Schema>, concurrency::Transaction *txn);
 
   // Create the primary key index for a table
   Result CreatePrimaryIndex(const std::string &database_name,
@@ -63,10 +63,10 @@ class Catalog {
                      std::string index_name, bool unique, IndexType index_type);
 
   // Drop a database
-  Result DropDatabase(std::string database_name);
+  Result DropDatabase(std::string database_name, concurrency::Transaction *txn);
 
   // Drop a table
-  Result DropTable(std::string database_name, std::string table_name);
+  Result DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn);
 
   // Find a database using its id
   storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;

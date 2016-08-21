@@ -107,7 +107,7 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   EXPECT_EQ(result_tiles[1].get()->GetTupleCount(), 5);
   EXPECT_EQ(result_tiles[2].get()->GetTupleCount(), 2);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(IndexScanTests, MultiColumnPredicateTest) {
@@ -170,7 +170,7 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
   EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 2);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 void ShowTable(std::string database_name, std::string table_name) {
@@ -218,7 +218,8 @@ TEST_F(IndexScanTests, SQLTest) {
 
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
+                                                        nullptr);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -242,7 +243,7 @@ TEST_F(IndexScanTests, SQLTest) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
                                                        DEFAULT_DB_NAME)
                 ->GetTableCount(),
@@ -284,9 +285,9 @@ TEST_F(IndexScanTests, SQLTest) {
   LOG_INFO("Aggregation selected");
 
   // free the database just created
-  txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   delete catalog;
 }

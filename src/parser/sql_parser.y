@@ -350,7 +350,7 @@ create_statement:
 			$$->name = $4;
 			$$->table_name = $6;
 			$$->index_attrs = $8;
-			$$->index_type = peloton::INDEX_TYPE_SKIPLIST;
+			$$->index_type = peloton::INDEX_TYPE_BWTREE;
 		}
 
 		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' USING opt_index_type {
@@ -442,7 +442,6 @@ opt_index_type:
 		HASH { $$ = peloton::INDEX_TYPE_HASH; }
 	|	BWTREE { $$ = peloton::INDEX_TYPE_BWTREE; }
 	|	BTREE { $$ = peloton::INDEX_TYPE_BTREE; }
-	|	SKIPLIST { $$ = peloton::INDEX_TYPE_SKIPLIST; }
 	;
 
 /******************************

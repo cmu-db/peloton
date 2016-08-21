@@ -403,7 +403,7 @@ bool RunNewOrder() {
     auto gii_lists_values = ExecuteReadTest(&item_index_scan_executor);
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
@@ -447,7 +447,7 @@ bool RunNewOrder() {
   auto gwtr_lists_values = ExecuteReadTest(&warehouse_index_scan_executor);
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
@@ -492,7 +492,7 @@ bool RunNewOrder() {
   auto gd_lists_values = ExecuteReadTest(&district_index_scan_executor);
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     LOG_TRACE("getDistrict failed");
     return false;
   }
@@ -543,7 +543,7 @@ bool RunNewOrder() {
   auto gc_lists_values = ExecuteReadTest(&customer_index_scan_executor);
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     LOG_ERROR("getCustomer failed");
     return false;
   }
@@ -596,7 +596,7 @@ bool RunNewOrder() {
   ExecuteUpdateTest(&district_update_executor);
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     LOG_TRACE("incrementNextOrderId failed");
     return false;
   }
@@ -697,7 +697,7 @@ bool RunNewOrder() {
     auto gsi_lists_values = ExecuteReadTest(&stock_index_scan_executor);
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       LOG_ERROR("getStockInfo failed");
       return false;
     }
@@ -775,7 +775,7 @@ bool RunNewOrder() {
     ExecuteUpdateTest(&stock_update_executor);
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       LOG_TRACE("updateStock failed");
       return false;
     }
@@ -833,7 +833,7 @@ bool RunNewOrder() {
   // transaction passed execution.
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
-  auto result = txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
 
   if (result == Result::RESULT_SUCCESS) {
     LOG_TRACE("D_TAX: %s", gd_lists_values[0][0].GetInfo().c_str());
@@ -983,13 +983,13 @@ bool RunPayment() {
 
     // Check if aborted
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
     if (customer_list.size() != 1) {
       assert(false);
-      auto result = txn_manager.CommitTransaction();
+      auto result = txn_manager.CommitTransaction(txn);
       if (result == Result::RESULT_SUCCESS) {
         return true;
       } else {
@@ -1041,13 +1041,13 @@ bool RunPayment() {
 
     // Check if aborted
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
     if (customer_list.size() < 1) {
       assert(false);
-      auto result = txn_manager.CommitTransaction();
+      auto result = txn_manager.CommitTransaction(txn);
       if (result == Result::RESULT_SUCCESS) {
         return true;
       } else {
@@ -1096,13 +1096,13 @@ bool RunPayment() {
 
   // Check if aborted
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
   if (warehouse_list.size() != 1) {
     assert(false);
-    auto result = txn_manager.CommitTransaction();
+    auto result = txn_manager.CommitTransaction(txn);
     if (result == Result::RESULT_SUCCESS) {
       return true;
     } else {
@@ -1149,13 +1149,13 @@ bool RunPayment() {
 
   // Check if aborted
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
   if (district_list.size() != 1) {
     assert(false);
-    auto result = txn_manager.CommitTransaction();
+    auto result = txn_manager.CommitTransaction(txn);
     if (result == Result::RESULT_SUCCESS) {
       return true;
     } else {
@@ -1211,7 +1211,7 @@ bool RunPayment() {
 
   // Check if aborted
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
@@ -1263,7 +1263,7 @@ bool RunPayment() {
 
   // Check the result
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
@@ -1417,7 +1417,7 @@ bool RunPayment() {
 
   // Check the result
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
@@ -1454,12 +1454,12 @@ bool RunPayment() {
   // Check result
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     assert(false);
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
-  auto result = txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
   if (result == Result::RESULT_SUCCESS) {
     return true;
   } else {
@@ -1540,7 +1540,7 @@ bool RunOrderStatus() {
 
     auto result = ExecuteReadTest(&customer_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
@@ -1590,7 +1590,7 @@ bool RunOrderStatus() {
 
     auto result = ExecuteReadTest(&customer_order_by_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
@@ -1653,7 +1653,7 @@ bool RunOrderStatus() {
 
   auto orders = ExecuteReadTest(&orders_order_by_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
@@ -1687,14 +1687,14 @@ bool RunOrderStatus() {
 
     ExecuteReadTest(&order_line_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
   }
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
-  auto result = txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
 
   if (result == Result::RESULT_SUCCESS) {
     return true;
@@ -1778,7 +1778,7 @@ bool RunDelivery() {
 
     auto result = ExecuteReadTest(&customer_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
@@ -1828,7 +1828,7 @@ bool RunDelivery() {
 
     auto result = ExecuteReadTest(&customer_order_by_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
 
@@ -1892,7 +1892,7 @@ bool RunDelivery() {
 
   auto orders = ExecuteReadTest(&orders_order_by_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
 
@@ -1926,14 +1926,14 @@ bool RunDelivery() {
 
     ExecuteReadTest(&order_line_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
+      txn_manager.AbortTransaction(txn);
       return false;
     }
   }
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
-  auto result = txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
 
   if (result == Result::RESULT_SUCCESS) {
     return true;
@@ -1994,7 +1994,7 @@ bool RunStockLevel() {
 
   auto districts = ExecuteReadTest(&district_index_scan_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
   assert(districts.size() == 1);
@@ -2126,14 +2126,14 @@ bool RunStockLevel() {
 
   auto count_result = ExecuteReadTest(&count_distinct_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
+    txn_manager.AbortTransaction(txn);
     return false;
   }
   assert(count_result.size() == 1);
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
-  auto result = txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
 
   if (result == Result::RESULT_SUCCESS) {
     return true;
