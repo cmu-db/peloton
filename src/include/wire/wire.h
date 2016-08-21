@@ -144,10 +144,10 @@ class PacketManager {
   void CloseClient();
 
  public:
-  /* Statement cache */
+  // Statement cache
   Cache<std::string, Statement> statement_cache_;
 
-  /* Portals */
+  //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
 

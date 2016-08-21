@@ -56,6 +56,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
           DEFAULT_DB_NAME, select_node->from_table->name));
   SetTargetTable(target_table);
   ColumnIds().clear();
+  // Check if there is an aggregate function in query
   bool function_found = false;
   for (auto elem : *select_node->select_list) {
     if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
@@ -64,6 +65,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
     }
   }
   // Pass all columns
+  // TODO: This isn't efficient. Needs to be fixed
   if (function_found) {
     for (auto column : GetTable()->GetSchema()->GetColumns()) {
       oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
@@ -86,8 +88,10 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
       for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
     }
   }
+  // Keep a copy of the where clause to be binded to values
   if (select_node->where_clause != NULL) {
     auto predicate = select_node->where_clause->Copy();
+    // Replace COLUMN_REF expressions with TupleValue expressions
     ReplaceColumnExpressions(GetTable()->GetSchema(), predicate);
     predicate_with_params_ =
         std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
