@@ -262,7 +262,7 @@ TEST_F(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   executor::SeqScanExecutor executor(&node, context.get());
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 // Sequential scan of logical tile with predicate.
@@ -312,7 +312,7 @@ TEST_F(SeqScanTests, NonLeafNodePredicateTest) {
 
   RunTest(executor, 2, expected_column_count);
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 }
 

@@ -60,7 +60,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
+                                                        nullptr);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -81,7 +82,7 @@ TEST_F(DeleteTests, VariousOperations) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
                                                        DEFAULT_DB_NAME)
                 ->GetTableCount(),
@@ -224,9 +225,9 @@ TEST_F(DeleteTests, VariousOperations) {
   ShowTable(DEFAULT_DB_NAME, "department_table");
 
   // free the database just created
-  txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   delete catalog;
 }

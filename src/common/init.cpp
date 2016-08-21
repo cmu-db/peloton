@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/init.h"
+#include "common/thread_pool.h"
 
 #include "libcds/cds/init.h"
 
@@ -20,7 +21,7 @@
 
 namespace peloton {
 
-WorkerThreadPool thread_pool;
+ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
 

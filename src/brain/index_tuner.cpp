@@ -75,7 +75,7 @@ static void AddIndex(storage::DataTable* table,
   index_metadata = new index::IndexMetadata(
       "adhoc_index_" + std::to_string(index_oid),
       index_oid,
-      INDEX_TYPE_SKIPLIST,
+      INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
       tuple_schema,
       key_schema,
