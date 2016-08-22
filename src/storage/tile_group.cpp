@@ -94,42 +94,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
 //===--------------------------------------------------------------------===//
 
 /**
- * Apply the column delta on the rollback segment to the given tuple
- */
-void TileGroup::ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id) {
-  auto seg_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
-  auto table_schema = GetAbstractTable()->GetSchema();
-
-  for (size_t idx = 0; idx < seg_col_count; ++idx) {
-    auto col_id =
-        storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, idx)->col_id;
-    Value col_value =
-        storage::RollbackSegmentPool::GetValue(rb_seg, table_schema, idx);
-
-    // Get target tile
-    auto tile_id = GetTileIdFromColumnId(col_id);
-    PL_ASSERT(tile_id < GetTileCount());
-    storage::Tile *tile = GetTile(tile_id);
-    PL_ASSERT(tile);
-
-    // Get tile schema
-    auto &tile_schema = tile_schemas[tile_id];
-
-    // Get a tuple wrapper
-    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    PL_ASSERT(tile_tuple_location);
-    storage::Tuple tile_tuple(&tile_schema, tile_tuple_location);
-
-    // Write the value to tuple
-    auto tile_col_idx = GetTileColumnId(col_id);
-    tile_tuple.SetValue(tile_col_idx, col_value, tile->GetPool());
-  }
-}
-
-/**
- * Grab next slot (thread-safe) and fill in the tuple
- *
- * Returns slot where inserted (INVALID_ID if not inserted)
+ * Copy from tuple.
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
@@ -173,7 +138,7 @@ void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
 }
 
 /**
- * Grab next slot (thread-safe) and fill in the tuple
+ * Grab next slot (thread-safe) and fill in the tuple if tuple != nullptr
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
@@ -189,32 +154,17 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
     return INVALID_OID;
   }
 
-  oid_t tile_column_count;
-  oid_t column_itr = 0;
-
-  for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
-
-    storage::Tile *tile = GetTile(tile_itr);
-    PL_ASSERT(tile);
-    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    PL_ASSERT(tile_tuple_location);
-
-    // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
-
-    for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
-         tile_column_itr++) {
-      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                          tile->GetPool());
-      column_itr++;
-    }
+  // if the input tuple is nullptr, then it means that the tuple with be filled in
+  // outside the function. directly return the empty slot.
+  if (tuple == nullptr) {
+    return tuple_slot_id;
   }
 
+  // copy tuple.
+  CopyTuple(tuple, tuple_slot_id);
+
   // Set MVCC info
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
-            INVALID_TXN_ID);
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
