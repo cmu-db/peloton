@@ -229,9 +229,9 @@ ItemPointer DataTable::AcquireVersion() {
 }
 
 
-bool DataTable::InstallVersion(const storage::Tuple *tuple, 
-                                     const TargetList *targets_ptr, 
-                                     ItemPointer *index_entry_ptr) {
+bool DataTable::InstallVersion(const AbstractTuple *tuple, 
+                               const TargetList *targets_ptr, 
+                               ItemPointer *index_entry_ptr) {
   
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
@@ -454,6 +454,72 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   }
   return true;
 }
+
+
+
+
+bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
+              const TargetList *targets_ptr, ItemPointer *index_entry_ptr) {
+  int index_count = GetIndexCount();
+  // Transaform the target list into a hash set
+  // when attempting to perform insertion to a secondary index,
+  // we must check whether the updated column is a secondary index column.
+  // insertion happens only if the updated column is a secondary index column.
+  std::unordered_set<oid_t> targets_set;
+  for (auto target : *targets_ptr) {
+    targets_set.insert(target.first);
+  }
+
+
+  // Check existence for primary/unique indexes
+  // Since this is NOT protected by a lock, concurrent insert may happen.
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+
+    if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+      continue;
+    }
+
+    // Check if we need to update the secondary index
+    bool updated = false;
+    for (auto col : indexed_columns) {
+      if (targets_set.find(col) != targets_set.end()) {
+        updated = true;
+        break;
+      }
+    }
+
+    // If attributes on key are not updated, skip the index update
+    if (updated == false) {
+      continue;
+    }
+
+    // Key attributes are updated, insert a new entry in all secondary index
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+    for (auto indexed_column : indexed_columns) {
+      auto value = tuple->GetValue(indexed_column);
+      key->SetValue(indexed_column, value, index->GetPool());
+    }
+    
+    switch (index->GetIndexType()) {
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+        break;
+      case INDEX_CONSTRAINT_TYPE_UNIQUE:
+        break;
+      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      default:
+        index->InsertEntry(key.get(), index_entry_ptr);
+        break;
+    }
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
+  }
+  return true;
+}
+
+
+
 
 /**
  * @brief Check if all the foreign key constraints on this table

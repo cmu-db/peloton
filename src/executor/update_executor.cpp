@@ -132,26 +132,35 @@ bool UpdateExecutor::DExecute() {
         }
         // if it is the latest version and not locked by other threads, then
         // insert a new version.
-        std::unique_ptr<storage::Tuple> new_tuple(
-            new storage::Tuple(target_table_->GetSchema(), true));
 
-        // Make a copy of the original tuple and allocate a new tuple
+        // acquire a version slot from the table.
+        ItemPointer new_location = target_table_->AcquireVersion();
+
+        auto &manager = catalog::Manager::GetInstance();
+        auto new_tile_group = manager.GetTileGroup(new_location.block);
+
+        expression::ContainerTuple<storage::TileGroup> new_tuple(
+            new_tile_group.get(), new_location.offset);
+
         expression::ContainerTuple<storage::TileGroup> old_tuple(
-            tile_group, physical_tuple_id);
-        // Execute the projections
-        project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
+            tile_group, physical_tuple_id);        
+
+        // perform projection from old version to new version.
+        // this triggers in-place update, and we do not need to allocate another version.
+        project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
                                 executor_context_);
 
+        // get indirection.
         ItemPointer *indirection = tile_group_header->GetIndirection(old_location.offset);
-        // finally insert updated tuple into the table
-        ItemPointer new_location = target_table_->InsertVersion(new_tuple.get(), &(project_info_->GetTargetList()), indirection);
+        // finally install new version into the table
+        bool ret = target_table_->InstallVersion(&new_tuple, &(project_info_->GetTargetList()), indirection);
 
         // PerformUpdate() will not be executed if the insertion failed.
         // There is a write lock acquired, but since it is not in the write set,
         // because we haven't yet put them into the write set.
         // the acquired lock can't be released when the txn is aborted.
         // the YieldOwnership() function helps us release the acquired write lock.
-        if (new_location.IsNull() == true) {
+        if (ret == false) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
           transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);

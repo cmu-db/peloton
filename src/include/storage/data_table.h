@@ -111,7 +111,7 @@ class DataTable : public AbstractTable {
   // copy the content into the version. after that, we need to check constraints and then install the version
   // into all the corresponding indexes.
   ItemPointer AcquireVersion();
-  bool InstallVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
+  bool InstallVersion(const AbstractTuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
 
   // insert tuple in table. the pointer to the index entry is returned as index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple, concurrency::Transaction *transaction, ItemPointer **index_entry_ptr = nullptr);
@@ -268,6 +268,10 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple, 
+                                const TargetList *targets_ptr, 
+                                ItemPointer *index_entry_ptr);
+
+  bool InsertInSecondaryIndexes(const AbstractTuple *tuple, 
                                 const TargetList *targets_ptr, 
                                 ItemPointer *index_entry_ptr);
 
