@@ -12,6 +12,7 @@
 
 #include "common/init.h"
 #include "common/thread_pool.h"
+#include "common/config.h"
 
 #include "libcds/cds/init.h"
 
@@ -38,6 +39,9 @@ void PelotonInit::Shutdown() {
 
   // shutdown protocol buf library
   google::protobuf::ShutdownProtobufLibrary();
+
+  // Shut down GFLAGS.
+  ::google::ShutDownCommandLineFlags();
 }
 
 void PelotonInit::SetUpThread() {
