@@ -14,19 +14,20 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/init.h"
+#include "common/thread_pool.h"
 
 namespace peloton {
 namespace wire {
 
-
-std::vector<SocketManager<PktBuf>*> Server::socket_manager_vector_ = { };
+std::vector<SocketManager<PktBuf> *> Server::socket_manager_vector_ = {};
 unsigned int Server::socket_manager_id = 0;
 
 /**
  * Stop signal handling
  */
-void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd, UNUSED_ATTRIBUTE short what, void *arg) {
-  struct event_base *base = (event_base*) arg;
+void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                     UNUSED_ATTRIBUTE short what, void *arg) {
+  struct event_base *base = (event_base *)arg;
   LOG_INFO("stop");
   event_base_loopexit(base, NULL);
 }
@@ -111,7 +112,6 @@ void AcceptCallback(struct evconnlistener *listener,
 	/* Setting up the event does not activate, add the event so it
 	   becomes active. */
 	event_add(socket_manager->ev_read, NULL);
-
 }
 
 Server::Server() {

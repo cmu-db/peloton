@@ -46,7 +46,7 @@ oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
 
   txn_manager.SetNextCid(next_cid);
 
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   auto &catalog_manager = catalog::Manager::GetInstance();
   oid_t total_tuple_count = 0;
@@ -55,14 +55,14 @@ oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
     auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
     total_tuple_count += tile_group->GetActiveTupleCount();
   }
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   return total_tuple_count;
 }
 
 TEST_F(CheckpointTests, CheckpointIntegrationTest) {
   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
@@ -74,8 +74,8 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
       ExecutorTestsUtil::CreateTable(tile_group_size, true, default_table_oid);
   ExecutorTestsUtil::PopulateTable(target_table,
                                    tile_group_size * table_tile_group_count,
-                                   false, false, false);
-  txn_manager.CommitTransaction();
+                                   false, false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   // add table to catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
@@ -117,7 +117,7 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
@@ -128,8 +128,8 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
       ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(target_table.get(),
                                    tile_group_size * table_tile_group_count,
-                                   false, false, false);
-  txn_manager.CommitTransaction();
+                                   false, false, false, txn);
+  txn_manager.CommitTransaction(txn);
 
   auto cid = txn_manager.GetNextCommitId() - 1;
   LOG_INFO("Scan with cid = %d. MaxCommittedCid = %d", (int) cid, (int)

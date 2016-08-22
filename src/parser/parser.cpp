@@ -64,18 +64,12 @@ Parser &Parser::GetInstance(){
   return parser;
 }
 
-std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& query_string){
+std::unique_ptr<parser::SQLStatementList> Parser::BuildParseTree(const std::string& query_string){
   auto stmt  = Parser::ParseSQLString(query_string);
 
   LOG_TRACE("Number of statements: %lu" ,stmt->GetStatements().size());
-  SQLStatement* first_stmt = nullptr;
-
-  for(auto s : stmt->GetStatements()){
-    first_stmt = s;
-    break;
-  }
-
-  std::unique_ptr<parser::SQLStatement> sql_stmt (first_stmt);
+  
+  std::unique_ptr<parser::SQLStatementList> sql_stmt (stmt);
   return std::move(sql_stmt);
 }
 

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -57,41 +56,28 @@ class IndexMetadata : public Printable {
   IndexMetadata() = delete;
 
  public:
-  IndexMetadata(std::string index_name,
-                oid_t index_oid,
-                IndexType method_type,
+  IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
-                const std::vector<oid_t>& key_attrs,
-                bool unique_keys);
+                const std::vector<oid_t> &key_attrs, bool unique_keys);
 
   ~IndexMetadata();
 
-  const std::string &GetName() const {
-    return index_name;
-  }
+  const std::string &GetName() const { return index_name; }
 
-  oid_t GetOid() {
-    return index_oid;
-  }
+  oid_t GetOid() { return index_oid; }
 
-  IndexType GetIndexMethodType() {
-    return method_type;
-  }
+  IndexType GetIndexMethodType() { return method_type; }
 
-  IndexConstraintType GetIndexType() {
-    return index_type;
-  }
+  IndexConstraintType GetIndexType() { return index_type; }
 
   /*
    * GetKeySchama() - Returns a schema object pointer that represents
    *                  the schema of indexed columns, from leading column
    *                  to the least important columns
    */
-  inline const catalog::Schema *GetKeySchema() const {
-    return key_schema;
-  }
+  inline const catalog::Schema *GetKeySchema() const { return key_schema; }
 
   // Return the number of columns inside index key (not in tuple key)
   //
@@ -99,9 +85,7 @@ class IndexMetadata : public Printable {
   // because it uses the member of catalog::Schema which is not known here
   oid_t GetColumnCount() const;
 
-  bool HasUniqueKeys() const {
-    return unique_keys;
-  }
+  bool HasUniqueKeys() const { return unique_keys; }
 
   /*
    * GetKeyAttrs() - Returns the mapping relation between indexed columns
@@ -112,10 +96,8 @@ class IndexMetadata : public Printable {
    * The entry whose value is j on index i means the i-th column in the
    * key is mapped to the j-th column in the base table tuple
    */
-  inline const std::vector<oid_t> &GetKeyAttrs() const {
-    return key_attrs;
-  }
-  
+  inline const std::vector<oid_t> &GetKeyAttrs() const { return key_attrs; }
+
   /*
    * GetTupleToIndexMapping() - Returns the mapping relation between tuple key
    *                            column and index key columns
@@ -124,17 +106,13 @@ class IndexMetadata : public Printable {
     return tuple_attrs;
   }
 
-  double GetUtility() const {
-    return utility_ratio;
-  }
+  double GetUtility() const { return utility_ratio; }
 
-  void SetUtility(double p_utility_ratio) {
-    utility_ratio = p_utility_ratio;
-  }
+  void SetUtility(double p_utility_ratio) { utility_ratio = p_utility_ratio; }
 
   /*
    * GetInfo() - Get a string representation for debugging
-   */ 
+   */
   const std::string GetInfo() const;
 
   ///////////////////////////////////////////////////////////////////
@@ -158,7 +136,7 @@ class IndexMetadata : public Printable {
 
   // The mapping relation between key schema and tuple schema
   std::vector<oid_t> key_attrs;
-  
+
   // The mapping relation between tuple schema and key schema
   // i.e. if the column in tuple is not indexed, then it is set to INVALID_OID
   //      if the column in tuple is indexed, then it is the index in index_key
@@ -195,7 +173,6 @@ class Index : public Printable {
   friend class IndexFactory;
 
  public:
-   
   /*
    * GetOid() - Returns the object identifier of the index
    *
@@ -203,19 +180,19 @@ class Index : public Printable {
    * two must remain the same and actually the one stored in index object
    * is copied from the index metadata
    */
-  oid_t GetOid() const {
-    return index_oid;
-  }
+  oid_t GetOid() const { return index_oid; }
 
-  IndexMetadata *GetMetadata() const {
-    return metadata;
-  }
+  IndexMetadata *GetMetadata() const { return metadata; }
 
   virtual ~Index();
 
   ///////////////////////////////////////////////////////////////////
   // Point Modification
   ///////////////////////////////////////////////////////////////////
+
+  // designed for secondary indexes.
+  virtual bool InsertEntry(const storage::Tuple *key,
+                           ItemPointer *location_ptr) = 0;
 
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
@@ -230,10 +207,9 @@ class Index : public Printable {
   // If not any of those k-v pair satisfy the predicate, insert the k-v pair
   // into the index and return true.
   // This function should be called for all primary/unique index insert
-  virtual bool CondInsertEntry(const storage::Tuple *key,
-                               const ItemPointer &location,
-                               std::function<bool(const ItemPointer &)> \
-                                 predicate) = 0;
+  virtual bool CondInsertEntry(
+      const storage::Tuple *key, ItemPointer *location,
+      std::function<bool(const ItemPointer &)> predicate) = 0;
 
   ///////////////////////////////////////////////////////////////////
   // Index Scan
@@ -245,7 +221,7 @@ class Index : public Printable {
                     const ScanDirectionType &scan_direction,
                     std::vector<ItemPointer *> &result,
                     const ConjunctionScanPredicate *csp_p) = 0;
-                    
+
   // This is the version used to test scan
   // Since it does scan planning everytime, it is slow, and should
   // only be used for correctness testing
@@ -267,18 +243,18 @@ class Index : public Printable {
   // This gives a hint on whether GC is needed on the index
   // For those that do not need GC this always return false
   virtual bool NeedGC() = 0;
-  
+
   // This function performs one round of GC
   // For those that do not need GC this should return immediately
   virtual void PerformGC() = 0;
 
-  // The following two are used to perform GC in a 
+  // The following two are used to perform GC in a
   // fast manner
   // Because if we register for epoch for every operation then
   // essentially we are synchronizing on each operation which does
   // not scale at all
-  //virtual void *JoinEpoch() = 0;
-  //virtual void LeaveEpoch(void *) = 0;
+  // virtual void *JoinEpoch() = 0;
+  // virtual void LeaveEpoch(void *) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -307,29 +283,19 @@ class Index : public Printable {
    * We might have to make a different class in future for maximizing
    * performance of UniqueIndex.
    */
-  bool HasUniqueKeys() const {
-    return metadata->HasUniqueKeys();
-  }
+  bool HasUniqueKeys() const { return metadata->HasUniqueKeys(); }
 
-  oid_t GetColumnCount() const {
-    return metadata->GetColumnCount();
-  }
+  oid_t GetColumnCount() const { return metadata->GetColumnCount(); }
 
-  const std::string &GetName() const {
-    return metadata->GetName();
-  }
+  const std::string &GetName() const { return metadata->GetName(); }
 
   const catalog::Schema *GetKeySchema() const {
     return metadata->GetKeySchema();
   }
 
-  IndexType GetIndexMethodType() {
-    return metadata->GetIndexMethodType();
-  }
+  IndexType GetIndexMethodType() { return metadata->GetIndexMethodType(); }
 
-  IndexConstraintType GetIndexType() const {
-    return metadata->GetIndexType();
-  }
+  IndexConstraintType GetIndexType() const { return metadata->GetIndexType(); }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -342,9 +308,7 @@ class Index : public Printable {
                const std::vector<ExpressionType> &expr_types,
                const std::vector<Value> &values);
 
-  VarlenPool *GetPool() const {
-    return pool;
-  }
+  VarlenPool *GetPool() const { return pool; }
 
   // Garbage collect
   virtual bool Cleanup() = 0;
@@ -359,7 +323,7 @@ class Index : public Printable {
 
   virtual void IncrementIndexedTileGroupOffset() {
     indexed_tile_group_offset++;
-    
+
     return;
   }
 
@@ -387,14 +351,14 @@ class Index : public Printable {
   int update_counter;
 
   // number of tuples
-  size_t number_of_tuples;
+  size_t number_of_tuples = 0;
 
   // dirty flag
   bool dirty = false;
 
   // pool
   VarlenPool *pool = nullptr;
-  
+
   // This is used by index tuner
   std::atomic<size_t> indexed_tile_group_offset;
 };

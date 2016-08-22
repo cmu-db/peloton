@@ -183,6 +183,8 @@ bool HybridScanExecutor::SeqScanUtil() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
+  auto current_txn = executor_context_->GetTransaction();
+
   // Retrieve next tile group.
   while (current_tile_group_offset_ < table_tile_group_count_) {
     LOG_TRACE("Current tile group offset : %u", current_tile_group_offset_);
@@ -210,7 +212,7 @@ bool HybridScanExecutor::SeqScanUtil() {
       }
 
       // Check transaction visibility
-      if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+      if (transaction_manager.IsVisible(current_txn, tile_group_header, tuple_id) == VISIBILITY_OK) {
         // If the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
@@ -231,9 +233,9 @@ bool HybridScanExecutor::SeqScanUtil() {
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(location);
+          auto res = transaction_manager.PerformRead(current_txn, location);
           if (!res) {
-            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
             return res;
           }
         }
@@ -361,6 +363,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
+  auto current_txn = executor_context_->GetTransaction();
+
   if (tuple_location_ptrs.size() == 0) {
     index_done_ = true;
     return false;
@@ -386,12 +390,14 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     while (true) {
       ++chain_length;
 
-      if (transaction_manager.IsVisible(tile_group_header,
-                                        tuple_location.offset)) {
+      auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_location.offset);
+
+      if (visibility == VISIBILITY_OK) {
+
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-        auto res = transaction_manager.PerformRead(tuple_location);
+        auto res = transaction_manager.PerformRead(current_txn, tuple_location);
         if (!res) {
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return res;
         }
         break;

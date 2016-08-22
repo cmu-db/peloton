@@ -118,7 +118,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
  * @param num_rows Number of tuples to insert.
  */
 void ConstraintsTestsUtil::PopulateTable(
-    UNUSED_ATTRIBUTE concurrency::Transaction *transaction,
+    concurrency::Transaction *transaction,
     storage::DataTable *table, int num_rows) {
   // Ensure that the tile group is as expected.
   UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
@@ -215,7 +215,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INDEX_TYPE_BTREE,
+        "primary_btree_index", 123, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
@@ -229,7 +229,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "secondary_btree_index", 124, INDEX_TYPE_BTREE,
+        "secondary_btree_index", 124, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(index::IndexFactory::GetInstance(index_metadata));
 
@@ -242,7 +242,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "unique_btree_index", 125, INDEX_TYPE_BTREE,
+        "unique_btree_index", 125, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema, key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> unique_index(index::IndexFactory::GetInstance(index_metadata));
 
@@ -264,7 +264,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   auto txn = txn_manager.BeginTransaction();
   ConstraintsTestsUtil::PopulateTable(txn, table,
                                       tuple_count * DEFAULT_TILEGROUP_COUNT);
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   return table;
 }

@@ -39,7 +39,7 @@ TEST_F(InsertTests, InsertRecord) {
   auto catalog = catalog::Bootstrapper::bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
   // Insert a table first
   auto id_column = catalog::Column(
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "dept_id", true);
@@ -49,30 +49,35 @@ TEST_F(InsertTests, InsertRecord) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
-  txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->CreateTable(
-      DEFAULT_DB_NAME, "TEST_TABLE", std::move(table_schema));
-  txn_manager.CommitTransaction();
+      DEFAULT_DB_NAME, "TEST_TABLE", std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
 
-  auto txn = txn_manager.BeginTransaction();
+  txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  auto insert_node = new parser::InsertStatement(INSERT_TYPE_VALUES);
-  std::string name = "TEST_TABLE";
+  std::unique_ptr<parser::InsertStatement> insert_node(
+      new parser::InsertStatement(INSERT_TYPE_VALUES));
+  char *name = new char[11]();
+  strcpy(name, "TEST_TABLE");
 
-  std::string col_1 = "dept_id";
-  std::string col_2 = "dept_name";
+  char *col_1 = new char[8]();
+  strcpy(col_1, "dept_id");
 
-  insert_node->table_name = const_cast<char *>(name.c_str());
+  char *col_2 = new char[10]();
+  strcpy(col_2, "dept_name");
+
+  insert_node->table_name = const_cast<char *>(name);
 
   insert_node->columns = new std::vector<char *>;
-  insert_node->columns->push_back(const_cast<char *>(col_1.c_str()));
-  insert_node->columns->push_back(const_cast<char *>(col_2.c_str()));
+  insert_node->columns->push_back(const_cast<char *>(col_1));
+  insert_node->columns->push_back(const_cast<char *>(col_2));
 
   insert_node->values = new std::vector<expression::AbstractExpression *>;
   insert_node->values->push_back(new expression::ConstantValueExpression(
@@ -83,18 +88,18 @@ TEST_F(InsertTests, InsertRecord) {
 
   insert_node->select = new parser::SelectStatement();
 
-  planner::InsertPlan node(insert_node);
+  planner::InsertPlan node(insert_node.get());
   executor::InsertExecutor executor(&node, context.get());
 
   EXPECT_TRUE(executor.Init());
   EXPECT_TRUE(executor.Execute());
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 
   // free the database just created
-  txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   delete catalog;
 }
