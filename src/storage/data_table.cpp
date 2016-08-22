@@ -137,7 +137,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
-  PL_ASSERT(tuple);
 
   size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
   std::shared_ptr<storage::TileGroup> tile_group;
