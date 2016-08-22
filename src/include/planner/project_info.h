@@ -59,7 +59,13 @@ class ProjectInfo {
 
   bool isNonTrivial() const { return target_list_.size() > 0; };
 
-  bool Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
+  bool Evaluate(storage::Tuple *dest, 
+                const AbstractTuple *tuple1,
+                const AbstractTuple *tuple2,
+                executor::ExecutorContext *econtext) const;
+
+  bool Evaluate(AbstractTuple *dest, 
+                const AbstractTuple *tuple1,
                 const AbstractTuple *tuple2,
                 executor::ExecutorContext *econtext) const;
 

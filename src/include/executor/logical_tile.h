@@ -84,6 +84,8 @@ class LogicalTile : public Printable {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
+  void SetValue(Value &value, oid_t tuple_id, oid_t column_id);
+
   size_t GetTupleCount();
 
   size_t GetColumnCount();

@@ -357,6 +357,14 @@ Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
+void TileGroup::SetValue(Value &value, oid_t tuple_id, oid_t column_id) {
+  PL_ASSERT(tuple_id < GetNextTupleSlot());
+  oid_t tile_column_id, tile_offset;
+  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
+}
+
+
 Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   PL_ASSERT(tile_offset < tile_count);
   Tile *tile = tiles[tile_offset].get();
