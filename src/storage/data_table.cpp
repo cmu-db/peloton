@@ -136,8 +136,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // new tile group.
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                         UNUSED_ATTRIBUTE bool check_constraint) {
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   PL_ASSERT(tuple);
 
   size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
@@ -178,19 +177,13 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
-ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
+ItemPointer DataTable::InsertEmptyVersion() {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, false);
+  ItemPointer location = GetEmptyTupleSlot(nullptr);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
-
-  // Index checks and updates
-  // if (InsertInSecondaryIndexes(tuple, location) == false) {
-  //   LOG_TRACE("Index constraint violated");
-  //   return INVALID_ITEMPOINTER;
-  // }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
@@ -202,7 +195,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple,
                                      const TargetList *targets_ptr, 
                                      ItemPointer *index_entry_ptr) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, true);
+  ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
