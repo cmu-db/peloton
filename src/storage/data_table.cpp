@@ -86,8 +86,6 @@ DataTable::~DataTable() {
     }
   }
 
-  // indices will be automatically cleaned up
-
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
@@ -136,9 +134,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // new tile group.
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                         UNUSED_ATTRIBUTE bool check_constraint) {
-  PL_ASSERT(tuple);
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
 
   size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
   std::shared_ptr<storage::TileGroup> tile_group;
@@ -178,19 +174,13 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
 //===--------------------------------------------------------------------===//
 // INSERT
 //===--------------------------------------------------------------------===//
-ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
-  // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, false);
+ItemPointer DataTable::InsertEmptyVersion() {
+  // First, claim a slot
+  ItemPointer location = GetEmptyTupleSlot(nullptr);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
-
-  // Index checks and updates
-  // if (InsertInSecondaryIndexes(tuple, location) == false) {
-  //   LOG_TRACE("Index constraint violated");
-  //   return INVALID_ITEMPOINTER;
-  // }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
@@ -198,27 +188,31 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   return location;
 }
 
-ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, 
-                                     const TargetList *targets_ptr, 
-                                     ItemPointer *index_entry_ptr) {
-  // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, true);
+ItemPointer DataTable::AcquireVersion() {
+  // First, claim a slot
+  ItemPointer location = GetEmptyTupleSlot(nullptr);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
-    return INVALID_ITEMPOINTER;
-  }
-
-  // Index checks and updates
-  if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
-    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseTupleCount(1);
-
   return location;
+}
+
+
+bool DataTable::InstallVersion(const AbstractTuple *tuple, 
+                               const TargetList *targets_ptr, 
+                               ItemPointer *index_entry_ptr) {
+  
+  // Index checks and updates
+  if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
+    LOG_TRACE("Index constraint violated");
+    return false;
+  }
+  return true;
 }
 
 
@@ -303,7 +297,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   int index_count = GetIndexCount();
 
   *index_entry_ptr = new ItemPointer(location);
-  
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -362,19 +356,10 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   return true;
 }
 
-bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
+
+bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
               const TargetList *targets_ptr, ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
-  // auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  // this function is used for conditional insertion.
-  // this helps avoid duplicated insertion caused by concurrent transactions.
-
-  // TODO: handle unique index.
-  // std::function<bool(const ItemPointer &)> fn =
-  //   std::bind(&concurrency::TransactionManager::IsOccupied,
-  //             &transaction_manager, std::placeholders::_1);
-
   // Transaform the target list into a hash set
   // when attempting to perform insertion to a secondary index,
   // we must check whether the updated column is a secondary index column.
@@ -412,19 +397,14 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
 
     // Key attributes are updated, insert a new entry in all secondary index
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+    
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
         break;
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // if in this index there has been a visible or uncommitted
-        // <key, location> pair, this constraint is violated
-        // if (index->CondInsertEntry(key.get(), master_ptr, fn) == false) {
-          // return false;
-        // }
-      } break;
-
+      case INDEX_CONSTRAINT_TYPE_UNIQUE:
+        break;
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
         index->InsertEntry(key.get(), index_entry_ptr);
@@ -434,6 +414,9 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   }
   return true;
 }
+
+
+
 
 /**
  * @brief Check if all the foreign key constraints on this table

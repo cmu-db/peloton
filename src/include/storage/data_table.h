@@ -101,10 +101,17 @@ class DataTable : public AbstractTable {
   // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
   // insert an empty version in table. designed for delete operation.
-  ItemPointer InsertEmptyVersion(const Tuple *tuple);
-  // insert an version in table. designed for update operation.
+  ItemPointer InsertEmptyVersion();
+  
+  // these two functions are designed for reducing memory allocation by performing in-place update.
+  // in the update executor, we first acquire a version slot from the data table, and then
+  // copy the content into the version. after that, we need to check constraints and then install the version
+  // into all the corresponding indexes.
+  ItemPointer AcquireVersion();
+  // install an version in table. designed for update operation.
   // as we implement logical-pointer indexing mechanism, targets_ptr is required.
-  ItemPointer InsertVersion(const storage::Tuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
+  bool InstallVersion(const AbstractTuple *tuple, const TargetList *targets_ptr, ItemPointer *index_entry_ptr);
+
   // insert tuple in table. the pointer to the index entry is returned as index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple, concurrency::Transaction *transaction, ItemPointer **index_entry_ptr = nullptr);
   // designed for tables without primary key. e.g., output table used by aggregate_executor.
@@ -242,8 +249,7 @@ class DataTable : public AbstractTable {
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                bool check_constraint = true);
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
 
   // add a tile group to the table
   oid_t AddDefaultTileGroup();
@@ -260,7 +266,7 @@ class DataTable : public AbstractTable {
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
 
-  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, 
+  bool InsertInSecondaryIndexes(const AbstractTuple *tuple, 
                                 const TargetList *targets_ptr, 
                                 ItemPointer *index_entry_ptr);
 

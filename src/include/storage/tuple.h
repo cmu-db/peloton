@@ -102,7 +102,7 @@ class Tuple : public AbstractTuple {
 
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
-  Value GetValue(const oid_t column_id) const;
+  Value GetValue(oid_t column_id) const;
 
   /**
    * Allocate space to copy strings that can't be inlined rather
@@ -115,6 +115,9 @@ class Tuple : public AbstractTuple {
    */
   void SetValue(const oid_t column_id, const Value &value,
                 VarlenPool *dataPool);
+
+  // set value without data pool.
+  void SetValue(oid_t column_id, Value &value);
 
   inline int GetLength() const { return tuple_schema->GetLength(); }
 
@@ -160,7 +163,7 @@ class Tuple : public AbstractTuple {
   size_t GetUninlinedMemorySize() const;
 
   // This sets the relevant columns from the source tuple
-  void SetFromTuple(const storage::Tuple *tuple,
+  void SetFromTuple(const AbstractTuple *tuple,
                     const std::vector<oid_t> &columns, VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
