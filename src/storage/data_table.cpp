@@ -86,8 +86,6 @@ DataTable::~DataTable() {
     }
   }
 
-  // indices will be automatically cleaned up
-
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
@@ -321,8 +319,9 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   
   int index_count = GetIndexCount();
 
-  *index_entry_ptr = new ItemPointer(location);
-  
+  // *index_entry_ptr = new ItemPointer(location);
+  *index_entry_ptr = nullptr;
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
@@ -346,6 +345,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
         // get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
+        index_entry_ptr = new ItemPointer(location);
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       }
         break;
