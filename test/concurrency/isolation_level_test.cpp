@@ -388,23 +388,6 @@ void SIAnomalyTest1() {
   }
 }
 
-// This is another version of the SI Anomaly described in this paper:
-// http://cs.nyu.edu/courses/fall15/CSCI-GA.2434-001/p729-cahill.pdf
-// void SIAnomalyTest2() {
-//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//   std::unique_ptr<storage::DataTable> table(
-//       TransactionTestsUtil::CreateTable());
-//   int X = 0, Y = 1, Z = 2;
-//   {
-
-//     TransactionScheduler scheduler(3, table.get(), &txn_manager);
-//     scheduler.Txn(1).Update(Y, 1);
-//     scheduler.Txn(1).Update(Z, 1);
-//     scheduler.Txn(0).Read(Y);
-//     scheduler.Txn(0).Write(X, 1);
-//   }
-// }
-
 TEST_F(IsolationLevelTest, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
@@ -419,7 +402,6 @@ TEST_F(IsolationLevelTest, SerializableTest) {
   }
 }
 
-// FIXME: CONCURRENCY_TYPE_SPECULATIVE_READ can't pass it for now
 TEST_F(IsolationLevelTest, StressTest) {
 
   const int num_txn = 2;    // 16
