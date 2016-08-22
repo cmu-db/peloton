@@ -58,65 +58,85 @@ bool SocketManager<B>::RefillReadBuffer() {
 
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
+  fd_set rset;
+  struct timeval timeout;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
-  while (wbuf.buf_size - written_bytes > 0) {
-    written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
-    fsync(sock_fd);
-    if (written_bytes < 0) {
-      switch(errno) {
-      case EINTR:
-    	  continue;
-    	  break;
-      case EAGAIN:
-    	  LOG_INFO("Error Writing: EAGAIN");
-    	  break;
-      case EBADF:
-    	  LOG_INFO("Error Writing: EBADF");
-    	  break;
-      case EDESTADDRREQ:
-    	  LOG_INFO("Error Writing: EDESTADDRREQ");
-    	  break;
-      case EDQUOT:
-    	  LOG_INFO("Error Writing: EDQUOT");
-    	  break;
-      case EFAULT:
-    	  LOG_INFO("Error Writing: EFAULT");
-    	  break;
-      case EFBIG:
-    	  LOG_INFO("Error Writing: EFBIG");
-    	  break;
-      case EINVAL:
-    	  LOG_INFO("Error Writing: EINVAL");
-    	  break;
-      case EIO:
-    	  LOG_INFO("Error Writing: EIO");
-    	  break;
-      case ENOSPC:
-    	  LOG_INFO("Error Writing: ENOSPC");
-    	  break;
-      case EPIPE:
-    	  LOG_INFO("Error Writing: EPIPE");
-    	  break;
-      default:
-    	  LOG_INFO("Error Writing: UNKNOWN");
-      }
-      if (errno == EINTR) {
-        // interrupts are ok, try again
-        continue;
-      } else {
-        // fatal errors
-        return false;
-      }
-    }
+  while ((int)wbuf.buf_size - written_bytes > 0) {
+	  while(written_bytes <= 0){
+			written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+			if (written_bytes < 0) {
+			  switch(errno) {
+			  case EINTR:
+				  continue;
+				  break;
+			  case EAGAIN:
+				  LOG_INFO("Error Writing: EAGAIN");
+				  break;
+			  case EBADF:
+				  LOG_INFO("Error Writing: EBADF");
+				  break;
+			  case EDESTADDRREQ:
+				  LOG_INFO("Error Writing: EDESTADDRREQ");
+				  break;
+			  case EDQUOT:
+				  LOG_INFO("Error Writing: EDQUOT");
+				  break;
+			  case EFAULT:
+				  LOG_INFO("Error Writing: EFAULT");
+				  break;
+			  case EFBIG:
+				  LOG_INFO("Error Writing: EFBIG");
+				  break;
+			  case EINVAL:
+				  LOG_INFO("Error Writing: EINVAL");
+				  break;
+			  case EIO:
+				  LOG_INFO("Error Writing: EIO");
+				  break;
+			  case ENOSPC:
+				  LOG_INFO("Error Writing: ENOSPC");
+				  break;
+			  case EPIPE:
+				  LOG_INFO("Error Writing: EPIPE");
+				  break;
+			  default:
+				  LOG_INFO("Error Writing: UNKNOWN");
+			  }
+			  if (errno == EINTR) {
+				// interrupts are ok, try again
+				written_bytes = 0;
+				continue;
+			  } else if (errno == EAGAIN) {
+				  FD_ZERO (&rset);
+				  FD_SET (sock_fd, &rset);
+				  timeout.tv_sec = 5;
+				  written_bytes = select(sock_fd + 1, &rset, NULL, NULL, &timeout);
+				  if (written_bytes < 0) {
+					  LOG_INFO("written_bytes < 0 after select. Fatal");
+					  exit(EXIT_FAILURE);
+				  } else if (written_bytes == 0) {
+					  // timed out without writing any data
+					  LOG_INFO("Timeout without writing");
+				  }
+				  // else, socket is now readable, so loop back up and do the read() again
+				  written_bytes = 0;
+				  continue;
+			  }
+			  else {
+				// fatal errors
+				return false;
+			  }
+			}
 
-    // weird edge case?
-    if (written_bytes == 0 && wbuf.buf_size != 0) {
-    	LOG_INFO("Not all data is written");
-      // fatal
-      return false;
-    }
+			// weird edge case?
+			if (written_bytes == 0 && wbuf.buf_size != 0) {
+				LOG_INFO("Not all data is written");
+			  // fatal
+			  return false;
+			}
+	  }
 
     // update bookkeping
     wbuf.buf_ptr += written_bytes;
