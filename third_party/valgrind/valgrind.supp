@@ -8,3 +8,32 @@
         ...
 }
 
+{
+    Handle DataTable ItemPointer pointer leaks
+        Memcheck:Leak
+        ...
+        fun:_Znwm
+        fun:_ZN7peloton7storage9DataTable15InsertInIndexesEPKNS0_5TupleENS_11ItemPointerEPNS_11concurrency11TransactionEPPS5_
+        fun:_ZN7peloton7storage9DataTable11InsertTupleEPKNS0_5TupleEPNS_11concurrency11TransactionEPPNS_11ItemPointerE
+        ...
+}
+
+{
+    Handle WAL logger ItemPointer pointer leaks
+        Memcheck:Leak
+        ...
+        fun:_Znwm
+        fun:_ZN7peloton7logging24WriteAheadFrontendLogger16InsertIndexEntryEPNS_7storage5TupleEPNS2_9DataTableENS_11ItemPointerE
+        fun:_ZN7peloton7logging24WriteAheadFrontendLogger23RecoverTableIndexHelperEPNS_7storage9DataTableEm
+        ...
+}
+
+{
+    Handle index_test ItemPointer pointer leaks
+        Memcheck:Leak
+        ...
+        fun:_Znwm
+        fun:_ZN7peloton5index11BWTreeIndexINS0_10GenericKeyILm16EEEPNS_11ItemPointerENS0_17GenericComparatorILm16EEENS0_22GenericEqualityCheckerILm16EEENS0_13GenericHasherILm16EEENS0_21ItemPointerComparatorENS0_19ItemPointerHashFuncEE11InsertEntryEPKNS_7storage5TupleERKS4_
+        fun:_ZN7peloton4test10InsertTestEPNS_5index5IndexEPNS_10VarlenPoolEmm
+        ...
+}
