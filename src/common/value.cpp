@@ -20,6 +20,8 @@
 #include <sstream>
 #include <algorithm>
 #include <set>
+#include <ctime>
+#include <chrono>
 
 namespace peloton {
 
@@ -382,41 +384,41 @@ TTInt Value::s_maxInt64AsDecimal(TTInt(INT64_MAX) * kMaxScaleFactor);
 TTInt Value::s_minInt64AsDecimal(TTInt(-INT64_MAX) * kMaxScaleFactor);
 
 std::string Value::ToString() {
-	const ValueType type = GetValueType();
-	const char *ptr;
-	switch (type) {
-	    case VALUE_TYPE_BOOLEAN:
-	    	if(GetBoolean()) {
-	    		return "true";
-	    	}
-	    	else {
-	    		return "false";
-	    	}
-	    case VALUE_TYPE_TINYINT:
-	      return std::to_string(static_cast<int32_t>(GetTinyInt()));
-	    case VALUE_TYPE_SMALLINT:
-	      return std::to_string(GetSmallInt());
-	    case VALUE_TYPE_DATE:
-	    case VALUE_TYPE_INTEGER:
-	    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
-	      return std::to_string(GetInteger());
-	    case VALUE_TYPE_BIGINT:
-	    case VALUE_TYPE_TIMESTAMP:
-	      return std::to_string(GetBigInt());
-	    case VALUE_TYPE_REAL:
-	    case VALUE_TYPE_DOUBLE:
-	    	return std::to_string(GetDouble());
-	    case VALUE_TYPE_VARCHAR:
-	      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-	      return std::string(ptr, GetObjectLengthWithoutNull());
-	    case VALUE_TYPE_VARBINARY:
-	      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-	      return std::string(ptr, GetObjectLengthWithoutNull());
-	    case VALUE_TYPE_DECIMAL:
-	      return CreateStringFromDecimal();
-	    default:
-	      return "(no details)";
-	  }
+  const ValueType type = GetValueType();
+  const char *ptr;
+  switch (type) {
+    case VALUE_TYPE_BOOLEAN:
+      if (GetBoolean()) {
+        return "true";
+      } else {
+        return "false";
+      }
+    case VALUE_TYPE_TINYINT:
+      return std::to_string(static_cast<int32_t>(GetTinyInt()));
+    case VALUE_TYPE_SMALLINT:
+      return std::to_string(GetSmallInt());
+    case VALUE_TYPE_DATE:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
+      return std::to_string(GetInteger());
+    case VALUE_TYPE_BIGINT:
+      return std::to_string(GetBigInt());
+    case VALUE_TYPE_TIMESTAMP:
+      return FormatTimestamp(std::to_string(GetBigInt()));
+    case VALUE_TYPE_REAL:
+    case VALUE_TYPE_DOUBLE:
+      return std::to_string(GetDouble());
+    case VALUE_TYPE_VARCHAR:
+      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+      return std::string(ptr, GetObjectLengthWithoutNull());
+    case VALUE_TYPE_VARBINARY:
+      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+      return std::string(ptr, GetObjectLengthWithoutNull());
+    case VALUE_TYPE_DECIMAL:
+      return CreateStringFromDecimal();
+    default:
+      return "(no details)";
+  }
 }
 
 /*
@@ -447,7 +449,7 @@ const std::string Value::GetInfo() const {
     case VALUE_TYPE_INTEGER:
       buffer << GetInteger();
       break;
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
       buffer << "NOT BINDED @ " << GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
@@ -463,11 +465,12 @@ const std::string Value::GetInfo() const {
       // with other Value types
       //
       // VARCHAR min value has 1 byte payload '\0' with length being 1
-      // VARCHAR max value has nullptr as payoad pointer with length VARCHAR_MAX_INDICATOR
-      if(GetObjectLengthWithoutNull() == VARCHAR_MAX_INDICATOR) {
+      // VARCHAR max value has nullptr as payoad pointer with length
+      // VARCHAR_MAX_INDICATOR
+      if (GetObjectLengthWithoutNull() == VARCHAR_MAX_INDICATOR) {
         buffer << "[0]*VARCHAR_MAX*";
-      } else if((GetObjectLengthWithoutNull() == 1) && \
-                (((char *)GetObjectValueWithoutNull())[0] == '\0')) {
+      } else if ((GetObjectLengthWithoutNull() == 1) &&
+                 (((char *)GetObjectValueWithoutNull())[0] == '\0')) {
         buffer << "[0]*VARCHAR_MIN*";
       } else {
         ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
@@ -476,7 +479,7 @@ const std::string Value::GetInfo() const {
         buffer << "[" << GetObjectLengthWithoutNull() << "]";
         buffer << "\"" << out_val << "\"[@" << addr << "]";
       }
-      
+
       break;
     case VALUE_TYPE_VARBINARY:
       ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
@@ -827,13 +830,15 @@ static void throwTimestampFormatError(const std::string &str) {
   // No space separator for between the date and time
   snprintf(message, 4096,
            "Attempted to cast \'%s\' to type %s failed. Supported format: "
-           "\'YYYY-MM-DD HH:MM:SS.UUUUUU\'"
+           "\'YYYY-MM-DD HH:MM:SS.UUUUUU(+/-)ZZ\'"
            "or \'YYYY-MM-DD\'",
            str.c_str(), ValueTypeToString(VALUE_TYPE_TIMESTAMP).c_str());
   throw Exception(message);
 }
 
 int64_t Value::parseTimestampString(const std::string &str) {
+  LOG_TRACE("parsing timestamp: %s", str.c_str());
+
   // date_str
   std::string date_str(str);
   // This is the std:string API for "ltrim" and "rtrim".
@@ -853,13 +858,14 @@ int64_t Value::parseTimestampString(const std::string &str) {
   int minute = 0;
   int second = 0;
   int micro = 1000000;
+  int time_zone = 0;
   // time_str
   std::string time_str;
   std::string number_string;
   const char *pch;
 
   switch (date_str.size()) {
-    case 26:
+    case 29:
       sep_pos = date_str.find(' ');
       if (sep_pos != 10) {
         throwTimestampFormatError(str);
@@ -871,7 +877,7 @@ int64_t Value::parseTimestampString(const std::string &str) {
           time_str.begin(),
           std::find_if(time_str.begin(), time_str.end(),
                        std::not1(std::ptr_fun<int, int>(std::isspace))));
-      if (time_str.length() != 15) {
+      if (time_str.length() != 18) {
         throwTimestampFormatError(str);
       }
 
@@ -940,6 +946,15 @@ int64_t Value::parseTimestampString(const std::string &str) {
       if (micro >= 2000000 || micro < 1000000) {
         throwTimestampFormatError(str);
       }
+
+      // Get the time zone
+      number_string = time_str.substr(15, 3);
+      pch = number_string.c_str();
+      time_zone = atoi(pch);
+
+      if (time_zone > 12 || time_zone < -12) {
+        throwTimestampFormatError(str);
+      }
     case 10:
       if (date_str.at(4) != '-' || date_str.at(7) != '-') {
         throwTimestampFormatError(str);
@@ -1002,9 +1017,12 @@ int64_t Value::parseTimestampString(const std::string &str) {
 
   int64_t result = 0;
   try {
+    LOG_TRACE("parsed timestamp: %d %d %d %d %d %d %d", year, month, day, hour,
+              minute, second, time_zone);
     result = epoch_microseconds_from_components(
         (unsigned short int)year, (unsigned short int)month,
-        (unsigned short int)day, hour, minute, second);
+        (unsigned short int)day, hour + time_zone, minute, second);
+    LOG_TRACE("unix epoch number: %ld", result);
   }
   catch (const std::out_of_range &bad) {
     throwTimestampFormatError(str);
@@ -1059,6 +1077,44 @@ Value Value::GetMinValue(ValueType type) {
       throw UnknownTypeException((int)type, "Can't get min value for type");
     }
   }
+}
+
+std::string Value::FormatTimestamp(std::string timestamp){
+          
+//Convert stored epoch from string to long long
+long long epoch = std::stoll(timestamp);
+
+//Get the time from the epoch value without milliseconds
+time_t new_time_stamp = static_cast<time_t>(epoch/1000000);
+          
+//Convert the format of that time to a UTC like format
+//Check http://www.cplusplus.com/reference/ctime/tm/
+struct tm *ltm = localtime(&new_time_stamp);
+
+//Get the year
+//Check previous link
+int i_year = 1900 + ltm->tm_year;
+std::string year = std::to_string(i_year);
+
+int i_month = 1 + ltm->tm_mon;
+std::string month = std::to_string(i_month);
+          
+std::string day = std::to_string(ltm->tm_mday);
+          
+int i_hour = 1 + ltm->tm_hour;
+std::string hour = std::to_string(i_hour);
+          
+int i_minute = 1 + ltm->tm_min;
+std::string minute = std::to_string(i_minute);
+
+int i_second = 1 + ltm->tm_sec;
+std::string second = std::to_string(i_second);
+          
+// arrange the time to a readable format
+std::string formatted_time = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
+
+return formatted_time;
+
 }
 
 Value Value::GetMaxValue(ValueType type) {

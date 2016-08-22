@@ -58,10 +58,14 @@ Result Catalog::CreateDatabase(std::string database_name, concurrency::Transacti
   databases.push_back(database);
   // Update catalog_db with this database info
 
-  auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
-      database_id,
-      database_name);
-  catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple), txn);
+  auto tuple =
+      GetDatabaseCatalogTuple(databases[START_OID]
+                                  ->GetTableWithName(DATABASE_CATALOG_NAME)
+                                  ->GetSchema(),
+                              database_id, database_name);
+  catalog::InsertTuple(
+      databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
+      std::move(tuple), txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
@@ -122,10 +126,12 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     auto schema = table->GetSchema();
 
     // Find primary index attributes
+    int column_idx = 0;
     for (auto &column : schema->GetColumns()) {
       if (column.IsPrimary()) {
-        key_attrs.push_back(column.column_offset);
+        key_attrs.push_back(column_idx);
       }
+      column_idx++;
     }
 
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
@@ -140,7 +146,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     table->AddIndex(pkey_index);
 
     LOG_TRACE("Successfully add primary key index for table %s",
-             table->GetName().c_str());
+              table->GetName().c_str());
     return Result::RESULT_SUCCESS;
   } else {
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
@@ -148,68 +154,67 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
   }
 }
 
-
 // Function to add non-primary Key index
 Result Catalog::CreateIndex(const std::string &database_name,
-                                   const std::string &table_name , std::vector<std::string> index_attr, std::string index_name , bool unique) {
+                            const std::string &table_name,
+                            std::vector<std::string> index_attr,
+                            std::string index_name, bool unique,
+                            IndexType index_type) {
 
   auto database = GetDatabaseWithName(database_name);
-  if(database != nullptr){
-     auto table = database->GetTableWithName(table_name);
-        if (table == nullptr) {
-          LOG_TRACE(
-              "Cannot find the table to create the primary key index. Return "
-              "RESULT_FAILURE.");
-          return Result::RESULT_FAILURE;
+  if (database != nullptr) {
+    auto table = database->GetTableWithName(table_name);
+    if (table == nullptr) {
+      LOG_TRACE(
+          "Cannot find the table to create the primary key index. Return "
+          "RESULT_FAILURE.");
+      return Result::RESULT_FAILURE;
+    }
+
+    std::vector<oid_t> key_attrs;
+    catalog::Schema *key_schema = nullptr;
+    index::IndexMetadata *index_metadata = nullptr;
+    auto schema = table->GetSchema();
+
+    // check if index attributes are in table
+    auto columns = schema->GetColumns();
+    for (auto attr : index_attr) {
+      for (uint i = 0; i < columns.size(); ++i) {
+        if (attr == columns[i].column_name) {
+          key_attrs.push_back(i);
         }
+      }
+    }
 
-        std::vector<oid_t> key_attrs;
-        catalog::Schema *key_schema = nullptr;
-        index::IndexMetadata *index_metadata = nullptr;
-        auto schema = table->GetSchema();
+    // Check for mismatch between key attributes and attributes
+    // that came out of the parser
+    if (key_attrs.size() != index_attr.size()) {
 
-        // check if index attributes are in table
-        auto columns = schema->GetColumns();
-        for(auto attr : index_attr){
-          for(uint i = 0; i < columns.size() ; ++i){  
-            if(attr == columns[i].column_name){
-              key_attrs.push_back(i);
-            }
-          }
-        }
-        
-        //Check for mismatch between key attributes and attributes
-        //that came out of the parser
-        if(key_attrs.size() != index_attr.size()){
+      LOG_TRACE("Some columns are missing");
+      return Result::RESULT_FAILURE;
+    }
 
-          LOG_TRACE("Some columns are missing");
-          return Result::RESULT_FAILURE;
-        }
+    key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+    key_schema->SetIndexedColumns(key_attrs);
 
-        key_schema = catalog::Schema::CopySchema(schema, key_attrs);
-        key_schema->SetIndexedColumns(key_attrs);
+    // Check if unique index or not
+    if (unique == false) {
+      index_metadata = new index::IndexMetadata(
+          index_name.c_str(), Manager::GetInstance().GetNextOid(), index_type,
+          INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
+    } else {
+      index_metadata = new index::IndexMetadata(
+          index_name.c_str(), Manager::GetInstance().GetNextOid(), index_type,
+          INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true);
+    }
 
-        // Check if unique index or not
-        if(unique == false){
-        index_metadata = new index::IndexMetadata(
-                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
-                INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
-        }
+    // Add index to table
+    std::shared_ptr<index::Index> key_index(
+        index::IndexFactory::GetInstance(index_metadata));
+    table->AddIndex(key_index);
 
-        else {
-        index_metadata = new index::IndexMetadata(
-                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
-                INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true); 
-        }
-
-        //Add index to table
-        std::shared_ptr<index::Index> key_index(
-             index::IndexFactory::GetInstance(index_metadata));
-        table->AddIndex(key_index);
-
-        LOG_TRACE("Successfully add index for table %s",
-                 table->GetName().c_str());
-       return Result::RESULT_SUCCESS;
+    LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
+    return Result::RESULT_SUCCESS;
   }
 
   return Result::RESULT_FAILURE;
@@ -249,7 +254,7 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
 Result Catalog::DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn) {
 
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
-           database_name.c_str());
+            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
     LOG_TRACE("Found database!");
@@ -294,7 +299,7 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
 storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
                                                   std::string table_name) {
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
-           database_name.c_str());
+            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
     storage::DataTable *table = database->GetTableWithName(table_name);
@@ -394,5 +399,7 @@ void Catalog::PrintCatalogs() {}
 int Catalog::GetDatabaseCount() { return databases.size(); }
 
 oid_t Catalog::GetNewID() { return id_cntr++; }
+
+Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
 }
 }

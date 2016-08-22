@@ -150,14 +150,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_,
-                 key_column_ids_,
-                 expr_types_,
-                 SCAN_DIRECTION_TYPE_FORWARD,
-                 tuple_location_ptrs,
+    index_->Scan(values_, key_column_ids_, expr_types_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                  &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
-
 
   if (tuple_location_ptrs.size() == 0) {
     LOG_TRACE("no tuple is retrieved from index.");
@@ -165,7 +161,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   auto &transaction_manager =
-    concurrency::TransactionManagerFactory::GetInstance();
+      concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
 
@@ -182,36 +178,41 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
     size_t chain_length = 0;
 
-    // the following code traverses the version chain until a certain visible version is found.
+    // the following code traverses the version chain until a certain visible
+    // version is found.
     // we should always find a visible version from a version chain.
     while (true) {
       ++chain_length;
 
-      auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_location.offset);
+      auto visibility = transaction_manager.IsVisible(
+          current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
+                  tuple_location.offset);
         break;
       }
       // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+                  tuple_location.offset);
 
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
           expression::ContainerTuple<storage::TileGroup> tuple(
-            tile_group.get(), tuple_location.offset);
+              tile_group.get(), tuple_location.offset);
           eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res = transaction_manager.PerformRead(current_txn, tuple_location);
+          auto res =
+              transaction_manager.PerformRead(current_txn, tuple_location);
           if (!res) {
-            transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+            transaction_manager.SetTransactionResult(current_txn,
+                                                     RESULT_FAILURE);
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
@@ -223,17 +224,24 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       // if the tuple is not visible.
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
-        
+
         LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
-        bool is_acquired = (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID);
-        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= current_txn->GetBeginCommitId());
+        bool is_acquired = (tile_group_header->GetTransactionId(
+                                tuple_location.offset) == INITIAL_TXN_ID);
+        bool is_alive =
+            (tile_group_header->GetEndCommitId(tuple_location.offset) <=
+             current_txn->GetBeginCommitId());
         if (is_acquired && is_alive) {
-          // See an invisible version that does not belong to any one in the version chain.
-          // this means that some other transactions have modified the version chain.
-          // Wire back because the current version is expired. have to search from scratch.
-          tuple_location = *(tile_group_header->GetIndirection(tuple_location.offset));
+          // See an invisible version that does not belong to any one in the
+          // version chain.
+          // this means that some other transactions have modified the version
+          // chain.
+          // Wire back because the current version is expired. have to search
+          // from scratch.
+          tuple_location =
+              *(tile_group_header->GetIndirection(tuple_location.offset));
           tile_group = manager.GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
           chain_length = 0;
@@ -243,15 +251,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         ItemPointer old_item = tuple_location;
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
 
-
         // there must exist a visible version.
-        if(tuple_location.IsNull()) {
+        if (tuple_location.IsNull()) {
           if (chain_length == 1) {
             break;
           }
 
-          // in most cases, there should exist a visible version. 
-          // if we have traversed through the chain and still can not fulfill one of the above conditions,
+          // in most cases, there should exist a visible version.
+          // if we have traversed through the chain and still can not fulfill
+          // one of the above conditions,
           // then return result_failure.
           transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return false;
@@ -265,7 +273,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
-
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
@@ -290,7 +297,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   return true;
 }
 
-
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
@@ -306,9 +312,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs, &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                 &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
-
 
   if (tuple_location_ptrs.size() == 0) {
     LOG_TRACE("no tuple is retrieved from index.");
@@ -332,18 +338,22 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
     size_t chain_length = 0;
 
-    // the following code traverses the version chain until a certain visible version is found.
+    // the following code traverses the version chain until a certain visible
+    // version is found.
     // we should always find a visible version from a version chain.
-    // different from primary key index lookup, we have to compare the secondary key to
+    // different from primary key index lookup, we have to compare the secondary
+    // key to
     // guarantee the correctness of the result.
     while (true) {
       ++chain_length;
 
-      auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_location.offset);
+      auto visibility = transaction_manager.IsVisible(
+          current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
+                  tuple_location.offset);
         break;
       }
       // if the tuple is visible.
@@ -354,20 +364,22 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // Further check if the version has the secondary key
         storage::Tuple key_tuple(index_->GetKeySchema(), true);
         expression::ContainerTuple<storage::TileGroup> candidate_tuple(
-          tile_group.get(), tuple_location.offset
-        );
+            tile_group.get(), tuple_location.offset);
         // Construct the key tuple
         auto &indexed_columns = index_->GetKeySchema()->GetIndexedColumns();
 
         oid_t this_col_itr = 0;
         for (auto col : indexed_columns) {
-          key_tuple.SetValue(this_col_itr, candidate_tuple.GetValue(col), index_->GetPool());
+          key_tuple.SetValue(this_col_itr, candidate_tuple.GetValue(col),
+                             index_->GetPool());
           this_col_itr++;
         }
 
         // Compare the key tuple and the key
-        if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) == false) {
-          LOG_TRACE("Secondary key mismatch: %u, %u\n", tuple_location.block, tuple_location.offset);
+        if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
+            false) {
+          LOG_TRACE("Secondary key mismatch: %u, %u\n", tuple_location.block,
+                    tuple_location.offset);
           break;
         }
 
@@ -375,15 +387,17 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
           expression::ContainerTuple<storage::TileGroup> tuple(
-            tile_group.get(), tuple_location.offset);
+              tile_group.get(), tuple_location.offset);
           eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res = transaction_manager.PerformRead(current_txn, tuple_location);
+          auto res =
+              transaction_manager.PerformRead(current_txn, tuple_location);
           if (!res) {
-            transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+            transaction_manager.SetTransactionResult(current_txn,
+                                                     RESULT_FAILURE);
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
@@ -395,17 +409,24 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       // if the tuple is not visible.
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
-        
+
         LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
-        bool is_acquired = (tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID);
-        bool is_alive = (tile_group_header->GetEndCommitId(tuple_location.offset) <= current_txn->GetBeginCommitId());
+        bool is_acquired = (tile_group_header->GetTransactionId(
+                                tuple_location.offset) == INITIAL_TXN_ID);
+        bool is_alive =
+            (tile_group_header->GetEndCommitId(tuple_location.offset) <=
+             current_txn->GetBeginCommitId());
         if (is_acquired && is_alive) {
-          // See an invisible version that does not belong to any one in the version chain.
-          // this means that some other transactions have modified the version chain.
-          // Wire back because the current version is expired. have to search from scratch.
-          tuple_location = *(tile_group_header->GetIndirection(tuple_location.offset));
+          // See an invisible version that does not belong to any one in the
+          // version chain.
+          // this means that some other transactions have modified the version
+          // chain.
+          // Wire back because the current version is expired. have to search
+          // from scratch.
+          tuple_location =
+              *(tile_group_header->GetIndirection(tuple_location.offset));
           tile_group = manager.GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
           chain_length = 0;
@@ -415,9 +436,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         ItemPointer old_item = tuple_location;
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
 
-
-        if(tuple_location.IsNull()) {
-          // For an index scan on a version chain, the result should be one of the following:
+        if (tuple_location.IsNull()) {
+          // For an index scan on a version chain, the result should be one of
+          // the following:
           //    (1) find a visible version
           //    (2) find a deleted version
           //    (3) find an aborted version with chain length equal to one
@@ -425,8 +446,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
             break;
           }
 
-          // in most cases, there should exist a visible version. 
-          // if we have traversed through the chain and still can not fulfill one of the above conditions,
+          // in most cases, there should exist a visible version.
+          // if we have traversed through the chain and still can not fulfill
+          // one of the above conditions,
           // then return result_failure.
           transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return false;
@@ -435,7 +457,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // search for next version.
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
-      } 
+      }
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
@@ -462,7 +484,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   return true;
 }
-
 
 }  // namespace executor
 }  // namespace peloton

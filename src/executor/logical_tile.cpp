@@ -444,7 +444,7 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
 	      if (base_tuple_id == NULL_OID) {
 	        row.push_back(ValueFactory::GetNullValueByType(
 	                  cp.base_tile->GetSchema()->GetType(cp.origin_column_id)).ToString());
-	      } else {
+	      }else {
 	        row.push_back(cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id).ToString());
 	      }
 	    }

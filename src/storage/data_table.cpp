@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <mutex>
 #include <utility>
 
@@ -53,9 +52,9 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
                      const bool adapt_table)
-: AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
-  tuples_per_tilegroup_(tuples_per_tilegroup),
-  adapt_table_(adapt_table) {
+    : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
+      tuples_per_tilegroup_(tuples_per_tilegroup),
+      adapt_table_(adapt_table) {
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -74,12 +73,11 @@ DataTable::~DataTable() {
   auto tile_groups_size = tile_groups_.GetSize();
   std::size_t tile_groups_itr;
 
-  for (tile_groups_itr = 0;
-      tile_groups_itr < tile_groups_size;
-      tile_groups_itr++) {
+  for (tile_groups_itr = 0; tile_groups_itr < tile_groups_size;
+       tile_groups_itr++) {
     auto tile_group_id = tile_groups_.Find(tile_groups_itr);
 
-    if(tile_group_id != invalid_tile_group_id) {
+    if (tile_group_id != invalid_tile_group_id) {
       LOG_TRACE("Dropping tile group : %u ", tile_group_id);
       // drop tile group in catalog
       catalog_manager.DropTileGroup(tile_group_id);
@@ -432,7 +430,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                           UNUSED_ATTRIBUTE) {
+                                               UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -442,7 +440,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
     int ref_table_index_count = ref_table->GetIndexCount();
 
     for (int index_itr = ref_table_index_count - 1; index_itr >= 0;
-        --index_itr) {
+         --index_itr) {
       auto index = ref_table->GetIndex(index_itr);
 
       // The foreign key constraints only refer to the primary key
@@ -459,7 +457,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
-        std::vector<ItemPointer*> location_ptrs;
+        std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
 
         // if this key doesn't exist in the refered column
@@ -510,9 +508,7 @@ void DataTable::SetTupleCount(const size_t &num_tuples) {
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-size_t DataTable::GetTupleCount() const {
-  return number_of_tuples_;
-}
+size_t DataTable::GetTupleCount() const { return number_of_tuples_; }
 
 /**
  * @brief return dirty flag
@@ -599,7 +595,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType) peloton_layout_mode);
+  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
@@ -663,7 +659,6 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
     LOG_TRACE("Recording tile group : %u ", tile_group_id);
   }
-
 }
 
 // NOTE: This function is only used in test cases.
@@ -696,8 +691,8 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
     const std::size_t &tile_group_offset) const {
   PL_ASSERT(tile_group_offset < GetTileGroupCount());
 
-  auto tile_group_id = tile_groups_.FindValid(tile_group_offset,
-                                              invalid_tile_group_id);
+  auto tile_group_id =
+      tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
 
   return GetTileGroupById(tile_group_id);
 }
@@ -714,12 +709,11 @@ void DataTable::DropTileGroups() {
   auto tile_groups_size = tile_groups_.GetSize();
   std::size_t tile_groups_itr;
 
-  for (tile_groups_itr = 0;
-      tile_groups_itr < tile_groups_size;
-      tile_groups_itr++) {
+  for (tile_groups_itr = 0; tile_groups_itr < tile_groups_size;
+       tile_groups_itr++) {
     auto tile_group_id = tile_groups_.Find(tile_groups_itr);
 
-    if(tile_group_id != invalid_tile_group_id) {
+    if (tile_group_id != invalid_tile_group_id) {
       // drop tile group in catalog
       catalog_manager.DropTileGroup(tile_group_id);
     }
@@ -729,7 +723,6 @@ void DataTable::DropTileGroups() {
   tile_groups_.Clear(invalid_tile_group_id);
 
   tile_group_count_ = 0;
-
 }
 
 const std::string DataTable::GetInfo() const {
@@ -744,7 +737,7 @@ const std::string DataTable::GetInfo() const {
   oid_t tuple_count = 0;
   oid_t table_id = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
+       tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
     table_id = tile_group->GetTableId();
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
@@ -773,7 +766,8 @@ void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
 
   // Add index column info
   auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
-  std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
+  std::set<oid_t> index_columns_set(index_columns_.begin(),
+                                    index_columns_.end());
 
   indexes_columns_.push_back(index_columns_set);
 
@@ -792,7 +786,7 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
   std::shared_ptr<index::Index> ret_index;
   auto index_count = indexes_.GetSize();
 
-  for(std::size_t index_itr = 0; index_itr < index_count; index_itr++){
+  for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
     ret_index = indexes_.Find(index_itr);
     if (ret_index->GetOid() == index_oid) {
       break;
@@ -807,7 +801,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   std::shared_ptr<index::Index> index;
   auto index_count = indexes_.GetSize();
 
-  for(std::size_t index_itr = 0; index_itr < index_count; index_itr++){
+  for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
     index = indexes_.Find(index_itr);
     if (index->GetOid() == index_oid) {
       break;
@@ -823,8 +817,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
-std::shared_ptr<index::Index> DataTable::GetIndex(
-    const oid_t &index_offset) {
+std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
 
   PL_ASSERT(index_offset < indexes_.GetSize());
   auto ret_index = indexes_.Find(index_offset);
@@ -963,8 +956,8 @@ storage::TileGroup *DataTable::TransformTileGroup(
     return nullptr;
   }
 
-  auto tile_group_id = tile_groups_.FindValid(tile_group_offset,
-                                              invalid_tile_group_id);
+  auto tile_group_id =
+      tile_groups_.FindValid(tile_group_offset, invalid_tile_group_id);
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
@@ -1008,7 +1001,7 @@ void DataTable::RecordLayoutSample(const brain::Sample &sample) {
   }
 }
 
-const std::vector<brain::Sample>& DataTable::GetLayoutSamples() const {
+const std::vector<brain::Sample> &DataTable::GetLayoutSamples() const {
   return layout_samples_;
 }
 
@@ -1028,7 +1021,7 @@ void DataTable::RecordIndexSample(const brain::Sample &sample) {
   }
 }
 
-const std::vector<brain::Sample>& DataTable::GetIndexSamples() const {
+const std::vector<brain::Sample> &DataTable::GetIndexSamples() const {
   return index_samples_;
 }
 
@@ -1056,7 +1049,7 @@ std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
   return std::move(column_map_stats);
 }
 
-void DataTable::SetDefaultLayout(const column_map_type& layout) {
+void DataTable::SetDefaultLayout(const column_map_type &layout) {
   default_partition_ = layout;
 }
 

@@ -636,6 +636,8 @@ class Value {
 
   std::string ToString();
 
+  std::string FormatTimestamp(std::string timestamp);
+
   /* Return a string full of arcana and wonder. */
   const std::string GetInfo() const;
 
@@ -676,7 +678,7 @@ class Value {
       case VALUE_TYPE_BIGINT:
       case VALUE_TYPE_DATE:
       case VALUE_TYPE_TIMESTAMP:
-      case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+      case VALUE_TYPE_PARAMETER_OFFSET:
         rt = s_intPromotionTable[vtb];
         break;
 
@@ -971,14 +973,14 @@ class Value {
   const int32_t &GetInteger() const {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
               GetValueType() == VALUE_TYPE_DATE ||
-              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+              GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
               GetValueType() == VALUE_TYPE_DATE ||
-              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+              GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
@@ -1662,6 +1664,7 @@ class Value {
     PL_ASSERT(IsNull() == false);
     Value retval(VALUE_TYPE_DECIMAL);
     const ValueType type = GetValueType();
+    LOG_TRACE("Cast %s to Decimal.", ValueTypeToString(type).c_str());
     if (IsNull()) {
       retval.SetNull();
       return retval;
@@ -2445,7 +2448,7 @@ class Value {
   }
 
   static Value GetBindingOnlyIntegerValue(int32_t value) {
-    Value retval(VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+    Value retval(VALUE_TYPE_PARAMETER_OFFSET);
     retval.GetInteger() = value;
     if (value == INT32_NULL) {
       retval.tagAsNull();
@@ -3425,7 +3428,7 @@ inline void Value::SerializeToExportWithoutNull(ExportSerializeOutput &io)
       return;
     }
     case VALUE_TYPE_DATE:
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
     case VALUE_TYPE_INTEGER: {
       io.WriteInt(GetInteger());
       return;

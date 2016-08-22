@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "abstract_plan.h"
@@ -41,7 +40,12 @@ class HashPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Hash"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(std::vector<Value> *values) {
+    LOG_TRACE("Setting parameter values in Hash Plan");
+    for (auto &child_plan : GetChildren()) {
+      child_plan->SetParameterValues(values);
+    }
+  };
 
   inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
     return this->hash_keys_;

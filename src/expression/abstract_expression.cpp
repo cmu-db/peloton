@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 
 #include "common/abstract_tuple.h"
@@ -27,10 +26,9 @@ namespace peloton {
 namespace expression {
 
 AbstractExpression::AbstractExpression(ExpressionType expr_type)
-: m_type(expr_type),
-  m_valueType(VALUE_TYPE_INVALID),
-  m_hasParameter(true)
-{}
+    : m_type(expr_type),
+      m_valueType(VALUE_TYPE_INVALID),
+      m_hasParameter(true) {}
 
 AbstractExpression::AbstractExpression(ExpressionType expr_type, ValueType type,
                                        AbstractExpression *left,
@@ -51,6 +49,10 @@ AbstractExpression::~AbstractExpression() {
   if (m_right != nullptr) {
     delete m_right;
   }
+  // Parser variables need to be cleaned too
+  delete name;
+  delete column;
+  delete alias;
 }
 
 bool AbstractExpression::HasParameter() const {
@@ -92,12 +94,14 @@ std::string AbstractExpression::Debug(const std::string &spacer) const {
   return buffer.str();
 }
 
-bool AbstractExpression::SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
+bool AbstractExpression::SerializeTo(SerializeOutput &output
+                                         UNUSED_ATTRIBUTE) const {
   PL_ASSERT(&output != nullptr);
   return false;
 }
 
-bool AbstractExpression::DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) const {
+bool AbstractExpression::DeserializeFrom(SerializeInputBE &input
+                                             UNUSED_ATTRIBUTE) const {
   PL_ASSERT(&input != nullptr);
   return false;
 }

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <unistd.h>
 #include <iostream>
 
@@ -18,28 +17,27 @@
 #include "common/init.h"
 #include "common/config.h"
 #include "common/macros.h"
-
+#include "wire/libevent_server.h"
 #include "wire/socket_base.h"
-#include "wire/wire.h"
 
 // Peloton process begins execution here.
-int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
+int main(int argc, char *argv[]) {
+
+  // Parse the command line flags using GFLAGS
+  ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
+
+  // If "-h" or "-help" is passed in, set up the help messages.
+  if (FLAGS_help || FLAGS_h) {
+    FLAGS_help = true;
+    ::google::SetUsageMessage("Usage Info: \n");
+    ::google::HandleCommandLineHelpFlags();
+  }
 
   // Setup
   peloton::PelotonInit::Initialize();
 
-  // Setup signal handlers
-  //peloton::RegisterSignalHandlers();
-
   // Launch server
-  peloton::PelotonConfiguration configuration;
-  peloton::wire::Server server(configuration);
-
-  peloton::wire::StartServer(configuration, &server);
-  peloton::wire::HandleConnections<peloton::wire::PacketManager,
-                                   peloton::wire::PktBuf>(&server);
-
-
+  peloton::wire::Server server;
 
   // Teardown
   peloton::PelotonInit::Shutdown();

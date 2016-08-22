@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 #include "concurrency/transaction_tests_util.h"
 #include "gc/gc_manager.h"
@@ -25,6 +24,9 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class GCTest : public PelotonTest {};
+
+// FIXME: see the explanation rpc_client_test and rpc_server_test
+TEST_F(GCTest, BlankTest) {}
 
 /*
 int UpdateTable(storage::DataTable *table, const int scale, const int num_key,
