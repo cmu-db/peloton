@@ -179,6 +179,13 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   }
 }
 
+// this function is designed for overriding pure virtual function.
+void LogicalTile::SetValue(Value &value UNUSED_ATTRIBUTE, 
+                           oid_t tuple_id UNUSED_ATTRIBUTE, 
+                           oid_t column_id UNUSED_ATTRIBUTE) {
+  PL_ASSERT(false);
+}
+
 /**
  * @brief Returns the number of visible tuples in this logical tile.
  *

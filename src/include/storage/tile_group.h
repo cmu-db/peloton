@@ -165,6 +165,8 @@ class TileGroup : public Printable {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
+  void SetValue(Value &value, oid_t tuple_id, oid_t column_id);
+
   double GetSchemaDifference(const storage::column_map_type &new_column_map);
 
   // Sync the contents

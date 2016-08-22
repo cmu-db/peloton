@@ -129,16 +129,8 @@ bool DeleteExecutor::DExecute() {
           return false;
         }
         // if it is the latest version and not locked by other threads, then
-        // insert a new version.
-        std::unique_ptr<storage::Tuple> new_tuple(
-            new storage::Tuple(target_table_->GetSchema(), true));
-
-        // Make a copy of the original tuple and allocate a new tuple
-        expression::ContainerTuple<storage::TileGroup> old_tuple(
-            tile_group, physical_tuple_id);
-
-        // finally insert updated tuple into the table
-        ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
+        // insert an empty version.
+        ItemPointer new_location = target_table_->InsertEmptyVersion();
 
         // PerformUpdate() will not be executed if the insertion failed.
         // There is a write lock acquired, but since it is not in the write set,
