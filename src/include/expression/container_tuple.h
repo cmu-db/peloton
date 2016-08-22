@@ -58,6 +58,14 @@ class ContainerTuple : public AbstractTuple {
     return container_->GetValue(tuple_id_, column_id);
   }
 
+
+  /** @brief Set the value at the given column id. */
+  void SetValue(oid_t column_id, Value &value) override {
+    PL_ASSERT(container_ != nullptr);
+
+    container_->SetValue(value, tuple_id_, column_id);
+  }
+
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
     // NOTE: We can't.Get a table tuple from a tilegroup or logical tile
@@ -174,6 +182,12 @@ class ContainerTuple<std::vector<Value>> : public AbstractTuple {
     PL_ASSERT(column_id < container_->size());
 
     return (*container_)[column_id];
+  }
+  
+  /** @brief Set the value at the given column id. */
+  // for override pure virtual function only.
+  void SetValue(oid_t column_id UNUSED_ATTRIBUTE, Value &value UNUSED_ATTRIBUTE) override {
+    PL_ASSERT(false);
   }
 
   /** @brief Get the raw location of the tuple's contents. */
