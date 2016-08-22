@@ -76,6 +76,9 @@ void ManageRead(SocketManager<PktBuf>** socket_manager) {
 	(*socket_manager)->execution_mutex.unlock();
 }
 
+/**
+ * The function called when there is new data ready to be read
+ */
 void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
   // Assign a thread if the socket manager is not executing
   if(((SocketManager<PktBuf>*)arg)->execution_mutex.try_lock()) {
