@@ -36,21 +36,18 @@ namespace planner {
 
 class IndexScanPlan : public AbstractScan {
  public:
-
   /*
    * class IndexScanDesc - Stores information to do the index scan
    */
   struct IndexScanDesc {
-    
+
     /*
      * Default Constructor - Set index pointer to empty
      *
      * We need to do this since this might be created even when an index
      * is not required, e.g. inside hybrid scan
      */
-    IndexScanDesc() :
-      index_obj{nullptr}
-    {}
+    IndexScanDesc() : index_obj{nullptr} {}
 
     /*
      * Constructor
@@ -59,18 +56,17 @@ class IndexScanPlan : public AbstractScan {
      * situations where index is not required, the default constructor should
      * be called to notify later procedures of the absense of an index
      */
-    IndexScanDesc(std::shared_ptr<index::Index> p_index_obj,
-                  const std::vector<oid_t> &p_tuple_column_id_list,
-                  const std::vector<ExpressionType> &expr_list_p,
-                  const std::vector<Value> &p_value_list,
-                  const std::vector<expression::AbstractExpression *> \
-                    &p_runtime_key_list) :
-      index_obj(p_index_obj),
-      tuple_column_id_list(p_tuple_column_id_list),
-      expr_list(expr_list_p),
-      value_list(p_value_list),
-      runtime_key_list(p_runtime_key_list)
-    {}
+    IndexScanDesc(
+        std::shared_ptr<index::Index> p_index_obj,
+        const std::vector<oid_t> &p_tuple_column_id_list,
+        const std::vector<ExpressionType> &expr_list_p,
+        const std::vector<Value> &p_value_list,
+        const std::vector<expression::AbstractExpression *> &p_runtime_key_list)
+        : index_obj(p_index_obj),
+          tuple_column_id_list(p_tuple_column_id_list),
+          expr_list(expr_list_p),
+          value_list(p_value_list),
+          runtime_key_list(p_runtime_key_list) {}
 
     // The index object for scanning
     //
@@ -95,11 +91,11 @@ class IndexScanPlan : public AbstractScan {
     // ???
     std::vector<expression::AbstractExpression *> runtime_key_list;
   };
-  
+
   ///////////////////////////////////////////////////////////////////
   // Members of IndexScanPlan
   ///////////////////////////////////////////////////////////////////
-  
+
   IndexScanPlan(const IndexScanPlan &) = delete;
   IndexScanPlan &operator=(const IndexScanPlan &) = delete;
   IndexScanPlan(IndexScanPlan &&) = delete;
@@ -114,6 +110,7 @@ class IndexScanPlan : public AbstractScan {
     for (auto expr : runtime_keys_) {
       delete expr;
     }
+    LOG_TRACE("Destroyed a index scan plan!");
   }
 
   std::shared_ptr<index::Index> GetIndex() const { return index_; }
@@ -125,7 +122,7 @@ class IndexScanPlan : public AbstractScan {
   const std::vector<ExpressionType> &GetExprTypes() const {
     return expr_types_;
   }
-  
+
   const index::IndexScanPredicate &GetIndexPredicate() const {
     return index_predicate_;
   }
@@ -171,8 +168,6 @@ class IndexScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> expr_types_;
 
-  expression::AbstractExpression *predicate_with_params_ = nullptr;
-
   // LM: I removed a const keyword for binding purpose
   //
   // The life time of the scan predicate is as long as the lifetime
@@ -188,7 +183,7 @@ class IndexScanPlan : public AbstractScan {
   std::vector<Value> values_with_params_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
-  
+
   // Currently we just support single conjunction predicate
   //
   // In the future this might be extended into an array of conjunctive

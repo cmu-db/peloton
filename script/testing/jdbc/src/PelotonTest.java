@@ -1,12 +1,18 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// delete_plan.h
+//
+// Identification: script/testing/jdbc/src/PelotonTest.java
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 import java.sql.*;
 import org.postgresql.util.*;
 
-
-/**
- * Author:  Ming Fang
- * Date:    7/19/15.
- * Email:   mingf@cs.cmu.edu
- */
 public class PelotonTest {
   private final String url = "jdbc:postgresql://localhost:5432/";
   private final String username = "postgres";

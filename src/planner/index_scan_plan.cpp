@@ -40,8 +40,10 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   if (predicate != NULL) {
     // we need to copy it here because eventually predicate will be destroyed by
     // its owner...
-    predicate_with_params_ = predicate->Copy();
-    ReplaceColumnExpressions(table->GetSchema(), predicate_with_params_);
+    predicate = predicate->Copy();
+    ReplaceColumnExpressions(table->GetSchema(), predicate);
+    predicate_with_params_ =
+        std::unique_ptr<expression::AbstractExpression>(predicate);
     SetPredicate(predicate_with_params_->Copy());
   }
 

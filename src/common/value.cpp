@@ -20,6 +20,8 @@
 #include <sstream>
 #include <algorithm>
 #include <set>
+#include <ctime>
+#include <chrono>
 
 namespace peloton {
 
@@ -400,8 +402,9 @@ std::string Value::ToString() {
     case VALUE_TYPE_PARAMETER_OFFSET:
       return std::to_string(GetInteger());
     case VALUE_TYPE_BIGINT:
-    case VALUE_TYPE_TIMESTAMP:
       return std::to_string(GetBigInt());
+    case VALUE_TYPE_TIMESTAMP:
+      return FormatTimestamp(std::to_string(GetBigInt()));
     case VALUE_TYPE_REAL:
     case VALUE_TYPE_DOUBLE:
       return std::to_string(GetDouble());
@@ -834,6 +837,8 @@ static void throwTimestampFormatError(const std::string &str) {
 }
 
 int64_t Value::parseTimestampString(const std::string &str) {
+  LOG_TRACE("parsing timestamp: %s", str.c_str());
+
   // date_str
   std::string date_str(str);
   // This is the std:string API for "ltrim" and "rtrim".
@@ -1012,9 +1017,12 @@ int64_t Value::parseTimestampString(const std::string &str) {
 
   int64_t result = 0;
   try {
+    LOG_TRACE("parsed timestamp: %d %d %d %d %d %d %d", year, month, day, hour,
+              minute, second, time_zone);
     result = epoch_microseconds_from_components(
         (unsigned short int)year, (unsigned short int)month,
         (unsigned short int)day, hour + time_zone, minute, second);
+    LOG_TRACE("unix epoch number: %ld", result);
   }
   catch (const std::out_of_range &bad) {
     throwTimestampFormatError(str);
@@ -1069,6 +1077,44 @@ Value Value::GetMinValue(ValueType type) {
       throw UnknownTypeException((int)type, "Can't get min value for type");
     }
   }
+}
+
+std::string Value::FormatTimestamp(std::string timestamp){
+          
+//Convert stored epoch from string to long long
+long long epoch = std::stoll(timestamp);
+
+//Get the time from the epoch value without milliseconds
+time_t new_time_stamp = static_cast<time_t>(epoch/1000000);
+          
+//Convert the format of that time to a UTC like format
+//Check http://www.cplusplus.com/reference/ctime/tm/
+struct tm *ltm = localtime(&new_time_stamp);
+
+//Get the year
+//Check previous link
+int i_year = 1900 + ltm->tm_year;
+std::string year = std::to_string(i_year);
+
+int i_month = 1 + ltm->tm_mon;
+std::string month = std::to_string(i_month);
+          
+std::string day = std::to_string(ltm->tm_mday);
+          
+int i_hour = 1 + ltm->tm_hour;
+std::string hour = std::to_string(i_hour);
+          
+int i_minute = 1 + ltm->tm_min;
+std::string minute = std::to_string(i_minute);
+
+int i_second = 1 + ltm->tm_sec;
+std::string second = std::to_string(i_second);
+          
+// arrange the time to a readable format
+std::string formatted_time = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
+
+return formatted_time;
+
 }
 
 Value Value::GetMaxValue(ValueType type) {

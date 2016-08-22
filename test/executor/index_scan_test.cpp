@@ -187,8 +187,8 @@ void ShowTable(std::string database_name, std::string table_name) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  status =
-      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+                                             params, result);
 }
 
 void ExecuteSQLQuery(const std::string statement_name,
@@ -208,8 +208,8 @@ void ExecuteSQLQuery(const std::string statement_name,
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  bridge::peloton_status status =
-      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
+  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+      statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   ShowTable(DEFAULT_DB_NAME, "department_table");
 }
@@ -217,8 +217,9 @@ void ExecuteSQLQuery(const std::string statement_name,
 TEST_F(IndexScanTests, SQLTest) {
 
   LOG_INFO("Bootstrapping...");
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  auto catalog = catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
+                                                        nullptr);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -237,7 +238,8 @@ TEST_F(IndexScanTests, SQLTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema), CreateType::CREATE_TYPE_TABLE);
+  planner::CreatePlan node("department_table", std::move(table_schema),
+                           CreateType::CREATE_TYPE_TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
@@ -281,6 +283,13 @@ TEST_F(IndexScanTests, SQLTest) {
   ExecuteSQLQuery("SELECT AGGREGATE",
                   "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;");
   LOG_INFO("Aggregation selected");
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  delete catalog;
 }
 
 }  // namespace test

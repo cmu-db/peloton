@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -44,19 +43,19 @@ class AbstractScan : public AbstractPlan {
   // We should add an empty constructor to support an empty object
   AbstractScan() : target_table_(nullptr), predicate_(nullptr) {}
 
-  const expression::AbstractExpression *GetPredicate() const {
+  inline const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }
 
-  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
+  inline const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_ABSTRACT_SCAN;
   }
 
-  const std::string GetInfo() const { return "AbstractScan"; }
+  inline const std::string GetInfo() const { return "AbstractScan"; }
 
-  storage::DataTable *GetTable() const { return target_table_; }
+  inline storage::DataTable *GetTable() const { return target_table_; }
 
  protected:
   // These methods only used by its derived classes (when deserialization)
@@ -64,10 +63,14 @@ class AbstractScan : public AbstractPlan {
   std::vector<oid_t> &ColumnIds() { return column_ids_; }
   void SetTargetTable(storage::DataTable *table) { target_table_ = table; }
   void SetColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
-  void SetPredicate(expression::AbstractExpression* predicate) {
-    std::unique_ptr<expression::AbstractExpression> pre_(std::move(predicate));
-    predicate_ = std::move(pre_);
+  void SetPredicate(expression::AbstractExpression *predicate) {
+    predicate_ = std::unique_ptr<expression::AbstractExpression>(predicate);
   }
+
+  /** @brief Predicate with ValueParameters inside. Needed to be binded at
+   * the binding stage to generate the "real" predicate.
+   */
+  std::unique_ptr<expression::AbstractExpression> predicate_with_params_;
 
  private:
   /** @brief Pointer to table to scan from. */

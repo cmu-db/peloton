@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 namespace peloton {
@@ -25,7 +24,6 @@ extern ThreadPool thread_pool;
 
 class PelotonInit {
  public:
-
   static void Initialize();
 
   static void Shutdown();
@@ -33,7 +31,6 @@ class PelotonInit {
   static void SetUpThread();
 
   static void TearDownThread();
-
 };
 
 }  // End peloton namespace

@@ -58,37 +58,39 @@ SimpleOptimizer::SimpleOptimizer() {};
 SimpleOptimizer::~SimpleOptimizer() {};
 
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
-    const std::unique_ptr<parser::SQLStatement>& parse_tree) {
+    const std::unique_ptr<parser::SQLStatementList>& parse_tree) {
 
   std::shared_ptr<planner::AbstractPlan> plan_tree;
 
   // Base Case
-  if (parse_tree.get() == nullptr) return plan_tree;
+  if (parse_tree->GetStatements().size() == 0) return plan_tree;
 
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // One to one Mapping
-  auto parse_item_node_type = parse_tree->GetType();
+  auto parse_item_node_type = parse_tree->GetStatements().at(0)->GetType();
+
+  auto parse_tree2 = parse_tree->GetStatements().at(0);
 
   switch (parse_item_node_type) {
     case STATEMENT_TYPE_DROP: {
       LOG_TRACE("Adding Drop plan...");
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
-          new planner::DropPlan((parser::DropStatement*)parse_tree.get()));
+          new planner::DropPlan((parser::DropStatement*)parse_tree2));
       child_plan = std::move(child_DropPlan);
     } break;
 
     case STATEMENT_TYPE_CREATE: {
       LOG_TRACE("Adding Create plan...");
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
-          new planner::CreatePlan((parser::CreateStatement*)parse_tree.get()));
+          new planner::CreatePlan((parser::CreateStatement*)parse_tree2));
       child_plan = std::move(child_CreatePlan);
     } break;
 
     case STATEMENT_TYPE_SELECT: {
 
       LOG_TRACE("Processing SELECT...");
-      auto select_stmt = (parser::SelectStatement*)parse_tree.get();
+      auto select_stmt = (parser::SelectStatement*)parse_tree2;
       LOG_TRACE("SELECT Info: %s", select_stmt->GetInfo().c_str());
       auto agg_type = AGGREGATE_TYPE_PLAIN;  // default aggregator
       std::vector<oid_t> group_by_columns;
@@ -312,21 +314,21 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     case STATEMENT_TYPE_INSERT: {
       LOG_TRACE("Adding Insert plan...");
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::InsertPlan((parser::InsertStatement*)parse_tree.get()));
+          new planner::InsertPlan((parser::InsertStatement*)parse_tree2));
       child_plan = std::move(child_InsertPlan);
     } break;
 
     case STATEMENT_TYPE_DELETE: {
       LOG_TRACE("Adding Delete plan...");
       std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-          new planner::DeletePlan((parser::DeleteStatement*)parse_tree.get()));
+          new planner::DeletePlan((parser::DeleteStatement*)parse_tree2));
       child_plan = std::move(child_DeletePlan);
     } break;
 
     case STATEMENT_TYPE_UPDATE: {
       LOG_TRACE("Adding Update plan...");
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::UpdatePlan((parser::UpdateStatement*)parse_tree.get()));
+          new planner::UpdatePlan((parser::UpdateStatement*)parse_tree2));
       child_plan = std::move(child_InsertPlan);
     } break;
 
@@ -594,14 +596,8 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   auto predicate3 = new expression::ComparisonExpression<expression::CmpLt>(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, ol_o_id_1, params[2]);
 
-  auto predicate4 =
-      new expression::OperatorExpression<peloton::expression::OpMinus>(
-          peloton::EXPRESSION_TYPE_OPERATOR_MINUS, params[3]->GetValueType(),
-          params[3], new expression::ConstantValueExpression(
-                         ValueFactory::GetIntegerValue(20)));
-
   auto predicate5 = new expression::ComparisonExpression<expression::CmpGte>(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, predicate4);
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, params[3]);
 
   auto predicate6 =
       new expression::ConjunctionExpression<expression::ConjunctionAnd>(

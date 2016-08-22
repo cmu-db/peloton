@@ -6,7 +6,7 @@
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 file(GLOB test_hdrs ${PROJECT_SOURCE_DIR}/test/include/*/*.h*)
-file(GLOB test_srcs_temp ${PROJECT_SOURCE_DIR}/test/*/*.cpp)
+file(GLOB test_srcs_temp ${PROJECT_SOURCE_DIR}/test/*/*test.cpp)
 file(GLOB perf_srcs ${PROJECT_SOURCE_DIR}/test/performance/*.cpp)
 
 set(test_srcs "")
@@ -43,8 +43,9 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
 
 # Set memcheck parameters
 find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
-set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes --soname-synonyms=somalloc=*jemalloc*)
-set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp" )
+set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes
+    --soname-synonyms=somalloc=*jemalloc* --error-exitcode=1)
+set(MEMORYCHECK_SUPPRESSIONS_FILE ${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp)
 
 foreach(test_src ${test_srcs} )
     #message("test_src = " ${test_src})
@@ -71,7 +72,8 @@ foreach(test_src ${test_srcs} )
 	)   
 	
 	# add test
-	add_test(${test_name} ${MEMORYCHECK_COMMAND} ${MEMORYCHECK_COMMAND_OPTIONS} ${CMAKE_BINARY_DIR}/test/${test_name})
+    add_test(${test_name} ${MEMORYCHECK_COMMAND} ${MEMORYCHECK_COMMAND_OPTIONS}
+        --suppressions=${MEMORYCHECK_SUPPRESSIONS_FILE} ${CMAKE_BINARY_DIR}/test/${test_name})
 	
 endforeach(test_src ${test_srcs})
 

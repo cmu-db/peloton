@@ -104,14 +104,13 @@ class AbstractExpression : public Printable {
   char *GetColumn() const { return column; }
 
  public:
-  // Parser stuff
+  // These variables are used by ParserExpression. We should refactor this and
+  // move them to ParserExpression later.
   int ival = 0;
   AbstractExpression *expr = nullptr;
-
   char *name = nullptr;
   char *column = nullptr;
   char *alias = nullptr;
-
   bool distinct = false;
 
  protected:

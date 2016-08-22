@@ -53,6 +53,7 @@ class ParserExpression : public AbstractExpression {
   }
 
   virtual ~ParserExpression() {
+    delete expr;
   }
 
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
