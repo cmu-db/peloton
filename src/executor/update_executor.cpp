@@ -101,16 +101,9 @@ bool UpdateExecutor::DExecute() {
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
           tile_group, physical_tuple_id);
-      // Create a temp copy
-      std::unique_ptr<storage::Tuple> new_tuple(
-          new storage::Tuple(target_table_->GetSchema(), true));
       // Execute the projections
-      // TODO: reduce memory copy by doing inplace update
-      project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
+      project_info_->Evaluate(&old_tuple, &old_tuple, nullptr,
                               executor_context_);
-
-      // overwrite the tuple in place.
-      tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
       
       transaction_manager.PerformUpdate(current_txn, old_location);
 
