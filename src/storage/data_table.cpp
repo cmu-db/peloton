@@ -178,7 +178,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
 // INSERT
 //===--------------------------------------------------------------------===//
 ItemPointer DataTable::InsertEmptyVersion() {
-  // First, do integrity checks and claim a slot
+  // First, claim a slot
   ItemPointer location = GetEmptyTupleSlot(nullptr);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
@@ -194,7 +194,7 @@ ItemPointer DataTable::InsertEmptyVersion() {
 ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple, 
                                      const TargetList *targets_ptr, 
                                      ItemPointer *index_entry_ptr) {
-  // First, do integrity checks and claim a slot
+  // First, claim a slot
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
@@ -212,6 +212,33 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple,
   IncreaseTupleCount(1);
 
   return location;
+}
+
+ItemPointer DataTable::AcquireVersion() {
+  // First, claim a slot
+  ItemPointer location = GetEmptyTupleSlot(nullptr);
+  if (location.block == INVALID_OID) {
+    LOG_TRACE("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
+
+  IncreaseTupleCount(1);
+  return location;
+}
+
+
+bool DataTable::InstallVersion(const storage::Tuple *tuple, 
+                                     const TargetList *targets_ptr, 
+                                     ItemPointer *index_entry_ptr) {
+  
+  // Index checks and updates
+  if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
+    LOG_TRACE("Index constraint violated");
+    return false;
+  }
+  return true;
 }
 
 
