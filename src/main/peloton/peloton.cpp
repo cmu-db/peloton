@@ -42,8 +42,5 @@ int main(int argc, char *argv[]) {
   // Teardown
   peloton::PelotonInit::Shutdown();
 
-  // Shut down GFLAGS.
-  ::google::ShutDownCommandLineFlags();
-
   return 0;
 }
