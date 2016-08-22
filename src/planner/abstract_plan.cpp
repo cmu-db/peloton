@@ -76,7 +76,7 @@ void AbstractPlan::ReplaceColumnExpressions(
                   .c_str());
     if (expression->GetLeft()->GetExpressionType() ==
         EXPRESSION_TYPE_COLUMN_REF) {
-      auto expr = expression->GetLeft();
+      auto expr = expression->GetModifiableLeft();
       std::string col_name(expr->GetName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       delete expr;
@@ -95,7 +95,7 @@ void AbstractPlan::ReplaceColumnExpressions(
                   expression->GetRight()->GetExpressionType()).c_str());
     if (expression->GetRight()->GetExpressionType() ==
         EXPRESSION_TYPE_COLUMN_REF) {
-      auto expr = expression->GetRight();
+      auto expr = expression->GetModifiableRight();
       std::string col_name(expr->GetName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       delete expr;

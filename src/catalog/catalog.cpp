@@ -399,5 +399,7 @@ void Catalog::PrintCatalogs() {}
 int Catalog::GetDatabaseCount() { return databases.size(); }
 
 oid_t Catalog::GetNewID() { return id_cntr++; }
+
+Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
 }
 }

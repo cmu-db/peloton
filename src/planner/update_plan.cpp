@@ -28,21 +28,19 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
                        std::unique_ptr<const planner::ProjectInfo> project_info)
     : target_table_(table),
       project_info_(std::move(project_info)),
-      updates_(NULL),
       where_(NULL) {
   LOG_TRACE("Creating an Update Plan");
 }
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   LOG_TRACE("Creating an Update Plan");
-  updates_ = new std::vector<parser::UpdateClause *>();
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
   for (auto update_clause : *parse_tree->updates) {
-    updates_->push_back(update_clause->Copy());
+    updates_.push_back(update_clause->Copy());
   }
   TargetList tlist;
   DirectMapList dmlist;
@@ -50,7 +48,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   auto schema = target_table_->GetSchema();
 
   std::vector<oid_t> columns;
-  for (auto update : *updates_) {
+  for (auto update : updates_) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);
@@ -87,7 +85,7 @@ void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   auto schema = target_table_->GetSchema();
 
   std::vector<oid_t> columns;
-  for (auto update : *updates_) {
+  for (auto update : updates_) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);
