@@ -163,7 +163,7 @@ class Tuple : public AbstractTuple {
   size_t GetUninlinedMemorySize() const;
 
   // This sets the relevant columns from the source tuple
-  void SetFromTuple(const storage::Tuple *tuple,
+  void SetFromTuple(const AbstractTuple *tuple,
                     const std::vector<oid_t> &columns, VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
