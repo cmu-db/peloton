@@ -267,9 +267,9 @@ class DataTable : public AbstractTable {
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
 
-  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, 
-                                const TargetList *targets_ptr, 
-                                ItemPointer *index_entry_ptr);
+  // bool InsertInSecondaryIndexes(const storage::Tuple *tuple, 
+  //                               const TargetList *targets_ptr, 
+  //                               ItemPointer *index_entry_ptr);
 
   bool InsertInSecondaryIndexes(const AbstractTuple *tuple, 
                                 const TargetList *targets_ptr, 
