@@ -397,10 +397,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
 
     // Key attributes are updated, insert a new entry in all secondary index
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    for (auto indexed_column : indexed_columns) {
-      auto value = tuple->GetValue(indexed_column);
-      key->SetValue(indexed_column, value, index->GetPool());
-    }
+
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
     
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
