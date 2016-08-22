@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "storage/tile_group.h"
 
 #include <numeric>
@@ -24,6 +23,7 @@
 #include "storage/tuple.h"
 #include "storage/tile_group_header.h"
 #include "storage/rollback_segment.h"
+#include "expression/container_tuple.h"
 
 namespace peloton {
 namespace storage {
@@ -371,8 +371,8 @@ Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   return tile;
 }
 
-std::shared_ptr<Tile> TileGroup::GetTileReference(
-    const oid_t tile_offset) const {
+std::shared_ptr<Tile> TileGroup::GetTileReference(const oid_t tile_offset)
+    const {
   PL_ASSERT(tile_offset < tile_count);
   return tiles[tile_offset];
 }

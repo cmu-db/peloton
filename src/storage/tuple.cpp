@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "storage/tuple.h"
 
 #include <cstdlib>
@@ -48,12 +47,17 @@ void Tuple::SetValue(const oid_t column_offset, const Value &value,
   PL_ASSERT(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_offset);
+  LOG_TRACE("c offset: %d; using pool: %p", column_offset, data_pool);
 
   const bool is_inlined = tuple_schema->IsInlined(column_offset);
   char *value_location = GetDataPtr(column_offset);
   int32_t column_length = tuple_schema->GetLength(column_offset);
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_offset);
+
+  LOG_TRACE("column_offset: %d; value_location %p; column_length %d; type %s",
+            column_offset, value_location, column_length,
+            ValueTypeToString(type).c_str());
 
   const bool is_in_bytes = false;
   // Allocate in heap or given data pool depending on whether a pool is provided

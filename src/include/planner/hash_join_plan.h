@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_join_plan.h"
 
 namespace peloton {
-namespace expression{
+namespace expression {
 class AbstractExpression;
 }
 namespace planner {
@@ -39,8 +38,7 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      const std::vector<oid_t> &
-          outer_hashkeys);
+      const std::vector<oid_t> &outer_hashkeys);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_HASHJOIN;
@@ -52,7 +50,12 @@ class HashJoinPlan : public AbstractJoinPlan {
     return outer_column_ids_;
   }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(std::vector<Value> *values) {
+    LOG_TRACE("Setting parameter values in Hash Join Plan");
+    for (auto &child_plan : GetChildren()) {
+      child_plan->SetParameterValues(values);
+    }
+  };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -20,11 +19,12 @@
 #include "common/types.h"
 
 namespace peloton {
-namespace planner{
+namespace planner {
 class AbstractPlan;
 }
 
-typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>> ResultType;
+typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>>
+    ResultType;
 
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfoType;
@@ -32,15 +32,13 @@ typedef std::tuple<std::string, oid_t, size_t> FieldInfoType;
 class Statement {
 
  public:
-
   Statement() = delete;
-  Statement(const Statement &) = delete;
-  Statement &operator=(const Statement &) = delete;
-  Statement(Statement &&) = delete;
-  Statement &operator=(Statement &&) = delete;
+  Statement(const Statement&) = delete;
+  Statement& operator=(const Statement&) = delete;
+  Statement(Statement&&) = delete;
+  Statement& operator=(Statement&&) = delete;
 
-  Statement(const std::string& statement_name,
-            const std::string& query_string);
+  Statement(const std::string& statement_name, const std::string& query_string);
 
   ~Statement();
 
@@ -69,7 +67,6 @@ class Statement {
   const std::shared_ptr<planner::AbstractPlan>& GetPlanTree() const;
 
  private:
-
   // logical name of statement
   std::string statement_name;
 
@@ -87,7 +84,6 @@ class Statement {
 
   // cached plan tree
   std::shared_ptr<planner::AbstractPlan> plan_tree;
-
 };
 
 }  // namespace peloton

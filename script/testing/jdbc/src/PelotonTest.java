@@ -1,10 +1,18 @@
-import java.sql.*;
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// delete_plan.h
+//
+// Identification: script/testing/jdbc/src/PelotonTest.java
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
-/**
- * Author:  Ming Fang
- * Date:    7/19/15.
- * Email:   mingf@cs.cmu.edu
- */
+import java.sql.*;
+import org.postgresql.util.*;
+
 public class PelotonTest {
   private final String url = "jdbc:postgresql://localhost:5432/";
   private final String username = "postgres";
@@ -20,10 +28,11 @@ public class PelotonTest {
 
   private final String INSERT_A_1 = "INSERT INTO A VALUES (1,'1961-06-16');";
   private final String INSERT_A_2 = "INSERT INTO A VALUES (2,'Full Clip')";
-  private final String DELETE_A = "DELETE * FROM A";
+  private final String DELETE_A = "DELETE FROM A";
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
+  private final String AGG_COUNT_3 = "SELECT AVG(id) FROM A WHERE id < ? + 1";
 
   private final String TEMPLATE_FOR_BATCH_INSERT = "INSERT INTO A VALUES (?,?);";
 
@@ -41,6 +50,45 @@ public class PelotonTest {
   private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = 1 FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
+  
+  // To test the join in TPCC
+  private final String CREATE_STOCK_TABLE = "CREATE TABLE STOCK ("
+		  	+ "S_W_ID INT PRIMARY KEY,"
+		  	+ "S_I_ID INT PRIMARY KEY,"
+  			+ "S_QUANTITY DECIMAL NOT NULL);";
+		  	//+ "PRIMARY KEY (S_W_ID, S_I_ID));";
+  private final String CREATE_ORDER_LINE_TABLE = "CREATE TABLE ORDER_LINE ("
+		  	+ "OL_W_ID INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_D_ID INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_O_ID INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_NUMBER INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_I_ID INT NOT NULL);";
+		  	//+ "PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER));";
+
+  private final String INSERT_STOCK_1 = "INSERT INTO STOCK VALUES (1, 2, 0);";
+  private final String INSERT_STOCK_2 = "INSERT INTO STOCK VALUES (1, 5, 1);";
+  private final String INSERT_STOCK_3 = "INSERT INTO STOCK VALUES (1, 7, 6);";
+  private final String SELECT_STOCK = "SELECT * FROM STOCK;";
+  // Test general expression evaluation
+  private final String SELECT_STOCK_COMPLEX = "SELECT * FROM STOCK WHERE"
+  		+ " S_W_ID + S_I_ID = ? + S_QUANTITY + 1;";
+  
+  private final String INSERT_ORDER_LINE = "INSERT INTO ORDER_LINE VALUES (1, 2, 3, 4, 5);";
+  private final String STOCK_LEVEL = "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
+			+ " FROM " + "ORDER_LINE, STOCK"
+			//+ " FROM " + "ORDER_LINE JOIN STOCK on S_I_ID = OL_I_ID"
+			+ " WHERE OL_W_ID = ?"
+			+ " AND OL_D_ID = ?"
+			+ " AND OL_O_ID < ?"
+			+ " AND OL_O_ID >= ? - 20"
+			+ " AND S_W_ID = ?"
+			+ " AND S_I_ID = OL_I_ID" 
+			+ " AND S_QUANTITY < ?";
+
+  private final String CREATE_TIMESTAMP_TABLE = "CREATE TABLE TS ("
+			+ "id INT NOT NULL,"
+			+ "ts TIMESTAMP NOT NULL);";
+  private final String INSERT_TIMESTAMP = "INSERT INTO TS VALUES (1, ?);";
 
   private final Connection conn;
 
@@ -78,10 +126,48 @@ public class PelotonTest {
     stmt.execute(DROP);
     stmt.execute(DDL);
 
-    //stmt.execute(INSERT);
-	//stmt.execute(SEQSCAN);
-//    stmt.execute(DROP);
+    stmt.execute(CREATE_STOCK_TABLE);
+    stmt.execute(CREATE_ORDER_LINE_TABLE);
+    stmt.execute(INSERT_STOCK_1);
+    stmt.execute(SELECT_STOCK);
+    stmt.execute(INSERT_STOCK_2);
+    stmt.execute(SELECT_STOCK);
+    stmt.execute(INSERT_STOCK_3);
+    stmt.execute(SELECT_STOCK);
+    stmt.execute(INSERT_ORDER_LINE);
+    PreparedStatement pstmt = conn.prepareStatement(STOCK_LEVEL);
+    pstmt.setInt(1, 1);
+    pstmt.setInt(2, 2);
+    pstmt.setInt(3, 5);
+    pstmt.setInt(4, 20);
+    pstmt.setInt(5, 1);
+    pstmt.setDouble(6, 5);
+    pstmt.execute();
+    pstmt = conn.prepareStatement(SELECT_STOCK_COMPLEX);
+    pstmt.setInt(1, 4);
+    //pstmt.execute();
+    ResultSet r=pstmt.executeQuery();
+
+    while(r.next()) {
+    	System.out.println(r.getInt(1));
+    	System.out.println(r.getInt(2));
+    	System.out.println(r.getBigDecimal(3));
+   }
+   r.close();
+
+    stmt.execute(CREATE_TIMESTAMP_TABLE);
+    pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
+    java.sql.Timestamp sysdate = new java.sql.Timestamp(
+			System.currentTimeMillis());
+    java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+    Timestamp timestamp = new org.postgresql.util.PGTimestamp(System.currentTimeMillis());
+    //pstmt.setDate(1, today);
+    pstmt.setTimestamp(1, timestamp, null);
+    //pstmt.setTimestamp(1, sysdate);
+    //pstmt.setTimestamp(1, datetime, null);
+    pstmt.execute();
     System.out.println("Test db created.");
+    //System.exit(0);
   }
 
   public void ShowTable() throws SQLException {
@@ -111,6 +197,10 @@ public class PelotonTest {
     stmt.execute(INDEXSCAN_COLUMN);
     stmt.execute(AGG_COUNT);
     stmt.execute(AGG_COUNT_2);
+    
+    PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
+    pstmt.setInt(1, 1);
+    pstmt.execute();
 
     for (int i = 1; i < 3; i++)
         IndexScanParam(i);

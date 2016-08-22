@@ -50,12 +50,13 @@ namespace planner {
  */
 
 SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
-  LOG_INFO("Creating a Sequential Scan Plan");
-  target_table_ = static_cast<storage::DataTable *>(
+  LOG_DEBUG("Creating a Sequential Scan Plan");
+  auto target_table = static_cast<storage::DataTable *>(
       catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
           DEFAULT_DB_NAME, select_node->from_table->name));
-  SetTargetTable(target_table_);
+  SetTargetTable(target_table);
   ColumnIds().clear();
+  // Check if there is an aggregate function in query
   bool function_found = false;
   for (auto elem : *select_node->select_list) {
     if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
@@ -64,8 +65,9 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
     }
   }
   // Pass all columns
+  // TODO: This isn't efficient. Needs to be fixed
   if (function_found) {
-    for (auto column : target_table_->GetSchema()->GetColumns()) {
+    for (auto column : GetTable()->GetSchema()->GetColumns()) {
       oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
       SetColumnId(col_id);
     }
@@ -76,7 +78,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
         EXPRESSION_TYPE_STAR) {
       for (auto col : *select_node->select_list) {
         LOG_TRACE("ExpressionType: %s",
-                 ExpressionTypeToString(col->GetExpressionType()).c_str());
+                  ExpressionTypeToString(col->GetExpressionType()).c_str());
         auto col_name = col->GetName();
         oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
         SetColumnId(col_id);
@@ -86,11 +88,14 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
       for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
     }
   }
+  // Keep a copy of the where clause to be binded to values
   if (select_node->where_clause != NULL) {
-    where_ = select_node->where_clause->Copy();
-    ReplaceColumnExpressions(GetTable()->GetSchema(), where_);
-    where_with_params_ = where_->Copy();
-    SetPredicate(where_->Copy());
+    auto predicate = select_node->where_clause->Copy();
+    // Replace COLUMN_REF expressions with TupleValue expressions
+    ReplaceColumnExpressions(GetTable()->GetSchema(), predicate);
+    predicate_with_params_ =
+        std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
+    SetPredicate(predicate);
   }
 }
 
@@ -300,12 +305,10 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
 
 void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
-  delete where_;
-  where_ = where_with_params_->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(where_,
-		  values,
-		  target_table_->GetSchema());
-  SetPredicate(where_->Copy());
+  auto predicate = predicate_with_params_->Copy();
+  expression::ExpressionUtil::ConvertParameterExpressions(
+      predicate, values, GetTable()->GetSchema());
+  SetPredicate(predicate);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);

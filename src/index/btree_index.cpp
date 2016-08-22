@@ -197,7 +197,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
 
   LOG_TRACE("Point Query = %d; Full Scan = %d ",
             csp_p->IsPointQuery(),
-            csp_p->IsFullTableScan());
+            csp_p->IsFullIndexScan());
 
   index_lock.ReadLock();
 

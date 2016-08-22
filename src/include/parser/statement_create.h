@@ -133,6 +133,7 @@ struct ColumnDefinition {
   bool not_null = false;
   bool primary = false;
   bool unique = false;
+  expression::AbstractExpression* default_value = nullptr;
 
   std::vector<char*>* primary_key = nullptr;
   std::vector<char*>* foreign_key_source = nullptr;
@@ -174,6 +175,8 @@ struct CreateStatement : SQLStatement {
 
   std::vector<ColumnDefinition*>* columns;
   std::vector<char*>* index_attrs = nullptr;
+
+  IndexType index_type;
 
   char* name;
   char* table_name = nullptr;

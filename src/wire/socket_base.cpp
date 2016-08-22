@@ -10,117 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "wire/socket_base.h"
+#include "wire/wire.h"
 #include "common/exception.h"
 
 #include <sys/un.h>
 #include <string>
-#include <fstream>
 
 namespace peloton {
 namespace wire {
 
-void StartServer(const PelotonConfiguration& configuration,
-                 Server *server) {
-  int yes = 1;
-  int ret;
-
-  // UNIX SOCKET FAMILY
-  if (configuration.GetSocketFamily() == "AF_UNIX") {
-    struct sockaddr_un serv_addr;
-    int len;
-
-    std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(server->port);
-    LOG_TRACE("Family : %s", configuration.GetSocketFamily().c_str());
-    LOG_TRACE("Socket path : %s", SOCKET_PATH.c_str());
-
-    server->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (server->server_fd < 0) {
-      LOG_ERROR("Server error: while opening socket");
-      exit(EXIT_FAILURE);
-    }
-
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sun_family = AF_UNIX;
-    strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
-            sizeof(serv_addr.sun_path) - 1);
-    unlink(serv_addr.sun_path);
-
-    ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                     sizeof(yes));
-    if (ret == -1) {
-      LOG_ERROR("Setsockopt error: can't config reuse addr");
-      exit(EXIT_FAILURE);
-    }
-
-    len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
-    ret = bind(server->server_fd, (struct sockaddr *)&serv_addr, len);
-    if (ret == -1) {
-      LOG_ERROR("Server error: while binding");
-      perror("bind");
-      exit(EXIT_FAILURE);
-    }
-
-    ret = listen(server->server_fd, server->max_connections);
-    if (ret == -1) {
-      LOG_ERROR("Server error: while listening");
-      perror("listen");
-      exit(EXIT_FAILURE);
-    }
-  }
-  // INET SOCKET FAMILY
-  else if (configuration.GetSocketFamily() == "AF_INET") {
-    struct sockaddr_in serv_addr;
-
-    LOG_TRACE("Family : %s", configuration.GetSocketFamily().c_str());
-
-    server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server->server_fd < 0) {
-      LOG_ERROR("Server error: while opening socket");
-      exit(EXIT_FAILURE);
-    }
-
-    memset(&serv_addr, 0, sizeof(serv_addr));
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(server->port);
-
-    ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                     sizeof(yes));
-    if (ret == -1) {
-      LOG_ERROR("Setsockopt error: can't config reuse addr");
-      exit(EXIT_FAILURE);
-    }
-
-    ret = bind(server->server_fd, (struct sockaddr *)&serv_addr,
-               sizeof(struct sockaddr));
-    if (ret == -1) {
-      LOG_ERROR("Server error: while binding");
-      perror("bind");
-      exit(EXIT_FAILURE);
-    }
-
-    ret = listen(server->server_fd, server->max_connections);
-    if (ret == -1) {
-      LOG_ERROR("Server error: while listening");
-      perror("listen");
-      exit(EXIT_FAILURE);
-    }
-
-  }
-  // UNKNOWN SOCKET FAMILY
-  else {
-    throw Exception("Unknown socket family: " + configuration.GetSocketFamily());
-  }
-}
 
 template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
-	LOG_INFO("RefillReadBuffer");
-	std::ofstream fs;
-	fs.open ("Bytes_Log.txt", std::ios::app);
   ssize_t bytes_read;
 
   // our buffer is to be emptied
@@ -131,22 +33,17 @@ bool SocketManager<B>::RefillReadBuffer() {
     //  try to fill the available space in the buffer
     bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                       SOCKET_BUFFER_SIZE - rbuf.buf_size);
-    LOG_INFO("Bytes Read: %lu", bytes_read);
-    fs << bytes_read << "\n";
-    fs.close();
-    if (bytes_read < 0) {
-      if (errno == EINTR) {
-        // interrupts are OK
-        continue;
-      }
 
-      // otherwise, report error
-      LOG_ERROR("Socket error: could not receive data from client");
+    if (bytes_read < 0) {
+		// Some other error occurred, close the socket, remove
+		// the event and free the client structure.
       return false;
     }
 
     if (bytes_read == 0) {
-      // EOF, return
+	  // If the length of bytes returned by read is 0, this means
+	  // that the client disconnected, remove the read event and the
+	  // free the client structure.
       return false;
     }
 
@@ -161,26 +58,85 @@ bool SocketManager<B>::RefillReadBuffer() {
 
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
+  fd_set rset;
+  struct timeval timeout;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
-  while (wbuf.buf_size - written_bytes > 0) {
-    written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
-    if (written_bytes < 0) {
-      if (errno == EINTR) {
-        // interrupts are ok, try again
-        continue;
-      } else {
-        // fatal errors
-        return false;
-      }
-    }
+  while ((int)wbuf.buf_size - written_bytes > 0) {
+	  while(written_bytes <= 0){
+			written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+			if (written_bytes < 0) {
+			  switch(errno) {
+			  case EINTR:
+				  continue;
+				  break;
+			  case EAGAIN:
+				  LOG_INFO("Error Writing: EAGAIN");
+				  break;
+			  case EBADF:
+				  LOG_INFO("Error Writing: EBADF");
+				  break;
+			  case EDESTADDRREQ:
+				  LOG_INFO("Error Writing: EDESTADDRREQ");
+				  break;
+			  case EDQUOT:
+				  LOG_INFO("Error Writing: EDQUOT");
+				  break;
+			  case EFAULT:
+				  LOG_INFO("Error Writing: EFAULT");
+				  break;
+			  case EFBIG:
+				  LOG_INFO("Error Writing: EFBIG");
+				  break;
+			  case EINVAL:
+				  LOG_INFO("Error Writing: EINVAL");
+				  break;
+			  case EIO:
+				  LOG_INFO("Error Writing: EIO");
+				  break;
+			  case ENOSPC:
+				  LOG_INFO("Error Writing: ENOSPC");
+				  break;
+			  case EPIPE:
+				  LOG_INFO("Error Writing: EPIPE");
+				  break;
+			  default:
+				  LOG_INFO("Error Writing: UNKNOWN");
+			  }
+			  if (errno == EINTR) {
+				// interrupts are ok, try again
+				written_bytes = 0;
+				continue;
+			  } else if (errno == EAGAIN) {
+				  FD_ZERO (&rset);
+				  FD_SET (sock_fd, &rset);
+				  timeout.tv_sec = 5;
+				  written_bytes = select(sock_fd + 1, &rset, NULL, NULL, &timeout);
+				  if (written_bytes < 0) {
+					  LOG_INFO("written_bytes < 0 after select. Fatal");
+					  exit(EXIT_FAILURE);
+				  } else if (written_bytes == 0) {
+					  // timed out without writing any data
+					  LOG_INFO("Timeout without writing");
+				  }
+				  // else, socket is now readable, so loop back up and do the read() again
+				  written_bytes = 0;
+				  continue;
+			  }
+			  else {
+				// fatal errors
+				return false;
+			  }
+			}
 
-    // weird edge case?
-    if (written_bytes == 0 && wbuf.buf_size != 0) {
-      // fatal
-      return false;
-    }
+			// weird edge case?
+			if (written_bytes == 0 && wbuf.buf_size != 0) {
+				LOG_INFO("Not all data is written");
+			  // fatal
+			  return false;
+			}
+	  }
 
     // update bookkeping
     wbuf.buf_ptr += written_bytes;
@@ -191,6 +147,35 @@ bool SocketManager<B>::FlushWriteBuffer() {
   wbuf.Reset();
 
   // we are ok
+  return true;
+}
+
+template <typename B>
+bool SocketManager<B>::CanRead() {
+  // Size of header (msg type + size)
+  uint32_t header_size = sizeof(int32_t) + 1;
+  uint32_t pkt_size = 0;
+  // Size of available data for read
+  size_t window = rbuf.buf_size - rbuf.buf_ptr;
+  // If can read header
+  if(header_size <= window) {
+    PktBuf dummy_pkt;
+	// Read the header size
+	dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
+            std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
+	// Get size of message
+	std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
+	        reinterpret_cast<uchar *>(&pkt_size));
+	pkt_size = ntohl(pkt_size) - sizeof(int32_t);
+	// If header and size is larger than window, don't read untill receive a
+	// read callback and buffer is refilled
+	if(header_size + pkt_size > window) {
+	  	return false;
+	}
+  }
+  else {
+	return false;
+  }
   return true;
 }
 
@@ -209,6 +194,7 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
     if (bytes <= window) {
       pkt_buf.insert(std::end(pkt_buf), std::begin(rbuf.buf) + rbuf.buf_ptr,
                      std::begin(rbuf.buf) + rbuf.buf_ptr + bytes);
+
 
       // move the pointer
       rbuf.buf_ptr += bytes;
@@ -320,7 +306,7 @@ void SocketManager<B>::CloseSocket() {
 }
 
 // explicit template instantiation for read_bytes
-template class SocketManager<std::vector<uchar>>;
+template class SocketManager<PktBuf>;
 
 }  // End wire namespace
 }  // End peloton namespace

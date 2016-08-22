@@ -21,6 +21,7 @@
 namespace peloton {
 namespace parser {
 class SQLStatement;
+class SQLStatementList;
 class SelectStatement;
 }
 
@@ -60,7 +61,7 @@ class SimpleOptimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::AbstractParse> &parse_tree);
 
   static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatement> &parse_tree);
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree);
 
  private:
   //===--------------------------------------------------------------------===//
@@ -78,6 +79,8 @@ class SimpleOptimizer : public AbstractOptimizer {
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
       storage::DataTable *target_table, parser::SelectStatement *select_stmt);
+
+  static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
 };
 }  // namespace optimizer
 }  // namespace peloton
