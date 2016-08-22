@@ -42,7 +42,13 @@ BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata)
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-BWTREE_INDEX_TYPE::~BWTreeIndex() { return; }
+BWTREE_INDEX_TYPE::~BWTreeIndex() {
+  for (auto it = container.Begin(); it.IsEnd() == false; it++) {
+    delete it->second;
+  }
+
+  return;
+}
 
 /*
  * InsertEntry() - insert a key-value pair into the map
