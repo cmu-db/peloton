@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
-
-#include "common/worker_thread_pool.h"
 
 namespace peloton {
 
-extern WorkerThreadPool thread_pool;
+class ThreadPool;
+
+extern ThreadPool thread_pool;
 
 //===--------------------------------------------------------------------===//
 // Global Setup and Teardown
@@ -25,7 +24,6 @@ extern WorkerThreadPool thread_pool;
 
 class PelotonInit {
  public:
-
   static void Initialize();
 
   static void Shutdown();
@@ -33,7 +31,6 @@ class PelotonInit {
   static void SetUpThread();
 
   static void TearDownThread();
-
 };
 
 }  // End peloton namespace

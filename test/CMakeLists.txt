@@ -6,7 +6,7 @@
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 file(GLOB test_hdrs ${PROJECT_SOURCE_DIR}/test/include/*/*.h*)
-file(GLOB test_srcs_temp ${PROJECT_SOURCE_DIR}/test/*/*.cpp)
+file(GLOB test_srcs_temp ${PROJECT_SOURCE_DIR}/test/*/*test.cpp)
 file(GLOB perf_srcs ${PROJECT_SOURCE_DIR}/test/performance/*.cpp)
 
 set(test_srcs "")

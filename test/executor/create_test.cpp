@@ -34,7 +34,8 @@ TEST_F(CreateTests, CreatingTable) {
 
   // Bootstrap
   auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
+                                                        nullptr);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -61,16 +62,16 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Init();
   executor.Execute();
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
                                                        DEFAULT_DB_NAME)
                 ->GetTableCount(),
             1);
 
   // free the database just created
-  txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME);
-  txn_manager.CommitTransaction();
+  txn = txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 
   delete catalog;
 }

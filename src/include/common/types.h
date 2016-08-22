@@ -68,9 +68,10 @@ enum ReplicationType {
   SEMISYNC_REPLICATION
 };
 
-enum GCType {
-  GC_TYPE_OFF = 0,
-  GC_TYPE_ON = 1
+enum GarbageCollectionType {
+  GARBAGE_COLLECTION_TYPE_INVALID = 0,
+  GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
+  GARBAGE_COLLECTION_TYPE_ON = 2  // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
@@ -382,7 +383,7 @@ enum ExpressionType {
 
 enum ConcurrencyType {
   CONCURRENCY_TYPE_INVALID = 0,
-  CONCURRENCY_TYPE_TO = 4  // timestamp ordering
+  CONCURRENCY_TYPE_TIMESTAMP_ORDERING = 1  // timestamp ordering
 };
 
 //===--------------------------------------------------------------------===//
@@ -411,11 +412,6 @@ enum IsolationLevelType {
 // Garbage Collection Types
 //===--------------------------------------------------------------------===//
 
-enum GCType {
-  GC_TYPE_INVALID = 0,
-  GC_TYPE_OFF = 1,         // turn off GC
-  GC_TYPE_COOPERATIVE = 2  // cooperative GC
-};
 
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
@@ -433,8 +429,7 @@ enum IndexType {
   INDEX_TYPE_INVALID = 0,   // invalid index type
   INDEX_TYPE_BTREE = 1,     // btree
   INDEX_TYPE_BWTREE = 2,    // bwtree
-  INDEX_TYPE_SKIPLIST = 3,  // skip list
-  INDEX_TYPE_HASH = 4       // hash
+  INDEX_TYPE_HASH = 3       // hash
 };
 
 enum IndexConstraintType {
@@ -941,7 +936,7 @@ bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
 
 BackendType GetBackendType(const LoggingType &logging_type);
 
-void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
+bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

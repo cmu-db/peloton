@@ -82,7 +82,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
     executor.Execute();
   }
 
-  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertTests, LoadingTest) {
@@ -95,7 +95,7 @@ TEST_F(InsertTests, LoadingTest) {
 
   // Control the scale
   oid_t loader_threads_count = 1;
-  oid_t tilegroup_count_per_loader = 1;
+  oid_t tilegroup_count_per_loader = 1000;
 
   // Each tuple size ~40 B.
   oid_t tuple_size = 41;
@@ -117,10 +117,28 @@ TEST_F(InsertTests, LoadingTest) {
 
   LOG_INFO("Duration: %.2lf", duration);
 
-  //EXPECT_LE(duration, 0.2);
+  auto expected_tile_group_count = 0;
 
-  auto expected_tile_group_count =
-      loader_threads_count * tilegroup_count_per_loader + 1;
+  int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
+  int max_cached_tuple_count = TEST_TUPLES_PER_TILEGROUP * ACTIVE_TILEGROUP_COUNT;
+  int max_unfill_cached_tuple_count = (TEST_TUPLES_PER_TILEGROUP - 1) * ACTIVE_TILEGROUP_COUNT;
+
+  if (total_tuple_count - max_cached_tuple_count <= 0) {
+    if (total_tuple_count <= max_unfill_cached_tuple_count) {
+      expected_tile_group_count = ACTIVE_TILEGROUP_COUNT;
+    } else {
+      expected_tile_group_count = ACTIVE_TILEGROUP_COUNT + total_tuple_count - max_unfill_cached_tuple_count; 
+    }
+  } else {
+    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * ACTIVE_TILEGROUP_COUNT;
+    
+    if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
+      expected_tile_group_count = filled_tile_group_count + ACTIVE_TILEGROUP_COUNT;
+    } else {
+      expected_tile_group_count = filled_tile_group_count + ACTIVE_TILEGROUP_COUNT + (total_tuple_count - filled_tile_group_count - max_unfill_cached_tuple_count); 
+    }
+  }
+
   auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);

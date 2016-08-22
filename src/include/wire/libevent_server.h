@@ -31,7 +31,6 @@
 #include "common/config.h"
 #include "wire/wire.h"
 #include "wire/socket_base.h"
-#include "common/worker_thread_pool.h"
 
 namespace peloton {
 
@@ -44,7 +43,7 @@ class Server {
 
   inline ~Server() {
     for (auto socket_manager : socket_manager_vector_) {
-      delete(socket_manager);
+      delete (socket_manager);
     }
   }
 
@@ -71,19 +70,12 @@ class Server {
   // socket manager id cntr
   static unsigned int socket_manager_id;
 
-private:
+
+ private:
   // For logging purposes
   static void LogCallback(int severity, const char* msg);
-
-  // port number
-  int port_;
-
-  // maximum number of connections
-  int max_connections_;
-
+  int port_;             // port number
+  int max_connections_;  // maximum number of connections
 };
-
 }
-
 }
-

@@ -21,6 +21,7 @@
 namespace peloton {
 namespace parser {
 class SQLStatement;
+class SQLStatementList;
 class SelectStatement;
 }
 
@@ -60,7 +61,7 @@ class SimpleOptimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::AbstractParse> &parse_tree);
 
   static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatement> &parse_tree);
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree);
 
  private:
   //===--------------------------------------------------------------------===//

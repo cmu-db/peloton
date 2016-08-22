@@ -62,6 +62,10 @@ class TrafficCop {
 
   std::vector<FieldInfoType> GenerateTupleDescriptor(std::string query);
 
+  FieldInfoType GetColumnFieldForValueType(std::string column_name , ValueType column_type);
+  
+  FieldInfoType GetColumnFieldForAggregates(std::string name , ExpressionType expr_type);  
+
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt,
                      std::string &error_message);

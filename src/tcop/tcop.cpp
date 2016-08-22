@@ -35,7 +35,7 @@ namespace tcop {
 TrafficCop &TrafficCop::GetInstance(void) {
   static TrafficCop traffic_cop;
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   return traffic_cop;
 }
 
@@ -107,9 +107,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
-  if(sql_stmt->GetType() == STATEMENT_TYPE_SELECT){
-    auto tuple_descriptor = GenerateTupleDescriptor(query_string);
-    statement->SetTupleDescriptor(tuple_descriptor);
+  for(auto stmt : sql_stmt->GetStatements()){
+    if(stmt->GetType() == STATEMENT_TYPE_SELECT){
+      auto tuple_descriptor = GenerateTupleDescriptor(query_string);
+      statement->SetTupleDescriptor(tuple_descriptor);
+    }
+    break;
   }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
@@ -117,152 +120,147 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   return std::move(statement);
 }
 
+std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(std::string query) {
 
-// This function returns the tuple descriptor that will be sent
-// to the client
-std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
-    std::string query) {
-
-  // Might change the paramater to SQLStatement* to remove the extra parsing
-  // here.
-
-  // The tuple descriptor to be returned
   std::vector<FieldInfoType> tuple_descriptor;
 
-  std::vector<std::string> query_tokens;
-  boost::split(query_tokens, query, boost::is_any_of(" "),
-               boost::token_compress_on);
+  // Set up parser
+  auto &peloton_parser = parser::Parser::GetInstance();
+  auto sql_stmt = peloton_parser.BuildParseTree(query);
 
-  // Check if query is select query
-  if (query_tokens[0] == "SELECT") {
+  auto first_stmt = sql_stmt->GetStatement(0);
 
-    auto &peloton_parser = parser::Parser::GetInstance();
-    auto sql_stmt = peloton_parser.BuildParseTree(query);
 
-    auto select_stmt = (parser::SelectStatement *)sql_stmt.get();
-    storage::DataTable *target_table = nullptr;
-       if (select_stmt->from_table->list == NULL) {
-        target_table = static_cast<storage::DataTable *>(
-          catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-              DEFAULT_DB_NAME, select_stmt->from_table->name));
-      }
+  //Get the Select Statement
+  auto select_stmt = (parser::SelectStatement *)first_stmt;
 
-      else{
-        for(auto table_name : *select_stmt->from_table->list){
-          //pick the first table for now.
-          //Method needs huge refactoring
-          target_table = static_cast<storage::DataTable *>(
-          catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-              DEFAULT_DB_NAME, table_name->name));
-        }
-      }
-      auto columns = target_table->GetSchema()->GetColumns();
+  // Set up the table
+  storage::DataTable *target_table = nullptr;
 
-      for (auto expr : *select_stmt->select_list) {
-        if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
+  // Check if query only has one Table
+  // Example : SELECT * FROM A;
+  if (select_stmt->from_table->list == NULL){
+    target_table = static_cast<storage::DataTable *>(
+              catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+                  DEFAULT_DB_NAME, select_stmt->from_table->name));
+  }
 
-          for (oid_t i = 0; i < columns.size(); ++i) {
-
-            if (columns[i].column_type == VALUE_TYPE_INTEGER) {
-              tuple_descriptor.push_back(std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-            } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
-              tuple_descriptor.push_back(std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
-            } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
-              tuple_descriptor.push_back(
-                  std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
-            } else if (columns[i].column_type == VALUE_TYPE_TIMESTAMP) {
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64));
-            } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
-              tuple_descriptor.push_back(
-                  std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16));
-            } else {
-              LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
-              tuple_descriptor.push_back(
-                  std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
-            }
-          }
-        } else if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
-          auto col_name = expr->GetName();
-          for (oid_t i = 0; i < columns.size(); ++i) {
-            if (col_name == columns[i].column_name) {
-
-              if (columns[i].column_type == VALUE_TYPE_INTEGER) {
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-              } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
-              } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
-              } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16));
-              } else if (columns[i].column_type == VALUE_TYPE_TIMESTAMP) {
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64));
-              } else {
-                LOG_ERROR("Unrecognized column type: %d",
-                          columns[i].column_type);
-                tuple_descriptor.push_back(
-                    std::make_tuple(columns[i].column_name, POSTGRES_VALUE_TYPE_TEXT, 255));
-              }
-            }
-          }
-        } else if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-          auto func_expr = (expression::ParserExpression *)expr;
-          if(expr->alias != nullptr){
-            std::string col_name = std::string(expr->alias);
-          
-            if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_AVG){
-              tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
-            }
-          
-            else{
-              tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-            }
-
-          }
-          else{
-          if (func_expr->expr->GetExpressionType() ==
-              EXPRESSION_TYPE_COLUMN_REF) {
-            std::string col_name = std::string(func_expr->GetName()) + "(" +
-                                   std::string(func_expr->expr->GetName()) +
-                                   ")";
-            tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-          } else if (func_expr->expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_AGGREGATE_AVG) {
-            std::string col_name = std::string(func_expr->GetName()) + "(" +
-                                   std::string(func_expr->expr->GetName()) +
-                                   ")";
-            tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_DOUBLE, 8));
-          } else if (func_expr->expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_AGGREGATE_MAX) {
-            std::string col_name = std::string(func_expr->GetName()) + "(" +
-                                   std::string(func_expr->expr->GetName()) +
-                                   ")";
-            tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-          } else if (func_expr->expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_AGGREGATE_MIN) {
-            std::string col_name = std::string(func_expr->GetName()) + "(" +
-                                   std::string(func_expr->expr->GetName()) +
-                                   ")";
-            tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-          } else if (func_expr->expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
-            std::string col_name = "COUNT(*)";
-            tuple_descriptor.push_back(std::make_tuple(col_name, POSTGRES_VALUE_TYPE_INTEGER, 4));
-          }
-        }
-      }
-      }
-    } else {
-      tuple_descriptor.push_back(std::make_tuple(query_tokens[1], POSTGRES_VALUE_TYPE_INTEGER, 4));
+  // Query has multiple tables
+  // Example: SELECT COUNT(ID) FROM A,B <Condition>
+  // For now we only pick the first table in the list
+  // FIX: Better handle for queries with multiple tables
+  else{
+    for(auto table : *select_stmt->from_table->list){
+      target_table = static_cast<storage::DataTable *>(
+                catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+                    DEFAULT_DB_NAME, table->name));
+      break;
     }
 
+  }
+
+  // Get the columns of the table
+  auto table_columns = target_table->GetSchema()->GetColumns();
+
+  // Get the columns information and set up
+  // the columns description for the returned results
+  for (auto expr : *select_stmt->select_list){
+    if(expr->GetExpressionType() == EXPRESSION_TYPE_STAR){
+      for(auto column : table_columns){
+        tuple_descriptor.push_back(GetColumnFieldForValueType(column.column_name,column.column_type));
+      }
+    }
+
+    //if query has only certain columns
+    if(expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF){
+
+      // Get the column name
+      auto col_name = expr->GetName();
+
+      // Traverse the table's columns
+      for(auto column : table_columns){
+        // check if the column name matches
+        if(column.column_name == col_name){
+          tuple_descriptor.push_back(GetColumnFieldForValueType(col_name , column.column_type));
+        }
+      }
+
+    }
+
+    // Query has aggregation Functions
+    if(expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF){
+      //Get the parser expression that contains
+      //the typr of the aggreataion function
+      auto func_expr = (expression::ParserExpression*)expr;
+
+      std::string col_name = "";
+      //check if expression has an alias
+      if(expr->alias != NULL){
+        tuple_descriptor.push_back(GetColumnFieldForAggregates(std::string(expr->alias) , func_expr->expr->GetExpressionType()));
+      }
+      else{
+        //Construct a String
+        std::string agg_func_name = std::string(expr->GetName());
+        std::string col_name = std::string(func_expr->expr->GetName());
+
+        // Example : Count(id)
+        std::string full_agg_name = agg_func_name + "(" + col_name + ")";
+
+        tuple_descriptor.push_back(GetColumnFieldForAggregates(full_agg_name , func_expr->expr->GetExpressionType()));
+      }
+    }
+  }
   return tuple_descriptor;
 }
 
+FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , ValueType column_type){
+  if(column_type == VALUE_TYPE_INTEGER){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_INTEGER , 4);
+  }
+
+  if(column_type == VALUE_TYPE_DOUBLE){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DOUBLE , 8);
+  }
+
+  if(column_type == VALUE_TYPE_VARCHAR){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
+  }
+
+  if(column_type == VALUE_TYPE_DECIMAL){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DECIMAL , 16);
+  }
+
+  if(column_type == VALUE_TYPE_TIMESTAMP){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TIMESTAMPS , 64);
+  }
+
+
+  // Type not Identified
+  LOG_ERROR("Unrecognized column type: %d", column_type);
+  //return String
+  return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
+}
+
+FieldInfoType TrafficCop::GetColumnFieldForAggregates(std::string name , ExpressionType expr_type){
+
+  //For now we only return INT for (MAX , MIN)
+  //TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
+
+  // Check the expression type and return the corresponding description
+  if(expr_type == EXPRESSION_TYPE_AGGREGATE_MAX || expr_type == EXPRESSION_TYPE_AGGREGATE_MIN || expr_type == EXPRESSION_TYPE_AGGREGATE_COUNT){
+    return std::make_tuple(name ,POSTGRES_VALUE_TYPE_INTEGER, 4);
+  }
+
+  // Return double if function is AVERAGE
+  if(expr_type == EXPRESSION_TYPE_AGGREGATE_AVG){
+    return std::make_tuple(name , POSTGRES_VALUE_TYPE_DOUBLE, 8);
+  }
+
+  if(expr_type == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR){
+    return std::make_tuple("COUNT(*)", POSTGRES_VALUE_TYPE_INTEGER, 4);
+  }
+
+  return std::make_tuple(name , POSTGRES_VALUE_TYPE_TEXT , 255);
+}
 }  // End tcop namespace
 }  // End peloton namespace
