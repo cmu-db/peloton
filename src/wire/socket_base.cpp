@@ -106,8 +106,8 @@ bool SocketManager<B>::FlushWriteBuffer() {
 		  default:
 			  LOG_INFO("Error Writing: UNKNOWN");
 		  }
-		  if (errno == EINTR) {
-			// interrupts are ok, try again
+		  if (errno == EINTR || errno == EAGAIN) {
+			// interrupts and again are ok, try again
 			continue;
 		  } else {
 			// fatal errors
