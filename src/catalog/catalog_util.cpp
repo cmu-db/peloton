@@ -43,6 +43,7 @@ void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tupl
 
 void DeleteTuple(storage::DataTable *table, oid_t id, concurrency::Transaction *txn){
   PL_ASSERT(txn != nullptr);
+
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
