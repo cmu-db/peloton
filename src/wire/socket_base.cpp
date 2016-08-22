@@ -58,13 +58,14 @@ bool SocketManager<B>::RefillReadBuffer() {
 
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
-  ssize_t written_bytes = 0;
+  ssize_t written_bytes = -1;
   wbuf.buf_ptr = 0;
+  errno = EAGAIN;
   // still outstanding bytes
   while (wbuf.buf_size - written_bytes > 0) {
-    written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
-    fsync(sock_fd);
-    if (written_bytes < 0) {
+    while(written_bytes < 0 && errno == EAGAIN) {
+      written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+      if (written_bytes < 0) {
       switch(errno) {
       case EINTR:
     	  continue;
@@ -102,6 +103,7 @@ bool SocketManager<B>::FlushWriteBuffer() {
       default:
     	  LOG_INFO("Error Writing: UNKNOWN");
       }
+    }
       if (errno == EINTR) {
         // interrupts are ok, try again
         continue;
