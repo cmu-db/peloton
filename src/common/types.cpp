@@ -635,25 +635,10 @@ ExpressionType StringToExpressionType(const std::string& str) {
 
 std::string IndexTypeToString(IndexType type) {
   switch (type) {
-<<<<<<< HEAD
     case INDEX_TYPE_INVALID: { return "INVALID"; }
     case INDEX_TYPE_BTREE: { return "BTREE"; }
     case INDEX_TYPE_BWTREE: { return "BWTREE"; }
     case INDEX_TYPE_HASH: { return "HASH"; }
-=======
-    case INDEX_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case INDEX_TYPE_BTREE: {
-      return "BTREE";
-    }
-    case INDEX_TYPE_BWTREE: {
-      return "BWTREE";
-    }
-    case INDEX_TYPE_HASH: {
-      return "HASH";
-    }
->>>>>>> master
   }
   return "INVALID";
 }
