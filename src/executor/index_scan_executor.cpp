@@ -391,8 +391,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
 
         break;
-
-        break;
       }
       // if the tuple is not visible.
       else {
