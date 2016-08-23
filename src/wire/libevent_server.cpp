@@ -52,38 +52,39 @@ bool SetNonBlocking(int fd) {
 /**
  * Process refill the buffer and process all packets that can be processed
  */
-void ManageRead(SocketManager<PktBuf>** socket_manager) {
-	// Startup packet
-	if((*socket_manager)->first_packet == false) {
-		if(!(*socket_manager)->socket_pkt_manager->ManageFirstPacket()) {
-			close((*socket_manager)->GetSocketFD());
-			event_del((*socket_manager)->ev_read);
-			(*socket_manager)->execution_mutex.unlock();
-			return;
-		}
-		(*socket_manager)->first_packet = true;
-	}
-	// Regular packet
-	else {
-		if(!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
-			close((*socket_manager)->GetSocketFD());
-			event_del((*socket_manager)->ev_read);
-			(*socket_manager)->execution_mutex.unlock();
-			return;
-		}
-	}
-	// Unlock the socket manager mutex
-	(*socket_manager)->execution_mutex.unlock();
+void ManageRead(SocketManager<PktBuf> **socket_manager) {
+  // Startup packet
+  if ((*socket_manager)->first_packet == false) {
+    if (!(*socket_manager)->socket_pkt_manager->ManageFirstPacket()) {
+      close((*socket_manager)->GetSocketFD());
+      event_del((*socket_manager)->ev_read);
+      (*socket_manager)->execution_mutex.unlock();
+      return;
+    }
+    (*socket_manager)->first_packet = true;
+  }
+  // Regular packet
+  else {
+    if (!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
+      close((*socket_manager)->GetSocketFD());
+      event_del((*socket_manager)->ev_read);
+      (*socket_manager)->execution_mutex.unlock();
+      return;
+    }
+  }
+  // Unlock the socket manager mutex
+  (*socket_manager)->execution_mutex.unlock();
 }
 
 /**
  * The function called when there is new data ready to be read
  */
-void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev, void *arg) {
+void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev,
+                  void *arg) {
   // Assign a thread if the socket manager is not executing
-  if(((SocketManager<PktBuf>*)arg)->execution_mutex.try_lock()) {
-	((SocketManager<PktBuf>*)arg)->self = (SocketManager<PktBuf>*)arg;
-    thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf>*)arg)->self);
+  if (((SocketManager<PktBuf> *)arg)->execution_mutex.try_lock()) {
+    ((SocketManager<PktBuf> *)arg)->self = (SocketManager<PktBuf> *)arg;
+    thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf> *)arg)->self);
   }
 }
 
@@ -91,30 +92,32 @@ void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev, void *arg)
  * This function will be called by libevent when there is a connection
  * ready to be accepted.
  */
-void AcceptCallback(struct evconnlistener *listener,
-	    evutil_socket_t client_fd, UNUSED_ATTRIBUTE struct sockaddr *address, UNUSED_ATTRIBUTE int socklen,
-		UNUSED_ATTRIBUTE void *ctx) {
-	LOG_INFO("New connection on fd %d", int(client_fd));
-	// Get the event base
-	struct event_base *base = evconnlistener_get_base(listener);
+void AcceptCallback(struct evconnlistener *listener, evutil_socket_t client_fd,
+                    UNUSED_ATTRIBUTE struct sockaddr *address,
+                    UNUSED_ATTRIBUTE int socklen, UNUSED_ATTRIBUTE void *ctx) {
+  LOG_INFO("New connection on fd %d", int(client_fd));
+  // Get the event base
+  struct event_base *base = evconnlistener_get_base(listener);
 
-	SetTCPNoDelay(client_fd);
-	/* We've accepted a new client, allocate a socket manager to
-	   maintain the state of this client. */
-	SocketManager<PktBuf>* socket_manager = new SocketManager<PktBuf>(client_fd, ++Server::socket_manager_id);
-	socket_manager->socket_pkt_manager.reset(new PacketManager(socket_manager));
+  SetTCPNoDelay(client_fd);
+  /* We've accepted a new client, allocate a socket manager to
+     maintain the state of this client. */
+  SocketManager<PktBuf> *socket_manager =
+      new SocketManager<PktBuf>(client_fd, ++Server::socket_manager_id);
+  socket_manager->socket_pkt_manager.reset(new PacketManager(socket_manager));
 
-	Server::AddSocketManager(socket_manager);
+  Server::AddSocketManager(socket_manager);
 
-	/* Setup the read event, libevent will call ReadCallback whenever
-	 * the clients socket becomes read ready.  Make the
-	 * read event persistent so we don't have to re-add after each
-	 * read. */
-	socket_manager->ev_read = event_new(base, client_fd, EV_READ|EV_PERSIST, ReadCallback, socket_manager);
+  /* Setup the read event, libevent will call ReadCallback whenever
+   * the clients socket becomes read ready.  Make the
+   * read event persistent so we don't have to re-add after each
+   * read. */
+  socket_manager->ev_read = event_new(base, client_fd, EV_READ | EV_PERSIST,
+                                      ReadCallback, socket_manager);
 
-	/* Setting up the event does not activate, add the event so it
-	   becomes active. */
-	event_add(socket_manager->ev_read, NULL);
+  /* Setting up the event does not activate, add the event so it
+     becomes active. */
+  event_add(socket_manager->ev_read, NULL);
 }
 
 Server::Server() {
@@ -150,7 +153,7 @@ Server::Server() {
 
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
-    memset(&sin, 0, sizeof(sin));
+    PL_MEMSET(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons(port_);
@@ -170,11 +173,11 @@ Server::Server() {
   }
   // This socket family code is not implemented yet
   else if (FLAGS_socket_family == "AF_UNIX") {
-	struct sockaddr_un serv_addr;
-	int len;
+    struct sockaddr_un serv_addr;
+    int len;
 
-	std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(port_);
-	memset(&serv_addr, 0, sizeof(serv_addr));
+    std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(port_);
+    PL_MEMSET(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sun_family = AF_UNIX;
     strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
             sizeof(serv_addr.sun_path) - 1);
@@ -195,10 +198,9 @@ Server::Server() {
     event_free(evstop);
     event_base_free(base);
 
-  }
-  else {
-	  LOG_ERROR("Socket family %s not supported", FLAGS_socket_family.c_str());
-	  exit(EXIT_FAILURE);
+  } else {
+    LOG_ERROR("Socket family %s not supported", FLAGS_socket_family.c_str());
+    exit(EXIT_FAILURE);
   }
 }
 
