@@ -110,9 +110,6 @@ class Catalog {
   // The id variable that get assigned to objects. Initialized with START_OID
   oid_t id_cntr = 1;
 
-  // Mutex used for atomic operations
-  std::mutex catalog_mutex;
-
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
 };
