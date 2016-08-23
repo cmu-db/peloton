@@ -37,6 +37,43 @@ bool SocketManager<B>::RefillReadBuffer() {
     if (bytes_read < 0) {
 		// Some other error occurred, close the socket, remove
 		// the event and free the client structure.
+    	switch(errno) {
+		  case EINTR:
+			  continue;
+			  break;
+		  case EAGAIN:
+			  LOG_INFO("Error Reading: EAGAIN");
+			  break;
+		  case EBADF:
+			  LOG_INFO("Error Reading: EBADF");
+			  break;
+		  case EDESTADDRREQ:
+			  LOG_INFO("Error Reading: EDESTADDRREQ");
+			  break;
+		  case EDQUOT:
+			  LOG_INFO("Error Reading: EDQUOT");
+			  break;
+		  case EFAULT:
+			  LOG_INFO("Error Reading: EFAULT");
+			  break;
+		  case EFBIG:
+			  LOG_INFO("Error Reading: EFBIG");
+			  break;
+		  case EINVAL:
+			  LOG_INFO("Error Reading: EINVAL");
+			  break;
+		  case EIO:
+			  LOG_INFO("Error Reading: EIO");
+			  break;
+		  case ENOSPC:
+			  LOG_INFO("Error Reading: ENOSPC");
+			  break;
+		  case EPIPE:
+			  LOG_INFO("Error Reading: EPIPE");
+			  break;
+		  default:
+			  LOG_INFO("Error Reading: UNKNOWN");
+		  }
       return false;
     }
 
