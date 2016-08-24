@@ -53,7 +53,7 @@ Result Catalog::CreateDatabase(std::string database_name,
       return Result::RESULT_FAILURE;
     }
   }
-  oid_t database_id = GetNewID();
+  oid_t database_id = GetNextOid();
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
   databases_.push_back(database);
@@ -78,7 +78,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
                             concurrency::Transaction *txn) {
   bool own_schema = true;
   bool adapt_table = false;
-  oid_t table_id = GetNewID();
+  oid_t table_id = GetNextOid();
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
     if (database->GetTableWithName(table_name)) {
@@ -331,7 +331,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
 
   catalog::Schema *schema = table_schema.release();
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNewID(), schema, table_name, DEFAULT_TUPLES_PER_TILEGROUP,
+      database_id, GetNextOid(), schema, table_name, DEFAULT_TUPLES_PER_TILEGROUP,
       own_schema, adapt_table));
   return table;
 }
@@ -346,7 +346,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   catalog::Schema *schema = database_schema.release();
 
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNewID(), schema, database_name,
+      database_id, GetNextOid(), schema, database_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
 
   return table;
@@ -404,7 +404,7 @@ void Catalog::PrintCatalogs() {}
 
 int Catalog::GetDatabaseCount() { return databases_.size(); }
 
-oid_t Catalog::GetNewID() { return oid_++; }
+oid_t Catalog::GetNextOid() { return oid_++; }
 
 Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
 }
