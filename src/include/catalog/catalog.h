@@ -101,7 +101,7 @@ class Catalog {
   void PrintCatalogs();
 
   // Get a new id for database, table, etc.
-  oid_t GetNewID();
+  oid_t GetNextOid();
 
   // Deconstruct the catalog database when destroy the catalog.
   ~Catalog();
@@ -110,8 +110,9 @@ class Catalog {
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
 
-  // The id variable that get assigned to objects. Initialized with START_OID
-  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID);
+  // The id variable that get assigned to objects. Initialized with (START_OID +
+  // 1) because START_OID is assigned to the catalog database.
+  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
 
   // Mutex used for atomic operations
   std::mutex catalog_mutex_;
