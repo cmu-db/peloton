@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include <fstream>
+
+
 #include "wire/libevent_server.h"
 #include "common/logger.h"
 #include "common/macros.h"
@@ -54,23 +56,29 @@ bool SetNonBlocking(int fd) {
  */
 void ManageRead(SocketManager<PktBuf> **socket_manager) {
   // Startup packet
-  if ((*socket_manager)->first_packet == false) {
+  if ((*socket_manager)->first_packet == true) {
     if (!(*socket_manager)->socket_pkt_manager->ManageFirstPacket()) {
       close((*socket_manager)->GetSocketFD());
       event_del((*socket_manager)->ev_read);
       (*socket_manager)->execution_mutex.unlock();
       return;
     }
-    (*socket_manager)->first_packet = true;
+    (*socket_manager)->first_packet = false;
   }
   // Regular packet
   else {
-    if (!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
-      close((*socket_manager)->GetSocketFD());
-      event_del((*socket_manager)->ev_read);
-      (*socket_manager)->execution_mutex.unlock();
-      return;
-    }
+
+	if(duration_cast<nanoseconds>(
+			(*socket_manager)->socket_pkt_manager->last_callback_time -
+			(*socket_manager)->socket_pkt_manager->last_read_time).count() > 0) {
+		if (!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
+			std::cout << "Failed to manage packet" << std::endl;
+		      close((*socket_manager)->GetSocketFD());
+		      event_del((*socket_manager)->ev_read);
+		      (*socket_manager)->execution_mutex.unlock();
+		      return;
+		}
+	}
   }
   // Unlock the socket manager mutex
   (*socket_manager)->execution_mutex.unlock();
@@ -81,8 +89,16 @@ void ManageRead(SocketManager<PktBuf> **socket_manager) {
  */
 void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev,
                   void *arg) {
+  LOG_INFO("Read callback");
+  // This is the first callback. Don't reset last_callback_time
+  if(((SocketManager<PktBuf> *)arg)->first_packet == false) {
+    ((SocketManager<PktBuf> *)arg)->socket_pkt_manager->last_callback_time = high_resolution_clock::now();
+  }
+
   // Assign a thread if the socket manager is not executing
+  // If a read callback is received while executing, make sure we don't miss it
   if (((SocketManager<PktBuf> *)arg)->execution_mutex.try_lock()) {
+	  std::cout << "New thread started execution for Socket Manager "<< ((SocketManager<PktBuf> *)arg)->id << std::endl;
     ((SocketManager<PktBuf> *)arg)->self = (SocketManager<PktBuf> *)arg;
     thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf> *)arg)->self);
   }

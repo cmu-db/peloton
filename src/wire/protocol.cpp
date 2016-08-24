@@ -674,29 +674,24 @@ bool PacketManager::ManageFirstPacket() {
 bool PacketManager::ManagePacket() {
   Packet pkt;
   ResponseBuffer responses;
-  bool status;
-  bool can_read_more = true;
+  bool status, read_status;
+  read_status = ReadPacket(&pkt, true, &client);
   // While can process more packets from buffer
-  while(can_read_more) {
-	if(ReadPacket(&pkt, true, &client)) {
+  while(read_status) {
+	// Process the read packet
+	status = ProcessPacket(&pkt, responses);
 
-		// Process the read packet
-		status = ProcessPacket(&pkt, responses);
-
-		// Write response
-		if (!WritePackets(responses, &client) || !status) {
-		  // close client on write failure or status failure
-		  CloseClient();
-		  return false;
-		}
-		// Can read more?
-		can_read_more = CanRead(&client);
-		pkt.Reset();
-    }
-	// Read failed
-	else {
-		break;
+	// Write response
+	if (!WritePackets(responses, &client) || !status) {
+	  // close client on write failure or status failure
+		std::cout << "Closing client" << std::endl;
+	  CloseClient();
+	  return false;
 	}
+	pkt.Reset();
+    // Timestamp before read attempt
+    last_read_time = high_resolution_clock::now();
+    read_status = ReadPacket(&pkt, true, &client);
   }
   return true;
 }

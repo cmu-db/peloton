@@ -281,8 +281,8 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   // check if we don't have enough space in the buffer
   if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
-	  std::cout << "FlushWriteBuffer due to not enough space" << std::endl;
-	  PrintWriteBuffer();
+//	  std::cout << "FlushWriteBuffer due to not enough space" << std::endl;
+//	  PrintWriteBuffer();
     FlushWriteBuffer();
   }
 
@@ -317,11 +317,11 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
       // Move the cursor and update size of socket buffer
       wbuf.buf_ptr += len;
       wbuf.buf_size = wbuf.buf_ptr;
-      std::cout << "Filled the write buffer but not flushed yet" << std::endl;
-      PrintWriteBuffer();
+//      std::cout << "Filled the write buffer but not flushed yet" << std::endl;
+//      PrintWriteBuffer();
       return true;
     } else {
-    	std::cout << "available window (" << window <<  ") is less than the length (" << len << ")" << std::endl;
+//    	std::cout << "available window (" << window <<  ") is less than the length (" << len << ")" << std::endl;
         /* contents longer than socket buffer size, fill up the socket buffer
          *  with "window" bytes
          */
@@ -335,15 +335,15 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
 
         wbuf.buf_size = wbuf.GetMaxSize();
 
-        std::cout << "Before flushing write buffer..." << std::endl;
-        PrintWriteBuffer();
+//        std::cout << "Before flushing write buffer..." << std::endl;
+//        PrintWriteBuffer();
         // write failure
         if (!FlushWriteBuffer()) {
-          std::cout << "Failed to flush write buffer" << std::endl;
+//          std::cout << "Failed to flush write buffer" << std::endl;
     	  return false;
         }
         else {
-          std::cout << "Flushed write buffer successfully" << std::endl;
+//          std::cout << "Flushed write buffer successfully" << std::endl;
         }
     }
   }
