@@ -44,7 +44,8 @@ void Catalog::CreateCatalogDatabase() {
 }
 
 // Create a database
-Result Catalog::CreateDatabase(std::string database_name, concurrency::Transaction *txn) {
+Result Catalog::CreateDatabase(std::string database_name,
+                               concurrency::Transaction *txn) {
   // Check if a database with the same name exists
   for (auto database : databases_) {
     if (database->GetDBName() == database_name) {
@@ -73,7 +74,8 @@ Result Catalog::CreateDatabase(std::string database_name, concurrency::Transacti
 
 // Create a table in a database
 Result Catalog::CreateTable(std::string database_name, std::string table_name,
-                            std::unique_ptr<catalog::Schema> schema, concurrency::Transaction *txn) {
+                            std::unique_ptr<catalog::Schema> schema,
+                            concurrency::Transaction *txn) {
   bool own_schema = true;
   bool adapt_table = false;
   oid_t table_id = GetNewID();
@@ -93,9 +95,11 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     CreatePrimaryIndex(database_name, table_name);
 
     // Update catalog_table with this table info
-    auto tuple = GetTableCatalogTuple(
-        databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
-        table_id, table_name, database_id, database->GetDBName());
+    auto tuple = GetTableCatalogTuple(databases_[START_OID]
+                                          ->GetTableWithName(TABLE_CATALOG_NAME)
+                                          ->GetSchema(),
+                                      table_id, table_name, database_id,
+                                      database->GetDBName());
     //  Another way of insertion using transaction manager
     catalog::InsertTuple(
         databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
@@ -221,7 +225,8 @@ Result Catalog::CreateIndex(const std::string &database_name,
 }
 
 // Drop a database
-Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction *txn) {
+Result Catalog::DropDatabase(std::string database_name,
+                             concurrency::Transaction *txn) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
@@ -251,7 +256,8 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
 }
 
 // Drop a table
-Result Catalog::DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn) {
+Result Catalog::DropTable(std::string database_name, std::string table_name,
+                          concurrency::Transaction *txn) {
 
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
             database_name.c_str());
@@ -356,7 +362,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size, "table_name", true);
+      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size_, "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -365,8 +371,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  auto database_name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size, "database_name", true);
+  auto database_name_column = catalog::Column(
+      VALUE_TYPE_VARCHAR, max_name_size_, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -384,8 +390,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
-  auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size, "database_name", true);
+  auto name_column = catalog::Column(VALUE_TYPE_VARCHAR, max_name_size_,
+                                     "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
