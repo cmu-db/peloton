@@ -24,9 +24,9 @@ namespace peloton {
 namespace catalog {
 
 // Get instance of the global catalog
-std::unique_ptr<Catalog> Catalog::GetInstance(void) {
+Catalog *Catalog::GetInstance(void) {
   static std::unique_ptr<Catalog> global_catalog(new Catalog());
-  return std::move(global_catalog);
+  return global_catalog.get();
 }
 
 // Creates the catalog database
@@ -142,7 +142,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
+        "customer_pkey", GetNextOid(), INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -204,11 +204,11 @@ Result Catalog::CreateIndex(const std::string &database_name,
     // Check if unique index or not
     if (unique == false) {
       index_metadata = new index::IndexMetadata(
-          index_name.c_str(), Manager::GetInstance().GetNextOid(), index_type,
+          index_name.c_str(), GetNextOid(), index_type,
           INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
     } else {
       index_metadata = new index::IndexMetadata(
-          index_name.c_str(), Manager::GetInstance().GetNextOid(), index_type,
+          index_name.c_str(), GetNextOid(), index_type,
           INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true);
     }
 
@@ -331,8 +331,8 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
 
   catalog::Schema *schema = table_schema.release();
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNextOid(), schema, table_name, DEFAULT_TUPLES_PER_TILEGROUP,
-      own_schema, adapt_table));
+      database_id, GetNextOid(), schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
   return table;
 }
 

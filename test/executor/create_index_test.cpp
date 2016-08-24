@@ -15,7 +15,6 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 #include "planner/create_plan.h"
 #include "planner/insert_plan.h"
@@ -43,9 +42,7 @@ class CreateIndexTests : public PelotonTest {};
 TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Bootstrapping...");
-  auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
-                                                        nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -85,11 +82,10 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Table Created");
   txn_manager.CommitTransaction(txn);
 
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
-                                                       DEFAULT_DB_NAME)
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
             1);
-
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
@@ -146,18 +142,15 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);
 
-  auto target_table_ =
-      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-          DEFAULT_DB_NAME, "department_table");
+  auto target_table_ = catalog::Catalog::GetInstance()->GetTableFromDatabase(
+      DEFAULT_DB_NAME, "department_table");
   // Expected 2 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete catalog;
 }
 
 }  // End test namespace
