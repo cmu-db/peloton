@@ -267,8 +267,8 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
 template <typename B>
 void SocketManager<B>::PrintWriteBuffer() {
 	std::cout << "Write Buffer:" << std::endl;
-	for(auto c : wbuf.buf) {
-		std::cout << c << " ";
+	for(int i = 0; i < wbuf.buf_size; ++i) {
+		std::cout << wbuf.buf[i] << " ";
 	}
 	std::cout << std::endl;
 }
