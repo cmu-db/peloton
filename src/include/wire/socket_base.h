@@ -99,6 +99,8 @@ class SocketManager {
   // Writes a packet into the write buffer
   bool BufferWriteBytes(B &pkt_buf, size_t len, uchar type);
 
+  void PrintWriteBuffer();
+
   // Used to invoke a write into the Socket, once the write buffer is ready
   bool FlushWriteBuffer();
 
