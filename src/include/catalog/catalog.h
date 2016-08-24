@@ -47,11 +47,13 @@ class Catalog {
   void CreateCatalogDatabase(void);
 
   // Create a database
-  Result CreateDatabase(std::string database_name, concurrency::Transaction *txn);
+  Result CreateDatabase(std::string database_name,
+                        concurrency::Transaction *txn);
 
   // Create a table in a database
   Result CreateTable(std::string database_name, std::string table_name,
-                     std::unique_ptr<catalog::Schema>, concurrency::Transaction *txn);
+                     std::unique_ptr<catalog::Schema>,
+                     concurrency::Transaction *txn);
 
   // Create the primary key index for a table
   Result CreatePrimaryIndex(const std::string &database_name,
@@ -66,7 +68,8 @@ class Catalog {
   Result DropDatabase(std::string database_name, concurrency::Transaction *txn);
 
   // Drop a table
-  Result DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn);
+  Result DropTable(std::string database_name, std::string table_name,
+                   concurrency::Transaction *txn);
 
   // Find a database using its id
   storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
@@ -105,16 +108,16 @@ class Catalog {
 
  private:
   // A vector of the database pointers in the catalog
-  std::vector<storage::Database *> databases;
+  std::vector<storage::Database *> databases_;
 
   // The id variable that get assigned to objects. Initialized with START_OID
-  oid_t id_cntr = 1;
+  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID);
 
   // Mutex used for atomic operations
-  std::mutex catalog_mutex;
+  std::mutex catalog_mutex_;
 
   // Maximum Column Size for Catalog Schemas
-  const size_t max_name_size = 32;
+  const size_t max_name_size_ = 32;
 };
 }
 }
