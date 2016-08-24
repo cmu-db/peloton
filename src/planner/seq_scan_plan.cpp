@@ -17,8 +17,8 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "expression/expression_util.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/schema.h"
+#include "catalog/catalog.h"
 
 #include "parser/statement_select.h"
 
@@ -52,7 +52,7 @@ namespace planner {
 SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   LOG_DEBUG("Creating a Sequential Scan Plan");
   auto target_table = static_cast<storage::DataTable *>(
-      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+      catalog::Catalog::GetInstance()->GetTableFromDatabase(
           DEFAULT_DB_NAME, select_node->from_table->name));
   SetTargetTable(target_table);
   ColumnIds().clear();

@@ -17,7 +17,6 @@
 #include "../../src/include/executor/drop_executor.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 #include "planner/drop_plan.h"
 
@@ -32,7 +31,7 @@ class DropTests : public PelotonTest {};
 
 TEST_F(DropTests, DroppingTable) {
 
-  auto catalog = catalog::Bootstrapper::bootstrap();
+  auto catalog = catalog::Catalog::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -47,40 +46,31 @@ TEST_F(DropTests, DroppingTable) {
   std::unique_ptr<catalog::Schema> table_schema2(
       new catalog::Schema({id_column, name_column}));
 
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->CreateTable(
-      DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
+  catalog->CreateTable(DEFAULT_DB_NAME, "department_table",
+                       std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->CreateTable(
-      DEFAULT_DB_NAME, "department_table_2", std::move(table_schema2), txn);
+  catalog->CreateTable(DEFAULT_DB_NAME, "department_table_2",
+                       std::move(table_schema2), txn);
   txn_manager.CommitTransaction(txn);
 
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
-                                                       DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            2);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 2);
 
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropTable(DEFAULT_DB_NAME,
-                                                   "department_table", txn);
+  catalog->DropTable(DEFAULT_DB_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
-                                                       DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            1);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog->DropDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete catalog;
 }
 
 }  // End test namespace

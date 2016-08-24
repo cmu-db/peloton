@@ -18,7 +18,6 @@
 #include "executor/insert_executor.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 #include "planner/insert_plan.h"
 #include "expression/abstract_expression.h"
@@ -36,7 +35,7 @@ class InsertTests : public PelotonTest {};
 
 TEST_F(InsertTests, InsertRecord) {
 
-  auto catalog = catalog::Bootstrapper::bootstrap();
+  catalog::Catalog::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -49,12 +48,12 @@ TEST_F(InsertTests, InsertRecord) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->CreateTable(
-      DEFAULT_DB_NAME, "TEST_TABLE", std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, "TEST_TABLE",
+                                               std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
@@ -98,10 +97,8 @@ TEST_F(InsertTests, InsertRecord) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete catalog;
 }
 
 }  // End test namespace

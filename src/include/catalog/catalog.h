@@ -41,7 +41,7 @@ class Catalog {
 
  public:
   // Global Singleton
-  static std::unique_ptr<Catalog> GetInstance(void);
+  static Catalog *GetInstance(void);
 
   // Creates the catalog database
   void CreateCatalogDatabase(void);

@@ -13,9 +13,9 @@
 #include "planner/delete_plan.h"
 
 #include "storage/data_table.h"
-#include "catalog/bootstrapper.h"
 #include "parser/statement_delete.h"
 #include "expression/expression_util.h"
+#include "catalog/catalog.h"
 
 namespace peloton {
 
@@ -26,14 +26,14 @@ namespace planner {
 
 DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
     : target_table_(table), truncate(truncate) {
-	LOG_TRACE("Creating a Delete Plan");
+  LOG_TRACE("Creating a Delete Plan");
 }
 
 DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 
   LOG_TRACE("Creating a Delete Plan");
   table_name_ = std::string(delete_statemenet->table_name);
-  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+  target_table_ = catalog::Catalog::GetInstance()->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name_);
   // if expr is null , delete all tuples from table
   if (delete_statemenet->expr == nullptr) {

@@ -16,7 +16,7 @@
 #include "common/types.h"
 
 #include "storage/data_table.h"
-#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
 #include "parser/statement_update.h"
 #include "parser/table_ref.h"
 #include "expression/expression_util.h"
@@ -36,7 +36,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
-  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+  target_table_ = catalog::Catalog::GetInstance()->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
   for (auto update_clause : *parse_tree->updates) {
