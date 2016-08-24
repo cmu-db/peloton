@@ -40,13 +40,13 @@ void Catalog::CreateCatalogDatabase() {
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table);
-  databases.push_back(database);
+  databases_.push_back(database);
 }
 
 // Create a database
 Result Catalog::CreateDatabase(std::string database_name, concurrency::Transaction *txn) {
   // Check if a database with the same name exists
-  for (auto database : databases) {
+  for (auto database : databases_) {
     if (database->GetDBName() == database_name) {
       LOG_TRACE("Database already exists. Returning RESULT_FAILURE.");
       return Result::RESULT_FAILURE;
@@ -55,16 +55,16 @@ Result Catalog::CreateDatabase(std::string database_name, concurrency::Transacti
   oid_t database_id = GetNewID();
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
-  databases.push_back(database);
+  databases_.push_back(database);
   // Update catalog_db with this database info
 
   auto tuple =
-      GetDatabaseCatalogTuple(databases[START_OID]
+      GetDatabaseCatalogTuple(databases_[START_OID]
                                   ->GetTableWithName(DATABASE_CATALOG_NAME)
                                   ->GetSchema(),
                               database_id, database_name);
   catalog::InsertTuple(
-      databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
+      databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
       std::move(tuple), txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
@@ -94,11 +94,11 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
 
     // Update catalog_table with this table info
     auto tuple = GetTableCatalogTuple(
-        databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
+        databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
         table_id, table_name, database_id, database->GetDBName());
     //  Another way of insertion using transaction manager
     catalog::InsertTuple(
-        databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
+        databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
         std::move(tuple), txn);
     return Result::RESULT_SUCCESS;
   } else {
@@ -231,7 +231,7 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
                              ->GetTableWithName(DATABASE_CATALOG_NAME),
                          database->GetOid(), txn);
     oid_t database_offset = 0;
-    for (auto database : databases) {
+    for (auto database : databases_) {
       if (database->GetDBName() == database_name) {
         LOG_TRACE("Deleting database object in database vector");
         delete database;
@@ -239,10 +239,10 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
       }
       database_offset++;
     }
-    PL_ASSERT(database_offset < databases.size());
+    PL_ASSERT(database_offset < databases_.size());
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
-    databases.erase(databases.begin() + database_offset);
+    databases_.erase(databases_.begin() + database_offset);
   } else {
     LOG_TRACE("Database is not found!");
     return Result::RESULT_FAILURE;
@@ -281,7 +281,7 @@ Result Catalog::DropTable(std::string database_name, std::string table_name, con
 
 // Find a database using its id
 storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
-  for (auto database : databases)
+  for (auto database : databases_)
     if (database->GetOid() == db_oid) return database;
   return nullptr;
 }
@@ -289,7 +289,7 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 // Find a database using its name
 storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
     const {
-  for (auto database : databases) {
+  for (auto database : databases_) {
     if (database->GetDBName() == database_name) return database;
   }
   return nullptr;
@@ -396,9 +396,9 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
 void Catalog::PrintCatalogs() {}
 
-int Catalog::GetDatabaseCount() { return databases.size(); }
+int Catalog::GetDatabaseCount() { return databases_.size(); }
 
-oid_t Catalog::GetNewID() { return id_cntr++; }
+oid_t Catalog::GetNewID() { return oid_++; }
 
 Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
 }
