@@ -146,13 +146,20 @@ class PacketManager {
  public:
   // Statement cache
   Cache<std::string, Statement> statement_cache_;
-
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
+  // last notification of read
+  high_resolution_clock::time_point last_callback_time;
+  // last read attempt
+  high_resolution_clock::time_point last_read_time;
 
 
   inline PacketManager(SocketManager<PktBuf>* sock)
-      : client(sock), txn_state(TXN_IDLE) {}
+      : client(sock), txn_state(TXN_IDLE) {
+	  last_callback_time = high_resolution_clock::now();
+	  usleep(1);
+	  last_read_time = high_resolution_clock::now();
+  }
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
