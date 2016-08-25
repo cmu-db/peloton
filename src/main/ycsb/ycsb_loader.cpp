@@ -20,7 +20,7 @@
 
 #include "benchmark/ycsb/ycsb_loader.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -60,7 +60,7 @@ void CreateYCSBDatabase() {
   ycsb_database = nullptr;
   user_table = nullptr;
 
-  auto &catalog = catalog::Catalog::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   ycsb_database = new storage::Database(ycsb_database_oid);
   catalog->AddDatabase(ycsb_database);
 

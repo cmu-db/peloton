@@ -270,6 +270,34 @@ Result Catalog::DropDatabase(std::string database_name,
   return Result::RESULT_SUCCESS;
 }
 
+// Drop a database with its oid
+void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
+  LOG_TRACE("Dropping database %s", database_name.c_str());
+  storage::Database *database = GetDatabaseWithOid(database_oid);
+  if (database != nullptr) {
+    LOG_TRACE("Found database!");
+    LOG_TRACE("Deleting tuple from catalog");
+    catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
+                             ->GetTableWithName(DATABASE_CATALOG_NAME),
+                         database_oid, nullptr);
+    oid_t database_offset = 0;
+    for (auto database : databases_) {
+      if (database->GetOid() == database_oid) {
+        LOG_TRACE("Deleting database object in database vector");
+        delete database;
+        break;
+      }
+      database_offset++;
+    }
+    PL_ASSERT(database_offset < databases_.size());
+    // Drop the database
+    LOG_TRACE("Deleting database from database vector");
+    databases_.erase(databases_.begin() + database_offset);
+  } else {
+    LOG_TRACE("Database is not found!");
+  }
+}
+
 // Drop a table
 Result Catalog::DropTable(std::string database_name, std::string table_name,
                           concurrency::Transaction *txn) {

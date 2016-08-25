@@ -72,6 +72,9 @@ class Catalog {
   // Drop a database
   Result DropDatabase(std::string database_name, concurrency::Transaction *txn);
 
+  // Drop a database with its oid
+  void DropDatabaseWithOid(const oid_t database_oid);
+
   // Drop a table
   Result DropTable(std::string database_name, std::string table_name,
                    concurrency::Transaction *txn);
@@ -119,7 +122,8 @@ class Catalog {
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
 
-  // The id variable that get assigned to objects. Initialized with (START_OID +
+  // The id variable that get assigned to objects. Initialized with (START_OID
+  // +
   // 1) because START_OID is assigned to the catalog database.
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
 
