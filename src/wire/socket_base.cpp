@@ -37,6 +37,43 @@ bool SocketManager<B>::RefillReadBuffer() {
     if (bytes_read < 0) {
 		// Some other error occurred, close the socket, remove
 		// the event and free the client structure.
+    	switch(errno) {
+		  case EINTR:
+			  continue;
+			  break;
+		  case EAGAIN:
+			  LOG_INFO("Error Reading: EAGAIN");
+			  break;
+		  case EBADF:
+			  LOG_INFO("Error Reading: EBADF");
+			  break;
+		  case EDESTADDRREQ:
+			  LOG_INFO("Error Reading: EDESTADDRREQ");
+			  break;
+		  case EDQUOT:
+			  LOG_INFO("Error Reading: EDQUOT");
+			  break;
+		  case EFAULT:
+			  LOG_INFO("Error Reading: EFAULT");
+			  break;
+		  case EFBIG:
+			  LOG_INFO("Error Reading: EFBIG");
+			  break;
+		  case EINVAL:
+			  LOG_INFO("Error Reading: EINVAL");
+			  break;
+		  case EIO:
+			  LOG_INFO("Error Reading: EIO");
+			  break;
+		  case ENOSPC:
+			  LOG_INFO("Error Reading: ENOSPC");
+			  break;
+		  case EPIPE:
+			  LOG_INFO("Error Reading: EPIPE");
+			  break;
+		  default:
+			  LOG_INFO("Error Reading: UNKNOWN");
+		  }
       return false;
     }
 
@@ -228,6 +265,15 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
 }
 
 template <typename B>
+void SocketManager<B>::PrintWriteBuffer() {
+	std::cout << "Write Buffer:" << std::endl;
+	for(int i = 0; i < wbuf.buf_size; ++i) {
+		std::cout << wbuf.buf[i] << " ";
+	}
+	std::cout << std::endl;
+}
+
+template <typename B>
 bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   size_t window, pkt_buf_ptr = 0;
   int len_nb;  // length in network byte order
@@ -235,6 +281,8 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   // check if we don't have enough space in the buffer
   if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
+	  std::cout << "FlushWriteBuffer due to not enough space" << std::endl;
+	  PrintWriteBuffer();
     FlushWriteBuffer();
   }
 
@@ -269,22 +317,34 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
       // Move the cursor and update size of socket buffer
       wbuf.buf_ptr += len;
       wbuf.buf_size = wbuf.buf_ptr;
+      std::cout << "Filled the write buffer but not flushed yet" << std::endl;
+      PrintWriteBuffer();
       return true;
     } else {
-      /* contents longer than socket buffer size, fill up the socket buffer
-       *  with "window" bytes
-       */
-      std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
+    	std::cout << "available window (" << window <<  ") is less than the length (" << len << ")" << std::endl;
+        /* contents longer than socket buffer size, fill up the socket buffer
+         *  with "window" bytes
+         */
+        std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
                 std::begin(pkt_buf) + pkt_buf_ptr + window,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
 
-      // move the packet's cursor
-      pkt_buf_ptr += window;
-      len -= window;
+        // move the packet's cursor
+        pkt_buf_ptr += window;
+        len -= window;
 
-      wbuf.buf_size = wbuf.GetMaxSize();
-      // write failure
-      if (!FlushWriteBuffer()) return false;
+        wbuf.buf_size = wbuf.GetMaxSize();
+
+        std::cout << "Before flushing write buffer..." << std::endl;
+        PrintWriteBuffer();
+        // write failure
+        if (!FlushWriteBuffer()) {
+          std::cout << "Failed to flush write buffer" << std::endl;
+    	  return false;
+        }
+        else {
+          std::cout << "Flushed write buffer successfully" << std::endl;
+        }
     }
   }
   return true;
