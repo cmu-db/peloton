@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "gc/gc_manager.h"
-#include "common/types.h"
+#include "gc/transaction_level_gc_manager.h"
+
 
 namespace peloton {
 namespace gc {
@@ -22,8 +22,14 @@ namespace gc {
 class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
-    static GCManager gc_manager(GARBAGE_COLLECTION_TYPE_OFF);
-    return gc_manager;
+    switch (gc_type_) {
+
+      case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
+        return TransactionLevelGCManager::GetInstance();
+
+      default:
+        return GCManager::GetInstance();
+    }
   }
 
   static void Configure(GarbageCollectionType gc_type) { gc_type_ = gc_type; }
