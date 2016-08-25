@@ -29,6 +29,8 @@ Catalog *Catalog::GetInstance(void) {
   return global_catalog.get();
 }
 
+Catalog::Catalog() { CreateCatalogDatabase(); }
+
 // Creates the catalog database
 void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);

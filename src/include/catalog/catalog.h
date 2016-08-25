@@ -43,6 +43,8 @@ class Catalog {
   // Global Singleton
   static Catalog *GetInstance(void);
 
+  Catalog();
+
   // Creates the catalog database
   void CreateCatalogDatabase(void);
 
