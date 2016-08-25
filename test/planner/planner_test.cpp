@@ -78,7 +78,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   del_plan->SetParameterValues(values);
 
   // free the database just created
-  catalog::Catalog::GetInstance()->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   delete values;
@@ -150,7 +150,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   update_plan->SetParameterValues(values);
 
   // free the database just created
-  catalog::Catalog::GetInstance()->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   delete values;
@@ -208,7 +208,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   insert_plan->SetParameterValues(values);
 
   // free the database just created
-  catalog::Catalog::GetInstance()->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   delete values;

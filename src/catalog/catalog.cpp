@@ -240,7 +240,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
 }
 
 // Drop a database
-Result Catalog::DropDatabase(std::string database_name,
+Result Catalog::DropDatabaseWithName(std::string database_name,
                              concurrency::Transaction *txn) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);

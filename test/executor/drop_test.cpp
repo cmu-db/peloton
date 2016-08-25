@@ -69,7 +69,7 @@ TEST_F(DropTests, DroppingTable) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 
