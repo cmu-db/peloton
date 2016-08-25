@@ -21,7 +21,7 @@
 
 #include "benchmark/tpcc/tpcc_loader.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -966,7 +966,7 @@ void CreateTPCCDatabase() {
   new_order_table = nullptr;
   order_line_table = nullptr;
 
-  auto &catalog = catalog::Catalog::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   tpcc_database = new storage::Database(tpcc_database_oid);
   catalog->AddDatabase(tpcc_database);
 

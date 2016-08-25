@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
+#include "catalog/catalog.h"
 
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile_factory.h"
@@ -322,10 +322,11 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   log_manager.DropFrontendLoggers();
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
   // just start, write a few records and exit
-  catalog::Schema *table_schema = new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(2),
-       ExecutorTestsUtil::GetColumnInfo(3)});
+  catalog::Schema *table_schema =
+      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
+                           ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(2),
+                           ExecutorTestsUtil::GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
 
   // Create table.
@@ -336,7 +337,8 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
 
   storage::Database test_db(12345);
   test_db.AddTable(table);
-  catalog::Manager::GetInstance().AddDatabase(&test_db);
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->AddDatabase(&test_db);
   concurrency::TransactionManager &txn_manager =
       concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
