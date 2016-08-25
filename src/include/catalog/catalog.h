@@ -70,7 +70,7 @@ class Catalog {
                      std::string index_name, bool unique, IndexType index_type);
 
   // Drop a database
-  Result DropDatabase(std::string database_name, concurrency::Transaction *txn);
+  Result DropDatabaseWithName(std::string database_name, concurrency::Transaction *txn);
 
   // Drop a database with its oid
   void DropDatabaseWithOid(const oid_t database_oid);
