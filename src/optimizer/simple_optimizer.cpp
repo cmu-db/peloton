@@ -717,7 +717,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
 
   auto column =
-      catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "COL_0",  // COL_A should be
                                 // used only when
                                 // there is no AS
