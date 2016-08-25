@@ -70,7 +70,8 @@ class Catalog {
                      std::string index_name, bool unique, IndexType index_type);
 
   // Drop a database
-  Result DropDatabaseWithName(std::string database_name, concurrency::Transaction *txn);
+  Result DropDatabaseWithName(std::string database_name,
+                              concurrency::Transaction *txn);
 
   // Drop a database with its oid
   void DropDatabaseWithOid(const oid_t database_oid);
@@ -84,6 +85,9 @@ class Catalog {
 
   // Find a database using its name
   storage::Database *GetDatabaseWithName(const std::string db_name) const;
+
+  // Find a database using vector offset
+  storage::Database *GetDatabaseWithOffset(const oid_t database_offset) const;
 
   // Create Table for pg_class
   std::unique_ptr<storage::DataTable> CreateTableCatalog(
@@ -99,12 +103,16 @@ class Catalog {
   // Initialize the schema of the table catalog
   std::unique_ptr<Schema> InitializeTablesSchema();
 
-  // Get table from a database
-  storage::DataTable *GetTableFromDatabase(std::string database_name,
-                                           std::string table_name);
+  // Get table from a database with its name
+  storage::DataTable *GetTableWithName(std::string database_name,
+                                       std::string table_name);
+
+  // Get table from a database with its oid
+  storage::DataTable *GetTableWithOid(const oid_t database_oid,
+                                      const oid_t table_oid) const;
 
   // Get the number of databases currently in the catalog
-  int GetDatabaseCount();
+  oid_t GetDatabaseCount();
 
   void PrintCatalogs();
 

@@ -387,12 +387,12 @@ void WriteAheadFrontendLogger::RecoverIndex() {
   cid_t cid = txn_manager.GetNextCommitId();
   LOG_TRACE("Index Recovery got Next commit id as %d", (int)cid);
 
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  auto database_count = catalog_manager.GetDatabaseCount();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto database_count = catalog->GetDatabaseCount();
 
   // loop all databases
   for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
-    auto database = catalog_manager.GetDatabase(database_idx);
+    auto database = catalog->GetDatabaseWithOffset(database_idx);
     auto table_count = database->GetTableCount();
 
     // loop all tables

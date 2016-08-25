@@ -241,7 +241,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
 
 // Drop a database
 Result Catalog::DropDatabaseWithName(std::string database_name,
-                             concurrency::Transaction *txn) {
+                                     concurrency::Transaction *txn) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
@@ -344,8 +344,15 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
   return nullptr;
 }
 
+storage::Database *Catalog::GetDatabaseWithOffset(const oid_t database_offset)
+    const {
+  PL_ASSERT(database_offset < databases_.size());
+  auto database = databases_.at(database_offset);
+  return database;
+}
+
 // Get table from a database
-storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
+storage::DataTable *Catalog::GetTableWithName(std::string database_name,
                                                   std::string table_name) {
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
@@ -363,6 +370,20 @@ storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
     LOG_TRACE("Well, database wasn't found in the first place.");
     return nullptr;
   }
+}
+
+storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
+                                             const oid_t table_oid) const {
+  // Lookup DB
+  auto database = GetDatabaseWithOid(database_oid);
+
+  // Lookup table
+  if (database != nullptr) {
+    auto table = database->GetTableWithOid(table_oid);
+    return table;
+  }
+
+  return nullptr;
 }
 
 // Create Table for pg_class
@@ -445,7 +466,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
 void Catalog::PrintCatalogs() {}
 
-int Catalog::GetDatabaseCount() { return databases_.size(); }
+oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
 oid_t Catalog::GetNextOid() { return oid_++; }
 

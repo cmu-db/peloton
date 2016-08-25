@@ -142,7 +142,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);
 
-  auto target_table_ = catalog::Catalog::GetInstance()->GetTableFromDatabase(
+  auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");
   // Expected 2 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);

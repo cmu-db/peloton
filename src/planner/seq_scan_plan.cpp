@@ -52,7 +52,7 @@ namespace planner {
 SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   LOG_DEBUG("Creating a Sequential Scan Plan");
   auto target_table = static_cast<storage::DataTable *>(
-      catalog::Catalog::GetInstance()->GetTableFromDatabase(
+      catalog::Catalog::GetInstance()->GetTableWithName(
           DEFAULT_DB_NAME, select_node->from_table->name));
   SetTargetTable(target_table);
   ColumnIds().clear();
@@ -193,7 +193,7 @@ bool SeqScanPlan::DeserializeFrom(SerializeInputBE &input) {
 
   // Get table and set it to the member
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
+      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid, table_oid));
   SetTargetTable(target_table);
 
   // Read the number of column_id and set them to column_ids_

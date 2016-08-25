@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <condition_variable>
 #include <memory>
 
@@ -21,6 +20,7 @@
 #include "common/macros.h"
 #include "executor/executor_context.h"
 #include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "storage/tuple.h"
 #include "storage/tile_group.h"
 #include "storage/data_table.h"
@@ -177,6 +177,7 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
                            const ItemPointer &new_version) {
   if (this->IsInLoggingMode()) {
     auto &manager = catalog::Manager::GetInstance();
+    auto catalog = catalog::Catalog::GetInstance();
 
     auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
 
@@ -184,7 +185,7 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
 
     std::unique_ptr<LogRecord> record;
     std::unique_ptr<storage::Tuple> tuple;
-    auto schema = manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
+    auto schema = catalog->GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
                                           new_tuple_tile_group->GetTableId())
                       ->GetSchema();
     // Can we avoid allocate tuple in head each time?
@@ -216,6 +217,7 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
+    auto catalog = catalog::Catalog::GetInstance();
 
     auto new_tuple_tile_group = manager.GetTileGroup(new_location.block);
 
@@ -224,7 +226,7 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
     std::unique_ptr<storage::Tuple> tuple;
     if (IsBasedOnWriteAheadLogging(logging_type_)) {
       auto schema =
-          manager.GetTableWithOid(tile_group->GetDatabaseId(),
+          catalog->GetTableWithOid(tile_group->GetDatabaseId(),
                                   tile_group->GetTableId())->GetSchema();
       tuple.reset(new storage::Tuple(schema, true));
       for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
@@ -382,11 +384,11 @@ void LogManager::PrepareRecovery() {
   if (prepared_recovery_) {
     return;
   }
-  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto catalog= catalog::Catalog::GetInstance();
   // for all database
-  auto db_count = catalog_manager.GetDatabaseCount();
+  auto db_count = catalog->GetDatabaseCount();
   for (oid_t db_idx = 0; db_idx < db_count; db_idx++) {
-    auto database = catalog_manager.GetDatabase(db_idx);
+    auto database = catalog->GetDatabaseWithOffset(db_idx);
     // for all tables
     auto table_count = database->GetTableCount();
     for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
@@ -401,8 +403,9 @@ void LogManager::PrepareRecovery() {
 
 void LogManager::DoneRecovery() {
   auto &catalog_manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   // for all database
-  auto db_count = catalog_manager.GetDatabaseCount();
+  auto db_count = catalog->GetDatabaseCount();
   for (oid_t db_idx = 0; db_idx < db_count; db_idx++) {
     auto database = catalog_manager.GetDatabase(db_idx);
     // for all tables
