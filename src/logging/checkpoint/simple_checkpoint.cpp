@@ -89,7 +89,7 @@ void SimpleCheckpoint::DoCheckpoint() {
   auto database_count = catalog->GetDatabaseCount();
 
   // loop all databases
-  for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
+  for (oid_t database_idx = 1; database_idx < database_count; database_idx++) {
     auto database = catalog->GetDatabaseWithOffset(database_idx);
     auto table_count = database->GetTableCount();
     auto database_oid = database->GetOid();
