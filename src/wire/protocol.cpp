@@ -501,7 +501,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecDescribeMessage(Packet *pkt,
+bool PacketManager::ExecDescribeMessage(Packet *pkt,
                                         ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
@@ -512,11 +512,14 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     auto portal_itr = portals_.find(portal_name);
 
     // TODO: error handling here
+    // Ahmed: This is causing the continuously running thread
+    // Changed the function signature to return boolean
+    // when false is returned, the connection is closed
     if (portal_itr == portals_.end()) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
-      return;
+      return false;
     }
 
     auto portal = portal_itr->second;
@@ -524,12 +527,13 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
-      return;
+      return false;
     }
 
     auto statement = portal->GetStatement();
     PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
   }
+  return true;
 }
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
@@ -598,7 +602,7 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
       ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
-      ExecDescribeMessage(pkt, responses);
+      return ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
       ExecExecuteMessage(pkt, responses);
@@ -684,7 +688,7 @@ bool PacketManager::ManagePacket() {
 	// Write response
 	if (!WritePackets(responses, &client) || !status) {
 	  // close client on write failure or status failure
-		std::cout << "Closing client" << std::endl;
+	  std::cout << "Closing client" << std::endl;
 	  CloseClient();
 	  return false;
 	}

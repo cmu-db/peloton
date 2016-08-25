@@ -81,6 +81,7 @@ bool SocketManager<B>::RefillReadBuffer() {
 	  // If the length of bytes returned by read is 0, this means
 	  // that the client disconnected, remove the read event and the
 	  // free the client structure.
+      disconnected = true;
       return false;
     }
 
