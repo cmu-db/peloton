@@ -174,8 +174,8 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
   table->AddIndex(pkey_index);
 
   // add this table to current database
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(database_id);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(database_id);
   if (db != nullptr) {
     db->AddTable(table);
   }
