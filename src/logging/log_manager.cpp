@@ -387,7 +387,7 @@ void LogManager::PrepareRecovery() {
   auto catalog= catalog::Catalog::GetInstance();
   // for all database
   auto db_count = catalog->GetDatabaseCount();
-  for (oid_t db_idx = 0; db_idx < db_count; db_idx++) {
+  for (oid_t db_idx = 1; db_idx < db_count; db_idx++) {
     auto database = catalog->GetDatabaseWithOffset(db_idx);
     // for all tables
     auto table_count = database->GetTableCount();
