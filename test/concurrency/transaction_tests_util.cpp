@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/transaction_tests_util.h"
 #include "planner/index_scan_plan.h"
 #include "executor/executor_context.h"
@@ -26,6 +25,7 @@
 #include "planner/insert_plan.h"
 #include "storage/tile.h"
 #include "storage/database.h"
+#include "catalog/catalog.h"
 
 namespace peloton {
 namespace executor {
@@ -63,11 +63,13 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-  auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+  auto index_metadata =
+      new index::IndexMetadata("primary_btree_index", 1234, INDEX_TYPE_BWTREE,
+                               INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+                               key_schema, key_attrs, unique);
 
-  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+  std::shared_ptr<index::Index> pkey_index(
+      index::IndexFactory::GetInstance(index_metadata));
 
   table->AddIndex(pkey_index);
 
@@ -106,11 +108,13 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-  auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+  auto index_metadata =
+      new index::IndexMetadata("primary_btree_index", 1234, INDEX_TYPE_BWTREE,
+                               INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+                               key_schema, key_attrs, unique);
 
-  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+  std::shared_ptr<index::Index> pkey_index(
+      index::IndexFactory::GetInstance(index_metadata));
 
   table->AddIndex(pkey_index);
 
@@ -120,11 +124,13 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   bool unique2 = false;
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
-  auto index_metadata2 = new index::IndexMetadata(
-      "unique_btree_index", 1235, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, key_attrs2, unique2);
+  auto index_metadata2 =
+      new index::IndexMetadata("unique_btree_index", 1235, INDEX_TYPE_BWTREE,
+                               INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2,
+                               key_schema2, key_attrs2, unique2);
 
-  std::shared_ptr<index::Index> ukey_index(index::IndexFactory::GetInstance(index_metadata2));
+  std::shared_ptr<index::Index> ukey_index(
+      index::IndexFactory::GetInstance(index_metadata2));
 
   table->AddIndex(ukey_index);
 
@@ -169,7 +175,8 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
                          : INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
 
-  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+  std::shared_ptr<index::Index> pkey_index(
+      index::IndexFactory::GetInstance(index_metadata));
 
   table->AddIndex(pkey_index);
 

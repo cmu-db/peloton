@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <dirent.h>
 
+#include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/pool.h"
@@ -574,7 +575,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &delete_loc) {
-  auto manager = catalog::Manager::GetInstance();
+  auto &manager = catalog::Manager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
