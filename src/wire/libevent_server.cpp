@@ -67,16 +67,16 @@ void ManageRead(SocketManager<PktBuf> **socket_manager) {
   }
   // Regular packet
   else {
-
 	if(duration_cast<nanoseconds>(
 			(*socket_manager)->socket_pkt_manager->last_callback_time -
 			(*socket_manager)->socket_pkt_manager->last_read_time).count() > 0) {
-		if (!(*socket_manager)->socket_pkt_manager->ManagePacket()) {
+		if (!(*socket_manager)->socket_pkt_manager->ManagePacket() ||
+				(*socket_manager)->disconnected == true) {
 			std::cout << "Failed to manage packet" << std::endl;
-		      close((*socket_manager)->GetSocketFD());
-		      event_del((*socket_manager)->ev_read);
-		      (*socket_manager)->execution_mutex.unlock();
-		      return;
+		    close((*socket_manager)->GetSocketFD());
+		    event_del((*socket_manager)->ev_read);
+		    (*socket_manager)->execution_mutex.unlock();
+		    return;
 		}
 	}
   }
@@ -89,7 +89,6 @@ void ManageRead(SocketManager<PktBuf> **socket_manager) {
  */
 void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev,
                   void *arg) {
-  LOG_INFO("Read callback");
   // This is the first callback. Don't reset last_callback_time
   if(((SocketManager<PktBuf> *)arg)->first_packet == false) {
     ((SocketManager<PktBuf> *)arg)->socket_pkt_manager->last_callback_time = high_resolution_clock::now();

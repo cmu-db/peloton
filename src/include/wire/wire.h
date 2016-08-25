@@ -135,7 +135,7 @@ class PacketManager {
   void ExecBindMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  void ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
+  bool ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the EXECUTE message of the extended query protocol */
   void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response);
