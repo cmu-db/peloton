@@ -59,8 +59,24 @@ Result Catalog::CreateDatabase(std::string database_name,
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
   databases_.push_back(database);
-  // Update catalog_db with this database info
 
+  InsertDBIntoCatalogDatabase(database_id, database_name, txn);
+
+  LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
+  return Result::RESULT_SUCCESS;
+}
+
+void Catalog::AddDatabase(storage::Database *database) {
+  databases_.push_back(database);
+  std::string database_name;
+  InsertDBIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
+}
+
+void Catalog::InsertDBIntoCatalogDatabase(oid_t database_id,
+                                          std::string &database_name,
+                                          concurrency::Transaction *txn) {
+
+  // Update catalog_db with this database info
   auto tuple =
       GetDatabaseCatalogTuple(databases_[START_OID]
                                   ->GetTableWithName(DATABASE_CATALOG_NAME)
@@ -69,9 +85,6 @@ Result Catalog::CreateDatabase(std::string database_name,
   catalog::InsertTuple(
       databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
       std::move(tuple), txn);
-
-  LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
-  return Result::RESULT_SUCCESS;
 }
 
 // Create a table in a database

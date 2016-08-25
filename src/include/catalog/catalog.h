@@ -52,6 +52,9 @@ class Catalog {
   Result CreateDatabase(std::string database_name,
                         concurrency::Transaction *txn);
 
+  // Add a database
+  void AddDatabase(storage::Database *database);
+
   // Create a table in a database
   Result CreateTable(std::string database_name, std::string table_name,
                      std::unique_ptr<catalog::Schema>,
@@ -109,6 +112,10 @@ class Catalog {
   ~Catalog();
 
  private:
+  void InsertDBIntoCatalogDatabase(oid_t database_id,
+                                   std::string &database_name,
+                                   concurrency::Transaction *txn);
+
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
 
