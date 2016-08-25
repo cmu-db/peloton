@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -352,8 +351,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-          recovery_txn_table[tuple_record->GetTransactionId()].push_back(
-              tuple_record);
+          recovery_txn_table[tuple_record->GetTransactionId()]
+              .push_back(tuple_record);
           break;
         case LOGRECORD_TYPE_ITERATION_DELIMITER: {
           // Do nothing if we hit the delimiter, because the delimiters help
@@ -541,7 +540,8 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        storage::Tuple *tuple,
                        bool should_increase_tuple_count = true) {
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_id);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
@@ -574,8 +574,9 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &delete_loc) {
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_id);
+  auto manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
@@ -606,7 +607,8 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &remove_loc,
                        const ItemPointer &insert_loc, storage::Tuple *tuple) {
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_id);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);

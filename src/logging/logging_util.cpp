@@ -240,9 +240,8 @@ void LoggingUtil::SkipTupleRecordBody(FileHandle &file_handle) {
 // Wrappers
 storage::DataTable *LoggingUtil::GetTable(TupleRecord &tuple_record) {
   // Get db, table, schema to insert tuple
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db =
-      manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(tuple_record.GetDatabaseOid());
   if (!db) {
     return nullptr;
   }
