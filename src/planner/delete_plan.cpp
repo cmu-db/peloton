@@ -33,7 +33,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 
   LOG_TRACE("Creating a Delete Plan");
   table_name_ = std::string(delete_statemenet->table_name);
-  target_table_ = catalog::Catalog::GetInstance()->GetTableFromDatabase(
+  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, table_name_);
   // if expr is null , delete all tuples from table
   if (delete_statemenet->expr == nullptr) {

@@ -140,7 +140,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   // Example : SELECT * FROM A;
   if (select_stmt->from_table->list == NULL) {
     target_table = static_cast<storage::DataTable *>(
-        catalog::Catalog::GetInstance()->GetTableFromDatabase(
+        catalog::Catalog::GetInstance()->GetTableWithName(
             DEFAULT_DB_NAME, select_stmt->from_table->name));
   }
 
@@ -151,7 +151,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   else {
     for (auto table : *select_stmt->from_table->list) {
       target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableFromDatabase(DEFAULT_DB_NAME,
+          catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                                 table->name));
       break;
     }

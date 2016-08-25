@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -31,6 +30,7 @@
 #include "executor/executor_context.h"
 #include "planner/seq_scan_plan.h"
 #include "catalog/manager.h"
+#include "catalog/catalog.h"
 
 #include "common/logger.h"
 #include "common/types.h"
@@ -85,12 +85,12 @@ void SimpleCheckpoint::DoCheckpoint() {
   begin_record->Serialize(begin_output_buffer);
   records_.push_back(begin_record);
 
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  auto database_count = catalog_manager.GetDatabaseCount();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto database_count = catalog->GetDatabaseCount();
 
   // loop all databases
   for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
-    auto database = catalog_manager.GetDatabase(database_idx);
+    auto database = catalog->GetDatabaseWithOffset(database_idx);
     auto table_count = database->GetTableCount();
     auto database_oid = database->GetOid();
 

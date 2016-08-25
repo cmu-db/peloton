@@ -110,7 +110,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
 
       storage::DataTable* target_table =
-          catalog::Catalog::GetInstance()->GetTableFromDatabase(
+          catalog::Catalog::GetInstance()->GetTableWithName(
               DEFAULT_DB_NAME, select_stmt->from_table->name);
 
       // Preparing the group by columns
@@ -146,7 +146,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // Else, do aggregations on top of scan
       else {
         // Create sequential scan plan
-        target_table = catalog::Catalog::GetInstance()->GetTableFromDatabase(
+        target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             DEFAULT_DB_NAME, select_stmt->from_table->name);
         std::unique_ptr<planner::AbstractScan> scan_node =  // nullptr;
             CreateScanPlan(target_table, select_stmt);
@@ -562,9 +562,9 @@ static std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema();
 std::unique_ptr<planner::AbstractPlan>
 SimpleOptimizer::CreateHackingJoinPlan() {
 
-  auto orderline_table = catalog::Catalog::GetInstance()->GetTableFromDatabase(
+  auto orderline_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "order_line");
-  auto stock_table = catalog::Catalog::GetInstance()->GetTableFromDatabase(
+  auto stock_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "stock");
 
   // Manually constructing the predicate....
