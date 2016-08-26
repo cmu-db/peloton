@@ -60,7 +60,7 @@ Result Catalog::CreateDatabase(std::string database_name,
   database->setDBName(database_name);
   databases_.push_back(database);
 
-  InsertDBIntoCatalogDatabase(database_id, database_name, txn);
+  InsertDatabaseIntoCatalogDatabase(database_id, database_name, txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
@@ -69,10 +69,10 @@ Result Catalog::CreateDatabase(std::string database_name,
 void Catalog::AddDatabase(storage::Database *database) {
   databases_.push_back(database);
   std::string database_name;
-  InsertDBIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
+  InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
 }
 
-void Catalog::InsertDBIntoCatalogDatabase(oid_t database_id,
+void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
                                           std::string &database_name,
                                           concurrency::Transaction *txn) {
 
