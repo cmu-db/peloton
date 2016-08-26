@@ -420,6 +420,7 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
 
   oid_t current_tile_group_offset = START_OID;
   auto table_tile_group_count = target_table->GetTileGroupCount();
+  LOG_TRACE("Recovering tile group count: %ld", table_tile_group_count);
   CheckpointTileScanner scanner;
 
   while (current_tile_group_offset < table_tile_group_count) {
@@ -540,6 +541,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &insert_loc,
                        storage::Tuple *tuple,
                        bool should_increase_tuple_count = true) {
+  LOG_TRACE("Insert tuple helper.");
   auto &manager = catalog::Manager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database *db = catalog->GetDatabaseWithOid(db_id);

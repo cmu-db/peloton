@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
@@ -100,7 +99,7 @@ class Manager {
   // Data members
   //===--------------------------------------------------------------------===//
 
-  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
+  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID + 1);
 
   LockFreeArray<std::shared_ptr<storage::TileGroup>> locator;
 
@@ -111,7 +110,6 @@ class Manager {
   std::mutex catalog_mutex;
 
   static std::shared_ptr<storage::TileGroup> empty_location;
-
 };
 
 }  // End catalog namespace

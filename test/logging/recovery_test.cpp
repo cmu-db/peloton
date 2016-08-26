@@ -99,8 +99,11 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
 }
 
 TEST_F(RecoveryTests, RestartTest) {
+  LOG_TRACE("Creating recovery_table");
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  LOG_TRACE("Finish creating recovery_table");
   auto catalog = catalog::Catalog::GetInstance();
+  LOG_TRACE("Finish creating catalog");
 
   size_t tile_group_size = 5;
   size_t table_tile_group_count = 3;
@@ -224,12 +227,18 @@ TEST_F(RecoveryTests, RestartTest) {
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
 
+  LOG_TRACE("recovery_table tile group count before recovery: %ld",
+            recovery_table->GetTileGroupCount());
+
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.SetGlobalMaxFlushedIdForRecovery(num_files + 1);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   wal_fel.DoRecovery();
+
+  LOG_TRACE("recovery_table tile group count after recovery: %ld",
+            recovery_table->GetTileGroupCount());
 
   EXPECT_EQ(recovery_table->GetTupleCount(),
             tile_group_size * table_tile_group_count - 1);
