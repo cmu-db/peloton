@@ -185,9 +185,9 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
 
     std::unique_ptr<LogRecord> record;
     std::unique_ptr<storage::Tuple> tuple;
-    auto schema = catalog->GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
-                                          new_tuple_tile_group->GetTableId())
-                      ->GetSchema();
+    auto schema = catalog->GetTableWithOid(
+                               new_tuple_tile_group->GetDatabaseId(),
+                               new_tuple_tile_group->GetTableId())->GetSchema();
     // Can we avoid allocate tuple in head each time?
     if (IsBasedOnWriteAheadLogging(logging_type_) || replicating_) {
       tuple.reset(new storage::Tuple(schema, true));
@@ -227,7 +227,7 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
     if (IsBasedOnWriteAheadLogging(logging_type_)) {
       auto schema =
           catalog->GetTableWithOid(tile_group->GetDatabaseId(),
-                                  tile_group->GetTableId())->GetSchema();
+                                   tile_group->GetTableId())->GetSchema();
       tuple.reset(new storage::Tuple(schema, true));
       for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
         tuple->SetValue(
@@ -384,7 +384,7 @@ void LogManager::PrepareRecovery() {
   if (prepared_recovery_) {
     return;
   }
-  auto catalog= catalog::Catalog::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   // for all database
   auto db_count = catalog->GetDatabaseCount();
   for (oid_t db_idx = 1; db_idx < db_count; db_idx++) {
@@ -402,12 +402,11 @@ void LogManager::PrepareRecovery() {
 }
 
 void LogManager::DoneRecovery() {
-  auto &catalog_manager = catalog::Manager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   // for all database
   auto db_count = catalog->GetDatabaseCount();
-  for (oid_t db_idx = 0; db_idx < db_count; db_idx++) {
-    auto database = catalog_manager.GetDatabase(db_idx);
+  for (oid_t db_idx = 1; db_idx < db_count; db_idx++) {
+    auto database = catalog->GetDatabaseWithOffset(db_idx);
     // for all tables
     auto table_count = database->GetTableCount();
     for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {

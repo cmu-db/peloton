@@ -272,7 +272,7 @@ Result Catalog::DropDatabaseWithName(std::string database_name,
 
 // Drop a database with its oid
 void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
-  LOG_TRACE("Dropping database %s", database_name.c_str());
+  LOG_TRACE("Dropping database with oid: %d", database_oid);
   storage::Database *database = GetDatabaseWithOid(database_oid);
   if (database != nullptr) {
     LOG_TRACE("Found database!");
@@ -353,7 +353,7 @@ storage::Database *Catalog::GetDatabaseWithOffset(const oid_t database_offset)
 
 // Get table from a database
 storage::DataTable *Catalog::GetTableWithName(std::string database_name,
-                                                  std::string table_name) {
+                                              std::string table_name) {
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
