@@ -593,28 +593,35 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
+//    	LOG_INFO("Q");
       ExecQueryMessage(pkt, responses);
     } break;
     case 'P': {
+//    	LOG_INFO("P");
       ExecParseMessage(pkt, responses);
     } break;
     case 'B': {
+//    	LOG_INFO("B");
       ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
+//    	LOG_INFO("D");
       return ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
+//    	LOG_INFO("E");
       ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
-      // SYNC message
+//    	LOG_INFO("S");
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
+//    	LOG_INFO("X");
       return false;
     } break;
     case NULL: {
+//    	LOG_INFO("NULL");
       return false;
     } break;
     default: {
@@ -684,18 +691,16 @@ bool PacketManager::ManagePacket() {
   while(read_status) {
 	// Process the read packet
 	status = ProcessPacket(&pkt, responses);
-
 	// Write response
-	if (!WritePackets(responses, &client) || !status) {
+	if (!WritePackets(responses, &client) || status == false) {
 	  // close client on write failure or status failure
-	  std::cout << "Closing client" << std::endl;
+	  std::cout << "Thread " << std::this_thread::get_id() << " closing client. Status = " << status << std::endl;
 	  CloseClient();
 	  return false;
 	}
+	// Timestamp before read attempt
 	pkt.Reset();
-    // Timestamp before read attempt
-    last_read_time = high_resolution_clock::now();
-    read_status = ReadPacket(&pkt, true, &client);
+	read_status = ReadPacket(&pkt, true, &client);
   }
   return true;
 }
