@@ -74,9 +74,14 @@ void ManageRead(SocketManager<PktBuf> **socket_manager) {
   //		  --(*socket_manager)->socket_pkt_manager->pkt_cntr;
   if (!(*socket_manager)->socket_pkt_manager->ManagePacket() ||
       (*socket_manager)->disconnected == true) {
-    std::cout << "Thread " << std::this_thread::get_id()
-              << "Executing for socket manager " << (*socket_manager)->id
-              << " failed to manage packet" << std::endl;
+#ifdef LOG_INFO_ENABLED
+    std::ostringstream ss;
+    ss << std::this_thread::get_id();
+    std::string id_str = ss.str();
+#endif
+    LOG_INFO(
+        "Thread %s Executing for socket manager %u failed to manage packet",
+        id_str.c_str(), (*socket_manager)->id);
     //		    close((*socket_manager)->GetSocketFD());
     //		    event_del((*socket_manager)->ev_read);
     //		    (*socket_manager)->execution_mutex.unlock();
