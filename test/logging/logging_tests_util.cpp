@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "logging/logging_tests_util.h"
 
 #define DEFAULT_RECOVERY_CID 15
@@ -72,8 +71,8 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
   }
   for (int i = 0; i < delete_tuples; i++) {
     ItemPointer location(1, 0);
-    auto &tuple = tuples[tile_group_size * table_tile_group_count +
-                         out_of_range_tuples + i];
+    auto &tuple = tuples
+        [tile_group_size * table_tile_group_count + out_of_range_tuples + i];
     PL_ASSERT(tuple->GetSchema());
     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4, INVALID_OID,
                                 INVALID_ITEMPOINTER, location, nullptr,
@@ -319,8 +318,9 @@ void LoggingScheduler::Run() {
 }
 
 void LoggingScheduler::Init() {
-  logging::LogManager::GetInstance().Configure(
-      LOGGING_TYPE_NVM_WAL, true, num_frontend_logger, LOGGER_MAPPING_TYPE_MANUAL);
+  logging::LogManager::GetInstance().Configure(LOGGING_TYPE_NVM_WAL, true,
+                                               num_frontend_logger,
+                                               LOGGER_MAPPING_TYPE_MANUAL);
   log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   log_manager->InitFrontendLoggers();
 

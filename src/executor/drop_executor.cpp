@@ -10,20 +10,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "executor/drop_executor.h"
-#include "catalog/bootstrapper.h"
+#include "executor/executor_context.h"
+#include "common/logger.h"
+#include "catalog/catalog.h"
 
 namespace peloton {
 namespace executor {
 
-//Constructor for drop executor
+// Constructor for drop executor
 DropExecutor::DropExecutor(const planner::AbstractPlan *node,
-                               ExecutorContext *executor_context)
+                           ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
-     context = executor_context;
+  context = executor_context;
 }
 
 // Initialize executer
@@ -42,25 +43,24 @@ bool DropExecutor::DExecute() {
 
   auto current_txn = context->GetTransaction();
 
-  Result result = catalog::Bootstrapper::global_catalog->DropTable(DEFAULT_DB_NAME, table_name, current_txn);
+  Result result = catalog::Catalog::GetInstance()->DropTable(
+      DEFAULT_DB_NAME, table_name, current_txn);
   current_txn->SetResult(result);
 
-  if(current_txn->GetResult() == Result::RESULT_SUCCESS){
-	  LOG_TRACE("Dropping table succeeded!");
-  }
-  else if(current_txn->GetResult() == Result::RESULT_FAILURE && node.IsMissing()) {
-	  current_txn->SetResult(Result::RESULT_SUCCESS);
-	  LOG_TRACE("Dropping table Succeeded!");
-  }
-  else if(current_txn->GetResult() == Result::RESULT_FAILURE && !node.IsMissing()){
-	  LOG_TRACE("Dropping table Failed!");
-  }
-  else {
-	  LOG_TRACE("Result is: %d", current_txn->GetResult());
+  if (current_txn->GetResult() == Result::RESULT_SUCCESS) {
+    LOG_TRACE("Dropping table succeeded!");
+  } else if (current_txn->GetResult() == Result::RESULT_FAILURE &&
+             node.IsMissing()) {
+    current_txn->SetResult(Result::RESULT_SUCCESS);
+    LOG_TRACE("Dropping table Succeeded!");
+  } else if (current_txn->GetResult() == Result::RESULT_FAILURE &&
+             !node.IsMissing()) {
+    LOG_TRACE("Dropping table Failed!");
+  } else {
+    LOG_TRACE("Result is: %d", current_txn->GetResult());
   }
 
   return false;
 }
-
 }
 }

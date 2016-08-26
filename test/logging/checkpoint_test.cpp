@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
+#include "catalog/catalog.h"
 #include "logging/checkpoint.h"
 #include "logging/logging_util.h"
 #include "logging/loggers/wal_backend_logger.h"
@@ -78,10 +78,10 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
   txn_manager.CommitTransaction(txn);
 
   // add table to catalog
-  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   storage::Database *db(new storage::Database(DEFAULT_DB_ID));
   db->AddTable(target_table);
-  catalog_manager.AddDatabase(db);
+  catalog->AddDatabase(db);
 
   // create checkpoint
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
@@ -109,7 +109,7 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
   EXPECT_EQ(db->GetTableCount(), 1);
   EXPECT_EQ(db->GetTable(0)->GetTupleCount(),
             tile_group_size * table_tile_group_count);
-  catalog_manager.DropDatabaseWithOid(db->GetOid());
+  catalog->DropDatabaseWithOid(db->GetOid());
   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
 }
 
@@ -132,8 +132,8 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
   txn_manager.CommitTransaction(txn);
 
   auto cid = txn_manager.GetNextCommitId() - 1;
-  LOG_INFO("Scan with cid = %d. MaxCommittedCid = %d", (int) cid, (int)
-txn_manager.GetMaxCommittedCid());
+  LOG_INFO("Scan with cid = %d. MaxCommittedCid = %d", (int)cid,
+           (int)txn_manager.GetMaxCommittedCid());
   auto schema = target_table->GetSchema();
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
@@ -161,8 +161,6 @@ txn_manager.GetMaxCommittedCid());
     EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
   }
 }
-
-
 
 TEST_F(CheckpointTests, CheckpointRecoveryTest) {
   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
