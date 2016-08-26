@@ -501,7 +501,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecDescribeMessage(Packet *pkt,
+bool PacketManager::ExecDescribeMessage(Packet *pkt,
                                         ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
@@ -512,11 +512,14 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     auto portal_itr = portals_.find(portal_name);
 
     // TODO: error handling here
+    // Ahmed: This is causing the continuously running thread
+    // Changed the function signature to return boolean
+    // when false is returned, the connection is closed
     if (portal_itr == portals_.end()) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
-      return;
+      return false;
     }
 
     auto portal = portal_itr->second;
@@ -524,12 +527,13 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
-      return;
+      return false;
     }
 
     auto statement = portal->GetStatement();
     PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
   }
+  return true;
 }
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
@@ -589,28 +593,35 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
+//    	LOG_INFO("Q");
       ExecQueryMessage(pkt, responses);
     } break;
     case 'P': {
+//    	LOG_INFO("P");
       ExecParseMessage(pkt, responses);
     } break;
     case 'B': {
+//    	LOG_INFO("B");
       ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
-      ExecDescribeMessage(pkt, responses);
+//    	LOG_INFO("D");
+      return ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
+//    	LOG_INFO("E");
       ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
-      // SYNC message
+//    	LOG_INFO("S");
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
+//    	LOG_INFO("X");
       return false;
     } break;
     case NULL: {
+//    	LOG_INFO("NULL");
       return false;
     } break;
     default: {
@@ -674,29 +685,22 @@ bool PacketManager::ManageFirstPacket() {
 bool PacketManager::ManagePacket() {
   Packet pkt;
   ResponseBuffer responses;
-  bool status;
-  bool can_read_more = true;
+  bool status, read_status;
+  read_status = ReadPacket(&pkt, true, &client);
   // While can process more packets from buffer
-  while(can_read_more) {
-	if(ReadPacket(&pkt, true, &client)) {
-
-		// Process the read packet
-		status = ProcessPacket(&pkt, responses);
-
-		// Write response
-		if (!WritePackets(responses, &client) || !status) {
-		  // close client on write failure or status failure
-		  CloseClient();
-		  return false;
-		}
-		// Can read more?
-		can_read_more = CanRead(&client);
-		pkt.Reset();
-    }
-	// Read failed
-	else {
-		break;
+  while(read_status) {
+	// Process the read packet
+	status = ProcessPacket(&pkt, responses);
+	// Write response
+	if (!WritePackets(responses, &client) || status == false) {
+	  // close client on write failure or status failure
+	  std::cout << "Thread " << std::this_thread::get_id() << " closing client. Status = " << status << std::endl;
+	  CloseClient();
+	  return false;
 	}
+	// Timestamp before read attempt
+	pkt.Reset();
+	read_status = ReadPacket(&pkt, true, &client);
   }
   return true;
 }
