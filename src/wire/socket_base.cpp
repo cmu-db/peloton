@@ -25,7 +25,7 @@ template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
-  struct timeval timeout;
+//  struct timeval timeout;
   bool done = false;
 
   // our buffer is to be emptied
@@ -85,8 +85,8 @@ bool SocketManager<B>::RefillReadBuffer() {
 			} else if (errno == EAGAIN) {
 				  FD_ZERO (&rset);
 				  FD_SET (sock_fd, &rset);
-				  timeout.tv_sec = 1;
-				  bytes_read = select(sock_fd + 1, &rset, NULL, NULL, &timeout);
+//				  timeout.tv_sec = 1;
+				  bytes_read = select(sock_fd + 1, &rset, NULL, NULL, NULL);
 				  if (bytes_read < 0) {
 					  LOG_INFO("bytes_read < 0 after select. Fatal");
 					  exit(EXIT_FAILURE);
