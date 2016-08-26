@@ -24,10 +24,12 @@ namespace peloton {
 namespace catalog {
 
 // Get instance of the global catalog
-std::unique_ptr<Catalog> Catalog::GetInstance(void) {
+Catalog *Catalog::GetInstance(void) {
   static std::unique_ptr<Catalog> global_catalog(new Catalog());
-  return std::move(global_catalog);
+  return global_catalog.get();
 }
+
+Catalog::Catalog() { CreateCatalogDatabase(); }
 
 // Creates the catalog database
 void Catalog::CreateCatalogDatabase() {
@@ -40,43 +42,58 @@ void Catalog::CreateCatalogDatabase() {
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table);
-  databases.push_back(database);
+  databases_.push_back(database);
 }
 
 // Create a database
-Result Catalog::CreateDatabase(std::string database_name, concurrency::Transaction *txn) {
+Result Catalog::CreateDatabase(std::string database_name,
+                               concurrency::Transaction *txn) {
   // Check if a database with the same name exists
-  for (auto database : databases) {
+  for (auto database : databases_) {
     if (database->GetDBName() == database_name) {
       LOG_TRACE("Database already exists. Returning RESULT_FAILURE.");
       return Result::RESULT_FAILURE;
     }
   }
-  oid_t database_id = GetNewID();
+  oid_t database_id = GetNextOid();
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
-  databases.push_back(database);
-  // Update catalog_db with this database info
+  databases_.push_back(database);
 
-  auto tuple =
-      GetDatabaseCatalogTuple(databases[START_OID]
-                                  ->GetTableWithName(DATABASE_CATALOG_NAME)
-                                  ->GetSchema(),
-                              database_id, database_name);
-  catalog::InsertTuple(
-      databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
-      std::move(tuple), txn);
+  InsertDBIntoCatalogDatabase(database_id, database_name, txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
 }
 
+void Catalog::AddDatabase(storage::Database *database) {
+  databases_.push_back(database);
+  std::string database_name;
+  InsertDBIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
+}
+
+void Catalog::InsertDBIntoCatalogDatabase(oid_t database_id,
+                                          std::string &database_name,
+                                          concurrency::Transaction *txn) {
+
+  // Update catalog_db with this database info
+  auto tuple =
+      GetDatabaseCatalogTuple(databases_[START_OID]
+                                  ->GetTableWithName(DATABASE_CATALOG_NAME)
+                                  ->GetSchema(),
+                              database_id, database_name);
+  catalog::InsertTuple(
+      databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
+      std::move(tuple), txn);
+}
+
 // Create a table in a database
 Result Catalog::CreateTable(std::string database_name, std::string table_name,
-                            std::unique_ptr<catalog::Schema> schema, concurrency::Transaction *txn) {
+                            std::unique_ptr<catalog::Schema> schema,
+                            concurrency::Transaction *txn) {
   bool own_schema = true;
   bool adapt_table = false;
-  oid_t table_id = GetNewID();
+  oid_t table_id = GetNextOid();
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
     if (database->GetTableWithName(table_name)) {
@@ -93,12 +110,14 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     CreatePrimaryIndex(database_name, table_name);
 
     // Update catalog_table with this table info
-    auto tuple = GetTableCatalogTuple(
-        databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
-        table_id, table_name, database_id, database->GetDBName());
+    auto tuple = GetTableCatalogTuple(databases_[START_OID]
+                                          ->GetTableWithName(TABLE_CATALOG_NAME)
+                                          ->GetSchema(),
+                                      table_id, table_name, database_id,
+                                      database->GetDBName());
     //  Another way of insertion using transaction manager
     catalog::InsertTuple(
-        databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
+        databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
         std::move(tuple), txn);
     return Result::RESULT_SUCCESS;
   } else {
@@ -138,7 +157,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
+        "customer_pkey", GetNextOid(), INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -200,11 +219,11 @@ Result Catalog::CreateIndex(const std::string &database_name,
     // Check if unique index or not
     if (unique == false) {
       index_metadata = new index::IndexMetadata(
-          index_name.c_str(), Manager::GetInstance().GetNextOid(), index_type,
+          index_name.c_str(), GetNextOid(), index_type,
           INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
     } else {
       index_metadata = new index::IndexMetadata(
-          index_name.c_str(), Manager::GetInstance().GetNextOid(), index_type,
+          index_name.c_str(), GetNextOid(), index_type,
           INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true);
     }
 
@@ -221,7 +240,8 @@ Result Catalog::CreateIndex(const std::string &database_name,
 }
 
 // Drop a database
-Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction *txn) {
+Result Catalog::DropDatabaseWithName(std::string database_name,
+                                     concurrency::Transaction *txn) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
@@ -231,7 +251,7 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
                              ->GetTableWithName(DATABASE_CATALOG_NAME),
                          database->GetOid(), txn);
     oid_t database_offset = 0;
-    for (auto database : databases) {
+    for (auto database : databases_) {
       if (database->GetDBName() == database_name) {
         LOG_TRACE("Deleting database object in database vector");
         delete database;
@@ -239,10 +259,10 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
       }
       database_offset++;
     }
-    PL_ASSERT(database_offset < databases.size());
+    PL_ASSERT(database_offset < databases_.size());
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
-    databases.erase(databases.begin() + database_offset);
+    databases_.erase(databases_.begin() + database_offset);
   } else {
     LOG_TRACE("Database is not found!");
     return Result::RESULT_FAILURE;
@@ -250,8 +270,37 @@ Result Catalog::DropDatabase(std::string database_name, concurrency::Transaction
   return Result::RESULT_SUCCESS;
 }
 
+// Drop a database with its oid
+void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
+  LOG_TRACE("Dropping database with oid: %d", database_oid);
+  storage::Database *database = GetDatabaseWithOid(database_oid);
+  if (database != nullptr) {
+    LOG_TRACE("Found database!");
+    LOG_TRACE("Deleting tuple from catalog");
+    catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
+                             ->GetTableWithName(DATABASE_CATALOG_NAME),
+                         database_oid, nullptr);
+    oid_t database_offset = 0;
+    for (auto database : databases_) {
+      if (database->GetOid() == database_oid) {
+        LOG_TRACE("Deleting database object in database vector");
+        delete database;
+        break;
+      }
+      database_offset++;
+    }
+    PL_ASSERT(database_offset < databases_.size());
+    // Drop the database
+    LOG_TRACE("Deleting database from database vector");
+    databases_.erase(databases_.begin() + database_offset);
+  } else {
+    LOG_TRACE("Database is not found!");
+  }
+}
+
 // Drop a table
-Result Catalog::DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn) {
+Result Catalog::DropTable(std::string database_name, std::string table_name,
+                          concurrency::Transaction *txn) {
 
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
             database_name.c_str());
@@ -281,7 +330,7 @@ Result Catalog::DropTable(std::string database_name, std::string table_name, con
 
 // Find a database using its id
 storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
-  for (auto database : databases)
+  for (auto database : databases_)
     if (database->GetOid() == db_oid) return database;
   return nullptr;
 }
@@ -289,15 +338,22 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 // Find a database using its name
 storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
     const {
-  for (auto database : databases) {
+  for (auto database : databases_) {
     if (database->GetDBName() == database_name) return database;
   }
   return nullptr;
 }
 
+storage::Database *Catalog::GetDatabaseWithOffset(const oid_t database_offset)
+    const {
+  PL_ASSERT(database_offset < databases_.size());
+  auto database = databases_.at(database_offset);
+  return database;
+}
+
 // Get table from a database
-storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
-                                                  std::string table_name) {
+storage::DataTable *Catalog::GetTableWithName(std::string database_name,
+                                              std::string table_name) {
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
@@ -316,6 +372,20 @@ storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
   }
 }
 
+storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
+                                             const oid_t table_oid) const {
+  // Lookup DB
+  auto database = GetDatabaseWithOid(database_oid);
+
+  // Lookup table
+  if (database != nullptr) {
+    auto table = database->GetTableWithOid(table_oid);
+    return table;
+  }
+
+  return nullptr;
+}
+
 // Create Table for pg_class
 std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
     oid_t database_id, std::string table_name) {
@@ -325,8 +395,8 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
 
   catalog::Schema *schema = table_schema.release();
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNewID(), schema, table_name, DEFAULT_TUPLES_PER_TILEGROUP,
-      own_schema, adapt_table));
+      database_id, GetNextOid(), schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
   return table;
 }
 
@@ -340,7 +410,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   catalog::Schema *schema = database_schema.release();
 
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNewID(), schema, database_name,
+      database_id, GetNextOid(), schema, database_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
 
   return table;
@@ -356,7 +426,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size, "table_name", true);
+      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size_, "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -365,8 +435,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  auto database_name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size, "database_name", true);
+  auto database_name_column = catalog::Column(
+      VALUE_TYPE_VARCHAR, max_name_size_, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -384,8 +454,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
-  auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size, "database_name", true);
+  auto name_column = catalog::Column(VALUE_TYPE_VARCHAR, max_name_size_,
+                                     "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -396,9 +466,9 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
 void Catalog::PrintCatalogs() {}
 
-int Catalog::GetDatabaseCount() { return databases.size(); }
+oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
-oid_t Catalog::GetNewID() { return id_cntr++; }
+oid_t Catalog::GetNextOid() { return oid_++; }
 
 Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
 }

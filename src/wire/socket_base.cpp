@@ -20,7 +20,6 @@
 namespace peloton {
 namespace wire {
 
-
 template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
   ssize_t bytes_read = 0;
@@ -117,6 +116,7 @@ bool SocketManager<B>::RefillReadBuffer() {
 		}
 	}
 
+
     // read success, update buffer size
     rbuf.buf_size += bytes_read;
 
@@ -210,6 +210,7 @@ bool SocketManager<B>::FlushWriteBuffer() {
 			}
 	  }
 
+
     // update bookkeping
     wbuf.buf_ptr += written_bytes;
     wbuf.buf_size -= written_bytes;
@@ -230,23 +231,22 @@ bool SocketManager<B>::CanRead() {
   // Size of available data for read
   size_t window = rbuf.buf_size - rbuf.buf_ptr;
   // If can read header
-  if(header_size <= window) {
+  if (header_size <= window) {
     PktBuf dummy_pkt;
-	// Read the header size
-	dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
-            std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
-	// Get size of message
-	std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
-	        reinterpret_cast<uchar *>(&pkt_size));
-	pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-	// If header and size is larger than window, don't read untill receive a
-	// read callback and buffer is refilled
-	if(header_size + pkt_size > window) {
-	  	return false;
-	}
-  }
-  else {
-	return false;
+    // Read the header size
+    dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
+                     std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
+    // Get size of message
+    std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
+              reinterpret_cast<uchar *>(&pkt_size));
+    pkt_size = ntohl(pkt_size) - sizeof(int32_t);
+    // If header and size is larger than window, don't read untill receive a
+    // read callback and buffer is refilled
+    if (header_size + pkt_size > window) {
+      return false;
+    }
+  } else {
+    return false;
   }
   return true;
 }
@@ -266,7 +266,6 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
     if (bytes <= window) {
       pkt_buf.insert(std::end(pkt_buf), std::begin(rbuf.buf) + rbuf.buf_ptr,
                      std::begin(rbuf.buf) + rbuf.buf_ptr + bytes);
-
 
       // move the pointer
       rbuf.buf_ptr += bytes;
@@ -301,11 +300,12 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
 
 template <typename B>
 void SocketManager<B>::PrintWriteBuffer() {
-	std::cout << "Write Buffer:" << std::endl;
-	for(int i = 0; i < wbuf.buf_size; ++i) {
-		std::cout << wbuf.buf[i] << " ";
-	}
-	std::cout << std::endl;
+  std::cout << "Write Buffer:" << std::endl;
+
+  for (size_t i = 0; i < wbuf.buf_size; ++i) {
+    std::cout << wbuf.buf[i] << " ";
+  }
+  std::cout << std::endl;
 }
 
 template <typename B>
@@ -316,8 +316,6 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   // check if we don't have enough space in the buffer
   if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
-//	  std::cout << "FlushWriteBuffer due to not enough space" << std::endl;
-//	  PrintWriteBuffer();
     FlushWriteBuffer();
   }
 
@@ -356,7 +354,6 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
 //      PrintWriteBuffer();
       return true;
     } else {
-//    	std::cout << "available window (" << window <<  ") is less than the length (" << len << ")" << std::endl;
         /* contents longer than socket buffer size, fill up the socket buffer
          *  with "window" bytes
          */
@@ -364,21 +361,15 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
                 std::begin(pkt_buf) + pkt_buf_ptr + window,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
 
-        // move the packet's cursor
-        pkt_buf_ptr += window;
-        len -= window;
+      // move the packet's cursor
+      pkt_buf_ptr += window;
+      len -= window;
 
-        wbuf.buf_size = wbuf.GetMaxSize();
+      wbuf.buf_size = wbuf.GetMaxSize();
 
-//        std::cout << "Before flushing write buffer..." << std::endl;
-//        PrintWriteBuffer();
         // write failure
         if (!FlushWriteBuffer()) {
-//          std::cout << "Failed to flush write buffer" << std::endl;
     	  return false;
-        }
-        else {
-//          std::cout << "Flushed write buffer successfully" << std::endl;
         }
     }
   }

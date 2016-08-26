@@ -41,17 +41,24 @@ class Catalog {
 
  public:
   // Global Singleton
-  static std::unique_ptr<Catalog> GetInstance(void);
+  static Catalog *GetInstance(void);
+
+  Catalog();
 
   // Creates the catalog database
   void CreateCatalogDatabase(void);
 
   // Create a database
-  Result CreateDatabase(std::string database_name, concurrency::Transaction *txn);
+  Result CreateDatabase(std::string database_name,
+                        concurrency::Transaction *txn);
+
+  // Add a database
+  void AddDatabase(storage::Database *database);
 
   // Create a table in a database
   Result CreateTable(std::string database_name, std::string table_name,
-                     std::unique_ptr<catalog::Schema>, concurrency::Transaction *txn);
+                     std::unique_ptr<catalog::Schema>,
+                     concurrency::Transaction *txn);
 
   // Create the primary key index for a table
   Result CreatePrimaryIndex(const std::string &database_name,
@@ -63,16 +70,24 @@ class Catalog {
                      std::string index_name, bool unique, IndexType index_type);
 
   // Drop a database
-  Result DropDatabase(std::string database_name, concurrency::Transaction *txn);
+  Result DropDatabaseWithName(std::string database_name,
+                              concurrency::Transaction *txn);
+
+  // Drop a database with its oid
+  void DropDatabaseWithOid(const oid_t database_oid);
 
   // Drop a table
-  Result DropTable(std::string database_name, std::string table_name, concurrency::Transaction *txn);
+  Result DropTable(std::string database_name, std::string table_name,
+                   concurrency::Transaction *txn);
 
   // Find a database using its id
   storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
 
   // Find a database using its name
   storage::Database *GetDatabaseWithName(const std::string db_name) const;
+
+  // Find a database using vector offset
+  storage::Database *GetDatabaseWithOffset(const oid_t database_offset) const;
 
   // Create Table for pg_class
   std::unique_ptr<storage::DataTable> CreateTableCatalog(
@@ -88,33 +103,43 @@ class Catalog {
   // Initialize the schema of the table catalog
   std::unique_ptr<Schema> InitializeTablesSchema();
 
-  // Get table from a database
-  storage::DataTable *GetTableFromDatabase(std::string database_name,
-                                           std::string table_name);
+  // Get table from a database with its name
+  storage::DataTable *GetTableWithName(std::string database_name,
+                                       std::string table_name);
+
+  // Get table from a database with its oid
+  storage::DataTable *GetTableWithOid(const oid_t database_oid,
+                                      const oid_t table_oid) const;
 
   // Get the number of databases currently in the catalog
-  int GetDatabaseCount();
+  oid_t GetDatabaseCount();
 
   void PrintCatalogs();
 
   // Get a new id for database, table, etc.
-  oid_t GetNewID();
+  oid_t GetNextOid();
 
   // Deconstruct the catalog database when destroy the catalog.
   ~Catalog();
 
  private:
-  // A vector of the database pointers in the catalog
-  std::vector<storage::Database *> databases;
+  void InsertDBIntoCatalogDatabase(oid_t database_id,
+                                   std::string &database_name,
+                                   concurrency::Transaction *txn);
 
-  // The id variable that get assigned to objects. Initialized with START_OID
-  oid_t id_cntr = 1;
+  // A vector of the database pointers in the catalog
+  std::vector<storage::Database *> databases_;
+
+  // The id variable that get assigned to objects. Initialized with (START_OID
+  // +
+  // 1) because START_OID is assigned to the catalog database.
+  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
 
   // Mutex used for atomic operations
-  std::mutex catalog_mutex;
+  std::mutex catalog_mutex_;
 
   // Maximum Column Size for Catalog Schemas
-  const size_t max_name_size = 32;
+  const size_t max_name_size_ = 32;
 };
 }
 }

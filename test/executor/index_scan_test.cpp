@@ -31,7 +31,6 @@
 #include "executor/plan_executor.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 #include "parser/parser.h"
 #include "optimizer/simple_optimizer.h"
@@ -174,7 +173,7 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
 }
 
 void ShowTable(std::string database_name, std::string table_name) {
-  auto table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
       database_name, table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
@@ -217,9 +216,7 @@ void ExecuteSQLQuery(const std::string statement_name,
 TEST_F(IndexScanTests, SQLTest) {
 
   LOG_INFO("Bootstrapping...");
-  auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
-                                                        nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
   // Create a table first
@@ -244,8 +241,8 @@ TEST_F(IndexScanTests, SQLTest) {
   create_executor.Init();
   create_executor.Execute();
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
-                                                       DEFAULT_DB_NAME)
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
             1);
   LOG_INFO("Table created!");
@@ -286,10 +283,8 @@ TEST_F(IndexScanTests, SQLTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete catalog;
 }
 
 }  // namespace test
