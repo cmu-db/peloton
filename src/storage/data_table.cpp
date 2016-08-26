@@ -299,7 +299,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const ItemPointer &)> fn =
+  std::function<bool(const void *)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, transaction, std::placeholders::_1);
 

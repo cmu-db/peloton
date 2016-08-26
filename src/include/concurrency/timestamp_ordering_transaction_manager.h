@@ -34,7 +34,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   // This method is used for avoiding concurrent inserts.
   virtual bool IsOccupied(
       Transaction *const current_txn, 
-      const ItemPointer &position);
+      const void *position);
 
   virtual VisibilityType IsVisible(
       Transaction *const current_txn, 

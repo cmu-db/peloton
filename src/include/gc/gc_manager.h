@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "common/macros.h"
 #include "common/types.h"
 #include "common/logger.h"
 
@@ -34,6 +35,11 @@ class GCManager {
 
   ~GCManager() { StopGC(); }
 
+  static GCManager& GetInstance() {
+    static GCManager gc_manager;
+    return gc_manager;
+  }
+
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }
 
@@ -44,7 +50,7 @@ class GCManager {
   void RecycleTupleSlot(const oid_t &table_id UNUSED_ATTRIBUTE, 
                         const ItemPointer &item_pointer UNUSED_ATTRIBUTE) {}
 
-  ItemPointer ReturnFreeSlot(const oid_t &table_id) {
+  ItemPointer ReturnFreeSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 

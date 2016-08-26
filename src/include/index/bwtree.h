@@ -3364,7 +3364,7 @@ abort_traverse:
   NavigateLeafNode(Context *context_p,
                    const ValueType &value,
                    std::pair<int, bool> *index_pair_p,
-                   std::function<bool(const peloton::ItemPointer&)> predicate,
+                   std::function<bool(const void*)> predicate,
                    bool *predicate_satisfied) {
 
 
@@ -3418,7 +3418,7 @@ abort_traverse:
                 // If the predicate is satified by the value
                 // then return with predicate flag set to true
                 // Otherwise test for duplication
-                if(predicate(*copy_start_it->second) == true) {
+                if(predicate(copy_start_it->second) == true) {
                   *predicate_satisfied = true;
                   
                   return nullptr;
@@ -3453,7 +3453,7 @@ abort_traverse:
                 present_set.Insert(insert_node_p->item.second);
 
                 // LeafInsertNode means this value exists
-                if(predicate(*insert_node_p->item.second) == true) {
+                if(predicate(insert_node_p->item.second) == true) {
                   *predicate_satisfied = true;
 
                   // Could return here since we know the predicate is satisfied
@@ -6081,7 +6081,7 @@ before_switch:
    */
   bool ConditionalInsert(const KeyType &key,
                          const ValueType &value,
-                         std::function<bool(const peloton::ItemPointer&)> predicate,
+                         std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied) {
     bwt_printf("Insert (cond.) called\n");
 

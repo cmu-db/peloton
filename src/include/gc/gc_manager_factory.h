@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "gc/transaction_level_gc_manager.h"
+#include "gc/gc_manager.h"
 
 
 namespace peloton {
@@ -25,7 +25,7 @@ class GCManagerFactory {
     switch (gc_type_) {
 
       case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
-        return TransactionLevelGCManager::GetInstance();
+        // return TransactionLevelGCManager::GetInstance();
 
       default:
         return GCManager::GetInstance();

@@ -65,7 +65,7 @@ class TransactionManager {
   // This method is used for avoiding concurrent inserts.
   virtual bool IsOccupied(
       Transaction *const current_txn, 
-      const ItemPointer &position) = 0;
+      const void *position_ptr) = 0;
 
   virtual VisibilityType IsVisible(
       Transaction *const current_txn, 
