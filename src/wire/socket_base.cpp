@@ -24,7 +24,7 @@ template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
-//  struct timeval timeout;
+  //  struct timeval timeout;
   bool done = false;
 
   // our buffer is to be emptied
@@ -130,7 +130,7 @@ bool SocketManager<B>::RefillReadBuffer() {
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
   fd_set rset;
-//  struct timeval timeout;
+  //  struct timeval timeout;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
@@ -209,7 +209,6 @@ bool SocketManager<B>::FlushWriteBuffer() {
 			  return false;
 			}
 	  }
-
 
     // update bookkeping
     wbuf.buf_ptr += written_bytes;
@@ -300,12 +299,11 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
 
 template <typename B>
 void SocketManager<B>::PrintWriteBuffer() {
-  std::cout << "Write Buffer:" << std::endl;
+  LOG_TRACE("Write Buffer:");
 
   for (size_t i = 0; i < wbuf.buf_size; ++i) {
-    std::cout << wbuf.buf[i] << " ";
+    LOG_TRACE("%u", wbuf.buf[i]);
   }
-  std::cout << std::endl;
 }
 
 template <typename B>
@@ -350,8 +348,9 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
       // Move the cursor and update size of socket buffer
       wbuf.buf_ptr += len;
       wbuf.buf_size = wbuf.buf_ptr;
-//      std::cout << "Filled the write buffer but not flushed yet" << std::endl;
-//      PrintWriteBuffer();
+      //      std::cout << "Filled the write buffer but not flushed yet" <<
+      // std::endl;
+      //      PrintWriteBuffer();
       return true;
     } else {
         /* contents longer than socket buffer size, fill up the socket buffer
