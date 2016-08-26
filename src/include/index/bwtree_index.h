@@ -87,37 +87,25 @@ class BWTreeIndex : public Index {
 
   ~BWTreeIndex();
 
-  bool InsertEntry(const storage::Tuple *key, ItemPointer *location_ptr);
+  bool InsertEntry(const storage::Tuple *key, ValueType value);
 
-  bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
-
-  bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
+  bool DeleteEntry(const storage::Tuple *key, ValueType value);
 
   bool CondInsertEntry(const storage::Tuple *key,
-                       ItemPointer *location,
-                       std::function<bool(const ItemPointer &)> predicate);
+                       ValueType value,
+                       std::function<bool(const void *)> predicate);
 
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
             const ScanDirectionType &scan_direction,
-            std::vector<ItemPointer> &);
-
-  void ScanAllKeys(std::vector<ItemPointer> &);
-
-  void ScanKey(const storage::Tuple *key, std::vector<ItemPointer> &);
-
-  void Scan(const std::vector<Value> &values,
-            const std::vector<oid_t> &key_column_ids,
-            const std::vector<ExpressionType> &expr_types,
-            const ScanDirectionType &scan_direction,
-            std::vector<ItemPointer *> &result,
+            std::vector<ValueType> &result,
             const ConjunctionScanPredicate *csp_p);
 
-  void ScanAllKeys(std::vector<ItemPointer *> &result);
+  void ScanAllKeys(std::vector<ValueType> &result);
 
   void ScanKey(const storage::Tuple *key,
-               std::vector<ItemPointer *> &result);
+               std::vector<ValueType> &result);
 
   std::string GetTypeName() const;
 
