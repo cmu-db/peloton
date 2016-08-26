@@ -123,7 +123,7 @@ class Catalog {
   ~Catalog();
 
  private:
-  void InsertDBIntoCatalogDatabase(oid_t database_id,
+  void InsertDatabaseIntoCatalogDatabase(oid_t database_id,
                                    std::string &database_name,
                                    concurrency::Transaction *txn);
 
