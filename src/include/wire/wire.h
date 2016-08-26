@@ -135,7 +135,7 @@ class PacketManager {
   void ExecBindMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  void ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
+  bool ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the EXECUTE message of the extended query protocol */
   void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response);
@@ -146,13 +146,14 @@ class PacketManager {
  public:
   // Statement cache
   Cache<std::string, Statement> statement_cache_;
-
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
+  // packets ready for read
+  size_t pkt_cntr;
 
 
   inline PacketManager(SocketManager<PktBuf>* sock)
-      : client(sock), txn_state(TXN_IDLE) {}
+      : client(sock), txn_state(TXN_IDLE), pkt_cntr(0) { }
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);

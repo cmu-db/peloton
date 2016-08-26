@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <iostream>
 #include <event2/event.h>
+#include <chrono>
 
 #include "common/logger.h"
 #include "common/config.h"
@@ -33,6 +34,8 @@
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
 #define DEFAULT_PORT 5432
+
+using namespace std::chrono;
 
 namespace peloton {
 namespace wire {
@@ -80,13 +83,14 @@ class SocketManager {
  public:
   unsigned int id;
   bool first_packet;
+  bool disconnected;
   std::unique_ptr<PacketManager> socket_pkt_manager;
   struct event *ev_read;  // the read event
   std::mutex execution_mutex;  // only one thread executing
   SocketManager<B>* self;
 
   inline SocketManager(int sock_fd, unsigned int assigned_id) : sock_fd(sock_fd),
-		  id(assigned_id), first_packet(false), ev_read(NULL), self(NULL) { }
+		  id(assigned_id), first_packet(true), disconnected(false), ev_read(NULL), self(NULL) { }
 
   int GetSocketFD() { return sock_fd; }
 
