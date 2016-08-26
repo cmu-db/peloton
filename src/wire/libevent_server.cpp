@@ -55,33 +55,33 @@ bool SetNonBlocking(int fd) {
  * Process refill the buffer and process all packets that can be processed
  */
 void ManageRead(SocketManager<PktBuf> **socket_manager) {
+	std::cout << "New thread " << std::this_thread::get_id() <<
+				  " started execution for socket manager "<<
+				  (*socket_manager)->id << std::endl;
   // Startup packet
-  if ((*socket_manager)->first_packet == true) {
     if (!(*socket_manager)->socket_pkt_manager->ManageFirstPacket()) {
-      close((*socket_manager)->GetSocketFD());
-      event_del((*socket_manager)->ev_read);
-      (*socket_manager)->execution_mutex.unlock();
+//      close((*socket_manager)->GetSocketFD());
+//      event_del((*socket_manager)->ev_read);
+//      (*socket_manager)->execution_mutex.unlock();
       return;
     }
     (*socket_manager)->first_packet = false;
-  }
   // Regular packet
-  else {
-	if(duration_cast<nanoseconds>(
-			(*socket_manager)->socket_pkt_manager->last_callback_time -
-			(*socket_manager)->socket_pkt_manager->last_read_time).count() > 0) {
+//	  while((*socket_manager)->socket_pkt_manager->pkt_cntr > 0) {
+//		  --(*socket_manager)->socket_pkt_manager->pkt_cntr;
 		if (!(*socket_manager)->socket_pkt_manager->ManagePacket() ||
 				(*socket_manager)->disconnected == true) {
-			std::cout << "Failed to manage packet" << std::endl;
-		    close((*socket_manager)->GetSocketFD());
-		    event_del((*socket_manager)->ev_read);
-		    (*socket_manager)->execution_mutex.unlock();
+			std::cout << "Thread " << std::this_thread::get_id() <<
+					"Executing for socket manager " << (*socket_manager)->id <<
+					" failed to manage packet" << std::endl;
+//		    close((*socket_manager)->GetSocketFD());
+//		    event_del((*socket_manager)->ev_read);
+//		    (*socket_manager)->execution_mutex.unlock();
 		    return;
 		}
-	}
-  }
+//	  }
   // Unlock the socket manager mutex
-  (*socket_manager)->execution_mutex.unlock();
+//  (*socket_manager)->execution_mutex.unlock();
 }
 
 /**
@@ -89,17 +89,15 @@ void ManageRead(SocketManager<PktBuf> **socket_manager) {
  */
 void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev,
                   void *arg) {
-  // This is the first callback. Don't reset last_callback_time
-  if(((SocketManager<PktBuf> *)arg)->first_packet == false) {
-    ((SocketManager<PktBuf> *)arg)->socket_pkt_manager->last_callback_time = high_resolution_clock::now();
-  }
 
   // Assign a thread if the socket manager is not executing
   // If a read callback is received while executing, make sure we don't miss it
   if (((SocketManager<PktBuf> *)arg)->execution_mutex.try_lock()) {
-	  std::cout << "New thread started execution for Socket Manager "<< ((SocketManager<PktBuf> *)arg)->id << std::endl;
     ((SocketManager<PktBuf> *)arg)->self = (SocketManager<PktBuf> *)arg;
     thread_pool.SubmitTask(ManageRead, &((SocketManager<PktBuf> *)arg)->self);
+  }
+  else {
+	  ((SocketManager<PktBuf> *)arg)->socket_pkt_manager->pkt_cntr++;
   }
 }
 
@@ -107,12 +105,12 @@ void ReadCallback(UNUSED_ATTRIBUTE int fd, UNUSED_ATTRIBUTE short ev,
  * This function will be called by libevent when there is a connection
  * ready to be accepted.
  */
-void AcceptCallback(struct evconnlistener *listener, evutil_socket_t client_fd,
+void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener, evutil_socket_t client_fd,
                     UNUSED_ATTRIBUTE struct sockaddr *address,
                     UNUSED_ATTRIBUTE int socklen, UNUSED_ATTRIBUTE void *ctx) {
   LOG_INFO("New connection on fd %d", int(client_fd));
   // Get the event base
-  struct event_base *base = evconnlistener_get_base(listener);
+//  struct event_base *base = evconnlistener_get_base(listener);
 
   SetTCPNoDelay(client_fd);
   /* We've accepted a new client, allocate a socket manager to
@@ -123,16 +121,20 @@ void AcceptCallback(struct evconnlistener *listener, evutil_socket_t client_fd,
 
   Server::AddSocketManager(socket_manager);
 
-  /* Setup the read event, libevent will call ReadCallback whenever
-   * the clients socket becomes read ready.  Make the
-   * read event persistent so we don't have to re-add after each
-   * read. */
-  socket_manager->ev_read = event_new(base, client_fd, EV_READ | EV_PERSIST,
-                                      ReadCallback, socket_manager);
+  socket_manager->self = socket_manager;
+  thread_pool.SubmitTask(ManageRead, &socket_manager->self);
 
-  /* Setting up the event does not activate, add the event so it
-     becomes active. */
-  event_add(socket_manager->ev_read, NULL);
+
+//  /* Setup the read event, libevent will call ReadCallback whenever
+//   * the clients socket becomes read ready.  Make the
+//   * read event persistent so we don't have to re-add after each
+//   * read. */
+//  socket_manager->ev_read = event_new(base, client_fd, EV_READ | EV_PERSIST,
+//                                      ReadCallback, socket_manager);
+//
+//  /* Setting up the event does not activate, add the event so it
+//     becomes active. */
+//  event_add(socket_manager->ev_read, NULL);
 }
 
 Server::Server() {

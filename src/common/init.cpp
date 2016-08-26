@@ -29,7 +29,7 @@ void PelotonInit::Initialize() {
   // Initialize CDS library
   cds::Initialize();
 
-  thread_pool.Initialize(std::thread::hardware_concurrency());
+  thread_pool.Initialize(9);
 }
 
 void PelotonInit::Shutdown() {
