@@ -294,7 +294,11 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   
   int index_count = GetIndexCount();
 
-  *index_entry_ptr = new ItemPointer(location);
+  size_t indirection_array_id = number_of_tuples_ % INDIRECTION_ARRAYS_COUNT;
+
+  *index_entry_ptr = indirection_arrays_[indirection_array_id].GetIndirection();
+  (*index_entry_ptr)->block = location.block;
+  (*index_entry_ptr)->offset = location.offset;
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
