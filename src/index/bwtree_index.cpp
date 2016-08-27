@@ -51,7 +51,7 @@ BWTREE_INDEX_TYPE::~BWTreeIndex() {}
  */
 BWTREE_TEMPLATE_ARGUMENTS
 bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
-                                    ValueType value) {
+                                    ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -67,7 +67,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
  */
 BWTREE_TEMPLATE_ARGUMENTS
 bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
-                                    ValueType value) {
+                                    ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -80,7 +80,7 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
 
 BWTREE_TEMPLATE_ARGUMENTS
 bool BWTREE_INDEX_TYPE::CondInsertEntry(
-    const storage::Tuple *key, ValueType value,
+    const storage::Tuple *key, ItemPointer *value,
     std::function<bool(const void*)> predicate) {
   KeyType index_key;
   index_key.SetFromKey(key);

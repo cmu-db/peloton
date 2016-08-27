@@ -37,6 +37,11 @@ extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 const int ACTIVE_TILEGROUP_COUNT = 1;
 
+const int INDIRECTION_ARRAY_MAX_SIZE = 1024 * 1024;
+
+const int INDIRECTION_ARRAYS_COUNT = 1;
+
+
 namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
@@ -65,6 +70,20 @@ namespace storage {
 
 class Tuple;
 class TileGroup;
+
+
+struct IndirectionArray {
+  ItemPointer *GetIndirection() {
+    size_t indirection_id =
+        indirection_counter_.fetch_add(1, std::memory_order_relaxed);
+    return &(indirections_[indirection_id]);
+  }
+
+ private:
+  ItemPointer indirections_[INDIRECTION_ARRAY_MAX_SIZE];
+  std::atomic<size_t> indirection_counter_ = ATOMIC_VAR_INIT(0);
+};
+
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -284,9 +303,12 @@ class DataTable : public AbstractTable {
   // TILE GROUPS
   LockFreeArray<oid_t> tile_groups_;
 
+  std::shared_ptr<storage::TileGroup> active_tile_groups_[ACTIVE_TILEGROUP_COUNT];
+
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  std::shared_ptr<storage::TileGroup> active_tile_groups_[ACTIVE_TILEGROUP_COUNT];
+  // INDIRECTIONS
+  IndirectionArray indirection_arrays_[INDIRECTION_ARRAYS_COUNT];
 
   // data table mutex
   std::mutex data_table_mutex_;

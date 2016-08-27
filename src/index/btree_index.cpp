@@ -47,7 +47,7 @@ BTREE_TEMPLATE_TYPE::~BTreeIndex() {}
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
-                                      ValueType value) {
+                                      ItemPointer *value) {
   KeyType index_key;
 
   index_key.SetFromKey(key);
@@ -68,7 +68,7 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
-                                      ValueType value) {
+                                      ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -106,7 +106,7 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                          ValueType value,
+                                          ItemPointer *value,
                                           std::function<bool(const void *)> predicate) {
 
   KeyType index_key;
