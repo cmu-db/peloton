@@ -840,16 +840,6 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
-// TupleMetadata
-//===--------------------------------------------------------------------===//
-struct TupleMetadata {
-  oid_t table_id = 0;
-  oid_t tile_group_id = 0;
-  oid_t tuple_slot_id = 0;
-  cid_t tuple_end_cid = 0;
-};
-
-//===--------------------------------------------------------------------===//
 // Column Bitmap
 //===--------------------------------------------------------------------===//
 static const size_t max_col_count = 128;

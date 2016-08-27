@@ -39,6 +39,8 @@ enum RWType {
   RW_TYPE_INS_DEL  // delete after insert.
 };
 
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> RWSet;
+
 class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
@@ -91,7 +93,7 @@ class Transaction : public Printable {
   // Return true if we detect INS_DEL
   bool RecordDelete(const ItemPointer &);
 
-  inline const std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> &GetRWSet() {
+  inline const RWSet &GetRWSet() {
     return rw_set_;
   }
 
@@ -125,7 +127,7 @@ class Transaction : public Printable {
   // epoch id
   size_t epoch_id_;
 
-  std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> rw_set_;
+  RWSet rw_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;

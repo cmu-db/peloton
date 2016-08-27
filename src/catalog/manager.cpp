@@ -42,8 +42,7 @@ void Manager::AddTileGroup(const oid_t oid,
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
-  concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
-
+  
   // drop the catalog reference to the tile group
   locator.Erase(oid, empty_location);
 

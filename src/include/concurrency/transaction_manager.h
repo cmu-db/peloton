@@ -21,6 +21,7 @@
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction.h"
 #include "concurrency/epoch_manager.h"
+#include "gc/gc_manager.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -118,12 +119,6 @@ class TransactionManager {
 
   virtual void PerformDelete(Transaction *const current_txn, 
                              const ItemPointer &location) = 0;
-
-  // Txn manager may store related information in TileGroupHeader, so when
-  // TileGroup is dropped, txn manager might need to be notified
-  virtual void DroppingTileGroup(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {
-    return;
-  }
 
   void SetTransactionResult(Transaction *const current_txn, const Result result) {
     current_txn->SetResult(result);
