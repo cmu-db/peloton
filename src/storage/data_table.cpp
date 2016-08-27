@@ -344,9 +344,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     if (res == false) {
       // If some of the indexes have been inserted,
       // the pointer has a chance to be dereferenced by readers and it cannot be deleted
-      if (success_count == 0) {
-        delete *index_entry_ptr;
-      }
       *index_entry_ptr = nullptr;
       return false;
     } else {
