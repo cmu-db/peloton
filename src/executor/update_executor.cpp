@@ -23,7 +23,6 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
 #include "storage/tile.h"
-#include "storage/rollback_segment.h"
 
 namespace peloton {
 namespace executor {

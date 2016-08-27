@@ -12,7 +12,6 @@
 
 #include "planner/project_info.h"
 #include "executor/executor_context.h"
-#include "storage/rollback_segment.h"
 #include "expression/expression_util.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/constant_value_expression.h"
