@@ -22,7 +22,6 @@
 #include "storage/tile.h"
 #include "storage/tuple.h"
 #include "storage/tile_group_header.h"
-#include "storage/rollback_segment.h"
 #include "expression/container_tuple.h"
 
 namespace peloton {
