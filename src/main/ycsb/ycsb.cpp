@@ -8,7 +8,7 @@
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
-//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//w
 
 #include <iostream>
 #include <fstream>
@@ -26,20 +26,34 @@ configuration state;
 
 std::ofstream out("outputfile.summary");
 
-static void WriteOutput(double stat) {
+static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d %d :: %lf",
-           state.update_ratio,
+  LOG_INFO("%d %d %d %d %lf %lf :: %lf",
            state.scale_factor,
            state.backend_count,
            state.column_count,
-           stat);
+           state.operation_count,
+           state.update_ratio,
+           state.zipf_theta,
+           state.throughput,
+           state.abort_rate);
 
-  out << state.update_ratio << " ";
   out << state.scale_factor << " ";
   out << state.backend_count << " ";
   out << state.column_count << " ";
-  out << stat << "\n";
+  out << state.operation_count << " ";
+  out << state.update_ratio << " ";
+  out << state.zipf_theta << " ";
+  out << state.throughput << " ";
+  out << state.abort_rate << " ";
+  for (size_t round_id = 0; round_id < state.profile_throughput.size();
+       ++round_id) {
+    out << "[" << std::setw(3) << std::left
+        << state.profile_duration * round_id << " - " << std::setw(3)
+        << std::left << state.profile_duration * (round_id + 1)
+        << " s]: " << state.profile_throughput[round_id] << " "
+        << state.profile_abort_rate[round_id] << "\n";
+  }
   out.flush();
 }
 
@@ -54,7 +68,7 @@ void RunBenchmark() {
   RunWorkload();
 
   // Emit throughput
-  WriteOutput(state.throughput);
+  WriteOutput();
 }
 
 }  // namespace ycsb
