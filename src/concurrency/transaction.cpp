@@ -116,10 +116,6 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
   return false;
 }
 
-const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
-  return rw_set_;
-}
-
 const std::string Transaction::GetInfo() const {
   std::ostringstream os;
 
