@@ -25,33 +25,34 @@
 
 namespace peloton {
 namespace gc {
+
 struct GarbageContext {
-  std::vector<TupleMetadata> garbages;
-  cid_t timestamp;
+  GarbageContext() : timestamp_(INVALID_CID) {}
+  GarbageContext(const RWSet &rw_set, const cid_t &timestamp) : rw_set_(rw_set), timestamp_(timestamp) {}
 
-  GarbageContext() : garbages(), timestamp(INVALID_CID) {}
+  RWSet rw_set_;
+  cid_t timestamp_;
 };
-
-extern thread_local GarbageContext *current_garbage_context;
 
 class TransactionLevelGCManager : public GCManager {
 public:
   TransactionLevelGCManager(int thread_count)
-    : is_running_(true),
-      gc_thread_count_(thread_count),
-      gc_threads_(thread_count),
-      unlink_queues_(),
-      local_unlink_queues_(),
-      reclaim_maps_(thread_count) {
+    // : is_running_(true)
+      // gc_thread_count_(thread_count),
+      // gc_threads_(thread_count),
+      // unlink_queues_(),
+      // local_unlink_queues_(),
+      // reclaim_maps_(thread_count) 
+      {
 
-    unlink_queues_.reserve(thread_count);
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockfreeQueue<std::shared_ptr<GarbageContext>>> unlink_queue(
-        new LockfreeQueue<std::shared_ptr<GarbageContext>>(MAX_QUEUE_LENGTH)
-      );
-      unlink_queues_.push_back(unlink_queue);
-      local_unlink_queues_.emplace_back();
-    }
+    // unlink_queues_.reserve(thread_count);
+    // for (int i = 0; i < gc_thread_count_; ++i) {
+    //   std::shared_ptr<LockfreeQueue<std::shared_ptr<GarbageContext>>> unlink_queue(
+    //     new LockfreeQueue<std::shared_ptr<GarbageContext>>(MAX_QUEUE_LENGTH)
+    //   );
+    //   unlink_queues_.push_back(unlink_queue);
+    //   local_unlink_queues_.emplace_back();
+    // }
     StartGC();
   }
 
@@ -66,29 +67,22 @@ public:
   virtual bool GetStatus() { return this->is_running_; }
 
   virtual void StartGC() {
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      StartGC(i);
-    }
+    // for (int i = 0; i < gc_thread_count_; ++i) {
+    //   StartGC(i);
+    // }
   };
 
   virtual void StopGC() {
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      StopGC(i);
-    }
+    // for (int i = 0; i < gc_thread_count_; ++i) {
+    //   StopGC(i);
+    // }
   }
 
-  virtual void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                                   const oid_t &tuple_id, const cid_t &tuple_end_cid);
-
-  virtual void RecycleInvalidTupleSlot(const oid_t &table_id __attribute__((unused)),
-                                       const oid_t &tile_group_id __attribute__((unused)),
-                                       const oid_t &tuple_id __attribute__((unused))) {
-    assert(false);
-  }
+  void RegisterTransaction(const RWSet &rw_set, const cid_t &timestamp);
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
-  virtual void RegisterTable(oid_t table_id) {
+  virtual void RegisterTable(const oid_t table_id) {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
       LOG_TRACE("register table %d to garbage collector", (int)table_id);
@@ -97,9 +91,9 @@ public:
     }
   }
 
-  virtual void CreateGCContext();
+  // virtual void CreateGCContext();
 
-  virtual void EndGCContext(cid_t ts);
+  // virtual void EndGCContext(cid_t ts);
 
 private:
   void StartGC(int thread_id);
@@ -112,11 +106,11 @@ private:
 
   void ClearGarbage(int thread_id);
 
-  void Running(int thread_id);
+  void Running(const int &thread_id);
 
-  void Reclaim(int thread_id, const cid_t &max_cid);
+  void Unlink(const int &thread_id, const cid_t &max_cid);
 
-  void Unlink(int thread_id, const cid_t &max_cid);
+  void Reclaim(const int &thread_id, const cid_t &max_cid);
 
   void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
 
@@ -130,23 +124,23 @@ private:
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
 
-  const int gc_thread_count_;
+  int gc_thread_count_;
 
-  std::vector<std::unique_ptr<std::thread>> gc_threads_;
+  std::unique_ptr<std::thread> gc_threads_[MAX_THREAD_COUNT];
 
-  std::vector<std::shared_ptr<peloton::LockfreeQueue<std::shared_ptr<GarbageContext>>>> unlink_queues_;
-  std::vector<std::list<std::shared_ptr<GarbageContext>>> local_unlink_queues_;
+  // queues for to-be-unlinked tuples.
+  LockfreeQueue<std::shared_ptr<GarbageContext>> unlink_queues_[MAX_THREAD_COUNT];
+  
+  // local queues for to-be-unlinked tuples.
+  std::list<std::shared_ptr<GarbageContext>> local_unlink_queues_[MAX_THREAD_COUNT];
 
-  // Map of actual grabage.
+  // multimaps for to-be-reclaimed tuples.
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
-  // TODO: use shared pointer to reduce memory copy
-  std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>> reclaim_maps_;
+  std::multimap<cid_t, std::shared_ptr<GarbageContext>> reclaim_maps_[MAX_THREAD_COUNT];
 
-  // TODO: use shared pointer to reduce memory copy
-  // table_id -> queue
-  //cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
-  std::unordered_map<oid_t, std::shared_ptr<peloton::LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
+  // queues for to-be-reused tuples.
+  LockfreeQueue<ItemPointer> recycle_queues_[MAX_TABLE_COUNT];
 };
 }
 }

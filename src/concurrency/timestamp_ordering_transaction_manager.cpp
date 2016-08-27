@@ -595,8 +595,6 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-        // GC recycle.
-        // RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -619,9 +617,6 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-
-        // GC recycle.
-        // RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -650,8 +645,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
   }
 
   Result result = current_txn->GetResult();
-
-  // gc::GCManagerFactory::GetInstance().EndGCContext(end_commit_id);
+  
   EndTransaction(current_txn);
 
   return result;
@@ -712,7 +706,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
           old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
           tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
         } else {
-          // PL_ASSERT(tile_group_header->GetPrevItemPointer(tuple_slot) == new_version);
           tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
 
@@ -766,9 +759,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // GC recycle
-        //RecycleInvalidTupleSlot(new_version.block, new_version.offset);
-        // aborted_versions.push_back(new_version);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -777,11 +767,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
-        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
-
-        // GC recycle
-        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
-
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -790,20 +775,12 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
-        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
-
-        // GC recycle
-        // RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
 
       }
     }
   }
 
   // cid_t next_commit_id = GetNextCommitId();
-
-  // for (auto &item_pointer : aborted_versions) {
-  //    RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
-  // }
 
   // Need to change next_commit_id to INVALID_CID if disable the recycle of aborted version
   // gc::GCManagerFactory::GetInstance().EndGCContext(next_commit_id);
