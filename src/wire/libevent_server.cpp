@@ -95,16 +95,6 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
   socket_manager->self = socket_manager;
   thread_pool.SubmitTask(ManageRead, &socket_manager->self);
 
-  //  /* Setup the read event, libevent will call ReadCallback whenever
-  //   * the clients socket becomes read ready.  Make the
-  //   * read event persistent so we don't have to re-add after each
-  //   * read. */
-  //  socket_manager->ev_read = event_new(base, client_fd, EV_READ | EV_PERSIST,
-  //                                      ReadCallback, socket_manager);
-  //
-  //  /* Setting up the event does not activate, add the event so it
-  //     becomes active. */
-  //  event_add(socket_manager->ev_read, NULL);
 }
 
 Server::Server() {
