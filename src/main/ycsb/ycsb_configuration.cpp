@@ -40,18 +40,18 @@ void Usage(FILE *out) {
 }
 
 static struct option opts[] = {
-    {"index", optional_argument, NULL, 'i'},
-    {"scale_factor", optional_argument, NULL, 'k'},
-    {"duration", optional_argument, NULL, 'd'},
-    {"profile_duration", optional_argument, NULL, 'p'},
-    {"backend_count", optional_argument, NULL, 'b'},
-    {"column_count", optional_argument, NULL, 'c'},
-    {"operation_count", optional_argument, NULL, 'o'},
-    {"update_ratio", optional_argument, NULL, 'u'},
-    {"zipf_theta", optional_argument, NULL, 'z'},
-    {"exp_backoff", no_argument, NULL, 'e'},
-    {"string_mode", no_argument, NULL, 'm'},
-    { NULL, 0, NULL, 0}
+    { "index", optional_argument, NULL, 'i' },
+    { "scale_factor", optional_argument, NULL, 'k' },
+    { "duration", optional_argument, NULL, 'd' },
+    { "profile_duration", optional_argument, NULL, 'p' },
+    { "backend_count", optional_argument, NULL, 'b' },
+    { "column_count", optional_argument, NULL, 'c' },
+    { "operation_count", optional_argument, NULL, 'o' },
+    { "update_ratio", optional_argument, NULL, 'u' },
+    { "zipf_theta", optional_argument, NULL, 'z' },
+    { "exp_backoff", no_argument, NULL, 'e' },
+    { "string_mode", no_argument, NULL, 'm' },
+    { NULL, 0, NULL, 0 }
 };
 
 void ValidateIndex(const configuration &state) {
@@ -162,7 +162,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         } else if (strcmp(index, "bwtree") == 0) {
           state.index = INDEX_TYPE_BWTREE;
         } else {
-          fprintf(stderr, "\nUnknown index: %s\n", index);
+          LOG_ERROR("Unknown index: %s", index);
           exit(EXIT_FAILURE);
         }
         break;
@@ -204,7 +204,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
 
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
+        LOG_ERROR("Unknown option: -%c-", c);
         Usage(stderr);
         exit(EXIT_FAILURE);
         break;
@@ -222,6 +222,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateUpdateRatio(state);
   ValidateZipfTheta(state);
 
+  LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run string mode", state.string_mode);
+  
 }
 
 }  // namespace ycsb

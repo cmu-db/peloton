@@ -54,6 +54,11 @@ set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
 
 # --[ Benchmarks
 
+# --[ tpcc
+file(GLOB_RECURSE tpcc_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/*.cpp)
+add_executable(tpcc EXCLUDE_FROM_ALL ${tpcc_srcs})
+target_link_libraries(tpcc peloton)
+
 # --[ ycsb
 file(GLOB_RECURSE ycsb_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/*.cpp)
 add_executable(ycsb EXCLUDE_FROM_ALL ${ycsb_srcs})
@@ -69,6 +74,6 @@ target_link_libraries(sdbench peloton)
 
 add_custom_target(benchmark)
 
-add_dependencies(benchmark ycsb sdbench)
+add_dependencies(benchmark tpcc ycsb sdbench)
 
 

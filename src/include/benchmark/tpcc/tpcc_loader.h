@@ -40,6 +40,7 @@ void LoadTPCCDatabase();
 /////////////////////////////////////////////////////////
 
 extern storage::Database* tpcc_database;
+
 extern storage::DataTable* warehouse_table;
 extern storage::DataTable* district_table;
 extern storage::DataTable* item_table;
@@ -121,6 +122,8 @@ extern double new_order_remote_txns;
 
 extern const int syllable_count;
 extern const char* syllables[];
+
+extern const std::string data_constant;
 
 struct NURandConstant {
   int c_last;
