@@ -120,6 +120,8 @@ const char *syllables[syllable_count] = {"BAR",   "OUGHT", "ABLE", "PRI",
                                          "PRES",  "ESES",  "ANTI", "CALLY",
                                          "ATION", "EING"};
 
+const std::string data_constant = std::string("FOO");
+
 NURandConstant nu_rand_const;
 
 const int loading_thread_count = 4;

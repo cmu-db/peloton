@@ -123,6 +123,8 @@ extern double new_order_remote_txns;
 extern const int syllable_count;
 extern const char* syllables[];
 
+extern const std::string data_constant;
+
 struct NURandConstant {
   int c_last;
   int c_id;

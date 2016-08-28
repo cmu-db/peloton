@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <limits>
 
+#include "benchmark/benchmark_common.h"
 #include "benchmark/tpcc/tpcc_workload.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "benchmark/tpcc/tpcc_loader.h"
@@ -87,7 +88,7 @@ namespace tpcc {
 
 // bool RunOrderStatus();
 
-// bool RunPayment();
+bool RunPayment();
 
 bool RunNewOrder();
 
@@ -95,8 +96,8 @@ bool RunNewOrder();
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-#define STOCK_LEVEL_RATIO     0.04
-#define ORDER_STATUS_RATIO    0.04
+#define STOCK_LEVEL_RATIO     0.00
+#define ORDER_STATUS_RATIO    0.00
 #define PAYMENT_RATIO         0.46
 
 volatile bool is_running = true;
@@ -151,91 +152,15 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    // fast_random rng(rand());
+    FastRandom rng(rand());
     
-    // auto rng_val = rng.next_uniform();
-    // if (rng_val <= STOCK_LEVEL_RATIO) {
-    //   if (!slept) {
-    //     slept = true;
-    //     std::this_thread::sleep_for(SLEEP_TIME);
-    //   }
-    //   std::chrono::steady_clock::time_point start_time;
-    //   if (thread_id == 0) {
-    //     start_time = std::chrono::steady_clock::now();
-    //   }
-    //   while (RunStockLevel(thread_id, state.order_range) == false) {
-    //     if (is_running == false) {
-    //       break;
-    //     }
-    //     execution_count_ref++;
-    //     // backoff
-    //     if (state.exp_backoff) {
-    //       if (backoff_shifts < 63) {
-    //         ++backoff_shifts;
-    //       }
-    //       uint64_t spins = 1UL << backoff_shifts;
-    //       spins *= 100;
-    //       while (spins) {
-    //         _mm_pause();
-    //         --spins;
-    //       }
-    //     }
-    //   }
-    // } else if (rng_val <= ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
-    //   std::chrono::steady_clock::time_point start_time;
-    //   if (!slept) {
-    //     slept = true;
-    //     std::this_thread::sleep_for(SLEEP_TIME);
-    //   }
-    //   if (thread_id == 0) {
-    //     start_time = std::chrono::steady_clock::now();
-    //   }
-    //    while (RunOrderStatus(thread_id) == false) {
-    //       if (is_running == false) {
-    //         break;
-    //       }
-    //      execution_count_ref++;
-    //     // backoff
-    //     if (state.exp_backoff) {
-    //       if (backoff_shifts < 63) {
-    //         ++backoff_shifts;
-    //       }
-    //       uint64_t spins = 1UL << backoff_shifts;
-    //       spins *= 100;
-    //       while (spins) {
-    //         _mm_pause();
-    //         --spins;
-    //       }
-    //     }
-    //    }
-    //  } 
-    //  else if (rng_val <= PAYMENT_RATIO + ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
-    //    while (RunPayment(payment_plans, thread_id) == false) {
-    //       if (is_running == false) {
-    //         break;
-    //       }
-    //      execution_count_ref++;
-    //      payment_execution_count_ref++;
-    //     // backoff
-    //     if (state.exp_backoff) {
-    //       if (backoff_shifts < 63) {
-    //         ++backoff_shifts;
-    //       }
-    //       uint64_t spins = 1UL << backoff_shifts;
-    //       spins *= 100;
-    //       while (spins) {
-    //         _mm_pause();
-    //         --spins;
-    //       }
-    //     }
-    //    }
-    //    payment_transaction_count_ref++;
-    //  } else {
-       while (RunNewOrder(thread_id) == false) {
-          if (is_running == false) {
-            break;
-          }
-         execution_count_ref++;
+    auto rng_val = rng.NextUniform();
+    if (rng_val <= STOCK_LEVEL_RATIO) {
+      while (RunStockLevel(thread_id) == false) {
+        if (is_running == false) {
+          break;
+        }
+        execution_count_ref++;
         // backoff
         if (state.exp_backoff) {
           if (backoff_shifts < 63) {
@@ -248,8 +173,65 @@ void RunBackend(oid_t thread_id) {
             --spins;
           }
         }
-       }
-     // }
+      }
+    } else if (rng_val <= ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
+      while (RunOrderStatus(thread_id) == false) {
+        if (is_running == false) {
+          break;
+        }
+        execution_count_ref++;
+        // backoff
+        if (state.exp_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
+      }
+    } else if (rng_val <= PAYMENT_RATIO + ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
+      while (RunPayment(thread_id) == false) {
+        if (is_running == false) {
+          break;
+        }
+        execution_count_ref++;
+        // backoff
+        if (state.exp_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
+      }
+    } else {
+      while (RunNewOrder(thread_id) == false) {
+        if (is_running == false) {
+          break;
+        }
+        execution_count_ref++;
+        // backoff
+        if (state.exp_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
+      }
+    }
 
     backoff_shifts >>= 1;
     transaction_count_ref++;
