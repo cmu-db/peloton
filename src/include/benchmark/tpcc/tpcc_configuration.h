@@ -156,7 +156,7 @@ class configuration {
   IndexType index;
 
   // scale factor
-  int scale_factor;
+  double scale_factor;
 
   // execution duration (in s)
   double duration;
