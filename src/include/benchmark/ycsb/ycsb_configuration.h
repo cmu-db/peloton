@@ -14,6 +14,7 @@
 #pragma once
 
 #include <string>
+#include <cstring>
 #include <getopt.h>
 #include <vector>
 #include <sys/time.h>
@@ -43,7 +44,7 @@ class configuration {
   int scale_factor;
 
   // execution duration (in s)
-  int duration;
+  double duration;
 
   // profile duration (in s)
   double profile_duration;

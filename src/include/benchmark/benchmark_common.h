@@ -20,9 +20,9 @@ namespace peloton {
 namespace benchmark {
 
 // Fast random number generator
-class fast_random {
+class FastRandom {
  public:
-  fast_random(unsigned long seed) : seed(0) { set_seed0(seed); }
+  FastRandom(unsigned long seed) : seed(0) { set_seed0(seed); }
 
   inline unsigned long next() {
     return ((unsigned long)next(32) << 32) + next(32);
@@ -33,7 +33,7 @@ class fast_random {
   inline uint16_t next_u16() { return (uint16_t)next(16); }
 
   /** [0.0, 1.0) */
-  inline double next_uniform() {
+  inline double NextUniform() {
     return (((unsigned long)next(26) << 27) + next(27)) / (double)(1L << 53);
   }
 
@@ -109,7 +109,7 @@ class ZipfDistribution {
   double zipf_theta;
   double denom;
   double zeta_2_theta;
-  fast_random rand_generator;
+  FastRandom rand_generator;
 };
 
 

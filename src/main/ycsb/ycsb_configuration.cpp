@@ -80,7 +80,7 @@ void ValidateDuration(const configuration &state) {
 }
 
 void ValidateProfileDuration(const configuration &state) {
-  if (state.profile-duration <= 0) {
+  if (state.profile_duration <= 0) {
     LOG_ERROR("Invalid profile_duration :: %lf", state.profile_duration);
     exit(EXIT_FAILURE);
   }
@@ -171,7 +171,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.scale_factor = atoi(optarg);
         break;
       case 'd':
-        state.duration = atoi(optarg);
+        state.duration = atof(optarg);
         break;
       case 'p':
         state.profile_duration = atof(optarg);

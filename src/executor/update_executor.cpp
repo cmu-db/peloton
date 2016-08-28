@@ -84,7 +84,7 @@ bool UpdateExecutor::DExecute() {
   auto current_txn = executor_context_->GetTransaction();
 
 
-  // Update tuples in given table
+  // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
@@ -127,9 +127,14 @@ bool UpdateExecutor::DExecute() {
 
         // acquire a version slot from the table.
         ItemPointer new_location = target_table_->AcquireVersion();
-
+        
         auto &manager = catalog::Manager::GetInstance();
         auto new_tile_group = manager.GetTileGroup(new_location.block);
+
+        if (new_tile_group == nullptr) {
+          LOG_INFO("block = %u, offset = %u", new_location.block, new_location.offset);
+          PL_ASSERT(false);
+        }
 
         expression::ContainerTuple<storage::TileGroup> new_tuple(
             new_tile_group.get(), new_location.offset);

@@ -28,7 +28,7 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %lf %lf :: %lf",
+  LOG_INFO("%d %d %d %d %lf %lf :: %lf %lf",
            state.scale_factor,
            state.backend_count,
            state.column_count,
@@ -45,7 +45,7 @@ static void WriteOutput() {
   out << state.update_ratio << " ";
   out << state.zipf_theta << " ";
   out << state.throughput << " ";
-  out << state.abort_rate << " ";
+  out << state.abort_rate << "\n";
   for (size_t round_id = 0; round_id < state.profile_throughput.size();
        ++round_id) {
     out << "[" << std::setw(3) << std::left

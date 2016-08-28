@@ -26,196 +26,92 @@
 #include <cstddef>
 #include <limits>
 
-#include "backend/benchmark/ycsb/ycsb_workload.h"
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
-#include "backend/benchmark/ycsb/ycsb_loader.h"
+#include "benchmark/ycsb/ycsb_workload.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+#include "benchmark/ycsb/ycsb_loader.h"
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
 
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/logger.h"
-#include "backend/common/timer.h"
-#include "backend/common/generator.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "common/logger.h"
+#include "common/timer.h"
+#include "common/generator.h"
 
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
 
-#include "backend/executor/executor_context.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/materialization_executor.h"
-#include "backend/executor/update_executor.h"
-#include "backend/executor/index_scan_executor.h"
-#include "backend/executor/insert_executor.h"
+#include "executor/executor_context.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/materialization_executor.h"
+#include "executor/update_executor.h"
+#include "executor/index_scan_executor.h"
+#include "executor/insert_executor.h"
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/expression_util.h"
-#include "backend/expression/container_tuple.h"
+#include "expression/abstract_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/expression_util.h"
+#include "expression/container_tuple.h"
 
-#include "backend/index/index_factory.h"
+#include "index/index_factory.h"
 
-#include "backend/logging/log_manager.h"
+#include "logging/log_manager.h"
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/materialization_plan.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/planner/update_plan.h"
-#include "backend/planner/index_scan_plan.h"
+#include "planner/abstract_plan.h"
+#include "planner/materialization_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/update_plan.h"
+#include "planner/index_scan_plan.h"
 
-#include "backend/storage/data_table.h"
-#include "backend/storage/table_factory.h"
-
-#define BEGIN_UPDATE_CID (state.sindex_count + 1)
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-MixedPlans PrepareMixedPlan() {
-
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-
-  index::Index *ycsb_skey_index = nullptr;
-  if (state.sindex_scan == true) {
-    key_column_ids.push_back(1);
-    ycsb_skey_index = user_table->GetIndexWithOid(ycsb_table_sindex_begin_oid + 1);
-  } else {
-    key_column_ids.push_back(0);
-  }
-
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-
-  std::vector<Value> values;
-
-  std::vector<expression::AbstractExpression *> runtime_keys;
-
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
-
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-    (state.sindex_scan ? ycsb_skey_index : ycsb_pkey_index),
-      key_column_ids, expr_types, values, runtime_keys);
-
-  // Create plan node.
-  auto predicate = nullptr;
-
-  oid_t column_count = state.column_count + 1;
   
-  oid_t begin_read_column_id = BEGIN_UPDATE_CID;
-  oid_t end_read_column_id = begin_read_column_id + state.read_column_count - 1;
-  
-  std::vector<oid_t> read_column_ids;
-  for (oid_t col_itr = begin_read_column_id; col_itr <= end_read_column_id; col_itr++) {
-    read_column_ids.push_back(col_itr);
-  }
-  //printf("read column id size=%d\n", (int)read_column_ids.size());
-  // Create and set up index scan executor
-  planner::IndexScanPlan index_scan_node(
-      user_table, predicate, read_column_ids, index_scan_desc);
-
-  executor::IndexScanExecutor *index_scan_executor =
-      new executor::IndexScanExecutor(&index_scan_node, nullptr);
-
-  index_scan_executor->Init();
-
-  /////////////////////////////////////////////////////////
-  // UPDATE
-  /////////////////////////////////////////////////////////
-
-  oid_t begin_update_column_id = BEGIN_UPDATE_CID;
-  oid_t end_update_column_id = begin_update_column_id + state.update_column_count - 1;
-
-  std::vector<oid_t> update_column_ids;
-  for (oid_t col_itr = begin_update_column_id; col_itr <= end_update_column_id; col_itr++) {
-    update_column_ids.push_back(col_itr);
-  }
-  //printf("update column id size=%d\n", (int)update_column_ids.size());
-
-  planner::IndexScanPlan update_index_scan_node(
-      user_table, predicate, update_column_ids, index_scan_desc);
-  
-  executor::IndexScanExecutor *update_index_scan_executor = nullptr;
-  if (state.blind_write == true) {
-    update_index_scan_executor = new executor::IndexScanExecutor(&index_scan_node, nullptr, true);
-  } else {
-    update_index_scan_executor = new executor::IndexScanExecutor(&index_scan_node, nullptr, false);
-  }
-    
-  TargetList target_list;
-  DirectMapList direct_map_list;
-
-  // update multiple attributes
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    if (col_itr < begin_update_column_id || col_itr > end_update_column_id) {
-      direct_map_list.emplace_back(col_itr,
-                                   std::pair<oid_t, oid_t>(0, col_itr));
-    }
-  }
-  //printf("direct_map_list size=%d\n", (int)direct_map_list.size());
-
-  std::unique_ptr<const planner::ProjectInfo> project_info(
-      new planner::ProjectInfo(std::move(target_list),
-                               std::move(direct_map_list)));
-  planner::UpdatePlan update_node(user_table, std::move(project_info));
-
-  executor::UpdateExecutor *update_executor = 
-      new executor::UpdateExecutor(&update_node, nullptr);
-
-  update_executor->AddChild(update_index_scan_executor);
-
-  update_executor->Init();
-
-  MixedPlans mixed_plans;
-
-  mixed_plans.index_scan_executor_ = index_scan_executor;
-
-  mixed_plans.update_index_scan_executor_ = update_index_scan_executor;
-
-  mixed_plans.update_executor_ = update_executor;
-
-  return mixed_plans;
-}
-  
-bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng, double update_ratio, int operation_count, bool is_read_only) {
-
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(nullptr));
-
-  mixed_plans.SetContext(context.get());
+bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  concurrency::Transaction *txn = nullptr;
-  if (is_read_only == true) {
-    if (update_ratio != 0) {
-      LOG_ERROR("update ratio must be 0!");
-    }
-    txn = txn_manager.BeginReadonlyTransaction();
-  } else {
-    txn = txn_manager.BeginTransaction();
+  concurrency::Transaction *txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile.
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count + 1;
+
+  // read all the attributes in a tuple.
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(col_itr);
   }
 
-  for (int i = 0; i < operation_count; i++) {
+  // Create and set up index scan executor
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
 
-    auto rng_val = rng.next_uniform();
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    if (rng_val < update_ratio) {
+  std::vector<expression::AbstractExpression *> runtime_keys;
+  
+  for (int i = 0; i < state.operation_count; i++) {
+
+    auto rng_val = rng.NextUniform();
+
+    if (rng_val < state.update_ratio) {
       /////////////////////////////////////////////////////////
       // PERFORM UPDATE
       /////////////////////////////////////////////////////////
-
-      mixed_plans.update_index_scan_executor_->ResetState();
 
       // set up parameter values
       std::vector<Value> values;
@@ -224,38 +120,54 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng,
 
       values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-      mixed_plans.update_index_scan_executor_->SetValues(values);
+      auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+    
+      planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+          ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+
+      // Create plan node.
+      auto predicate = nullptr;
+
+      planner::IndexScanPlan index_scan_node(user_table, predicate, column_ids,
+                                             index_scan_desc);
+
+      // Run the executor
+      executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                      context.get());
+
+
+      // mixed_plans.update_index_scan_executor_->SetValues(values);
 
       TargetList target_list;
+      DirectMapList direct_map_list;
 
-      if (state.update_column_count == 0) {
-        // in this case, we randomly update a column.
-        oid_t update_column_id = BEGIN_UPDATE_CID + rng.next() % state.column_count;
-        int update_raw_value = update_column_id;
+      // update multiple attributes
+      for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+        if (col_itr == 1) {
+        int update_raw_value = 1;
         Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
-        target_list.emplace_back(
-              update_column_id, expression::ExpressionUtil::ConstantValueFactory(update_val));
-
-      } else {
-        oid_t begin_update_column_id = BEGIN_UPDATE_CID;
-        oid_t end_update_column_id = begin_update_column_id + state.update_column_count - 1;
-
-        for (oid_t col_itr = begin_update_column_id; col_itr <= end_update_column_id; ++col_itr) {
-          int update_raw_value = col_itr;
-      
-          Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
-
           target_list.emplace_back(
-              col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
+                col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
+        }
+        else {
+          direct_map_list.emplace_back(col_itr,
+                                       std::pair<oid_t, oid_t>(0, col_itr));
         }
       }
-      
-      mixed_plans.update_executor_->SetTargetList(target_list);
 
-      ExecuteUpdateTest(mixed_plans.update_executor_);
+      std::unique_ptr<const planner::ProjectInfo> project_info(
+          new planner::ProjectInfo(std::move(target_list),
+                                   std::move(direct_map_list)));
+      planner::UpdatePlan update_node(user_table, std::move(project_info));
+
+      executor::UpdateExecutor update_executor(&update_node, context.get());
+
+      update_executor.AddChild(&index_scan_executor);
+
+      ExecuteUpdate(&update_executor);
 
       if (txn->GetResult() != Result::RESULT_SUCCESS) {
-        txn_manager.AbortTransaction();
+        txn_manager.AbortTransaction(txn);
         return false;
       }
 
@@ -264,8 +176,6 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng,
       // PERFORM READ
       /////////////////////////////////////////////////////////
 
-      mixed_plans.index_scan_executor_->ResetState();
-
       // set up parameter values
       std::vector<Value> values;
 
@@ -273,18 +183,28 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng,
 
       values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-      mixed_plans.index_scan_executor_->SetValues(values);
+      auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+    
+      planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+          ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
 
-      auto ret_result = ExecuteReadTest(mixed_plans.index_scan_executor_);
+      // Create plan node.
+      auto predicate = nullptr;
+
+      planner::IndexScanPlan index_scan_node(user_table, predicate, column_ids,
+                                             index_scan_desc);
+
+      // Run the executor
+      executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                      context.get());
+
+      
+      
+      ExecuteRead(&index_scan_executor);
 
       if (txn->GetResult() != Result::RESULT_SUCCESS) {
-        txn_manager.AbortTransaction();
+        txn_manager.AbortTransaction(txn);
         return false;
-      }
-
-      if ((ret_result.size() > 1 && state.sindex_scan == false) || ret_result.size() < 1) {
-        // LOG_ERROR("Error: result size = %d\n", (int)ret_result.size());
-        assert(false);
       }
     }
   }
@@ -292,12 +212,7 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng,
   // transaction passed execution.
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
-  if (is_read_only == true) {
-    txn_manager.EndReadonlyTransaction();
-    return true;
-  }
-
-  auto result = txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
 
   if (result == Result::RESULT_SUCCESS) {
     return true;
