@@ -163,7 +163,7 @@ class PacketManager {
   bool ProcessPacket(Packet* pkt, ResponseBuffer& responses);
 
   /* Manage the startup packet */
-  bool ManageFirstPacket();
+  bool ManageStartupPacket();
 
   /* Manage subsequent packets */
   bool ManagePacket();

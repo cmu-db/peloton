@@ -36,6 +36,7 @@ bool SocketManager<B>::RefillReadBuffer() {
 		bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
 						  SOCKET_BUFFER_SIZE - rbuf.buf_size);
 
+		// Read failed
 		if (bytes_read < 0) {
 			// Some other error occurred, close the socket, remove
 			// the event and free the client structure.
@@ -80,6 +81,9 @@ bool SocketManager<B>::RefillReadBuffer() {
 				// interrupts are ok, try again
 				bytes_read = 0;
 				continue;
+
+			// Read would have blocked if the scoket
+			// was in blocking mode. Wait till it's readable
 			} else if (errno == EAGAIN) {
 				  FD_ZERO (&rset);
 				  FD_SET (sock_fd, &rset);
@@ -104,8 +108,7 @@ bool SocketManager<B>::RefillReadBuffer() {
 
 		else if (bytes_read == 0) {
 		  // If the length of bytes returned by read is 0, this means
-		  // that the client disconnected, remove the read event and the
-		  // free the client structure.
+		  // that the client disconnected
 		  disconnected = true;
 		  return false;
 		}
@@ -134,6 +137,7 @@ bool SocketManager<B>::FlushWriteBuffer() {
   while ((int)wbuf.buf_size - written_bytes > 0) {
 	  while(written_bytes <= 0){
 			written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+			// Write failed
 			if (written_bytes < 0) {
 			  switch(errno) {
 			  case EINTR:
@@ -176,6 +180,8 @@ bool SocketManager<B>::FlushWriteBuffer() {
 				// interrupts are ok, try again
 				written_bytes = 0;
 				continue;
+				// Write would have blocked if the socket was
+				// in blocking mode. Wait till it's readable
 			  } else if (errno == EAGAIN) {
 				  FD_ZERO (&rset);
 				  FD_SET (sock_fd, &rset);
@@ -215,34 +221,6 @@ bool SocketManager<B>::FlushWriteBuffer() {
   wbuf.Reset();
 
   // we are ok
-  return true;
-}
-
-template <typename B>
-bool SocketManager<B>::CanRead() {
-  // Size of header (msg type + size)
-  uint32_t header_size = sizeof(int32_t) + 1;
-  uint32_t pkt_size = 0;
-  // Size of available data for read
-  size_t window = rbuf.buf_size - rbuf.buf_ptr;
-  // If can read header
-  if (header_size <= window) {
-    PktBuf dummy_pkt;
-    // Read the header size
-    dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
-                     std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
-    // Get size of message
-    std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
-              reinterpret_cast<uchar *>(&pkt_size));
-    pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-    // If header and size is larger than window, don't read untill receive a
-    // read callback and buffer is refilled
-    if (header_size + pkt_size > window) {
-      return false;
-    }
-  } else {
-    return false;
-  }
   return true;
 }
 
