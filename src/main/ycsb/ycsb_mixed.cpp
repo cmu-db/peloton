@@ -135,9 +135,6 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       executor::IndexScanExecutor index_scan_executor(&index_scan_node,
                                                       context.get());
 
-
-      // mixed_plans.update_index_scan_executor_->SetValues(values);
-
       TargetList target_list;
       DirectMapList direct_map_list;
 

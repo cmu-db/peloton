@@ -55,13 +55,15 @@ static void WriteOutput() {
         << state.profile_abort_rate[round_id] << "\n";
   }
   out.flush();
+  out.close();
 }
 
 // Main Entry Point
 void RunBenchmark() {
-  // Create and load the user table
+  // Create the database
   CreateYCSBDatabase();
 
+  // Load the databases
   LoadYCSBDatabase();
 
   // Run the workload

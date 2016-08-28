@@ -40,6 +40,7 @@ void LoadTPCCDatabase();
 /////////////////////////////////////////////////////////
 
 extern storage::Database* tpcc_database;
+
 extern storage::DataTable* warehouse_table;
 extern storage::DataTable* district_table;
 extern storage::DataTable* item_table;
