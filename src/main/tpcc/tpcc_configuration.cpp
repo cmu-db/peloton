@@ -57,11 +57,11 @@ void ValidateIndex(const configuration &state) {
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
-    LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
+    LOG_ERROR("Invalid scale_factor :: %lf", state.scale_factor);
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %d", "scale_factor", state.scale_factor);
+  LOG_TRACE("%s : %lf", "scale_factor", state.scale_factor);
 }
 
 void ValidateDuration(const configuration &state) {
@@ -133,7 +133,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       }
       case 'k':
-        state.scale_factor = atoi(optarg);
+        state.scale_factor = atof(optarg);
         break;
       case 'd':
         state.duration = atof(optarg);

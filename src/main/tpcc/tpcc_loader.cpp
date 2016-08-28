@@ -141,7 +141,7 @@ storage::DataTable *order_line_table;
 
 const bool own_schema = true;
 const bool adapt_table = false;
-const bool is_inlined = true;
+const bool is_inlined = false;
 const bool unique_index = false;
 const bool allocate = true;
 
@@ -1547,6 +1547,7 @@ void LoadWarehouses(const int &warehouse_from, const int &warehouse_to) {
 
   // WAREHOUSES
   for (auto warehouse_itr = warehouse_from; warehouse_itr < warehouse_to; warehouse_itr++) {
+
     std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
 
     auto txn = txn_manager.BeginTransaction();
@@ -1725,3 +1726,5 @@ void LoadTPCCDatabase() {
 }  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
+
+

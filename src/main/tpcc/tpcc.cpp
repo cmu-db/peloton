@@ -31,7 +31,7 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d :: %lf %lf",
+  LOG_INFO("%lf %d %d :: %lf %lf",
            state.scale_factor,
            state.backend_count,
            state.warehouse_count,
@@ -64,7 +64,7 @@ void RunBenchmark() {
   LoadTPCCDatabase();
 
   // Run the workload
-  RunWorkload();
+  // RunWorkload();
 
   // Emit throughput
   WriteOutput();
