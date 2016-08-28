@@ -131,11 +131,6 @@ bool UpdateExecutor::DExecute() {
         auto &manager = catalog::Manager::GetInstance();
         auto new_tile_group = manager.GetTileGroup(new_location.block);
 
-        if (new_tile_group == nullptr) {
-          LOG_INFO("block = %u, offset = %u", new_location.block, new_location.offset);
-          PL_ASSERT(false);
-        }
-
         expression::ContainerTuple<storage::TileGroup> new_tuple(
             new_tile_group.get(), new_location.offset);
 
