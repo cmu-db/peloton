@@ -601,8 +601,6 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   PL_ASSERT(tile_group.get());
-  
-  active_tile_groups_[active_tile_group_id] = tile_group;
 
   tile_group_id = tile_group->GetTileGroupId();
 
@@ -612,6 +610,10 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 
   // add tile group metadata in locator
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+  
+  COMPILER_MEMORY_FENCE;
+
+  active_tile_groups_[active_tile_group_id] = tile_group;
 
   // we must guarantee that the compiler always add tile group before adding
   // tile_group_count_.

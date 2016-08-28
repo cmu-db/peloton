@@ -86,18 +86,14 @@ oid_t *commit_counts;
 
 void RunBackend(oid_t thread_id) {
 
-  auto update_ratio = state.update_ratio;
-  auto operation_count = state.operation_count;
-
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
 
   ZipfDistribution zipf((state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP) - 1,
                         state.zipf_theta);
 
-  fast_random rng(rand());
+  FastRandom rng(rand());
 
-  MixedPlan mixed_plan = PrepareMixedPlan();
   // backoff
   uint32_t backoff_shifts = 0;
 
@@ -105,7 +101,7 @@ void RunBackend(oid_t thread_id) {
     if (is_running == false) {
       break;
     }
-    while (RunMixed(mixed_plans, zipf, rng, update_ratio, operation_count) == false) {
+    while (RunMixed(zipf, rng) == false) {
       if (is_running == false) {
         break;
       }
@@ -148,8 +144,8 @@ void RunWorkload() {
     abort_counts_profiles[round_id] = new oid_t[num_threads];
   }
 
-  oid_t **commit_counts_profiles = new oid_t *[snapshot_round];
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
+  oid_t **commit_counts_profiles = new oid_t *[profile_round];
+  for (size_t round_id = 0; round_id < profile_round; ++round_id) {
     commit_counts_profiles[round_id] = new oid_t[num_threads];
   }
 
@@ -159,7 +155,6 @@ void RunWorkload() {
   }
 
   //////////////////////////////////////
-  oid_t last_tile_group_id = 0;
   for (size_t round_id = 0; round_id < profile_round; ++round_id) {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(int(state.profile_duration * 1000)));
@@ -167,7 +162,6 @@ void RunWorkload() {
            sizeof(oid_t) * num_threads);
     memcpy(commit_counts_profiles[round_id], commit_counts,
            sizeof(oid_t) * num_threads);
-    auto& manager = catalog::Manager::GetInstance();
   }
 
   is_running = false;
@@ -217,12 +211,12 @@ void RunWorkload() {
   // calculate the aggregated throughput and abort rate.
   total_commit_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
-    total_commit_count += commit_counts_snapshots[snapshot_round - 1][i];
+    total_commit_count += commit_counts_profiles[profile_round - 1][i];
   }
 
   total_abort_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
-    total_abort_count += abort_counts_snapshots[snapshot_round - 1][i];
+    total_abort_count += abort_counts_profiles[profile_round - 1][i];
   }
 
   state.throughput = total_commit_count * 1.0 / state.duration;
@@ -231,14 +225,14 @@ void RunWorkload() {
   //////////////////////////////////////////////////
 
   // cleanup everything.
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    delete[] abort_counts_snapshots[round_id];
-    abort_counts_snapshots[round_id] = nullptr;
+  for (size_t round_id = 0; round_id < profile_round; ++round_id) {
+    delete[] abort_counts_profiles[round_id];
+    abort_counts_profiles[round_id] = nullptr;
   }
 
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    delete[] commit_counts_snapshots[round_id];
-    commit_counts_snapshots[round_id] = nullptr;
+  for (size_t round_id = 0; round_id < profile_round; ++round_id) {
+    delete[] commit_counts_profiles[round_id];
+    commit_counts_profiles[round_id] = nullptr;
   }
 
   delete[] abort_counts_profiles;
@@ -259,6 +253,7 @@ void RunWorkload() {
 /////////////////////////////////////////////////////////
 
 std::vector<std::vector<Value>> ExecuteRead(executor::AbstractExecutor* executor) {
+  executor->Init();
 
   std::vector<std::vector<Value>> logical_tile_values;
 
@@ -291,7 +286,7 @@ std::vector<std::vector<Value>> ExecuteRead(executor::AbstractExecutor* executor
 }
 
 void ExecuteUpdate(executor::AbstractExecutor* executor) {
-  
+  executor->Init();
   // Execute stuff
   while (executor->Execute() == true);
 }
