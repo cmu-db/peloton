@@ -664,7 +664,7 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
   responses.push_back(std::move(pkt));
 }
 
-bool PacketManager::ManageFirstPacket() {
+bool PacketManager::ManageStartupPacket() {
   Packet pkt;
   ResponseBuffer responses;
   bool status;
@@ -697,7 +697,6 @@ bool PacketManager::ManagePacket() {
 	// Write response
 	if (!WritePackets(responses, &client) || status == false) {
 	  // close client on write failure or status failure
-	  std::cout << "Thread " << std::this_thread::get_id() << " closing client. Status = " << status << std::endl;
 	  CloseClient();
 	  return false;
 	}
