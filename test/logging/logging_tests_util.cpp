@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "logging/logging_tests_util.h"
 
 #define DEFAULT_RECOVERY_CID 15
@@ -47,10 +46,11 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
     std::vector<std::shared_ptr<storage::Tuple>> &tuples,
     size_t tile_group_size, size_t table_tile_group_count,
     int out_of_range_tuples, int delete_tuples) {
+  auto tile_group_start_oid = catalog::Manager::GetInstance().GetNextOid();
   std::vector<logging::TupleRecord> records;
   for (size_t block = 1; block <= table_tile_group_count; ++block) {
     for (size_t offset = 0; offset < tile_group_size; ++offset) {
-      ItemPointer location(block, offset);
+      ItemPointer location(block + tile_group_start_oid, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
       PL_ASSERT(tuple->GetSchema());
       logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block + 1,
@@ -61,7 +61,8 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
     }
   }
   for (int i = 0; i < out_of_range_tuples; i++) {
-    ItemPointer location(tile_group_size, table_tile_group_count + i);
+    ItemPointer location(tile_group_size + tile_group_start_oid,
+                         table_tile_group_count + i);
     auto &tuple = tuples[tile_group_size * table_tile_group_count + i];
     PL_ASSERT(tuple->GetSchema());
     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, 1000,
@@ -71,9 +72,9 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
     records.push_back(record);
   }
   for (int i = 0; i < delete_tuples; i++) {
-    ItemPointer location(1, 0);
-    auto &tuple = tuples[tile_group_size * table_tile_group_count +
-                         out_of_range_tuples + i];
+    ItemPointer location(tile_group_start_oid + 1, 0);
+    auto &tuple = tuples
+        [tile_group_size * table_tile_group_count + out_of_range_tuples + i];
     PL_ASSERT(tuple->GetSchema());
     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4, INVALID_OID,
                                 INVALID_ITEMPOINTER, location, nullptr,
@@ -319,8 +320,9 @@ void LoggingScheduler::Run() {
 }
 
 void LoggingScheduler::Init() {
-  logging::LogManager::GetInstance().Configure(
-      LOGGING_TYPE_NVM_WAL, true, num_frontend_logger, LOGGER_MAPPING_TYPE_MANUAL);
+  logging::LogManager::GetInstance().Configure(LOGGING_TYPE_NVM_WAL, true,
+                                               num_frontend_logger,
+                                               LOGGER_MAPPING_TYPE_MANUAL);
   log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   log_manager->InitFrontendLoggers();
 

@@ -155,12 +155,6 @@ void PacketPutCbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
   pkt->buf.insert(std::end(pkt->buf), b, b + len);
   pkt->len += len;
 }
-/**
- * Check if the buffer has data to be read
- */
-bool CanRead(Client *client) {
-	return client->sock->CanRead();
-}
 
 /*
  * read_packet - Tries to read a single packet, returns true on success,

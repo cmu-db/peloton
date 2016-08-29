@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,7 +22,6 @@
 #include "catalog/schema.h"
 #include "common/value_factory.h"
 #include "common/pool.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 
 #include "executor/executor_context.h"
@@ -64,7 +62,6 @@ class MutateTests : public PelotonTest {};
 
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
-
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
@@ -138,7 +135,6 @@ void UpdateTuple(storage::DataTable *table,
     ;
 
   txn_manager.CommitTransaction(txn);
-
 }
 
 void DeleteTuple(storage::DataTable *table,
@@ -181,7 +177,6 @@ void DeleteTuple(storage::DataTable *table,
   EXPECT_TRUE(delete_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
-
 }
 
 TEST_F(MutateTests, StressTests) {
@@ -218,7 +213,8 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor2.Execute();
-  } catch (ConstraintException &ce) {
+  }
+  catch (ConstraintException &ce) {
     LOG_ERROR("%s", ce.what());
   }
 
@@ -302,9 +298,8 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
+      Return(false));
 
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
