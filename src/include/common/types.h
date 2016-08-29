@@ -774,7 +774,7 @@ enum CheckpointStatus {
 enum StatsType {
   STATS_TYPE_INVALID = 0,
   STATS_TYPE_ENABLE = 1,
-} StatsType;
+};
 
 enum MetricType {
   TEMPORAL_METRIC = 0,

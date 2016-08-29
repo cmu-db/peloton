@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "statistics/counter_metric.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace stats {
@@ -20,7 +21,7 @@ CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
 }
 
 void CounterMetric::Aggregate(AbstractMetric &source) {
-  assert(source.GetType() == COUNTER_METRIC);
+  PL_ASSERT(source.GetType() == COUNTER_METRIC);
   count_ += static_cast<CounterMetric &>(source).GetCounter();
 }
 

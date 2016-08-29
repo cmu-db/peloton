@@ -50,9 +50,9 @@ IndexMetadata::IndexMetadata(
     const catalog::Schema *tuple_schema, const catalog::Schema *key_schema,
     const std::vector<oid_t> &key_attrs, bool unique_keys)
     : index_name(index_name),
+      index_oid(index_oid),
       table_oid(table_oid),
       database_oid(database_oid),
-      index_oid(index_oid),
       method_type(method_type),
       index_type(index_type),
       tuple_schema(tuple_schema),

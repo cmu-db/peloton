@@ -251,7 +251,7 @@ index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
   // Lookup index
   if (table != nullptr) {
     auto index = table->GetIndexWithOid(index_oid);
-    return index;
+    return index.get();
   }
 
   return nullptr;
