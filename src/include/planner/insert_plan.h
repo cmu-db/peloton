@@ -24,7 +24,6 @@ class Tuple;
 }
 
 namespace parser{
-  class InsertParse;
   class InsertStatement;
 }
 

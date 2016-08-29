@@ -31,10 +31,8 @@
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
-
 namespace peloton {
 namespace wire {
-
 
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
@@ -120,7 +118,6 @@ void PacketManager::PutTupleDescriptor(
     ResponseBuffer &responses) {
 
   if (tuple_descriptor.empty()) return;
-
 
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'T';
@@ -352,7 +349,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read parameter format
   int num_params_format = PacketGetInt(pkt, 2);
-  
+
   // get the format of each parameter
   std::vector<int16_t> formats(num_params_format);
   for (int i = 0; i < num_params_format; i++) {
@@ -398,7 +395,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   const auto &query_string = statement->GetQueryString();
   const auto &query_type = statement->GetQueryType();
-
 
   // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
@@ -501,7 +497,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecDescribeMessage(Packet *pkt,
+bool PacketManager::ExecDescribeMessage(Packet *pkt,
                                         ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
@@ -512,11 +508,14 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     auto portal_itr = portals_.find(portal_name);
 
     // TODO: error handling here
+    // Ahmed: This is causing the continuously running thread
+    // Changed the function signature to return boolean
+    // when false is returned, the connection is closed
     if (portal_itr == portals_.end()) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
-      return;
+      return false;
     }
 
     auto portal = portal_itr->second;
@@ -524,12 +523,13 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
-      return;
+      return false;
     }
 
     auto statement = portal->GetStatement();
     PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
   }
+  return true;
 }
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
@@ -589,28 +589,35 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
+      LOG_DEBUG("Q");
       ExecQueryMessage(pkt, responses);
     } break;
     case 'P': {
+      LOG_DEBUG("P");
       ExecParseMessage(pkt, responses);
     } break;
     case 'B': {
+      LOG_DEBUG("B");
       ExecBindMessage(pkt, responses);
     } break;
     case 'D': {
-      ExecDescribeMessage(pkt, responses);
+      LOG_DEBUG("D");
+      return ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
+      LOG_DEBUG("E");
       ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
-      // SYNC message
+      LOG_DEBUG("S");
       SendReadyForQuery(txn_state, responses);
     } break;
     case 'X': {
+      LOG_DEBUG("X");
       return false;
     } break;
     case NULL: {
+      LOG_DEBUG("NULL");
       return false;
     } break;
     default: {
@@ -653,7 +660,7 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
   responses.push_back(std::move(pkt));
 }
 
-bool PacketManager::ManageFirstPacket() {
+bool PacketManager::ManageStartupPacket() {
   Packet pkt;
   ResponseBuffer responses;
   bool status;
@@ -674,33 +681,27 @@ bool PacketManager::ManageFirstPacket() {
 bool PacketManager::ManagePacket() {
   Packet pkt;
   ResponseBuffer responses;
-  bool status;
-  bool can_read_more = true;
+  bool status, read_status;
+
+  read_status = ReadPacket(&pkt, true, &client);
+
   // While can process more packets from buffer
-  while(can_read_more) {
-	if(ReadPacket(&pkt, true, &client)) {
+  while (read_status) {
+    // Process the read packet
+    status = ProcessPacket(&pkt, responses);
 
-		// Process the read packet
-		status = ProcessPacket(&pkt, responses);
-
-		// Write response
-		if (!WritePackets(responses, &client) || !status) {
-		  // close client on write failure or status failure
-		  CloseClient();
-		  return false;
-		}
-		// Can read more?
-		can_read_more = CanRead(&client);
-		pkt.Reset();
+    // Write response
+    if (!WritePackets(responses, &client) || status == false) {
+      // close client on write failure or status failure
+      CloseClient();
+      return false;
     }
-	// Read failed
-	else {
-		break;
-	}
+
+    pkt.Reset();
+    read_status = ReadPacket(&pkt, true, &client);
   }
   return true;
 }
-
 
 }  // End wire namespace
 }  // End peloton namespace
