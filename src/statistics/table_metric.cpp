@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/statistics/table_metric.h"
-#include "backend/catalog/manager.h"
-#include "backend/storage/data_table.h"
+#include "statistics/table_metric.h"
+#include "catalog/manager.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace stats {
