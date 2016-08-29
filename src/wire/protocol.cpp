@@ -664,7 +664,7 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
   responses.push_back(std::move(pkt));
 }
 
-bool PacketManager::ManageFirstPacket() {
+bool PacketManager::ManageStartupPacket() {
   Packet pkt;
   ResponseBuffer responses;
   bool status;
@@ -686,19 +686,21 @@ bool PacketManager::ManagePacket() {
   Packet pkt;
   ResponseBuffer responses;
   bool status, read_status;
+
   read_status = ReadPacket(&pkt, true, &client);
+
   // While can process more packets from buffer
   while(read_status) {
 	// Process the read packet
 	status = ProcessPacket(&pkt, responses);
+
 	// Write response
 	if (!WritePackets(responses, &client) || status == false) {
 	  // close client on write failure or status failure
-	  std::cout << "Thread " << std::this_thread::get_id() << " closing client. Status = " << status << std::endl;
 	  CloseClient();
 	  return false;
 	}
-	// Timestamp before read attempt
+
 	pkt.Reset();
 	read_status = ReadPacket(&pkt, true, &client);
   }
