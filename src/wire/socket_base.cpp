@@ -24,7 +24,6 @@ template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
-  //  struct timeval timeout;
   bool done = false;
 
   // our buffer is to be emptied
@@ -32,86 +31,92 @@ bool SocketManager<B>::RefillReadBuffer() {
 
   // return explicitly
   while (!done) {
-    while (bytes_read <= 0) {
-      //  try to fill the available space in the buffer
-      bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
-                        SOCKET_BUFFER_SIZE - rbuf.buf_size);
+	while(bytes_read <= 0) {
+		//  try to fill the available space in the buffer
+		bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
+						  SOCKET_BUFFER_SIZE - rbuf.buf_size);
 
-      if (bytes_read < 0) {
-        // Some other error occurred, close the socket, remove
-        // the event and free the client structure.
-        switch (errno) {
-          case EINTR:
-            LOG_DEBUG("Error Reading: EINTR");
-            break;
-          case EAGAIN:
-            LOG_DEBUG("Error Reading: EAGAIN");
-            break;
-          case EBADF:
-            LOG_DEBUG("Error Reading: EBADF");
-            break;
-          case EDESTADDRREQ:
-            LOG_DEBUG("Error Reading: EDESTADDRREQ");
-            break;
-          case EDQUOT:
-            LOG_DEBUG("Error Reading: EDQUOT");
-            break;
-          case EFAULT:
-            LOG_DEBUG("Error Reading: EFAULT");
-            break;
-          case EFBIG:
-            LOG_DEBUG("Error Reading: EFBIG");
-            break;
-          case EINVAL:
-            LOG_DEBUG("Error Reading: EINVAL");
-            break;
-          case EIO:
-            LOG_DEBUG("Error Reading: EIO");
-            break;
-          case ENOSPC:
-            LOG_DEBUG("Error Reading: ENOSPC");
-            break;
-          case EPIPE:
-            LOG_DEBUG("Error Reading: EPIPE");
-            break;
-          default:
-            LOG_DEBUG("Error Reading: UNKNOWN");
-        }
-        if (errno == EINTR) {
-          // interrupts are ok, try again
-          bytes_read = 0;
-          continue;
-        } else if (errno == EAGAIN) {
-          FD_ZERO(&rset);
-          FD_SET(sock_fd, &rset);
-          //				  timeout.tv_sec = 1;
-          bytes_read = select(sock_fd + 1, &rset, NULL, NULL, NULL);
-          if (bytes_read < 0) {
-            LOG_INFO("bytes_read < 0 after select. Fatal");
-            exit(EXIT_FAILURE);
-          } else if (bytes_read == 0) {
-            // timed out without writing any data
-            LOG_INFO("Timeout without reading");
-            exit(EXIT_FAILURE);
-          }
-          // else, socket is now readable, so loop back up and do the read()
-          // again
-          bytes_read = 0;
-          continue;
-        } else {
-          // fatal errors
-          return false;
-        }
-      } else if (bytes_read == 0) {
-        // If the length of bytes returned by read is 0, this means
-        // that the client disconnected, remove the read event and the
-        // free the client structure.
-        disconnected = true;
-        return false;
-      } else {
-        done = true;
-      }
-    }
+		// Read failed
+		if (bytes_read < 0) {
+			// Some other error occurred, close the socket, remove
+			// the event and free the client structure.
+			switch(errno) {
+			  case EINTR:
+				  LOG_DEBUG("Error Reading: EINTR");
+				  break;
+			  case EAGAIN:
+				  LOG_DEBUG("Error Reading: EAGAIN");
+				  break;
+			  case EBADF:
+				  LOG_DEBUG("Error Reading: EBADF");
+				  break;
+			  case EDESTADDRREQ:
+				  LOG_DEBUG("Error Reading: EDESTADDRREQ");
+				  break;
+			  case EDQUOT:
+				  LOG_DEBUG("Error Reading: EDQUOT");
+				  break;
+			  case EFAULT:
+				  LOG_DEBUG("Error Reading: EFAULT");
+				  break;
+			  case EFBIG:
+				  LOG_DEBUG("Error Reading: EFBIG");
+				  break;
+			  case EINVAL:
+				  LOG_DEBUG("Error Reading: EINVAL");
+				  break;
+			  case EIO:
+				  LOG_DEBUG("Error Reading: EIO");
+				  break;
+			  case ENOSPC:
+				  LOG_DEBUG("Error Reading: ENOSPC");
+				  break;
+			  case EPIPE:
+				  LOG_DEBUG("Error Reading: EPIPE");
+				  break;
+			  default:
+				  LOG_DEBUG("Error Reading: UNKNOWN");
+			  }
+			if (errno == EINTR) {
+				// interrupts are ok, try again
+				bytes_read = 0;
+				continue;
+
+			// Read would have blocked if the scoket
+			// was in blocking mode. Wait till it's readable
+			} else if (errno == EAGAIN) {
+				  FD_ZERO (&rset);
+				  FD_SET (sock_fd, &rset);
+				  bytes_read = select(sock_fd + 1, &rset, NULL, NULL, NULL);
+				  if (bytes_read < 0) {
+					  LOG_INFO("bytes_read < 0 after select. Fatal");
+					  exit(EXIT_FAILURE);
+				  } else if (bytes_read == 0) {
+					  // timed out without writing any data
+					  LOG_INFO("Timeout without reading");
+					  exit(EXIT_FAILURE);
+				  }
+				  // else, socket is now readable, so loop back up and do the read() again
+				  bytes_read = 0;
+				  continue;
+			}
+			else {
+			  // fatal errors
+			  return false;
+			}
+		}
+
+		else if (bytes_read == 0) {
+		  // If the length of bytes returned by read is 0, this means
+		  // that the client disconnected
+		  disconnected = true;
+		  return false;
+		}
+		else {
+			done = true;
+		}
+	}
+
 
     // read success, update buffer size
     rbuf.buf_size += bytes_read;
@@ -126,85 +131,87 @@ bool SocketManager<B>::RefillReadBuffer() {
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
   fd_set rset;
-  //  struct timeval timeout;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
   while ((int)wbuf.buf_size - written_bytes > 0) {
-    while (written_bytes <= 0) {
-      written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
-      if (written_bytes < 0) {
-        switch (errno) {
-          case EINTR:
-            LOG_DEBUG("Error Writing: EINTR");
-            break;
-          case EAGAIN:
-            LOG_DEBUG("Error Writing: EAGAIN");
-            break;
-          case EBADF:
-            LOG_DEBUG("Error Writing: EBADF");
-            break;
-          case EDESTADDRREQ:
-            LOG_DEBUG("Error Writing: EDESTADDRREQ");
-            break;
-          case EDQUOT:
-            LOG_DEBUG("Error Writing: EDQUOT");
-            break;
-          case EFAULT:
-            LOG_DEBUG("Error Writing: EFAULT");
-            break;
-          case EFBIG:
-            LOG_DEBUG("Error Writing: EFBIG");
-            break;
-          case EINVAL:
-            LOG_DEBUG("Error Writing: EINVAL");
-            break;
-          case EIO:
-            LOG_DEBUG("Error Writing: EIO");
-            break;
-          case ENOSPC:
-            LOG_DEBUG("Error Writing: ENOSPC");
-            break;
-          case EPIPE:
-            LOG_DEBUG("Error Writing: EPIPE");
-            break;
-          default:
-            LOG_DEBUG("Error Writing: UNKNOWN");
-        }
-        if (errno == EINTR) {
-          // interrupts are ok, try again
-          written_bytes = 0;
-          continue;
-        } else if (errno == EAGAIN) {
-          FD_ZERO(&rset);
-          FD_SET(sock_fd, &rset);
-          //				  timeout.tv_sec = 1;
-          written_bytes = select(sock_fd + 1, &rset, NULL, NULL, NULL);
-          if (written_bytes < 0) {
-            LOG_INFO("written_bytes < 0 after select. Fatal");
-            exit(EXIT_FAILURE);
-          } else if (written_bytes == 0) {
-            // timed out without writing any data
-            LOG_INFO("Timeout without writing");
-            exit(EXIT_FAILURE);
-          }
-          // else, socket is now readable, so loop back up and do the read()
-          // again
-          written_bytes = 0;
-          continue;
-        } else {
-          // fatal errors
-          return false;
-        }
-      }
 
-      // weird edge case?
-      if (written_bytes == 0 && wbuf.buf_size != 0) {
-        LOG_INFO("Not all data is written");
-        // fatal
-        return false;
-      }
-    }
+	  while(written_bytes <= 0){
+			written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+			// Write failed
+			if (written_bytes < 0) {
+			  switch(errno) {
+			  case EINTR:
+				  LOG_DEBUG("Error Writing: EINTR");
+				  break;
+			  case EAGAIN:
+				  LOG_DEBUG("Error Writing: EAGAIN");
+				  break;
+			  case EBADF:
+				  LOG_DEBUG("Error Writing: EBADF");
+				  break;
+			  case EDESTADDRREQ:
+				  LOG_DEBUG("Error Writing: EDESTADDRREQ");
+				  break;
+			  case EDQUOT:
+				  LOG_DEBUG("Error Writing: EDQUOT");
+				  break;
+			  case EFAULT:
+				  LOG_DEBUG("Error Writing: EFAULT");
+				  break;
+			  case EFBIG:
+				  LOG_DEBUG("Error Writing: EFBIG");
+				  break;
+			  case EINVAL:
+				  LOG_DEBUG("Error Writing: EINVAL");
+				  break;
+			  case EIO:
+				  LOG_DEBUG("Error Writing: EIO");
+				  break;
+			  case ENOSPC:
+				  LOG_DEBUG("Error Writing: ENOSPC");
+				  break;
+			  case EPIPE:
+				  LOG_DEBUG("Error Writing: EPIPE");
+				  break;
+			  default:
+				  LOG_DEBUG("Error Writing: UNKNOWN");
+			  }
+			  if (errno == EINTR) {
+				// interrupts are ok, try again
+				written_bytes = 0;
+				continue;
+				// Write would have blocked if the socket was
+				// in blocking mode. Wait till it's readable
+			  } else if (errno == EAGAIN) {
+				  FD_ZERO (&rset);
+				  FD_SET (sock_fd, &rset);
+				  written_bytes = select(sock_fd + 1, &rset, NULL, NULL, NULL);
+				  if (written_bytes < 0) {
+					  LOG_INFO("written_bytes < 0 after select. Fatal");
+					  exit(EXIT_FAILURE);
+				  } else if (written_bytes == 0) {
+					  // timed out without writing any data
+					  LOG_INFO("Timeout without writing");
+					  exit(EXIT_FAILURE);
+				  }
+				  // else, socket is now readable, so loop back up and do the read() again
+				  written_bytes = 0;
+				  continue;
+			  }
+			  else {
+				// fatal errors
+				return false;
+			  }
+			}
+
+			// weird edge case?
+			if (written_bytes == 0 && wbuf.buf_size != 0) {
+				LOG_INFO("Not all data is written");
+			  // fatal
+			  return false;
+			}
+	  }
 
     // update bookkeping
     wbuf.buf_ptr += written_bytes;
@@ -215,34 +222,6 @@ bool SocketManager<B>::FlushWriteBuffer() {
   wbuf.Reset();
 
   // we are ok
-  return true;
-}
-
-template <typename B>
-bool SocketManager<B>::CanRead() {
-  // Size of header (msg type + size)
-  uint32_t header_size = sizeof(int32_t) + 1;
-  uint32_t pkt_size = 0;
-  // Size of available data for read
-  size_t window = rbuf.buf_size - rbuf.buf_ptr;
-  // If can read header
-  if (header_size <= window) {
-    PktBuf dummy_pkt;
-    // Read the header size
-    dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
-                     std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
-    // Get size of message
-    std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
-              reinterpret_cast<uchar *>(&pkt_size));
-    pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-    // If header and size is larger than window, don't read untill receive a
-    // read callback and buffer is refilled
-    if (header_size + pkt_size > window) {
-      return false;
-    }
-  } else {
-    return false;
-  }
   return true;
 }
 
@@ -310,8 +289,6 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   // check if we don't have enough space in the buffer
   if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
-    //	  std::cout << "FlushWriteBuffer due to not enough space" << std::endl;
-    //	  PrintWriteBuffer();
     FlushWriteBuffer();
   }
 
@@ -351,12 +328,10 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
       //      PrintWriteBuffer();
       return true;
     } else {
-      //    	std::cout << "available window (" << window <<  ") is less than
-      // the length (" << len << ")" << std::endl;
-      /* contents longer than socket buffer size, fill up the socket buffer
-       *  with "window" bytes
-       */
-      std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
+        /* contents longer than socket buffer size, fill up the socket buffer
+         *  with "window" bytes
+         */
+        std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
                 std::begin(pkt_buf) + pkt_buf_ptr + window,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
 
@@ -366,16 +341,10 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
 
       wbuf.buf_size = wbuf.GetMaxSize();
 
-      //        std::cout << "Before flushing write buffer..." << std::endl;
-      //        PrintWriteBuffer();
-      // write failure
-      if (!FlushWriteBuffer()) {
-        //          std::cout << "Failed to flush write buffer" << std::endl;
-        return false;
-      } else {
-        //          std::cout << "Flushed write buffer successfully" <<
-        // std::endl;
-      }
+        // write failure
+        if (!FlushWriteBuffer()) {
+    	  return false;
+        }
     }
   }
   return true;
