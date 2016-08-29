@@ -24,7 +24,6 @@ template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
-  //  struct timeval timeout;
   bool done = false;
 
   // our buffer is to be emptied
@@ -37,6 +36,7 @@ bool SocketManager<B>::RefillReadBuffer() {
       bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                         SOCKET_BUFFER_SIZE - rbuf.buf_size);
 
+      // Read failed
       if (bytes_read < 0) {
         // Some other error occurred, close the socket, remove
         // the event and free the client structure.
@@ -81,10 +81,12 @@ bool SocketManager<B>::RefillReadBuffer() {
           // interrupts are ok, try again
           bytes_read = 0;
           continue;
+
+          // Read would have blocked if the scoket
+          // was in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN) {
           FD_ZERO(&rset);
           FD_SET(sock_fd, &rset);
-          //				  timeout.tv_sec = 1;
           bytes_read = select(sock_fd + 1, &rset, NULL, NULL, NULL);
           if (bytes_read < 0) {
             LOG_INFO("bytes_read < 0 after select. Fatal");
@@ -104,8 +106,7 @@ bool SocketManager<B>::RefillReadBuffer() {
         }
       } else if (bytes_read == 0) {
         // If the length of bytes returned by read is 0, this means
-        // that the client disconnected, remove the read event and the
-        // free the client structure.
+        // that the client disconnected
         disconnected = true;
         return false;
       } else {
@@ -126,13 +127,14 @@ bool SocketManager<B>::RefillReadBuffer() {
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
   fd_set rset;
-  //  struct timeval timeout;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
   while ((int)wbuf.buf_size - written_bytes > 0) {
+
     while (written_bytes <= 0) {
       written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+      // Write failed
       if (written_bytes < 0) {
         switch (errno) {
           case EINTR:
@@ -175,10 +177,11 @@ bool SocketManager<B>::FlushWriteBuffer() {
           // interrupts are ok, try again
           written_bytes = 0;
           continue;
+          // Write would have blocked if the socket was
+          // in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN) {
           FD_ZERO(&rset);
           FD_SET(sock_fd, &rset);
-          //				  timeout.tv_sec = 1;
           written_bytes = select(sock_fd + 1, &rset, NULL, NULL, NULL);
           if (written_bytes < 0) {
             LOG_INFO("written_bytes < 0 after select. Fatal");
@@ -215,34 +218,6 @@ bool SocketManager<B>::FlushWriteBuffer() {
   wbuf.Reset();
 
   // we are ok
-  return true;
-}
-
-template <typename B>
-bool SocketManager<B>::CanRead() {
-  // Size of header (msg type + size)
-  uint32_t header_size = sizeof(int32_t) + 1;
-  uint32_t pkt_size = 0;
-  // Size of available data for read
-  size_t window = rbuf.buf_size - rbuf.buf_ptr;
-  // If can read header
-  if (header_size <= window) {
-    PktBuf dummy_pkt;
-    // Read the header size
-    dummy_pkt.insert(std::end(dummy_pkt), std::begin(rbuf.buf) + rbuf.buf_ptr,
-                     std::begin(rbuf.buf) + rbuf.buf_ptr + header_size);
-    // Get size of message
-    std::copy(dummy_pkt.begin() + 1, dummy_pkt.end(),
-              reinterpret_cast<uchar *>(&pkt_size));
-    pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-    // If header and size is larger than window, don't read untill receive a
-    // read callback and buffer is refilled
-    if (header_size + pkt_size > window) {
-      return false;
-    }
-  } else {
-    return false;
-  }
   return true;
 }
 
@@ -310,8 +285,6 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   // check if we don't have enough space in the buffer
   if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
-    //	  std::cout << "FlushWriteBuffer due to not enough space" << std::endl;
-    //	  PrintWriteBuffer();
     FlushWriteBuffer();
   }
 
@@ -346,13 +319,8 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
       // Move the cursor and update size of socket buffer
       wbuf.buf_ptr += len;
       wbuf.buf_size = wbuf.buf_ptr;
-      //      std::cout << "Filled the write buffer but not flushed yet" <<
-      // std::endl;
-      //      PrintWriteBuffer();
       return true;
     } else {
-      //    	std::cout << "available window (" << window <<  ") is less than
-      // the length (" << len << ")" << std::endl;
       /* contents longer than socket buffer size, fill up the socket buffer
        *  with "window" bytes
        */
@@ -366,15 +334,9 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
 
       wbuf.buf_size = wbuf.GetMaxSize();
 
-      //        std::cout << "Before flushing write buffer..." << std::endl;
-      //        PrintWriteBuffer();
       // write failure
       if (!FlushWriteBuffer()) {
-        //          std::cout << "Failed to flush write buffer" << std::endl;
         return false;
-      } else {
-        //          std::cout << "Flushed write buffer successfully" <<
-        // std::endl;
       }
     }
   }
