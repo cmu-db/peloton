@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 
 #include "catalog/foreign_key.h"
@@ -26,7 +25,10 @@ Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
 
 Database::~Database() {
   // Clean up all the tables
+  LOG_TRACE("Deleting tables from database");
   for (auto table : tables) delete table;
+
+  LOG_TRACE("Finish deleting tables from database");
 }
 
 //===--------------------------------------------------------------------===//
@@ -47,8 +49,8 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   return nullptr;
 }
 
-storage::DataTable *Database::GetTableWithName(
-    const std::string table_name) const {
+storage::DataTable *Database::GetTableWithName(const std::string table_name)
+    const {
   for (auto table : tables)
     if (table->GetName() == table_name) return table;
 
@@ -149,8 +151,9 @@ const std::string Database::GetInfo() const {
 
 std::string Database::GetDBName() { return database_name; }
 
-void Database::setDBName(const std::string& database_name) { Database::database_name = database_name; }
-
+void Database::setDBName(const std::string &database_name) {
+  Database::database_name = database_name;
+}
 
 }  // End storage namespace
 }  // End peloton namespace
