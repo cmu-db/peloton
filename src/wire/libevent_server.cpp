@@ -79,11 +79,12 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
                     evutil_socket_t client_fd,
                     UNUSED_ATTRIBUTE struct sockaddr *address,
                     UNUSED_ATTRIBUTE int socklen, UNUSED_ATTRIBUTE void *ctx) {
-  LOG_INFO("New connection on fd %d", int(client_fd));
-  // Get the event base
-  //  struct event_base *base = evconnlistener_get_base(listener);
 
+  LOG_INFO("New connection on fd %d", int(client_fd));
+
+  // No delay for TCP
   SetTCPNoDelay(client_fd);
+
   /* We've accepted a new client, allocate a socket manager to
      maintain the state of this client. */
   SocketManager<PktBuf> *socket_manager =
@@ -93,6 +94,8 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
   Server::AddSocketManager(socket_manager);
 
   socket_manager->self = socket_manager;
+
+  // New thread for this socket manager
   thread_pool.SubmitTask(ManageRead, &socket_manager->self);
 
 }
