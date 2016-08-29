@@ -133,10 +133,10 @@ class StatsAggregator {
   BackendStatsContext aggregated_stats_;
 
   // Protect register and unregister of BackendStatsContext*
-  std::mutex stats_mutex_;
+  std::mutex stats_mutex_{};
 
   // Map the thread id to the pointer of its BackendStatsContext
-  std::unordered_map<std::thread::id, BackendStatsContext *> backend_stats_;
+  std::unordered_map<std::thread::id, BackendStatsContext *> backend_stats_{};
 
   // How often to aggregate all worker thread stats
   int64_t aggregation_interval_ms_;

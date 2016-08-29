@@ -126,9 +126,9 @@ class IndexMetadata : public Printable {
 
   std::string index_name;
 
-  oid_t database_oid;
-  oid_t table_oid;
   oid_t index_oid;
+  oid_t table_oid;
+  oid_t database_oid;
 
   IndexType method_type;
 

@@ -11,12 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "statistics/access_metric.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace stats {
 
 void AccessMetric::Aggregate(AbstractMetric &source) {
-  assert(source.GetType() == ACCESS_METRIC);
+  PL_ASSERT(source.GetType() == ACCESS_METRIC);
 
   auto access_metric = static_cast<AccessMetric &>(source);
   for (size_t i = 0; i < NUM_COUNTERS; ++i) {

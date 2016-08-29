@@ -21,12 +21,11 @@
 namespace peloton {
 namespace stats {
 
-BackendStatsContext::BackendStatsContext& GetInstance(
-    int64_t aggregation_interval_ms) {
+BackendStatsContext& BackendStatsContext::GetInstance() {
 
   // Each thread gets a backend stats context
-  thread_local static BackendStatsContext stats_context =
-      BackendStatsContext(LATENCY_MAX_HISTORY_THREAD);
+  thread_local static BackendStatsContext stats_context(
+      LATENCY_MAX_HISTORY_THREAD);
 
   return stats_context;
 }

@@ -38,7 +38,7 @@ namespace stats {
  */
 class BackendStatsContext {
  public:
-  static BackendStatsContext& GetInstance(void);
+  static BackendStatsContext& GetInstance();
 
   BackendStatsContext(size_t max_latency_history);
   ~BackendStatsContext();
@@ -208,15 +208,16 @@ class BackendStatsContext {
   std::string ToString() const;
 
   // Database metrics
-  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>> database_metrics_;
+  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>>
+      database_metrics_{};
 
   // Table metrics
   std::unordered_map<TableMetric::TableKey, std::unique_ptr<TableMetric>>
-      table_metrics_;
+      table_metrics_{};
 
   // Index metrics
   std::unordered_map<IndexMetric::IndexKey, std::unique_ptr<IndexMetric>>
-      index_metrics_;
+      index_metrics_{};
 
  private:
   //===--------------------------------------------------------------------===//

@@ -305,6 +305,11 @@ bool TimestampOrderingTransactionManager::PerformRead(
   if (IsOwner(current_txn, tile_group_header, tuple_id) == true) {
     PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <=
               current_txn->GetBeginCommitId());
+    // Increment table read op stats
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance().IncrementTableReads(
+          location.block);
+    }
     return true;
   }
   // if the current transaction does not own this tuple, then attemp to set last
@@ -312,17 +317,16 @@ bool TimestampOrderingTransactionManager::PerformRead(
   if (SetLastReaderCommitId(tile_group_header, tuple_id,
                             current_txn->GetBeginCommitId()) == true) {
     current_txn->RecordRead(location);
+    // Increment table read op stats
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance().IncrementTableReads(
+          location.block);
+    }
     return true;
   } else {
     // if the tuple has been owned by some concurrent transactions, then read
     // fails.
     return false;
-  }
-
-  // Increment table read op stats
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTableReads(
-        location.block);
   }
 }
 
