@@ -242,6 +242,21 @@ Result Catalog::CreateIndex(const std::string &database_name,
   return Result::RESULT_FAILURE;
 }
 
+index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
+                                       const oid_t table_oid,
+                                       const oid_t index_oid) const {
+  // Lookup table
+  auto table = GetTableWithOid(database_oid, table_oid);
+
+  // Lookup index
+  if (table != nullptr) {
+    auto index = table->GetIndexWithOid(index_oid);
+    return index;
+  }
+
+  return nullptr;
+}
+
 // Drop a database
 Result Catalog::DropDatabaseWithName(std::string database_name,
                                      concurrency::Transaction *txn) {
