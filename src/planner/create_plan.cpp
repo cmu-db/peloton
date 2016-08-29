@@ -13,8 +13,9 @@
 #include "planner/create_plan.h"
 
 #include "storage/data_table.h"
-#include "parser/create_parse.h"
 #include "parser/statement_create.h"
+#include "catalog/schema.h"
+#include "catalog/column.h"
 
 namespace peloton {
 namespace planner {
@@ -30,11 +31,6 @@ CreatePlan::CreatePlan(std::string name,
   table_name = name;
   table_schema = schema.release();
   create_type = c_type;
-}
-
-CreatePlan::CreatePlan(parser::CreateParse *parse_tree) {
-  table_name = parse_tree->GetTableName();
-  table_schema = parse_tree->GetSchema();
 }
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
