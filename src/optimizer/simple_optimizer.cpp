@@ -13,7 +13,6 @@
 #include "optimizer/simple_optimizer.h"
 
 #include "parser/abstract_parse.h"
-#include "parser/insert_parse.h"
 
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
@@ -24,12 +23,11 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/update_plan.h"
+#include "planner/limit_plan.h"
+#include "planner/order_by_plan.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
-#include "parser/abstract_parse.h"
-#include "parser/drop_parse.h"
-#include "parser/create_parse.h"
 #include "catalog/schema.h"
 #include "expression/abstract_expression.h"
 #include "expression/parser_expression.h"
@@ -39,7 +37,7 @@
 #include "expression/conjunction_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
-#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
 #include "storage/data_table.h"
 
 #include "common/logger.h"
@@ -110,7 +108,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
 
       storage::DataTable* target_table =
-          catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+          catalog::Catalog::GetInstance()->GetTableWithName(
               DEFAULT_DB_NAME, select_stmt->from_table->name);
 
       // Preparing the group by columns
@@ -141,14 +139,78 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (!func_flag && group_by_columns.size() == 0) {
         LOG_TRACE("No aggregate functions found.");
         auto child_SelectPlan = CreateScanPlan(target_table, select_stmt);
+        
+        if(select_stmt->order != NULL && select_stmt->limit != NULL){
+          std::vector<oid_t> keys;
+          for(auto elem : *select_stmt->select_list){
+            std::string col_name(elem->GetName());
+            auto column_id = target_table->GetSchema()->GetColumnID(col_name);
+            keys.push_back(column_id);
+          }
+          
+          std::vector<bool> flags;
+          if(select_stmt->order->type == 0){
+            flags.push_back(false);
+          }
+          else{
+            flags.push_back(true);
+          }
+          std::vector<oid_t> key;
+          std::string col_name(select_stmt->order->expr->GetName());
+          auto column_id = target_table->GetSchema()->GetColumnID(col_name);
+          key.push_back(column_id);
+          std::unique_ptr<planner::OrderByPlan> order_by_plan(new planner::OrderByPlan(key , flags , keys));
+          order_by_plan->AddChild(std::move(child_SelectPlan));
+          int offset = select_stmt->limit->offset;
+          if(offset < 0){
+            offset = 0;
+          }
+          std::unique_ptr<planner::LimitPlan> limit_plan(new planner::LimitPlan(select_stmt->limit->limit, offset));
+          limit_plan->AddChild(std::move(order_by_plan));
+          child_plan = std::move(limit_plan);
+        }
+        else if(select_stmt->order != NULL){
+          std::vector<oid_t> keys;
+          for(auto elem : *select_stmt->select_list){
+            std::string col_name(elem->GetName());
+            auto column_id = target_table->GetSchema()->GetColumnID(col_name);
+            keys.push_back(column_id);
+          }
+          
+          std::vector<bool> flags;
+          if(select_stmt->order->type == 0){
+            flags.push_back(false);
+          }
+          else{
+            flags.push_back(true);
+          }
+          std::vector<oid_t> key;
+          std::string col_name(select_stmt->order->expr->GetName());
+          auto column_id = target_table->GetSchema()->GetColumnID(col_name);
+          key.push_back(column_id);
+          std::unique_ptr<planner::OrderByPlan> order_by_plan(new planner::OrderByPlan(key , flags , keys));
+          order_by_plan->AddChild(std::move(child_SelectPlan));
+          child_plan = std::move(order_by_plan);
+        }
+
+        else if(select_stmt->limit != NULL){
+          int offset = select_stmt->limit->offset;
+          if(offset < 0){
+            offset = 0;
+          }
+          std::unique_ptr<planner::LimitPlan> limit_plan(new planner::LimitPlan(select_stmt->limit->limit, offset));
+          limit_plan->AddChild(std::move(child_SelectPlan));
+          child_plan = std::move(limit_plan);
+        }
+        else{
         child_plan = std::move(child_SelectPlan);
+        }
       }
       // Else, do aggregations on top of scan
       else {
         // Create sequential scan plan
-        target_table =
-            catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-                DEFAULT_DB_NAME, select_stmt->from_table->name);
+        target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+            DEFAULT_DB_NAME, select_stmt->from_table->name);
         std::unique_ptr<planner::AbstractScan> scan_node =  // nullptr;
             CreateScanPlan(target_table, select_stmt);
 
@@ -563,12 +625,10 @@ static std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema();
 std::unique_ptr<planner::AbstractPlan>
 SimpleOptimizer::CreateHackingJoinPlan() {
 
-  auto orderline_table =
-      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-          DEFAULT_DB_NAME, "order_line");
-  auto stock_table =
-      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-          DEFAULT_DB_NAME, "stock");
+  auto orderline_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, "order_line");
+  auto stock_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, "stock");
 
   // Manually constructing the predicate....
   expression::ParameterValueExpression* params[6];
@@ -720,7 +780,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
 
   auto column =
-      catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "COL_0",  // COL_A should be
                                 // used only when
                                 // there is no AS

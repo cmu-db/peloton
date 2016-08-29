@@ -14,7 +14,6 @@
 
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 #include "planner/create_plan.h"
 #include "executor/create_executor.h"
@@ -33,9 +32,7 @@ class CreateTests : public PelotonTest {};
 TEST_F(CreateTests, CreatingTable) {
 
   // Bootstrap
-  auto catalog = catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
-                                                        nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Insert a table first
   auto id_column = catalog::Column(
@@ -63,17 +60,15 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Execute();
 
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
-                                                       DEFAULT_DB_NAME)
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
             1);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete catalog;
 }
 
 }  // End test namespace

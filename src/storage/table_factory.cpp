@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "storage/table_factory.h"
 
 #include "common/exception.h"
 #include "common/logger.h"
 #include "index/index.h"
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "storage/data_table.h"
 
 #include <mutex>
@@ -37,9 +36,10 @@ DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
 }
 
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
-  auto &manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
+
   DataTable *table =
-      (DataTable *)manager.GetTableWithOid(database_oid, table_oid);
+      (DataTable *)catalog->GetTableWithOid(database_oid, table_oid);
 
   if (table == nullptr) return false;
 

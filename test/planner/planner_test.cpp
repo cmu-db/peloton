@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
-#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
 #include "expression/abstract_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/comparison_expression.h"
@@ -27,21 +27,12 @@ namespace test {
 // Planner Tests
 //===--------------------------------------------------------------------===//
 
-class PlannerTests : public PelotonTest {
- protected:
-  virtual void SetUp() {
-    PelotonTest::SetUp();
-    static std::unique_ptr<catalog::Catalog> catalog_(
-        catalog::Bootstrapper::bootstrap());
-  }
-};
+class PlannerTests : public PelotonTest {};
 
 TEST_F(PlannerTests, DeletePlanTestParameter) {
 
   // Bootstrapping peloton
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
-                                                        nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -52,7 +43,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Bootstrapper::global_catalog->CreateTable(
+  catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
 
   // DELETE FROM department_table WHERE id = $0
@@ -87,7 +78,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   del_plan->SetParameterValues(values);
 
   // free the database just created
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   delete values;
@@ -98,9 +89,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   // Bootstrapping peloton
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
-                                                        nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -111,7 +100,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Bootstrapper::global_catalog->CreateTable(
+  catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
 
   // UPDATE department_table SET name = $0 WHERE id = $1
@@ -161,7 +150,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   update_plan->SetParameterValues(values);
 
   // free the database just created
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   delete values;
@@ -171,9 +160,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
 TEST_F(PlannerTests, InsertPlanTestParameter) {
   // Bootstrapping peloton
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME,
-                                                        nullptr);
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -184,7 +171,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Bootstrapper::global_catalog->CreateTable(
+  catalog::Catalog::GetInstance()->CreateTable(
       DEFAULT_DB_NAME, "department_table", std::move(table_schema), txn);
 
   // INSERT INTO department_table VALUES ($0, $1)
@@ -221,7 +208,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   insert_plan->SetParameterValues(values);
 
   // free the database just created
-  catalog::Bootstrapper::global_catalog->DropDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   delete values;
