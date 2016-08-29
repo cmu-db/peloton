@@ -1,33 +1,44 @@
-language: cpp
-compiler:
-    - g++
+sudo: required
+dist: trusty
 
-install:
-    # get c++11 support
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
-addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-            - boost-latest
-        packages:
-            - gcc-4.8
-            - g++-4.8
+matrix:
+    include:
+        - compiler: gcc
+          addons:
+              apt:
+                sources:
+                    - ubuntu-toolchain-r-test
+                    - boost-latest
+                packages:
+                    - g++-4.9
+          env: CXX=g++-4.9
+        - compiler: gcc
+          addons:
+              apt:
+                sources:
+                    - ubuntu-toolchain-r-test
+                    - boost-latest
+                packages:
+                    - g++-5
+          env: CXX=g++-5
 
 before_script:
     # setup environment
-    - sudo -H sh ./scripts/installation/packages.sh
-    - export PATH=/usr/local/bin:$PATH
-    - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-    
+    - sudo -H sh ./script/installation/packages.sh
+    - pip install --user cpp-coveralls
+
 script:
     # first, run validator
-    - python ./scripts/validators/validator.py
-    # bootstrap
-    - ./bootstrap
+    - python ./script/validators/validator.py
+    # create build directory
+    - mkdir build
     - cd build
-    - ../configure CXXFLAGS="-O0"
+    # run cmake
+    - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
+    # build
     - make
-    # - make check
-    - sudo make install
-    - ../scripts/oltpbenchmark/test_peloton.sh
+    # run tests
+    - make check
+    # upload coverage info
+    #- make coveralls
+
