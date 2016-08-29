@@ -213,15 +213,8 @@ void CreateWarehouseTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "warehouse_pkey", warehouse_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
-
-=======
-      "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -305,14 +298,8 @@ void CreateDistrictTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "district_pkey", district_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
-=======
-      "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -371,14 +358,8 @@ void CreateItemTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "item_pkey", item_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
-=======
-      "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -513,14 +494,8 @@ void CreateCustomerTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "customer_pkey", customer_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
-=======
-      "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      true);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -531,16 +506,9 @@ void CreateCustomerTable() {
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-<<<<<<< HEAD
   index_metadata = new index::IndexMetadata(
       "customer_skey", customer_table_skey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
-=======
-  index_metadata =
-      new index::IndexMetadata("customer_skey", customer_table_skey_index_oid,
-                               INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_INVALID,
-                               tuple_schema, key_schema, key_attrs, false);
->>>>>>> master
 
   std::shared_ptr<index::Index> skey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -713,14 +681,8 @@ void CreateStockTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "stock_pkey", stock_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
-=======
-      "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -801,14 +763,8 @@ void CreateOrdersTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "orders_pkey", orders_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
-=======
-      "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      true);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -819,16 +775,9 @@ void CreateOrdersTable() {
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-<<<<<<< HEAD
   index_metadata = new index::IndexMetadata(
       "orders_skey", orders_table_skey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
-=======
-  index_metadata =
-      new index::IndexMetadata("orders_skey", orders_table_skey_index_oid,
-                               INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_INVALID,
-                               tuple_schema, key_schema, key_attrs, false);
->>>>>>> master
 
   std::shared_ptr<index::Index> skey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -882,14 +831,8 @@ void CreateNewOrderTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "new_order_pkey", new_order_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
-=======
-      "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -982,14 +925,8 @@ void CreateOrderLineTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "order_line_pkey", order_line_table_pkey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
-=======
-      "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      true);
->>>>>>> master
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -1001,14 +938,8 @@ void CreateOrderLineTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-<<<<<<< HEAD
       "order_line_skey", order_line_table_skey_index_oid, state.index,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
-=======
-      "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs,
-      false);
->>>>>>> master
 
   std::shared_ptr<index::Index> skey_index(
       index::IndexFactory::GetInstance(index_metadata));
