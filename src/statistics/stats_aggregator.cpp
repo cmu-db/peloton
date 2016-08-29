@@ -22,8 +22,8 @@ namespace peloton {
 namespace stats {
 
 StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
-    : stats_history_(0),
-      aggregated_stats_(LATENCY_MAX_HISTORY_AGGREGATOR),
+    : stats_history_(0, false),
+      aggregated_stats_(LATENCY_MAX_HISTORY_AGGREGATOR, false),
       aggregation_interval_ms_(aggregation_interval_ms),
       thread_number_(0),
       total_prev_txn_committed_(0) {

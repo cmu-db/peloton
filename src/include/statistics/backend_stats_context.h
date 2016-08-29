@@ -40,7 +40,7 @@ class BackendStatsContext {
  public:
   static BackendStatsContext& GetInstance();
 
-  BackendStatsContext(size_t max_latency_history);
+  BackendStatsContext(size_t max_latency_history, bool regiser_to_aggregator);
   ~BackendStatsContext();
 
   //===--------------------------------------------------------------------===//

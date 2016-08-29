@@ -13,6 +13,7 @@
 #include <map>
 
 #include "common/types.h"
+#include "catalog/catalog.h"
 #include "index/index.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
@@ -25,18 +26,20 @@ BackendStatsContext& BackendStatsContext::GetInstance() {
 
   // Each thread gets a backend stats context
   thread_local static BackendStatsContext stats_context(
-      LATENCY_MAX_HISTORY_THREAD);
+      LATENCY_MAX_HISTORY_THREAD, true);
 
   return stats_context;
 }
 
-BackendStatsContext::BackendStatsContext(size_t max_latency_history)
+BackendStatsContext::BackendStatsContext(size_t max_latency_history,
+                                         bool regiser_to_aggregator)
     : txn_latencies_(LATENCY_METRIC, max_latency_history) {
   std::thread::id this_id = std::this_thread::get_id();
   thread_id_ = this_id;
 
   // Register to the global aggregator
-  StatsAggregator::GetInstance().RegisterContext(thread_id_, this);
+  if (regiser_to_aggregator == true)
+    StatsAggregator::GetInstance().RegisterContext(thread_id_, this);
 }
 
 BackendStatsContext::~BackendStatsContext() {
@@ -103,9 +106,9 @@ void BackendStatsContext::Reset() {
     index_item.second->Reset();
   }
 
-  oid_t num_databases = catalog::Manager::GetInstance().GetDatabaseCount();
+  oid_t num_databases = catalog::Catalog::GetInstance()->GetDatabaseCount();
   for (oid_t i = 0; i < num_databases; ++i) {
-    auto database = catalog::Manager::GetInstance().GetDatabase(i);
+    auto database = catalog::Catalog::GetInstance()->GetDatabaseWithOffset(i);
     oid_t database_id = database->GetOid();
 
     // Reset database metrics
