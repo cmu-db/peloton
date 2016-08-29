@@ -13,7 +13,6 @@
 #include "optimizer/simple_optimizer.h"
 
 #include "parser/abstract_parse.h"
-#include "parser/insert_parse.h"
 
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
@@ -29,9 +28,6 @@
 #include "planner/aggregate_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
-#include "parser/abstract_parse.h"
-#include "parser/drop_parse.h"
-#include "parser/create_parse.h"
 #include "catalog/schema.h"
 #include "expression/abstract_expression.h"
 #include "expression/parser_expression.h"

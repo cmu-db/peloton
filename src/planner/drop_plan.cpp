@@ -13,7 +13,6 @@
 #include "planner/drop_plan.h"
 
 #include "storage/data_table.h"
-#include "parser/drop_parse.h"
 #include "parser/statement_drop.h"
 #include "catalog/catalog.h"
 
@@ -30,13 +29,6 @@ DropPlan::DropPlan(std::string name) {
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, table_name);
   missing = false;
-}
-
-DropPlan::DropPlan(parser::DropParse *parse_tree) {
-  table_name = parse_tree->GetEntityName();
-  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name);
-  missing = parse_tree->IsMissing();
 }
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree) {
