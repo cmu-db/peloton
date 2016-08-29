@@ -67,31 +67,6 @@ class Manager {
 
   void ClearTileGroup(void);
 
-  //===--------------------------------------------------------------------===//
-  // DATABASE
-  //===--------------------------------------------------------------------===//
-
-  void AddDatabase(storage::Database *database);
-
-  storage::Database *GetDatabase(const oid_t database_offset) const;
-
-  storage::Database *GetDatabaseWithOid(const oid_t database_oid) const;
-
-  oid_t GetDatabaseCount() const;
-
-  void DropDatabaseWithOid(const oid_t database_oid);
-
-  //===--------------------------------------------------------------------===//
-  // CONVENIENCE WRAPPERS
-  //===--------------------------------------------------------------------===//
-
-  // Look up the table
-  storage::DataTable *GetTableWithOid(const oid_t database_oid,
-                                      const oid_t table_oid) const;
-
-  storage::DataTable *GetTableWithName(const oid_t database_oid,
-                                       const std::string table_name) const;
-
   Manager(Manager const &) = delete;
 
  private:
@@ -102,10 +77,6 @@ class Manager {
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
   LockFreeArray<std::shared_ptr<storage::TileGroup>> locator;
-
-  // DATABASES
-
-  std::vector<storage::Database *> databases;
 
   std::mutex catalog_mutex;
 
