@@ -27,12 +27,7 @@
 namespace peloton {
 
 namespace storage {
-class DataTable;
-class Database;
 class TileGroup;
-}
-namespace index {
-class Index;
 }
 
 namespace catalog {
