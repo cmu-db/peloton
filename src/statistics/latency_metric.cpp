@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <mutex>
 
-#include "backend/statistics/latency_metric.h"
+#include "statistics/latency_metric.h"
 
 namespace peloton {
 namespace stats {

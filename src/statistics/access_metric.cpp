@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/statistics/access_metric.h"
+#include "statistics/access_metric.h"
 
 namespace peloton {
 namespace stats {

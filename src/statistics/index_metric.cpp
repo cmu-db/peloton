@@ -24,7 +24,7 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
       table_id_(table_id),
       index_id_(index_id) {
   index_name_ = "";
-  auto index = catalog::Manager::GetInstance().GetIndexWithOid(
+  auto index = catalog::Catalog::GetInstance().GetIndexWithOid(
       database_id, table_id, index_id);
   if (index == nullptr) {
     index_name_ = "";

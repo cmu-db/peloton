@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace stats {

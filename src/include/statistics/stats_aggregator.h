@@ -33,8 +33,6 @@
 #define LATENCY_MAX_HISTORY_THREAD 100
 #define LATENCY_MAX_HISTORY_AGGREGATOR 10000
 
-extern StatsType peloton_stats_mode;
-
 class BackendStatsContext;
 
 namespace peloton {

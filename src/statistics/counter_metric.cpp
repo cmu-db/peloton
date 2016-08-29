@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/statistics/counter_metric.h"
+#include "statistics/counter_metric.h"
 
 namespace peloton {
 namespace stats {

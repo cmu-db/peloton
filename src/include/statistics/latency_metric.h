@@ -16,9 +16,9 @@
 #include <string>
 #include <sstream>
 
-#include "backend/common/timer.h"
-#include "backend/common/types.h"
-#include "backend/statistics/abstract_metric.h"
+#include "common/timer.h"
+#include "common/types.h"
+#include "statistics/abstract_metric.h"
 
 namespace peloton {
 namespace stats {
