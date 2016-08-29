@@ -57,9 +57,6 @@ class SimpleOptimizer : public AbstractOptimizer {
   SimpleOptimizer();
   virtual ~SimpleOptimizer();
 
-  static std::shared_ptr<planner::AbstractPlan> BuildPlanTree(
-      const std::unique_ptr<parser::AbstractParse> &parse_tree);
-
   static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree);
 
