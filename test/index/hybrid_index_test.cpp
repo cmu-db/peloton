@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 #include "common/harness.h"
 
@@ -51,7 +50,7 @@
 
 namespace peloton {
 namespace test {
-namespace hybrid_index_test{
+namespace hybrid_index_test {
 
 class HybridIndexTests : public PelotonTest {};
 
@@ -70,7 +69,7 @@ static double tuple_end_offset = (selectivity + predicate_offset) * tuple_count;
 
 static size_t query_count = 10;
 
-void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
+void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
                  bool build_indexes) {
 
   const bool is_inlined = true;
@@ -79,10 +78,9 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    auto column = catalog::Column(VALUE_TYPE_INTEGER,
-                                  GetTypeSize(VALUE_TYPE_INTEGER),
-                                  std::to_string(col_itr),
-                                  is_inlined);
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
 
@@ -96,8 +94,8 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
   bool own_schema = true;
   bool adapt_table = true;
   hyadapt_table.reset(storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tile_group, own_schema, adapt_table));
+      INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tile_group,
+      own_schema, adapt_table));
 
   // PRIMARY INDEX
   if (build_indexes == true) {
@@ -114,21 +112,18 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-        tuple_schema,
-        key_schema,
-        key_attrs,
+        "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
+        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
-    std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+    std::shared_ptr<index::Index> pkey_index(
+        index::IndexFactory::GetInstance(index_metadata));
 
     hyadapt_table->AddIndex(pkey_index);
   }
-
 }
 
-void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+void LoadTable(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   auto table_schema = hyadapt_table->GetSchema();
 
@@ -150,7 +145,8 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
     }
 
     ItemPointer *index_entry_ptr = nullptr;
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple, txn, &index_entry_ptr);
+    ItemPointer tuple_slot_id =
+        hyadapt_table->InsertTuple(&tuple, txn, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
@@ -176,8 +172,7 @@ expression::AbstractExpression *GetPredicate() {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate_left =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
-          tuple_value_expr_left,
+          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr_left,
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
@@ -190,23 +185,22 @@ expression::AbstractExpression *GetPredicate() {
 
   expression::AbstractExpression *predicate_right =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_LESSTHAN,
-          tuple_value_expr_right,
+          EXPRESSION_TYPE_COMPARE_LESSTHAN, tuple_value_expr_right,
           constant_value_expr_right);
 
   expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                                     predicate_left,
-                                                     predicate_right);
+      expression::ExpressionUtil::ConjunctionFactory(
+          EXPRESSION_TYPE_CONJUNCTION_AND, predicate_left, predicate_right);
 
   return predicate;
 }
 
-void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
-                              std::vector<ExpressionType>& expr_types,
-                              std::vector<Value>& values) {
+void CreateIndexScanPredicate(std::vector<oid_t> &key_column_ids,
+                              std::vector<ExpressionType> &expr_types,
+                              std::vector<Value> &values) {
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
   values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
 
   key_column_ids.push_back(0);
@@ -214,8 +208,8 @@ void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
   values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
 }
 
-void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t
-                      column_count) {
+void GenerateSequence(std::vector<oid_t> &hyadapt_column_ids,
+                      oid_t column_count) {
   // Reset sequence
   hyadapt_column_ids.clear();
 
@@ -250,10 +244,10 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   LOG_TRACE("Lower bound        : %.0lf", tuple_start_offset);
   LOG_TRACE("Upper bound        : %.0lf", tuple_end_offset);
   LOG_TRACE("Result tuple count : %lu", result_tuple_count);
-  //EXPECT_EQ(result_tuple_count, selectivity * tuple_count);
+  // EXPECT_EQ(result_tuple_count, selectivity * tuple_count);
 }
 
-void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+void LaunchSeqScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -276,10 +270,8 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   planner::IndexScanPlan::IndexScanDesc dummy_index_scan_desc;
 
-  planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(),
-                                           predicate,
-                                           column_ids,
-                                           dummy_index_scan_desc,
+  planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate,
+                                           column_ids, dummy_index_scan_desc,
                                            HYBRID_SCAN_TYPE_SEQUENTIAL);
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
@@ -290,7 +282,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   std::vector<oid_t> column_ids;
   std::vector<oid_t> hyadapt_column_ids;
 
@@ -315,10 +307,8 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(),
-                                           predicate,
-                                           column_ids,
-                                           index_scan_desc,
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
+                                           column_ids, index_scan_desc,
                                            HYBRID_SCAN_TYPE_INDEX);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -328,7 +318,6 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
@@ -337,8 +326,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
-                      hyadapt_table) {
+void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   std::vector<oid_t> column_ids;
   std::vector<oid_t> column_ids_second;
   oid_t query_column_count = projectivity * column_count;
@@ -365,10 +353,8 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
 
   auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(),
-                                           predicate,
-                                           column_ids_second,
-                                           index_scan_desc,
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
+                                           column_ids_second, index_scan_desc,
                                            HYBRID_SCAN_TYPE_HYBRID);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -377,7 +363,6 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
@@ -397,13 +382,12 @@ void BuildIndex(std::shared_ptr<index::Index> index,
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
   while (start_tile_group_count < table_tile_group_count) {
-    auto tile_group =
-        table->GetTileGroup(start_tile_group_count++);
+    auto tile_group = table->GetTileGroup(start_tile_group_count++);
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-      std::unique_ptr<storage::Tuple> tuple_ptr(new
-                                                storage::Tuple(table->GetSchema(), true));
+      std::unique_ptr<storage::Tuple> tuple_ptr(
+          new storage::Tuple(table->GetSchema(), true));
       tile_group->CopyTuple(tuple_id, tuple_ptr.get());
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
@@ -412,10 +396,9 @@ void BuildIndex(std::shared_ptr<index::Index> index,
     }
     index->IncrementIndexedTileGroupOffset();
   }
-  
+
   txn_manager.CommitTransaction(txn);
 }
-
 
 TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
@@ -456,15 +439,17 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+      "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      unique);
 
-  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+  std::shared_ptr<index::Index> pkey_index(
+      index::IndexFactory::GetInstance(index_metadata));
 
   hyadapt_table->AddIndex(pkey_index);
 
-  std::thread index_builder = std::thread(BuildIndex, pkey_index,
-                                          hyadapt_table.get());
+  std::thread index_builder =
+      std::thread(BuildIndex, pkey_index, hyadapt_table.get());
 
   for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
     LaunchHybridScan(hyadapt_table);
@@ -476,4 +461,3 @@ TEST_F(HybridIndexTests, HybridScanTest) {
 }  // namespace hybrid_index_test
 }  // namespace test
 }  // namespace peloton
-
