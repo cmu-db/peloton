@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
 #include <vector>
+#include <list>
 
 #include "expression/abstract_expression.h"
 
@@ -88,12 +88,12 @@ class ExpressionUtil {
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
 
-  static expression::AbstractExpression* ConvertToTupleValueExpression(catalog::Schema *schema, std::string column_name);
+  static expression::AbstractExpression *ConvertToTupleValueExpression(
+      catalog::Schema *schema, std::string column_name);
 
-  static void ConvertParameterExpressions(expression::AbstractExpression* expression,
-		  std::vector<Value>* values,
-		  catalog::Schema* schema);
-
+  static void ConvertParameterExpressions(
+      expression::AbstractExpression *expression, std::vector<Value> *values,
+      catalog::Schema *schema);
 };
 
 }  // End expression namespace

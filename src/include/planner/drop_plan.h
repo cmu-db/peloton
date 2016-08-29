@@ -20,7 +20,6 @@ namespace storage {
 class DataTable;
 }
 namespace parser {
-class DropParse;
 class DropStatement;
 }
 namespace catalog {
@@ -40,8 +39,6 @@ class DropPlan : public AbstractPlan {
   explicit DropPlan(storage::DataTable *table);
 
   explicit DropPlan(std::string name);
-
-  explicit DropPlan(parser::DropParse *parse_tree);
 
   explicit DropPlan(parser::DropStatement *parse_tree);
 

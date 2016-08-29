@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -21,7 +20,7 @@
 
 #include "benchmark/ycsb/ycsb_loader.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -62,9 +61,9 @@ void CreateYCSBDatabase() {
   ycsb_database = nullptr;
   user_table = nullptr;
 
-  auto &manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   ycsb_database = new storage::Database(ycsb_database_oid);
-  manager.AddDatabase(ycsb_database);
+  catalog->AddDatabase(ycsb_database);
 
   bool own_schema = true;
   bool adapt_table = false;
@@ -77,10 +76,10 @@ void CreateYCSBDatabase() {
   columns.push_back(column);
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      auto column =
-          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                          "FIELD" + std::to_string(col_itr), is_inlined);
-      columns.push_back(column);
+    auto column =
+        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "FIELD" + std::to_string(col_itr), is_inlined);
+    columns.push_back(column);
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
@@ -116,7 +115,8 @@ void CreateYCSBDatabase() {
       key_attrs,
       unique);
 
-  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+  std::shared_ptr<index::Index> pkey_index(
+      index::IndexFactory::GetInstance(index_metadata));
   user_table->AddIndex(pkey_index);
 }
 
@@ -145,7 +145,7 @@ void LoadYCSBDatabase() {
     auto key_value = ValueFactory::GetIntegerValue(rowid);
 
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-        tuple->SetValue(col_itr, key_value, nullptr);
+      tuple->SetValue(col_itr, key_value, nullptr);
     }
 
     planner::InsertPlan node(user_table, std::move(tuple));

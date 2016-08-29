@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/macros.h"
 #include "logging/checkpoint_tile_scanner.h"
 #include "storage/tile_group_header.h"
@@ -29,6 +28,8 @@ std::unique_ptr<executor::LogicalTile> CheckpointTileScanner::Scan(
   auto tile_group_header = tile_group->GetHeader();
 
   oid_t active_tuple_count = tile_group->GetNextTupleSlot();
+
+  LOG_TRACE("Active tuple count in tile group: %d", active_tuple_count);
 
   // Construct position list by looping through tile group
   // and applying the predicate.
