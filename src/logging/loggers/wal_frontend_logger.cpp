@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <algorithm>
 #include <dirent.h>
 
+#include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/pool.h"
@@ -352,8 +352,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-          recovery_txn_table[tuple_record->GetTransactionId()].push_back(
-              tuple_record);
+          recovery_txn_table[tuple_record->GetTransactionId()]
+              .push_back(tuple_record);
           break;
         case LOGRECORD_TYPE_ITERATION_DELIMITER: {
           // Do nothing if we hit the delimiter, because the delimiters help
@@ -387,12 +387,12 @@ void WriteAheadFrontendLogger::RecoverIndex() {
   cid_t cid = txn_manager.GetNextCommitId();
   LOG_TRACE("Index Recovery got Next commit id as %d", (int)cid);
 
-  auto &catalog_manager = catalog::Manager::GetInstance();
-  auto database_count = catalog_manager.GetDatabaseCount();
+  auto catalog = catalog::Catalog::GetInstance();
+  auto database_count = catalog->GetDatabaseCount();
 
   // loop all databases
-  for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
-    auto database = catalog_manager.GetDatabase(database_idx);
+  for (oid_t database_idx = 1; database_idx < database_count; database_idx++) {
+    auto database = catalog->GetDatabaseWithOffset(database_idx);
     auto table_count = database->GetTableCount();
 
     // loop all tables
@@ -420,6 +420,7 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
 
   oid_t current_tile_group_offset = START_OID;
   auto table_tile_group_count = target_table->GetTileGroupCount();
+  LOG_TRACE("Recovering tile group count: %ld", table_tile_group_count);
   CheckpointTileScanner scanner;
 
   while (current_tile_group_offset < table_tile_group_count) {
@@ -540,8 +541,10 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &insert_loc,
                        storage::Tuple *tuple,
                        bool should_increase_tuple_count = true) {
+  LOG_TRACE("Insert tuple helper.");
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_id);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
@@ -575,7 +578,8 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &delete_loc) {
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_id);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
@@ -606,7 +610,8 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &remove_loc,
                        const ItemPointer &insert_loc, storage::Tuple *tuple) {
   auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db = manager.GetDatabaseWithOid(db_id);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = catalog->GetDatabaseWithOid(db_id);
   PL_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);

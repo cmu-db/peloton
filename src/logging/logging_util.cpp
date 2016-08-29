@@ -10,12 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sys/stat.h>
 #include <dirent.h>
 #include <cstring>
 
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "logging/logging_util.h"
 #include "storage/database.h"
 
@@ -240,9 +239,9 @@ void LoggingUtil::SkipTupleRecordBody(FileHandle &file_handle) {
 // Wrappers
 storage::DataTable *LoggingUtil::GetTable(TupleRecord &tuple_record) {
   // Get db, table, schema to insert tuple
-  auto &manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   storage::Database *db =
-      manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
+      catalog->GetDatabaseWithOid(tuple_record.GetDatabaseOid());
   if (!db) {
     return nullptr;
   }

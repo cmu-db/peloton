@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <dirent.h>
 
 #include "common/harness.h"
+#include "catalog/catalog.h"
 
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile_factory.h"
@@ -99,8 +99,11 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
 }
 
 TEST_F(RecoveryTests, RestartTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  LOG_TRACE("Finish creating catalog");
+  LOG_TRACE("Creating recovery_table");
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
+  LOG_TRACE("Finish creating recovery_table");
 
   size_t tile_group_size = 5;
   size_t table_tile_group_count = 3;
@@ -114,9 +117,9 @@ TEST_F(RecoveryTests, RestartTest) {
   // XXX: for now hardcode for one logger (suffix 0)
   std::string dir_name = logging::WriteAheadFrontendLogger::wal_directory_path;
 
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+  storage::Database *db = new storage::Database(DEFAULT_DB_ID);
+  catalog->AddDatabase(db);
+  db->AddTable(recovery_table);
 
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
@@ -224,12 +227,18 @@ TEST_F(RecoveryTests, RestartTest) {
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
 
+  LOG_TRACE("recovery_table tile group count before recovery: %ld",
+            recovery_table->GetTileGroupCount());
+
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.SetGlobalMaxFlushedIdForRecovery(num_files + 1);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   wal_fel.DoRecovery();
+
+  LOG_TRACE("recovery_table tile group count after recovery: %ld",
+            recovery_table->GetTileGroupCount());
 
   EXPECT_EQ(recovery_table->GetTupleCount(),
             tile_group_size * table_tile_group_count - 1);
@@ -264,14 +273,16 @@ TEST_F(RecoveryTests, RestartTest) {
 
   status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
   EXPECT_EQ(status, true);
+
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *db = new storage::Database(DEFAULT_DB_ID);
+  catalog->AddDatabase(db);
+  db->AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
@@ -307,14 +318,16 @@ TEST_F(RecoveryTests, BasicInsertTest) {
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 1);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID);
 }
 
 TEST_F(RecoveryTests, BasicUpdateTest) {
+  auto catalog = catalog::Catalog::GetInstance();
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+  storage::Database *db = new storage::Database(DEFAULT_DB_ID);
+  catalog->AddDatabase(db);
+  db->AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
@@ -352,6 +365,8 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID);
 }
 
 /* (From Joy) TODO FIX this
@@ -384,9 +399,9 @@ TEST_F(RecoveryTests, BasicDeleteTest) {
 
 TEST_F(RecoveryTests, OutOfOrderCommitTest) {
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
+  auto catalog = catalog::Catalog::GetInstance();
   storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
+  catalog->AddDatabase(&db);
   db.AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);

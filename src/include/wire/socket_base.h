@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <iostream>
 #include <event2/event.h>
+#include <chrono>
 
 #include "common/logger.h"
 #include "common/config.h"
@@ -33,6 +34,8 @@
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
 #define DEFAULT_PORT 5432
+
+using namespace std::chrono;
 
 namespace peloton {
 namespace wire {
@@ -79,25 +82,22 @@ class SocketManager {
 
  public:
   unsigned int id;
-  bool first_packet;
+  bool disconnected;
   std::unique_ptr<PacketManager> socket_pkt_manager;
-  struct event *ev_read;  // the read event
-  std::mutex execution_mutex;  // only one thread executing
   SocketManager<B>* self;
 
   inline SocketManager(int sock_fd, unsigned int assigned_id) : sock_fd(sock_fd),
-		  id(assigned_id), first_packet(false), ev_read(NULL), self(NULL) { }
+		  id(assigned_id), disconnected(false), self(NULL) { }
 
   int GetSocketFD() { return sock_fd; }
-
-  // Check if there is data to read from buffer
-  bool CanRead();
 
   // Reads a packet of length "bytes" from the head of the buffer
   bool ReadBytes(B &pkt_buf, size_t bytes);
 
   // Writes a packet into the write buffer
   bool BufferWriteBytes(B &pkt_buf, size_t len, uchar type);
+
+  void PrintWriteBuffer();
 
   // Used to invoke a write into the Socket, once the write buffer is ready
   bool FlushWriteBuffer();

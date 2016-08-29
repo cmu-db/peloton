@@ -19,6 +19,7 @@
 #include "common/logger.h"
 #include "common/platform.h"
 #include "catalog/foreign_key.h"
+#include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction.h"
 #include "gc/gc_manager_factory.h"
@@ -200,11 +201,10 @@ ItemPointer DataTable::AcquireVersion() {
   return location;
 }
 
-
-bool DataTable::InstallVersion(const AbstractTuple *tuple, 
-                               const TargetList *targets_ptr, 
+bool DataTable::InstallVersion(const AbstractTuple *tuple,
+                               const TargetList *targets_ptr,
                                ItemPointer *index_entry_ptr) {
-  
+
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
@@ -213,11 +213,11 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
   return true;
 }
 
-
-ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, 
-                                   concurrency::Transaction *transaction, 
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
+                                   concurrency::Transaction *transaction,
                                    ItemPointer **index_entry_ptr) {
-  // the upper layer may not pass a index_entry_ptr (default value: nullptr) into the function.
+  // the upper layer may not pass a index_entry_ptr (default value: nullptr)
+  // into the function.
   // in this case, we have to create a temp_ptr to hold the content.
   ItemPointer *temp_ptr = nullptr;
 
@@ -232,7 +232,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
-  
+
   auto index_count = GetIndexCount();
   if (index_count == 0) {
     // Increase the table's number of tuples by 1
@@ -251,8 +251,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
     return INVALID_ITEMPOINTER;
   }
 
-  PL_ASSERT((*index_entry_ptr)->block == location.block && 
-    (*index_entry_ptr)->offset == location.offset);
+  PL_ASSERT((*index_entry_ptr)->block == location.block &&
+            (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -270,9 +270,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   }
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
-  
+
   UNUSED_ATTRIBUTE auto index_count = GetIndexCount();
-  PL_ASSERT (index_count == 0);
+  PL_ASSERT(index_count == 0);
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
   return location;
@@ -288,10 +288,10 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  *primary/unique).
  */
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
-                                ItemPointer location, 
+                                ItemPointer location,
                                 concurrency::Transaction *transaction,
                                 ItemPointer **index_entry_ptr) {
-  
+
   int index_count = GetIndexCount();
 
   size_t indirection_array_id = number_of_tuples_ % INDIRECTION_ARRAYS_COUNT;
@@ -324,15 +324,13 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
-      }
-        break;
+      } break;
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
         // res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
-      }
-        break;
+      } break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
@@ -343,7 +341,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     // Handle failure
     if (res == false) {
       // If some of the indexes have been inserted,
+<<<<<<< HEAD
       // the pointer has a chance to be dereferenced by readers and it cannot be deleted
+=======
+      // the pointer has a chance to be dereferenced by readers and it cannot be
+      // deleted
+      if (success_count == 0) {
+        delete *index_entry_ptr;
+      }
+>>>>>>> master
       *index_entry_ptr = nullptr;
       return false;
     } else {
@@ -355,9 +361,9 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   return true;
 }
 
-
 bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
-              const TargetList *targets_ptr, ItemPointer *index_entry_ptr) {
+                                         const TargetList *targets_ptr,
+                                         ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
   // Transaform the target list into a hash set
   // when attempting to perform insertion to a secondary index,
@@ -367,7 +373,6 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
   for (auto target : *targets_ptr) {
     targets_set.insert(target.first);
   }
-
 
   // Check existence for primary/unique indexes
   // Since this is NOT protected by a lock, concurrent insert may happen.
@@ -398,7 +403,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
 
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-    
+
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
         break;
@@ -413,9 +418,6 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
   }
   return true;
 }
-
-
-
 
 /**
  * @brief Check if all the foreign key constraints on this table
@@ -435,7 +437,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
+        (storage::DataTable *)catalog::Catalog::GetInstance()->GetTableWithOid(
             database_oid, sink_table_id);
 
     int ref_table_index_count = ref_table->GetIndexCount();
@@ -601,6 +603,11 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   PL_ASSERT(tile_group.get());
+<<<<<<< HEAD
+=======
+
+  active_tile_groups_[active_tile_group_id] = tile_group;
+>>>>>>> master
 
   tile_group_id = tile_group->GetTileGroupId();
 
@@ -622,7 +629,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   tile_group_count_++;
 
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
-  
+
   return tile_group_id;
 }
 
@@ -686,7 +693,6 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
-
 
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 

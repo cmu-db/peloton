@@ -15,11 +15,10 @@
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
-#include "parser/insert_parse.h"
 #include "parser/statement_select.h"
 #include "parser/statement_insert.h"
 #include "catalog/column.h"
-#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
 
 namespace peloton {
 namespace planner {
@@ -55,7 +54,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
   parameter_vector_.reset(new std::vector<std::pair<oid_t, oid_t>>());
   params_value_type_.reset(new std::vector<ValueType>);
 
-  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, parse_tree->table_name);
   if (target_table_) {
     catalog::Schema *table_schema = target_table_->GetSchema();
