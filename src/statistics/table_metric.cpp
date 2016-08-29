@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "statistics/table_metric.h"
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -20,7 +20,7 @@ namespace stats {
 TableMetric::TableMetric(MetricType type, oid_t database_id, oid_t table_id)
     : AbstractMetric(type), database_id_(database_id), table_id_(table_id) {
   auto table =
-      catalog::Manager::GetInstance().GetTableWithOid(database_id, table_id);
+      catalog::Catalog::GetInstance()->GetTableWithOid(database_id, table_id);
   if (table == nullptr) {
     table_name_ = "";
   } else {
