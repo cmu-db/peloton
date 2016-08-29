@@ -15,7 +15,6 @@
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
-#include "parser/insert_parse.h"
 #include "parser/statement_select.h"
 #include "parser/statement_insert.h"
 #include "catalog/column.h"
