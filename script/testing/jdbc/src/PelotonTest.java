@@ -21,7 +21,6 @@ public class PelotonTest {
   private final String DROP = "DROP TABLE A;" +
           "DROP TABLE IF EXISTS B;";
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);";
-          //
 
   private final String INSERT_A = "INSERT INTO A VALUES (1,'1961-06-16');";
   private final String INSERT_B = "INSERT INTO A VALUES (2,'Full Clip')";
@@ -126,7 +125,7 @@ public class PelotonTest {
     stmt.execute(DROP);
     stmt.execute(DDL);
 
-    stmt.execute(CREATE_STOCK_TABLE);
+/*    stmt.execute(CREATE_STOCK_TABLE);
     stmt.execute(CREATE_ORDER_LINE_TABLE);
     stmt.execute(INSERT_STOCK_1);
     stmt.execute(SELECT_STOCK);
@@ -167,7 +166,7 @@ public class PelotonTest {
     //pstmt.setTimestamp(1, datetime, null);
     pstmt.execute();
     System.out.println("Test db created.");
-    //System.exit(0);
+    //System.exit(0);*/
   }
 
   public void ShowTable() throws SQLException {
@@ -180,6 +179,16 @@ public class PelotonTest {
   stmt.execute(SEQSCAN);
 //    stmt.execute(DROP);
     System.out.println("Test db created.");
+  }
+
+  public void Multiple_Test() throws SQLException {
+    PreparedStatement stmt = conn.prepareStatement("SELECT * FROM A WHERE id=?;SELECT * FROM A WHERE id=?");
+    stmt.setInt(1, 1); 
+    stmt.setInt(2, 1);
+    ResultSet r = stmt.executeQuery(); 
+    while (r.next()) {
+      System.out.println("Multiple: id = " + r.getString(1) + ", " + r.getString(2));
+    } 
   }
 
   /**
@@ -458,11 +467,13 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    pt.Scan_Test();
+    pt.Multiple_Test();
+    pt.Close();
+/*    pt.Scan_Test();
     pt.Close();
     PelotonTest pt2 = new PelotonTest();
     pt2.Batch_Insert();
-    pt2.Close();
+    pt2.Close();*/
   }
 }
 
