@@ -341,15 +341,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     // Handle failure
     if (res == false) {
       // If some of the indexes have been inserted,
-<<<<<<< HEAD
       // the pointer has a chance to be dereferenced by readers and it cannot be deleted
-=======
-      // the pointer has a chance to be dereferenced by readers and it cannot be
-      // deleted
-      if (success_count == 0) {
-        delete *index_entry_ptr;
-      }
->>>>>>> master
       *index_entry_ptr = nullptr;
       return false;
     } else {
@@ -603,11 +595,6 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   PL_ASSERT(tile_group.get());
-<<<<<<< HEAD
-=======
-
-  active_tile_groups_[active_tile_group_id] = tile_group;
->>>>>>> master
 
   tile_group_id = tile_group->GetTileGroupId();
 
