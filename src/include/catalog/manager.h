@@ -21,7 +21,6 @@
 
 #include "common/macros.h"
 #include "common/types.h"
-#include "container/cuckoo_map.h"
 #include "container/lock_free_array.h"
 
 namespace peloton {

@@ -36,8 +36,10 @@ Database::~Database() {
 //===--------------------------------------------------------------------===//
 
 void Database::AddTable(storage::DataTable *table) {
-  std::lock_guard<std::mutex> lock(database_mutex);
-  tables.push_back(table);
+  {
+    std::lock_guard<std::mutex> lock(database_mutex);
+    tables.push_back(table);
+  }
 }
 
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
