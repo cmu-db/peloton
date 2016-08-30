@@ -21,7 +21,6 @@
 #include "common/types.h"
 #include "common/logger.h"
 #include "gc/gc_manager.h"
-#include "concurrency/transaction.h"
 
 #include "container/lock_free_queue.h"
 
