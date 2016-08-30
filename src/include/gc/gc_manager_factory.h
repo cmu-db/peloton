@@ -14,6 +14,7 @@
 #pragma once
 
 #include "gc/gc_manager.h"
+#include "gc/transaction_level_gc_manager.h"
 
 
 namespace peloton {
@@ -25,20 +26,25 @@ class GCManagerFactory {
     switch (gc_type_) {
 
       case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
-        // return TransactionLevelGCManager::GetInstance();
+        return TransactionLevelGCManager::GetInstance(gc_thread_count_);
 
       default:
         return GCManager::GetInstance();
     }
   }
 
-  static void Configure(GarbageCollectionType gc_type) { gc_type_ = gc_type; }
+  static void Configure(GarbageCollectionType gc_type, int thread_count = 1) { 
+    gc_type_ = gc_type; 
+    gc_thread_count_ = thread_count;
+  }
 
   static GarbageCollectionType GetGCType() { return gc_type_; }
 
  private:
   // GC type
   static GarbageCollectionType gc_type_;
+
+  static int gc_thread_count_;
 };
 
 }  // namespace gc

@@ -54,6 +54,10 @@ class GCManager {
     return INVALID_ITEMPOINTER;
   }
 
+  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {
+
+  }
+
  private:
   bool is_running_;
 };
