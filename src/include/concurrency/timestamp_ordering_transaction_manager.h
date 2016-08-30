@@ -106,8 +106,6 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual void EndTransaction(Transaction *current_txn) {
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
-    // gc::GCManagerFactory::GetInstance().RegisterTransaction(current_txn->GetRWSet(), end_commit_id);
-
     delete current_txn;
     current_txn = nullptr;
   }

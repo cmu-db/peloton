@@ -61,7 +61,6 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 
 void TransactionLevelGCManager::Running(const int &thread_id) {
 
-  // std::this_thread::sleep_for(std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
   while (true) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -81,17 +80,9 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 
 
 void TransactionLevelGCManager::RegisterTransaction(const RWSet &rw_set, const cid_t &timestamp) {
-  // if (ts == INVALID_CID) {
-    // Directly delete the context
-    // delete current_garbage_context;
-  // } else {
-    // current_garbage_context->timestamp = ts;
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(rw_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
-  // }
-  // Reset the GC context (not necessary...)
-  // current_garbage_context = nullptr;
 }
 
 void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid) {
@@ -140,7 +131,6 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
         }
       }
       // Add to the garbage map
-      // reclaim_map_.insert(std::make_pair(getnextcid(), tuple_metadata));
       garbages.push_back(garbage_ctx);
       tuple_counter++;
 
@@ -217,22 +207,15 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
-  // return INVALID_ITEMPOINTER;
   PL_ASSERT(recycle_queue_map_.count(table_id) != 0);
   ItemPointer location;
   auto recycle_queue = recycle_queue_map_[table_id];
 
-
-  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
-  // if there exists recycle_queue
-  //if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
-  //TupleMetadata tuple_metadata;
   if (recycle_queue->Dequeue(location) == true) {
     LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
               location.offset, table_id);
     return location;
   }
-  //}
   return INVALID_ITEMPOINTER;
 }
 
@@ -286,7 +269,7 @@ void TransactionLevelGCManager::DeleteTupleFromIndexes(const ItemPointer &locati
         break;
       default: {
         LOG_TRACE("Deleting other index");
-        // index->DeleteEntry(key.get(), location);
+        index->DeleteEntry(key.get(), new(location));
       }
     }
   }

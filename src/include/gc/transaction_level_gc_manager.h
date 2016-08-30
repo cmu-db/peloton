@@ -83,7 +83,6 @@ public:
 
   void RegisterTransaction(const RWSet &rw_set, const cid_t &timestamp);
 
-  // void RegisterAbortedTransaction(const RWSet &rw_set, const cid_t &timestamp);
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
