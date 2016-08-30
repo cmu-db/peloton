@@ -24,6 +24,7 @@
 #include "common/types.h"
 #include "common/exception.h"
 
+
 namespace peloton {
 namespace concurrency {
 
@@ -31,15 +32,6 @@ namespace concurrency {
 // Transaction
 //===--------------------------------------------------------------------===//
 
-enum RWType {
-  RW_TYPE_READ,
-  RW_TYPE_UPDATE,
-  RW_TYPE_INSERT,
-  RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL  // delete after insert.
-};
-
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> RWSet;
 
 class Transaction : public Printable {
   Transaction(Transaction const &) = delete;

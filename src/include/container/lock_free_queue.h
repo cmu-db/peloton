@@ -4,7 +4,7 @@
 //
 // lock_free_queue.h
 //
-// Identification: src/backend/common/lockfree_queue.h
+// Identification: src/include/container/lockfree_queue.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -14,6 +14,8 @@
 #include "common/thread_pool.h"
 #include "common/config.h"
 
+#include "gc/gc_manager_factory.h"
+
 #include "libcds/cds/init.h"
 
 #include <google/protobuf/stubs/common.h>
@@ -34,6 +36,9 @@ void PelotonInit::Initialize() {
   // chosen. Assigning new task after reaching maximum will
   // block.
   thread_pool.Initialize(std::thread::hardware_concurrency());
+
+  // currently, we assign the garbage collector with dedicated threads.
+  gc::GCManagerFactory::GetInstance();
 }
 
 void PelotonInit::Shutdown() {

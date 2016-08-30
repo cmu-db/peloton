@@ -19,6 +19,7 @@
 #include <bitset>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -882,6 +883,20 @@ struct ItemPointerHasher {
     return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
   }
 };
+
+//===--------------------------------------------------------------------===//
+// read-write set
+//===--------------------------------------------------------------------===//
+
+enum RWType {
+  RW_TYPE_READ,
+  RW_TYPE_UPDATE,
+  RW_TYPE_INSERT,
+  RW_TYPE_DELETE,
+  RW_TYPE_INS_DEL  // delete after insert.
+};
+
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> RWSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle

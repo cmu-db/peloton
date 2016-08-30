@@ -81,7 +81,6 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
 }
 
 
-
 TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetInstance() {
   static TimestampOrderingTransactionManager txn_manager;
   return txn_manager;
