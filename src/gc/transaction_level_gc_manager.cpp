@@ -269,7 +269,7 @@ void TransactionLevelGCManager::DeleteTupleFromIndexes(const ItemPointer &locati
         break;
       default: {
         LOG_TRACE("Deleting other index");
-        index->DeleteEntry(key.get(), new(location));
+        index->DeleteEntry(key.get(), new ItemPointer(location));
       }
     }
   }
