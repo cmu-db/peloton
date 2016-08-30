@@ -47,11 +47,11 @@ class Manager {
   // OBJECT MAP
   //===--------------------------------------------------------------------===//
 
-  oid_t GetNextOid() { return ++oid; }
+  oid_t GetNextOid() { return ++oid_; }
 
-  oid_t GetCurrentOid() { return oid; }
+  oid_t GetCurrentOid() { return oid_; }
 
-  void SetNextOid(oid_t next_oid) { oid = next_oid; }
+  void SetNextOid(oid_t next_oid) { oid_ = next_oid; }
 
   void AddTileGroup(const oid_t oid,
                     std::shared_ptr<storage::TileGroup> location);
@@ -69,13 +69,11 @@ class Manager {
   // Data members
   //===--------------------------------------------------------------------===//
 
-  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
+  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::TileGroup>> locator;
+  LockFreeArray<std::shared_ptr<storage::TileGroup>> locator_;
 
-  std::mutex catalog_mutex;
-
-  static std::shared_ptr<storage::TileGroup> empty_location;
+  static std::shared_ptr<storage::TileGroup> empty_location_;
 };
 
 }  // End catalog namespace
