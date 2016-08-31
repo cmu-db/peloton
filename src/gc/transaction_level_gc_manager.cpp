@@ -51,7 +51,7 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   tile_group_header->SetEndCommitId(location.offset, MAX_CID);
   tile_group_header->SetPrevItemPointer(location.offset, INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
-  std::memset(
+  PL_MEMSET(
     tile_group_header->GetReservedFieldRef(location.offset), 0,
     storage::TileGroupHeader::GetReservedSize());
 
