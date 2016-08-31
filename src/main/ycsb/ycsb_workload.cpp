@@ -132,10 +132,10 @@ void RunWorkload() {
 
 
   abort_counts = new oid_t[num_threads];
-  memset(abort_counts, 0, sizeof(oid_t) * num_threads);
+  PL_MEMSET(abort_counts, 0, sizeof(oid_t) * num_threads);
 
   commit_counts = new oid_t[num_threads];
-  memset(commit_counts, 0, sizeof(oid_t) * num_threads);
+  PL_MEMSET(commit_counts, 0, sizeof(oid_t) * num_threads);
 
   size_t profile_round = (size_t)(state.duration / state.profile_duration);
 
@@ -158,9 +158,9 @@ void RunWorkload() {
   for (size_t round_id = 0; round_id < profile_round; ++round_id) {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(int(state.profile_duration * 1000)));
-    memcpy(abort_counts_profiles[round_id], abort_counts,
+    PL_MEMCPY(abort_counts_profiles[round_id], abort_counts,
            sizeof(oid_t) * num_threads);
-    memcpy(commit_counts_profiles[round_id], commit_counts,
+    PL_MEMCPY(commit_counts_profiles[round_id], commit_counts,
            sizeof(oid_t) * num_threads);
   }
 
