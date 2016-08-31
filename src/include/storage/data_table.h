@@ -22,6 +22,7 @@
 #include "storage/abstract_table.h"
 #include "container/lock_free_array.h"
 #include "index/index.h"
+#include "storage/indirection_array.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -36,8 +37,6 @@ extern LayoutType peloton_layout_mode;
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 const int ACTIVE_TILEGROUP_COUNT = 1;
-
-const int INDIRECTION_ARRAY_MAX_SIZE = 1024 * 1024;
 
 const int INDIRECTION_ARRAYS_COUNT = 1;
 
@@ -70,19 +69,7 @@ namespace storage {
 
 class Tuple;
 class TileGroup;
-
-
-struct IndirectionArray {
-  ItemPointer *GetIndirection() {
-    size_t indirection_id =
-        indirection_counter_.fetch_add(1, std::memory_order_relaxed);
-    return &(indirections_[indirection_id]);
-  }
-
- private:
-  ItemPointer indirections_[INDIRECTION_ARRAY_MAX_SIZE];
-  std::atomic<size_t> indirection_counter_ = ATOMIC_VAR_INIT(0);
-};
+class IndirectionArray;
 
 
 //===--------------------------------------------------------------------===//
@@ -308,7 +295,7 @@ class DataTable : public AbstractTable {
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
   // INDIRECTIONS
-  IndirectionArray indirection_arrays_[INDIRECTION_ARRAYS_COUNT];
+  std::shared_ptr<IndirectionArray> indirection_arrays_[INDIRECTION_ARRAYS_COUNT];
 
   // data table mutex
   std::mutex data_table_mutex_;
