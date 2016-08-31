@@ -92,23 +92,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual Result AbortTransaction(Transaction *const current_txn);
 
-  virtual Transaction *BeginTransaction() {
-    txn_id_t txn_id = GetNextTransactionId();
-    cid_t begin_cid = GetNextCommitId();
-    Transaction *txn = new Transaction(txn_id, begin_cid);
-    
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-    txn->SetEpochId(eid);
+  virtual Transaction *BeginTransaction();
 
-    return txn;
-  }
-
-  virtual void EndTransaction(Transaction *current_txn) {
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
-
-    delete current_txn;
-    current_txn = nullptr;
-  }
+  virtual void EndTransaction(Transaction *current_txn);
 
  private:
 
