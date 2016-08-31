@@ -61,9 +61,13 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
-  // Create a tile group.
+  // Create tile groups.
   for (size_t i = 0; i < ACTIVE_TILEGROUP_COUNT; ++i) {
     AddDefaultTileGroup(i);
+  }
+  // Create indirection layers.
+  for (size_t i = 0; i < INDIRECTION_ARRAYS_COUNT; ++i) {
+    indirection_arrays_[i].reset(new IndirectionArray());
   }
 }
 
@@ -296,9 +300,18 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   size_t indirection_array_id = number_of_tuples_ % INDIRECTION_ARRAYS_COUNT;
 
-  *index_entry_ptr = indirection_arrays_[indirection_array_id].GetIndirection();
+  size_t indirection_offset = indirection_arrays_[indirection_array_id]->AllocateIndirection();
+
+  while (indirection_offset == INVALID_INDIRECTION_OFFSET);
+
+  *index_entry_ptr = indirection_arrays_[indirection_array_id]->GetIndirectionByOffset(indirection_offset);
   (*index_entry_ptr)->block = location.block;
   (*index_entry_ptr)->offset = location.offset;
+
+
+  if (indirection_offset == INDIRECTION_ARRAY_MAX_SIZE - 1) {
+    indirection_arrays_[indirection_array_id].reset(new IndirectionArray());
+  }
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
