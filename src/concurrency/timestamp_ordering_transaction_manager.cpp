@@ -20,6 +20,7 @@
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace concurrency {
@@ -80,13 +81,37 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
   *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
+Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
+  txn_id_t txn_id = GetNextTransactionId();
+  cid_t begin_cid = GetNextCommitId();
+  Transaction *txn = new Transaction(txn_id, begin_cid);
+  
+  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+  txn->SetEpochId(eid);
+
+  return txn;
+}
+
+void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
+  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
+  if (current_txn->GetResult() == RESULT_SUCCESS) {
+    gc::GCManagerFactory::GetInstance().RegisterCommittedTransaction(current_txn->GetRWSet(), current_txn->GetBeginCommitId());
+  } else {
+    gc::GCManagerFactory::GetInstance().RegisterAbortedTransaction(current_txn->GetRWSet(), GetNextCommitId());
+  }
+
+
+  delete current_txn;
+  current_txn = nullptr;
+}
+
+
 
 TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetInstance() {
   static TimestampOrderingTransactionManager txn_manager;
   return txn_manager;
 }
-
-
 
 bool TimestampOrderingTransactionManager::IsOccupied(
     Transaction *const current_txn, 
