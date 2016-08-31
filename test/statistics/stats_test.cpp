@@ -29,8 +29,6 @@
 #include "statistics/stats_tests_util.h"
 
 #include <iostream>
-using std::cout;
-using std::endl;
 
 namespace peloton {
 namespace test {
