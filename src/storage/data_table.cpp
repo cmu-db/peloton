@@ -67,7 +67,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   }
   // Create indirection layers.
   for (size_t i = 0; i < INDIRECTION_ARRAYS_COUNT; ++i) {
-    indirection_arrays_[i].reset(new IndirectionArray());
+    indirection_arrays_[i] = std::shared_ptr<IndirectionArray>(new IndirectionArray());
   }
 }
 
@@ -310,7 +310,8 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
 
   if (indirection_offset == INDIRECTION_ARRAY_MAX_SIZE - 1) {
-    indirection_arrays_[indirection_array_id].reset(new IndirectionArray());
+
+    indirection_arrays_[indirection_array_id] = std::shared_ptr<IndirectionArray>(new IndirectionArray());
   }
 
   auto &transaction_manager =
