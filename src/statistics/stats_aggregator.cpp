@@ -38,9 +38,12 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
 
 StatsAggregator::~StatsAggregator() {
   LOG_DEBUG("StatsAggregator destruction\n");
+  // Delete later: I keep this double-free here to show that we're using
+  // jemalloc...
+  /*
   for (auto &stats_item : backend_stats_) {
     delete stats_item.second;
-  }
+  }*/
   try {
     ofs_.close();
   }
