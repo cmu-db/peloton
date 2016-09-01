@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/executor_tests_util.h"
 
 #include <cstdlib>
@@ -164,7 +163,7 @@ std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(
  * @param num_rows Number of tuples to insert.
  */
 void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
-                                      bool mutate, bool random, bool group_by, 
+                                      bool mutate, bool random, bool group_by,
                                       concurrency::Transaction *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
@@ -213,7 +212,8 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     tuple.SetValue(3, string_value, testing_pool);
 
     ItemPointer *index_entry_ptr = nullptr;
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, current_txn, &index_entry_ptr);
+    ItemPointer tuple_slot_id =
+        table->InsertTuple(&tuple, current_txn, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
@@ -258,8 +258,7 @@ void ExecutorTestsUtil::PopulateTiles(
     ItemPointer *index_entry_ptr = nullptr;
     oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
     txn_manager.PerformInsert(
-        current_txn,
-        ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id), 
+        current_txn, ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id),
         index_entry_ptr);
   }
 
@@ -302,9 +301,7 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 }
 
 storage::DataTable *ExecutorTestsUtil::CreateTable(
-    int tuples_per_tilegroup_count,
-    bool indexes,
-    oid_t table_oid) {
+    int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
@@ -324,18 +321,18 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     // This holds schema of the underlying table, which stays all the same
     // for all indices on the same underlying table
     auto tuple_schema = table->GetSchema();
-    
+
     // This points to the schmea of only columns indiced by the index
     // This is basically selecting tuple_schema() with key_attrs as index
     // but the order inside tuple schema is preserved - the order of schema
     // inside key_schema is not the order of real key
     catalog::Schema *key_schema;
-    
+
     // This will be created for each index on the table
     // and the metadata is passed as part of the index construction paratemter
     // list
     index::IndexMetadata *index_metadata;
-    
+
     // Whether keys should be unique. For primary key this must be true;
     // for secondary keys this might be true as an extra constraint
     bool unique;
@@ -346,7 +343,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 
     key_attrs = {0};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-    
+
     // This is not redundant
     // since the key schema always follows the ordering of the base table
     // schema, we need real ordering of the key columns
@@ -355,26 +352,30 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+        "primary_btree_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
+        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        unique);
 
-    std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+    std::shared_ptr<index::Index> pkey_index(
+        index::IndexFactory::GetInstance(index_metadata));
 
     table->AddIndex(pkey_index);
 
     /////////////////////////////////////////////////////////////////
     // Add index on table column 0 and 1
     /////////////////////////////////////////////////////////////////
-    
+
     key_attrs = {0, 1};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "secondary_btree_index", 124, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, key_attrs, unique);
-    std::shared_ptr<index::Index> sec_index(index::IndexFactory::GetInstance(index_metadata));
+        "secondary_btree_index", 124, INVALID_OID, INVALID_OID,
+        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
+        key_schema, key_attrs, unique);
+    std::shared_ptr<index::Index> sec_index(
+        index::IndexFactory::GetInstance(index_metadata));
 
     table->AddIndex(sec_index);
   }
@@ -393,7 +394,7 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT,
-                                    false, false, false, txn);
+                                   false, false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   return table;

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "index/index.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -25,7 +24,7 @@
 
 namespace peloton {
 namespace index {
-  
+
 /*
  * GetColumnCount() - Returns the number of indexed columns
  *
@@ -45,23 +44,22 @@ oid_t IndexMetadata::GetColumnCount() const {
  * However, tuple schema belongs to the table, such that this metadata should
  * not destroy the tuple schema object on destruction
  */
-IndexMetadata::IndexMetadata(std::string index_name,
-                             oid_t index_oid,
-                             IndexType method_type,
-                             IndexConstraintType index_type,
-                             const catalog::Schema *tuple_schema,
-                             const catalog::Schema *key_schema,
-                             const std::vector<oid_t>& key_attrs,
-                             bool unique_keys) :
-  index_name(index_name),
-  index_oid(index_oid),
-  method_type(method_type),
-  index_type(index_type),
-  tuple_schema(tuple_schema),
-  key_schema(key_schema),
-  key_attrs(key_attrs),
-  tuple_attrs(),
-  unique_keys(unique_keys) {
+IndexMetadata::IndexMetadata(
+    std::string index_name, oid_t index_oid, oid_t table_oid,
+    oid_t database_oid, IndexType method_type, IndexConstraintType index_type,
+    const catalog::Schema *tuple_schema, const catalog::Schema *key_schema,
+    const std::vector<oid_t> &key_attrs, bool unique_keys)
+    : index_name(index_name),
+      index_oid(index_oid),
+      table_oid(table_oid),
+      database_oid(database_oid),
+      method_type(method_type),
+      index_type(index_type),
+      tuple_schema(tuple_schema),
+      key_schema(key_schema),
+      key_attrs(key_attrs),
+      tuple_attrs(),
+      unique_keys(unique_keys) {
 
   // Push the reverse mapping relation into tuple_attrs which maps
   // tuple key's column into index key's column
@@ -69,7 +67,7 @@ IndexMetadata::IndexMetadata(std::string index_name,
   tuple_attrs.resize(tuple_schema->GetColumnCount(), INVALID_OID);
 
   // For those column IDs not mapped, they are set to INVALID_OID
-  for(oid_t i = 0;i < key_attrs.size();i++) {
+  for (oid_t i = 0; i < key_attrs.size(); i++) {
     // That is the tuple column ID that index key column i is mapped to
     oid_t tuple_column_id = key_attrs[i];
 
@@ -86,7 +84,7 @@ IndexMetadata::IndexMetadata(std::string index_name,
 IndexMetadata::~IndexMetadata() {
   // clean up key schema
   delete key_schema;
-  
+
   // no need to clean the tuple schema
   return;
 }
@@ -96,7 +94,7 @@ const std::string IndexMetadata::GetInfo() const {
 
   os << "\tINDEX METADATA: [";
 
-  for(auto key_attr : key_attrs){
+  for (auto key_attr : key_attrs) {
     os << key_attr << " ";
   }
 
@@ -118,19 +116,18 @@ const std::string IndexMetadata::GetInfo() const {
  * from the caller, the Index object owns that metadata and is responsible
  * for destructing the metadata object on its own destruction
  */
-Index::Index(IndexMetadata *metadata) :
-  metadata(metadata),
-  indexed_tile_group_offset(0) {
+Index::Index(IndexMetadata *metadata)
+    : metadata(metadata), indexed_tile_group_offset(0) {
 
   // This is redundant
   index_oid = metadata->GetOid();
-  
+
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 
   // initialize pool
   pool = new VarlenPool(BACKEND_TYPE_MM);
-  
+
   return;
 }
 
@@ -138,7 +135,7 @@ Index::Index(IndexMetadata *metadata) :
  * Destructor
  */
 Index::~Index() {
-  
+
   // Free metadata which frees the key schema but not tuple schema
   // This is passed in as construction argument but Index object is
   // responsible for its destruction
@@ -146,7 +143,7 @@ Index::~Index() {
 
   // Free the varlen pool - it is allocted during construction
   delete pool;
-  
+
   return;
 }
 
@@ -157,16 +154,10 @@ void Index::ScanTest(const std::vector<Value> &value_list,
                      std::vector<ItemPointer *> &result) {
   IndexScanPredicate isp{};
 
-  isp.AddConjunctionScanPredicate(this,
-                                  value_list,
-                                  tuple_column_id_list,
+  isp.AddConjunctionScanPredicate(this, value_list, tuple_column_id_list,
                                   expr_list);
 
-  Scan(value_list,
-       tuple_column_id_list,
-       expr_list,
-       scan_direction,
-       result,
+  Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
        &isp.GetConjunctionList()[0]);
 
   return;
@@ -182,40 +173,40 @@ bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<ExpressionType> &expr_list,
                     const std::vector<Value> &value_list) {
   int diff;
-  
+
   // The size of these three arrays must be the same
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
   PL_ASSERT(expr_list.size() == value_list.size());
-  
+
   // Need the mapping
   const IndexMetadata *metadata_p = GetMetadata();
-  
+
   // This is the end of loop
   oid_t cond_num = tuple_column_id_list.size();
-  
+
   // This maps the tuple column ID to index key column ID
   // Since tuple_column_id_list is a list returned from the optimizer,
   // we should first map them to columns on index and then retrieve
   // comparion operand
-  const std::vector<oid_t> &tuple_to_index_map = \
-    metadata_p->GetTupleToIndexMapping();
-  
+  const std::vector<oid_t> &tuple_to_index_map =
+      metadata_p->GetTupleToIndexMapping();
+
   // Go over each attribute in the list of comparison columns
   // The key_columns_ids, as the name shows, saves the key column ids that
   // have values and expression needs to be compared.
 
-  for (oid_t i = 0;i < cond_num;i++) {
+  for (oid_t i = 0; i < cond_num; i++) {
     // First retrieve the tuple column ID from the map, and then map
     // it to the column ID of index key
     oid_t tuple_key_column_id = tuple_column_id_list[i];
     oid_t index_key_column_id = tuple_to_index_map[tuple_key_column_id];
-    
+
     // This the comparison right hand side operand
     const Value &rhs = value_list[i];
-    
+
     // Also retrieve left hand side operand using index key column ID
     const Value &lhs = index_key.GetValue(index_key_column_id);
-    
+
     // Expression type. We use this to interpret comparison result
     //
     // Possible results of comparison are: EQ, >, <
@@ -229,7 +220,7 @@ bool Index::Compare(const AbstractTuple &index_key,
     // accordingly
     if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
       bool bret = lhs.InList(rhs);
-      
+
       if (bret == true) {
         diff = VALUE_COMPARE_EQUAL;
       } else {
@@ -316,11 +307,10 @@ bool Index::Compare(const AbstractTuple &index_key,
  * index_util impossible.
  */
 bool Index::ConstructLowerBoundTuple(
-    storage::Tuple *index_key,
-    const std::vector<peloton::Value> &values,
+    storage::Tuple *index_key, const std::vector<peloton::Value> &values,
     const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types) {
-      
+
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
   bool all_constraints_equal = true;
@@ -328,28 +318,28 @@ bool Index::ConstructLowerBoundTuple(
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
-    
+
     // If the current column of the key has a predicate item
     // specified in the key column list
     auto key_column_itr =
         std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
-        
+
     bool placeholder = false;
     Value value;
 
     // This column is part of the key column ids
     if (key_column_itr != key_column_ids.end()) {
-      
+
       // This is the index into value list and expression type list
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
-      
+
       // If there is an "==" for the current column then we could fix the value
       // for index key
       // otherwise we know not all predicate items are "==", i.e. this is not
       // a point query and potentially requires an index scan
       if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
         placeholder = true;
-        
+
         // This is the value object that will be filled into the index key
         value = values[offset];
       } else {
@@ -367,15 +357,14 @@ bool Index::ConstructLowerBoundTuple(
       index_key->SetValue(column_itr, value, GetPool());
     } else {
       auto value_type = schema->GetType(column_itr);
-      
-      index_key->SetValue(column_itr,
-                          Value::GetMinValue(value_type),
+
+      index_key->SetValue(column_itr, Value::GetMinValue(value_type),
                           GetPool());
     }
-  } // for all columns in index key
+  }  // for all columns in index key
 
   LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
-  
+
   // Corner case: If not all columns have a "==" relation then still
   // this is not a point query though all existing predicate items
   // are "=="
