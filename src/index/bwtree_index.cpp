@@ -11,11 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/logger.h"
+#include "common/config.h"
 #include "index/bwtree_index.h"
 #include "index/index_key.h"
 #include "storage/tuple.h"
 
 #include "index/scan_optimizer.h"
+#include "statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace index {
@@ -57,6 +59,10 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
 
   bool ret = container.Insert(index_key, value);
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+  }
+
   return ret;
 }
 
@@ -70,11 +76,16 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
                                     ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
+  size_t delete_count = 0;
 
   // In Delete() since we just use the value for comparison (i.e. read-only)
   // it is unnecessary for us to allocate memory
   bool ret = container.Delete(index_key, value);
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexDeletes(
+        delete_count, metadata);
+  }
   return ret;
 }
 
@@ -99,6 +110,10 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
     assert(ret == true);
   } else {
     assert(ret == false);
+  }
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
   }
 
   return ret;
@@ -190,6 +205,10 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &value_list,
     }
   }  // if is full scan
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+                                                                  metadata);
+  }
   return;
 }
 
@@ -203,6 +222,10 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
     it++;
   }
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+                                                                  metadata);
+  }
   return;
 }
 
@@ -214,6 +237,11 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
 
   // This function in BwTree fills a given vector
   container.GetValue(index_key, result);
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+                                                                  metadata);
+  }
 
   return;
 }
