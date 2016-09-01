@@ -52,7 +52,7 @@ boost::circular_buffer<double> LatencyMetric::Copy() {
   return new_buffer;
 }
 
-std::string LatencyMetric::ToString() const {
+const std::string LatencyMetric::GetInfo() const {
   std::stringstream ss;
   ss << "TXN LATENCY (ms): [ ";
   ss << "average=" << latency_measurements_.average_;

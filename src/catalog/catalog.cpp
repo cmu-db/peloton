@@ -156,10 +156,12 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
 
+    bool unique_keys = true;
+
     index_metadata = new index::IndexMetadata(
         "customer_pkey", GetNextOid(), table->GetOid(), database->GetOid(),
         INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema,
-        key_schema, key_attrs, true);
+        key_schema, key_attrs, unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
         index::IndexFactory::GetInstance(index_metadata));

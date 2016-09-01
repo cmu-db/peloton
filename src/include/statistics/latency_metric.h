@@ -79,7 +79,7 @@ class LatencyMetric : public AbstractMetric {
   void Aggregate(AbstractMetric &source);
 
   // Returns a string representation of this latency metric
-  std::string ToString() const;
+  const std::string GetInfo() const;
 
   // Returns a copy of the latencies collected
   boost::circular_buffer<double> Copy();

@@ -64,7 +64,7 @@ class DatabaseMetric : public AbstractMetric {
 
   void Aggregate(AbstractMetric &source);
 
-  std::string ToString() const;
+  const std::string GetInfo() const;
 
  private:
   //===--------------------------------------------------------------------===//

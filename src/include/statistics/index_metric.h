@@ -73,11 +73,11 @@ class IndexMetric : public AbstractMetric {
 
   void Aggregate(AbstractMetric &source);
 
-  inline std::string ToString() const {
+  inline const std::string GetInfo() const {
     std::stringstream ss;
     ss << "INDEXES: " << std::endl;
     ss << index_name_ << "(OID=" << index_id_ << "): ";
-    ss << index_access_.ToString() << std::endl;
+    ss << index_access_.GetInfo() << std::endl;
     return ss.str();
   }
 

@@ -89,8 +89,10 @@ class AccessMetric : public AbstractMetric {
   //===--------------------------------------------------------------------===//
 
   inline bool operator==(const AccessMetric &other) {
-    for (size_t i = 0; i < access_counters_.size(); ++i) {
-      if (access_counters_[i] != other.access_counters_[i]) {
+    for (size_t access_counter_itr = 0;
+         access_counter_itr < access_counters_.size(); ++access_counter_itr) {
+      if (access_counters_[access_counter_itr] !=
+          other.access_counters_[access_counter_itr]) {
         return false;
       }
     }
@@ -109,12 +111,12 @@ class AccessMetric : public AbstractMetric {
   }
 
   // Returns a string representation of this access metric
-  inline std::string ToString() const {
+  inline const std::string GetInfo() const {
     std::stringstream ss;
-    ss << "[ reads=" << access_counters_[READ_COUNTER].ToString()
-       << ", updates=" << access_counters_[UPDATE_COUNTER].ToString()
-       << ", inserts=" << access_counters_[INSERT_COUNTER].ToString()
-       << ", deletes=" << access_counters_[DELETE_COUNTER].ToString() << " ]";
+    ss << "[ reads=" << access_counters_[READ_COUNTER].GetInfo()
+       << ", updates=" << access_counters_[UPDATE_COUNTER].GetInfo()
+       << ", inserts=" << access_counters_[INSERT_COUNTER].GetInfo()
+       << ", deletes=" << access_counters_[DELETE_COUNTER].GetInfo() << " ]";
     return ss.str();
   }
 

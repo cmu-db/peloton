@@ -777,14 +777,24 @@ enum StatsType {
 };
 
 enum MetricType {
-  TEMPORAL_METRIC = 0,
+  // Metric type is invalid
+  INVALID_METRIC = 0,
+  // Metric to count a number
   COUNTER_METRIC = 1,
+  // Access information, e.g., # tuples read, inserted, updated, deleted
   ACCESS_METRIC = 2,
+  // Life time of a object
   LIFETIME_METRIC = 3,
+  // Statistics for a specific database
   DATABASE_METRIC = 4,
+  // Statistics for a specific table
   TABLE_METRIC = 5,
+  // Statistics for a specific index
   INDEX_METRIC = 6,
-  LATENCY_METRIC = 7
+  // Latency of transactions
+  LATENCY_METRIC = 7,
+  // Timestamp, e.g., creation time of a table/index
+  TEMPORAL_METRIC = 8,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;
