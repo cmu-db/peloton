@@ -79,14 +79,14 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RegisterCommittedTransaction(const WriteSet &w_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterCommittedTransaction(std::shared_ptr<WriteSet> w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
 
-void TransactionLevelGCManager::RegisterAbortedTransaction(const WriteSet &w_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterAbortedTransaction(std::shared_ptr<WriteSet> w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
@@ -105,7 +105,7 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
     [this, &garbages, &tuple_counter, max_cid](const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
       bool res = garbage_ctx->timestamp_ < max_cid;
       if (res) {
-        for (auto entry : garbage_ctx->w_set_) {
+        for (auto entry : *(garbage_ctx->w_set_.get())) {
           for (auto &element : entry.second) {
             DeleteTupleFromIndexes(ItemPointer(entry.first, element)); 
           }
@@ -128,7 +128,7 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
     if (garbage_ctx->timestamp_ < max_cid) {
       // Now that we know we need to recycle tuple, we need to delete all
       // tuples from the indexes to which it belongs as well.
-      for (auto &entry : garbage_ctx->w_set_) {
+      for (auto &entry : *(garbage_ctx->w_set_.get())) {
         for (auto &element : entry.second) {
             DeleteTupleFromIndexes(ItemPointer(entry.first, element)); 
         }
@@ -179,7 +179,7 @@ void TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_c
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx) {
   // If the tuple being reset no longer exists, just skip it
-  for (auto &entry : gc_ctx->w_set_) {
+  for (auto &entry : *(gc_ctx->w_set_.get())) {
     for (auto &element : entry.second) {
 
       auto &manager = catalog::Manager::GetInstance();

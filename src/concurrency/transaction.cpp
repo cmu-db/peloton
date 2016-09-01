@@ -53,7 +53,7 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       is_written_ = true;
 
       // insert into write set.
-      w_set_[tile_group_id].insert(tuple_id);
+      (*(w_set_.get()))[tile_group_id].insert(tuple_id);
       return;
     }
     if (type == RW_TYPE_UPDATE) {
@@ -98,7 +98,7 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       // record write.
       is_written_ = true;
 
-      w_set_[tile_group_id].insert(tuple_id);
+      (*(w_set_.get()))[tile_group_id].insert(tuple_id);
       return false;
     }
     if (type == RW_TYPE_UPDATE) {
