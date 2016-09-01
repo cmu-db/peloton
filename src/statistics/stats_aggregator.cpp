@@ -128,5 +128,40 @@ StatsAggregator &StatsAggregator::GetInstance(int64_t aggregation_interval_ms) {
   return stats_aggregator;
 }
 
+//===--------------------------------------------------------------------===//
+// HELPER FUNCTIONS
+//===--------------------------------------------------------------------===//
+
+// Register the BackendStatsContext of a worker thread to global Stats
+// Aggregator
+void StatsAggregator::RegisterContext(std::thread::id id_,
+                                      BackendStatsContext *context_) {
+  {
+    std::lock_guard<std::mutex> lock(stats_mutex_);
+
+    PL_ASSERT(backend_stats_.find(id_) == backend_stats_.end());
+
+    thread_number_++;
+    backend_stats_[id_] = context_;
+  }
+  LOG_DEBUG("Stats aggregator hash map size: %ld\n", backend_stats_.size());
+}
+
+// Unregister a BackendStatsContext. Currently we directly reuse the thread id
+// instead of explicitly unregistering it.
+void StatsAggregator::UnregisterContext(std::thread::id id) {
+  {
+    std::lock_guard<std::mutex> lock(stats_mutex_);
+
+    if (backend_stats_.find(id) != backend_stats_.end()) {
+      stats_history_.Aggregate(*backend_stats_[id]);
+      backend_stats_.erase(id);
+      thread_number_--;
+    } else {
+      LOG_DEBUG("stats_context already deleted!");
+    }
+  }
+}
+
 }  // namespace stats
 }  // namespace peloton
