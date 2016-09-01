@@ -19,19 +19,20 @@
 
 #include "libcuckoo/cuckoohash_map.hh"
 
-#include "catalog/manager.h"
-#include "common/types.h"
-#include "index/index.h"
-#include "statistics/counter_metric.h"
-#include "statistics/database_metric.h"
+#include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
-#include "statistics/table_metric.h"
-#include "storage/database.h"
-#include "storage/tile_group.h"
+#include "statistics/database_metric.h"
 
 namespace peloton {
+
+namespace index {
+class IndexMetadata;
+}
+
 namespace stats {
+
+class CounterMetric;
 
 /**
  * Context of backend stats as a singleton per thread
@@ -60,7 +61,7 @@ class BackendStatsContext {
   IndexMetric* GetIndexMetric(oid_t database_id, oid_t table_id,
                               oid_t index_id);
 
-  inline LatencyMetric& GetTxnLatencyMetric() { return txn_latencies_; }
+  LatencyMetric& GetTxnLatencyMetric();
 
   void IncrementTableReads(oid_t tile_group_id);
 
