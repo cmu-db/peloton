@@ -45,7 +45,7 @@ BackendStatsContext::BackendStatsContext(size_t max_latency_history,
 }
 
 BackendStatsContext::~BackendStatsContext() {
-  // peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
+  StatsAggregator::GetInstance().UnregisterContext(thread_id_);
 }
 
 //===--------------------------------------------------------------------===//

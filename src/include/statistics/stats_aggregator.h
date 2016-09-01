@@ -22,6 +22,7 @@
 #include <fstream>
 
 #include "common/logger.h"
+#include "common/macros.h"
 #include "statistics/backend_stats_context.h"
 
 //===--------------------------------------------------------------------===//
@@ -80,39 +81,11 @@ class StatsAggregator {
 
   // Register the BackendStatsContext of a worker thread to global Stats
   // Aggregator
-  inline void RegisterContext(std::thread::id id_,
-                              BackendStatsContext *context_) {
-    {
-      std::lock_guard<std::mutex> lock(stats_mutex_);
-
-      // FIXME: This is sort of hacky. Eventually we want to free the
-      // StatsContext
-      // when the thread exit
-      if (backend_stats_.find(id_) == backend_stats_.end()) {
-        thread_number_++;
-      } else {
-        stats_history_.Aggregate(*backend_stats_[id_]);
-        delete backend_stats_[id_];
-      }
-      backend_stats_[id_] = context_;
-    }
-    LOG_DEBUG("Stats aggregator hash map size: %ld\n", backend_stats_.size());
-  }
+  void RegisterContext(std::thread::id id_, BackendStatsContext *context_);
 
   // Unregister a BackendStatsContext. Currently we directly reuse the thread id
   // instead of explicitly unregistering it.
-  inline void UnregisterContext(std::thread::id id) {
-    {
-      std::lock_guard<std::mutex> lock(stats_mutex_);
-
-      if (backend_stats_.find(id) != backend_stats_.end()) {
-        stats_history_.Aggregate(*backend_stats_[id]);
-        delete backend_stats_[id];
-        backend_stats_.erase(id);
-        thread_number_--;
-      }
-    }
-  }
+  void UnregisterContext(std::thread::id id);
 
   // Aggregate the stats of current living threads
   void Aggregate(int64_t &interval_cnt, double &alpha,
