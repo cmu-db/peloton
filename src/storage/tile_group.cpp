@@ -44,7 +44,7 @@ TileGroup::TileGroup(BackendType backend_type,
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
-    oid_t tile_id = manager.GetNextOid();
+    oid_t tile_id = manager.GetNextTileId();
 
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,

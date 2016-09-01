@@ -38,7 +38,7 @@ extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 const int ACTIVE_TILEGROUP_COUNT = 1;
 
-const int INDIRECTION_ARRAYS_COUNT = 1;
+const int ACTIVE_INDIRECTION_ARRAY_COUNT = 1;
 
 
 namespace peloton {
@@ -261,6 +261,8 @@ class DataTable : public AbstractTable {
   oid_t AddDefaultTileGroup();
   // add a tile group to the table. replace the active_tile_group_id-th active tile group.
   oid_t AddDefaultTileGroup(const size_t &active_tile_group_id);
+
+  oid_t AddDefaultIndirectionArray(const size_t &active_indirection_array_id);
   
   // get a partitioning with given layout type
   column_map_type GetTileGroupLayout(LayoutType layout_type);
@@ -295,7 +297,7 @@ class DataTable : public AbstractTable {
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
   // INDIRECTIONS
-  std::shared_ptr<IndirectionArray> indirection_arrays_[INDIRECTION_ARRAYS_COUNT];
+  std::shared_ptr<storage::IndirectionArray> active_indirection_arrays_[ACTIVE_INDIRECTION_ARRAY_COUNT];
 
   // data table mutex
   std::mutex data_table_mutex_;

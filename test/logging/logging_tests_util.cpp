@@ -46,7 +46,7 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
     std::vector<std::shared_ptr<storage::Tuple>> &tuples,
     size_t tile_group_size, size_t table_tile_group_count,
     int out_of_range_tuples, int delete_tuples) {
-  auto tile_group_start_oid = catalog::Manager::GetInstance().GetNextOid();
+  auto tile_group_start_oid = catalog::Manager::GetInstance().GetNextTileGroupId();
   std::vector<logging::TupleRecord> records;
   for (size_t block = 1; block <= table_tile_group_count; ++block) {
     for (size_t offset = 0; offset < tile_group_size; ++offset) {

@@ -65,9 +65,9 @@ TEST_F(ManagerTests, TransactionTest) {
   LaunchParallelTest(8, AddTileGroup);
 
   LOG_INFO("Catalog allocations :: %u",
-           catalog::Manager::GetInstance().GetCurrentOid());
+           catalog::Manager::GetInstance().GetCurrentTileGroupId());
 
-  // EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
+  // EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentTileGroupId(), 800);
 }
 
 }  // End test namespace
