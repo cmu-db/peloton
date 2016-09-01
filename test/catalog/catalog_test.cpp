@@ -17,6 +17,10 @@
 #include "common/logger.h"
 #include "catalog/catalog.h"
 
+#define CATALOG_DATABASE_NAME "catalog_db"
+#define DATABASE_CATALOG_NAME "database_catalog"
+#define TABLE_CATALOG_NAME "table_catalog"
+
 namespace peloton {
 namespace test {
 
@@ -27,7 +31,12 @@ namespace test {
 class CatalogTests : public PelotonTest {};
 
 TEST_F(CatalogTests, BootstrappingCatalog) {
-  EXPECT_EQ(catalog::Catalog::GetInstance()->GetDatabaseCount(), 1);
+  auto catalog = catalog::Catalog::GetInstance();
+  EXPECT_EQ(catalog->GetDatabaseCount(), 1);
+  storage::Database *database = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  EXPECT_NE(database, nullptr);
+  auto metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
+  EXPECT_NE(metric_table, nullptr);
 }
 
 TEST_F(CatalogTests, CreatingDatabase) {

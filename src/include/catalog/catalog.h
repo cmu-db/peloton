@@ -22,6 +22,11 @@
 #include "catalog/catalog_util.h"
 #include "common/varlen_pool.h"
 
+#define CATALOG_DATABASE_NAME "catalog_db"
+#define DATABASE_CATALOG_NAME "database_catalog"
+#define TABLE_CATALOG_NAME "table_catalog"
+#define DATABASE_METRIC_NAME "database_metric"
+
 namespace peloton {
 
 namespace catalog {
@@ -101,11 +106,18 @@ class Catalog {
   std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
       oid_t database_id, std::string table_name);
 
+  // Create Table for database metrics
+  std::unique_ptr<storage::DataTable> CreateDatabaseMetricsCatalog(
+      oid_t database_id, std::string table_name);
+
   // Initialize the schema of the database catalog
   std::unique_ptr<Schema> InitializeDatabaseSchema();
 
   // Initialize the schema of the table catalog
   std::unique_ptr<Schema> InitializeTablesSchema();
+
+  // Initialize the schema of the database metrics table
+  std::unique_ptr<Schema> InitializeDatabaseMetricsTable();
 
   // Get table from a database with its name
   storage::DataTable *GetTableWithName(std::string database_name,

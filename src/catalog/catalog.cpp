@@ -16,10 +16,6 @@
 #include "catalog/manager.h"
 #include "index/index_factory.h"
 
-#define CATALOG_DATABASE_NAME "catalog_db"
-#define DATABASE_CATALOG_NAME "database_catalog"
-#define TABLE_CATALOG_NAME "table_catalog"
-
 namespace peloton {
 namespace catalog {
 
@@ -42,6 +38,13 @@ void Catalog::CreateCatalogDatabase() {
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table);
+
+  // Create table for database metrics
+  auto database_metrics_catalog = 
+      CreateDatabaseMetricsCatalog(START_OID, DATABASE_METRIC_NAME);
+  storage::DataTable *database_metrics_table = 
+      database_metrics_catalog.release();
+  database->AddTable(database_metrics_table);
   databases_.push_back(database);
 }
 
@@ -426,6 +429,23 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   auto database_schema = InitializeDatabaseSchema();
 
   catalog::Schema *schema = database_schema.release();
+
+  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
+      database_id, GetNextOid(), schema, database_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
+
+  return table;
+}
+
+// Create Table for pg_database
+std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseMetricsCatalog(
+    oid_t database_id, std::string database_name) {
+  bool own_schema = true;
+  bool adapt_table = false;
+  // TODO create schema for database metrics
+  auto table_schema = InitializeDatabaseSchema();
+
+  catalog::Schema *schema = table_schema.release();
 
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       database_id, GetNextOid(), schema, database_name,
