@@ -58,9 +58,9 @@ class GCManager {
 
   }
 
-  virtual void RegisterCommittedTransaction(const RWSet &rw_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterCommittedTransaction(const ReadWriteSet &rw_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterAbortedTransaction(const RWSet &rw_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterAbortedTransaction(const ReadWriteSet &rw_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
  private:
   bool is_running_;

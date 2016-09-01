@@ -96,9 +96,9 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
   if (current_txn->GetResult() == RESULT_SUCCESS) {
-    gc::GCManagerFactory::GetInstance().RegisterCommittedTransaction(current_txn->GetRWSet(), current_txn->GetBeginCommitId());
+    gc::GCManagerFactory::GetInstance().RegisterCommittedTransaction(current_txn->GetReadWriteSet(), current_txn->GetBeginCommitId());
   } else {
-    gc::GCManagerFactory::GetInstance().RegisterAbortedTransaction(current_txn->GetRWSet(), GetNextCommitId());
+    gc::GCManagerFactory::GetInstance().RegisterAbortedTransaction(current_txn->GetReadWriteSet(), GetNextCommitId());
   }
 
 
@@ -582,7 +582,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetBeginCommitId();
 
-  auto &rw_set = current_txn->GetRWSet();
+  auto &rw_set = current_txn->GetReadWriteSet();
 
   // install everything.
   // 1. install a new version for update operations;
@@ -679,7 +679,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
-  auto &rw_set = current_txn->GetRWSet();
+  auto &rw_set = current_txn->GetReadWriteSet();
 
   std::vector<ItemPointer> aborted_versions;
 

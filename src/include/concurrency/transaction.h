@@ -85,7 +85,7 @@ class Transaction : public Printable {
   // Return true if we detect INS_DEL
   bool RecordDelete(const ItemPointer &);
 
-  inline const RWSet &GetRWSet() {
+  inline const ReadWriteSet &GetReadWriteSet() {
     return rw_set_;
   }
 
@@ -119,7 +119,7 @@ class Transaction : public Printable {
   // epoch id
   size_t epoch_id_;
 
-  RWSet rw_set_;
+  ReadWriteSet rw_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;

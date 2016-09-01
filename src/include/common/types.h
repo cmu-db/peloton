@@ -20,6 +20,7 @@
 #include <vector>
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -896,7 +897,8 @@ enum RWType {
   RW_TYPE_INS_DEL  // delete after insert.
 };
 
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> RWSet;
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> ReadWriteSet;
+typedef std::unordered_map<oid_t, std::unordered_set<oid_t>> WriteSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
