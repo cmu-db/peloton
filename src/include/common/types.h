@@ -73,7 +73,7 @@ enum ReplicationType {
 enum GarbageCollectionType {
   GARBAGE_COLLECTION_TYPE_INVALID = 0,
   GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
-  GARBAGE_COLLECTION_TYPE_ON = 2  // turn on GC
+  GARBAGE_COLLECTION_TYPE_ON = 2    // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
@@ -414,7 +414,6 @@ enum IsolationLevelType {
 // Garbage Collection Types
 //===--------------------------------------------------------------------===//
 
-
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
   BACKEND_TYPE_MM = 1,       // on volatile memory
@@ -428,10 +427,10 @@ enum BackendType {
 //===--------------------------------------------------------------------===//
 
 enum IndexType {
-  INDEX_TYPE_INVALID = 0,   // invalid index type
-  INDEX_TYPE_BTREE = 1,     // btree
-  INDEX_TYPE_BWTREE = 2,    // bwtree
-  INDEX_TYPE_HASH = 3       // hash
+  INDEX_TYPE_INVALID = 0,  // invalid index type
+  INDEX_TYPE_BTREE = 1,    // btree
+  INDEX_TYPE_BWTREE = 2,   // bwtree
+  INDEX_TYPE_HASH = 3      // hash
 };
 
 enum IndexConstraintType {
@@ -770,6 +769,36 @@ enum CheckpointStatus {
   CHECKPOINT_STATUS_RECOVERY = 2,
   CHECKPOINT_STATUS_DONE_RECOVERY = 3,
   CHECKPOINT_STATUS_CHECKPOINTING = 4,
+};
+
+// Statistics Collection Type
+// Disable or enable
+enum StatsType {
+  // Disable statistics collection
+  STATS_TYPE_INVALID = 0,
+  // Enable statistics collection
+  STATS_TYPE_ENABLE = 1,
+};
+
+enum MetricType {
+  // Metric type is invalid
+  INVALID_METRIC = 0,
+  // Metric to count a number
+  COUNTER_METRIC = 1,
+  // Access information, e.g., # tuples read, inserted, updated, deleted
+  ACCESS_METRIC = 2,
+  // Life time of a object
+  LIFETIME_METRIC = 3,
+  // Statistics for a specific database
+  DATABASE_METRIC = 4,
+  // Statistics for a specific table
+  TABLE_METRIC = 5,
+  // Statistics for a specific index
+  INDEX_METRIC = 6,
+  // Latency of transactions
+  LATENCY_METRIC = 7,
+  // Timestamp, e.g., creation time of a table/index
+  TEMPORAL_METRIC = 8,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;

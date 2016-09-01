@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 #include "common/harness.h"
 
@@ -38,8 +37,7 @@ catalog::Schema *tuple_schema = nullptr;
 
 std::shared_ptr<ItemPointer> item(new ItemPointer(120, 5));
 
-index::Index *BuildIndex(const bool unique_keys,
-                         const IndexType index_type) {
+index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   // Build tuple and key schema
   std::vector<std::vector<std::string>> column_names;
   std::vector<catalog::Column> columns;
@@ -70,8 +68,9 @@ index::Index *BuildIndex(const bool unique_keys,
 
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "test_index", 125, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, key_attrs, unique_keys);
+      "test_index", 125, INVALID_OID, INVALID_OID, index_type,
+      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, key_attrs,
+      unique_keys);
 
   // Build index
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
@@ -88,13 +87,12 @@ index::Index *BuildIndex(const bool unique_keys,
  *
  * The insert pattern is depicted as follows:
  *
- * |<--- thread 0 --->|<--- thread 1 --->| ... |<--- thread (num_thread - 1) --->|
+ * |<--- thread 0 --->|<--- thread 1 --->| ... |<--- thread (num_thread - 1)
+ *--->|
  *  ^                ^
  * start key       end key
  */
-static void InsertTest1(index::Index *index,
-                        size_t num_thread,
-                        size_t num_key,
+static void InsertTest1(index::Index *index, size_t num_thread, size_t num_key,
                         uint64_t thread_id) {
   // To avoid compiler warning
   (void)num_thread;
@@ -105,13 +103,13 @@ static void InsertTest1(index::Index *index,
   size_t end_key = start_key + num_key;
 
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
-  
-  // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
 
-  for (size_t i = start_key;i < end_key;i++) {
-    auto key_value =  ValueFactory::GetIntegerValue(i);
+  // Set the non-indexed column of the key to avoid undefined behaviour
+  // key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
+
+  for (size_t i = start_key; i < end_key; i++) {
+    auto key_value = ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -119,7 +117,7 @@ static void InsertTest1(index::Index *index,
     auto status = index->InsertEntry(key.get(), item.get());
     EXPECT_TRUE(status);
   }
-  
+
   return;
 }
 
@@ -131,13 +129,12 @@ static void InsertTest1(index::Index *index,
  *
  * The delete pattern is depicted as follows:
  *
- * |<--- thread 0 --->|<--- thread 1 --->| ... |<--- thread (num_thread - 1) --->|
+ * |<--- thread 0 --->|<--- thread 1 --->| ... |<--- thread (num_thread - 1)
+ *--->|
  *  ^                ^
  * start key       end key
  */
-static void DeleteTest1(index::Index *index,
-                        size_t num_thread,
-                        size_t num_key,
+static void DeleteTest1(index::Index *index, size_t num_thread, size_t num_key,
                         uint64_t thread_id) {
   // To avoid compiler warning
   (void)num_thread;
@@ -150,11 +147,11 @@ static void DeleteTest1(index::Index *index,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
 
-  for (size_t i = start_key;i < end_key;i++) {
-    auto key_value =  ValueFactory::GetIntegerValue(i);
+  for (size_t i = start_key; i < end_key; i++) {
+    auto key_value = ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -173,15 +170,15 @@ static void DeleteTest1(index::Index *index,
  *
  * The insert pattern is depicted as follows:
  *
- * |0 1 2 3 .. (num_thread - 1)|0 1 2 3 .. (num_thread - 1)| ... |0 1 2 3 .. (num_thread - 1)|
+ * |0 1 2 3 .. (num_thread - 1)|0 1 2 3 .. (num_thread - 1)| ... |0 1 2 3 ..
+ *(num_thread - 1)|
  *  ^                           ^                                 ^
- * 1st key for thread 0       second key for thread 0            last key for thread 0
+ * 1st key for thread 0       second key for thread 0            last key for
+ *thread 0
  *
  * This test usually has higher contention and lower performance
  */
-static void InsertTest2(index::Index *index,
-                        size_t num_thread,
-                        size_t num_key,
+static void InsertTest2(index::Index *index, size_t num_thread, size_t num_key,
                         uint64_t thread_id) {
   // num_thread is the step for each iteration
   // thread_id is the offset of each iteration
@@ -189,12 +186,12 @@ static void InsertTest2(index::Index *index,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
-  for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
-    auto key_value =  ValueFactory::GetIntegerValue(i);
+  for (size_t i = thread_id; j < num_key; (i += num_thread), j++) {
+    auto key_value = ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -213,15 +210,15 @@ static void InsertTest2(index::Index *index,
  *
  * The delete pattern is depicted as follows:
  *
- * |0 1 2 3 .. (num_thread - 1)|0 1 2 3 .. (num_thread - 1)| ... |0 1 2 3 .. (num_thread - 1)|
+ * |0 1 2 3 .. (num_thread - 1)|0 1 2 3 .. (num_thread - 1)| ... |0 1 2 3 ..
+ *(num_thread - 1)|
  *  ^                           ^                                 ^
- * 1st key for thread 0       second key for thread 0            last key for thread 0
+ * 1st key for thread 0       second key for thread 0            last key for
+ *thread 0
  *
  * This test usually has higher contention and lower performance
  */
-static void DeleteTest2(index::Index *index,
-                        size_t num_thread,
-                        size_t num_key,
+static void DeleteTest2(index::Index *index, size_t num_thread, size_t num_key,
                         uint64_t thread_id) {
   // num_thread is the step for each iteration
   // thread_id is the offset of each iteration
@@ -229,12 +226,12 @@ static void DeleteTest2(index::Index *index,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
-  for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
-    auto key_value =  ValueFactory::GetIntegerValue(i);
+  for (size_t i = thread_id; j < num_key; (i += num_thread), j++) {
+    auto key_value = ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -246,15 +243,14 @@ static void DeleteTest2(index::Index *index,
   return;
 }
 
-
 /*
  * TestIndexPerformance() - Test driver for indices of a given type
  *
  * This function tests Insert and Delete performance together with
  * key scan
  */
-static void TestIndexPerformance(const IndexType& index_type) {
-  
+static void TestIndexPerformance(const IndexType &index_type) {
+
   // This is where we read all values in and verify them
   std::vector<ItemPointer *> location_ptrs;
 
@@ -262,13 +258,13 @@ static void TestIndexPerformance(const IndexType& index_type) {
   std::unique_ptr<index::Index> index(BuildIndex(false, index_type));
 
   // Parallel Test by default 1 Million key
-  
+
   // Number of threads doing insert or delete
   size_t num_thread = 4;
-  
+
   // Number of keys inserted by each thread
   size_t num_key = 1024 * 256;
-  
+
   Timer<> timer;
 
   ///////////////////////////////////////////////////////////////////
@@ -282,7 +278,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
   LaunchParallelTest(num_thread, InsertTest1, index.get(), num_thread, num_key);
 
   // Perform garbage collection
-  if(index->NeedGC() == true) {
+  if (index->NeedGC() == true) {
     index->PerformGC();
   }
 
@@ -291,21 +287,21 @@ static void TestIndexPerformance(const IndexType& index_type) {
   location_ptrs.clear();
 
   timer.Stop();
-  LOG_INFO("Test = InsertTest1; Type = %d; Duration = %.2lf",
-           (int)index_type,
+  LOG_INFO("Test = InsertTest1; Type = %d; Duration = %.2lf", (int)index_type,
            timer.GetDuration());
-  
+
   ///////////////////////////////////////////////////////////////////
   // Start DeleteTest1
   ///////////////////////////////////////////////////////////////////
-  
-  if(index_type != INDEX_TYPE_BWTREE) {
+
+  if (index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
-    LaunchParallelTest(num_thread, DeleteTest1, index.get(), num_thread, num_key);
+    LaunchParallelTest(num_thread, DeleteTest1, index.get(), num_thread,
+                       num_key);
 
     // Perform garbage collection
-    if(index->NeedGC() == true) {
+    if (index->NeedGC() == true) {
       index->PerformGC();
     }
 
@@ -314,26 +310,27 @@ static void TestIndexPerformance(const IndexType& index_type) {
     location_ptrs.clear();
 
     timer.Stop();
-    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf",
-             (int)index_type,
+    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf", (int)index_type,
              timer.GetDuration());
   } else {
-    LOG_INFO("INDEX_TYPE_BWTREE (type = %d) does not"
-             " support the following tests",
-             (int)index_type);
+    LOG_INFO(
+        "INDEX_TYPE_BWTREE (type = %d) does not"
+        " support the following tests",
+        (int)index_type);
   }
-  
+
   ///////////////////////////////////////////////////////////////////
   // Start InsertTest2
   ///////////////////////////////////////////////////////////////////
-  
-  if(index_type != INDEX_TYPE_BWTREE) {
+
+  if (index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
-    LaunchParallelTest(num_thread, InsertTest2, index.get(), num_thread, num_key);
+    LaunchParallelTest(num_thread, InsertTest2, index.get(), num_thread,
+                       num_key);
 
     // Perform garbage collection
-    if(index->NeedGC() == true) {
+    if (index->NeedGC() == true) {
       index->PerformGC();
     }
 
@@ -342,26 +339,27 @@ static void TestIndexPerformance(const IndexType& index_type) {
     location_ptrs.clear();
 
     timer.Stop();
-    LOG_INFO("Test = InsertTest2; Type = %d; Duration = %.2lf",
-             (int)index_type,
+    LOG_INFO("Test = InsertTest2; Type = %d; Duration = %.2lf", (int)index_type,
              timer.GetDuration());
   } else {
-    LOG_INFO("INDEX_TYPE_BWTREE (type = %d) does not"
-             " support the following tests",
-             (int)index_type);
+    LOG_INFO(
+        "INDEX_TYPE_BWTREE (type = %d) does not"
+        " support the following tests",
+        (int)index_type);
   }
-  
+
   ///////////////////////////////////////////////////////////////////
   // Start DeleteTest2
   ///////////////////////////////////////////////////////////////////
 
-  if(index_type != INDEX_TYPE_BWTREE) {
+  if (index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
-    LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread, num_key);
+    LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread,
+                       num_key);
 
     // Perform garbage collection
-    if(index->NeedGC() == true) {
+    if (index->NeedGC() == true) {
       index->PerformGC();
     }
 
@@ -370,13 +368,13 @@ static void TestIndexPerformance(const IndexType& index_type) {
     location_ptrs.clear();
 
     timer.Stop();
-    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf",
-             (int)index_type,
+    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf", (int)index_type,
              timer.GetDuration());
   } else {
-    LOG_INFO("INDEX_TYPE_BWTREE (type = %d) does not"
-             " support the following tests",
-             (int)index_type);
+    LOG_INFO(
+        "INDEX_TYPE_BWTREE (type = %d) does not"
+        " support the following tests",
+        (int)index_type);
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -384,7 +382,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
   ///////////////////////////////////////////////////////////////////
 
   delete tuple_schema;
-  
+
   return;
 }
 
@@ -392,10 +390,9 @@ TEST_F(IndexPerformanceTests, MultiThreadedTest) {
   std::vector<IndexType> index_types = {INDEX_TYPE_BWTREE};
 
   // Run the test suite for each types of index
-  for(auto index_type : index_types) {
+  for (auto index_type : index_types) {
     TestIndexPerformance(index_type);
   }
-
 }
 
 }  // End test namespace
