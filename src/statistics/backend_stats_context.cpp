@@ -39,13 +39,16 @@ BackendStatsContext::BackendStatsContext(size_t max_latency_history,
   std::thread::id this_id = std::this_thread::get_id();
   thread_id_ = this_id;
 
+  is_registered_to_aggregator_ = regiser_to_aggregator;
+
   // Register to the global aggregator
   if (regiser_to_aggregator == true)
     StatsAggregator::GetInstance().RegisterContext(thread_id_, this);
 }
 
 BackendStatsContext::~BackendStatsContext() {
-  StatsAggregator::GetInstance().UnregisterContext(thread_id_);
+  if (is_registered_to_aggregator_ == true)
+    StatsAggregator::GetInstance().UnregisterContext(thread_id_);
 }
 
 //===--------------------------------------------------------------------===//
