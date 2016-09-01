@@ -61,9 +61,14 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
-  // Create a tile group.
+  // Create tile groups.
   for (size_t i = 0; i < ACTIVE_TILEGROUP_COUNT; ++i) {
     AddDefaultTileGroup(i);
+  }
+
+  // Create indirection layers.
+  for (size_t i = 0; i < ACTIVE_INDIRECTION_ARRAY_COUNT; ++i) {
+    AddDefaultIndirectionArray(i);
   }
 }
 
@@ -294,12 +299,25 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   int index_count = GetIndexCount();
 
-  *index_entry_ptr = new ItemPointer(location);
+  size_t active_indirection_array_id = number_of_tuples_ % ACTIVE_INDIRECTION_ARRAY_COUNT;
+
+  size_t indirection_offset = active_indirection_arrays_[active_indirection_array_id]->AllocateIndirection();
+
+  while (indirection_offset == INVALID_INDIRECTION_OFFSET);
+
+  *index_entry_ptr = active_indirection_arrays_[active_indirection_array_id]->GetIndirectionByOffset(indirection_offset);
+  (*index_entry_ptr)->block = location.block;
+  (*index_entry_ptr)->offset = location.offset;
+
+
+  if (indirection_offset == INDIRECTION_ARRAY_MAX_SIZE - 1) {
+    AddDefaultIndirectionArray(active_indirection_array_id);
+  }
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const ItemPointer &)> fn =
+  std::function<bool(const void *)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, transaction, std::placeholders::_1);
 
@@ -337,11 +355,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     // Handle failure
     if (res == false) {
       // If some of the indexes have been inserted,
-      // the pointer has a chance to be dereferenced by readers and it cannot be
-      // deleted
-      if (success_count == 0) {
-        delete *index_entry_ptr;
-      }
+      // the pointer has a chance to be dereferenced by readers and it cannot be deleted
       *index_entry_ptr = nullptr;
       return false;
     } else {
@@ -525,7 +539,7 @@ TileGroup *DataTable::GetTileGroupWithLayout(
   std::vector<catalog::Schema> schemas;
   oid_t tile_group_id = INVALID_OID;
 
-  tile_group_id = catalog::Manager::GetInstance().GetNextOid();
+  tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
 
   // Figure out the columns in each tile in new layout
   std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
@@ -580,6 +594,22 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   return column_map;
 }
 
+
+oid_t DataTable::AddDefaultIndirectionArray(const size_t &active_indirection_array_id) {
+  std::shared_ptr<IndirectionArray> indirection_array(new IndirectionArray());
+
+  auto &manager = catalog::Manager::GetInstance();
+
+  oid_t indirection_array_id = manager.GetNextIndirectionArrayId();
+  manager.AddIndirectionArray(indirection_array_id, indirection_array);
+
+  COMPILER_MEMORY_FENCE;
+
+  active_indirection_arrays_[active_indirection_array_id] = indirection_array;
+
+  return indirection_array_id;
+}
+
 oid_t DataTable::AddDefaultTileGroup() {
   size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
   return AddDefaultTileGroup(active_tile_group_id);
@@ -596,8 +626,6 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   PL_ASSERT(tile_group.get());
 
-  active_tile_groups_[active_tile_group_id] = tile_group;
-
   tile_group_id = tile_group->GetTileGroupId();
 
   LOG_TRACE("Added a tile group ");
@@ -606,6 +634,10 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 
   // add tile group metadata in locator
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+  
+  COMPILER_MEMORY_FENCE;
+
+  active_tile_groups_[active_tile_group_id] = tile_group;
 
   // we must guarantee that the compiler always add tile group before adding
   // tile_group_count_.

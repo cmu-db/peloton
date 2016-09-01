@@ -39,18 +39,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
       comparator() {}
 
 BTREE_TEMPLATE_ARGUMENT
-BTreeIndex<KeyType, ValueType, KeyComparator,
-           KeyEqualityChecker>::~BTreeIndex() {
-  // we should not rely on shared_ptr to reclaim memory.
-  // this is because the underlying index can split or merge leaf nodes,
-  // which invokes data data copy and deletes.
-  // as the underlying index is unaware of shared_ptr,
-  // memory allocated should be managed carefully by programmers.
-  for (auto entry = container.begin(); entry != container.end(); ++entry) {
-    delete entry->second;
-    entry->second = nullptr;
-  }
-}
+BTREE_TEMPLATE_TYPE::~BTreeIndex() {}
 
 /////////////////////////////////////////////////////////////////////
 // Mutating operations
@@ -58,31 +47,12 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
-                                      ItemPointer *location_ptr) {
+                                      ItemPointer *value) {
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key, location_ptr);
 
-  {
-    index_lock.WriteLock();
-
-    // Insert the key, val pair
-    container.insert(entry);
-
-    index_lock.Unlock();
-  }
-
-  return true;
-}
-
-BTREE_TEMPLATE_ARGUMENT
-bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
-                                      const ItemPointer &location) {
-  KeyType index_key;
-
-  index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key, new ItemPointer(location));
+  std::pair<KeyType, ValueType> entry(index_key, value);
 
   {
     index_lock.WriteLock();
@@ -98,7 +68,7 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
-                                      const ItemPointer &location) {
+                                      ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -115,14 +85,10 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
       auto entries = container.equal_range(index_key);
       for (auto iterator = entries.first; iterator != entries.second;
            iterator++) {
-        ItemPointer value = *(iterator->second);
+        ValueType ret_value = iterator->second;
 
-        if ((value.block == location.block) &&
-            (value.offset == location.offset)) {
-          delete iterator->second;
-          iterator->second = nullptr;
+        if (ret_value == value) {
           container.erase(iterator);
-          // Set try again
           // We could not proceed here since erase() may invalidate
           // iterators by one or more node merge
           try_again = true;
@@ -140,8 +106,8 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
 
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                          ItemPointer *location,
-                                          std::function<bool(const ItemPointer &)> predicate) {
+                                          ItemPointer *value,
+                                          std::function<bool(const void *)> predicate) {
 
   KeyType index_key;
   index_key.SetFromKey(key);
@@ -152,9 +118,9 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      ItemPointer item_pointer = *(entry->second);
+      ValueType tmp_value = entry->second;
 
-      if (predicate(item_pointer)) {
+      if (predicate(tmp_value)) {
         // this key is already visible or dirty in the index
         index_lock.Unlock();
 
@@ -164,7 +130,7 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
 
     // Insert the key, val pair
     container.insert(
-        std::pair<KeyType, ValueType>(index_key, location));
+        std::pair<KeyType, ValueType>(index_key, value));
 
     index_lock.Unlock();
   }
@@ -181,7 +147,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
                                const std::vector<oid_t> &tuple_column_id_list,
                                const std::vector<ExpressionType> &expr_list,
                                const ScanDirectionType &scan_direction,
-                               std::vector<ItemPointer *> &result,
+                               std::vector<ValueType> &result,
                                const ConjunctionScanPredicate *csp_p) {
       
   // First make sure all three components of the scan predicate are
@@ -288,7 +254,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
 }
 
 BTREE_TEMPLATE_ARGUMENT
-void BTREE_TEMPLATE_TYPE::ScanAllKeys(std::vector<ItemPointer *> &result) {
+void BTREE_TEMPLATE_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
   {
     index_lock.ReadLock();
 
@@ -310,7 +276,7 @@ void BTREE_TEMPLATE_TYPE::ScanAllKeys(std::vector<ItemPointer *> &result) {
  */
 BTREE_TEMPLATE_ARGUMENT
 void BTREE_TEMPLATE_TYPE::ScanKey(const storage::Tuple *key,
-                                  std::vector<ItemPointer *> &result) {
+                                  std::vector<ValueType> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
 

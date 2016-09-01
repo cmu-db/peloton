@@ -14,6 +14,7 @@
 #pragma once
 
 #include <string>
+#include <cstring>
 #include <getopt.h>
 #include <vector>
 #include <sys/time.h>
@@ -35,32 +36,50 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
+
+  // index type
+  IndexType index;
+
   // size of the table
   int scale_factor;
 
-  // column count
-  int column_count;
+  // execution duration (in s)
+  double duration;
 
-  // update ratio
-  double update_ratio;
-
-  // execution duration (in ms)
-  int duration;
+  // profile duration (in s)
+  double profile_duration;
 
   // number of backends
   int backend_count;
 
+  // column count
+  int column_count;
+
+  // operation count in a transaction
+  int operation_count;
+
+  // update ratio
+  double update_ratio;
+
+  // contention level
+  double zipf_theta;
+
+  // exponential backoff
+  bool exp_backoff;
+
+  // store strings
+  bool string_mode;
+
   // throughput
-  double throughput;
+  double throughput = 0;
 
-  // latency average
-  double latency;
+  // abort rate
+  double abort_rate = 0;
 
-  // # of transaction
-  int transaction_count;
+  std::vector<double> profile_throughput;
 
-  // store ints
-  bool ints_mode;
+  std::vector<double> profile_abort_rate;
+
 };
 
 extern configuration state;
@@ -69,17 +88,23 @@ void Usage(FILE *out);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
+void ValidateIndex(const configuration &state);
+
 void ValidateScaleFactor(const configuration &state);
-
-void ValidateColumnCount(const configuration &state);
-
-void ValidateUpdateRatio(const configuration &state);
-
-void ValidateBackendCount(const configuration &state);
 
 void ValidateDuration(const configuration &state);
 
-void ValidateTransactionCount(const configuration &state);
+void ValidateProfileDuration(const configuration &state);
+
+void ValidateBackendCount(const configuration &state);
+
+void ValidateColumnCount(const configuration &state);
+
+void ValidateOperationCount(const configuration &state);
+
+void ValidateUpdateRatio(const configuration &state);
+
+void ValidateZipfTheta(const configuration &state);
 
 }  // namespace ycsb
 }  // namespace benchmark

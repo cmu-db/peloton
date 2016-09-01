@@ -46,25 +46,23 @@ class BTreeIndex : public Index {
 
   ~BTreeIndex();
 
-  bool InsertEntry(const storage::Tuple *key, ItemPointer *location_ptr);
+  bool InsertEntry(const storage::Tuple *key, ItemPointer *value);
 
-  bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
+  bool DeleteEntry(const storage::Tuple *key, ItemPointer *value);
 
-  bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
-
-  bool CondInsertEntry(const storage::Tuple *key, ItemPointer *location,
-                       std::function<bool(const ItemPointer &)> predicate);
+  bool CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
+                       std::function<bool(const void *)> predicate);
 
   void Scan(const std::vector<Value> &value_list,
             const std::vector<oid_t> &tuple_column_id_list,
             const std::vector<ExpressionType> &expr_list,
             const ScanDirectionType &scan_direction,
-            std::vector<ItemPointer *> &result,
+            std::vector<ValueType> &result,
             const ConjunctionScanPredicate *csp_p);
 
-  void ScanAllKeys(std::vector<ItemPointer *> &result);
+  void ScanAllKeys(std::vector<ValueType> &result);
 
-  void ScanKey(const storage::Tuple *key, std::vector<ItemPointer *> &result);
+  void ScanKey(const storage::Tuple *key, std::vector<ValueType> &result);
 
   std::string GetTypeName() const;
 

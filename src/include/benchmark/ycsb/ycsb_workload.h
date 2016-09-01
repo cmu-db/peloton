@@ -13,8 +13,12 @@
 
 #pragma once
 
+#include "benchmark/benchmark_common.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "storage/data_table.h"
+#include "executor/update_executor.h"
+#include "executor/index_scan_executor.h"
+#include "executor/insert_executor.h"
 
 namespace peloton {
 
@@ -30,6 +34,15 @@ extern configuration state;
 extern storage::DataTable* user_table;
 
 void RunWorkload();
+
+bool RunMixed(ZipfDistribution &zipf, FastRandom &rng);
+
+/////////////////////////////////////////////////////////
+
+std::vector<std::vector<Value>> ExecuteRead(executor::AbstractExecutor* executor);
+
+void ExecuteUpdate(executor::AbstractExecutor* executor);
+
 
 }  // namespace ycsb
 }  // namespace benchmark

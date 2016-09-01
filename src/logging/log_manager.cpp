@@ -519,7 +519,7 @@ void LogManager::UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid) {
 
     if (update_managers_count == (int)num_frontend_loggers_) {
       auto &manager = catalog::Manager::GetInstance();
-      manager.SetNextOid(max_oid);
+      manager.SetNextTileGroupId(max_oid);
 
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       txn_manager.SetNextCid(max_cid + 1);

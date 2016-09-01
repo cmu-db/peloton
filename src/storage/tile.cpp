@@ -25,7 +25,6 @@
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
-#include "storage/rollback_segment.h"
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
