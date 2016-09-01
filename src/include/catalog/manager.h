@@ -27,6 +27,7 @@ namespace peloton {
 
 namespace storage {
 class TileGroup;
+class IndirectionArray;
 }
 
 namespace catalog {
@@ -46,11 +47,13 @@ class Manager {
   // OBJECT MAP
   //===--------------------------------------------------------------------===//
 
-  oid_t GetNextOid() { return ++oid_; }
+  oid_t GetNextTileId() { return ++tile_oid_; }
 
-  oid_t GetCurrentOid() { return oid_; }
+  oid_t GetNextTileGroupId() { return ++tile_group_oid_; }
 
-  void SetNextOid(oid_t next_oid) { oid_ = next_oid; }
+  oid_t GetCurrentTileGroupId() { return tile_group_oid_; }
+
+  void SetNextTileGroupId(oid_t next_oid) { tile_group_oid_ = next_oid; }
 
   void AddTileGroup(const oid_t oid,
                     std::shared_ptr<storage::TileGroup> location);
@@ -61,6 +64,17 @@ class Manager {
 
   void ClearTileGroup(void);
 
+  oid_t GetNextIndirectionArrayId() { return ++indirection_array_oid_; }
+
+  oid_t GetCurrentIndirectionArrayId() { return indirection_array_oid_; }
+
+  void AddIndirectionArray(const oid_t oid,
+                           std::shared_ptr<storage::IndirectionArray> location);
+
+  void DropIndirectionArray(const oid_t oid);
+
+  void ClearIndirectionArray(void);
+
   Manager(Manager const &) = delete;
 
  private:
@@ -68,11 +82,19 @@ class Manager {
   // Data members
   //===--------------------------------------------------------------------===//
 
-  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID);
+  std::atomic<oid_t> tile_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::TileGroup>> locator_;
+  std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  static std::shared_ptr<storage::TileGroup> empty_location_;
+  std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
+
+  LockFreeArray<std::shared_ptr<storage::TileGroup>> tile_group_locator_;
+
+  LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
+
+  static std::shared_ptr<storage::TileGroup> empty_tile_group_;
+
+  static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };
 
 }  // End catalog namespace

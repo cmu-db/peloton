@@ -26,6 +26,7 @@ class Index;
 namespace storage{
 class TileGroup;
 class Database;
+class IndirectionArray;
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
@@ -147,6 +148,8 @@ template class LockFreeArray<std::shared_ptr<index::Index>>;
 template class LockFreeArray<std::shared_ptr<storage::TileGroup>>;
 
 template class LockFreeArray<std::shared_ptr<storage::Database>>;
+
+template class LockFreeArray<std::shared_ptr<storage::IndirectionArray>>;
 
 template class LockFreeArray<oid_t>;
 

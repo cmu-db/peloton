@@ -16,7 +16,7 @@ namespace peloton {
 
 namespace storage {
 
-const size_t INDIRECTION_ARRAY_MAX_SIZE = 1024 * 1024;
+const size_t INDIRECTION_ARRAY_MAX_SIZE = 1000;
 const size_t INVALID_INDIRECTION_OFFSET = std::numeric_limits<size_t>::max();
 
 class IndirectionArray {

@@ -21,7 +21,9 @@
 namespace peloton {
 namespace catalog {
 
-std::shared_ptr<storage::TileGroup> Manager::empty_location_;
+std::shared_ptr<storage::TileGroup> Manager::empty_tile_group_;
+
+std::shared_ptr<storage::IndirectionArray> Manager::empty_indirection_array_;
 
 Manager &Manager::GetInstance() {
   static Manager manager;
@@ -36,19 +38,19 @@ void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
 
   // add/update the catalog reference to the tile group
-  locator_.Update(oid, location);
+  tile_group_locator_.Update(oid, location);
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   
   // drop the catalog reference to the tile group
-  locator_.Erase(oid, empty_location_);
+  tile_group_locator_.Erase(oid, empty_tile_group_);
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
   
-  location = locator_.Find(oid);
+  location = tile_group_locator_.Find(oid);
 
   return location;
 }
@@ -56,7 +58,28 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
 // used for logging test
 void Manager::ClearTileGroup() {
 
-  locator_.Clear(empty_location_);
+  tile_group_locator_.Clear(empty_tile_group_);
+}
+
+
+void Manager::AddIndirectionArray(const oid_t oid,
+                                  std::shared_ptr<storage::IndirectionArray> location) {
+
+  // add/update the catalog reference to the indirection array
+  indirection_array_locator_.Update(oid, location);
+}
+
+void Manager::DropIndirectionArray(const oid_t oid) {
+  
+  // drop the catalog reference to the tile group
+  indirection_array_locator_.Erase(oid, empty_indirection_array_);
+}
+
+
+// used for logging test
+void Manager::ClearIndirectionArray() {
+
+  indirection_array_locator_.Clear(empty_indirection_array_);
 }
 
 }  // End catalog namespace

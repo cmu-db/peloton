@@ -65,9 +65,10 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (size_t i = 0; i < ACTIVE_TILEGROUP_COUNT; ++i) {
     AddDefaultTileGroup(i);
   }
+
   // Create indirection layers.
-  for (size_t i = 0; i < INDIRECTION_ARRAYS_COUNT; ++i) {
-    indirection_arrays_[i] = std::shared_ptr<IndirectionArray>(new IndirectionArray());
+  for (size_t i = 0; i < ACTIVE_INDIRECTION_ARRAY_COUNT; ++i) {
+    AddDefaultIndirectionArray(i);
   }
 }
 
@@ -298,20 +299,19 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   int index_count = GetIndexCount();
 
-  size_t indirection_array_id = number_of_tuples_ % INDIRECTION_ARRAYS_COUNT;
+  size_t active_indirection_array_id = number_of_tuples_ % ACTIVE_INDIRECTION_ARRAY_COUNT;
 
-  size_t indirection_offset = indirection_arrays_[indirection_array_id]->AllocateIndirection();
+  size_t indirection_offset = active_indirection_arrays_[active_indirection_array_id]->AllocateIndirection();
 
   while (indirection_offset == INVALID_INDIRECTION_OFFSET);
 
-  *index_entry_ptr = indirection_arrays_[indirection_array_id]->GetIndirectionByOffset(indirection_offset);
+  *index_entry_ptr = active_indirection_arrays_[active_indirection_array_id]->GetIndirectionByOffset(indirection_offset);
   (*index_entry_ptr)->block = location.block;
   (*index_entry_ptr)->offset = location.offset;
 
 
   if (indirection_offset == INDIRECTION_ARRAY_MAX_SIZE - 1) {
-
-    indirection_arrays_[indirection_array_id] = std::shared_ptr<IndirectionArray>(new IndirectionArray());
+    AddDefaultIndirectionArray(active_indirection_array_id);
   }
 
   auto &transaction_manager =
@@ -539,7 +539,7 @@ TileGroup *DataTable::GetTileGroupWithLayout(
   std::vector<catalog::Schema> schemas;
   oid_t tile_group_id = INVALID_OID;
 
-  tile_group_id = catalog::Manager::GetInstance().GetNextOid();
+  tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
 
   // Figure out the columns in each tile in new layout
   std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
@@ -592,6 +592,22 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   }
 
   return column_map;
+}
+
+
+oid_t DataTable::AddDefaultIndirectionArray(const size_t &active_indirection_array_id) {
+  std::shared_ptr<IndirectionArray> indirection_array(new IndirectionArray());
+
+  auto &manager = catalog::Manager::GetInstance();
+
+  oid_t indirection_array_id = manager.GetNextIndirectionArrayId();
+  manager.AddIndirectionArray(indirection_array_id, indirection_array);
+
+  COMPILER_MEMORY_FENCE;
+
+  active_indirection_arrays_[active_indirection_array_id] = indirection_array;
+
+  return indirection_array_id;
 }
 
 oid_t DataTable::AddDefaultTileGroup() {

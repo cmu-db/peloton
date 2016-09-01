@@ -172,8 +172,8 @@ cid_t SimpleCheckpoint::DoRecovery() {
   // After finishing recovery, set the next oid with maximum oid
   // observed during the recovery
   auto &manager = catalog::Manager::GetInstance();
-  if (max_oid_ > manager.GetNextOid()) {
-    manager.SetNextOid(max_oid_);
+  if (max_oid_ > manager.GetNextTileGroupId()) {
+    manager.SetNextTileGroupId(max_oid_);
   }
 
   // FIXME this is not thread safe for concurrent checkpoint recovery
