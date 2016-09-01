@@ -10,33 +10,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "index/btree_index.h"
 #include "index/index_key.h"
 #include "index/index_util.h"
 #include "common/logger.h"
+#include "common/config.h"
 #include "storage/tuple.h"
+#include "statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace index {
 
-#define BTREE_TEMPLATE_ARGUMENT template <typename KeyType, \
-                                          typename ValueType, \
-                                          typename KeyComparator, \
-                                          typename KeyEqualityChecker>
-                                          
-#define BTREE_TEMPLATE_TYPE BTreeIndex<KeyType, \
-                                       ValueType, \
-                                       KeyComparator, \
-                                       KeyEqualityChecker>
+#define BTREE_TEMPLATE_ARGUMENT                                           \
+  template <typename KeyType, typename ValueType, typename KeyComparator, \
+            typename KeyEqualityChecker>
+
+#define BTREE_TEMPLATE_TYPE \
+  BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
 
 BTREE_TEMPLATE_ARGUMENT
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
     IndexMetadata *metadata)
-    : Index(metadata),
-      container(KeyComparator()),
-      equals(),
-      comparator() {}
+    : Index(metadata), container(KeyComparator()), equals(), comparator() {}
 
 BTREE_TEMPLATE_ARGUMENT
 BTreeIndex<KeyType, ValueType, KeyComparator,
@@ -73,6 +68,10 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
     index_lock.Unlock();
   }
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+  }
+
   return true;
 }
 
@@ -93,6 +92,10 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
     index_lock.Unlock();
   }
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+  }
+
   return true;
 }
 
@@ -101,6 +104,7 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
                                       const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
+  size_t delete_count = 0;
 
   {
     index_lock.WriteLock();
@@ -126,7 +130,8 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
           // We could not proceed here since erase() may invalidate
           // iterators by one or more node merge
           try_again = true;
-          
+          delete_count++;
+
           break;
         }
       }
@@ -135,13 +140,17 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
     index_lock.Unlock();
   }
 
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexDeletes(
+        delete_count, metadata);
+  }
   return true;
 }
 
 BTREE_TEMPLATE_ARGUMENT
-bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                          ItemPointer *location,
-                                          std::function<bool(const ItemPointer &)> predicate) {
+bool BTREE_TEMPLATE_TYPE::CondInsertEntry(
+    const storage::Tuple *key, ItemPointer *location,
+    std::function<bool(const ItemPointer &)> predicate) {
 
   KeyType index_key;
   index_key.SetFromKey(key);
@@ -163,10 +172,13 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
     }
 
     // Insert the key, val pair
-    container.insert(
-        std::pair<KeyType, ValueType>(index_key, location));
+    container.insert(std::pair<KeyType, ValueType>(index_key, location));
 
     index_lock.Unlock();
+  }
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
   }
 
   return true;
@@ -183,27 +195,26 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
                                const ScanDirectionType &scan_direction,
                                std::vector<ItemPointer *> &result,
                                const ConjunctionScanPredicate *csp_p) {
-      
+
   // First make sure all three components of the scan predicate are
   // of the same length
   // Since there is a 1-to-1 correspondense between these three vectors
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
   PL_ASSERT(tuple_column_id_list.size() == value_list.size());
-  
+
   // This is a hack - we do not support backward scan
-  if(scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
+  if (scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
     throw Exception("Invalid scan direction \n");
   }
 
-  LOG_TRACE("Point Query = %d; Full Scan = %d ",
-            csp_p->IsPointQuery(),
+  LOG_TRACE("Point Query = %d; Full Scan = %d ", csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
 
   index_lock.ReadLock();
 
-  if(csp_p->IsPointQuery() == true) {
+  if (csp_p->IsPointQuery() == true) {
     // For point query we construct the key and use equal_range
-    
+
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
 
     KeyType point_query_key;
@@ -211,79 +222,69 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
 
     // Use equal_range to mark two ends of the scan
     auto scan_itr_pair = container.equal_range(point_query_key);
-    
+
     auto scan_begin_itr = scan_itr_pair.first;
     auto scan_end_itr = scan_itr_pair.second;
 
-    for (auto scan_itr = scan_begin_itr;
-         scan_itr != scan_end_itr;
-         scan_itr++) {
+    for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr; scan_itr++) {
       auto scan_current_key = scan_itr->first;
-      auto tuple = \
-        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+      auto tuple =
+          scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
-      if (Compare(tuple,
-                  tuple_column_id_list,
-                  expr_list,
-                  value_list) == true) {
+      if (Compare(tuple, tuple_column_id_list, expr_list, value_list) == true) {
         result.push_back(scan_itr->second);
       }
     }
-  } else if(csp_p->IsFullIndexScan() == true) {
+  } else if (csp_p->IsFullIndexScan() == true) {
     // If it is a full index scan, then just do the scan
-    
-    for (auto scan_itr = container.begin();
-         scan_itr != container.end();
+
+    for (auto scan_itr = container.begin(); scan_itr != container.end();
          scan_itr++) {
       // Unpack the key as a standard tuple for comparison
       auto scan_current_key = scan_itr->first;
-      auto tuple = \
-        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+      auto tuple =
+          scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
       // Compare whether the current key satisfies the predicate
       // since we just narrowed down search range using low key and
       // high key for scan, it is still possible that there are tuples
       // for which the predicate is not true
-      if(Compare(tuple,
-                 tuple_column_id_list,
-                 expr_list,
-                 value_list) == true) {
+      if (Compare(tuple, tuple_column_id_list, expr_list, value_list) == true) {
         result.push_back(scan_itr->second);
       }
-    } // for it from begin() to end()
+    }  // for it from begin() to end()
   } else {
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
-    
+
     // Construct low key and high key in KeyType form, rather than
     // the standard in-memory tuple
     KeyType index_low_key;
     KeyType index_high_key;
     index_low_key.SetFromKey(low_key_p);
     index_high_key.SetFromKey(high_key_p);
-    
+
     // It is good that we have equal_range
     auto scan_begin_itr = container.equal_range(index_low_key).first;
     auto scan_end_itr = container.equal_range(index_high_key).second;
 
-    for (auto scan_itr = scan_begin_itr;
-         scan_itr != scan_end_itr;
-         scan_itr++) {
+    for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr; scan_itr++) {
       auto scan_current_key = scan_itr->first;
-      auto tuple = \
-        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
-        
-      if (Compare(tuple,
-                  tuple_column_id_list,
-                  expr_list,
-                  value_list) == true) {
+      auto tuple =
+          scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+
+      if (Compare(tuple, tuple_column_id_list, expr_list, value_list) == true) {
         result.push_back(scan_itr->second);
       }
     }
-  } // if is full scan
+  }  // if is full scan
 
   index_lock.Unlock();
-  
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+                                                                  metadata);
+  }
   return;
 }
 
@@ -302,6 +303,11 @@ void BTREE_TEMPLATE_TYPE::ScanAllKeys(std::vector<ItemPointer *> &result) {
     }
 
     index_lock.Unlock();
+  }
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+                                                                  metadata);
   }
 }
 
@@ -325,14 +331,16 @@ void BTREE_TEMPLATE_TYPE::ScanKey(const storage::Tuple *key,
 
     index_lock.Unlock();
   }
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+                                                                  metadata);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 BTREE_TEMPLATE_ARGUMENT
-std::string BTREE_TEMPLATE_TYPE::GetTypeName() const {
-  return "Btree";
-}
+std::string BTREE_TEMPLATE_TYPE::GetTypeName() const { return "Btree"; }
 
 // Explicit template instantiation
 
@@ -352,4 +360,3 @@ template class BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
 
 }  // End index namespace
 }  // End peloton namespace
-

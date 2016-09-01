@@ -103,8 +103,9 @@ static index::Index *BuildIndex() {
   // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "index_util_test", 88888,  // Index oid
-      INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema.get(),
-      key_schema, key_attrs, true);  // unique_keys
+      INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
+      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema.get(), key_schema, key_attrs,
+      true);  // unique_keys
 
   // Build index
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);

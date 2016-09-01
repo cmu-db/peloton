@@ -69,6 +69,9 @@ class Catalog {
                      std::vector<std::string> index_attr,
                      std::string index_name, bool unique, IndexType index_type);
 
+  // Get a index with the oids of index, table, and database.
+  index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
+                                const oid_t index_oid) const;
   // Drop a database
   Result DropDatabaseWithName(std::string database_name,
                               concurrency::Transaction *txn);
@@ -124,8 +127,8 @@ class Catalog {
 
  private:
   void InsertDatabaseIntoCatalogDatabase(oid_t database_id,
-                                   std::string &database_name,
-                                   concurrency::Transaction *txn);
+                                         std::string &database_name,
+                                         concurrency::Transaction *txn);
 
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;

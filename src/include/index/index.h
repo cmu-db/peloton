@@ -56,7 +56,8 @@ class IndexMetadata : public Printable {
   IndexMetadata() = delete;
 
  public:
-  IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
+  IndexMetadata(std::string index_name, oid_t index_oid, oid_t table_oid,
+                oid_t database_oid, IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
@@ -66,7 +67,11 @@ class IndexMetadata : public Printable {
 
   const std::string &GetName() const { return index_name; }
 
-  oid_t GetOid() { return index_oid; }
+  inline oid_t GetOid() { return index_oid; }
+
+  inline oid_t GetTableOid() { return table_oid; }
+
+  inline oid_t GetDatabaseOid() { return database_oid; }
 
   IndexType GetIndexMethodType() { return method_type; }
 
@@ -122,6 +127,8 @@ class IndexMetadata : public Printable {
   std::string index_name;
 
   oid_t index_oid;
+  oid_t table_oid;
+  oid_t database_oid;
 
   IndexType method_type;
 
