@@ -79,14 +79,14 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RegisterCommittedTransaction(const RWSet &rw_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterCommittedTransaction(const ReadWriteSet &rw_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(rw_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
 
-void TransactionLevelGCManager::RegisterAbortedTransaction(const RWSet &rw_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterAbortedTransaction(const ReadWriteSet &rw_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(rw_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
