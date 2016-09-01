@@ -4,7 +4,7 @@
 //
 // counter_metric.h
 //
-// Identification: src/backend/statistics/counter_metric.h
+// Identification: src/statistics/counter_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

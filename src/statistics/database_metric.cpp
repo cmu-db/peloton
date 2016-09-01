@@ -4,7 +4,7 @@
 //
 // database_metric.cpp
 //
-// Identification: src/backend/statistics/database_metric.cpp
+// Identification: src/statistics/database_metric.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

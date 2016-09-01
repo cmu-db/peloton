@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// data_table_test.cpp
+// stats_test.cpp
 //
-// Identification: tests/storage/basic_stats_test.cpp
+// Identification: test/statistics/stats_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -212,5 +212,5 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   EXPECT_EQ(9, reads);
   EXPECT_EQ(1, deletes);
 }
-}
-}
+}  // namespace stats
+}  // namespace peloton

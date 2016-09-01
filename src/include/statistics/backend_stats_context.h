@@ -4,7 +4,7 @@
 //
 // backend_stats_context.h
 //
-// Identification: src/backend/statistics/backend_stats_context.h
+// Identification: src/statistics/backend_stats_context.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,8 +16,6 @@
 #include <thread>
 #include <sstream>
 #include <unordered_map>
-
-#include "libcuckoo/cuckoohash_map.hh"
 
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"

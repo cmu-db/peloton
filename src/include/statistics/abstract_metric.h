@@ -4,7 +4,7 @@
 //
 // abstract_metric.h
 //
-// Identification: src/backend/statistics/abstract_metric.h
+// Identification: src/statistics/abstract_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // access_metric.h
 //
-// Identification: src/backend/statistics/access_metric.h
+// Identification: src/statistics/access_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

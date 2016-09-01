@@ -4,7 +4,7 @@
 //
 // index_metric.h
 //
-// Identification: src/backend/statistics/index_metric.h
+// Identification: src/statistics/index_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

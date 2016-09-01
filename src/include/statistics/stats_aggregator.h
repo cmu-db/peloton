@@ -4,7 +4,7 @@
 //
 // stats_aggregator.h
 //
-// Identification: src/backend/statistics/stats_aggregator.h
+// Identification: src/statistics/stats_aggregator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

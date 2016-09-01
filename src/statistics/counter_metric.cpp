@@ -4,7 +4,7 @@
 //
 // counter_metric.cpp
 //
-// Identification: src/backend/statistics/counter_metric.cpp
+// Identification: src/statistics/counter_metric.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
