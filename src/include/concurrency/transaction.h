@@ -43,7 +43,7 @@ class Transaction : public Printable {
         end_cid_(MAX_CID),
         is_written_(false),
         insert_count_(0) {
-          w_set_.reset(new WriteSet());
+          // w_set_.reset(new WriteSet());
         }
 
   Transaction(const txn_id_t &txn_id)
@@ -91,9 +91,9 @@ class Transaction : public Printable {
     return rw_set_;
   }
 
-  inline std::shared_ptr<WriteSet> GetWriteSetRef() {
-    return w_set_;
-  }
+  // inline std::shared_ptr<WriteSet> GetWriteSetRef() {
+  //   return w_set_;
+  // }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -127,7 +127,7 @@ class Transaction : public Printable {
 
   ReadWriteSet rw_set_;
 
-  std::shared_ptr<WriteSet> w_set_;
+  // std::shared_ptr<WriteSet> w_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
