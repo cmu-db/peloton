@@ -95,11 +95,13 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
-  if (current_txn->GetResult() == RESULT_SUCCESS) {
-    gc::GCManagerFactory::GetInstance().RegisterCommittedTransaction(current_txn->GetReadWriteSet(), current_txn->GetBeginCommitId());
-  } else {
-    gc::GCManagerFactory::GetInstance().RegisterAbortedTransaction(current_txn->GetReadWriteSet(), GetNextCommitId());
-  }
+  // if (current_txn->GetResult() == RESULT_SUCCESS) {
+  //   gc::GCManagerFactory::GetInstance().
+  //       RegisterCommittedTransaction(current_txn->GetWriteSet(), current_txn->GetBeginCommitId());
+  // } else {
+  //   gc::GCManagerFactory::GetInstance().
+  //       RegisterAbortedTransaction(current_txn->GetWriteSet(), GetNextCommitId());
+  // }
 
 
   delete current_txn;
@@ -803,11 +805,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
       }
     }
   }
-
-  // cid_t next_commit_id = GetNextCommitId();
-
-  // Need to change next_commit_id to INVALID_CID if disable the recycle of aborted version
-  // gc::GCManagerFactory::GetInstance().EndGCContext(next_commit_id);
   
   EndTransaction(current_txn);
 

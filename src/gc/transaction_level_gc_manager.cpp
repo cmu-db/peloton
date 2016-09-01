@@ -79,16 +79,16 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RegisterCommittedTransaction(const ReadWriteSet &rw_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterCommittedTransaction(const WriteSet &w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
-    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(rw_set, timestamp));
+    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
 
-void TransactionLevelGCManager::RegisterAbortedTransaction(const ReadWriteSet &rw_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterAbortedTransaction(const WriteSet &w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
-    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(rw_set, timestamp));
+    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
@@ -105,11 +105,9 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
     [this, &garbages, &tuple_counter, max_cid](const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
       bool res = garbage_ctx->timestamp_ < max_cid;
       if (res) {
-        for (auto entry : garbage_ctx->rw_set_) {
+        for (auto entry : garbage_ctx->w_set_) {
           for (auto &element : entry.second) {
-            if (element.second == RW_TYPE_UPDATE) {
-              DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
-            }
+            DeleteTupleFromIndexes(ItemPointer(entry.first, element)); 
           }
         }
         garbages.push_back(garbage_ctx);
@@ -130,11 +128,9 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
     if (garbage_ctx->timestamp_ < max_cid) {
       // Now that we know we need to recycle tuple, we need to delete all
       // tuples from the indexes to which it belongs as well.
-      for (auto &entry : garbage_ctx->rw_set_) {
+      for (auto &entry : garbage_ctx->w_set_) {
         for (auto &element : entry.second) {
-          if (element.second == RW_TYPE_UPDATE) {
-            DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
-          }
+            DeleteTupleFromIndexes(ItemPointer(entry.first, element)); 
         }
       }
       // Add to the garbage map
@@ -183,7 +179,7 @@ void TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_c
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx) {
   // If the tuple being reset no longer exists, just skip it
-  for (auto &entry : gc_ctx->rw_set_) {
+  for (auto &entry : gc_ctx->w_set_) {
     for (auto &element : entry.second) {
 
       auto &manager = catalog::Manager::GetInstance();
@@ -197,16 +193,14 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
 
       oid_t table_id = table->GetOid();
 
-      if (element.second == RW_TYPE_UPDATE) {
-        ItemPointer location(entry.first, element.first); 
+      ItemPointer location(entry.first, element); 
 
-        if (ResetTuple(location) == false) {
-          continue;
-        }
-        // if the entry for table_id exists.
-        PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
-        recycle_queue_map_[table_id]->Enqueue(location);
+      if (ResetTuple(location) == false) {
+        continue;
       }
+      // if the entry for table_id exists.
+      PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
+      recycle_queue_map_[table_id]->Enqueue(location);
     }
   }
 }

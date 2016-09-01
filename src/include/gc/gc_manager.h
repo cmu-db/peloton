@@ -54,13 +54,11 @@ class GCManager {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {
+  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
-  }
+  virtual void RegisterCommittedTransaction(const WriteSet &w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterCommittedTransaction(const ReadWriteSet &rw_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
-
-  virtual void RegisterAbortedTransaction(const ReadWriteSet &rw_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterAbortedTransaction(const WriteSet &w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
  private:
   bool is_running_;

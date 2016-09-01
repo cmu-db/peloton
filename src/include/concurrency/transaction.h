@@ -89,6 +89,10 @@ class Transaction : public Printable {
     return rw_set_;
   }
 
+  inline const WriteSet &GetWriteSet() {
+    return w_set_;
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -120,6 +124,8 @@ class Transaction : public Printable {
   size_t epoch_id_;
 
   ReadWriteSet rw_set_;
+
+  WriteSet w_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
