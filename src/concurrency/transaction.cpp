@@ -53,7 +53,7 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       is_written_ = true;
 
       // insert into write set.
-      // (*(w_set_.get()))[tile_group_id].insert(tuple_id);
+      w_set_->operator[](tile_group_id).insert(tuple_id);
       return;
     }
     if (type == RW_TYPE_UPDATE) {
@@ -77,7 +77,6 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   if (rw_set_.find(tile_group_id) != rw_set_.end() &&
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
-    // RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     PL_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RW_TYPE_INSERT;
@@ -98,7 +97,7 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       // record write.
       is_written_ = true;
 
-      // (*(w_set_.get()))[tile_group_id].insert(tuple_id);
+      w_set_->operator[](tile_group_id).insert(tuple_id);
       return false;
     }
     if (type == RW_TYPE_UPDATE) {
