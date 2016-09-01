@@ -123,6 +123,9 @@ class BackendStatsContext {
 
   // Latencies recorded by this worker
   LatencyMetric txn_latencies_;
+
+  // Whether this context is registered to the global aggregator
+  bool is_registered_to_aggregator_;
 };
 
 }  // namespace stats
