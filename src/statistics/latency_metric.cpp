@@ -21,14 +21,14 @@ namespace stats {
 LatencyMetric::LatencyMetric(MetricType type, size_t max_history)
     : AbstractMetric(type) {
   max_history_ = max_history;
-  latencies_.set_capacity(max_history_);
+  latencies_.SetCapaciry(max_history_);
 }
 
 void LatencyMetric::Aggregate(AbstractMetric& source) {
   assert(source.GetType() == LATENCY_METRIC);
 
   LatencyMetric& latency_metric = static_cast<LatencyMetric&>(source);
-  boost::circular_buffer<double> source_latencies = latency_metric.Copy();
+  CircularBuffer<double> source_latencies = latency_metric.Copy();
   {
     // This method should only ever be called by the aggregator which
     // is the only thread to access its own latencies_, but we lock
@@ -36,13 +36,13 @@ void LatencyMetric::Aggregate(AbstractMetric& source) {
     // have to block here.
     std::lock_guard<std::mutex> lock(latency_mutex_);
     for (double latency_value : source_latencies) {
-      latencies_.push_back(latency_value);
+      latencies_.PushBack(latency_value);
     }
   }
 }
 
-boost::circular_buffer<double> LatencyMetric::Copy() {
-  boost::circular_buffer<double> new_buffer;
+CircularBuffer<double> LatencyMetric::Copy() {
+  CircularBuffer<double> new_buffer;
   {
     // This method is only called by the aggregator to make
     // a copy of a worker thread's latencies_.
@@ -68,7 +68,7 @@ const std::string LatencyMetric::GetInfo() const {
 
 void LatencyMetric::ComputeLatencies() {
   // LatencyMeasurements measurements;
-  if (latencies_.empty()) {
+  if (latencies_.IsEmpty()) {
     return;
   }
   std::vector<double> sorted_latencies;

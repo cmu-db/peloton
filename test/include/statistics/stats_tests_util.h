@@ -35,5 +35,6 @@ class StatsTestsUtil {
                                       int first_col_val, int second_col_val,
                                       int third_col_val, int fourth_col_val);
 };
-}
-}
+
+}  // namespace test
+}  // namespace peloton

@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <boost/circular_buffer.hpp>
 #include <string>
 #include <sstream>
 
 #include "common/timer.h"
 #include "common/types.h"
+#include "container/circular_buffer.h"
 #include "statistics/abstract_metric.h"
 
 namespace peloton {
@@ -47,7 +47,7 @@ class LatencyMetric : public AbstractMetric {
   //===--------------------------------------------------------------------===//
 
   inline void Reset() {
-    latencies_.clear();
+    latencies_.Clear();
     timer_ms_.Reset();
   }
 
@@ -66,7 +66,7 @@ class LatencyMetric : public AbstractMetric {
     {
       std::unique_lock<std::mutex> lock(latency_mutex_, std::defer_lock);
       if (lock.try_lock()) {
-        latencies_.push_back(latency_value);
+        latencies_.PushBack(latency_value);
       }
     }
   }
@@ -82,7 +82,7 @@ class LatencyMetric : public AbstractMetric {
   const std::string GetInfo() const;
 
   // Returns a copy of the latencies collected
-  boost::circular_buffer<double> Copy();
+  CircularBuffer<double> Copy();
 
  private:
   //===--------------------------------------------------------------------===//
@@ -91,7 +91,7 @@ class LatencyMetric : public AbstractMetric {
 
   // Circular buffer with capacity N that stores the <= N
   // most recent latencies collected
-  boost::circular_buffer<double> latencies_;
+  CircularBuffer<double> latencies_;
 
   // Timer for timing individual latencies
   Timer<std::ratio<1, 1000>> timer_ms_;

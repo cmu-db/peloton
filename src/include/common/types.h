@@ -772,7 +772,9 @@ enum CheckpointStatus {
 // Statistics Collection Type
 // Disable or enable
 enum StatsType {
+  // Disable statistics collection
   STATS_TYPE_INVALID = 0,
+  // Enable statistics collection
   STATS_TYPE_ENABLE = 1,
 };
 
