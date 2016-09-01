@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 /**
  * How to use the transaction test utilities
  *
@@ -147,7 +146,6 @@ class TransactionTestsUtil {
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
 
- private:
   static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       const storage::Tuple *tuple);
   static expression::ComparisonExpression<expression::CmpEq> *MakePredicate(
@@ -162,7 +160,7 @@ struct TransactionOperation {
   // value of the row, used by INSERT and DELETE operation
   int value;
   TransactionOperation(txn_op_t op_, int id_, int value_)
-      : op(op_), id(id_), value(value_){};
+      : op(op_), id(id_), value(value_) {};
 };
 
 // The schedule for transaction execution
@@ -407,16 +405,16 @@ class TransactionScheduler {
     sequence[time++] = cur_txn_id;
   }
   void UpdateByValue(int old_value, int new_value) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE,
-                                                  old_value, new_value);
+    schedules[cur_txn_id]
+        .operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value);
     sequence[time++] = cur_txn_id;
   }
   // ReadStore will store the (result of read + modify) to the schedule, the
   // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
   // to a schedule. See usage in isolation_level_test SIAnomalyTest.
   void ReadStore(int id, int modify) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id,
-                                                  modify);
+    schedules[cur_txn_id]
+        .operations.emplace_back(TXN_OP_READ_STORE, id, modify);
     sequence[time++] = cur_txn_id;
   }
 

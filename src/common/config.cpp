@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/config.h"
+#include "common/types.h"
 
 DEFINE_uint64(port, 5432, "Peloton port (default: 5432)");
 
@@ -18,5 +19,8 @@ DEFINE_uint64(max_connections, 64,
               "Maximum number of connections (default: 64)");
 
 DEFINE_string(socket_family, "AF_INET", "Socket family (AF_UNIX, AF_INET)");
+
+DEFINE_uint64(stats_mode, peloton::STATS_TYPE_INVALID,
+              "Enable statistics collection (default: STATS_TYPE_INVALID)");
 
 DEFINE_bool(h, false, "Show help");

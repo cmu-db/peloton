@@ -103,8 +103,8 @@ index::Index *BuildIndex(const bool unique_keys) {
   // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "test_index", 125,  // Index oid
-      index_type, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema,
-      key_attrs, unique_keys);
+      INVALID_OID, INVALID_OID, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      tuple_schema, key_schema, key_attrs, unique_keys);
 
   // Build index
   //

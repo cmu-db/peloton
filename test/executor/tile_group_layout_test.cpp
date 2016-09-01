@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -108,10 +107,12 @@ void ExecuteTileGroupTest() {
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+        "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
+        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        unique);
 
-    std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+    std::shared_ptr<index::Index> pkey_index(
+        index::IndexFactory::GetInstance(index_metadata));
     table->AddIndex(pkey_index);
   }
 
@@ -135,12 +136,13 @@ void ExecuteTileGroupTest() {
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
-    ItemPointer  *index_entry_ptr = nullptr;
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, txn, &index_entry_ptr);
-    
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id =
+        table->InsertTuple(&tuple, txn, &index_entry_ptr);
+
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    
+
     txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
   }
 
