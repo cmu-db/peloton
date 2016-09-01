@@ -10,25 +10,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
+#include <iostream>
 
-#include "statistics/stats_aggregator.h"
-#include "statistics/backend_stats_context.h"
-#include "storage/data_table.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "concurrency/transaction_tests_util.h"
-#include "executor/executor_tests_util.h"
-#include "executor/insert_executor.h"
-#include "executor/executor_context.h"
-#include "storage/tuple.h"
+#include "common/harness.h"
 #include "common/value.h"
 #include "common/config.h"
 #include "common/value_factory.h"
-#include "planner/insert_plan.h"
 
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction_tests_util.h"
+#include "statistics/stats_aggregator.h"
+#include "statistics/backend_stats_context.h"
 #include "statistics/stats_tests_util.h"
-
-#include <iostream>
+#include "storage/data_table.h"
+#include "storage/tuple.h"
+#include "executor/executor_tests_util.h"
+#include "executor/insert_executor.h"
+#include "executor/executor_context.h"
+#include "planner/insert_plan.h"
 
 namespace peloton {
 namespace test {
@@ -55,7 +54,7 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Ensure that the tile group is as expected.
   const catalog::Schema *schema = data_table->GetSchema();
-  assert(schema->GetColumnCount() == 4);
+  PL_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   std::vector<ItemPointer> tuple_slot_ids;
@@ -78,14 +77,6 @@ TEST_F(StatsTest, PerThreadStatsTest) {
         new executor::ExecutorContext(txn));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
-
-    /*
-    ItemPointer tuple_slot_id = data_table->InsertTuple(&tuple);
-    tuple_slot_ids.push_back(tuple_slot_id);
-    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
-    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    txn_manager.PerformInsert(txn, tuple_slot_id);
-    */
   }
   txn_manager.CommitTransaction(txn);
   oid_t database_id = data_table->GetDatabaseOid();
@@ -153,18 +144,7 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   EXPECT_EQ(1, txn_aborted);
   EXPECT_EQ(6, reads);
 
-  /*
   // Read and update the first tuple
-  txn = txn_manager.BeginTransaction();
-  storage::Tuple new_tuple = StatsTestsUtil::PopulateTuple(schema, 1, 2, 3, 4);
-  ItemPointer new_tuple_slot_id = data_table->InsertTuple(&new_tuple);
-  EXPECT_TRUE(new_tuple_slot_id.block != INVALID_OID);
-  EXPECT_TRUE(new_tuple_slot_id.offset != INVALID_OID);
-  txn_manager.PerformUpdate(txn, tuple_slot_ids[0], new_tuple_slot_id);
-  txn_manager.PerformRead(txn, tuple_slot_ids[0]);
-  txn_manager.CommitTransaction(txn);
-  */
-
   txn = txn_manager.BeginTransaction();
   TransactionTestsUtil::ExecuteUpdate(txn, data_table.get(), 0, 2);
   txn_manager.CommitTransaction(txn);
