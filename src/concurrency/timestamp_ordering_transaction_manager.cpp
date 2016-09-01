@@ -95,14 +95,13 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
-  // if (current_txn->GetResult() == RESULT_SUCCESS) {
-  //   gc::GCManagerFactory::GetInstance().
-  //       RegisterCommittedTransaction(current_txn->GetWriteSet(), current_txn->GetBeginCommitId());
-  // } else {
-  //   gc::GCManagerFactory::GetInstance().
-  //       RegisterAbortedTransaction(current_txn->GetWriteSet(), GetNextCommitId());
-  // }
-
+  if (current_txn->GetResult() == RESULT_SUCCESS) {
+    gc::GCManagerFactory::GetInstance().
+        RegisterCommittedTransaction(current_txn->GetWriteSetRef(), current_txn->GetBeginCommitId());
+  } else {
+    gc::GCManagerFactory::GetInstance().
+        RegisterAbortedTransaction(current_txn->GetWriteSetRef(), GetNextCommitId());
+  }
 
   delete current_txn;
   current_txn = nullptr;
