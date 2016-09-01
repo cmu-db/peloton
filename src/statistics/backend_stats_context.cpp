@@ -17,7 +17,9 @@
 #include "index/index.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
+#include "statistics/counter_metric.h"
 #include "storage/database.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace stats {
@@ -82,6 +84,10 @@ IndexMetric* BackendStatsContext::GetIndexMetric(oid_t database_id,
         new IndexMetric{INDEX_METRIC, database_id, table_id, index_id});
   }
   return index_metrics_[index_key].get();
+}
+
+LatencyMetric& BackendStatsContext::GetTxnLatencyMetric() {
+  return txn_latencies_;
 }
 
 void BackendStatsContext::IncrementTableReads(oid_t tile_group_id) {
