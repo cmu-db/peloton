@@ -23,6 +23,9 @@ DECLARE_uint64(max_connections);
 // Socket family (AF_UNIX, AF_INET)
 DECLARE_string(socket_family);
 
+// Enable or disable statistics collection
+DECLARE_uint64(stats_mode);
+
 // Both for showing the help info
 DECLARE_bool(h);
 DECLARE_bool(help);

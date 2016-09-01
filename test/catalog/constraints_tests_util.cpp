@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/constraints_tests_util.h"
 
 #include <cstdlib>
@@ -91,10 +90,8 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(VALUE_TYPE_VARCHAR,
-                                    25,  // Column length.
-                                    "COL_D",
-                                    !is_inlined);  // inlined.
+      auto column = catalog::Column(VALUE_TYPE_VARCHAR, 25,  // Column length.
+                                    "COL_D", !is_inlined);   // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -117,9 +114,9 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ConstraintsTestsUtil::PopulateTable(
-    concurrency::Transaction *transaction,
-    storage::DataTable *table, int num_rows) {
+void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
+                                         storage::DataTable *table,
+                                         int num_rows) {
   // Ensure that the tile group is as expected.
   UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
   PL_ASSERT(schema->GetColumnCount() == 4);
@@ -215,10 +212,12 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
+        "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
+        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+        key_schema, key_attrs, unique);
 
-    std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+    std::shared_ptr<index::Index> pkey_index(
+        index::IndexFactory::GetInstance(index_metadata));
 
     table->AddIndex(pkey_index);
 
@@ -229,9 +228,11 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "secondary_btree_index", 124, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, key_attrs, unique);
-    std::shared_ptr<index::Index> sec_index(index::IndexFactory::GetInstance(index_metadata));
+        "secondary_btree_index", 124, table->GetOid(), table->GetDatabaseOid(),
+        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
+        key_schema, key_attrs, unique);
+    std::shared_ptr<index::Index> sec_index(
+        index::IndexFactory::GetInstance(index_metadata));
 
     table->AddIndex(sec_index);
 
@@ -242,9 +243,11 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "unique_btree_index", 125, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema, key_schema, key_attrs, unique);
-    std::shared_ptr<index::Index> unique_index(index::IndexFactory::GetInstance(index_metadata));
+        "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
+        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema,
+        key_schema, key_attrs, unique);
+    std::shared_ptr<index::Index> unique_index(
+        index::IndexFactory::GetInstance(index_metadata));
 
     table->AddIndex(unique_index);
   }

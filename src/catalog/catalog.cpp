@@ -73,8 +73,8 @@ void Catalog::AddDatabase(storage::Database *database) {
 }
 
 void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
-                                          std::string &database_name,
-                                          concurrency::Transaction *txn) {
+                                                std::string &database_name,
+                                                concurrency::Transaction *txn) {
 
   // Update catalog_db with this database info
   auto tuple =
@@ -156,9 +156,12 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
 
+    bool unique_keys = true;
+
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", GetNextOid(), INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
+        "customer_pkey", GetNextOid(), table->GetOid(), database->GetOid(),
+        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema,
+        key_schema, key_attrs, unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
         index::IndexFactory::GetInstance(index_metadata));
@@ -219,12 +222,14 @@ Result Catalog::CreateIndex(const std::string &database_name,
     // Check if unique index or not
     if (unique == false) {
       index_metadata = new index::IndexMetadata(
-          index_name.c_str(), GetNextOid(), index_type,
-          INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
+          index_name.c_str(), GetNextOid(), table->GetOid(), database->GetOid(),
+          index_type, INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema,
+          key_attrs, true);
     } else {
       index_metadata = new index::IndexMetadata(
-          index_name.c_str(), GetNextOid(), index_type,
-          INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true);
+          index_name.c_str(), GetNextOid(), table->GetOid(), database->GetOid(),
+          index_type, INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema,
+          key_attrs, true);
     }
 
     // Add index to table
@@ -237,6 +242,21 @@ Result Catalog::CreateIndex(const std::string &database_name,
   }
 
   return Result::RESULT_FAILURE;
+}
+
+index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
+                                       const oid_t table_oid,
+                                       const oid_t index_oid) const {
+  // Lookup table
+  auto table = GetTableWithOid(database_oid, table_oid);
+
+  // Lookup index
+  if (table != nullptr) {
+    auto index = table->GetIndexWithOid(index_oid);
+    return index.get();
+  }
+
+  return nullptr;
 }
 
 // Drop a database

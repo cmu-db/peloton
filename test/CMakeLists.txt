@@ -32,9 +32,11 @@ set(EXECUTOR_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/executor/executor_tests_util.
 set(LOGGING_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/logging/logging_tests_util.cpp)
 set(JOIN_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/executor/join_tests_util.cpp)
 set(TXN_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/concurrency/transaction_tests_util.cpp)
+set(STATS_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/statistics/stats_tests_util.cpp)
 
 add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} 
-            ${HARNESS} ${EXECUTOR_TESTS_UTIL} ${LOGGING_TESTS_UTIL} ${JOIN_TESTS_UTIL} ${TXN_TESTS_UTIL})
+            ${HARNESS} ${EXECUTOR_TESTS_UTIL} ${LOGGING_TESTS_UTIL} ${JOIN_TESTS_UTIL}
+            ${TXN_TESTS_UTIL} ${STATS_TESTS_UTIL})
 
 # --[ Add "make check" target
 
