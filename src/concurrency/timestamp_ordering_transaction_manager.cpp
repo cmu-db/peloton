@@ -20,6 +20,7 @@
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace concurrency {
@@ -80,6 +81,32 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
   *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
+Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
+  txn_id_t txn_id = GetNextTransactionId();
+  cid_t begin_cid = GetNextCommitId();
+  Transaction *txn = new Transaction(txn_id, begin_cid);
+  
+  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+  txn->SetEpochId(eid);
+
+  return txn;
+}
+
+void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
+  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
+  if (current_txn->GetResult() == RESULT_SUCCESS) {
+    gc::GCManagerFactory::GetInstance().
+        RegisterCommittedTransaction(current_txn->GetWriteSetRef(), current_txn->GetBeginCommitId());
+  } else {
+    gc::GCManagerFactory::GetInstance().
+        RegisterAbortedTransaction(current_txn->GetWriteSetRef(), GetNextCommitId());
+  }
+
+  delete current_txn;
+  current_txn = nullptr;
+}
+
 
 
 TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetInstance() {
@@ -87,11 +114,11 @@ TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetIns
   return txn_manager;
 }
 
-
-
 bool TimestampOrderingTransactionManager::IsOccupied(
     Transaction *const current_txn, 
-    const ItemPointer &position) {
+    const void *position_ptr) {
+  ItemPointer &position = *((ItemPointer*)position_ptr);
+
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
   auto tuple_id = position.offset;
@@ -556,7 +583,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetBeginCommitId();
 
-  auto &rw_set = current_txn->GetRWSet();
+  auto &rw_set = current_txn->GetReadWriteSet();
 
   // install everything.
   // 1. install a new version for update operations;
@@ -593,8 +620,6 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-        // GC recycle.
-        // RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -617,9 +642,6 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-
-        // GC recycle.
-        // RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -648,8 +670,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(Transaction *const
   }
 
   Result result = current_txn->GetResult();
-
-  // gc::GCManagerFactory::GetInstance().EndGCContext(end_commit_id);
+  
   EndTransaction(current_txn);
 
   return result;
@@ -659,7 +680,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
-  auto &rw_set = current_txn->GetRWSet();
+  auto &rw_set = current_txn->GetReadWriteSet();
 
   std::vector<ItemPointer> aborted_versions;
 
@@ -710,7 +731,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
           old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
           tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
         } else {
-          // PL_ASSERT(tile_group_header->GetPrevItemPointer(tuple_slot) == new_version);
           tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
 
@@ -764,9 +784,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // GC recycle
-        //RecycleInvalidTupleSlot(new_version.block, new_version.offset);
-        // aborted_versions.push_back(new_version);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -775,11 +792,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
-        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
-
-        // GC recycle
-        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
-
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -788,23 +800,10 @@ Result TimestampOrderingTransactionManager::AbortTransaction(Transaction *const 
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
-        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
-
-        // GC recycle
-        // RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
 
       }
     }
   }
-
-  // cid_t next_commit_id = GetNextCommitId();
-
-  // for (auto &item_pointer : aborted_versions) {
-  //    RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
-  // }
-
-  // Need to change next_commit_id to INVALID_CID if disable the recycle of aborted version
-  // gc::GCManagerFactory::GetInstance().EndGCContext(next_commit_id);
   
   EndTransaction(current_txn);
 

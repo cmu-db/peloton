@@ -19,6 +19,8 @@
 #include <bitset>
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include <unordered_set>
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -840,16 +842,6 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
-// TupleMetadata
-//===--------------------------------------------------------------------===//
-struct TupleMetadata {
-  oid_t table_id = 0;
-  oid_t tile_group_id = 0;
-  oid_t tuple_slot_id = 0;
-  cid_t tuple_end_cid = 0;
-};
-
-//===--------------------------------------------------------------------===//
 // Column Bitmap
 //===--------------------------------------------------------------------===//
 static const size_t max_col_count = 128;
@@ -892,6 +884,22 @@ struct ItemPointerHasher {
     return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
   }
 };
+
+//===--------------------------------------------------------------------===//
+// read-write set
+//===--------------------------------------------------------------------===//
+
+enum RWType {
+  RW_TYPE_READ,
+  RW_TYPE_UPDATE,
+  RW_TYPE_INSERT,
+  RW_TYPE_DELETE,
+  RW_TYPE_INS_DEL  // delete after insert.
+};
+
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> ReadWriteSet;
+typedef std::unordered_map<oid_t, std::unordered_set<oid_t>> WriteSet;
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> InsertSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle

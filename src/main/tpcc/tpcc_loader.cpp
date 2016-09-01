@@ -119,7 +119,12 @@ const char *syllables[syllable_count] = {"BAR",   "OUGHT", "ABLE", "PRI",
                                          "PRES",  "ESES",  "ANTI", "CALLY",
                                          "ATION", "EING"};
 
+const std::string data_constant = std::string("FOO");
+
 NURandConstant nu_rand_const;
+
+const int loading_thread_count = 4;
+
 /////////////////////////////////////////////////////////
 // Create the tables
 /////////////////////////////////////////////////////////
@@ -161,7 +166,7 @@ void CreateWarehouseTable() {
   std::vector<catalog::Column> warehouse_columns;
 
   auto w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "W_ID", is_inlined);
   warehouse_columns.push_back(w_id_column);
   auto w_name_column = catalog::Column(
@@ -208,9 +213,8 @@ void CreateWarehouseTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "warehouse_pkey", warehouse_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -240,10 +244,10 @@ void CreateDistrictTable() {
   std::vector<catalog::Column> district_columns;
 
   auto d_id_column = catalog::Column(
-      VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "D_ID", is_inlined);
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D_ID", is_inlined);
   district_columns.push_back(d_id_column);
   auto d_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "D_W_ID", is_inlined);
   district_columns.push_back(d_w_id_column);
   auto d_name_column = catalog::Column(VALUE_TYPE_VARCHAR, district_name_length,
@@ -294,9 +298,8 @@ void CreateDistrictTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "district_pkey", district_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -355,9 +358,8 @@ void CreateItemTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "item_pkey", item_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -403,11 +405,11 @@ void CreateCustomerTable() {
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_ID", is_inlined);
   customer_columns.push_back(c_id_column);
   auto c_d_id_column =
-      catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "C_D_ID", is_inlined);
   customer_columns.push_back(c_d_id_column);
   auto c_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "C_W_ID", is_inlined);
   customer_columns.push_back(c_w_id_column);
   auto c_first_name_column =
@@ -492,9 +494,8 @@ void CreateCustomerTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      true);
+      "customer_pkey", customer_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -505,10 +506,9 @@ void CreateCustomerTable() {
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-  index_metadata =
-      new index::IndexMetadata("customer_skey", customer_table_skey_index_oid,
-                               INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_INVALID,
-                               tuple_schema, key_schema, key_attrs, false);
+  index_metadata = new index::IndexMetadata(
+      "customer_skey", customer_table_skey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -541,19 +541,19 @@ void CreateHistoryTable() {
                       "H_C_ID", is_inlined);
   history_columns.push_back(h_c_id_column);
   auto h_c_d_id_column =
-      catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "H_C_D_ID", is_inlined);
   history_columns.push_back(h_c_d_id_column);
   auto h_c_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "H_C_W_ID", is_inlined);
   history_columns.push_back(h_c_w_id_column);
   auto h_d_id_column =
-      catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "H_D_ID", is_inlined);
   history_columns.push_back(h_d_id_column);
   auto h_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "H_W_ID", is_inlined);
   history_columns.push_back(h_w_id_column);
   auto h_date_column =
@@ -610,7 +610,7 @@ void CreateStockTable() {
                       "S_I_ID", is_inlined);
   stock_columns.push_back(s_i_id_column);
   auto s_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "S_W_ID", is_inlined);
   stock_columns.push_back(s_w_id_column);
   auto s_quantity_column =
@@ -681,9 +681,8 @@ void CreateStockTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "stock_pkey", stock_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -720,11 +719,11 @@ void CreateOrdersTable() {
                       "O_C_ID", is_inlined);
   orders_columns.push_back(o_c_id_column);
   auto o_d_id_column =
-      catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "O_D_ID", is_inlined);
   orders_columns.push_back(o_d_id_column);
   auto o_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "O_W_ID", is_inlined);
   orders_columns.push_back(o_w_id_column);
   auto o_entry_d_column =
@@ -764,9 +763,8 @@ void CreateOrdersTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      true);
+      "orders_pkey", orders_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -777,10 +775,9 @@ void CreateOrdersTable() {
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-  index_metadata =
-      new index::IndexMetadata("orders_skey", orders_table_skey_index_oid,
-                               INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_INVALID,
-                               tuple_schema, key_schema, key_attrs, false);
+  index_metadata = new index::IndexMetadata(
+      "orders_skey", orders_table_skey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -807,11 +804,11 @@ void CreateNewOrderTable() {
                       "NO_O_ID", is_inlined);
   new_order_columns.push_back(no_o_id_column);
   auto no_d_id_column =
-      catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "NO_D_ID", is_inlined);
   new_order_columns.push_back(no_d_id_column);
   auto no_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "NO_W_ID", is_inlined);
   new_order_columns.push_back(no_w_id_column);
 
@@ -834,9 +831,8 @@ void CreateNewOrderTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "new_order_pkey", new_order_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -873,11 +869,11 @@ void CreateOrderLineTable() {
                       "OL_O_ID", is_inlined);
   order_line_columns.push_back(ol_o_id_column);
   auto ol_d_id_column =
-      catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "OL_D_ID", is_inlined);
   order_line_columns.push_back(ol_d_id_column);
   auto ol_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "OL_W_ID", is_inlined);
   order_line_columns.push_back(ol_w_id_column);
   auto ol_number_column =
@@ -889,7 +885,7 @@ void CreateOrderLineTable() {
                       "OL_I_ID", is_inlined);
   order_line_columns.push_back(ol_i_id_column);
   auto ol_supply_w_id_column =
-      catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT),
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "OL_SUPPLY_W_ID", is_inlined);
   order_line_columns.push_back(ol_supply_w_id_column);
   auto ol_delivery_d_column =
@@ -929,9 +925,8 @@ void CreateOrderLineTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      true);
+      "order_line_pkey", order_line_table_pkey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -943,9 +938,8 @@ void CreateOrderLineTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs,
-      false);
+      "order_line_skey", order_line_table_skey_index_oid, state.index,
+      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -1217,7 +1211,7 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(
   district_tuple->SetValue(0, ValueFactory::GetIntegerValue(district_id),
                            nullptr);
   // D_W_ID
-  district_tuple->SetValue(1, ValueFactory::GetSmallIntValue(warehouse_id),
+  district_tuple->SetValue(1, ValueFactory::GetIntegerValue(warehouse_id),
                            nullptr);
   // D_NAME
   auto d_name = GetRandomAlphaNumericString(district_name_length);
@@ -1266,10 +1260,10 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(
   customer_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id),
                            nullptr);
   // C_D_ID
-  customer_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id),
+  customer_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id),
                            nullptr);
   // C_W_ID
-  customer_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id),
+  customer_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id),
                            nullptr);
   // C_FIRST, C_MIDDLE, C_LAST
   auto c_first = GetRandomAlphaNumericString(name_length);
@@ -1358,17 +1352,17 @@ std::unique_ptr<storage::Tuple> BuildHistoryTuple(
   history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id),
                           nullptr);
   // H_C_D_ID
-  history_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id),
+  history_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id),
                           nullptr);
   // H_C_W_ID
-  history_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id),
+  history_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id),
                           nullptr);
   // H_D_ID
-  history_tuple->SetValue(3, ValueFactory::GetTinyIntValue(history_district_id),
+  history_tuple->SetValue(3, ValueFactory::GetIntegerValue(history_district_id),
                           nullptr);
   // H_W_ID
   history_tuple->SetValue(
-      4, ValueFactory::GetSmallIntValue(history_warehouse_id), nullptr);
+      4, ValueFactory::GetIntegerValue(history_warehouse_id), nullptr);
   // H_DATE
   auto h_date = GetTimeStamp();
   history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date), nullptr);
@@ -1400,7 +1394,7 @@ std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
   orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id),
                          nullptr);
   // O_W_ID
-  orders_tuple->SetValue(3, ValueFactory::GetSmallIntValue(warehouse_id),
+  orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id),
                          nullptr);
   // O_ENTRY_D
   auto o_entry_d = GetTimeStamp();
@@ -1437,7 +1431,7 @@ std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
   new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id),
                             nullptr);
   // NO_W_ID
-  new_order_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id),
+  new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id),
                             nullptr);
 
   return new_order_tuple;
@@ -1458,7 +1452,7 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
   order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id),
                              nullptr);
   // OL_W_ID
-  order_line_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id),
+  order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id),
                              nullptr);
   // OL_NUMBER
   order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(order_line_id),
@@ -1468,7 +1462,7 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
   order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(ol_i_id),
                              nullptr);
   // OL_SUPPLY_W_ID
-  order_line_tuple->SetValue(5, ValueFactory::GetSmallIntValue(ol_supply_w_id),
+  order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_supply_w_id),
                              nullptr);
   // OL_DELIVERY_D
   int64_t ol_delivery_d = GetTimeStamp();
@@ -1557,13 +1551,13 @@ void LoadItems() {
   txn_manager.CommitTransaction(txn);
 }
 
-void LoadWarehouses() {
+void LoadWarehouses(const int &warehouse_from, const int &warehouse_to) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<executor::ExecutorContext> context;
 
   // WAREHOUSES
-  for (auto warehouse_itr = 0; warehouse_itr < state.warehouse_count;
-       warehouse_itr++) {
+  for (auto warehouse_itr = warehouse_from; warehouse_itr < warehouse_to; warehouse_itr++) {
+
     std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
 
     auto txn = txn_manager.BeginTransaction();
@@ -1688,9 +1682,45 @@ void LoadWarehouses() {
 }
 
 void LoadTPCCDatabase() {
+
+  std::chrono::steady_clock::time_point start_time;
+  start_time = std::chrono::steady_clock::now();
+
   LoadItems();
 
-  LoadWarehouses();
+  if (state.warehouse_count < loading_thread_count) {
+    std::vector<std::unique_ptr<std::thread>> load_threads(state.warehouse_count);
+    for (int thread_id = 0; thread_id < state.warehouse_count; ++thread_id) {
+      int warehouse_from = thread_id;
+      int warehouse_to = thread_id + 1;
+      load_threads[thread_id].reset(new std::thread(LoadWarehouses, warehouse_from, warehouse_to));
+    }
+
+    for (auto thread_id = 0; thread_id < state.warehouse_count; ++thread_id) {
+      load_threads[thread_id]->join();
+    }
+
+  } else {
+    std::vector<std::unique_ptr<std::thread>> load_threads(loading_thread_count);
+    int warehouse_per_thread = state.warehouse_count / loading_thread_count;
+    for (int thread_id = 0; thread_id < loading_thread_count - 1; ++thread_id) {
+      int warehouse_from = warehouse_per_thread * thread_id;
+      int warehouse_to = warehouse_per_thread * (thread_id + 1);
+      load_threads[thread_id].reset(new std::thread(LoadWarehouses, warehouse_from, warehouse_to));
+    }
+    int thread_id = loading_thread_count - 1;
+    int warehouse_from = warehouse_per_thread * thread_id;
+    int warehouse_to = state.warehouse_count;
+    load_threads[thread_id].reset(new std::thread(LoadWarehouses, warehouse_from, warehouse_to));
+
+    for (auto thread_id = 0; thread_id < loading_thread_count; ++thread_id) {
+      load_threads[thread_id]->join();
+    }
+  }
+
+  std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+  double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+  LOG_INFO("loading time = %lf ms", diff);
 
   LOG_INFO("warehouse count = %lu", warehouse_table->GetTupleCount());
   LOG_INFO("district count  = %lu", district_table->GetTupleCount());
@@ -1706,3 +1736,5 @@ void LoadTPCCDatabase() {
 }  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
+
+

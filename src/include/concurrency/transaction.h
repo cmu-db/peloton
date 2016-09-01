@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <mutex>
 #include <atomic>
 #include <vector>
 #include <map>
@@ -24,6 +23,7 @@
 #include "common/types.h"
 #include "common/exception.h"
 
+
 namespace peloton {
 namespace concurrency {
 
@@ -31,40 +31,34 @@ namespace concurrency {
 // Transaction
 //===--------------------------------------------------------------------===//
 
-enum RWType {
-  RW_TYPE_READ,
-  RW_TYPE_UPDATE,
-  RW_TYPE_INSERT,
-  RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL  // delete after insert.
-};
 
 class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction()
-      : txn_id_(INVALID_TXN_ID),
-        begin_cid_(INVALID_CID),
-        end_cid_(MAX_CID),
-        is_written_(false),
-        insert_count_(0) {}
+  Transaction() {
+    Init(INVALID_TXN_ID, INVALID_CID);
+  }
 
-  Transaction(const txn_id_t &txn_id)
-      : txn_id_(txn_id),
-        begin_cid_(INVALID_CID),
-        end_cid_(MAX_CID),
-        is_written_(false),
-        insert_count_(0) {}
+  Transaction(const txn_id_t &txn_id) {
+    Init(txn_id, INVALID_CID);
+  }
 
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
-      : txn_id_(txn_id),
-        begin_cid_(begin_cid),
-        end_cid_(MAX_CID),
-        is_written_(false),
-        insert_count_(0) {}
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) {
+    Init(txn_id, begin_cid);
+  }
 
   ~Transaction() {}
+
+  void Init(const txn_id_t &txn_id, const cid_t &begin_cid) {
+    txn_id_ = txn_id;
+    begin_cid_ = begin_cid;
+    end_cid_ = MAX_CID;
+    is_written_ = false;
+    insert_count_ = 0;
+    w_set_.reset(new WriteSet());
+    i_set_.reset(new InsertSet());
+  }
 
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
@@ -91,7 +85,17 @@ class Transaction : public Printable {
   // Return true if we detect INS_DEL
   bool RecordDelete(const ItemPointer &);
 
-  const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
+  inline const ReadWriteSet &GetReadWriteSet() {
+    return rw_set_;
+  }
+
+  inline std::shared_ptr<WriteSet> GetWriteSetRef() {
+    return w_set_;
+  }
+
+  inline std::shared_ptr<InsertSet> GetInsertSetRef() {
+    return i_set_;
+  }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -123,7 +127,13 @@ class Transaction : public Printable {
   // epoch id
   size_t epoch_id_;
 
-  std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
+  ReadWriteSet rw_set_;
+
+  // this set contains data location that is updated/deleted by the transaction
+  std::shared_ptr<WriteSet> w_set_;
+
+  // this set contains data location that is inserted by the transaction
+  std::shared_ptr<InsertSet> i_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;

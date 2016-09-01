@@ -30,9 +30,9 @@ class IndexTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
-ItemPointer item0(120, 5);
-ItemPointer item1(120, 7);
-ItemPointer item2(123, 19);
+std::shared_ptr<ItemPointer> item0(new ItemPointer(120, 5));
+std::shared_ptr<ItemPointer> item1(new ItemPointer(120, 7));
+std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
 
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
@@ -139,15 +139,16 @@ TEST_F(IndexTests, BasicTest) {
   key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
 
   // INSERT
-  index->InsertEntry(key0.get(), item0);
+
+  index->InsertEntry(key0.get(), item0.get());
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item0.block);
+  EXPECT_EQ(location_ptrs[0]->block, item0->block);
   location_ptrs.clear();
 
   // DELETE
-  index->DeleteEntry(key0.get(), item0);
+  index->DeleteEntry(key0.get(), item0.get());
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -216,16 +217,16 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
     // item0 = 2
     // item1 = 6
     // item2 = 1
-    index->InsertEntry(key0.get(), item0);
-    index->InsertEntry(key1.get(), item1);
-    index->InsertEntry(key1.get(), item2);
-    index->InsertEntry(key1.get(), item1);
-    index->InsertEntry(key1.get(), item1);
-    index->InsertEntry(key1.get(), item0);
+    index->InsertEntry(key0.get(), item0.get());
+    index->InsertEntry(key1.get(), item1.get());
+    index->InsertEntry(key1.get(), item2.get());
+    index->InsertEntry(key1.get(), item1.get());
+    index->InsertEntry(key1.get(), item1.get());
+    index->InsertEntry(key1.get(), item0.get());
 
-    index->InsertEntry(key2.get(), item1);
-    index->InsertEntry(key3.get(), item1);
-    index->InsertEntry(key4.get(), item1);
+    index->InsertEntry(key2.get(), item1.get());
+    index->InsertEntry(key3.get(), item1.get());
+    index->InsertEntry(key4.get(), item1.get());
   }
 }
 
@@ -284,11 +285,11 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
     // item0 = 2
     // item1 = 6
     // item2 = 1
-    index->DeleteEntry(key0.get(), item0);
-    index->DeleteEntry(key1.get(), item1);
-    index->DeleteEntry(key2.get(), item2);
-    index->DeleteEntry(key3.get(), item1);
-    index->DeleteEntry(key4.get(), item1);
+    index->DeleteEntry(key0.get(), item0.get());
+    index->DeleteEntry(key1.get(), item1.get());
+    index->DeleteEntry(key2.get(), item2.get());
+    index->DeleteEntry(key3.get(), item1.get());
+    index->DeleteEntry(key4.get(), item1.get());
 
     // should be no key0
     // key1 item 0 1 2
@@ -334,7 +335,7 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item0.block);
+  EXPECT_EQ(location_ptrs[0]->block, item0->block);
   location_ptrs.clear();
 
   delete tuple_schema;
@@ -375,7 +376,7 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0].block, item1.block);
+  EXPECT_EQ(location_ptrs[0].block, item1->block);
   location_ptrs.clear();
 
   delete tuple_schema;
@@ -416,7 +417,7 @@ TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item1.block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   delete tuple_schema;
@@ -466,7 +467,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
     EXPECT_EQ(location_ptrs.size(), num_threads);
   }
 
-  EXPECT_EQ(location_ptrs[0]->block, item0.block);
+  EXPECT_EQ(location_ptrs[0]->block, item0->block);
   location_ptrs.clear();
 
   delete tuple_schema;
@@ -508,7 +509,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0].block, item1.block);
+  EXPECT_EQ(location_ptrs[0].block, item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -634,7 +635,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
     EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
 
-  EXPECT_EQ(location_ptrs[0]->block, item1.block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -880,7 +881,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
     EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
 
-  EXPECT_EQ(location_ptrs[0]->block, item1.block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
