@@ -25,7 +25,7 @@ class GCManagerFactory {
   static GCManager &GetInstance() {
     switch (gc_type_) {
 
-      case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
+      case GARBAGE_COLLECTION_TYPE_ON:
         return TransactionLevelGCManager::GetInstance(gc_thread_count_);
 
       default:
