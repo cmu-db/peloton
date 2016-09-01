@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <mutex>
 #include <atomic>
 #include <vector>
 #include <map>
@@ -37,34 +36,29 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction()
-      : txn_id_(INVALID_TXN_ID),
-        begin_cid_(INVALID_CID),
-        end_cid_(MAX_CID),
-        is_written_(false),
-        insert_count_(0) {
-          w_set_.reset(new WriteSet());
-        }
+  Transaction() {
+    Init(INVALID_TXN_ID, INVALID_CID);
+  }
 
-  Transaction(const txn_id_t &txn_id)
-      : txn_id_(txn_id),
-        begin_cid_(INVALID_CID),
-        end_cid_(MAX_CID),
-        is_written_(false),
-        insert_count_(0) {
-          w_set_.reset(new WriteSet());
-        }
+  Transaction(const txn_id_t &txn_id) {
+    Init(txn_id, INVALID_CID);
+  }
 
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
-      : txn_id_(txn_id),
-        begin_cid_(begin_cid),
-        end_cid_(MAX_CID),
-        is_written_(false),
-        insert_count_(0) {
-          w_set_.reset(new WriteSet());
-        }
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) {
+    Init(txn_id, begin_cid);
+  }
 
   ~Transaction() {}
+
+  void Init(const txn_id_t &txn_id, const cid_t &begin_cid) {
+    txn_id_ = txn_id;
+    begin_cid_ = begin_cid;
+    end_cid_ = MAX_CID;
+    is_written_ = false;
+    insert_count_ = 0;
+    w_set_.reset(new WriteSet());
+    i_set_.reset(new InsertSet());
+  }
 
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
@@ -99,6 +93,10 @@ class Transaction : public Printable {
     return w_set_;
   }
 
+  inline std::shared_ptr<InsertSet> GetInsertSetRef() {
+    return i_set_;
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -131,7 +129,11 @@ class Transaction : public Printable {
 
   ReadWriteSet rw_set_;
 
+  // this set contains data location that is updated/deleted by the transaction
   std::shared_ptr<WriteSet> w_set_;
+
+  // this set contains data location that is inserted by the transaction
+  std::shared_ptr<InsertSet> i_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;

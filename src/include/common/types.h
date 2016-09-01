@@ -899,6 +899,7 @@ enum RWType {
 
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> ReadWriteSet;
 typedef std::unordered_map<oid_t, std::unordered_set<oid_t>> WriteSet;
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> InsertSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle

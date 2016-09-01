@@ -81,6 +81,9 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   } else {
     rw_set_[tile_group_id][tuple_id] = RW_TYPE_INSERT;
     ++insert_count_;
+
+    // insert into insert set.
+    i_set_->operator[](tile_group_id)[tuple_id] = true;
   }
 }
 
@@ -107,6 +110,9 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
     if (type == RW_TYPE_INSERT) {
       type = RW_TYPE_INS_DEL;
       --insert_count_;
+
+      // update insert set.
+      i_set_->operator[](tile_group_id)[tuple_id] = false;
       return true;
     }
     if (type == RW_TYPE_DELETE) {
