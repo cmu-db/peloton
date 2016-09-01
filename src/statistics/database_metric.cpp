@@ -27,7 +27,7 @@ void DatabaseMetric::Aggregate(AbstractMetric& source) {
   txn_aborted_.Aggregate(db_metric.GetTxnAborted());
 }
 
-std::string DatabaseMetric::ToString() const {
+const std::string DatabaseMetric::GetInfo() const {
   std::stringstream ss;
   ss << "//"
         "===-----------------------------------------------------------------"
@@ -36,8 +36,8 @@ std::string DatabaseMetric::ToString() const {
   ss << "//"
         "===-----------------------------------------------------------------"
         "---===//" << std::endl;
-  ss << "# transactions committed: " << txn_committed_.ToString() << std::endl;
-  ss << "# transactions aborted:   " << txn_aborted_.ToString() << std::endl;
+  ss << "# transactions committed: " << txn_committed_.GetInfo() << std::endl;
+  ss << "# transactions aborted:   " << txn_aborted_.GetInfo() << std::endl;
   return ss.str();
 }
 

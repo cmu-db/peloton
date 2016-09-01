@@ -66,14 +66,14 @@ class TableMetric : public AbstractMetric {
 
   void Aggregate(AbstractMetric &source);
 
-  inline std::string ToString() const {
+  inline const std::string GetInfo() const {
     std::stringstream ss;
     ss << "-----------------------------" << std::endl;
     ss << "  TABLE " << table_name_ << "(OID=";
     ss << table_id_ << ")" << std::endl;
     ;
     ss << "-----------------------------" << std::endl;
-    ss << table_access_.ToString() << std::endl;
+    ss << table_access_.GetInfo() << std::endl;
     return ss.str();
   }
 
