@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// transaction_tests_util.cpp
+// stats_tests_util.cpp
 //
-// Identification: tests/concurrency/transaction_tests_util.cpp
+// Identification: tests/include/statistics/stats_tests_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -46,5 +46,5 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   tuple.SetValue(3, string_value, testing_pool);
   return tuple;
 }
-}
-}
+}  // namespace test
+}  // namespace peloton
