@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "common/macros.h"
 #include "common/types.h"
 #include "common/logger.h"
@@ -56,9 +58,9 @@ class GCManager {
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterCommittedTransaction(const WriteSet &w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterCommittedTransaction(std::shared_ptr<WriteSet> w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterAbortedTransaction(const WriteSet &w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterAbortedTransaction(std::shared_ptr<WriteSet> w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
  private:
   bool is_running_;
