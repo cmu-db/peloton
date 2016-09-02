@@ -16,9 +16,7 @@
 #include "common/macros.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "benchmark/tpcc/tpcc_loader.h"
-#include "executor/update_executor.h"
-#include "executor/index_scan_executor.h"
-#include "executor/insert_executor.h"
+#include "executor/abstract_executor.h"
 
 namespace peloton {
 
