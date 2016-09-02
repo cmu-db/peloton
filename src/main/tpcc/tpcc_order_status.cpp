@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.cpp
+// tpcc_order_status.cpp
 //
-// Identification: benchmark/tpcc/workload.cpp
+// Identification: src/main/tpcc/tpcc_order_status.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
