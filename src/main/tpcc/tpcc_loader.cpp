@@ -1081,8 +1081,8 @@ double GetRandomDouble(const double lower_bound, const double upper_bound) {
 }
 
 double GetRandomFixedPoint(int decimal_places, double minimum, double maximum) {
-  assert(decimal_places > 0);
-  assert(minimum < maximum);
+  PL_ASSERT(decimal_places > 0);
+  PL_ASSERT(minimum < maximum);
 
   int multiplier = 1;
   for (int i = 0; i < decimal_places; ++i) {
