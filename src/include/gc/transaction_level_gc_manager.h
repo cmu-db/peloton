@@ -30,14 +30,18 @@ namespace gc {
 #define MAX_QUEUE_LENGTH 100000
 #define MAX_ATTEMPT_COUNT 100000
 
+
 struct GarbageContext {
-  GarbageContext() : timestamp_(INVALID_CID) {}
-  GarbageContext(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp) : timestamp_(timestamp) {
+  GarbageContext() : timestamp_(INVALID_CID), w_set_type_(WRITE_SET_TYPE_COMMITTED) {}
+  GarbageContext(std::shared_ptr<ReadWriteSet> w_set, 
+                 const cid_t &timestamp, 
+                 const WriteSetType w_set_type) : timestamp_(timestamp), w_set_type_(w_set_type) {
     w_set_ = w_set;
   }
 
   std::shared_ptr<ReadWriteSet> w_set_;
   cid_t timestamp_;
+  WriteSetType w_set_type_;
 };
 
 class TransactionLevelGCManager : public GCManager {

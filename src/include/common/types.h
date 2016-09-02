@@ -926,6 +926,11 @@ enum RWType {
   RW_TYPE_INS_DEL  // delete after insert.
 };
 
+enum WriteSetType {
+  WRITE_SET_TYPE_COMMITTED,
+  WRITE_SET_TYPE_ABORTED
+};
+
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> ReadWriteSet;
 
 //===--------------------------------------------------------------------===//
