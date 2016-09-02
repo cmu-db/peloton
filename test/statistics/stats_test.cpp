@@ -40,7 +40,7 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   /*
    * Register to StatsAggregator
    */
-  peloton::stats::StatsAggregator::GetInstance(1000000);
+  auto &aggregator =peloton::stats::StatsAggregator::GetInstance(1000);
 
   // int tuple_count = 10;
   int tups_per_tile_group = 100;
@@ -191,6 +191,9 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   EXPECT_EQ(4, txn_commited);
   EXPECT_EQ(9, reads);
   EXPECT_EQ(1, deletes);
+
+  aggregator.ShutdownAggregator();
+
 }
 }  // namespace stats
 }  // namespace peloton

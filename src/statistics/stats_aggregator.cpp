@@ -44,14 +44,23 @@ StatsAggregator::~StatsAggregator() {
   for (auto &stats_item : backend_stats_) {
     delete stats_item.second;
   }*/
+
+  ShutdownAggregator();
   try {
     ofs_.close();
   }
   catch (std::ofstream::failure &e) {
     LOG_ERROR("Couldn't close the stats log file %s", e.what());
   }
+}
+
+void StatsAggregator::ShutdownAggregator() {
+  if (!shutting_down_) {
+    shutting_down_ = true;
   exec_finished_.notify_one();
   aggregator_thread_.join();
+    LOG_INFO("join finished");
+  }
 }
 
 void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
@@ -115,7 +124,7 @@ void StatsAggregator::RunAggregator() {
   double alpha = 0.4;
   double weighted_avg_throughput = 0.0;
 
-  while (exec_finished_.wait_for(
+  while (!shutting_down_ && exec_finished_.wait_for(
              lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
          std::cv_status::timeout) {
     Aggregate(interval_cnt, alpha, weighted_avg_throughput);

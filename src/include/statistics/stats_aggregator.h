@@ -94,6 +94,10 @@ class StatsAggregator {
   // Aggregate stats periodically
   void RunAggregator();
 
+  // Terminate aggregator thread. 
+  // TODO this should not be a public function
+  void ShutdownAggregator();  
+
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -128,6 +132,9 @@ class StatsAggregator {
   // Output path of the stats log
   std::string peloton_stats_directory_ = "./stats_log";
   std::ofstream ofs_;
+
+  // Whether the aggregator is running
+  bool shutting_down_ = false;
 };
 
 }  // namespace stats
