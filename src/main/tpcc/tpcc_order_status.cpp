@@ -153,11 +153,11 @@ bool RunOrderStatus(const size_t &thread_id){
 
     if (result.size() == 0) {
       LOG_ERROR("wrong result size : %lu", result.size());
-      assert(false);
+      PL_ASSERT(false);
     }
     if (result[0].size() == 0) {
       LOG_ERROR("wrong result[0] size : %lu", result[0].size());
-      assert(false);
+      PL_ASSERT(false);
     }
   } else {
     LOG_ERROR("getCustomersByLastName: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id, d_id, c_last");
@@ -207,17 +207,17 @@ bool RunOrderStatus(const size_t &thread_id){
       return false;
     }
 
-    assert(result.size() > 0);
+    PL_ASSERT(result.size() > 0);
     // Get the middle one
     size_t name_count = result.size();
     auto &customer = result[name_count/2];
-    assert(customer.size() > 0);
+    PL_ASSERT(customer.size() > 0);
     c_id = ValuePeeker::PeekInteger(customer[0]);
   }
 
   if (c_id < 0) {
     LOG_ERROR("wrong c_id");
-    assert(false);
+    PL_ASSERT(false);
   }
 
   LOG_TRACE("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id");
@@ -309,7 +309,7 @@ bool RunOrderStatus(const size_t &thread_id){
     }
   }
 
-  assert(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 

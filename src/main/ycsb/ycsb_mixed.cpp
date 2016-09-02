@@ -207,7 +207,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
   }
 
   // transaction passed execution.
-  assert(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
@@ -216,7 +216,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
     
   } else {
     // transaction failed commitment.
-    assert(result == Result::RESULT_ABORTED ||
+    PL_ASSERT(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
     return false;
   }
