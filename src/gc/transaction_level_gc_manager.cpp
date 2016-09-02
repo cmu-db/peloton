@@ -81,14 +81,13 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 
 void TransactionLevelGCManager::RegisterCommittedTransaction(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
-    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
+    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp, WRITE_SET_TYPE_COMMITTED));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
-
 void TransactionLevelGCManager::RegisterAbortedTransaction(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
-    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
+    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp, WRITE_SET_TYPE_ABORTED));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
@@ -107,7 +106,9 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
       if (res) {
         for (auto entry : *(garbage_ctx->w_set_.get())) {
           for (auto &element : entry.second) {
-            DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
+            if (element.second == RW_TYPE_DELETE) {
+              DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
+            }
           }
         }
         garbages.push_back(garbage_ctx);
@@ -126,11 +127,15 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
     }
 
     if (garbage_ctx->timestamp_ < max_cid) {
-      // Now that we know we need to recycle tuple, we need to delete all
-      // tuples from the indexes to which it belongs as well.
+      // as the max timestamp of committed transactions is larger than the gc's timestamp,
+      // it means that no active transactions can read it.
+      // so we can unlink it.
+      // we need to delete all the tuples from the indexes to which it belongs as well.
       for (auto &entry : *(garbage_ctx->w_set_.get())) {
         for (auto &element : entry.second) {
+          if (element.second == RW_TYPE_DELETE) {
             DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
+          }
         }
       }
       // Add to the garbage map
@@ -219,7 +224,6 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
   }
   return INVALID_ITEMPOINTER;
 }
-
 
 void TransactionLevelGCManager::ClearGarbage(int thread_id) {
   while(!unlink_queues_[thread_id]->IsEmpty() || !local_unlink_queues_[thread_id].empty()) {
