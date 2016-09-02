@@ -124,9 +124,6 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
 }
 
 
-
-
-
 TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetInstance() {
   static TimestampOrderingTransactionManager txn_manager;
   return txn_manager;

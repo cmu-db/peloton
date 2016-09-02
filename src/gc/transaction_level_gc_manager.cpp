@@ -79,14 +79,14 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RegisterCommittedTransaction(std::shared_ptr<WriteSet> w_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterCommittedTransaction(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
 
-void TransactionLevelGCManager::RegisterAbortedTransaction(std::shared_ptr<WriteSet> w_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RegisterAbortedTransaction(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp) {
     // Add the garbage context to the lockfree queue
     std::shared_ptr<GarbageContext> gc_context(new GarbageContext(w_set, timestamp));
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
@@ -107,7 +107,7 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
       if (res) {
         for (auto entry : *(garbage_ctx->w_set_.get())) {
           for (auto &element : entry.second) {
-            DeleteTupleFromIndexes(ItemPointer(entry.first, element)); 
+            DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
           }
         }
         garbages.push_back(garbage_ctx);
@@ -130,7 +130,7 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
       // tuples from the indexes to which it belongs as well.
       for (auto &entry : *(garbage_ctx->w_set_.get())) {
         for (auto &element : entry.second) {
-            DeleteTupleFromIndexes(ItemPointer(entry.first, element)); 
+            DeleteTupleFromIndexes(ItemPointer(entry.first, element.first)); 
         }
       }
       // Add to the garbage map
@@ -193,7 +193,7 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
 
       oid_t table_id = table->GetOid();
 
-      ItemPointer location(entry.first, element); 
+      ItemPointer location(entry.first, element.first); 
 
       if (ResetTuple(location) == false) {
         continue;

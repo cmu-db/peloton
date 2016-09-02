@@ -56,8 +56,7 @@ class Transaction : public Printable {
     end_cid_ = MAX_CID;
     is_written_ = false;
     insert_count_ = 0;
-    w_set_.reset(new WriteSet());
-    i_set_.reset(new InsertSet());
+    w_set_.reset(new ReadWriteSet());
   }
 
   //===--------------------------------------------------------------------===//
@@ -89,12 +88,8 @@ class Transaction : public Printable {
     return rw_set_;
   }
 
-  inline std::shared_ptr<WriteSet> GetWriteSetRef() {
+  inline std::shared_ptr<ReadWriteSet> GetWriteSetRef() {
     return w_set_;
-  }
-
-  inline std::shared_ptr<InsertSet> GetInsertSetRef() {
-    return i_set_;
   }
 
   // Get a string representation for debugging
@@ -129,11 +124,8 @@ class Transaction : public Printable {
 
   ReadWriteSet rw_set_;
 
-  // this set contains data location that is updated/deleted by the transaction
-  std::shared_ptr<WriteSet> w_set_;
-
-  // this set contains data location that is inserted by the transaction
-  std::shared_ptr<InsertSet> i_set_;
+  // this set contains data location that is updated/deleted/inserted by the transaction
+  std::shared_ptr<ReadWriteSet> w_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
