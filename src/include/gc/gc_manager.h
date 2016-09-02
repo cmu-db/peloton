@@ -58,9 +58,11 @@ class GCManager {
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterCommittedTransaction(std::shared_ptr<WriteSet> w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterCommittedTransaction(std::shared_ptr<ReadWriteSet> w_set UNUSED_ATTRIBUTE, 
+                                            const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
-  virtual void RegisterAbortedTransaction(std::shared_ptr<WriteSet> w_set UNUSED_ATTRIBUTE, const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+  virtual void RegisterAbortedTransaction(std::shared_ptr<ReadWriteSet> w_set UNUSED_ATTRIBUTE, 
+                                          const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
  private:
   bool is_running_;

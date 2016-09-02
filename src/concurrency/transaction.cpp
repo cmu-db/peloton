@@ -53,7 +53,7 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       is_written_ = true;
 
       // insert into write set.
-      w_set_->operator[](tile_group_id).insert(tuple_id);
+      w_set_->operator[](tile_group_id)[tuple_id] = RW_TYPE_UPDATE;
       return;
     }
     if (type == RW_TYPE_UPDATE) {
@@ -83,7 +83,7 @@ void Transaction::RecordInsert(const ItemPointer &location) {
     ++insert_count_;
 
     // insert into insert set.
-    i_set_->operator[](tile_group_id)[tuple_id] = true;
+    w_set_->operator[](tile_group_id)[tuple_id] = RW_TYPE_INSERT;
   }
 }
 
@@ -100,11 +100,13 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       // record write.
       is_written_ = true;
 
-      w_set_->operator[](tile_group_id).insert(tuple_id);
+      w_set_->operator[](tile_group_id)[tuple_id] = RW_TYPE_DELETE;
       return false;
     }
     if (type == RW_TYPE_UPDATE) {
       type = RW_TYPE_DELETE;
+
+      w_set_->operator[](tile_group_id)[tuple_id] = RW_TYPE_DELETE;
       return false;
     }
     if (type == RW_TYPE_INSERT) {
@@ -112,7 +114,7 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       --insert_count_;
 
       // update insert set.
-      i_set_->operator[](tile_group_id)[tuple_id] = false;
+      w_set_->operator[](tile_group_id)[tuple_id] = RW_TYPE_INS_DEL;
       return true;
     }
     if (type == RW_TYPE_DELETE) {
