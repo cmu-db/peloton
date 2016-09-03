@@ -79,6 +79,17 @@ list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/tpcc.cpp)
 add_executable(logger EXCLUDE_FROM_ALL ${logger_srcs})
 target_link_libraries(logger peloton)
 
+# Force link against JeMalloc. The bad thing is that shared libraries will be linked
+# no matter if they are actually needed or not.
+# --[ link jemalloc
+set(EXE_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
+set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
+set(EXE_LIST peloton-bin ycsb tpcc sdbench logger)
+foreach(exe_name ${EXE_LIST})
+    target_link_libraries(${exe_name} ${EXE_LINK_LIBRARIES})
+    set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})
+endforeach()
+
 # --[ benchmark
 
 add_custom_target(benchmark)
