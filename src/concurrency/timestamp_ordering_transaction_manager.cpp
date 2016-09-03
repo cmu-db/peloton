@@ -107,10 +107,10 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
 
   if (current_txn->GetResult() == RESULT_SUCCESS) {
     gc::GCManagerFactory::GetInstance().
-        RegisterCommittedTransaction(current_txn->GetWriteSetRef(), current_txn->GetBeginCommitId());
+        RecycleTransaction(current_txn->GetGCSetRef(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
   } else {
     gc::GCManagerFactory::GetInstance().
-        RegisterAbortedTransaction(current_txn->GetWriteSetRef(), GetNextCommitId());
+        RecycleTransaction(current_txn->GetGCSetRef(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
   }
 
   delete current_txn;
@@ -660,6 +660,8 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
   auto &rw_set = current_txn->GetReadWriteSet();
 
+  auto gc_set = current_txn->GetGCSetRef();
+
   oid_t database_id = 0;
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     if (!rw_set.empty()) {
@@ -704,6 +706,9 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        // add to gc set.
+        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_UPDATE;
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -726,6 +731,9 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        // add to gc set.
+        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_DELETE;
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
@@ -736,6 +744,8 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
+        // nothing to be added to gc set. 
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -748,6 +758,9 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
         // set the begin commit id to persist insert
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+
+        // add to gc set.
+        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INS_DEL;
       }
     }
   }
@@ -773,6 +786,8 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
   auto &rw_set = current_txn->GetReadWriteSet();
 
+  auto gc_set = current_txn->GetGCSetRef();
+
   oid_t database_id = 0;
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     if (!rw_set.empty()) {
@@ -780,8 +795,6 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
           manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
     }
   }
-
-  std::vector<ItemPointer> aborted_versions;
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -841,7 +854,9 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-        aborted_versions.push_back(new_version);
+
+        // add to gc set.
+        gc_set->operator[](new_version.block)[new_version.offset] = RW_TYPE_UPDATE;
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
 
@@ -893,6 +908,8 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        // add to gc set.
+        gc_set->operator[](new_version.block)[new_version.offset] = RW_TYPE_DELETE;
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -902,6 +919,9 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
+        // add to gc set.
+        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INSERT;
+
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -910,6 +930,8 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
+        // add to gc set.
+        gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INS_DEL;
       }
     }
   }

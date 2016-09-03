@@ -32,16 +32,16 @@ namespace gc {
 
 
 struct GarbageContext {
-  GarbageContext() : timestamp_(INVALID_CID), w_set_type_(WRITE_SET_TYPE_COMMITTED) {}
-  GarbageContext(std::shared_ptr<ReadWriteSet> w_set, 
+  GarbageContext() : timestamp_(INVALID_CID), gc_set_type_(GC_SET_TYPE_COMMITTED) {}
+  GarbageContext(std::shared_ptr<ReadWriteSet> gc_set, 
                  const cid_t &timestamp, 
-                 const WriteSetType w_set_type) : timestamp_(timestamp), w_set_type_(w_set_type) {
-    w_set_ = w_set;
+                 const GCSetType gc_set_type) : timestamp_(timestamp), gc_set_type_(gc_set_type) {
+    gc_set_ = gc_set;
   }
 
-  std::shared_ptr<ReadWriteSet> w_set_;
+  std::shared_ptr<ReadWriteSet> gc_set_;
   cid_t timestamp_;
-  WriteSetType w_set_type_;
+  GCSetType gc_set_type_;
 };
 
 class TransactionLevelGCManager : public GCManager {
@@ -86,9 +86,7 @@ public:
     }
   }
 
-  void RegisterCommittedTransaction(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp);
-
-  void RegisterAbortedTransaction(std::shared_ptr<ReadWriteSet> w_set, const cid_t &timestamp);
+  void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType);
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
@@ -122,7 +120,9 @@ private:
 
   bool ResetTuple(const ItemPointer &);
 
-  void DeleteTupleFromIndexes(const ItemPointer &tuple_metadata);
+  void DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx);
+
+  void DeleteTupleFromIndexes(ItemPointer *indirection);
 
 private:
   //===--------------------------------------------------------------------===//
