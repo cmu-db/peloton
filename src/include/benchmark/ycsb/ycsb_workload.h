@@ -16,9 +16,7 @@
 #include "benchmark/benchmark_common.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "storage/data_table.h"
-#include "executor/update_executor.h"
-#include "executor/index_scan_executor.h"
-#include "executor/insert_executor.h"
+#include "executor/abstract_executor.h"
 
 namespace peloton {
 
