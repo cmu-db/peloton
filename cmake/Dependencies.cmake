@@ -37,7 +37,8 @@ endif()
 # ---[ Jemalloc
 find_package(JeMalloc)
 include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
-list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
+# NOTE: do not link JeMalloc here, link it when binary gets built. See issue #220
+# list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
 
 # --[ Valgrind
 find_program(MEMORYCHECK_COMMAND valgrind)
