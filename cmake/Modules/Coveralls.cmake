@@ -63,10 +63,14 @@ function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 	add_custom_target(coveralls_generate
 
 		# Zero the coverage counters.
-		COMMAND ${CMAKE_COMMAND} -DPROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}" -P "${_CMAKE_SCRIPT_PATH}/CoverallsClear.cmake"
+		# COMMAND ${CMAKE_COMMAND} -DPROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}" -P "${_CMAKE_SCRIPT_PATH}/CoverallsClear.cmake"
 
 		# Run regress tests.
-		COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+		# COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+
+		# Since we are running tests in a serial manner, it will take a long time rerunning all the test cases again, which
+		# cause a time out error in the travis ci server. So We just use the .gcda file generated from the previous
+		# make check to evaluate the coverage. Note that now we can only run make coveralls after running make check.
 
 		# Generate Gcov and translate it into coveralls JSON.
 		# We do this by executing an external CMake script.
