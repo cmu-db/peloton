@@ -110,11 +110,3 @@ foreach(perf_src ${perf_srcs} )
 	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name})
 	
 endforeach(perf_src ${perf_srcs})
-
-# ---[ Coverage
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Coverage")
-	include(CodeCoverage)	
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_COVERAGE}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
-	SETUP_TARGET_FOR_COVERAGE(coverage peloton-testsuite coverage)
-endif()	
