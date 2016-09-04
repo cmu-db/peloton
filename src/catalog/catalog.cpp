@@ -44,7 +44,10 @@ void Catalog::CreateCatalogDatabase() {
       CreateDatabaseMetricsCatalog(START_OID, DATABASE_METRIC_NAME);
   database->AddTable(database_metrics_catalog.release());
 
-  // TODO Create table for index metrics
+  // Create table for index metrics
+  auto index_metrics_catalog =
+      CreateIndexMetricsCatalog(START_OID, INDEX_METRIC_NAME);
+  database->AddTable(index_metrics_catalog.release());
 
   // Create table for table metrics
   auto table_metrics_catalog =
@@ -475,6 +478,22 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableMetricsCatalog(
   return table;
 }
 
+// Create table for index metrics
+std::unique_ptr<storage::DataTable> Catalog::CreateIndexMetricsCatalog(
+    oid_t database_id, std::string table_name) {
+  bool own_schema = true;
+  bool adapt_table = false;
+  auto table_schema = InitializeIndexMetricsSchema();
+
+  catalog::Schema *schema = table_schema.release();
+
+  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
+      database_id, GetNextOid(), schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
+
+  return table;
+}
+
 // Initialize tables catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   const std::string not_null_constraint_name = "not_null";
@@ -590,6 +609,48 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
       {database_id_column, table_id_column, reads_column,    updates_column,
+       deletes_column,     inserts_column,  timestamp_column}));
+  return database_schema;
+}
+
+// Initialize database catalog schema
+std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
+  const std::string not_null_constraint_name = "not_null";
+
+  auto database_id_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "database_id", true);
+  database_id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto table_id_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "table_id", true);
+  table_id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto index_id_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "index_id", true);
+  index_id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  auto reads_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "reads", true);
+  reads_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto deletes_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "deletes", true);
+  deletes_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto inserts_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "inserts", true);
+  inserts_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  // TODO check if time stamp overflows with integer
+  auto timestamp_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "time_stamp", true);
+  timestamp_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+      {database_id_column, table_id_column, index_id_column, reads_column,
        deletes_column,     inserts_column,  timestamp_column}));
   return database_schema;
 }

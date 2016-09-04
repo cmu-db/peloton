@@ -41,6 +41,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
                      UNUSED_ATTRIBUTE uint64_t thread_itr) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
   auto tile_group_id = table->GetTileGroup(0)->GetTileGroupId();
+  auto index_metadata = table->GetIndex(0)->GetMetadata();
   auto &context = stats::BackendStatsContext::GetInstance();
 
   for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
@@ -49,15 +50,21 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
       std::chrono::microseconds sleep_time(1);
       std::this_thread::sleep_for(sleep_time);
     }
+    // Record database stat
     context.IncrementTxnCommitted(database->GetOid());
     context.IncrementTxnAborted(database->GetOid());
     context.IncrementTxnAborted(database->GetOid());
+    // Record table stat
     context.IncrementTableReads(tile_group_id);
     context.IncrementTableReads(tile_group_id);
     context.IncrementTableUpdates(tile_group_id);
     context.IncrementTableDeletes(tile_group_id);
     context.IncrementTableDeletes(tile_group_id);
     context.IncrementTableInserts(tile_group_id);
+    // Record index stat
+    context.IncrementIndexReads(1, index_metadata);
+    context.IncrementIndexDeletes(2, index_metadata);
+    context.IncrementIndexInserts(index_metadata);
   }
 }
 
@@ -71,7 +78,7 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
    */
   peloton::stats::StatsAggregator::GetInstance(100);
 
-  // Create dummy table for testing
+  // Create dummy database, table and index
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -90,31 +97,38 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   // Create multiple stat worker threads
   storage::Database *database = catalog->GetDatabaseWithName("EMP_DB");
   storage::DataTable *table = database->GetTableWithName("emp_table");
-  auto table_oid = table->GetOid();
-  auto db_oid = database->GetOid();
   LaunchParallelTest(8, TransactionTest, database, table);
 
   // Wait for aggregation to finish
   std::chrono::microseconds sleep_time(200 * 1000);
   std::this_thread::sleep_for(sleep_time);
 
-  // TODO check the number of aggregated reads
+  // Check database metrics
   auto &aggregated_stats =
       peloton::stats::StatsAggregator::GetInstance().GetAggregatedStats();
+  auto db_oid = database->GetOid();
   auto db_metric = aggregated_stats.GetDatabaseMetric(db_oid);
-  auto table_metric = aggregated_stats.GetTableMetric(db_oid, table_oid);
-  auto table_access = table_metric->GetTableAccess();
-  auto table_reads = table_access.GetReads();
-  auto table_updates = table_access.GetUpdates();
-  auto table_deletes = table_access.GetDeletes();
-  auto table_inserts = table_access.GetInserts();
-
   ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(), 8 * 50);
   ASSERT_EQ(db_metric->GetTxnAborted().GetCounter(), 8 * 50 * 2);
-  ASSERT_EQ(table_reads, 8 * 50 * 2);
-  ASSERT_EQ(table_updates, 8 * 50 * 1);
-  ASSERT_EQ(table_deletes, 8 * 50 * 2);
-  ASSERT_EQ(table_inserts, 8 * 50 * 1);
+
+  // Check table metrics
+  auto table_oid = table->GetOid();
+  auto table_metric = aggregated_stats.GetTableMetric(db_oid, table_oid);
+  auto table_access = table_metric->GetTableAccess();
+  ASSERT_EQ(table_access.GetReads(), 8 * 50 * 2);
+  ASSERT_EQ(table_access.GetUpdates(), 8 * 50 * 1);
+  ASSERT_EQ(table_access.GetDeletes(), 8 * 50 * 2);
+  ASSERT_EQ(table_access.GetInserts(), 8 * 50 * 1);
+
+  // Check index metrics
+  auto index = table->GetIndex(0);
+  auto index_oid = index->GetOid();
+  auto index_metric =
+      aggregated_stats.GetIndexMetric(db_oid, table_oid, index_oid);
+  auto index_access = index_metric->GetIndexAccess();
+  ASSERT_EQ(index_access.GetReads(), 8 * 50 * 1);
+  ASSERT_EQ(index_access.GetDeletes(), 8 * 50 * 2);
+  ASSERT_EQ(index_access.GetInserts(), 8 * 50 * 1);
 
   aggregator.ShutdownAggregator();
   txn = txn_manager.BeginTransaction();

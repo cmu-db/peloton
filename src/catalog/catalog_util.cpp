@@ -149,6 +149,28 @@ std::unique_ptr<storage::Tuple> GetTableMetricsCatalogTuple(
   return std::move(tuple);
 }
 
+std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
+    catalog::Schema *schema, oid_t database_id, oid_t table_id, oid_t index_id,
+    int64_t reads, int64_t deletes, int64_t inserts, int64_t time_stamp) {
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+  Value val1 = ValueFactory::GetIntegerValue(database_id);
+  Value val2 = ValueFactory::GetIntegerValue(table_id);
+  Value val3 = ValueFactory::GetIntegerValue(index_id);
+  Value val4 = ValueFactory::GetIntegerValue(reads);
+  Value val5 = ValueFactory::GetIntegerValue(deletes);
+  Value val6 = ValueFactory::GetIntegerValue(inserts);
+  Value val7 = ValueFactory::GetIntegerValue(time_stamp);
+
+  tuple->SetValue(0, val1, nullptr);
+  tuple->SetValue(1, val2, nullptr);
+  tuple->SetValue(2, val3, nullptr);
+  tuple->SetValue(3, val4, nullptr);
+  tuple->SetValue(4, val5, nullptr);
+  tuple->SetValue(5, val6, nullptr);
+  tuple->SetValue(6, val7, nullptr);
+  return std::move(tuple);
+}
+
 /**
  * Generate a table catalog tuple
  * Input: The table schema, the table id, the table name, the database id, and

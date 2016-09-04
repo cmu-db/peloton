@@ -55,5 +55,9 @@ std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
 std::unique_ptr<storage::Tuple> GetTableMetricsCatalogTuple(
     catalog::Schema *schema, oid_t database_id, oid_t table_id, int64_t reads,
     int64_t updates, int64_t deletes, int64_t inserts, int64_t time);
+
+std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
+    catalog::Schema *schema, oid_t database_id, oid_t table_id, oid_t index_id,
+    int64_t reads, int64_t deletes, int64_t inserts, int64_t time);
 }
 }

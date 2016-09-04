@@ -116,6 +116,9 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
       catalog_database->GetTableWithName(DATABASE_METRIC_NAME);
   auto table_metrics_table =
       catalog_database->GetTableWithName(TABLE_METRIC_NAME);
+  auto index_metrics_table =
+      catalog_database->GetTableWithName(INDEX_METRIC_NAME);
+
   PL_ASSERT(table_metrics_table != nullptr);
   PL_ASSERT(database_metrics_table != nullptr);
 
@@ -157,6 +160,26 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
       catalog::InsertTuple(table_metrics_table, std::move(table_tuple),
                            nullptr);
       LOG_TRACE("Table Tuple inserted");
+
+      auto index_count = table->GetIndexCount();
+      for (oid_t index_offset = 0; index_offset < index_count; index_offset++) {
+        auto index = table->GetIndex(index_offset);
+        auto index_oid = index->GetOid();
+        auto index_metric = aggregated_stats_.GetIndexMetric(
+            database_oid, table_oid, index_oid);
+
+        auto index_access = index_metric->GetIndexAccess();
+        auto reads = index_access.GetReads();
+        auto deletes = index_access.GetDeletes();
+        auto inserts = index_access.GetInserts();
+
+        auto index_tuple = catalog::GetIndexMetricsCatalogTuple(
+            index_metrics_table->GetSchema(), database_oid, table_oid,
+            index_oid, reads, deletes, inserts, interval_cnt);
+
+        catalog::InsertTuple(index_metrics_table, std::move(index_tuple),
+                             nullptr);
+      }
     }
   }
 
