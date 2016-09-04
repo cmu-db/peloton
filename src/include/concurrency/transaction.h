@@ -88,7 +88,7 @@ class Transaction : public Printable {
     return rw_set_;
   }
 
-  inline std::shared_ptr<ReadWriteSet> GetGCSetRef() {
+  inline std::shared_ptr<ReadWriteSet> GetGCSetPtr() {
     return gc_set_;
   }
 
