@@ -70,6 +70,12 @@ class configuration {
   // store strings
   bool string_mode;
 
+  // garbage collection
+  bool gc_mode;
+
+  // number of gc threads
+  bool gc_backend_count;
+
   // throughput
   double throughput = 0;
 
@@ -105,6 +111,8 @@ void ValidateOperationCount(const configuration &state);
 void ValidateUpdateRatio(const configuration &state);
 
 void ValidateZipfTheta(const configuration &state);
+
+void ValidateGCBackendCount(const configuration &state);
 
 }  // namespace ycsb
 }  // namespace benchmark

@@ -12,11 +12,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 #include "common/logger.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "benchmark/ycsb/ycsb_loader.h"
 #include "benchmark/ycsb/ycsb_workload.h"
+
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -60,6 +63,11 @@ static void WriteOutput() {
 
 // Main Entry Point
 void RunBenchmark() {
+
+  if (state.gc_mode == true) {
+    gc::GCManagerFactory::Configure(state.gc_backend_count);
+  }
+  
   // Create the database
   CreateYCSBDatabase();
 
