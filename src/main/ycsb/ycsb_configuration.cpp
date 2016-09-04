@@ -35,7 +35,9 @@ void Usage(FILE *out) {
           "   -u --update_ratio      :  fraction of updates \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
-          "   -m --string_modes      :  store strings \n"
+          "   -m --string_mode       :  store strings \n"
+          "   -g --gc_mode           :  enable garbage collection \n"
+          "   -n --gc_backend_count  :  # of gc backends \n"
   );
 }
 
@@ -51,6 +53,8 @@ static struct option opts[] = {
     { "zipf_theta", optional_argument, NULL, 'z' },
     { "exp_backoff", no_argument, NULL, 'e' },
     { "string_mode", no_argument, NULL, 'm' },
+    { "gc_mode", no_argument, NULL, 'g' },
+    { "gc_backend_count", optional_argument, NULL, 'n' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -133,6 +137,15 @@ void ValidateZipfTheta(const configuration &state) {
   LOG_TRACE("%s : %lf", "zipf_theta", state.zipf_theta);
 }
 
+void ValidateGCBackendCount(const configuration &state) {
+  if (state.gc_backend_count <= 0) {
+    LOG_ERROR("Invalid gc_backend_count :: %d", state.gc_backend_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_TRACE("%s : %d", "gc_backend_count", state.gc_backend_count);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.index = INDEX_TYPE_BWTREE;
@@ -146,11 +159,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.zipf_theta = 0.0;
   state.exp_backoff = false;
   state.string_mode = false;
+  state.gc_mode = false;
+  state.gc_backend_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hemi:k:d:p:b:c:o:u:z:", opts, &idx);
+    int c = getopt_long(argc, argv, "hemgi:k:d:p:b:c:o:u:z:", opts, &idx);
 
     if (c == -1) break;
 
@@ -197,7 +212,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'm':
         state.string_mode = true;
         break;
-
+      case 'g':
+        state.gc_mode = true;
+        break;
+      case 'n':
+        state.gc_backend_count = atof(optarg);
+        break;
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -221,9 +241,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateOperationCount(state);
   ValidateUpdateRatio(state);
   ValidateZipfTheta(state);
+  ValidateGCBackendCount(state);
 
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
   LOG_TRACE("%s : %d", "Run string mode", state.string_mode);
+  LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
   
 }
 
