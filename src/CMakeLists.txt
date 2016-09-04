@@ -27,7 +27,7 @@ peloton_default_properties(peloton-parser)
 
 # --[ Parser Flags
 
-set(PARSER_FLAGS "-w -Wno-error -fpermissive")
+set(PARSER_FLAGS "-w -Wno-error -fpermissive -Wno-sign-compare")
 set_source_files_properties(${SQLParser_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
 set_source_files_properties(${SQLScanner_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
 
