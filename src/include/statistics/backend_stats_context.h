@@ -73,7 +73,7 @@ class BackendStatsContext {
 
   void IncrementIndexInserts(index::IndexMetadata* metadata);
 
-  void IncrementTableUpdates(index::IndexMetadata* metadata);
+  void IncrementIndexUpdates(index::IndexMetadata* metadata);
 
   void IncrementIndexDeletes(size_t delete_count,
                              index::IndexMetadata* metadata);

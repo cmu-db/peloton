@@ -157,7 +157,7 @@ void BackendStatsContext::IncrementIndexInserts(
   index_metric->GetIndexAccess().IncrementInserts();
 }
 
-void BackendStatsContext::IncrementTableUpdates(
+void BackendStatsContext::IncrementIndexUpdates(
     index::IndexMetadata* metadata) {
   oid_t index_id = metadata->GetOid();
   oid_t table_id = metadata->GetTableOid();

@@ -118,11 +118,13 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
       catalog_database->GetTableWithName(TABLE_METRIC_NAME);
   auto index_metrics_table =
       catalog_database->GetTableWithName(INDEX_METRIC_NAME);
+  auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+      time_since_epoch).count();
 
   PL_ASSERT(table_metrics_table != nullptr);
   PL_ASSERT(database_metrics_table != nullptr);
 
-  // TODO insert new value to the database
   auto database_count = catalog->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
        database_offset++) {
@@ -134,8 +136,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 
     auto db_tuple = catalog::GetDatabaseMetricsCatalogTuple(
         database_metrics_table->GetSchema(), database_oid, txn_committed,
-        txn_aborted, interval_cnt);
-    // FIXME interval_cnt starts with 0 every time.
+        txn_aborted, time_stamp);
 
     // Another way of insertion using transaction manager
     catalog::InsertTuple(database_metrics_table, std::move(db_tuple), nullptr);
@@ -155,7 +156,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 
       auto table_tuple = catalog::GetTableMetricsCatalogTuple(
           table_metrics_table->GetSchema(), database_oid, table_oid, reads,
-          updates, deletes, inserts, interval_cnt);
+          updates, deletes, inserts, time_stamp);
 
       catalog::InsertTuple(table_metrics_table, std::move(table_tuple),
                            nullptr);
@@ -175,7 +176,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 
         auto index_tuple = catalog::GetIndexMetricsCatalogTuple(
             index_metrics_table->GetSchema(), database_oid, table_oid,
-            index_oid, reads, deletes, inserts, interval_cnt);
+            index_oid, reads, deletes, inserts, time_stamp);
 
         catalog::InsertTuple(index_metrics_table, std::move(index_tuple),
                              nullptr);

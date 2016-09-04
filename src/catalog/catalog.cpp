@@ -560,7 +560,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   txn_committed_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  // TODO check if time stamp overflows with integer
   auto timestamp_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "time_stamp", true);
   timestamp_column.AddConstraint(
@@ -601,7 +600,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   inserts_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  // TODO check if time stamp overflows with integer
+  // MAX_INT only tracks the number of seconds since epoch until 2037
   auto timestamp_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "time_stamp", true);
   timestamp_column.AddConstraint(
@@ -643,7 +642,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   inserts_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  // TODO check if time stamp overflows with integer
   auto timestamp_column = catalog::Column(
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "time_stamp", true);
   timestamp_column.AddConstraint(
