@@ -185,6 +185,12 @@ class configuration {
   // client affinity
   bool affinity;
 
+  // garbage collection
+  bool gc_mode;
+
+  // number of gc threads
+  bool gc_backend_count;
+
   // throughput
   double throughput = 0;
 
@@ -214,6 +220,8 @@ void ValidateProfileDuration(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateWarehouseCount(const configuration &state);
+
+void ValidateGCBackendCount(const configuration &state);
 
 }  // namespace tpcc
 }  // namespace benchmark

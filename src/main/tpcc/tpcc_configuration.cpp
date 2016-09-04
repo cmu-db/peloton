@@ -33,6 +33,8 @@ void Usage(FILE *out) {
           "   -w --warehouse_count   :  # of warehouses \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -a --affinity          :  enable client affinity \n"
+          "   -g --gc_mode           :  enable garbage collection \n"
+          "   -n --gc_backend_count  :  # of gc backends \n"
   );
 }
 
@@ -45,6 +47,8 @@ static struct option opts[] = {
     { "warehouse_count", optional_argument, NULL, 'w' },
     { "exp_backoff", no_argument, NULL, 'e' },
     { "affinity", no_argument, NULL, 'a' },
+    { "gc_mode", no_argument, NULL, 'g' },
+    { "gc_backend_count", optional_argument, NULL, 'n' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -100,6 +104,15 @@ void ValidateWarehouseCount(const configuration &state) {
   LOG_TRACE("%s : %d", "warehouse_count", state.warehouse_count);
 }
 
+void ValidateGCBackendCount(const configuration &state) {
+  if (state.gc_backend_count <= 0) {
+    LOG_ERROR("Invalid gc_backend_count :: %d", state.gc_backend_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_TRACE("%s : %d", "gc_backend_count", state.gc_backend_count);
+}
+
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
@@ -111,11 +124,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.warehouse_count = 2;
   state.exp_backoff = false;
   state.affinity = false;
+  state.gc_mode = false;
+  state.gc_backend_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "heai:k:d:p:b:w:", opts, &idx);
+    int c = getopt_long(argc, argv, "heagi:k:d:p:b:w:n:", opts, &idx);
 
     if (c == -1) break;
 
@@ -147,6 +162,18 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'w':
         state.warehouse_count = atoi(optarg);
         break;
+      case 'e':
+        state.exp_backoff = true;
+        break;
+      case 'a':
+        state.affinity = true;
+        break;
+      case 'g':
+        state.gc_mode = true;
+        break;
+      case 'n':
+        state.gc_backend_count = atof(optarg);
+        break;
 
       case 'h':
         Usage(stderr);
@@ -173,9 +200,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateProfileDuration(state);
   ValidateBackendCount(state);
   ValidateWarehouseCount(state);
+  ValidateGCBackendCount(state);
 
   LOG_TRACE("%s : %d", "Run client affinity", state.run_affinity);
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
 }
 
 }  // namespace tpcc
