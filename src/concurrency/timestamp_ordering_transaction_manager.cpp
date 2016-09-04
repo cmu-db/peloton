@@ -107,10 +107,10 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
 
   if (current_txn->GetResult() == RESULT_SUCCESS) {
     gc::GCManagerFactory::GetInstance().
-        RecycleTransaction(current_txn->GetGCSetRef(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
+        RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
   } else {
     gc::GCManagerFactory::GetInstance().
-        RecycleTransaction(current_txn->GetGCSetRef(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+        RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
   }
 
   delete current_txn;
@@ -129,6 +129,8 @@ TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetIns
   return txn_manager;
 }
 
+// this function checks whether a concurrent transaction is inserting the same tuple
+// that is to-be-inserted by the current transaction.
 bool TimestampOrderingTransactionManager::IsOccupied(
     Transaction *const current_txn, 
     const void *position_ptr) {
@@ -141,11 +143,18 @@ bool TimestampOrderingTransactionManager::IsOccupied(
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     return false;
   }
+  
+  // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  // the tuple has already been committed.
+  bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  // the tuple is not visible.
+  bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
@@ -159,8 +168,6 @@ bool TimestampOrderingTransactionManager::IsOccupied(
       return false;
     }
   } else {
-    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
@@ -191,7 +198,7 @@ bool TimestampOrderingTransactionManager::IsOccupied(
   }
 }
 
-// Visibility check
+// this function checks whether a version is visible to current transaction.
 VisibilityType TimestampOrderingTransactionManager::IsVisible(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -452,12 +459,15 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
 
+  // we should guarantee that the newer version is all set before linking the 
+  // newer version to older version.
+  COMPILER_MEMORY_FENCE;
+
   if (old_prev.IsNull() == false) {
     auto old_prev_tile_group_header = catalog::Manager::GetInstance()
                                           .GetTileGroup(old_prev.block)
                                           ->GetHeader();
 
-    COMPILER_MEMORY_FENCE;
 
     // once everything is set, we can allow traversing the new version.
     old_prev_tile_group_header->SetNextItemPointer(old_prev.offset,
@@ -569,12 +579,14 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
 
+  // we should guarantee that the newer version is all set before linking the 
+  // newer version to older version.
+  COMPILER_MEMORY_FENCE;
+
   if (old_prev.IsNull() == false) {
     auto old_prev_tile_group_header = catalog::Manager::GetInstance()
                                           .GetTileGroup(old_prev.block)
                                           ->GetHeader();
-
-    COMPILER_MEMORY_FENCE;
 
     old_prev_tile_group_header->SetNextItemPointer(old_prev.offset,
                                                    new_location);
@@ -660,7 +672,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
   auto &rw_set = current_txn->GetReadWriteSet();
 
-  auto gc_set = current_txn->GetGCSetRef();
+  auto gc_set = current_txn->GetGCSetPtr();
 
   oid_t database_id = 0;
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -700,6 +712,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -725,6 +738,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -741,6 +755,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
@@ -754,6 +769,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         // set the begin commit id to persist insert
@@ -786,7 +802,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
   auto &rw_set = current_txn->GetReadWriteSet();
 
-  auto gc_set = current_txn->GetGCSetRef();
+  auto gc_set = current_txn->GetGCSetPtr();
 
   oid_t database_id = 0;
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
@@ -835,6 +851,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
         }
         //////////////////////////////////////////////////
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -851,6 +868,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
           tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
@@ -889,6 +907,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
         }
         //////////////////////////////////////////////////
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -904,6 +923,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
         tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
@@ -915,6 +935,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
@@ -926,6 +947,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // we should set the version before releasing the lock.
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);

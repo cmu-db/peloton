@@ -140,6 +140,15 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
 
+  //=============== garbage collection==================
+  // check if there are recycled tuple slots
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  if (free_item_pointer.IsNull() == false) {
+    return free_item_pointer;
+  }
+  //====================================================
+
   size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
