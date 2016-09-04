@@ -40,11 +40,17 @@ void Catalog::CreateCatalogDatabase() {
   database->AddTable(tables_table);
 
   // Create table for database metrics
-  auto database_metrics_catalog = 
+  auto database_metrics_catalog =
       CreateDatabaseMetricsCatalog(START_OID, DATABASE_METRIC_NAME);
-  storage::DataTable *database_metrics_table = 
-      database_metrics_catalog.release();
-  database->AddTable(database_metrics_table);
+  database->AddTable(database_metrics_catalog.release());
+
+  // TODO Create table for index metrics
+
+  // Create table for table metrics
+  auto table_metrics_catalog =
+      CreateTableMetricsCatalog(START_OID, TABLE_METRIC_NAME);
+  database->AddTable(table_metrics_catalog.release());
+
   databases_.push_back(database);
 }
 
@@ -437,18 +443,33 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   return table;
 }
 
-// Create Table for pg_database
+// Create table for database metrics
 std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseMetricsCatalog(
-    oid_t database_id, std::string database_name) {
+    oid_t database_id, std::string table_name) {
   bool own_schema = true;
   bool adapt_table = false;
-  // TODO create schema for database metrics
-  auto table_schema = InitializeDatabaseSchema();
+  auto table_schema = InitializeDatabaseMetricsSchema();
 
   catalog::Schema *schema = table_schema.release();
 
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNextOid(), schema, database_name,
+      database_id, GetNextOid(), schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
+
+  return table;
+}
+
+// Create table for table metrics
+std::unique_ptr<storage::DataTable> Catalog::CreateTableMetricsCatalog(
+    oid_t database_id, std::string table_name) {
+  bool own_schema = true;
+  bool adapt_table = false;
+  auto table_schema = InitializeTableMetricsSchema();
+
+  catalog::Schema *schema = table_schema.release();
+
+  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
+      database_id, GetNextOid(), schema, table_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
 
   return table;
@@ -499,6 +520,77 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
   std::unique_ptr<catalog::Schema> database_schema(
       new catalog::Schema({id_column, name_column}));
+  return database_schema;
+}
+
+// Initialize database catalog schema
+std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
+  const std::string not_null_constraint_name = "not_null";
+
+  auto id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
+  id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto txn_aborted_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "txn_aborted", true);
+  txn_aborted_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto txn_committed_column =
+      catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+                      "txn_committed", true);
+  txn_committed_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  // TODO check if time stamp overflows with integer
+  auto timestamp_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "time_stamp", true);
+  timestamp_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+      {id_column, txn_aborted_column, txn_committed_column, timestamp_column}));
+  return database_schema;
+}
+
+// Initialize database catalog schema
+std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
+  const std::string not_null_constraint_name = "not_null";
+
+  auto database_id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
+  database_id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto table_id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "table_id", true);
+  table_id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  auto reads_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "reads", true);
+  reads_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto updates_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "updates", true);
+  updates_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto deletes_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "deletes", true);
+  deletes_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+  auto inserts_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "inserts", true);
+  inserts_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  // TODO check if time stamp overflows with integer
+  auto timestamp_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "time_stamp", true);
+  timestamp_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+      {database_id_column, table_id_column, reads_column,    updates_column,
+       deletes_column,     inserts_column,  timestamp_column}));
   return database_schema;
 }
 

@@ -17,6 +17,8 @@
 
 #include "statistics/stats_aggregator.h"
 #include "statistics/backend_stats_context.h"
+#include "catalog/catalog.h"
+#include "catalog/catalog_util.h"
 
 namespace peloton {
 namespace stats {
@@ -57,8 +59,9 @@ StatsAggregator::~StatsAggregator() {
 void StatsAggregator::ShutdownAggregator() {
   if (!shutting_down_) {
     shutting_down_ = true;
-  exec_finished_.notify_one();
-  aggregator_thread_.join();
+    exec_finished_.notify_one();
+    LOG_INFO("notifying...");
+    aggregator_thread_.join();
     LOG_INFO("join finished");
   }
 }
@@ -99,9 +102,64 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 
   total_prev_txn_committed_ = current_txns_committed;
-  LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
-  LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
-  LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
+  // LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
+  // LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
+  // LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
+
+  LOG_INFO("Inserting into catalog database..");
+  auto catalog = catalog::Catalog::GetInstance();
+  PL_ASSERT(catalog->GetDatabaseCount() > 0);
+  storage::Database *catalog_database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  PL_ASSERT(catalog_database != nullptr);
+  auto database_metrics_table =
+      catalog_database->GetTableWithName(DATABASE_METRIC_NAME);
+  auto table_metrics_table =
+      catalog_database->GetTableWithName(TABLE_METRIC_NAME);
+  PL_ASSERT(table_metrics_table != nullptr);
+  PL_ASSERT(database_metrics_table != nullptr);
+
+  // TODO insert new value to the database
+  auto database_count = catalog->GetDatabaseCount();
+  for (oid_t database_offset = 0; database_offset < database_count;
+       database_offset++) {
+    auto database = catalog->GetDatabaseWithOffset(database_offset);
+    auto database_oid = database->GetOid();
+    auto database_metric = aggregated_stats_.GetDatabaseMetric(database_oid);
+    auto txn_committed = database_metric->GetTxnCommitted().GetCounter();
+    auto txn_aborted = database_metric->GetTxnAborted().GetCounter();
+
+    auto db_tuple = catalog::GetDatabaseMetricsCatalogTuple(
+        database_metrics_table->GetSchema(), database_oid, txn_committed,
+        txn_aborted, interval_cnt);
+    // FIXME interval_cnt starts with 0 every time.
+
+    // Another way of insertion using transaction manager
+    catalog::InsertTuple(database_metrics_table, std::move(db_tuple), nullptr);
+    LOG_TRACE("DB Tuple inserted");
+
+    auto table_count = database->GetTableCount();
+    for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
+      auto table = database->GetTable(table_offset);
+      auto table_oid = table->GetOid();
+      auto table_metrics =
+          aggregated_stats_.GetTableMetric(database_oid, table_oid);
+      auto table_access = table_metrics->GetTableAccess();
+      auto reads = table_access.GetReads();
+      auto updates = table_access.GetUpdates();
+      auto deletes = table_access.GetDeletes();
+      auto inserts = table_access.GetInserts();
+
+      auto table_tuple = catalog::GetTableMetricsCatalogTuple(
+          table_metrics_table->GetSchema(), database_oid, table_oid, reads,
+          updates, deletes, inserts, interval_cnt);
+
+      catalog::InsertTuple(table_metrics_table, std::move(table_tuple),
+                           nullptr);
+      LOG_TRACE("Table Tuple inserted");
+    }
+  }
+
   if (interval_cnt % STATS_LOG_INTERVALS == 0) {
     try {
       ofs_ << "At interval: " << interval_cnt << std::endl;
@@ -118,15 +176,17 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 }
 
 void StatsAggregator::RunAggregator() {
+  LOG_DEBUG("Aggregator running.\n");
   std::mutex mtx;
   std::unique_lock<std::mutex> lck(mtx);
   int64_t interval_cnt = 0;
   double alpha = 0.4;
   double weighted_avg_throughput = 0.0;
 
-  while (!shutting_down_ && exec_finished_.wait_for(
+  while (!shutting_down_ &&
+         exec_finished_.wait_for(
              lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
-         std::cv_status::timeout) {
+             std::cv_status::timeout) {
     Aggregate(interval_cnt, alpha, weighted_avg_throughput);
   }
   LOG_DEBUG("Aggregator done!\n");

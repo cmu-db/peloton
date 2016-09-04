@@ -17,6 +17,7 @@
 #include "common/config.h"
 #include "common/value_factory.h"
 
+#include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_tests_util.h"
 #include "statistics/stats_aggregator.h"
@@ -24,6 +25,7 @@
 #include "statistics/stats_tests_util.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
+#include "storage/tile.h"
 #include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
 #include "executor/executor_context.h"
@@ -34,13 +36,99 @@ namespace test {
 
 class StatsTest : public PelotonTest {};
 
+// TODO test index stats aggregation
+void TransactionTest(storage::Database *database, storage::DataTable *table,
+                     UNUSED_ATTRIBUTE uint64_t thread_itr) {
+  uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
+  auto tile_group_id = table->GetTileGroup(0)->GetTileGroupId();
+  auto &context = stats::BackendStatsContext::GetInstance();
+
+  for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
+
+    if (thread_id % 2 == 0) {
+      std::chrono::microseconds sleep_time(1);
+      std::this_thread::sleep_for(sleep_time);
+    }
+    context.IncrementTxnCommitted(database->GetOid());
+    context.IncrementTxnAborted(database->GetOid());
+    context.IncrementTxnAborted(database->GetOid());
+    context.IncrementTableReads(tile_group_id);
+    context.IncrementTableReads(tile_group_id);
+    context.IncrementTableUpdates(tile_group_id);
+    context.IncrementTableDeletes(tile_group_id);
+    context.IncrementTableDeletes(tile_group_id);
+    context.IncrementTableInserts(tile_group_id);
+  }
+}
+
+TEST_F(StatsTest, MultiThreadStatsTest) {
+
+  FLAGS_stats_mode = STATS_TYPE_ENABLE;
+  auto &aggregator = peloton::stats::StatsAggregator::GetInstance(100);
+
+  /*
+   * Register to StatsAggregator
+   */
+  peloton::stats::StatsAggregator::GetInstance(100);
+
+  // Create dummy table for testing
+  auto catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  auto id_column = catalog::Column(common::Type::INTEGER,
+                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
+  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
+
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, name_column}));
+
+  catalog->CreateDatabase("EMP_DB", txn);
+  catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "emp_table",
+                                               std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Create multiple stat worker threads
+  storage::Database *database = catalog->GetDatabaseWithName("EMP_DB");
+  storage::DataTable *table = database->GetTableWithName("emp_table");
+  auto table_oid = table->GetOid();
+  auto db_oid = database->GetOid();
+  LaunchParallelTest(8, TransactionTest, database, table);
+
+  // Wait for aggregation to finish
+  std::chrono::microseconds sleep_time(200 * 1000);
+  std::this_thread::sleep_for(sleep_time);
+
+  // TODO check the number of aggregated reads
+  auto &aggregated_stats =
+      peloton::stats::StatsAggregator::GetInstance().GetAggregatedStats();
+  auto db_metric = aggregated_stats.GetDatabaseMetric(db_oid);
+  auto table_metric = aggregated_stats.GetTableMetric(db_oid, table_oid);
+  auto table_access = table_metric->GetTableAccess();
+  auto table_reads = table_access.GetReads();
+  auto table_updates = table_access.GetUpdates();
+  auto table_deletes = table_access.GetDeletes();
+  auto table_inserts = table_access.GetInserts();
+
+  ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(), 8 * 50);
+  ASSERT_EQ(db_metric->GetTxnAborted().GetCounter(), 8 * 50 * 2);
+  ASSERT_EQ(table_reads, 8 * 50 * 2);
+  ASSERT_EQ(table_updates, 8 * 50 * 1);
+  ASSERT_EQ(table_deletes, 8 * 50 * 2);
+  ASSERT_EQ(table_inserts, 8 * 50 * 1);
+
+  aggregator.ShutdownAggregator();
+  txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName("EMP_DB", txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 TEST_F(StatsTest, PerThreadStatsTest) {
   FLAGS_stats_mode = STATS_TYPE_ENABLE;
 
   /*
    * Register to StatsAggregator
    */
-  auto &aggregator =peloton::stats::StatsAggregator::GetInstance(1000);
+  auto &aggregator = peloton::stats::StatsAggregator::GetInstance(1000000);
 
   // int tuple_count = 10;
   int tups_per_tile_group = 100;
@@ -193,7 +281,6 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   EXPECT_EQ(1, deletes);
 
   aggregator.ShutdownAggregator();
-
 }
 }  // namespace stats
 }  // namespace peloton
