@@ -95,7 +95,7 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   ItemPointer *index_entry_ptr = nullptr;
 
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<common::VarlenPool> pool(new common::VarlenPool(BACKEND_TYPE_MM));
   txn_manager.SetNextCid(1);
   auto txn = txn_manager.BeginTransaction();
   auto tuple = ExecutorTestsUtil::GetTuple(table.get(), 1, pool.get());

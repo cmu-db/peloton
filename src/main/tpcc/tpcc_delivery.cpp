@@ -135,11 +135,11 @@ bool RunDelivery(const size_t &thread_id){
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
     
-    std::vector<Value> new_order_key_values;
+    std::vector<common::Value *> new_order_key_values;
     
-    new_order_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
-    new_order_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-    new_order_key_values.push_back(ValueFactory::GetIntegerValue(-1));
+    new_order_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    new_order_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
+    new_order_key_values.push_back(common::ValueFactory::GetIntegerValue(-1).Copy());
 
     // Get the index
     auto new_order_pkey_index = new_order_table->GetIndexWithOid(new_order_table_pkey_index_oid);
@@ -193,11 +193,11 @@ bool RunDelivery(const size_t &thread_id){
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     
-    std::vector<Value> orders_key_values;
+    std::vector<common::Value *> orders_key_values;
 
     orders_key_values.push_back(no_o_id);
-    orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
-    orders_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+    orders_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    orders_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
     // Get the index
     auto orders_pkey_index = orders_table->GetIndexWithOid(orders_table_pkey_index_oid);
@@ -239,11 +239,11 @@ bool RunDelivery(const size_t &thread_id){
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    std::vector<Value> order_line_key_values;
+    std::vector<common::Value *> order_line_key_values;
 
     order_line_key_values.push_back(no_o_id);
-    order_line_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
-    order_line_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+    order_line_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    order_line_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
     
     auto order_line_pkey_index = order_line_table->GetIndexWithOid(order_line_table_pkey_index_oid);
     planner::IndexScanPlan::IndexScanDesc order_line_index_scan_desc(
@@ -268,10 +268,10 @@ bool RunDelivery(const size_t &thread_id){
     // Workaround: Externanl sum
     for (auto v : order_line_index_scan_res) {
       assert(v.size() == 1);
-      sum_res += ValuePeeker::PeekDouble(v[0]);
+      sum_res += common::ValuePeeker::PeekDouble(v[0]);
     }
 
-    auto ol_total = ValueFactory::GetDoubleValue(sum_res);
+    auto ol_total = common::ValueFactory::GetDoubleValue(sum_res);
 
     LOG_TRACE("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
 
@@ -284,10 +284,10 @@ bool RunDelivery(const size_t &thread_id){
     new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    std::vector<Value> new_order_delete_key_values;
+    std::vector<common::Value *> new_order_delete_key_values;
 
-    new_order_delete_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
-    new_order_delete_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+    new_order_delete_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    new_order_delete_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
     new_order_delete_key_values.push_back(no_o_id);
 
     planner::IndexScanPlan::IndexScanDesc new_order_delete_idex_scan_desc(
@@ -340,10 +340,10 @@ bool RunDelivery(const size_t &thread_id){
         orders_direct_map_list.emplace_back(col_itr, std::make_pair(0, col_itr));
       }
     }
-    Value orders_update_val = ValueFactory::GetIntegerValue(o_carrier_id);
+    common::Value * orders_update_val = common::ValueFactory::GetIntegerValue(o_carrier_id).Copy();
 
     orders_target_list.emplace_back(
-      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(orders_update_val)
+      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(*orders_update_val)
     );
 
     std::unique_ptr<const planner::ProjectInfo> orders_project_info(
@@ -386,10 +386,10 @@ bool RunDelivery(const size_t &thread_id){
        order_line_direct_map_list.emplace_back(col_itr, std::make_pair(0, col_itr));
      }
     }
-    Value order_line_update_val = ValueFactory::GetTimestampValue(0);
+    common::Value * order_line_update_val = common::ValueFactory::GetTimestampValue(0).Copy();
 
     order_line_target_list.emplace_back(
-      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(order_line_update_val)
+      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(*order_line_update_val)
     );
 
     std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
@@ -421,11 +421,11 @@ bool RunDelivery(const size_t &thread_id){
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    std::vector<Value> customer_key_values;
+    std::vector<common::Value *> customer_key_values;
 
     customer_key_values.push_back(c_id);
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+    customer_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    customer_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
     
     auto customer_pkey_index = customer_table->GetIndexWithOid(customer_table_pkey_index_oid);
 
@@ -452,13 +452,13 @@ bool RunDelivery(const size_t &thread_id){
     // Expressions
     // Tuple value expression
     auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(
-      VALUE_TYPE_INTEGER, 0, COL_IDX_C_BALANCE);
+      common::Type::INTEGER, 0, COL_IDX_C_BALANCE);
     // Constant value expression
     auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
       ol_total);
     // + operator expression
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_INTEGER, tuple_val_expr, constant_val_expr);
+      EXPRESSION_TYPE_OPERATOR_PLUS, common::Type::INTEGER, tuple_val_expr, constant_val_expr);
 
     customer_target_list.emplace_back(
       COL_IDX_C_BALANCE, plus_operator_expr);

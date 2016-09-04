@@ -91,7 +91,7 @@ void TupleRecord::SerializeHeader(CopySerializeOutput &output) {
  * @brief Deserialize LogRecordHeader
  * @param input
  */
-void TupleRecord::DeserializeHeader(CopySerializeInputBE &input) {
+void TupleRecord::DeserializeHeader(CopySerializeInput &input) {
   input.ReadInt();
   db_oid = (oid_t)(input.ReadLong());
   PL_ASSERT(db_oid);

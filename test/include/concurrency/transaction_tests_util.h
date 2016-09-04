@@ -148,7 +148,7 @@ class TransactionTestsUtil {
 
   static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       const storage::Tuple *tuple);
-  static expression::ComparisonExpression<expression::CmpEq> *MakePredicate(
+  static expression::ComparisonExpression *MakePredicate(
       int id);
 };
 

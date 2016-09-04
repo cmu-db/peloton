@@ -20,7 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_manager.h"
@@ -65,7 +65,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
   logging_type = LOGGING_TYPE_NVM_WAL;
 
   // allocate pool
-  recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
+  recovery_pool = new common::VarlenPool(BACKEND_TYPE_MM);
   if (test_mode_) {
     cur_file_handle.file = nullptr;
   } else {
@@ -79,7 +79,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
   logging_type = LOGGING_TYPE_NVM_WAL;
 
   // allocate pool
-  recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
+  recovery_pool = new common::VarlenPool(BACKEND_TYPE_MM);
 
   InitSelf();
 }
@@ -453,7 +453,8 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
         // construct a physical tuple from the logical tuple
         std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
         for (auto column_id : column_ids) {
-          tuple->SetValue(column_id, cur_tuple.GetValue(column_id),
+          std::unique_ptr<common::Value> val(cur_tuple.GetValue(column_id));
+          tuple->SetValue(column_id, *val,
                           recovery_pool);
         }
 
@@ -725,8 +726,8 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
     LOG_TRACE("fread succeeded.");
   }
 
-  CopySerializeInputBE input(&buffer, sizeof(char));
-  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+  CopySerializeInput input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadByte());
 
   return log_record_type;
 }

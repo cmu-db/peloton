@@ -126,7 +126,6 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
 void RunBackend(oid_t thread_id) {
   // PinToCore(thread_id);
 
-
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
   
@@ -245,7 +244,6 @@ void RunBackend(oid_t thread_id) {
   }
 }
 
-
 void RunWorkload() {
 
   // Execute the workload to build the log
@@ -263,6 +261,7 @@ void RunWorkload() {
   oid_t **abort_counts_profiles = new oid_t *[profile_round];
   for (size_t round_id = 0; round_id < profile_round; ++round_id) {
     abort_counts_profiles[round_id] = new oid_t[num_threads];
+
   }
 
   oid_t **commit_counts_profiles = new oid_t *[profile_round];
@@ -373,15 +372,14 @@ void RunWorkload() {
   commit_counts = nullptr;
 }
 
-
 /////////////////////////////////////////////////////////
 // HARNESS
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<Value>> ExecuteRead(executor::AbstractExecutor* executor) {
+std::vector<std::vector<common::Value *>> ExecuteRead(executor::AbstractExecutor* executor) {
   executor->Init();
 
-  std::vector<std::vector<Value>> logical_tile_values;
+  std::vector<std::vector<common::Value *>> logical_tile_values;
 
   // Execute stuff
   while (executor->Execute() == true) {
@@ -397,7 +395,7 @@ std::vector<std::vector<Value>> ExecuteRead(executor::AbstractExecutor* executor
     for (oid_t tuple_id : *result_tile) {
       expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
                                                                   tuple_id);
-      std::vector<Value> tuple_values;
+      std::vector<common::Value *> tuple_values;
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
          auto value = cur_tuple.GetValue(column_itr);
          tuple_values.push_back(value);

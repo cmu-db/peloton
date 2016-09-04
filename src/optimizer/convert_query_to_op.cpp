@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cmath>
 
 #include "optimizer/convert_query_to_op.h"
 #include "optimizer/query_node_visitor.h"
@@ -69,15 +70,15 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
     output_expr = std::make_shared<OpExpression>(ExprVariable::make(col));
     output_type = col->Type();
-    output_size = GetTypeSize(output_type);
+    output_size = common::Type::GetTypeSize(output_type);
     output_inlined = col->Inlined();
   }
 
   void visit(const Constant *op) override {
     output_expr = std::make_shared<OpExpression>(ExprConstant::make(op->value));
-    output_type = op->value.GetValueType();
-    output_size = GetTypeSize(output_type);
-    output_inlined = op->value.GetSourceInlined();
+    output_type = op->value->GetTypeId();
+    output_size = common::Type::GetTypeSize(output_type);
+    output_inlined = op->value->IsInlined();
   }
 
   void visit(const OperatorExpression *op) override {
@@ -95,12 +96,12 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     }
 
     if (IsCompareOp(op->type)) {
-      output_type = VALUE_TYPE_BOOLEAN;
-      output_size = GetTypeSize(VALUE_TYPE_BOOLEAN);
+      output_type = common::Type::BOOLEAN;
+      output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
       output_inlined = true;
     } else {
       output_type = op->value_type;
-      output_size = GetTypeSize(output_type);
+      output_size = common::Type::GetTypeSize(output_type);
       // TODO(abpoms): how can this be determined?
       output_inlined = true;
     }
@@ -118,8 +119,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     }
 
     output_expr = expr;
-    output_type = VALUE_TYPE_BOOLEAN;
-    output_size = GetTypeSize(VALUE_TYPE_BOOLEAN);
+    output_type = common::Type::BOOLEAN;
+    output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
     output_inlined = true;
   }
 
@@ -133,8 +134,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     }
 
     output_expr = expr;
-    output_type = VALUE_TYPE_BOOLEAN;
-    output_size = GetTypeSize(VALUE_TYPE_BOOLEAN);
+    output_type = common::Type::BOOLEAN;
+    output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
     output_inlined = true;
   }
 
@@ -147,8 +148,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     expr->PushChild(output_expr);
 
     output_expr = expr;
-    output_type = VALUE_TYPE_BOOLEAN;
-    output_size = GetTypeSize(VALUE_TYPE_BOOLEAN);
+    output_type = common::Type::BOOLEAN;
+    output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
     output_inlined = true;
   }
 
@@ -260,7 +261,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   std::shared_ptr<OpExpression> output_expr;
   // For expr nodes
-  ValueType output_type;
+  common::Type::TypeId output_type;
   int output_size;
   bool output_inlined;
 };

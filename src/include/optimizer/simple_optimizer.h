@@ -14,6 +14,7 @@
 
 #include "optimizer/abstract_optimizer.h"
 #include "common/types.h"
+#include "common/value.h"
 
 #include <memory>
 #include <vector>
@@ -70,7 +71,7 @@ class SimpleOptimizer : public AbstractOptimizer {
                                   expression::AbstractExpression *expression,
                                   std::vector<oid_t> &column_ids,
                                   std::vector<ExpressionType> &expr_types,
-                                  std::vector<Value> &values,
+                                  std::vector<common::Value *> &values,
                                   bool &index_searchable);
 
   // create a scan plan for a select statement

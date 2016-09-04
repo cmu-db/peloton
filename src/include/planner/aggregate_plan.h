@@ -98,7 +98,7 @@ class AggregatePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "AggregatePlan"; }
 
-  void SetParameterValues(std::vector<Value> *values) {
+  void SetParameterValues(std::vector<common::Value *> *values) {
     LOG_TRACE("Setting parameter values in Aggregate Plan");
     for (auto &child_plan : GetChildren()) {
       child_plan->SetParameterValues(values);

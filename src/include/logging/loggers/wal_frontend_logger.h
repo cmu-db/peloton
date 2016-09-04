@@ -17,6 +17,7 @@
 #include "logging/records/tuple_record.h"
 #include "logging/log_file.h"
 #include "executor/executors.h"
+#include "common/varlen_pool.h"
 
 #include <dirent.h>
 #include <vector>
@@ -26,8 +27,6 @@
 extern int peloton_flush_frequency_micros;
 
 namespace peloton {
-
-class VarlenPool;
 
 namespace concurrency {
 class Transaction;
@@ -132,7 +131,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   cid_t max_cid = 0;
 
   // pool for allocating non-inlined values
-  VarlenPool *recovery_pool;
+  common::VarlenPool *recovery_pool;
 
   // abj1 adding code here!
   std::vector<LogFile *> log_files_;

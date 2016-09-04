@@ -49,7 +49,7 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
-  void SetParameterValues(std::vector<Value> *values);
+  void SetParameterValues(std::vector<common::Value *> *values);
 
   bool GetTruncate() const { return truncate; }
 

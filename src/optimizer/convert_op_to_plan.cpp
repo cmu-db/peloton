@@ -63,11 +63,11 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
     std::tie(table_idx, column_idx) =
         FindRelativeIndex(left_columns, right_columns, var->column);
     output_expr = expression::ExpressionUtil::TupleValueFactory(
-        VALUE_TYPE_NULL, table_idx, column_idx);
+        common::Type::INVALID, table_idx, column_idx);
   }
 
   void visit(const ExprConstant *op) override {
-    output_expr = expression::ExpressionUtil::ConstantValueFactory(op->value);
+    output_expr = expression::ExpressionUtil::ConstantValueFactory(*op->value);
   }
 
   void visit(const ExprCompare *op) override {
@@ -98,7 +98,7 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
       case BoolOpType::Not: {
         assert(children.size() == 1);
         output_expr = expression::ExpressionUtil::OperatorFactory(
-            EXPRESSION_TYPE_OPERATOR_NOT, VALUE_TYPE_NULL, child_exprs.front(),
+            EXPRESSION_TYPE_OPERATOR_NOT, common::Type::INVALID, child_exprs.front(),
             nullptr);
       } break;
       case BoolOpType::And: {
@@ -127,7 +127,7 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
     child_exprs.resize(4, nullptr);
 
     output_expr = expression::ExpressionUtil::OperatorFactory(
-        op->expr_type, VALUE_TYPE_NULL, child_exprs[0], child_exprs[1],
+        op->expr_type, common::Type::INVALID, child_exprs[0], child_exprs[1],
         child_exprs[2], child_exprs[3]);
   }
 

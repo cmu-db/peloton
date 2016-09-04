@@ -39,6 +39,7 @@
 
 #include "common/types.h"
 #include "common/serializer.h"
+#include "common/serializeio.h"
 
 namespace peloton {
 namespace logging {

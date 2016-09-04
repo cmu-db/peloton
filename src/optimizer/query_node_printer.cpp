@@ -32,17 +32,17 @@ void QueryNodePrinter::visit(const Variable *op) {
   append("Variable: ");
   append("base_table_oid " + std::to_string(op->base_table_oid));
   append(", column_offset " + std::to_string(op->column_index));
-  append(", type " + ValueTypeToString(op->column.GetType()));
+  append(", type " + std::to_string(op->column.GetType()));
 }
 
 void QueryNodePrinter::visit(const Constant *op) {
-  append("Constant: " + op->value.GetInfo());
+  append("Constant: " + op->value->GetInfo());
   (void)op;
 }
 
 void QueryNodePrinter::visit(const OperatorExpression *op) {
   push_header("OperatorExpression, type: " + ExpressionTypeToString(op->type) +
-              ", return_type: " + ValueTypeToString(op->value_type));
+              ", return_type: " + std::to_string(op->value_type));
   for (QueryExpression *e : op->args) {
     e->accept(this);
     append_line();

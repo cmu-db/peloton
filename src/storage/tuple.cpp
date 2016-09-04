@@ -31,103 +31,86 @@ Tuple::~Tuple() {
 }
 
 // Get the value of a specified column (const)
-Value Tuple::GetValue(oid_t column_id) const {
+common::Value *Tuple::GetValue(oid_t column_id) const {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
-  const ValueType column_type = tuple_schema->GetType(column_id);
+  const common::Type::TypeId column_type = tuple_schema->GetType(column_id);
   const char *data_ptr = GetDataPtr(column_id);
   const bool is_inlined = tuple_schema->IsInlined(column_id);
-  return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
+  return common::Value::DeserializeFrom(data_ptr, column_type, is_inlined);
 }
 
 // Set all columns by value into this tuple.
-void Tuple::SetValue(const oid_t column_offset, const Value &value,
-                     VarlenPool *data_pool) {
+void Tuple::SetValue(const oid_t column_offset, const common::Value &value,
+                     common::VarlenPool *data_pool) {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
-  const ValueType type = tuple_schema->GetType(column_offset);
+  const common::Type::TypeId type = tuple_schema->GetType(column_offset);
   LOG_TRACE("c offset: %d; using pool: %p", column_offset, data_pool);
 
   const bool is_inlined = tuple_schema->IsInlined(column_offset);
   char *value_location = GetDataPtr(column_offset);
-  int32_t column_length = tuple_schema->GetLength(column_offset);
+  UNUSED_ATTRIBUTE int32_t column_length = tuple_schema->GetLength(column_offset);
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_offset);
 
-  LOG_TRACE("column_offset: %d; value_location %p; column_length %d; type %s",
+  LOG_TRACE("column_offset: %d; value_location %p; column_length %d; type %d",
             column_offset, value_location, column_length,
-            ValueTypeToString(type).c_str());
+            type);
 
-  const bool is_in_bytes = false;
-  // Allocate in heap or given data pool depending on whether a pool is provided
-  if (data_pool == nullptr) {
-    // Skip casting if type is same
-    if (type == value.GetValueType()) {
-      value.SerializeToTupleStorage(value_location, is_inlined, column_length,
-                                    is_in_bytes);
-    } else {
-      Value casted_value = value.CastAs(type);
-      casted_value.SerializeToTupleStorage(value_location, is_inlined,
-                                           column_length, is_in_bytes);
-      // Do not clean up immediately
-      casted_value.SetCleanUp(false);
-    }
+  // Skip casting if type is same
+  if (type == value.GetTypeId()) {
+    value.SerializeTo(value_location, is_inlined, data_pool);
   } else {
-    // Skip casting if type is same
-    if (type == value.GetValueType()) {
-      value.SerializeToTupleStorageAllocateForObjects(
-          value_location, is_inlined, column_length, is_in_bytes, data_pool);
-    } else {
-      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(
-          value_location, is_inlined, column_length, is_in_bytes, data_pool);
-    }
+    std::unique_ptr<common::Value> casted_value(value.CastAs(type));
+    casted_value->SerializeTo(value_location, is_inlined, data_pool);
   }
 }
 
 
 // Set all columns by value into this tuple.
-void Tuple::SetValue(oid_t column_offset, Value &value) {
+void Tuple::SetValue(oid_t column_offset, const common::Value &value) {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
-  const ValueType type = tuple_schema->GetType(column_offset);
+  const common::Type::TypeId type = tuple_schema->GetType(column_offset);
 
   const bool is_inlined = tuple_schema->IsInlined(column_offset);
   char *value_location = GetDataPtr(column_offset);
-  int32_t column_length = tuple_schema->GetLength(column_offset);
+  UNUSED_ATTRIBUTE int32_t column_length = tuple_schema->GetLength(column_offset);
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_offset);
 
-  const bool is_in_bytes = false;
+  //const bool is_in_bytes = false;
   // Allocate in heap or given data pool depending on whether a pool is provided
   // Skip casting if type is same
-  if (type == value.GetValueType()) {
-    value.SerializeToTupleStorage(value_location, is_inlined, column_length,
-                                  is_in_bytes);
+  if (type == value.GetTypeId()) {
+    value.SerializeTo(value_location, is_inlined, nullptr);
   } else {
-    Value casted_value = value.CastAs(type);
-    casted_value.SerializeToTupleStorage(value_location, is_inlined,
-                                         column_length, is_in_bytes);
+    common::Value *casted_value = value.CastAs(type);
+    casted_value->SerializeTo(value_location, is_inlined, nullptr);
     // Do not clean up immediately
-    casted_value.SetCleanUp(false);
+    //casted_value.SetCleanUp(false);
   }
 }
 
 void Tuple::SetFromTuple(const AbstractTuple *tuple,
-                         const std::vector<oid_t> &columns, VarlenPool *pool) {
+                         const std::vector<oid_t> &columns,
+                         common::VarlenPool *pool) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
   for (auto col : columns) {
-    SetValue(this_col_itr, tuple->GetValue(col), pool);
+    std::unique_ptr<common::Value> fetched_value(tuple->GetValue(col));
+    SetValue(this_col_itr, *fetched_value, pool);
     this_col_itr++;
   }
 }
 
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
-void Tuple::Copy(const void *source, VarlenPool *pool) {
+void Tuple::Copy(const void *source, common::VarlenPool *pool) {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
@@ -149,10 +132,10 @@ void Tuple::Copy(const void *source, VarlenPool *pool) {
           tuple_schema->GetUninlinedColumn(column_itr);
 
       // Get original value from uninlined pool
-      Value value = GetValue(unlineable_column_id);
+      common::Value *value = GetValue(unlineable_column_id);
 
       // Make a copy of the value at a new location in uninlined pool
-      SetValue(unlineable_column_id, value, pool);
+      SetValue(unlineable_column_id, *value, pool);
     }
   }
 }
@@ -168,28 +151,29 @@ size_t Tuple::ExportSerializationSize() const {
 
   for (int column_itr = 0; column_itr < column_count; ++column_itr) {
     switch (GetType(column_itr)) {
-      case VALUE_TYPE_TINYINT:
-      case VALUE_TYPE_SMALLINT:
-      case VALUE_TYPE_INTEGER:
-      case VALUE_TYPE_BIGINT:
-      case VALUE_TYPE_TIMESTAMP:
-      case VALUE_TYPE_DOUBLE:
+      case common::Type::TINYINT:
+      case common::Type::SMALLINT:
+      case common::Type::INTEGER:
+      case common::Type::BIGINT:
+      case common::Type::TIMESTAMP:
+      case common::Type::DECIMAL:
+      //case common::Type::DOUBLE:
         bytes += sizeof(int64_t);
         break;
 
-      case VALUE_TYPE_DECIMAL:
+      //case common::Type::DECIMAL:
         // Decimals serialized in ascii as
         // 32 bits of length + max prec digits + radix pt + sign
-        bytes += sizeof(int32_t) + Value::kMaxDecPrec + 1 + 1;
-        break;
+        //bytes += sizeof(int32_t) + Value::kMaxDecPrec + 1 + 1;
+        //break;
 
-      case VALUE_TYPE_VARCHAR:
-      case VALUE_TYPE_VARBINARY:
+      case common::Type::VARCHAR:
+      case common::Type::VARBINARY:
         // 32 bit length preceding value and
         // actual character data without null string terminator.
-        if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) + ValuePeeker::PeekObjectLengthWithoutNull(
-                                          GetValue(column_itr)));
+        if (!GetValue(column_itr)->IsNull()) {
+          bytes += (sizeof(int32_t)
+            + ((common::VarlenValue *)GetValue(column_itr))->GetLength());
         }
         break;
 
@@ -212,12 +196,12 @@ size_t Tuple::GetUninlinedMemorySize() const {
   if (tuple_schema->IsInlined() == false) {
     for (int column_itr = 0; column_itr < column_count; ++column_itr) {
       // peekObjectLength is unhappy with non-varchar
-      if ((GetType(column_itr) == VALUE_TYPE_VARCHAR ||
-           (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
+      if ((GetType(column_itr) == common::Type::VARCHAR ||
+           (GetType(column_itr) == common::Type::VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
-        if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) + ValuePeeker::PeekObjectLengthWithoutNull(
-                                          GetValue(column_itr)));
+        if (!GetValue(column_itr)->IsNull()) {
+          bytes += (sizeof(int32_t)
+            + ((common::VarlenValue *)GetValue(column_itr))->GetLength());
         }
       }
     }
@@ -226,15 +210,16 @@ size_t Tuple::GetUninlinedMemorySize() const {
   return bytes;
 }
 
-void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
-  PL_ASSERT(tuple_schema);
+void Tuple::DeserializeFrom(UNUSED_ATTRIBUTE SerializeInput &input,
+                            UNUSED_ATTRIBUTE common::VarlenPool *dataPool) {
+  /*PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
   input.ReadInt();
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    const ValueType type = tuple_schema->GetType(column_itr);
+    const ValueType type = tuple_schema->GetType(column_itr);*/
 
     /**
      * DeserializeFrom is only called when we serialize/deserialize tables.
@@ -246,7 +231,7 @@ void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
      * out of Tuple. The memory allocation will be performed when serializing
      * to tuple storage.
      */
-    const bool is_inlined = tuple_schema->IsInlined(column_itr);
+    /*const bool is_inlined = tuple_schema->IsInlined(column_itr);
     int32_t column_length;
     char *data_ptr = GetDataPtr(column_itr);
 
@@ -260,11 +245,11 @@ void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
     const bool is_in_bytes = false;
     Value::DeserializeFrom(input, dataPool, data_ptr, type, is_inlined,
                            column_length, is_in_bytes);
-  }
+  }*/
 }
 
-void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
-  PL_ASSERT(tuple_schema);
+void Tuple::DeserializeWithHeaderFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
+  /*PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
   input.ReadInt();  // Read in the tuple size, discard
@@ -281,8 +266,7 @@ void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
     // TODO: Not sure about arguments
     const bool is_in_bytes = false;
     Value::DeserializeFrom(input, NULL, data_ptr, type, is_inlined,
-                           column_length, is_in_bytes);
-  }
+                           column_length, is_in_bytes);*/
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
@@ -295,8 +279,8 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    Value value = GetValue(column_itr);
-    value.SerializeTo(output);
+    std::unique_ptr<common::Value> value(GetValue(column_itr));
+    value->SerializeTo(output);
   }
 
   int32_t serialized_size =
@@ -312,15 +296,15 @@ void Tuple::SerializeTo(SerializeOutput &output) {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    Value value = GetValue(column_itr);
-    value.SerializeTo(output);
+    std::unique_ptr<common::Value> value(GetValue(column_itr));
+    value->SerializeTo(output);
   }
 
   output.WriteIntAt(
       start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
 }
 
-void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset,
+void Tuple::SerializeToExport(SerializeOutput &output, int colOffset,
                               uint8_t *null_array) {
   const int column_count = GetColumnCount();
 
@@ -335,8 +319,9 @@ void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset,
       null_array[byte] = (uint8_t)(null_array[byte] | mask);
       continue;
     }
-
-    GetValue(column_itr).SerializeToExportWithoutNull(output);
+    
+    std::unique_ptr<common::Value> val(GetValue(column_itr));
+    val->SerializeTo(output);
   }
 }
 
@@ -354,9 +339,10 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    const Value lhs = GetValue(column_itr);
-    const Value rhs = other.GetValue(column_itr);
-    if (lhs.OpNotEquals(rhs).IsTrue()) {
+    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
+    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
+    std::unique_ptr<common::Value> res(lhs->CompareNotEquals(*rhs));
+    if (res->IsTrue()) {
       return false;
     }
   }
@@ -367,9 +353,10 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
 bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
                                 const std::vector<oid_t> &columns) const {
   for (auto column_itr : columns) {
-    const Value lhs = GetValue(column_itr);
-    const Value rhs = other.GetValue(column_itr);
-    if (lhs.OpNotEquals(rhs).IsTrue()) {
+    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
+    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
+    std::unique_ptr<common::Value> res(lhs->CompareNotEquals(*rhs));
+    if (res->IsTrue()) {
       return false;
     }
   }
@@ -383,22 +370,25 @@ void Tuple::SetAllNulls() {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    Value value = Value::GetNullValue(tuple_schema->GetType(column_itr));
-    SetValue(column_itr, value, nullptr);
+    common::Value *value = common::ValueFactory::GetNullValueByType(
+      tuple_schema->GetType(column_itr));
+    SetValue(column_itr, *value, nullptr);
   }
 }
 
 int Tuple::Compare(const Tuple &other) const {
-  int diff;
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    const Value lhs = GetValue(column_itr);
-    const Value rhs = other.GetValue(column_itr);
-    diff = lhs.Compare(rhs);
-
-    if (diff) {
-      return diff;
+    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
+    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
+    std::unique_ptr<common::Value> res_gt(lhs->CompareGreaterThan(*rhs));
+    if (res_gt->IsTrue()) {
+      return 1;
+    }
+    std::unique_ptr<common::Value> res_lt(lhs->CompareLessThan(*rhs));
+    if (res_lt->IsTrue()) {
+      return -1;
     }
   }
 
@@ -407,15 +397,16 @@ int Tuple::Compare(const Tuple &other) const {
 
 int Tuple::Compare(const Tuple &other,
                    const std::vector<oid_t> &columns) const {
-  int diff;
-
   for (auto column_itr : columns) {
-    const Value lhs = GetValue(column_itr);
-    const Value rhs = other.GetValue(column_itr);
-    diff = lhs.Compare(rhs);
-
-    if (diff) {
-      return diff;
+    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
+    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
+    std::unique_ptr<common::Value> res_gt(lhs->CompareGreaterThan(*rhs));
+    if (res_gt->IsTrue()) {
+      return 1;
+    }
+    std::unique_ptr<common::Value> res_lt(lhs->CompareLessThan(*rhs));
+    if (res_lt->IsTrue()) {
+      return -1;
     }
   }
 
@@ -426,8 +417,8 @@ size_t Tuple::HashCode(size_t seed) const {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    const Value value = GetValue(column_itr);
-    value.HashCombine(seed);
+    std::unique_ptr<common::Value> value(GetValue(column_itr));
+    value->HashCombine(seed);
   }
 
   return seed;
@@ -464,7 +455,8 @@ const std::string Tuple::GetInfo() const {
     if (IsNull(column_itr)) {
       os << "<NULL>";
     } else {
-      os << GetValue(column_itr);
+      std::unique_ptr<common::Value> val(GetValue(column_itr));
+      os << val->GetInfo();
     }
     os << ")";
   }

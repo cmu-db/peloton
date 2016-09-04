@@ -67,7 +67,7 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
   return tiles[tile_id]->GetTileId();
 }
 
-peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
+common::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   Tile *tile = GetTile(tile_id);
 
   if (tile != nullptr) {
@@ -116,8 +116,8 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
-      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                          tile->GetPool());
+      std::unique_ptr<common::Value> val(tuple->GetValue(column_itr));
+      tile_tuple.SetValue(tile_column_itr, *val, tile->GetPool());
       column_itr++;
     }
   }
@@ -132,7 +132,8 @@ void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
   PL_ASSERT(tuple->GetColumnCount() == schema->GetColumnCount());
 
   for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
-    tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
+    std::unique_ptr<common::Value> val(GetValue(tuple_slot_id, col_id));
+    tuple->SetValue(col_id, *val, nullptr);
   }
 }
 
@@ -210,8 +211,8 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
-      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                          tile->GetPool());
+      std::unique_ptr<common::Value> val(tuple->GetValue(column_itr));
+      tile_tuple.SetValue(tile_column_itr, *val, tile->GetPool());
       column_itr++;
     }
   }
@@ -310,8 +311,8 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
-      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                          tile->GetPool());
+      std::unique_ptr<common::Value> val(tuple->GetValue(column_itr));
+      tile_tuple.SetValue(tile_column_itr, *val, tile->GetPool());
       column_itr++;
     }
   }
@@ -349,14 +350,14 @@ oid_t TileGroup::GetTileColumnId(oid_t column_id) {
   return tile_column_id;
 }
 
-Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
+common::Value *TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(Value &value, oid_t tuple_id, oid_t column_id) {
+void TileGroup::SetValue(common::Value &value, oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);

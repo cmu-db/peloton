@@ -30,7 +30,9 @@
 
 namespace peloton {
 
+namespace common{
 class VarlenPool;
+}
 
 namespace test {
 
@@ -57,7 +59,7 @@ class TestingHarness {
 
   txn_id_t GetNextTransactionId();
 
-  VarlenPool *GetTestingPool();
+  common::VarlenPool *GetTestingPool();
 
   oid_t GetNextTileGroupId();
 
@@ -74,7 +76,7 @@ class TestingHarness {
   std::atomic<oid_t> tile_group_id_counter;
 
   // Testing pool
-  std::unique_ptr<VarlenPool> pool_;
+  std::unique_ptr<common::VarlenPool> pool_;
 };
 
 template <typename... Args>

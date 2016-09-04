@@ -14,10 +14,11 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <sys/stat.h>
 
 #include "common/types.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 
 namespace peloton {
 
@@ -37,7 +38,7 @@ class Checkpoint {
  public:
   Checkpoint(bool disable_file_access)
       : disable_file_access(disable_file_access) {
-    pool.reset(new VarlenPool(BACKEND_TYPE_MM));
+    pool.reset(new common::VarlenPool(BACKEND_TYPE_MM));
   }
 
   virtual ~Checkpoint(void) { pool.reset(); }
@@ -74,7 +75,7 @@ class Checkpoint {
 
   // variable length memory pool
   // TODO better periodically clean up varlen pool?
-  std::unique_ptr<VarlenPool> pool;
+  std::unique_ptr<common::VarlenPool> pool;
 
   // TODO set directory to configurable variables
   std::string checkpoint_dir = "pl_checkpoint";

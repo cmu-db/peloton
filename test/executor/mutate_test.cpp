@@ -21,7 +21,7 @@
 
 #include "catalog/schema.h"
 #include "common/value_factory.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "catalog/catalog.h"
 
 #include "executor/executor_context.h"
@@ -63,7 +63,7 @@ class MutateTests : public PelotonTest {};
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::DataTable *table, VarlenPool *pool,
+void InsertTuple(storage::DataTable *table, common::VarlenPool *pool,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -88,9 +88,9 @@ void UpdateTuple(storage::DataTable *table,
       new executor::ExecutorContext(txn));
 
   // Update
-  std::vector<oid_t> update_column_ids = {2};
-  std::vector<Value> values;
-  Value update_val = ValueFactory::GetDoubleValue(23.5);
+  //std::vector<oid_t> update_column_ids = {2};
+  //std::vector<common::Value *> values;
+  auto update_val = common::ValueFactory::GetDoubleValue(23.5);
 
   TargetList target_list;
   DirectMapList direct_map_list;
@@ -112,11 +112,11 @@ void UpdateTuple(storage::DataTable *table,
 
   // WHERE ATTR_0 < 70
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(70));
-  auto predicate = new expression::ComparisonExpression<expression::CmpLt>(
+          common::ValueFactory::GetIntegerValue(70));
+  auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
@@ -154,11 +154,11 @@ void DeleteTuple(storage::DataTable *table,
 
   // WHERE ATTR_0 > 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(60));
-  auto predicate = new expression::ComparisonExpression<expression::CmpGt>(
+          common::ValueFactory::GetIntegerValue(60));
+  auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_GREATERTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
@@ -242,8 +242,8 @@ TEST_F(MutateTests, StressTests) {
   storage::Tuple *key1 = new storage::Tuple(key_schema, true);
   storage::Tuple *key2 = new storage::Tuple(key_schema, true);
 
-  key1->SetValue(0, ValueFactory::GetIntegerValue(10), nullptr);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), nullptr);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(10), nullptr);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), nullptr);
 
   delete key1;
   delete key2;
@@ -258,10 +258,10 @@ TEST_F(MutateTests, StressTests) {
   storage::Tuple *key3 = new storage::Tuple(key_schema, true);
   storage::Tuple *key4 = new storage::Tuple(key_schema, true);
 
-  key3->SetValue(0, ValueFactory::GetIntegerValue(10), nullptr);
-  key3->SetValue(1, ValueFactory::GetIntegerValue(11), nullptr);
-  key4->SetValue(0, ValueFactory::GetIntegerValue(100), nullptr);
-  key4->SetValue(1, ValueFactory::GetIntegerValue(101), nullptr);
+  key3->SetValue(0, common::ValueFactory::GetIntegerValue(10), nullptr);
+  key3->SetValue(1, common::ValueFactory::GetIntegerValue(11), nullptr);
+  key4->SetValue(0, common::ValueFactory::GetIntegerValue(100), nullptr);
+  key4->SetValue(1, common::ValueFactory::GetIntegerValue(101), nullptr);
 
   delete key3;
   delete key4;
@@ -397,12 +397,12 @@ TEST_F(MutateTests, UpdateTest) {
 
   // ATTR = 23.5
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_DOUBLE, 0, 2);
+      new expression::TupleValueExpression(common::Type::DECIMAL, 0, 2);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
-          ValueFactory::GetDoubleValue(23.5));
+          common::ValueFactory::GetDoubleValue(23.5));
 
-  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+  auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   tuple_cnt = SeqScanCount(table, column_ids, predicate);

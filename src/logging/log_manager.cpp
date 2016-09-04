@@ -192,9 +192,9 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
     if (IsBasedOnWriteAheadLogging(logging_type_) || replicating_) {
       tuple.reset(new storage::Tuple(schema, true));
       for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-        tuple->SetValue(col,
-                        new_tuple_tile_group->GetValue(new_version.offset, col),
-                        logger->GetVarlenPool());
+        std::unique_ptr<common::Value> val(
+            new_tuple_tile_group->GetValue(new_version.offset, col));
+        tuple->SetValue(col, *val, logger->GetVarlenPool());
       }
       record.reset(
           logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
@@ -230,9 +230,9 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
                                    tile_group->GetTableId())->GetSchema();
       tuple.reset(new storage::Tuple(schema, true));
       for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-        tuple->SetValue(
-            col, new_tuple_tile_group->GetValue(new_location.offset, col),
-            logger->GetVarlenPool());
+        std::unique_ptr<common::Value> val(
+            new_tuple_tile_group->GetValue(new_location.offset, col));
+        tuple->SetValue(col, *val, logger->GetVarlenPool());
       }
 
       record.reset(logger->GetTupleRecord(
@@ -274,7 +274,7 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     if (syncronization_commit) {
       WaitForFlush(commit_id);
     }
-    logger->GetVarlenPool()->Purge();
+    //logger->GetVarlenPool()->Purge();
   }
 }
 

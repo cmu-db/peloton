@@ -44,9 +44,9 @@ TEST_F(CatalogTests, CreatingDatabase) {
 TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
-                                   GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
-  auto name_column = catalog::Column(VALUE_TYPE_VARCHAR, 32, "name", true);
+  auto id_column = catalog::Column(common::Type::INTEGER,
+                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
+  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

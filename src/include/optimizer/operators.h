@@ -226,14 +226,18 @@ class ExprVariable : public OperatorNode<ExprVariable> {
 // Constant
 //===--------------------------------------------------------------------===//
 class ExprConstant : public OperatorNode<ExprConstant> {
+  ~ExprConstant() {
+    delete value;
+  }
+  
  public:
-  static Operator make(Value value);
+  static Operator make(const common::Value *value);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  Value value;
+  common::Value *value;
 };
 
 //===--------------------------------------------------------------------===//
@@ -275,14 +279,14 @@ class ExprBoolOp : public OperatorNode<ExprBoolOp> {
 //===--------------------------------------------------------------------===//
 class ExprOp : public OperatorNode<ExprOp> {
  public:
-  static Operator make(ExpressionType type, ValueType return_type);
+  static Operator make(ExpressionType type, common::Type::TypeId return_type);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
   ExpressionType expr_type;
-  ValueType return_type;
+  common::Type::TypeId return_type;
 };
 
 //===--------------------------------------------------------------------===//

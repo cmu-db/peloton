@@ -72,7 +72,7 @@ void ExecuteTileGroupTest() {
 
   for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                         "FIELD" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
@@ -132,7 +132,7 @@ void ExecuteTileGroupTest() {
     storage::Tuple tuple(table_schema, allocate);
 
     for (oid_t col_itr = 0; col_itr <= col_count; col_itr++) {
-      auto value = ValueFactory::GetIntegerValue(populate_value + col_itr);
+      auto value = common::ValueFactory::GetIntegerValue(populate_value + col_itr);
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
@@ -175,7 +175,7 @@ void ExecuteTileGroupTest() {
   oid_t col_itr = 0;
   for (auto column_id : column_ids) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                         "FIELD" + std::to_string(column_id), is_inlined);
     output_columns.push_back(column);
 

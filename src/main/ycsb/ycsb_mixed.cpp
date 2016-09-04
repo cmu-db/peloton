@@ -114,11 +114,11 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<Value> values;
+      std::vector<common::Value *> values;
 
       auto lookup_key = zipf.GetNextNumber();
 
-      values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+      values.push_back(common::ValueFactory::GetIntegerValue(lookup_key).Copy());
 
       auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
     
@@ -142,9 +142,9 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
         if (col_itr == 1) {
         int update_raw_value = 1;
-        Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
+        common::Value * update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
           target_list.emplace_back(
-                col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
+                col_itr, expression::ExpressionUtil::ConstantValueFactory(*update_val));
         }
         else {
           direct_map_list.emplace_back(col_itr,
@@ -174,11 +174,11 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<Value> values;
+      std::vector<common::Value *> values;
 
       auto lookup_key = zipf.GetNextNumber();
 
-      values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+      values.push_back(common::ValueFactory::GetIntegerValue(lookup_key).Copy());
 
       auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
     

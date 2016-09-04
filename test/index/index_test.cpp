@@ -62,17 +62,17 @@ index::Index *BuildIndex(const bool unique_keys) {
   // The size of the key is:
   //   integer 4 + varchar 8 = total 12
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
 
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024, "B", false);
+  catalog::Column column2(common::Type::VARCHAR, 1024, "B", false);
 
   // The following twoc constitutes tuple schema but does not appear in index
 
-  catalog::Column column3(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+  catalog::Column column3(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
                           "C", true);
 
-  catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column4(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "D", true);
 
   // Use the first two columns to build key schema
@@ -134,9 +134,9 @@ TEST_F(IndexTests, BasicTest) {
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
 
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
 
   // INSERT
 
@@ -158,7 +158,7 @@ TEST_F(IndexTests, BasicTest) {
 }
 
 // INSERT HELPER FUNCTION
-void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
+void InsertTest(index::Index *index, common::VarlenPool *pool, size_t scale_factor,
                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
@@ -171,16 +171,16 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
     std::unique_ptr<storage::Tuple> keynonce(
         new storage::Tuple(key_schema, true));
 
-    key0->SetValue(0, ValueFactory::GetIntegerValue(100 * scale_itr), pool);
-    key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-    key1->SetValue(0, ValueFactory::GetIntegerValue(100 * scale_itr), pool);
-    key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-    key2->SetValue(0, ValueFactory::GetIntegerValue(100 * scale_itr), pool);
-    key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
-    key3->SetValue(0, ValueFactory::GetIntegerValue(400 * scale_itr), pool);
-    key3->SetValue(1, ValueFactory::GetStringValue("d"), pool);
-    key4->SetValue(0, ValueFactory::GetIntegerValue(500 * scale_itr), pool);
-    key4->SetValue(1, ValueFactory::GetStringValue(
+    key0->SetValue(0, common::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+    key1->SetValue(0, common::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+    key2->SetValue(0, common::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
+    key3->SetValue(0, common::ValueFactory::GetIntegerValue(400 * scale_itr), pool);
+    key3->SetValue(1, common::ValueFactory::GetVarcharValue("d"), pool);
+    key4->SetValue(0, common::ValueFactory::GetIntegerValue(500 * scale_itr), pool);
+    key4->SetValue(1, common::ValueFactory::GetVarcharValue(
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -202,9 +202,9 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
                    pool);
-    keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000 * scale_itr),
+    keynonce->SetValue(0, common::ValueFactory::GetIntegerValue(1000 * scale_itr),
                        pool);
-    keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
+    keynonce->SetValue(1, common::ValueFactory::GetVarcharValue("f"), pool);
 
     // INSERT
     // key0 1 (100, a)   item0
@@ -231,7 +231,7 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
 }
 
 // DELETE HELPER FUNCTION
-void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
+void DeleteTest(index::Index *index, common::VarlenPool *pool, size_t scale_factor,
                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
@@ -242,16 +242,16 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
     std::unique_ptr<storage::Tuple> key3(new storage::Tuple(key_schema, true));
     std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema, true));
 
-    key0->SetValue(0, ValueFactory::GetIntegerValue(100 * scale_itr), pool);
-    key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-    key1->SetValue(0, ValueFactory::GetIntegerValue(100 * scale_itr), pool);
-    key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-    key2->SetValue(0, ValueFactory::GetIntegerValue(100 * scale_itr), pool);
-    key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
-    key3->SetValue(0, ValueFactory::GetIntegerValue(400 * scale_itr), pool);
-    key3->SetValue(1, ValueFactory::GetStringValue("d"), pool);
-    key4->SetValue(0, ValueFactory::GetIntegerValue(500 * scale_itr), pool);
-    key4->SetValue(1, ValueFactory::GetStringValue(
+    key0->SetValue(0, common::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+    key1->SetValue(0, common::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+    key2->SetValue(0, common::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
+    key3->SetValue(0, common::ValueFactory::GetIntegerValue(400 * scale_itr), pool);
+    key3->SetValue(1, common::ValueFactory::GetVarcharValue("d"), pool);
+    key4->SetValue(0, common::ValueFactory::GetIntegerValue(500 * scale_itr), pool);
+    key4->SetValue(1, common::ValueFactory::GetVarcharValue(
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -324,10 +324,10 @@ TEST_F(IndexTests, MultiMapInsertTest) {
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> keynonce(
       new storage::Tuple(key_schema, true));
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-  keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000), pool);
-  keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+  keynonce->SetValue(0, common::ValueFactory::GetIntegerValue(1000), pool);
+  keynonce->SetValue(1, common::ValueFactory::GetVarcharValue("f"), pool);
 
   index->ScanKey(keynonce.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -359,12 +359,12 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -400,12 +400,12 @@ TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -449,11 +449,11 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
   std::unique_ptr<storage::Tuple> keynonce(
       new storage::Tuple(key_schema, true));
 
-  keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000), pool);
-  keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
+  keynonce->SetValue(0, common::ValueFactory::GetIntegerValue(1000), pool);
+  keynonce->SetValue(1, common::ValueFactory::GetVarcharValue("f"), pool);
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
 
   index->ScanKey(keynonce.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -492,12 +492,19 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
+
+  std::unique_ptr<common::Value> key0_val0(key0->GetValue(0));
+  std::unique_ptr<common::Value> key0_val1(key0->GetValue(1));
+  std::unique_ptr<common::Value> key1_val0(key1->GetValue(0));
+  std::unique_ptr<common::Value> key1_val1(key1->GetValue(1));
+  std::unique_ptr<common::Value> key2_val0(key2->GetValue(0));
+  std::unique_ptr<common::Value> key2_val1(key2->GetValue(1));
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -517,27 +524,27 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1_val0.get()}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -583,14 +590,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema, true));
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
-  key4->SetValue(0, ValueFactory::GetIntegerValue(500), pool);
-  key4->SetValue(1, ValueFactory::GetStringValue(
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
+  key4->SetValue(0, common::ValueFactory::GetIntegerValue(500), pool);
+  key4->SetValue(1, common::ValueFactory::GetVarcharValue(
                         "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                         "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                         "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -649,7 +656,15 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  std::unique_ptr<common::Value> key0_val0(key0->GetValue(0));
+  std::unique_ptr<common::Value> key0_val1(key0->GetValue(1));
+  std::unique_ptr<common::Value> key1_val0(key1->GetValue(0));
+  std::unique_ptr<common::Value> key1_val1(key1->GetValue(1));
+  std::unique_ptr<common::Value> key2_val0(key2->GetValue(0));
+  std::unique_ptr<common::Value> key2_val1(key2->GetValue(1));
+  std::unique_ptr<common::Value> key4_val0(key4->GetValue(0));
+  std::unique_ptr<common::Value> key4_val1(key4->GetValue(1));
+  index->ScanTest({key1_val0.get()}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
@@ -661,7 +676,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
@@ -674,7 +689,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
@@ -687,14 +702,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+      {key2_val0.get(), key2_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
@@ -707,8 +722,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key0->GetValue(0), key0->GetValue(1),
-       key2->GetValue(0), key2->GetValue(1)},
+      {key0_val0.get(), key0_val1.get(),
+       key2_val0.get(), key2_val1.get()},
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
@@ -722,8 +737,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   location_ptrs.clear();
 
-  index->ScanTest({key0->GetValue(0), key0->GetValue(1),
-                   key4->GetValue(0), key4->GetValue(1)},
+  index->ScanTest({key0_val0.get(), key0_val1.get(),
+                   key4_val0.get(), key4_val1.get()},
                   {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                                  EXPRESSION_TYPE_COMPARE_GREATERTHAN,
                                  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
@@ -739,7 +754,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // REVERSE SCAN
-  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1_val0.get()}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
@@ -751,7 +766,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -764,7 +779,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -777,7 +792,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key1_val0.get(), key1_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -786,7 +801,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+      {key2_val0.get(), key2_val1.get()}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -799,8 +814,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key0->GetValue(0), key0->GetValue(1),
-       key2->GetValue(0), key2->GetValue(1)},
+      {key0_val0.get(), key0_val1.get(),
+       key2_val0.get(), key2_val1.get()},
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
@@ -814,8 +829,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   location_ptrs.clear();
 
-  index->ScanTest({key0->GetValue(0), key0->GetValue(1),
-                   key4->GetValue(0), key4->GetValue(1)},
+  index->ScanTest({key0_val0.get(), key0_val1.get(),
+                   key4_val0.get(), key4_val1.get()},
                   {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                                  EXPRESSION_TYPE_COMPARE_GREATERTHAN,
                                  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
@@ -852,12 +867,12 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
 
-  key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key0->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, common::ValueFactory::GetVarcharValue("a"), pool);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -930,10 +945,10 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
 
-  key1->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
-  key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key1->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, common::ValueFactory::GetVarcharValue("b"), pool);
+  key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
+  key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key1.get(), location_ptrs);
   if (index->HasUniqueKeys()) {

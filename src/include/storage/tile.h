@@ -16,7 +16,8 @@
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/serializer.h"
-#include "common/pool.h"
+#include "common/serializeio.h"
+#include "common/varlen_pool.h"
 #include "common/printable.h"
 
 #include <mutex>
@@ -79,26 +80,27 @@ class Tile : public Printable {
   /**
    * Returns value present at slot
    */
-  Value GetValue(const oid_t tuple_offset, const oid_t column_id);
+  common::Value *GetValue(const oid_t tuple_offset, const oid_t column_id);
 
   /*
    * Faster way to get value
    * By amortizing schema lookups
    */
-  Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
-                     const ValueType column_type, const bool is_inlined);
+  common::Value *GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+                     const common::Type::TypeId column_type,
+                     const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
    */
-  void SetValue(const Value &value, const oid_t tuple_offset,
+  void SetValue(const common::Value &value, const oid_t tuple_offset,
                 const oid_t column_id);
 
   /*
    * Faster way to set value
    * By amortizing schema lookups
    */
-  void SetValueFast(const Value &value, const oid_t tuple_offset,
+  void SetValueFast(const common::Value &value, const oid_t tuple_offset,
                     const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
@@ -157,12 +159,12 @@ class Tile : public Printable {
   bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
                          int num_tuples);
 
-  void DeserializeTuplesFrom(SerializeInputBE &serialize_in,
-                             VarlenPool *pool = nullptr);
-  void DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
-                                          VarlenPool *pool = nullptr);
+  void DeserializeTuplesFrom(SerializeInput &serialize_in,
+                             common::VarlenPool *pool = nullptr);
+  void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
+                                          common::VarlenPool *pool = nullptr);
 
-  VarlenPool *GetPool() { return (pool); }
+  common::VarlenPool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_offset) const;
 
@@ -193,7 +195,7 @@ class Tile : public Printable {
   TileGroup *tile_group;
 
   // storage pool for uninlined data
-  VarlenPool *pool;
+  common::VarlenPool *pool;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;

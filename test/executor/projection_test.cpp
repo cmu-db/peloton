@@ -164,7 +164,8 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
-  executor::ProjectionExecutor executor(&node, nullptr);
+  executor::ExecutorContext context(txn);
+  executor::ProjectionExecutor executor(&node, &context);
   executor.AddChild(&child_executor);
 
   RunTest(executor, 1);
@@ -216,12 +217,12 @@ TEST_F(ProjectionTests, BasicTargetTest) {
 
   // target list
   auto const_val = new expression::ConstantValueExpression(
-      ValueFactory::GetIntegerValue(20));
+      common::ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
-                                                  VALUE_TYPE_INTEGER,
+                                                  common::Type::INTEGER,
                                                   tuple_value_expr, const_val);
 
   Target target = std::make_pair(1, expr);

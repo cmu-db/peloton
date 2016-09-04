@@ -98,7 +98,7 @@ size_t LoggingUtil::GetNextFrameSize(FileHandle &file_handle) {
   }
 
   // Read next 4 bytes as an integer
-  CopySerializeInputBE frameCheck(buffer, sizeof(buffer));
+  CopySerializeInput frameCheck(buffer, sizeof(buffer));
   frame_size = (frameCheck.ReadInt()) + sizeof(buffer);
 
   // Move back by 4 bytes
@@ -132,7 +132,7 @@ LogRecordType LoggingUtil::GetNextLogRecordType(FileHandle &file_handle) {
     return LOGRECORD_TYPE_INVALID;
   }
 
-  CopySerializeInputBE input(&buffer, sizeof(char));
+  CopySerializeInput input(&buffer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
 
   return log_record_type;
@@ -164,7 +164,7 @@ bool LoggingUtil::ReadTransactionRecordHeader(TransactionRecord &txn_record,
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInputBE txn_header(header, header_size);
+  CopySerializeInput txn_header(header, header_size);
   txn_record.Deserialize(txn_header);
 
   return true;
@@ -186,14 +186,14 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
     LOG_ERROR("Error occured in fread");
   }
 
-  CopySerializeInputBE tuple_header(header, header_size);
+  CopySerializeInput tuple_header(header, header_size);
   tuple_record.DeserializeHeader(tuple_header);
 
   return true;
 }
 
 storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
-                                                 VarlenPool *pool,
+                                                 common::VarlenPool *pool,
                                                  FileHandle &file_handle) {
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize(file_handle);
@@ -209,7 +209,7 @@ storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
     LOG_ERROR("Error occured in fread ");
   }
 
-  CopySerializeInputBE tuple_body(body, body_size);
+  CopySerializeInput tuple_body(body, body_size);
 
   // We create a tuple based on the message
   storage::Tuple *tuple = new storage::Tuple(schema, true);
@@ -233,7 +233,7 @@ void LoggingUtil::SkipTupleRecordBody(FileHandle &file_handle) {
   }
 
   // TODO Is it necessary?
-  CopySerializeInputBE tuple_body(body, body_size);
+  CopySerializeInput tuple_body(body, body_size);
 }
 
 // Wrappers

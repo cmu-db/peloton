@@ -259,22 +259,22 @@ hash_t ExprVariable::Hash() const {
 //===--------------------------------------------------------------------===//
 // Constant
 //===--------------------------------------------------------------------===//
-Operator ExprConstant::make(Value value) {
+Operator ExprConstant::make(const common::Value *value) {
   ExprConstant *constant = new ExprConstant;
-  constant->value = value;
+  constant->value = value->Copy();
   return Operator(constant);
 }
 
 bool ExprConstant::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Constant) return false;
   const ExprConstant &r = *static_cast<const ExprConstant *>(&node);
-  if (value != r.value) return false;
+  if (!value->CompareEquals(*r.value)->IsTrue()) return false;
   return true;
 }
 
 hash_t ExprConstant::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, value.MurmurHash3());
+  hash = util::CombineHashes(hash, value->Hash());
   return hash;
 }
 
@@ -325,7 +325,7 @@ hash_t ExprBoolOp::Hash() const {
 //===--------------------------------------------------------------------===//
 // Operation (e.g. +, -, string functions)
 //===--------------------------------------------------------------------===//
-Operator ExprOp::make(ExpressionType type, ValueType return_type) {
+Operator ExprOp::make(ExpressionType type, common::Type::TypeId return_type) {
   ExprOp *op = new ExprOp;
   op->expr_type = type;
   op->return_type = return_type;
@@ -343,7 +343,7 @@ bool ExprOp::operator==(const BaseOperatorNode &node) {
 hash_t ExprOp::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = util::CombineHashes(hash, util::Hash<ExpressionType>(&expr_type));
-  hash = util::CombineHashes(hash, util::Hash<ValueType>(&return_type));
+  hash = util::CombineHashes(hash, util::Hash<common::Type::TypeId>(&return_type));
   return hash;
 }
 

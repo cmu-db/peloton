@@ -130,7 +130,7 @@ expression::AbstractExpression *CreatePredicate(
   PL_ASSERT(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConstantValueFactory(Value::GetFalse());
+      expression::ExpressionUtil::ConstantValueFactory(common::BooleanValue(0));
 
   bool even = false;
   for (oid_t tuple_id : tuple_ids) {
@@ -141,19 +141,24 @@ expression::AbstractExpression *CreatePredicate(
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
     tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(
-                                  VALUE_TYPE_INTEGER, 0, 0)
+                                  common::Type::INTEGER, 0, 0)
                             : expression::ExpressionUtil::TupleValueFactory(
-                                  VALUE_TYPE_VARCHAR, 0, 3);
+                                  common::Type::VARCHAR, 0, 3);
 
     // Second, create constant value expression.
-    Value constant_value =
-        even ? ValueFactory::GetIntegerValue(
-                   ExecutorTestsUtil::PopulatedValue(tuple_id, 0))
-             : ValueFactory::GetStringValue(std::to_string(
-                   ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
-
-    expression::AbstractExpression *constant_value_expr =
-        expression::ExpressionUtil::ConstantValueFactory(constant_value);
+    expression::AbstractExpression *constant_value_expr;
+    if (even) {
+      auto constant_value = common::ValueFactory::GetIntegerValue(
+          ExecutorTestsUtil::PopulatedValue(tuple_id, 0));
+      constant_value_expr = expression::ExpressionUtil::ConstantValueFactory(
+          constant_value);
+    }
+    else {
+      auto constant_value = common::ValueFactory::GetVarcharValue(
+        std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
+      constant_value_expr = expression::ExpressionUtil::ConstantValueFactory(
+          constant_value);
+    }
 
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
@@ -215,16 +220,16 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
       // We divide by 10 because we know how PopulatedValue() computes.
       // Bad style. Being a bit lazy here...
 
-      int old_tuple_id =
-          result_tiles[i]->GetValue(new_tuple_id, 0).GetIntegerForTestsOnly() /
-          10;
+      std::unique_ptr<common::Value> value1(
+          result_tiles[i]->GetValue(new_tuple_id, 0));
+      int old_tuple_id = value1->GetAs<int32_t>() / 10;
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
       int val1 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1);
-      EXPECT_EQ(
-          val1,
-          result_tiles[i]->GetValue(new_tuple_id, 1).GetIntegerForTestsOnly());
+      std::unique_ptr<common::Value> value2(
+          result_tiles[i]->GetValue(new_tuple_id, 1));
+      EXPECT_EQ(val1, value2->GetAs<int32_t>());
       int val2 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3);
 
       // expected_num_cols - 1 is a hacky way to ensure that
@@ -232,9 +237,11 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
       // For the tile group test case, it'll be 2 (one column is removed
       // during the scan as part of the test case).
       // For the logical tile test case, it'll be 3.
-      Value string_value(ValueFactory::GetStringValue(std::to_string(val2)));
-      EXPECT_EQ(string_value,
-                result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
+      auto string_value(common::ValueFactory::GetVarcharValue(std::to_string(val2)));
+      std::unique_ptr<common::Value> val(
+          result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
+      std::unique_ptr<common::Value> cmp(val->CompareEquals(string_value));
+      EXPECT_TRUE(cmp->IsTrue());
     }
     EXPECT_EQ(0, expected_tuples_left.size());
   }

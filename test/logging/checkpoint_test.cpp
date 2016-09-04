@@ -128,7 +128,7 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
   // table has 3 tile groups
   std::unique_ptr<storage::DataTable> target_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(target_table.get(),
+      ExecutorTestsUtil::PopulateTable(target_table.get(),
                                    tile_group_size * table_tile_group_count,
                                    false, false, false, txn);
   txn_manager.CommitTransaction(txn);

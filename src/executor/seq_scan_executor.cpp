@@ -89,8 +89,10 @@ bool SeqScanExecutor::DExecute() {
         // Invalidate tuples that don't satisfy the predicate.
         for (oid_t tuple_id : *tile) {
           expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
-          if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
-                  .IsFalse()) {
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_);
+          if (eval->IsFalse()) {
+          //if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
+          //        .IsFalse()) {
             tile->RemoveVisibility(tuple_id);
           }
         }
@@ -152,10 +154,9 @@ bool SeqScanExecutor::DExecute() {
             expression::ContainerTuple<storage::TileGroup> tuple(
                 tile_group.get(), tuple_id);
             LOG_TRACE("Evaluate predicate for a tuple");
-            auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
-                            .IsTrue();
+            auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_);
             LOG_TRACE("Evaluation result: %d", eval);
-            if (eval == true) {
+            if (eval->IsTrue()) {
               position_list.push_back(tuple_id);
               auto res = transaction_manager.PerformRead(current_txn, location);
               if (!res) {

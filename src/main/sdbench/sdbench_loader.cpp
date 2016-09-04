@@ -52,7 +52,8 @@ void CreateTable() {
 
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(common::Type::INTEGER,
+                        GetTypeSize(common::Type::INTEGER),
                         "" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
@@ -87,7 +88,8 @@ void LoadTable() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<common::VarlenPool> pool(
+    new common::VarlenPool(BACKEND_TYPE_MM));
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {

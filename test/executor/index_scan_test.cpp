@@ -61,13 +61,13 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   auto index = data_table->GetIndex(0);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<common::Value *> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
   expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(110));
+  values.push_back(common::ValueFactory::GetIntegerValue(110).Copy());
 
   // Create index scan desc
 
@@ -124,15 +124,15 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   auto index = data_table->GetIndex(1);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<common::Value *> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(1);
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  values.push_back(ValueFactory::GetIntegerValue(50));
-  values.push_back(ValueFactory::GetIntegerValue(70));
+  values.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
+  values.push_back(common::ValueFactory::GetIntegerValue(70).Copy());
 
   // Create index scan desc
 
@@ -178,7 +178,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
-  std::vector<Value> params;
+  std::vector<common::Value *> params;
   std::vector<ResultType> result;
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -203,11 +203,11 @@ void ExecuteSQLQuery(const std::string statement_name,
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
-  std::vector<Value> params;
+  std::vector<common::Value *> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+  UNUSED_ATTRIBUTE bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -222,12 +222,12 @@ TEST_F(IndexScanTests, SQLTest) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "dept_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
   // Set dept_id as the primary key (only that we can have a primary key index)
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, 32, "dept_name", false);
+      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

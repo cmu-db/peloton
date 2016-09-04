@@ -49,11 +49,11 @@ TEST_F(UpdateTests, Updating) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "dept_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
   auto manager_id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "manager_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "manager_id", true);
   auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, 32, "dept_name", false);
+      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, manager_id_column, name_column}));
@@ -92,7 +92,7 @@ TEST_F(UpdateTests, Updating) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
-  std::vector<Value> params;
+  std::vector<common::Value *> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");

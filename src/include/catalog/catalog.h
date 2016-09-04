@@ -20,6 +20,7 @@
 #include "storage/table_factory.h"
 #include "common/value_factory.h"
 #include "catalog/catalog_util.h"
+#include "common/varlen_pool.h"
 
 namespace peloton {
 
@@ -139,7 +140,10 @@ class Catalog {
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
 
   // Maximum Column Size for Catalog Schemas
-  const size_t max_name_size_ = 32;
+  const size_t max_name_size = 32;
+ 
+ public:
+  common::VarlenPool *pool_ = new common::VarlenPool();
 };
 }
 }

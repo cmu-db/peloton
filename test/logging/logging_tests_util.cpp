@@ -110,23 +110,23 @@ std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
 
     // First column is unique in this case
     tuple->SetValue(0,
-                    ValueFactory::GetIntegerValue(
+                    common::ValueFactory::GetIntegerValue(
                         ExecutorTestsUtil::PopulatedValue(populate_value, 0)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
     tuple->SetValue(
-        1, ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
+        1, common::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
     tuple->SetValue(
-        2, ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
+        2, common::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
                random ? std::rand() : populate_value, 2)),
         testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    Value string_value = ValueFactory::GetStringValue(
+    auto string_value = common::ValueFactory::GetVarcharValue(
         std::to_string(ExecutorTestsUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);

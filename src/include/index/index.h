@@ -22,11 +22,12 @@
 #include "common/printable.h"
 #include "common/types.h"
 #include "common/logger.h"
+#include "common/varlen_pool.h"
+#include "common/value.h"
 
 namespace peloton {
 
 class AbstractTuple;
-class VarlenPool;
 
 namespace catalog {
 class Schema;
@@ -218,7 +219,7 @@ class Index : public Printable {
   // Index Scan
   ///////////////////////////////////////////////////////////////////
 
-  virtual void Scan(const std::vector<Value> &value_list,
+  virtual void Scan(const std::vector<common::Value *> &value_list,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
                     const ScanDirectionType &scan_direction,
@@ -228,7 +229,7 @@ class Index : public Printable {
   // This is the version used to test scan
   // Since it does scan planning everytime, it is slow, and should
   // only be used for correctness testing
-  virtual void ScanTest(const std::vector<Value> &value_list,
+  virtual void ScanTest(const std::vector<common::Value *> &value_list,
                         const std::vector<oid_t> &tuple_column_id_list,
                         const std::vector<ExpressionType> &expr_list,
                         const ScanDirectionType &scan_direction,
@@ -309,9 +310,9 @@ class Index : public Printable {
   bool Compare(const AbstractTuple &index_key,
                const std::vector<oid_t> &column_ids,
                const std::vector<ExpressionType> &expr_types,
-               const std::vector<Value> &values);
+               const std::vector<common::Value *> &values);
 
-  VarlenPool *GetPool() const { return pool; }
+  common::VarlenPool *GetPool() const { return pool; }
 
   // Garbage collect
   virtual bool Cleanup() = 0;
@@ -335,7 +336,7 @@ class Index : public Printable {
 
   // Set the lower bound tuple for index iteration
   bool ConstructLowerBoundTuple(storage::Tuple *index_key,
-                                const std::vector<Value> &values,
+                                const std::vector<common::Value*> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
 
@@ -360,7 +361,7 @@ class Index : public Printable {
   bool dirty = false;
 
   // pool
-  VarlenPool *pool = nullptr;
+  common::VarlenPool *pool = nullptr;
 
   // This is used by index tuner
   std::atomic<size_t> indexed_tile_group_offset;

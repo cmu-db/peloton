@@ -30,8 +30,8 @@ void Column::SetLength(oid_t column_length) {
 
 void Column::SetInlined() {
   switch (column_type) {
-    case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
+    case common::Type::VARCHAR:
+    case common::Type::VARBINARY:
       break;  // No change of inlined setting
 
     default:
@@ -44,7 +44,7 @@ const std::string Column::GetInfo() const {
   std::ostringstream os;
 
   os << " name = " << column_name << ","
-     << " type = " << ValueTypeToString(column_type) << ","
+     << " type = " << column_type << ","
      << " offset = " << column_offset << ","
      << " fixed length = " << fixed_length << ","
      << " variable length = " << variable_length << ","

@@ -75,7 +75,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   AddChild(std::move(seq_scan_node));
 }
 
-void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
+void UpdatePlan::SetParameterValues(std::vector<common::Value *> *values) {
   LOG_TRACE("Setting parameter values in Update");
   // First update project_info_ target list
   // Create new project_info_

@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// catalog.cpp
+// libevent_server.cpp
 //
 // Identification: src/wire/libevent_server.cpp
 //

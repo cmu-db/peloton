@@ -418,7 +418,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::pair<int, std::string>> bind_parameters;
   auto param_types = statement->GetParamTypes();
 
-  auto param_values = new std::vector<Value>();
+  auto param_values = new std::vector<common::Value *>();
 
   PktBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
@@ -427,7 +427,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     if (param_len == -1) {
       // NULL mode
       bind_parameters.push_back(
-          std::make_pair(ValueType::VALUE_TYPE_INTEGER, std::string("")));
+          std::make_pair(common::Type::INTEGER, std::string("")));
     } else {
       PacketGetBytes(pkt, param_len, param);
 
@@ -435,9 +435,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         // TEXT mode
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters.push_back(
-            std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
+            std::make_pair(common::Type::VARCHAR, param_str));
         param_values->push_back(
-            (ValueFactory::GetStringValue(param_str))
+            (common::ValueFactory::GetVarcharValue(param_str))
                 .CastAs(PostgresValueTypeToPelotonValueType(
                      (PostgresValueType)param_types[param_idx])));
       } else {
@@ -449,8 +449,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters.push_back(std::make_pair(
-                ValueType::VALUE_TYPE_INTEGER, std::to_string(int_val)));
-            param_values->push_back(ValueFactory::GetIntegerValue(int_val));
+                common::Type::INTEGER, std::to_string(int_val)));
+            param_values->push_back(common::ValueFactory::GetIntegerValue(int_val).Copy());
           } break;
           case POSTGRES_VALUE_TYPE_BIGINT: {
             int64_t int_val = 0;
@@ -458,8 +458,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters.push_back(std::make_pair(
-                ValueType::VALUE_TYPE_BIGINT, std::to_string(int_val)));
-            param_values->push_back(ValueFactory::GetBigIntValue(int_val));
+                common::Type::BIGINT, std::to_string(int_val)));
+            param_values->push_back(common::ValueFactory::GetBigIntValue(int_val).Copy());
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -469,8 +469,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             }
             memcpy(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(std::make_pair(
-                ValueType::VALUE_TYPE_DOUBLE, std::to_string(float_val)));
-            param_values->push_back(ValueFactory::GetDoubleValue(float_val));
+                common::Type::DECIMAL, std::to_string(float_val)));
+            param_values->push_back(common::ValueFactory::GetDoubleValue(float_val).Copy());
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);

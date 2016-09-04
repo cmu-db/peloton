@@ -13,7 +13,7 @@
 #include "index/index.h"
 #include "common/exception.h"
 #include "common/logger.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "catalog/schema.h"
 #include "catalog/manager.h"
 #include "storage/tuple.h"
@@ -21,6 +21,7 @@
 #include "index/scan_optimizer.h"
 
 #include <iostream>
+#include <algorithm>
 
 namespace peloton {
 namespace index {
@@ -126,8 +127,8 @@ Index::Index(IndexMetadata *metadata)
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 
   // initialize pool
-  pool = new VarlenPool(BACKEND_TYPE_MM);
-
+  pool = new common::VarlenPool(BACKEND_TYPE_MM);
+  
   return;
 }
 
@@ -147,7 +148,7 @@ Index::~Index() {
   return;
 }
 
-void Index::ScanTest(const std::vector<Value> &value_list,
+void Index::ScanTest(const std::vector<common::Value *> &value_list,
                      const std::vector<oid_t> &tuple_column_id_list,
                      const std::vector<ExpressionType> &expr_list,
                      const ScanDirectionType &scan_direction,
@@ -171,9 +172,9 @@ void Index::ScanTest(const std::vector<Value> &value_list,
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
-                    const std::vector<Value> &value_list) {
-  int diff;
-
+                    const std::vector<common::Value *> &value_list) {
+  //int diff;
+  
   // The size of these three arrays must be the same
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
   PL_ASSERT(expr_list.size() == value_list.size());
@@ -202,11 +203,12 @@ bool Index::Compare(const AbstractTuple &index_key,
     oid_t index_key_column_id = tuple_to_index_map[tuple_key_column_id];
 
     // This the comparison right hand side operand
-    const Value &rhs = value_list[i];
-
+    const common::Value &rhs = *value_list[i];
+    
     // Also retrieve left hand side operand using index key column ID
-    const Value &lhs = index_key.GetValue(index_key_column_id);
-
+    std::unique_ptr<common::Value> val(index_key.GetValue(index_key_column_id));
+    const common::Value &lhs = *val;
+    
     // Expression type. We use this to interpret comparison result
     //
     // Possible results of comparison are: EQ, >, <
@@ -218,7 +220,7 @@ bool Index::Compare(const AbstractTuple &index_key,
     // To make the procedure more uniform, we interpret IN as EQUAL
     // and NOT IN as NOT EQUAL, and react based on expression type below
     // accordingly
-    if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
+    /*if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
       bool bret = lhs.InList(rhs);
 
       if (bret == true) {
@@ -230,9 +232,9 @@ bool Index::Compare(const AbstractTuple &index_key,
       diff = lhs.Compare(rhs);
     }
 
-    LOG_TRACE("Difference : %d ", diff);
-
-    if (diff == VALUE_COMPARE_EQUAL) {
+    LOG_TRACE("Difference : %d ", diff);*/
+    std::unique_ptr<common::Value> cmp_eq(lhs.CompareEquals(rhs));
+    if (cmp_eq->IsTrue()) {
       switch (expr_type) {
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
@@ -249,43 +251,51 @@ bool Index::Compare(const AbstractTuple &index_key,
           throw IndexException("Unsupported expression type : " +
                                std::to_string(expr_type));
       }
-    } else if (diff == VALUE_COMPARE_LESSTHAN) {
-      switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-          continue;
+    }
+    else {
+      std::unique_ptr<common::Value> cmp_lt(lhs.CompareLessThan(rhs));
+      if (cmp_lt->IsTrue()) {
+        switch (expr_type) {
+          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+            continue;
 
-        case EXPRESSION_TYPE_COMPARE_EQUAL:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN:
-          return false;
+          case EXPRESSION_TYPE_COMPARE_EQUAL:
+          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+          case EXPRESSION_TYPE_COMPARE_IN:
+            return false;
 
-        default:
-          throw IndexException("Unsupported expression type : " +
-                               std::to_string(expr_type));
+          default:
+            throw IndexException("Unsupported expression type : " +
+                                 std::to_string(expr_type));
+        }
       }
-    } else if (diff == VALUE_COMPARE_GREATERTHAN) {
-      switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-          continue;
+      else {
+        std::unique_ptr<common::Value> cmp_gt(lhs.CompareGreaterThan(rhs));
+        if (cmp_gt->IsTrue()) {
+          switch (expr_type) {
+            case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+            case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+            case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+              continue;
 
-        case EXPRESSION_TYPE_COMPARE_EQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN:
+            case EXPRESSION_TYPE_COMPARE_EQUAL:
+            case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+            case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+            case EXPRESSION_TYPE_COMPARE_IN:
+              return false;
+
+            default:
+              throw IndexException("Unsupported expression type : " +
+                                   std::to_string(expr_type));
+          }
+        }else {
+          // Since it is an AND predicate, we could directly return false
           return false;
-
-        default:
-          throw IndexException("Unsupported expression type : " +
-                               std::to_string(expr_type));
+        }
       }
-    } else if (diff == VALUE_COMPARE_NO_EQUAL) {
-      // Since it is an AND predicate, we could directly return false
-      return false;
     }
   }
 
@@ -307,7 +317,8 @@ bool Index::Compare(const AbstractTuple &index_key,
  * index_util impossible.
  */
 bool Index::ConstructLowerBoundTuple(
-    storage::Tuple *index_key, const std::vector<peloton::Value> &values,
+    storage::Tuple *index_key,
+    const std::vector<common::Value *> &values,
     const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types) {
 
@@ -325,7 +336,7 @@ bool Index::ConstructLowerBoundTuple(
         std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
 
     bool placeholder = false;
-    Value value;
+    common::Value *value;
 
     // This column is part of the key column ids
     if (key_column_itr != key_column_ids.end()) {
@@ -354,11 +365,12 @@ bool Index::ConstructLowerBoundTuple(
     // Otherwise if there is not a value then we could only fill the
     // min possible value of the current column's type
     if (placeholder == true) {
-      index_key->SetValue(column_itr, value, GetPool());
+      index_key->SetValue(column_itr, *value, GetPool());
     } else {
       auto value_type = schema->GetType(column_itr);
-
-      index_key->SetValue(column_itr, Value::GetMinValue(value_type),
+      
+      index_key->SetValue(column_itr,
+                          *common::Type::GetMinValue(value_type),
                           GetPool());
     }
   }  // for all columns in index key

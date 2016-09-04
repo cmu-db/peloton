@@ -38,12 +38,12 @@ class ProjectInfo;
 namespace test {
 
 storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
-  auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
-                                   GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
+  auto id_column = catalog::Column(common::Type::INTEGER,
+                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "value", true);
   value_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
 
@@ -85,12 +85,12 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
 }
 
 storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
-  auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
-                                   GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
+  auto id_column = catalog::Column(common::Type::INTEGER,
+                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "value", true);
 
   // Create the table
   catalog::Schema *table_schema =
@@ -148,10 +148,10 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
 storage::DataTable *TransactionTestsUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
     oid_t index_oid, bool need_primary_index) {
-  auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
-                                   GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
+  auto id_column = catalog::Column(common::Type::INTEGER,
+                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
   auto value_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "value", true);
 
   // Create the table
   catalog::Schema *table_schema =
@@ -204,8 +204,8 @@ TransactionTestsUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    auto value = tuple->GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
+    std::unique_ptr<common::Value> value(tuple->GetValue(col_id));
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(*value);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -223,8 +223,8 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(id), testing_pool);
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(value), testing_pool);
+  tuple->SetValue(0, common::ValueFactory::GetIntegerValue(id), testing_pool);
+  tuple->SetValue(1, common::ValueFactory::GetIntegerValue(value), testing_pool);
   std::unique_ptr<const planner::ProjectInfo> project_info{
       MakeProjectInfoFromTuple(tuple.get())};
 
@@ -234,13 +234,13 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   return executor.Execute();
 }
 
-expression::ComparisonExpression<expression::CmpEq> *
+expression::ComparisonExpression *
 TransactionTestsUtil::MakePredicate(int id) {
   auto tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
-      ValueFactory::GetIntegerValue(id));
-  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      common::ValueFactory::GetIntegerValue(id));
+  auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   return predicate;
@@ -251,13 +251,13 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
   auto index = table->GetIndex(0);
   std::vector<expression::AbstractExpression *> runtime_keys;
   std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<common::Value *> values;
 
   std::vector<oid_t> key_column_ids = {0};
 
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-  values.push_back(ValueFactory::GetIntegerValue(id));
+  values.push_back(common::ValueFactory::GetIntegerValue(id).Copy());
 
   return planner::IndexScanPlan::IndexScanDesc(
       index, key_column_ids, expr_types, values, runtime_keys);
@@ -289,7 +289,8 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
     result = -1;
   else {
     EXPECT_EQ(1, result_tile->GetTupleCount());
-    result = result_tile->GetValue(0, 1).GetIntegerForTestsOnly();
+    std::unique_ptr<common::Value> val(result_tile->GetValue(0, 1));
+    result = val->GetAs<int32_t>();
   }
 
   return true;
@@ -325,7 +326,7 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
-  Value update_val = ValueFactory::GetIntegerValue(value);
+  auto update_val = common::ValueFactory::GetIntegerValue(value);
 
   // ProjectInfo
   TargetList target_list;
@@ -363,7 +364,7 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  Value update_val = ValueFactory::GetIntegerValue(new_value);
+  auto update_val = common::ValueFactory::GetIntegerValue(new_value);
 
   // ProjectInfo
   TargetList target_list;
@@ -382,10 +383,10 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 
   // Predicate
   auto tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 1);
   auto const_val_exp = new expression::ConstantValueExpression(
-      ValueFactory::GetIntegerValue(old_value));
-  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      common::ValueFactory::GetIntegerValue(old_value));
+  auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   // Seq scan
@@ -410,11 +411,11 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
 
   // Predicate, WHERE `id`>=id1
   auto tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
-      ValueFactory::GetIntegerValue(id));
+      common::ValueFactory::GetIntegerValue(id));
 
-  auto predicate = new expression::ComparisonExpression<expression::CmpGte>(
+  auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tup_val_exp, const_val_exp);
 
   // Seq scan
@@ -429,7 +430,8 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
       seq_scan_executor.GetOutput());
 
   for (size_t i = 0; i < result_tile->GetTupleCount(); i++) {
-    results.push_back(result_tile->GetValue(i, 1).GetIntegerForTestsOnly());
+    std::unique_ptr<common::Value> val(result_tile->GetValue(i, 1));
+    results.push_back(val->GetAs<int32_t>());
   }
   return true;
 }

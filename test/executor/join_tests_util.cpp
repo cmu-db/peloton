@@ -18,6 +18,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
+#include "expression/constant_value_expression.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 
@@ -31,11 +32,11 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+      new expression::TupleValueExpression(common::Type::INTEGER, 1, 1);
 
-  predicate = new expression::ComparisonExpression<expression::CmpEq>(
+  predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
 
   return predicate;
@@ -73,26 +74,26 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+      new expression::TupleValueExpression(common::Type::INTEGER, 1, 1);
 
-  expression::ComparisonExpression<expression::CmpEq> *comp_a =
-      new expression::ComparisonExpression<expression::CmpEq>(
+  expression::ComparisonExpression *comp_a =
+      new expression::ComparisonExpression(
           EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
 
   // LEFT.3 > 50.0
 
   expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(VALUE_TYPE_DOUBLE, 0, 1);
+      new expression::TupleValueExpression(common::Type::DECIMAL, 0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
-          ValueFactory::GetDoubleValue(50.0));
-  expression::ComparisonExpression<expression::CmpGt> *comp_b =
-      new expression::ComparisonExpression<expression::CmpGt>(
+          common::ValueFactory::GetDoubleValue(50.0));
+  expression::ComparisonExpression *comp_b =
+      new expression::ComparisonExpression(
           EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
 
-  predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+  predicate = new expression::ConjunctionExpression(
       EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);
 
   return predicate;

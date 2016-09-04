@@ -53,9 +53,9 @@ class JoinTests : public PelotonTest {};
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
   auto left =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 1);
+      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0, 1);
   auto right =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 1, 1);
+      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
@@ -255,18 +255,21 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
     for (oid_t tuple_itr = 3; tuple_itr < source_tile_tuple_count;
          tuple_itr++) {
       for (oid_t col_itr = 0; col_itr < source_tile_column_count; col_itr++) {
-        right_dest_tile->SetValue(
-            left_source_tile->GetValue(tuple_itr, col_itr), tuple_itr, col_itr);
+        std::unique_ptr<common::Value> val(
+            left_source_tile->GetValue(tuple_itr, col_itr));
+        right_dest_tile->SetValue(*val, tuple_itr, col_itr);
       }
     }
 
     // RIGHT - 1 st tile --> RIGHT - 2 nd tile
     // RIGHT - 2 nd tile --> RIGHT - 2 nd tile
     for (oid_t col_itr = 0; col_itr < source_tile_column_count; col_itr++) {
-      right_dest_tile->SetValue(right_source_tile->GetValue(4, col_itr), 0,
-                                col_itr);
-      right_dest_tile->SetValue(right_dest_tile->GetValue(3, col_itr), 2,
-                                col_itr);
+      std::unique_ptr<common::Value> val1(
+          right_source_tile->GetValue(4, col_itr));
+      right_dest_tile->SetValue(*val1, 0, col_itr);
+      std::unique_ptr<common::Value> val2(
+          right_dest_tile->GetValue(3, col_itr));
+      right_dest_tile->SetValue(*val2, 2, col_itr);
     }
   }
 
@@ -445,7 +448,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
     case PLAN_NODE_TYPE_HASHJOIN: {
       // Create hash plan node
       expression::AbstractExpression *right_table_attr_1 =
-          new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+          new expression::TupleValueExpression(common::Type::INTEGER, 1, 1);
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           hash_keys;
@@ -455,13 +458,13 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           left_hash_keys;
       left_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1)});
+              new expression::TupleValueExpression(common::Type::INTEGER, 0, 1)});
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           right_hash_keys;
       right_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1)});
+              new expression::TupleValueExpression(common::Type::INTEGER, 1, 1)});
 
       // Create hash plan node
       planner::HashPlan hash_plan_node(hash_keys);
@@ -665,8 +668,8 @@ oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
 
     // Go over all the fields and check for null values
     for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-      auto val = join_tuple.GetValue(col_itr);
-      if (val.IsNull()) {
+      std::unique_ptr<common::Value> val(join_tuple.GetValue(col_itr));
+      if (val->IsNull()) {
         tuples_with_null++;
         break;
       }
@@ -692,12 +695,11 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
         logical_tile, logical_tile_itr);
 
     // Check the join fields
-    auto left_tuple_join_attribute_val = join_tuple.GetValue(0);
-    auto right_tuple_join_attribute_val = join_tuple.GetValue(1);
-    EXPECT_TRUE(
-        (left_tuple_join_attribute_val.IsNull() == true) ||
-        (right_tuple_join_attribute_val.IsNull() == true) ||
-        (left_tuple_join_attribute_val == right_tuple_join_attribute_val));
+    std::unique_ptr<common::Value> left_tuple_join_attribute_val(join_tuple.GetValue(0));
+    std::unique_ptr<common::Value> right_tuple_join_attribute_val(join_tuple.GetValue(1));
+    std::unique_ptr<common::Value> cmp(left_tuple_join_attribute_val->CompareEquals(
+        *right_tuple_join_attribute_val));
+    EXPECT_TRUE(cmp->IsNull() || cmp->IsTrue());
   }
 }
 void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {

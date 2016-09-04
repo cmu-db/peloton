@@ -21,6 +21,7 @@
 #include "common/portal.h"
 #include "common/statement.h"
 #include "common/types.h"
+#include "common/type.h"
 
 namespace peloton {
 namespace tcop {
@@ -62,7 +63,7 @@ class TrafficCop {
 
   std::vector<FieldInfoType> GenerateTupleDescriptor(std::string query);
 
-  FieldInfoType GetColumnFieldForValueType(std::string column_name , ValueType column_type);
+  FieldInfoType GetColumnFieldForValueType(std::string column_name , common::Type::TypeId column_type);
   
   FieldInfoType GetColumnFieldForAggregates(std::string name , ExpressionType expr_type);  
 

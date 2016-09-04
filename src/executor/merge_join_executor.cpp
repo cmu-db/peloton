@@ -150,10 +150,13 @@ bool MergeJoinExecutor::DExecute() {
           clause.right_->Evaluate(&left_tuple, &right_tuple, nullptr);
 
       // Compare the values
-      int comparison = left_value.Compare(right_value);
+      std::unique_ptr<common::Value> cmp_less(
+          left_value->CompareLessThan(*right_value));
+      std::unique_ptr<common::Value> cmp_greater(
+        left_value->CompareGreaterThan(*right_value));
 
       // Left key < Right key, advance left
-      if (comparison < 0) {
+      if (cmp_less->IsTrue()) {
         LOG_TRACE("left < right, advance left ");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
@@ -161,7 +164,7 @@ bool MergeJoinExecutor::DExecute() {
         break;
       }
       // Left key > Right key, advance right
-      else if (comparison > 0) {
+      else if (cmp_greater->IsTrue()) {
         LOG_TRACE("left > right, advance right ");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile, right_start_row, false);
@@ -183,8 +186,11 @@ bool MergeJoinExecutor::DExecute() {
 
     // Join predicate exists
     if (predicate_ != nullptr) {
-      if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-              .IsFalse()) {
+      auto eval = predicate_->Evaluate(&left_tuple,
+                                      &right_tuple, executor_context_);
+      if (eval->IsFalse()) {
+      //if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
+      //        .IsFalse()) {
         // Join predicate is false. Advance both.
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
@@ -260,12 +266,14 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
     for (auto &clause : *join_clauses_) {
       // Go through each join clauses
       auto expr = is_left ? clause.left_.get() : clause.right_.get();
-      peloton::Value this_value =
+      auto this_value =
           expr->Evaluate(&this_tuple, &this_tuple, executor_context_);
-      peloton::Value next_value =
+      auto next_value =
           expr->Evaluate(&next_tuple, &next_tuple, executor_context_);
 
-      if (this_value.Compare(next_value) != 0) {
+      std::unique_ptr<common::Value> cmp(
+          this_value->CompareEquals(*next_value));
+      if (!cmp->IsTrue()) {
         diff = true;
         break;
       }

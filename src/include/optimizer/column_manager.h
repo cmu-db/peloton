@@ -27,10 +27,10 @@ class ColumnManager {
 
   Column *LookupColumnByID(ColumnID id);
 
-  Column *AddBaseColumn(ValueType type, int size, std::string name,
+  Column *AddBaseColumn(common::Type::TypeId type, int size, std::string name,
                         bool inlined, oid_t base_table, oid_t column_index);
 
-  Column *AddExprColumn(ValueType type, int size, std::string name,
+  Column *AddExprColumn(common::Type::TypeId type, int size, std::string name,
                         bool inlined);
 
  private:

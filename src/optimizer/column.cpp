@@ -20,13 +20,13 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Column
 //===--------------------------------------------------------------------===//
-Column::Column(ColumnID id, ValueType type, int size, std::string name,
+Column::Column(ColumnID id, common::Type::TypeId type, int size, std::string name,
                bool inlined)
     : id(id), type(type), size(size), name(name), inlined(inlined) {}
 
 ColumnID Column::ID() const { return id; }
 
-ValueType Column::Type() const { return type; }
+common::Type::TypeId Column::Type() const { return type; }
 
 int Column::Size() const { return size; }
 
@@ -39,7 +39,7 @@ hash_t Column::Hash() const { return util::Hash<ColumnID>(&id); }
 //===--------------------------------------------------------------------===//
 // TableColumn
 //===--------------------------------------------------------------------===//
-TableColumn::TableColumn(ColumnID id, ValueType type, int size,
+TableColumn::TableColumn(ColumnID id, common::Type::TypeId type, int size,
                          std::string name, bool inlined, oid_t base_table,
                          oid_t column_index)
     : Column(id, type, size, name, inlined),
@@ -53,7 +53,7 @@ oid_t TableColumn::ColumnIndexOid() const { return column_index; }
 //===--------------------------------------------------------------------===//
 // ExprColumn
 //===--------------------------------------------------------------------===//
-ExprColumn::ExprColumn(ColumnID id, ValueType type, int size, std::string name,
+ExprColumn::ExprColumn(ColumnID id, common::Type::TypeId type, int size, std::string name,
                        bool inlined)
     : Column(id, type, size, name, inlined) {}
 

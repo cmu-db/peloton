@@ -51,7 +51,7 @@ bool TransactionRecord::Serialize(CopySerializeOutput &output) {
  * @brief Deserialize LogRecordHeader
  * @param input
  */
-void TransactionRecord::Deserialize(CopySerializeInputBE &input) {
+void TransactionRecord::Deserialize(CopySerializeInput &input) {
   // Get the message length
   input.ReadInt();
 

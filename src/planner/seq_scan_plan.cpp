@@ -139,7 +139,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
     output.WriteByte(static_cast<int8_t>(expr_type));
 
     // Write predicate
-    GetPredicate()->SerializeTo(output);
+    //GetPredicate()->SerializeTo(output);
   }
 
   // Write parent, but parent seems never be set or used right now
@@ -176,7 +176,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
    * [(int8_t) plan type]     : if invalid, parent is null
    * [(bytes) parent]         : parent is also a plan
  */
-bool SeqScanPlan::DeserializeFrom(SerializeInputBE &input) {
+bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
   // Read the size of SeqScanPlan class
   input.ReadInt();
 
@@ -303,7 +303,7 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   return index;
 }
 
-void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
+void SeqScanPlan::SetParameterValues(std::vector<common::Value *> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
   auto predicate = predicate_with_params_->Copy();
   expression::ExpressionUtil::ConvertParameterExpressions(

@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// loader_test.cpp
+// insert_performance_test.cpp
 //
 // Identification: test/performance/insert_performance_test.cpp
 //
@@ -21,7 +21,7 @@
 
 #include "catalog/schema.h"
 #include "common/value_factory.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 
@@ -59,7 +59,7 @@ std::atomic<int> loader_tuple_id;
 // Utility
 //===------------------------------===//
 
-void InsertTuple(storage::DataTable *table, VarlenPool *pool,
+void InsertTuple(storage::DataTable *table, common::VarlenPool *pool,
                  oid_t tilegroup_count_per_loader,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -98,7 +98,7 @@ TEST_F(InsertTests, LoadingTest) {
   oid_t tilegroup_count_per_loader = 1000;
 
   // Each tuple size ~40 B.
-  oid_t tuple_size = 41;
+  UNUSED_ATTRIBUTE oid_t tuple_size = 41;
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
@@ -113,7 +113,7 @@ TEST_F(InsertTests, LoadingTest) {
                      testing_pool, tilegroup_count_per_loader);
 
   timer.Stop();
-  auto duration = timer.GetDuration();
+  UNUSED_ATTRIBUTE auto duration = timer.GetDuration();
 
   LOG_INFO("Duration: %.2lf", duration);
 
@@ -139,7 +139,7 @@ TEST_F(InsertTests, LoadingTest) {
     }
   }
 
-  auto bytes_to_megabytes_converter = (1024 * 1024);
+  UNUSED_ATTRIBUTE auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 

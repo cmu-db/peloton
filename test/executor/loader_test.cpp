@@ -21,7 +21,7 @@
 
 #include "catalog/schema.h"
 #include "common/value_factory.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_context.h"
@@ -68,8 +68,9 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    auto value = tuple->GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
+    std::unique_ptr<common::Value> value(
+        tuple->GetValue(col_id));
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(*value);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -77,7 +78,7 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       std::move(target_list), std::move(direct_map_list)));
 }
 
-void InsertTuple(storage::DataTable *table, VarlenPool *pool,
+void InsertTuple(storage::DataTable *table, common::VarlenPool *pool,
                  oid_t tilegroup_count_per_loader,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -118,7 +119,7 @@ TEST_F(LoaderTests, LoadingTest) {
   oid_t tilegroup_count_per_loader = 1002;
 
   // Each tuple size ~40 B.
-  oid_t tuple_size = 41;
+  UNUSED_ATTRIBUTE oid_t tuple_size = 41;
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
@@ -150,7 +151,7 @@ TEST_F(LoaderTests, LoadingTest) {
     }
   }
 
-  auto bytes_to_megabytes_converter = (1024 * 1024);
+  UNUSED_ATTRIBUTE auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 

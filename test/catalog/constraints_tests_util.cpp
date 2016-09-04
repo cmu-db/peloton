@@ -61,7 +61,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column =
-          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -71,7 +71,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column =
-          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -81,7 +81,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column =
-          catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+          catalog::Column(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
                           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -90,8 +90,10 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(VALUE_TYPE_VARCHAR, 25,  // Column length.
-                                    "COL_D", !is_inlined);   // inlined.
+      auto column = catalog::Column(common::Type::VARCHAR,
+                                    25,  // Column length.
+                                    "COL_D",
+                                    !is_inlined);  // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -124,18 +126,16 @@ void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
 
-    Value col1, col2, col3, col4;
-
     // First column is unique in this case
-    col1 = ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
+    auto col1 = common::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
 
     // In case of random, make sure this column has duplicated values
-    col2 = ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
+    auto col2 = common::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    col3 = ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
+    auto col3 = common::ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
-    col4 = ValueFactory::GetStringValue(
+    auto col4 = common::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(populate_value, 3)));
 
     ConstraintsTestsUtil::ExecuteInsert(transaction, table, col1, col2, col3,
@@ -149,8 +149,8 @@ std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    auto value = tuple->GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
+    std::unique_ptr<common::Value> value(tuple->GetValue(col_id));
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(*value);
     target_list.emplace_back(col_id, expression);
   }
 

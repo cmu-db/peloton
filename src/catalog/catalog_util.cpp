@@ -64,12 +64,12 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
   // Predicate
   // WHERE id_in_table = id
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+  auto tmp_value = common::ValueFactory::GetIntegerValue(id);
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(id));
-  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+      new expression::ConstantValueExpression(tmp_value);
+  auto predicate = new expression::ComparisonExpression(
+		  EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
@@ -94,13 +94,14 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
  * Input: The table schema, the database id, the database name
  * Returns: The generated tuple
  */
-std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
-    catalog::Schema *schema, oid_t database_id, std::string database_name) {
+std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(catalog::Schema *schema,
+		oid_t database_id,
+		std::string database_name, common::VarlenPool *pool){
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-  Value val1 = ValueFactory::GetIntegerValue(database_id);
-  Value val2 = ValueFactory::GetStringValue(database_name, nullptr);
-  tuple->SetValue(0, val1, nullptr);
-  tuple->SetValue(1, val2, nullptr);
+  auto val1 = common::ValueFactory::GetIntegerValue(database_id);
+  auto val2 = common::ValueFactory::GetVarcharValue(database_name, nullptr);
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
   return std::move(tuple);
 }
 
@@ -110,19 +111,19 @@ std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
  * the database name
  * Returns: The generated tuple
  */
-std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
-    catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name) {
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-  Value val1 = ValueFactory::GetIntegerValue(table_id);
-  Value val2 = ValueFactory::GetStringValue(table_name, nullptr);
-  Value val3 = ValueFactory::GetIntegerValue(database_id);
-  Value val4 = ValueFactory::GetStringValue(database_name, nullptr);
-  tuple->SetValue(0, val1, nullptr);
-  tuple->SetValue(1, val2, nullptr);
-  tuple->SetValue(2, val3, nullptr);
-  tuple->SetValue(3, val4, nullptr);
-  return std::move(tuple);
+std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema,
+		oid_t table_id, std::string table_name, oid_t database_id,
+    std::string database_name, common::VarlenPool *pool){
+	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+	auto val1 = common::ValueFactory::GetIntegerValue(table_id);
+	auto val2 = common::ValueFactory::GetVarlenValue(table_name, nullptr);
+	auto val3 = common::ValueFactory::GetIntegerValue(database_id);
+	auto val4 = common::ValueFactory::GetVarlenValue(database_name, nullptr);
+	tuple->SetValue(0, val1, pool);
+	tuple->SetValue(1, val2, pool);
+	tuple->SetValue(2, val3, pool);
+	tuple->SetValue(3, val4, pool);
+	return std::move(tuple);
 }
 }
 }

@@ -37,9 +37,9 @@ TEST_F(DropTests, DroppingTable) {
   auto txn = txn_manager.BeginTransaction();
   // Insert a table first
   auto id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "dept_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
   auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, 32, "dept_name", false);
+      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

@@ -60,13 +60,18 @@ class IndexScanPlan : public AbstractScan {
         std::shared_ptr<index::Index> p_index_obj,
         const std::vector<oid_t> &p_tuple_column_id_list,
         const std::vector<ExpressionType> &expr_list_p,
-        const std::vector<Value> &p_value_list,
+        const std::vector<common::Value *> &p_value_list,
         const std::vector<expression::AbstractExpression *> &p_runtime_key_list)
         : index_obj(p_index_obj),
           tuple_column_id_list(p_tuple_column_id_list),
           expr_list(expr_list_p),
           value_list(p_value_list),
           runtime_key_list(p_runtime_key_list) {}
+
+    ~IndexScanDesc() {
+      //for (auto val : value_list)
+      //  delete val;
+    }
 
     // The index object for scanning
     //
@@ -86,7 +91,7 @@ class IndexScanPlan : public AbstractScan {
     std::vector<ExpressionType> expr_list;
 
     // A list of values either bounded or unbounded
-    std::vector<Value> value_list;
+    std::vector<common::Value *> value_list;
 
     // ???
     std::vector<expression::AbstractExpression *> runtime_key_list;
@@ -110,6 +115,12 @@ class IndexScanPlan : public AbstractScan {
     for (auto expr : runtime_keys_) {
       delete expr;
     }
+    for (auto val : values_) {
+      delete val;
+    }
+    for (auto val : values_with_params_) {
+      delete val;
+    }
     LOG_TRACE("Destroyed a index scan plan!");
   }
 
@@ -127,7 +138,7 @@ class IndexScanPlan : public AbstractScan {
     return index_predicate_;
   }
 
-  const std::vector<Value> &GetValues() const { return values_; }
+  const std::vector<common::Value *> &GetValues() const { return values_; }
 
   const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const {
     return runtime_keys_;
@@ -139,7 +150,7 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
-  void SetParameterValues(std::vector<Value> *values);
+  void SetParameterValues(std::vector<common::Value *> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
@@ -178,9 +189,9 @@ class IndexScanPlan : public AbstractScan {
   // Note that when binding values to the scan plan we copy those values
   // into this array, which means the lifetime of values being bound is
   // also the lifetime of the IndexScanPlan object
-  std::vector<Value> values_;
+  std::vector<common::Value *> values_;
   // the original copy of values with all the value parameters (bind them later)
-  std::vector<Value> values_with_params_;
+  std::vector<common::Value *> values_with_params_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 

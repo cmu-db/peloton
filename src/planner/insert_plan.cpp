@@ -52,7 +52,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
   auto values = parse_tree->values;
   auto cols = parse_tree->columns;
   parameter_vector_.reset(new std::vector<std::pair<oid_t, oid_t>>());
-  params_value_type_.reset(new std::vector<ValueType>);
+  params_value_type_.reset(new std::vector<common::Type::TypeId>);
 
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, parse_tree->table_name);
@@ -76,13 +76,13 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
           expression::ConstantValueExpression *const_expr_elem =
               dynamic_cast<expression::ConstantValueExpression *>(elem);
           switch (const_expr_elem->GetValueType()) {
-            case VALUE_TYPE_VARCHAR:
-            case VALUE_TYPE_VARBINARY:
-              tuple->SetValue(col_cntr, const_expr_elem->getValue(),
+            case common::Type::VARCHAR:
+            case common::Type::VARBINARY:
+              tuple->SetValue(col_cntr, *const_expr_elem->GetValue(),
                               GetPlanPool());
               break;
             default: {
-              tuple->SetValue(col_cntr, const_expr_elem->getValue(), nullptr);
+              tuple->SetValue(col_cntr, *const_expr_elem->GetValue(), nullptr);
             }
           }
         }
@@ -106,23 +106,23 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
 
         // If the column does not exist, insert a null value
         if (pos >= query_columns->size()) {
-          switch (elem.GetType()) {
-            case VALUE_TYPE_VARCHAR:
-            case VALUE_TYPE_VARBINARY: {
-              tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(),
-                              GetPlanPool());
-              break;
-            }
-            default:
-              tuple->SetValue(col_cntr, Value::GetNullValue(elem.GetType()),
-                              nullptr);
-          }
+          //switch (elem.GetType()) {
+            //case common::Type::VARCHAR:
+            //case common::Type::VARBINARY: {
+            //  tuple->SetValue(col_cntr, *common::ValueFactory::GetNullStringValue(),
+            //                  GetPlanPool());
+            //  break;
+            //}
+            //default:
+              tuple->SetValue(col_cntr,
+                  *common::ValueFactory::GetNullValueByType(elem.GetType()),nullptr);
+          //}
         } else {
           // If it's varchar or varbinary then use data pool, otherwise allocate
           // inline
           auto data_pool = GetPlanPool();
-          if (elem.GetType() != VALUE_TYPE_VARCHAR &&
-              elem.GetType() != VALUE_TYPE_VARBINARY)
+          if (elem.GetType() != common::Type::VARCHAR &&
+              elem.GetType() != common::Type::VARBINARY)
             data_pool = nullptr;
 
           LOG_TRACE("Column %d found in INSERT query, ExpressionType: %s",
@@ -140,7 +140,8 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
             expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<expression::ConstantValueExpression *>(
                     values->at(pos));
-            tuple->SetValue(col_cntr, const_expr_elem->getValue(), data_pool);
+            std::unique_ptr<common::Value> val(const_expr_elem->GetValue());
+            tuple->SetValue(col_cntr, *val, data_pool);
           }
         }
 
@@ -154,14 +155,15 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
   }
 }
 
-VarlenPool *InsertPlan::GetPlanPool() {
+common::VarlenPool *InsertPlan::GetPlanPool() {
   // construct pool if needed
-  if (pool_.get() == nullptr) pool_.reset(new VarlenPool(BACKEND_TYPE_MM));
+  if (pool_.get() == nullptr) pool_.reset(
+    new common::VarlenPool(BACKEND_TYPE_MM));
   // return pool
   return pool_.get();
 }
 
-void InsertPlan::SetParameterValues(std::vector<Value> *values) {
+void InsertPlan::SetParameterValues(std::vector<common::Value *> *values) {
   PL_ASSERT(values->size() == parameter_vector_->size());
   LOG_TRACE("Set Parameter Values in Insert");
   for (unsigned int i = 0; i < values->size(); ++i) {
@@ -170,14 +172,16 @@ void InsertPlan::SetParameterValues(std::vector<Value> *values) {
     // LOG_TRACE("Setting value of type %s",
     // ValueTypeToString(param_type).c_str());
     switch (param_type) {
-      case VALUE_TYPE_VARBINARY:
-      case VALUE_TYPE_VARCHAR:
-        tuple_->SetValue(parameter_vector_->at(i).first,
-                         value.CastAs(param_type), GetPlanPool());
+      case common::Type::VARBINARY:
+      case common::Type::VARCHAR: {
+        std::unique_ptr<common::Value> val(value->CastAs(param_type));
+        tuple_->SetValue(parameter_vector_->at(i).first, *val, GetPlanPool());
         break;
-      default:
-        tuple_->SetValue(parameter_vector_->at(i).first,
-                         value.CastAs(param_type), nullptr);
+      }
+      default: {
+        std::unique_ptr<common::Value> val(value->CastAs(param_type));
+        tuple_->SetValue(parameter_vector_->at(i).first, *val, nullptr);
+      }
     }
   }
 }

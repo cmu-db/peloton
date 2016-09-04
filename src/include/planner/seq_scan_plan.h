@@ -61,13 +61,13 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-  void SetParameterValues(std::vector<Value> *values);
+  void SetParameterValues(std::vector<common::Value *> *values);
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
   bool SerializeTo(SerializeOutput &output);
-  bool DeserializeFrom(SerializeInputBE &input);
+  bool DeserializeFrom(SerializeInput &input);
 
   /* For init SerializeOutput */
   int SerializeSize();

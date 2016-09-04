@@ -180,8 +180,9 @@ bool NestedLoopJoinExecutor::DExecute() {
               right_tile, right_tile_row_itr);
 
           // Join predicate is false. Skip pair and continue.
-          if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-                  .IsFalse()) {
+          auto eval = predicate_->Evaluate(&left_tuple,
+                                          &right_tuple, executor_context_);
+          if (eval->IsFalse()) {
             continue;
           }
         }

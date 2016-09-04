@@ -57,7 +57,7 @@ class MaterializationPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Materialize"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(

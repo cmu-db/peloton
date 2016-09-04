@@ -30,11 +30,11 @@ class TupleTests : public PelotonTest {};
 TEST_F(TupleTests, BasicTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
                           "C", true);
 
   columns.push_back(column1);
@@ -46,17 +46,27 @@ TEST_F(TupleTests, BasicTest) {
   storage::Tuple *tuple(new storage::Tuple(schema, true));
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(0, common::ValueFactory::GetIntegerValue(23), pool);
+  tuple->SetValue(1, common::ValueFactory::GetIntegerValue(45), pool);
+  tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
 
-  EXPECT_EQ(tuple->GetValue(0), ValueFactory::GetIntegerValue(23));
-  EXPECT_EQ(tuple->GetValue(1), ValueFactory::GetIntegerValue(45));
-  EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(1));
+  std::unique_ptr<common::Value> val0(tuple->GetValue(0));
+  std::unique_ptr<common::Value> val1(tuple->GetValue(1));
+  std::unique_ptr<common::Value> val2(tuple->GetValue(2));
 
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
+  std::unique_ptr<common::Value> cmp(val0->CompareEquals(
+      common::ValueFactory::GetIntegerValue(23)));
+  EXPECT_TRUE(cmp->IsTrue());
+  cmp.reset(val1->CompareEquals(common::ValueFactory::GetIntegerValue(45)));
+  EXPECT_TRUE(cmp->IsTrue());
+  cmp.reset(val2->CompareEquals(common::ValueFactory::GetIntegerValue(1)));
+  EXPECT_TRUE(cmp->IsTrue());
 
-  EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
+  tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
+
+  val2.reset(tuple->GetValue(2));
+  cmp.reset(val2->CompareEquals(common::ValueFactory::GetIntegerValue(2)));
+  EXPECT_TRUE(cmp->IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 
@@ -67,13 +77,13 @@ TEST_F(TupleTests, BasicTest) {
 TEST_F(TupleTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
                           "C", true);
-  catalog::Column column4(VALUE_TYPE_VARCHAR, 25, "D", false);
+  catalog::Column column4(common::Type::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -85,21 +95,25 @@ TEST_F(TupleTests, VarcharTest) {
   storage::Tuple *tuple(new storage::Tuple(schema, true));
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(23), pool);
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(45), pool);
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(0, common::ValueFactory::GetIntegerValue(23), pool);
+  tuple->SetValue(1, common::ValueFactory::GetIntegerValue(45), pool);
+  tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
 
-  Value val = ValueFactory::GetStringValue("hello hello world", pool);
+  auto val = common::ValueFactory::GetVarcharValue("hello hello world", pool);
   tuple->SetValue(3, val, pool);
-  EXPECT_EQ(tuple->GetValue(3), val);
+  std::unique_ptr<common::Value> value3(tuple->GetValue(3));
+  std::unique_ptr<common::Value> cmp(value3->CompareEquals(val));
+  EXPECT_TRUE(cmp->IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 
-  Value val2 = ValueFactory::GetStringValue("hi joy !", pool);
+  auto val2 = common::ValueFactory::GetVarcharValue("hi joy !", pool);
   tuple->SetValue(3, val2, pool);
-
-  EXPECT_NE(tuple->GetValue(3), val);
-  EXPECT_EQ(tuple->GetValue(3), val2);
+  value3.reset(tuple->GetValue(3));
+  cmp.reset(value3->CompareNotEquals(val));
+  EXPECT_TRUE(cmp->IsTrue());
+  cmp.reset(value3->CompareEquals(val2));
+  EXPECT_TRUE(cmp->IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 

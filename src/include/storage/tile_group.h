@@ -21,11 +21,11 @@
 #include <planner/project_info.h>
 
 #include "common/types.h"
+#include "common/value.h"
 #include "common/printable.h"
+#include "common/varlen_pool.h"
 
 namespace peloton {
-
-class VarlenPool;
 
 namespace catalog {
 class Manager;
@@ -134,7 +134,7 @@ class TileGroup : public Printable {
 
   oid_t GetTileId(const oid_t tile_id) const;
 
-  peloton::VarlenPool *GetTilePool(const oid_t tile_id) const;
+  peloton::common::VarlenPool *GetTilePool(const oid_t tile_id) const;
 
   const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
     return column_map;
@@ -161,9 +161,9 @@ class TileGroup : public Printable {
 
   oid_t GetTileColumnId(oid_t column_id);
 
-  Value GetValue(oid_t tuple_id, oid_t column_id);
+  common::Value *GetValue(oid_t tuple_id, oid_t column_id);
 
-  void SetValue(Value &value, oid_t tuple_id, oid_t column_id);
+  void SetValue(common::Value &value, oid_t tuple_id, oid_t column_id);
 
   double GetSchemaDifference(const storage::column_map_type &new_column_map);
 

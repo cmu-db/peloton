@@ -15,7 +15,7 @@
 
 #include "executor/abstract_executor.h"
 #include "storage/data_table.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 
 #include <vector>
 

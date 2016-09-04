@@ -50,7 +50,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // Get varlen pool
-  VarlenPool *pool = nullptr;
+  common::VarlenPool *pool = nullptr;
   if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
 
   // (A) Execute target list
@@ -59,7 +59,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
-    dest->SetValue(col_id, value, pool);
+    dest->SetValue(col_id, *value, pool);
   }
 
   // (B) Execute direct map
@@ -69,10 +69,14 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
     auto tuple_index = dm.second.first;
     auto src_col_id = dm.second.second;
 
-    Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
-                                     : tuple2->GetValue(src_col_id);
-
-    dest->SetValue(dest_col_id, value, pool);
+    if (tuple_index == 0) {
+      std::unique_ptr<common::Value> value(tuple1->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, *value, pool);
+    }
+    else {
+      std::unique_ptr<common::Value> value(tuple2->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, *value, pool);
+    }
   }
 
   return true;
@@ -88,8 +92,7 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest,
     auto col_id = target.first;
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
-
-    dest->SetValue(col_id, value);
+    dest->SetValue(col_id, *value);
   }
 
   // (B) Execute direct map
@@ -99,10 +102,14 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest,
     auto tuple_index = dm.second.first;
     auto src_col_id = dm.second.second;
 
-    Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
-                                     : tuple2->GetValue(src_col_id);
-
-    dest->SetValue(dest_col_id, value);
+    if (tuple_index == 0) {
+      std::unique_ptr<common::Value> val1(tuple1->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, *val1);
+    }
+    else {
+      std::unique_ptr<common::Value> val2(tuple2->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, *val2);
+    }
   }
 
   return true;
@@ -113,7 +120,7 @@ std::string ProjectInfo::Debug() const {
   buffer << "Target List: < DEST_column_id , expression >\n";
   for (auto &target : target_list_) {
     buffer << "Dest Col id: " << target.first << std::endl;
-    buffer << "Expr: \n" << target.second->Debug(" ");
+    buffer << "Expr: \n" << target.second->GetInfo();
     buffer << std::endl;
   }
   buffer << "DirectMap List: < NEW_col_id , <tuple_idx , OLD_col_id>  > \n";
@@ -126,7 +133,7 @@ std::string ProjectInfo::Debug() const {
 }
 
 void ProjectInfo::transformParameterToConstantValueExpression(
-    std::vector<Value> *values, catalog::Schema *schema) {
+    std::vector<common::Value *> *values, catalog::Schema *schema) {
   LOG_TRACE("Setting parameter values in Projection");
   for (unsigned int i = 0; i < target_list_.size(); ++i) {
     // The assignment parameter is an expression with left and right
@@ -145,9 +152,9 @@ void ProjectInfo::transformParameterToConstantValueExpression(
         auto param_expr =
             (expression::ParameterValueExpression *)target_list_[i].second;
         LOG_TRACE("Setting parameter %u to value %s", param_expr->GetValueIdx(),
-                  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
+                  values->at(param_expr->GetValueIdx())->GetInfo().c_str());
         auto value = new expression::ConstantValueExpression(
-            values->at(param_expr->GetValueIdx()));
+            *values->at(param_expr->GetValueIdx()));
         delete param_expr;
         target_list_[i].second = value;
       }

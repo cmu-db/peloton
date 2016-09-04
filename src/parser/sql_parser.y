@@ -19,6 +19,7 @@
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/parser_expression.h"
+#include "expression/parameter_value_expression.h"
 
 #include "parser/statements.h"
 #include "parser/sql_parser.h"
@@ -727,29 +728,29 @@ scalar_expr:
 
 unary_expr:
 		'-' expr { $$ = new peloton::expression::OperatorUnaryMinusExpression($2); }
-	|	NOT expr { $$ = new peloton::expression::OperatorUnaryNotExpression($2); }
+	|	NOT expr { $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_NOT, peloton::common::Type::BOOLEAN, $2, nullptr); }
 	;
 
 binary_expr:
 		comp_expr
-	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMinus>(peloton::EXPRESSION_TYPE_OPERATOR_MINUS, $1->GetValueType(), $1, $3); }
-	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpPlus>(peloton::EXPRESSION_TYPE_OPERATOR_PLUS, $1->GetValueType(), $1, $3); }
-	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpDivide>(peloton::EXPRESSION_TYPE_OPERATOR_DIVIDE, $1->GetValueType(), $1, $3); }
-	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMultiply>(peloton::EXPRESSION_TYPE_OPERATOR_MULTIPLY, $1->GetValueType(), $1, $3); }
-	|	expr AND expr	{ $$ = new peloton::expression::ConjunctionExpression<peloton::expression::ConjunctionAnd>(peloton::EXPRESSION_TYPE_CONJUNCTION_AND, $1, $3); }
-	|	expr OR expr	{ $$ = new peloton::expression::ConjunctionExpression<peloton::expression::ConjunctionOr>(peloton::EXPRESSION_TYPE_CONJUNCTION_OR, $1, $3); }
-	|	expr LIKE expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $3); }
-	|	expr NOT LIKE expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpNe>(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $4); }
+	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_MINUS, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_PLUS, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_DIVIDE, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_MULTIPLY, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr AND expr	{ $$ = new peloton::expression::ConjunctionExpression(peloton::EXPRESSION_TYPE_CONJUNCTION_AND, $1, $3); }
+	|	expr OR expr	{ $$ = new peloton::expression::ConjunctionExpression(peloton::EXPRESSION_TYPE_CONJUNCTION_OR, $1, $3); }
+	|	expr LIKE expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $3); }
+	|	expr NOT LIKE expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $4); }
 	;
 
 
 comp_expr:
-		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_EQUAL, $1, $3); }
-	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpNe>(peloton::EXPRESSION_TYPE_COMPARE_NOTEQUAL, $1, $3); }
-	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLt>(peloton::EXPRESSION_TYPE_COMPARE_LESSTHAN, $1, $3);; }
-	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGt>(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHAN, $1, $3); }
-	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLte>(peloton::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, $1, $3); }
-	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGte>(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, $1, $3); }
+		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_EQUAL, $1, $3); }
+	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_NOTEQUAL, $1, $3); }
+	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LESSTHAN, $1, $3);; }
+	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHAN, $1, $3); }
+	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, $1, $3); }
+	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, $1, $3); }
 	;
 
 function_expr:
@@ -769,17 +770,17 @@ literal:
 	;
 
 string_literal:
-		STRING { $$ = new peloton::expression::ConstantValueExpression(peloton::ValueFactory::GetStringValue($1)); free($1);}
+		STRING { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetVarcharValue($1)); free($1);}
 	;
 
 
 num_literal:
-		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::ValueFactory::GetDoubleValue($1)); }
+		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetDoubleValue($1)); }
 	|	int_literal
 	;
 
 int_literal:
-		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
+		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
 	;
 
 star_expr:
@@ -796,7 +797,7 @@ placeholder_expr:
 parameter_expr:
 	PREPAREPARAMETERS {
 			int val = atol($1);
-			$$ = new peloton::expression::ParameterValueExpression(val -1 , peloton::ValueFactory::GetNullValue());
+			$$ = new peloton::expression::ParameterValueExpression(val - 1);
 		}
 	;
 

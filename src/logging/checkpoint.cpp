@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "logging/checkpoint.h"
 #include "logging/logging_util.h"
 #include "logging/checkpoint/simple_checkpoint.h"

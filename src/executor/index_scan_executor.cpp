@@ -18,6 +18,7 @@
 #include <numeric>
 
 #include "common/types.h"
+#include "common/value.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/executor_context.h"
@@ -84,8 +85,8 @@ bool IndexScanExecutor::DInit() {
 
       for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-        LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
-        values_.push_back(value);
+        LOG_TRACE("Evaluated runtime scan key: %s", value->GetInfo().c_str());
+        values_.push_back(value->Copy());
       }
 
       key_ready_ = true;
@@ -205,7 +206,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           expression::ContainerTuple<storage::TileGroup> tuple(
               tile_group.get(), tuple_location.offset);
           eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+              predicate_->Evaluate(&tuple, nullptr, executor_context_)->IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -371,8 +372,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
         oid_t this_col_itr = 0;
         for (auto col : indexed_columns) {
-          key_tuple.SetValue(this_col_itr, candidate_tuple.GetValue(col),
-                             index_->GetPool());
+          std::unique_ptr<common::Value> val(candidate_tuple.GetValue(col));
+          key_tuple.SetValue(this_col_itr, *val, index_->GetPool());
           this_col_itr++;
         }
 
@@ -390,7 +391,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           expression::ContainerTuple<storage::TileGroup> tuple(
               tile_group.get(), tuple_location.offset);
           eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+              predicate_->Evaluate(&tuple, nullptr, executor_context_)->IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {

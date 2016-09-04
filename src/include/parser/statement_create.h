@@ -70,59 +70,59 @@ struct ColumnDefinition {
     free (name);
   }
 
-  static ValueType GetValueType(DataType type) {
+  static common::Type::TypeId GetValueType(DataType type) {
     switch (type) {
       case INT:
       case INTEGER:
-        return VALUE_TYPE_INTEGER;
+        return common::Type::INTEGER;
         break;
 
       case TINYINT:
-        return VALUE_TYPE_TINYINT;
+        return common::Type::TINYINT;
         break;
       case SMALLINT:
-        return VALUE_TYPE_SMALLINT;
+        return common::Type::SMALLINT;
         break;
       case BIGINT:
-        return VALUE_TYPE_BIGINT;
+        return common::Type::BIGINT;
         break;
 
-      case DOUBLE:
-      case FLOAT:
-        return VALUE_TYPE_DOUBLE;
-        break;
+      //case DOUBLE:
+      //case FLOAT:
+      //  return common::Type::DOUBLE;
+      //  break;
 
       case DECIMAL:
-        return VALUE_TYPE_DECIMAL;
+        return common::Type::DECIMAL;
         break;
 
       case BOOLEAN:
-        return VALUE_TYPE_BOOLEAN;
+        return common::Type::BOOLEAN;
         break;
 
-      case ADDRESS:
-        return VALUE_TYPE_ADDRESS;
-        break;
+      //case ADDRESS:
+      //  return common::Type::ADDRESS;
+      //  break;
 
       case TIMESTAMP:
-        return VALUE_TYPE_TIMESTAMP;
+        return common::Type::TIMESTAMP;
         break;
 
       case CHAR:
       case TEXT:
       case VARCHAR:
-        return VALUE_TYPE_VARCHAR;
+        return common::Type::VARCHAR;
         break;
 
       case VARBINARY:
-        return VALUE_TYPE_VARBINARY;
+        return common::Type::VARBINARY;
         break;
 
       case INVALID:
       case PRIMARY:
       case FOREIGN:
       default:
-        return VALUE_TYPE_INVALID;
+        return common::Type::INVALID;
         break;
     }
   }

@@ -41,9 +41,14 @@ class HybridScanPlan : public AbstractScan {
                  const IndexScanPlan::IndexScanDesc &index_scan_desc,
                  HybridScanType hybrid_scan_type);
 
+  ~HybridScanPlan() {
+    for (auto val : values_)
+      delete val;
+  }
+
   std::shared_ptr<index::Index> GetDataIndex() const { return index_; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
@@ -65,7 +70,7 @@ class HybridScanPlan : public AbstractScan {
     return index_predicate_;
   }
 
-  const std::vector<Value> &GetValues() const { return values_; }
+  const std::vector<common::Value *> &GetValues() const { return values_; }
 
   const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const {
     return runtime_keys_;
@@ -83,7 +88,7 @@ class HybridScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> expr_types_;
 
-  const std::vector<Value> values_;
+  const std::vector<common::Value *> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 

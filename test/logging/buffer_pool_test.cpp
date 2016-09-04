@@ -124,9 +124,9 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024 * 1024 * 20, "B", false);
+  catalog::Column column2(common::Type::VARCHAR, 1024 * 1024 * 20, "B", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -134,8 +134,8 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
   std::unique_ptr<catalog::Schema> key_schema(new catalog::Schema(columns));
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(key_schema.get(), true));
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), testing_pool);
-  tuple->SetValue(1, ValueFactory::GetStringValue(
+  tuple->SetValue(0, common::ValueFactory::GetIntegerValue(1), testing_pool);
+  tuple->SetValue(1, common::ValueFactory::GetVarcharValue(
                          std::string(1024 * 1024 * 20, 'e').c_str()),
                   testing_pool);
 

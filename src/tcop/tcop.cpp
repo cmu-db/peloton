@@ -16,6 +16,7 @@
 #include "common/portal.h"
 #include "common/logger.h"
 #include "common/types.h"
+#include "common/type.h"
 #include "common/abstract_tuple.h"
 
 #include "expression/parser_expression.h"
@@ -81,7 +82,7 @@ Result TrafficCop::ExecuteStatement(
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
 
   LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
-  std::vector<Value> params;
+  std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result);
@@ -213,26 +214,25 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   return tuple_descriptor;
 }
 
-FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name,
-                                                     ValueType column_type) {
-  if (column_type == VALUE_TYPE_INTEGER) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
+FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , common::Type::TypeId column_type){
+  if(column_type == common::Type::INTEGER){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_INTEGER , 4);
   }
 
-  if (column_type == VALUE_TYPE_DOUBLE) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
+  if(column_type == common::Type::DECIMAL){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DOUBLE , 8);
   }
 
-  if (column_type == VALUE_TYPE_VARCHAR) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
+  if(column_type == common::Type::VARCHAR){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
   }
 
-  if (column_type == VALUE_TYPE_DECIMAL) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16);
+  if(column_type == common::Type::DECIMAL){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DECIMAL , 16);
   }
 
-  if (column_type == VALUE_TYPE_TIMESTAMP) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
+  if(column_type == common::Type::TIMESTAMP){
+    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TIMESTAMPS , 64);
   }
 
   // Type not Identified

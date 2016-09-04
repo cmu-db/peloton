@@ -41,7 +41,7 @@ typedef struct peloton_status {
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
   bool SerializeTo(peloton::SerializeOutput &output);
-  bool DeserializeFrom(peloton::SerializeInputBE &input);
+  bool DeserializeFrom(peloton::SerializeInput &input);
 
 } peloton_status;
 
@@ -75,14 +75,14 @@ class PlanExecutor {
   */
 
   /*
-   * @brief Use std::vector<Value> as params to make it more elegant for
+   * @brief Use std::vector<common::Value *> as params to make it more elegant for
    * networking
    *        Before ExecutePlan, a node first receives value list, so we should
    * pass
    *        value list directly rather than passing Postgres's ParamListInfo
    */
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                    const std::vector<Value> &params,
+                                    const std::vector<common::Value *> &params,
 									std::vector<ResultType> &result);
 
   /*
@@ -91,7 +91,7 @@ class PlanExecutor {
    * @return the number of tuple it executes and logical_tile_list
    */
   static int ExecutePlan(
-      const planner::AbstractPlan *plan, const std::vector<Value> &params,
+      const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 

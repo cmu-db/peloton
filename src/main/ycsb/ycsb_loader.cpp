@@ -71,15 +71,15 @@ void CreateYCSBDatabase() {
   std::vector<catalog::Column> columns;
 
   auto column =
-      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+      catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                       "YCSB_KEY", is_inlined);
   columns.push_back(column);
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "FIELD" + std::to_string(col_itr), is_inlined);
-    columns.push_back(column);
+      auto column =
+          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+                          "FIELD" + std::to_string(col_itr), is_inlined);
+      columns.push_back(column);
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
@@ -137,7 +137,7 @@ void LoadYCSBDatabase() {
   for (rowid = 0; rowid < tuple_count; rowid++) {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
-    auto key_value = ValueFactory::GetIntegerValue(rowid);
+    auto key_value = common::ValueFactory::GetIntegerValue(rowid);
 
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       tuple->SetValue(col_itr, key_value, nullptr);

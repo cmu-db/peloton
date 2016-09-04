@@ -34,15 +34,15 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
                                              int fourth_col_val) {
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   storage::Tuple tuple(schema, true);
-  tuple.SetValue(0, ValueFactory::GetIntegerValue(first_col_val), testing_pool);
+  tuple.SetValue(0, common::ValueFactory::GetIntegerValue(first_col_val), testing_pool);
 
-  tuple.SetValue(1, ValueFactory::GetIntegerValue(second_col_val),
+  tuple.SetValue(1, common::ValueFactory::GetIntegerValue(second_col_val),
                  testing_pool);
 
-  tuple.SetValue(2, ValueFactory::GetDoubleValue(third_col_val), testing_pool);
+  tuple.SetValue(2, common:: ValueFactory::GetDoubleValue(third_col_val), testing_pool);
 
-  Value string_value =
-      ValueFactory::GetStringValue(std::to_string(fourth_col_val));
+  common::VarlenValue string_value =
+	common::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
   tuple.SetValue(3, string_value, testing_pool);
   return tuple;
 }

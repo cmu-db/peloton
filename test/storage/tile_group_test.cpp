@@ -40,13 +40,13 @@ TEST_F(TileGroupTests, BasicTest) {
 
   // SCHEMA
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
                           "C", true);
-  catalog::Column column4(VALUE_TYPE_VARCHAR, 25, "D", false);
+  catalog::Column column4(common::Type::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -97,15 +97,15 @@ TEST_F(TileGroupTests, BasicTest) {
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   auto pool = tile_group->GetTilePool(1);
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1"), pool);
+  tuple1->SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, common::ValueFactory::GetVarcharValue("tuple 1"), pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
-  tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
+  tuple2->SetValue(0, common::ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, common::ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, common::ValueFactory::GetVarcharValue("tuple 2"), pool);
 
   // TRANSACTION
 
@@ -150,11 +150,11 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
 
   auto pool = tile_group->GetTilePool(1);
 
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
+  tuple->SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
+  tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
   tuple->SetValue(
-      3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)),
+      3, common::ValueFactory::GetVarcharValue("thread " + std::to_string(thread_id)),
       pool);
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
@@ -176,13 +176,13 @@ TEST_F(TileGroupTests, StressTest) {
   std::vector<catalog::Schema> schemas;
 
   // SCHEMA
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
                           "C", true);
-  catalog::Column column4(VALUE_TYPE_VARCHAR, 50, "D", false);
+  catalog::Column column4(common::Type::VARCHAR, 50, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -241,13 +241,13 @@ TEST_F(TileGroupTests, StressTest) {
 //  std::vector<catalog::Schema> schemas;
 //
 //  // SCHEMA
-//  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+//  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
 //                          "A", true);
-//  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+//  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
 //                          "B", true);
-//  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+//  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
 //                          "C", true);
-//  catalog::Column column4(VALUE_TYPE_VARCHAR, 50, "D", false);
+//  catalog::Column column4(common::Type::VARCHAR, 50, "D", false);
 //
 //  columns.push_back(column1);
 //  columns.push_back(column2);
@@ -292,10 +292,10 @@ TEST_F(TileGroupTests, StressTest) {
 //  storage::Tuple *tuple = new storage::Tuple(schema, true);
 //  auto pool = tile_group->GetTilePool(1);
 //
-//  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
-//  tuple->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
-//  tuple->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
-//  tuple->SetValue(3, ValueFactory::GetStringValue("abc"), pool);
+//  tuple->SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
+//  tuple->SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
+//  tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
+//  tuple->SetValue(3, common::ValueFactory::GetVarcharValue("abc"), pool);
 //
 //  oid_t tuple_slot_id = INVALID_OID;
 //
@@ -304,17 +304,17 @@ TEST_F(TileGroupTests, StressTest) {
 //  txn_id_t txn_id1 = txn->GetTransactionId();
 //  cid_t cid1 = txn->GetBeginCommitId();
 //
-//  tuple->SetValue(2, ValueFactory::GetIntegerValue(0), pool);
+//  tuple->SetValue(2, common::ValueFactory::GetIntegerValue(0), pool);
 //  tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
 //  txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_slot_id);
 //  EXPECT_EQ(0, tuple_slot_id);
 //
-//  tuple->SetValue(2, ValueFactory::GetIntegerValue(1), pool);
+//  tuple->SetValue(2, common::ValueFactory::GetIntegerValue(1), pool);
 //  tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
 //  txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_slot_id);
 //  EXPECT_EQ(1, tuple_slot_id);
 //
-//  tuple->SetValue(2, ValueFactory::GetIntegerValue(2), pool);
+//  tuple->SetValue(2, common::ValueFactory::GetIntegerValue(2), pool);
 //  tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
 //  txn_manager.RecordInsert(tile_group->GetTileGroupId(), tuple_slot_id);
 //  EXPECT_EQ(2, tuple_slot_id);
@@ -353,14 +353,14 @@ TEST_F(TileGroupTests, TileCopyTest) {
   std::vector<std::vector<std::string>> column_names;
   std::vector<catalog::Schema> schemas;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
                           "C", true);
-  catalog::Column column4(VALUE_TYPE_VARCHAR, 25, "D", false);
-  catalog::Column column5(VALUE_TYPE_VARCHAR, 25, "E", false);
+  catalog::Column column4(common::Type::VARCHAR, 25, "D", false);
+  catalog::Column column5(common::Type::VARCHAR, 25, "E", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -412,24 +412,24 @@ TEST_F(TileGroupTests, TileCopyTest) {
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
   storage::Tuple *tuple3 = new storage::Tuple(schema, true);
 
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1), pool);
-  tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta"), pool);
-  tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again"),
+  tuple1->SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, common::ValueFactory::GetVarcharValue("vivek sengupta"), pool);
+  tuple1->SetValue(4, common::ValueFactory::GetVarcharValue("vivek sengupta again"),
                    pool);
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
-  tuple2->SetValue(3, ValueFactory::GetStringValue("ming fang"), pool);
-  tuple2->SetValue(4, ValueFactory::GetStringValue("ming fang again"), pool);
+  tuple2->SetValue(0, common::ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, common::ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, common::ValueFactory::GetVarcharValue("ming fang"), pool);
+  tuple2->SetValue(4, common::ValueFactory::GetVarcharValue("ming fang again"), pool);
 
-  tuple3->SetValue(0, ValueFactory::GetIntegerValue(3), pool);
-  tuple3->SetValue(1, ValueFactory::GetIntegerValue(3), pool);
-  tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3), pool);
-  tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim"), pool);
-  tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again"), pool);
+  tuple3->SetValue(0, common::ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(1, common::ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(2, common::ValueFactory::GetTinyIntValue(3), pool);
+  tuple3->SetValue(3, common::ValueFactory::GetVarcharValue("jinwoong kim"), pool);
+  tuple3->SetValue(4, common::ValueFactory::GetVarcharValue("jinwoong kim again"), pool);
 
   tile->InsertTuple(0, tuple1);
   tile->InsertTuple(1, tuple2);
@@ -472,8 +472,8 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   // 1. Pools
   bool intended_behavior = true;
-  peloton::VarlenPool *old_pool = tile->GetPool();
-  peloton::VarlenPool *new_pool = new_tile->GetPool();
+  peloton::common::VarlenPool *old_pool = tile->GetPool();
+  peloton::common::VarlenPool *new_pool = new_tile->GetPool();
 
   int is_pool_same = old_pool == new_pool;
   if (is_pool_same) intended_behavior = false;
@@ -482,7 +482,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   // data)
   int uninlined_col_index;
   size_t uninlined_col_object_len, new_uninlined_col_object_len;
-  unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
+  char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
 
   int new_tile_uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
 
@@ -493,29 +493,30 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
     // Iterate over all the tuples for the current uninlined column in the tile
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
-      Value uninlined_col_value, new_uninlined_col_value;
+      //Value uninlined_col_value, new_uninlined_col_value;
 
-      uninlined_col_value = tile->GetValue(tup_itr, uninlined_col_index);
-      uninlined_col_object_len =
-          ValuePeeker::PeekObjectLengthWithoutNull(uninlined_col_value);
-      uninlined_col_object_ptr = static_cast<unsigned char *>(
-          ValuePeeker::PeekObjectValue(uninlined_col_value));
+      std::unique_ptr<common::VarlenValue> uninlined_col_value(
+        reinterpret_cast<common::VarlenValue *>(
+          tile->GetValue(tup_itr, uninlined_col_index)));
+      uninlined_col_object_len = uninlined_col_value->GetLength();
+      uninlined_col_object_ptr = uninlined_col_value->GetAs<char *>();
       std::string uninlined_varchar_str(
           reinterpret_cast<char const *>(uninlined_col_object_ptr),
           uninlined_col_object_len);
 
-      new_uninlined_col_value =
-          new_tile->GetValue(tup_itr, uninlined_col_index);
-      new_uninlined_col_object_len =
-          ValuePeeker::PeekObjectLengthWithoutNull(new_uninlined_col_value);
-      new_uninlined_col_object_ptr = static_cast<unsigned char *>(
-          ValuePeeker::PeekObjectValue(new_uninlined_col_value));
+      std::unique_ptr<common::VarlenValue> new_uninlined_col_value(
+        reinterpret_cast<common::VarlenValue *>(
+          new_tile->GetValue(tup_itr, uninlined_col_index)));
+      new_uninlined_col_object_len = new_uninlined_col_value->GetLength();
+      new_uninlined_col_object_ptr = new_uninlined_col_value->GetAs<char *>();
       std::string new_uninlined_varchar_str(
           reinterpret_cast<char const *>(new_uninlined_col_object_ptr),
           new_uninlined_col_object_len);
 
       // Compare original and copied tile details for current tuple
-      int is_value_same = uninlined_col_value.Compare(new_uninlined_col_value);
+      std::unique_ptr<common::Value> cmp(uninlined_col_value->CompareNotEquals(
+          *new_uninlined_col_value));
+      int is_value_not_same = cmp->IsTrue();
       int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
       int is_pointer_same =
           uninlined_col_object_ptr == new_uninlined_col_object_ptr;
@@ -523,7 +524,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
                                      new_uninlined_varchar_str.c_str());
 
       // Break if there is any mismatch
-      if (is_value_same || !is_length_same || is_pointer_same || is_data_same) {
+      if (is_value_not_same || !is_length_same || is_pointer_same || is_data_same) {
         intended_behavior = false;
         break;
       }

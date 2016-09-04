@@ -14,7 +14,7 @@
 
 #include "catalog/manager.h"
 #include "common/logger.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/executor_context.h"
@@ -97,8 +97,8 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-        tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr),
-                        executor_pool);
+        std::unique_ptr<common::Value> val(cur_tuple.GetValue(column_itr));
+        tuple->SetValue(column_itr, *val, executor_pool);
       }
 
       // insert tuple into the table.
@@ -140,9 +140,9 @@ bool InsertExecutor::DExecute() {
       project_tuple.reset(new storage::Tuple(schema, true));
 
       for (auto target : project_info->GetTargetList()) {
-        peloton::Value value =
+        auto value =
             target.second->Evaluate(nullptr, nullptr, executor_context_);
-        project_tuple->SetValue(target.first, value, executor_pool);
+        project_tuple->SetValue(target.first, *value, executor_pool);
       }
 
       // Set tuple to point to temporary project tuple
@@ -158,7 +158,8 @@ bool InsertExecutor::DExecute() {
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
       if (tuple->GetColumnCount() > 2) {
-        LOG_TRACE("value: %s", tuple->GetValue(2).GetInfo().c_str());
+        std::unique_ptr<common::Value> val(tuple->GetValue(2));
+        LOG_TRACE("value: %s", val->GetInfo().c_str());
       }
 
       if (location.block == INVALID_OID) {

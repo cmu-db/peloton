@@ -4,73 +4,56 @@
 //
 // varlen.h
 //
-// Identification: src/include/common/varlen.h
+// Identification: src/backend/common/varlen.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstddef>
+#include "common/varlen_pool.h"
 
 namespace peloton {
+namespace common {
 
 class VarlenPool;
 
-//===--------------------------------------------------------------------===//
-// Storage space for variable length fields
-//===--------------------------------------------------------------------===//
-
-/**
- * An object to use in lieu of raw char* pointers for strings
- * which are not inlined into tuple storage. This provides a
- * constant value to live in tuple storage while allowing the memory
- * containing the actual string to be moved around as the result of
- * compaction.
- */
+// Represents a variable-length opaque collection of bytes.
 class Varlen {
  public:
-  /// Create and return a new Varlen object which points to an
-  /// allocated memory block of the requested size. The caller
-  /// may provide an optional Pool from which the memory (and
-  /// the memory for the Varlen object itself) will be
-  /// allocated, intended for temporary strings. If no Pool
-  /// object is provided, the Varlen and the string memory will be
-  /// allocated out of the ThreadLocalPool.
-  static Varlen *Create(std::size_t size, VarlenPool *data_pool = NULL);
+  // Create and return a new Varlen object of the given size. The caller may
+  // optionally provide a pool from which memory can be requested to allocate
+  // an object. If no pool is allocated, the implementation is free to acquire
+  // memory from anywhere she pleases, including a thread local pool or the
+  // global heap memory space.
+  Varlen(size_t size, VarlenPool *pool = nullptr);
 
-  /// Destroy the given Varlen object and free any memory, if
-  /// any, allocated from pools to store the object.
-  /// varlen must have been allocated and returned by a call to
-  /// Varlen::create() and must not have been created in a
-  /// temporary Pool
+  // Destroy this object, freeing and returning any memory that was allocated
+  // at the time of construction.
   ~Varlen();
 
-  /**
-   * @brief Clone (deep copy) the source Varlen in the provided data pool.
-   */
-  static Varlen *Clone(const Varlen &src, VarlenPool *data_pool = NULL);
+  // Clone this Varlen object, acquiring memory from the (optionall) provided
+  // varlen pool.
+  Varlen *Clone(const Varlen &src, VarlenPool *pool = nullptr) const;
 
-  char *Get();
-  const char *Get() const;
+  // Get access to the raw bytes this object refers to
+  char *GetRaw() { return data_ptr_; }
+  const char *GetRaw() const { return data_ptr_; }
+  size_t  GetSize() const { return data_size_; }
 
  private:
-  Varlen(std::size_t size);
-  Varlen(std::size_t size, VarlenPool *data_pool);
-
-  /// Callback used via the back-pointer in order to update the
-  /// pointer to the memory backing this string reference
-  void UpdateStringLocation(void *location);
-
-  void SetBackPtr();
-
-  std::size_t varlen_size;
-
-  bool varlen_temp_pool;
-
-  char *varlen_string_ptr;
+  // The pointer to the memory space where the data is stored
+  char *data_ptr_;
+  size_t data_size_;
+  // Indicates whether this varlen object owns the memory space, or whether it
+  // was acquired from an external memory pool
+  bool owns_data_;
+  // If this varlen doesn't own the data, it belongs to this varlen pool and
+  // must be returned when destroyed.
+  VarlenPool *pool_;
 };
 
-}  // End peloton namespace
+}  // namespace common
+}  // namespace peloton

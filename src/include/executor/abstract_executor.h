@@ -15,12 +15,13 @@
 
 #include <memory>
 #include <vector>
+#include <common/value.h>
 
 #include "executor/logical_tile.h"
 
 namespace peloton {
 
-class Value;
+//class Value;
 
 namespace planner {
 class AbstractPlan;
@@ -64,7 +65,7 @@ class AbstractExecutor {
   const planner::AbstractPlan *GetRawNode() const { return node_; }
 
   // set the context
-  void SetContext(Value value);
+  void SetContext(common::Value *value);
 
   // clear the context
   void ClearContext();

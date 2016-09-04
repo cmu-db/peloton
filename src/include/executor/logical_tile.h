@@ -20,6 +20,7 @@
 
 #include "common/printable.h"
 #include "common/types.h"
+#include "common/value.h"
 #include "common/macros.h"
 
 namespace peloton {
@@ -82,9 +83,9 @@ class LogicalTile : public Printable {
 
   storage::Tile *GetBaseTile(oid_t column_id);
 
-  Value GetValue(oid_t tuple_id, oid_t column_id);
+  common::Value *GetValue(oid_t tuple_id, oid_t column_id);
 
-  void SetValue(Value &value, oid_t tuple_id, oid_t column_id);
+  void SetValue(common::Value &value, oid_t tuple_id, oid_t column_id);
 
   size_t GetTupleCount();
 

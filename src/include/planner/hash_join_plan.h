@@ -50,7 +50,7 @@ class HashJoinPlan : public AbstractJoinPlan {
     return outer_column_ids_;
   }
 
-  void SetParameterValues(std::vector<Value> *values) {
+  void SetParameterValues(std::vector<common::Value *> *values) {
     LOG_TRACE("Setting parameter values in Hash Join Plan");
     for (auto &child_plan : GetChildren()) {
       child_plan->SetParameterValues(values);

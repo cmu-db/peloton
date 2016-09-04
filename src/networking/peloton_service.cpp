@@ -17,11 +17,13 @@
 #include "common/logger.h"
 #include "common/types.h"
 #include "common/serializer.h"
+#include "common/serializeio.h"
 #include "common/macros.h"
 #include "storage/tile.h"
 #include "storage/tuple.h"
 #include "planner/seq_scan_plan.h"
 #include "executor/plan_executor.h"
+#include "common/varlen_pool.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -330,18 +332,18 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     }
 
     // construct parameter list
-    int param_num = request->param_num();
+    //int param_num = request->param_num();
     std::string param_list = request->param_list();
-    ReferenceSerializeInputBE param_input(param_list.c_str(),
-                                          param_list.size());
-    std::vector<Value> params;
-    for (int it = 0; it < param_num; it++) {
-      // TODO: Make sure why varlen_pool is used as parameter
-      std::shared_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
-      Value value_item;
-      value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
-      params.push_back(value_item);
-    }
+    ReferenceSerializeInput param_input(param_list.c_str(),
+                                        param_list.size());
+    std::vector<common::Value *> params;
+    //for (int it = 0; it < param_num; it++) {
+    //  // TODO: Make sure why varlen_pool is used as parameter
+    //  std::shared_ptr<common::VarlenPool> pool(new common::VarlenPool(BACKEND_TYPE_MM));
+    //  Value value_item;
+    //  value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
+    //  params.push_back(value_item);
+    //}
 
     // construct TupleDesc
     // std::unique_ptr<tupleDesc> tuple_desc =
@@ -359,7 +361,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
       case PLAN_NODE_TYPE_SEQSCAN: {
         LOG_TRACE("SEQSCAN revieved");
         std::string plan = request->plan();
-        ReferenceSerializeInputBE input(plan.c_str(), plan.size());
+        ReferenceSerializeInput input(plan.c_str(), plan.size());
         std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan =
             std::make_shared<peloton::planner::SeqScanPlan>();
         ss_plan->DeserializeFrom(input);
@@ -423,8 +425,8 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     for (int idx = 0; idx < result_size; idx++) {
       // Get the tile bytes
       std::string tile_bytes = response->result(idx);
-      ReferenceSerializeInputBE tile_input(tile_bytes.c_str(),
-                                           tile_bytes.size());
+      ReferenceSerializeInput tile_input(tile_bytes.c_str(),
+                                         tile_bytes.size());
 
       // Create a tile or tuple that depends on our protocol.
       // Tuple is prefered, since it voids copying from tile again

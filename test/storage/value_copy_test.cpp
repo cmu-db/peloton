@@ -29,7 +29,7 @@ class ValueCopyTests : public PelotonTest {};
 TEST_F(ValueCopyTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_VARCHAR, 25, "D", false);
+  catalog::Column column1(common::Type::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column1);
@@ -40,16 +40,17 @@ TEST_F(ValueCopyTests, VarcharTest) {
 
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  Value val = ValueFactory::GetStringValue("hello hello world", pool);
+  std::unique_ptr<common::Value> val1(
+      common::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
+  std::unique_ptr<common::Value> val2(
+      common::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
 
-  Value val2 = ValueFactory::GetStringValue("hello hello world", nullptr);
+  tuple->SetValue(0, *val1, pool);
+  tuple->SetValue(1, *val2, pool);
 
-  tuple->SetValue(0, val2, nullptr);
-  tuple->SetValue(1, val2, nullptr);
+  std::unique_ptr<common::Value> val3(tuple->GetValue(0));
 
-  Value val3 = tuple->GetValue(0);
-
-  LOG_INFO("%s", val3.GetInfo().c_str());
+  LOG_INFO("%s", val3->GetInfo().c_str());
 
   delete tuple;
   delete schema;

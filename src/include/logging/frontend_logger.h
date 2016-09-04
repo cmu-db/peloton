@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <map>
 #include <thread>
+#include <algorithm>
 
 #include "common/types.h"
 #include "logging/logger.h"

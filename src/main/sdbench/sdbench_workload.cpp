@@ -110,7 +110,7 @@ expression::AbstractExpression *CreateSimpleScanPredicate(oid_t key_attr,
   // First, create tuple value expression.
   oid_t left_tuple_idx = 0;
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER,
+      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER,
                                                     left_tuple_idx,
                                                     key_attr);
 
@@ -177,7 +177,7 @@ expression::AbstractExpression *CreateScanPredicate(std::vector<oid_t> key_attrs
 void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
                               std::vector<oid_t>& key_column_ids,
                               std::vector<ExpressionType>& expr_types,
-                              std::vector<Value>& values) {
+                              std::vector<common::Value *>& values) {
   const int tuple_start_offset = GetLowerBound();
   const int tuple_end_offset = GetUpperBound();
 
@@ -407,7 +407,7 @@ void RunDirectTest() {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<common::Value *> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   // Create index scan predicate
@@ -448,8 +448,8 @@ void RunDirectTest() {
   oid_t col_itr = 0;
   for (auto column_id : column_ids) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER,
-                        GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(common::Type::INTEGER,
+                        GetTypeSize(common::Type::INTEGER),
                         std::to_string(column_id),
                         is_inlined);
     output_columns.push_back(column);
@@ -502,7 +502,7 @@ void RunInsertTest() {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  std::vector<Value> values;
+  std::vector<common::Value *> values;
   Value insert_val = ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
   TargetList target_list;
   DirectMapList direct_map_list;

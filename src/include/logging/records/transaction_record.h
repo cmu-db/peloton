@@ -16,6 +16,7 @@
 #include "logging/log_record.h"
 #include "common/serializer.h"
 #include "common/printable.h"
+#include "common/serializeio.h"
 
 namespace peloton {
 namespace logging {
@@ -41,7 +42,7 @@ class TransactionRecord : public LogRecord, Printable {
 
   bool Serialize(CopySerializeOutput &output);
 
-  void Deserialize(CopySerializeInputBE &input);
+  void Deserialize(CopySerializeInput &input);
 
   static size_t GetTransactionRecordSize(void);
 

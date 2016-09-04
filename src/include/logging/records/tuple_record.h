@@ -17,6 +17,7 @@
 #include "storage/tuple.h"
 #include "common/serializer.h"
 #include "common/printable.h"
+#include "common/serializeio.h"
 
 namespace peloton {
 namespace logging {
@@ -62,7 +63,7 @@ class TupleRecord : public LogRecord, Printable {
 
   void SerializeHeader(CopySerializeOutput &output);
 
-  void DeserializeHeader(CopySerializeInputBE &input);
+  void DeserializeHeader(CopySerializeInput &input);
 
   //===--------------------------------------------------------------------===//
   // Accessor

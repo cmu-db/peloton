@@ -62,7 +62,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column =
-          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -72,7 +72,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column =
-          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -82,7 +82,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column =
-          catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+          catalog::Column(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
                           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -91,7 +91,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(VALUE_TYPE_VARCHAR, 25,  // Column length.
+      auto column = catalog::Column(common::Type::VARCHAR, 25,  // Column length.
                                     "COL_D", !is_inlined);   // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -184,30 +184,30 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     if (group_by) {
       // First column has only two distinct values
-      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(
+      tuple.SetValue(0, common::ValueFactory::GetIntegerValue(PopulatedValue(
                             int(populate_value / (num_rows / 2)), 0)),
                      testing_pool);
 
     } else {
       // First column is unique in this case
       tuple.SetValue(
-          0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)),
+          0, common::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)),
           testing_pool);
     }
 
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(
-        1, ValueFactory::GetIntegerValue(PopulatedValue(
+        1, common::ValueFactory::GetIntegerValue(PopulatedValue(
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
+    tuple.SetValue(2, common::ValueFactory::GetDoubleValue(PopulatedValue(
                           random ? std::rand() : populate_value, 2)),
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    Value string_value =
-        ValueFactory::GetStringValue(std::to_string(PopulatedValue(
+    auto string_value =
+        common::ValueFactory::GetVarcharValue(std::to_string(PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
@@ -245,13 +245,13 @@ void ExecutorTestsUtil::PopulateTiles(
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
+    tuple.SetValue(0, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
                    testing_pool);
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
+    tuple.SetValue(1, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
                    testing_pool);
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
+    tuple.SetValue(2, common::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
                    testing_pool);
-    Value string_value = ValueFactory::GetStringValue(
+    auto string_value = common::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
@@ -401,28 +401,37 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 }
 
 std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
-    storage::DataTable *table, oid_t tuple_id, VarlenPool *pool) {
+    storage::DataTable *table, oid_t tuple_id, common::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)),
-                  pool);
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)),
-                  pool);
-  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)),
-                  pool);
-  tuple->SetValue(3, ValueFactory::GetStringValue("12345"), pool);
+  auto val1 = common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
+  auto val2 = common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
+  auto val3 = common::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
+  auto val4 = common::ValueFactory::GetVarcharValue("12345");
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
+  tuple->SetValue(2, val3, pool);
+  tuple->SetValue(3, val4, pool);
 
   return tuple;
 }
 
 std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
-    storage::DataTable *table, VarlenPool *pool) {
+    storage::DataTable *table, common::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
-  tuple->SetValue(0, ValueFactory::GetNullValue(), pool);
-  tuple->SetValue(1, ValueFactory::GetNullValue(), pool);
-  tuple->SetValue(2, ValueFactory::GetNullValue(), pool);
-  tuple->SetValue(3, ValueFactory::GetNullStringValue(), pool);
+  auto val1 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
+  auto val2 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
+  auto val3 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
+  auto val4 = common::ValueFactory::GetNullValueByType(common::Type::VARCHAR);
+  tuple->SetValue(0, *val1, pool);
+  tuple->SetValue(1, *val2, pool);
+  tuple->SetValue(2, *val3, pool);
+  tuple->SetValue(3, *val4, pool);
+  delete val1;
+  delete val2;
+  delete val3;
+  delete val4;
 
   return tuple;
 }
@@ -430,10 +439,10 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
 void ExecutorTestsUtil::PrintTileVector(
     std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
   for (auto &tile : tile_vec) {
-    for (oid_t tuple_id : *tile) {
+    for (UNUSED_ATTRIBUTE oid_t tuple_id : *tile) {
       LOG_INFO("<");
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        LOG_INFO("%s", tile->GetValue(tuple_id, col_id).GetInfo().c_str());
+        LOG_INFO("%s", tile->GetValue(tuple_id, col_id)->GetInfo().c_str());
       }
       LOG_INFO(">");
     }

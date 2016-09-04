@@ -20,6 +20,8 @@
 #include "index/index_util.h"
 #include "index/index.h"
 
+#include <algorithm>
+
 namespace peloton {
 namespace index {
 
@@ -216,28 +218,28 @@ bool FindValueIndex(const IndexMetadata *metadata_p,
  * If values are equal then compare the second element which is an int
  * and return the result
  */
-bool ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                         const std::pair<peloton::Value, int> &j) {
+bool ValuePairComparator(const std::pair<common::Value *, int> &i,
+                         const std::pair<common::Value *, int> &j) {
 
   // If first elements are equal then compare the second element
-  if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
+  if (i.first->CompareEquals(*j.first)->IsTrue()) {
     return i.second < j.second;
   }
   
   // Otherwise compare the first element for "<" or ">"
-  return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
+  return i.first->CompareLessThan(*j.first)->IsTrue();
 }
 
 void ConstructIntervals(oid_t leading_column_id,
-                        const std::vector<Value> &values,
+                        const std::vector<common::Value *> &values,
                         const std::vector<oid_t> &key_column_ids,
                         const std::vector<ExpressionType> &expr_types,
-                        std::vector<std::pair<Value, Value>> &intervals) {
+          std::vector<std::pair<common::Value *, common::Value *>> &intervals) {
   // Find all contrains of leading column.
   // Equal --> > < num
   // > >= --->  > num
   // < <= ----> < num
-  std::vector<std::pair<peloton::Value, int>> nums;
+  std::vector<std::pair<common::Value *, int>> nums;
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     if (key_column_ids[i] != leading_column_id) {
       continue;
@@ -245,17 +247,17 @@ void ConstructIntervals(oid_t leading_column_id,
 
     // If leading column
     if (DefinesLowerBound(expr_types[i])) {
-      nums.push_back(std::pair<Value, int>(values[i], -1));
+      nums.push_back(std::pair<common::Value *, int>(values[i], -1));
     } else if (DefinesUpperBound(expr_types[i])) {
-      nums.push_back(std::pair<Value, int>(values[i], 1));
+      nums.push_back(std::pair<common::Value *, int>(values[i], 1));
     } else {
       // Currently if it is not >  < <= then it must be ==
       // *** I could not find BETWEEN expression in types.h so did not add it
       // into the list
       PL_ASSERT(expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL);
       
-      nums.push_back(std::pair<Value, int>(values[i], -1));
-      nums.push_back(std::pair<Value, int>(values[i], 1));
+      nums.push_back(std::pair<common::Value *, int>(values[i], -1));
+      nums.push_back(std::pair<common::Value *, int>(values[i], 1));
     }
   }
 
@@ -267,43 +269,46 @@ void ConstructIntervals(oid_t leading_column_id,
   PL_ASSERT(nums.size() > 0);
 
   // Build intervals.
-  Value cur;
+  common::Value *cur;
   size_t i = 0;
   if (nums[0].second < 0) {
     cur = nums[0].first;
     i++;
   } else {
-    cur = Value::GetMinValue(nums[0].first.GetValueType());
+    cur = common::Type::GetMinValue(nums[0].first->GetTypeId());
   }
 
   while (i < nums.size()) {
     if (nums[i].second > 0) {
       if (i + 1 < nums.size() && nums[i + 1].second < 0) {
         // right value
-        intervals.push_back(std::pair<Value, Value>(cur, nums[i].first));
+        intervals.push_back(std::pair<common::Value *, common::Value *>(
+          cur, nums[i].first));
         cur = nums[i + 1].first;
       } else if (i + 1 == nums.size()) {
         // Last value while right value
-        intervals.push_back(std::pair<Value, Value>(cur, nums[i].first));
-        cur = Value::GetNullValue(nums[0].first.GetValueType());
+        intervals.push_back(std::pair<common::Value *, common::Value *>(
+          cur, nums[i].first));
+        cur = common::ValueFactory::GetNullValueByType(nums[0].first->GetTypeId());
       }
     }
     i++;
   }
 
-  if (cur.IsNull() == false) {
-    intervals.push_back(std::pair<Value, Value>(
-        cur, Value::GetMaxValue(nums[0].first.GetValueType())));
+  if (cur->IsNull() == false) {
+    intervals.push_back(std::pair<common::Value *, common::Value *>(
+        cur, common::Type::GetMaxValue(nums[0].first->GetTypeId())));
   }
 
   // Finish invtervals building.
 };
 
 void FindMaxMinInColumns(oid_t leading_column_id,
-                         const std::vector<Value> &values,
+                         const std::vector<common::Value *> &values,
                          const std::vector<oid_t> &key_column_ids,
                          const std::vector<ExpressionType> &expr_types,
-                         std::map<oid_t, std::pair<Value, Value>> &non_leading_columns) {
+                         std::map<oid_t, std::pair<common::Value*,
+                             common::Value*>> &non_leading_columns) {
   // find extreme nums on each column.
   LOG_TRACE("FindMinMax leading column %d\n", leading_column_id);
   for (size_t i = 0; i < key_column_ids.size(); i++) {
@@ -313,59 +318,59 @@ void FindMaxMinInColumns(oid_t leading_column_id,
     }
 
     if (non_leading_columns.find(column_id) == non_leading_columns.end()) {
-      auto type = values[i].GetValueType();
+      auto type = values[i]->GetTypeId();
       // std::pair<Value, Value> *range = new std::pair<Value,
       // Value>(Value::GetMaxValue(type),
       //                                            Value::GetMinValue(type));
       // std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
-      non_leading_columns.insert(std::pair<oid_t, std::pair<Value, Value>>(
-          column_id, std::pair<Value, Value>(Value::GetNullValue(type),
-                                             Value::GetNullValue(type))));
+      non_leading_columns.insert(std::pair<oid_t,
+        std::pair<common::Value *, common::Value *>>(
+          column_id, std::pair<common::Value *, common::Value*>(
+            common::ValueFactory::GetNullValueByType(type),
+            common::ValueFactory::GetNullValueByType(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
-                non_leading_columns[column_id].first.GetInfo().size(),
-                non_leading_columns[column_id].second.GetInfo().c_str());
+                non_leading_columns[column_id].first->GetInfo().size(),
+                non_leading_columns[column_id].second->GetInfo().c_str());
     }
 
     if (DefinesLowerBound(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("min cur %lu compare with %s\n",
-                non_leading_columns[column_id].first.GetInfo().size(),
-                values[i].GetInfo().c_str());
-      if (non_leading_columns[column_id].first.IsNull() ||
-          non_leading_columns[column_id].first.Compare(values[i]) ==
-              VALUE_COMPARE_GREATERTHAN) {
+                non_leading_columns[column_id].first->GetInfo().size(),
+                values[i]->GetInfo().c_str());
+      if (non_leading_columns[column_id].first->IsNull() ||
+          non_leading_columns[column_id].first
+            ->CompareGreaterThan(*values[i])->IsTrue()) {
         LOG_TRACE("Update min\n");
-        non_leading_columns[column_id].first =
-            ValueFactory::Clone(values[i], nullptr);
+        non_leading_columns[column_id].first = values[i]->Copy();
       }
     }
 
     if (DefinesUpperBound(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("max cur %s compare with %s\n",
-                non_leading_columns[column_id].second.GetInfo().c_str(),
-                values[i].GetInfo().c_str());
-      if (non_leading_columns[column_id].first.IsNull() ||
-          non_leading_columns[column_id].second.Compare(values[i]) ==
-              VALUE_COMPARE_LESSTHAN) {
+                non_leading_columns[column_id].second->GetInfo().c_str(),
+                values[i]->GetInfo().c_str());
+      if (non_leading_columns[column_id].first->IsNull() ||
+          non_leading_columns[column_id].second
+            ->CompareLessThan(*values[i])->IsTrue()) {
         LOG_TRACE("Update max\n");
-        non_leading_columns[column_id].second =
-            ValueFactory::Clone(values[i], nullptr);
+        non_leading_columns[column_id].second = values[i]->Copy();
       }
     }
   }
 
   // check if min value is right bound or max value is left bound, if so, update
   for (const auto &k_v : non_leading_columns) {
-    if (k_v.second.first.IsNull()) {
+    if (k_v.second.first->IsNull()) {
       non_leading_columns[k_v.first].first =
-          Value::GetMinValue(k_v.second.first.GetValueType());
+          common::Type::GetMinValue(k_v.second.first->GetTypeId());
     }
-    if (k_v.second.second.IsNull()) {
+    if (k_v.second.second->IsNull()) {
       non_leading_columns[k_v.first].second =
-          Value::GetMaxValue(k_v.second.second.GetValueType());
+          common::Type::GetMinValue(k_v.second.second->GetTypeId());
     }
   }
 };

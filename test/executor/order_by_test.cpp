@@ -63,7 +63,7 @@ void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
   EXPECT_GT(descend_flags.size(), 0);
 
   // TODO: Verify
-  for (auto &tile : result_tiles) {
+  for (UNUSED_ATTRIBUTE auto &tile : result_tiles) {
     LOG_INFO("%s", tile->GetInfo().c_str());
   }
 }

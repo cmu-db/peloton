@@ -41,7 +41,7 @@ class SetOpPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "SetOp"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new SetOpPlan(set_op_));

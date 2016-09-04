@@ -52,7 +52,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
   AddChild(std::move(seq_scan_node));
 }
 
-void DeletePlan::SetParameterValues(std::vector<Value> *values) {
+void DeletePlan::SetParameterValues(std::vector<common::Value *> *values) {
   LOG_TRACE("Setting parameter values in Delete");
   auto &children = GetChildren();
   // One sequential scan

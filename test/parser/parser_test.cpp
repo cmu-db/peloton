@@ -80,7 +80,7 @@ TEST_F(ParserTest, BasicTest) {
   queries.push_back("EXECUTE prep;");
 
   // Parsing
-  int ii = 0;
+  UNUSED_ATTRIBUTE int ii = 0;
   for(auto query : queries) {
     parser::SQLStatementList* stmt_list = parser::Parser::ParseSQLString(query.c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
@@ -104,7 +104,6 @@ TEST_F(ParserTest, GrammarTest) {
     }
     delete result;
   }
-
 }
 
 #define EXPECT_NULL(pointer) EXPECT_TRUE(pointer == NULL);
@@ -219,7 +218,7 @@ TEST_F(ParserTest, CreateTest) {
       " )");
 
   // Parsing
-  int ii = 0;
+  UNUSED_ATTRIBUTE int ii = 0;
   for(auto query : queries) {
     parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
 
@@ -273,7 +272,7 @@ TEST_F(ParserTest, TM1Test) {
       "  );");
 
   // Parsing
-  int ii = 0;
+  UNUSED_ATTRIBUTE int ii = 0;
   for(auto query : queries) {
     parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
 
@@ -304,7 +303,7 @@ TEST_F(ParserTest, IndexTest) {
   queries.push_back("DROP DATABASE i_security;");
 
   // Parsing
-  int ii = 0;
+  UNUSED_ATTRIBUTE int ii = 0;
   for(auto query : queries) {
     parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
 

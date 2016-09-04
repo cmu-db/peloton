@@ -152,9 +152,9 @@ bool RunNewOrder(const size_t &thread_id){
     
     LOG_TRACE("getItemInfo: SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = %d", item_id);
     
-    std::vector<Value> item_key_values;
+    std::vector<common::Value *> item_key_values;
     
-    item_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
+    item_key_values.push_back(common::ValueFactory::GetIntegerValue(item_id).Copy());
 
     planner::IndexScanPlan::IndexScanDesc item_index_scan_desc(
       item_pkey_index, item_key_column_ids, item_expr_types,
@@ -191,9 +191,9 @@ bool RunNewOrder(const size_t &thread_id){
   warehouse_expr_types.push_back(
     ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-  std::vector<Value> warehouse_key_values;
+  std::vector<common::Value *> warehouse_key_values;
 
-  warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  warehouse_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
   auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
       warehouse_table_pkey_index_oid);
@@ -223,7 +223,7 @@ bool RunNewOrder(const size_t &thread_id){
     PL_ASSERT(false);
   }
 
-  auto w_tax = gwtr_lists_values[0][0];
+  UNUSED_ATTRIBUTE auto w_tax = gwtr_lists_values[0][0];
 
   LOG_TRACE("w_tax: %s", w_tax.GetInfo().c_str());
 
@@ -240,9 +240,9 @@ bool RunNewOrder(const size_t &thread_id){
   district_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   
-  std::vector<Value> district_key_values;
-  district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
-  district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  std::vector<common::Value *> district_key_values;
+  district_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
+  district_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
@@ -273,8 +273,8 @@ bool RunNewOrder(const size_t &thread_id){
     PL_ASSERT(false);
   }
 
-  auto d_tax = gd_lists_values[0][0];
-  auto d_next_o_id = gd_lists_values[0][1];
+  UNUSED_ATTRIBUTE auto d_tax = gd_lists_values[0][0];
+  UNUSED_ATTRIBUTE auto d_next_o_id = gd_lists_values[0][1];
 
   LOG_TRACE("d_tax: %s, d_next_o_id: %s", d_tax.GetInfo().c_str(), d_next_o_id.GetInfo().c_str());
   
@@ -295,10 +295,10 @@ bool RunNewOrder(const size_t &thread_id){
   customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-  std::vector<Value> customer_key_values;
-  customer_key_values.push_back(ValueFactory::GetIntegerValue(customer_id));
-  customer_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
-  customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  std::vector<common::Value *> customer_key_values;
+  customer_key_values.push_back(common::ValueFactory::GetIntegerValue(customer_id).Copy());
+  customer_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
+  customer_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
   
   auto customer_pkey_index = customer_table->GetIndexWithOid(
       customer_table_pkey_index_oid);
@@ -329,14 +329,14 @@ bool RunNewOrder(const size_t &thread_id){
     PL_ASSERT(false);
   }
 
-  auto c_last = gc_lists_values[0][0];
-  auto c_credit = gc_lists_values[0][1];
-  auto c_discount = gc_lists_values[0][2];
+  UNUSED_ATTRIBUTE auto c_last = gc_lists_values[0][0];
+  UNUSED_ATTRIBUTE auto c_credit = gc_lists_values[0][1];
+  UNUSED_ATTRIBUTE auto c_discount = gc_lists_values[0][2];
 
   LOG_TRACE("c_last: %s, c_credit: %s, c_discount: %s", c_last.GetInfo().c_str(), c_credit.GetInfo().c_str(), c_discount.GetInfo().c_str());
 
 
-  int district_update_value = ValuePeeker::PeekAsInteger(d_next_o_id) + 1;
+  int district_update_value = common::ValuePeeker::PeekInteger(d_next_o_id) + 1;
   LOG_TRACE("district update value = %d", district_update_value);
 
   LOG_TRACE("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = %d WHERE D_ID = %d AND D_W_ID = %d", district_update_value, district_id, warehouse_id);
@@ -358,10 +358,10 @@ bool RunNewOrder(const size_t &thread_id){
       district_direct_map_list.emplace_back(col_itr,
                                    std::pair<oid_t, oid_t>(0, col_itr));
   }
-  Value district_update_val = ValueFactory::GetIntegerValue(district_update_value);
+  common::Value * district_update_val = common::ValueFactory::GetIntegerValue(district_update_value).Copy();
   
   district_target_list.emplace_back(
-      10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
+      10, expression::ExpressionUtil::ConstantValueFactory(*district_update_val));
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
       new planner::ProjectInfo(std::move(district_target_list),
@@ -386,44 +386,44 @@ bool RunNewOrder(const size_t &thread_id){
   std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
 
   // O_ID
-  orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
+  orders_tuple->SetValue(0, common::ValueFactory::GetIntegerValue(common::ValuePeeker::PeekInteger(d_next_o_id)), nullptr);
   // O_C_ID
-  orders_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_id), nullptr);
+  orders_tuple->SetValue(1, common::ValueFactory::GetIntegerValue(customer_id), nullptr);
   // O_D_ID
-  orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id), nullptr);
+  orders_tuple->SetValue(2, common::ValueFactory::GetIntegerValue(district_id), nullptr);
   // O_W_ID
-  orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  orders_tuple->SetValue(3, common::ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // O_ENTRY_D
   //auto o_entry_d = GetTimeStamp();
-  orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(1) , nullptr);
+  orders_tuple->SetValue(4, common::ValueFactory::GetTimestampValue(1) , nullptr);
   // O_CARRIER_ID
-  orders_tuple->SetValue(5, ValueFactory::GetIntegerValue(0), nullptr);
+  orders_tuple->SetValue(5, common::ValueFactory::GetIntegerValue(0), nullptr);
   // O_OL_CNT
-  orders_tuple->SetValue(6, ValueFactory::GetIntegerValue(o_ol_cnt), nullptr);
+  orders_tuple->SetValue(6, common::ValueFactory::GetIntegerValue(o_ol_cnt), nullptr);
   // O_ALL_LOCAL
-  orders_tuple->SetValue(7, ValueFactory::GetIntegerValue(o_all_local), nullptr);
+  orders_tuple->SetValue(7, common::ValueFactory::GetIntegerValue(o_all_local), nullptr);
 
   planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
   executor::InsertExecutor orders_executor(&orders_node, context.get());
   orders_executor.Execute();
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)common::ValuePeeker::PeekInteger(d_next_o_id));
     txn_manager.AbortTransaction(txn);
     return false;
   } else {
-    LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)common::ValuePeeker::PeekInteger(d_next_o_id));
   }
   
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
   std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
 
   // NO_O_ID
-  new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
+  new_order_tuple->SetValue(0, common::ValueFactory::GetIntegerValue(common::ValuePeeker::PeekInteger(d_next_o_id)), nullptr);
   // NO_D_ID
-  new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
+  new_order_tuple->SetValue(1, common::ValueFactory::GetIntegerValue(district_id), nullptr);
   // NO_W_ID
-  new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  new_order_tuple->SetValue(2, common::ValueFactory::GetIntegerValue(warehouse_id), nullptr);
 
   planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
@@ -463,10 +463,10 @@ bool RunNewOrder(const size_t &thread_id){
     
     LOG_TRACE("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = %d AND S_W_ID = %d", item_id, ol_w_id);
     
-    std::vector<Value> stock_key_values;
+    std::vector<common::Value *> stock_key_values;
     
-    stock_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
-    stock_key_values.push_back(ValueFactory::GetIntegerValue(ol_w_id));
+    stock_key_values.push_back(common::ValueFactory::GetIntegerValue(item_id).Copy());
+    stock_key_values.push_back(common::ValueFactory::GetIntegerValue(ol_w_id).Copy());
 
     planner::IndexScanPlan::IndexScanDesc stock_index_scan_desc(
         stock_pkey_index, stock_key_column_ids, stock_expr_types,
@@ -492,7 +492,7 @@ bool RunNewOrder(const size_t &thread_id){
       PL_ASSERT(false);
     }
 
-    int s_quantity = ValuePeeker::PeekAsInteger(gsi_lists_values[0][0]);
+    int s_quantity = common::ValuePeeker::PeekInteger(gsi_lists_values[0][0]);
 
     if (s_quantity >= ol_qty + 10) {
       s_quantity = s_quantity - ol_qty;
@@ -500,13 +500,13 @@ bool RunNewOrder(const size_t &thread_id){
       s_quantity = s_quantity + 91 - ol_qty;
     }
 
-    Value s_data = gsi_lists_values[0][1];
+    common::Value * s_data = gsi_lists_values[0][1];
 
-    int s_ytd = ValuePeeker::PeekAsInteger(gsi_lists_values[0][2]) + ol_qty;
+    int s_ytd = common::ValuePeeker::PeekInteger(gsi_lists_values[0][2]) + ol_qty;
 
-    int s_order_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][3]) + 1;
+    int s_order_cnt = common::ValuePeeker::PeekInteger(gsi_lists_values[0][3]) + 1;
 
-    int s_remote_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][4]);
+    int s_remote_cnt = common::ValuePeeker::PeekInteger(gsi_lists_values[0][4]);
 
     if (ol_w_id != warehouse_id) {
       s_remote_cnt += 1;
@@ -532,13 +532,13 @@ bool RunNewOrder(const size_t &thread_id){
       }
     }
     stock_target_list.emplace_back(
-        2, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_quantity)));
+        2, expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetIntegerValue(s_quantity)));
     stock_target_list.emplace_back(
-        13, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_ytd)));
+        13, expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetIntegerValue(s_ytd)));
     stock_target_list.emplace_back(
-        14, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_order_cnt)));
+        14, expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetIntegerValue(s_order_cnt)));
     stock_target_list.emplace_back(
-        15, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_remote_cnt)));
+        15, expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetIntegerValue(s_remote_cnt)));
 
     std::unique_ptr<const planner::ProjectInfo> stock_project_info(
         new planner::ProjectInfo(std::move(stock_target_list),
@@ -569,26 +569,26 @@ bool RunNewOrder(const size_t &thread_id){
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
     // OL_O_ID
-    order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
+    order_line_tuple->SetValue(0, common::ValueFactory::GetIntegerValue(common::ValuePeeker::PeekInteger(d_next_o_id)), nullptr);
     // OL_D_ID
-    order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
+    order_line_tuple->SetValue(1, common::ValueFactory::GetIntegerValue(district_id), nullptr);
     // OL_W_ID
-    order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+    order_line_tuple->SetValue(2, common::ValueFactory::GetIntegerValue(warehouse_id), nullptr);
     // OL_NUMBER
-    order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(i), nullptr);
+    order_line_tuple->SetValue(3, common::ValueFactory::GetIntegerValue(i), nullptr);
     // OL_I_ID
-    order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(item_id), nullptr);
+    order_line_tuple->SetValue(4, common::ValueFactory::GetIntegerValue(item_id), nullptr);
     // OL_SUPPLY_W_ID
-    order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_w_id), nullptr);
+    order_line_tuple->SetValue(5, common::ValueFactory::GetIntegerValue(ol_w_id), nullptr);
     // OL_DELIVERY_D
-    order_line_tuple->SetValue(6, ValueFactory::GetTimestampValue(1) , nullptr);
+    order_line_tuple->SetValue(6, common::ValueFactory::GetTimestampValue(1) , nullptr);
     // OL_QUANTITY
-    order_line_tuple->SetValue(7, ValueFactory::GetIntegerValue(ol_qty), nullptr);
+    order_line_tuple->SetValue(7, common::ValueFactory::GetIntegerValue(ol_qty), nullptr);
     // OL_AMOUNT
     // TODO: workaround!!! I don't know how to get float from Value.
-    order_line_tuple->SetValue(8, ValueFactory::GetDoubleValue(0), nullptr);
+    order_line_tuple->SetValue(8, common::ValueFactory::GetDoubleValue(0), nullptr);
     // OL_DIST_INFO
-    order_line_tuple->SetValue(9, s_data, nullptr);
+    order_line_tuple->SetValue(9, *s_data, nullptr);
 
     planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());
@@ -608,14 +608,14 @@ bool RunNewOrder(const size_t &thread_id){
 
   if (result == Result::RESULT_SUCCESS) {
     // transaction passed commitment.
-    LOG_TRACE("commit txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    LOG_TRACE("commit txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)common::ValuePeeker::PeekInteger(d_next_o_id));
     return true;
     
   } else {
     // transaction failed commitment.
     PL_ASSERT(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-    LOG_TRACE("abort txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    LOG_TRACE("abort txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)common::ValuePeeker::PeekInteger(d_next_o_id));
     return false;
   }
 }

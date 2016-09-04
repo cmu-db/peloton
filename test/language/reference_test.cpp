@@ -69,10 +69,10 @@ TEST_F(ReferenceTests, BasicTest) {
   int n = 1;
   int& r1 = n;          // lvalue reference to the object n
   const int& cr(n);     // reference can be more cv-qualified
-  volatile int& cv{n};  // any initializer syntax can be used
-  int& r2 = r1;         // another lvalue reference to the object n
+  UNUSED_ATTRIBUTE volatile int& cv{n};  // any initializer syntax can be used
+  UNUSED_ATTRIBUTE int& r2 = r1;         // another lvalue reference to the object n
   //    int& bad = cr; // error: less cv-qualified
-  int& r3 = const_cast<int&>(cr);  // const_cast is needed
+  UNUSED_ATTRIBUTE int& r3 = const_cast<int&>(cr);  // const_cast is needed
 
   // B b;
   // A& base_ref = b;  // reference to base subobject
@@ -80,15 +80,15 @@ TEST_F(ReferenceTests, BasicTest) {
 
   // rvalues
   //  int& bad = 1; // error: cannot bind lvalue ref to rvalue
-  const int& cref = 1;  // bound to rvalue
-  int&& rref = 1;       // bound to rvalue
+  UNUSED_ATTRIBUTE const int& cref = 1;  // bound to rvalue
+  UNUSED_ATTRIBUTE int&& rref = 1;       // bound to rvalue
 
   // const A& cref2 = bar();  // reference to A subobject of B temporary
   // A&& rref2 = bar();       // same
 
-  int&& xref = static_cast<int&&>(n);  // bind directly to n
+  UNUSED_ATTRIBUTE int&& xref = static_cast<int&&>(n);  // bind directly to n
   //  int&& copy_ref = n; // error: can't bind to an lvalue
-  double&& copy_ref = n;  // bind to an rvalue temporary with value 1.0
+  UNUSED_ATTRIBUTE double&& copy_ref = n;  // bind to an rvalue temporary with value 1.0
 
   // restrictions on temporary lifetimes
   // std::ostream& buf_ref = std::ostringstream() << 'a'; // the ostringstream

@@ -52,7 +52,7 @@ class DropPlan : public AbstractPlan {
     return returned_string;
   }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new DropPlan(target_table_));

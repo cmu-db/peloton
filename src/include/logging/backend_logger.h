@@ -22,7 +22,7 @@
 #include "logging/log_record.h"
 #include "logging/log_buffer.h"
 #include "common/platform.h"
-#include "common/pool.h"
+#include "common/varlen_pool.h"
 #include "logging/circular_buffer_pool.h"
 
 namespace peloton {
@@ -93,7 +93,7 @@ class BackendLogger : public Logger {
   void SetShutdown(bool);
 
   // gets the Varlenpool used for log serialization
-  VarlenPool *GetVarlenPool() { return backend_pool.get(); }
+  common::VarlenPool *GetVarlenPool() { return backend_pool.get(); }
 
  protected:
   // the lock for the buffer being used currently
@@ -127,7 +127,7 @@ class BackendLogger : public Logger {
   std::unique_ptr<BufferPool> persist_buffer_pool_;
 
   // varlen pool for serialization
-  std::unique_ptr<VarlenPool> backend_pool;
+  std::unique_ptr<common::VarlenPool> backend_pool;
 
   // shutdown flag
   bool shutdown = false;

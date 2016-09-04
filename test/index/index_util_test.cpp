@@ -56,17 +56,17 @@ static index::Index *BuildIndex() {
   // The size of the key is:
   //   integer 4 * 3 = total 12
 
-  catalog::Column column0(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column0(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "A", true);
 
-  catalog::Column column1(VALUE_TYPE_VARCHAR, 1024, "B", false);
+  catalog::Column column1(common::Type::VARCHAR, 1024, "B", false);
 
   // The following twoc constitutes tuple schema but does not appear in index
 
-  catalog::Column column2(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+  catalog::Column column2(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
                           "C", true);
 
-  catalog::Column column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+  catalog::Column column3(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
                           "D", true);
 
   // Use all four columns to build tuple schema
@@ -243,13 +243,13 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
 
-  std::vector<Value> value_list{};
+  std::vector<common::Value *> value_list{};
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
-  value_list = {ValueFactory::GetIntegerValue(100),
-                ValueFactory::GetIntegerValue(200),
-                ValueFactory::GetIntegerValue(50), };
+  value_list = {common::ValueFactory::GetIntegerValue(100).Copy(),
+                common::ValueFactory::GetIntegerValue(200).Copy(),
+                common::ValueFactory::GetIntegerValue(50).Copy(), };
 
   tuple_column_id_list = {3, 3, 0};
 
@@ -288,7 +288,9 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   // The condition means first index column does not equal 100
   ///////////////////////////////////////////////////////////////////
 
-  value_list = {ValueFactory::GetIntegerValue(100), };
+  for (auto val : value_list)
+    delete val;
+  value_list = {common::ValueFactory::GetIntegerValue(100).Copy(), };
 
   tuple_column_id_list = {3, };
 
@@ -313,9 +315,11 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 
   IndexScanPredicate isp2{};
 
-  value_list = {ValueFactory::GetIntegerValue(100),
-                ValueFactory::GetStringValue("Peloton!"),
-                ValueFactory::GetIntegerValue(50), };
+  for (auto val : value_list)
+    delete val;
+  value_list = {common::ValueFactory::GetIntegerValue(100).Copy(),
+                common::ValueFactory::GetVarcharValue("Peloton!").Copy(),
+                common::ValueFactory::GetIntegerValue(50).Copy(), };
 
   tuple_column_id_list = {3, 1, 0};
 
@@ -341,6 +345,9 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   ///////////////////////////////////////////////////////////////////
   delete index_p;
 
+  for (auto val : value_list)
+    delete val;
+
   return;
 }
 
@@ -353,13 +360,13 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
 
-  std::vector<Value> value_list{};
+  std::vector<common::Value *> value_list{};
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
-  value_list = {ValueFactory::GetBindingOnlyIntegerValue(2),
-                ValueFactory::GetBindingOnlyIntegerValue(0),
-                ValueFactory::GetBindingOnlyIntegerValue(1), };
+  value_list = {common::ValueFactory::GetBindingOnlyIntegerValue(2).Copy(),
+                common::ValueFactory::GetBindingOnlyIntegerValue(0).Copy(),
+                common::ValueFactory::GetBindingOnlyIntegerValue(1).Copy(), };
 
   tuple_column_id_list = {3, 3, 0};
 
@@ -392,9 +399,13 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   LOG_INFO("High key (NOT BINDED) = %s", cl[0].GetHighKey()->GetInfo().c_str());
 
   // Bind real value
-  isp.LateBindValues(index_p, {ValueFactory::GetIntegerValue(100),
-                               ValueFactory::GetIntegerValue(200),
-                               ValueFactory::GetIntegerValue(300)});
+  std::unique_ptr<common::Value> val1(
+      common::ValueFactory::GetIntegerValue(100).Copy());
+  std::unique_ptr<common::Value> val2(
+      common::ValueFactory::GetIntegerValue(200).Copy());
+  std::unique_ptr<common::Value> val3(
+      common::ValueFactory::GetIntegerValue(300).Copy());
+  isp.LateBindValues(index_p, {val1.get(), val2.get(), val3.get()});
 
   // This is important - Since binding does not change the number of
   // binding points, and their information is preserved for next
@@ -409,6 +420,9 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   // End of all tests
   ///////////////////////////////////////////////////////////////////
   delete index_p;
+
+  for (auto val : value_list)
+    delete val;
 
   return;
 }

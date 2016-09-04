@@ -29,13 +29,13 @@ using ColumnID = int32_t;
 //===--------------------------------------------------------------------===//
 class Column {
  public:
-  Column(ColumnID id, ValueType type, int size, std::string name, bool inlined);
+  Column(ColumnID id, common::Type::TypeId type, int size, std::string name, bool inlined);
 
   virtual ~Column() {}
 
   ColumnID ID() const;
 
-  ValueType Type() const;
+  common::Type::TypeId Type() const;
 
   int Size() const;
 
@@ -47,7 +47,7 @@ class Column {
 
  private:
   const ColumnID id;
-  const ValueType type;
+  const common::Type::TypeId type;
   const int size;
   const std::string name;
   const bool inlined;
@@ -58,7 +58,7 @@ class Column {
 //===--------------------------------------------------------------------===//
 class TableColumn : public Column {
  public:
-  TableColumn(ColumnID id, ValueType type, int size, std::string name,
+  TableColumn(ColumnID id, common::Type::TypeId type, int size, std::string name,
               bool inlined, oid_t base_table, oid_t column_index);
 
   oid_t BaseTableOid() const;
@@ -75,7 +75,7 @@ class TableColumn : public Column {
 //===--------------------------------------------------------------------===//
 class ExprColumn : public Column {
  public:
-  ExprColumn(ColumnID id, ValueType type, int size, std::string name,
+  ExprColumn(ColumnID id, common::Type::TypeId type, int size, std::string name,
              bool inlined);
 };
 

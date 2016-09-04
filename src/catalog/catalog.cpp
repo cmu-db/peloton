@@ -81,7 +81,7 @@ void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
       GetDatabaseCatalogTuple(databases_[START_OID]
                                   ->GetTableWithName(DATABASE_CATALOG_NAME)
                                   ->GetSchema(),
-                              database_id, database_name);
+                              database_id, database_name, pool_);
   catalog::InsertTuple(
       databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
       std::move(tuple), txn);
@@ -110,11 +110,9 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     CreatePrimaryIndex(database_name, table_name);
 
     // Update catalog_table with this table info
-    auto tuple = GetTableCatalogTuple(databases_[START_OID]
-                                          ->GetTableWithName(TABLE_CATALOG_NAME)
-                                          ->GetSchema(),
-                                      table_id, table_name, database_id,
-                                      database->GetDBName());
+    auto tuple = GetTableCatalogTuple(
+        databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
+        table_id, table_name, database_id, database->GetDBName(), pool_);
     //  Another way of insertion using transaction manager
     catalog::InsertTuple(
         databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
@@ -440,23 +438,23 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
 std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   const std::string not_null_constraint_name = "not_null";
 
-  auto id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "table_id", true);
+  auto id_column = catalog::Column(common::Type::INTEGER,
+    common::Type::GetTypeSize(common::Type::INTEGER), "table_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto name_column =
-      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size_, "table_name", true);
+      catalog::Column(common::Type::VARCHAR, max_name_size, "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  auto database_id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "database_id", true);
+  auto database_id_column = catalog::Column(common::Type::INTEGER,
+    common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  auto database_name_column = catalog::Column(
-      VALUE_TYPE_VARCHAR, max_name_size_, "database_name", true);
+  auto database_name_column =
+      catalog::Column(common::Type::VARCHAR, max_name_size, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -470,12 +468,12 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
 std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   const std::string not_null_constraint_name = "not_null";
 
-  auto id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "database_id", true);
+  auto id_column = catalog::Column(common::Type::INTEGER,
+    common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
-  auto name_column = catalog::Column(VALUE_TYPE_VARCHAR, max_name_size_,
-                                     "database_name", true);
+  auto name_column =
+      catalog::Column(common::Type::VARCHAR, max_name_size, "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -490,6 +488,10 @@ oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
 oid_t Catalog::GetNextOid() { return oid_++; }
 
-Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
+Catalog::~Catalog() {
+  delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  delete pool_;
+}
+
 }
 }

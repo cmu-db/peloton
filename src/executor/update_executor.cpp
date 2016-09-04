@@ -135,7 +135,7 @@ bool UpdateExecutor::DExecute() {
             new_tile_group.get(), new_location.offset);
 
         expression::ContainerTuple<storage::TileGroup> old_tuple(
-            tile_group, physical_tuple_id);        
+            tile_group, physical_tuple_id);
 
         // perform projection from old version to new version.
         // this triggers in-place update, and we do not need to allocate another version.

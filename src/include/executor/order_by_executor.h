@@ -14,13 +14,11 @@
 #pragma once
 
 #include "common/types.h"
+#include "common/varlen_pool.h"
 #include "executor/abstract_executor.h"
 #include "storage/tuple.h"
 
 namespace peloton {
-
-class VarlenPool;
-
 namespace executor {
 
 /**

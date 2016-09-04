@@ -42,7 +42,7 @@ void Variable::accept(QueryNodeVisitor *v) const { v->visit(this); }
 //===--------------------------------------------------------------------===//
 // Constant
 //===--------------------------------------------------------------------===//
-Constant::Constant(Value value) : value(value) {}
+Constant::Constant(common::Value *value) : value(value->Copy()) {}
 
 ExpressionType Constant::GetExpressionType() const {
   return EXPRESSION_TYPE_VALUE_CONSTANT;
@@ -54,7 +54,7 @@ void Constant::accept(QueryNodeVisitor *v) const { v->visit(this); }
 // OperatorExpression - matches with Peloton's operator_expression.h
 //===--------------------------------------------------------------------===//
 OperatorExpression::OperatorExpression(
-    peloton::ExpressionType type, ValueType value_type,
+    peloton::ExpressionType type, common::Type::TypeId value_type,
     const std::vector<QueryExpression *> &args)
     : type(type), value_type(value_type), args(args) {}
 

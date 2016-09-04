@@ -29,12 +29,7 @@
 #include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
 #include "catalog/schema.h"
-#include "expression/abstract_expression.h"
-#include "expression/parser_expression.h"
 #include "expression/expression_util.h"
-#include "expression/constant_value_expression.h"
-#include "expression/operator_expression.h"
-#include "expression/conjunction_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "catalog/catalog.h"
@@ -261,7 +256,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   EXPRESSION_TYPE_AGGREGATE_AVG) {
 
                 auto column = catalog::Column(
-                    VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+                    common::Type::DECIMAL,
+                    common::Type::GetTypeSize(common::Type::DECIMAL),
                     "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                              // used only when
                                                              // there is no AS
@@ -278,7 +274,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                     target_table->GetSchema()->GetColumn(old_col_id);
 
                 auto column = catalog::Column(
-                    table_column.GetType(), GetTypeSize(table_column.GetType()),
+                    table_column.GetType(),
+                    common::Type::GetTypeSize(table_column.GetType()),
                     "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                              // used only when
                                                              // there is no AS
@@ -308,7 +305,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                         outer_pair.second.first, outer_pair.second.second);
 
               auto column = catalog::Column(
-                  VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                  common::Type::INTEGER,
+                  common::Type::GetTypeSize(common::Type::INTEGER),
                   "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                            // used only when
                                                            // there is no AS
@@ -340,7 +338,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 target_table->GetSchema()->GetColumn(old_col_id);
 
             auto column = catalog::Column(
-                table_column.GetType(), GetTypeSize(table_column.GetType()),
+                table_column.GetType(),
+                common::Type::GetTypeSize(table_column.GetType()),
                 "COL_" + std::to_string(col_cntr_id++),  // COL_A should be used
                                                          // only when there is
                                                          // no AS
@@ -425,13 +424,13 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // column predicates passing to the index
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<common::Value *> values;
 
   // column predicates between the tuple value and the constant in the where
   // clause
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<Value> predicate_values;
+  std::vector<common::Value *> predicate_values;
 
   if (select_stmt->where_clause != NULL) {
     index_searchable = true;
@@ -544,7 +543,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 void SimpleOptimizer::GetPredicateColumns(
     catalog::Schema* schema, expression::AbstractExpression* expression,
     std::vector<oid_t>& column_ids, std::vector<ExpressionType>& expr_types,
-    std::vector<Value>& values, bool& index_searchable) {
+    std::vector<common::Value *>& values, bool& index_searchable) {
 
   // For now, all conjunctions should be AND when using index scan.
   if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_OR)
@@ -575,16 +574,15 @@ void SimpleOptimizer::GetPredicateColumns(
       expr_types.push_back(expression->GetExpressionType());
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-            expression->GetModifiableRight())->getValue());
+            expression->GetModifiableRight())->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
                       expression->GetModifiableRight())
-                      ->getValue()
-                      .GetValueType());
+                      ->GetValueType());
       } else
-        values.push_back(std::move(ValueFactory::GetBindingOnlyIntegerValue(
+        values.push_back(common::ValueFactory::GetIntegerValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableRight())->GetValueIdx())));
+                expression->GetModifiableRight())->GetValueIdx()).Copy());
     }
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
@@ -600,16 +598,15 @@ void SimpleOptimizer::GetPredicateColumns(
       expr_types.push_back(expression->GetExpressionType());
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-            expression->GetModifiableRight())->getValue());
+            expression->GetModifiableRight())->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
                       expression->GetModifiableLeft())
-                      ->getValue()
-                      .GetValueType());
+                      ->GetValueType());
       } else
-        values.push_back(std::move(ValueFactory::GetBindingOnlyIntegerValue(
+        values.push_back(common::ValueFactory::GetIntegerValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableLeft())->GetValueIdx())));
+                expression->GetModifiableLeft())->GetValueIdx()).Copy());
     }
   } else {
     GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,
@@ -633,8 +630,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   // Manually constructing the predicate....
   expression::ParameterValueExpression* params[6];
   for (int i = 0; i < 6; ++i)
-    params[i] = new expression::ParameterValueExpression(
-        VALUE_TYPE_PARAMETER_OFFSET, i);
+    params[i] = new expression::ParameterValueExpression(i);
 
   char ol_w_id_name[] = "ol_w_id";
   char ol_d_id_name[] = "ol_d_id";
@@ -649,31 +645,28 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   auto ol_o_id_2 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
                                                     ol_o_id_2_name);
 
-  auto predicate1 = new expression::ComparisonExpression<expression::CmpEq>(
+  auto predicate1 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, ol_w_id, params[0]);
-  auto predicate2 = new expression::ComparisonExpression<expression::CmpEq>(
+  auto predicate2 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, ol_d_id, params[1]);
-  auto predicate3 = new expression::ComparisonExpression<expression::CmpLt>(
+  auto predicate3 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, ol_o_id_1, params[2]);
 
-  auto predicate5 = new expression::ComparisonExpression<expression::CmpGte>(
+  auto predicate5 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, params[3]);
 
-  auto predicate6 =
-      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate1, predicate2);
-  auto predicate7 =
-      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate3, predicate5);
-  auto predicate8 =
-      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate6, predicate7);
+  auto predicate6 = new expression::ConjunctionExpression(
+      EXPRESSION_TYPE_CONJUNCTION_AND, predicate1, predicate2);
+  auto predicate7 = new expression::ConjunctionExpression(
+      EXPRESSION_TYPE_CONJUNCTION_AND, predicate3, predicate5);
+  auto predicate8 = new expression::ConjunctionExpression(
+      EXPRESSION_TYPE_CONJUNCTION_AND, predicate6, predicate7);
 
   // Get the index scan descriptor
   bool index_searchable;
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<Value> predicate_values;
+  std::vector<common::Value *> predicate_values;
   std::vector<oid_t> column_ids = {4};
   std::vector<expression::AbstractExpression*> runtime_keys;
 
@@ -698,17 +691,16 @@ SimpleOptimizer::CreateHackingJoinPlan() {
       new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF, s_w_id_name);
   auto s_quantity = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
                                                      s_quantity_name);
-  auto predicate9 = new expression::ComparisonExpression<expression::CmpEq>(
+  auto predicate9 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, s_w_id, params[4]);
-  auto predicate10 = new expression::ComparisonExpression<expression::CmpLt>(
+  auto predicate10 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[5]);
-  auto predicate11 =
-      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+  auto predicate11 = new expression::ConjunctionExpression(
           EXPRESSION_TYPE_CONJUNCTION_AND, predicate9, predicate10);
 
   predicate_column_ids = {0};
   predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL};
-  predicate_values = {ValueFactory::GetBindingOnlyIntegerValue(4)};
+  predicate_values = {common::ValueFactory::GetIntegerValue(4).Copy()};
   column_ids = {1};
 
   index = stock_table->GetIndex(0);
@@ -724,7 +716,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 
   // Create hash plan node
   expression::AbstractExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   hash_keys.emplace_back(right_table_attr_1);
@@ -736,11 +728,11 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 
   // LEFT.4 == RIGHT.1
   expression::TupleValueExpression* left_table_attr_4 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
   right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
   std::unique_ptr<const expression::AbstractExpression> join_predicate(
-      new expression::ComparisonExpression<expression::CmpEq>(
+      new expression::ComparisonExpression(
           EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_4,
           right_table_attr_1));
 
@@ -756,7 +748,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   hash_join_plan_node->AddChild(std::move(hash_plan_node));
 
   expression::TupleValueExpression* left_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
 
   planner::AggregatePlan::AggTerm agg_term(
       ParserExpressionNameToExpressionType("count"), left_table_attr_1, 1);
@@ -780,7 +772,8 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
 
   auto column =
-      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+      catalog::Column(common::Type::INTEGER,
+                      common::Type::GetTypeSize(common::Type::INTEGER),
                       "COL_0",  // COL_A should be
                                 // used only when
                                 // there is no AS
@@ -818,8 +811,8 @@ std::unique_ptr<const planner::ProjectInfo> CreateHackProjection() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
-  auto column = catalog::Column(VALUE_TYPE_INTEGER,
-                                GetTypeSize(VALUE_TYPE_INTEGER), "S_I_ID", 1);
+  auto column = catalog::Column(common::Type::INTEGER,
+      common::Type::GetTypeSize(common::Type::INTEGER), "S_I_ID", 1);
 
   column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));

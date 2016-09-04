@@ -13,11 +13,12 @@
 
 #pragma once
 
-#include "common/pool.h"
+#include "common/varlen_pool.h"
+#include "common/value.h"
 
 namespace peloton {
 
-class Value;
+//class Value;
 
 namespace concurrency{
 class Transaction;
@@ -39,20 +40,20 @@ class ExecutorContext {
   ExecutorContext(concurrency::Transaction *transaction);
 
   ExecutorContext(concurrency::Transaction *transaction,
-                  const std::vector<Value> &params);
+                  const std::vector<common::Value *> &params);
 
   ~ExecutorContext();
 
   concurrency::Transaction *GetTransaction() const;
 
-  const std::vector<Value> &GetParams() const;
+  const std::vector<common::Value *> &GetParams() const;
 
-  void SetParams(Value value);
+  void SetParams(common::Value *value);
 
   void ClearParams();
 
   // Get a varlen pool (will construct the pool only if needed)
-  VarlenPool *GetExecutorContextPool();
+  common::VarlenPool *GetExecutorContextPool();
 
   // num of tuple processed
   uint32_t num_processed = 0;
@@ -66,10 +67,10 @@ class ExecutorContext {
   concurrency::Transaction *transaction_;
 
   // params
-  std::vector<Value> params_;
+  std::vector<common::Value *> params_;
 
   // pool
-  std::unique_ptr<VarlenPool> pool_;
+  std::unique_ptr<common::VarlenPool> pool_;
 
 };
 

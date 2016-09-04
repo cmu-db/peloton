@@ -24,7 +24,9 @@ namespace peloton {
 // Utils
 //===--------------------------------------------------------------------===//
 
+namespace common {
 class VarlenPool;
+}
 
 namespace catalog {
 class Column;
@@ -98,9 +100,9 @@ class ExecutorTestsUtil {
 
   static std::unique_ptr<storage::Tuple> GetTuple(storage::DataTable *table,
                                                   oid_t tuple_id,
-                                                  VarlenPool *pool);
+                                                  common::VarlenPool *pool);
   static std::unique_ptr<storage::Tuple> GetNullTuple(storage::DataTable *table,
-                                                      VarlenPool *pool);
+                                                      common::VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(

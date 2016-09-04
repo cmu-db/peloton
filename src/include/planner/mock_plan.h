@@ -40,7 +40,7 @@ class MockPlan : public planner::AbstractPlan {
 
   inline const std::string GetInfo() const { return "Mock"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<planner::AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new MockPlan());

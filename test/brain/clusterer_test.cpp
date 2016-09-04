@@ -69,14 +69,14 @@ TEST_F(ClustererTests, BasicTest) {
   auto partitioning1 = clusterer.GetPartitioning(2);
 
   LOG_INFO("COLUMN \t TILE");
-  for (auto entry : partitioning1) {
+  for (UNUSED_ATTRIBUTE auto entry : partitioning1) {
     LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
              entry.second.second);
   }
 
   auto partitioning2 = clusterer.GetPartitioning(4);
   LOG_INFO("COLUMN \t TILE");
-  for (auto entry : partitioning2) {
+  for (UNUSED_ATTRIBUTE auto entry : partitioning2) {
     LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
              entry.second.second);
   }

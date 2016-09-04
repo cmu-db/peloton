@@ -48,7 +48,7 @@ class ProjectionPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Projection"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   void SetColumnIds(const std::vector<oid_t> &column_ids) {
     column_ids_ = column_ids;
