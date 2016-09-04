@@ -44,7 +44,7 @@ class Manager {
   static Manager &GetInstance();
 
   //===--------------------------------------------------------------------===//
-  // OBJECT MAP
+  // TILE GROUP ALLOCATION
   //===--------------------------------------------------------------------===//
 
   oid_t GetNextTileId() { return ++tile_oid_; }
@@ -64,6 +64,11 @@ class Manager {
 
   void ClearTileGroup(void);
 
+
+  //===--------------------------------------------------------------------===//
+  // INDIRECTION ARRAY ALLOCATION
+  //===--------------------------------------------------------------------===//
+
   oid_t GetNextIndirectionArrayId() { return ++indirection_array_oid_; }
 
   oid_t GetCurrentIndirectionArrayId() { return indirection_array_oid_; }
@@ -79,20 +84,26 @@ class Manager {
 
  private:
   //===--------------------------------------------------------------------===//
-  // Data members
+  // Data member for tile allocation
   //===--------------------------------------------------------------------===//
 
   std::atomic<oid_t> tile_oid_ = ATOMIC_VAR_INIT(START_OID);
 
+  //===--------------------------------------------------------------------===//
+  // Data members for tile group allocation
+  //===--------------------------------------------------------------------===//
   std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
-
-  std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
 
   LockFreeArray<std::shared_ptr<storage::TileGroup>> tile_group_locator_;
 
-  LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
-
   static std::shared_ptr<storage::TileGroup> empty_tile_group_;
+
+  //===--------------------------------------------------------------------===//
+  // Data members for indirection array allocation
+  //===--------------------------------------------------------------------===//
+  std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
+
+  LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
 
   static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };

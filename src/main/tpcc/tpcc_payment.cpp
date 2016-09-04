@@ -600,41 +600,41 @@ bool RunPayment(const size_t &thread_id){
     return false;
   }
 
-  // LOG_TRACE("insertHistory: INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-  // std::unique_ptr<storage::Tuple> history_tuple(new storage::Tuple(history_table->GetSchema(), true));
+  LOG_TRACE("insertHistory: INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+  std::unique_ptr<storage::Tuple> history_tuple(new storage::Tuple(history_table->GetSchema(), true));
 
-  // // Note: workaround
-  // // auto h_data = data_constant;
+  // Note: workaround
+  auto h_data = data_constant;
 
-  // // H_C_ID
-  // history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
-  // // H_C_D_ID
-  // history_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_district_id), nullptr);
-  // // H_C_W_ID
-  // history_tuple->SetValue(2, ValueFactory::GetIntegerValue(customer_warehouse_id), nullptr);
-  // // H_D_ID
-  // history_tuple->SetValue(3, ValueFactory::GetIntegerValue(district_id), nullptr);
-  // // H_W_ID
-  // history_tuple->SetValue(4, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
-  // // H_DATE
-  // history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date), nullptr);
-  // // H_AMOUNT
-  // history_tuple->SetValue(6, ValueFactory::GetDoubleValue(h_amount), nullptr);
-  // // H_DATA
-  // history_tuple->SetValue(7, ValueFactory::GetStringValue(data_constant), context.get()->GetExecutorContextPool());
+  // H_C_ID
+  history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
+  // H_C_D_ID
+  history_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_district_id), nullptr);
+  // H_C_W_ID
+  history_tuple->SetValue(2, ValueFactory::GetIntegerValue(customer_warehouse_id), nullptr);
+  // H_D_ID
+  history_tuple->SetValue(3, ValueFactory::GetIntegerValue(district_id), nullptr);
+  // H_W_ID
+  history_tuple->SetValue(4, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  // H_DATE
+  history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date), nullptr);
+  // H_AMOUNT
+  history_tuple->SetValue(6, ValueFactory::GetDoubleValue(h_amount), nullptr);
+  // H_DATA
+  history_tuple->SetValue(7, ValueFactory::GetStringValue(h_data), context.get()->GetExecutorContextPool());
 
-  // planner::InsertPlan history_insert_node(history_table, std::move(history_tuple));
-  // executor::InsertExecutor history_insert_executor(&history_insert_node, context.get());
+  planner::InsertPlan history_insert_node(history_table, std::move(history_tuple));
+  executor::InsertExecutor history_insert_executor(&history_insert_node, context.get());
 
-  // // Execute
-  // history_insert_executor.Execute();
+  // Execute
+  history_insert_executor.Execute();
 
-  // // Check result
-  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
-  //   LOG_TRACE("abort transaction");
-  //   txn_manager.AbortTransaction(txn);
-  //   return false;
-  // }
+  // Check result
+  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    LOG_TRACE("abort transaction");
+    txn_manager.AbortTransaction(txn);
+    return false;
+  }
 
   PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
 
