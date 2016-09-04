@@ -165,7 +165,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hemgi:k:d:p:b:c:o:u:z:", opts, &idx);
+    int c = getopt_long(argc, argv, "hemgi:k:d:p:b:c:o:u:z:n:", opts, &idx);
 
     if (c == -1) break;
 
@@ -218,6 +218,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'n':
         state.gc_backend_count = atof(optarg);
         break;
+        
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);

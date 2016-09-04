@@ -15,11 +15,12 @@
 #include <fstream>
 #include <iomanip>
 
+#include "common/logger.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "benchmark/tpcc/tpcc_loader.h"
 #include "benchmark/tpcc/tpcc_workload.h"
 
-#include "common/logger.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -57,6 +58,11 @@ static void WriteOutput() {
 
 // Main Entry Point
 void RunBenchmark() {
+
+  if (state.gc_mode == true) {
+    gc::GCManagerFactory::Configure(state.gc_backend_count);
+  }
+  
   // Create the database
   CreateTPCCDatabase();
 
