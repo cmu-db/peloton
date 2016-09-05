@@ -38,7 +38,6 @@ class ThreadPool {
     PL_ASSERT(pool_size_ != 0);
 
     dedicated_thread_count_ = dedicated_thread_count;
-    PL_ASSERT(dedicated_thread_count_ != 0);
 
     for (size_t i = 0; i < pool_size_; ++i) {
       // add thread to thread pool.
