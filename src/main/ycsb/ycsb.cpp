@@ -78,6 +78,8 @@ void RunBenchmark() {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
   
+  gc::GCManagerFactory::GetInstance().StartGC();
+
   // Create the database
   CreateYCSBDatabase();
 
@@ -88,8 +90,6 @@ void RunBenchmark() {
   RunWorkload();
   
   gc::GCManagerFactory::GetInstance().StopGC();
-  std::this_thread::sleep_for (std::chrono::seconds(1));  
-
 
   // Emit throughput
   WriteOutput();

@@ -35,13 +35,20 @@ void PelotonInit::Initialize() {
   // std::thread::hardware_concurrency() should be
   // chosen. Assigning new task after reaching maximum will
   // block.
-  thread_pool.Initialize(std::thread::hardware_concurrency());
+  thread_pool.Initialize(std::thread::hardware_concurrency(), 0);
 
-  // currently, we assign the garbage collector with dedicated threads.
-  gc::GCManagerFactory::GetInstance();
+  // the garbage collector is assigned to dedicated threads.
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  gc_manager.StartGC();
 }
 
 void PelotonInit::Shutdown() {
+
+  // shut down GC.
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  gc_manager.StopGC();
+
+  thread_pool.Shutdown();
 
   // Terminate CDS library
   cds::Terminate();
