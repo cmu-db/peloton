@@ -27,7 +27,7 @@ peloton_default_properties(peloton-parser)
 
 # --[ Parser Flags
 
-set(PARSER_FLAGS "-w -Wno-error -fpermissive")
+set(PARSER_FLAGS "-w -Wno-error -fpermissive -Wno-sign-compare")
 set_source_files_properties(${SQLParser_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
 set_source_files_properties(${SQLScanner_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
 
@@ -69,6 +69,16 @@ file(GLOB_RECURSE sdbench_srcs ${PROJECT_SOURCE_DIR}/src/main/sdbench/*.cpp)
 add_executable(sdbench EXCLUDE_FROM_ALL ${sdbench_srcs})
 target_link_libraries(sdbench peloton)
 
+
+# Llink to jemalloc.
+# --[ link jemalloc
+set(EXE_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
+set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
+set(EXE_LIST peloton-bin ycsb tpcc sdbench)
+foreach(exe_name ${EXE_LIST})
+    target_link_libraries(${exe_name} ${EXE_LINK_LIBRARIES})
+    set_target_properties(${exe_name} PROPERTIES LINK_FLAGS ${EXE_LINK_FLAGS})
+endforeach()
 
 # --[ benchmark
 

@@ -14,6 +14,7 @@
 #include <mutex>
 
 #include "statistics/latency_metric.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace stats {
@@ -25,7 +26,7 @@ LatencyMetric::LatencyMetric(MetricType type, size_t max_history)
 }
 
 void LatencyMetric::Aggregate(AbstractMetric& source) {
-  assert(source.GetType() == LATENCY_METRIC);
+  PL_ASSERT(source.GetType() == LATENCY_METRIC);
 
   LatencyMetric& latency_metric = static_cast<LatencyMetric&>(source);
   CircularBuffer<double> source_latencies = latency_metric.Copy();
