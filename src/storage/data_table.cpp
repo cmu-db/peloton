@@ -310,14 +310,20 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   size_t active_indirection_array_id = number_of_tuples_ % ACTIVE_INDIRECTION_ARRAY_COUNT;
 
-  size_t indirection_offset = active_indirection_arrays_[active_indirection_array_id]->AllocateIndirection();
+  size_t indirection_offset = INVALID_INDIRECTION_OFFSET;
+  
+  while (true) {
+    auto active_indirection_array = active_indirection_arrays_[active_indirection_array_id];
+    indirection_offset = active_indirection_array->AllocateIndirection();
 
-  while (indirection_offset == INVALID_INDIRECTION_OFFSET);
+    if (indirection_offset != INVALID_INDIRECTION_OFFSET) {
+      *index_entry_ptr = active_indirection_array->GetIndirectionByOffset(indirection_offset);
+      break;
+    }
+  }
 
-  *index_entry_ptr = active_indirection_arrays_[active_indirection_array_id]->GetIndirectionByOffset(indirection_offset);
   (*index_entry_ptr)->block = location.block;
   (*index_entry_ptr)->offset = location.offset;
-
 
   if (indirection_offset == INDIRECTION_ARRAY_MAX_SIZE - 1) {
     AddDefaultIndirectionArray(active_indirection_array_id);
