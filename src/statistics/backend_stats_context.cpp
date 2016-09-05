@@ -24,13 +24,19 @@
 namespace peloton {
 namespace stats {
 
-BackendStatsContext& BackendStatsContext::GetInstance() {
+CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
+    BackendStatsContext::stats_context_map_;
+
+BackendStatsContext* BackendStatsContext::GetInstance() {
 
   // Each thread gets a backend stats context
-  thread_local static BackendStatsContext stats_context(
-      LATENCY_MAX_HISTORY_THREAD, true);
-
-  return stats_context;
+  std::thread::id this_id = std::this_thread::get_id();
+  std::shared_ptr<BackendStatsContext> result(nullptr);
+  if (!stats_context_map_.Find(this_id, result)) {
+    result.reset(new BackendStatsContext(LATENCY_MAX_HISTORY_THREAD, true));
+    stats_context_map_.Insert(this_id, result);
+  }
+  return result.get();
 }
 
 BackendStatsContext::BackendStatsContext(size_t max_latency_history,
@@ -210,7 +216,7 @@ void BackendStatsContext::Aggregate(BackendStatsContext& source) {
 
   // Aggregate all per-database metrics
   //  for (auto& database_item : database_metrics_) {
-  //    auto worker_db_metric = source.GetDatabaseMetric(database_item.first);
+  //    auto worker_db_metric = source->GetDatabaseMetric(database_item.first);
   //    if (worker_db_metric != nullptr) {
   //      database_item.second->Aggregate(*worker_db_metric);
   //    }
@@ -221,7 +227,7 @@ void BackendStatsContext::Aggregate(BackendStatsContext& source) {
 
   // Aggregate all per-table metrics
   //  for (auto& table_item : table_metrics_) {
-  //    auto worker_table_metric = source.GetTableMetric(
+  //    auto worker_table_metric = source->GetTableMetric(
   //        table_item.second->GetDatabaseId(),
   // table_item.second->GetTableId());
   //    if (worker_table_metric != nullptr) {

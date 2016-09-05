@@ -153,13 +153,13 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
     catalog::Schema *schema, oid_t database_id, oid_t table_id, oid_t index_id,
     int64_t reads, int64_t deletes, int64_t inserts, int64_t time_stamp) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-  Value val1 = ValueFactory::GetIntegerValue(database_id);
-  Value val2 = ValueFactory::GetIntegerValue(table_id);
-  Value val3 = ValueFactory::GetIntegerValue(index_id);
-  Value val4 = ValueFactory::GetIntegerValue(reads);
-  Value val5 = ValueFactory::GetIntegerValue(deletes);
-  Value val6 = ValueFactory::GetIntegerValue(inserts);
-  Value val7 = ValueFactory::GetIntegerValue(time_stamp);
+  auto val1 = common::ValueFactory::GetIntegerValue(database_id);
+  auto val2 = common::ValueFactory::GetIntegerValue(table_id);
+  auto val3 = common::ValueFactory::GetIntegerValue(index_id);
+  auto val4 = common::ValueFactory::GetIntegerValue(reads);
+  auto val5 = common::ValueFactory::GetIntegerValue(deletes);
+  auto val6 = common::ValueFactory::GetIntegerValue(inserts);
+  auto val7 = common::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(0, val1, nullptr);
   tuple->SetValue(1, val2, nullptr);

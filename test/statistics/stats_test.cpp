@@ -36,13 +36,12 @@ namespace test {
 
 class StatsTest : public PelotonTest {};
 
-// TODO test index stats aggregation
 void TransactionTest(storage::Database *database, storage::DataTable *table,
                      UNUSED_ATTRIBUTE uint64_t thread_itr) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
   auto tile_group_id = table->GetTileGroup(0)->GetTileGroupId();
   auto index_metadata = table->GetIndex(0)->GetMetadata();
-  auto &context = stats::BackendStatsContext::GetInstance();
+  auto context = stats::BackendStatsContext::GetInstance();
 
   for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
 
@@ -51,20 +50,20 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
       std::this_thread::sleep_for(sleep_time);
     }
     // Record database stat
-    context.IncrementTxnCommitted(database->GetOid());
-    context.IncrementTxnAborted(database->GetOid());
-    context.IncrementTxnAborted(database->GetOid());
+    context->IncrementTxnCommitted(database->GetOid());
+    context->IncrementTxnAborted(database->GetOid());
+    context->IncrementTxnAborted(database->GetOid());
     // Record table stat
-    context.IncrementTableReads(tile_group_id);
-    context.IncrementTableReads(tile_group_id);
-    context.IncrementTableUpdates(tile_group_id);
-    context.IncrementTableDeletes(tile_group_id);
-    context.IncrementTableDeletes(tile_group_id);
-    context.IncrementTableInserts(tile_group_id);
+    context->IncrementTableReads(tile_group_id);
+    context->IncrementTableReads(tile_group_id);
+    context->IncrementTableUpdates(tile_group_id);
+    context->IncrementTableDeletes(tile_group_id);
+    context->IncrementTableDeletes(tile_group_id);
+    context->IncrementTableInserts(tile_group_id);
     // Record index stat
-    context.IncrementIndexReads(1, index_metadata);
-    context.IncrementIndexDeletes(2, index_metadata);
-    context.IncrementIndexInserts(index_metadata);
+    context->IncrementIndexReads(1, index_metadata);
+    context->IncrementIndexDeletes(2, index_metadata);
+    context->IncrementIndexInserts(index_metadata);
   }
 }
 
@@ -186,11 +185,11 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Check: # transactions committed = 1, # table inserts = 10
   int64_t txn_commited = stats::BackendStatsContext::GetInstance()
-                             .GetDatabaseMetric(database_id)
+                             ->GetDatabaseMetric(database_id)
                              ->GetTxnCommitted()
                              .GetCounter();
   int64_t inserts = stats::BackendStatsContext::GetInstance()
-                        .GetTableMetric(database_id, table_id)
+                        ->GetTableMetric(database_id, table_id)
                         ->GetTableAccess()
                         .GetInserts();
   EXPECT_EQ(1, txn_commited);
@@ -207,15 +206,15 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Check: # transactions committed = 2, # inserts = 10, # reads = 5
   txn_commited = stats::BackendStatsContext::GetInstance()
-                     .GetDatabaseMetric(database_id)
+                     ->GetDatabaseMetric(database_id)
                      ->GetTxnCommitted()
                      .GetCounter();
   inserts = stats::BackendStatsContext::GetInstance()
-                .GetTableMetric(database_id, table_id)
+                ->GetTableMetric(database_id, table_id)
                 ->GetTableAccess()
                 .GetInserts();
   int64_t reads = stats::BackendStatsContext::GetInstance()
-                      .GetTableMetric(database_id, table_id)
+                      ->GetTableMetric(database_id, table_id)
                       ->GetTableAccess()
                       .GetReads();
   EXPECT_EQ(2, txn_commited);
@@ -231,15 +230,15 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Check: # txns committed = 2, # txns aborted = 1, # reads = 6
   txn_commited = stats::BackendStatsContext::GetInstance()
-                     .GetDatabaseMetric(database_id)
+                     ->GetDatabaseMetric(database_id)
                      ->GetTxnCommitted()
                      .GetCounter();
   int64_t txn_aborted = stats::BackendStatsContext::GetInstance()
-                            .GetDatabaseMetric(database_id)
+                            ->GetDatabaseMetric(database_id)
                             ->GetTxnAborted()
                             .GetCounter();
   reads = stats::BackendStatsContext::GetInstance()
-              .GetTableMetric(database_id, table_id)
+              ->GetTableMetric(database_id, table_id)
               ->GetTableAccess()
               .GetReads();
   EXPECT_EQ(2, txn_commited);
@@ -253,15 +252,15 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Check: # txns committed = 3, # updates = 1, # reads = 7
   txn_commited = stats::BackendStatsContext::GetInstance()
-                     .GetDatabaseMetric(database_id)
+                     ->GetDatabaseMetric(database_id)
                      ->GetTxnCommitted()
                      .GetCounter();
   reads = stats::BackendStatsContext::GetInstance()
-              .GetTableMetric(database_id, table_id)
+              ->GetTableMetric(database_id, table_id)
               ->GetTableAccess()
               .GetReads();
   int64_t updates = stats::BackendStatsContext::GetInstance()
-                        .GetTableMetric(database_id, table_id)
+                        ->GetTableMetric(database_id, table_id)
                         ->GetTableAccess()
                         .GetUpdates();
   EXPECT_EQ(3, txn_commited);
@@ -279,15 +278,15 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Check: # txns committed = 4, # deletes = 1, # reads = 8
   txn_commited = stats::BackendStatsContext::GetInstance()
-                     .GetDatabaseMetric(database_id)
+                     ->GetDatabaseMetric(database_id)
                      ->GetTxnCommitted()
                      .GetCounter();
   reads = stats::BackendStatsContext::GetInstance()
-              .GetTableMetric(database_id, table_id)
+              ->GetTableMetric(database_id, table_id)
               ->GetTableAccess()
               .GetReads();
   int64_t deletes = stats::BackendStatsContext::GetInstance()
-                        .GetTableMetric(database_id, table_id)
+                        ->GetTableMetric(database_id, table_id)
                         ->GetTableAccess()
                         .GetDeletes();
   EXPECT_EQ(4, txn_commited);

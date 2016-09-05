@@ -106,7 +106,8 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   // LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
   // LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
 
-  LOG_INFO("Inserting into catalog database..");
+  // TODO refactor me
+  LOG_DEBUG("Inserting stat tuples into catalog database..");
   auto catalog = catalog::Catalog::GetInstance();
   PL_ASSERT(catalog->GetDatabaseCount() > 0);
   storage::Database *catalog_database =

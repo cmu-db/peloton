@@ -95,7 +95,7 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
-        .GetTxnLatencyMetric()
+        ->GetTxnLatencyMetric()
         .StartTimer();
   }
 
@@ -118,7 +118,7 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
-        .GetTxnLatencyMetric()
+        ->GetTxnLatencyMetric()
         .RecordLatency();
   }
 }
@@ -356,7 +356,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
               current_txn->GetBeginCommitId());
     // Increment table read op stats
     if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance().IncrementTableReads(
+      stats::BackendStatsContext::GetInstance()->IncrementTableReads(
           location.block);
     }
     return true;
@@ -368,7 +368,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
     current_txn->RecordRead(location);
     // Increment table read op stats
     if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance().IncrementTableReads(
+      stats::BackendStatsContext::GetInstance()->IncrementTableReads(
           location.block);
     }
     return true;
@@ -411,7 +411,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   // Increment table insert op stats
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTableInserts(
+    stats::BackendStatsContext::GetInstance()->IncrementTableInserts(
         location.block);
   }
 }
@@ -505,7 +505,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // Increment table update op stats
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTableUpdates(
+    stats::BackendStatsContext::GetInstance()->IncrementTableUpdates(
         new_location.block);
   }
 }
@@ -533,7 +533,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // Increment table update op stats
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTableUpdates(
+    stats::BackendStatsContext::GetInstance()->IncrementTableUpdates(
         location.block);
   }
 }
@@ -624,7 +624,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   // Increment table delete op stats
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTableDeletes(
+    stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
         old_location.block);
   }
 }
@@ -656,7 +656,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   // Increment table delete op stats
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTableDeletes(
+    stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
         location.block);
   }
 }
@@ -788,7 +788,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
   // Increment # txns committed metric
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
-        .GetDatabaseMetric(database_id)
+        ->GetDatabaseMetric(database_id)
         ->IncrementTxnCommitted();
   }
 
@@ -962,7 +962,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
   // Increment # txns aborted metric
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementTxnAborted(database_id);
+    stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
   }
 
   return Result::RESULT_ABORTED;

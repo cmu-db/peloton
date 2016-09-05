@@ -617,33 +617,33 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto database_id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "database_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto table_id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "table_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "table_id", true);
   table_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto index_id_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "index_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "index_id", true);
   index_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto reads_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "reads", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "reads", true);
   reads_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto deletes_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "deletes", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "deletes", true);
   deletes_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto inserts_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "inserts", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "inserts", true);
   inserts_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto timestamp_column = catalog::Column(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "time_stamp", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "time_stamp", true);
   timestamp_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 

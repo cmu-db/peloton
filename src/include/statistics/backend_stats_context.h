@@ -21,6 +21,7 @@
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
 #include "statistics/database_metric.h"
+#include "container/cuckoo_map.h"
 
 namespace peloton {
 
@@ -37,7 +38,7 @@ class CounterMetric;
  */
 class BackendStatsContext {
  public:
-  static BackendStatsContext& GetInstance();
+  static BackendStatsContext* GetInstance();
 
   BackendStatsContext(size_t max_latency_history, bool regiser_to_aggregator);
   ~BackendStatsContext();
@@ -126,6 +127,9 @@ class BackendStatsContext {
 
   // Whether this context is registered to the global aggregator
   bool is_registered_to_aggregator_;
+
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
+      stats_context_map_;
 };
 
 }  // namespace stats
