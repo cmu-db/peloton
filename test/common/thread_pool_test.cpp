@@ -24,7 +24,7 @@ class ThreadPoolTests : public PelotonTest {};
 
 TEST_F(ThreadPoolTests, BasicTest) {
   ThreadPool thread_pool;
-  thread_pool.Initialize(2);
+  thread_pool.Initialize(2, 0);
 
   int var1 = 1;
   int var2 = 2;
