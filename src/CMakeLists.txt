@@ -70,8 +70,7 @@ add_executable(sdbench EXCLUDE_FROM_ALL ${sdbench_srcs})
 target_link_libraries(sdbench peloton)
 
 
-# Llink to jemalloc.
-# --[ link jemalloc
+# --[ link to jemalloc
 set(EXE_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
 set(EXE_LINK_FLAGS "-Wl,--no-as-needed")
 set(EXE_LIST peloton-bin ycsb tpcc sdbench)

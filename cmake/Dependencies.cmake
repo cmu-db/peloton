@@ -34,6 +34,12 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 #  list(APPEND Peloton_LINKER_LIBS "-ltsan")
 endif()
 
+# NOTE: link jemalloc only when building binaries.
+# ---[ Jemalloc
+find_package(JeMalloc)
+include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
+
+
 # --[ Valgrind
 find_program(MEMORYCHECK_COMMAND valgrind)
 set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
