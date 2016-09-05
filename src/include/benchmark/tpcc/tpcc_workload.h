@@ -49,7 +49,7 @@ std::vector<std::vector<Value>> ExecuteRead(executor::AbstractExecutor* executor
 
 void ExecuteUpdate(executor::AbstractExecutor* executor);
 
-void ExecuteDeleteTest(executor::AbstractExecutor* executor);
+void ExecuteDelete(executor::AbstractExecutor* executor);
 
 }  // namespace tpcc
 }  // namespace benchmark
