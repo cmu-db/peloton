@@ -33,9 +33,9 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(true) { StartGC(); }
+  GCManager() : is_running_(true) { }
 
-  ~GCManager() { StopGC(); }
+  virtual ~GCManager() { }
 
   static GCManager& GetInstance() {
     static GCManager gc_manager;
@@ -43,20 +43,17 @@ class GCManager {
   }
 
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->is_running_; }
+  virtual bool GetStatus() { return this->is_running_; }
 
-  void StartGC() {}
+  virtual void StartGC() {}
 
-  void StopGC() {}
+  virtual void StopGC() {}
 
-  void RecycleTupleSlot(const oid_t &table_id UNUSED_ATTRIBUTE, 
-                        const ItemPointer &item_pointer UNUSED_ATTRIBUTE) {}
-
-  ItemPointer ReturnFreeSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
+  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
+  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) { }
 
   virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set UNUSED_ATTRIBUTE, 
                                    const cid_t &timestamp UNUSED_ATTRIBUTE,

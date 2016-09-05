@@ -38,11 +38,6 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(location.block);
 
-  // During the resetting, a table may deconstruct because of the DROP TABLE request
-  if (tile_group == nullptr) {
-    return false;
-  }
-
   auto tile_group_header = tile_group->GetHeader();
 
   // Reset the header
@@ -171,6 +166,11 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
 
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
+
+    // During the resetting, a table may deconstruct because of the DROP TABLE request
+    if (tile_group == nullptr) {
+      return;
+    }
 
     PL_ASSERT(tile_group != nullptr);
 

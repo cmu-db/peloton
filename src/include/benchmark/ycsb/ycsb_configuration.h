@@ -86,6 +86,8 @@ class configuration {
 
   std::vector<double> profile_abort_rate;
 
+  std::vector<int> profile_memory;
+
 };
 
 extern configuration state;
