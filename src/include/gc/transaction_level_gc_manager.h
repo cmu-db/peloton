@@ -64,7 +64,7 @@ public:
     StartGC(); 
   }
 
-  ~TransactionLevelGCManager() { StopGC(); }
+  virtual ~TransactionLevelGCManager() { }
 
   static TransactionLevelGCManager& GetInstance(int thread_count = 1) {
     static TransactionLevelGCManager gc_manager(thread_count);
@@ -72,28 +72,27 @@ public:
   }
 
   // Get status of whether GC thread is running or not
-  virtual bool GetStatus() { return this->is_running_; }
+  virtual bool GetStatus() override { return this->is_running_; }
 
-  virtual void StartGC() {
+  virtual void StartGC() override {
     for (int i = 0; i < gc_thread_count_; ++i) {
       StartGC(i);
     }
   };
 
-  virtual void StopGC() {
+  virtual void StopGC() override {
     for (int i = 0; i < gc_thread_count_; ++i) {
       StopGC(i);
     }
   }
 
-  void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType);
+  virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType) override;
 
-  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
+  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
-  virtual void RegisterTable(const oid_t table_id) {
+  virtual void RegisterTable(const oid_t &table_id) override {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
-      LOG_TRACE("register table %d to garbage collector", (int)table_id);
       std::shared_ptr<LockFreeQueue<ItemPointer>> recycle_queue(new LockFreeQueue<ItemPointer>(MAX_QUEUE_LENGTH));
       recycle_queue_map_[table_id] = recycle_queue;
     }

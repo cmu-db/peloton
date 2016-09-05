@@ -30,8 +30,14 @@ configuration state;
 std::ofstream out("outputfile.summary");
 
 static void WriteOutput() {
+
+  oid_t total_profile_memory = 0;
+  for (auto &entry : state.profile_memory) {
+    total_profile_memory += entry;
+  }
+
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %lf %lf :: %lf %lf",
+  LOG_INFO("%d %d %d %d %lf %lf :: %lf %lf %d",
            state.scale_factor,
            state.backend_count,
            state.column_count,
@@ -39,7 +45,8 @@ static void WriteOutput() {
            state.update_ratio,
            state.zipf_theta,
            state.throughput,
-           state.abort_rate);
+           state.abort_rate,
+           total_profile_memory);
 
   out << state.scale_factor << " ";
   out << state.backend_count << " ";
@@ -48,14 +55,17 @@ static void WriteOutput() {
   out << state.update_ratio << " ";
   out << state.zipf_theta << " ";
   out << state.throughput << " ";
-  out << state.abort_rate << "\n";
+  out << state.abort_rate << " ";
+  out << total_profile_memory << "\n";
+
   for (size_t round_id = 0; round_id < state.profile_throughput.size();
        ++round_id) {
     out << "[" << std::setw(3) << std::left
         << state.profile_duration * round_id << " - " << std::setw(3)
         << std::left << state.profile_duration * (round_id + 1)
         << " s]: " << state.profile_throughput[round_id] << " "
-        << state.profile_abort_rate[round_id] << "\n";
+        << state.profile_abort_rate[round_id] << " "
+        << state.profile_memory[round_id] << "\n";
   }
   out.flush();
   out.close();
@@ -76,6 +86,10 @@ void RunBenchmark() {
 
   // Run the workload
   RunWorkload();
+  
+  gc::GCManagerFactory::GetInstance().StopGC();
+  std::this_thread::sleep_for (std::chrono::seconds(1));  
+
 
   // Emit throughput
   WriteOutput();

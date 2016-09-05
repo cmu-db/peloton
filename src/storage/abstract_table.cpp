@@ -18,8 +18,7 @@
 #include "index/index.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-
-#include <mutex>
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace storage {
@@ -31,7 +30,14 @@ AbstractTable::AbstractTable(oid_t database_oid, oid_t table_oid,
       table_oid(table_oid),
       table_name(table_name),
       schema(schema),
-      own_schema_(own_schema) {}
+      own_schema_(own_schema) {
+
+  // Register table to GC manager.
+  auto *gc_manager = &gc::GCManagerFactory::GetInstance();
+  assert(gc_manager != nullptr);
+  gc_manager->RegisterTable(table_oid);
+
+}
 
 AbstractTable::~AbstractTable() {
   // clean up schema
