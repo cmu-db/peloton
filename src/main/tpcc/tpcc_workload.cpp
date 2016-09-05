@@ -84,7 +84,8 @@ namespace tpcc {
 
 #define STOCK_LEVEL_RATIO     0.00
 #define ORDER_STATUS_RATIO    0.00
-#define PAYMENT_RATIO         0.46
+#define PAYMENT_RATIO         0.50
+#define NEW_ORDER_RATIO       0.50
 
 volatile bool is_running = true;
 
@@ -198,8 +199,27 @@ void RunBackend(oid_t thread_id) {
           }
         }
       }
-    } else {
+    } else if (rng_val <= PAYMENT_RATIO + ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO + NEW_ORDER_RATIO) {
       while (RunNewOrder(thread_id) == false) {
+        if (is_running == false) {
+          break;
+        }
+        execution_count_ref++;
+        // backoff
+        if (state.exp_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
+      }
+    } else {
+      while (RunDelivery(thread_id) == false) {
         if (is_running == false) {
           break;
         }

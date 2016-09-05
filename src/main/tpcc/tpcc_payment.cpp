@@ -111,7 +111,8 @@ bool RunPayment(const size_t &thread_id){
   int h_date = 0;
 
   int x = GetRandomInteger(1, 100);
-  // int y = GetRandomInteger(1, 100);
+  // currently we only retrieve data by id.
+  int y = 100; // GetRandomInteger(1, 100);
 
   // 85%: paying through own warehouse ( or there is only 1 warehosue)
   if (state.warehouse_count == 1 || x <= 85) {
@@ -126,15 +127,15 @@ bool RunPayment(const size_t &thread_id){
   }
 
   // 60%: payment by last name
-  // if (y <= 60) {
-  //   LOG_TRACE("By last name");
-  //   customer_lastname = GetRandomLastName(state.customers_per_district);
-  // }
-  // // 40%: payment by id
-  // else {
+  if (y <= 60) {
+    LOG_TRACE("By last name");
+    customer_lastname = GetRandomLastName(state.customers_per_district);
+  }
+  // 40%: payment by id
+  else {
     LOG_TRACE("By id");
     customer_id = GetRandomInteger(0, state.customers_per_district - 1);
-  // }
+  }
 
   std::vector<expression::AbstractExpression *> runtime_keys;
 

@@ -13,7 +13,6 @@
 #include <array>
 
 namespace peloton {
-
 namespace storage {
 
 const size_t INDIRECTION_ARRAY_MAX_SIZE = 1000;
