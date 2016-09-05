@@ -60,8 +60,6 @@ public:
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
     }
-
-    StartGC(); 
   }
 
   virtual ~TransactionLevelGCManager() { }
