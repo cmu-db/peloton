@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <numeric>
+
 #include "common/harness.h"
 #include "catalog/catalog.h"
 #include "logging/checkpoint.h"
