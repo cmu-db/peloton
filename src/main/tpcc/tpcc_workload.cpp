@@ -255,6 +255,7 @@ void RunWorkload() {
   }
 
   //////////////////////////////////////
+  oid_t last_tile_group_id = 0;
   for (size_t round_id = 0; round_id < profile_round; ++round_id) {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(int(state.profile_duration * 1000)));
@@ -262,7 +263,17 @@ void RunWorkload() {
            sizeof(oid_t) * num_threads);
     PL_MEMCPY(commit_counts_profiles[round_id], commit_counts,
            sizeof(oid_t) * num_threads);
+    
+    auto& manager = catalog::Manager::GetInstance();
+    oid_t current_tile_group_id = manager.GetCurrentTileGroupId();
+    if (round_id != 0) {
+      state.profile_memory.push_back(current_tile_group_id - last_tile_group_id);
+    }
+    last_tile_group_id = current_tile_group_id;
+    
   }
+  
+  state.profile_memory.push_back(state.profile_memory.at(state.profile_memory.size() - 1));
 
   is_running = false;
 
