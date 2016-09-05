@@ -41,6 +41,8 @@ TEST_F(ThreadPoolTests, BasicTest) {
   EXPECT_EQ(0, var2);
   EXPECT_EQ(9, var3);
   EXPECT_EQ(1, var4);
+
+  thread_pool.Shutdown();
 }
 
 }  // End test namespace
