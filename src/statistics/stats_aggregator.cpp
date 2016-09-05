@@ -60,18 +60,18 @@ void StatsAggregator::ShutdownAggregator() {
   if (!shutting_down_) {
     shutting_down_ = true;
     exec_finished_.notify_one();
-    LOG_INFO("notifying...");
+    LOG_DEBUG("notifying aggregator thread...");
     aggregator_thread_.join();
-    LOG_INFO("join finished");
+    LOG_DEBUG("aggregator thread joined");
   }
 }
 
 void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
                                 double &weighted_avg_throughput) {
   interval_cnt++;
-  LOG_INFO(
-      "\n//////////////////////////////////////////////////////"
-      "//////////////////////////////////////////////////////\n");
+  // LOG_INFO(
+  //     "\n//////////////////////////////////////////////////////"
+  //     "//////////////////////////////////////////////////////\n");
   LOG_INFO("TIME ELAPSED: %ld sec\n", interval_cnt);
 
   aggregated_stats_.Reset();
@@ -105,6 +105,9 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   // LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
   // LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
   // LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
   // TODO refactor me
   LOG_DEBUG("Inserting stat tuples into catalog database..");
@@ -140,7 +143,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
         txn_aborted, time_stamp);
 
     // Another way of insertion using transaction manager
-    catalog::InsertTuple(database_metrics_table, std::move(db_tuple), nullptr);
+    catalog::InsertTuple(database_metrics_table, std::move(db_tuple), txn);
     LOG_TRACE("DB Tuple inserted");
 
     auto table_count = database->GetTableCount();
@@ -159,8 +162,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
           table_metrics_table->GetSchema(), database_oid, table_oid, reads,
           updates, deletes, inserts, time_stamp);
 
-      catalog::InsertTuple(table_metrics_table, std::move(table_tuple),
-                           nullptr);
+      catalog::InsertTuple(table_metrics_table, std::move(table_tuple), txn);
       LOG_TRACE("Table Tuple inserted");
 
       auto index_count = table->GetIndexCount();
@@ -179,11 +181,11 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
             index_metrics_table->GetSchema(), database_oid, table_oid,
             index_oid, reads, deletes, inserts, time_stamp);
 
-        catalog::InsertTuple(index_metrics_table, std::move(index_tuple),
-                             nullptr);
+        catalog::InsertTuple(index_metrics_table, std::move(index_tuple), txn);
       }
     }
   }
+  txn_manager.EndTransaction(txn);
 
   if (interval_cnt % STATS_LOG_INTERVALS == 0) {
     try {
