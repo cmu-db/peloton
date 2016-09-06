@@ -225,7 +225,7 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
-  // just a ';' sent
+
   if (queries.size() == 1) {
     SendEmptyQueryResponse(responses);
     SendReadyForQuery(txn_state, responses);
@@ -235,38 +235,44 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   // Get traffic cop
   auto &tcop = tcop::TrafficCop::GetInstance();
 
-  // iterate till before the trivial string after the last ';'
   for (auto query : queries) {
-    if (query.empty()) {
+    // iterate till before the empty string after the last ';'
+    if (query != queries.back()) {
+      if (query.empty()) {
+        SendEmptyQueryResponse(responses);
+        SendReadyForQuery(TXN_IDLE, responses);
+        return;
+      }
+
+      std::vector<ResultType> result;
+      std::vector<FieldInfoType> tuple_descriptor;
+      std::string error_message;
+      int rows_affected;
+
+      // execute the query using tcop
+      auto status = tcop.ExecuteStatement(query, result, tuple_descriptor,
+                                          rows_affected, error_message);
+
+      // check status
+      if (status == Result::RESULT_FAILURE) {
+        SendErrorResponse({{'M', error_message}}, responses);
+        break;
+      }
+
+      // send the attribute names
+      PutTupleDescriptor(tuple_descriptor, responses);
+
+      // send the result rows
+      SendDataRows(result, tuple_descriptor.size(), rows_affected, responses);
+
+      // TODO: should change to query_type
+      CompleteCommand(query, rows_affected, responses);
+    } else if (queries.size() == 1) {
+      // just a ';' sent
       SendEmptyQueryResponse(responses);
-      SendReadyForQuery(TXN_IDLE, responses);
-      return;
     }
-
-    std::vector<ResultType> result;
-    std::vector<FieldInfoType> tuple_descriptor;
-    std::string error_message;
-    int rows_affected;
-
-    // execute the query in Sqlite
-    auto status = tcop.ExecuteStatement(query, result, tuple_descriptor,
-                                        rows_affected, error_message);
-
-    // check status
-    if (status == Result::RESULT_FAILURE) {
-      SendErrorResponse({{'M', error_message}}, responses);
-      break;
-    }
-
-    // send the attribute names
-    PutTupleDescriptor(tuple_descriptor, responses);
-
-    // send the result rows
-    SendDataRows(result, tuple_descriptor.size(), rows_affected, responses);
-
-    // TODO: should change to query_type
-    CompleteCommand(query, rows_affected, responses);
   }
+
   SendReadyForQuery('I', responses);
 }
 
