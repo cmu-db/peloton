@@ -85,8 +85,6 @@ class Database : public Printable {
   std::vector<storage::DataTable *> tables;
 
   std::mutex database_mutex;
-
-  // std::shared_ptr<gc::GCManager> gc_manager;
 };
 
 }  // End storage namespace

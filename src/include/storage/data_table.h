@@ -22,6 +22,7 @@
 #include "storage/abstract_table.h"
 #include "container/lock_free_array.h"
 #include "index/index.h"
+#include "storage/indirection_array.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -36,6 +37,9 @@ extern LayoutType peloton_layout_mode;
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 const int ACTIVE_TILEGROUP_COUNT = 1;
+
+const int ACTIVE_INDIRECTION_ARRAY_COUNT = 1;
+
 
 namespace peloton {
 
@@ -65,6 +69,8 @@ namespace storage {
 
 class Tuple;
 class TileGroup;
+class IndirectionArray;
+
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -255,6 +261,8 @@ class DataTable : public AbstractTable {
   oid_t AddDefaultTileGroup();
   // add a tile group to the table. replace the active_tile_group_id-th active tile group.
   oid_t AddDefaultTileGroup(const size_t &active_tile_group_id);
+
+  oid_t AddDefaultIndirectionArray(const size_t &active_indirection_array_id);
   
   // get a partitioning with given layout type
   column_map_type GetTileGroupLayout(LayoutType layout_type);
@@ -284,9 +292,12 @@ class DataTable : public AbstractTable {
   // TILE GROUPS
   LockFreeArray<oid_t> tile_groups_;
 
+  std::shared_ptr<storage::TileGroup> active_tile_groups_[ACTIVE_TILEGROUP_COUNT];
+
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  std::shared_ptr<storage::TileGroup> active_tile_groups_[ACTIVE_TILEGROUP_COUNT];
+  // INDIRECTIONS
+  std::shared_ptr<storage::IndirectionArray> active_indirection_arrays_[ACTIVE_INDIRECTION_ARRAY_COUNT];
 
   // data table mutex
   std::mutex data_table_mutex_;

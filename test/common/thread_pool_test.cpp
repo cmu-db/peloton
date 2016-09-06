@@ -24,7 +24,7 @@ class ThreadPoolTests : public PelotonTest {};
 
 TEST_F(ThreadPoolTests, BasicTest) {
   ThreadPool thread_pool;
-  thread_pool.Initialize(2);
+  thread_pool.Initialize(2, 0);
 
   int var1 = 1;
   int var2 = 2;
@@ -41,6 +41,8 @@ TEST_F(ThreadPoolTests, BasicTest) {
   EXPECT_EQ(0, var2);
   EXPECT_EQ(9, var3);
   EXPECT_EQ(1, var4);
+
+  thread_pool.Shutdown();
 }
 
 }  // End test namespace

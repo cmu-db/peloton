@@ -13,6 +13,7 @@
 #pragma once
 
 #include <string>
+#include <cstring>
 #include <getopt.h>
 #include <vector>
 #include <sys/time.h>
@@ -150,23 +151,24 @@ static const oid_t order_line_table_skey_index_oid =
 
 class configuration {
  public:
-  // scale factor
-  int scale_factor;
 
-  // num of warehouses
-  int warehouse_count;
+  // index type
+  IndexType index;
+
+  // scale factor
+  double scale_factor;
+
+  // execution duration (in s)
+  double duration;
+
+  // profile duration (in s)
+  double profile_duration;
 
   // number of backends
   int backend_count;
 
-  // execution duration (ms)
-  int duration;
-
-  // throughput
-  double throughput;
-
-  // average latency
-  double latency;
+  // num of warehouses
+  int warehouse_count;
 
   // item count
   int item_count;
@@ -177,8 +179,30 @@ class configuration {
 
   int new_orders_per_district;
 
-  // # of transaction
-  int transaction_count;
+  // exponential backoff
+  bool exp_backoff;
+
+  // client affinity
+  bool affinity;
+
+  // garbage collection
+  bool gc_mode;
+
+  // number of gc threads
+  bool gc_backend_count;
+
+  // throughput
+  double throughput = 0;
+
+  // abort rate
+  double abort_rate = 0;
+
+  std::vector<double> profile_throughput;
+
+  std::vector<double> profile_abort_rate;
+
+  std::vector<int> profile_memory;
+  
 };
 
 extern configuration state;
@@ -187,13 +211,19 @@ void Usage(FILE *out);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
-void ValidateBackendCount(const configuration &state);
+void ValidateIndex(const configuration &state);
+
+void ValidateScaleFactor(const configuration &state);
 
 void ValidateDuration(const configuration &state);
 
+void ValidateProfileDuration(const configuration &state);
+
+void ValidateBackendCount(const configuration &state);
+
 void ValidateWarehouseCount(const configuration &state);
 
-void ValidateTransactionCount(const configuration &state);
+void ValidateGCBackendCount(const configuration &state);
 
 }  // namespace tpcc
 }  // namespace benchmark

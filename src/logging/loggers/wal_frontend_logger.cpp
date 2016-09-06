@@ -468,7 +468,7 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
 
 void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
                                                 storage::DataTable *table,
-                                                ItemPointer target_location) {
+                                                ItemPointer target_location UNUSED_ATTRIBUTE) {
   PL_ASSERT(tuple);
   PL_ASSERT(table);
   auto index_count = table->GetIndexCount();
@@ -482,7 +482,9 @@ void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
-    index->InsertEntry(key.get(), new ItemPointer(target_location));
+    // TODO: workaround. this can cause memory leak.
+    // since currently logging does not work, we will handle this later.
+    // index->InsertEntry(key.get(), new ItemPointer(target_location));
     // Increase the indexes' number of tuples by 1 as well
     index->IncreaseNumberOfTuplesBy(1);
   }

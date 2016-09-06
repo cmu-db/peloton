@@ -51,6 +51,7 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       type = RW_TYPE_UPDATE;
       // record write.
       is_written_ = true;
+
       return;
     }
     if (type == RW_TYPE_UPDATE) {
@@ -74,11 +75,11 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   if (rw_set_.find(tile_group_id) != rw_set_.end() &&
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
-    // RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     PL_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RW_TYPE_INSERT;
     ++insert_count_;
+
   }
 }
 
@@ -94,15 +95,18 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       type = RW_TYPE_DELETE;
       // record write.
       is_written_ = true;
+
       return false;
     }
     if (type == RW_TYPE_UPDATE) {
       type = RW_TYPE_DELETE;
+
       return false;
     }
     if (type == RW_TYPE_INSERT) {
       type = RW_TYPE_INS_DEL;
       --insert_count_;
+
       return true;
     }
     if (type == RW_TYPE_DELETE) {
@@ -114,10 +118,6 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
     PL_ASSERT(false);
   }
   return false;
-}
-
-const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
-  return rw_set_;
 }
 
 const std::string Transaction::GetInfo() const {

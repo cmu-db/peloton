@@ -44,12 +44,13 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-storage::Database *ycsb_database;
+storage::Database *ycsb_database = nullptr;
 
-storage::DataTable *user_table;
+storage::DataTable *user_table = nullptr;
 
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
+  const bool is_inlined = true;
 
   /////////////////////////////////////////////////////////
   // Create tables
@@ -66,8 +67,6 @@ void CreateYCSBDatabase() {
 
   bool own_schema = true;
   bool adapt_table = false;
-  const bool is_inlined = false;
-
   // Create schema first
   std::vector<catalog::Column> columns;
 
@@ -107,9 +106,9 @@ void CreateYCSBDatabase() {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", user_table_pkey_index_oid, user_table_oid,
-      ycsb_database_oid, INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-      tuple_schema, key_schema, key_attrs, unique);
+    "primary_index", user_table_pkey_index_oid, user_table_oid,
+    ycsb_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+    tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -122,7 +121,6 @@ void LoadYCSBDatabase() {
 
   // Pick the user table
   auto table_schema = user_table->GetSchema();
-  std::string field_raw_value(ycsb_field_length - 1, 'o');
 
   /////////////////////////////////////////////////////////
   // Load in the data

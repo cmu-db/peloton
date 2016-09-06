@@ -138,9 +138,6 @@ class Catalog {
   // 1) because START_OID is assigned to the catalog database.
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
 
-  // Mutex used for atomic operations
-  std::mutex catalog_mutex_;
-
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size_ = 32;
 };

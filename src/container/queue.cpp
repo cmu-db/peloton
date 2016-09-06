@@ -31,6 +31,5 @@ bool QUEUE_TYPE::Dequeue(ValueType& item) {
 }
 
 // Explicit template instantiation
-template class Queue<TupleMetadata>;
 
 }  // namespace peloton

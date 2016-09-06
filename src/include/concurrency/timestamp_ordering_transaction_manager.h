@@ -34,8 +34,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   static TimestampOrderingTransactionManager &GetInstance();
 
   // This method is used for avoiding concurrent inserts.
-  virtual bool IsOccupied(Transaction *const current_txn,
-                          const ItemPointer &position);
+  virtual bool IsOccupied(
+      Transaction *const current_txn, 
+      const void *position);
 
   virtual VisibilityType IsVisible(
       Transaction *const current_txn,
@@ -92,35 +93,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual Result AbortTransaction(Transaction *const current_txn);
 
-  virtual Transaction *BeginTransaction() {
-    txn_id_t txn_id = GetNextTransactionId();
-    cid_t begin_cid = GetNextCommitId();
-    Transaction *txn = new Transaction(txn_id, begin_cid);
+  virtual Transaction *BeginTransaction();
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-    txn->SetEpochId(eid);
-
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
-          .GetTxnLatencyMetric()
-          .StartTimer();
-    }
-
-    return txn;
-  }
-
-  virtual void EndTransaction(Transaction *current_txn) {
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
-
-    delete current_txn;
-    current_txn = nullptr;
-
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
-          .GetTxnLatencyMetric()
-          .RecordLatency();
-    }
-  }
+  virtual void EndTransaction(Transaction *current_txn);
 
  private:
   static const int LOCK_OFFSET = 0;

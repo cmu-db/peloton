@@ -34,8 +34,8 @@ class IndexPerformanceTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
-ItemPointer item0(120, 5);
-ItemPointer item1(120, 7);
+
+std::shared_ptr<ItemPointer> item(new ItemPointer(120, 5));
 
 index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   // Build tuple and key schema
@@ -114,7 +114,7 @@ static void InsertTest1(index::Index *index, size_t num_thread, size_t num_key,
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
 
-    auto status = index->InsertEntry(key.get(), item0);
+    auto status = index->InsertEntry(key.get(), item.get());
     EXPECT_TRUE(status);
   }
 
@@ -156,7 +156,7 @@ static void DeleteTest1(index::Index *index, size_t num_thread, size_t num_key,
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
 
-    auto status = index->DeleteEntry(key.get(), item0);
+    auto status = index->DeleteEntry(key.get(), item.get());
     EXPECT_TRUE(status);
   }
 
@@ -196,7 +196,7 @@ static void InsertTest2(index::Index *index, size_t num_thread, size_t num_key,
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
 
-    auto status = index->InsertEntry(key.get(), item0);
+    auto status = index->InsertEntry(key.get(), item.get());
     EXPECT_TRUE(status);
   }
 
@@ -236,7 +236,7 @@ static void DeleteTest2(index::Index *index, size_t num_thread, size_t num_key,
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
 
-    auto status = index->DeleteEntry(key.get(), item0);
+    auto status = index->DeleteEntry(key.get(), item.get());
     EXPECT_TRUE(status);
   }
 
@@ -387,7 +387,7 @@ static void TestIndexPerformance(const IndexType &index_type) {
 }
 
 TEST_F(IndexPerformanceTests, MultiThreadedTest) {
-  std::vector<IndexType> index_types = {INDEX_TYPE_BTREE};
+  std::vector<IndexType> index_types = {INDEX_TYPE_BWTREE};
 
   // Run the test suite for each types of index
   for (auto index_type : index_types) {

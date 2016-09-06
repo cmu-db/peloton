@@ -201,13 +201,9 @@ class Index : public Printable {
   virtual bool InsertEntry(const storage::Tuple *key,
                            ItemPointer *location_ptr) = 0;
 
-  // insert an index entry linked to given tuple
-  virtual bool InsertEntry(const storage::Tuple *key,
-                           const ItemPointer &location) = 0;
-
   // delete the index entry linked to given tuple and location
   virtual bool DeleteEntry(const storage::Tuple *key,
-                           const ItemPointer &location) = 0;
+                           ItemPointer *location_ptr) = 0;
 
   // First retrieve all Key-Value pairs of the given key
   // Return false if any of those k-v pairs satisfy the predicate
@@ -216,7 +212,7 @@ class Index : public Printable {
   // This function should be called for all primary/unique index insert
   virtual bool CondInsertEntry(
       const storage::Tuple *key, ItemPointer *location,
-      std::function<bool(const ItemPointer &)> predicate) = 0;
+      std::function<bool(const void *)> predicate) = 0;
 
   ///////////////////////////////////////////////////////////////////
   // Index Scan

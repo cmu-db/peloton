@@ -44,13 +44,7 @@ BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata)
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-BWTREE_INDEX_TYPE::~BWTreeIndex() {
-  // for (auto it = container.Begin(); it.IsEnd() == false; it++) {
-  //  delete it->second;
-  //}
-
-  return;
-}
+BWTREE_INDEX_TYPE::~BWTreeIndex() {}
 
 /*
  * InsertEntry() - insert a key-value pair into the map
@@ -59,31 +53,11 @@ BWTREE_INDEX_TYPE::~BWTreeIndex() {
  */
 BWTREE_TEMPLATE_ARGUMENTS
 bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
-                                    ItemPointer *location_ptr) {
+                                    ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
-  bool ret = container.Insert(index_key, location_ptr);
-
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
-  }
-
-  return ret;
-}
-
-/*
- * InsertEntry() - insert a key-value pair into the map
- *
- * If the key value pair already exists in the map, just return false
- */
-BWTREE_TEMPLATE_ARGUMENTS
-bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
-                                    const ItemPointer &location) {
-  KeyType index_key;
-  index_key.SetFromKey(key);
-
-  bool ret = container.Insert(index_key, new ItemPointer(location));
+  bool ret = container.Insert(index_key, value);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
@@ -99,26 +73,14 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
  */
 BWTREE_TEMPLATE_ARGUMENTS
 bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
-                                    const ItemPointer &location) {
+                                    ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
   size_t delete_count = 0;
 
-  // Must allocate new memory here
-  ItemPointer *ip_p = new ItemPointer{location};
-
   // In Delete() since we just use the value for comparison (i.e. read-only)
   // it is unnecessary for us to allocate memory
-  bool ret = container.DeleteExchange(index_key, &ip_p);
-
-  // IF delete succeeds then DeleteExchange() will exchange the deleted
-  // value into this variable
-  if (ret == true) {
-    // delete ip_p;
-  } else {
-    // This will delete the unused memory
-    delete ip_p;
-  }
+  bool ret = container.Delete(index_key, value);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance().IncrementIndexDeletes(
@@ -129,8 +91,8 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
 
 BWTREE_TEMPLATE_ARGUMENTS
 bool BWTREE_INDEX_TYPE::CondInsertEntry(
-    const storage::Tuple *key, ItemPointer *location,
-    std::function<bool(const ItemPointer &)> predicate) {
+    const storage::Tuple *key, ItemPointer *value,
+    std::function<bool(const void*)> predicate) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -139,7 +101,7 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   // This function will complete them in one step
   // predicate will be set to nullptr if the predicate
   // returns true for some value
-  bool ret = container.ConditionalInsert(index_key, location, predicate,
+  bool ret = container.ConditionalInsert(index_key, value, predicate,
                                          &predicate_satisfied);
 
   // If predicate is not satisfied then we know insertion successes
@@ -162,7 +124,7 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &value_list,
                              const std::vector<oid_t> &tuple_column_id_list,
                              const std::vector<ExpressionType> &expr_list,
                              const ScanDirectionType &scan_direction,
-                             std::vector<ItemPointer *> &result,
+                             std::vector<ValueType> &result,
                              const ConjunctionScanPredicate *csp_p) {
   // First make sure all three components of the scan predicate are
   // of the same length
@@ -251,7 +213,7 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &value_list,
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ItemPointer *> &result) {
+void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
   auto it = container.Begin();
 
   // scan all entries
@@ -269,7 +231,7 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ItemPointer *> &result) {
 
 BWTREE_TEMPLATE_ARGUMENTS
 void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
-                                std::vector<ItemPointer *> &result) {
+                                std::vector<ValueType> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
 

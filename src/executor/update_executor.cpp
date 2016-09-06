@@ -23,7 +23,6 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
 #include "storage/tile.h"
-#include "storage/rollback_segment.h"
 
 namespace peloton {
 namespace executor {
@@ -85,7 +84,7 @@ bool UpdateExecutor::DExecute() {
   auto current_txn = executor_context_->GetTransaction();
 
 
-  // Update tuples in given table
+  // Update tuples in a given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
@@ -128,7 +127,7 @@ bool UpdateExecutor::DExecute() {
 
         // acquire a version slot from the table.
         ItemPointer new_location = target_table_->AcquireVersion();
-
+        
         auto &manager = catalog::Manager::GetInstance();
         auto new_tile_group = manager.GetTileGroup(new_location.block);
 

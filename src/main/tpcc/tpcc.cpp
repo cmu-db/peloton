@@ -15,11 +15,12 @@
 #include <fstream>
 #include <iomanip>
 
+#include "common/logger.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "benchmark/tpcc/tpcc_loader.h"
 #include "benchmark/tpcc/tpcc_workload.h"
 
-#include "common/logger.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -29,18 +30,51 @@ configuration state;
 
 std::ofstream out("outputfile.summary");
 
-static void WriteOutput(double stat) {
-  LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d :: %lf", state.scale_factor, state.backend_count, stat);
+static void WriteOutput() {
 
+  oid_t total_profile_memory = 0;
+  for (auto &entry : state.profile_memory) {
+    total_profile_memory += entry;
+  }
+
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%lf %d %d :: %lf %lf %d",
+           state.scale_factor,
+           state.backend_count,
+           state.warehouse_count,
+           state.throughput,
+           state.abort_rate,
+           total_profile_memory);
+
+  out << state.scale_factor << " ";
   out << state.backend_count << " ";
-  out << stat << "\n";
+  out << state.warehouse_count << " ";
+  out << state.throughput << " ";
+  out << state.abort_rate << " ";
+  out << total_profile_memory << "\n";
+
+  for (size_t round_id = 0; round_id < state.profile_throughput.size();
+       ++round_id) {
+    out << "[" << std::setw(3) << std::left
+        << state.profile_duration * round_id << " - " << std::setw(3)
+        << std::left << state.profile_duration * (round_id + 1)
+        << " s]: " << state.profile_throughput[round_id] << " "
+        << state.profile_abort_rate[round_id] << " "
+        << state.profile_memory[round_id] << "\n";
+  }
   out.flush();
   out.close();
 }
 
 // Main Entry Point
 void RunBenchmark() {
+
+  if (state.gc_mode == true) {
+    gc::GCManagerFactory::Configure(state.gc_backend_count);
+  }
+  
+  gc::GCManagerFactory::GetInstance().StartGC();
+  
   // Create the database
   CreateTPCCDatabase();
 
@@ -49,9 +83,11 @@ void RunBenchmark() {
 
   // Run the workload
   RunWorkload();
+  
+  gc::GCManagerFactory::GetInstance().StopGC();
 
   // Emit throughput
-  WriteOutput(state.throughput);
+  WriteOutput();
 }
 
 }  // namespace tpcc

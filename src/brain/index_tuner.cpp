@@ -122,7 +122,7 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
       key->SetFromTuple(tuple_ptr.get(), indexed_columns, index->GetPool());
 
       // Insert in specific index
-      index->InsertEntry(key.get(), location);
+      // index->InsertEntry(key.get(), location);
     }
 
     // Update indexed tile group offset (set of tgs indexed)
