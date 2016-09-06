@@ -69,9 +69,9 @@ void StatsAggregator::ShutdownAggregator() {
 void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
                                 double &weighted_avg_throughput) {
   interval_cnt++;
-  // LOG_INFO(
-  //     "\n//////////////////////////////////////////////////////"
-  //     "//////////////////////////////////////////////////////\n");
+  LOG_INFO(
+      "\n//////////////////////////////////////////////////////"
+      "//////////////////////////////////////////////////////\n");
   LOG_INFO("TIME ELAPSED: %ld sec\n", interval_cnt);
 
   aggregated_stats_.Reset();
@@ -102,90 +102,12 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 
   total_prev_txn_committed_ = current_txns_committed;
-  // LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
-  // LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
-  // LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
+  LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
+  LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
+  LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
-  // TODO refactor me
-  LOG_DEBUG("Inserting stat tuples into catalog database..");
-  auto catalog = catalog::Catalog::GetInstance();
-  PL_ASSERT(catalog->GetDatabaseCount() > 0);
-  storage::Database *catalog_database =
-      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  PL_ASSERT(catalog_database != nullptr);
-  auto database_metrics_table =
-      catalog_database->GetTableWithName(DATABASE_METRIC_NAME);
-  auto table_metrics_table =
-      catalog_database->GetTableWithName(TABLE_METRIC_NAME);
-  auto index_metrics_table =
-      catalog_database->GetTableWithName(INDEX_METRIC_NAME);
-  auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
-      time_since_epoch).count();
-
-  PL_ASSERT(table_metrics_table != nullptr);
-  PL_ASSERT(database_metrics_table != nullptr);
-
-  auto database_count = catalog->GetDatabaseCount();
-  for (oid_t database_offset = 0; database_offset < database_count;
-       database_offset++) {
-    auto database = catalog->GetDatabaseWithOffset(database_offset);
-    auto database_oid = database->GetOid();
-    auto database_metric = aggregated_stats_.GetDatabaseMetric(database_oid);
-    auto txn_committed = database_metric->GetTxnCommitted().GetCounter();
-    auto txn_aborted = database_metric->GetTxnAborted().GetCounter();
-
-    auto db_tuple = catalog::GetDatabaseMetricsCatalogTuple(
-        database_metrics_table->GetSchema(), database_oid, txn_committed,
-        txn_aborted, time_stamp);
-
-    // Another way of insertion using transaction manager
-    catalog::InsertTuple(database_metrics_table, std::move(db_tuple), txn);
-    LOG_TRACE("DB Tuple inserted");
-
-    auto table_count = database->GetTableCount();
-    for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
-      auto table = database->GetTable(table_offset);
-      auto table_oid = table->GetOid();
-      auto table_metrics =
-          aggregated_stats_.GetTableMetric(database_oid, table_oid);
-      auto table_access = table_metrics->GetTableAccess();
-      auto reads = table_access.GetReads();
-      auto updates = table_access.GetUpdates();
-      auto deletes = table_access.GetDeletes();
-      auto inserts = table_access.GetInserts();
-
-      auto table_tuple = catalog::GetTableMetricsCatalogTuple(
-          table_metrics_table->GetSchema(), database_oid, table_oid, reads,
-          updates, deletes, inserts, time_stamp);
-
-      catalog::InsertTuple(table_metrics_table, std::move(table_tuple), txn);
-      LOG_TRACE("Table Tuple inserted");
-
-      auto index_count = table->GetIndexCount();
-      for (oid_t index_offset = 0; index_offset < index_count; index_offset++) {
-        auto index = table->GetIndex(index_offset);
-        auto index_oid = index->GetOid();
-        auto index_metric = aggregated_stats_.GetIndexMetric(
-            database_oid, table_oid, index_oid);
-
-        auto index_access = index_metric->GetIndexAccess();
-        auto reads = index_access.GetReads();
-        auto deletes = index_access.GetDeletes();
-        auto inserts = index_access.GetInserts();
-
-        auto index_tuple = catalog::GetIndexMetricsCatalogTuple(
-            index_metrics_table->GetSchema(), database_oid, table_oid,
-            index_oid, reads, deletes, inserts, time_stamp);
-
-        catalog::InsertTuple(index_metrics_table, std::move(index_tuple), txn);
-      }
-    }
-  }
-  txn_manager.EndTransaction(txn);
+  // Write the stats to metric tables
+  UpdateMetrics();
 
   if (interval_cnt % STATS_LOG_INTERVALS == 0) {
     try {
@@ -202,6 +124,125 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 }
 
+void StatsAggregator::UpdateMetrics() {
+  // All tuples are inserted in a single txn
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // Get the target table metrics table
+  LOG_DEBUG("Inserting stat tuples into catalog database..");
+  auto catalog = catalog::Catalog::GetInstance();
+  PL_ASSERT(catalog->GetDatabaseCount() > 0);
+  storage::Database *catalog_database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  PL_ASSERT(catalog_database != nullptr);
+  auto database_metrics_table =
+      catalog_database->GetTableWithName(DATABASE_METRIC_NAME);
+  PL_ASSERT(database_metrics_table != nullptr);
+
+  auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
+  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
+      time_since_epoch).count();
+
+  auto database_count = catalog->GetDatabaseCount();
+  for (oid_t database_offset = 0; database_offset < database_count;
+       database_offset++) {
+    auto database = catalog->GetDatabaseWithOffset(database_offset);
+
+    // Update database metrics table
+    auto database_oid = database->GetOid();
+    auto database_metric = aggregated_stats_.GetDatabaseMetric(database_oid);
+    auto txn_committed = database_metric->GetTxnCommitted().GetCounter();
+    auto txn_aborted = database_metric->GetTxnAborted().GetCounter();
+
+    auto db_tuple = catalog::GetDatabaseMetricsCatalogTuple(
+        database_metrics_table->GetSchema(), database_oid, txn_committed,
+        txn_aborted, time_stamp);
+
+    catalog::InsertTuple(database_metrics_table, std::move(db_tuple), txn);
+    LOG_TRACE("DB Metric Tuple inserted");
+
+    // Update all the indices of this database
+    UpdateTableMetrics(database, time_stamp, txn);
+  }
+
+  txn_manager.EndTransaction(txn);
+}
+
+void StatsAggregator::UpdateTableMetrics(storage::Database *database,
+                                         int64_t time_stamp,
+                                         concurrency::Transaction *txn) {
+  // Get the target table metrics table
+  auto catalog = catalog::Catalog::GetInstance();
+  PL_ASSERT(catalog->GetDatabaseCount() > 0);
+  storage::Database *catalog_database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  PL_ASSERT(catalog_database != nullptr);
+  auto table_metrics_table =
+      catalog_database->GetTableWithName(TABLE_METRIC_NAME);
+  auto database_oid = database->GetOid();
+  PL_ASSERT(table_metrics_table != nullptr);
+
+  // Update table metrics table for each of the indices
+  auto table_count = database->GetTableCount();
+  for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
+    auto table = database->GetTable(table_offset);
+    auto table_oid = table->GetOid();
+    auto table_metrics =
+        aggregated_stats_.GetTableMetric(database_oid, table_oid);
+    auto table_access = table_metrics->GetTableAccess();
+    auto reads = table_access.GetReads();
+    auto updates = table_access.GetUpdates();
+    auto deletes = table_access.GetDeletes();
+    auto inserts = table_access.GetInserts();
+
+    // Generate and insert the tuple
+    auto table_tuple = catalog::GetTableMetricsCatalogTuple(
+        table_metrics_table->GetSchema(), database_oid, table_oid, reads,
+        updates, deletes, inserts, time_stamp);
+    catalog::InsertTuple(table_metrics_table, std::move(table_tuple), txn);
+    LOG_TRACE("Table Metric Tuple inserted");
+
+    UpdateIndexMetrics(database, table, time_stamp, txn);
+  }
+}
+
+void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
+                                         storage::DataTable *table,
+                                         int64_t time_stamp,
+                                         concurrency::Transaction *txn) {
+  // Get the target index metrics table
+  auto catalog = catalog::Catalog::GetInstance();
+  storage::Database *catalog_database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  PL_ASSERT(catalog_database != nullptr);
+  auto index_metrics_table =
+      catalog_database->GetTableWithName(INDEX_METRIC_NAME);
+
+  // Update index metrics table for each of the indices
+  auto database_oid = database->GetOid();
+  auto table_oid = table->GetOid();
+  auto index_count = table->GetIndexCount();
+  for (oid_t index_offset = 0; index_offset < index_count; index_offset++) {
+    auto index = table->GetIndex(index_offset);
+    auto index_oid = index->GetOid();
+    auto index_metric =
+        aggregated_stats_.GetIndexMetric(database_oid, table_oid, index_oid);
+
+    auto index_access = index_metric->GetIndexAccess();
+    auto reads = index_access.GetReads();
+    auto deletes = index_access.GetDeletes();
+    auto inserts = index_access.GetInserts();
+
+    // Generate and insert the tuple
+    auto index_tuple = catalog::GetIndexMetricsCatalogTuple(
+        index_metrics_table->GetSchema(), database_oid, table_oid, index_oid,
+        reads, deletes, inserts, time_stamp);
+
+    catalog::InsertTuple(index_metrics_table, std::move(index_tuple), txn);
+  }
+}
+
 void StatsAggregator::RunAggregator() {
   LOG_DEBUG("Aggregator running.\n");
   std::mutex mtx;
@@ -210,10 +251,10 @@ void StatsAggregator::RunAggregator() {
   double alpha = 0.4;
   double weighted_avg_throughput = 0.0;
 
-  while (!shutting_down_ &&
-         exec_finished_.wait_for(
+  while (exec_finished_.wait_for(
              lck, std::chrono::milliseconds(aggregation_interval_ms_)) ==
-             std::cv_status::timeout) {
+             std::cv_status::timeout &&
+         !shutting_down_) {
     Aggregate(interval_cnt, alpha, weighted_avg_throughput);
   }
   LOG_DEBUG("Aggregator done!\n");

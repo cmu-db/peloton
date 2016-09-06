@@ -24,6 +24,9 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "statistics/backend_stats_context.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
+#include "concurrency/transaction.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -94,9 +97,8 @@ class StatsAggregator {
   // Aggregate stats periodically
   void RunAggregator();
 
-  // Terminate aggregator thread. 
-  // TODO this should not be a public function
-  void ShutdownAggregator();  
+  // Terminate aggregator thread
+  void ShutdownAggregator();
 
  private:
   //===--------------------------------------------------------------------===//
@@ -135,6 +137,22 @@ class StatsAggregator {
 
   // Whether the aggregator is running
   bool shutting_down_ = false;
+
+  //===--------------------------------------------------------------------===//
+  // HELPER FUNCTIONS
+  //===--------------------------------------------------------------------===//
+
+  // Write the all metrics to metric tables
+  void UpdateMetrics();
+
+  // Update the table metrics with a given database
+  void UpdateTableMetrics(storage::Database *database, int64_t time_stamp,
+                          concurrency::Transaction *txn);
+
+  // Update the index metrics with a given table
+  void UpdateIndexMetrics(storage::Database *database,
+                          storage::DataTable *table, int64_t time_stamp,
+                          concurrency::Transaction *txn);
 };
 
 }  // namespace stats
