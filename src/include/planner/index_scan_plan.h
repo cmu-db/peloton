@@ -109,7 +109,7 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                const IndexScanDesc &index_scan_desc, bool for_update_flag);
+                const IndexScanDesc &index_scan_desc, bool for_update_flag = false);
 
   ~IndexScanPlan() {
     for (auto expr : runtime_keys_) {
