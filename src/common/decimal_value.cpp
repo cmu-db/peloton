@@ -26,13 +26,11 @@ static inline double ValMod(double x, double y) {
 DecimalValue::DecimalValue(double d)
   : NumericValue(Type::GetInstance(Type::DECIMAL)) {
   value_.decimal = d;
-  //std::cout << "decimal type: " << GetTypeId() << " value: " << d << std::endl;
 }
 
 DecimalValue::DecimalValue(float f)
   : NumericValue(Type::GetInstance(Type::DECIMAL)) {
   value_.decimal = f;
-  //std::cout << "decimal type: " << GetTypeId() << " value: " << f << std::endl;
 }
 
 bool DecimalValue::IsZero() const {
