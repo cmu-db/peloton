@@ -476,7 +476,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     LOG_TRACE("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
         new planner::SeqScanPlan(select_stmt));
-    LOG_INFO("Sequential scan plan created");
+    LOG_TRACE("Sequential scan plan created");
     return std::move(child_SelectPlan);
   }
 
