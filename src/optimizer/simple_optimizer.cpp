@@ -476,7 +476,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     LOG_TRACE("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
         new planner::SeqScanPlan(select_stmt));
-    LOG_TRACE("Sequential scan plan created");
+    LOG_INFO("Sequential scan plan created");
     return std::move(child_SelectPlan);
   }
 
@@ -499,6 +499,10 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     column_idx++;
   }
 
+  bool update_flag = false;
+  if(select_stmt->is_for_update == true){
+    update_flag = true;
+  }
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
@@ -530,7 +534,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   // Create plan node.
   std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
-      target_table, select_stmt->where_clause, column_ids, index_scan_desc));
+      target_table, select_stmt->where_clause, column_ids, index_scan_desc , update_flag));
   LOG_TRACE("Index scan plan created");
 
   return std::move(node);
@@ -681,7 +685,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   // Create the index scan plan for ORDER_LINE
   std::unique_ptr<planner::IndexScanPlan> orderline_scan_node(
       new planner::IndexScanPlan(orderline_table, predicate8, column_ids,
-                                 index_scan_desc));
+                                 index_scan_desc , false));
   LOG_DEBUG("Index scan for order_line plan created");
 
   // predicate for scanning stock table
@@ -711,7 +715,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   // Create the index scan plan for STOCK
   std::unique_ptr<planner::IndexScanPlan> stock_scan_node(
       new planner::IndexScanPlan(stock_table, predicate11, column_ids,
-                                 index_scan_desc2));
+                                 index_scan_desc2, false));
   LOG_DEBUG("Index scan plan for STOCK created");
 
   // Create hash plan node
