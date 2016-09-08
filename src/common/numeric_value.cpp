@@ -38,7 +38,7 @@ IntegerValue::IntegerValue(int16_t i)
 
 IntegerValue::IntegerValue(int32_t i, UNUSED_ATTRIBUTE bool is_offset)
                      : NumericValue(Type::GetInstance(Type::PARAMETER_OFFSET)) {
-  assert(is_offset);
+  PL_ASSERT(is_offset);
   value_.integer = i;
 }
 
@@ -77,7 +77,6 @@ Value *IntegerValue::AddValue(const Value &o) const {
   T2 y = o.GetAs<T2>();
   T1 sum1 = (T1)(x + y);
   T2 sum2 = (T2)(x + y);
-  //std::cout << (int)sum1 << " " << sum2 << std::endl;
   if ((x + y) != sum1 && (x + y) != sum2) {
     throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");

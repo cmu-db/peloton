@@ -21,39 +21,39 @@ namespace common {
 VarlenValue::VarlenValue(const char *data, uint32_t len)
                             : Value(Type::GetInstance(Type::VARCHAR)) {
   if (len == PELOTON_VARCHAR_MAX_LEN) {
-    value_.ptr = (char *) malloc(sizeof(uint32_t));
-    assert(value_.ptr != nullptr);
+    value_.ptr = new char[sizeof(uint32_t)];
+    PL_ASSERT(value_.ptr != nullptr);
     (*(uint32_t *) value_.ptr) = len;
   }
   else {
-    value_.ptr = (char *) malloc(len + sizeof(uint32_t));
-    assert(value_.ptr != nullptr);
+    value_.ptr = new char[len + sizeof(uint32_t)];
+    PL_ASSERT(value_.ptr != nullptr);
     (*(uint32_t *) value_.ptr) = len;
     char *dest = value_.ptr + sizeof(uint32_t);
-    memcpy(dest, data, len);
+    PL_MEMCPY(dest, data, len);
   }
 }
 
 VarlenValue::VarlenValue(const std::string &data)
                             : Value(Type::GetInstance(Type::VARCHAR)) {
   uint32_t len = data.length();
-  value_.ptr = (char *) malloc(len + 1 + sizeof(uint32_t));
-  assert(value_.ptr != nullptr);
+  value_.ptr = new char[len + 1 + sizeof(uint32_t)];
+  PL_ASSERT(value_.ptr != nullptr);
   (*(uint32_t *) value_.ptr) = len + 1;
   char *dest = value_.ptr + sizeof(uint32_t);
-  memcpy(dest, data.c_str(), len + 1);
+  PL_MEMCPY(dest, data.c_str(), len + 1);
 }
 
 VarlenValue::VarlenValue(const Varlen *varlen)
                             : Value(Type::GetInstance(Type::VARCHAR)) {
-  value_.ptr = (char *) malloc(varlen->GetSize() + sizeof(uint32_t));
+  value_.ptr = new char[varlen->GetSize() + sizeof(uint32_t)];
   (*(uint32_t *) value_.ptr) = varlen->GetSize();
   char *dest = value_.ptr;
-  memcpy(dest, varlen->GetRaw(), varlen->GetSize());
+  PL_MEMCPY(dest, varlen->GetRaw(), varlen->GetSize());
 }
 
 VarlenValue::~VarlenValue() {
-  free(value_.ptr);
+  delete[] value_.ptr;
 }
 
 // Access the raw variable length data
@@ -172,17 +172,17 @@ void VarlenValue::SerializeTo(char *storage, bool inlined UNUSED_ATTRIBUTE,
                               VarlenPool *pool) const {
   if (pool == nullptr) {
     uint32_t size = GetLength() + sizeof(uint32_t);
-    char *data = (char *)malloc(size);
-    assert(data != nullptr);
+    char *data = new char[size];
+    PL_ASSERT(data != nullptr);
     *reinterpret_cast<const char **>(storage) = data;
-    memcpy(data, value_.ptr, size);
+    PL_MEMCPY(data, value_.ptr, size);
   }
   else {
     uint32_t size = GetLength() + sizeof(uint32_t);
     char *data = (char *)pool->Allocate(size);
-    assert(data != nullptr);
+    PL_ASSERT(data != nullptr);
     *reinterpret_cast<const char **>(storage) = data;
-    memcpy(data, value_.ptr, size);
+    PL_MEMCPY(data, value_.ptr, size);
   }
 }
 
