@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// varlen_pool_test.cpp
+//
+// Identification: test/common/varlen_pool_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <limits.h>
 #include <pthread.h>
 #include "common/varlen_pool.h"
@@ -7,11 +19,11 @@
 namespace peloton {
 namespace test {
 
-class VarlenPoolTest : public PelotonTest {};
+class VarlenPoolTests : public PelotonTest {};
 
-#define N 1024
-#define M 100000
-#define R 10
+#define N 10
+#define M 1000
+#define R 1
 #define RANDOM(a) (rand() % a) // Generate a random number in [0, a)
 
 const size_t str_len = 1000; // test string length
@@ -31,14 +43,8 @@ size_t get_align(size_t size) {
   return (1 << bits);
 }
 
-// Test the construction and destruction of a VarlenPool
-TEST_F(VarlenPoolTest, Construction) {
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
-  delete pool;
-}
-
 // Allocate and free once
-TEST_F(VarlenPoolTest, AllocateOnce) {
+TEST_F(VarlenPoolTests, AllocateOnceTest) {
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
   void *p = nullptr;
   size_t size;
@@ -57,37 +63,8 @@ TEST_F(VarlenPoolTest, AllocateOnce) {
   delete pool;
 }
 
-// Test compaction
-TEST_F(VarlenPoolTest, Compaction) {
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
-  void *p[200000] = {nullptr};
-  size_t block_size, n;
-
-  // Allocate and free (MAX_EMPTY_NUM + 2) buffers each list
-  for (size_t i = 0; i < MAX_LIST_NUM; i++) {
-    n = MAX_BLOCK_NUM >> i;
-    block_size = 1 << (i + 4);
-    for (size_t j = 0; j < (MAX_EMPTY_NUM + 2) * n; j++) {
-      p[j] = pool->Allocate(block_size);
-    }
-    for (size_t j = 0; j < (MAX_EMPTY_NUM + 2) * n; j++) {
-      pool->Free(p[j]);
-    }
-  }
-
-  // All the pointers have been freed
-  EXPECT_EQ(0, pool->GetTotalAllocatedSpace());
-
-  // Test compaction
-  for (size_t i = 0; i < LARGE_LIST_ID; i++)
-    EXPECT_TRUE(MAX_EMPTY_NUM == pool->empty_cnt_[i]);
-  EXPECT_EQ(0, pool->empty_cnt_[LARGE_LIST_ID]);
-
-  delete pool;
-}
-
 // Allocate and free N blocks from each buffer list
-TEST_F(VarlenPoolTest, TestAll) {
+TEST_F(VarlenPoolTests, AllocateTest) {
   std::srand(std::time(0));
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
   char *p[MAX_LIST_NUM][N];
@@ -167,7 +144,7 @@ TEST_F(VarlenPoolTest, TestAll) {
 }
 
 // Random allocation and free
-TEST_F(VarlenPoolTest, TestRandom) {
+TEST_F(VarlenPoolTests, RandomTest) {
   std::srand(std::time(0));
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
   char *p[M] = {nullptr};
@@ -307,7 +284,7 @@ void *thread_all(void *arg) {
 
 void *thread_random(void *arg) {
   std::srand(std::time(0));
-  const size_t m = 10000;
+  const size_t m = 1000;
   VarlenPool *pool = (VarlenPool *) arg;
   char *p[m] = {nullptr};
   char *test_str = new char[str_len];
@@ -362,7 +339,7 @@ void *thread_random(void *arg) {
   pthread_exit(NULL);
 }
 
-TEST_F(VarlenPoolTest, MultithreadAll) {
+TEST_F(VarlenPoolTests, MultithreadTest) {
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
 
   pthread_t thread1, thread2;
@@ -383,7 +360,7 @@ TEST_F(VarlenPoolTest, MultithreadAll) {
   delete pool;
 }
 
-TEST_F(VarlenPoolTest, MultithreadRandom) {
+TEST_F(VarlenPoolTests, MultithreadRandomTest) {
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
 
   pthread_t thread1, thread2;

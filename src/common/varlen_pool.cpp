@@ -17,7 +17,7 @@ namespace common {
 
 Buffer::Buffer(size_t buf_size, size_t blk_size) {
   buf_size_ = buf_size;
-  buf_begin_ = malloc(buf_size_);
+  buf_begin_ = new char[buf_size_];
   blk_size_ = blk_size;
   bitmap_ = std::vector<bool> (MAX_BLOCK_NUM, 0);
   bitmap_.resize(buf_size / blk_size);
@@ -26,7 +26,7 @@ Buffer::Buffer(size_t buf_size, size_t blk_size) {
 
 Buffer::~Buffer() {
   if (buf_begin_ != nullptr) {
-    free(buf_begin_);
+    delete[] buf_begin_;
   }
 }
 

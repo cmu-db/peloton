@@ -14,7 +14,7 @@
 #include <cstring>
 #include <memory>
 #include <assert.h>
-//#include <boost/shared_array.hpp>
+#include "macros.h"
 
 namespace peloton {
 /**
@@ -87,21 +87,21 @@ class GenericArray {
 
   // corresponds to "bar = new byte[len];" in Java
   void resetAndExpand(int newLength) {
-    assert(newLength >= 0);
+    PL_ASSERT(newLength >= 0);
     //data_ = boost::shared_array<T>(new T[newLength]);
     data_ = std::shared_ptr<T>(new T[newLength]);
-    ::memset(data_.get(), 0, newLength * sizeof(T));
+    PL_MEMSET(data_.get(), 0, newLength * sizeof(T));
     length_ = newLength;
   };
 
   // corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar = tmp;" in Java
   void copyAndExpand(int newLength) {
-    assert(newLength >= 0);
-    assert(newLength > length_);
+    PL_ASSERT(newLength >= 0);
+    PL_ASSERT(newLength > length_);
     //boost::shared_array<T> newData(new T[newLength]);
     std::shared_ptr<T> newData(new T[newLength]);
-    ::memset(newData.get(), 0, newLength * sizeof(T)); // makes valgrind happy.
-    ::memcpy(newData.get(), data_.get(), length_ * sizeof(T));
+    PL_MEMSET(newData.get(), 0, newLength * sizeof(T)); // makes valgrind happy.
+    PL_MEMCPY(newData.get(), data_.get(), length_ * sizeof(T));
     data_ = newData;
     length_ = newLength;
   };
@@ -113,15 +113,15 @@ class GenericArray {
 
   // helper functions for convenience.
   void assign(const T* assignedData, int offset, int assignedLength) {
-    assert(!isNull());
-    assert(length_ >= offset + assignedLength);
-    assert(offset >= 0);
-    ::memcpy(data_.get() + offset, assignedData, assignedLength * sizeof(T));
+    PL_ASSERT(!isNull());
+    PL_ASSERT(length_ >= offset + assignedLength);
+    PL_ASSERT(offset >= 0);
+    PL_MEMCPY(data_.get() + offset, assignedData, assignedLength * sizeof(T));
   };
 
   GenericArray<T> operator+(const GenericArray<T> &tail) const {
-    assert(!isNull());
-    assert(!tail.isNull());
+    PL_ASSERT(!isNull());
+    PL_ASSERT(!tail.isNull());
     GenericArray<T> concated(this->length_ + tail.length_);
     concated.assign(this->data_.get(), 0, this->length_);
     concated.assign(tail.data_.get(), this->length_, tail.length_);
@@ -129,14 +129,14 @@ class GenericArray {
   };
 
   const T& operator[](int index) const {
-    assert(!isNull());
-    assert(length_ > index);
+    PL_ASSERT(!isNull());
+    PL_ASSERT(length_ > index);
     return data_.get()[index];
   };
 
   T& operator[](int index) {
-    assert(!isNull());
-    assert(length_ > index);
+    PL_ASSERT(!isNull());
+    PL_ASSERT(length_ > index);
     return data_.get()[index];
   };
 
