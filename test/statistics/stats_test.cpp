@@ -31,6 +31,8 @@
 #include "executor/executor_context.h"
 #include "planner/insert_plan.h"
 
+#define NUM_ITERATION 50
+
 namespace peloton {
 namespace test {
 
@@ -43,7 +45,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto index_metadata = table->GetIndex(0)->GetMetadata();
   auto context = stats::BackendStatsContext::GetInstance();
 
-  for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {
+  for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
 
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
@@ -81,8 +83,9 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(common::Type::INTEGER,
-                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -94,9 +97,10 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   txn_manager.CommitTransaction(txn);
 
   // Create multiple stat worker threads
+  int num_threads = 8;
   storage::Database *database = catalog->GetDatabaseWithName("EMP_DB");
   storage::DataTable *table = database->GetTableWithName("emp_table");
-  LaunchParallelTest(8, TransactionTest, database, table);
+  LaunchParallelTest(num_threads, TransactionTest, database, table);
 
   // Wait for aggregation to finish
   std::chrono::microseconds sleep_time(200 * 1000);
@@ -107,17 +111,19 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
       peloton::stats::StatsAggregator::GetInstance().GetAggregatedStats();
   auto db_oid = database->GetOid();
   auto db_metric = aggregated_stats.GetDatabaseMetric(db_oid);
-  ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(), 8 * 50);
-  ASSERT_EQ(db_metric->GetTxnAborted().GetCounter(), 8 * 50 * 2);
+  ASSERT_EQ(db_metric->GetTxnCommitted().GetCounter(),
+            num_threads * NUM_ITERATION);
+  ASSERT_EQ(db_metric->GetTxnAborted().GetCounter(),
+            num_threads * NUM_ITERATION * 2);
 
   // Check table metrics
   auto table_oid = table->GetOid();
   auto table_metric = aggregated_stats.GetTableMetric(db_oid, table_oid);
   auto table_access = table_metric->GetTableAccess();
-  ASSERT_EQ(table_access.GetReads(), 8 * 50 * 2);
-  ASSERT_EQ(table_access.GetUpdates(), 8 * 50 * 1);
-  ASSERT_EQ(table_access.GetDeletes(), 8 * 50 * 2);
-  ASSERT_EQ(table_access.GetInserts(), 8 * 50 * 1);
+  ASSERT_EQ(table_access.GetReads(), num_threads * NUM_ITERATION * 2);
+  ASSERT_EQ(table_access.GetUpdates(), num_threads * NUM_ITERATION);
+  ASSERT_EQ(table_access.GetDeletes(), num_threads * NUM_ITERATION * 2);
+  ASSERT_EQ(table_access.GetInserts(), num_threads * NUM_ITERATION);
 
   // Check index metrics
   auto index = table->GetIndex(0);
@@ -125,9 +131,9 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   auto index_metric =
       aggregated_stats.GetIndexMetric(db_oid, table_oid, index_oid);
   auto index_access = index_metric->GetIndexAccess();
-  ASSERT_EQ(index_access.GetReads(), 8 * 50 * 1);
-  ASSERT_EQ(index_access.GetDeletes(), 8 * 50 * 2);
-  ASSERT_EQ(index_access.GetInserts(), 8 * 50 * 1);
+  ASSERT_EQ(index_access.GetReads(), num_threads * NUM_ITERATION);
+  ASSERT_EQ(index_access.GetDeletes(), num_threads * NUM_ITERATION * 2);
+  ASSERT_EQ(index_access.GetInserts(), num_threads * NUM_ITERATION);
 
   aggregator.ShutdownAggregator();
   txn = txn_manager.BeginTransaction();
