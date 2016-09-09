@@ -53,8 +53,9 @@ BackendStatsContext::BackendStatsContext(size_t max_latency_history,
 }
 
 BackendStatsContext::~BackendStatsContext() {
-  if (is_registered_to_aggregator_ == true)
-    StatsAggregator::GetInstance().UnregisterContext(thread_id_);
+  // TODO clean up aggregator backend context map when a thread exits
+  //  if (is_registered_to_aggregator_ == true)
+  //    StatsAggregator::GetInstance().UnregisterContext(thread_id_);
 }
 
 //===--------------------------------------------------------------------===//
