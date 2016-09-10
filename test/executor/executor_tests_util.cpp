@@ -20,19 +20,19 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
+#include "common/exception.h"
 #include "common/value.h"
 #include "common/value_factory.h"
-#include "common/exception.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
+#include "index/index_factory.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
 #include "storage/tuple.h"
-#include "storage/data_table.h"
-#include "storage/table_factory.h"
-#include "index/index_factory.h"
 
 #include "executor/mock_executor.h"
 
@@ -62,7 +62,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column =
-          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+          catalog::Column(common::Type::INTEGER,
+                          common::Type::GetTypeSize(common::Type::INTEGER),
                           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -72,7 +73,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column =
-          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+          catalog::Column(common::Type::INTEGER,
+                          common::Type::GetTypeSize(common::Type::INTEGER),
                           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -82,7 +84,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column =
-          catalog::Column(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
+          catalog::Column(common::Type::DECIMAL,
+                          common::Type::GetTypeSize(common::Type::DECIMAL),
                           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -91,8 +94,9 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(common::Type::VARCHAR, 25,  // Column length.
-                                    "COL_D", !is_inlined);   // inlined.
+      auto column =
+          catalog::Column(common::Type::VARCHAR, 25,  // Column length.
+                          "COL_D", !is_inlined);      // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -190,9 +194,9 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     } else {
       // First column is unique in this case
-      tuple.SetValue(
-          0, common::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)),
-          testing_pool);
+      tuple.SetValue(0, common::ValueFactory::GetIntegerValue(
+                            PopulatedValue(populate_value, 0)),
+                     testing_pool);
     }
 
     // In case of random, make sure this column has duplicated values
@@ -245,12 +249,15 @@ void ExecutorTestsUtil::PopulateTiles(
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
-                   testing_pool);
-    tuple.SetValue(1, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
-                   testing_pool);
-    tuple.SetValue(2, common::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
-                   testing_pool);
+    tuple.SetValue(
+        0, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
+        testing_pool);
+    tuple.SetValue(
+        1, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
+        testing_pool);
+    tuple.SetValue(
+        2, common::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
+        testing_pool);
     auto string_value = common::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
@@ -285,8 +292,9 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   EXPECT_TRUE(executor->Init());
 
   // Where the main work takes place...
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile));
@@ -314,7 +322,6 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
       tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {
-
     // This holds column ID in the underlying table that are being indexed
     std::vector<oid_t> key_attrs;
 
@@ -404,8 +411,10 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
     storage::DataTable *table, oid_t tuple_id, common::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
-  auto val1 = common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
-  auto val2 = common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
+  auto val1 =
+      common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
+  auto val2 =
+      common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
   auto val3 = common::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
   auto val4 = common::ValueFactory::GetVarcharValue("12345");
   tuple->SetValue(0, val1, pool);
@@ -442,7 +451,10 @@ void ExecutorTestsUtil::PrintTileVector(
     for (UNUSED_ATTRIBUTE oid_t tuple_id : *tile) {
       LOG_INFO("<");
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        LOG_INFO("%s", tile->GetValue(tuple_id, col_id)->GetInfo().c_str());
+        LOG_INFO("%s", std::unique_ptr<common::Value>(
+                           tile->GetValue(tuple_id, col_id))
+                           ->GetInfo()
+                           .c_str());
       }
       LOG_INFO(">");
     }
