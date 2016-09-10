@@ -467,7 +467,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             for (size_t i = 0; i < sizeof(double); ++i) {
               buf = (buf << 8) | param[i];
             }
-            memcpy(&float_val, &buf, sizeof(double));
+            PL_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(std::make_pair(
                 common::Type::DECIMAL, std::to_string(float_val)));
             param_values->push_back(common::ValueFactory::GetDoubleValue(float_val).Copy());

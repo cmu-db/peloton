@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// array_value_test.cpp
+//
+// Identification: test/common/array_value_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include <limits.h>
 #include <iostream>
 #include <cstdint>
@@ -12,7 +25,7 @@
 namespace peloton {
 namespace test {
 
-class ArrayValueTest : public PelotonTest {};
+class ArrayValueTests : public PelotonTest {};
 
 #define RANDOM(a) (rand() % a) // Generate a random number in [0, a)
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
@@ -53,7 +66,7 @@ std::string RANDOM_STRING(size_t size) {
   return rand_string;
 }
 
-TEST_F(ArrayValueTest, GetElement) {
+TEST_F(ArrayValueTests, GetElementTest) {
   // Create vectors of different types
   // Insert n elements into each vector
   size_t n = 10;
@@ -143,14 +156,13 @@ TEST_F(ArrayValueTest, GetElement) {
     Type::GetInstance(Type::VARCHAR));
   for (size_t i = 0; i < n; i++) {
     Value *ele = array_varchar->GetElementAt(i);
-    //std::cout << vec_varchar[i] << std::endl;
     EXPECT_EQ(((VarlenValue *)ele)->GetData(), vec_varchar[i]);
     delete ele;
   }
   delete array_varchar;
 }
 
-TEST(ArrayValue, InList) {
+TEST_F(ArrayValueTests, InListTest) {
   // Create vectors of different types
   // Insert n elements into each vector
   size_t n = 10;
@@ -383,7 +395,7 @@ void CheckGreaterThan(Value *v1, Value *v2) {
     delete result[i];
 }
 
-TEST_F(ArrayValueTest, Compare) {
+TEST_F(ArrayValueTests, CompareTest) {
   for (int i = 0; i < TEST_NUM; i++) {
     size_t len = 10;
     std::string str1 = RANDOM_STRING(len);

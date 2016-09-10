@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// value_factory_test.cpp
+//
+// Identification: test/common/value_factory_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <limits.h>
 #include <iostream>
 #include <cstdint>
@@ -12,7 +24,7 @@
 namespace peloton {
 namespace test {
 
-class ValueFactoryTest : public PelotonTest {};
+class ValueFactoryTests : public PelotonTest {};
 
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 
@@ -39,7 +51,7 @@ int64_t RANDOM64() {
   return 1;
 }
 
-TEST_F(ValueFactoryTest, test) {
+TEST_F(ValueFactoryTests, PeekValueTest) {
   common::IntegerValue v1((int8_t)common::PELOTON_INT8_MAX);
   EXPECT_EQ(common::ValuePeeker::PeekTinyInt(&v1), common::PELOTON_INT8_MAX);
   common::IntegerValue v2((int16_t)common::PELOTON_INT16_MAX);
@@ -57,7 +69,7 @@ TEST_F(ValueFactoryTest, test) {
   EXPECT_EQ(v7.GetData(), str);
 }
 
-TEST_F(ValueFactoryTest, test2) {
+TEST_F(ValueFactoryTests, CastTest) {
   std::unique_ptr<common::Value> v1(common::ValueFactory::CastAsBigInt(
     common::IntegerValue((int32_t)common::PELOTON_INT32_MAX)));
   EXPECT_EQ(v1->GetTypeId(), common::Type::BIGINT);
@@ -115,34 +127,7 @@ TEST_F(ValueFactoryTest, test2) {
   EXPECT_THROW(common::ValueFactory::CastAsTinyInt(common::VarlenValue("128")), peloton::Exception);
 }
 
-TEST_F(ValueFactoryTest, GetInfo) {
-  std::cout << common::BooleanValue(true).GetInfo();
-  std::cout << common::BooleanValue(false).GetInfo();
-  std::cout << common::BooleanValue(common::PELOTON_BOOLEAN_NULL).GetInfo();
-  std::cout << common::IntegerValue((int8_t)common::PELOTON_INT8_MAX).GetInfo();
-  std::cout << common::IntegerValue((int8_t)common::PELOTON_INT8_MIN).GetInfo();
-  std::cout << common::IntegerValue((int8_t)common::PELOTON_INT8_NULL).GetInfo();
-  std::cout << common::IntegerValue((int16_t)common::PELOTON_INT16_MAX).GetInfo();
-  std::cout << common::IntegerValue((int16_t)common::PELOTON_INT16_MIN).GetInfo();
-  std::cout << common::IntegerValue((int16_t)common::PELOTON_INT16_NULL).GetInfo();
-  std::cout << common::IntegerValue((int32_t)common::PELOTON_INT32_MAX).GetInfo();
-  std::cout << common::IntegerValue((int32_t)common::PELOTON_INT32_MIN).GetInfo();
-  std::cout << common::IntegerValue((int32_t)common::PELOTON_INT32_NULL).GetInfo();
-  std::cout << common::IntegerValue((int64_t)common::PELOTON_INT64_MAX).GetInfo();
-  std::cout << common::IntegerValue((int64_t)common::PELOTON_INT64_MIN).GetInfo();
-  std::cout << common::IntegerValue((int64_t)common::PELOTON_INT64_NULL).GetInfo();
-  //std::cout << DecimalValue((double)PELOTON_DECIMAL_MAX).GetInfo();
-  std::cout << common::DecimalValue((double)common::PELOTON_DECIMAL_MIN).GetInfo();
-  std::cout << common::DecimalValue((double)common::PELOTON_DECIMAL_NULL).GetInfo();
-  std::cout << common::VarlenValue("hello").GetInfo();
-  std::cout << common::VarlenValue("").GetInfo();
-  std::cout << common::VarlenValue(nullptr, 0).GetInfo();
-  std::cout << common::TimestampValue(common::PELOTON_TIMESTAMP_MAX).GetInfo();
-  std::cout << common::TimestampValue(0).GetInfo();
-  std::cout << common::TimestampValue(common::PELOTON_TIMESTAMP_NULL).GetInfo();
-}
-
-TEST_F(ValueFactoryTest, Serialization) {
+TEST_F(ValueFactoryTests, SerializationTest) {
   peloton::CopySerializeOutput out;
   common::IntegerValue((int8_t)common::PELOTON_INT8_MAX).SerializeTo(out);
   common::IntegerValue((int8_t)common::PELOTON_INT8_MIN).SerializeTo(out);

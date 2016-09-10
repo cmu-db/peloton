@@ -42,7 +42,7 @@ class Buffer {
   size_t buf_size_;
   size_t blk_size_;
   size_t allocated_cnt_;
-  void *buf_begin_;
+  char *buf_begin_;
   std::vector<bool> bitmap_;
   Buffer(size_t buf_size, size_t block_size);
   ~Buffer();
