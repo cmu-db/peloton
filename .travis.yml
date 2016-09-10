@@ -36,9 +36,9 @@ script:
     # run cmake
     - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
     # build
-    - make
+    - make -j2
     # run tests
-    - make check
+    - make check -j2
     # install peloton
     - make install
     # run jdbc tests
