@@ -10,20 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "optimizer/memo.h"
-#include "optimizer/column_manager.h"
-#include "optimizer/query_operators.h"
-#include "optimizer/operator_node.h"
+#include "common/logger.h"
+#include "optimizer/abstract_optimizer.h"
 #include "optimizer/binding.h"
+#include "optimizer/column_manager.h"
+#include "optimizer/memo.h"
+#include "optimizer/operator_node.h"
 #include "optimizer/pattern.h"
 #include "optimizer/property.h"
 #include "optimizer/property_set.h"
+#include "optimizer/query_operators.h"
 #include "optimizer/rule.h"
 #include "planner/abstract_plan.h"
-#include "common/logger.h"
 
 #include <memory>
 
@@ -33,7 +33,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-class Optimizer {
+class Optimizer : public AbstractOptimizer {
   friend class BindingIterator;
   friend class GroupBindingIterator;
 
