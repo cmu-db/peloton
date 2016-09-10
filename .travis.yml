@@ -42,7 +42,7 @@ script:
     # install peloton
     - make install
     # run jdbc tests
-    - python ./script/validator/jdbc_validator.py
+    - python ./script/validators/jdbc_validator.py
     # upload coverage info
     - make coveralls
 

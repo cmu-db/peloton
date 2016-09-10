@@ -440,7 +440,7 @@ public class PelotonTest {
       if (res[i] < 0) {
         throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
       }
-    } 
+    }
     conn.commit();
   }
 
