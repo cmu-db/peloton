@@ -77,6 +77,7 @@ Value *IntegerValue::AddValue(const Value &o) const {
   T2 y = o.GetAs<T2>();
   T1 sum1 = (T1)(x + y);
   T2 sum2 = (T2)(x + y);
+
   if ((x + y) != sum1 && (x + y) != sum2) {
     throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
