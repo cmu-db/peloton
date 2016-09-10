@@ -14,7 +14,7 @@
 
 /**
  * Debug logging functions for EE. Unlike the performance counters,
- * these are just printf() turned on/off by LOG_LEVEL compile option.
+ * these are just fprintf() turned on/off by LOG_LEVEL compile option.
  * The main concern here is not to add any overhead on runtime performance
  * when the logging is turned off. Use LOG_XXX_ENABLED macros defined here to
  * eliminate all instructions in the final binary.
@@ -36,6 +36,7 @@ namespace peloton {
 #define LOG_LEVEL_ALL 0
 
 #define LOG_LOG_TIME_FORMAT "%Y-%m-%d %H:%M:%S"
+#define LOG_OUTPUT_STREAM stdout
 
 // Compile Option
 #ifndef LOG_LEVEL
@@ -72,8 +73,8 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 //#pragma message("LOG_ERROR was enabled.")
 #define LOG_ERROR(...)                                                 \
   outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_ERROR); \
-  ::printf(__VA_ARGS__);                                               \
-  printf("\n");                                                        \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                           \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                    \
   ::fflush(stdout)
 #else
 #define LOG_ERROR(...) ((void)0)
@@ -87,8 +88,8 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 //#pragma message("LOG_WARN was enabled.")
 #define LOG_WARN(...)                                                 \
   outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_WARN); \
-  ::printf(__VA_ARGS__);                                              \
-  printf("\n");                                                       \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                          \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                   \
   ::fflush(stdout)
 #else
 #define LOG_WARN(...) ((void)0)
@@ -102,8 +103,8 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 //#pragma message("LOG_INFO was enabled.")
 #define LOG_INFO(...)                                                 \
   outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_INFO); \
-  ::printf(__VA_ARGS__);                                              \
-  printf("\n");                                                       \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                          \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                   \
   ::fflush(stdout)
 #else
 #define LOG_INFO(...) ((void)0)
@@ -117,8 +118,8 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 //#pragma message("LOG_DEBUG was enabled.")
 #define LOG_DEBUG(...)                                                 \
   outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_DEBUG); \
-  ::printf(__VA_ARGS__);                                               \
-  printf("\n");                                                        \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                           \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                    \
   ::fflush(stdout)
 #else
 #define LOG_DEBUG(...) ((void)0)
@@ -132,8 +133,8 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 //#pragma message("LOG_TRACE was enabled.")
 #define LOG_TRACE(...)                                                 \
   outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_TRACE); \
-  ::printf(__VA_ARGS__);                                               \
-  printf("\n");                                                        \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                           \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                    \
   ::fflush(stdout)
 #else
 #define LOG_TRACE(...) ((void)0)
@@ -167,7 +168,8 @@ inline void outputLogHeader_(const char *file, int line, const char *func,
     default:
       type = "UNKWN";
   }
-  ::printf("[%s] [%s:%d:%s()] %s - ", type, file, line, func, time_str);
+  ::fprintf(LOG_OUTPUT_STREAM, "[%s] [%s:%d:%s()] %s - ", type, file, line,
+            func, time_str);
 }
 
 }  // End peloton namespace
