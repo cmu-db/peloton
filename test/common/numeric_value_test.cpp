@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// numeric_value_test.cpp
+//
+// Identification: test/common/numeric_value_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <limits.h>
 #include <iostream>
 #include <cstdint>
@@ -11,7 +23,7 @@
 namespace peloton {
 namespace test {
 
-class NumericValueTest : public PelotonTest {};
+class NumericValueTests : public PelotonTest {};
 
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 #define SEED 233
@@ -165,7 +177,6 @@ void CheckMath1(T1 x, T2 y) {
   Value *v1 = nullptr;
   Value *v2 = nullptr;
   // Test x + y
-  printf("test x + y:\n");
   v1 = nullptr;
   v2 = new IntegerValue(x + y);
   T1 sum1 = (T1)(x + y);
@@ -190,7 +201,6 @@ void CheckMath1(T1 x, T2 y) {
   delete v2;
 
   // Test x - y
-  printf("test x - y:\n");
   v1 = nullptr;
   v2 = new IntegerValue(x - y);
   T1 diff1 = (T1)(x - y);
@@ -215,7 +225,6 @@ void CheckMath1(T1 x, T2 y) {
   delete v2;
 
   // Test x * y
-  printf("test x * y:\n");
   v1 = nullptr;
   v2 = new IntegerValue(x * y);
   T1 prod1 = (T1)(x * y);
@@ -240,7 +249,6 @@ void CheckMath1(T1 x, T2 y) {
   delete v2;
 
   // Test x / y
-  printf("test x / y\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -255,7 +263,6 @@ void CheckMath1(T1 x, T2 y) {
   delete v1;
 
   // Test x % y
-  printf("test x mod y\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -270,7 +277,6 @@ void CheckMath1(T1 x, T2 y) {
   delete v1;
 
   // Test sqrt(x)
-  printf("test sqrt(x)\n");
   v1 = nullptr;
   if (x < 0)
     EXPECT_THROW(IntegerValue(x).Sqrt(),
@@ -288,28 +294,24 @@ void CheckMath1(T1 x, T2 y) {
 template<class T>
 void CheckMath2(T x, double y) {
   Value *v1, *v2;
-  printf("test x + y:\n");
   v1 = IntegerValue(x).Add(DecimalValue(y));
   v2 = new DecimalValue(x + y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x - y:\n");
   v1 = IntegerValue(x).Subtract(DecimalValue(y));
   v2 = new DecimalValue(x - y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x * y:\n");
   v1 = IntegerValue(x).Multiply(DecimalValue(y));
   v2 = new DecimalValue(x * y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x / y\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -323,7 +325,6 @@ void CheckMath2(T x, double y) {
   }
   delete v1;
 
-  printf("test x mod y\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -343,28 +344,24 @@ template<class T>
 void CheckMath3(double x, T y) {
   Value *v1, *v2;
 
-  printf("test x + y:\n");
   v1 = DecimalValue(x).Add(IntegerValue(y));
   v2 = new DecimalValue(x + y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x - y:\n");
   v1 = DecimalValue(x).Subtract(IntegerValue(y));
   v2 = new DecimalValue(x - y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x * y:\n");
   v1 = DecimalValue(x).Multiply(IntegerValue(y));
   v2 = new DecimalValue(x * y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x / y\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -378,7 +375,6 @@ void CheckMath3(double x, T y) {
   }
   delete v1;
 
-  printf("test x mod y:\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -397,28 +393,24 @@ void CheckMath3(double x, T y) {
 void CheckMath4(double x, double y) {
   Value *v1, *v2;
 
-  printf("test x + y:\n");
   v1 = DecimalValue(x).Add(DecimalValue(y));
   v2 = new DecimalValue(x + y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x - y:\n");
   v1 = DecimalValue(x).Subtract(DecimalValue(y));
   v2 = new DecimalValue(x - y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x * y:\n");
   v1 = DecimalValue(x).Multiply(DecimalValue(y));
   v2 = new DecimalValue(x * y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  printf("test x / y\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -432,7 +424,6 @@ void CheckMath4(double x, double y) {
   }
   delete v1;
 
-  printf("test x mod y:\n");
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
@@ -446,7 +437,6 @@ void CheckMath4(double x, double y) {
   }
   delete v1;
   
-  printf("test sqrt(x)\n");
   v1 = nullptr;
   if (x < 0)
     EXPECT_THROW(DecimalValue(x).Sqrt(),
@@ -460,12 +450,7 @@ void CheckMath4(double x, double y) {
   delete v1;
 }
 
-TEST_F(NumericValueTest, Comstruct) {
-  DecimalValue *v = new DecimalValue(0.0);
-  delete v;
-}
-
-TEST_F(NumericValueTest, Compare) {
+TEST_F(NumericValueTests, ComparisonTest) {
   std::srand(SEED);
 
   for (int i = 0; i < TEST_NUM; i++) {
@@ -501,7 +486,7 @@ TEST_F(NumericValueTest, Compare) {
   }
 }
 
-TEST_F(NumericValueTest, Math) {
+TEST_F(NumericValueTests, MathTest) {
   std::srand(SEED);
 
   // Generate two values v1 and v2
@@ -539,7 +524,7 @@ TEST_F(NumericValueTest, Math) {
   }
 }
 
-TEST_F(NumericValueTest, DivideByZero) {
+TEST_F(NumericValueTests, DivideByZeroTest) {
   std::srand(SEED);
 
   CheckMath1<int8_t, int8_t>(RANDOM8(), 0);
@@ -573,7 +558,7 @@ TEST_F(NumericValueTest, DivideByZero) {
   CheckMath4(RANDOM_DECIMAL(), 0);
 }
 
-TEST_F(NumericValueTest, TestNull) {
+TEST_F(NumericValueTests, NullValueTest) {
   std::srand(SEED);
   Value *result[5] = { nullptr };
 
@@ -609,7 +594,6 @@ TEST_F(NumericValueTest, TestNull) {
   }
 
   // Operate null
-  printf("test operate null\n");
   result[0] = IntegerValue(rand()).Add(
     IntegerValue((int8_t)PELOTON_INT8_NULL));
   result[1] = IntegerValue(rand()).Add(

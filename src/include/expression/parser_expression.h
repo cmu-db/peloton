@@ -54,9 +54,9 @@ class ParserExpression : public AbstractExpression {
 
   virtual ~ParserExpression() {
     delete expr;
-    free(name);
-    free(column);
-    free(alias);
+    delete[] name;
+    delete[] column;
+    delete[] alias;
   }
 
   std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
