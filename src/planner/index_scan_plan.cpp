@@ -22,7 +22,7 @@ namespace planner {
 IndexScanPlan::IndexScanPlan(storage::DataTable *table,
                              expression::AbstractExpression *predicate,
                              const std::vector<oid_t> &column_ids,
-                             const IndexScanDesc &index_scan_desc)
+                             const IndexScanDesc &index_scan_desc , bool for_update_flag)
     : index_(index_scan_desc.index_obj),
       column_ids_(column_ids),
       key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
@@ -34,6 +34,10 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       index_predicate_() {
 
   LOG_TRACE("Creating an Index Scan Plan");
+
+  if(for_update_flag == true){
+    SetForUpdateFlag(true);
+  }
 
   SetTargetTable(table);
 

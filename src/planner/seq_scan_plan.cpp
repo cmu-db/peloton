@@ -88,6 +88,12 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
       for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
     }
   }
+
+  // Check for "For Update" flag
+  if(select_node->is_for_update == true){
+    SetForUpdateFlag(true);
+  }
+
   // Keep a copy of the where clause to be binded to values
   if (select_node->where_clause != NULL) {
     auto predicate = select_node->where_clause->Copy();

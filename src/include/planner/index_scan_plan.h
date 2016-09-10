@@ -109,7 +109,7 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                const IndexScanDesc &index_scan_desc);
+                const IndexScanDesc &index_scan_desc, bool for_update_flag = false);
 
   ~IndexScanPlan() {
     for (auto expr : runtime_keys_) {
@@ -161,7 +161,7 @@ class IndexScanPlan : public AbstractScan {
     IndexScanDesc desc(index_, key_column_ids_, expr_types_, values_,
                        new_runtime_keys);
     IndexScanPlan *new_plan = new IndexScanPlan(
-        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc);
+        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc , false);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 

@@ -54,17 +54,17 @@ public class PelotonTest {
   
   // To test the join in TPCC
   private final String CREATE_STOCK_TABLE = "CREATE TABLE STOCK ("
-		  	+ "S_W_ID INT PRIMARY KEY,"
-		  	+ "S_I_ID INT PRIMARY KEY,"
-  			+ "S_QUANTITY DECIMAL NOT NULL);";
-		  	//+ "PRIMARY KEY (S_W_ID, S_I_ID));";
+        + "S_W_ID INT PRIMARY KEY,"
+        + "S_I_ID INT PRIMARY KEY,"
+        + "S_QUANTITY DECIMAL NOT NULL);";
+        //+ "PRIMARY KEY (S_W_ID, S_I_ID));";
   private final String CREATE_ORDER_LINE_TABLE = "CREATE TABLE ORDER_LINE ("
-		  	+ "OL_W_ID INT NOT NULL PRIMARY KEY,"
-		  	+ "OL_D_ID INT NOT NULL PRIMARY KEY,"
-		  	+ "OL_O_ID INT NOT NULL PRIMARY KEY,"
-		  	+ "OL_NUMBER INT NOT NULL PRIMARY KEY,"
-		  	+ "OL_I_ID INT NOT NULL);";
-		  	//+ "PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER));";
+        + "OL_W_ID INT NOT NULL PRIMARY KEY,"
+        + "OL_D_ID INT NOT NULL PRIMARY KEY,"
+        + "OL_O_ID INT NOT NULL PRIMARY KEY,"
+        + "OL_NUMBER INT NOT NULL PRIMARY KEY,"
+        + "OL_I_ID INT NOT NULL);";
+        //+ "PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER));";
 
   private final String INSERT_STOCK_1 = "INSERT INTO STOCK VALUES (1, 2, 0);";
   private final String INSERT_STOCK_2 = "INSERT INTO STOCK VALUES (1, 5, 1);";
@@ -72,23 +72,23 @@ public class PelotonTest {
   private final String SELECT_STOCK = "SELECT * FROM STOCK;";
   // Test general expression evaluation
   private final String SELECT_STOCK_COMPLEX = "SELECT * FROM STOCK WHERE"
-  		+ " S_W_ID + S_I_ID = ? + S_QUANTITY + 1;";
+      + " S_W_ID + S_I_ID = ? + S_QUANTITY + 1;";
   
   private final String INSERT_ORDER_LINE = "INSERT INTO ORDER_LINE VALUES (1, 2, 3, 4, 5);";
   private final String STOCK_LEVEL = "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
-			+ " FROM " + "ORDER_LINE, STOCK"
-			//+ " FROM " + "ORDER_LINE JOIN STOCK on S_I_ID = OL_I_ID"
-			+ " WHERE OL_W_ID = ?"
-			+ " AND OL_D_ID = ?"
-			+ " AND OL_O_ID < ?"
-			+ " AND OL_O_ID >= ? - 20"
-			+ " AND S_W_ID = ?"
-			+ " AND S_I_ID = OL_I_ID" 
-			+ " AND S_QUANTITY < ?";
+      + " FROM " + "ORDER_LINE, STOCK"
+      //+ " FROM " + "ORDER_LINE JOIN STOCK on S_I_ID = OL_I_ID"
+      + " WHERE OL_W_ID = ?"
+      + " AND OL_D_ID = ?"
+      + " AND OL_O_ID < ?"
+      + " AND OL_O_ID >= ? - 20"
+      + " AND S_W_ID = ?"
+      + " AND S_I_ID = OL_I_ID"
+      + " AND S_QUANTITY < ?";
 
   private final String CREATE_TIMESTAMP_TABLE = "CREATE TABLE TS ("
-			+ "id INT NOT NULL,"
-			+ "ts TIMESTAMP NOT NULL);";
+      + "id INT NOT NULL,"
+      + "ts TIMESTAMP NOT NULL);";
   private final String INSERT_TIMESTAMP = "INSERT INTO TS VALUES (1, ?);";
 
   private final Connection conn;
@@ -150,16 +150,16 @@ public class PelotonTest {
     ResultSet r=pstmt.executeQuery();
 
     while(r.next()) {
-    	System.out.println(r.getInt(1));
-    	System.out.println(r.getInt(2));
-    	System.out.println(r.getBigDecimal(3));
+      System.out.println(r.getInt(1));
+      System.out.println(r.getInt(2));
+      System.out.println(r.getBigDecimal(3));
    }
    r.close();
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
     pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
     java.sql.Timestamp sysdate = new java.sql.Timestamp(
-			System.currentTimeMillis());
+      System.currentTimeMillis());
     java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
     Timestamp timestamp = new org.postgresql.util.PGTimestamp(System.currentTimeMillis());
     //pstmt.setDate(1, today);
@@ -231,7 +231,7 @@ public class PelotonTest {
     for (int i = 1; i < 3; i++)
         IndexScanParam(i);
 
-	  stmt.execute(DELETE_A);
+    stmt.execute(DELETE_A);
     System.out.println("Scan test passed.");
   }
 
@@ -504,4 +504,3 @@ public class PelotonTest {
     pt.Close();
   }
 }
-

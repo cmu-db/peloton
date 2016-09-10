@@ -57,6 +57,9 @@ class AbstractScan : public AbstractPlan {
 
   inline storage::DataTable *GetTable() const { return target_table_; }
 
+  inline bool IsForUpdate() const { return is_for_update;}
+  
+
  protected:
   // These methods only used by its derived classes (when deserialization)
   expression::AbstractExpression *Predicate() { return predicate_.get(); }
@@ -66,6 +69,7 @@ class AbstractScan : public AbstractPlan {
   void SetPredicate(expression::AbstractExpression *predicate) {
     predicate_ = std::unique_ptr<expression::AbstractExpression>(predicate);
   }
+  void SetForUpdateFlag(bool flag){is_for_update = flag;}
 
   /** @brief Predicate with ValueParameters inside. Needed to be binded at
    * the binding stage to generate the "real" predicate.
@@ -82,6 +86,9 @@ class AbstractScan : public AbstractPlan {
 
   /** @brief Columns from tile group to be added to logical tile output. */
   std::vector<oid_t> column_ids_;
+
+  // "For Update" Flag
+  bool is_for_update = false;
 };
 
 }  // namespace planner
