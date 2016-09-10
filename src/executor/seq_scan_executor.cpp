@@ -54,7 +54,7 @@ bool SeqScanExecutor::DInit() {
   const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
 
   target_table_ = node.GetTable();
-
+  
   current_tile_group_offset_ = START_OID;
 
   if (target_table_ != nullptr) {
