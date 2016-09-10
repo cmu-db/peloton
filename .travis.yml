@@ -39,6 +39,10 @@ script:
     - make
     # run tests
     - make check
+    # install peloton
+    - make install
+    # run jdbc tests
+    - python ./script/validator/jdbc_validator.py
     # upload coverage info
     - make coveralls
 
