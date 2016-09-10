@@ -10,29 +10,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 #include "catalog/schema.h"
-#include "common/value.h"
 #include "common/macros.h"
-#include "storage/tile_group.h"
-#include "storage/tile.h"
-#include "storage/data_table.h"
+#include "common/value.h"
 #include "common/value_factory.h"
 #include "executor/logical_tile.h"
+#include "storage/data_table.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace executor {
 
 #define SCHEMA_PREALLOCATION_SIZE 20
 
-LogicalTile::LogicalTile(){
+LogicalTile::LogicalTile() {
   // Preallocate schema
   schema_.reserve(SCHEMA_PREALLOCATION_SIZE);
 }
-
 
 /**
  * @brief Get the schema of the tile.
@@ -181,8 +179,8 @@ common::Value *LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 }
 
 // this function is designed for overriding pure virtual function.
-void LogicalTile::SetValue(common::Value &value UNUSED_ATTRIBUTE, 
-                           oid_t tuple_id UNUSED_ATTRIBUTE, 
+void LogicalTile::SetValue(common::Value &value UNUSED_ATTRIBUTE,
+                           oid_t tuple_id UNUSED_ATTRIBUTE,
                            oid_t column_id UNUSED_ATTRIBUTE) {
   PL_ASSERT(false);
 }
@@ -434,28 +432,28 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
 }
 
 std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
-	std::vector<std::vector<std::string>> string_tile;
-	for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
-		std::vector<std::string> row;
-	    if (visible_rows_[tuple_itr] == false) continue;
-	    for (oid_t column_itr = 0; column_itr < schema_.size(); column_itr++) {
-	      const LogicalTile::ColumnInfo &cp = schema_[column_itr];
-	      oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
-	      // get the value from the base physical tile
-	      if (base_tuple_id == NULL_OID) {
-          std::unique_ptr<common::Value> val(
+  std::vector<std::vector<std::string>> string_tile;
+  for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
+    std::vector<std::string> row;
+    if (visible_rows_[tuple_itr] == false) continue;
+    for (oid_t column_itr = 0; column_itr < schema_.size(); column_itr++) {
+      const LogicalTile::ColumnInfo &cp = schema_[column_itr];
+      oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
+      // get the value from the base physical tile
+      if (base_tuple_id == NULL_OID) {
+        std::unique_ptr<common::Value> val(
             common::ValueFactory::GetNullValueByType(
-              cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
-	        row.push_back(val->ToString());
-	      }else {
-          std::unique_ptr<common::Value> val(
+                cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
+        row.push_back(val->ToString());
+      } else {
+        std::unique_ptr<common::Value> val(
             cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
-	        row.push_back(val->ToString());
-	      }
-	    }
-	    string_tile.push_back(row);
-	}
-	return string_tile;
+        row.push_back(val->ToString());
+      }
+    }
+    string_tile.push_back(row);
+  }
+  return string_tile;
 }
 
 const std::string LogicalTile::GetInfo() const {
@@ -479,14 +477,14 @@ const std::string LogicalTile::GetInfo() const {
       oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
       // get the value from the base physical tile
       if (base_tuple_id == NULL_OID) {
-        os << common::ValueFactory::GetNullValueByType(
-                cp.base_tile->GetSchema()->GetType(cp.origin_column_id))
-                   ->GetInfo()
-           << " ";
+        std::unique_ptr<common::Value> value(
+            common::ValueFactory::GetNullValueByType(
+                cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
+        os << value->GetInfo() << " ";
       } else {
-        os << cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id)
-                ->GetInfo()
-           << " ";
+        std::unique_ptr<common::Value> value(
+            cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
+        os << value->GetInfo() << " ";
       }
     }
 
@@ -511,8 +509,8 @@ const std::string LogicalTile::GetInfo() const {
  */
 void LogicalTile::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-    std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-        cols_in_physical_tile) {
+    std::unordered_map<storage::Tile *, std::vector<oid_t>>
+        &cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -537,7 +535,8 @@ void LogicalTile::MaterializeByTiles(
     storage::Tile *dest_tile) {
   bool row_wise_materialization = true;
 
-  if (peloton_layout_mode == LAYOUT_TYPE_COLUMN) row_wise_materialization = false;
+  if (peloton_layout_mode == LAYOUT_TYPE_COLUMN)
+    row_wise_materialization = false;
 
   // TODO: Make this a parameter
   auto dest_tile_column_count = dest_tile->GetColumnCount();
@@ -596,7 +595,8 @@ void LogicalTile::MaterializeRowAtAtATime(
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
       old_column_offsets.push_back(old_column_offset);
-      const common::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
+      const common::Type::TypeId old_column_type =
+          old_schema->GetType(old_column_id);
       old_column_types.push_back(old_column_type);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
       old_is_inlineds.push_back(old_is_inlined);
@@ -683,7 +683,8 @@ void LogicalTile::MaterializeColumnAtATime(
       // Get old column information
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
-      const common::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
+      const common::Type::TypeId old_column_type =
+          old_schema->GetType(old_column_id);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
 
       // Old to new column mapping
@@ -710,9 +711,8 @@ void LogicalTile::MaterializeColumnAtATime(
       ///////////////////////////
       for (oid_t old_tuple_id : *this) {
         oid_t base_tuple_id = column_position_list[old_tuple_id];
-        std::unique_ptr<common::Value> value(
-          old_tile->GetValueFast(base_tuple_id, old_column_offset,
-            old_column_type, old_is_inlined));
+        std::unique_ptr<common::Value> value(old_tile->GetValueFast(
+            base_tuple_id, old_column_offset, old_column_type, old_is_inlined));
 
         LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
         LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);

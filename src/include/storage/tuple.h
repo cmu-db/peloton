@@ -10,19 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
 
 #include "catalog/schema.h"
+#include "common/abstract_tuple.h"
+#include "common/serializeio.h"
+#include "common/serializer.h"
+#include "common/types.h"
 #include "common/value.h"
 #include "common/value_factory.h"
 #include "common/value_peeker.h"
-#include "common/types.h"
-#include "common/abstract_tuple.h"
-#include "common/serializer.h"
-#include "common/serializeio.h"
 
 namespace peloton {
 namespace storage {
@@ -125,7 +124,8 @@ class Tuple : public AbstractTuple {
 
   // Is the column value null ?
   inline bool IsNull(const uint64_t column_id) const {
-    return GetValue(column_id)->IsNull();
+    std::unique_ptr<common::Value> value(GetValue(column_id));
+    return value->IsNull();
   }
 
   // Is the tuple null ?
@@ -166,7 +166,8 @@ class Tuple : public AbstractTuple {
 
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const AbstractTuple *tuple,
-                    const std::vector<oid_t> &columns, common::VarlenPool *pool);
+                    const std::vector<oid_t> &columns,
+                    common::VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);
