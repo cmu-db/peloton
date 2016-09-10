@@ -29,6 +29,7 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
       aggregation_interval_ms_(aggregation_interval_ms),
       thread_number_(0),
       total_prev_txn_committed_(0) {
+  pool_.reset(new common::VarlenPool());
   try {
     ofs_.open(peloton_stats_directory_, std::ofstream::out);
   }
@@ -124,6 +125,32 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 }
 
+void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
+                                         concurrency::Transaction *txn) {
+  // Get the target query metrics table
+  LOG_DEBUG("Inserting Query Metric Tuples");
+  auto query_metrics_table = GetMetricTable(QUERY_METRIC_NAME);
+
+  std::shared_ptr<QueryMetric> query_metric;
+  auto &completed_query_metrics = aggregated_stats_.GetCompletedQueryMetrics();
+  while (completed_query_metrics.Dequeue(query_metric)) {
+
+    auto table_access = query_metric->GetQueryAccess();
+    auto reads = table_access.GetReads();
+    auto updates = table_access.GetUpdates();
+    auto deletes = table_access.GetDeletes();
+    auto inserts = table_access.GetInserts();
+
+    // Generate and insert the tuple
+    auto query_tuple = catalog::GetQueryMetricsCatalogTuple(
+        query_metrics_table->GetSchema(), query_metric->GetName(),
+        query_metric->GetDatabaseId(), reads, updates, deletes, inserts,
+        time_stamp, pool_.get());
+    catalog::InsertTuple(query_metrics_table, std::move(query_tuple), txn);
+    LOG_TRACE("Query Metric Tuple inserted");
+  }
+}
+
 void StatsAggregator::UpdateMetrics() {
   // All tuples are inserted in a single txn
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -166,6 +193,9 @@ void StatsAggregator::UpdateMetrics() {
     UpdateTableMetrics(database, time_stamp, txn);
   }
 
+  // Update all query metrics
+  UpdateQueryMetrics(time_stamp, txn);
+
   txn_manager.EndTransaction(txn);
 }
 
@@ -173,15 +203,8 @@ void StatsAggregator::UpdateTableMetrics(storage::Database *database,
                                          int64_t time_stamp,
                                          concurrency::Transaction *txn) {
   // Get the target table metrics table
-  auto catalog = catalog::Catalog::GetInstance();
-  PL_ASSERT(catalog->GetDatabaseCount() > 0);
-  storage::Database *catalog_database =
-      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  PL_ASSERT(catalog_database != nullptr);
-  auto table_metrics_table =
-      catalog_database->GetTableWithName(TABLE_METRIC_NAME);
   auto database_oid = database->GetOid();
-  PL_ASSERT(table_metrics_table != nullptr);
+  auto table_metrics_table = GetMetricTable(TABLE_METRIC_NAME);
 
   // Update table metrics table for each of the indices
   auto table_count = database->GetTableCount();
@@ -298,6 +321,17 @@ void StatsAggregator::UnregisterContext(std::thread::id id) {
       LOG_DEBUG("stats_context already deleted!");
     }
   }
+}
+
+storage::DataTable *StatsAggregator::GetMetricTable(std::string table_name) {
+  auto catalog = catalog::Catalog::GetInstance();
+  PL_ASSERT(catalog->GetDatabaseCount() > 0);
+  storage::Database *catalog_database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  PL_ASSERT(catalog_database != nullptr);
+  auto metrics_table = catalog_database->GetTableWithName(table_name);
+  PL_ASSERT(metrics_table != nullptr);
+  return metrics_table;
 }
 
 }  // namespace stats

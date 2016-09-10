@@ -21,7 +21,11 @@
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
 #include "statistics/database_metric.h"
+#include "statistics/query_metric.h"
 #include "container/cuckoo_map.h"
+#include "container/lock_free_queue.h"
+
+#define QUERY_METRIC_QUEUE_SIZE 100000
 
 namespace peloton {
 
@@ -60,28 +64,47 @@ class BackendStatsContext {
   IndexMetric* GetIndexMetric(oid_t database_id, oid_t table_id,
                               oid_t index_id);
 
+  // Returns the metrics for completed queries
+  LockFreeQueue<std::shared_ptr<QueryMetric>>& GetCompletedQueryMetrics() {
+    return completed_query_metrics_;
+  };
+
+  // Returns the latency metric
   LatencyMetric& GetTxnLatencyMetric();
 
+  // Increment the read stat for given tile group
   void IncrementTableReads(oid_t tile_group_id);
 
+  // Increment the insert stat for given tile group
   void IncrementTableInserts(oid_t tile_group_id);
 
+  // Increment the update stat for given tile group
   void IncrementTableUpdates(oid_t tile_group_id);
 
+  // Increment the delete stat for given tile group
   void IncrementTableDeletes(oid_t tile_group_id);
 
+  // Increment the read stat for given index by read_count
   void IncrementIndexReads(size_t read_count, index::IndexMetadata* metadata);
 
+  // Increment the insert stat for index
   void IncrementIndexInserts(index::IndexMetadata* metadata);
 
+  // Increment the update stat for index
   void IncrementIndexUpdates(index::IndexMetadata* metadata);
 
+  // Increment the delete stat for index
   void IncrementIndexDeletes(size_t delete_count,
                              index::IndexMetadata* metadata);
 
+  // Increment the commit stat for given database
   void IncrementTxnCommitted(oid_t database_id);
 
+  // Increment the abortion stat for given database
   void IncrementTxnAborted(oid_t database_id);
+
+  // Initialize the query stat
+  void InitQueryMetric(std::string query_string, oid_t database_oid);
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
@@ -102,6 +125,16 @@ class BackendStatsContext {
 
   std::string ToString() const;
 
+  // Returns the total number of query aggregated so far
+  oid_t GetQueryCount() { return aggregated_query_count_; }
+
+  // Resets the total number of query aggregated to zero
+  void ResetQueryCount() { aggregated_query_count_ = 0; }
+
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
   // Database metrics
   std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>>
       database_metrics_{};
@@ -114,10 +147,17 @@ class BackendStatsContext {
   std::unordered_map<IndexMetric::IndexKey, std::unique_ptr<IndexMetric>>
       index_metrics_{};
 
+  // Metrics for completed queries
+  LockFreeQueue<std::shared_ptr<QueryMetric>> completed_query_metrics_{
+      QUERY_METRIC_QUEUE_SIZE};
+
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
+
+  // The query metric for the on going metric
+  std::shared_ptr<QueryMetric> ongoing_query_metric_ = nullptr;
 
   // The thread ID of this worker
   std::thread::id thread_id_;
@@ -128,8 +168,19 @@ class BackendStatsContext {
   // Whether this context is registered to the global aggregator
   bool is_registered_to_aggregator_;
 
+  // The mapping table of backend stat context for each thread
   static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
       stats_context_map_;
+
+  // The total number of queries aggregated
+  oid_t aggregated_query_count_ = 0;
+
+  //===--------------------------------------------------------------------===//
+  // HELPER FUNCTIONS
+  //===--------------------------------------------------------------------===//
+
+  // Mark the on going query as completed and move it to completed query queue
+  void CompleteQueryMetric();
 };
 
 }  // namespace stats

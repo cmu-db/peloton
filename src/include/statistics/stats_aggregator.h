@@ -90,6 +90,9 @@ class StatsAggregator {
   // instead of explicitly unregistering it.
   void UnregisterContext(std::thread::id id);
 
+  // Utility function to get the metric table
+  storage::DataTable *GetMetricTable(std::string table_name);
+
   // Aggregate the stats of current living threads
   void Aggregate(int64_t &interval_cnt, double &alpha,
                  double &weighted_avg_throughput);
@@ -138,11 +141,14 @@ class StatsAggregator {
   // Whether the aggregator is running
   bool shutting_down_ = false;
 
+  // Varlen Pool to hold query strings
+  std::unique_ptr<common::VarlenPool> pool_;
+
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
   //===--------------------------------------------------------------------===//
 
-  // Write the all metrics to metric tables
+  // Write all metrics to metric tables
   void UpdateMetrics();
 
   // Update the table metrics with a given database
@@ -153,6 +159,9 @@ class StatsAggregator {
   void UpdateIndexMetrics(storage::Database *database,
                           storage::DataTable *table, int64_t time_stamp,
                           concurrency::Transaction *txn);
+
+  // Write all query metrics to a metric table
+  void UpdateQueryMetrics(int64_t time_stamp, concurrency::Transaction *txn);
 };
 
 }  // namespace stats

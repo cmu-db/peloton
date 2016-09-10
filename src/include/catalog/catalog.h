@@ -28,6 +28,7 @@
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"
 #define INDEX_METRIC_NAME "index_metric"
+#define QUERY_METRIC_NAME "query_metric"
 
 namespace peloton {
 
@@ -120,6 +121,10 @@ class Catalog {
   std::unique_ptr<storage::DataTable> CreateIndexMetricsCatalog(
       oid_t database_id, std::string table_name);
 
+  // Create Table for query metrics
+  std::unique_ptr<storage::DataTable> CreateQueryMetricsCatalog(
+      oid_t database_id, std::string table_name);
+
   // Initialize the schema of the database catalog
   std::unique_ptr<Schema> InitializeDatabaseSchema();
 
@@ -134,6 +139,9 @@ class Catalog {
 
   // Initialize the schema of the index metrics table
   std::unique_ptr<Schema> InitializeIndexMetricsSchema();
+
+  // Initialize the schema of the query metrics table
+  std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
 
   // Get table from a database with its name
   storage::DataTable *GetTableWithName(std::string database_name,

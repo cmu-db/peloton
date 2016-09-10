@@ -782,14 +782,13 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
   }
 
   Result result = current_txn->GetResult();
-  
+
   EndTransaction(current_txn);
 
   // Increment # txns committed metric
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetDatabaseMetric(database_id)
-        ->IncrementTxnCommitted();
+    stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
+        database_id);
   }
 
   return result;

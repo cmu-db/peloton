@@ -37,6 +37,8 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
   EXPECT_NE(database, nullptr);
   auto metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
   EXPECT_NE(metric_table, nullptr);
+  auto query_metric_table = database->GetTableWithName(QUERY_METRIC_NAME);
+  EXPECT_NE(query_metric_table, nullptr);
 }
 
 TEST_F(CatalogTests, CreatingDatabase) {

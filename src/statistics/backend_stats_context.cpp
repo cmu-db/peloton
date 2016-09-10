@@ -52,11 +52,7 @@ BackendStatsContext::BackendStatsContext(size_t max_latency_history,
     StatsAggregator::GetInstance().RegisterContext(thread_id_, this);
 }
 
-BackendStatsContext::~BackendStatsContext() {
-  // TODO clean up aggregator backend context map when a thread exits
-  //  if (is_registered_to_aggregator_ == true)
-  //    StatsAggregator::GetInstance().UnregisterContext(thread_id_);
-}
+BackendStatsContext::~BackendStatsContext() {}
 
 //===--------------------------------------------------------------------===//
 // ACCESSORS
@@ -109,6 +105,9 @@ void BackendStatsContext::IncrementTableReads(oid_t tile_group_id) {
   auto table_metric = GetTableMetric(database_id, table_id);
   PL_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementReads();
+  if (ongoing_query_metric_ != nullptr) {
+    ongoing_query_metric_->GetQueryAccess().IncrementReads();
+  }
 }
 
 void BackendStatsContext::IncrementTableInserts(oid_t tile_group_id) {
@@ -120,6 +119,9 @@ void BackendStatsContext::IncrementTableInserts(oid_t tile_group_id) {
   auto table_metric = GetTableMetric(database_id, table_id);
   PL_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementInserts();
+  if (ongoing_query_metric_ != nullptr) {
+    ongoing_query_metric_->GetQueryAccess().IncrementInserts();
+  }
 }
 
 void BackendStatsContext::IncrementTableUpdates(oid_t tile_group_id) {
@@ -131,6 +133,9 @@ void BackendStatsContext::IncrementTableUpdates(oid_t tile_group_id) {
   auto table_metric = GetTableMetric(database_id, table_id);
   PL_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementUpdates();
+  if (ongoing_query_metric_ != nullptr) {
+    ongoing_query_metric_->GetQueryAccess().IncrementUpdates();
+  }
 }
 
 void BackendStatsContext::IncrementTableDeletes(oid_t tile_group_id) {
@@ -142,6 +147,9 @@ void BackendStatsContext::IncrementTableDeletes(oid_t tile_group_id) {
   auto table_metric = GetTableMetric(database_id, table_id);
   PL_ASSERT(table_metric != nullptr);
   table_metric->GetTableAccess().IncrementDeletes();
+  if (ongoing_query_metric_ != nullptr) {
+    ongoing_query_metric_->GetQueryAccess().IncrementDeletes();
+  }
 }
 
 void BackendStatsContext::IncrementIndexReads(size_t read_count,
@@ -188,12 +196,21 @@ void BackendStatsContext::IncrementTxnCommitted(oid_t database_id) {
   auto database_metric = GetDatabaseMetric(database_id);
   PL_ASSERT(database_metric != nullptr);
   database_metric->IncrementTxnCommitted();
+  CompleteQueryMetric();
 }
 
 void BackendStatsContext::IncrementTxnAborted(oid_t database_id) {
   auto database_metric = GetDatabaseMetric(database_id);
   PL_ASSERT(database_metric != nullptr);
   database_metric->IncrementTxnAborted();
+  CompleteQueryMetric();
+}
+
+void BackendStatsContext::InitQueryMetric(std::string query_string,
+                                          oid_t database_oid) {
+  ongoing_query_metric_.reset(
+      new QueryMetric(QUERY_METRIC, query_string, database_oid));
+  LOG_TRACE("Query metric initialized");
 }
 
 //===--------------------------------------------------------------------===//
@@ -216,25 +233,11 @@ void BackendStatsContext::Aggregate(BackendStatsContext& source) {
   txn_latencies_.ComputeLatencies();
 
   // Aggregate all per-database metrics
-  //  for (auto& database_item : database_metrics_) {
-  //    auto worker_db_metric = source->GetDatabaseMetric(database_item.first);
-  //    if (worker_db_metric != nullptr) {
-  //      database_item.second->Aggregate(*worker_db_metric);
-  //    }
-  //  }
   for (auto& database_item : source.database_metrics_) {
     GetDatabaseMetric(database_item.first)->Aggregate(*database_item.second);
   }
 
   // Aggregate all per-table metrics
-  //  for (auto& table_item : table_metrics_) {
-  //    auto worker_table_metric = source->GetTableMetric(
-  //        table_item.second->GetDatabaseId(),
-  // table_item.second->GetTableId());
-  //    if (worker_table_metric != nullptr) {
-  //      table_item.second->Aggregate(*worker_table_metric);
-  //    }
-  //  }
   for (auto& table_item : source.table_metrics_) {
     GetTableMetric(table_item.second->GetDatabaseId(),
                    table_item.second->GetTableId())
@@ -242,18 +245,18 @@ void BackendStatsContext::Aggregate(BackendStatsContext& source) {
   }
 
   // Aggregate all per-index metrics
-  //  for (auto& index_item : source.index_metrics_) {
-  //    auto worker_index_metric = GetIndexMetric(
-  //        index_item.second->GetDatabaseId(), index_item.second->GetTableId(),
-  //        index_item.second->GetIndexId());
-  //    if (worker_index_metric != nullptr) {
-  //      index_item.second->Aggregate(*worker_index_metric);
-  //    }
-  //  }
   for (auto& index_item : source.index_metrics_) {
     GetIndexMetric(
         index_item.second->GetDatabaseId(), index_item.second->GetTableId(),
         index_item.second->GetIndexId())->Aggregate(*index_item.second);
+  }
+
+  // Aggregate all per-query metrics
+  std::shared_ptr<QueryMetric> query_metric;
+  while (source.completed_query_metrics_.Dequeue(query_metric)) {
+    completed_query_metrics_.Enqueue(query_metric);
+    LOG_TRACE("Found a query metric to aggregate");
+    aggregated_query_count_++;
   }
 }
 
@@ -345,6 +348,14 @@ std::string BackendStatsContext::ToString() const {
   }
 
   return ss.str();
+}
+
+void BackendStatsContext::CompleteQueryMetric() {
+  if (ongoing_query_metric_ != nullptr) {
+    completed_query_metrics_.Enqueue(ongoing_query_metric_);
+    ongoing_query_metric_.reset();
+    LOG_TRACE("Ongoing query completed");
+  }
 }
 
 }  // namespace stats

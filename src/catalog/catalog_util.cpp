@@ -106,7 +106,10 @@ std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(catalog::Schema *schema,
 }
 
 /**
- TODO comment me
+ * Generate a database metric tuple
+ * Input: The table schema, the database id, number of txn committed,
+ * number of txn aborted, the timestamp
+ * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
     catalog::Schema *schema, oid_t database_id, int64_t commit, int64_t abort,
@@ -125,7 +128,10 @@ std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
 }
 
 /**
- * TODO add comment
+ * Generate a table metric tuple
+ * Input: The table schema, the database id, the table id, number of tuples
+ * read, updated, deleted inserted, the timestamp
+ * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetTableMetricsCatalogTuple(
     catalog::Schema *schema, oid_t database_id, oid_t table_id, int64_t reads,
@@ -149,6 +155,12 @@ std::unique_ptr<storage::Tuple> GetTableMetricsCatalogTuple(
   return std::move(tuple);
 }
 
+/**
+ * Generate a index metric tuple
+ * Input: The table schema, the database id, the table id, the index id,
+ * number of tuples read, deleted inserted, the timestamp
+ * Returns: The generated tuple
+ */
 std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
     catalog::Schema *schema, oid_t database_id, oid_t table_id, oid_t index_id,
     int64_t reads, int64_t deletes, int64_t inserts, int64_t time_stamp) {
@@ -162,6 +174,37 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
   auto val7 = common::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(0, val1, nullptr);
+  tuple->SetValue(1, val2, nullptr);
+  tuple->SetValue(2, val3, nullptr);
+  tuple->SetValue(3, val4, nullptr);
+  tuple->SetValue(4, val5, nullptr);
+  tuple->SetValue(5, val6, nullptr);
+  tuple->SetValue(6, val7, nullptr);
+  return std::move(tuple);
+}
+
+/**
+ * Generate a query metric tuple
+ * Input: The table schema, the query string, database id, number of
+ * tuples read, updated, deleted inserted, the timestamp
+ * Returns: The generated tuple
+ */
+std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
+    catalog::Schema *schema, std::string query_name, oid_t database_id,
+    int64_t reads, int64_t updates, int64_t deletes, int64_t inserts,
+    int64_t time_stamp, common::VarlenPool *pool) {
+
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+
+  auto val1 = common::ValueFactory::GetVarcharValue(query_name, nullptr);
+  auto val2 = common::ValueFactory::GetIntegerValue(database_id);
+  auto val3 = common::ValueFactory::GetIntegerValue(reads);
+  auto val4 = common::ValueFactory::GetIntegerValue(updates);
+  auto val5 = common::ValueFactory::GetIntegerValue(deletes);
+  auto val6 = common::ValueFactory::GetIntegerValue(inserts);
+  auto val7 = common::ValueFactory::GetIntegerValue(time_stamp);
+
+  tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, nullptr);
   tuple->SetValue(2, val3, nullptr);
   tuple->SetValue(3, val4, nullptr);
