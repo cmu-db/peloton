@@ -59,7 +59,6 @@ void ShowTable(std::string database_name, std::string table_name) {
                                                                  table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
-  bridge::peloton_status status;
   std::vector<common::Value *> params;
   std::vector<ResultType> result;
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
@@ -68,8 +67,8 @@ void ShowTable(std::string database_name, std::string table_name) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+  bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
+                                    result);
 }
 
 void TransactionTest(storage::Database *database, storage::DataTable *table,
