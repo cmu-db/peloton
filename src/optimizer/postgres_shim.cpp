@@ -10,11 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "common/logger.h"
 #include "optimizer/postgres_shim.h"
+#include "common/logger.h"
 #include "optimizer/query_operators.h"
-#include "optimizer/query_node_printer.h"
 
 namespace peloton {
 namespace optimizer {

@@ -10,10 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 namespace peloton {
+
+namespace parser {
+class CreateStatement;
+}
+
 namespace optimizer {
 
 class Variable;
@@ -47,6 +51,7 @@ class QueryNodeVisitor {
   virtual void visit(const Join*) = 0;
   virtual void visit(const OrderBy*) = 0;
   virtual void visit(const Select*) = 0;
+  virtual void visit(const parser::CreateStatement*) = 0;
 };
 
 } /* namespace optimizer */

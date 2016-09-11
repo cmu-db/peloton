@@ -28,6 +28,11 @@
 #include <memory>
 
 namespace peloton {
+
+namespace parser {
+class SQLStatementList;
+class SQLStatement;
+}
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -47,8 +52,8 @@ class Optimizer : public AbstractOptimizer {
 
   static Optimizer &GetInstance();
 
-  std::shared_ptr<planner::AbstractPlan> GeneratePlan(
-      std::shared_ptr<Select> select_tree);
+  std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree);
 
  private:
   /* TransformQueryTree - create an initial operator tree for the given query
@@ -57,8 +62,7 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the root group expression for the inserted query
    */
-  std::shared_ptr<GroupExpression> InsertQueryTree(
-      std::shared_ptr<Select> tree);
+  std::shared_ptr<GroupExpression> InsertQueryTree(parser::SQLStatement *tree);
 
   /* GetQueryTreeRequiredProperties - get the required physical properties for
    * a peloton query tree.
@@ -66,7 +70,7 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the set of required physical properties for the query
    */
-  PropertySet GetQueryTreeRequiredProperties(std::shared_ptr<Select> tree);
+  PropertySet GetQueryTreeRequiredProperties(parser::SQLStatement *tree);
 
   /* OptimizerPlanToPlannerPlan - convert a tree of physical operators to
    *     a Peloton planner plan for execution.

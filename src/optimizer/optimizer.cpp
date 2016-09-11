@@ -10,18 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/optimizer.h"
-#include "optimizer/operator_visitor.h"
-#include "optimizer/convert_query_to_op.h"
 #include "optimizer/convert_op_to_plan.h"
+#include "optimizer/convert_query_to_op.h"
+#include "optimizer/operator_visitor.h"
 #include "optimizer/rule_impls.h"
 
+#include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
-#include "planner/order_by_plan.h"
 
 #include "catalog/manager.h"
+
+#include "parser/sql_statement.h"
 
 #include <memory>
 
@@ -48,14 +49,25 @@ Optimizer &Optimizer::GetInstance() {
   return optimizer;
 }
 
-std::shared_ptr<planner::AbstractPlan> Optimizer::GeneratePlan(
-    std::shared_ptr<Select> select_tree) {
+std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
+    const std::unique_ptr<parser::SQLStatementList> &parse_tree_list) {
+  // Base Case
+  if (parse_tree_list->GetStatements().size() == 0) return nullptr;
+
+  std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
+
+  // One to one Mapping
+  // auto parse_item_node_type =
+  // parse_tree_list->GetStatements().at(0)->GetType();
+
+  auto parse_tree = parse_tree_list->GetStatements().at(0);
+
   // Generate initial operator tree from query tree
-  std::shared_ptr<GroupExpression> gexpr = InsertQueryTree(select_tree);
+  std::shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree);
   GroupID root_id = gexpr->GetGroupID();
 
   // Get the physical properties the final plan must output
-  PropertySet properties = GetQueryTreeRequiredProperties(select_tree);
+  PropertySet properties = GetQueryTreeRequiredProperties(parse_tree);
 
   // Find least cost plan for root group
   OptimizeExpression(gexpr, properties);
@@ -72,7 +84,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::GeneratePlan(
 }
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
-    std::shared_ptr<Select> tree) {
+    parser::SQLStatement *tree) {
   std::shared_ptr<OpExpression> initial =
       ConvertQueryToOpExpression(column_manager, tree);
   std::shared_ptr<GroupExpression> gexpr;
@@ -81,7 +93,7 @@ std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 PropertySet Optimizer::GetQueryTreeRequiredProperties(
-    std::shared_ptr<Select> tree) {
+    parser::SQLStatement *tree) {
   (void)tree;
   return PropertySet();
 }

@@ -17,13 +17,19 @@
 
 #pragma once
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
-#include "common/types.h"
+#include "common/macros.h"
 #include "common/printable.h"
+#include "common/types.h"
 
 namespace peloton {
+
+namespace optimizer {
+class QueryNodeVisitor;
+}
+
 namespace parser {
 
 struct TableInfo{
@@ -47,6 +53,8 @@ class SQLStatement {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
+  virtual void Accept(UNUSED_ATTRIBUTE optimizer::QueryNodeVisitor* v) const {}
 
  private:
   StatementType stmt_type;
@@ -90,7 +98,6 @@ class SQLStatementList {
     for (auto stmt : statements) delete stmt;
 
     free((char*)parser_msg);
-
   }
 
   void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }

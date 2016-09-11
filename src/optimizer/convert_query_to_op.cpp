@@ -13,12 +13,14 @@
 #include <cmath>
 
 #include "optimizer/convert_query_to_op.h"
-#include "optimizer/query_node_visitor.h"
 #include "optimizer/operators.h"
+#include "optimizer/query_node_visitor.h"
 
+#include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
-#include "planner/order_by_plan.h"
+
+#include "parser/statements.h"
 
 #include "catalog/manager.h"
 
@@ -49,8 +51,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
   QueryToOpTransformer(ColumnManager &manager) : manager(manager) {}
 
   std::shared_ptr<OpExpression> ConvertToOpExpression(
-      std::shared_ptr<Select> op) {
-    op->accept(this);
+      parser::SQLStatement *op) {
+    op->Accept(this);
     return output_expr;
   }
 
@@ -256,6 +258,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     output_expr = project_expr;
   }
 
+  void visit(UNUSED_ATTRIBUTE const parser::CreateStatement *op) override {}
+
  private:
   ColumnManager &manager;
 
@@ -268,7 +272,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 }
 
 std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
-    ColumnManager &manager, std::shared_ptr<Select> tree) {
+    ColumnManager &manager, parser::SQLStatement *tree) {
   QueryToOpTransformer converter(manager);
   return converter.ConvertToOpExpression(tree);
 }

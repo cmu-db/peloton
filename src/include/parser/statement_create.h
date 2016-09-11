@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
 #include "common/types.h"
+#include "expression/parser_expression.h"
+#include "optimizer/query_node_visitor.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace parser {
@@ -87,8 +89,8 @@ struct ColumnDefinition {
         return common::Type::BIGINT;
         break;
 
-      //case DOUBLE:
-      //case FLOAT:
+      // case DOUBLE:
+      // case FLOAT:
       //  return common::Type::DOUBLE;
       //  break;
 
@@ -102,7 +104,7 @@ struct ColumnDefinition {
         return common::Type::BOOLEAN;
         break;
 
-      //case ADDRESS:
+      // case ADDRESS:
       //  return common::Type::ADDRESS;
       //  break;
 
@@ -177,6 +179,10 @@ struct CreateStatement : TableRefStatement {
 
     free(index_name);
     free(database_name);
+  }
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->visit(this);
   }
 
   CreateType type;
