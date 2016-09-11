@@ -109,20 +109,8 @@ class Catalog {
   std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
       oid_t database_id, std::string table_name);
 
-  // Create Table for database metrics
-  std::unique_ptr<storage::DataTable> CreateDatabaseMetricsCatalog(
-      oid_t database_id, std::string table_name);
-
-  // Create Table for table metrics
-  std::unique_ptr<storage::DataTable> CreateTableMetricsCatalog(
-      oid_t database_id, std::string table_name);
-
-  // Create Table for index metrics
-  std::unique_ptr<storage::DataTable> CreateIndexMetricsCatalog(
-      oid_t database_id, std::string table_name);
-
-  // Create Table for query metrics
-  std::unique_ptr<storage::DataTable> CreateQueryMetricsCatalog(
+  // Create Table for metrics tables
+  std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
       oid_t database_id, std::string table_name);
 
   // Initialize the schema of the database catalog

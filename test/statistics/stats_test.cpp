@@ -83,6 +83,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
 
     context->InitQueryMetric("query_string", db_oid);
+    context->GetOnGoingQueryMetric()->GetQueryLatency().StartTimer();
 
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
@@ -112,6 +113,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
 
     // Record database stat
     for (int i = 0; i < NUM_DB_COMMIT; i++) {
+      context->GetOnGoingQueryMetric()->GetQueryLatency().RecordLatency();
       context->IncrementTxnCommitted(db_oid);
     }
     for (int i = 0; i < NUM_DB_ABORT; i++) {

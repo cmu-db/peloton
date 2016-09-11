@@ -192,7 +192,7 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
 std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     catalog::Schema *schema, std::string query_name, oid_t database_id,
     int64_t reads, int64_t updates, int64_t deletes, int64_t inserts,
-    int64_t time_stamp, common::VarlenPool *pool) {
+    int64_t latency, int64_t time_stamp, common::VarlenPool *pool) {
 
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
@@ -202,7 +202,8 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
   auto val4 = common::ValueFactory::GetIntegerValue(updates);
   auto val5 = common::ValueFactory::GetIntegerValue(deletes);
   auto val6 = common::ValueFactory::GetIntegerValue(inserts);
-  auto val7 = common::ValueFactory::GetIntegerValue(time_stamp);
+  auto val7 = common::ValueFactory::GetIntegerValue(latency);
+  auto val8 = common::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, nullptr);
@@ -211,6 +212,7 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
   tuple->SetValue(4, val5, nullptr);
   tuple->SetValue(5, val6, nullptr);
   tuple->SetValue(6, val7, nullptr);
+  tuple->SetValue(7, val8, nullptr);
   return std::move(tuple);
 }
 

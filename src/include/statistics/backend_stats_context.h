@@ -69,6 +69,9 @@ class BackendStatsContext {
     return completed_query_metrics_;
   };
 
+  // Returns the metric for the on going query
+  QueryMetric* GetOnGoingQueryMetric() { return ongoing_query_metric_.get(); }
+
   // Returns the latency metric
   LatencyMetric& GetTxnLatencyMetric();
 
@@ -143,7 +146,9 @@ class BackendStatsContext {
   std::unordered_map<TableMetric::TableKey, std::unique_ptr<TableMetric>>
       table_metrics_{};
 
-  // Index metrics
+  // TODO stl map is not thread safe. use cuckoomap instead
+  // CuckooMap<IndexMetric::IndexKey,std::shared_ptr<IndexMetric>>
+  //      index_metrics_{};
   std::unordered_map<IndexMetric::IndexKey, std::unique_ptr<IndexMetric>>
       index_metrics_{};
 

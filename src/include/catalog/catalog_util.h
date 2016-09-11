@@ -66,6 +66,6 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
 std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     catalog::Schema *schema, std::string query_name, oid_t database_id,
     int64_t reads, int64_t updates, int64_t deletes, int64_t inserts,
-    int64_t time_stamp, common::VarlenPool *pool);
+    int64_t latency, int64_t time_stamp, common::VarlenPool *pool);
 }
 }

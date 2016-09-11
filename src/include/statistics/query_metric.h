@@ -18,6 +18,7 @@
 #include "common/types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
+#include "statistics/latency_metric.h"
 
 namespace peloton {
 namespace stats {
@@ -34,6 +35,8 @@ class QueryMetric : public AbstractMetric {
   //===--------------------------------------------------------------------===//
 
   inline AccessMetric &GetQueryAccess() { return query_access_; }
+
+  inline LatencyMetric &GetQueryLatency() { return latency_metric_; }
 
   inline std::string GetName() { return query_name_; }
 
@@ -79,7 +82,8 @@ class QueryMetric : public AbstractMetric {
   // The number of tuple accesses
   AccessMetric query_access_{ACCESS_METRIC};
 
-  // TODO add latency metric
+  // Latency metric
+  LatencyMetric latency_metric_{LATENCY_METRIC, 2};
 };
 
 }  // namespace stats

@@ -41,22 +41,22 @@ void Catalog::CreateCatalogDatabase() {
 
   // Create table for database metrics
   auto database_metrics_catalog =
-      CreateDatabaseMetricsCatalog(START_OID, DATABASE_METRIC_NAME);
+      CreateMetricsCatalog(START_OID, DATABASE_METRIC_NAME);
   database->AddTable(database_metrics_catalog.release());
 
   // Create table for index metrics
   auto index_metrics_catalog =
-      CreateIndexMetricsCatalog(START_OID, INDEX_METRIC_NAME);
+      CreateMetricsCatalog(START_OID, INDEX_METRIC_NAME);
   database->AddTable(index_metrics_catalog.release());
 
   // Create table for table metrics
   auto table_metrics_catalog =
-      CreateTableMetricsCatalog(START_OID, TABLE_METRIC_NAME);
+      CreateMetricsCatalog(START_OID, TABLE_METRIC_NAME);
   database->AddTable(table_metrics_catalog.release());
 
   // Create table for query metrics
   auto query_metrics_catalog =
-      CreateQueryMetricsCatalog(START_OID, QUERY_METRIC_NAME);
+      CreateMetricsCatalog(START_OID, QUERY_METRIC_NAME);
   database->AddTable(query_metrics_catalog.release());
 
   databases_.push_back(database);
@@ -451,62 +451,23 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   return table;
 }
 
-// Create table for database metrics
-std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseMetricsCatalog(
-    oid_t database_id, std::string table_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
-  auto table_schema = InitializeDatabaseMetricsSchema();
-
-  catalog::Schema *schema = table_schema.release();
-
-  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNextOid(), schema, table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
-
-  return table;
-}
-
-// Create table for table metrics
-std::unique_ptr<storage::DataTable> Catalog::CreateTableMetricsCatalog(
-    oid_t database_id, std::string table_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
-  auto table_schema = InitializeTableMetricsSchema();
-
-  catalog::Schema *schema = table_schema.release();
-
-  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNextOid(), schema, table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
-
-  return table;
-}
-
-// Create table for index metrics
-std::unique_ptr<storage::DataTable> Catalog::CreateIndexMetricsCatalog(
-    oid_t database_id, std::string table_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
-  auto table_schema = InitializeIndexMetricsSchema();
-
-  catalog::Schema *schema = table_schema.release();
-
-  std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNextOid(), schema, table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
-
-  return table;
-}
-
-// Create table for query metrics
-std::unique_ptr<storage::DataTable> Catalog::CreateQueryMetricsCatalog(
+// Create table for metrics tables
+std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
     oid_t database_id, std::string table_name) {
   bool own_schema = true;
   bool adapt_table = false;
   auto table_schema = InitializeQueryMetricsSchema();
 
-  catalog::Schema *schema = table_schema.release();
+  catalog::Schema *schema = nullptr;
+  if (table_name == QUERY_METRIC_NAME) {
+    schema = InitializeQueryMetricsSchema().release();
+  } else if (table_name == TABLE_METRIC_NAME) {
+    schema = InitializeTableMetricsSchema().release();
+  } else if (table_name == DATABASE_METRIC_NAME) {
+    schema = InitializeDatabaseMetricsSchema().release();
+  } else if (table_name == INDEX_METRIC_NAME) {
+    schema = InitializeIndexMetricsSchema().release();
+  }
 
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       database_id, GetNextOid(), schema, table_name,
@@ -696,6 +657,9 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   auto inserts_column =
       catalog::Column(integer_type, integer_type_size, "inserts", true);
   inserts_column.AddConstraint(not_null_constraint);
+  auto latency_column =
+      catalog::Column(integer_type, integer_type_size, "latency", true);
+  latency_column.AddConstraint(not_null_constraint);
 
   // MAX_INT only tracks the number of seconds since epoch until 2037
   auto timestamp_column =
@@ -703,8 +667,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {name_column,    database_id_column, reads_column,    updates_column,
-       deletes_column, inserts_column,     timestamp_column}));
+      {name_column,    database_id_column, reads_column,   updates_column,
+       deletes_column, inserts_column,     latency_column, timestamp_column}));
   return database_schema;
 }
 
