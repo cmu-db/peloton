@@ -166,10 +166,10 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
 
 /* Gets the first token of a query */
 std::string get_query_type(std::string query) {
-  std::vector<std::string> query_tokens;
-  boost::split(query_tokens, query, boost::is_any_of(" "),
-               boost::token_compress_on);
-  return query_tokens[0];
+  std::string query_type;
+  std::stringstream stream(query);
+  stream >> query_type;
+  return query_type;
 }
 
 void PacketManager::CompleteCommand(const std::string &query_type, int rows,
