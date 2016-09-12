@@ -870,7 +870,7 @@ common::Type::TypeId PostgresValueTypeToPelotonValueType(
     case POSTGRES_VALUE_TYPE_VARCHAR:
     case POSTGRES_VALUE_TYPE_VARCHAR2:
     case POSTGRES_VALUE_TYPE_TEXT:
-      return common::Type::DECIMAL;
+      return common::Type::VARCHAR;
 
     case POSTGRES_VALUE_TYPE_DATE:
     case POSTGRES_VALUE_TYPE_TIMESTAMPS:

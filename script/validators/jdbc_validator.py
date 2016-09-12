@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+## ==============================================
+## GOAL : Check for std::cout and printf and avoid them
+## ==============================================
+import sys
+import os
+import subprocess
+import time
+import re
+
+## ==============================================
+## CONFIGURATION
+## ==============================================
+
+# NOTE: absolute path to peloton directory is calculated from current directory
+# directory structure: peloton/scripts/validators/<this_file>
+# PELOTON_DIR needs to be redefined if the directory structure is changed
+CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
+PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
+
+# Change if Peloton bin directory is modified
+PELOTON_BIN = os.path.join(PELOTON_DIR, "build/bin/peloton")
+
+# Path to JDBC test script
+PELOTON_JDBC_SCRIPT_DIR = os.path.join(PELOTON_DIR, "script/testing/jdbc")
+
+EXIT_SUCCESS = 0
+EXIT_FAILURE = -1
+
+if __name__ == '__main__':
+	# Launch Peloton
+	peloton = subprocess.Popen(['exec ' + PELOTON_BIN], shell=True)
+
+	# start jdbc test
+	os.chdir(PELOTON_JDBC_SCRIPT_DIR)
+	jdbc = subprocess.Popen(['/bin/bash test_jdbc.sh'], shell=True, stdout=subprocess.PIPE, 
+		stderr=subprocess.STDOUT)
+	jdbc_out = ''.join(jdbc.stdout.readlines())
+	print jdbc_out
+
+	# kill peloton
+	peloton.kill()
+
+	# any mention of the word 'exception'? Fail validator
+	if re.search('exception', jdbc_out, re.IGNORECASE):
+		sys.exit(EXIT_FAILURE)
+	sys.exit(EXIT_SUCCESS)
