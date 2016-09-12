@@ -14,6 +14,7 @@
 
 #include "parser/sql_statement.h"
 #include "parser/statement_select.h"
+#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -52,6 +53,10 @@ struct InsertStatement : TableRefStatement {
     delete select;
   }
 
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->visit(this);
+  }
 
   InsertType type;
   std::vector<char*>* columns;

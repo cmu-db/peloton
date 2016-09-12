@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
-
 #include "common/logger.h"
+#include "optimizer/query_node_visitor.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace parser {
@@ -33,6 +33,9 @@ struct DeleteStatement : TableRefStatement {
     delete expr;
   }
 
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->visit(this);
+  }
 
   expression::AbstractExpression* expr = nullptr;
 };

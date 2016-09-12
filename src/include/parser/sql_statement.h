@@ -54,7 +54,10 @@ class SQLStatement {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  virtual void Accept(UNUSED_ATTRIBUTE optimizer::QueryNodeVisitor* v) const {}
+  // Visitor Pattern used for the optimizer to access statements
+  // This allows a facility outside the object itself to determine the type of
+  // class using the built-in type system.
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const = 0;
 
  private:
   StatementType stmt_type;

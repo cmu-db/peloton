@@ -15,6 +15,7 @@
 #include "parser/sql_statement.h"
 #include "parser/statement_select.h"
 #include "expression/parameter_value_expression.h"
+#include "optimizer/query_node_visitor.h"
 
 #include <algorithm>
 
@@ -56,6 +57,10 @@ struct PrepareStatement : SQLStatement {
     // Set the placeholder id on the Expr. This replaces the previously stored
     // column id
     for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival_ = i;
+  }
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->visit(this);
   }
 
   char* name;

@@ -10,18 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/operator_node.h"
 
+#include "catalog/schema.h"
 #include "common/types.h"
 #include "common/value.h"
 #include "storage/data_table.h"
-#include "catalog/schema.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace peloton {
 namespace optimizer {
@@ -96,7 +95,8 @@ struct Constant : QueryExpression {
 // OperatorExpression - matches with Peloton's operator_expression.h
 //===--------------------------------------------------------------------===//
 struct OperatorExpression : QueryExpression {
-  OperatorExpression(peloton::ExpressionType type, common::Type::TypeId value_type,
+  OperatorExpression(peloton::ExpressionType type,
+                     common::Type::TypeId value_type,
                      const std::vector<QueryExpression *> &args);
 
   virtual ExpressionType GetExpressionType() const override;
@@ -188,7 +188,7 @@ struct QueryJoinNode {
 };
 
 //===--------------------------------------------------------------------===//
-// Table
+// Get tuples from a single table
 //===--------------------------------------------------------------------===//
 struct Table : QueryJoinNode {
   Table(storage::DataTable *data_table);
@@ -267,6 +267,11 @@ struct Select {
   void accept(QueryNodeVisitor *v) const;
 
   QueryJoinNode *join_tree;
+  // LM: I keep this information as Alex did. However, if we want to reuse the
+  // logical transformation across different quries, we have to update this
+  // field and any other query specific field when new query comes. Another way
+  // to do it is to exclude this information in logical plans and pass metadata
+  // to physical plans with real query.
   QueryExpression *where_predicate;
   std::vector<Attribute *> output_list;
   std::vector<OrderBy *> orderings;

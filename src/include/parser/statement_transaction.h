@@ -13,6 +13,7 @@
 #pragma once
 
 #include "parser/sql_statement.h"
+#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -30,6 +31,10 @@ struct TransactionStatement : SQLStatement {
 
   TransactionStatement(CommandType type)
       : SQLStatement(STATEMENT_TYPE_TRANSACTION), type(type) {}
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->visit(this);
+  }
 
   CommandType type;
 };

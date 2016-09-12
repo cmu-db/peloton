@@ -14,6 +14,7 @@
 
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
+#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -102,6 +103,10 @@ struct SelectStatement : SQLStatement {
     delete union_select;
     delete order;
     delete limit;
+  }
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->visit(this);
   }
 
 

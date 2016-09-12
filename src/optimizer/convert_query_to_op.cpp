@@ -258,7 +258,62 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     output_expr = project_expr;
   }
 
-  void visit(UNUSED_ATTRIBUTE const parser::CreateStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::SelectStatement *op) override {
+    std::vector<Column *> columns;
+
+    storage::DataTable *target_table =
+        catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                          op->from_table->name);
+
+    catalog::Schema *schema = target_table->GetSchema();
+    oid_t table_oid = target_table->GetOid();
+    for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
+      catalog::Column schema_col = schema->GetColumn(col_id);
+      Column *col = manager.LookupColumn(table_oid, col_id);
+      if (col == nullptr) {
+        col = manager.AddBaseColumn(
+            schema_col.GetType(), schema_col.GetLength(), schema_col.GetName(),
+            schema_col.IsInlined(), table_oid, col_id);
+      }
+      columns.push_back(col);
+    }
+    auto get_expr =
+        std::make_shared<OpExpression>(LogicalGet::make(target_table, columns));
+
+    // Add filter for where predicate
+    if (op->where_clause != nullptr) {
+      auto select_expr = std::make_shared<OpExpression>(LogicalSelect::make());
+      select_expr->PushChild(get_expr);
+      op->where_predicate->accept(this);
+      select_expr->PushChild(output_expr);
+      join_expr = select_expr;
+    }
+
+    // Add all attributes in output list as projection at top level
+    auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
+    project_expr->PushChild(join_expr);
+    auto project_list = std::make_shared<OpExpression>(ExprProjectList::make());
+    project_expr->PushChild(project_list);
+    for (Attribute *attr : op->output_list) {
+      // Ignore intermediate columns for output projection
+      if (!attr->intermediate) {
+        attr->accept(this);
+        project_list->PushChild(output_expr);
+      }
+    }
+
+    output_expr = project_expr;
+  }
+  void Visit(UNUSED_ATTRIBUTE const parser::CreateStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::InsertStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::DeleteStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::DropStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::PrepareStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::ExecuteStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::TransactionStatement *op) override {
+  }
+  void Visit(UNUSED_ATTRIBUTE const parser::UpdateStatement *op) override {}
+  void Visit(UNUSED_ATTRIBUTE const parser::ImportStatement *op) override {}
 
  private:
   ColumnManager &manager;
