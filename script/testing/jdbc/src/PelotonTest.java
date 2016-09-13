@@ -29,7 +29,7 @@ public class PelotonTest {
 
   private final String INSERT_A_1 = "INSERT INTO A VALUES ("+ DATA_A +");";
   private final String INSERT_A_2 = "INSERT INTO A VALUES ("+ DATA_B +")";
-  private final String DELETE_A = "DELETE FROM A WHEREid = 1 ";
+  // private final String DELETE_A = "DELETE FROM A";
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
