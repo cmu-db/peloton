@@ -1,3 +1,6 @@
+-- WARNING: DO NOT MODIFY THIS FILE
+-- psql tests use the exact output from this file for CI
+
 -- create the table
 -- 2 columns, 1 primary key
 

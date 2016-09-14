@@ -41,6 +41,8 @@ script:
     - make check -j2
     # install peloton
     - make install
+    # run psql tests
+    - bash ../script/testing/psql/psql_test.sh
     # run jdbc tests
     - python ../script/validators/jdbc_validator.py
     # upload coverage info

@@ -16,4 +16,5 @@ apt-get --ignore-missing -y install \
     libboost-filesystem-dev \
     libjemalloc-dev \
     valgrind \
-    lcov
+    lcov \
+    postgresql-client
