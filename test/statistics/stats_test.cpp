@@ -16,12 +16,7 @@
 #include "common/value.h"
 #include "common/config.h"
 
-#include "common/statement.h"
 #include "common/value_factory.h"
-
-#include "catalog/catalog.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "concurrency/transaction_tests_util.h"
 
 #include "statistics/stats_aggregator.h"
 #include "statistics/backend_stats_context.h"
@@ -33,10 +28,6 @@
 #include "executor/insert_executor.h"
 #include "executor/executor_context.h"
 #include "executor/create_executor.h"
-#include "executor/plan_executor.h"
-#include "planner/insert_plan.h"
-#include "parser/parser.h"
-#include "optimizer/simple_optimizer.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
@@ -54,21 +45,24 @@ namespace test {
 
 class StatsTest : public PelotonTest {};
 
-void ShowTable(std::string database_name, std::string table_name) {
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                                 table_name);
-  std::unique_ptr<Statement> statement;
-  auto &peloton_parser = parser::Parser::GetInstance();
-  std::vector<common::Value *> params;
-  std::vector<ResultType> result;
-  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
-  auto select_stmt =
-      peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
-                                    result);
+// Launch the aggregator thread manually
+void LaunchAggregator(int64_t stat_interval) {
+  FLAGS_stats_mode = STATS_TYPE_ENABLE;
+  auto &aggregator =
+      peloton::stats::StatsAggregator::GetInstance(stat_interval);
+  aggregator.GetAggregatedStats().ResetQueryCount();
+  aggregator.ShutdownAggregator();
+  aggregator.LaunchAggregator();
+}
+
+// Force a final aggregation
+void ForceFinalAggregation(int64_t stat_interval) {
+  auto &aggregator =
+      peloton::stats::StatsAggregator::GetInstance(stat_interval);
+  int64_t interval_cnt = 0;
+  double alpha = 0;
+  double weighted_avg_throughput = 0;
+  aggregator.Aggregate(interval_cnt, alpha, weighted_avg_throughput);
 }
 
 void TransactionTest(storage::Database *database, storage::DataTable *table,
@@ -123,15 +117,14 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
 
 TEST_F(StatsTest, MultiThreadStatsTest) {
 
-  // Register to StatsAggregator
-  FLAGS_stats_mode = STATS_TYPE_ENABLE;
-  int64_t stat_interval = 100;
-  auto &aggregator =
-      peloton::stats::StatsAggregator::GetInstance(stat_interval);
-  aggregator.GetAggregatedStats().ResetQueryCount();
+  auto catalog = catalog::Catalog::GetInstance();
+
+  // Launch aggregator thread
+  int64_t aggregate_interval = 100;
+  LaunchAggregator(aggregate_interval);
+  auto &aggregator = stats::StatsAggregator::GetInstance();
 
   // Create database, table and index
-  auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
@@ -152,18 +145,14 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   LaunchParallelTest(num_threads, TransactionTest, database, table);
 
   // Wait for aggregation to finish
-  std::chrono::microseconds sleep_time(stat_interval * 3 * 1000);
+  std::chrono::microseconds sleep_time(aggregate_interval * 2 * 1000);
   std::this_thread::sleep_for(sleep_time);
-
+  aggregator.ShutdownAggregator();
   // Force a final aggregation
-  int64_t interval_cnt = 0;
-  double alpha = 0;
-  double weighted_avg_throughput = 0;
-  aggregator.Aggregate(interval_cnt, alpha, weighted_avg_throughput);
+  ForceFinalAggregation(aggregate_interval);
 
   // Check query metrics
-  auto &aggregated_stats =
-      peloton::stats::StatsAggregator::GetInstance().GetAggregatedStats();
+  auto &aggregated_stats = aggregator.GetAggregatedStats();
   ASSERT_EQ(aggregated_stats.GetQueryCount(), num_threads * NUM_ITERATION);
 
   // Check database metrics
@@ -209,7 +198,6 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
   // Register to StatsAggregator
   auto &aggregator = peloton::stats::StatsAggregator::GetInstance(1000000);
-  aggregator.GetAggregatedStats().ResetQueryCount();
 
   // int tuple_count = 10;
   int tups_per_tile_group = 100;
@@ -366,15 +354,10 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 
 TEST_F(StatsTest, PerQueryStatsTest) {
 
-  FLAGS_stats_mode = STATS_TYPE_ENABLE;
-  int64_t stat_interval = 1000;
-  auto &aggregator =
-      peloton::stats::StatsAggregator::GetInstance(stat_interval);
-  aggregator.GetAggregatedStats().ResetQueryCount();
-
-  LOG_INFO("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-  LOG_INFO("Bootstrapping completed!");
+  int64_t aggregate_interval = 1000;
+  LaunchAggregator(aggregate_interval);
+  auto &aggregator = stats::StatsAggregator::GetInstance();
+  auto backend_context = stats::BackendStatsContext::GetInstance();
 
   // Create a table first
   LOG_INFO("Creating a table...");
@@ -396,59 +379,33 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   create_executor.Init();
   create_executor.Execute();
   txn_manager.CommitTransaction(txn);
+
+  // Default database should include 4 metrics tables and the test table
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
-            1);
+            5);
   LOG_INFO("Table created!");
 
   // Inserting a tuple end-to-end
-  LOG_INFO("Inserting a tuple...");
-  LOG_INFO(
-      "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
-      "(1,'hello_1');");
-  std::unique_ptr<Statement> statement;
-  std::string query_string =
-      "INSERT INTO department_table(dept_id,dept_name) VALUES "
-      "(1,'hello_1');";
-  statement.reset(new Statement("INSERT", query_string));
-  auto &peloton_parser = parser::Parser::GetInstance();
-  LOG_INFO("Building parse tree...");
-  auto insert_stmt = peloton_parser.BuildParseTree(query_string);
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
-  LOG_INFO("Building plan tree completed!");
-  std::vector<common::Value *> params;
-  std::vector<ResultType> result;
-
-  auto backend_context = stats::BackendStatsContext::GetInstance();
+  auto statement = StatsTestsUtil::GetInsertStmt();
+  // Initialize the query metric
   backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
 
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
-
+  std::vector<common::Value *> params;
+  std::vector<ResultType> result;
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
-  ShowTable(DEFAULT_DB_NAME, "department_table");
-  txn = txn_manager.BeginTransaction();
-
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  StatsTestsUtil::ShowTable(DEFAULT_DB_NAME, "department_table");
 
   // Wait for aggregation to finish
-  std::chrono::microseconds sleep_time(stat_interval * 3 * 1000);
+  std::chrono::microseconds sleep_time(aggregate_interval * 2 * 1000);
   std::this_thread::sleep_for(sleep_time);
   aggregator.ShutdownAggregator();
+  ForceFinalAggregation(aggregate_interval);
 
-  // Force a final aggregation
-  int64_t interval_cnt = 0;
-  double alpha = 0;
-  double weighted_avg_throughput = 0;
-  aggregator.Aggregate(interval_cnt, alpha, weighted_avg_throughput);
   EXPECT_EQ(aggregator.GetAggregatedStats().GetQueryCount(), 1);
 }
 }  // namespace stats

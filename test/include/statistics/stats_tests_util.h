@@ -11,7 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
+#include "common/statement.h"
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction_tests_util.h"
 #include "storage/tile_group_factory.h"
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
@@ -23,6 +27,10 @@
 #include "concurrency/transaction.h"
 #include "common/types.h"
 #include "expression/comparison_expression.h"
+#include "planner/insert_plan.h"
+#include "parser/parser.h"
+#include "optimizer/simple_optimizer.h"
+#include "executor/plan_executor.h"
 
 #pragma once
 
@@ -31,9 +39,12 @@ namespace test {
 
 class StatsTestsUtil {
  public:
+  static void ShowTable(std::string database_name, std::string table_name);
+
   static storage::Tuple PopulateTuple(const catalog::Schema *schema,
                                       int first_col_val, int second_col_val,
                                       int third_col_val, int fourth_col_val);
+  static std::unique_ptr<Statement> GetInsertStmt();
 };
 
 }  // namespace test

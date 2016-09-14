@@ -97,8 +97,8 @@ class StatsAggregator {
   void Aggregate(int64_t &interval_cnt, double &alpha,
                  double &weighted_avg_throughput);
 
-  // Aggregate stats periodically
-  void RunAggregator();
+  // Launch aggregator thread
+  void LaunchAggregator();
 
   // Terminate aggregator thread
   void ShutdownAggregator();
@@ -139,7 +139,7 @@ class StatsAggregator {
   std::ofstream ofs_;
 
   // Whether the aggregator is running
-  bool shutting_down_ = false;
+  bool is_aggregating_ = false;
 
   // Varlen Pool to hold query strings
   std::unique_ptr<common::VarlenPool> pool_;
@@ -162,6 +162,9 @@ class StatsAggregator {
 
   // Write all query metrics to a metric table
   void UpdateQueryMetrics(int64_t time_stamp, concurrency::Transaction *txn);
+
+  // Aggregate stats periodically
+  void RunAggregator();
 };
 
 }  // namespace stats
