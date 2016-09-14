@@ -228,11 +228,11 @@ public class PelotonTest {
     stmt.execute(INDEXSCAN_COLUMN);
 
     // TODO: Aggregations not yet supported in Peloton
-    // stmt.execute(AGG_COUNT);
-    // stmt.execute(AGG_COUNT_2);
-    // PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
-    // pstmt.setInt(1, 1);
-    // pstmt.execute();
+    stmt.execute(AGG_COUNT);
+    stmt.execute(AGG_COUNT_2);
+    PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
+    pstmt.setInt(1, 1);
+    pstmt.execute();
 
     for (int i = 1; i < 3; i++)
         IndexScanParam(i);
@@ -440,7 +440,13 @@ public class PelotonTest {
     }
 
     System.out.println("All Good Here");
-    int[] res = stmt.executeBatch();
+    int[] res;
+    try{
+       res = stmt.executeBatch();
+    }catch(SQLException e){
+      e.printStackTrace();
+      throw e.getNextException();
+    }
     for(int i=0; i < res.length; i++){
       System.out.println(res[i]);
       if (res[i] < 0) {
@@ -505,9 +511,10 @@ public class PelotonTest {
     pt.ShowTable();
     pt.SeqScan();
     pt.Scan_Test();
-    //pt.Batch_Insert();
-    //pt.Batch_Update();
-    //pt.Batch_Delete();
+    pt.Init();
+    pt.Batch_Insert();
+    pt.Batch_Update();
+    pt.Batch_Delete();
     pt.Close();
   }
 }

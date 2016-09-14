@@ -784,7 +784,11 @@ int_literal:
 	;
 
 star_expr:
-		'*' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR); }
+		'*' { 
+			char * star = new char[2];
+			strcpy(star, "*");
+			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR, star); 
+		}
 	;
 
 
