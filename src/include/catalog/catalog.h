@@ -57,6 +57,9 @@ class Catalog {
   // Creates the catalog database
   void CreateCatalogDatabase(void);
 
+  // Creates the metric tables for statistics
+  void CreateMetricsCatalog();
+
   // Create a database
   Result CreateDatabase(std::string database_name,
                         concurrency::Transaction *txn);
@@ -165,7 +168,7 @@ class Catalog {
 
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
- 
+
  public:
   common::VarlenPool *pool_ = new common::VarlenPool();
 };

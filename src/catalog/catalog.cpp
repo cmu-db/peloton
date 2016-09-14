@@ -25,7 +25,40 @@ Catalog *Catalog::GetInstance(void) {
   return global_catalog.get();
 }
 
-Catalog::Catalog() { CreateCatalogDatabase(); }
+Catalog::Catalog() {
+  CreateCatalogDatabase();
+  auto result = CreateDatabase(DEFAULT_DB_NAME, nullptr);
+  if (result == RESULT_SUCCESS) {
+    // create metrics table in default database
+    CreateMetricsCatalog();
+  }
+}
+
+void Catalog::CreateMetricsCatalog() {
+  auto default_db = GetDatabaseWithName(DEFAULT_DB_NAME);
+  auto default_db_oid = default_db->GetOid();
+
+  // Create table for database metrics
+  auto database_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, DATABASE_METRIC_NAME);
+  default_db->AddTable(database_metrics_catalog.release());
+
+  // Create table for index metrics
+  auto index_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, INDEX_METRIC_NAME);
+  default_db->AddTable(index_metrics_catalog.release());
+
+  // Create table for table metrics
+  auto table_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, TABLE_METRIC_NAME);
+  default_db->AddTable(table_metrics_catalog.release());
+
+  // Create table for query metrics
+  auto query_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
+  default_db->AddTable(query_metrics_catalog.release());
+  LOG_DEBUG("Metrics tables created");
+}
 
 // Creates the catalog database
 void Catalog::CreateCatalogDatabase() {
@@ -38,28 +71,8 @@ void Catalog::CreateCatalogDatabase() {
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table);
-
-  // Create table for database metrics
-  auto database_metrics_catalog =
-      CreateMetricsCatalog(START_OID, DATABASE_METRIC_NAME);
-  database->AddTable(database_metrics_catalog.release());
-
-  // Create table for index metrics
-  auto index_metrics_catalog =
-      CreateMetricsCatalog(START_OID, INDEX_METRIC_NAME);
-  database->AddTable(index_metrics_catalog.release());
-
-  // Create table for table metrics
-  auto table_metrics_catalog =
-      CreateMetricsCatalog(START_OID, TABLE_METRIC_NAME);
-  database->AddTable(table_metrics_catalog.release());
-
-  // Create table for query metrics
-  auto query_metrics_catalog =
-      CreateMetricsCatalog(START_OID, QUERY_METRIC_NAME);
-  database->AddTable(query_metrics_catalog.release());
-
   databases_.push_back(database);
+  LOG_DEBUG("Catalog database created");
 }
 
 // Create a database
@@ -127,9 +140,11 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     CreatePrimaryIndex(database_name, table_name);
 
     // Update catalog_table with this table info
-    auto tuple = GetTableCatalogTuple(
-        databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
-        table_id, table_name, database_id, database->GetDBName(), pool_);
+    auto tuple = GetTableCatalogTuple(databases_[START_OID]
+                                          ->GetTableWithName(TABLE_CATALOG_NAME)
+                                          ->GetSchema(),
+                                      table_id, table_name, database_id,
+                                      database->GetDBName(), pool_);
     //  Another way of insertion using transaction manager
     catalog::InsertTuple(
         databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
@@ -374,7 +389,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
     const {
   for (auto database : databases_) {
-    if (database->GetDBName() == database_name) return database;
+    if (database != nullptr && database->GetDBName() == database_name)
+      return database;
   }
   return nullptr;
 }
@@ -491,13 +507,14 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  auto database_id_column = catalog::Column(common::Type::INTEGER,
-    common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
+  auto database_id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
-  auto database_name_column =
-      catalog::Column(common::Type::VARCHAR, max_name_size, "database_name", true);
+  auto database_name_column = catalog::Column(
+      common::Type::VARCHAR, max_name_size, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -511,12 +528,13 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
 std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   const std::string not_null_constraint_name = "not_null";
 
-  auto id_column = catalog::Column(common::Type::INTEGER,
-    common::Type::GetTypeSize(common::Type::INTEGER), "database_id", true);
+  auto id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
-  auto name_column =
-      catalog::Column(common::Type::VARCHAR, max_name_size, "database_name", true);
+  auto name_column = catalog::Column(common::Type::VARCHAR, max_name_size,
+                                     "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -679,9 +697,10 @@ oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 oid_t Catalog::GetNextOid() { return oid_++; }
 
 Catalog::~Catalog() {
+  delete GetDatabaseWithName(DEFAULT_DB_NAME);
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
+
   delete pool_;
 }
-
 }
 }

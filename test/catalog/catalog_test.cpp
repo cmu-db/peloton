@@ -32,13 +32,18 @@ class CatalogTests : public PelotonTest {};
 
 TEST_F(CatalogTests, BootstrappingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
-  EXPECT_EQ(catalog->GetDatabaseCount(), 1);
-  storage::Database *database = catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  EXPECT_EQ(catalog->GetDatabaseCount(), 2);
+  storage::Database *database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   EXPECT_NE(database, nullptr);
-  auto metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
-  EXPECT_NE(metric_table, nullptr);
-  auto query_metric_table = database->GetTableWithName(QUERY_METRIC_NAME);
-  EXPECT_NE(query_metric_table, nullptr);
+
+  // Check default database and metric tables
+  storage::Database *default_database =
+      catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
+  EXPECT_EQ(default_database->GetTableCount(), 4);
+  auto db_metric_table =
+      default_database->GetTableWithName(DATABASE_METRIC_NAME);
+  EXPECT_NE(db_metric_table, nullptr);
 }
 
 TEST_F(CatalogTests, CreatingDatabase) {
@@ -55,8 +60,9 @@ TEST_F(CatalogTests, CreatingDatabase) {
 TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(common::Type::INTEGER,
-                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
