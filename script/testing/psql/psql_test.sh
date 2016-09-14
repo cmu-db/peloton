@@ -13,12 +13,12 @@ TEMP_OUT_FILE="/tmp/psql_out"
 cd $PELOTON_DIR/build
 
 # start peloton
-bin/peloton > /dev/null &
+bin/peloton -port 57721 > /dev/null &
 PELOTON_PID=$!
 sleep 3
 
 # run psql
-echo "\i ../script/testing/dml/basic1.sql" | psql "sslmode=disable" -U postgres -h 0.0.0.0 -p 5432 > $TEMP_OUT_FILE 2>&1
+echo "\i ../script/testing/dml/basic1.sql" | psql "sslmode=disable" -U postgres -h localhost -p 57721 > $TEMP_OUT_FILE 2>&1
 
 # compute diff against reference output
 diff_res=$(diff $TEMP_OUT_FILE $REF_OUT_FILE 2>&1)
