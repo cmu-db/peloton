@@ -13,21 +13,14 @@
 #include <iostream>
 
 #include "common/harness.h"
-#include "common/value.h"
 #include "common/config.h"
-
-#include "common/value_factory.h"
 
 #include "statistics/stats_aggregator.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_tests_util.h"
-#include "storage/data_table.h"
-#include "storage/tuple.h"
-#include "storage/tile.h"
 #include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
 #include "executor/executor_context.h"
-#include "executor/create_executor.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
@@ -360,25 +353,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   auto backend_context = stats::BackendStatsContext::GetInstance();
 
   // Create a table first
-  LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-      "dept_id", true);
-  auto name_column =
-      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
-
-  std::unique_ptr<catalog::Schema> table_schema(
-      new catalog::Schema({id_column, name_column}));
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema),
-                           CreateType::CREATE_TYPE_TABLE);
-  executor::CreateExecutor create_executor(&node, context.get());
-  create_executor.Init();
-  create_executor.Execute();
-  txn_manager.CommitTransaction(txn);
+  StatsTestsUtil::CreateTable();
 
   // Default database should include 4 metrics tables and the test table
   EXPECT_EQ(catalog::Catalog::GetInstance()
@@ -392,13 +367,39 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   // Initialize the query metric
   backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
 
+  // Execute insert
   std::vector<common::Value *> params;
   std::vector<ResultType> result;
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
-  StatsTestsUtil::ShowTable(DEFAULT_DB_NAME, "department_table");
+
+  // Now Updating end-to-end
+  statement = std::move(StatsTestsUtil::GetUpdateStmt());
+  // Initialize the query metric
+  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+
+  // Execute update
+  params.clear();
+  result.clear();
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+                                             params, result);
+  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple updated!");
+
+  // Deleting end-to-end
+  statement = std::move(StatsTestsUtil::GetDeleteStmt());
+  // Initialize the query metric
+  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+
+  // Execute delete
+  params.clear();
+  result.clear();
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+                                             params, result);
+  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple deleted!");
 
   // Wait for aggregation to finish
   std::chrono::microseconds sleep_time(aggregate_interval * 2 * 1000);
@@ -406,7 +407,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   aggregator.ShutdownAggregator();
   ForceFinalAggregation(aggregate_interval);
 
-  EXPECT_EQ(aggregator.GetAggregatedStats().GetQueryCount(), 1);
+  EXPECT_EQ(aggregator.GetAggregatedStats().GetQueryCount(), 3);
 }
 }  // namespace stats
 }  // namespace peloton

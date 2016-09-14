@@ -67,27 +67,65 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
+void StatsTestsUtil::CreateTable() {
+  LOG_INFO("Creating a table...");
+  auto id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "dept_id", true);
+  auto name_column =
+      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, name_column}));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  planner::CreatePlan node("department_table", std::move(table_schema),
+                           CreateType::CREATE_TYPE_TABLE);
+  executor::CreateExecutor create_executor(&node, context.get());
+  create_executor.Init();
+  create_executor.Execute();
+  txn_manager.CommitTransaction(txn);
+}
+
 std::unique_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
-  LOG_INFO(
-      "Query: INSERT INTO department_table(dept_id,dept_name) VALUES "
-      "(1,'hello_1');");
   std::unique_ptr<Statement> statement;
-  std::string query_string =
+  std::string sql =
       "INSERT INTO department_table(dept_id,dept_name) VALUES "
       "(1,'hello_1');";
-  statement.reset(new Statement("INSERT", query_string));
-  auto &peloton_parser = parser::Parser::GetInstance();
-  LOG_INFO("Building parse tree...");
-  auto insert_stmt = peloton_parser.BuildParseTree(query_string);
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
-  LOG_INFO("Building plan tree completed!");
-
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Query: %s", sql.c_str());
+  statement.reset(new Statement("DELETE", sql));
+  ParseAndPlan(statement.get(), sql);
   return std::move(statement);
+}
+
+std::unique_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
+  std::unique_ptr<Statement> statement;
+  std::string sql = "DELETE FROM department_table";
+  LOG_INFO("Query: %s", sql.c_str());
+  statement.reset(new Statement("DELETE", sql));
+  ParseAndPlan(statement.get(), sql);
+  return std::move(statement);
+}
+
+std::unique_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
+  std::unique_ptr<Statement> statement;
+  std::string sql =
+      "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1";
+  LOG_INFO("Query: %s", sql.c_str());
+  statement.reset(new Statement("UPDATE", sql));
+  ParseAndPlan(statement.get(), sql);
+  return std::move(statement);
+}
+
+void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
+  auto &peloton_parser = parser::Parser::GetInstance();
+  auto update_stmt = peloton_parser.BuildParseTree(sql);
+  LOG_DEBUG("Building plan tree...");
+  statement->SetPlanTree(
+      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  LOG_DEBUG("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 }
 
 }  // namespace test
