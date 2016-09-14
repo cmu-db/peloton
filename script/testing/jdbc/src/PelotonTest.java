@@ -29,7 +29,7 @@ public class PelotonTest {
 
   private final String INSERT_A_1 = "INSERT INTO A VALUES ("+ DATA_A +");";
   private final String INSERT_A_2 = "INSERT INTO A VALUES ("+ DATA_B +")";
-  // private final String DELETE_A = "DELETE FROM A";
+  private final String DELETE_A = "DELETE FROM A WHERE id=1";
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
@@ -229,7 +229,7 @@ public class PelotonTest {
 
     // TODO: Aggregations not yet supported in Peloton
     // stmt.execute(AGG_COUNT);
-    // stmt.execute(AGG_COUNT_2); 
+    // stmt.execute(AGG_COUNT_2);
     // PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
     // pstmt.setInt(1, 1);
     // pstmt.execute();
@@ -237,7 +237,7 @@ public class PelotonTest {
     for (int i = 1; i < 3; i++)
         IndexScanParam(i);
     // TODO: Causes failed assertion on Peloton
-    // stmt.execute(DELETE_A);
+    stmt.execute(DELETE_A);
     System.out.println("Scan test passed.");
   }
 
@@ -504,10 +504,10 @@ public class PelotonTest {
     pt.Init();
     pt.ShowTable();
     pt.SeqScan();
-    pt.Scan_Test();
-    pt.Batch_Insert();
-    pt.Batch_Update();
-    pt.Batch_Delete();
+    // pt.Scan_Test();
+    // pt.Batch_Insert();
+    // pt.Batch_Update();
+    // pt.Batch_Delete();
     pt.Close();
   }
 }
