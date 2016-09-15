@@ -505,9 +505,9 @@ public class PelotonTest {
     pt.ShowTable();
     pt.SeqScan();
     pt.Scan_Test();
-    pt.Batch_Insert();
-    pt.Batch_Update();
-    pt.Batch_Delete();
+    //pt.Batch_Insert();
+    //pt.Batch_Update();
+    //pt.Batch_Delete();
     pt.Close();
   }
 }
