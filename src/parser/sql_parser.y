@@ -797,6 +797,7 @@ placeholder_expr:
 parameter_expr:
 	PREPAREPARAMETERS {
 			int val = atol($1);
+			delete[] $1;
 			$$ = new peloton::expression::ParameterValueExpression(val - 1);
 		}
 	;
