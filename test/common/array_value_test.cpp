@@ -179,7 +179,7 @@ TEST_F(ArrayValueTests, InListTest) {
   }
   EXPECT_THROW(array_bool->InList(IntegerValue(0)), peloton::Exception);
   EXPECT_THROW(array_bool->InList(DecimalValue(0.0)), peloton::Exception);
-  EXPECT_THROW(array_bool->InList(VarlenValue("")), peloton::Exception);
+  EXPECT_THROW(array_bool->InList(VarlenValue("", false)), peloton::Exception);
   EXPECT_THROW(array_bool->InList(*array_bool), peloton::Exception);
   delete array_bool;
 
@@ -205,7 +205,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_tinyint->InList(BooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_tinyint->InList(VarlenValue("")), peloton::Exception);
+  EXPECT_THROW(array_tinyint->InList(VarlenValue("", false)), peloton::Exception);
   EXPECT_THROW(array_tinyint->InList(*array_tinyint), peloton::Exception);
   delete array_tinyint;
 
@@ -231,7 +231,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_smallint->InList(BooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_smallint->InList(VarlenValue("")), peloton::Exception);
+  EXPECT_THROW(array_smallint->InList(VarlenValue("", false)), peloton::Exception);
   EXPECT_THROW(array_smallint->InList(*array_smallint), peloton::Exception);
   delete array_smallint;
 
@@ -257,7 +257,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_integer->InList(BooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_integer->InList(VarlenValue("")), peloton::Exception);
+  EXPECT_THROW(array_integer->InList(VarlenValue("", false)), peloton::Exception);
   EXPECT_THROW(array_integer->InList(*array_integer), peloton::Exception);
   delete array_integer;
 
@@ -283,7 +283,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_bigint->InList(BooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_bigint->InList(VarlenValue("")), peloton::Exception);
+  EXPECT_THROW(array_bigint->InList(VarlenValue("", false)), peloton::Exception);
   EXPECT_THROW(array_bigint->InList(*array_bigint), peloton::Exception);
   delete array_bigint;
 
@@ -309,7 +309,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_decimal->InList(BooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_decimal->InList(VarlenValue("")), peloton::Exception);
+  EXPECT_THROW(array_decimal->InList(VarlenValue("", false)), peloton::Exception);
   EXPECT_THROW(array_decimal->InList(*array_decimal), peloton::Exception);
   delete array_decimal;
 
@@ -320,7 +320,7 @@ TEST_F(ArrayValueTests, InListTest) {
   ArrayValue *array_varchar = new ArrayValue(vec_varchar,
     Type::GetInstance(Type::VARCHAR));
   for (size_t i = 0; i < n; i++) {
-    Value *in_list = array_varchar->InList(VarlenValue(vec_varchar[i]));
+    Value *in_list = array_varchar->InList(VarlenValue(vec_varchar[i], false));
     EXPECT_TRUE(((BooleanValue *)in_list)->IsTrue());
     delete in_list;
   }
@@ -329,7 +329,7 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<std::string>::iterator it = find(vec_varchar.begin(),
       vec_varchar.end(), val);
     if (it == vec_varchar.end()) {
-      Value *in_list = array_varchar->InList(VarlenValue(val));
+      Value *in_list = array_varchar->InList(VarlenValue(val, false));
       EXPECT_TRUE(((BooleanValue *)in_list)->IsFalse());
       delete in_list;
     }
@@ -400,8 +400,8 @@ TEST_F(ArrayValueTests, CompareTest) {
     size_t len = 10;
     std::string str1 = RANDOM_STRING(len);
     std::string str2 = RANDOM_STRING(len);
-    Value *v1 = new VarlenValue(str1);
-    Value *v2 = new VarlenValue(str2);
+    Value *v1 = new VarlenValue(str1, false);
+    Value *v2 = new VarlenValue(str2, false);
     EXPECT_EQ(len, ((VarlenValue *)v1)->GetLength());
     EXPECT_EQ(len, ((VarlenValue *)v2)->GetLength());
     if (str1 == str2)
@@ -415,13 +415,13 @@ TEST_F(ArrayValueTests, CompareTest) {
   }
 
   // Test type mismatch
-  Value *v = new VarlenValue("");
+  Value *v = new VarlenValue("", false);
   EXPECT_THROW(v->CompareEquals(BooleanValue(0)), peloton::Exception);
   EXPECT_THROW(v->CompareEquals(IntegerValue(0)), peloton::Exception);
   EXPECT_THROW(v->CompareEquals(DecimalValue(0.0)), peloton::Exception);
 
   // Test null varchar
-  std::unique_ptr<BooleanValue> cmp((BooleanValue *)v->CompareEquals(VarlenValue(nullptr, 0)));
+  std::unique_ptr<BooleanValue> cmp((BooleanValue *)v->CompareEquals(VarlenValue(nullptr, 0, false)));
   EXPECT_TRUE(cmp->IsNull());
   delete v;
 }

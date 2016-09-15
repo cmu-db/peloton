@@ -50,7 +50,8 @@ bool Value::IsNull() const {
     case Type::TIMESTAMP:
       return (value_.timestamp == PELOTON_TIMESTAMP_NULL);
     case Type::VARCHAR:
-      return (*((uint32_t *)value_.ptr) == 0);
+    case Type::VARBINARY:
+      return (*((uint32_t *) value_.ptr) == 0);
     default:
       break;
   }
@@ -80,6 +81,10 @@ void Value::CheckComparable(const Value &o) const {
       break;
     case Type::VARCHAR:
       if (o.GetTypeId() == Type::VARCHAR) return;
+      break;
+    case Type::VARBINARY:
+      if (o.GetTypeId() == Type::VARBINARY)
+        return;
       break;
     case Type::TIMESTAMP:
       if (o.GetTypeId() == Type::TIMESTAMP) return;
@@ -141,9 +146,15 @@ Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
     }
     case Type::VARCHAR: {
       const char *ptr = *reinterpret_cast<const char *const *>(storage);
-      if (ptr == nullptr) return new VarlenValue(nullptr, 0);
+      if (ptr == nullptr) return new VarlenValue(nullptr, 0, false);
       uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-      return new VarlenValue(ptr + sizeof(uint32_t), len);
+      return new VarlenValue(ptr + sizeof(uint32_t), len, false);
+    }
+    case Type::VARBINARY:{
+      const char *ptr = *reinterpret_cast<const char *const *>(storage);
+      if (ptr == nullptr) return new VarlenValue(nullptr, 0, true);
+      uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
+      return new VarlenValue(ptr + sizeof(uint32_t), len, true);
     }
     default:
       break;
@@ -168,7 +179,8 @@ Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
       return new DecimalValue(in.ReadDouble());
     case Type::TIMESTAMP:
       return new IntegerValue(in.ReadLong());
-    case Type::VARCHAR: {
+    case Type::VARCHAR:
+    case Type::VARBINARY:{
       uint32_t len = in.ReadInt();
       const char *data = (char *)in.getRawPointer(len);
       return new VarlenValue(data, len);

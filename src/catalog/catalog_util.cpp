@@ -230,9 +230,9 @@ std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema,
     std::string database_name, common::VarlenPool *pool){
 	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 	auto val1 = common::ValueFactory::GetIntegerValue(table_id);
-	auto val2 = common::ValueFactory::GetVarlenValue(table_name, nullptr);
+	auto val2 = common::ValueFactory::GetVarcharValue(table_name, nullptr);
 	auto val3 = common::ValueFactory::GetIntegerValue(database_id);
-	auto val4 = common::ValueFactory::GetVarlenValue(database_name, nullptr);
+	auto val4 = common::ValueFactory::GetVarcharValue(database_name, nullptr);
 	tuple->SetValue(0, val1, pool);
 	tuple->SetValue(1, val2, pool);
 	tuple->SetValue(2, val3, pool);

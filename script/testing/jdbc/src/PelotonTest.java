@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 import java.sql.*;
-import org.postgresql.util.*;
+import java.util.Arrays;
+import java.util.Random;
 
 public class PelotonTest {
   private final String url = "jdbc:postgresql://localhost:54321/";
@@ -679,6 +680,43 @@ public class PelotonTest {
     stmt.execute();
     conn.commit();
   }
+  
+  //tests inserting and reading back large binary values
+  public void BlobTest() throws SQLException {
+    Random rand = new Random(12345L);
+    for (int i = 1; i < 20; i++) {
+      Statement initstmt = conn.createStatement();
+      initstmt.execute("DROP TABLE IF EXISTS A;");
+      initstmt.execute("CREATE TABLE A (id INT PRIMARY KEY, data VARBINARY)");
+      PreparedStatement stmt = conn.prepareStatement("INSERT INTO A VALUES (?,?);");
+      
+      System.out.println(i);
+      int numbytes = 1 << i;
+      byte[] sentbytes = new byte[numbytes];
+      rand.nextBytes(sentbytes);
+      stmt.setInt(1, 1);
+      stmt.setBytes(2, sentbytes);
+      stmt.execute();
+
+      initstmt.execute(SEQSCAN);
+      ResultSet rs = initstmt.getResultSet();
+      if (!rs.next()) {
+        System.err.println("failed at " + (numbytes) + " bytes");
+        throw new SQLException("Did not get result after inserting into varbinary");
+      }
+      int recvint = rs.getInt(1);
+      byte[] recvbytes = rs.getBytes(2);
+      if (recvint != 1 || !Arrays.equals(sentbytes, recvbytes)) {
+        System.err.println("failed at " + (numbytes) + " bytes");
+        throw new SQLException(
+            "byte mismatch: \n before: " + Arrays.toString(sentbytes) + "\n after:  " + Arrays.toString(recvbytes));
+      }
+      if (rs.next()) {
+        System.err.println("failed at " + (numbytes) + " bytes");
+        throw new SQLException("Too many results");
+      }
+    }
+  }
 
   static public void main(String[] args) throws Exception {
       if (args.length == 0 || args[0].equals("basic")) {
@@ -700,6 +738,7 @@ public class PelotonTest {
     pt.Batch_Update();
     pt.Batch_Delete();
     pt.Invalid_SQL();
+    pt.BlobTest();
     pt.Close();
   }
 

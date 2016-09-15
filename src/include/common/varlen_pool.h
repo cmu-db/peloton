@@ -25,7 +25,7 @@
 #include <mutex>
 
 static const size_t BUFFER_SIZE = (1 << 17);    // Bytes
-static const size_t MAX_POOL_SIZE = (1 << 30);
+static const size_t MAX_POOL_SIZE = (1L << 60);
 static const size_t MIN_BLOCK_SIZE = 16;
 static const size_t MAX_BLOCK_NUM = BUFFER_SIZE / MIN_BLOCK_SIZE;
 static const size_t MAX_LIST_NUM = 15;
