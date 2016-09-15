@@ -11,10 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/index_scan_plan.h"
-#include "storage/data_table.h"
 #include "common/types.h"
-#include "expression/expression_util.h"
 #include "expression/constant_value_expression.h"
+#include "expression/expression_util.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace planner {
@@ -22,7 +22,8 @@ namespace planner {
 IndexScanPlan::IndexScanPlan(storage::DataTable *table,
                              expression::AbstractExpression *predicate,
                              const std::vector<oid_t> &column_ids,
-                             const IndexScanDesc &index_scan_desc , bool for_update_flag)
+                             const IndexScanDesc &index_scan_desc,
+                             bool for_update_flag)
     : index_(index_scan_desc.index_obj),
       column_ids_(column_ids),
       key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
@@ -32,10 +33,9 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       // Initialize the index scan predicate object and initialize all
       // keys that we could initialize
       index_predicate_() {
-
   LOG_TRACE("Creating an Index Scan Plan");
 
-  if(for_update_flag == true){
+  if (for_update_flag == true) {
     SetForUpdateFlag(true);
   }
 
@@ -55,7 +55,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   for (auto val : values_with_params_) {
     values_.push_back(val->Copy());
   }
-  //values_ = values_with_params_;
 
   // Then add the only conjunction predicate into the index predicate list
   // (at least for now we only supports single conjunction)
@@ -73,15 +72,25 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value *> *values) {
       where, values, GetTable()->GetSchema());
   SetPredicate(where);
 
-  values_ = values_with_params_;
+  // Destroy the values of the last plan and copy the original values over for
+  // binding
+  for (auto val : values_) {
+    delete val;
+  }
+  values_.clear();
+  for (auto val : values_with_params_) {
+    values_.push_back(val->Copy());
+  }
+
   for (unsigned int i = 0; i < values_.size(); ++i) {
     auto value = values_[i];
     auto column_id = key_column_ids_[i];
     if (value->GetTypeId() == common::Type::PARAMETER_OFFSET) {
       int offset = value->GetAs<int32_t>();
       delete value;
-      value = (values->at(offset))->CastAs(
-          GetTable()->GetSchema()->GetColumn(column_id).GetType());
+      value =
+          (values->at(offset))
+              ->CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 
