@@ -1745,7 +1745,6 @@ void LoadTPCCDatabase() {
   LOG_INFO("orders count = %lu", orders_table->GetTupleCount());
   LOG_INFO("new order count = %lu", new_order_table->GetTupleCount());
   LOG_INFO("order line count = %lu", order_line_table->GetTupleCount());
-  printf("here\n");
 }
 
 }  // namespace tpcc

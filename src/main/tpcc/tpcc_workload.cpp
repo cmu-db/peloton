@@ -82,10 +82,10 @@ namespace tpcc {
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-#define STOCK_LEVEL_RATIO     0.00
-#define ORDER_STATUS_RATIO    0.00
-#define PAYMENT_RATIO         0.00
-#define NEW_ORDER_RATIO       1.00
+#define STOCK_LEVEL_RATIO     0.04
+#define ORDER_STATUS_RATIO    0.04
+#define PAYMENT_RATIO         0.44
+#define NEW_ORDER_RATIO       0.44
 
 volatile bool is_running = true;
 
