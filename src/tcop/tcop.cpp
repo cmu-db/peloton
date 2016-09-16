@@ -18,6 +18,7 @@
 #include "common/types.h"
 #include "common/type.h"
 #include "common/abstract_tuple.h"
+#include "common/config.h"
 
 #include "expression/parser_expression.h"
 
@@ -80,6 +81,11 @@ Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()->InitQueryMetric(
+        statement->GetQueryString(), DEFAULT_DB_ID);
+  }
 
   LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
@@ -153,7 +159,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     for (auto table : *select_stmt->from_table->list) {
       target_table = static_cast<storage::DataTable *>(
           catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                                table->name));
+                                                            table->name));
       break;
     }
   }

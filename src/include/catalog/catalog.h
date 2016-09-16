@@ -22,6 +22,14 @@
 #include "catalog/catalog_util.h"
 #include "common/varlen_pool.h"
 
+#define CATALOG_DATABASE_NAME "catalog_db"
+#define DATABASE_CATALOG_NAME "database_catalog"
+#define TABLE_CATALOG_NAME "table_catalog"
+#define DATABASE_METRIC_NAME "database_metric"
+#define TABLE_METRIC_NAME "table_metric"
+#define INDEX_METRIC_NAME "index_metric"
+#define QUERY_METRIC_NAME "query_metric"
+
 namespace peloton {
 
 namespace catalog {
@@ -48,6 +56,9 @@ class Catalog {
 
   // Creates the catalog database
   void CreateCatalogDatabase(void);
+
+  // Creates the metric tables for statistics
+  void CreateMetricsCatalog();
 
   // Create a database
   Result CreateDatabase(std::string database_name,
@@ -101,11 +112,27 @@ class Catalog {
   std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
       oid_t database_id, std::string table_name);
 
+  // Create Table for metrics tables
+  std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
+      oid_t database_id, std::string table_name);
+
   // Initialize the schema of the database catalog
   std::unique_ptr<Schema> InitializeDatabaseSchema();
 
   // Initialize the schema of the table catalog
   std::unique_ptr<Schema> InitializeTablesSchema();
+
+  // Initialize the schema of the database metrics table
+  std::unique_ptr<Schema> InitializeDatabaseMetricsSchema();
+
+  // Initialize the schema of the table metrics table
+  std::unique_ptr<Schema> InitializeTableMetricsSchema();
+
+  // Initialize the schema of the index metrics table
+  std::unique_ptr<Schema> InitializeIndexMetricsSchema();
+
+  // Initialize the schema of the query metrics table
+  std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
 
   // Get table from a database with its name
   storage::DataTable *GetTableWithName(std::string database_name,
@@ -141,8 +168,9 @@ class Catalog {
 
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
- 
+
  public:
+  // The var len pool for new varlen tuple fields
   common::VarlenPool *pool_ = new common::VarlenPool();
 };
 }

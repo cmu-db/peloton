@@ -60,7 +60,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   bool ret = container.Insert(index_key, value);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
   return ret;
@@ -83,7 +83,7 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
   bool ret = container.Delete(index_key, value);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexDeletes(
+    stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
         delete_count, metadata);
   }
   return ret;
@@ -113,7 +113,7 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
   return ret;
@@ -206,7 +206,7 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<common::Value *> &value_list,
   }  // if is full scan
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(result.size(),
                                                                   metadata);
   }
   return;
@@ -223,7 +223,7 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
   }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(result.size(),
                                                                   metadata);
   }
   return;
@@ -239,7 +239,7 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
   container.GetValue(index_key, result);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(result.size(),
                                                                   metadata);
   }
 
