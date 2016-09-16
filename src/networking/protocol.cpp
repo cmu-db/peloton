@@ -418,7 +418,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::pair<int, std::string>> bind_parameters;
   auto param_types = statement->GetParamTypes();
 
-  auto param_values = new std::vector<common::Value *>();
+  std::vector<common::Value *> param_values;
 
   PktBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
@@ -436,7 +436,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters.push_back(
             std::make_pair(common::Type::VARCHAR, param_str));
-        param_values->push_back(
+        param_values.push_back(
             (common::ValueFactory::GetVarcharValue(param_str))
                 .CastAs(PostgresValueTypeToPelotonValueType(
                      (PostgresValueType)param_types[param_idx])));
@@ -450,7 +450,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             }
             bind_parameters.push_back(std::make_pair(
                 common::Type::INTEGER, std::to_string(int_val)));
-            param_values->push_back(common::ValueFactory::GetIntegerValue(int_val).Copy());
+            param_values.push_back(common::ValueFactory::GetIntegerValue(int_val).Copy());
           } break;
           case POSTGRES_VALUE_TYPE_BIGINT: {
             int64_t int_val = 0;
@@ -459,7 +459,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             }
             bind_parameters.push_back(std::make_pair(
                 common::Type::BIGINT, std::to_string(int_val)));
-            param_values->push_back(common::ValueFactory::GetBigIntValue(int_val).Copy());
+            param_values.push_back(common::ValueFactory::GetBigIntValue(int_val).Copy());
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -470,7 +470,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             PL_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(std::make_pair(
                 common::Type::DECIMAL, std::to_string(float_val)));
-            param_values->push_back(common::ValueFactory::GetDoubleValue(float_val).Copy());
+            param_values.push_back(common::ValueFactory::GetDoubleValue(float_val).Copy());
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -481,9 +481,15 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
   // Construct a portal
 
-  if (param_values->size() > 0) {
-    statement->GetPlanTree()->SetParameterValues(param_values);
+  if (param_values.size() > 0) {
+    statement->GetPlanTree()->SetParameterValues(&param_values);
   }
+
+  //clean up param_values
+  for (auto val_ptr : param_values){
+    delete val_ptr;
+  }
+  param_values.clear();
 
   auto portal = new Portal(portal_name, statement, bind_parameters);
   std::shared_ptr<Portal> portal_reference(portal);
