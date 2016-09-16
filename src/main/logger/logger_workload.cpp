@@ -25,6 +25,7 @@
 #include "common/logger.h"
 #include "common/timer.h"
 #include "logging/log_manager.h"
+#include "storage/storage_manager.h"
 
 #include "benchmark/logger/logger_workload.h"
 
@@ -323,20 +324,15 @@ bool PrepareLogFile() {
 
   // Pick metrics based on benchmark type
   double throughput = 0;
-  double latency = 0;
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     throughput = ycsb::state.throughput;
-    latency = ycsb::state.latency;
   } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
     throughput = tpcc::state.throughput;
-    latency = tpcc::state.latency;
   }
 
   // Log the build log time
   if (state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
     WriteOutput(throughput);
-  } else if (state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
-    WriteOutput(latency);
   }
 
   return true;

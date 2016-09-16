@@ -370,8 +370,8 @@ void Tuple::SetAllNulls() {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    common::Value *value = common::ValueFactory::GetNullValueByType(
-      tuple_schema->GetType(column_itr));
+    std::unique_ptr<common::Value> value(common::ValueFactory::GetNullValueByType(
+      tuple_schema->GetType(column_itr)));
     SetValue(column_itr, *value, nullptr);
   }
 }

@@ -19,6 +19,7 @@
 #include "parser/statement_insert.h"
 #include "catalog/column.h"
 #include "catalog/catalog.h"
+#include "common/value.h"
 
 namespace peloton {
 namespace planner {
@@ -75,14 +76,15 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
         } else {
           expression::ConstantValueExpression *const_expr_elem =
               dynamic_cast<expression::ConstantValueExpression *>(elem);
+          std::unique_ptr<common::Value> const_expr_elem_val(const_expr_elem->GetValue());
           switch (const_expr_elem->GetValueType()) {
             case common::Type::VARCHAR:
             case common::Type::VARBINARY:
-              tuple->SetValue(col_cntr, *const_expr_elem->GetValue(),
+              tuple->SetValue(col_cntr, *const_expr_elem_val,
                               GetPlanPool());
               break;
             default: {
-              tuple->SetValue(col_cntr, *const_expr_elem->GetValue(), nullptr);
+              tuple->SetValue(col_cntr, *const_expr_elem_val, nullptr);
             }
           }
         }
