@@ -31,31 +31,27 @@ void Usage(FILE* out) {
   fprintf(out,
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -a --asynchronous-mode :  Asynchronous mode \n"
-          "   -e --experiment-type   :  Experiment Type \n"
+          "   -s --asynchronous-mode :  Asynchronous mode \n"
+          "   -x --experiment-type   :  Experiment Type \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -l --logging-type      :  Logging type \n"
-          "   -n --nvm-latency       :  NVM latency \n"
-          "   -p --pcommit-latency   :  pcommit latency \n"
+          "   -t --nvm-latency       :  NVM latency \n"
+          "   -q --pcommit-latency   :  pcommit latency \n"
           "   -v --flush-mode        :  Flush mode \n"
-          "   -w --commit-interval   :  Group commit interval \n"
+          "   -r --commit-interval   :  Group commit interval \n"
           "   -y --benchmark-type    :  Benchmark type \n");
 }
 
 static struct option opts[] = {
-    {"asynchronous_mode", optional_argument, NULL, 'a'},
-    {"experiment-type", optional_argument, NULL, 'e'},
+    {"asynchronous_mode", optional_argument, NULL, 's'},
+    {"experiment-type", optional_argument, NULL, 'x'},
     {"data-file-size", optional_argument, NULL, 'f'},
-    {"replication-type", optional_argument, NULL, 'g'},
     {"logging-type", optional_argument, NULL, 'l'},
-    {"nvm-latency", optional_argument, NULL, 'n'},
-    {"pcommit-latency", optional_argument, NULL, 'p'},
-    {"skew", optional_argument, NULL, 's'},
+    {"nvm-latency", optional_argument, NULL, 't'},
+    {"pcommit-latency", optional_argument, NULL, 'q'},
     {"flush-mode", optional_argument, NULL, 'v'},
-    {"commit-interval", optional_argument, NULL, 'w'},
-    {"replication-port", optional_argument, NULL, 'x'},
+    {"commit-interval", optional_argument, NULL, 'r'},
     {"benchmark-type", optional_argument, NULL, 'y'},
-    {"remote-endpoint", optional_argument, NULL, 'z'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
@@ -267,64 +263,100 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
   state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
 
-  // Default YCSB Values
+  // YCSB Default Values
+  ycsb::state.index = INDEX_TYPE_BWTREE;
   ycsb::state.scale_factor = 1;
-  ycsb::state.duration = 1000;
-  ycsb::state.column_count = 10;
-  ycsb::state.update_ratio = 0.5;
+  ycsb::state.duration = 10;
+  ycsb::state.profile_duration = 1;
   ycsb::state.backend_count = 2;
-  ycsb::state.transaction_count = 0;
+  ycsb::state.column_count = 10;
+  ycsb::state.operation_count = 10;
+  ycsb::state.update_ratio = 0.5;
+  ycsb::state.zipf_theta = 0.0;
+  ycsb::state.exp_backoff = false;
+  ycsb::state.string_mode = false;
+  ycsb::state.gc_mode = false;
+  ycsb::state.gc_backend_count = 1;
 
-  // Default Values
-  tpcc::state.warehouse_count = 2;  // 10
-  tpcc::state.duration = 1000;
+  // TPC-C Default Values
+  tpcc::state.index = INDEX_TYPE_BWTREE;
+  tpcc::state.scale_factor = 1;
+  tpcc::state.duration = 10;
+  tpcc::state.profile_duration = 1;
   tpcc::state.backend_count = 2;
-  tpcc::state.transaction_count = 0;
+  tpcc::state.warehouse_count = 2;
+  tpcc::state.exp_backoff = false;
+  tpcc::state.affinity = false;
+  tpcc::state.gc_mode = false;
+  tpcc::state.gc_backend_count = 1;
+
 
   // Parse args
   while (1) {
     int idx = 0;
-    // logger - a:e:f:g:hl:n:p:v:w:y:
-    // ycsb   - b:c:d:k:t:u:
-    // tpcc   - b:d:k:t:
-    int c = getopt_long(argc, argv, "a:e:f:hil:n:p:v:w:y:b:c:d:k:u:t:",
+    // logger - hs:x:f:l:t:q:v:r:y:
+    // ycsb   - hemgi:k:d:p:b:c:o:u:z:n:
+    // tpcc   - heagi:k:d:p:b:w:n:
+    int c = getopt_long(argc, argv, "hs:x:f:l:t:q:v:r:y:emgi:k:d:p:b:c:o:u:z:n:aw:",
                         opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
-      case 'a':
+      case 's':
         state.asynchronous_mode = (AsynchronousType)atoi(optarg);
         break;
-      case 'e':
+      case 'x':
         state.experiment_type = (ExperimentType)atoi(optarg);
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
         break;
-      case 'i':
-        state.checkpoint_type = CHECKPOINT_TYPE_NORMAL;
-        break;
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
         break;
-      case 'n':
+      case 't':
         state.nvm_latency = atoi(optarg);
         break;
-      case 'p':
+      case 'q':
         state.pcommit_latency = atoi(optarg);
         break;
       case 'v':
         state.flush_mode = atoi(optarg);
         break;
-      case 'w':
+      case 'r':
         state.wait_timeout = atoi(optarg);
         break;
       case 'y':
         state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
 
-      // YCSB
+      case 'i': {
+        char *index = optarg;
+        if (strcmp(index, "btree") == 0) {
+          ycsb::state.index = INDEX_TYPE_BTREE;
+          tpcc::state.index = INDEX_TYPE_BTREE;
+        } else if (strcmp(index, "bwtree") == 0) {
+          ycsb::state.index = INDEX_TYPE_BWTREE;
+          tpcc::state.index = INDEX_TYPE_BWTREE;
+        } else {
+          LOG_ERROR("Unknown index: %s", index);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'k':
+        ycsb::state.scale_factor = atoi(optarg);
+        tpcc::state.scale_factor = atof(optarg);
+        break;
+      case 'd':
+        ycsb::state.duration = atof(optarg);
+        tpcc::state.duration = atof(optarg);
+        break;
+      case 'p':
+        ycsb::state.profile_duration = atof(optarg);
+        tpcc::state.profile_duration = atof(optarg);
+        break;
       case 'b':
         ycsb::state.backend_count = atoi(optarg);
         tpcc::state.backend_count = atoi(optarg);
@@ -332,31 +364,49 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'c':
         ycsb::state.column_count = atoi(optarg);
         break;
-      case 'd':
-        ycsb::state.duration = atoi(optarg);
-        tpcc::state.duration = atoi(optarg);
-        break;
-      case 'k':
-        ycsb::state.scale_factor = atoi(optarg);
-        tpcc::state.warehouse_count = atoi(optarg);
-        break;
-      case 't':
-        ycsb::state.transaction_count = atoi(optarg);
-        tpcc::state.transaction_count = atoi(optarg);
+      case 'o':
+        ycsb::state.operation_count = atoi(optarg);
         break;
       case 'u':
         ycsb::state.update_ratio = atof(optarg);
+        break;
+      case 'z':
+        ycsb::state.zipf_theta = atof(optarg);
+        break;
+      case 'e':
+        ycsb::state.exp_backoff = true;
+        tpcc::state.exp_backoff = true;
+        break;
+      case 'm':
+        ycsb::state.string_mode = true;
+        break;
+      case 'g':
+        ycsb::state.gc_mode = true;
+        tpcc::state.gc_mode = true;
+        break;
+      case 'n':
+        ycsb::state.gc_backend_count = atof(optarg);
+        tpcc::state.gc_backend_count = atof(optarg);
+        break;
+      case 'w':
+        tpcc::state.warehouse_count = atoi(optarg);
+        break;
+      case 'a':
+        tpcc::state.affinity = true;
         break;
 
       case 'h':
         Usage(stderr);
         ycsb::Usage(stderr);
+        tpcc::Usage(stderr);
         exit(EXIT_FAILURE);
         break;
 
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
+        ycsb::Usage(stderr);
+        tpcc::Usage(stderr);
         exit(EXIT_FAILURE);
         break;
     }
@@ -383,26 +433,32 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Print YCSB configuration
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::ValidateIndex(ycsb::state);
     ycsb::ValidateScaleFactor(ycsb::state);
-    ycsb::ValidateColumnCount(ycsb::state);
-    ycsb::ValidateUpdateRatio(ycsb::state);
-    ycsb::ValidateBackendCount(ycsb::state);
     ycsb::ValidateDuration(ycsb::state);
-    ycsb::ValidateTransactionCount(ycsb::state);
-
+    ycsb::ValidateProfileDuration(ycsb::state);
+    ycsb::ValidateBackendCount(ycsb::state);
+    ycsb::ValidateColumnCount(ycsb::state);
+    ycsb::ValidateOperationCount(ycsb::state);
+    ycsb::ValidateUpdateRatio(ycsb::state);
+    ycsb::ValidateZipfTheta(ycsb::state);
+    ycsb::ValidateGCBackendCount(ycsb::state);
   }
   // Print TPCC configuration
   else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
-    tpcc::ValidateBackendCount(tpcc::state);
+    tpcc::ValidateIndex(tpcc::state);
+    tpcc::ValidateScaleFactor(tpcc::state);
     tpcc::ValidateDuration(tpcc::state);
+    tpcc::ValidateProfileDuration(tpcc::state);
+    tpcc::ValidateBackendCount(tpcc::state);
     tpcc::ValidateWarehouseCount(tpcc::state);
-    tpcc::ValidateTransactionCount(tpcc::state);
+    tpcc::ValidateGCBackendCount(tpcc::state);
 
     // Static TPCC parameters
-    tpcc::state.item_count = 1000;            // 100000
-    tpcc::state.districts_per_warehouse = 2;  // 10
-    tpcc::state.customers_per_district = 30;  // 3000
-    tpcc::state.new_orders_per_district = 9;  // 900
+    tpcc::state.item_count = 100000 * tpcc::state.scale_factor;
+    tpcc::state.districts_per_warehouse = 10;
+    tpcc::state.customers_per_district = 3000 * tpcc::state.scale_factor;
+    tpcc::state.new_orders_per_district = 900 * tpcc::state.scale_factor;
   }
 }
 

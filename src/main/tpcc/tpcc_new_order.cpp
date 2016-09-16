@@ -485,7 +485,7 @@ bool RunNewOrder(const size_t &thread_id){
     stock_update_key_values.push_back(common::ValueFactory::GetIntegerValue(item_id).Copy());
     stock_update_key_values.push_back(common::ValueFactory::GetIntegerValue(ol_w_id).Copy());
 
-    planner::IndexScanPlan::IndexScanDesc stock_index_scan_desc(
+    planner::IndexScanPlan::IndexScanDesc stock_update_index_scan_desc(
         stock_pkey_index, stock_key_column_ids, stock_expr_types,
         stock_update_key_values, runtime_keys);
 
@@ -493,7 +493,7 @@ bool RunNewOrder(const size_t &thread_id){
     // Create plan node.
     planner::IndexScanPlan stock_index_scan_node(stock_table, nullptr,
                                                  stock_column_ids,
-                                                 stock_index_scan_desc);
+                                                 stock_update_index_scan_desc);
 
     executor::IndexScanExecutor stock_index_scan_executor(&stock_index_scan_node, context.get());
 
