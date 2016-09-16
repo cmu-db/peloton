@@ -23,7 +23,7 @@ namespace peloton {
 namespace executor {
 
 class ForUpdateExecutor : public AbstractExecutor {
-  ForUpdateExecutor(const UpdateExecutor &) = delete;
+  ForUpdateExecutor(const ForUpdateExecutor &) = delete;
   ForUpdateExecutor &operator=(const ForUpdateExecutor &) = delete;
 
  public:

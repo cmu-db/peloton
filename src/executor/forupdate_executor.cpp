@@ -39,7 +39,7 @@ ForUpdateExecutor::ForUpdateExecutor(const planner::AbstractPlan *node,
  * @brief Nothing to init at the moment.
  * @return true on success, false otherwise.
  */
-bool UpdateExecutor::DInit() {
+bool ForUpdateExecutor::DInit() {
   PL_ASSERT(children_.size() == 1);
   PL_ASSERT(target_table_ == nullptr);
   PL_ASSERT(project_info_ == nullptr);
