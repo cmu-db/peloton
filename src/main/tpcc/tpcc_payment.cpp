@@ -267,7 +267,7 @@ bool RunPayment(const size_t &thread_id){
 
   auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(warehouse_table_pkey_index_oid);
 
-  planner::IndexScanPlan::IndexScanDesc warehouse_index_scan_desc (
+  planner::IndexScanPlan::IndexScanDesc warehouse_index_scan_desc(
     warehouse_pkey_index, warehouse_key_column_ids, warehouse_expr_types,
     warehouse_key_values, runtime_keys);
 
@@ -346,6 +346,10 @@ bool RunPayment(const size_t &thread_id){
 
   std::vector<oid_t> warehouse_update_column_ids = {8};
 
+  std::vector<common::Value *> warehouse_update_key_values;
+
+  warehouse_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
+
   planner::IndexScanPlan warehouse_update_index_scan_node(warehouse_table, nullptr,
     warehouse_update_column_ids,
     warehouse_index_scan_desc);
@@ -394,8 +398,18 @@ bool RunPayment(const size_t &thread_id){
 
   std::vector<oid_t> district_update_column_ids = {9};
 
+
+  std::vector<common::Value *> district_update_key_values;
+
+  district_update_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
+  district_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
+  
+  planner::IndexScanPlan::IndexScanDesc district_update_index_scan_desc(
+    district_pkey_index, district_key_column_ids, district_expr_types,
+    district_update_key_values, runtime_keys);
+
   planner::IndexScanPlan district_update_index_scan_node(district_table, nullptr,
-    district_update_column_ids, district_index_scan_desc);
+    district_update_column_ids, district_update_index_scan_desc);
 
   executor::IndexScanExecutor district_update_index_scan_executor(&district_update_index_scan_node, context.get());
 
@@ -416,12 +430,8 @@ bool RunPayment(const size_t &thread_id){
   );
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
-    new planner::ProjectInfo(
-      std::move(district_target_list),
-      std::move(district_direct_map_list)
-    )
-  );
-
+    new planner::ProjectInfo(std::move(district_target_list),
+                             std::move(district_direct_map_list)));
   planner::UpdatePlan district_update_node(district_table, std::move(district_project_info));
   
   executor::UpdateExecutor district_update_executor(&district_update_node, context.get());
@@ -448,7 +458,6 @@ bool RunPayment(const size_t &thread_id){
   customer_id = common::ValuePeeker::PeekInteger(customer[0]);
 
   // NOTE: Workaround, we assign a constant to the customer's data field
-  // auto customer_data = customer_data_constant;
 
   // Check the credit record of the user
   if (customer_credit == customers_bad_credit) {
