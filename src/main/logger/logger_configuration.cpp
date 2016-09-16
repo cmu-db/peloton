@@ -250,7 +250,7 @@ static void ValidateLogFileDir(configuration& state) {
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Logger Values
-  state.logging_type = LOGGING_TYPE_NVM_WAL;
+  state.logging_type = LOGGING_TYPE_SSD_WAL;
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 

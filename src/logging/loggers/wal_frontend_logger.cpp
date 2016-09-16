@@ -62,7 +62,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger()
  */
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
   test_mode_ = for_testing;
-  logging_type = LOGGING_TYPE_NVM_WAL;
 
   // allocate pool
   recovery_pool = new common::VarlenPool(BACKEND_TYPE_MM);
@@ -76,8 +75,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
     : peloton_log_directory(log_dir) {
   LOG_TRACE("Instantiating wal_fel with log directory: %s", log_dir.c_str());
-  logging_type = LOGGING_TYPE_NVM_WAL;
-
+  
   // allocate pool
   recovery_pool = new common::VarlenPool(BACKEND_TYPE_MM);
 
@@ -755,12 +753,10 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   std::string base_name = "peloton_log_";
 
   LOG_TRACE("Trying to read log directory");
-
   dirp = opendir(this->peloton_log_directory.c_str());
   if (dirp == nullptr) {
     LOG_TRACE("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
-
   // XXX readdir is not thread safe???
   while ((file = readdir(dirp)) != NULL) {
     if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
