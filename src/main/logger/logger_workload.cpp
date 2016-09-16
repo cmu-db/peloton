@@ -145,21 +145,21 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);
       log_thread.swap(local_thread);
-      // log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
-      //                                   true);
+      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
+                                        true);
 
-      // // Clean up database tile state before recovery from checkpoint
-      // log_manager.PrepareRecovery();
+      // Clean up database tile state before recovery from checkpoint
+      log_manager.PrepareRecovery();
 
-      // // Do any recovery
-      // log_manager.StartRecoveryMode();
+      // Do any recovery
+      log_manager.StartRecoveryMode();
 
-      // // Wait for logging mode
-      // log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING,
-      //                                   true);
+      // Wait for logging mode
+      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING,
+                                        true);
 
-      // // Done recovery
-      // log_manager.DoneRecovery();
+      // Done recovery
+      log_manager.DoneRecovery();
     }
   }
 }

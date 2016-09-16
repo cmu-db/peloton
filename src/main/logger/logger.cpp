@@ -71,7 +71,7 @@ void RunBenchmark() {
     PrepareLogFile();
 
     // Reset data
-    // ResetSystem();
+    ResetSystem();
 
     // Do recovery
     // DoRecovery();
