@@ -84,8 +84,8 @@ namespace tpcc {
 
 #define STOCK_LEVEL_RATIO     0.04
 #define ORDER_STATUS_RATIO    0.04
-#define PAYMENT_RATIO         0.44
-#define NEW_ORDER_RATIO       0.44
+#define PAYMENT_RATIO         0.43
+#define NEW_ORDER_RATIO       0.45
 
 volatile bool is_running = true;
 
