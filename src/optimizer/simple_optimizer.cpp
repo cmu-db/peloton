@@ -494,7 +494,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       values.push_back(predicate_values[column_idx]);
       LOG_TRACE("Adding for IndexScanDesc: id(%d), expr(%s), values(%s)",
                 column_id, ExpressionTypeToString(*expr_types.rbegin()).c_str(),
-                values.rbegin()->GetInfo().c_str());
+                (*values.rbegin())->GetInfo().c_str());
     }
     column_idx++;
   }
