@@ -170,6 +170,7 @@ class Catalog {
   const size_t max_name_size = 32;
 
  public:
+  // The var len pool for new varlen tuple fields
   common::VarlenPool *pool_ = new common::VarlenPool();
 };
 }
