@@ -32,17 +32,13 @@ class CatalogTests : public PelotonTest {};
 
 TEST_F(CatalogTests, BootstrappingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
-  EXPECT_EQ(catalog->GetDatabaseCount(), 2);
+  EXPECT_EQ(catalog->GetDatabaseCount(), 1);
   storage::Database *database =
       catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   EXPECT_NE(database, nullptr);
 
-  // Check default database and metric tables
-  storage::Database *default_database =
-      catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
-  EXPECT_EQ(default_database->GetTableCount(), 4);
-  auto db_metric_table =
-      default_database->GetTableWithName(DATABASE_METRIC_NAME);
+  // Check metric tables
+  auto db_metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
   EXPECT_NE(db_metric_table, nullptr);
 }
 

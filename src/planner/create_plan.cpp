@@ -25,10 +25,11 @@ CreatePlan::CreatePlan(storage::DataTable *table) {
   table_schema = nullptr;
 }
 
-CreatePlan::CreatePlan(std::string name,
+CreatePlan::CreatePlan(std::string name, std::string database_name,
                        std::unique_ptr<catalog::Schema> schema,
                        CreateType c_type) {
   table_name = name;
+  this->database_name = database_name;
   table_schema = schema.release();
   create_type = c_type;
 }

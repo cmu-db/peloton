@@ -18,6 +18,8 @@ public class PelotonTest {
   private final String username = "postgres";
   private final String pass = "postgres";
 
+  private final int STAT_INTERVAL_MS = 1000;
+
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);";
@@ -95,6 +97,17 @@ public class PelotonTest {
 
   private enum TABLE {A, B, AB}
 
+  // To test the database stats colleced
+  private final String SELECT_DB_METRIC = "SELECT * FROM catalog_db.database_metric;";
+
+  // To test the query stats colleced
+  private final String SELECT_QUERY_METRIC = "SELECT * FROM catalog_db.query_metric;";
+
+  // To test the index stats colleced
+  private final String SELECT_INDEX_METRIC = "SELECT * FROM catalog_db.index_metric;";
+
+  // To test the table stats colleced
+  private final String SELECT_TABLE_METRIC = "SELECT * FROM catalog_db.table_metric;";
   ;
 
   public PelotonTest() throws SQLException {
@@ -239,6 +252,75 @@ public class PelotonTest {
     // TODO: Causes failed assertion on Peloton
     stmt.execute(DELETE_A);
     System.out.println("Scan test passed.");
+  }
+
+  /**
+   * Test SeqScan and IndexScan
+   *
+   * @throws SQLException
+   */
+  public void Stat_Test() throws Exception {
+    conn.setAutoCommit(true);
+    Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+    int txn_committed = 0;
+
+    // Test Insert
+    stmt.execute(INSERT_A_1);
+    txn_committed++;
+    // Wait for stats to be aggregated
+    Thread.sleep(STAT_INTERVAL_MS * 2);
+    // Check query metric
+    stmt.execute(SELECT_QUERY_METRIC);
+    ResultSet rs = stmt.getResultSet();
+    rs.last();
+    int nums[] = new int[4];
+    // Read
+    nums[0] = rs.getInt(3);
+    // Update
+    nums[1] = rs.getInt(4);
+    // Delete
+    nums[2] = rs.getInt(5);
+    // Insert
+    nums[3] = rs.getInt(6);
+    // Query
+    String query = rs.getString(1);
+    String row1 = query + "\tread:" + nums[0] + "\tupdate:" + nums[1]
+                      + "\tdelete:" + nums[2] + "\tinsert:" + nums[3];
+    System.out.println(row1);
+    if (nums[3] != 1) {
+      throw new SQLException("Query insert doesn't match!");
+    }
+
+    // Test Update
+    UpdateByIndex(1);
+    txn_committed++;
+    // Wait for stats to be aggregated
+    Thread.sleep(STAT_INTERVAL_MS * 2);
+    // Check index metric
+    stmt.execute(SELECT_INDEX_METRIC);
+    rs = stmt.getResultSet();
+    rs.last();
+    nums = new int[1];
+    // Read
+    nums[0] = rs.getInt(4);
+    if (nums[0] != 1) {
+      // TODO this test doesn't pass since update by index scan is not supported yet
+      //throw new SQLException("Index read doesn't match:" + nums[0]);
+    }
+
+    // Check database metric
+    stmt.execute(SELECT_DB_METRIC);
+    rs = stmt.getResultSet();
+    rs.last();
+    nums = new int[2];
+    // Commit
+    nums[0] = rs.getInt(2);
+    // Abort
+    nums[1] = rs.getInt(3);
+    if (nums[0] < txn_committed) {
+      throw new SQLException("Txn committed count doesn't match!");
+    }
+
   }
 
   /**
@@ -506,6 +588,15 @@ public class PelotonTest {
   }
 
   static public void main(String[] args) throws Exception {
+      if (args.length == 0 || args[0].equals("basic")) {
+        BasicTest();
+      } else if (args[0].equals("stats")) {
+        StatsTest();
+      }
+  }
+
+  static public void BasicTest() throws Exception {
+    System.out.println("Basic Tests");
     PelotonTest pt = new PelotonTest();
     pt.Init();
     pt.ShowTable();
@@ -517,4 +608,13 @@ public class PelotonTest {
     pt.Batch_Delete();
     pt.Close();
   }
+
+  static public void StatsTest() throws Exception {
+    System.out.println("Stats Tests");
+    PelotonTest pt = new PelotonTest();
+    pt.Init();
+    pt.Stat_Test();
+    pt.Close();
+  }
+
 }

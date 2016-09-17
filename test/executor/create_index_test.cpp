@@ -85,7 +85,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
-            1 + 4);
+            1);
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();

@@ -32,7 +32,7 @@ BackendStatsContext* BackendStatsContext::GetInstance() {
   // Each thread gets a backend stats context
   std::thread::id this_id = std::this_thread::get_id();
   std::shared_ptr<BackendStatsContext> result(nullptr);
-  if (!stats_context_map_.Find(this_id, result)) {
+  if (stats_context_map_.Find(this_id, result) == false) {
     result.reset(new BackendStatsContext(LATENCY_MAX_HISTORY_THREAD, true));
     stats_context_map_.Insert(this_id, result);
   }

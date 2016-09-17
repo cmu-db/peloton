@@ -31,13 +31,14 @@ void StatsTestsUtil::ShowTable(std::string database_name,
                                std::string table_name) {
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
                                                                  table_name);
+  PL_ASSERT(table != nullptr);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
   std::vector<common::Value *> params;
   std::vector<ResultType> result;
-  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
-  auto select_stmt =
-      peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
+  std::string sql = "SELECT * FROM " + database_name + "." + table_name;
+  statement.reset(new Statement("SELECT", sql));
+  auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
@@ -69,6 +70,7 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
 
 void StatsTestsUtil::CreateTable() {
   LOG_INFO("Creating a table...");
+
   auto id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
       "dept_id", true);
@@ -80,7 +82,8 @@ void StatsTestsUtil::CreateTable() {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema),
+  planner::CreatePlan node("department_table", "emp_db",
+                           std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
@@ -91,7 +94,7 @@ void StatsTestsUtil::CreateTable() {
 std::unique_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
   std::unique_ptr<Statement> statement;
   std::string sql =
-      "INSERT INTO department_table(dept_id,dept_name) VALUES "
+      "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
       "(1,'hello_1');";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("DELETE", sql));
@@ -101,7 +104,7 @@ std::unique_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
 
 std::unique_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
   std::unique_ptr<Statement> statement;
-  std::string sql = "DELETE FROM department_table";
+  std::string sql = "DELETE FROM EMP_DB.department_table";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("DELETE", sql));
   ParseAndPlan(statement.get(), sql);
@@ -111,7 +114,7 @@ std::unique_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
 std::unique_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
   std::unique_ptr<Statement> statement;
   std::string sql =
-      "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1";
+      "UPDATE EMP_DB.department_table SET dept_name = 'CS' WHERE dept_id = 1";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("UPDATE", sql));
   ParseAndPlan(statement.get(), sql);
