@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <algorithm>
-#include <mutex>
 
 #include "statistics/latency_metric.h"
 #include "common/macros.h"

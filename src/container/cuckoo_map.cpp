@@ -25,6 +25,10 @@ namespace storage{
 class TileGroup;
 }
 
+namespace stats {
+class BackendStatsContext;
+}
+
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_TYPE::CuckooMap(){
 }
@@ -90,5 +94,8 @@ template class CuckooMap<uint32_t, uint32_t>;
 template class CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>>;
 
 template class CuckooMap<oid_t, std::shared_ptr<oid_t>>;
+
+template class CuckooMap<std::thread::id,
+                         std::shared_ptr<stats::BackendStatsContext>>;
 
 }  // End peloton namespace

@@ -19,6 +19,7 @@
 #include "common/types.h"
 #include "container/circular_buffer.h"
 #include "statistics/abstract_metric.h"
+#include <mutex>
 
 namespace peloton {
 namespace stats {
@@ -69,6 +70,14 @@ class LatencyMetric : public AbstractMetric {
         latencies_.PushBack(latency_value);
       }
     }
+  }
+
+  // Returns the first latency value recorded
+  inline double GetFirstLatencyValue() {
+    if (latencies_.begin() == latencies_.end()) {
+      return -1;
+    }
+    return *(latencies_.begin());
   }
 
   // Computes the latency measurements using the latencies

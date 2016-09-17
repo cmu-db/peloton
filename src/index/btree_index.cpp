@@ -48,18 +48,8 @@ bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
   index_key.SetFromKey(key);
 
   std::pair<KeyType, ValueType> entry(index_key, value);
-
-  {
-    index_lock.WriteLock();
-
-    // Insert the key, val pair
-    container.insert(entry);
-
-    index_lock.Unlock();
-  }
-
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
   return true;
@@ -103,7 +93,7 @@ bool BTREE_TEMPLATE_TYPE::DeleteEntry(const storage::Tuple *key,
   }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexDeletes(
+    stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
         delete_count, metadata);
   }
   return true;
@@ -141,7 +131,7 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
   }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexInserts(metadata);
+    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
   return true;
@@ -245,7 +235,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<common::Value *> &value_list,
   index_lock.Unlock();
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(result.size(),
                                                                   metadata);
   }
   return;
@@ -269,7 +259,7 @@ void BTREE_TEMPLATE_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
   }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(result.size(),
                                                                   metadata);
   }
 }
@@ -295,7 +285,7 @@ void BTREE_TEMPLATE_TYPE::ScanKey(const storage::Tuple *key,
     index_lock.Unlock();
   }
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance().IncrementIndexReads(result.size(),
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(result.size(),
                                                                   metadata);
   }
 }

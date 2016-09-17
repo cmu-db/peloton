@@ -63,7 +63,7 @@ TEST_F(CreateTests, CreatingTable) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
-            1);
+            1 + 4);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
