@@ -16,6 +16,8 @@
 #include "common/types.h"
 #include "common/statement.h"
 #include "executor/abstract_executor.h"
+#include "boost/thread/future.hpp"
+
 
 namespace peloton {
 namespace bridge {
@@ -77,22 +79,25 @@ class PlanExecutor {
   /*
    * @brief Use std::vector<common::Value *> as params to make it more elegant for
    * networking
-   *        Before ExecutePlan, a node first receives value list, so we should
-   * pass
-   *        value list directly rather than passing Postgres's ParamListInfo
+   * Before ExecutePlan, a node first receives value list, so we should pass
+   * value list directly rather than passing Postgres's ParamListInfo
+   *
    */
-  static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                    const std::vector<common::Value *> &params,
-									std::vector<ResultType> &result);
+  static void ExecutePlanLocal(const planner::AbstractPlan *plan,
+                               const std::vector<common::Value *> &params,
+                               std::vector<ResultType> &result,
+                               boost::promise<bridge::peloton_status> &p);
 
   /*
-   * @brief When a peloton node recvs a query plan, this function is invoked
+   * @brief When a peloton node recvs a query plan in rpc mode,
+   * this function is invoked
    * @param plan and params
    * @return the number of tuple it executes and logical_tile_list
    */
-  static int ExecutePlan(
+  static void ExecutePlanRemote(
       const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
-      std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
+      std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list,
+      boost::promise<int> &p);
 };
 
 }  // namespace bridge

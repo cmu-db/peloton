@@ -19,6 +19,7 @@
 #include "common/serializer.h"
 #include "common/serializeio.h"
 #include "common/macros.h"
+#include "common/thread_pool.h"
 #include "storage/tile.h"
 #include "storage/tuple.h"
 #include "planner/seq_scan_plan.h"
@@ -29,6 +30,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <iostream>
+#include <include/common/init.h>
 
 namespace peloton {
 namespace networking {
@@ -359,6 +361,10 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
       }
 
       case PLAN_NODE_TYPE_SEQSCAN: {
+        // used for communication between client and executor threads
+        boost::promise<int> p;
+        boost::unique_future<int> f = p.get_future();
+
         LOG_TRACE("SEQSCAN revieved");
         std::string plan = request->plan();
         ReferenceSerializeInput input(plan.c_str(), plan.size());
@@ -367,8 +373,13 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         ss_plan->DeserializeFrom(input);
 
         std::vector<std::unique_ptr<executor::LogicalTile>> logical_tile_list;
-        int tuple_count = peloton::bridge::PlanExecutor::ExecutePlan(
-            ss_plan.get(), params, logical_tile_list);
+        executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanRemote,
+                                        ss_plan.get(), std::ref(params),
+                                        std::ref(logical_tile_list), std::ref(p));
+
+        // wait for the executor thread to produce results
+        int tuple_count = f.get();
+
         // Return result
         if (tuple_count < 0) {
           // ExecutePlan fails

@@ -29,6 +29,9 @@
 #include "catalog/catalog.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/thread/future.hpp>
+#include "common/thread_pool.h"
+#include <include/common/init.h>
 
 namespace peloton {
 namespace tcop {
@@ -82,6 +85,9 @@ Result TrafficCop::ExecuteStatement(
     UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
 
+  boost::promise<bridge::peloton_status> p;
+  boost::unique_future<bridge::peloton_status> f = p.get_future();
+
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
@@ -90,8 +96,15 @@ Result TrafficCop::ExecuteStatement(
   LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result);
+
+  // submit it to the executor queue
+  executor_thread_pool.SubmitTask(&bridge::PlanExecutor::ExecutePlanLocal,
+                                  statement->GetPlanTree().get(), std::ref(params),
+                                  std::ref(result), std::ref(p));
+
+  // wait for executor thread to return result
+  bridge::peloton_status status = f.get();
+
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
 
   rows_changed = status.m_processed;

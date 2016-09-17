@@ -42,12 +42,13 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
+void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
                                          const std::vector<common::Value *> &params,
-                                         std::vector<ResultType> &result) {
+                                         std::vector<ResultType> &result,
+                                         boost::promise<bridge::peloton_status> &p) {
   peloton_status p_status;
 
-  if (plan == nullptr) return p_status;
+  if (plan == nullptr) p.set_value(p_status);
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -157,7 +158,7 @@ cleanup:
   // clean up executor tree
   CleanExecutorTree(executor_tree.get());
 
-  return p_status;
+  p.set_value(p_status);
 }
 
 /**
@@ -167,10 +168,11 @@ cleanup:
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
-int PlanExecutor::ExecutePlan(
+void PlanExecutor::ExecutePlanRemote(
     const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
-  if (plan == nullptr) return -1;
+    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list,
+    boost::promise<int> &p) {
+  if (plan == nullptr) return p.set_value(-1);
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -248,17 +250,17 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        return executor_context->num_processed;
+        return p.set_value(executor_context->num_processed);
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-        return -1;
+        return p.set_value(-1);
     }
   }
-  return executor_context->num_processed;
+  return p.set_value(executor_context->num_processed);
 }
 
 /**
