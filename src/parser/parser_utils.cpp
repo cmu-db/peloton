@@ -52,7 +52,7 @@ void inprintU(UNUSED_ATTRIBUTE uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
 void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
   switch (table->type) {
     case TABLE_REFERENCE_TYPE_NAME:
-      inprint(table->table_name->name, num_indent);
+      inprint(table->GetTableName(), num_indent);
       break;
 
     case TABLE_REFERENCE_TYPE_SELECT:

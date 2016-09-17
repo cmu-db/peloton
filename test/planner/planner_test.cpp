@@ -51,9 +51,12 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   parser::DeleteStatement *delete_statement = new parser::DeleteStatement();
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  delete_statement->table_name = name;
-  //Value val =
-  //    common::ValueFactory::GetNullValue();  // The value is not important at this point
+  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
+                                                     name, nullptr);
+  delete_statement->table_name = table_name;
+  // Value val =
+  //    common::ValueFactory::GetNullValue();  // The value is not important at
+  // this point
 
   // id = $0
   auto parameter_expr = new expression::ParameterValueExpression(0);
