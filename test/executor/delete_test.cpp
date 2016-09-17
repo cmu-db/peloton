@@ -83,7 +83,7 @@ TEST_F(DeleteTests, VariousOperations) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
-            1);
+            1 + 4);
   LOG_INFO("Table created!");
 
   // Inserting a tuple end-to-end

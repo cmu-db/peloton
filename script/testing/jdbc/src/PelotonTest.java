@@ -29,7 +29,7 @@ public class PelotonTest {
 
   private final String INSERT_A_1 = "INSERT INTO A VALUES ("+ DATA_A +");";
   private final String INSERT_A_2 = "INSERT INTO A VALUES ("+ DATA_B +")";
-  private final String DELETE_A = "DELETE FROM A";
+  private final String DELETE_A = "DELETE FROM A WHERE id=1";
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
@@ -176,23 +176,17 @@ public class PelotonTest {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
 
-    stmt.execute(INSERT_A);
-    stmt.execute(INSERT_B);
     stmt.execute(SEQSCAN);
 
     ResultSet rs = stmt.getResultSet();
 
-    rs.next();
-    String row1 = rs.getString(1) + "," + rs.getString(2);
-    rs.next();
-    String row2 = rs.getString(1) + "," + rs.getString(2);
+    ResultSetMetaData rsmd = rs.getMetaData();
 
-    if (rs.next()) {
-      throw new SQLException("More than 2 rows returned");
-    } else if (row1.equals(row2)) {
-      throw new SQLException("Rows aren't distinct");
+    if (rsmd.getColumnCount() != 2) {
+      throw new SQLException("Table should have 2 columns");
+    } else if (rs.next()) {
+      throw new SQLException("No rows should be returned");
     }
-
     System.out.println("Test db created.");
   }
 
@@ -218,19 +212,31 @@ public class PelotonTest {
     stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(SEQSCAN);
+
+    ResultSet rs = stmt.getResultSet();
+    rs.next();
+    String row1 = rs.getString(1) + "," + rs.getString(2);
+    rs.next();
+    String row2 = rs.getString(1) + "," + rs.getString(2);
+    if (rs.next()) {
+      throw new SQLException("More than 2 rows returned");
+    } else if (row1.equals(row2)) {
+      throw new SQLException("Rows aren't distinct");
+    }
+
     stmt.execute(INDEXSCAN);
     stmt.execute(INDEXSCAN_COLUMN);
 
     // TODO: Aggregations not yet supported in Peloton
-    // stmt.execute(AGG_COUNT);
-    // stmt.execute(AGG_COUNT_2); 
-    // PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
-    // pstmt.setInt(1, 1);
-    // pstmt.execute();
+    stmt.execute(AGG_COUNT);
+    stmt.execute(AGG_COUNT_2);
+    PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
+    pstmt.setInt(1, 1);
+    pstmt.execute();
 
     for (int i = 1; i < 3; i++)
         IndexScanParam(i);
-
+    // TODO: Causes failed assertion on Peloton
     stmt.execute(DELETE_A);
     System.out.println("Scan test passed.");
   }
@@ -434,7 +440,13 @@ public class PelotonTest {
     }
 
     System.out.println("All Good Here");
-    int[] res = stmt.executeBatch();
+    int[] res;
+    try{
+       res = stmt.executeBatch();
+    }catch(SQLException e){
+      e.printStackTrace();
+      throw e.getNextException();
+    }
     for(int i=0; i < res.length; i++){
       System.out.println(res[i]);
       if (res[i] < 0) {
@@ -498,6 +510,8 @@ public class PelotonTest {
     pt.Init();
     pt.ShowTable();
     pt.SeqScan();
+    pt.Scan_Test();
+    pt.Init();
     pt.Batch_Insert();
     pt.Batch_Update();
     pt.Batch_Delete();

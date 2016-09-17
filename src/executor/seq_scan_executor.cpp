@@ -155,7 +155,7 @@ bool SeqScanExecutor::DExecute() {
                 tile_group.get(), tuple_id);
             LOG_TRACE("Evaluate predicate for a tuple");
             auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_);
-            LOG_TRACE("Evaluation result: %d", eval);
+            LOG_TRACE("Evaluation result: %s", eval->GetInfo().c_str());
             if (eval->IsTrue()) {
               position_list.push_back(tuple_id);
               auto res = transaction_manager.PerformRead(current_txn, location);

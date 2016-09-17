@@ -323,9 +323,20 @@ bool RunDelivery(const size_t &thread_id){
     // Construct index scan executor
     std::vector<oid_t> orders_update_column_ids = {COL_IDX_O_CARRIER_ID};
 
+
+    std::vector<common::Value *> orders_update_key_values;
+
+    orders_update_key_values.push_back(no_o_id);
+    orders_update_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    orders_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
+    
+    planner::IndexScanPlan::IndexScanDesc orders_update_index_scan_desc(
+      orders_pkey_index, orders_key_column_ids, orders_expr_types,
+      orders_update_key_values, runtime_keys);
+
     // Reuse the index scan desc created above since nothing different
     planner::IndexScanPlan orders_update_index_scan_node(
-      orders_table, nullptr, orders_update_column_ids, orders_index_scan_desc);
+      orders_table, nullptr, orders_update_column_ids, orders_update_index_scan_desc);
 
     executor::IndexScanExecutor orders_update_index_scan_executor(&orders_update_index_scan_node, context.get());
 
@@ -370,8 +381,19 @@ bool RunDelivery(const size_t &thread_id){
     // Construct index scan executor
     std::vector<oid_t> order_line_update_column_ids = {COL_IDX_OL_DELIVERY_D};
 
+
+    std::vector<common::Value *> order_line_update_key_values;
+
+    order_line_update_key_values.push_back(no_o_id);
+    order_line_update_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
+    order_line_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
+    
+    planner::IndexScanPlan::IndexScanDesc order_line_update_index_scan_desc(
+      order_line_pkey_index, order_line_key_column_ids, order_line_expr_types,
+      order_line_update_key_values, runtime_keys);
+
     planner::IndexScanPlan order_line_update_index_scan_node(
-      order_line_table, nullptr, order_line_update_column_ids, order_line_index_scan_desc);
+      order_line_table, nullptr, order_line_update_column_ids, order_line_update_index_scan_desc);
 
     executor::IndexScanExecutor order_line_update_index_scan_executor(&order_line_update_index_scan_node, context.get());
 

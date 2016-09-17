@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <thread>
 
 #include "benchmark/logger/logger_configuration.h"
 #include "benchmark/logger/logger_workload.h"

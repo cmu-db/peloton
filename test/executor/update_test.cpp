@@ -67,7 +67,7 @@ TEST_F(UpdateTests, Updating) {
   create_executor.Init();
   create_executor.Execute();
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1 + 4);
 
   LOG_INFO("Table created!");
 
