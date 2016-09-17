@@ -63,8 +63,11 @@ TEST_F(InsertTests, InsertRecord) {
 
   std::unique_ptr<parser::InsertStatement> insert_node(
       new parser::InsertStatement(INSERT_TYPE_VALUES));
+
   char *name = new char[11]();
   strcpy(name, "TEST_TABLE");
+  expression::ParserExpression *table_name = new expression::ParserExpression(
+      EXPRESSION_TYPE_TABLE_REF, name, nullptr);
 
   char *col_1 = new char[8]();
   strcpy(col_1, "dept_id");
@@ -72,7 +75,7 @@ TEST_F(InsertTests, InsertRecord) {
   char *col_2 = new char[10]();
   strcpy(col_2, "dept_name");
 
-  insert_node->table_name = const_cast<char *>(name);
+  insert_node->table_name = table_name;
 
   insert_node->columns = new std::vector<char *>;
   insert_node->columns->push_back(const_cast<char *>(col_1));

@@ -148,7 +148,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   if (select_stmt->from_table->list == NULL) {
     target_table = static_cast<storage::DataTable *>(
         catalog::Catalog::GetInstance()->GetTableWithName(
-            DEFAULT_DB_NAME, select_stmt->from_table->name));
+            select_stmt->from_table->GetDatabaseName(),
+            select_stmt->from_table->GetTableName()));
   }
 
   // Query has multiple tables
@@ -158,8 +159,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   else {
     for (auto table : *select_stmt->from_table->list) {
       target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                            table->name));
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              table->GetDatabaseName(), table->GetTableName()));
       break;
     }
   }

@@ -43,10 +43,11 @@ bool CreateExecutor::DExecute() {
   // Check if query was for creating table
   if (node.GetCreateType() == CreateType::CREATE_TYPE_TABLE) {
     std::string table_name = node.GetTableName();
+    auto database_name = node.GetDatabaseName();
     std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
     Result result = catalog::Catalog::GetInstance()->CreateTable(
-        DEFAULT_DB_NAME, table_name, std::move(schema), current_txn);
+        database_name, table_name, std::move(schema), current_txn);
     current_txn->SetResult(result);
 
     if (current_txn->GetResult() == Result::RESULT_SUCCESS) {

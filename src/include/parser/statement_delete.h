@@ -27,15 +27,24 @@ namespace parser {
  */
 struct DeleteStatement : SQLStatement {
   DeleteStatement()
-      : SQLStatement(STATEMENT_TYPE_DELETE), table_name(NULL), expr(NULL){
-  };
+      : SQLStatement(STATEMENT_TYPE_DELETE), table_name(NULL), expr(NULL) {};
 
   virtual ~DeleteStatement() {
     delete table_name;
     delete expr;
   }
 
-  const char* table_name = nullptr;
+  inline std::string GetTableName() { return std::string(table_name->name); }
+
+  inline std::string GetDatabaseName() {
+    if (table_name == nullptr || table_name->database == nullptr) {
+      return DEFAULT_DB_NAME;
+    }
+    return std::string(table_name->database);
+  }
+
+  expression::ParserExpression* table_name = nullptr;
+
   expression::AbstractExpression* expr = nullptr;
 };
 

@@ -55,7 +55,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
   params_value_type_.reset(new std::vector<common::Type::TypeId>);
 
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, parse_tree->table_name);
+      parse_tree->GetDatabaseName(), parse_tree->GetTableName());
   if (target_table_) {
     catalog::Schema *table_schema = target_table_->GetSchema();
     // INSERT INTO table_name VALUES (val2, val2, ...)

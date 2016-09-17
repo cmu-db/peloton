@@ -70,31 +70,34 @@ class CreatePlan : public AbstractPlan {
 
   IndexType GetIndexType() const { return index_type; }
 
-  std::vector<std::string> GetIndexAttributes() const { return index_attrs;}
+  std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
 
-  //Table Name
+  // Table Name
   std::string table_name;
 
+  // Database Name
+  std::string database_name;
+
   // Table Schema
-  catalog::Schema* table_schema;
+  catalog::Schema *table_schema;
 
   // Index attributes
   std::vector<std::string> index_attrs;
-  
+
   // Check to either Create Table or INDEX
   CreateType create_type;
-  
+
   // IndexName
   std::string index_name;
 
-  //Index Tyoe specified from parser (Default: SKIPLIST)
+  // Index Tyoe specified from parser (Default: SKIPLIST)
   IndexType index_type;
 
-  //UNIQUE INDEX flag
+  // UNIQUE INDEX flag
   bool unique;
 };
 }

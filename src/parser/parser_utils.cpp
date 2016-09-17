@@ -52,7 +52,7 @@ void inprintU(UNUSED_ATTRIBUTE uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
 void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
   switch (table->type) {
     case TABLE_REFERENCE_TYPE_NAME:
-      inprint(table->name, num_indent);
+      inprint(table->table_name->name, num_indent);
       break;
 
     case TABLE_REFERENCE_TYPE_SELECT:
@@ -174,15 +174,17 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
 
 void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprint("CreateStatment", num_indent);
-  inprint(stmt->name, num_indent + 1);
   inprintU(stmt->type, num_indent + 1);
 
   if (stmt->type == CreateStatement::CreateType::kIndex) {
+    inprint(stmt->index_name, num_indent + 1);
     std::cout << indent(num_indent);
-    printf("INDEX : table : %s unique : %d attrs : ", stmt->table_name,
-           stmt->unique);
+    printf("INDEX : table : %s unique : %d attrs : ",
+           stmt->GetTableName().c_str(), stmt->unique);
     for (auto key : *(stmt->index_attrs)) printf("%s ", key);
     printf("\n");
+  } else if (stmt->type == CreateStatement::CreateType::kTable) {
+    inprint(stmt->GetTableName().c_str(), num_indent + 1);
   }
 
   if (stmt->columns != nullptr) {
@@ -211,7 +213,7 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
 
 void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   inprint("InsertStatment", num_indent);
-  inprint(stmt->table_name, num_indent + 1);
+  inprint(stmt->GetTableName().c_str(), num_indent + 1);
   if (stmt->columns != NULL) {
     inprint("-> Columns", num_indent + 1);
     for (char* col_name : *stmt->columns) {

@@ -34,8 +34,8 @@ CreatePlan::CreatePlan(std::string name,
 }
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
-
-  table_name = std::string(parse_tree->name);
+  table_name = parse_tree->GetTableName();
+  database_name = parse_tree->GetDatabaseName();
   std::vector<catalog::Column> columns;
   std::vector<catalog::Constraint> column_contraints;
   if (parse_tree->type == parse_tree->CreateType::kTable) {
@@ -71,8 +71,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   }
   if (parse_tree->type == parse_tree->CreateType::kIndex) {
     create_type = CreateType::CREATE_TYPE_INDEX;
-    index_name = std::string(parse_tree->name);
-    table_name = std::string(parse_tree->table_name);
+    index_name = std::string(parse_tree->index_name);
+    table_name = std::string(parse_tree->GetTableName());
 
     // This holds the attribute names.
     // This is a fix for a bug where
@@ -91,6 +91,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
     unique = parse_tree->unique;
   }
+  // TODO check type CreateType::kDatabase
 }
 
 }  // namespace planner

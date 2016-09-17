@@ -32,9 +32,11 @@ DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
 DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 
   LOG_TRACE("Creating a Delete Plan");
-  table_name_ = std::string(delete_statemenet->table_name);
+  table_name_ = delete_statemenet->GetTableName();
+  auto database_name = delete_statemenet->GetDatabaseName();
+  // Get target table based on database name and table name
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name_);
+      database_name, table_name_);
   // if expr is null , delete all tuples from table
   if (delete_statemenet->expr == nullptr) {
     LOG_TRACE("No expression, setting truncate to true");

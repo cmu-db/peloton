@@ -27,15 +27,13 @@ Catalog *Catalog::GetInstance(void) {
 
 Catalog::Catalog() {
   CreateCatalogDatabase();
-  auto result = CreateDatabase(DEFAULT_DB_NAME, nullptr);
-  if (result == RESULT_SUCCESS) {
-    // create metrics table in default database
-    CreateMetricsCatalog();
-  }
+
+  // Create metrics table in default database
+  CreateMetricsCatalog();
 }
 
 void Catalog::CreateMetricsCatalog() {
-  auto default_db = GetDatabaseWithName(DEFAULT_DB_NAME);
+  auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
   auto default_db_oid = default_db->GetOid();
 
   // Create table for database metrics

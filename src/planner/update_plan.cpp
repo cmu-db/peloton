@@ -35,9 +35,9 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
-  table_name = std::string(t_ref->name);
+  table_name = std::string(t_ref->GetTableName());
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name);
+      t_ref->GetDatabaseName(), table_name);
 
   for (auto update_clause : *parse_tree->updates) {
     updates_.push_back(update_clause->Copy());
