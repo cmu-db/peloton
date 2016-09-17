@@ -67,24 +67,22 @@ namespace logger {
 
 std::ofstream out("outputfile.summary");
 
-static void WriteOutput(double value) {
+static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %d %d :: %lf", 
+  LOG_INFO("%d %d %d %d %d %d", 
            state.benchmark_type,
            state.logging_type,
            state.nvm_latency, 
            state.pcommit_latency,
            state.flush_mode, 
-           state.asynchronous_mode, 
-           value);
+           state.asynchronous_mode);
 
   out << state.benchmark_type << " ";
   out << state.logging_type << " ";
   out << state.nvm_latency << " ";
   out << state.pcommit_latency << " ";
   out << state.flush_mode << " ";
-  out << state.asynchronous_mode << " ";
-  out << value << "\n";
+  out << state.asynchronous_mode << "\n";
   out.flush();
 }
 
@@ -327,18 +325,12 @@ bool PrepareLogFile() {
     }
   }
 
-  // // Pick metrics based on benchmark type
-  // double throughput = 0;
-  // if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
-  //   throughput = ycsb::state.throughput;
-  // } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
-  //   throughput = tpcc::state.throughput;
-  // }
-
-  // // Log the build log time
-  // if (state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
-  //   WriteOutput(throughput);
-  // }
+  WriteOutput();
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::WriteOutput();
+  } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
+    tpcc::WriteOutput();
+  }
 
   return true;
 }
@@ -399,10 +391,15 @@ void DoRecovery() {
     cp_thread.join();
   }
 
-  // Recovery time (in ms)
-  if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
-    WriteOutput(timer.GetDuration());
+  WriteOutput();
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::WriteOutput();
+  } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
+    tpcc::WriteOutput();
   }
+
+  // Recovery time (in ms)
+  LOG_INFO("recovery time: %lf", timer.GetDuration());
 }
 
 //===--------------------------------------------------------------------===//
