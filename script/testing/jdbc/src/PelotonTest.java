@@ -14,7 +14,7 @@ import java.sql.*;
 import org.postgresql.util.*;
 
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:5432/";
+  private final String url = "jdbc:postgresql://localhost:54321/";
   private final String username = "postgres";
   private final String pass = "postgres";
 
@@ -263,10 +263,18 @@ public class PelotonTest {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
     int txn_committed = 0;
+    int table_update = 0;
+    int table_delete = 0;
+    int table_insert = 0;
+    int table_read = 0;
+    int index_read = 0;
+    int index_insert = 0;
 
     // Test Insert
     stmt.execute(INSERT_A_1);
     txn_committed++;
+    table_insert++;
+    index_insert++;
     // Wait for stats to be aggregated
     Thread.sleep(STAT_INTERVAL_MS * 2);
     // Check query metric
@@ -287,25 +295,75 @@ public class PelotonTest {
     String row1 = query + "\tread:" + nums[0] + "\tupdate:" + nums[1]
                       + "\tdelete:" + nums[2] + "\tinsert:" + nums[3];
     System.out.println(row1);
-    if (nums[3] != 1) {
+    if (nums[3] != table_insert) {
       throw new SQLException("Query insert doesn't match!");
     }
 
     // Test Update
     UpdateByIndex(1);
     txn_committed++;
+    table_update++;
+    table_read++;
+    // TODO this test doesn't examine index since update by index scan
+    // is not supported yet
+    //index_read++;
+
+    stmt.execute(INDEXSCAN);
+    table_read++;
+    txn_committed++;
+    index_read++;
+
+    // TODO this test doesn't examine index since delete by index
+    // scan is not supported
+    stmt.execute(DELETE_A);
+    table_read++;
+    table_delete++;
+    txn_committed++;
+    // index_read++;
+
     // Wait for stats to be aggregated
     Thread.sleep(STAT_INTERVAL_MS * 2);
     // Check index metric
     stmt.execute(SELECT_INDEX_METRIC);
     rs = stmt.getResultSet();
     rs.last();
-    nums = new int[1];
+    nums = new int[3];
     // Read
     nums[0] = rs.getInt(4);
-    if (nums[0] != 1) {
-      // TODO this test doesn't pass since update by index scan is not supported yet
-      //throw new SQLException("Index read doesn't match:" + nums[0]);
+    // Insert
+    nums[2] = rs.getInt(6);
+    if (nums[0] != index_read) {
+      throw new SQLException("Index read doesn't match: " + nums[0]);
+    }
+    if (nums[2] != index_insert) {
+      throw new SQLException("Index insert doesn't match: " + nums[2]);
+    }
+
+
+    // Check table metric
+    stmt.execute(SELECT_TABLE_METRIC);
+    rs = stmt.getResultSet();
+    rs.last();
+    nums = new int[4];
+    // Read
+    nums[0] = rs.getInt(3);
+    // Update
+    nums[1] = rs.getInt(4);
+    // Delete
+    nums[2] = rs.getInt(5);
+    // Insert
+    nums[3] = rs.getInt(6);
+    if (nums[1] != table_update) {
+      throw new SQLException("Table update doesn't match: " + nums[1]);
+    }
+    if (nums[2] != table_delete) {
+      throw new SQLException("Table delete doesn't match: " + nums[2]);
+    }
+    if (nums[3] != table_insert) {
+      throw new SQLException("Table insert doesn't match: " + nums[3]);
+    }
+    if (nums[0] != table_read) {
+      throw new SQLException("Table read doesn't match: " + nums[0]);
     }
 
     // Check database metric
@@ -320,6 +378,8 @@ public class PelotonTest {
     if (nums[0] < txn_committed) {
       throw new SQLException("Txn committed count doesn't match!");
     }
+
+    System.out.println("Stat test all good!");
 
   }
 

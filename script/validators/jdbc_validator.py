@@ -31,17 +31,34 @@ EXIT_FAILURE = -1
 
 if __name__ == '__main__':
 	# Launch Peloton
-	peloton = subprocess.Popen(['exec ' + PELOTON_BIN], shell=True)
+	peloton = subprocess.Popen(['exec ' + PELOTON_BIN + ' -port 54321'], shell=True)
 
 	# start jdbc test
 	os.chdir(PELOTON_JDBC_SCRIPT_DIR)
-	jdbc = subprocess.Popen(['/bin/bash test_jdbc.sh'], shell=True, stdout=subprocess.PIPE, 
+	jdbc = subprocess.Popen(['/bin/bash test_jdbc.sh basic'], shell=True, stdout=subprocess.PIPE, 
 		stderr=subprocess.STDOUT)
 	jdbc_out = ''.join(jdbc.stdout.readlines())
 	print jdbc_out
 
 	# kill peloton
 	peloton.kill()
+
+	# any mention of the word 'exception'? Fail validator
+	if re.search('exception', jdbc_out, re.IGNORECASE):
+		sys.exit(EXIT_FAILURE)
+
+        # Launch Peloton with Stat Option
+        peloton = subprocess.Popen(['exec ' + PELOTON_BIN + ' -port 54321 -stats_mode 1'], shell=True)
+
+        # start jdbc test
+        os.chdir(PELOTON_JDBC_SCRIPT_DIR)
+        jdbc = subprocess.Popen(['/bin/bash test_jdbc.sh stats'], shell=True, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT)
+        jdbc_out = ''.join(jdbc.stdout.readlines())
+        print jdbc_out
+
+        # kill peloton
+        peloton.kill()
 
 	# any mention of the word 'exception'? Fail validator
 	if re.search('exception', jdbc_out, re.IGNORECASE):
