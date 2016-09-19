@@ -56,10 +56,10 @@ bool ForUpdateExecutor::DInit() {
 }
 
 /**
- * @brief updates a set of columns
+ * @brief locks a set of tuples in tile
  * @return true on success, false otherwise.
  */
-bool ForUpdateExecutor::DRetrieveLock() {
+bool ForUpdateExecutor::DRetrieveLock(LogicalTile *source_tile) {
   PL_ASSERT(children_.size() == 1);
   PL_ASSERT(executor_context_);
 
@@ -69,8 +69,6 @@ bool ForUpdateExecutor::DRetrieveLock() {
   if (!children_[0]->Execute()) {
     return false;
   }
-
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
   storage::Tile *tile = source_tile->GetBaseTile(0);
