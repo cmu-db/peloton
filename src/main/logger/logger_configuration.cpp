@@ -39,6 +39,7 @@ void Usage(FILE* out) {
           "   -q --pcommit-latency   :  pcommit latency \n"
           "   -v --flush-mode        :  Flush mode \n"
           "   -r --commit-interval   :  Group commit interval \n"
+          "   -j --log-dir           :  Log directory\n"
           "   -y --benchmark-type    :  Benchmark type \n");
 }
 
@@ -52,6 +53,7 @@ static struct option opts[] = {
     {"flush-mode", optional_argument, NULL, 'v'},
     {"commit-interval", optional_argument, NULL, 'r'},
     {"benchmark-type", optional_argument, NULL, 'y'},
+    {"log-dir", optional_argument, NULL, 'j'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
@@ -203,46 +205,13 @@ static void ValidatePCOMMITLatency(const configuration& state) {
 
 static void ValidateLogFileDir(configuration& state) {
   struct stat data_stat;
-
-  // Assign log file dir based on logging type
-  switch (state.logging_type) {
-    // Log file on NVM
-    case LOGGING_TYPE_NVM_WAL:
-    case LOGGING_TYPE_NVM_WBL: {
-      int status = stat(NVM_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = NVM_DIR;
-      }
-    } break;
-
-    // Log file on SSD
-    case LOGGING_TYPE_SSD_WAL:
-    case LOGGING_TYPE_SSD_WBL: {
-      int status = stat(SSD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = SSD_DIR;
-      }
-    } break;
-
-    // Log file on HDD
-    case LOGGING_TYPE_HDD_WAL:
-    case LOGGING_TYPE_HDD_WBL: {
-      int status = stat(HDD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = HDD_DIR;
-      }
-    } break;
-
-    case LOGGING_TYPE_INVALID:
-    default: {
-      int status = stat(TMP_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = TMP_DIR;
-      } else {
-        throw Exception("Could not find temp directory : " +
-                        std::string(TMP_DIR));
-      }
-    } break;
+  // Check the existence of the log directory
+  if (stat(state.log_file_dir.c_str(), &data_stat) != 0) {
+    LOG_ERROR("log_file_dir :: %s does not exist", state.log_file_dir.c_str());
+    exit(EXIT_FAILURE);
+  } else if (!(data_stat.st_mode & S_IFDIR)) {
+    LOG_ERROR("log_file_dir :: %s is not a directory", state.log_file_dir.c_str());
+    exit(EXIT_FAILURE);
   }
 
   LOG_INFO("log_file_dir :: %s", state.log_file_dir.c_str());
@@ -297,7 +266,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // logger - hs:x:f:l:t:q:v:r:y:
     // ycsb   - hemgi:k:d:p:b:c:o:u:z:n:
     // tpcc   - heagi:k:d:p:b:w:n:
-    int c = getopt_long(argc, argv, "hs:x:f:l:t:q:v:r:y:emgi:k:d:p:b:c:o:u:z:n:aw:",
+    int c = getopt_long(argc, argv, "hs:x:f:l:t:q:v:r:y:emgi:k:d:p:b:c:o:u:z:n:aw:j:",
                         opts, &idx);
 
     if (c == -1) break;
@@ -311,6 +280,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
+        break;
+      case 'j':
+        state.log_file_dir = optarg;
         break;
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
