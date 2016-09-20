@@ -126,12 +126,12 @@ bool SocketManager<B>::RefillReadBuffer() {
 
 template <typename B>
 bool SocketManager<B>::FlushWriteBuffer() {
-  fd_set rset;
+  fd_set wset;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
-  while ((int)wbuf.buf_size - written_bytes > 0) {
-
+  while ((int)wbuf.buf_size > 0) {
+   written_bytes=0;
     while (written_bytes <= 0) {
       written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
       // Write failed
@@ -180,9 +180,9 @@ bool SocketManager<B>::FlushWriteBuffer() {
           // Write would have blocked if the socket was
           // in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN) {
-          FD_ZERO(&rset);
-          FD_SET(sock_fd, &rset);
-          written_bytes = select(sock_fd + 1, &rset, NULL, NULL, NULL);
+          FD_ZERO(&wset);
+          FD_SET(sock_fd, &wset);
+          written_bytes = select(sock_fd + 1, NULL, &wset, NULL, NULL);
           if (written_bytes < 0) {
             LOG_INFO("written_bytes < 0 after select. Fatal");
             exit(EXIT_FAILURE);
