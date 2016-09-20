@@ -65,9 +65,8 @@ namespace logger {
 #define LOGGING_TESTS_DATABASE_OID 20000
 #define LOGGING_TESTS_TABLE_OID 10000
 
-std::ofstream out("outputfile.summary");
-
-static void WriteOutput() {
+void WriteOutput() {
+  std::ofstream out("outputfile-log.summary");
   LOG_INFO("----------------------------------------------------------");
   LOG_INFO("%d %d %d %d %d %d", 
            state.benchmark_type,
@@ -308,7 +307,7 @@ bool PrepareLogFile() {
   StartLogging(logging_thread, checkpoint_thread);
 
   // Build the log
-  // BuildLog();
+  BuildLog();
 
   // Stop frontend logger if in a valid logging mode
   if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
@@ -325,7 +324,7 @@ bool PrepareLogFile() {
     }
   }
 
-  WriteOutput();
+  // WriteOutput();
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::WriteOutput();
   } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
@@ -391,7 +390,7 @@ void DoRecovery() {
     cp_thread.join();
   }
 
-  WriteOutput();
+  //WriteOutput();
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::WriteOutput();
   } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {

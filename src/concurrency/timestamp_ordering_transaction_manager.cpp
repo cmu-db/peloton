@@ -93,6 +93,10 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
   auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
   txn->SetEpochId(eid);
 
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.PrepareLogging();
+  log_manager.LogBeginTransaction(begin_cid);
+
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         .GetTxnLatencyMetric()
@@ -104,13 +108,18 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 
 void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+  auto &log_manager = logging::LogManager::GetInstance();
 
   if (current_txn->GetResult() == RESULT_SUCCESS) {
     gc::GCManagerFactory::GetInstance().
         RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
+        // Log the transaction's commit
+        // For time stamp ordering, every transaction only has one timestamp
+        log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
   } else {
     gc::GCManagerFactory::GetInstance().
         RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+    log_manager.DoneLogging();
   }
 
   delete current_txn;
@@ -666,6 +675,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
+  auto &log_manager = logging::LogManager::GetInstance();
 
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetBeginCommitId();
@@ -722,6 +732,9 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
         // add to gc set.
         gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_UPDATE;
 
+        // add to log manager
+        log_manager.LogUpdate(end_commit_id, ItemPointer(tile_group_id, tuple_slot), new_version);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -748,6 +761,9 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
         // add to gc set.
         gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_DELETE;
 
+        // add to log manager
+        log_manager.LogDelete(end_commit_id, ItemPointer(tile_group_id, tuple_slot));
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
@@ -760,7 +776,10 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
-        // nothing to be added to gc set. 
+        // nothing to be added to gc set.
+
+        // add to log manager
+        log_manager.LogInsert(end_commit_id, ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -777,6 +796,8 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
         // add to gc set.
         gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_INS_DEL;
+
+        // no log is needed for this case
       }
     }
   }

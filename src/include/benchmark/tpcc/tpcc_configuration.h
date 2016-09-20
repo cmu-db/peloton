@@ -225,6 +225,8 @@ void ValidateWarehouseCount(const configuration &state);
 
 void ValidateGCBackendCount(const configuration &state);
 
+void WriteOutput();
+
 }  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
