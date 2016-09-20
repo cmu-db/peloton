@@ -323,7 +323,7 @@ storage::DataTable *StatsAggregator::GetMetricTable(std::string table_name) {
   auto catalog = catalog::Catalog::GetInstance();
   PL_ASSERT(catalog->GetDatabaseCount() > 0);
   storage::Database *catalog_database =
-      catalog->GetDatabaseWithName(DEFAULT_DB_NAME);
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
   PL_ASSERT(catalog_database != nullptr);
   auto metrics_table = catalog_database->GetTableWithName(table_name);
   PL_ASSERT(metrics_table != nullptr);

@@ -155,6 +155,7 @@ struct PARSER_CUST_LTYPE {
 
 	peloton::parser::TableRef* table;
 	peloton::expression::AbstractExpression* expr;
+	peloton::expression::ParserExpression* parser_expr;
 	peloton::parser::OrderDescription* order;
 	peloton::parser::OrderType order_type;
 	peloton::parser::LimitDescription* limit;
@@ -213,7 +214,7 @@ struct PARSER_CUST_LTYPE {
 %type <update_stmt> update_statement
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
-%type <sval> 		table_name opt_alias alias
+%type <sval> 		opt_alias alias
 %type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique opt_update
 %type <uval>		opt_join_type column_type opt_column_width opt_index_type
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
@@ -221,6 +222,7 @@ struct PARSER_CUST_LTYPE {
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr opt_default
 %type <expr> 		column_name literal int_literal num_literal string_literal
 %type <expr> 		comp_expr opt_where join_condition opt_having
+%type <parser_expr>	table_name
 %type <order>		opt_order
 %type <limit>		opt_limit
 %type <order_type>	opt_order_type
@@ -337,18 +339,18 @@ create_statement:
 		CREATE TABLE opt_not_exists table_name '(' column_def_commalist ')' {
 			$$ = new CreateStatement(CreateStatement::kTable);
 			$$->if_not_exists = $3;
-			$$->name = $4;
+			$$->table_name = $4;
 			$$->columns = $6;
 		}
 		|	CREATE DATABASE opt_not_exists IDENTIFIER {
 			$$ = new CreateStatement(CreateStatement::kDatabase);
 			$$->if_not_exists = $3;
-			$$->name = $4;
+			$$->database_name = $4;
 		}
 		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' {
 			$$ = new CreateStatement(CreateStatement::kIndex);
 			$$->unique = $2;
-			$$->name = $4;
+			$$->index_name = $4;
 			$$->table_name = $6;
 			$$->index_attrs = $8;
 			$$->index_type = peloton::INDEX_TYPE_BWTREE;
@@ -357,7 +359,7 @@ create_statement:
 		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' USING opt_index_type {
 			$$ = new CreateStatement(CreateStatement::kIndex);
 			$$->unique = $2;
-			$$->name = $4;
+			$$->index_name = $4;
 			$$->table_name = $6;
 			$$->index_attrs = $8;
 			$$->index_type = $11;
@@ -392,7 +394,7 @@ column_def:
 		FOREIGN KEY '(' ident_commalist ')' REFERENCES table_name '(' ident_commalist ')' {
 			$$ = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 			$$->foreign_key_source = $4;
-			$$->name = $7;
+			$$->table_name = $7;
 			$$->foreign_key_sink = $9;
 		}
 		;
@@ -457,23 +459,23 @@ drop_statement:
 		DROP TABLE opt_exists table_name {
 			$$ = new DropStatement(DropStatement::kTable);
 			$$->missing = $3;
-			$$->name = $4;
+			$$->table_name = $4;
 		}
 		|
 		DROP DATABASE IDENTIFIER {
 			$$ = new DropStatement(DropStatement::kDatabase);
-			$$->name = $3;
+			$$->index_name = $3;
 		}
 		|	
 		DROP INDEX IDENTIFIER ON table_name  {
 			$$ = new DropStatement(DropStatement::kIndex);
-			$$->name = $3;
+			$$->index_name = $3;
 			$$->table_name = $5;
 		}
 		|	
 		DEALLOCATE PREPARE IDENTIFIER {
 			$$ = new DropStatement(DropStatement::kPreparedStatement);
-			$$->name = $3;
+			$$->prep_stmt = $3;
 		}
 	;
 
@@ -840,9 +842,9 @@ table_ref_commalist:
 table_ref_name:
 		table_name opt_alias {
 			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-			tbl->name = $1;
 			tbl->alias = $2;
 			$$ = tbl;
+			tbl->table_name = $1;
 		}
 	;
 
@@ -850,14 +852,14 @@ table_ref_name:
 table_ref_name_no_alias:
 		table_name {
 			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-			$$->name = $1;
+			$$->table_name = $1;
 		}
 	;
 
 
 table_name:
-		IDENTIFIER
-	|	IDENTIFIER '.' IDENTIFIER
+		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_TABLE_REF, $1); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_TABLE_REF, $3, $1); }
 	;
 
 

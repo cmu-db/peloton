@@ -35,13 +35,6 @@ class TableMetric : public AbstractMetric {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  // Returns a key for this index
-  static inline TableKey GetKey(oid_t database_id, oid_t table_id) {
-    std::stringstream ss;
-    ss << database_id << table_id;
-    return ss.str();
-  }
-
   inline AccessMetric &GetTableAccess() { return table_access_; }
 
   inline std::string GetName() { return table_name_; }

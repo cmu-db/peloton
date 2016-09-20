@@ -14,6 +14,7 @@
 
 #include "parser/sql_statement.h"
 #include "parser/statement_select.h"
+#include "expression/parser_expression.h"
 
 namespace peloton {
 namespace parser {
@@ -33,7 +34,7 @@ struct InsertStatement : SQLStatement {
         select(NULL) {}
 
   virtual ~InsertStatement() {
-	  delete table_name;
+    delete table_name;
 
     if (columns) {
       for (auto col : *columns) free(col);
@@ -51,8 +52,18 @@ struct InsertStatement : SQLStatement {
     delete select;
   }
 
+  // Get the name of the database of this table
+  inline std::string GetDatabaseName() {
+    if (table_name == nullptr || table_name->database == nullptr) {
+      return DEFAULT_DB_NAME;
+    }
+    return std::string(table_name->database);
+  }
+
+  inline std::string GetTableName() { return std::string(table_name->name); }
+
   InsertType type;
-  const char* table_name;
+  expression::ParserExpression* table_name;
   std::vector<char*>* columns;
   std::vector<expression::AbstractExpression*>* values;
   SelectStatement* select;

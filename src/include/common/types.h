@@ -396,6 +396,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_PLACEHOLDER = 701,
   EXPRESSION_TYPE_COLUMN_REF = 702,
   EXPRESSION_TYPE_FUNCTION_REF = 703,
+  EXPRESSION_TYPE_TABLE_REF = 704,
 
   //===--------------------------------------------------------------------===//
   // Misc

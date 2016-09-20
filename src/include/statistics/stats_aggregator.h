@@ -136,6 +136,8 @@ class StatsAggregator {
 
   // Output path of the stats log
   std::string peloton_stats_directory_ = "./stats_log";
+
+  // Output file stream
   std::ofstream ofs_;
 
   // Whether the aggregator is running

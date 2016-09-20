@@ -50,7 +50,8 @@ TEST_F(CreateTests, CreatingTable) {
       new executor::ExecutorContext(txn));
 
   // Create plans
-  planner::CreatePlan node("department_table", std::move(table_schema),
+  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
+                           std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
 
   // Create executer
@@ -63,7 +64,7 @@ TEST_F(CreateTests, CreatingTable) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME)
                 ->GetTableCount(),
-            1 + 4);
+            1);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

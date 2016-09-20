@@ -350,17 +350,20 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   int64_t aggregate_interval = 1000;
   LaunchAggregator(aggregate_interval);
   auto &aggregator = stats::StatsAggregator::GetInstance();
-  auto backend_context = stats::BackendStatsContext::GetInstance();
 
   // Create a table first
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->CreateDatabase("emp_db", nullptr);
   StatsTestsUtil::CreateTable();
 
   // Default database should include 4 metrics tables and the test table
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(CATALOG_DATABASE_NAME)
                 ->GetTableCount(),
-            5);
+            6);
   LOG_INFO("Table created!");
+
+  auto backend_context = stats::BackendStatsContext::GetInstance();
 
   // Inserting a tuple end-to-end
   auto statement = StatsTestsUtil::GetInsertStmt();
@@ -408,6 +411,11 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   ForceFinalAggregation(aggregate_interval);
 
   EXPECT_EQ(aggregator.GetAggregatedStats().GetQueryCount(), 3);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName("emp_db", txn);
+  txn_manager.CommitTransaction(txn);
 }
 }  // namespace stats
 }  // namespace peloton

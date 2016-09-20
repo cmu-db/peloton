@@ -118,10 +118,6 @@ class BackendStatsContext {
    */
   void Aggregate(BackendStatsContext& source);
 
-  bool operator==(const BackendStatsContext& other);
-
-  bool operator!=(const BackendStatsContext& other);
-
   // Resets all metrics (and sub-metrics) to their starting state
   // (e.g., sets all counters to zero)
   void Reset();
@@ -143,14 +139,13 @@ class BackendStatsContext {
       database_metrics_{};
 
   // Table metrics
-  std::unordered_map<TableMetric::TableKey, std::unique_ptr<TableMetric>>
-      table_metrics_{};
+  std::unordered_map<oid_t, std::unique_ptr<TableMetric>> table_metrics_{};
 
-  // TODO stl map is not thread safe. use cuckoomap instead
-  // CuckooMap<IndexMetric::IndexKey,std::shared_ptr<IndexMetric>>
-  //      index_metrics_{};
-  std::unordered_map<IndexMetric::IndexKey, std::unique_ptr<IndexMetric>>
-      index_metrics_{};
+  // Index metrics
+  CuckooMap<oid_t, std::shared_ptr<IndexMetric>> index_metrics_{};
+
+  // Index oids
+  std::unordered_set<oid_t> index_ids_;
 
   // Metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> completed_query_metrics_{

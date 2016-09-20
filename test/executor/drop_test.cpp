@@ -59,13 +59,13 @@ TEST_F(DropTests, DroppingTable) {
                        std::move(table_schema2), txn);
   txn_manager.CommitTransaction(txn);
 
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 2 + 4);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 2);
 
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
   catalog->DropTable(DEFAULT_DB_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1 + 4);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
