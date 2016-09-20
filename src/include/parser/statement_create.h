@@ -94,6 +94,8 @@ struct ColumnDefinition {
       //  break;
 
       case DECIMAL:
+      case DOUBLE:
+      case FLOAT:
         return common::Type::DECIMAL;
         break;
 
