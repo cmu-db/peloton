@@ -75,7 +75,8 @@ foreach(test_src ${test_srcs} )
 	
 	# add test
     add_test(${test_name} ${MEMORYCHECK_COMMAND} ${MEMORYCHECK_COMMAND_OPTIONS}
-        --suppressions=${MEMORYCHECK_SUPPRESSIONS_FILE} ${CMAKE_BINARY_DIR}/test/${test_name})
+        --suppressions=${MEMORYCHECK_SUPPRESSIONS_FILE} ${CMAKE_BINARY_DIR}/test/${test_name}
+        --gtest_output=xml:${CMAKE_BINARY_DIR}/test/unit_${test_name}.xml)
 	
 endforeach(test_src ${test_srcs})
 
@@ -107,6 +108,7 @@ foreach(perf_src ${perf_srcs} )
 	)   
 	
 	# add test
-	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name})
+	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name}
+        --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${perf_name}.xml)
 	
 endforeach(perf_src ${perf_srcs})
