@@ -585,7 +585,7 @@ void SimpleOptimizer::GetPredicateColumns(
                       expression->GetModifiableRight())
                       ->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetIntegerValue(
+        values.push_back(common::ValueFactory::GetParameterOffsetValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
                 expression->GetModifiableRight())->GetValueIdx()).Copy());
     }
@@ -609,7 +609,7 @@ void SimpleOptimizer::GetPredicateColumns(
                       expression->GetModifiableLeft())
                       ->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetIntegerValue(
+        values.push_back(common::ValueFactory::GetParameterOffsetValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
                 expression->GetModifiableLeft())->GetValueIdx()).Copy());
     }
