@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/value.h"
-#include "common/numeric_value.h"
 #include "common/boolean_value.h"
 #include "common/decimal_value.h"
-#include "common/varlen_value.h"
+#include "common/numeric_value.h"
 #include "common/timestamp_value.h"
+#include "common/varlen_value.h"
 
 namespace peloton {
 namespace common {
@@ -33,7 +33,7 @@ const std::string Value::GetInfo() const {
 }
 
 bool Value::IsNull() const {
-  switch(GetTypeId()) {
+  switch (GetTypeId()) {
     case Type::BOOLEAN:
       return (value_.boolean == PELOTON_BOOLEAN_NULL);
     case Type::TINYINT:
@@ -41,6 +41,7 @@ bool Value::IsNull() const {
     case Type::SMALLINT:
       return (value_.smallint == PELOTON_INT16_NULL);
     case Type::INTEGER:
+    case Type::PARAMETER_OFFSET:
       return (value_.integer == PELOTON_INT32_NULL);
     case Type::BIGINT:
       return (value_.bigint == PELOTON_INT64_NULL);
@@ -49,7 +50,7 @@ bool Value::IsNull() const {
     case Type::TIMESTAMP:
       return (value_.timestamp == PELOTON_TIMESTAMP_NULL);
     case Type::VARCHAR:
-      return (*((uint32_t *) value_.ptr) == 0);
+      return (*((uint32_t *)value_.ptr) == 0);
     default:
       break;
   }
@@ -57,10 +58,9 @@ bool Value::IsNull() const {
 }
 
 void Value::CheckComparable(const Value &o) const {
-  switch(GetTypeId()) {
+  switch (GetTypeId()) {
     case Type::BOOLEAN:
-      if (o.GetTypeId() == Type::BOOLEAN)
-        return;
+      if (o.GetTypeId() == Type::BOOLEAN) return;
       break;
     case Type::TINYINT:
     case Type::SMALLINT:
@@ -79,19 +79,17 @@ void Value::CheckComparable(const Value &o) const {
       }
       break;
     case Type::VARCHAR:
-      if (o.GetTypeId() == Type::VARCHAR)
-        return;
+      if (o.GetTypeId() == Type::VARCHAR) return;
       break;
     case Type::TIMESTAMP:
-      if (o.GetTypeId() == Type::TIMESTAMP)
-        return;
+      if (o.GetTypeId() == Type::TIMESTAMP) return;
       break;
     default:
       break;
   }
-  std::string msg = "Operation between "
-    + Type::GetInstance(GetTypeId()).ToString() + " and "
-    + Type::GetInstance(o.GetTypeId()).ToString() + " is invalid.";
+  std::string msg =
+      "Operation between " + Type::GetInstance(GetTypeId()).ToString() +
+      " and " + Type::GetInstance(o.GetTypeId()).ToString() + " is invalid.";
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
 }
 
@@ -106,15 +104,15 @@ void Value::CheckInteger() const {
     default:
       break;
   }
-  std::string msg = "Type " + Type::GetInstance(GetTypeId()).ToString()
-    + " is not an integer type.";
+  std::string msg = "Type " + Type::GetInstance(GetTypeId()).ToString() +
+                    " is not an integer type.";
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
 }
 
-Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id, 
+Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
                               UNUSED_ATTRIBUTE const bool inlined,
                               UNUSED_ATTRIBUTE VarlenPool *pool) {
-  switch(type_id) {
+  switch (type_id) {
     case Type::BOOLEAN:
       break;
     case Type::TINYINT: {
@@ -142,9 +140,8 @@ Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
       return new TimestampValue(val);
     }
     case Type::VARCHAR: {
-      const char *ptr = *reinterpret_cast<const char * const *>(storage);
-      if (ptr == nullptr)
-        return new VarlenValue(nullptr, 0);
+      const char *ptr = *reinterpret_cast<const char *const *>(storage);
+      if (ptr == nullptr) return new VarlenValue(nullptr, 0);
       uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
       return new VarlenValue(ptr + sizeof(uint32_t), len);
     }
@@ -156,7 +153,7 @@ Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
 
 Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
                               VarlenPool *pool UNUSED_ATTRIBUTE) {
-  switch(type_id) {
+  switch (type_id) {
     case Type::BOOLEAN:
       break;
     case Type::TINYINT:
@@ -173,7 +170,7 @@ Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
       return new IntegerValue(in.ReadLong());
     case Type::VARCHAR: {
       uint32_t len = in.ReadInt();
-      const char *data = (char *) in.getRawPointer(len);
+      const char *data = (char *)in.getRawPointer(len);
       return new VarlenValue(data, len);
     }
     default:

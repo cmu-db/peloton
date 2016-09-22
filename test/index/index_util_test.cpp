@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "common/harness.h"
+#include "gtest/gtest.h"
 
 #include "common/logger.h"
 #include "common/platform.h"
 #include "index/index_factory.h"
-#include "storage/tuple.h"
 #include "index/index_util.h"
 #include "index/scan_optimizer.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace test {
@@ -56,18 +56,21 @@ static index::Index *BuildIndex() {
   // The size of the key is:
   //   integer 4 * 3 = total 12
 
-  catalog::Column column0(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-                          "A", true);
+  catalog::Column column0(common::Type::INTEGER,
+                          common::Type::GetTypeSize(common::Type::INTEGER), "A",
+                          true);
 
   catalog::Column column1(common::Type::VARCHAR, 1024, "B", false);
 
   // The following twoc constitutes tuple schema but does not appear in index
 
-  catalog::Column column2(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
-                          "C", true);
+  catalog::Column column2(common::Type::DECIMAL,
+                          common::Type::GetTypeSize(common::Type::DECIMAL), "C",
+                          true);
 
-  catalog::Column column3(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-                          "D", true);
+  catalog::Column column3(common::Type::INTEGER,
+                          common::Type::GetTypeSize(common::Type::INTEGER), "D",
+                          true);
 
   // Use all four columns to build tuple schema
 
@@ -188,7 +191,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
       index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
       {EXPRESSION_TYPE_COMPARE_LESSTHAN, EXPRESSION_TYPE_COMPARE_EQUAL,
        EXPRESSION_TYPE_COMPARE_LESSTHAN, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_EQUAL,    EXPRESSION_TYPE_COMPARE_EQUAL},
+       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
@@ -196,9 +199,9 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // This should return true
   ret = FindValueIndex(
       index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL,    EXPRESSION_TYPE_COMPARE_EQUAL,
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
        EXPRESSION_TYPE_COMPARE_LESSTHAN, EXPRESSION_TYPE_COMPARE_LESSTHAN,
-       EXPRESSION_TYPE_COMPARE_EQUAL,    EXPRESSION_TYPE_COMPARE_EQUAL},
+       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, true);
   value_index_list.clear();
@@ -219,12 +222,12 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // the complexity
   //
 
-  ret = FindValueIndex(index_p->GetMetadata(), {3, 0, 1, 0},
-                       {EXPRESSION_TYPE_COMPARE_EQUAL,
-                        EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-                        EXPRESSION_TYPE_COMPARE_EQUAL,
-                        EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO},
-                       value_index_list);
+  ret = FindValueIndex(
+      index_p->GetMetadata(), {3, 0, 1, 0},
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+       EXPRESSION_TYPE_COMPARE_EQUAL,
+       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO},
+      value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
@@ -247,15 +250,19 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
-  value_list = {common::ValueFactory::GetIntegerValue(100).Copy(),
-                common::ValueFactory::GetIntegerValue(200).Copy(),
-                common::ValueFactory::GetIntegerValue(50).Copy(), };
+  value_list = {
+      common::ValueFactory::GetIntegerValue(100).Copy(),
+      common::ValueFactory::GetIntegerValue(200).Copy(),
+      common::ValueFactory::GetIntegerValue(50).Copy(),
+  };
 
   tuple_column_id_list = {3, 3, 0};
 
-  expr_list = {EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-               EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-               EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, };
+  expr_list = {
+      EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+  };
 
   IndexScanPredicate isp{};
 
@@ -288,13 +295,18 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   // The condition means first index column does not equal 100
   ///////////////////////////////////////////////////////////////////
 
-  for (auto val : value_list)
-    delete val;
-  value_list = {common::ValueFactory::GetIntegerValue(100).Copy(), };
+  for (auto val : value_list) delete val;
+  value_list = {
+      common::ValueFactory::GetIntegerValue(100).Copy(),
+  };
 
-  tuple_column_id_list = {3, };
+  tuple_column_id_list = {
+      3,
+  };
 
-  expr_list = {EXPRESSION_TYPE_COMPARE_NOTEQUAL, };
+  expr_list = {
+      EXPRESSION_TYPE_COMPARE_NOTEQUAL,
+  };
 
   isp.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
                                   expr_list);
@@ -315,16 +327,19 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 
   IndexScanPredicate isp2{};
 
-  for (auto val : value_list)
-    delete val;
-  value_list = {common::ValueFactory::GetIntegerValue(100).Copy(),
-                common::ValueFactory::GetVarcharValue("Peloton!").Copy(),
-                common::ValueFactory::GetIntegerValue(50).Copy(), };
+  for (auto val : value_list) delete val;
+  value_list = {
+      common::ValueFactory::GetIntegerValue(100).Copy(),
+      common::ValueFactory::GetVarcharValue("Peloton!").Copy(),
+      common::ValueFactory::GetIntegerValue(50).Copy(),
+  };
 
   tuple_column_id_list = {3, 1, 0};
 
-  expr_list = {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-               EXPRESSION_TYPE_COMPARE_EQUAL, };
+  expr_list = {
+      EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
+      EXPRESSION_TYPE_COMPARE_EQUAL,
+  };
 
   isp2.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
                                    expr_list);
@@ -345,8 +360,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   ///////////////////////////////////////////////////////////////////
   delete index_p;
 
-  for (auto val : value_list)
-    delete val;
+  for (auto val : value_list) delete val;
 
   return;
 }
@@ -364,15 +378,19 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
-  value_list = {common::ValueFactory::GetBindingOnlyIntegerValue(2).Copy(),
-                common::ValueFactory::GetBindingOnlyIntegerValue(0).Copy(),
-                common::ValueFactory::GetBindingOnlyIntegerValue(1).Copy(), };
+  value_list = {
+      common::ValueFactory::GetParameterOffsetValue(2).Copy(),
+      common::ValueFactory::GetParameterOffsetValue(0).Copy(),
+      common::ValueFactory::GetParameterOffsetValue(1).Copy(),
+  };
 
   tuple_column_id_list = {3, 3, 0};
 
-  expr_list = {EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-               EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-               EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, };
+  expr_list = {
+      EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+  };
 
   IndexScanPredicate isp{};
 
@@ -421,8 +439,7 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   ///////////////////////////////////////////////////////////////////
   delete index_p;
 
-  for (auto val : value_list)
-    delete val;
+  for (auto val : value_list) delete val;
 
   return;
 }
