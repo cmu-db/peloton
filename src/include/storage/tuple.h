@@ -154,6 +154,9 @@ class Tuple : public AbstractTuple {
 
   void SetNull() { tuple_data = NULL; }
 
+  // this does set 0 to all values. VarlenValue is set to "0"
+  void SetAllZeros();
+
   /**
    * Determine the maximum number of bytes when serialized for Export.
    * Excludes the bytes required by the row header (which includes

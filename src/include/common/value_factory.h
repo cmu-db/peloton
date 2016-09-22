@@ -101,6 +101,31 @@ class ValueFactory {
     throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
   }
 
+  static inline Value *GetZeroValueByType(Type::TypeId type_id) {
+    switch (type_id) {
+      case Type::BOOLEAN:
+        return new BooleanValue(0);
+      case Type::TINYINT:
+        return new IntegerValue(0);
+      case Type::SMALLINT:
+        return new IntegerValue(0);
+      case Type::INTEGER:
+        return new IntegerValue(0);
+      case Type::BIGINT:
+        return new IntegerValue(0);
+      case Type::DECIMAL:
+        return new DecimalValue(reinterpret_cast<double>(0));
+      case Type::TIMESTAMP:
+        return new TimestampValue(0);
+      case Type::VARCHAR:
+        std::string zero_string = "0";
+        return new VarlenValue(zero_string);
+      default:
+        break;
+    }
+    throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+  }
+
   static inline Value *CastAsBigInt(const Value &value) {
     if (Type::GetInstance(Type::BIGINT).IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) return new IntegerValue((int64_t)PELOTON_INT64_NULL);
