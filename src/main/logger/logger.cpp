@@ -70,9 +70,6 @@ void RunBenchmark() {
     // Prepare a simple log file
     PrepareLogFile();
 
-    // Reset data
-    // ResetSystem();
-
     // Do recovery
     DoRecovery();
   }
