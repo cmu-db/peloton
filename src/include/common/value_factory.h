@@ -102,6 +102,8 @@ class ValueFactory {
   }
 
   static inline Value *GetZeroValueByType(Type::TypeId type_id) {
+    std::string zero_string("0");
+
     switch (type_id) {
       case Type::BOOLEAN:
         return new BooleanValue(0);
@@ -114,11 +116,10 @@ class ValueFactory {
       case Type::BIGINT:
         return new IntegerValue(0);
       case Type::DECIMAL:
-        return new DecimalValue(reinterpret_cast<double>(0));
+        return new DecimalValue((double)0);
       case Type::TIMESTAMP:
         return new TimestampValue(0);
       case Type::VARCHAR:
-        std::string zero_string = "0";
         return new VarlenValue(zero_string);
       default:
         break;
