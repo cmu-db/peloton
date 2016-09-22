@@ -324,7 +324,6 @@ bool PrepareLogFile() {
     }
   }
 
-  // WriteOutput();
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::WriteOutput();
   } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
@@ -390,7 +389,6 @@ void DoRecovery() {
     cp_thread.join();
   }
 
-  //WriteOutput();
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::WriteOutput();
   } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
