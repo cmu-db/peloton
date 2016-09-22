@@ -12,21 +12,21 @@
 
 #include "tcop/tcop.h"
 
-#include "common/macros.h"
-#include "common/portal.h"
-#include "common/logger.h"
-#include "common/types.h"
-#include "common/type.h"
 #include "common/abstract_tuple.h"
 #include "common/config.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/portal.h"
+#include "common/type.h"
+#include "common/types.h"
 
 #include "expression/parser_expression.h"
 
 #include "parser/parser.h"
 
-#include "optimizer/simple_optimizer.h"
-#include "executor/plan_executor.h"
 #include "catalog/catalog.h"
+#include "executor/plan_executor.h"
+#include "optimizer/simple_optimizer.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -81,13 +81,15 @@ Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
-
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
   }
 
-  LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of name: %s",
+            statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of query: %s",
+            statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
@@ -128,7 +130,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     std::string query) {
-
   std::vector<FieldInfoType> tuple_descriptor;
 
   // Set up parser
@@ -180,7 +181,6 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
 
     // if query has only certain columns
     if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
-
       // Get the column name
       auto col_name = expr->GetName();
 
@@ -251,7 +251,6 @@ FieldInfoType TrafficCop::GetColumnFieldForValueType(
 
 FieldInfoType TrafficCop::GetColumnFieldForAggregates(
     std::string name, ExpressionType expr_type) {
-
   // For now we only return INT for (MAX , MIN)
   // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
 
