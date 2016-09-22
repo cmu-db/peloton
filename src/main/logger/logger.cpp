@@ -74,7 +74,7 @@ void RunBenchmark() {
     // ResetSystem();
 
     // Do recovery
-    // DoRecovery();
+    DoRecovery();
   }
   //===--------------------------------------------------------------------===//
   // WBL
