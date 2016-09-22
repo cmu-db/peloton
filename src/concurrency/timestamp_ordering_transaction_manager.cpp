@@ -977,7 +977,8 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
       }
     }
   }
-  
+
+  current_txn->SetResult(RESULT_ABORTED);
   EndTransaction(current_txn);
 
   // Increment # txns aborted metric
