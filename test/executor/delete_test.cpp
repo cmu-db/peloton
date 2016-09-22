@@ -38,12 +38,12 @@ namespace test {
 class DeleteTests : public PelotonTest {};
 
 void ShowTable(std::string database_name, std::string table_name) {
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name);
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                                 table_name);
   std::unique_ptr<Statement> statement;
   auto& peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
-  std::vector<common::Value *> params;
+  std::vector<common::Value*> params;
   std::vector<ResultType> result;
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -74,7 +74,8 @@ TEST_F(DeleteTests, VariousOperations) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema),
+  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
+                           std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();

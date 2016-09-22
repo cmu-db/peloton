@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// table_metric.h
+// query_metric.h
 //
-// Identification: src/statistics/table_metric.h
+// Identification: src/statistics/query_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,55 +18,53 @@
 #include "common/types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
+#include "statistics/latency_metric.h"
 
 namespace peloton {
 namespace stats {
 
 /**
- * Metric for the access of a table
+ * Metric for the access of a query
  */
-class TableMetric : public AbstractMetric {
+class QueryMetric : public AbstractMetric {
  public:
-  typedef std::string TableKey;
-
-  TableMetric(MetricType type, oid_t database_id, oid_t table_id);
+  QueryMetric(MetricType type, std::string query_name, oid_t database_id);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  inline AccessMetric &GetTableAccess() { return table_access_; }
+  inline AccessMetric &GetQueryAccess() { return query_access_; }
 
-  inline std::string GetName() { return table_name_; }
+  inline LatencyMetric &GetQueryLatency() { return latency_metric_; }
+
+  inline std::string GetName() { return query_name_; }
 
   inline oid_t GetDatabaseId() { return database_id_; }
-
-  inline oid_t GetTableId() { return table_id_; }
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
   //===--------------------------------------------------------------------===//
 
-  inline void Reset() { table_access_.Reset(); }
+  inline void Reset() { query_access_.Reset(); }
 
-  inline bool operator==(const TableMetric &other) {
-    return database_id_ == other.database_id_ && table_id_ == other.table_id_ &&
-           table_name_ == other.table_name_ &&
-           table_access_ == other.table_access_;
+  inline bool operator==(const QueryMetric &other) {
+    return database_id_ == other.database_id_ &&
+           query_name_ == other.query_name_ &&
+           query_access_ == other.query_access_;
   }
 
-  inline bool operator!=(const TableMetric &other) { return !(*this == other); }
+  inline bool operator!=(const QueryMetric &other) { return !(*this == other); }
 
   void Aggregate(AbstractMetric &source);
 
   inline const std::string GetInfo() const {
     std::stringstream ss;
     ss << "-----------------------------" << std::endl;
-    ss << "  TABLE " << table_name_ << "(OID=";
-    ss << table_id_ << ")" << std::endl;
+    ss << "  QUERY " << query_name_ << std::endl;
     ;
     ss << "-----------------------------" << std::endl;
-    ss << table_access_.GetInfo() << std::endl;
+    ss << query_access_.GetInfo() << std::endl;
     return ss.str();
   }
 
@@ -75,17 +73,17 @@ class TableMetric : public AbstractMetric {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
-  // The database ID of this table
+  // The database ID of this query
   oid_t database_id_;
 
-  // The ID of this table
-  oid_t table_id_;
-
-  // The name of this table
-  std::string table_name_;
+  // The name of this query
+  std::string query_name_;
 
   // The number of tuple accesses
-  AccessMetric table_access_{ACCESS_METRIC};
+  AccessMetric query_access_{ACCESS_METRIC};
+
+  // Latency metric
+  LatencyMetric latency_metric_{LATENCY_METRIC, 2};
 };
 
 }  // namespace stats

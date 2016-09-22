@@ -61,7 +61,8 @@ TEST_F(UpdateTests, Updating) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema),
+  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
+                           std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();

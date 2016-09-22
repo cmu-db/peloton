@@ -173,8 +173,8 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
 }
 
 void ShowTable(std::string database_name, std::string table_name) {
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, table_name);
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
+                                                                 table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
@@ -235,7 +235,8 @@ TEST_F(IndexScanTests, SQLTest) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema),
+  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
+                           std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();

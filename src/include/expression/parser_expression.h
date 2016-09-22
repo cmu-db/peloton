@@ -26,29 +26,32 @@ namespace expression {
 class ParserExpression : public AbstractExpression {
  public:
   ParserExpression(ExpressionType type, char* name_)
- : AbstractExpression(type) {
+      : AbstractExpression(type) {
     name = name_;
   }
 
-  ParserExpression(ExpressionType type, char* name_, char* column_)
-  : AbstractExpression(type) {
+  ParserExpression(ExpressionType type, char* name_, char* column_or_database_)
+      : AbstractExpression(type) {
     name = name_;
-    column = column_;
+    if (type == peloton::EXPRESSION_TYPE_COLUMN_REF) {
+      column = column_or_database_;
+    } else if (type == peloton::EXPRESSION_TYPE_TABLE_REF) {
+      database = column_or_database_;
+    }
   }
 
-  ParserExpression(ExpressionType type)
-  : AbstractExpression(type) {
-  }
+  ParserExpression(ExpressionType type) : AbstractExpression(type) {}
 
-  ParserExpression(ExpressionType type, char* func_name_, AbstractExpression* expr_, bool distinct_)
-  : AbstractExpression(type) {
+  ParserExpression(ExpressionType type, char* func_name_,
+                   AbstractExpression* expr_, bool distinct_)
+      : AbstractExpression(type) {
     name = func_name_;
     expr = expr_;
     distinct = distinct_;
   }
 
   ParserExpression(ExpressionType type, int placeholder)
-  : AbstractExpression(type) {
+      : AbstractExpression(type) {
     ival = placeholder;
   }
 
@@ -56,24 +59,25 @@ class ParserExpression : public AbstractExpression {
     delete expr;
     delete[] name;
     delete[] column;
+    delete[] database;
     delete[] alias;
   }
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-                 UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-                 UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
+  std::unique_ptr<Value> Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple* tuple1,
+      UNUSED_ATTRIBUTE const AbstractTuple* tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext* context) const override {
     return std::unique_ptr<BooleanValue>(new BooleanValue(1));
   }
 
-  AbstractExpression *Copy() const override {
+  AbstractExpression* Copy() const override {
     // TODO: Fix copy based on other constructors
-	  std::string str (name);
-    char * new_cstr = new char [str.length()+1];
-    std::strcpy (new_cstr, str.c_str());
+    std::string str(name);
+    char* new_cstr = new char[str.length() + 1];
+    std::strcpy(new_cstr, str.c_str());
     return new ParserExpression(this->GetExpressionType(), new_cstr);
   }
 };
 
-} // End peloton namespace
-} // End nstore namespace
-
+}  // End peloton namespace
+}  // End nstore namespace

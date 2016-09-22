@@ -37,14 +37,6 @@ class IndexMetric : public AbstractMetric {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  // Returns a key for this index
-  static inline IndexKey GetKey(oid_t database_id, oid_t table_id,
-                                oid_t index_id) {
-    std::stringstream ss;
-    ss << database_id << table_id << index_id;
-    return ss.str();
-  }
-
   // Returns a metric containing the counts of all
   // accesses to this index
   inline AccessMetric &GetIndexAccess() { return index_access_; }

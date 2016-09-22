@@ -39,6 +39,10 @@ class ValueFactory {
     return IntegerValue(value);
   }
 
+  static inline IntegerValue GetParameterOffsetValue(int32_t value) {
+    return IntegerValue(value, true);
+  }
+
   static inline IntegerValue GetBigIntValue(int64_t value) {
     return IntegerValue(value);
   }

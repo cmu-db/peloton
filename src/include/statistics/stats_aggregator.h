@@ -24,6 +24,9 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "statistics/backend_stats_context.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
+#include "concurrency/transaction.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -87,12 +90,18 @@ class StatsAggregator {
   // instead of explicitly unregistering it.
   void UnregisterContext(std::thread::id id);
 
+  // Utility function to get the metric table
+  storage::DataTable *GetMetricTable(std::string table_name);
+
   // Aggregate the stats of current living threads
   void Aggregate(int64_t &interval_cnt, double &alpha,
                  double &weighted_avg_throughput);
 
-  // Aggregate stats periodically
-  void RunAggregator();
+  // Launch aggregator thread
+  void LaunchAggregator();
+
+  // Terminate aggregator thread
+  void ShutdownAggregator();
 
  private:
   //===--------------------------------------------------------------------===//
@@ -127,7 +136,37 @@ class StatsAggregator {
 
   // Output path of the stats log
   std::string peloton_stats_directory_ = "./stats_log";
+
+  // Output file stream
   std::ofstream ofs_;
+
+  // Whether the aggregator is running
+  bool is_aggregating_ = false;
+
+  // Varlen Pool to hold query strings
+  std::unique_ptr<common::VarlenPool> pool_;
+
+  //===--------------------------------------------------------------------===//
+  // HELPER FUNCTIONS
+  //===--------------------------------------------------------------------===//
+
+  // Write all metrics to metric tables
+  void UpdateMetrics();
+
+  // Update the table metrics with a given database
+  void UpdateTableMetrics(storage::Database *database, int64_t time_stamp,
+                          concurrency::Transaction *txn);
+
+  // Update the index metrics with a given table
+  void UpdateIndexMetrics(storage::Database *database,
+                          storage::DataTable *table, int64_t time_stamp,
+                          concurrency::Transaction *txn);
+
+  // Write all query metrics to a metric table
+  void UpdateQueryMetrics(int64_t time_stamp, concurrency::Transaction *txn);
+
+  // Aggregate stats periodically
+  void RunAggregator();
 };
 
 }  // namespace stats

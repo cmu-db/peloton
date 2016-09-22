@@ -396,6 +396,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_PLACEHOLDER = 701,
   EXPRESSION_TYPE_COLUMN_REF = 702,
   EXPRESSION_TYPE_FUNCTION_REF = 703,
+  EXPRESSION_TYPE_TABLE_REF = 704,
 
   //===--------------------------------------------------------------------===//
   // Misc
@@ -823,6 +824,8 @@ enum MetricType {
   LATENCY_METRIC = 7,
   // Timestamp, e.g., creation time of a table/index
   TEMPORAL_METRIC = 8,
+  //  Statistics for a specific table
+  QUERY_METRIC = 9,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;

@@ -17,6 +17,10 @@
 #include "common/logger.h"
 #include "catalog/catalog.h"
 
+#define CATALOG_DATABASE_NAME "catalog_db"
+#define DATABASE_CATALOG_NAME "database_catalog"
+#define TABLE_CATALOG_NAME "table_catalog"
+
 namespace peloton {
 namespace test {
 
@@ -27,7 +31,15 @@ namespace test {
 class CatalogTests : public PelotonTest {};
 
 TEST_F(CatalogTests, BootstrappingCatalog) {
-  EXPECT_EQ(catalog::Catalog::GetInstance()->GetDatabaseCount(), 1);
+  auto catalog = catalog::Catalog::GetInstance();
+  EXPECT_EQ(catalog->GetDatabaseCount(), 1);
+  storage::Database *database =
+      catalog->GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  EXPECT_NE(database, nullptr);
+
+  // Check metric tables
+  auto db_metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
+  EXPECT_NE(db_metric_table, nullptr);
 }
 
 TEST_F(CatalogTests, CreatingDatabase) {
@@ -44,8 +56,9 @@ TEST_F(CatalogTests, CreatingDatabase) {
 TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(common::Type::INTEGER,
-                                   common::Type::GetTypeSize(common::Type::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "id", true);
   auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(

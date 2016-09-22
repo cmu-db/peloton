@@ -348,17 +348,12 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
-        // get unique tuple from primary index.
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: 
+      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        // get unique tuple from primary/unique index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
-      } break;
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // get unique tuple from primary index.
-        // if in this index there has been a visible or uncommitted
-        // <key, location> pair, this constraint is violated
-        // res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       } break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:

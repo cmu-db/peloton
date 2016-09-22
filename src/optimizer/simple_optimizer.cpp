@@ -104,7 +104,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
       storage::DataTable* target_table =
           catalog::Catalog::GetInstance()->GetTableWithName(
-              DEFAULT_DB_NAME, select_stmt->from_table->name);
+              select_stmt->from_table->GetDatabaseName(),
+              select_stmt->from_table->GetTableName());
 
       // Preparing the group by columns
       if (group_by != NULL) {
@@ -205,7 +206,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       else {
         // Create sequential scan plan
         target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            DEFAULT_DB_NAME, select_stmt->from_table->name);
+            select_stmt->from_table->GetDatabaseName(),
+            select_stmt->from_table->GetTableName());
         std::unique_ptr<planner::AbstractScan> scan_node =  // nullptr;
             CreateScanPlan(target_table, select_stmt);
 
@@ -471,7 +473,6 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // as BIGINT...
 
   if (!index_searchable) {
-    //  if (true) {
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
@@ -494,7 +495,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       values.push_back(predicate_values[column_idx]);
       LOG_TRACE("Adding for IndexScanDesc: id(%d), expr(%s), values(%s)",
                 column_id, ExpressionTypeToString(*expr_types.rbegin()).c_str(),
-                values.rbegin()->GetInfo().c_str());
+                (*values.rbegin())->GetInfo().c_str());
     }
     column_idx++;
   }
@@ -584,7 +585,7 @@ void SimpleOptimizer::GetPredicateColumns(
                       expression->GetModifiableRight())
                       ->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetIntegerValue(
+        values.push_back(common::ValueFactory::GetParameterOffsetValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
                 expression->GetModifiableRight())->GetValueIdx()).Copy());
     }
@@ -608,7 +609,7 @@ void SimpleOptimizer::GetPredicateColumns(
                       expression->GetModifiableLeft())
                       ->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetIntegerValue(
+        values.push_back(common::ValueFactory::GetParameterOffsetValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
                 expression->GetModifiableLeft())->GetValueIdx()).Copy());
     }

@@ -136,6 +136,7 @@ class AbstractExpression : public Printable {
   char *name = nullptr;
   char *column = nullptr;
   char *alias = nullptr;
+  char *database = nullptr;
 
   bool distinct = false;
 
