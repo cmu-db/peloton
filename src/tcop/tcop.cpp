@@ -141,6 +141,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
 
   auto first_stmt = sql_stmt->GetStatement(0);
 
+  if (first_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
+
   // Get the Select Statement
   auto select_stmt = (parser::SelectStatement *)first_stmt;
 

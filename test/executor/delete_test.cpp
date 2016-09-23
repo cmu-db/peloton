@@ -25,6 +25,7 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "tcop/tcop.h"
 
 #include "gtest/gtest.h"
 
@@ -52,8 +53,10 @@ void ShowTable(std::string database_name, std::string table_name) {
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format;
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  auto tuple_descriptor =
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor("SELECT * FROM " +
+                                                              table->GetName());
+  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
 }
@@ -113,8 +116,7 @@ TEST_F(DeleteTests, VariousOperations) {
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
   std::vector<int> result_format;
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  result_format = std::move(std::vector<int>(0, 0));
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
@@ -138,8 +140,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
@@ -163,8 +164,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
@@ -186,8 +186,10 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  auto tuple_descriptor =
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+          statement->GetQueryString());
+  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
@@ -207,8 +209,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
@@ -230,8 +231,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
