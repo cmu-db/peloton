@@ -64,8 +64,9 @@ Result TrafficCop::ExecuteStatement(
 
   // Then, execute the statement
   bool unnamed = true;
-  auto status =
-      ExecuteStatement(statement, unnamed, result, rows_changed, error_message);
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  auto status = ExecuteStatement(statement, unnamed, result_format, result,
+                                 rows_changed, error_message);
 
   if (status == Result::RESULT_SUCCESS) {
     LOG_TRACE("Execution succeeded!");
@@ -79,8 +80,9 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
+    UNUSED_ATTRIBUTE const bool unnamed, const std::vector<int> &result_format,
+    std::vector<ResultType> &result, int &rows_changed,
+    UNUSED_ATTRIBUTE std::string &error_message) {
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
@@ -93,7 +95,7 @@ Result TrafficCop::ExecuteStatement(
   std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result);
+      statement->GetPlanTree().get(), params, result, result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
 
   rows_changed = status.m_processed;
@@ -105,7 +107,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     UNUSED_ATTRIBUTE std::string &error_message) {
   std::shared_ptr<Statement> statement;
 
-  LOG_TRACE("Prepare Statement %s", query_string.c_str());
+  LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
+  LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
   statement.reset(new Statement(statement_name, query_string));
 
@@ -124,7 +127,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_TRACE("Statement Prepared!");
+  LOG_DEBUG("Statement Prepared!");
   return std::move(statement);
 }
 

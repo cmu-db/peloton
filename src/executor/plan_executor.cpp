@@ -14,11 +14,11 @@
 
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executors.h"
 #include "executor/executor_context.h"
+#include "executor/executors.h"
 #include "executor/plan_executor.h"
-#include "storage/tuple_iterator.h"
 #include "optimizer/util.h"
+#include "storage/tuple_iterator.h"
 
 namespace peloton {
 namespace bridge {
@@ -37,14 +37,16 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
 
 /**
  * @brief Build a executor tree and execute it.
- * Use std::vector<common::Value *> as params to make it more elegant for networking
+ * Use std::vector<common::Value *> as params to make it more elegant for
+ * networking
  * Before ExecutePlan, a node first receives value list, so we should pass
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         const std::vector<common::Value *> &params,
-                                         std::vector<ResultType> &result) {
+peloton_status PlanExecutor::ExecutePlan(
+    const planner::AbstractPlan *plan,
+    const std::vector<common::Value *> &params, std::vector<ResultType> &result,
+    const std::vector<int> &result_format) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -67,7 +69,8 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  // Use const std::vector<common::Value *> &params to make it more elegant for network
+  // Use const std::vector<common::Value *> &params to make it more elegant for
+  // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
 
@@ -94,7 +97,6 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     status = executor_tree->Execute();
     // Stop
     if (status == false) {
-
       std::unique_ptr<executor::LogicalTile> logical_tile(
           executor_tree->GetOutput());
       // Some executors don't return logical tiles (e.g., Update).
@@ -103,7 +105,9 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
                   logical_tile->GetInfo().c_str());  // Printing the answers
         auto output_schema =
             logical_tile->GetPhysicalSchema();  // Physical schema of the tile
-        auto answer_tuples = logical_tile->GetAllValuesAsStrings();
+        std::vector<std::vector<std::string>> answer_tuples;
+        answer_tuples =
+            std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
         // Construct the returned results
         result.clear();
@@ -112,8 +116,12 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
           for (auto column : output_schema->GetColumns()) {
             auto column_name = column.GetName();
             auto res = ResultType();
-            PlanExecutor::copyFromTo(column_name.c_str(), res.first);
-            PlanExecutor::copyFromTo(tuple[col_index++].c_str(), res.second);
+            PlanExecutor::copyFromTo(column_name, res.first);
+            LOG_TRACE("column name: %s", column_name.c_str());
+            PlanExecutor::copyFromTo(tuple[col_index++], res.second);
+            if (tuple[col_index - 1].c_str() != nullptr) {
+              LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
+            }
             result.push_back(res);
           }
         }
@@ -162,13 +170,15 @@ cleanup:
 
 /**
  * @brief Build a executor tree and execute it.
- * Use std::vector<common::Value *> as params to make it more elegant for networking
+ * Use std::vector<common::Value *> as params to make it more elegant for
+ * networking
  * Before ExecutePlan, a node first receives value list, so we should pass
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
+    const planner::AbstractPlan *plan,
+    const std::vector<common::Value *> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   if (plan == nullptr) return -1;
 
@@ -191,7 +201,8 @@ int PlanExecutor::ExecutePlan(
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  // Use const std::vector<common::Value *> &params to make it more elegant for network
+  // Use const std::vector<common::Value *> &params to make it more elegant for
+  // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
 

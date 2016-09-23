@@ -431,7 +431,8 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
   schema_ = std::move(new_schema);
 }
 
-std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
+std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
+    const std::vector<int> &result_format) {
   std::vector<std::vector<std::string>> string_tile;
   for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
     std::vector<std::string> row;
@@ -440,15 +441,39 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
       const LogicalTile::ColumnInfo &cp = schema_[column_itr];
       oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
       // get the value from the base physical tile
+      std::unique_ptr<common::Value> val;
       if (base_tuple_id == NULL_OID) {
-        std::unique_ptr<common::Value> val(
-            common::ValueFactory::GetNullValueByType(
-                cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
+        val.reset(common::ValueFactory::GetNullValueByType(
+            cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
+      } else {
+        val.reset(cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
+      }
+
+      // LM: I put varchar here because we don't need to do endian conversion
+      // for them, and assuming binary and text for a varchar are the same.
+      if (result_format[column_itr] == 0 ||
+          cp.base_tile->GetSchema()->GetType(cp.origin_column_id) ==
+              common::Type::VARCHAR) {
         row.push_back(val->ToString());
       } else {
-        std::unique_ptr<common::Value> val(
-            cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
-        row.push_back(val->ToString());
+        auto data_length =
+            cp.base_tile->GetSchema()->GetLength(cp.origin_column_id);
+        LOG_TRACE("data length: %ld", data_length);
+        char *val_binary = new char[data_length];
+        bool is_inlined = false;
+        common::VarlenPool *pool = nullptr;
+
+        val->SerializeTo(val_binary, is_inlined, pool);
+
+        // convert little endian to big endian...
+        // TODO: This is stupid.... But I think this hack is fine for now.
+        for (size_t i = 0; i < (data_length >> 1); ++i) {
+          auto tmp_char = val_binary[i];
+          val_binary[i] = val_binary[data_length - i - 1];
+          val_binary[data_length - i - 1] = tmp_char;
+        }
+
+        row.push_back(std::string(val_binary, data_length));
       }
     }
     string_tile.push_back(row);

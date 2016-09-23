@@ -14,18 +14,18 @@
 #include <unordered_map>
 
 #include "common/cache.h"
-#include "common/types.h"
 #include "common/macros.h"
-#include "wire/marshal.h"
 #include "common/portal.h"
+#include "common/types.h"
 #include "tcop/tcop.h"
+#include "wire/marshal.h"
 
-#include "planner/abstract_plan.h"
-#include "planner/insert_plan.h"
-#include "planner/update_plan.h"
-#include "planner/delete_plan.h"
 #include "common/value.h"
 #include "common/value_factory.h"
+#include "planner/abstract_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/update_plan.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -36,7 +36,7 @@ namespace wire {
 
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
-    PacketManager::parameter_status_map =
+    PacketManager::parameter_status_map_ =
         boost::assign::map_list_of("application_name", "psql")(
             "client_encoding", "UTF8")("DateStyle", "ISO, MDY")(
             "integer_datetimes", "on")("IntervalStyle", "postgres")(
@@ -47,7 +47,7 @@ const std::unordered_map<std::string, std::string>
 /*
  * close_client - Close the socket of the underlying client
  */
-void PacketManager::CloseClient() { client.sock->CloseSocket(); }
+void PacketManager::CloseClient() { client_.sock->CloseSocket(); }
 
 void PacketManager::MakeHardcodedParameterStatus(
     ResponseBuffer &responses, const std::pair<std::string, std::string> &kv) {
@@ -85,15 +85,15 @@ bool PacketManager::ProcessStartupPacket(Packet *pkt,
     if (token.compare("database") == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client.dbname);
+      GetStringToken(pkt, client_.dbname);
     } else if (token.compare(("user")) == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client.user);
+      GetStringToken(pkt, client_.user);
     } else {
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
-      client.cmdline_options[token] = value;
+      client_.cmdline_options[token] = value;
     }
   }
 
@@ -103,8 +103,8 @@ bool PacketManager::ProcessStartupPacket(Packet *pkt,
   responses.push_back(std::move(response));
 
   // Send the parameterStatus map ('S')
-  for (auto it = parameter_status_map.begin(); it != parameter_status_map.end();
-       it++) {
+  for (auto it = parameter_status_map_.begin();
+       it != parameter_status_map_.end(); it++) {
     MakeHardcodedParameterStatus(responses, *it);
   }
 
@@ -116,7 +116,6 @@ bool PacketManager::ProcessStartupPacket(Packet *pkt,
 void PacketManager::PutTupleDescriptor(
     const std::vector<FieldInfoType> &tuple_descriptor,
     ResponseBuffer &responses) {
-
   if (tuple_descriptor.empty()) return;
 
   std::unique_ptr<Packet> pkt(new Packet());
@@ -178,13 +177,13 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows,
   pkt->msg_type = 'C';
   std::string tag = query_type;
   /* After Begin, we enter a txn block */
-  if (query_type.compare("BEGIN") == 0) txn_state = TXN_BLOCK;
+  if (query_type.compare("BEGIN") == 0) txn_state_ = TXN_BLOCK;
   /* After commit, we end the txn block */
   else if (query_type.compare("COMMIT") == 0)
-    txn_state = TXN_IDLE;
+    txn_state_ = TXN_IDLE;
   /* After rollback, the txn block is ended */
   else if (!query_type.compare("ROLLBACK"))
-    txn_state = TXN_IDLE;
+    txn_state_ = TXN_IDLE;
   /* the rest are custom status messages for each command */
   else if (!query_type.compare("INSERT"))
     tag += " 0 " + std::to_string(rows);
@@ -209,11 +208,11 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
   if (query_type.compare("SET") == 0 || query_type.compare("SHOW") == 0)
     return false;
   // skip duplicate BEGIN
-  if (!query_type.compare("BEGIN") && txn_state == TXN_BLOCK) return false;
+  if (!query_type.compare("BEGIN") && txn_state_ == TXN_BLOCK) return false;
   // skip duplicate Commits
-  if (!query_type.compare("COMMIT") && txn_state == TXN_IDLE) return false;
+  if (!query_type.compare("COMMIT") && txn_state_ == TXN_IDLE) return false;
   // skip duplicate Rollbacks
-  if (!query_type.compare("ROLLBACK") && txn_state == TXN_IDLE) return false;
+  if (!query_type.compare("ROLLBACK") && txn_state_ == TXN_IDLE) return false;
   return true;
 }
 
@@ -225,10 +224,9 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
-
   if (queries.size() == 1) {
     SendEmptyQueryResponse(responses);
-    SendReadyForQuery(txn_state, responses);
+    SendReadyForQuery(txn_state_, responses);
     return;
   }
 
@@ -307,7 +305,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
       tcop.PrepareStatement(statement_name, query_string, error_message);
   if (statement.get() == nullptr) {
     SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state, responses);
+    SendReadyForQuery(txn_state_, responses);
     return;
   }
 
@@ -328,7 +326,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Unnamed statement
   if (unnamed_query) {
-    unnamed_statement = statement;
+    unnamed_statement_ = statement;
   } else {
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
@@ -375,7 +373,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::shared_ptr<Statement> statement;
 
   if (statement_name.empty()) {
-    statement = unnamed_statement;
+    statement = unnamed_statement_;
 
     // Check unnamed statement
     if (statement.get() == nullptr) {
@@ -439,7 +437,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         param_values.push_back(
             (common::ValueFactory::GetVarcharValue(param_str))
                 .CastAs(PostgresValueTypeToPelotonValueType(
-                     (PostgresValueType)param_types[param_idx])));
+                    (PostgresValueType)param_types[param_idx])));
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -448,18 +446,20 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             for (size_t i = 0; i < sizeof(int); ++i) {
               int_val = (int_val << 8) | param[i];
             }
-            bind_parameters.push_back(std::make_pair(
-                common::Type::INTEGER, std::to_string(int_val)));
-            param_values.push_back(common::ValueFactory::GetIntegerValue(int_val).Copy());
+            bind_parameters.push_back(
+                std::make_pair(common::Type::INTEGER, std::to_string(int_val)));
+            param_values.push_back(
+                common::ValueFactory::GetIntegerValue(int_val).Copy());
           } break;
           case POSTGRES_VALUE_TYPE_BIGINT: {
             int64_t int_val = 0;
             for (size_t i = 0; i < sizeof(int64_t); ++i) {
               int_val = (int_val << 8) | param[i];
             }
-            bind_parameters.push_back(std::make_pair(
-                common::Type::BIGINT, std::to_string(int_val)));
-            param_values.push_back(common::ValueFactory::GetBigIntValue(int_val).Copy());
+            bind_parameters.push_back(
+                std::make_pair(common::Type::BIGINT, std::to_string(int_val)));
+            param_values.push_back(
+                common::ValueFactory::GetBigIntValue(int_val).Copy());
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -470,7 +470,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             PL_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(std::make_pair(
                 common::Type::DECIMAL, std::to_string(float_val)));
-            param_values.push_back(common::ValueFactory::GetDoubleValue(float_val).Copy());
+            param_values.push_back(
+                common::ValueFactory::GetDoubleValue(float_val).Copy());
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -479,18 +480,40 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
       }
     }
   }
-  // Construct a portal
+
+  int format_codes_number = PacketGetInt(pkt, 2);
+  LOG_TRACE("format_codes_number: %d", format_codes_number);
+  // Set the result-column format code
+  if (format_codes_number == 0) {
+    // using the default text format
+    result_format_ =
+        std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  } else if (format_codes_number == 1) {
+    // get the format code from packet
+    auto result_format = PacketGetInt(pkt, 2);
+    result_format_ = std::move(std::vector<int>(
+        statement->GetTupleDescriptor().size(), result_format));
+  } else {
+    // get the format code for each column
+    result_format_.clear();
+    for (int format_code_idx = 0; format_code_idx < format_codes_number;
+         ++format_code_idx) {
+      result_format_.push_back(PacketGetInt(pkt, 2));
+      LOG_TRACE("format code: %d", *result_format_.rbegin());
+    }
+  }
 
   if (param_values.size() > 0) {
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 
-  //clean up param_values
-  for (auto val_ptr : param_values){
+  // clean up param_values
+  for (auto val_ptr : param_values) {
     delete val_ptr;
   }
   param_values.clear();
 
+  // Construct a portal
   auto portal = new Portal(portal_name, statement, bind_parameters);
   std::shared_ptr<Portal> portal_reference(portal);
 
@@ -516,7 +539,7 @@ bool PacketManager::ExecDescribeMessage(Packet *pkt,
   PacketGetBytes(pkt, 1, mode);
   GetStringToken(pkt, portal_name);
   if (mode[0] == 'P') {
-
+    LOG_TRACE("Describe a portal");
     auto portal_itr = portals_.find(portal_name);
 
     // TODO: error handling here
@@ -540,6 +563,8 @@ bool PacketManager::ExecDescribeMessage(Packet *pkt,
 
     auto statement = portal->GetStatement();
     PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
+  } else {
+    LOG_TRACE("Describe a prepared statement");
   }
   return true;
 }
@@ -563,7 +588,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   if (portal.get() == nullptr) {
     LOG_ERROR("Did not find portal : %s", portal_name.c_str());
     SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state, responses);
+    SendReadyForQuery(txn_state_, responses);
     return;
   }
 
@@ -572,7 +597,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   if (statement.get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state, responses);
+    SendReadyForQuery(txn_state_, responses);
     return;
   }
 
@@ -580,13 +605,13 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   bool unnamed = statement_name.empty();
 
   auto &tcop = tcop::TrafficCop::GetInstance();
-  auto status = tcop.ExecuteStatement(statement, unnamed, results,
-                                      rows_affected, error_message);
+  auto status = tcop.ExecuteStatement(statement, unnamed, result_format_,
+                                      results, rows_affected, error_message);
 
   if (status == Result::RESULT_FAILURE) {
     LOG_ERROR("Failed to execute: %s", error_message.c_str());
     SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state, responses);
+    SendReadyForQuery(txn_state_, responses);
   }
   // put_row_desc(portal->rowdesc, responses);
   auto tuple_descriptor = statement->GetTupleDescriptor();
@@ -599,6 +624,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
  *  Returns false if the session needs to be closed.
  */
 bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
+  LOG_TRACE("message type: %c", pkt->msg_type);
   switch (pkt->msg_type) {
     case 'Q': {
       LOG_DEBUG("Q");
@@ -622,7 +648,7 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
     } break;
     case 'S': {
       LOG_DEBUG("S");
-      SendReadyForQuery(txn_state, responses);
+      SendReadyForQuery(txn_state_, responses);
     } break;
     case 'X': {
       LOG_DEBUG("X");
@@ -677,12 +703,12 @@ bool PacketManager::ManageStartupPacket() {
   ResponseBuffer responses;
   bool status;
   // fetch the startup packet
-  if (!ReadPacket(&pkt, false, &client)) {
+  if (!ReadPacket(&pkt, false, &client_)) {
     CloseClient();
     return false;
   }
   status = ProcessStartupPacket(&pkt, responses);
-  if (!WritePackets(responses, &client) || !status) {
+  if (!WritePackets(responses, &client_) || !status) {
     // close client on write failure or status failure
     CloseClient();
     return false;
@@ -695,7 +721,7 @@ bool PacketManager::ManagePacket() {
   ResponseBuffer responses;
   bool status, read_status;
 
-  read_status = ReadPacket(&pkt, true, &client);
+  read_status = ReadPacket(&pkt, true, &client_);
 
   // While can process more packets from buffer
   while (read_status) {
@@ -703,14 +729,14 @@ bool PacketManager::ManagePacket() {
     status = ProcessPacket(&pkt, responses);
 
     // Write response
-    if (!WritePackets(responses, &client) || status == false) {
+    if (!WritePackets(responses, &client_) || status == false) {
       // close client on write failure or status failure
       CloseClient();
       return false;
     }
 
     pkt.Reset();
-    read_status = ReadPacket(&pkt, true, &client);
+    read_status = ReadPacket(&pkt, true, &client_);
   }
   return true;
 }

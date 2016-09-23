@@ -10,19 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <vector>
-#include <string>
 #include <iostream>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/assign/list_of.hpp>
 
 #include "common/cache.h"
-#include "common/statement.h"
 #include "common/portal.h"
+#include "common/statement.h"
 #include "wire/socket_base.h"
 
 // TXN state definitions
@@ -69,22 +68,6 @@ struct Packet {
 };
 
 class PacketManager {
-  Client client;
-
-  // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_statement;
-
-  // gloabl txn state
-  uchar txn_state;
-
-  // state to mang skipped queries
-  bool skipped_stmt_ = false;
-  std::string skipped_query_string_;
-  std::string skipped_query_type_;
-
-  static const std::unordered_map<std::string, std::string>
-      parameter_status_map;
-
   /* Note: The responses argument in every subsequent function
    * is used to batch all the generated packets ofr that unit */
 
@@ -106,8 +89,7 @@ class PacketManager {
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type,
-                       int rows,
+  void CompleteCommand(const std::string& query_type, int rows,
                        ResponseBuffer& responses);
 
   // Specific response for empty or NULL queries
@@ -144,16 +126,34 @@ class PacketManager {
   void CloseClient();
 
  public:
+  Client client_;
+
+  // Manage standalone queries
+  std::shared_ptr<Statement> unnamed_statement_;
+
+  // The result-column format code
+  std::vector<int> result_format_;
+
+  // gloabl txn state
+  uchar txn_state_;
+
+  // state to mang skipped queries
+  bool skipped_stmt_ = false;
+  std::string skipped_query_string_;
+  std::string skipped_query_type_;
+
+  static const std::unordered_map<std::string, std::string>
+      parameter_status_map_;
+
   // Statement cache
   Cache<std::string, Statement> statement_cache_;
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
   // packets ready for read
-  size_t pkt_cntr;
-
+  size_t pkt_cntr_;
 
   inline PacketManager(SocketManager<PktBuf>* sock)
-      : client(sock), txn_state(TXN_IDLE), pkt_cntr(0) { }
+      : client_(sock), txn_state_(TXN_IDLE), pkt_cntr_(0) {}
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
@@ -167,7 +167,6 @@ class PacketManager {
 
   /* Manage subsequent packets */
   bool ManagePacket();
-
 };
 
 }  // End wire namespace
