@@ -424,8 +424,11 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     // BIND packet NULL parameter case
     if (param_len == -1) {
       // NULL mode
-      bind_parameters.push_back(
-          std::make_pair(common::Type::INTEGER, std::string("")));
+      auto peloton_type = PostgresValueTypeToPelotonValueType(
+          static_cast<PostgresValueType>(param_types[param_idx]));
+      bind_parameters.push_back(std::make_pair(peloton_type, std::string("")));
+      param_values.push_back(
+          common::ValueFactory::GetNullValueByType(peloton_type));
     } else {
       PacketGetBytes(pkt, param_len, param);
 
