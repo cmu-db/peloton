@@ -94,10 +94,7 @@ void TupleRecord::SerializeHeader(CopySerializeOutput &output) {
 void TupleRecord::DeserializeHeader(CopySerializeInput &input) {
   input.ReadInt();
   db_oid = (oid_t)(input.ReadLong());
-  // db_oid == START_OID == 0 means the catalog database/table
-  // PL_ASSERT(db_oid);
   table_oid = (oid_t)(input.ReadLong());
-  // PL_ASSERT(table_oid);
   cid = (txn_id_t)(input.ReadLong());
   PL_ASSERT(cid);
   insert_location.block = (oid_t)(input.ReadLong());

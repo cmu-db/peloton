@@ -49,7 +49,6 @@ class TupleRecord : public LogRecord, Printable {
     PL_ASSERT(table_oid);
 
     // NOTE: Database with oid = 0 is the catalog database
-    // PL_ASSERT(db_oid);
   }
 
   ~TupleRecord() {
