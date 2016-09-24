@@ -12,21 +12,21 @@
 
 #include "tcop/tcop.h"
 
-#include "common/macros.h"
-#include "common/portal.h"
-#include "common/logger.h"
-#include "common/types.h"
-#include "common/type.h"
 #include "common/abstract_tuple.h"
 #include "common/config.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/portal.h"
+#include "common/type.h"
+#include "common/types.h"
 
 #include "expression/parser_expression.h"
 
 #include "parser/parser.h"
 
-#include "optimizer/simple_optimizer.h"
-#include "executor/plan_executor.h"
 #include "catalog/catalog.h"
+#include "executor/plan_executor.h"
+#include "optimizer/simple_optimizer.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -64,8 +64,9 @@ Result TrafficCop::ExecuteStatement(
 
   // Then, execute the statement
   bool unnamed = true;
-  auto status =
-      ExecuteStatement(statement, unnamed, result, rows_changed, error_message);
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  auto status = ExecuteStatement(statement, unnamed, result_format, result,
+                                 rows_changed, error_message);
 
   if (status == Result::RESULT_SUCCESS) {
     LOG_TRACE("Execution succeeded!");
@@ -79,19 +80,22 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
-
+    UNUSED_ATTRIBUTE const bool unnamed, const std::vector<int> &result_format,
+    std::vector<ResultType> &result, int &rows_changed,
+    UNUSED_ATTRIBUTE std::string &error_message) {
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
   }
 
-  LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of name: %s",
+            statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of query: %s",
+            statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result);
+      statement->GetPlanTree().get(), params, result, result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
 
   rows_changed = status.m_processed;
@@ -103,7 +107,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     UNUSED_ATTRIBUTE std::string &error_message) {
   std::shared_ptr<Statement> statement;
 
-  LOG_TRACE("Prepare Statement %s", query_string.c_str());
+  LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
+  LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
   statement.reset(new Statement(statement_name, query_string));
 
@@ -122,13 +127,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_TRACE("Statement Prepared!");
+  LOG_DEBUG("Statement Prepared!");
   return std::move(statement);
 }
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     std::string query) {
-
   std::vector<FieldInfoType> tuple_descriptor;
 
   // Set up parser
@@ -136,6 +140,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   auto sql_stmt = peloton_parser.BuildParseTree(query);
 
   auto first_stmt = sql_stmt->GetStatement(0);
+
+  if (first_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
 
   // Get the Select Statement
   auto select_stmt = (parser::SelectStatement *)first_stmt;
@@ -180,7 +186,6 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
 
     // if query has only certain columns
     if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
-
       // Get the column name
       auto col_name = expr->GetName();
 
@@ -251,7 +256,6 @@ FieldInfoType TrafficCop::GetColumnFieldForValueType(
 
 FieldInfoType TrafficCop::GetColumnFieldForAggregates(
     std::string name, ExpressionType expr_type) {
-
   // For now we only return INT for (MAX , MIN)
   // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
 

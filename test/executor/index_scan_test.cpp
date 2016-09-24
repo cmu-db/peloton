@@ -12,28 +12,29 @@
 
 #include <memory>
 
+#include "catalog/catalog.h"
 #include "common/harness.h"
-#include "common/value_factory.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "planner/index_scan_plan.h"
-#include "planner/create_plan.h"
-#include "planner/insert_plan.h"
-#include "planner/delete_plan.h"
 #include "common/types.h"
+#include "common/value_factory.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/create_executor.h"
+#include "executor/delete_executor.h"
 #include "executor/executor_context.h"
+#include "executor/index_scan_executor.h"
+#include "executor/insert_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "executor/index_scan_executor.h"
-#include "executor/create_executor.h"
-#include "executor/insert_executor.h"
-#include "executor/delete_executor.h"
 #include "executor/plan_executor.h"
-#include "storage/data_table.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "catalog/catalog.h"
-#include "parser/parser.h"
 #include "optimizer/simple_optimizer.h"
+#include "parser/parser.h"
+#include "planner/create_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/insert_plan.h"
+#include "storage/data_table.h"
+#include "tcop/tcop.h"
 
 #include "executor/executor_tests_util.h"
 
@@ -186,8 +187,13 @@ void ShowTable(std::string database_name, std::string table_name) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  std::vector<int> result_format;
+  auto tuple_descriptor =
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+          statement->GetQueryString());
+  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+                                             params, result, result_format);
 }
 
 void ExecuteSQLQuery(const std::string statement_name,
@@ -207,14 +213,19 @@ void ExecuteSQLQuery(const std::string statement_name,
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  UNUSED_ATTRIBUTE bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result);
+  std::vector<int> result_format;
+  auto tuple_descriptor =
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+          statement->GetQueryString());
+  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
+  UNUSED_ATTRIBUTE bridge::peloton_status status =
+      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
+                                        result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   ShowTable(DEFAULT_DB_NAME, "department_table");
 }
 
 TEST_F(IndexScanTests, SQLTest) {
-
   LOG_INFO("Bootstrapping...");
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
@@ -222,7 +233,8 @@ TEST_F(IndexScanTests, SQLTest) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "dept_id", true);
   // Set dept_id as the primary key (only that we can have a primary key index)
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);

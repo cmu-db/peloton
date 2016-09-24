@@ -23,11 +23,11 @@ namespace wire {
 
 // checks for parsing overflows
 void CheckOverflow(Packet *pkt, size_t size) {
-
   if (pkt->ptr + size - 1 >= pkt->len) {
     // overflow case, throw error
-    LOG_WARN("Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
-    		(int)pkt->ptr, (int) size, (int)pkt->len);
+    LOG_WARN(
+        "Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
+        (int)pkt->ptr, (int)size, (int)pkt->len);
   }
 }
 

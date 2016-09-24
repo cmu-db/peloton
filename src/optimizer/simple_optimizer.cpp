@@ -711,7 +711,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 
   predicate_column_ids = {0};
   predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL};
-  predicate_values = {common::ValueFactory::GetIntegerValue(4).Copy()};
+  predicate_values = {common::ValueFactory::GetParameterOffsetValue(4).Copy()};
   column_ids = {1};
 
   index = stock_table->GetIndex(0);

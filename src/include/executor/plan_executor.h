@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "common/types.h"
 #include "common/statement.h"
+#include "common/types.h"
 #include "executor/abstract_executor.h"
 
 namespace peloton {
@@ -58,12 +57,13 @@ class PlanExecutor {
                         std::string prefix = "");
 
   // Copy From
-  static inline void copyFromTo(const char *src, std::vector<unsigned char> &dst) {
-    if (src == nullptr) {
+  static inline void copyFromTo(const std::string &src,
+                                std::vector<unsigned char> &dst) {
+    if (src.c_str() == nullptr) {
       return;
     }
-    size_t len = strlen(src);
-    for(unsigned int i = 0; i < len; i++){
+    size_t len = src.size();
+    for (unsigned int i = 0; i < len; i++) {
       dst.push_back((unsigned char)src[i]);
     }
   }
@@ -75,7 +75,8 @@ class PlanExecutor {
   */
 
   /*
-   * @brief Use std::vector<common::Value *> as params to make it more elegant for
+   * @brief Use std::vector<common::Value *> as params to make it more elegant
+   * for
    * networking
    *        Before ExecutePlan, a node first receives value list, so we should
    * pass
@@ -83,7 +84,8 @@ class PlanExecutor {
    */
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                     const std::vector<common::Value *> &params,
-									std::vector<ResultType> &result);
+                                    std::vector<ResultType> &result,
+                                    const std::vector<int> &result_format);
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked
@@ -91,7 +93,8 @@ class PlanExecutor {
    * @return the number of tuple it executes and logical_tile_list
    */
   static int ExecutePlan(
-      const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
+      const planner::AbstractPlan *plan,
+      const std::vector<common::Value *> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 

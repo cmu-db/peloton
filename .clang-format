@@ -3,8 +3,8 @@
 # We'll use defaults from the Google style,
 BasedOnStyle: Google
 
-# 4 columns tab indentation.
-TabWidth: 4
+# 2 columns tab indentation.
+TabWidth: 2
 
 # No tabs
 UseTab: Never

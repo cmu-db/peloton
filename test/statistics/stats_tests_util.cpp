@@ -11,18 +11,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "statistics/stats_tests_util.h"
-#include "executor/executor_context.h"
 #include "executor/delete_executor.h"
+#include "executor/executor_context.h"
+#include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/mock_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
-#include "executor/logical_tile_factory.h"
 #include "expression/expression_util.h"
-#include "storage/tile.h"
-#include "executor/mock_executor.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
-#include "executor/executor_tests_util.h"
+#include "storage/tile.h"
 
 namespace peloton {
 namespace test {
@@ -43,8 +43,9 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
-                                    result);
+                                    result, result_format);
 }
 
 storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
