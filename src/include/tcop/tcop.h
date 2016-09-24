@@ -56,6 +56,22 @@ class TrafficCop {
                           int &rows_change,
                           std::string &error_message);
 
+  /*
+ * @brief Based on the Volcano 'Exchange' intra-query parallelism model.
+ * Currently supported only for sequential scans. This operator spawns
+ * multiple execution trees (tasks), each deployed on a different executor
+ * thread. For now, the operator spawns as many tasks as there are cores
+ * in the system. The tiles to be processed are divided into modulo
+ * partitions such that each thread gets roughly the same amount of work.
+ * The intermediate results from each thread are coalesced to give the
+ * final output.
+ */
+  static void ExchangeOperator(
+      const planner::AbstractPlan **plan,
+      const std::vector<common::Value *> &params,
+      concurrency::Transaction *txn,
+      std::vector<ResultType>& result, boost::promise<bool> &p);
+
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string& statement_name,
                                               const std::string& query_string,

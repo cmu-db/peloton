@@ -60,6 +60,10 @@ const std::vector<AbstractExecutor *> &AbstractExecutor::GetChildren() const {
 bool AbstractExecutor::Init() {
   bool status = false;
 
+  // by default we are running the query is running on a single thread
+  parallelism_count_ = 1;
+  partition_id_ = 0;
+
   for (auto child : children_) {
     status = child->Init();
     if (status == false) {
@@ -94,6 +98,11 @@ bool AbstractExecutor::Execute() {
   bool status = DExecute();
 
   return status;
+}
+
+void AbstractExecutor::SetParallelism(int parallelism_count, int partition_id) {
+  parallelism_count_ = parallelism_count;
+  partition_id_ = partition_id;
 }
 
 void AbstractExecutor::SetContext(common::Value *value) {
