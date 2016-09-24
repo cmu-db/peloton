@@ -86,16 +86,15 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.PrepareLogging();
+
   txn_id_t txn_id = GetNextTransactionId();
   cid_t begin_cid = GetNextCommitId();
   Transaction *txn = new Transaction(txn_id, begin_cid);
 
   auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
   txn->SetEpochId(eid);
-
-  auto &log_manager = logging::LogManager::GetInstance();
-  log_manager.PrepareLogging();
-  log_manager.LogBeginTransaction(begin_cid);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -679,6 +678,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetBeginCommitId();
+  log_manager.LogBeginTransaction(end_commit_id);
 
   auto &rw_set = current_txn->GetReadWriteSet();
 
