@@ -15,6 +15,7 @@
 #include <fstream>
 #include <thread>
 
+#include "common/logger.h"
 #include "benchmark/logger/logger_configuration.h"
 #include "benchmark/logger/logger_workload.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
@@ -69,9 +70,6 @@ void RunBenchmark() {
     // Prepare a simple log file
     PrepareLogFile();
 
-    // Reset data
-    ResetSystem();
-
     // Do recovery
     DoRecovery();
   }
@@ -79,6 +77,8 @@ void RunBenchmark() {
   // WBL
   //===--------------------------------------------------------------------===//
   else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
+    LOG_ERROR("currently, we do not support write behind logging.");
+    PL_ASSERT(false);
     // Test a simple log process
     PrepareLogFile();
 

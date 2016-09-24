@@ -196,11 +196,10 @@ void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
 
 }
 
-std::ofstream out("outputfile.summary");
-
 oid_t query_itr;
 
 static void WriteOutput(double duration) {
+  std::ofstream out("outputfile-sd.summary");
   // Convert to ms
   duration *= 1000;
 
