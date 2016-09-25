@@ -26,6 +26,13 @@
 #include "planner/index_scan_plan.h"
 #include "planner/seq_scan_plan.h"
 
+#include "planner/abstract_plan.h"
+#include "planner/abstract_scan_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/seq_scan_plan.h"
+
+
+
 namespace peloton {
 namespace planner {
 
