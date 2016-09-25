@@ -21,6 +21,13 @@
 #include "parser/table_ref.h"
 #include "expression/expression_util.h"
 
+#include "planner/abstract_plan.h"
+#include "planner/abstract_scan_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/seq_scan_plan.h"
+
+
+
 namespace peloton {
 namespace planner {
 
@@ -32,7 +39,7 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
   LOG_TRACE("Creating an Update Plan");
 }
 
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
+void UpdatePlan::Init(parser::UpdateStatement *parse_tree, std::vector<oid_t>& columns) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->GetTableName());
@@ -50,7 +57,6 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   oid_t col_id;
   auto schema = target_table_->GetSchema();
 
-  std::vector<oid_t> columns;
   for (auto update : updates_) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
@@ -72,11 +78,39 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 
   where_ = parse_tree->where->Copy();
   ReplaceColumnExpressions(target_table_->GetSchema(), where_);
+}
 
+UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
+  std::vector<oid_t> columns;
+  Init(parse_tree, columns);
+  LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(target_table_, where_->Copy(), columns));
+  LOG_TRACE("Sequential scan plan created");
   AddChild(std::move(seq_scan_node));
 }
+
+UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
+                        std::vector<oid_t> &key_column_ids,
+                        std::vector<ExpressionType> &expr_types,
+                        std::vector<common::Value *> &values,
+                        int &index_id) {
+  std::vector<oid_t> columns;
+  Init(parse_tree, columns);
+  // Create index scan desc
+  std::vector<expression::AbstractExpression*> runtime_keys;
+  auto index = target_table_->GetIndex(index_id);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+  // Create plan node.
+  LOG_TRACE("Creating a index scan plan");  
+  std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+      new planner::IndexScanPlan(target_table_, where_,
+                                 columns, index_scan_desc, true));
+  LOG_TRACE("Index scan plan created");
+  AddChild(std::move(index_scan_node));
+}
+
 
 void UpdatePlan::SetParameterValues(std::vector<common::Value *> *values) {
   LOG_TRACE("Setting parameter values in Update");
