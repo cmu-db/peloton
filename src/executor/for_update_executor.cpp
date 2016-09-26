@@ -59,7 +59,7 @@ bool ForUpdateExecutor::DInit() {
  * @brief locks a set of tuples in tile
  * @return true on success, false otherwise.
  */
-bool ForUpdateExecutor::DRetrieveLock(LogicalTile *source_tile) {
+bool ForUpdateExecutor::DExecute(LogicalTile *source_tile) {
   PL_ASSERT(children_.size() == 1);
   PL_ASSERT(executor_context_);
 

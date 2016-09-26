@@ -34,43 +34,6 @@ class ForUpdateTests : public PelotonTest {};
 
 TEST_F(ForUpdateTests, Updating) {
 
-//  LOG_INFO("Bootstrapping...");
-//  auto catalog = catalog::Catalog::GetInstance();
-//  catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-//  LOG_INFO("Bootstrapping completed!");
-//
-//  // Create a table first
-//  LOG_INFO("Creating a table...");
-//
-//  // Define columns and schema
-//  auto id_column = catalog::Column(
-//      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
-//  auto manager_id_column = catalog::Column(
-//      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "manager_id", true);
-//  auto name_column =
-//      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
-//  std::unique_ptr<catalog::Schema> table_schema(
-//      new catalog::Schema({id_column, manager_id_column, name_column}));
-//
-//  // Initialize transaction manager, plan node, and executors
-//  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//  auto txn = txn_manager.BeginTransaction();
-//  std::unique_ptr<executor::ExecutorContext> context(
-//      new executor::ExecutorContext(txn));
-//  planner::CreatePlan node("department_table", std::move(table_schema),
-//                           CreateType::CREATE_TYPE_TABLE);
-//  executor::ForUpdateExecutor for_update_executor(&node, &context);
-//  executor::CreateExecutor create_executor(&node, context.get());
-//
-//  // Initialize executors
-//  for_update_executor.DInit();
-//  create_executor.Init();
-//  create_executor.Execute();
-//  txn_manager.CommitTransaction(txn);
-//  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
-//
-//  LOG_INFO("Table created!");
-
   // Create a tile group
   const int tuple_count = 1;
   std::shared_ptr<storage::TileGroup> tile_group(
@@ -103,20 +66,16 @@ TEST_F(ForUpdateTests, Updating) {
   // Selecting tuple for update
   txn = txn_manager.BeginTransaction();
   executor::LogicalTile *logical_tile = LogicalTileFactory::WrapTileGroup(&tile_group)
-  bool locked = for_update_executor.DRetrieveLock(logical_tile);
+  bool locked = for_update_executor.DExecute(logical_tile);
   txn_manager.CommitTransaction(txn);
   EXPECT_TRUE(locked);
 
   // Try grabbing the same tuple again
   txn = txn_manager.BeginTransaction();
-  bool locked = for_update_executor.DRetrieveLock(logical_tile);
+  bool locked = for_update_executor.DExecute(logical_tile);
   txn_manager.CommitTransaction(txn);
   EXPECT_FALSE(locked);
 
-//  // Free the database just created
-//  txn = txn_manager.BeginTransaction();
-//  catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-//  txn_manager.CommitTransaction(txn);
 }
 
 }  // End test namespace

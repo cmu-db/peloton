@@ -341,11 +341,6 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_FORUPDATE:
-          LOG_TRACE("Adding For Update Executer");
-          child_executor = new executor::ForUpdateExecutor(plan, executor_context);
-          break;
-
     case PLAN_NODE_TYPE_LIMIT:
       LOG_TRACE("Adding Limit Executer");
       child_executor = new executor::LimitExecutor(plan, executor_context);

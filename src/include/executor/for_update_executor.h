@@ -33,7 +33,7 @@ class ForUpdateExecutor : public AbstractExecutor {
  protected:
   bool DInit();
 
-  bool DRetrieveLock();
+  bool DExecute();
 
  private:
   storage::DataTable *target_table_ = nullptr;
