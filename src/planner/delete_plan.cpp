@@ -35,7 +35,7 @@ DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
 }
 
 // Initializes the delete plan and retrieves coloum ids.
-void DeletePlan::Init(parser::DeleteStatement *delete_statemenet, std::vector<oid_t>& columns) {
+void DeletePlan::BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet) {
   LOG_TRACE("Creating a Delete Plan");
   table_name_ = delete_statemenet->GetTableName();
   auto database_name = delete_statemenet->GetDatabaseName();
@@ -53,17 +53,15 @@ void DeletePlan::Init(parser::DeleteStatement *delete_statemenet, std::vector<oi
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
     ReplaceColumnExpressions(target_table_->GetSchema(), expr_);
   }
-  columns = {};
 }
 
 // Creates the update plan with sequential scan.
 DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 
-  std::vector<oid_t> columns;
-  Init(delete_statemenet, columns);
+  BuildInitialDeletePlan(delete_statemenet);
   LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, expr_, columns));
+      new planner::SeqScanPlan(target_table_, expr_, {}));
   LOG_TRACE("Sequential scan plan created");
   AddChild(std::move(seq_scan_node));
 }
@@ -73,9 +71,9 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet,
                         std::vector<oid_t> &key_column_ids,
                         std::vector<ExpressionType> &expr_types,
                         std::vector<common::Value *> &values,
-                        int &index_id) {
+                        oid_t &index_id) {
   std::vector<oid_t> columns;
-  Init(delete_statemenet, columns);
+  BuildInitialDeletePlan(delete_statemenet);
   // Create index scan desc
   std::vector<expression::AbstractExpression*> runtime_keys;
   auto index = target_table_->GetIndex(index_id);

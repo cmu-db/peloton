@@ -47,7 +47,7 @@ class DeletePlan : public AbstractPlan {
                         std::vector<oid_t> &key_column_ids,
                         std::vector<ExpressionType> &expr_types,
                         std::vector<common::Value *> &values,
-                        int &index_id);
+                        oid_t &index_id);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
@@ -66,8 +66,7 @@ class DeletePlan : public AbstractPlan {
 
  private:
 
-  void Init(parser::DeleteStatement *delete_statemenet, 
-            std::vector<oid_t>& columns);
+  void BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet);
 
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;

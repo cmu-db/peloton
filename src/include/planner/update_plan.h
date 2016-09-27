@@ -49,7 +49,7 @@ class UpdatePlan : public AbstractPlan {
                       std::vector<oid_t> &key_column_ids,
                       std::vector<ExpressionType> &expr_types,
                       std::vector<common::Value *> &values,
-                      int &index_id);
+                      oid_t &index_id);
 
   inline ~UpdatePlan() {
     delete(where_);
@@ -78,7 +78,7 @@ class UpdatePlan : public AbstractPlan {
  private:
 
   // Initialize private members and construct colum_ids given a UpdateStatement.
-  void Init(parser::UpdateStatement *parse_tree, std::vector<oid_t>& columns);
+  void BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree, std::vector<oid_t>& columns);
 
   /** @brief Target table. */
   storage::DataTable *target_table_;
