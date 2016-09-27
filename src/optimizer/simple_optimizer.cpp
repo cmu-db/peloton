@@ -385,7 +385,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
       std::vector<common::Value*> values;
-      int index_id;
+      oid_t index_id;
 
       parser::DeleteStatement* deleteStmt = 
           (parser::DeleteStatement*)parse_tree2;
@@ -416,7 +416,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
       std::vector<common::Value*> values;
-      int index_id;
+      oid_t index_id;
 
       parser::UpdateStatement* updateStmt = 
           (parser::UpdateStatement*)parse_tree2;
@@ -474,7 +474,7 @@ bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table,
                                             std::vector<oid_t> &key_column_ids,
                                             std::vector<ExpressionType> &expr_types,
                                             std::vector<common::Value *> &values,
-                                            int &index_id) {
+                                            oid_t &index_id) {
   bool index_searchable = false;
   index_id = 0;
 
@@ -515,7 +515,7 @@ bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table,
   if (!index_searchable)
     return false;
 
-  // Create index scan plan
+  // Prepares arguments for the index scan plan
   auto index = target_table->GetIndex(index_id);
 
   auto index_columns = target_table->GetIndexColumns()[index_id];
@@ -539,7 +539,7 @@ bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table,
 
 std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     storage::DataTable* target_table, parser::SelectStatement* select_stmt) {
-  int index_id = 0;
+  oid_t index_id = 0;
 
   // column predicates passing to the index
   std::vector<oid_t> key_column_ids;

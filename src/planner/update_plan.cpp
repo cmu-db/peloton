@@ -39,7 +39,10 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
   LOG_TRACE("Creating an Update Plan");
 }
 
-void UpdatePlan::Init(parser::UpdateStatement *parse_tree, std::vector<oid_t>& columns) {
+//  Initializes the update plan without adding any child nodes and
+//  retrieves column ids for the child scan plan.
+void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree, 
+                                        std::vector<oid_t>& column_ids) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->GetTableName());
@@ -60,7 +63,7 @@ void UpdatePlan::Init(parser::UpdateStatement *parse_tree, std::vector<oid_t>& c
   for (auto update : updates_) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
-    columns.push_back(col_id);
+    column_ids.push_back(col_id);
     auto update_expr = update->value->Copy();
     ReplaceColumnExpressions(target_table_->GetSchema(), update_expr);
     tlist.emplace_back(col_id, update_expr);
@@ -80,23 +83,24 @@ void UpdatePlan::Init(parser::UpdateStatement *parse_tree, std::vector<oid_t>& c
   ReplaceColumnExpressions(target_table_->GetSchema(), where_);
 }
 
+// Creates the update plan with sequential scan.
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
-  std::vector<oid_t> columns;
-  Init(parse_tree, columns);
+  std::vector<oid_t> column_ids;
+  BuildInitialUpdatePlan(parse_tree, column_ids);
   LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, where_->Copy(), columns));
-  LOG_TRACE("Sequential scan plan created");
+      new planner::SeqScanPlan(target_table_, where_->Copy(), column_ids));
   AddChild(std::move(seq_scan_node));
 }
 
+// Creates the update plan with index scan.
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
                         std::vector<oid_t> &key_column_ids,
                         std::vector<ExpressionType> &expr_types,
                         std::vector<common::Value *> &values,
-                        int &index_id) {
-  std::vector<oid_t> columns;
-  Init(parse_tree, columns);
+                        oid_t &index_id) {
+  std::vector<oid_t> column_ids;
+  BuildInitialUpdatePlan(parse_tree, column_ids);
   // Create index scan desc
   std::vector<expression::AbstractExpression*> runtime_keys;
   auto index = target_table_->GetIndex(index_id);
@@ -106,7 +110,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
   LOG_TRACE("Creating a index scan plan");  
   std::unique_ptr<planner::IndexScanPlan> index_scan_node(
       new planner::IndexScanPlan(target_table_, where_,
-                                 columns, index_scan_desc, true));
+                                 column_ids, index_scan_desc, true));
   LOG_TRACE("Index scan plan created");
   AddChild(std::move(index_scan_node));
 }
