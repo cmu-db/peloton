@@ -17,6 +17,11 @@
 #include "expression/expression_util.h"
 #include "catalog/catalog.h"
 
+#include "planner/abstract_plan.h"
+#include "planner/abstract_scan_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/seq_scan_plan.h"
+
 namespace peloton {
 
 namespace expression {
@@ -29,8 +34,8 @@ DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
   LOG_TRACE("Creating a Delete Plan");
 }
 
-DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
-
+// Initializes the delete plan and retrieves coloum ids.
+void DeletePlan::BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet) {
   LOG_TRACE("Creating a Delete Plan");
   table_name_ = delete_statemenet->GetTableName();
   auto database_name = delete_statemenet->GetDatabaseName();
@@ -48,10 +53,39 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
     ReplaceColumnExpressions(target_table_->GetSchema(), expr_);
   }
-  std::vector<oid_t> column_ids = {};
+}
+
+// Creates the update plan with sequential scan.
+DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
+
+  BuildInitialDeletePlan(delete_statemenet);
+  LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, expr_, column_ids));
+      new planner::SeqScanPlan(target_table_, expr_, {}));
+  LOG_TRACE("Sequential scan plan created");
   AddChild(std::move(seq_scan_node));
+}
+
+// Creates the update plan with index scan.
+DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet,
+                        std::vector<oid_t> &key_column_ids,
+                        std::vector<ExpressionType> &expr_types,
+                        std::vector<common::Value *> &values,
+                        oid_t &index_id) {
+  std::vector<oid_t> columns;
+  BuildInitialDeletePlan(delete_statemenet);
+  // Create index scan desc
+  std::vector<expression::AbstractExpression*> runtime_keys;
+  auto index = target_table_->GetIndex(index_id);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+    // Create plan node.
+  LOG_TRACE("Creating a index scan plan");  
+  std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+      new planner::IndexScanPlan(target_table_, expr_,
+                                 columns, index_scan_desc, true));
+  LOG_TRACE("Index scan plan created");
+  AddChild(std::move(index_scan_node));
 }
 
 void DeletePlan::SetParameterValues(std::vector<common::Value *> *values) {
