@@ -52,7 +52,10 @@ class UpdatePlan : public AbstractPlan {
                       oid_t &index_id);
 
   inline ~UpdatePlan() {
-    delete(where_);
+    if (where_ != nullptr) {
+      delete(where_);
+    }
+
     for(size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
     	delete(updates_[update_itr]);
     }

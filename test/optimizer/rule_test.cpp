@@ -168,71 +168,30 @@ TEST_F(RuleTests, UpdateDelWithIndexScanTest) {
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
 
   // Test update tuple with index scan
-  txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating a tuple...");
   LOG_INFO(
       "Query: UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
-  statement.reset(new Statement(
-      "UPDATE",
-      "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52"));
-  LOG_INFO("Building parse tree...");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
-  LOG_INFO("Building plan tree completed!");
-  planner::AbstractPlan *plan = statement->GetPlanTree().get();
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  auto update_plan = optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt);
 
   // Check scan plan
-  ASSERT_FALSE(plan == nullptr);
-  if (plan->GetPlanNodeType() == PLAN_NODE_TYPE_UPDATE) {
-    auto& scanPlan = plan->GetChildren().front();
-    EXPECT_EQ(scanPlan->GetPlanNodeType(), PLAN_NODE_TYPE_INDEXSCAN);
-  }
-  LOG_INFO("Executing plan...");
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple Updated!");
-  txn_manager.CommitTransaction(txn);
+  ASSERT_FALSE(update_plan == nullptr);
+  EXPECT_EQ(update_plan->GetPlanNodeType(), PLAN_NODE_TYPE_UPDATE);
+  auto& update_scan_plan = update_plan->GetChildren().front();
+  EXPECT_EQ(update_scan_plan->GetPlanNodeType(), PLAN_NODE_TYPE_INDEXSCAN);
 
   // Test delete tuple with index scan
-  txn = txn_manager.BeginTransaction();
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE student_id = 52");
-  statement.reset(new Statement(
-      "DELETE", "DELETE FROM department_table WHERE student_id = 52"));
-  LOG_INFO("Building parse tree...");
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE student_id = 52");
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
-  LOG_INFO("Building plan tree completed!");
-  planner::AbstractPlan *delPlan = statement->GetPlanTree().get();
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  auto del_plan = optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt);
 
   // Check scan plan
-  ASSERT_FALSE(delPlan == nullptr);
-  if (delPlan->GetPlanNodeType() == PLAN_NODE_TYPE_DELETE) {
-    auto& scanPlan = delPlan->GetChildren().front();
-    EXPECT_EQ(scanPlan->GetPlanNodeType(), PLAN_NODE_TYPE_INDEXSCAN);
-  }
-
-  LOG_INFO("Executing plan...");
-  result_format = std::move(std::vector<int>(0, 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");
-  txn_manager.CommitTransaction(txn);
-
+  EXPECT_EQ(del_plan->GetPlanNodeType(), PLAN_NODE_TYPE_DELETE);
+  auto& del_scan_plan = del_plan->GetChildren().front();
+  EXPECT_EQ(del_scan_plan->GetPlanNodeType(), PLAN_NODE_TYPE_INDEXSCAN);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

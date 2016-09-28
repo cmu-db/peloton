@@ -34,7 +34,7 @@ DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
   LOG_TRACE("Creating a Delete Plan");
 }
 
-// Initializes the delete plan and retrieves coloum ids.
+// Initializes the delete plan.
 void DeletePlan::BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet) {
   LOG_TRACE("Creating a Delete Plan");
   table_name_ = delete_statemenet->GetTableName();
