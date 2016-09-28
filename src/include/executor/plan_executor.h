@@ -47,6 +47,22 @@ typedef struct peloton_status {
 
 } peloton_status;
 
+/*
+ * Struct to hold parameters used by the exchange operator
+ */
+struct ExchangeParams {
+  boost::promise<bridge::peloton_status> p;
+  boost::unique_future<bridge::peloton_status> f;
+  std::vector<ResultType> results;
+  int parallelism_count, partition_id;
+
+  inline ExchangeParams(int pc, int pid) :
+      parallelism_count(pc), partition_id(pid) {
+    f = p.get_future();
+  }
+};
+
+
 class PlanExecutor {
  public:
   PlanExecutor(const PlanExecutor &) = delete;
@@ -70,7 +86,7 @@ class PlanExecutor {
     }
   }
 
-  /* TODO: Delete this mothod
+  /* TODO: Delete this method
     static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                       ParamListInfo m_param_list,
                                       TupleDesc m_tuple_desc);
@@ -80,12 +96,15 @@ class PlanExecutor {
    * @brief Use std::vector<common::Value *> as params to make it more elegant for
    * networking
    * Before ExecutePlan, a node first receives value list, so we should pass
-   * value list directly rather than passing Postgres's ParamListInfo
+   * value list directly rather than passing Postgres's ParamListInfo.
+   *
+   * Also pass parallelism details if we are doing intra-query parallelism
    *
    */
   static void ExecutePlanLocal(const planner::AbstractPlan *plan,
                                const std::vector<common::Value *> &params,
                                std::vector<ResultType> &result,
+                               int *num_executor_threads, int *partition_id,
                                boost::promise<bridge::peloton_status> &p);
 
   /*

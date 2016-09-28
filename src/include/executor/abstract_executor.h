@@ -46,6 +46,8 @@ class AbstractExecutor {
 
   bool Execute();
 
+  virtual void SetParallelism(int parallelism_count, int partition_id);
+
   //===--------------------------------------------------------------------===//
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
@@ -82,8 +84,6 @@ class AbstractExecutor {
 
   /** @brief Workhorse function to be overriden by derived class. */
   virtual bool DExecute() = 0;
-
-  virtual void SetParallelism(int parallelism_count, int partition_id);
 
   void SetOutput(LogicalTile *val);
 

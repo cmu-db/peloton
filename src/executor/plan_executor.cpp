@@ -43,12 +43,11 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
-                                         const std::vector<common::Value *> &params,
-                                         std::vector<ResultType> &result,
-                                         boost::promise<bridge::peloton_status> &p) {
+                              const std::vector<common::Value *> &params,
+                              std::unique_ptr<ExchangeParams>& exchg_params) {
   peloton_status p_status;
 
-  if (plan == nullptr) p.set_value(p_status);
+  if (plan == nullptr) exchg_params->p.set_value(p_status);
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -77,6 +76,8 @@ void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
       BuildExecutorTree(nullptr, plan, executor_context.get()));
 
   LOG_TRACE("Initializing the executor tree");
+
+  executor_tree->SetParallelism(*num_executor_threads, *partition_id);
 
   // Initialize the executor tree
   status = executor_tree->Init();

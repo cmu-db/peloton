@@ -23,6 +23,11 @@
 #include "common/types.h"
 #include "common/type.h"
 
+#include "executor/plan_executor.h"
+
+#include <boost/algorithm/string.hpp>
+#include <boost/thread/future.hpp>
+
 namespace peloton {
 namespace tcop {
 
@@ -66,11 +71,10 @@ class TrafficCop {
  * The intermediate results from each thread are coalesced to give the
  * final output.
  */
-  static void ExchangeOperator(
-      const planner::AbstractPlan **plan,
+  static bridge::peloton_status ExchangeOperator(
+      const planner::AbstractPlan *plan,
       const std::vector<common::Value *> &params,
-      concurrency::Transaction *txn,
-      std::vector<ResultType>& result, boost::promise<bool> &p);
+      std::vector<ResultType>& result);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string& statement_name,
