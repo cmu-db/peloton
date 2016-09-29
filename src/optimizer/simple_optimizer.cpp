@@ -512,8 +512,12 @@ bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table,
     }
   }
 
-  if (!index_searchable)
+  if (!index_searchable) {
+    for (common::Value *value : predicate_values) {
+      delete value;
+    }
     return false;
+  }
 
   // Prepares arguments for the index scan plan
   auto index = target_table->GetIndex(index_id);
