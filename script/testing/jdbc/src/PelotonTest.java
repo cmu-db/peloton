@@ -304,22 +304,18 @@ public class PelotonTest {
     txn_committed++;
     table_update++;
     table_read++;
-    // TODO this test doesn't examine index since update by index scan
-    // is not supported yet
-    //index_read++;
+    index_read++;
 
     stmt.execute(INDEXSCAN);
     table_read++;
     txn_committed++;
     index_read++;
 
-    // TODO this test doesn't examine index since delete by index
-    // scan is not supported
     stmt.execute(DELETE_A);
     table_read++;
     table_delete++;
     txn_committed++;
-    // index_read++;
+    index_read++;
 
     // Wait for stats to be aggregated
     Thread.sleep(STAT_INTERVAL_MS * 2);

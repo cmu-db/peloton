@@ -380,16 +380,65 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case STATEMENT_TYPE_DELETE: {
       LOG_TRACE("Adding Delete plan...");
-      std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-          new planner::DeletePlan((parser::DeleteStatement*)parse_tree2));
-      child_plan = std::move(child_DeletePlan);
+
+      // column predicates passing to the  index
+      std::vector<oid_t> key_column_ids;
+      std::vector<ExpressionType> expr_types;
+      std::vector<common::Value*> values;
+      oid_t index_id;
+
+      parser::DeleteStatement* deleteStmt = 
+          (parser::DeleteStatement*)parse_tree2;
+      auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+                  deleteStmt->GetDatabaseName(), 
+                  deleteStmt->GetTableName());
+      if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
+                                expr_types, values, index_id)) {
+        // Create index scan plan
+        std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
+            new planner::DeletePlan(deleteStmt, key_column_ids, 
+                expr_types, values, index_id));
+        child_plan = std::move(child_DeletePlan);
+      }
+      else {
+        // Create sequential scan plan
+        std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
+          new planner::DeletePlan(deleteStmt));
+        child_plan = std::move(child_DeletePlan);
+      }
+      
     } break;
 
     case STATEMENT_TYPE_UPDATE: {
       LOG_TRACE("Adding Update plan...");
-      std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::UpdatePlan((parser::UpdateStatement*)parse_tree2));
-      child_plan = std::move(child_InsertPlan);
+
+      // column predicates passing to the index
+      std::vector<oid_t> key_column_ids;
+      std::vector<ExpressionType> expr_types;
+      std::vector<common::Value*> values;
+      oid_t index_id;
+
+      parser::UpdateStatement* updateStmt = 
+          (parser::UpdateStatement*)parse_tree2;
+      auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+                            updateStmt->table->GetDatabaseName(), 
+                            updateStmt->table->GetTableName());
+      
+      if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
+                                expr_types, values, index_id)) {
+        // Create index scan plan
+        std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+            new planner::UpdatePlan(updateStmt, key_column_ids, 
+                expr_types, values, index_id));
+        child_plan = std::move(child_InsertPlan);
+      }
+      else {
+        // Create sequential scan plan
+        std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+          new planner::UpdatePlan(updateStmt));
+        child_plan = std::move(child_InsertPlan);
+      }
+
     } break;
 
     default:
@@ -414,15 +463,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   return plan_tree;
 }
 
-std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
-    storage::DataTable* target_table, parser::SelectStatement* select_stmt) {
+/**
+ * This function checks whether the current expression can enable index
+ * scan for the statement. If it is index searchable, returns true and 
+ * set the corresponding data structures that will be used in creating
+ * index scan node. Otherwise, returns false.
+ */
+bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table, 
+                                            expression::AbstractExpression *expression,
+                                            std::vector<oid_t> &key_column_ids,
+                                            std::vector<ExpressionType> &expr_types,
+                                            std::vector<common::Value *> &values,
+                                            oid_t &index_id) {
   bool index_searchable = false;
-  int index_id = 0;
-
-  // column predicates passing to the index
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<common::Value*> values;
+  index_id = 0;
 
   // column predicates between the tuple value and the constant in the where
   // clause
@@ -430,11 +484,11 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   std::vector<ExpressionType> predicate_expr_types;
   std::vector<common::Value*> predicate_values;
 
-  if (select_stmt->where_clause != NULL) {
+  if (expression != NULL) {
     index_searchable = true;
 
     LOG_TRACE("Getting predicate columns");
-    GetPredicateColumns(target_table->GetSchema(), select_stmt->where_clause,
+    GetPredicateColumns(target_table->GetSchema(), expression,
                         predicate_column_ids, predicate_expr_types,
                         predicate_values, index_searchable);
     LOG_TRACE("Finished Getting predicate columns");
@@ -458,29 +512,15 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     }
   }
 
-  // index_searchable = false;
-  // using the index scan causes an error:
-  // Exception Type :: Mismatch Type
-  // Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be
-  // cast as BIGINT...
-  // terminate called after throwing an instance of
-  // 'peloton::TypeMismatchException'
-  // what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast
-  // as BIGINT...
-
   if (!index_searchable) {
-    // Create sequential scan plan
-    LOG_TRACE("Creating a sequential scan plan");
-    std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-        new planner::SeqScanPlan(select_stmt));
-    LOG_TRACE("Sequential scan plan created");
-    return std::move(child_SelectPlan);
+    for (common::Value *value : predicate_values) {
+      delete value;
+    }
+    return false;
   }
 
-  // Create index scan plan
-  LOG_TRACE("Creating a index scan plan");
+  // Prepares arguments for the index scan plan
   auto index = target_table->GetIndex(index_id);
-  std::vector<expression::AbstractExpression*> runtime_keys;
 
   auto index_columns = target_table->GetIndexColumns()[index_id];
   int column_idx = 0;
@@ -495,6 +535,46 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     }
     column_idx++;
   }
+
+  return true;
+}
+
+
+
+std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
+    storage::DataTable* target_table, parser::SelectStatement* select_stmt) {
+  oid_t index_id = 0;
+
+  // column predicates passing to the index
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<common::Value*> values;
+
+  // index_searchable = false;
+  // using the index scan causes an error:
+  // Exception Type :: Mismatch Type
+  // Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be
+  // cast as BIGINT...
+  // terminate called after throwing an instance of
+  // 'peloton::TypeMismatchException'
+  // what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast
+  // as BIGINT...
+  // 
+
+  if (!CheckIndexSearchable(target_table, select_stmt->where_clause, 
+                            key_column_ids, expr_types, values, index_id)) {
+    // Create sequential scan plan
+    LOG_TRACE("Creating a sequential scan plan");
+    std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
+        new planner::SeqScanPlan(select_stmt));
+    LOG_TRACE("Sequential scan plan created");
+    return std::move(child_SelectPlan);
+  }
+
+  // Create index scan plan
+  LOG_TRACE("Creating a index scan plan");
+  auto index = target_table->GetIndex(index_id);
+  std::vector<expression::AbstractExpression*> runtime_keys;
 
   bool update_flag = false;
   if (select_stmt->is_for_update == true) {
@@ -574,6 +654,14 @@ void SimpleOptimizer::GetPredicateColumns(
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
+
+      // Potential memory leak in line 664:
+      // 24 bytes in 1 blocks are definitely lost in loss record 1 of 3
+      // malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+      // peloton::do_allocation(unsigned long, bool) (allocator.cpp:27)
+      // operator new(unsigned long) (allocator.cpp:40)
+      // peloton::common::IntegerValue::Copy() const (numeric_value.cpp:1288)
+      // peloton::expression::ConstantValueExpression::GetValue() const (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableRight())
@@ -603,6 +691,7 @@ void SimpleOptimizer::GetPredicateColumns(
       LOG_TRACE("Column id: %d", column_id);
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
+
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableRight())
