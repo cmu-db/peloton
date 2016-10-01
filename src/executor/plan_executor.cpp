@@ -77,7 +77,8 @@ void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
 
   LOG_TRACE("Initializing the executor tree");
 
-  executor_tree->SetParallelism(*num_executor_threads, *partition_id);
+  executor_tree->SetParallelism(exchg_params->parallelism_count,
+                                exchg_params->partition_id);
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -108,7 +109,7 @@ void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
         auto answer_tuples = logical_tile->GetAllValuesAsStrings();
 
         // Construct the returned results
-        result.clear();
+        exchg_params->results.clear();
         for (auto tuple : answer_tuples) {
           unsigned int col_index = 0;
           for (auto column : output_schema->GetColumns()) {
@@ -116,7 +117,7 @@ void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
             auto res = ResultType();
             PlanExecutor::copyFromTo(column_name.c_str(), res.first);
             PlanExecutor::copyFromTo(tuple[col_index++].c_str(), res.second);
-            result.push_back(res);
+            exchg_params->results.push_back(res);
           }
         }
 
@@ -159,7 +160,7 @@ cleanup:
   // clean up executor tree
   CleanExecutorTree(executor_tree.get());
 
-  p.set_value(p_status);
+  exchg_params->p.set_value(p_status);
 }
 
 /**

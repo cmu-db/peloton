@@ -122,18 +122,22 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
   }
 
   for(int i=0; i<num_executor_threads; i++) {
-    std::unique_ptr<bridge::ExchangeParams> exchg =
-        new bridge::ExchangeParams(num_executor_threads, i);
-    exchg_params_list.push_back(exchg);
+    // in first pass make the exch params list
+    std::unique_ptr<bridge::ExchangeParams> exchg(
+        new bridge::ExchangeParams(num_executor_threads, i));
+    exchg_params_list.push_back(std::move(exchg));
+  }
+
+  for(int i=0; i<num_executor_threads; i++) {
     // submit it to the executor queue
     executor_thread_pool.SubmitTask(&bridge::PlanExecutor::ExecutePlanLocal,
                                     &(*plan), std::ref(params),
-                                    std::ref(exchg));
+                                    std::ref(exchg_params_list[i]));
   }
 
   for(int i=0; i<num_executor_threads; i++) {
     // wait for executor thread to return result
-    auto temp_status = exchg_params[i].f.get();
+    auto temp_status = exchg_params_list[i]->f.get();
     final_status.m_processed += temp_status.m_processed;
 
     // persist failure states across iterations
@@ -143,8 +147,8 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
 
     // FIXME: This is simple coalescing of results which will have
     // out-of-order tuples
-    result.insert(result.end(), exchg_params[i].results.begin(),
-                  exchg_params[i].results.end());
+    result.insert(result.end(), exchg_params_list[i]->results.begin(),
+                  exchg_params_list[i]->results.end());
   }
 
   return final_status;

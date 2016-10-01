@@ -103,9 +103,7 @@ class PlanExecutor {
    */
   static void ExecutePlanLocal(const planner::AbstractPlan *plan,
                                const std::vector<common::Value *> &params,
-                               std::vector<ResultType> &result,
-                               int *num_executor_threads, int *partition_id,
-                               boost::promise<bridge::peloton_status> &p);
+                               std::unique_ptr<ExchangeParams>& exchg_params);
 
   /*
    * @brief When a peloton node recvs a query plan in rpc mode,
