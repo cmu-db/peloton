@@ -23,10 +23,13 @@ namespace executor {
 /**
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
+ *
+ * by default we are running the query is running on a single thread
  */
 AbstractExecutor::AbstractExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context)
-    : node_(node), executor_context_(executor_context) {}
+    : node_(node), executor_context_(executor_context),
+      parallelism_count_(1), partition_id_(0) {}
 
 void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
@@ -59,10 +62,6 @@ const std::vector<AbstractExecutor *> &AbstractExecutor::GetChildren() const {
  */
 bool AbstractExecutor::Init() {
   bool status = false;
-
-  // by default we are running the query is running on a single thread
-  parallelism_count_ = 1;
-  partition_id_ = 0;
 
   for (auto child : children_) {
     status = child->Init();

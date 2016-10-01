@@ -58,6 +58,9 @@ bool SeqScanExecutor::DInit() {
   // offset by partition_id when multiple threads run the query
   current_tile_group_offset_ = START_OID + partition_id_;
 
+  LOG_TRACE("Partition_ID:%d, Parallelism Count:%d Tile Group Offset:%d\n",
+            partition_id_, parallelism_count_, current_tile_group_offset_);
+
   if (target_table_ != nullptr) {
     table_tile_group_count_ = target_table_->GetTileGroupCount();
 
