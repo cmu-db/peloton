@@ -38,6 +38,7 @@ class NotOperator;
 class Attribute;
 class Get;
 class Join;
+class Table;
 class OrderBy;
 class Select;
 
@@ -57,7 +58,7 @@ class QueryNodeVisitor {
   virtual void visit(const OrOperator*) = 0;
   virtual void visit(const NotOperator*) = 0;
   virtual void visit(const Attribute*) = 0;
-  virtual void visit(const Get*) = 0;
+  virtual void visit(const Table*) = 0;
   virtual void visit(const Join*) = 0;
   virtual void visit(const OrderBy*) = 0;
   virtual void visit(const Select*) = 0;

@@ -42,7 +42,7 @@ struct DropStatement : TableRefStatement {
   }
 
   virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
-    v->visit(this);
+    v->Visit(this);
   }
 
   EntityType type;

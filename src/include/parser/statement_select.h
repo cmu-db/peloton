@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "optimizer/query_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
-#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -106,9 +106,8 @@ struct SelectStatement : SQLStatement {
   }
 
   virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
-    v->visit(this);
+    v->Visit(this);
   }
-
 
   TableRef* from_table;
   bool select_distinct;
@@ -121,10 +120,10 @@ struct SelectStatement : SQLStatement {
   LimitDescription* limit;
   bool is_for_update;
 
-public:
-	const std::vector<expression::AbstractExpression*>* getSelectList() const {
-		return select_list;
-	}
+ public:
+  const std::vector<expression::AbstractExpression*>* getSelectList() const {
+    return select_list;
+  }
 };
 
 }  // End parser namespace

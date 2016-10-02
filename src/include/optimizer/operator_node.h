@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/property_set.h"
 #include "optimizer/util.h"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace peloton {
 namespace optimizer {
@@ -50,6 +49,7 @@ enum class OpType {
   RightHashJoin,
   OuterHashJoin,
   // Exprs
+  Expression,
   Variable,
   Constant,
   Compare,

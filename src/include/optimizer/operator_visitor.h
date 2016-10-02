@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/operators.h"
@@ -47,6 +46,7 @@ class OperatorVisitor {
   virtual void visit(const PhysicalLeftHashJoin *);
   virtual void visit(const PhysicalRightHashJoin *);
   virtual void visit(const PhysicalOuterHashJoin *);
+  virtual void visit(const QueryExpressionOperator *);
   virtual void visit(const ExprVariable *);
   virtual void visit(const ExprConstant *);
   virtual void visit(const ExprCompare *);

@@ -11,18 +11,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
+#include "optimizer/column.h"
+#include "optimizer/group.h"
 #include "optimizer/operator_node.h"
 #include "optimizer/query_operators.h"
-#include "optimizer/group.h"
-#include "optimizer/column.h"
 #include "optimizer/util.h"
 
 #include <vector>
 
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}
+
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -207,6 +211,16 @@ class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
 class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
  public:
   static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// QueryExpression (predicate/select_list)
+//===--------------------------------------------------------------------===//
+class QueryExpressionOperator : public OperatorNode<QueryExpressionOperator> {
+ public:
+  static Operator make(expression::AbstractExpression *expression);
+
+  expression::AbstractExpression *expression_;
 };
 
 //===--------------------------------------------------------------------===//

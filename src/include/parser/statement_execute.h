@@ -37,7 +37,7 @@ struct ExecuteStatement : SQLStatement {
   }
 
   virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
-    v->visit(this);
+    v->Visit(this);
   }
 
   char* name;

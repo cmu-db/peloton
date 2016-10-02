@@ -22,6 +22,7 @@
 
 #include "parser/statements.h"
 
+#include "catalog/catalog.h"
 #include "catalog/manager.h"
 
 namespace peloton {
@@ -282,24 +283,19 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
     // Add filter for where predicate
     if (op->where_clause != nullptr) {
-      auto select_expr = std::make_shared<OpExpression>(LogicalSelect::make());
-      select_expr->PushChild(get_expr);
-      op->where_predicate->accept(this);
-      select_expr->PushChild(output_expr);
-      join_expr = select_expr;
+      auto predicate_expr = std::make_shared<OpExpression>(
+          QueryExpressionOperator::make(op->where_clause));
+      get_expr->PushChild(predicate_expr);
     }
 
     // Add all attributes in output list as projection at top level
     auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
-    project_expr->PushChild(join_expr);
+    project_expr->PushChild(get_expr);
     auto project_list = std::make_shared<OpExpression>(ExprProjectList::make());
     project_expr->PushChild(project_list);
-    for (Attribute *attr : op->output_list) {
-      // Ignore intermediate columns for output projection
-      if (!attr->intermediate) {
-        attr->accept(this);
-        project_list->PushChild(output_expr);
-      }
+    for (auto &select_expr : *op->select_list) {
+      project_list->PushChild(std::make_shared<OpExpression>(
+          QueryExpressionOperator::make(select_expr)));
     }
 
     output_expr = project_expr;

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/operator_visitor.h"
 
 namespace peloton {
@@ -61,6 +60,8 @@ void OperatorVisitor::visit(const PhysicalLeftHashJoin*) {}
 void OperatorVisitor::visit(const PhysicalRightHashJoin*) {}
 
 void OperatorVisitor::visit(const PhysicalOuterHashJoin*) {}
+
+void OperatorVisitor::visit(const QueryExpressionOperator*) {}
 
 void OperatorVisitor::visit(const ExprVariable*) {}
 

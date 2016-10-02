@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/operators.h"
 #include "optimizer/operator_visitor.h"
 
@@ -237,6 +236,16 @@ Operator PhysicalOuterHashJoin::make() {
 //===--------------------------------------------------------------------===//
 // Variable
 //===--------------------------------------------------------------------===//
+Operator QueryExpressionOperator::make(
+    expression::AbstractExpression *expression) {
+  QueryExpressionOperator *var = new QueryExpressionOperator;
+  var->expression_ = expression;
+  return Operator(var);
+}
+
+//===--------------------------------------------------------------------===//
+// Variable
+//===--------------------------------------------------------------------===//
 Operator ExprVariable::make(Column *column) {
   ExprVariable *var = new ExprVariable;
   var->column = column;
@@ -343,7 +352,8 @@ bool ExprOp::operator==(const BaseOperatorNode &node) {
 hash_t ExprOp::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = util::CombineHashes(hash, util::Hash<ExpressionType>(&expr_type));
-  hash = util::CombineHashes(hash, util::Hash<common::Type::TypeId>(&return_type));
+  hash =
+      util::CombineHashes(hash, util::Hash<common::Type::TypeId>(&return_type));
   return hash;
 }
 
@@ -464,6 +474,10 @@ void OperatorNode<PhysicalOuterHashJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalOuterHashJoin *)this);
 }
 template <>
+void OperatorNode<QueryExpressionOperator>::accept(OperatorVisitor *v) const {
+  v->visit((const QueryExpressionOperator *)this);
+}
+template <>
 void OperatorNode<ExprVariable>::accept(OperatorVisitor *v) const {
   v->visit((const ExprVariable *)this);
 }
@@ -538,6 +552,9 @@ template <>
 std::string OperatorNode<PhysicalOuterHashJoin>::_name =
     "PhysicalOuterHashJoin";
 template <>
+std::string OperatorNode<QueryExpressionOperator>::_name =
+    "QueryExpressionOperator";
+template <>
 std::string OperatorNode<ExprVariable>::_name = "ExprVariable";
 template <>
 std::string OperatorNode<ExprConstant>::_name = "ExprConstant";
@@ -594,6 +611,8 @@ template <>
 OpType OperatorNode<PhysicalRightHashJoin>::_type = OpType::RightHashJoin;
 template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::_type = OpType::OuterHashJoin;
+template <>
+OpType OperatorNode<QueryExpressionOperator>::_type = OpType::Expression;
 template <>
 OpType OperatorNode<ExprVariable>::_type = OpType::Variable;
 template <>
@@ -692,6 +711,10 @@ bool OperatorNode<PhysicalRightHashJoin>::IsLogical() const {
 template <>
 bool OperatorNode<PhysicalOuterHashJoin>::IsLogical() const {
   return false;
+}
+template <>
+bool OperatorNode<QueryExpressionOperator>::IsLogical() const {
+  return true;
 }
 template <>
 bool OperatorNode<ExprVariable>::IsLogical() const {
@@ -800,6 +823,10 @@ bool OperatorNode<PhysicalLeftHashJoin>::IsPhysical() const {
 }
 template <>
 bool OperatorNode<PhysicalRightHashJoin>::IsPhysical() const {
+  return true;
+}
+template <>
+bool OperatorNode<QueryExpressionOperator>::IsPhysical() const {
   return true;
 }
 template <>

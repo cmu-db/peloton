@@ -34,7 +34,7 @@ struct DeleteStatement : TableRefStatement {
   }
 
   virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
-    v->visit(this);
+    v->Visit(this);
   }
 
   expression::AbstractExpression* expr = nullptr;
