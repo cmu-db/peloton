@@ -42,12 +42,11 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
-                              const std::vector<common::Value *> &params,
-                              std::unique_ptr<ExchangeParams>& exchg_params) {
+void PlanExecutor::ExecutePlanLocal(ExchangeParams **exchg_params_arg) {
   peloton_status p_status;
+  ExchangeParams *exchg_params = *exchg_params_arg;
 
-  if (plan == nullptr) exchg_params->p.set_value(p_status);
+  if (exchg_params->plan == nullptr) exchg_params->p.set_value(p_status);
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -69,11 +68,11 @@ void PlanExecutor::ExecutePlanLocal(const planner::AbstractPlan *plan,
 
   // Use const std::vector<common::Value *> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-      BuildExecutorContext(params, txn));
+      BuildExecutorContext(exchg_params->params, txn));
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
-      BuildExecutorTree(nullptr, plan, executor_context.get()));
+      BuildExecutorTree(nullptr, exchg_params->plan, executor_context.get()));
 
   LOG_TRACE("Initializing the executor tree");
 

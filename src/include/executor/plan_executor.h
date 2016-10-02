@@ -54,10 +54,17 @@ struct ExchangeParams {
   boost::promise<bridge::peloton_status> p;
   boost::unique_future<bridge::peloton_status> f;
   std::vector<ResultType> results;
+  const planner::AbstractPlan *plan;
+  const std::vector<common::Value *> params;
   int parallelism_count, partition_id;
+  ExchangeParams *self;
 
-  inline ExchangeParams(int pc, int pid) :
-      parallelism_count(pc), partition_id(pid) {
+  inline ExchangeParams(const planner::AbstractPlan *plan,
+                        const std::vector<common::Value *>& params,
+                        int parallelism_count, int partition_id)
+      : plan(plan), params(params),
+        parallelism_count(parallelism_count),
+        partition_id(partition_id) {
     f = p.get_future();
   }
 };
@@ -101,9 +108,7 @@ class PlanExecutor {
    * Also pass parallelism details if we are doing intra-query parallelism
    *
    */
-  static void ExecutePlanLocal(const planner::AbstractPlan *plan,
-                               const std::vector<common::Value *> &params,
-                               std::unique_ptr<ExchangeParams>& exchg_params);
+  static void ExecutePlanLocal(ExchangeParams **exchg_params_arg);
 
   /*
    * @brief When a peloton node recvs a query plan in rpc mode,

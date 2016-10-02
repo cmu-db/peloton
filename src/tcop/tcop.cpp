@@ -111,7 +111,7 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
     const std::vector<common::Value *> &params,
     std::vector<ResultType>& result) {
 
-  std::vector<std::unique_ptr<bridge::ExchangeParams>> exchg_params_list;
+  std::vector<std::shared_ptr<bridge::ExchangeParams>> exchg_params_list;
   int num_executor_threads = 1;
   bridge::peloton_status final_status;
   final_status.m_processed = 0;
@@ -124,16 +124,12 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
 
   for(int i=0; i<num_executor_threads; i++) {
     // in first pass make the exch params list
-    std::unique_ptr<bridge::ExchangeParams> exchg(
-        new bridge::ExchangeParams(num_executor_threads, i));
-    exchg_params_list.push_back(std::move(exchg));
-  }
-
-  for(int i=0; i<num_executor_threads; i++) {
-    // submit it to the executor queue
-    executor_thread_pool.SubmitTask(&bridge::PlanExecutor::ExecutePlanLocal,
-                                    &(*plan), std::ref(params),
-                                    std::ref(exchg_params_list[i]));
+    std::shared_ptr<bridge::ExchangeParams> exchg_params(
+        new bridge::ExchangeParams(plan, params, num_executor_threads, i));
+    exchg_params->self = exchg_params.get();
+    exchg_params_list.push_back(exchg_params);
+    executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanLocal,
+                                    &exchg_params->self);
   }
 
   for(int i=0; i<num_executor_threads; i++) {
