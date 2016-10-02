@@ -236,7 +236,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
     // Add filter for where predicate
     if (op->where_predicate) {
-      auto select_expr = std::make_shared<OpExpression>(LogicalSelect::make());
+      auto select_expr = std::make_shared<OpExpression>(LogicalFilter::make());
       select_expr->PushChild(join_expr);
       op->where_predicate->accept(this);
       select_expr->PushChild(output_expr);

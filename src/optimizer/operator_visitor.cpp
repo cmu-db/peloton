@@ -25,7 +25,7 @@ void OperatorVisitor::visit(const LogicalGet*) {}
 
 void OperatorVisitor::visit(const LogicalProject*) {}
 
-void OperatorVisitor::visit(const LogicalSelect*) {}
+void OperatorVisitor::visit(const LogicalFilter*) {}
 
 void OperatorVisitor::visit(const LogicalInnerJoin*) {}
 

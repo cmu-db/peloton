@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/rule.h"
@@ -60,10 +59,10 @@ class ProjectToComputeExprs : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// SelectToFilter
-class SelectToFilter : public Rule {
+/// LogicalFilterToPhysical
+class LogicalFilterToPhysical : public Rule {
  public:
-  SelectToFilter();
+  LogicalFilterToPhysical();
 
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 

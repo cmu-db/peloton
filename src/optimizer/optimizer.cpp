@@ -35,7 +35,7 @@ namespace optimizer {
 Optimizer::Optimizer() {
   rules.emplace_back(new InnerJoinCommutativity());
   rules.emplace_back(new GetToScan());
-  rules.emplace_back(new SelectToFilter());
+  rules.emplace_back(new LogicalFilterToPhysical());
   rules.emplace_back(new ProjectToComputeExprs());
   rules.emplace_back(new InnerJoinToInnerNLJoin());
   rules.emplace_back(new LeftJoinToLeftNLJoin());

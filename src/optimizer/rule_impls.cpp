@@ -108,22 +108,22 @@ void ProjectToComputeExprs::Transform(
 
 ///////////////////////////////////////////////////////////////////////////////
 /// SelectToFilter
-SelectToFilter::SelectToFilter() {
+LogicalFilterToPhysical::LogicalFilterToPhysical() {
   physical = true;
 
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern = std::make_shared<Pattern>(OpType::Select);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
   match_pattern->AddChild(child);
   match_pattern->AddChild(predicate);
 }
 
-bool SelectToFilter::Check(std::shared_ptr<OpExpression> plan) const {
+bool LogicalFilterToPhysical::Check(std::shared_ptr<OpExpression> plan) const {
   (void)plan;
   return true;
 }
 
-void SelectToFilter::Transform(
+void LogicalFilterToPhysical::Transform(
     std::shared_ptr<OpExpression> input,
     std::vector<std::shared_ptr<OpExpression>> &transformed) const {
   auto result = std::make_shared<OpExpression>(PhysicalFilter::make());

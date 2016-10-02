@@ -68,8 +68,8 @@ Operator LogicalProject::make() {
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-Operator LogicalSelect::make() {
-  LogicalSelect *select = new LogicalSelect;
+Operator LogicalFilter::make() {
+  LogicalFilter *select = new LogicalFilter;
   return Operator(select);
 }
 
@@ -402,8 +402,8 @@ void OperatorNode<LogicalProject>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalProject *)this);
 }
 template <>
-void OperatorNode<LogicalSelect>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalSelect *)this);
+void OperatorNode<LogicalFilter>::accept(OperatorVisitor *v) const {
+  v->visit((const LogicalFilter *)this);
 }
 template <>
 void OperatorNode<LogicalInnerJoin>::accept(OperatorVisitor *v) const {
@@ -513,7 +513,7 @@ std::string OperatorNode<LogicalGet>::_name = "LogicalGet";
 template <>
 std::string OperatorNode<LogicalProject>::_name = "LogicalProject";
 template <>
-std::string OperatorNode<LogicalSelect>::_name = "LogicalSelect";
+std::string OperatorNode<LogicalFilter>::_name = "LogicalFilter";
 template <>
 std::string OperatorNode<LogicalInnerJoin>::_name = "LogicalInnerJoin";
 template <>
@@ -576,7 +576,7 @@ OpType OperatorNode<LogicalGet>::_type = OpType::Get;
 template <>
 OpType OperatorNode<LogicalProject>::_type = OpType::Project;
 template <>
-OpType OperatorNode<LogicalSelect>::_type = OpType::Select;
+OpType OperatorNode<LogicalFilter>::_type = OpType::LogicalFilter;
 template <>
 OpType OperatorNode<LogicalInnerJoin>::_type = OpType::InnerJoin;
 template <>
@@ -641,7 +641,7 @@ bool OperatorNode<LogicalProject>::IsLogical() const {
   return true;
 }
 template <>
-bool OperatorNode<LogicalSelect>::IsLogical() const {
+bool OperatorNode<LogicalFilter>::IsLogical() const {
   return true;
 }
 template <>
@@ -758,7 +758,7 @@ bool OperatorNode<LogicalProject>::IsPhysical() const {
   return false;
 }
 template <>
-bool OperatorNode<LogicalSelect>::IsPhysical() const {
+bool OperatorNode<LogicalFilter>::IsPhysical() const {
   return false;
 }
 template <>

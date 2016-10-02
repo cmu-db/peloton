@@ -28,7 +28,7 @@ class OperatorVisitor {
   virtual void visit(const LeafOperator *);
   virtual void visit(const LogicalGet *);
   virtual void visit(const LogicalProject *);
-  virtual void visit(const LogicalSelect *);
+  virtual void visit(const LogicalFilter *);
   virtual void visit(const LogicalInnerJoin *);
   virtual void visit(const LogicalLeftJoin *);
   virtual void visit(const LogicalRightJoin *);

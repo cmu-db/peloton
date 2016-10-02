@@ -65,7 +65,7 @@ class LogicalProject : public OperatorNode<LogicalProject> {
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-class LogicalSelect : public OperatorNode<LogicalSelect> {
+class LogicalFilter : public OperatorNode<LogicalFilter> {
  public:
   static Operator make();
 };

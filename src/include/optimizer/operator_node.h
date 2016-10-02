@@ -29,7 +29,7 @@ enum class OpType {
   // Logical ops
   Get,
   Project,
-  Select,
+  LogicalFilter,
   InnerJoin,
   LeftJoin,
   RightJoin,
