@@ -164,7 +164,7 @@ struct CreateStatement : TableRefStatement {
       : TableRefStatement(STATEMENT_TYPE_CREATE),
         type(type),
         if_not_exists(false),
-        columns(NULL) {};
+        columns(NULL){};
 
   virtual ~CreateStatement() {
     if (columns) {

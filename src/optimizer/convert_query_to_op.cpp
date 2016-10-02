@@ -259,12 +259,12 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     output_expr = project_expr;
   }
 
-  void Visit(UNUSED_ATTRIBUTE const parser::SelectStatement *op) override {
+  void Visit(const parser::SelectStatement *op) override {
     std::vector<Column *> columns;
 
     storage::DataTable *target_table =
-        catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                          op->from_table->name);
+        catalog::Catalog::GetInstance()->GetTableWithName(
+            op->from_table->GetDatabaseName(), op->from_table->GetTableName());
 
     catalog::Schema *schema = target_table->GetSchema();
     oid_t table_oid = target_table->GetOid();
