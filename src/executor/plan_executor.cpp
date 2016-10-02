@@ -46,7 +46,10 @@ void PlanExecutor::ExecutePlanLocal(ExchangeParams **exchg_params_arg) {
   peloton_status p_status;
   ExchangeParams *exchg_params = *exchg_params_arg;
 
-  if (exchg_params->plan == nullptr) exchg_params->p.set_value(p_status);
+  if (exchg_params->plan == nullptr) {
+    exchg_params->p.set_value(p_status);
+    return;
+  }
 
   LOG_TRACE("PlanExecutor Start ");
 

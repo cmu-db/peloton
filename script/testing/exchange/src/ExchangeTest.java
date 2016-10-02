@@ -74,9 +74,10 @@ public class ExchangeTest {
         stmt.execute(DDL);
     }
 
-    public void ShowTable() throws SQLException {
+    public void SeqScan() throws SQLException {
         conn.setAutoCommit(true);
         Statement stmt = conn.createStatement();
+        int rowCtr = 0;
 
         stmt.execute(SEQSCAN);
 
@@ -84,28 +85,32 @@ public class ExchangeTest {
 
         ResultSetMetaData rsmd = rs.getMetaData();
 
-        if (rsmd.getColumnCount() != 2) {
+        if (rsmd.getColumnCount() != 2)
           throw new SQLException("Table should have 2 columns");
-        } else if (rs.next()) {
-          throw new SQLException("No rows should be returned");
-        }
-        System.out.println("Test db created.");
+
+        while(rs.next())
+            rowCtr++;
+
+        if (rowCtr != numRows)
+            throw new SQLException("Insufficient rows returned:" +
+                rowCtr +"/" + numRows);
+        else
+            System.out.println("Sequential Scan successful");
     }
 
-    public void Batch_Insert() throws SQLException{
+    public void BatchInsert() throws SQLException{
     	int[] res;
+        String name1, name2;
     	PreparedStatement stmt = conn.prepareStatement(TEMPLATE_FOR_BATCH_INSERT);
     	conn.setAutoCommit(false);
     
-    	String name1 = nameTokens[rand.nextInt(nameTokens.length)];
-    	String name2 = nameTokens[rand.nextInt(nameTokens.length)];
-	    for(int i=1; i <= numRows ;i++){
-	      stmt.setInt(1,i);
-	      stmt.setString(2, name1+name2);
-	      stmt.addBatch();
+        for(int i=1; i <= numRows ;i++){
+            stmt.setInt(1,i);
+            name1 = nameTokens[rand.nextInt(nameTokens.length)];
+            name2 = nameTokens[rand.nextInt(nameTokens.length)];
+            stmt.setString(2, name1+name2);
+            stmt.addBatch();
 	    }
-	    
-	    System.out.println("Batch Being Launched");
 
 		try{
 			res = stmt.executeBatch();
@@ -114,10 +119,8 @@ public class ExchangeTest {
 			throw e.getNextException();
 		}
 
-		System.out.println("Batch Executed");
-
-		for(int i=0; i < res.length; i++){
-			System.out.println(res[i]);
+        for(int i=0; i < res.length; i++){
+			// System.out.println(res[i]);
 			if (res[i] < 0) {
 				throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
 			}
@@ -152,7 +155,10 @@ public class ExchangeTest {
         System.out.println("Number of rows in Exchange Test:" + numRows);
         ExchangeTest et = new ExchangeTest();
         et.Init();
-        et.Batch_Insert();
+        System.out.println("Completed Init");
+        et.BatchInsert();
+        System.out.println("Completed Batch Insert");
+        et.SeqScan();
         et.Close();
     }
 }
