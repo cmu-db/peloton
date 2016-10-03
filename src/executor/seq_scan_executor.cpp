@@ -39,7 +39,7 @@ namespace executor {
  */
 SeqScanExecutor::SeqScanExecutor(const planner::AbstractPlan *node,
                                  ExecutorContext *executor_context)
-    : AbstractScanExecutor(node, executor_context) {}
+    : AbstractScanExecutor(node, executor_context), num_tile_groups_processed_(0) {}
 
 /**
  * @brief Let base class DInit() first, then do mine.
@@ -56,13 +56,20 @@ bool SeqScanExecutor::DInit() {
   target_table_ = node.GetTable();
 
   // offset by partition_id when multiple threads run the query
-  current_tile_group_offset_ = START_OID + partition_id_;
+  current_tile_group_offset_ = (START_OID + partition_id_);
 
   LOG_TRACE("Partition_ID:%d, Parallelism Count:%d Tile Group Offset:%d\n",
             partition_id_, parallelism_count_, current_tile_group_offset_);
 
   if (target_table_ != nullptr) {
     table_tile_group_count_ = target_table_->GetTileGroupCount();
+
+    // round up to the nearest value of parallelism count
+    num_tile_groups_per_thread_ =
+        (table_tile_group_count_ + parallelism_count_ - 1)/parallelism_count_;
+
+    // offset by the number of tiles that each thread processes
+    current_tile_group_offset_ *= num_tile_groups_per_thread_;
 
     if (column_ids_.empty()) {
       column_ids_.resize(target_table_->GetSchema()->GetColumnCount());
@@ -130,12 +137,16 @@ bool SeqScanExecutor::DExecute() {
     auto current_txn = executor_context_->GetTransaction();
 
     // Retrieve next tile group.
-    while (current_tile_group_offset_ < table_tile_group_count_) {
+    while (current_tile_group_offset_ < table_tile_group_count_ &&
+        num_tile_groups_processed_ < num_tile_groups_per_thread_) {
+
       auto tile_group =
           target_table_->GetTileGroup(current_tile_group_offset_);
-      // skip next chunk of tiles - they will be processed by the
-      // other threads (if any)
-      current_tile_group_offset_ += parallelism_count_;
+
+      // move to next offset
+      current_tile_group_offset_++;
+      num_tile_groups_processed_++;
+
       auto tile_group_header = tile_group->GetHeader();
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
