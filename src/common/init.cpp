@@ -26,6 +26,9 @@ namespace peloton {
 
 ThreadPool thread_pool;
 
+// decouple client handling from query execution
+ThreadPool executor_thread_pool;
+
 void PelotonInit::Initialize() {
 
   // Initialize CDS library
@@ -36,6 +39,10 @@ void PelotonInit::Initialize() {
   // chosen. Assigning new task after reaching maximum will
   // block.
   thread_pool.Initialize(std::thread::hardware_concurrency(), 0);
+
+  // FIXME: Find a way to balance client threads with execution
+  // threads. Too many active clients might starve execution.
+  executor_thread_pool.Initialize(std::thread::hardware_concurrency(), 0);
 
   // the garbage collector is assigned to dedicated threads.
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -49,6 +56,7 @@ void PelotonInit::Shutdown() {
   gc_manager.StopGC();
 
   thread_pool.Shutdown();
+  executor_thread_pool.Shutdown();
 
   // Terminate CDS library
   cds::Terminate();

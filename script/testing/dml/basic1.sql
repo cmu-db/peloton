@@ -22,9 +22,9 @@ select * from foo;
 
 -- select
 
-select * from foo where id < 3;
+-- select * from foo where id < 3;
 
-select * from foo where year > 200;
+-- select * from foo where year > 200;
 
 -- delete
 

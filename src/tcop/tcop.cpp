@@ -28,7 +28,10 @@
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
 
-#include <boost/algorithm/string.hpp>
+#include "common/thread_pool.h"
+#include <include/common/init.h>
+#include <tuple>
+#include <include/tcop/tcop.h>
 
 namespace peloton {
 namespace tcop {
@@ -83,6 +86,7 @@ Result TrafficCop::ExecuteStatement(
     UNUSED_ATTRIBUTE const bool unnamed, const std::vector<int> &result_format,
     std::vector<ResultType> &result, int &rows_changed,
     UNUSED_ATTRIBUTE std::string &error_message) {
+
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
@@ -94,12 +98,57 @@ Result TrafficCop::ExecuteStatement(
             statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+
+  auto status = ExchangeOperator(statement->GetPlanTree().get(),
+                                 params, result, result_format);
+
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
 
   rows_changed = status.m_processed;
   return status.m_result;
+}
+
+bridge::peloton_status TrafficCop::ExchangeOperator(
+    const planner::AbstractPlan *plan,
+    const std::vector<common::Value *> &params,
+    std::vector<ResultType>& result, const std::vector<int> &result_format) {
+
+  std::vector<std::shared_ptr<bridge::ExchangeParams>> exchg_params_list;
+  int num_executor_threads = 1;
+  bridge::peloton_status final_status;
+  final_status.m_processed = 0;
+
+  if(plan != nullptr && plan->GetPlanNodeType() ==
+                            PlanNodeType::PLAN_NODE_TYPE_SEQSCAN) {
+    // provide intra-query parallelism for sequential scans
+    num_executor_threads = std::thread::hardware_concurrency();
+  }
+
+  for(int i=0; i<num_executor_threads; i++) {
+    // in first pass make the exch params list
+    std::shared_ptr<bridge::ExchangeParams> exchg_params(
+        new bridge::ExchangeParams(plan, params, num_executor_threads, i, result_format));
+    exchg_params->self = exchg_params.get();
+    exchg_params_list.push_back(exchg_params);
+    executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanLocal,
+                                    &exchg_params->self);
+  }
+
+  for(int i=0; i<num_executor_threads; i++) {
+    // wait for executor thread to return result
+    auto temp_status = exchg_params_list[i]->f.get();
+    final_status.m_processed += temp_status.m_processed;
+
+    // persist failure states across iterations
+    if (final_status.m_result == peloton::Result::RESULT_SUCCESS)
+      final_status.m_result = temp_status.m_result;
+    final_status.m_result_slots = nullptr;
+
+    result.insert(result.end(), exchg_params_list[i]->results.begin(),
+                  exchg_params_list[i]->results.end());
+  }
+
+  return final_status;
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
