@@ -91,47 +91,41 @@ peloton_status PlanExecutor::ExecutePlan(
   }
 
   LOG_TRACE("Running the executor tree");
+  result.clear();
 
   // Execute the tree until we get result tiles from root node
-  for (;;) {
+  while (status == true) {
     status = executor_tree->Execute();
-    // Stop
-    if (status == false) {
-      std::unique_ptr<executor::LogicalTile> logical_tile(
-          executor_tree->GetOutput());
-      // Some executors don't return logical tiles (e.g., Update).
-      if (logical_tile.get() != nullptr) {
-        LOG_TRACE("Final Answer: %s",
-                  logical_tile->GetInfo().c_str());  // Printing the answers
-        auto output_schema =
-            logical_tile->GetPhysicalSchema();  // Physical schema of the tile
-        std::vector<std::vector<std::string>> answer_tuples;
-        answer_tuples =
-            std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
-        // Construct the returned results
-        result.clear();
-        for (auto tuple : answer_tuples) {
-          unsigned int col_index = 0;
-          for (auto column : output_schema->GetColumns()) {
-            auto column_name = column.GetName();
-            auto res = ResultType();
-            PlanExecutor::copyFromTo(column_name, res.first);
-            LOG_TRACE("column name: %s", column_name.c_str());
-            PlanExecutor::copyFromTo(tuple[col_index++], res.second);
-            if (tuple[col_index - 1].c_str() != nullptr) {
-              LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
-            }
-            result.push_back(res);
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        executor_tree->GetOutput());
+    // Some executors don't return logical tiles (e.g., Update).
+    if (logical_tile.get() != nullptr) {
+      LOG_TRACE("Final Answer: %s",
+                logical_tile->GetInfo().c_str());  // Printing the answers
+      auto output_schema =
+          logical_tile->GetPhysicalSchema();  // Physical schema of the tile
+      std::vector<std::vector<std::string>> answer_tuples;
+      answer_tuples =
+          std::move(logical_tile->GetAllValuesAsStrings(result_format));
+
+      // Construct the returned results
+      for (auto tuple : answer_tuples) {
+        unsigned int col_index = 0;
+        for (auto column : output_schema->GetColumns()) {
+          auto column_name = column.GetName();
+          auto res = ResultType();
+          PlanExecutor::copyFromTo(column_name, res.first);
+          LOG_TRACE("column name: %s", column_name.c_str());
+          PlanExecutor::copyFromTo(tuple[col_index++], res.second);
+          if (tuple[col_index - 1].c_str() != nullptr) {
+            LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
           }
+          result.push_back(res);
         }
-
-        delete output_schema;
       }
-      break;
+      delete output_schema;
     }
-
-    // Go over the logical tile
   }
 
   // Set the result
