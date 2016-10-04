@@ -103,8 +103,8 @@ peloton_status PlanExecutor::ExecutePlan(
     if (logical_tile.get() != nullptr) {
       LOG_TRACE("Final Answer: %s",
                 logical_tile->GetInfo().c_str());  // Printing the answers
-      auto output_schema =
-          logical_tile->GetPhysicalSchema();  // Physical schema of the tile
+      std::unique_ptr<catalog::Schema> output_schema(
+          logical_tile->GetPhysicalSchema());  // Physical schema of the tile
       std::vector<std::vector<std::string>> answer_tuples;
       answer_tuples =
           std::move(logical_tile->GetAllValuesAsStrings(result_format));
@@ -124,7 +124,6 @@ peloton_status PlanExecutor::ExecutePlan(
           result.push_back(res);
         }
       }
-      delete output_schema;
     }
   }
 
