@@ -10,12 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/rule_impls.h"
 #include "optimizer/operators.h"
 
 #include <memory>
-#include <cassert>
 
 namespace peloton {
 namespace optimizer {
@@ -44,7 +42,7 @@ void InnerJoinCommutativity::Transform(
     std::vector<std::shared_ptr<OpExpression>> &transformed) const {
   auto result_plan = std::make_shared<OpExpression>(LogicalInnerJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[2]);
@@ -73,6 +71,10 @@ void GetToScan::Transform(
   auto result_plan = std::make_shared<OpExpression>(
       PhysicalScan::make(get->table, get->columns));
 
+  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+  PL_ASSERT(children.size() == 1);
+  result_plan->PushChild(children[0]);
+
   transformed.push_back(result_plan);
 }
 
@@ -99,7 +101,7 @@ void ProjectToComputeExprs::Transform(
     std::vector<std::shared_ptr<OpExpression>> &transformed) const {
   auto result = std::make_shared<OpExpression>(PhysicalComputeExprs::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 2);
+  PL_ASSERT(children.size() == 2);
   result->PushChild(children[0]);
   result->PushChild(children[1]);
 
@@ -128,7 +130,7 @@ void LogicalFilterToPhysical::Transform(
     std::vector<std::shared_ptr<OpExpression>> &transformed) const {
   auto result = std::make_shared<OpExpression>(PhysicalFilter::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 2);
+  PL_ASSERT(children.size() == 2);
   result->PushChild(children[0]);
   result->PushChild(children[1]);
 
@@ -168,7 +170,7 @@ void InnerJoinToInnerNLJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalInnerNLJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
@@ -208,7 +210,7 @@ void LeftJoinToLeftNLJoin::Transform(
     std::vector<std::shared_ptr<OpExpression>> &transformed) const {
   auto result_plan = std::make_shared<OpExpression>(PhysicalLeftNLJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
@@ -248,7 +250,7 @@ void RightJoinToRightNLJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalRightNLJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
@@ -288,7 +290,7 @@ void OuterJoinToOuterNLJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalOuterNLJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
@@ -333,7 +335,7 @@ void InnerJoinToInnerHashJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalInnerHashJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
@@ -374,7 +376,7 @@ void LeftJoinToLeftHashJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalLeftHashJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
@@ -414,7 +416,7 @@ void RightJoinToRightHashJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalRightHashJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);
@@ -454,7 +456,7 @@ void OuterJoinToOuterHashJoin::Transform(
   auto result_plan =
       std::make_shared<OpExpression>(PhysicalOuterHashJoin::make());
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
-  assert(children.size() == 3);
+  PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
   result_plan->PushChild(children[1]);

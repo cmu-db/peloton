@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/convert_op_to_plan.h"
 #include "optimizer/operator_visitor.h"
 
 #include "planner/hash_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
-#include "planner/seq_scan_plan.h"
 #include "planner/projection_plan.h"
+#include "planner/seq_scan_plan.h"
 
 #include "expression/expression_util.h"
 
@@ -98,8 +97,8 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
       case BoolOpType::Not: {
         assert(children.size() == 1);
         output_expr = expression::ExpressionUtil::OperatorFactory(
-            EXPRESSION_TYPE_OPERATOR_NOT, common::Type::INVALID, child_exprs.front(),
-            nullptr);
+            EXPRESSION_TYPE_OPERATOR_NOT, common::Type::INVALID,
+            child_exprs.front(), nullptr);
       } break;
       case BoolOpType::And: {
         assert(children.size() > 0);
@@ -156,6 +155,7 @@ class OpToPlanTransformer : public OperatorVisitor {
   }
 
   void visit(const PhysicalScan *op) override {
+    auto children = current_children;
     std::vector<oid_t> column_ids;
     for (Column *col : op->columns) {
       TableColumn *table_col = dynamic_cast<TableColumn *>(col);
@@ -163,9 +163,13 @@ class OpToPlanTransformer : public OperatorVisitor {
       column_ids.push_back(table_col->ColumnIndexOid());
     }
     left_columns = op->columns;
-
     output_columns = op->columns;
-    output_plan.reset(new planner::SeqScanPlan(op->table, nullptr, column_ids));
+
+    expression::AbstractExpression *predicate =
+        ConvertToAbstractExpression(children[1]);
+
+    output_plan.reset(
+        new planner::SeqScanPlan(op->table, predicate, column_ids));
   }
 
   void visit(const PhysicalComputeExprs *) override {
@@ -278,6 +282,8 @@ class OpToPlanTransformer : public OperatorVisitor {
 
  private:
   void VisitOpExpression(std::shared_ptr<OpExpression> op) {
+    // LM: I don't understand why we're copying prev information here and then
+    // copy them back. It seems not used anywhere.
     std::vector<std::shared_ptr<OpExpression>> prev_children = current_children;
     auto prev_left_cols = left_columns;
     auto prev_right_cols = right_columns;

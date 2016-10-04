@@ -281,12 +281,12 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     auto get_expr =
         std::make_shared<OpExpression>(LogicalGet::make(target_table, columns));
 
-    // Add filter for where predicate
-    if (op->where_clause != nullptr) {
-      auto predicate_expr = std::make_shared<OpExpression>(
-          QueryExpressionOperator::make(op->where_clause));
-      get_expr->PushChild(predicate_expr);
-    }
+    // Add where predicate as a child OpExpression
+    // LM: In the future we may want to remove this and change where predicate
+    // to physical property.
+    auto predicate_expr = std::make_shared<OpExpression>(
+        QueryExpressionOperator::make(op->where_clause));
+    get_expr->PushChild(predicate_expr);
 
     // Add all attributes in output list as projection at top level
     auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
