@@ -493,7 +493,7 @@ bool RunNewOrder(const size_t &thread_id){
     // Create plan node.
     planner::IndexScanPlan stock_index_scan_node(stock_table, nullptr,
                                                  stock_column_ids,
-                                                 stock_update_index_scan_desc);
+                                                 stock_index_scan_desc);
 
     executor::IndexScanExecutor stock_index_scan_executor(&stock_index_scan_node, context.get());
 

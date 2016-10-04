@@ -350,9 +350,13 @@ bool RunPayment(const size_t &thread_id){
 
   warehouse_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
+  planner::IndexScanPlan::IndexScanDesc warehouse_update_index_scan_desc(
+    warehouse_pkey_index, warehouse_key_column_ids, warehouse_expr_types,
+    warehouse_update_key_values, runtime_keys);
+
   planner::IndexScanPlan warehouse_update_index_scan_node(warehouse_table, nullptr,
     warehouse_update_column_ids,
-    warehouse_index_scan_desc);
+    warehouse_update_index_scan_desc);
 
   executor::IndexScanExecutor warehouse_update_index_scan_executor(&warehouse_update_index_scan_node, context.get());
 
