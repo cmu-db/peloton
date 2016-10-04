@@ -239,7 +239,7 @@ Operator PhysicalOuterHashJoin::make() {
 Operator QueryExpressionOperator::make(
     expression::AbstractExpression *expression) {
   QueryExpressionOperator *var = new QueryExpressionOperator;
-  var->expression_ = expression;
+  var->expression_.reset(expression);
   return Operator(var);
 }
 

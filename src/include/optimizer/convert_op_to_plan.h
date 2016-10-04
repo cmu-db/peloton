@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "optimizer/op_expression.h"
 #include "expression/abstract_expression.h"
+#include "optimizer/op_expression.h"
 #include "planner/abstract_plan.h"
 
 #include <memory>
@@ -23,8 +22,7 @@ namespace peloton {
 namespace optimizer {
 
 expression::AbstractExpression *ConvertOpExpressionToAbstractExpression(
-    std::shared_ptr<OpExpression> op_expr, std::vector<Column *> left_columns,
-    std::vector<Column *> right_columns);
+    std::shared_ptr<OpExpression> op_expr);
 
 planner::AbstractPlan *ConvertOpExpressionToPlan(
     std::shared_ptr<OpExpression> plan);

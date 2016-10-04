@@ -220,7 +220,7 @@ class QueryExpressionOperator : public OperatorNode<QueryExpressionOperator> {
  public:
   static Operator make(expression::AbstractExpression *expression);
 
-  expression::AbstractExpression *expression_;
+  std::unique_ptr<expression::AbstractExpression> expression_;
 };
 
 //===--------------------------------------------------------------------===//

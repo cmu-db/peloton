@@ -12,6 +12,8 @@
 
 #include <cmath>
 
+#include "expression/expression_util.h"
+
 #include "optimizer/convert_query_to_op.h"
 #include "optimizer/operators.h"
 #include "optimizer/query_node_visitor.h"
@@ -284,8 +286,14 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     // Add where predicate as a child OpExpression
     // LM: In the future we may want to remove this and change where predicate
     // to physical property.
+    expression::AbstractExpression *where_clause = nullptr;
+    if (op->where_clause != nullptr) {
+      where_clause = op->where_clause->Copy();
+      expression::ExpressionUtil::ReplaceColumnExpressions(schema,
+                                                           where_clause);
+    }
     auto predicate_expr = std::make_shared<OpExpression>(
-        QueryExpressionOperator::make(op->where_clause));
+        QueryExpressionOperator::make(where_clause));
     get_expr->PushChild(predicate_expr);
 
     // Add all attributes in output list as projection at top level
@@ -293,9 +301,17 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     project_expr->PushChild(get_expr);
     auto project_list = std::make_shared<OpExpression>(ExprProjectList::make());
     project_expr->PushChild(project_list);
+
+    expression::AbstractExpression *expression;
     for (auto &select_expr : *op->select_list) {
+      expression = nullptr;
+      if (select_expr != nullptr) {
+        expression = select_expr->Copy();
+        expression::ExpressionUtil::ReplaceColumnExpressions(schema,
+                                                             expression);
+      }
       project_list->PushChild(std::make_shared<OpExpression>(
-          QueryExpressionOperator::make(select_expr)));
+          QueryExpressionOperator::make(expression)));
     }
 
     output_expr = project_expr;

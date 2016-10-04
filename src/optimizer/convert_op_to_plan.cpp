@@ -25,123 +25,26 @@ namespace optimizer {
 
 namespace {
 
-std::tuple<oid_t, oid_t> FindRelativeIndex(
-    const std::vector<Column *> &left_columns,
-    const std::vector<Column *> &right_columns, const Column *column) {
-  assert(!(left_columns.empty() && right_columns.empty()));
-  for (size_t i = 0; i < left_columns.size(); ++i) {
-    if (column->ID() == left_columns[i]->ID()) {
-      return std::make_tuple(0, i);
-    }
-  }
-  for (size_t i = 0; i < right_columns.size(); ++i) {
-    if (column->ID() == right_columns[i]->ID()) {
-      return std::make_tuple(1, i);
-    }
-  }
-  return std::make_tuple(INVALID_OID, INVALID_OID);
-}
-
 class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
  public:
-  ExprOpToAbstractExpressionTransformer(
-      const std::vector<Column *> &left_columns,
-      const std::vector<Column *> &right_columns)
-      : left_columns(left_columns), right_columns(right_columns) {}
-
   expression::AbstractExpression *ConvertOpExpression(
       std::shared_ptr<OpExpression> op) {
     VisitOpExpression(op);
     return output_expr;
   }
 
-  void visit(const ExprVariable *var) override {
-    assert(!(left_columns.empty() && right_columns.empty()));
-    oid_t table_idx = INVALID_OID;
-    oid_t column_idx = INVALID_OID;
-    std::tie(table_idx, column_idx) =
-        FindRelativeIndex(left_columns, right_columns, var->column);
-    output_expr = expression::ExpressionUtil::TupleValueFactory(
-        common::Type::INVALID, table_idx, column_idx);
-  }
-
-  void visit(const ExprConstant *op) override {
-    output_expr = expression::ExpressionUtil::ConstantValueFactory(op->value);
-  }
-
-  void visit(const ExprCompare *op) override {
-    auto children = current_children;
-    assert(children.size() == 2);
-
-    std::vector<expression::AbstractExpression *> child_exprs;
-    for (std::shared_ptr<OpExpression> child : children) {
-      VisitOpExpression(child);
-      child_exprs.push_back(output_expr);
+  void visit(const QueryExpressionOperator *op) override {
+    if (op->expression_ != nullptr) {
+      output_expr = op->expression_->Copy();
     }
-    child_exprs.resize(2, nullptr);
-
-    output_expr = expression::ExpressionUtil::ComparisonFactory(
-        op->expr_type, child_exprs[0], child_exprs[1]);
-  }
-
-  void visit(const ExprBoolOp *op) override {
-    auto children = current_children;
-
-    std::list<expression::AbstractExpression *> child_exprs;
-    for (std::shared_ptr<OpExpression> child : children) {
-      VisitOpExpression(child);
-      child_exprs.push_back(output_expr);
-    }
-
-    switch (op->bool_type) {
-      case BoolOpType::Not: {
-        assert(children.size() == 1);
-        output_expr = expression::ExpressionUtil::OperatorFactory(
-            EXPRESSION_TYPE_OPERATOR_NOT, common::Type::INVALID,
-            child_exprs.front(), nullptr);
-      } break;
-      case BoolOpType::And: {
-        assert(children.size() > 0);
-        output_expr = expression::ExpressionUtil::ConjunctionFactory(
-            EXPRESSION_TYPE_CONJUNCTION_AND, child_exprs);
-      } break;
-      case BoolOpType::Or: {
-        assert(children.size() > 0);
-        output_expr = expression::ExpressionUtil::ConjunctionFactory(
-            EXPRESSION_TYPE_CONJUNCTION_OR, child_exprs);
-      } break;
-      default: { assert(false); }
-    }
-    assert(output_expr != nullptr);
-  }
-
-  void visit(const ExprOp *op) override {
-    auto children = current_children;
-
-    std::vector<expression::AbstractExpression *> child_exprs;
-    for (std::shared_ptr<OpExpression> child : children) {
-      VisitOpExpression(child);
-      child_exprs.push_back(output_expr);
-    }
-    child_exprs.resize(4, nullptr);
-
-    output_expr = expression::ExpressionUtil::OperatorFactory(
-        op->expr_type, common::Type::INVALID, child_exprs[0], child_exprs[1],
-        child_exprs[2], child_exprs[3]);
   }
 
  private:
   void VisitOpExpression(std::shared_ptr<OpExpression> op) {
-    std::vector<std::shared_ptr<OpExpression>> prev_children = current_children;
-    current_children = op->Children();
     op->Op().accept(this);
-    current_children = prev_children;
   }
 
-  expression::AbstractExpression *output_expr;
-  std::vector<std::shared_ptr<OpExpression>> current_children;
-  std::vector<Column *> left_columns;
-  std::vector<Column *> right_columns;
+  expression::AbstractExpression *output_expr = nullptr;
 };
 
 class OpToPlanTransformer : public OperatorVisitor {
@@ -296,8 +199,7 @@ class OpToPlanTransformer : public OperatorVisitor {
 
   expression::AbstractExpression *ConvertToAbstractExpression(
       std::shared_ptr<OpExpression> op) {
-    return ConvertOpExpressionToAbstractExpression(op, left_columns,
-                                                   right_columns);
+    return ConvertOpExpressionToAbstractExpression(op);
   }
 
   catalog::Schema *BuildSchemaFromColumns(std::vector<Column *> columns) {
@@ -308,6 +210,7 @@ class OpToPlanTransformer : public OperatorVisitor {
     return new catalog::Schema(schema_columns);
   }
 
+  /*
   planner::ProjectInfo *BuildProjectInfoFromColumns(
       std::vector<Column *> columns) {
     DirectMapList dm_list;
@@ -322,7 +225,7 @@ class OpToPlanTransformer : public OperatorVisitor {
       dm_list.push_back({col_id, {table_idx, column_idx}});
     }
     return new planner::ProjectInfo({}, std::move(dm_list));
-  }
+  }*/
 
   planner::ProjectInfo *BuildProjectInfoFromExprs(
       std::vector<expression::AbstractExpression *> exprs) {
@@ -348,10 +251,8 @@ class OpToPlanTransformer : public OperatorVisitor {
 }
 
 expression::AbstractExpression *ConvertOpExpressionToAbstractExpression(
-    std::shared_ptr<OpExpression> op_expr, std::vector<Column *> left_columns,
-    std::vector<Column *> right_columns) {
-  ExprOpToAbstractExpressionTransformer transformer(left_columns,
-                                                    right_columns);
+    std::shared_ptr<OpExpression> op_expr) {
+  ExprOpToAbstractExpressionTransformer transformer;
   return transformer.ConvertOpExpression(op_expr);
 }
 
