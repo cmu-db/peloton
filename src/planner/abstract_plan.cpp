@@ -17,8 +17,8 @@
 #include <string>
 #include <utility>
 
-#include "common/types.h"
 #include "common/logger.h"
+#include "common/types.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
@@ -62,6 +62,14 @@ const std::string AbstractPlan::GetInfo() const {
   return os.str();
 }
 
+void AbstractPlan::SetParameterValues(std::vector<common::Value *> *values) {
+  LOG_TRACE("Setting parameter values in all child plans of %s",
+            GetInfo().c_str());
+  for (auto &child_plan : GetChildren()) {
+    child_plan->SetParameterValues(values);
+  }
+};
+
 /**
  * This function replaces all COLUMN_REF expressions with TupleValue expressions
  */
@@ -89,9 +97,10 @@ void AbstractPlan::ReplaceColumnExpressions(
   }
 
   if (expression->GetRight() != nullptr) {
-    LOG_TRACE("Right Type --> %s",
-              ExpressionTypeToString(
-                  expression->GetRight()->GetExpressionType()).c_str());
+    LOG_TRACE(
+        "Right Type --> %s",
+        ExpressionTypeToString(expression->GetRight()->GetExpressionType())
+            .c_str());
     if (expression->GetRight()->GetExpressionType() ==
         EXPRESSION_TYPE_COLUMN_REF) {
       auto expr = expression->GetModifiableRight();

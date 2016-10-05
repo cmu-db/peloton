@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -70,8 +69,6 @@ class MergeJoinPlan : public AbstractJoinPlan {
   }
 
   const std::string GetInfo() const { return "MergeJoin"; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<JoinClause> new_join_clauses;

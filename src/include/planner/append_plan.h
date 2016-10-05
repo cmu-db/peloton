@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "abstract_plan.h"
@@ -32,8 +31,6 @@ class AppendPlan : public AbstractPlan {
   AppendPlan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_APPEND; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   const std::string GetInfo() const { return "Append"; }
 
