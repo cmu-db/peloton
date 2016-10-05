@@ -37,13 +37,14 @@ DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
 
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
   auto catalog = catalog::Catalog::GetInstance();
-
-  DataTable *table =
-      (DataTable *)catalog->GetTableWithOid(database_oid, table_oid);
-
-  if (table == nullptr) return false;
-
-  delete table;
+  try {
+    DataTable *table =
+        (DataTable *)catalog->GetTableWithOid(database_oid, table_oid);
+    delete table;
+  }
+  catch (CatalogException &e) {
+    return false;
+  }
   return true;
 }
 

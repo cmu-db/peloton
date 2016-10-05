@@ -151,6 +151,7 @@ class DataTable : public AbstractTable {
 
   void AddIndex(std::shared_ptr<index::Index> index);
 
+  // Throw CatalogException if not such index is found
   std::shared_ptr<index::Index> GetIndexWithOid(const oid_t &index_oid);
 
   void DropIndexWithOid(const oid_t &index_oid);

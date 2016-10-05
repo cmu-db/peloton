@@ -18,6 +18,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"
+#include "common/exception.h"
 #include "catalog/foreign_key.h"
 #include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -828,7 +829,10 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
       break;
     }
   }
-
+  if (ret_index == nullptr) {
+    throw CatalogException("No index with oid = " + std::to_string(index_oid) +
+                           " is found");
+  }
   return ret_index;
 }
 

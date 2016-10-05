@@ -96,9 +96,11 @@ class Catalog {
                    concurrency::Transaction *txn);
 
   // Find a database using its id
+  // Throw CatalogException if not found
   storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
 
   // Find a database using its name
+  // Throw CatalogException if not found
   storage::Database *GetDatabaseWithName(const std::string db_name) const;
 
   // Find a database using vector offset
