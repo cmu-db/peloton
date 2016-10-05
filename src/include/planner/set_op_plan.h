@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "abstract_plan.h"
@@ -40,8 +39,6 @@ class SetOpPlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SETOP; }
 
   const std::string GetInfo() const { return "SetOp"; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new SetOpPlan(set_op_));

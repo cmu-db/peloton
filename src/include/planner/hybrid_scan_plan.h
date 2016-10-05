@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include "common/types.h"
+#include "expression/abstract_expression.h"
+#include "index/index.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
-#include "index/index.h"
-#include "common/types.h"
-#include "expression/abstract_expression.h"
 
 namespace peloton {
 
@@ -25,7 +25,7 @@ namespace peloton {
 namespace index {
 class IndexScanPredicate;
 }
-  
+
 namespace planner {
 
 class HybridScanPlan : public AbstractScan {
@@ -42,13 +42,10 @@ class HybridScanPlan : public AbstractScan {
                  HybridScanType hybrid_scan_type);
 
   ~HybridScanPlan() {
-    for (auto val : values_)
-      delete val;
+    for (auto val : values_) delete val;
   }
 
   std::shared_ptr<index::Index> GetDataIndex() const { return index_; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
@@ -65,7 +62,7 @@ class HybridScanPlan : public AbstractScan {
   const std::vector<ExpressionType> &GetExprTypes() const {
     return expr_types_;
   }
-  
+
   const index::IndexScanPredicate &GetIndexPredicate() const {
     return index_predicate_;
   }
@@ -79,7 +76,6 @@ class HybridScanPlan : public AbstractScan {
   HybridScanType GetHybridType() const { return type_; }
 
  private:
-
   HybridScanType type_ = HYBRID_SCAN_TYPE_INVALID;
 
   const std::vector<oid_t> column_ids_;

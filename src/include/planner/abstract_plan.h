@@ -12,19 +12,19 @@
 
 #pragma once
 
-#include <iostream>
-#include <memory>
 #include <cstdint>
-#include <vector>
+#include <iostream>
 #include <map>
+#include <memory>
+#include <vector>
 #include <vector>
 
+#include "catalog/schema.h"
 #include "common/printable.h"
+#include "common/serializeio.h"
+#include "common/serializer.h"
 #include "common/types.h"
 #include "common/value.h"
-#include "common/serializer.h"
-#include "common/serializeio.h"
-#include "catalog/schema.h"
 
 namespace peloton {
 
@@ -77,7 +77,7 @@ class AbstractPlan : public Printable {
   virtual PlanNodeType GetPlanNodeType() const = 0;
 
   // Setting values of the parameters in the prepare statement
-  virtual void SetParameterValues(std::vector<common::Value *> *values) = 0;
+  virtual void SetParameterValues(std::vector<common::Value *> *values);
 
   //===--------------------------------------------------------------------===//
   // Utilities
