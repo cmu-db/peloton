@@ -63,7 +63,8 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
     col_id = schema->GetColumnID(std::string(update->column));
     column_ids.push_back(col_id);
     auto update_expr = update->value->Copy();
-    ReplaceColumnExpressions(target_table_->GetSchema(), update_expr);
+    expression::ExpressionUtil::ReplaceColumnExpressions(
+        target_table_->GetSchema(), update_expr);
     tlist.emplace_back(col_id, update_expr);
   }
 
@@ -84,7 +85,8 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   project_info_ = std::move(project_info);
 
   where_ = parse_tree->where->Copy();
-  ReplaceColumnExpressions(target_table_->GetSchema(), where_);
+  expression::ExpressionUtil::ReplaceColumnExpressions(
+      target_table_->GetSchema(), where_);
 }
 
 // Creates the update plan with sequential scan.
@@ -133,7 +135,8 @@ void UpdatePlan::SetParameterValues(std::vector<common::Value *> *values) {
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);
     auto update_expr = update->value->Copy();
-    ReplaceColumnExpressions(target_table_->GetSchema(), update_expr);
+    expression::ExpressionUtil::ReplaceColumnExpressions(
+        target_table_->GetSchema(), update_expr);
     tlist.emplace_back(col_id, update_expr);
   }
 

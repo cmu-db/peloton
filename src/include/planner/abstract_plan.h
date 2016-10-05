@@ -111,10 +111,6 @@ class AbstractPlan : public Printable {
   // only used by its derived classes (when deserialization)
   AbstractPlan *Parent() { return parent_; }
 
-  // Convert COLUMN_REF in AbstractExpression to TupleValueExpression
-  void ReplaceColumnExpressions(catalog::Schema *schema,
-                                expression::AbstractExpression *expression);
-
  private:
   // A plan node can have multiple children
   std::vector<std::unique_ptr<AbstractPlan>> children_;
