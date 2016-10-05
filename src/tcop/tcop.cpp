@@ -144,8 +144,8 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
       final_status.m_result = temp_status.m_result;
     final_status.m_result_slots = nullptr;
 
-    result.insert(result.end(), exchg_params_list[i]->results.begin(),
-                  exchg_params_list[i]->results.end());
+    result.insert(result.end(), exchg_params_list[i]->result.begin(),
+                  exchg_params_list[i]->result.end());
   }
 
   return final_status;
