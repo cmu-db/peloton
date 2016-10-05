@@ -10,23 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
 #include <vector>
 
-#include "expression/constant_value_expression.h"
-#include "expression/parameter_value_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/operator_expression.h"
+#include "catalog/schema.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/string_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/parameter_value_expression.h"
 #include "expression/parser_expression.h"
-#include "catalog/schema.h"
+#include "expression/string_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace expression {
@@ -46,27 +45,31 @@ class ExpressionUtil {
       return nullptr;
     }
     LOG_TRACE("Column id in table: %u", column_id);
-    expression::TupleValueExpression *expr = new expression::TupleValueExpression(
-        schema->GetType(column_id), 0, column_id);
+    expression::TupleValueExpression *expr =
+        new expression::TupleValueExpression(schema->GetType(column_id), 0,
+                                             column_id);
     return expr;
   }
 
   /**
-   * This function converts each ParameterValueExpression in an expression tree to
+   * This function converts each ParameterValueExpression in an expression tree
+   * to
    * a value from the value vector
    */
   static void ConvertParameterExpressions(
-      expression::AbstractExpression *expression, std::vector<Value*> *values,
+      expression::AbstractExpression *expression, std::vector<Value *> *values,
       catalog::Schema *schema) {
     LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
     if (expression->GetLeft()) {
-      LOG_TRACE("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
+      LOG_TRACE("expression->left: %s",
+                expression->GetLeft()->GetInfo().c_str());
       if (expression->GetLeft()->GetExpressionType() ==
           EXPRESSION_TYPE_VALUE_PARAMETER) {
         // left expression is parameter
         auto left = (ParameterValueExpression *)expression->GetLeft();
-        auto value = new ConstantValueExpression(*values->at(left->GetValueIdx()));
+        auto value =
+            new ConstantValueExpression(*values->at(left->GetValueIdx()));
         LOG_TRACE("left in vector type: %s",
                   values->at(left->GetValueIdx())->GetInfo().c_str());
         LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
@@ -91,12 +94,62 @@ class ExpressionUtil {
         auto value =
             new ConstantValueExpression(*values->at(right->GetValueIdx()));
         LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
-                  std::unique_ptr<common::Value>(value->GetValue())->GetInfo().c_str());
+                  std::unique_ptr<common::Value>(value->GetValue())
+                      ->GetInfo()
+                      .c_str());
         delete right;
         expression->setRightExpression(value);
       } else {
         ConvertParameterExpressions(expression->GetModifiableRight(), values,
                                     schema);
+      }
+    }
+  }
+
+  /**
+   * This function replaces all COLUMN_REF expressions with TupleValue
+   * expressions
+   */
+  static void ReplaceColumnExpressions(
+      catalog::Schema *schema, expression::AbstractExpression *expression) {
+    LOG_TRACE("Expression Type --> %s",
+              ExpressionTypeToString(expression->GetExpressionType()).c_str());
+    if (expression->GetLeft() != nullptr) {
+      LOG_TRACE(
+          "Left Type --> %s",
+          ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
+              .c_str());
+      if (expression->GetLeft()->GetExpressionType() ==
+          EXPRESSION_TYPE_COLUMN_REF) {
+        auto expr = expression->GetModifiableLeft();
+        std::string col_name(expr->GetName());
+        LOG_TRACE("Column name: %s", col_name.c_str());
+        delete expr;
+        expression->setLeftExpression(
+            expression::ExpressionUtil::ConvertToTupleValueExpression(
+                schema, col_name));
+
+      } else {
+        ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
+      }
+    }
+
+    if (expression->GetRight() != nullptr) {
+      LOG_TRACE(
+          "Right Type --> %s",
+          ExpressionTypeToString(expression->GetRight()->GetExpressionType())
+              .c_str());
+      if (expression->GetRight()->GetExpressionType() ==
+          EXPRESSION_TYPE_COLUMN_REF) {
+        auto expr = expression->GetModifiableRight();
+        std::string col_name(expr->GetName());
+        LOG_TRACE("Column name: %s", col_name.c_str());
+        delete expr;
+        expression->setRightExpression(
+            expression::ExpressionUtil::ConvertToTupleValueExpression(
+                schema, col_name));
+      } else {
+        ReplaceColumnExpressions(schema, expression->GetModifiableRight());
       }
     }
   }
@@ -118,8 +171,8 @@ class ExpressionUtil {
   }
 
   static AbstractExpression *ConjunctionFactory(ExpressionType type,
-                                               AbstractExpression *left,
-                                               AbstractExpression *right) {
+                                                AbstractExpression *left,
+                                                AbstractExpression *right) {
     return new ConjunctionExpression(type, left, right);
   }
 
@@ -130,12 +183,10 @@ class ExpressionUtil {
     return new OperatorExpression(type, value_type, left, right);
   }
 
-  static AbstractExpression *OperatorFactory(ExpressionType type,
-                                             common::Type::TypeId value_type,
-                                             AbstractExpression *expr1,
-                                             AbstractExpression *expr2,
-                                             AbstractExpression *expr3,
-                            UNUSED_ATTRIBUTE AbstractExpression *expr4) {
+  static AbstractExpression *OperatorFactory(
+      ExpressionType type, common::Type::TypeId value_type,
+      AbstractExpression *expr1, AbstractExpression *expr2,
+      AbstractExpression *expr3, UNUSED_ATTRIBUTE AbstractExpression *expr4) {
     switch (type) {
       case (EXPRESSION_TYPE_ASCII):
         return new AsciiExpression(expr1);
@@ -164,7 +215,8 @@ class ExpressionUtil {
     }
   }
 
-  static AbstractExpression *ConjunctionFactory(ExpressionType type,
+  static AbstractExpression *ConjunctionFactory(
+      ExpressionType type,
       const std::list<expression::AbstractExpression *> &child_exprs) {
     if (child_exprs.empty())
       return new ConstantValueExpression(common::BooleanValue(1));
@@ -177,6 +229,5 @@ class ExpressionUtil {
     return left;
   }
 };
-
 }
 }
