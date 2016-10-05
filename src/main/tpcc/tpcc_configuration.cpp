@@ -13,6 +13,7 @@
 
 #include <iomanip>
 #include <algorithm>
+#include <fstream>
 
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "common/logger.h"
@@ -206,6 +207,46 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
   LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
 }
+
+
+
+void WriteOutput() {
+  std::ofstream out("outputfile.summary");
+
+  oid_t total_profile_memory = 0;
+  for (auto &entry : state.profile_memory) {
+    total_profile_memory += entry;
+  }
+
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%lf %d %d :: %lf %lf %d",
+           state.scale_factor,
+           state.backend_count,
+           state.warehouse_count,
+           state.throughput,
+           state.abort_rate,
+           total_profile_memory);
+
+  out << state.scale_factor << " ";
+  out << state.backend_count << " ";
+  out << state.warehouse_count << " ";
+  out << state.throughput << " ";
+  out << state.abort_rate << " ";
+  out << total_profile_memory << "\n";
+
+  for (size_t round_id = 0; round_id < state.profile_throughput.size();
+       ++round_id) {
+    out << "[" << std::setw(3) << std::left
+        << state.profile_duration * round_id << " - " << std::setw(3)
+        << std::left << state.profile_duration * (round_id + 1)
+        << " s]: " << state.profile_throughput[round_id] << " "
+        << state.profile_abort_rate[round_id] << " "
+        << state.profile_memory[round_id] << "\n";
+  }
+  out.flush();
+  out.close();
+}
+
 
 }  // namespace tpcc
 }  // namespace benchmark

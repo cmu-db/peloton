@@ -65,27 +65,23 @@ namespace logger {
 #define LOGGING_TESTS_DATABASE_OID 20000
 #define LOGGING_TESTS_TABLE_OID 10000
 
-std::ofstream out("outputfile.summary");
-
-static void WriteOutput(double value) {
+void WriteOutput() {
+  std::ofstream out("outputfile-log.summary");
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %lf %d %d %d %d %d %d %d :: %lf", state.benchmark_type,
-           state.logging_type, ycsb::state.update_ratio,
-           ycsb::state.backend_count, ycsb::state.scale_factor,
-           ycsb::state.duration, state.nvm_latency, state.pcommit_latency,
-           state.flush_mode, state.asynchronous_mode, value);
+  LOG_INFO("%d %d %d %d %d %d", 
+           state.benchmark_type,
+           state.logging_type,
+           state.nvm_latency, 
+           state.pcommit_latency,
+           state.flush_mode, 
+           state.asynchronous_mode);
 
   out << state.benchmark_type << " ";
   out << state.logging_type << " ";
-  out << ycsb::state.update_ratio << " ";
-  out << ycsb::state.scale_factor << " ";
-  out << ycsb::state.backend_count << " ";
-  out << ycsb::state.duration << " ";
   out << state.nvm_latency << " ";
   out << state.pcommit_latency << " ";
   out << state.flush_mode << " ";
-  out << state.asynchronous_mode << " ";
-  out << value << "\n";
+  out << state.asynchronous_mode << "\n";
   out.flush();
 }
 
@@ -101,7 +97,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
 }
 
 void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
-  // PrepareLogFile();
+
   auto& log_manager = logging::LogManager::GetInstance();
 
   if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
@@ -259,10 +255,16 @@ bool PrepareLogFile() {
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
   log_manager.SetLogDirectoryName(state.log_file_dir);
-  log_manager.SetLogFileName(state.log_file_dir + "/" +
-                             logging::WriteBehindFrontendLogger::wbl_log_path);
 
-  auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
+  if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
+    log_manager.SetLogFileName(state.log_file_dir + "/" +
+                               logging::WriteAheadFrontendLogger::wal_directory_path);
+  } else {
+    LOG_ERROR("currently, we do not support write behind logging.");
+    PL_ASSERT(false);
+  }
+
+  UNUSED_ATTRIBUTE auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
 
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");
@@ -322,17 +324,10 @@ bool PrepareLogFile() {
     }
   }
 
-  // Pick metrics based on benchmark type
-  double throughput = 0;
   if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
-    throughput = ycsb::state.throughput;
+    ycsb::WriteOutput();
   } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
-    throughput = tpcc::state.throughput;
-  }
-
-  // Log the build log time
-  if (state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
-    WriteOutput(throughput);
+    tpcc::WriteOutput();
   }
 
   return true;
@@ -394,10 +389,14 @@ void DoRecovery() {
     cp_thread.join();
   }
 
-  // Recovery time (in ms)
-  if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
-    WriteOutput(timer.GetDuration());
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::WriteOutput();
+  } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
+    tpcc::WriteOutput();
   }
+
+  // Recovery time (in ms)
+  LOG_INFO("recovery time: %lf", timer.GetDuration());
 }
 
 //===--------------------------------------------------------------------===//

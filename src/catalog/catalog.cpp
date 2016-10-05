@@ -27,15 +27,13 @@ Catalog *Catalog::GetInstance(void) {
 
 Catalog::Catalog() {
   CreateCatalogDatabase();
-  auto result = CreateDatabase(DEFAULT_DB_NAME, nullptr);
-  if (result == RESULT_SUCCESS) {
-    // create metrics table in default database
-    CreateMetricsCatalog();
-  }
+
+  // Create metrics table in default database
+  CreateMetricsCatalog();
 }
 
 void Catalog::CreateMetricsCatalog() {
-  auto default_db = GetDatabaseWithName(DEFAULT_DB_NAME);
+  auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
   auto default_db_oid = default_db->GetOid();
 
   // Create table for database metrics
@@ -554,19 +552,19 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   auto id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
   id_column.AddConstraint(not_null_constraint);
-  auto txn_aborted_column =
-      catalog::Column(integer_type, integer_type_size, "txn_aborted", true);
-  txn_aborted_column.AddConstraint(not_null_constraint);
   auto txn_committed_column =
       catalog::Column(integer_type, integer_type_size, "txn_committed", true);
   txn_committed_column.AddConstraint(not_null_constraint);
+  auto txn_aborted_column =
+      catalog::Column(integer_type, integer_type_size, "txn_aborted", true);
+  txn_aborted_column.AddConstraint(not_null_constraint);
 
   auto timestamp_column =
       catalog::Column(integer_type, integer_type_size, "time_stamp", true);
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {id_column, txn_aborted_column, txn_committed_column, timestamp_column}));
+      {id_column, txn_committed_column, txn_aborted_column, timestamp_column}));
   return database_schema;
 }
 
@@ -697,7 +695,6 @@ oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 oid_t Catalog::GetNextOid() { return oid_++; }
 
 Catalog::~Catalog() {
-  delete GetDatabaseWithName(DEFAULT_DB_NAME);
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
   delete pool_;

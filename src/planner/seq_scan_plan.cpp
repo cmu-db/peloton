@@ -53,7 +53,8 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   LOG_DEBUG("Creating a Sequential Scan Plan");
   auto target_table = static_cast<storage::DataTable *>(
       catalog::Catalog::GetInstance()->GetTableWithName(
-          DEFAULT_DB_NAME, select_node->from_table->name));
+          select_node->from_table->GetDatabaseName(),
+          select_node->from_table->GetTableName()));
   SetTargetTable(target_table);
   ColumnIds().clear();
   // Check if there is an aggregate function in query

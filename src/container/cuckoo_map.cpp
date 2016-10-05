@@ -21,12 +21,13 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class TileGroup;
 }
 
 namespace stats {
 class BackendStatsContext;
+class IndexMetric;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
@@ -60,8 +61,7 @@ bool CUCKOO_MAP_TYPE::Erase(const KeyType &key){
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Find(const KeyType &key,
-                           ValueType& value){
+bool CUCKOO_MAP_TYPE::Find(const KeyType &key, ValueType &value) const {
 
   auto status = cuckoo_map.find(key, value);
   LOG_TRACE("find status : %d", status);
@@ -97,5 +97,7 @@ template class CuckooMap<oid_t, std::shared_ptr<oid_t>>;
 
 template class CuckooMap<std::thread::id,
                          std::shared_ptr<stats::BackendStatsContext>>;
+
+template class CuckooMap<oid_t, std::shared_ptr<stats::IndexMetric>>;
 
 }  // End peloton namespace

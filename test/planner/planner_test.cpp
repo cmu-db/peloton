@@ -51,9 +51,12 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   parser::DeleteStatement *delete_statement = new parser::DeleteStatement();
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  delete_statement->table_name = name;
-  //Value val =
-  //    common::ValueFactory::GetNullValue();  // The value is not important at this point
+  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
+                                                     name, nullptr);
+  delete_statement->table_name = table_name;
+  // Value val =
+  //    common::ValueFactory::GetNullValue();  // The value is not important at
+  // this point
 
   // id = $0
   auto parameter_expr = new expression::ParameterValueExpression(0);
@@ -111,12 +114,16 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   parser::UpdateStatement *update_statement = new parser::UpdateStatement();
   parser::TableRef *table_ref =
       new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
+
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  table_ref->name = name;
+  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
+                                                     name, nullptr);
+  table_ref->table_name = table_name;
   update_statement->table = table_ref;
-  //Value val =
-  //    common::ValueFactory::GetNullValue();  // The value is not important at this point
+  // Value val =
+  //    common::ValueFactory::GetNullValue();  // The value is not important at
+  // this point
 
   // name = $0
   auto update = new parser::UpdateClause();
@@ -184,14 +191,18 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   // INSERT INTO department_table VALUES ($0, $1)
   auto insert_statement =
       new parser::InsertStatement(peloton::INSERT_TYPE_VALUES);
+
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  insert_statement->table_name = name;
+  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
+                                                     name, nullptr);
+  insert_statement->table_name = table_name;
   std::vector<char *> *columns = NULL;  // will not be used
   insert_statement->columns = columns;
 
-  //Value val =
-  //    common::ValueFactory::GetNullValue();  // The value is not important at this point
+  // Value val =
+  //    common::ValueFactory::GetNullValue();  // The value is not important at
+  // this point
   auto parameter_expr_1 = new expression::ParameterValueExpression(0);
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
   auto parameter_exprs = new std::vector<expression::AbstractExpression *>();

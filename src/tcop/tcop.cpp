@@ -12,21 +12,21 @@
 
 #include "tcop/tcop.h"
 
-#include "common/macros.h"
-#include "common/portal.h"
-#include "common/logger.h"
-#include "common/types.h"
-#include "common/type.h"
 #include "common/abstract_tuple.h"
 #include "common/config.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/portal.h"
+#include "common/type.h"
+#include "common/types.h"
 
 #include "expression/parser_expression.h"
 
 #include "parser/parser.h"
 
-#include "optimizer/simple_optimizer.h"
-#include "executor/plan_executor.h"
 #include "catalog/catalog.h"
+#include "executor/plan_executor.h"
+#include "optimizer/simple_optimizer.h"
 
 #include "common/thread_pool.h"
 #include <include/common/init.h>
@@ -67,8 +67,9 @@ Result TrafficCop::ExecuteStatement(
 
   // Then, execute the statement
   bool unnamed = true;
-  auto status =
-      ExecuteStatement(statement, unnamed, result, rows_changed, error_message);
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  auto status = ExecuteStatement(statement, unnamed, result_format, result,
+                                 rows_changed, error_message);
 
   if (status == Result::RESULT_SUCCESS) {
     LOG_TRACE("Execution succeeded!");
@@ -82,23 +83,24 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
-
-  boost::promise<bridge::peloton_status> p;
-  boost::unique_future<bridge::peloton_status> f = p.get_future();
+    UNUSED_ATTRIBUTE const bool unnamed, const std::vector<int> &result_format,
+    std::vector<ResultType> &result, int &rows_changed,
+    UNUSED_ATTRIBUTE std::string &error_message) {
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
   }
 
-  LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of name: %s",
+            statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of query: %s",
+            statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 
   auto status = ExchangeOperator(statement->GetPlanTree().get(),
-                                 params, result);
+                                 params, result, result_format);
 
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
 
@@ -109,7 +111,7 @@ Result TrafficCop::ExecuteStatement(
 bridge::peloton_status TrafficCop::ExchangeOperator(
     const planner::AbstractPlan *plan,
     const std::vector<common::Value *> &params,
-    std::vector<ResultType>& result) {
+    std::vector<ResultType>& result, const std::vector<int> &result_format) {
 
   std::vector<std::shared_ptr<bridge::ExchangeParams>> exchg_params_list;
   int num_executor_threads = 1;
@@ -125,7 +127,7 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
   for(int i=0; i<num_executor_threads; i++) {
     // in first pass make the exch params list
     std::shared_ptr<bridge::ExchangeParams> exchg_params(
-        new bridge::ExchangeParams(plan, params, num_executor_threads, i));
+        new bridge::ExchangeParams(plan, params, num_executor_threads, i, result_format));
     exchg_params->self = exchg_params.get();
     exchg_params_list.push_back(exchg_params);
     executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanLocal,
@@ -142,10 +144,8 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
       final_status.m_result = temp_status.m_result;
     final_status.m_result_slots = nullptr;
 
-    // FIXME: This is simple coalescing of results which will have
-    // out-of-order tuples
-    result.insert(result.end(), exchg_params_list[i]->results.begin(),
-                  exchg_params_list[i]->results.end());
+    result.insert(result.end(), exchg_params_list[i]->result.begin(),
+                  exchg_params_list[i]->result.end());
   }
 
   return final_status;
@@ -156,7 +156,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     UNUSED_ATTRIBUTE std::string &error_message) {
   std::shared_ptr<Statement> statement;
 
-  LOG_TRACE("Prepare Statement %s", query_string.c_str());
+  LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
+  LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
   statement.reset(new Statement(statement_name, query_string));
 
@@ -175,13 +176,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_TRACE("Statement Prepared!");
+  LOG_DEBUG("Statement Prepared!");
   return std::move(statement);
 }
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     std::string query) {
-
   std::vector<FieldInfoType> tuple_descriptor;
 
   // Set up parser
@@ -189,6 +189,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   auto sql_stmt = peloton_parser.BuildParseTree(query);
 
   auto first_stmt = sql_stmt->GetStatement(0);
+
+  if (first_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
 
   // Get the Select Statement
   auto select_stmt = (parser::SelectStatement *)first_stmt;
@@ -201,7 +203,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   if (select_stmt->from_table->list == NULL) {
     target_table = static_cast<storage::DataTable *>(
         catalog::Catalog::GetInstance()->GetTableWithName(
-            DEFAULT_DB_NAME, select_stmt->from_table->name));
+            select_stmt->from_table->GetDatabaseName(),
+            select_stmt->from_table->GetTableName()));
   }
 
   // Query has multiple tables
@@ -211,8 +214,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   else {
     for (auto table : *select_stmt->from_table->list) {
       target_table = static_cast<storage::DataTable *>(
-          catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                            table->name));
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              table->GetDatabaseName(), table->GetTableName()));
       break;
     }
   }
@@ -232,7 +235,6 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
 
     // if query has only certain columns
     if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
-
       // Get the column name
       auto col_name = expr->GetName();
 
@@ -273,25 +275,26 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   return tuple_descriptor;
 }
 
-FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , common::Type::TypeId column_type){
-  if(column_type == common::Type::INTEGER){
-    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_INTEGER , 4);
+FieldInfoType TrafficCop::GetColumnFieldForValueType(
+    std::string column_name, common::Type::TypeId column_type) {
+  if (column_type == common::Type::INTEGER) {
+    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
   }
 
-  if(column_type == common::Type::DECIMAL){
-    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DOUBLE , 8);
+  if (column_type == common::Type::DECIMAL) {
+    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
   }
 
-  if(column_type == common::Type::VARCHAR){
-    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
+  if (column_type == common::Type::VARCHAR) {
+    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
   }
 
-  if(column_type == common::Type::DECIMAL){
-    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DECIMAL , 16);
+  if (column_type == common::Type::DECIMAL) {
+    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16);
   }
 
-  if(column_type == common::Type::TIMESTAMP){
-    return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TIMESTAMPS , 64);
+  if (column_type == common::Type::TIMESTAMP) {
+    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
   }
 
   // Type not Identified
@@ -302,7 +305,6 @@ FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , c
 
 FieldInfoType TrafficCop::GetColumnFieldForAggregates(
     std::string name, ExpressionType expr_type) {
-
   // For now we only return INT for (MAX , MIN)
   // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
 

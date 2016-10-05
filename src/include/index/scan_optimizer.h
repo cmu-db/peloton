@@ -14,9 +14,9 @@
 
 #include <vector>
 
-#include "index/index.h"
-#include "common/logger.h"
 #include "catalog/schema.h"
+#include "common/logger.h"
+#include "index/index.h"
 #include "storage/tuple.h"
 
 #include "index/index_util.h"
@@ -97,10 +97,10 @@ class ConjunctionScanPredicate {
   /*
    * Construction - Initializes boundary keys
    */
-  ConjunctionScanPredicate(Index *index_p, const std::vector<common::Value *> &value_list,
+  ConjunctionScanPredicate(Index *index_p,
+                           const std::vector<common::Value *> &value_list,
                            const std::vector<oid_t> &tuple_column_id_list,
                            const std::vector<ExpressionType> &expr_list) {
-
     // It contains a pointer to the index key schema
     IndexMetadata *metadata_p = index_p->GetMetadata();
 
@@ -260,7 +260,6 @@ class ConjunctionScanPredicate {
                              const std::vector<common::Value *> &value_list,
                              const std::vector<oid_t> &tuple_column_id_list,
                              const std::vector<ExpressionType> &expr_list) {
-
     // This must hold for all cases
     PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
 
@@ -275,7 +274,7 @@ class ConjunctionScanPredicate {
     // value_index_list should be of the same length as the index key
     // schema, since it maps index key column to indices inside value_list
     PL_ASSERT(metadata_p->GetColumnCount() == value_index_list_.size());
-    
+
     LOG_TRACE("Constructing scan interval. Point query = %d", is_point_query_);
 
     // For each column in the index key, if there is not a bound
@@ -286,7 +285,8 @@ class ConjunctionScanPredicate {
 
       // We use the type of the current index key column to get the
       // +Inf, -Inf and/or casted type for Value object
-      common::Type::TypeId index_key_column_type = metadata_p->GetKeySchema()->GetType(i);
+      common::Type::TypeId index_key_column_type =
+          metadata_p->GetKeySchema()->GetType(i);
 
       // If the lower bound of this column is not specified by the predicate
       // then we fill it with the minimum
@@ -316,9 +316,7 @@ class ConjunctionScanPredicate {
 
       // Only bind the second half if point query is false
       if (is_point_query_ == false) {
-
         if (index_pair.second == INVALID_OID) {
-
           // We set the value using index's varlen pool, if any VARCHAR is
           // involved (this is OK since the routine only runs for once)
           std::unique_ptr<common::Value> val(
@@ -329,7 +327,7 @@ class ConjunctionScanPredicate {
               index_p, *value_list[index_pair.second], high_key_p_, i);
 
           if (bind_ret != INVALID_OID) {
-            LOG_INFO("High key for column %u needs late binding!", i);
+            LOG_TRACE("High key for column %u needs late binding!", i);
 
             // The first element is index, and the second element
             // is the return value, which is the future index in the
@@ -390,7 +388,8 @@ class ConjunctionScanPredicate {
    *
    * NOTE 3: This function could not be called if full_index_scan if true
    */
-  void LateBindValues(Index *index_p, const std::vector<common::Value *> &value_list) {
+  void LateBindValues(Index *index_p,
+                      const std::vector<common::Value *> &value_list) {
     PL_ASSERT(full_index_scan_ == false);
 
     // Bind values to low key and high key respectively
@@ -540,7 +539,8 @@ class IndexScanPredicate {
    * this function simply return, since there is no point updating the low
    * key and high key with full index scan
    */
-  void LateBindValues(Index *index_p, const std::vector<common::Value *> &value_list) {
+  void LateBindValues(Index *index_p,
+                      const std::vector<common::Value *> &value_list) {
     if (full_index_scan_ == true) {
       LOG_INFO("Fast path: For full index scan do not bind");
 

@@ -22,7 +22,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.HelpFormatter;
 
 public class ExchangeTest {
-    private final String url = "jdbc:postgresql://localhost:5432/";
+    private final String url = "jdbc:postgresql://localhost:54321/";
     private final String username = "postgres";
     private final String pass = "postgres";
 

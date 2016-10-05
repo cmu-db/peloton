@@ -12,21 +12,21 @@
 
 #include <cstdio>
 
+#include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "catalog/catalog.h"
-#include "planner/create_plan.h"
-#include "planner/insert_plan.h"
-#include "planner/delete_plan.h"
-#include "planner/update_plan.h"
 #include "executor/create_executor.h"
-#include "executor/insert_executor.h"
 #include "executor/delete_executor.h"
-#include "executor/update_executor.h"
+#include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
-#include "parser/parser.h"
+#include "executor/update_executor.h"
 #include "optimizer/simple_optimizer.h"
+#include "parser/parser.h"
+#include "planner/create_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/update_plan.h"
 
 #include "gtest/gtest.h"
 
@@ -40,7 +40,6 @@ namespace test {
 class UpdateTests : public PelotonTest {};
 
 TEST_F(UpdateTests, Updating) {
-
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Catalog::GetInstance();
   catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
@@ -49,9 +48,11 @@ TEST_F(UpdateTests, Updating) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "dept_id", true);
   auto manager_id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "manager_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "manager_id", true);
   auto name_column =
       catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
 
@@ -61,13 +62,14 @@ TEST_F(UpdateTests, Updating) {
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", std::move(table_schema),
+  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
+                           std::move(table_schema),
                            CreateType::CREATE_TYPE_TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
   txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1 + 4);
+  EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
   LOG_INFO("Table created!");
 
@@ -92,12 +94,15 @@ TEST_F(UpdateTests, Updating) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
-  std::vector<common::Value *> params;
+  std::vector<common::Value*> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
+  std::vector<int> result_format;
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result);
+      statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
@@ -120,8 +125,10 @@ TEST_F(UpdateTests, Updating) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
@@ -145,8 +152,10 @@ TEST_F(UpdateTests, Updating) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
@@ -167,8 +176,10 @@ TEST_F(UpdateTests, Updating) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
   txn_manager.CommitTransaction(txn);

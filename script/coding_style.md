@@ -4,7 +4,7 @@ This is a short document describing the preferred coding style for Peloton.
 
 **FORWARD DECLARATIONS** Use `forward declaration` in .h files as much as possible. Instead, include the required files only in the .cpp files. This will significantly reduce coupling and compilation times after minor changes.
 
-**INDENTATION** We use 4-column tabs for indentation. Don't put multiple assignments on a single line either. Peloton coding style
+**INDENTATION** We use 2-column tabs for indentation. Don't put multiple assignments on a single line either. Peloton coding style
 is super simple. Avoid tricky expressions. Get a decent editor and don't leave whitespace at the end of lines.
 
 **BREAKING LONG LINES** Coding style is all about readability and maintainability using commonly available tools. The limit on the length of lines is 80 columns and this is a strongly preferred limit. Statements longer than 80 columns will be broken into sensible chunks, unless exceeding 80 columns significantly increases readability and does not hide information. Descendants are always substantially shorter than the parent and are placed substantially to the right. The same applies to function headers with a long argument list. Make use of vertical spaces to separate different steps of a function.

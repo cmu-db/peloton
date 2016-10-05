@@ -10,16 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+#include <concurrency/transaction_manager_factory.h>
 #include <utility>
 #include <vector>
-#include <concurrency/transaction_manager_factory.h>
 
 #include "common/logger.h"
-#include "executor/aggregator.h"
 #include "executor/aggregate_executor.h"
-#include "executor/logical_tile_factory.h"
+#include "executor/aggregator.h"
 #include "executor/executor_context.h"
+#include "executor/logical_tile_factory.h"
 #include "expression/container_tuple.h"
 #include "planner/aggregate_plan.h"
 #include "storage/table_factory.h"
@@ -143,7 +142,20 @@ bool AggregateExecutor::DExecute() {
 
   LOG_TRACE("Finalizing..");
   if (!aggregator.get() || !aggregator->Finalize()) {
-    // If there's no tuples in the table and only if no group-by in the query,
+    // If there's no tuples and no group-by, count() aggregations should return
+    // 0 according to the test in MySQL.
+    // TODO: We only checked whether all AggTerms are counts here. If there're
+    // mixed terms, we should return 0 for counts and null for others.
+    bool all_count_aggs = true;
+    for (oid_t aggno = 0; aggno < node.GetUniqueAggTerms().size(); aggno++) {
+      auto agg_type = node.GetUniqueAggTerms()[aggno].aggtype;
+      if (agg_type != EXPRESSION_TYPE_AGGREGATE_COUNT &&
+          agg_type != EXPRESSION_TYPE_AGGREGATE_COUNT_STAR)
+        all_count_aggs = false;
+    }
+
+    // If there's no tuples in the table and only if no group-by in the
+    // query,
     // we should return a NULL tuple
     // this is required by SQL
     if (!aggregator.get() && node.GetGroupbyColIds().empty()) {
@@ -152,7 +164,11 @@ bool AggregateExecutor::DExecute() {
           "here.");
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
-      tuple->SetAllNulls();
+      if (all_count_aggs == true) {
+        tuple->SetAllZeros();
+      } else {
+        tuple->SetAllNulls();
+      }
       auto location = output_table->InsertTuple(tuple.get());
       PL_ASSERT(location.block != INVALID_OID);
 
@@ -184,7 +200,6 @@ bool AggregateExecutor::DExecute() {
 
   done = true;
   LOG_TRACE("Result tiles : %lu ", result.size());
-
 
   SetOutput(result[result_itr]);
   result_itr++;

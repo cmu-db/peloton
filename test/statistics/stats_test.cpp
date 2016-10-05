@@ -12,15 +12,15 @@
 
 #include <iostream>
 
-#include "common/harness.h"
 #include "common/config.h"
+#include "common/harness.h"
 
-#include "statistics/stats_aggregator.h"
-#include "statistics/backend_stats_context.h"
-#include "statistics/stats_tests_util.h"
+#include "executor/executor_context.h"
 #include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
-#include "executor/executor_context.h"
+#include "statistics/backend_stats_context.h"
+#include "statistics/stats_aggregator.h"
+#include "statistics/stats_tests_util.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
@@ -67,7 +67,6 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto context = stats::BackendStatsContext::GetInstance();
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
-
     context->InitQueryMetric("query_string", db_oid);
     context->GetOnGoingQueryMetric()->GetQueryLatency().StartTimer();
 
@@ -109,7 +108,6 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
 }
 
 TEST_F(StatsTest, MultiThreadStatsTest) {
-
   auto catalog = catalog::Catalog::GetInstance();
 
   // Launch aggregator thread
@@ -346,21 +344,23 @@ TEST_F(StatsTest, PerThreadStatsTest) {
 }
 
 TEST_F(StatsTest, PerQueryStatsTest) {
-
   int64_t aggregate_interval = 1000;
   LaunchAggregator(aggregate_interval);
   auto &aggregator = stats::StatsAggregator::GetInstance();
-  auto backend_context = stats::BackendStatsContext::GetInstance();
 
   // Create a table first
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->CreateDatabase("emp_db", nullptr);
   StatsTestsUtil::CreateTable();
 
   // Default database should include 4 metrics tables and the test table
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
+                ->GetDatabaseWithName(CATALOG_DATABASE_NAME)
                 ->GetTableCount(),
-            5);
+            6);
   LOG_INFO("Table created!");
+
+  auto backend_context = stats::BackendStatsContext::GetInstance();
 
   // Inserting a tuple end-to-end
   auto statement = StatsTestsUtil::GetInsertStmt();
@@ -370,8 +370,9 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   // Execute insert
   std::vector<common::Value *> params;
   std::vector<ResultType> result;
+  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result);
+      statement->GetPlanTree().get(), params, result, result_format);
   LOG_DEBUG("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
 
@@ -383,8 +384,10 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   // Execute update
   params.clear();
   result.clear();
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+                                             params, result, result_format);
   LOG_DEBUG("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple updated!");
 
@@ -396,8 +399,10 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   // Execute delete
   params.clear();
   result.clear();
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result);
+                                             params, result, result_format);
   LOG_DEBUG("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
 
@@ -408,6 +413,11 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   ForceFinalAggregation(aggregate_interval);
 
   EXPECT_EQ(aggregator.GetAggregatedStats().GetQueryCount(), 3);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName("emp_db", txn);
+  txn_manager.CommitTransaction(txn);
 }
 }  // namespace stats
 }  // namespace peloton

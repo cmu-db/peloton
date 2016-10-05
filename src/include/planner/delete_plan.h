@@ -39,9 +39,21 @@ class DeletePlan : public AbstractPlan {
   DeletePlan(DeletePlan &&) = delete;
   DeletePlan &operator=(DeletePlan &&) = delete;
 
+  ~DeletePlan() {
+    if (expr_ != nullptr) {
+      delete expr_;
+    }
+  }
+
   explicit DeletePlan(storage::DataTable *table, bool truncate);
 
   explicit DeletePlan(parser::DeleteStatement *parse_tree);
+
+  explicit DeletePlan(parser::DeleteStatement *delete_statemenet,
+                        std::vector<oid_t> &key_column_ids,
+                        std::vector<ExpressionType> &expr_types,
+                        std::vector<common::Value *> &values,
+                        oid_t &index_id);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
@@ -59,6 +71,9 @@ class DeletePlan : public AbstractPlan {
   }
 
  private:
+
+  void BuildInitialDeletePlan(parser::DeleteStatement *delete_statemenet);
+
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
 

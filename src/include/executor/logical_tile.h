@@ -10,18 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iterator>
-#include <vector>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
+#include "common/macros.h"
 #include "common/printable.h"
 #include "common/types.h"
 #include "common/value.h"
-#include "common/macros.h"
 
 namespace peloton {
 
@@ -107,7 +106,8 @@ class LogicalTile : public Printable {
 
   void SetPositionListsAndVisibility(PositionLists &&position_lists);
 
-  std::vector<std::vector<std::string>> GetAllValuesAsStrings();
+  std::vector<std::vector<std::string>> GetAllValuesAsStrings(
+      const std::vector<int> &result_format);
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -285,7 +285,6 @@ class LogicalTile : public Printable {
   };
 
  private:
-
   // Default constructor
   LogicalTile();
 
@@ -298,15 +297,15 @@ class LogicalTile : public Printable {
   // Column-oriented materialization
   void MaterializeColumnAtATime(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-          tile_to_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>>
+          &tile_to_cols,
       storage::Tile *dest_tile);
 
   // Row-oriented materialization
   void MaterializeRowAtAtATime(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-          tile_to_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>>
+          &tile_to_cols,
       storage::Tile *dest_tile);
 
   /**
@@ -317,8 +316,8 @@ class LogicalTile : public Printable {
    */
   void MaterializeByTiles(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-          tile_to_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>>
+          &tile_to_cols,
       storage::Tile *dest_tile);
 
   /**
@@ -333,8 +332,8 @@ class LogicalTile : public Printable {
    */
   void GenerateTileToColMap(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-          cols_in_physical_tile);
+      std::unordered_map<storage::Tile *, std::vector<oid_t>>
+          &cols_in_physical_tile);
 
   //===--------------------------------------------------------------------===//
   // Members

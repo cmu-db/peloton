@@ -13,6 +13,7 @@
 #pragma once
 
 #include "parser/sql_statement.h"
+#include "expression/parser_expression.h"
 #include "common/types.h"
 
 namespace peloton {
@@ -53,21 +54,21 @@ struct ColumnDefinition {
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
-      for (auto key : *primary_key) free (key);
+      for (auto key : *primary_key) free(key);
       delete primary_key;
     }
 
     if (foreign_key_source) {
-      for (auto key : *foreign_key_source) free (key);
+      for (auto key : *foreign_key_source) free(key);
       delete foreign_key_source;
     }
-
     if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) free (key);
+      for (auto key : *foreign_key_sink) free(key);
       delete foreign_key_sink;
     }
 
-    free (name);
+    free(name);
+    delete table_name;
   }
 
   static common::Type::TypeId GetValueType(DataType type) {
@@ -93,6 +94,8 @@ struct ColumnDefinition {
       //  break;
 
       case DECIMAL:
+      case DOUBLE:
+      case FLOAT:
         return common::Type::DECIMAL;
         break;
 
@@ -128,6 +131,10 @@ struct ColumnDefinition {
   }
 
   char* name = nullptr;
+
+  // The name of the table and its database
+  expression::ParserExpression* table_name = nullptr;
+
   DataType type;
   size_t varlen = 0;
   bool not_null = false;
@@ -146,14 +153,17 @@ struct ColumnDefinition {
  * city TEXT, grade DOUBLE)"
  */
 struct CreateStatement : SQLStatement {
-  enum CreateType { kTable, kDatabase, kIndex };
+  enum CreateType {
+    kTable,
+    kDatabase,
+    kIndex
+  };
 
   CreateStatement(CreateType type)
       : SQLStatement(STATEMENT_TYPE_CREATE),
         type(type),
         if_not_exists(false),
-        columns(NULL),
-        name(NULL){};
+        columns(NULL) {};
 
   virtual ~CreateStatement() {
     if (columns) {
@@ -162,12 +172,13 @@ struct CreateStatement : SQLStatement {
     }
 
     if (index_attrs) {
-      for (auto attr : *index_attrs) free (attr);
+      for (auto attr : *index_attrs) free(attr);
       delete index_attrs;
     }
 
-    free (name);
-    free (table_name);
+    free(index_name);
+    free(database_name);
+    delete table_name;
   }
 
   CreateType type;
@@ -178,8 +189,20 @@ struct CreateStatement : SQLStatement {
 
   IndexType index_type;
 
-  char* name;
-  char* table_name = nullptr;
+  inline std::string GetTableName() { return table_name->name; }
+
+  // Get the name of the database of this table
+  inline std::string GetDatabaseName() {
+    if (table_name == nullptr || table_name->database == nullptr) {
+      return DEFAULT_DB_NAME;
+    }
+    return std::string(table_name->database);
+  }
+
+  char* index_name = nullptr;
+  char* database_name = nullptr;
+  expression::ParserExpression* table_name = nullptr;
+
   bool unique = false;
 };
 

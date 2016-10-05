@@ -115,10 +115,8 @@ bool SeqScanExecutor::DExecute() {
 
       /* Hopefully we needn't do projections here */
       SetOutput(tile.release());
-
       return true;
     }
-
     return false;
   }
   // Scanning a table

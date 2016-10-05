@@ -116,6 +116,8 @@ void ValidateZipfTheta(const configuration &state);
 
 void ValidateGCBackendCount(const configuration &state);
 
+void WriteOutput();
+
 }  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton

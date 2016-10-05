@@ -14,11 +14,11 @@
 
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/executors.h"
 #include "executor/executor_context.h"
+#include "executor/executors.h"
 #include "executor/plan_executor.h"
-#include "storage/tuple_iterator.h"
 #include "optimizer/util.h"
+#include "storage/tuple_iterator.h"
 
 namespace peloton {
 namespace bridge {
@@ -37,7 +37,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
 
 /**
  * @brief Build a executor tree and execute it.
- * Use std::vector<common::Value *> as params to make it more elegant for networking
+ * Use std::vector<common::Value *> as params to make it more elegant for
+ * networking
  * Before ExecutePlan, a node first receives value list, so we should pass
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
@@ -69,7 +70,8 @@ void PlanExecutor::ExecutePlanLocal(ExchangeParams **exchg_params_arg) {
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  // Use const std::vector<common::Value *> &params to make it more elegant for network
+  // Use const std::vector<common::Value *> &params to make it more elegant for
+  // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(exchg_params->params, txn));
 
@@ -93,42 +95,40 @@ void PlanExecutor::ExecutePlanLocal(ExchangeParams **exchg_params_arg) {
   }
 
   LOG_TRACE("Running the executor tree");
+  exchg_params->result.clear();
 
   // Execute the tree until we get result tiles from root node
-  for (;;) {
+  while (status == true) {
     status = executor_tree->Execute();
-    // Stop
-    if (status == false) {
 
-      std::unique_ptr<executor::LogicalTile> logical_tile(
-          executor_tree->GetOutput());
-      // Some executors don't return logical tiles (e.g., Update).
-      if (logical_tile.get() != nullptr) {
-        LOG_TRACE("Final Answer: %s",
-                  logical_tile->GetInfo().c_str());  // Printing the answers
-        auto output_schema =
-            logical_tile->GetPhysicalSchema();  // Physical schema of the tile
-        auto answer_tuples = logical_tile->GetAllValuesAsStrings();
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        executor_tree->GetOutput());
+    // Some executors don't return logical tiles (e.g., Update).
+    if (logical_tile.get() != nullptr) {
+      LOG_TRACE("Final Answer: %s",
+                logical_tile->GetInfo().c_str());  // Printing the answers
+      std::unique_ptr<catalog::Schema> output_schema(
+          logical_tile->GetPhysicalSchema());  // Physical schema of the tile
+      std::vector<std::vector<std::string>> answer_tuples;
+      answer_tuples =
+          std::move(logical_tile->GetAllValuesAsStrings(exchg_params->result_format));
 
-        // Construct the returned results
-        exchg_params->results.clear();
-        for (auto tuple : answer_tuples) {
-          unsigned int col_index = 0;
-          for (auto column : output_schema->GetColumns()) {
-            auto column_name = column.GetName();
-            auto res = ResultType();
-            PlanExecutor::copyFromTo(column_name.c_str(), res.first);
-            PlanExecutor::copyFromTo(tuple[col_index++].c_str(), res.second);
-            exchg_params->results.push_back(res);
+      // Construct the returned results
+      for (auto tuple : answer_tuples) {
+        unsigned int col_index = 0;
+        for (auto column : output_schema->GetColumns()) {
+          auto column_name = column.GetName();
+          auto res = ResultType();
+          PlanExecutor::copyFromTo(column_name, res.first);
+          LOG_TRACE("column name: %s", column_name.c_str());
+          PlanExecutor::copyFromTo(tuple[col_index++], res.second);
+          if (tuple[col_index - 1].c_str() != nullptr) {
+            LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
           }
+          exchg_params->result.push_back(res);
         }
-
-        delete output_schema;
       }
-      break;
     }
-
-    // Go over the logical tile
   }
 
   // Set the result
@@ -167,11 +167,13 @@ cleanup:
 
 /**
  * @brief Build a executor tree and execute it.
- * Use std::vector<common::Value *> as params to make it more elegant for networking
+ * Use std::vector<common::Value *> as params to make it more elegant for
+ * networking
  * Before ExecutePlan, a node first receives value list, so we should pass
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
+
 void PlanExecutor::ExecutePlanRemote(
     const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list,
@@ -197,7 +199,8 @@ void PlanExecutor::ExecutePlanRemote(
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  // Use const std::vector<common::Value *> &params to make it more elegant for network
+  // Use const std::vector<common::Value *> &params to make it more elegant for
+  // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
 

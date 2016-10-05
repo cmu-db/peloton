@@ -32,9 +32,9 @@ DropPlan::DropPlan(std::string name) {
 }
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree) {
-  table_name = parse_tree->name;
+  table_name = parse_tree->GetTableName();
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name);
+      parse_tree->GetDatabaseName(), table_name);
   // Set it up for the moment , cannot seem to find it in DropStatement
   missing = parse_tree->missing;
 }

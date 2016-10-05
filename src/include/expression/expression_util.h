@@ -91,7 +91,7 @@ class ExpressionUtil {
         auto value =
             new ConstantValueExpression(*values->at(right->GetValueIdx()));
         LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
-                  value->GetValue()->GetInfo().c_str());
+                  std::unique_ptr<common::Value>(value->GetValue())->GetInfo().c_str());
         delete right;
         expression->setRightExpression(value);
       } else {

@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "expression/abstract_expression.h"
+#include "expression/parser_expression.h"
+
 #include "common/types.h"
 
 namespace peloton {
@@ -30,7 +32,7 @@ struct TableRef {
   TableRef(TableReferenceType type)
       : type(type),
         schema(NULL),
-        name(NULL),
+        table_name(NULL),
         alias(NULL),
         select(NULL),
         list(NULL),
@@ -41,7 +43,10 @@ struct TableRef {
   TableReferenceType type;
 
   char* schema;
-  const char* name;
+
+  // Expression of database name and table name
+  expression::ParserExpression* table_name;
+
   char* alias;
 
   SelectStatement* select;
@@ -51,11 +56,20 @@ struct TableRef {
   // Convenience accessor methods
   inline bool HasSchema() { return schema != NULL; }
 
-  inline const char* GetName() {
+  // Get the name of the database of this table
+  inline const char* GetDatabaseName() {
+    if (table_name == nullptr || table_name->database == nullptr) {
+      return DEFAULT_DB_NAME;
+    }
+    return table_name->database;
+  }
+
+  // Get the name of the table
+  inline const char* GetTableName() {
     if (alias != NULL)
       return alias;
     else
-      return name;
+      return table_name->name;
   }
 };
 

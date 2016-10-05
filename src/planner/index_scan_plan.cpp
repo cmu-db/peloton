@@ -88,7 +88,7 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value *> *values) {
     if (value->GetTypeId() == common::Type::PARAMETER_OFFSET) {
       int offset = value->GetAs<int32_t>();
       delete value;
-      value =
+      values_[i] =
           (values->at(offset))
               ->CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }

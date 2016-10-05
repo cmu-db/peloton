@@ -21,6 +21,21 @@
 #include "optimizer/op_expression.h"
 #include "optimizer/operators.h"
 
+#include "catalog/catalog.h"
+#include "common/logger.h"
+#include "common/statement.h"
+#include "executor/create_executor.h"
+#include "executor/delete_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/plan_executor.h"
+#include "executor/update_executor.h"
+#include "optimizer/simple_optimizer.h"
+#include "parser/parser.h"
+#include "planner/create_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/update_plan.h"
+
 namespace peloton {
 namespace test {
 

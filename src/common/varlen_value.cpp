@@ -187,7 +187,7 @@ void VarlenValue::SerializeTo(char *storage, bool inlined UNUSED_ATTRIBUTE,
 }
 
 Value *VarlenValue::Copy() const {
-  uint32_t len = *(value_.ptr);
+  uint32_t len = GetLength();
   return new VarlenValue(GetData(), len);
 }
 
