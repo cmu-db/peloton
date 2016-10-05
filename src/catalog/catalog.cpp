@@ -676,6 +676,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   auto latency_column =
       catalog::Column(integer_type, integer_type_size, "latency", true);
   latency_column.AddConstraint(not_null_constraint);
+  auto cpu_time_column =
+      catalog::Column(integer_type, integer_type_size, "cpu_time", true);
 
   // MAX_INT only tracks the number of seconds since epoch until 2037
   auto timestamp_column =
@@ -683,8 +685,9 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {name_column,    database_id_column, reads_column,   updates_column,
-       deletes_column, inserts_column,     latency_column, timestamp_column}));
+      {name_column,    database_id_column, reads_column,
+       updates_column, deletes_column,     inserts_column,
+       latency_column, cpu_time_column,    timestamp_column}));
   return database_schema;
 }
 

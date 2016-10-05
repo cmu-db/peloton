@@ -824,8 +824,10 @@ enum MetricType {
   LATENCY_METRIC = 7,
   // Timestamp, e.g., creation time of a table/index
   TEMPORAL_METRIC = 8,
-  //  Statistics for a specific table
+  // Statistics for a specific table
   QUERY_METRIC = 9,
+  // Statistics for CPU
+  PROCESSOR_METRIC = 10,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;

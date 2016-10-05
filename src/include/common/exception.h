@@ -32,8 +32,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 enum ExceptionType {
-  EXCEPTION_TYPE_INVALID = 0,  // invalid type
-
+  EXCEPTION_TYPE_INVALID = 0,            // invalid type
   EXCEPTION_TYPE_OUT_OF_RANGE = 1,       // value out of range error
   EXCEPTION_TYPE_CONVERSION = 2,         // conversion/casting error
   EXCEPTION_TYPE_UNKNOWN_TYPE = 3,       // unknown type
@@ -52,7 +51,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_SCHEDULER = 16,         // scheduler related
   EXCEPTION_TYPE_EXECUTOR = 17,          // executor related
   EXCEPTION_TYPE_CONSTRAINT = 18,        // constraint related
-  EXCEPTION_TYPE_INDEX = 19              // index related
+  EXCEPTION_TYPE_INDEX = 19,             // index related
+  EXCEPTION_TYPE_STAT = 20               // stat related
 };
 
 class Exception : public std::runtime_error {
@@ -386,6 +386,13 @@ class IndexException : public Exception {
 
  public:
   IndexException(std::string msg) : Exception(EXCEPTION_TYPE_INDEX, msg) {}
+};
+
+class StatException : public Exception {
+  StatException() = delete;
+
+ public:
+  StatException(std::string msg) : Exception(EXCEPTION_TYPE_INDEX, msg) {}
 };
 
 }  // End peloton namespace

@@ -210,8 +210,6 @@ void BackendStatsContext::InitQueryMetric(std::string query_string,
                                           oid_t database_oid) {
   ongoing_query_metric_.reset(
       new QueryMetric(QUERY_METRIC, query_string, database_oid));
-  ongoing_query_metric_->GetQueryLatency().StartTimer();
-  LOG_TRACE("Query metric initialized");
 }
 
 //===--------------------------------------------------------------------===//
@@ -347,6 +345,7 @@ std::string BackendStatsContext::ToString() const {
 
 void BackendStatsContext::CompleteQueryMetric() {
   if (ongoing_query_metric_ != nullptr) {
+    ongoing_query_metric_->GetProcessorMetric().RecordTime();
     ongoing_query_metric_->GetQueryLatency().RecordLatency();
     completed_query_metrics_.Enqueue(ongoing_query_metric_);
     ongoing_query_metric_.reset();
