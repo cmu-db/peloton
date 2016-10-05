@@ -12,21 +12,19 @@
 
 #include "planner/update_plan.h"
 
-#include "planner/project_info.h"
 #include "common/types.h"
+#include "planner/project_info.h"
 
-#include "storage/data_table.h"
 #include "catalog/catalog.h"
+#include "expression/expression_util.h"
 #include "parser/statement_update.h"
 #include "parser/table_ref.h"
-#include "expression/expression_util.h"
+#include "storage/data_table.h"
 
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/index_scan_plan.h"
 #include "planner/seq_scan_plan.h"
-
-
 
 namespace peloton {
 namespace planner {
@@ -41,13 +39,13 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 
 //  Initializes the update plan without adding any child nodes and
 //  retrieves column ids for the child scan plan.
-void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree, 
-                                        std::vector<oid_t>& column_ids) {
+void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
+                                        std::vector<oid_t> &column_ids) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->GetTableName());
   auto database_name = t_ref->GetDatabaseName();
-  LOG_INFO("Update database %s table %s", database_name, table_name.c_str());
+  LOG_TRACE("Update database %s table %s", database_name, table_name.c_str());
   target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       database_name, table_name);
   PL_ASSERT(target_table_ != nullptr);
@@ -70,8 +68,14 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   }
 
   for (uint i = 0; i < schema->GetColumns().size(); i++) {
-    if (schema->GetColumns()[i].column_name !=
-        schema->GetColumns()[col_id].column_name)
+    bool is_in_target_list = false;
+    for (auto col_id : column_ids) {
+      if (schema->GetColumns()[i].column_name ==
+          schema->GetColumns()[col_id].column_name)
+        is_in_target_list = true;
+      break;
+    }
+    if (is_in_target_list == false)
       dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
   }
 
@@ -95,26 +99,24 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 
 // Creates the update plan with index scan.
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
-                        std::vector<oid_t> &key_column_ids,
-                        std::vector<ExpressionType> &expr_types,
-                        std::vector<common::Value *> &values,
-                        oid_t &index_id) {
+                       std::vector<oid_t> &key_column_ids,
+                       std::vector<ExpressionType> &expr_types,
+                       std::vector<common::Value *> &values, oid_t &index_id) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
   // Create index scan desc
-  std::vector<expression::AbstractExpression*> runtime_keys;
+  std::vector<expression::AbstractExpression *> runtime_keys;
   auto index = target_table_->GetIndex(index_id);
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
   // Create plan node.
-  LOG_TRACE("Creating a index scan plan");  
+  LOG_TRACE("Creating a index scan plan");
   std::unique_ptr<planner::IndexScanPlan> index_scan_node(
-      new planner::IndexScanPlan(target_table_, where_,
-                                 column_ids, index_scan_desc, true));
+      new planner::IndexScanPlan(target_table_, where_, column_ids,
+                                 index_scan_desc, true));
   LOG_TRACE("Index scan plan created");
   AddChild(std::move(index_scan_node));
 }
-
 
 void UpdatePlan::SetParameterValues(std::vector<common::Value *> *values) {
   LOG_TRACE("Setting parameter values in Update");
@@ -136,8 +138,14 @@ void UpdatePlan::SetParameterValues(std::vector<common::Value *> *values) {
   }
 
   for (uint i = 0; i < schema->GetColumns().size(); i++) {
-    if (schema->GetColumns()[i].column_name !=
-        schema->GetColumns()[col_id].column_name)
+    bool is_in_target_list = false;
+    for (auto col_id : columns) {
+      if (schema->GetColumns()[i].column_name ==
+          schema->GetColumns()[col_id].column_name)
+        is_in_target_list = true;
+      break;
+    }
+    if (is_in_target_list == false)
       dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
   }
 
