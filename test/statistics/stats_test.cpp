@@ -15,6 +15,9 @@
 #include "common/config.h"
 #include "common/harness.h"
 
+#include <sys/resource.h>
+#include <time.h>
+
 #include "executor/executor_context.h"
 #include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
@@ -68,7 +71,6 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
     context->InitQueryMetric("query_string", db_oid);
-    context->GetOnGoingQueryMetric()->GetQueryLatency().StartTimer();
 
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
