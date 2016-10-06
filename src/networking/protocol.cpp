@@ -304,8 +304,9 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   statement =
       tcop.PrepareStatement(statement_name, query_string, error_message);
   if (statement.get() == nullptr) {
+    skipped_stmt_ = true;
     SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state_, responses);
+    LOG_TRACE("ExecParse Error");
     return;
   }
 

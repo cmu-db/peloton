@@ -103,7 +103,6 @@ Result TrafficCop::ExecuteStatement(
   }
   catch (Exception &e) {
     error_message = e.what();
-    e.PrintStackTrace();
     return Result::RESULT_FAILURE;
   }
 }
@@ -120,7 +119,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   try {
     auto &peloton_parser = parser::Parser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
-
+    if (sql_stmt->is_valid == false) {
+      throw ParserException("Error parsing SQL statement");
+    }
     statement->SetPlanTree(
         optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
@@ -138,7 +139,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
   catch (Exception &e) {
     error_message = e.what();
-    e.PrintStackTrace();
     return nullptr;
   }
 }

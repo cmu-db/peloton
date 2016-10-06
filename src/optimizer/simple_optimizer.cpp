@@ -94,10 +94,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   select_stmt->from_table->join != NULL);
         LOG_TRACE("have sub select statement? %d",
                   select_stmt->from_table->select != NULL);
+        try {
+          catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                            "order_line");
+          auto child_SelectPlan = CreateHackingJoinPlan();
+          child_plan = std::move(child_SelectPlan);
+          break;
+        }
+        catch (Exception& e) {
+          throw NotImplementedException("Error: Joins are not implemented yet");
+        }
+      }
 
-        auto child_SelectPlan = CreateHackingJoinPlan();
-        child_plan = std::move(child_SelectPlan);
-        break;
+      if (select_stmt->from_table->join != NULL) {
+        throw NotImplementedException("Error: Joins are not implemented yet");
       }
 
       storage::DataTable* target_table =
@@ -334,6 +344,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               output_schema_columns.push_back(column);
             } else {
               LOG_TRACE("Unrecognized type in function expression!");
+              throw PlannerException(
+                  "Error: Unrecognized type in function expression");
             }
             ++agg_id;
           }
@@ -457,8 +469,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     } break;
 
+    case STATEMENT_TYPE_TRANSACTION: {
+    } break;
     default:
-      LOG_TRACE("Unsupported Parse Node Type");
+      LOG_ERROR("Unsupported Parse Node Type %d", parse_item_node_type);
+      throw NotImplementedException("Error: Query plan not implemented");
   }
 
   if (child_plan != nullptr) {
