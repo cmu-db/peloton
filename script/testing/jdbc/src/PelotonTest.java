@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// delete_plan.h
+// PelotonTest.java
 //
 // Identification: script/testing/jdbc/src/PelotonTest.java
 //
@@ -113,7 +113,7 @@ public class PelotonTest {
 
   private final String INVALID_DB_SQL = "SELECT * FROM INVALID_DB.A;";
 
-  private final String INVALID_KEYWORD_SQL = "INVALIDKEYWORD * FROM A;";
+  private final String INVALID_SYNTAX_SQL = "INVALIDKEYWORD * FROM A;";
 
   private final String UNSUPPORTED_JOIN_SQL = "SELECT * FROM A, B;";
 
@@ -611,7 +611,7 @@ public class PelotonTest {
     String statements[] = new String[5];
     statements[0] = INVALID_TABLE_SQL;
     statements[1] = INVALID_DB_SQL;
-    statements[2] = INVALID_KEYWORD_SQL;
+    statements[2] = INVALID_SYNTAX_SQL;
     statements[3] = UNSUPPORTED_JOIN_SQL;
     statements[4] = UNSUPPORTED_INNER_JOIN_SQL;
     for (int i = 0; i < 5; i++) {
@@ -624,7 +624,7 @@ public class PelotonTest {
       }
     }
     if (validQueryIndex != -1) {
-      throw new SQLException(statements[validQueryIndex]);
+      throw new SQLException("This should be an invalid SQL: " + statements[validQueryIndex]);
     }
   }
 
