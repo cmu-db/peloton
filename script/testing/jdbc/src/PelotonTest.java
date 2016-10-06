@@ -119,6 +119,8 @@ public class PelotonTest {
 
   private final String UNSUPPORTED_INNER_JOIN_SQL = "SELECT * FROM A INNER JOIN B ON A.id = B.id;";
 
+  private final String UNSUPPORTED_SELECT_FOR_UPDATE_SQL = "SELECT id FROM A FOR UPDATE where A.id = 1;";
+
   public PelotonTest() throws SQLException {
     try {
       Class.forName("org.postgresql.Driver");
@@ -608,13 +610,14 @@ public class PelotonTest {
     Statement stmt = conn.createStatement();
 
     int validQueryIndex = -1;
-    String statements[] = new String[5];
+    String statements[] = new String[6];
     statements[0] = INVALID_TABLE_SQL;
     statements[1] = INVALID_DB_SQL;
     statements[2] = INVALID_SYNTAX_SQL;
     statements[3] = UNSUPPORTED_JOIN_SQL;
     statements[4] = UNSUPPORTED_INNER_JOIN_SQL;
-    for (int i = 0; i < 5; i++) {
+    statements[5] = UNSUPPORTED_SELECT_FOR_UPDATE_SQL;
+    for (int i = 0; i < 6; i++) {
       try {
         stmt.execute(statements[i]);
         validQueryIndex = i;
