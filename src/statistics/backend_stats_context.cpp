@@ -24,17 +24,22 @@
 namespace peloton {
 namespace stats {
 
-CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-    BackendStatsContext::stats_context_map_;
+CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+  BackendStatsContext::GetBackendContextMap() {
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
+      stats_context_map;
+  return stats_context_map;
+}
 
 BackendStatsContext* BackendStatsContext::GetInstance() {
 
   // Each thread gets a backend stats context
   std::thread::id this_id = std::this_thread::get_id();
   std::shared_ptr<BackendStatsContext> result(nullptr);
-  if (stats_context_map_.Find(this_id, result) == false) {
+  auto &stats_context_map = GetBackendContextMap();
+  if (stats_context_map.Find(this_id, result) == false) {
     result.reset(new BackendStatsContext(LATENCY_MAX_HISTORY_THREAD, true));
-    stats_context_map_.Insert(this_id, result);
+    stats_context_map.Insert(this_id, result);
   }
   return result.get();
 }

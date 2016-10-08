@@ -168,10 +168,6 @@ class BackendStatsContext {
   // Whether this context is registered to the global aggregator
   bool is_registered_to_aggregator_;
 
-  // The mapping table of backend stat context for each thread
-  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-      stats_context_map_;
-
   // The total number of queries aggregated
   oid_t aggregated_query_count_ = 0;
 
@@ -181,6 +177,11 @@ class BackendStatsContext {
 
   // Mark the on going query as completed and move it to completed query queue
   void CompleteQueryMetric();
+
+  // Get the mapping table of backend stat context for each thread
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+    GetBackendContextMap(void);
+
 };
 
 }  // namespace stats
