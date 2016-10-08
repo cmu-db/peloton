@@ -182,9 +182,11 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
 
   // add this table to current database
   auto catalog = catalog::Catalog::GetInstance();
-  storage::Database *db = catalog->GetDatabaseWithOid(database_id);
-  if (db != nullptr) {
+  try {
+    storage::Database *db = catalog->GetDatabaseWithOid(database_id);
     db->AddTable(table);
+  }
+  catch (CatalogException &e) {
   }
 
   // Insert tuple

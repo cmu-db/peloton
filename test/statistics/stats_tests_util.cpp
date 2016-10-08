@@ -29,10 +29,7 @@ namespace test {
 
 void StatsTestsUtil::ShowTable(std::string database_name,
                                std::string table_name) {
-  UNUSED_ATTRIBUTE auto table =
-      catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                        table_name);
-  PL_ASSERT(table != nullptr);
+  catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
   std::vector<common::Value *> params;

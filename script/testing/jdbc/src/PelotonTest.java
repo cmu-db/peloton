@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// delete_plan.h
+// PelotonTest.java
 //
 // Identification: script/testing/jdbc/src/PelotonTest.java
 //
@@ -108,7 +108,18 @@ public class PelotonTest {
 
   // To test the table stats colleced
   private final String SELECT_TABLE_METRIC = "SELECT * FROM catalog_db.table_metric;";
-  ;
+  
+  private final String INVALID_TABLE_SQL = "SELECT * FROM INVALID_TABLE;";
+
+  private final String INVALID_DB_SQL = "SELECT * FROM INVALID_DB.A;";
+
+  private final String INVALID_SYNTAX_SQL = "INVALIDKEYWORD * FROM A;";
+
+  private final String UNSUPPORTED_JOIN_SQL = "SELECT * FROM A, B;";
+
+  private final String UNSUPPORTED_INNER_JOIN_SQL = "SELECT * FROM A INNER JOIN B ON A.id = B.id;";
+
+  private final String UNSUPPORTED_SELECT_FOR_UPDATE_SQL = "SELECT id FROM A FOR UPDATE where A.id = 1;";
 
   public PelotonTest() throws SQLException {
     try {
@@ -594,6 +605,32 @@ public class PelotonTest {
     conn.commit();
   }
 
+  public void Invalid_SQL() throws SQLException {
+    conn.setAutoCommit(true);
+    Statement stmt = conn.createStatement();
+
+    int validQueryIndex = -1;
+    String statements[] = new String[6];
+    statements[0] = INVALID_TABLE_SQL;
+    statements[1] = INVALID_DB_SQL;
+    statements[2] = INVALID_SYNTAX_SQL;
+    statements[3] = UNSUPPORTED_JOIN_SQL;
+    statements[4] = UNSUPPORTED_INNER_JOIN_SQL;
+    statements[5] = UNSUPPORTED_SELECT_FOR_UPDATE_SQL;
+    for (int i = 0; i < 6; i++) {
+      try {
+        stmt.execute(statements[i]);
+        validQueryIndex = i;
+        break;
+      } catch (Exception e) {
+        // Great! Exception is expected!
+      }
+    }
+    if (validQueryIndex != -1) {
+      throw new SQLException("This should be an invalid SQL: " + statements[validQueryIndex]);
+    }
+  }
+
   public void Batch_Update() throws SQLException{
     PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
 
@@ -662,6 +699,7 @@ public class PelotonTest {
     pt.Batch_Insert();
     pt.Batch_Update();
     pt.Batch_Delete();
+    pt.Invalid_SQL();
     pt.Close();
   }
 

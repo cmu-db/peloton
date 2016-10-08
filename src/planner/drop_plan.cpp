@@ -33,10 +33,19 @@ DropPlan::DropPlan(std::string name) {
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree) {
   table_name = parse_tree->GetTableName();
-  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      parse_tree->GetDatabaseName(), table_name);
   // Set it up for the moment , cannot seem to find it in DropStatement
   missing = parse_tree->missing;
+
+  try {
+    target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
+        parse_tree->GetDatabaseName(), table_name);
+  }
+  catch (CatalogException &e) {
+    // Dropping a table which doesn't exist
+    if (missing == false) {
+      throw e;
+    }
+  }
 }
 
 }  // namespace planner

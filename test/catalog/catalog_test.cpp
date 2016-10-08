@@ -143,8 +143,9 @@ TEST_F(CatalogTests, DroppingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName("EMP_DB", txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()->GetDatabaseWithName("EMP_DB"),
-            nullptr);
+
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseWithName("EMP_DB"),
+               CatalogException);
   txn_manager.CommitTransaction(txn);
 }
 

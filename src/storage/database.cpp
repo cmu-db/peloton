@@ -17,6 +17,7 @@
 #include "storage/table_factory.h"
 #include "common/logger.h"
 #include "index/index.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace storage {
@@ -45,7 +46,8 @@ void Database::AddTable(storage::DataTable *table) {
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   for (auto table : tables)
     if (table->GetOid() == table_oid) return table;
-
+  throw CatalogException("Table with oid = " + std::to_string(table_oid) +
+                         " is not found");
   return nullptr;
 }
 
@@ -53,7 +55,7 @@ storage::DataTable *Database::GetTableWithName(const std::string table_name)
     const {
   for (auto table : tables)
     if (table->GetName() == table_name) return table;
-
+  throw CatalogException("Table " + table_name + " is not found");
   return nullptr;
 }
 
