@@ -20,6 +20,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.HelpFormatter;
+import java.lang.reflect.Method;
 
 public class ExchangeTest {
     private final String url = "jdbc:postgresql://localhost:54321/";
@@ -38,9 +39,13 @@ public class ExchangeTest {
 
     private final String SEQSCAN = "SELECT * FROM A";
 
+    private final String NON_KEY_SCAN = "SELECT * FROM A WHERE name = ?";
+
     private final Connection conn;
+
+    private static final int BATCH_SIZE = 10000;
     
-    private static int numRows = 10;
+    private static int numRows;
 
     public ExchangeTest() throws SQLException {
         try {
@@ -99,41 +104,95 @@ public class ExchangeTest {
     }
 
     public void BatchInsert() throws SQLException{
-    	int[] res;
+        int[] res;
+        int insertCount = 0, numInsertions;
+        int numBatches = (numRows + BATCH_SIZE - 1)/BATCH_SIZE;
         String name1, name2;
-    	PreparedStatement stmt = conn.prepareStatement(TEMPLATE_FOR_BATCH_INSERT);
-    	conn.setAutoCommit(false);
-    
-        for(int i=1; i <= numRows ;i++){
-            stmt.setInt(1,i);
-            name1 = nameTokens[rand.nextInt(nameTokens.length)];
-            name2 = nameTokens[rand.nextInt(nameTokens.length)];
-            stmt.setString(2, name1+name2);
-            stmt.addBatch();
-	    }
+        PreparedStatement stmt = conn.prepareStatement(TEMPLATE_FOR_BATCH_INSERT);
+        conn.setAutoCommit(false);
 
-		try{
-			res = stmt.executeBatch();
-		}catch(SQLException e){
-			e.printStackTrace();
-			throw e.getNextException();
-		}
+        for (int i=1; i<=numBatches; i++) {
+            numInsertions = (i==numBatches) ? numRows - insertCount : BATCH_SIZE;
+            for(int j=1; j <= numInsertions; j++){
+                stmt.setInt(1,j+insertCount);
+                stmt.setString(2, nameTokens[j%nameTokens.length]);
+                stmt.addBatch();
+            }
+            try{
+                res = stmt.executeBatch();
+            }catch(SQLException e){
+                e.printStackTrace();
+                throw e.getNextException();
+            }
 
-        for(int i=0; i < res.length; i++){
-			// System.out.println(res[i]);
-			if (res[i] < 0) {
-				throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
-			}
-		}
-		conn.commit();
+            for(int k=0; k < res.length; k++){
+                if (res[k] < 0) {
+                    throw new SQLException("Query "+ (k+1) +" returned " + res[k]);
+                }
+            }
+            insertCount += res.length;
+            System.out.println("Inserted " + insertCount + 
+                " rows out of " + numRows + " rows.");
+            stmt.clearBatch();
+        }
+        conn.commit();
     }
 
+    public void Selectivity10Scan() throws SQLException {
+        int rowCtr = 0;
+        conn.setAutoCommit(true);
+        PreparedStatement pstmt = conn.prepareStatement(NON_KEY_SCAN);
+        pstmt.setString(1, nameTokens[1]);
+        pstmt.execute();
+
+        ResultSet rs = pstmt.getResultSet();
+
+        ResultSetMetaData rsmd = rs.getMetaData();
+
+        if (rsmd.getColumnCount() != 2)
+          throw new SQLException("Table should have 2 columns");
+
+        while(rs.next())
+            rowCtr++;
+
+        if (rowCtr != numRows/10)
+            throw new SQLException("Insufficient rows returned:" +
+                rowCtr +"/" + numRows/10);
+        else
+            System.out.println("Selectivity10 Scan successful");
+    }
+
+    public void TimeAndExecuteQuery(Object obj, Method method) 
+        throws Exception {
+            Object[] parameters = new Object[0];
+            long startTime, endTime;
+            startTime = System.nanoTime();
+            method.invoke(obj, parameters);
+            endTime = System.nanoTime();
+            System.out.println(method.getName() + " runtime:" + 
+                ((double) endTime - startTime)/Math.pow(10, 6) + "ms");
+    }
   
     static public void main(String[] args) throws Exception {
+        boolean isCreate, isExecute, isLoad;
         Options options = new Options();
+        long startTime, endTime;
+        Class[] parameterTypes = new Class[0];
 
-        Option rows = new Option("r", "rows", true, "number of input rows");
+        // load CLI options
+        Option rows = new Option("r", "rows", true,
+            "Required: number of input rows");
+        rows.setRequired(true);
+        Option create = new Option("c", "create", true,
+            "Create a new table (true or false)");
+        Option load = new Option("l", "load", true,
+            "Load values into the table (true or false)");
+        Option execute = new Option("e", "execute", true,
+            "Execute queries on the table (true or false)");
         options.addOption(rows);
+        options.addOption(create);
+        options.addOption(load);
+        options.addOption(execute);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -149,16 +208,29 @@ public class ExchangeTest {
         }
 
         if (cmd.hasOption("rows")){
-        	numRows = Integer.parseInt(cmd.getOptionValue("rows"));
+            numRows = Integer.parseInt(cmd.getOptionValue("rows"));
         }
 
-        System.out.println("Number of rows in Exchange Test:" + numRows);
+        isCreate = Boolean.parseBoolean(cmd.getOptionValue("create", "true"));
+        isLoad = Boolean.parseBoolean(cmd.getOptionValue("load", "true"));
+        isExecute = Boolean.parseBoolean(cmd.getOptionValue("execute", "true"));
+
+        // select the tests that will be run
+        Method test1 = ExchangeTest.class.getMethod("Selectivity10Scan",
+                                                    parameterTypes);
+
         ExchangeTest et = new ExchangeTest();
-        et.Init();
-        System.out.println("Completed Init");
-        et.BatchInsert();
-        System.out.println("Completed Batch Insert");
-        et.SeqScan();
+        if (isCreate) {
+            et.Init();
+            System.out.println("Completed Init");
+        }
+        if (isLoad) {
+            et.BatchInsert();
+            System.out.println("Completed Batch Insert");
+        }
+        if (isExecute) {
+            et.TimeAndExecuteQuery(et, test1);     
+        }
         et.Close();
     }
 }
