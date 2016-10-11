@@ -606,8 +606,10 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   bool update_flag = false;
   if (select_stmt->is_for_update == true) {
-    throw NotImplementedException(
-        "Error: select .. for update is not implemented yet!");
+    // FIXME: These are commented out for now to profile TPC-C. Eventually we
+    // have to support select for update.
+    //throw NotImplementedException(
+    //    "Error: select .. for update is not implemented yet!");
     update_flag = true;
   }
   // Create index scan desc
