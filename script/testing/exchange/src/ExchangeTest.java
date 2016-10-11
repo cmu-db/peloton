@@ -29,14 +29,14 @@ public class ExchangeTest {
 
     private final String DROP = "DROP TABLE IF EXISTS A;";
     private final String DDL = 
-        "CREATE TABLE A (id INT PRIMARY KEY, name TEXT, extra_id INT);";
+        "CREATE TABLE A (id INT PRIMARY KEY, name TEXT, extra_id INT, single INT);";
 
     public final static String[] nameTokens = { "BAR", "OUGHT", "ABLE", "PRI",
       "PRES", "ESE", "ANTI", "CALLY", "ATION", "EING" };
     
     private final Random rand;
     
-    private final String TEMPLATE_FOR_BATCH_INSERT = "INSERT INTO A VALUES (?,?,?);";
+    private final String TEMPLATE_FOR_BATCH_INSERT = "INSERT INTO A VALUES (?,?,?,?);";
 
     private final String SEQSCAN = "SELECT * FROM A";
 
@@ -46,11 +46,15 @@ public class ExchangeTest {
 
     private final String NON_KEY_SCAN_50 = "SELECT * FROM A WHERE extra_id >= ?";
 
+    private final String SINGLE_RESULT = "SELECT * FROM A WHERE single = 10";
+
     private final Connection conn;
 
     private static final int BATCH_SIZE = 10000;
     
     private static int numRows;
+
+    private static final int NUM_COLS = 4;
 
     public ExchangeTest() throws SQLException {
         try {
@@ -84,30 +88,6 @@ public class ExchangeTest {
         stmt.execute(DDL);
     }
 
-    public void SeqScan() throws SQLException {
-        conn.setAutoCommit(true);
-        Statement stmt = conn.createStatement();
-        int rowCtr = 0;
-
-        stmt.execute(SEQSCAN);
-
-        ResultSet rs = stmt.getResultSet();
-
-        ResultSetMetaData rsmd = rs.getMetaData();
-
-        if (rsmd.getColumnCount() != 3)
-          throw new SQLException("Table should have 3 columns");
-
-        while(rs.next())
-            rowCtr++;
-
-        if (rowCtr != numRows)
-            throw new SQLException("Insufficient rows returned:" +
-                rowCtr +"/" + numRows);
-        else
-            System.out.println("Sequential Scan successful");
-    }
-
     public void BatchInsert() throws SQLException{
         int[] res;
         int insertCount = 0, numInsertions, key;
@@ -123,6 +103,7 @@ public class ExchangeTest {
                 stmt.setInt(1, key);
                 stmt.setString(2, nameTokens[j%nameTokens.length]);
                 stmt.setInt(3, key%100);
+                stmt.setInt(4, key);
                 stmt.addBatch();
             }
             try{
@@ -145,28 +126,28 @@ public class ExchangeTest {
         conn.commit();
     }
 
-    public void Selectivity10Scan() throws SQLException {
-        int rowCtr = 0;
+    public void SeqScan() throws SQLException {
         conn.setAutoCommit(true);
-        PreparedStatement pstmt = conn.prepareStatement(NON_KEY_SCAN_10);
-        pstmt.setString(1, nameTokens[1]);
-        pstmt.execute();
+        Statement stmt = conn.createStatement();
+        int rowCtr = 0;
 
-        ResultSet rs = pstmt.getResultSet();
+        stmt.execute(SEQSCAN);
+
+        ResultSet rs = stmt.getResultSet();
 
         ResultSetMetaData rsmd = rs.getMetaData();
 
-        if (rsmd.getColumnCount() != 3)
-          throw new SQLException("Table should have 3 columns");
+        if (rsmd.getColumnCount() != NUM_COLS)
+          throw new SQLException("Table should have "+ NUM_COLS +" columns");
 
         while(rs.next())
             rowCtr++;
 
-        if (rowCtr != numRows/10)
+        if (rowCtr != numRows)
             throw new SQLException("Insufficient rows returned:" +
-                rowCtr +"/" + numRows/10);
+                rowCtr +"/" + numRows);
         else
-            System.out.println("Selectivity10 Scan successful");
+            System.out.println("Sequential Scan successful");
     }
 
     public void Selectivity1Scan() throws SQLException {
@@ -180,8 +161,8 @@ public class ExchangeTest {
 
         ResultSetMetaData rsmd = rs.getMetaData();
 
-        if (rsmd.getColumnCount() != 3)
-          throw new SQLException("Table should have 3 columns");
+        if (rsmd.getColumnCount() != NUM_COLS)
+          throw new SQLException("Table should have "+ NUM_COLS +" columns");
 
         while(rs.next())
             rowCtr++;
@@ -191,6 +172,31 @@ public class ExchangeTest {
                 rowCtr +"/" + numRows/100);
         else
             System.out.println("Selectivity1 Scan successful");
+    }
+
+
+    public void Selectivity10Scan() throws SQLException {
+        int rowCtr = 0;
+        conn.setAutoCommit(true);
+        PreparedStatement pstmt = conn.prepareStatement(NON_KEY_SCAN_10);
+        pstmt.setString(1, nameTokens[1]);
+        pstmt.execute();
+
+        ResultSet rs = pstmt.getResultSet();
+
+        ResultSetMetaData rsmd = rs.getMetaData();
+
+        if (rsmd.getColumnCount() != NUM_COLS)
+          throw new SQLException("Table should have "+ NUM_COLS +" columns");
+
+        while(rs.next())
+            rowCtr++;
+
+        if (rowCtr != numRows/10)
+            throw new SQLException("Insufficient rows returned:" +
+                rowCtr +"/" + numRows/10);
+        else
+            System.out.println("Selectivity10 Scan successful");
     }
 
     public void Selectivity50Scan() throws SQLException {
@@ -204,8 +210,8 @@ public class ExchangeTest {
 
         ResultSetMetaData rsmd = rs.getMetaData();
 
-        if (rsmd.getColumnCount() != 3)
-          throw new SQLException("Table should have 3 columns");
+        if (rsmd.getColumnCount() != NUM_COLS)
+          throw new SQLException("Table should have "+ NUM_COLS +" columns");
 
         while(rs.next())
             rowCtr++;
@@ -215,6 +221,29 @@ public class ExchangeTest {
                 rowCtr +"/" + numRows/2);
         else
             System.out.println("Selectivity50 Scan successful");
+    }
+
+    public void Selectivity1TupleScan() throws SQLException {
+        int rowCtr = 0;
+        conn.setAutoCommit(true);
+        PreparedStatement pstmt = conn.prepareStatement(SINGLE_RESULT);
+        pstmt.execute();
+
+        ResultSet rs = pstmt.getResultSet();
+
+        ResultSetMetaData rsmd = rs.getMetaData();
+
+        if (rsmd.getColumnCount() != NUM_COLS)
+          throw new SQLException("Table should have "+ NUM_COLS +" columns");
+
+        while(rs.next())
+            rowCtr++;
+
+        if (rowCtr != 1)
+            throw new SQLException("Incorrect rows returned:" +
+                rowCtr +"/" + 1);
+        else
+            System.out.println("Selectivity1TupleScan Scan successful");
     }
 
     public void TimeAndExecuteQuery(Object obj, Method method) 
@@ -271,11 +300,13 @@ public class ExchangeTest {
         isExecute = Boolean.parseBoolean(cmd.getOptionValue("execute", "true"));
 
         // select the tests that will be run
-        Method test1 = ExchangeTest.class.getMethod("Selectivity10Scan",
+        Method test1 = ExchangeTest.class.getMethod("Selectivity1Scan", 
                                                     parameterTypes);
-        Method test2 = ExchangeTest.class.getMethod("Selectivity1Scan", 
+        Method test2 = ExchangeTest.class.getMethod("Selectivity10Scan",
                                                     parameterTypes);
         Method test3 = ExchangeTest.class.getMethod("Selectivity50Scan",
+                                                    parameterTypes);
+        Method test4 = ExchangeTest.class.getMethod("Selectivity1TupleScan", 
                                                     parameterTypes);
 
         ExchangeTest et = new ExchangeTest();
@@ -288,9 +319,9 @@ public class ExchangeTest {
             System.out.println("Completed Batch Insert");
         }
         if (isExecute) {
-            et.TimeAndExecuteQuery(et, test3); 
-            et.TimeAndExecuteQuery(et, test2);
-            et.TimeAndExecuteQuery(et, test1);
+            et.TimeAndExecuteQuery(et, test4); 
+            // et.TimeAndExecuteQuery(et, test2);
+            // et.TimeAndExecuteQuery(et, test1);
         }
         et.Close();
     }
