@@ -43,14 +43,6 @@ VarlenValue::VarlenValue(const std::string &data, bool binary) :
   PL_MEMCPY(dest, data.c_str(), len);
 }
 
-VarlenValue::VarlenValue(const Varlen *varlen, bool binary) :
-    Value(Type::GetInstance(binary ? Type::VARBINARY : Type::VARCHAR)) {
-  value_.ptr = new char[varlen->GetSize() + sizeof(uint32_t)];
-  (*(uint32_t *) value_.ptr) = varlen->GetSize();
-  char *dest = value_.ptr;
-  PL_MEMCPY(dest, varlen->GetRaw(), varlen->GetSize());
-}
-
 VarlenValue::~VarlenValue() {
   delete[] value_.ptr;
 }

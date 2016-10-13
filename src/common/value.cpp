@@ -144,17 +144,13 @@ Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
       uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
       return new TimestampValue(val);
     }
-    case Type::VARCHAR: {
-      const char *ptr = *reinterpret_cast<const char *const *>(storage);
-      if (ptr == nullptr) return new VarlenValue(nullptr, 0, false);
-      uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-      return new VarlenValue(ptr + sizeof(uint32_t), len, false);
-    }
+    case Type::VARCHAR:
     case Type::VARBINARY:{
+      bool isBinary = type_id == Type::VARBINARY;
       const char *ptr = *reinterpret_cast<const char *const *>(storage);
-      if (ptr == nullptr) return new VarlenValue(nullptr, 0, true);
+      if (ptr == nullptr) return new VarlenValue(nullptr, 0, isBinary);
       uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-      return new VarlenValue(ptr + sizeof(uint32_t), len, true);
+      return new VarlenValue(ptr + sizeof(uint32_t), len, isBinary);
     }
     default:
       break;
@@ -181,9 +177,10 @@ Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
       return new IntegerValue(in.ReadLong());
     case Type::VARCHAR:
     case Type::VARBINARY:{
+      bool isBinary = type_id == Type::VARBINARY;
       uint32_t len = in.ReadInt();
       const char *data = (char *)in.getRawPointer(len);
-      return new VarlenValue(data, len);
+      return new VarlenValue(data, len, isBinary);
     }
     default:
       break;
