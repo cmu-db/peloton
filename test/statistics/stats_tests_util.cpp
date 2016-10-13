@@ -73,6 +73,8 @@ void StatsTestsUtil::CreateTable() {
   auto id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
       "dept_id", true);
+  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+  id_column.AddConstraint(constraint);
   auto name_column =
       catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(

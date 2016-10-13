@@ -15,14 +15,14 @@
 
 #include "gtest/gtest.h"
 
-#include "executor/insert_executor.h"
+#include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/catalog.h"
-#include "planner/insert_plan.h"
+#include "executor/insert_executor.h"
 #include "expression/abstract_expression.h"
 #include "parser/statement_insert.h"
 #include "parser/statement_select.h"
+#include "planner/insert_plan.h"
 
 namespace peloton {
 namespace test {
@@ -34,14 +34,14 @@ namespace test {
 class InsertTests : public PelotonTest {};
 
 TEST_F(InsertTests, InsertRecord) {
-
   catalog::Catalog::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert a table first
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER), "dept_id", true);
+      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      "dept_id", true);
   auto name_column =
       catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
 
@@ -55,6 +55,9 @@ TEST_F(InsertTests, InsertRecord) {
   catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME, "TEST_TABLE",
                                                std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
+
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, "TEST_TABLE");
 
   txn = txn_manager.BeginTransaction();
 
@@ -95,6 +98,17 @@ TEST_F(InsertTests, InsertRecord) {
 
   EXPECT_TRUE(executor.Init());
   EXPECT_TRUE(executor.Execute());
+  EXPECT_EQ(1, table->GetTupleCount());
+
+  delete insert_node->values->at(0);
+  insert_node->values->at(0) = new expression::ConstantValueExpression(
+      common::ValueFactory::GetIntegerValue(80));
+  planner::InsertPlan node2(insert_node.get());
+  executor::InsertExecutor executor2(&node2, context.get());
+
+  EXPECT_TRUE(executor2.Init());
+  EXPECT_TRUE(executor2.Execute());
+  EXPECT_EQ(2, table->GetTupleCount());
 
   txn_manager.CommitTransaction(txn);
 
