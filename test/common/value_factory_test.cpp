@@ -65,7 +65,7 @@ TEST_F(ValueFactoryTests, PeekValueTest) {
   common::BooleanValue v6(true);
   EXPECT_EQ(common::ValuePeeker::PeekBoolean(&v6), true);
   std::string str = "hello";
-  common::VarlenValue v7(str);
+  common::VarlenValue v7(str, false);
   EXPECT_EQ(v7.GetData(), str);
 }
 
@@ -85,7 +85,7 @@ TEST_F(ValueFactoryTests, CastTest) {
   EXPECT_THROW(common::ValueFactory::CastAsTinyInt(common::IntegerValue(common::PELOTON_INT32_MAX)),
                                            peloton::Exception);
 
-  std::unique_ptr<common::Value> v3(common::ValueFactory::CastAsVarchar(common::ValueFactory::GetVarlenValue("hello")));
+  std::unique_ptr<common::Value> v3(common::ValueFactory::CastAsVarchar(common::ValueFactory::GetVarcharValue("hello")));
   EXPECT_EQ(v3->GetTypeId(), common::Type::VARCHAR);
 
   std::unique_ptr<common::Value> v4(common::ValueFactory::Clone(*v3));
@@ -98,33 +98,33 @@ TEST_F(ValueFactoryTests, CastTest) {
   EXPECT_EQ(v6->ToString(), "9223372036854775807");
 
   std::string str1("9999-12-31 23:59:59.999999+14");
-  std::unique_ptr<common::Value> v7(common::ValueFactory::CastAsTimestamp(common::VarlenValue(str1)));
+  std::unique_ptr<common::Value> v7(common::ValueFactory::CastAsTimestamp(common::VarlenValue(str1, false)));
   EXPECT_EQ(v7->ToString(), str1);
   std::string str2("9999-12-31 23:59:59-01");
-  std::unique_ptr<common::Value> v77(common::ValueFactory::CastAsTimestamp(common::VarlenValue(str2)));
+  std::unique_ptr<common::Value> v77(common::ValueFactory::CastAsTimestamp(common::VarlenValue(str2, false)));
   EXPECT_EQ(v77->ToString(), "9999-12-31 23:59:59.000000-01");
-  EXPECT_THROW(common::ValueFactory::CastAsTimestamp(common::VarlenValue("1900-02-29 23:59:59.999999+12")),
+  EXPECT_THROW(common::ValueFactory::CastAsTimestamp(common::VarlenValue("1900-02-29 23:59:59.999999+12", false)),
                                              peloton::Exception);
 
-  std::unique_ptr<common::Value> v8(common::ValueFactory::CastAsBigInt(common::VarlenValue("9223372036854775807")));
+  std::unique_ptr<common::Value> v8(common::ValueFactory::CastAsBigInt(common::VarlenValue("9223372036854775807", false)));
   EXPECT_EQ(v8->GetAs<int64_t>(), 9223372036854775807);
-  EXPECT_THROW(common::ValueFactory::CastAsBigInt(common::VarlenValue("9223372036854775808")), peloton::Exception);
-  EXPECT_THROW(common::ValueFactory::CastAsBigInt(common::VarlenValue("-9223372036854775808")), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsBigInt(common::VarlenValue("9223372036854775808", false)), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsBigInt(common::VarlenValue("-9223372036854775808", false)), peloton::Exception);
 
-  std::unique_ptr<common::Value> v9(common::ValueFactory::CastAsInteger(common::VarlenValue("2147483647")));
+  std::unique_ptr<common::Value> v9(common::ValueFactory::CastAsInteger(common::VarlenValue("2147483647", false)));
   EXPECT_EQ(v9->GetAs<int32_t>(), 2147483647);
-  EXPECT_THROW(common::ValueFactory::CastAsInteger(common::VarlenValue("-2147483648")), peloton::Exception);
-  EXPECT_THROW(common::ValueFactory::CastAsInteger(common::VarlenValue("2147483648")), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsInteger(common::VarlenValue("-2147483648", false)), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsInteger(common::VarlenValue("2147483648", false)), peloton::Exception);
 
-  std::unique_ptr<common::Value> v10(common::ValueFactory::CastAsSmallInt(common::VarlenValue("32767")));
+  std::unique_ptr<common::Value> v10(common::ValueFactory::CastAsSmallInt(common::VarlenValue("32767", false)));
   EXPECT_EQ(v10->GetAs<int16_t>(), 32767);
-  EXPECT_THROW(common::ValueFactory::CastAsSmallInt(common::VarlenValue("-32768")), peloton::Exception);
-  EXPECT_THROW(common::ValueFactory::CastAsSmallInt(common::VarlenValue("32768")), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsSmallInt(common::VarlenValue("-32768", false)), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsSmallInt(common::VarlenValue("32768", false)), peloton::Exception);
 
-  std::unique_ptr<common::Value> v11(common::ValueFactory::CastAsTinyInt(common::VarlenValue("127")));
+  std::unique_ptr<common::Value> v11(common::ValueFactory::CastAsTinyInt(common::VarlenValue("127", false)));
   EXPECT_EQ(v11->GetAs<int8_t>(), 127);
-  EXPECT_THROW(common::ValueFactory::CastAsTinyInt(common::VarlenValue("-128")), peloton::Exception);
-  EXPECT_THROW(common::ValueFactory::CastAsTinyInt(common::VarlenValue("128")), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsTinyInt(common::VarlenValue("-128", false)), peloton::Exception);
+  EXPECT_THROW(common::ValueFactory::CastAsTinyInt(common::VarlenValue("128", false)), peloton::Exception);
 }
 
 TEST_F(ValueFactoryTests, SerializationTest) {

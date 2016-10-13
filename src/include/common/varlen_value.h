@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/value.h"
-#include "common/varlen.h"
+//#include "common/varlen.h"
 
 namespace peloton {
 namespace common {
@@ -22,9 +22,8 @@ namespace common {
 // variable length.
 class VarlenValue : public Value {
  public:
-  VarlenValue(const char *data, uint32_t len);
-  VarlenValue(const std::string &data);
-  VarlenValue(const Varlen *varlen);
+  VarlenValue(const char *data, uint32_t len, bool binary);
+  VarlenValue(const std::string &data, bool binary);
   ~VarlenValue();
   
   // Access the raw variable length data

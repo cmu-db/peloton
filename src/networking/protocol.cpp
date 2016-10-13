@@ -477,6 +477,11 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             param_values.push_back(
                 common::ValueFactory::GetDoubleValue(float_val).Copy());
           } break;
+          case POSTGRES_VALUE_TYPE_VARBINARY: {
+            bind_parameters.push_back(std::make_pair(
+                common::Type::VARBINARY, std::string(reinterpret_cast<char *>(&param[0]), param_len)));
+            param_values.push_back(common::ValueFactory::GetVarbinaryValue(&param[0], param_len).Copy());
+          } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
           } break;

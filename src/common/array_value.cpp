@@ -53,7 +53,7 @@ Value *ArrayValue::GetElementAt(uint64_t idx) const {
     }
     case Type::VARCHAR: {
       std::vector<std::string> vec = *(std::vector<std::string> *)(value_.ptr);
-      return new VarlenValue(vec.at(idx));
+      return new VarlenValue(vec.at(idx), false);
     }
     default:
       break;
@@ -149,7 +149,7 @@ Value *ArrayValue::InList(const Value &o) const {
       std::vector<std::string> vec = *(std::vector<std::string> *)(value_.ptr);
       std::vector<std::string>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        BooleanValue *res = (BooleanValue *) VarlenValue(*it).CompareEquals(o);
+        BooleanValue *res = (BooleanValue *) VarlenValue(*it, false).CompareEquals(o);
         if (res->IsTrue())
           return res;
         delete res;
