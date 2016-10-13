@@ -135,6 +135,10 @@ class TileGroupHeader : public Printable {
   //===--------------------------------------------------------------------===//
 
   // Getters
+  inline const TileGroup *GetTileGroup() const {
+    PL_ASSERT(tile_group);
+    return tile_group;
+  }
 
   // it is possible that some other transactions are modifying the txn_id,
   // but the current transaction reads the txn_id.

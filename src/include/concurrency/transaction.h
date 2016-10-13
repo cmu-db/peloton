@@ -77,12 +77,16 @@ class Transaction : public Printable {
 
   void RecordRead(const ItemPointer &);
 
+  void RecordReadOwn(const ItemPointer &);
+
   void RecordUpdate(const ItemPointer &);
 
   void RecordInsert(const ItemPointer &);
 
   // Return true if we detect INS_DEL
   bool RecordDelete(const ItemPointer &);
+
+  RWType GetRWType(const ItemPointer&);
 
   inline const ReadWriteSet &GetReadWriteSet() {
     return rw_set_;

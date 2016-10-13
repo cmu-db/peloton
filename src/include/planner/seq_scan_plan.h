@@ -42,7 +42,7 @@ class SeqScanPlan : public AbstractScan {
 
   SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
-              const std::vector<oid_t> &column_ids)
+              const std::vector<oid_t> &column_ids, bool is_for_update = false)
       : AbstractScan(table, predicate, column_ids) {
     LOG_DEBUG("Creating a Sequential Scan Plan");
 
@@ -51,6 +51,8 @@ class SeqScanPlan : public AbstractScan {
       predicate_with_params_ =
           std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
     }
+
+    SetForUpdateFlag(is_for_update);
   }
 
   SeqScanPlan(parser::SelectStatement *select_node);

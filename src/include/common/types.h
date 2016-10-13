@@ -958,11 +958,13 @@ struct ItemPointerHasher {
 //===--------------------------------------------------------------------===//
 
 enum RWType {
+  RW_TYPE_INVALID,
   RW_TYPE_READ,
+  RW_TYPE_READ_OWN, // select for update
   RW_TYPE_UPDATE,
   RW_TYPE_INSERT,
   RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL  // delete after insert.
+  RW_TYPE_INS_DEL,  // delete after insert.
 };
 
 enum GCSetType {

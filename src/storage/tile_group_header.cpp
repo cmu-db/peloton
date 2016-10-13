@@ -32,6 +32,7 @@ namespace storage {
 TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
                                  const int &tuple_count)
     : backend_type(backend_type),
+      tile_group(nullptr),
       data(nullptr),
       num_tuple_slots(tuple_count),
       next_tuple_slot(0),

@@ -186,6 +186,8 @@ bool HybridScanExecutor::SeqScanUtil() {
 
   auto current_txn = executor_context_->GetTransaction();
 
+  bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
+
   // Retrieve next tile group.
   while (current_tile_group_offset_ < table_tile_group_count_) {
     LOG_TRACE("Current tile group offset : %u", current_tile_group_offset_);
@@ -234,7 +236,7 @@ bool HybridScanExecutor::SeqScanUtil() {
             predicate_->Evaluate(&tuple, nullptr, executor_context_)->IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(current_txn, location);
+          auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
             return res;
@@ -338,6 +340,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   PL_ASSERT(index_done_ == false);
 
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
+  bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   auto key_column_ids_ = node.GetKeyColumnIds();
   auto expr_type_ = node.GetExprTypes();
@@ -396,7 +399,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       if (visibility == VISIBILITY_OK) {
 
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-        auto res = transaction_manager.PerformRead(current_txn, tuple_location);
+        auto res = transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
         if (!res) {
           transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return res;
