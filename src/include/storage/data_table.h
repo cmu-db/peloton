@@ -36,10 +36,6 @@ extern LayoutType peloton_layout_mode;
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
-const int ACTIVE_TILEGROUP_COUNT = 1;
-
-const int ACTIVE_INDIRECTION_ARRAY_COUNT = 1;
-
 
 namespace peloton {
 
@@ -70,6 +66,7 @@ namespace storage {
 class Tuple;
 class TileGroup;
 class IndirectionArray;
+
 
 
 //===--------------------------------------------------------------------===//
@@ -245,6 +242,16 @@ class DataTable : public AbstractTable {
                        concurrency::Transaction *transaction, 
                        ItemPointer **index_entry_ptr);
 
+
+
+  static void SetActiveTileGroupCount(const size_t active_tile_group_count) {
+    active_tilegroup_count_ = active_tile_group_count;
+  }
+
+  static void SetActiveIndirectionArrayCount(const size_t active_indirection_array_count) {
+    active_indirection_array_count_ = active_indirection_array_count;
+  }
+
  protected:
 
   //===--------------------------------------------------------------------===//
@@ -282,6 +289,11 @@ class DataTable : public AbstractTable {
   // check the foreign key constraints
   bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
 
+public:
+  static size_t active_tilegroup_count_;
+
+  static size_t active_indirection_array_count_;
+
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -293,12 +305,12 @@ class DataTable : public AbstractTable {
   // TILE GROUPS
   LockFreeArray<oid_t> tile_groups_;
 
-  std::shared_ptr<storage::TileGroup> active_tile_groups_[ACTIVE_TILEGROUP_COUNT];
+  std::vector<std::shared_ptr<storage::TileGroup>> active_tile_groups_;
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
   // INDIRECTIONS
-  std::shared_ptr<storage::IndirectionArray> active_indirection_arrays_[ACTIVE_INDIRECTION_ARRAY_COUNT];
+  std::vector<std::shared_ptr<storage::IndirectionArray>> active_indirection_arrays_;
 
   // data table mutex
   std::mutex data_table_mutex_;
