@@ -267,14 +267,14 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
 
 bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
                                        storage::DataTable *table, int id,
-                                       int &result) {
+                                       int &result, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
   // index scan
   std::vector<oid_t> column_ids = {0, 1};
   planner::IndexScanPlan idx_scan_node(table, nullptr, column_ids,
-                                       MakeIndexDesc(table, id));
+                                       MakeIndexDesc(table, id), select_for_update);
   executor::IndexScanExecutor idx_scan_executor(&idx_scan_node, context.get());
 
   EXPECT_TRUE(idx_scan_executor.Init());
@@ -298,7 +298,7 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
   return true;
 }
 bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
-                                         storage::DataTable *table, int id) {
+                                         storage::DataTable *table, int id, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -311,7 +311,7 @@ bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
   // Scan
   std::vector<oid_t> column_ids = {0};
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(table, predicate, column_ids));
+      new planner::SeqScanPlan(table, predicate, column_ids, select_for_update));
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
                                               context.get());
 
@@ -324,7 +324,7 @@ bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
 }
 bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
                                          storage::DataTable *table, int id,
-                                         int value) {
+                                         int value, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -349,7 +349,7 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   std::vector<oid_t> column_ids = {0};
   std::unique_ptr<planner::IndexScanPlan> idx_scan_node(
       new planner::IndexScanPlan(table, nullptr, column_ids,
-                                 MakeIndexDesc(table, id)));
+                                 MakeIndexDesc(table, id), select_for_update));
   executor::IndexScanExecutor idx_scan_executor(idx_scan_node.get(),
                                                 context.get());
 
@@ -362,7 +362,7 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
 
 bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
                                                 storage::DataTable *table,
-                                                int old_value, int new_value) {
+                                                int old_value, int new_value, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -394,7 +394,7 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(table, predicate, column_ids));
+      new planner::SeqScanPlan(table, predicate, column_ids, select_for_update));
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
                                               context.get());
 
@@ -407,7 +407,7 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 
 bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
                                        std::vector<int> &results,
-                                       storage::DataTable *table, int id) {
+                                       storage::DataTable *table, int id, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -422,7 +422,7 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids, select_for_update);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   EXPECT_TRUE(seq_scan_executor.Init());

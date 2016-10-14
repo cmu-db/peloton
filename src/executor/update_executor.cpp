@@ -95,7 +95,14 @@ bool UpdateExecutor::DExecute() {
 
     bool is_owner = 
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
-    if (is_owner == true) {
+
+    bool is_written =
+      transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
+
+    PL_ASSERT((is_owner == false && is_written == true) == false);
+
+    if (is_owner == true && is_written == true) {
+      // We have already owned a version
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
@@ -107,14 +114,14 @@ bool UpdateExecutor::DExecute() {
       transaction_manager.PerformUpdate(current_txn, old_location);
 
     } else {
-
-      bool is_ownable = 
+      // Skip the IsOwnable and AcquireOwnership if we have already got the ownership
+      bool is_ownable = is_owner ||
           transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
 
       if (is_ownable == true) {
         // if the tuple is not owned by any transaction and is visible to current transaction.
 
-        bool acquire_ownership_success = 
+        bool acquire_ownership_success = is_owner ||
             transaction_manager.AcquireOwnership(current_txn, tile_group_header, physical_tuple_id);
 
         if (acquire_ownership_success == false) {
@@ -154,7 +161,10 @@ bool UpdateExecutor::DExecute() {
         // the YieldOwnership() function helps us release the acquired write lock.
         if (ret == false) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-          transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
+          if (is_owner == false) {
+            // If the ownership is acquire inside this update executor, we release it here
+            transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
+          }
           transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
           return false;
         }

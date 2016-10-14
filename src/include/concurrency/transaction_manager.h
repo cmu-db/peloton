@@ -79,6 +79,13 @@ class TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
+  // This method tests whether the current transaction has created this version of the tuple
+  virtual bool IsWritten(
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id
+  ) = 0;
+
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
       Transaction *const current_txn, 
@@ -104,7 +111,8 @@ class TransactionManager {
                              ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(Transaction *const current_txn, 
-                           const ItemPointer &location) = 0;
+                           const ItemPointer &location,
+                           bool acquire_ownership = false) = 0;
 
   virtual void PerformUpdate(Transaction *const current_txn, 
                              const ItemPointer &old_location,
