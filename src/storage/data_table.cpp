@@ -50,6 +50,9 @@ namespace storage {
 
 oid_t DataTable::invalid_tile_group_id = -1;
 
+size_t DataTable::active_tilegroup_count_ = 1;
+size_t DataTable::active_indirection_array_count_ = 1;
+
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
@@ -62,13 +65,19 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
+
+  active_tile_groups_.resize(active_tilegroup_count_);
+
+  active_indirection_arrays_.resize(active_indirection_array_count_);
+
+
   // Create tile groups.
-  for (size_t i = 0; i < ACTIVE_TILEGROUP_COUNT; ++i) {
+  for (size_t i = 0; i < active_tilegroup_count_; ++i) {
     AddDefaultTileGroup(i);
   }
 
   // Create indirection layers.
-  for (size_t i = 0; i < ACTIVE_INDIRECTION_ARRAY_COUNT; ++i) {
+  for (size_t i = 0; i < active_indirection_array_count_; ++i) {
     AddDefaultIndirectionArray(i);
   }
 }
@@ -150,7 +159,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   }
   //====================================================
 
-  size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
+  size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
@@ -309,7 +318,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   int index_count = GetIndexCount();
 
-  size_t active_indirection_array_id = number_of_tuples_ % ACTIVE_INDIRECTION_ARRAY_COUNT;
+  size_t active_indirection_array_id = number_of_tuples_ % active_indirection_array_count_;
 
   size_t indirection_offset = INVALID_INDIRECTION_OFFSET;
   
@@ -622,7 +631,7 @@ oid_t DataTable::AddDefaultIndirectionArray(const size_t &active_indirection_arr
 }
 
 oid_t DataTable::AddDefaultTileGroup() {
-  size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
+  size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
   return AddDefaultTileGroup(active_tile_group_id);
 }
 
@@ -702,7 +711,7 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 // NOTE: This function is only used in test cases.
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
-  size_t active_tile_group_id = number_of_tuples_ % ACTIVE_TILEGROUP_COUNT;
+  size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
 
   active_tile_groups_[active_tile_group_id] = tile_group;
 
