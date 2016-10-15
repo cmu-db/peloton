@@ -1,513 +1,518 @@
-////===----------------------------------------------------------------------===//
-////
-////                         Peloton
-////
-//// array_value.h
-////
-//// Identification: src/backend/common/array_value.cpp
-////
-//// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-////
-////===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
-//#include "common/array_value.h"
-//#include "common/numeric_value.h"
-//#include "common/decimal_value.h"
-//#include "common/boolean_value.h"
-//#include "common/varlen_value.h"
-//#include "common/timestamp_value.h"
+//                         Peloton
 //
-//namespace peloton {
-//namespace common {
+// array_value.h
 //
-//// Get the element at a given index in this array
-//Value *ArrayValue::GetElementAt(uint64_t idx) const {
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec = *(std::vector<bool> *)(value_.ptr);
-//      return new BooleanValue(vec.at(idx));
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec = *(std::vector<int8_t> *)(value_.ptr);
-//      return new IntegerValue((int8_t)vec.at(idx));
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec = *(std::vector<int16_t> *)(value_.ptr);
-//      return new IntegerValue((int16_t)vec.at(idx));
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec = *(std::vector<int32_t> *)(value_.ptr);
-//      return new IntegerValue((int32_t)vec.at(idx));
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec = *(std::vector<int64_t> *)(value_.ptr);
-//      return new IntegerValue((int64_t)vec.at(idx));
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec = *(std::vector<double> *)(value_.ptr);
-//      return new DecimalValue((double)vec.at(idx));
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec = *(std::vector<uint64_t> *)(value_.ptr);
-//      return new TimestampValue((uint64_t)vec.at(idx));
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec = *(std::vector<std::string> *)(value_.ptr);
-//      return new VarlenValue(vec.at(idx), false);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
+// Identification: src/backend/common/array_value.cpp
 //
-//// Does this value exist in this array?
-//Value *ArrayValue::InList(const Value &o) const {
-//  std::unique_ptr<Value> ele(GetElementAt(0));
-//  ele->CheckComparable(o);
-//  if (o.IsNull())
-//    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) BooleanValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) IntegerValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) IntegerValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) IntegerValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) IntegerValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) DecimalValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) TimestampValue(*it).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec = *(std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string>::iterator it;
-//      for (it = vec.begin(); it != vec.end(); it++) {
-//        BooleanValue *res = (BooleanValue *) VarlenValue(*it, false).CompareEquals(o);
-//        if (res->IsTrue())
-//          return res;
-//        delete res;
-//      }
-//      return new BooleanValue(0);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
-//Value *ArrayValue::CompareEquals(const Value &o) const {
-//  PL_ASSERT(GetTypeId() == Type::ARRAY);
-//  CheckComparable(o);
-//  if (((ArrayValue &)o).GetElementType() != GetElementType()) {
-//    std::string msg = Type::GetInstance((
-//                      (ArrayValue &)o).GetElementType()).ToString()
-//                      + " mismatch with " +
-//                      Type::GetInstance(GetElementType()).ToString();
-//    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
-//  }
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec1 = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool> vec2 = *(std::vector<bool> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec1 = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double> vec2 = *(std::vector<double> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec1 = *(std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string> vec2 = *(std::vector<std::string> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 == vec2);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
-//
-//Value *ArrayValue::CompareNotEquals(const Value &o) const {
-//  PL_ASSERT(GetTypeId() == Type::ARRAY);
-//  CheckComparable(o);
-//  if (((ArrayValue &)o).GetElementType() != GetElementType()) {
-//    std::string msg = Type::GetInstance((
-//                      (ArrayValue &)o).GetElementType()).ToString()
-//                      + " mismatch with " +
-//                      Type::GetInstance(GetElementType()).ToString();
-//    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
-//  }
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec1 = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool> vec2 = *(std::vector<bool> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec1 = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double> vec2 = *(std::vector<double> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec1 = *(std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string> vec2 = *(std::vector<std::string> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 != vec2);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
-//
-//Value *ArrayValue::CompareLessThan(const Value &o) const {
-//  PL_ASSERT(GetTypeId() == Type::ARRAY);
-//  CheckComparable(o);
-//  if (((ArrayValue &)o).GetElementType() != GetElementType()) {
-//    std::string msg = Type::GetInstance((
-//                      (ArrayValue &)o).GetElementType()).ToString()
-//                      + " mismatch with " +
-//                      Type::GetInstance(GetElementType()).ToString();
-//    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
-//  }
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec1 = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool> vec2 = *(std::vector<bool> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec1 = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double> vec2 = *(std::vector<double> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> *vec1 = (std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string> *vec2 = (std::vector<std::string> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 < vec2);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
-//
-//Value *ArrayValue::CompareLessThanEquals(const Value &o) const {
-//  PL_ASSERT(GetTypeId() == Type::ARRAY);
-//  CheckComparable(o);
-//  if (((ArrayValue &)o).GetElementType() != GetElementType()) {
-//    std::string msg = Type::GetInstance((
-//                      (ArrayValue &)o).GetElementType()).ToString()
-//                      + " mismatch with " +
-//                      Type::GetInstance(GetElementType()).ToString();
-//    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
-//  }
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec1 = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool> vec2 = *(std::vector<bool> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec1 = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double> vec2 = *(std::vector<double> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec1 = *(std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string> vec2 = *(std::vector<std::string> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 <= vec2);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
-//
-//Value *ArrayValue::CompareGreaterThan(const Value &o) const {
-//  PL_ASSERT(GetTypeId() == Type::ARRAY);
-//  CheckComparable(o);
-//  if (((ArrayValue &)o).GetElementType() != GetElementType()) {
-//    std::string msg = Type::GetInstance((
-//                      (ArrayValue &)o).GetElementType()).ToString()
-//                      + " mismatch with " +
-//                      Type::GetInstance(GetElementType()).ToString();
-//    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
-//  }
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec1 = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool> vec2 = *(std::vector<bool> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec1 = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double> vec2 = *(std::vector<double> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec1 = *(std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string> vec2 = *(std::vector<std::string> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 > vec2);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
-//
-//Value *ArrayValue::CompareGreaterThanEquals(const Value &o) const {
-//  PL_ASSERT(GetTypeId() == Type::ARRAY);
-//  CheckComparable(o);
-//  if (((ArrayValue &)o).GetElementType() != GetElementType()) {
-//    std::string msg = Type::GetInstance((
-//                      (ArrayValue &)o).GetElementType()).ToString()
-//                      + " mismatch with " +
-//                      Type::GetInstance(GetElementType()).ToString();
-//    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
-//  }
-//  switch (GetElementType()) {
-//    case Type::BOOLEAN: {
-//      std::vector<bool> vec1 = *(std::vector<bool> *)(value_.ptr);
-//      std::vector<bool> vec2 = *(std::vector<bool> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::TINYINT: {
-//      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(value_.ptr);
-//      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::SMALLINT: {
-//      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(value_.ptr);
-//      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::INTEGER: {
-//      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(value_.ptr);
-//      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::BIGINT: {
-//      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(value_.ptr);
-//      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::DECIMAL: {
-//      std::vector<double> vec1 = *(std::vector<double> *)(value_.ptr);
-//      std::vector<double> vec2 = *(std::vector<double> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::TIMESTAMP: {
-//      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(value_.ptr);
-//      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    case Type::VARCHAR: {
-//      std::vector<std::string> vec1 = *(std::vector<std::string> *)(value_.ptr);
-//      std::vector<std::string> vec2 = *(std::vector<std::string> *)(o.GetAs<char *>());
-//      return new BooleanValue(vec1 >= vec2);
-//    }
-//    default:
-//      break;
-//  }
-//  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
-//}
-//
-//Value *ArrayValue::CastAs(UNUSED_ATTRIBUTE const Type::TypeId type_id) const {
-//  PL_ASSERT(false);
-//  throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, "Cannot cast array values.");
-//}
-//
-//}  // namespace peloton
-//}  // namespace common
+//===----------------------------------------------------------------------===//
+
+#include "common/type.h"
+#include "common/array_value.h"
+#include "common/numeric_value.h"
+#include "common/decimal_value.h"
+#include "common/boolean_value.h"
+#include "common/varlen_value.h"
+#include "common/timestamp_value.h"
+
+namespace peloton {
+namespace common {
+
+// Get the element at a given index in this array
+Value *ArrayType::GetElementAt(const Value& val, uint64_t idx) const {
+  switch (val.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec = *(std::vector<bool> *)(val.value_.array.data);
+      return new Value(Type::BOOLEAN, vec.at(idx));
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec = *(std::vector<int8_t> *)(val.value_.array.data);
+      return new Value(Type::TINYINT, (int8_t)vec.at(idx));
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec = *(std::vector<int16_t> *)(val.value_.array.data);
+      return new Value(Type::SMALLINT, (int16_t)vec.at(idx));
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec = *(std::vector<int32_t> *)(val.value_.array.data);
+      return new Value(Type::INTEGER, (int32_t)vec.at(idx));
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec = *(std::vector<int64_t> *)(val.value_.array.data);
+      return new Value(Type::BIGINT, (int64_t)vec.at(idx));
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec = *(std::vector<double> *)(val.value_.array.data);
+      return new Value(Type::DECIMAL, (double)vec.at(idx));
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec = *(std::vector<uint64_t> *)(val.value_.array.data);
+      return new Value(Type::TIMESTAMP,(uint64_t)vec.at(idx));
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec = *(std::vector<std::string> *)(val.value_.array.data);
+      return new Value(Type::VARCHAR, vec.at(idx));
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+// Does this value exist in this array?
+Value *ArrayType::InList(const Value& list, const Value &object) const {
+  std::unique_ptr<Value> ele(list.GetElementAt(0));
+  ele->CheckComparable(object);
+  if (object.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  switch (list.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array.data);
+      std::vector<bool>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::BOOLEAN, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec = *(std::vector<int8_t> *)(list.value_.array.data);
+      std::vector<int8_t>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::TINYINT, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec = *(std::vector<int16_t> *)(list.value_.array.data);
+      std::vector<int16_t>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::SMALLINT, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec = *(std::vector<int32_t> *)(list.value_.array.data);
+      std::vector<int32_t>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::INTEGER, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec = *(std::vector<int64_t> *)(list.value_.array.data);
+      std::vector<int64_t>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::BIGINT, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec = *(std::vector<double> *)(list.value_.array.data);
+      std::vector<double>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::DECIMAL, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec = *(std::vector<uint64_t> *)(list.value_.array.data);
+      std::vector<uint64_t>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::TIMESTAMP, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec = *(std::vector<std::string> *)(list.value_.array.data);
+      std::vector<std::string>::iterator it;
+      for (it = vec.begin(); it != vec.end(); it++) {
+        Value *res = Value(Type::VARCHAR, *it).CompareEquals(object);
+        if (res->IsTrue())
+          return res;
+        delete res;
+      }
+      return new Value(Type::BOOLEAN, 0);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CompareEquals(const Value& left, const Value &right) const {
+  PL_ASSERT(GetTypeId() == Type::ARRAY);
+  left.CheckComparable(right);
+  if (right.GetElementType() != left.GetElementType()) {
+    std::string msg = Type::GetInstance(
+                      right.GetElementType())->ToString()
+                      + " mismatch with " +
+                      Type::GetInstance(left.GetElementType())->ToString();
+    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  }
+  switch (left.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array.data);
+      std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array.data);
+      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array.data);
+      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array.data);
+      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array.data);
+      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array.data);
+      std::vector<double> vec2 = *(std::vector<double> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(left.value_.array.data);
+      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec1 = *(std::vector<std::string> *)(left.value_.array.data);
+      std::vector<std::string> vec2 = *(std::vector<std::string> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 == vec2);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CompareNotEquals(const Value& left, const Value &right) const {
+  PL_ASSERT(GetTypeId() == Type::ARRAY);
+  left.CheckComparable(right);
+  if (right.GetElementType() != left.GetElementType()) {
+    std::string msg = Type::GetInstance(
+                      right.GetElementType())->ToString()
+                      + " mismatch with " +
+                      Type::GetInstance(left.GetElementType())->ToString();
+    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  }
+  switch (left.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array.data);
+      std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array.data);
+      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array.data);
+      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array.data);
+      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array.data);
+      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array.data);
+      std::vector<double> vec2 = *(std::vector<double> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(left.value_.array.data);
+      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec1 = *(std::vector<std::string> *)(left.value_.array.data);
+      std::vector<std::string> vec2 = *(std::vector<std::string> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 != vec2);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CompareLessThan(const Value& left, const Value &right) const {
+  PL_ASSERT(GetTypeId() == Type::ARRAY);
+  left.CheckComparable(right);
+  if (right.GetElementType() != left.GetElementType()) {
+    std::string msg = Type::GetInstance(
+                      right.GetElementType())->ToString()
+                      + " mismatch with " +
+                      Type::GetInstance(left.GetElementType())->ToString();
+    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  }
+  switch (left.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array.data);
+      std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array.data);
+      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array.data);
+      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array.data);
+      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array.data);
+      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array.data);
+      std::vector<double> vec2 = *(std::vector<double> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(left.value_.array.data);
+      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> *vec1 = (std::vector<std::string> *)(left.value_.array.data);
+      std::vector<std::string> *vec2 = (std::vector<std::string> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 < vec2);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CompareLessThanEquals(const Value& left, const Value &right) const {
+  PL_ASSERT(GetTypeId() == Type::ARRAY);
+  left.CheckComparable(right);
+  if (right.GetElementType() != left.GetElementType()) {
+    std::string msg = Type::GetInstance(
+                      right.GetElementType())->ToString()
+                      + " mismatch with " +
+                      Type::GetInstance(left.GetElementType())->ToString();
+    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  }
+  switch (left.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array.data);
+      std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array.data);
+      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array.data);
+      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array.data);
+      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array.data);
+      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array.data);
+      std::vector<double> vec2 = *(std::vector<double> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(left.value_.array.data);
+      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec1 = *(std::vector<std::string> *)(left.value_.array.data);
+      std::vector<std::string> vec2 = *(std::vector<std::string> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 <= vec2);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CompareGreaterThan(const Value& left, const Value &right) const {
+  PL_ASSERT(GetTypeId() == Type::ARRAY);
+  left.CheckComparable(right);
+  if (right.GetElementType() != left.GetElementType()) {
+    std::string msg = Type::GetInstance(
+                      right.GetElementType())->ToString()
+                      + " mismatch with " +
+                      Type::GetInstance(left.GetElementType())->ToString();
+    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  }
+  switch (left.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array.data);
+      std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array.data);
+      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array.data);
+      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array.data);
+      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array.data);
+      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array.data);
+      std::vector<double> vec2 = *(std::vector<double> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(left.value_.array.data);
+      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec1 = *(std::vector<std::string> *)(left.value_.array.data);
+      std::vector<std::string> vec2 = *(std::vector<std::string> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 > vec2);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
+  PL_ASSERT(GetTypeId() == Type::ARRAY);
+  left.CheckComparable(right);
+  if (right.GetElementType() != left.GetElementType()) {
+    std::string msg = Type::GetInstance(
+                      right.GetElementType())->ToString()
+                      + " mismatch with " +
+                      Type::GetInstance(left.GetElementType())->ToString();
+    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  }
+  switch (left.GetElementType()) {
+    case Type::BOOLEAN: {
+      std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array.data);
+      std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::TINYINT: {
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array.data);
+      std::vector<int8_t> vec2 = *(std::vector<int8_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::SMALLINT: {
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array.data);
+      std::vector<int16_t> vec2 = *(std::vector<int16_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::INTEGER: {
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array.data);
+      std::vector<int32_t> vec2 = *(std::vector<int32_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::BIGINT: {
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array.data);
+      std::vector<int64_t> vec2 = *(std::vector<int64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::DECIMAL: {
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array.data);
+      std::vector<double> vec2 = *(std::vector<double> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::TIMESTAMP: {
+      std::vector<uint64_t> vec1 = *(std::vector<uint64_t> *)(left.value_.array.data);
+      std::vector<uint64_t> vec2 = *(std::vector<uint64_t> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    case Type::VARCHAR: {
+      std::vector<std::string> vec1 = *(std::vector<std::string> *)(left.value_.array.data);
+      std::vector<std::string> vec2 = *(std::vector<std::string> *)(right.GetAs<char *>());
+      return new Value(Type::BOOLEAN, vec1 >= vec2);
+    }
+    default:
+      break;
+  }
+  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+}
+
+Value *ArrayType::CastAs(const Value& val UNUSED_ATTRIBUTE, UNUSED_ATTRIBUTE const Type::TypeId type_id) const {
+  PL_ASSERT(false);
+  throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, "Cannot cast array values.");
+}
+
+Type::TypeId ArrayType::GetElementType(const Value& val UNUSED_ATTRIBUTE) const {
+  return val.value_.array.array_type;
+}
+
+}  // namespace peloton
+}  // namespace common

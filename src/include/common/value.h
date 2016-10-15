@@ -19,6 +19,7 @@
 #include <climits>
 #include <cfloat>
 #include <cstdint>
+#include <vector>
 #include "common/macros.h"
 
 namespace peloton {
@@ -64,7 +65,8 @@ class Value : public Printable {
   Value(const Type::TypeId type) : type_(Type::GetInstance(type)) {}
 
   //ARRAY values
-  //TODO: implement array values
+  template<class T>
+  Value(Type::TypeId type, const std::vector<T> &vals, Type::TypeId element_type);
 
   //BOOLEAN and TINYINT
   Value(Type::TypeId type, int8_t val);
@@ -85,7 +87,9 @@ class Value : public Printable {
 
   //VARCHAR and VARBINARY
   Value(Type::TypeId type, const char *data, uint32_t len);
-  Value(Type::TypeId type, const std::string &data) ;
+  Value(Type::TypeId type, const std::string &data);
+
+
 
 
   ~Value();
@@ -190,6 +194,13 @@ class Value : public Printable {
 
   Value *CastAs(const Type::TypeId type_id) const;
 
+  // Get the element at a given index in this array
+  Value *GetElementAt(uint64_t idx) const;
+
+  Type::TypeId GetElementType() const;
+
+  // Does this value exist in this array?
+  Value *InList(const Value &object) const;
 
   // For unordered_map
   struct equal_to {
@@ -215,6 +226,7 @@ class Value : public Printable {
   friend struct hash_combine;
   friend struct hash;
   friend class Type;
+  friend class ArrayType;
   friend class BooleanType;
   friend class NumericType;
   friend class IntegerType;
@@ -236,7 +248,15 @@ class Value : public Printable {
     int64_t bigint;
     double decimal;
     uint64_t timestamp;
-    char *ptr;
+//    char *ptr;
+    struct{
+      uint32_t len;
+      char *data;
+    }varlen;
+    struct{
+      Type::TypeId array_type;
+      char *data;
+    } array;
   } value_;
 };
 

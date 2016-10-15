@@ -12,6 +12,7 @@
 
 #include "common/type.h"
 #include "common/value.h"
+#include "common/array_value.h"
 #include "common/numeric_value.h"
 #include "common/decimal_value.h"
 #include "common/boolean_value.h"
@@ -36,7 +37,7 @@ Type* Type::kTypes[] = {
   new Type(Type::DATE), // not yet implemented
   new VarlenType(Type::VARCHAR),
   new VarlenType(Type::VARBINARY),
-  new Type(Type::ARRAY), // not yet implemented
+  new ArrayType(), // not yet implemented
   new Type(Type::UDT), // not yet implemented
 };
 
@@ -309,6 +310,20 @@ const char *Type::GetData(const Value& val UNUSED_ATTRIBUTE) const{
 
 // Get the length of the variable length data
 uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Get the element at a given index in this array
+Value *Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE, uint64_t idx UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+Type::TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+  // Does this value exist in this array?
+Value *Type::InList(const Value& list UNUSED_ATTRIBUTE, const Value &object UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 

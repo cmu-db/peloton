@@ -20,6 +20,22 @@
 namespace peloton {
 namespace common {
 
+//Array
+template<class T>
+Value::Value(Type::TypeId type, const std::vector<T> &vals, Type::TypeId element_type)
+                            : Type(Type::ARRAY){
+  switch (type) {
+    case Type::ARRAY:
+      value_.array.data = (char *) &vals;
+      value_.array.array_type = element_type;
+      break;
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+          "Invalid Type for constructor");
+    }
+
+  }
+
 // BOOLEAN and TINYINT
 Value::Value(Type::TypeId type, int8_t i) :
     Value(type) {
@@ -123,17 +139,11 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len) :
   switch (type) {
   case Type::VARCHAR:
   case Type::VARBINARY:
-    if (len == PELOTON_VARCHAR_MAX_LEN) {
-        value_.ptr = new char[sizeof(uint32_t)];
-        PL_ASSERT(value_.ptr != nullptr);
-        (*(uint32_t *) value_.ptr) = len;
-      } else {
-        value_.ptr = new char[len + sizeof(uint32_t)];
-        PL_ASSERT(value_.ptr != nullptr);
-        (*(uint32_t *) value_.ptr) = len;
-        char *dest = value_.ptr + sizeof(uint32_t);
-        PL_MEMCPY(dest, data, len);
-      }
+    PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
+    value_.varlen.data = new char[len];
+    PL_ASSERT(value_.varlen.data != nullptr);
+    value_.varlen.len = len;
+    PL_MEMCPY(value_.varlen.data, data, len);
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -148,11 +158,10 @@ Value::Value(Type::TypeId type, const std::string &data) :
   case Type::VARBINARY:
   {
     uint32_t len = data.length() + (type == Type::VARCHAR);
-    value_.ptr = new char[len + sizeof(uint32_t)];
-    PL_ASSERT(value_.ptr != nullptr);
-    (*(uint32_t *) value_.ptr) = len;
-    char *dest = value_.ptr + sizeof(uint32_t);
-    PL_MEMCPY(dest, data.c_str(), len);
+    value_.varlen.data = new char[len];
+    PL_ASSERT(value_.varlen.data != nullptr);
+    value_.varlen.len = len;
+    PL_MEMCPY(value_.varlen.data, data.c_str(), len);
     break;
   }
   default:
@@ -166,7 +175,7 @@ Value::~Value() {
   switch(type_->GetTypeId()){
   case Type::VARBINARY:
   case Type::VARCHAR:
-    delete[] value_.ptr;
+    delete[] value_.varlen.data;
     break;
   default:
     break;
@@ -202,7 +211,7 @@ bool Value::IsNull() const {
       return (value_.timestamp == PELOTON_TIMESTAMP_NULL);
     case Type::VARCHAR:
     case Type::VARBINARY:
-      return (*((uint32_t *) value_.ptr) == 0);
+      return value_.varlen.len == 0;
     default:
       break;
   }
@@ -437,6 +446,20 @@ Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
   // Get the length of the variable length data
   uint32_t Value::GetLength() const{
     return type_->GetLength(*this);
+  }
+
+  // Get the element at a given index in this array
+  Value *Value::GetElementAt(uint64_t idx) const{
+    return type_->GetElementAt(*this, idx);
+  }
+
+  Type::TypeId Value::GetElementType() const{
+    return type_->GetElementType(*this);
+  }
+
+  // Does this value exist in this array?
+  Value *Value::InList(const Value &object) const{
+    return type_->InList(*this, object);
   }
 
 

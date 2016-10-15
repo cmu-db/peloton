@@ -28,12 +28,12 @@ VarlenType::~VarlenType() {
 
 // Access the raw variable length data
 const char *VarlenType::GetData(const Value& val) const {
-  return (val.value_.ptr + sizeof(uint32_t));
+  return val.value_.varlen.data;
 }
 
 // Get the length of the variable length data
 uint32_t VarlenType::GetLength(const Value& val) const {
-  return *((uint32_t *) val.value_.ptr);
+  return val.value_.varlen.len;
 }
 
 Value *VarlenType::CompareEquals(const Value& left, const Value &right) const {
@@ -148,19 +148,11 @@ void VarlenType::SerializeTo(const Value& val, SerializeOutput &out) const {
 
 void VarlenType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
     VarlenPool *pool) const {
-  if (pool == nullptr) {
-    uint32_t size = val.GetLength() + sizeof(uint32_t);
-    char *data = new char[size];
-    PL_ASSERT(data != nullptr);
-    *reinterpret_cast<const char **>(storage) = data;
-    PL_MEMCPY(data, val.value_.ptr, size);
-  } else {
-    uint32_t size = val.GetLength() + sizeof(uint32_t);
-    char *data = (char *) pool->Allocate(size);
-    PL_ASSERT(data != nullptr);
-    *reinterpret_cast<const char **>(storage) = data;
-    PL_MEMCPY(data, val.value_.ptr, size);
-  }
+  uint32_t size = val.GetLength() + sizeof(uint32_t);
+  char *data = (pool == nullptr ) ? new char[size] : (char *) pool->Allocate(size);
+  *reinterpret_cast<const char **>(storage) = data;
+  PL_MEMCPY(data, &val.value_.varlen.len, sizeof(uint32_t));
+  PL_MEMCPY(data + sizeof(uint32_t), val.value_.varlen.data, size-sizeof(uint32_t));
 }
 
 Value *VarlenType::Copy(const Value& val) const {

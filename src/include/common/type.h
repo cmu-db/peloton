@@ -136,6 +136,14 @@ class Type {
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
 
+  // Get the element at a given index in this array
+  virtual Value *GetElementAt(const Value& val, uint64_t idx) const;
+
+  virtual TypeId GetElementType(const Value& val) const;
+
+    // Does this value exist in this array?
+  virtual Value *InList(const Value& list, const Value &object) const;
+
  protected:
   // The actual type ID
   TypeId type_id_;
