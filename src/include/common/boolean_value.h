@@ -12,7 +12,9 @@
 
 #pragma once
 
+#include "common/type.h"
 #include "common/value.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace common {
@@ -32,10 +34,8 @@ class BooleanType : public Type {
   Value *CompareGreaterThan(const Value& left, const Value &right) const override;
   Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Type::TypeId type_id) const override;
-
   // Decimal types are always inlined
-  bool IsInlined(const Value& val) const override { return true; }
+  bool IsInlined(const Value&) const override { return true; }
 
   // Debug
   std::string ToString(const Value& val) const override;
@@ -45,19 +45,19 @@ class BooleanType : public Type {
   void HashCombine(const Value& val, size_t &seed) const override;
 
   // Serialize this value into the given storage space
-  void SerializeTo(const Value& val, SerializeOutput &out) const override{
+  void SerializeTo(const Value&, SerializeOutput &) const override{
     throw Exception("Can't serialize boolean types to storage");
   }
 
-  void SerializeTo(const Value& val, char *storage, bool inlined,
-                   VarlenPool *pool) const override{
+  void SerializeTo(const Value& , char *, bool ,
+                   VarlenPool *) const override{
     throw Exception("Can't serialize boolean types to storage");
   }
 
   // Create a copy of this value
   Value *Copy(const Value& val) const override;
 
-  Value *CastAs(const Value& val, const Type::TypeId type_id) const;
+  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 };
 
 }  // namespace peloton

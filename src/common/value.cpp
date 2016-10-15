@@ -32,7 +32,7 @@ Value::Value(Type::TypeId type, int8_t i) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -45,7 +45,7 @@ Value::Value(Type::TypeId type, int16_t i) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -59,7 +59,7 @@ Value::Value(Type::TypeId type, int32_t i) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -75,7 +75,7 @@ Value::Value(Type::TypeId type, int64_t i) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -88,7 +88,7 @@ Value::Value(Type::TypeId type, uint64_t i) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -101,7 +101,7 @@ Value::Value(Type::TypeId type, double d) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -113,7 +113,7 @@ Value::Value(Type::TypeId type, float f) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -137,7 +137,7 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len) :
     break;
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -146,6 +146,7 @@ Value::Value(Type::TypeId type, const std::string &data) :
   switch (type) {
   case Type::VARCHAR:
   case Type::VARBINARY:
+  {
     uint32_t len = data.length() + (type == Type::VARCHAR);
     value_.ptr = new char[len + sizeof(uint32_t)];
     PL_ASSERT(value_.ptr != nullptr);
@@ -153,9 +154,10 @@ Value::Value(Type::TypeId type, const std::string &data) :
     char *dest = value_.ptr + sizeof(uint32_t);
     PL_MEMCPY(dest, data.c_str(), len);
     break;
+  }
   default:
     throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+        "Invalid Type for constructor");
   }
 }
 
@@ -165,6 +167,9 @@ Value::~Value() {
   case Type::VARBINARY:
   case Type::VARCHAR:
     delete[] value_.ptr;
+    break;
+  default:
+    break;
   }
 }
 
@@ -172,7 +177,7 @@ const std::string Value::GetInfo() const {
   std::ostringstream os;
 
   os << "\tValue :: "
-     << " type = " << Type::GetInstance(GetTypeId()).ToString() << ","
+     << " type = " << Type::GetInstance(GetTypeId())->ToString() << ","
      << " value = " << ToString() << std::endl;
 
   return os.str();
@@ -239,8 +244,8 @@ void Value::CheckComparable(const Value &o) const {
       break;
   }
   std::string msg =
-      "Operation between " + Type::GetInstance(GetTypeId()).ToString() +
-      " and " + Type::GetInstance(o.GetTypeId()).ToString() + " is invalid.";
+      "Operation between " + Type::GetInstance(GetTypeId())->ToString() +
+      " and " + Type::GetInstance(o.GetTypeId())->ToString() + " is invalid.";
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
 }
 
@@ -255,7 +260,7 @@ void Value::CheckInteger() const {
     default:
       break;
   }
-  std::string msg = "Type " + Type::GetInstance(GetTypeId()).ToString() +
+  std::string msg = "Type " + Type::GetInstance(GetTypeId())->ToString() +
                     " is not an integer type.";
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
 }

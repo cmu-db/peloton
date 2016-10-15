@@ -69,10 +69,10 @@ class SumAgg : public Agg {
       return;
     }
     if (!have_advanced) {
-      aggregate.reset(static_cast<common::NumericValue *>(val->Copy()));
+      aggregate.reset(static_cast<common::Value *>(val->Copy()));
       have_advanced = true;
     } else {
-      aggregate.reset(static_cast<common::NumericValue *>(aggregate->Add(*val)));
+      aggregate.reset(static_cast<common::Value *>(aggregate->Add(*val)));
     }
   }
 
@@ -83,7 +83,7 @@ class SumAgg : public Agg {
   }
 
  private:
-  std::unique_ptr<common::NumericValue> aggregate;
+  std::unique_ptr<common::Value> aggregate;
 
   bool have_advanced;
 };
@@ -91,7 +91,7 @@ class SumAgg : public Agg {
 class AvgAgg : public Agg {
  public:
   AvgAgg(bool is_weighted) : is_weighted(is_weighted), count(0) {
-    default_delta.reset(static_cast<common::NumericValue *>(
+    default_delta.reset(static_cast<common::Value *>(
         common::ValueFactory::GetIntegerValue(1).Copy()));
   }
 
@@ -107,20 +107,20 @@ class AvgAgg : public Agg {
     // Weighted average
     if (is_weighted) {
       std::unique_ptr<common::Value> weighted_val(
-          static_cast<const common::NumericValue *>(val)->Multiply(*delta));
+          static_cast<const common::Value *>(val)->Multiply(*delta));
       if (count == 0) {
-        aggregate.reset(static_cast<common::NumericValue *>(
+        aggregate.reset(static_cast<common::Value *>(
             weighted_val.release()));
       } else {
-        aggregate.reset(static_cast<common::NumericValue *>(
+        aggregate.reset(static_cast<common::Value *>(
             aggregate->Add(*weighted_val)));
       }
       count += common::ValuePeeker::PeekInteger(delta);
     } else {
       if (count == 0) {
-        aggregate.reset(static_cast<common::NumericValue *>(val->Copy()));
+        aggregate.reset(static_cast<common::Value *>(val->Copy()));
       } else {
-        aggregate.reset(static_cast<common::NumericValue *>(
+        aggregate.reset(static_cast<common::Value *>(
             aggregate->Add(*val)));
       }
       count += 1;
@@ -138,10 +138,10 @@ class AvgAgg : public Agg {
 
  private:
   /** @brief aggregate initialized on first advance. */
-  std::unique_ptr<common::NumericValue> aggregate;
+  std::unique_ptr<common::Value> aggregate;
 
   /** @brief  default delta for weighted average */
-  std::unique_ptr<common::NumericValue> default_delta;
+  std::unique_ptr<common::Value> default_delta;
 
   bool is_weighted;
 
@@ -186,7 +186,7 @@ class CountStarAgg : public Agg {
 class MaxAgg : public Agg {
  public:
   MaxAgg() : have_advanced(false) {
-    aggregate.reset(static_cast<common::NumericValue *>(
+    aggregate.reset(static_cast<common::Value *>(
         common::ValueFactory::GetNullValueByType(common::Type::INTEGER)));
   }
 
@@ -195,10 +195,10 @@ class MaxAgg : public Agg {
       return;
     }
     if (!have_advanced) {
-      aggregate.reset(static_cast<common::NumericValue *>(val->Copy()));
+      aggregate.reset(static_cast<common::Value *>(val->Copy()));
       have_advanced = true;
     } else {
-      aggregate.reset(static_cast<common::NumericValue *>(aggregate->Max(*val)));
+      aggregate.reset(static_cast<common::Value *>(aggregate->Max(*val)));
     }
   }
 
@@ -207,7 +207,7 @@ class MaxAgg : public Agg {
   }
 
  private:
-  std::unique_ptr<common::NumericValue> aggregate;
+  std::unique_ptr<common::Value> aggregate;
 
   bool have_advanced;
 };
@@ -215,7 +215,7 @@ class MaxAgg : public Agg {
 class MinAgg : public Agg {
  public:
   MinAgg() : have_advanced(false) {
-    aggregate.reset(static_cast<common::NumericValue *>(
+    aggregate.reset(static_cast<common::Value *>(
         common::ValueFactory::GetNullValueByType(common::Type::INTEGER)));
   }
 
@@ -225,10 +225,10 @@ class MinAgg : public Agg {
     }
 
     if (!have_advanced) {
-      aggregate.reset(static_cast<common::NumericValue *>(val->Copy()));
+      aggregate.reset(static_cast<common::Value *>(val->Copy()));
       have_advanced = true;
     } else {
-      aggregate.reset(static_cast<common::NumericValue *>(aggregate->Min(*val)));
+      aggregate.reset(static_cast<common::Value *>(aggregate->Min(*val)));
     }
   }
 
@@ -237,7 +237,7 @@ class MinAgg : public Agg {
   }
 
  private:
-  std::unique_ptr<common::NumericValue> aggregate;
+  std::unique_ptr<common::Value> aggregate;
 
   bool have_advanced;
 };

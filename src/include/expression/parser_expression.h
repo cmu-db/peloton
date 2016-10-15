@@ -67,7 +67,7 @@ class ParserExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const AbstractTuple* tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple* tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext* context) const override {
-    return std::unique_ptr<BooleanValue>(new BooleanValue(1));
+    return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 1));
   }
 
   AbstractExpression* Copy() const override {

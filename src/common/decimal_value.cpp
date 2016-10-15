@@ -157,7 +157,7 @@ Value *DecimalType::Min(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(CompareLessThanEquals(o));
+  std::unique_ptr<Value> cmp(left.CompareLessThanEquals(right));
   if (cmp->IsTrue())
     return left.Copy();
   return right.Copy();
@@ -169,7 +169,7 @@ Value *DecimalType::Max(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(CompareGreaterThanEquals(o));
+  std::unique_ptr<Value> cmp(left.CompareGreaterThanEquals(right));
   if (cmp->IsTrue())
     return left.Copy();
   return right.Copy();
@@ -186,7 +186,7 @@ Value *DecimalType::Sqrt(const Value& val) const {
   return new Value(Type::DECIMAL, sqrt(val.value_.decimal));
 }
 
-Value *DecimalType::OperateNull(const Value& left, const Value &right UNUSED_ATTRIBUTE) const {
+Value *DecimalType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right UNUSED_ATTRIBUTE) const {
   return new Value(Type::DECIMAL, PELOTON_DECIMAL_NULL);
 }
 
@@ -370,7 +370,7 @@ Value *DecimalType::CastAs(const Value& val, const Type::TypeId type_id) const {
       break;
   }
   throw Exception("DECIMAL is not coercable to "
-      + Type::GetInstance(type_id).ToString());
+      + Type::GetInstance(type_id)->ToString());
 }
 
 std::string DecimalType::ToString(const Value& val) const {
@@ -384,7 +384,7 @@ size_t DecimalType::Hash(const Value& val) const {
 }
 
 void DecimalType::HashCombine(const Value& val, size_t &seed) const {
-  hash_combine<double>(seed, val.value_.decimal);
+  val.hash_combine<double>(seed, val.value_.decimal);
 }
 
 void DecimalType::SerializeTo(const Value& val, SerializeOutput &out) const {

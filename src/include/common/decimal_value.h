@@ -45,7 +45,7 @@ class DecimalType : public NumericType {
   Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
-  bool IsInlined(const Value& val) const override { return true; }
+  bool IsInlined(const Value&) const override { return true; }
 
   // Debug
   std::string ToString(const Value& val) const override;

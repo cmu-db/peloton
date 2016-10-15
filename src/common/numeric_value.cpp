@@ -44,7 +44,7 @@ bool IntegerType::IsZero(const Value& val) const {
     default:
       break;
   }
-  std::string msg = Type::GetInstance(val.GetTypeId()).ToString()
+  std::string msg = Type::GetInstance(val.GetTypeId())->ToString()
                   + " is not an integer type";
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
 }
@@ -560,7 +560,7 @@ Value *IntegerType::Min(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(CompareGreaterThanEquals(o));
+  std::unique_ptr<Value> cmp(left.CompareGreaterThanEquals(right));
   if (cmp->IsTrue())
     return left.Copy();
   return right.Copy();
@@ -572,7 +572,7 @@ Value *IntegerType::Max(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(CompareGreaterThanEquals(o));
+  std::unique_ptr<Value> cmp(left.CompareGreaterThanEquals(right));
   if (cmp->IsTrue())
     return left.Copy();
   return right.Copy();
@@ -1195,17 +1195,17 @@ size_t IntegerType::Hash(const Value& val) const {
 void IntegerType::HashCombine(const Value& val, size_t &seed) const {
   switch(val.GetTypeId()) {
     case Type::TINYINT:
-      hash_combine<int8_t>(seed, val.value_.tinyint);
+      val.hash_combine<int8_t>(seed, val.value_.tinyint);
       break;
     case Type::SMALLINT:
-      hash_combine<int16_t>(seed, val.value_.smallint);
+      val.hash_combine<int16_t>(seed, val.value_.smallint);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
-      hash_combine<int32_t>(seed, val.value_.integer);
+      val.hash_combine<int32_t>(seed, val.value_.integer);
       break;
     case Type::BIGINT:
-      hash_combine<int64_t>(seed, val.value_.bigint);
+      val.hash_combine<int64_t>(seed, val.value_.bigint);
       break;
     default:
       break;
@@ -1265,7 +1265,7 @@ Value *IntegerType::Copy(const Value& val) const {
     case Type::INTEGER:
       return new Value(Type::INTEGER, val.value_.integer);
     case Type::PARAMETER_OFFSET:
-      return new Value(Type::PARAMETER_OFFSET, val.value_.integer, true);
+      return new Value(Type::PARAMETER_OFFSET, val.value_.integer);
     case Type::BIGINT:
       return new Value(Type::BIGINT, val.value_.bigint);
     default:
@@ -1434,9 +1434,9 @@ Value *IntegerType::CastAs(const Value& val, const Type::TypeId type_id) const {
     default:
       break;
   }
-  throw Exception(Type::GetInstance(val.GetTypeId()).ToString()
+  throw Exception(Type::GetInstance(val.GetTypeId())->ToString()
       + " is not coercable to "
-      + Type::GetInstance(type_id).ToString());
+      + Type::GetInstance(type_id)->ToString());
 }
 
 

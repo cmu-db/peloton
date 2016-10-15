@@ -18,25 +18,26 @@
 #include "common/varlen_value.h"
 #include "common/timestamp_value.h"
 #include "common/exception.h"
+#include "common/varlen_pool.h"
 
 namespace peloton {
 namespace common {
 
 Type* Type::kTypes[] = {
-  Type(Type::INVALID),
-  Type(Type::PARAMETER_OFFSET),
-  Type(Type::BOOLEAN),
-  Type(Type::TINYINT),
-  Type(Type::SMALLINT),
-  Type(Type::INTEGER),
-  Type(Type::BIGINT),
-  Type(Type::DECIMAL),
-  Type(Type::TIMESTAMP),
-  Type(Type::DATE),
-  Type(Type::VARCHAR),
-  Type(Type::VARBINARY),
-  Type(Type::ARRAY),
-  Type(Type::UDT),
+  new Type(Type::INVALID),
+  new IntegerType(Type::PARAMETER_OFFSET),
+  new BooleanType(),
+  new IntegerType(Type::TINYINT),
+  new IntegerType(Type::SMALLINT),
+  new IntegerType(Type::INTEGER),
+  new IntegerType(Type::BIGINT),
+  new DecimalType(),
+  new TimestampType(),
+  new Type(Type::DATE), // not yet implemented
+  new VarlenType(Type::VARCHAR),
+  new VarlenType(Type::VARBINARY),
+  new Type(Type::ARRAY), // not yet implemented
+  new Type(Type::UDT), // not yet implemented
 };
 
 //// Is this type equivalent to the other
@@ -92,6 +93,7 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
         default:
           return 0;
       }
+      break;
     case TIMESTAMP:
       return (type_id == VARCHAR || type_id == TIMESTAMP);
     case VARCHAR:
@@ -108,6 +110,7 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
         default:
           return 0;
       }
+      break;
     default:
       return (type_id == type_id_);
   }
@@ -200,11 +203,113 @@ Value *Type::GetMaxValue(TypeId type_id) {
 }
 
 Type *Type::GetInstance(TypeId type_id) {
-  return &kTypes[type_id];
+  return kTypes[type_id];
 }
 
 Type::TypeId Type::GetTypeId() const {
   return type_id_;
+}
+
+Value *Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Other mathematical functions
+Value *Type::Add(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Subtract(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Multiply(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Divide(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Modulo(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Min(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Max(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::Sqrt(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::OperateNull(const Value& val UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+bool Type::IsZero(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Is the data inlined into this classes storage space, or must it be accessed
+// through an indirection/pointer?
+bool Type::IsInlined(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Return a stringified version of this value
+std::string Type::ToString(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Compute a hash value
+size_t Type::Hash(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+void Type::HashCombine(const Value& val UNUSED_ATTRIBUTE, size_t &seed UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Serialize this value into the given storage space. The inlined parameter
+// indicates whether we are allowed to inline this value into the storage
+// space, or whether we must store only a reference to this value. If inlined
+// is false, we may use the provided data pool to allocate space for this
+// value, storing a reference into the allocated pool space in the storage.
+void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE, char *storage UNUSED_ATTRIBUTE, bool inlined UNUSED_ATTRIBUTE,
+                         VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Create a copy of this value
+Value *Type::Copy(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+Value *Type::CastAs(const Value& val UNUSED_ATTRIBUTE, const Type::TypeId type_id UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Access the raw variable length data
+const char *Type::GetData(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
+// Get the length of the variable length data
+uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 }  // namespace common

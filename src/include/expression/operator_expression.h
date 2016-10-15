@@ -41,19 +41,17 @@ class OperatorExpression : public AbstractExpression {
     if (exp_type_ == EXPRESSION_TYPE_OPERATOR_NOT) {
       auto vl = left_->Evaluate(tuple1, tuple2, context);
       if (vl->IsTrue())
-        return std::unique_ptr<Value>(new BooleanValue(0));
+        return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 0));
       else if (vl->IsFalse())
-        return std::unique_ptr<Value>(new BooleanValue(1));
+        return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 1));
       else
-        return std::unique_ptr<Value>(new BooleanValue(PELOTON_BOOLEAN_NULL));
+        return std::unique_ptr<Value>(new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL));
     }
     auto eval1 = left_->Evaluate(tuple1, tuple2, context);
-    auto vl = std::unique_ptr<NumericValue>(static_cast<NumericValue *>(
-        eval1.get()));
+    auto vl = std::unique_ptr<Value>(eval1.get());
     eval1.release();
     auto eval2 = right_->Evaluate(tuple1, tuple2, context);
-    auto vr = std::unique_ptr<NumericValue>(static_cast<NumericValue *>(
-        eval2.get()));
+    auto vr = std::unique_ptr<Value>(eval2.get());
     eval2.release();
     switch (exp_type_) {
       case (EXPRESSION_TYPE_OPERATOR_PLUS):
@@ -88,7 +86,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
                                   const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
-    std::unique_ptr<NumericValue> zero(new IntegerValue(0));
+    std::unique_ptr<Value> zero(new Value(Type::INTEGER, 0));
     return std::unique_ptr<Value>(zero->Subtract(*vl));
   }
 

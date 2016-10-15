@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "storage/tuple.h"
+#include "common/value.h"
 
 namespace peloton {
 namespace storage {
@@ -173,7 +174,7 @@ size_t Tuple::ExportSerializationSize() const {
         // actual character data without null string terminator.
         if (!GetValue(column_itr)->IsNull()) {
           bytes += (sizeof(int32_t) +
-                    ((common::VarlenValue *)GetValue(column_itr))->GetLength());
+                    GetValue(column_itr)->GetLength());
         }
         break;
 
@@ -201,7 +202,7 @@ size_t Tuple::GetUninlinedMemorySize() const {
           !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr)->IsNull()) {
           bytes += (sizeof(int32_t) +
-                    ((common::VarlenValue *)GetValue(column_itr))->GetLength());
+                    GetValue(column_itr)->GetLength());
         }
       }
     }

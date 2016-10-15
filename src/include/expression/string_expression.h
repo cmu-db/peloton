@@ -20,7 +20,7 @@ class AsciiExpression : public AbstractExpression {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     std::string str = vl->ToString();
     int32_t val = str[0];
-    return std::unique_ptr<IntegerValue>(new IntegerValue(val));
+    return std::unique_ptr<Value>(new Value(Type::INTEGER, val));
   }
 
   AbstractExpression *Copy() const override {
@@ -39,7 +39,7 @@ class ChrExpression : public AbstractExpression {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     int32_t val = vl->GetAs<int32_t>();
     std::string str(1, char(static_cast<char>(val)));
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str));
   }
 
   AbstractExpression *Copy() const override {
@@ -68,7 +68,7 @@ class SubstrExpression : public AbstractExpression {
     std::string str = vl->ToString();
     int32_t from = vr->GetAs<int32_t>() - 1;
     int32_t len = (len_->Evaluate(nullptr, nullptr, nullptr))->GetAs<int32_t>();
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str.substr(from, len), false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str.substr(from, len)));
   }
 
   AbstractExpression *Copy() const override {
@@ -92,7 +92,7 @@ class CharLengthExpression : public AbstractExpression {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     std::string str = vl->ToString();
     int32_t len = str.length();
-    return std::unique_ptr<IntegerValue>(new IntegerValue(len));
+    return std::unique_ptr<Value>(new Value(Type::INTEGER, len));
   }
 
   AbstractExpression *Copy() const override {
@@ -112,7 +112,7 @@ class ConcatExpression : public AbstractExpression {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
     std::string str = vl->ToString() + vr->ToString();
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str));
   }
 
   AbstractExpression *Copy() const override {
@@ -133,7 +133,7 @@ class OctetLengthExpression : public AbstractExpression {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     std::string str = vl->ToString();
     int32_t len = str.length();
-    return std::unique_ptr<IntegerValue>(new IntegerValue(len));
+    return std::unique_ptr<Value>(new Value(Type::INTEGER, len));
   }
 
   AbstractExpression *Copy() const override {
@@ -159,7 +159,7 @@ class RepeatExpression : public AbstractExpression {
     while (num--) {
       ret = ret + str;
     }
-    return std::unique_ptr<VarlenValue>(new VarlenValue(ret, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, ret));
   }
 
   AbstractExpression *Copy() const override {
@@ -194,7 +194,7 @@ class ReplaceExpression : public AbstractExpression {
       str.replace(pos, from.length(), to);
       pos += to.length();
     }
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str));
   }
 
   AbstractExpression *Copy() const override {
@@ -228,7 +228,7 @@ class LTrimExpression : public AbstractExpression {
     }
     if (erase)
       str.erase(0, pos);
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str));
   }
 
   AbstractExpression *Copy() const override {
@@ -252,7 +252,7 @@ class RTrimExpression : public AbstractExpression {
     std::string str = vl->ToString();
     std::string from = vr->ToString();
     if (str.length() == 0)
-      return std::unique_ptr<VarlenValue>(new VarlenValue("", false));
+      return std::unique_ptr<Value>(new Value(Type::VARCHAR, ""));
     size_t pos = str.length() - 1;
     bool erase = 0;
     while (from.find(str[pos]) != std::string::npos) {
@@ -261,7 +261,7 @@ class RTrimExpression : public AbstractExpression {
     }
     if (erase)
       str.erase(pos + 1, str.length() - pos - 1);
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str));
   }
 
   AbstractExpression *Copy() const override {
@@ -286,7 +286,7 @@ class BTrimExpression : public AbstractExpression {
     std::string from = vr->ToString();
 
     if (str.length() == 0)
-      return std::unique_ptr<VarlenValue>(new VarlenValue("", false));
+      return std::unique_ptr<Value>(new Value(Type::VARCHAR, "", false));
 
     size_t pos = str.length() - 1;
     bool erase = 0;
@@ -305,7 +305,7 @@ class BTrimExpression : public AbstractExpression {
     }
     if (erase)
       str.erase(0, pos);
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return std::unique_ptr<Value>(new Value(Type::VARCHAR, str));
   }
 
   AbstractExpression *Copy() const override {

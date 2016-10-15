@@ -16,9 +16,13 @@
 #include <string>
 
 namespace peloton {
+class SerializeOutput;
+
 namespace common {
 
+class VarlenPool;
 class Value;
+
 
 class Type {
  public:
@@ -39,7 +43,11 @@ class Type {
     UDT
 };
 
-  virtual ~Type();
+  Type(TypeId type_id) : type_id_(type_id) {}
+
+  virtual ~Type(){
+
+  }
   // Get the size of this data type in bytes
   static uint64_t GetTypeSize(TypeId type_id);
 
@@ -60,8 +68,6 @@ class Type {
   static Type * GetInstance(TypeId type_id);
   TypeId GetTypeId() const;
 
-  Type(TypeId type_id) : type_id_(type_id) {}
-
   // Comparison functions
   //
   // NOTE:
@@ -80,35 +86,35 @@ class Type {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  virtual Value *CompareEquals(const Value& left, const Value &right) const = 0;
-  virtual Value *CompareNotEquals(const Value& left, const Value &right) const = 0;
-  virtual Value *CompareLessThan(const Value& left, const Value &right) const = 0;
-  virtual Value *CompareLessThanEquals(const Value& left, const Value &right) const = 0;
-  virtual Value *CompareGreaterThan(const Value& left, const Value &right) const = 0;
-  virtual Value *CompareGreaterThanEquals(const Value& left, const Value &right) const = 0;
+  virtual Value *CompareEquals(const Value& left, const Value &right) const;
+  virtual Value *CompareNotEquals(const Value& left, const Value &right) const;
+  virtual Value *CompareLessThan(const Value& left, const Value &right) const;
+  virtual Value *CompareLessThanEquals(const Value& left, const Value &right) const;
+  virtual Value *CompareGreaterThan(const Value& left, const Value &right) const;
+  virtual Value *CompareGreaterThanEquals(const Value& left, const Value &right) const;
 
   // Other mathematical functions
-  virtual Value *Add(const Value& left, const Value &right) const = 0;
-  virtual Value *Subtract(const Value& left, const Value &right) const = 0;
-  virtual Value *Multiply(const Value& left, const Value &right) const = 0;
-  virtual Value *Divide(const Value& left, const Value &right) const = 0;
-  virtual Value *Modulo(const Value& left, const Value &right) const = 0;
-  virtual Value *Min(const Value& left, const Value &right) const = 0;
-  virtual Value *Max(const Value& left, const Value &right) const = 0;
-  virtual Value *Sqrt(const Value& val) const = 0;
-  virtual Value *OperateNull(const Value& val, const Value &right) const = 0;
-  virtual bool IsZero(const Value& val) const = 0;
+  virtual Value *Add(const Value& left, const Value &right) const;
+  virtual Value *Subtract(const Value& left, const Value &right) const;
+  virtual Value *Multiply(const Value& left, const Value &right) const;
+  virtual Value *Divide(const Value& left, const Value &right) const;
+  virtual Value *Modulo(const Value& left, const Value &right) const;
+  virtual Value *Min(const Value& left, const Value &right) const;
+  virtual Value *Max(const Value& left, const Value &right) const;
+  virtual Value *Sqrt(const Value& val) const;
+  virtual Value *OperateNull(const Value& val, const Value &right) const;
+  virtual bool IsZero(const Value& val) const;
 
   // Is the data inlined into this classes storage space, or must it be accessed
   // through an indirection/pointer?
-  virtual bool IsInlined(const Value& val) const = 0;
+  virtual bool IsInlined(const Value& val) const;
 
   // Return a stringified version of this value
-  virtual std::string ToString(const Value& val) const = 0;
+  virtual std::string ToString(const Value& val) const;
 
   // Compute a hash value
-  virtual size_t Hash(const Value& val) const = 0;
-  virtual void HashCombine(const Value& val, size_t &seed) const = 0;
+  virtual size_t Hash(const Value& val) const;
+  virtual void HashCombine(const Value& val, size_t &seed) const;
 
   // Serialize this value into the given storage space. The inlined parameter
   // indicates whether we are allowed to inline this value into the storage
@@ -116,13 +122,13 @@ class Type {
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
   virtual void SerializeTo(const Value& val, char *storage, bool inlined,
-                           VarlenPool *pool) const = 0;
-  virtual void SerializeTo(const Value& val, SerializeOutput &out) const = 0;
+                           VarlenPool *pool) const;
+  virtual void SerializeTo(const Value& val, SerializeOutput &out) const;
 
   // Create a copy of this value
-  virtual Value *Copy(const Value& val) const = 0;
+  virtual Value *Copy(const Value& val) const;
 
-  virtual Value *CastAs(const Value& val, const Type::TypeId type_id) const = 0;
+  virtual Value *CastAs(const Value& val, const Type::TypeId type_id) const;
 
   // Access the raw variable length data
   virtual const char *GetData(const Value& val) const;
@@ -130,27 +136,7 @@ class Type {
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
 
-  // For unordered_map
-  struct equal_to {
-    bool operator()(const Value *x, const Value *y) const {
-      std::unique_ptr<Value> cmp(x->CompareEquals(*y));
-      return (cmp->IsTrue());
-    }
-  };
-
-  template <class T>
-  inline void hash_combine(std::size_t &seed, const T &v) const {
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-  }
-
-  struct hash {
-    size_t operator()(const Value *x) const {
-      return x->Hash();
-    }
-  };
-
- private:
+ protected:
   // The actual type ID
   TypeId type_id_;
 

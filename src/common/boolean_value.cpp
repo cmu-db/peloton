@@ -82,7 +82,7 @@ size_t BooleanType::Hash(const Value& val) const {
 }
 
 void BooleanType::HashCombine(const Value& val, size_t &seed) const {
-  hash_combine<int8_t>(seed, val.value_.boolean);
+  val.hash_combine<int8_t>(seed, val.value_.boolean);
 }
 
 Value *BooleanType::Copy(const Value& val) const {
@@ -96,12 +96,12 @@ Value *BooleanType::CastAs(const Value& val, const Type::TypeId type_id) const {
     case Type::VARCHAR:
       if (val.IsNull())
         return new Value(Type::VARCHAR, nullptr, 0);
-      return new Value(Type::VARCHAR, val.ToString(), false);
+      return new Value(Type::VARCHAR, val.ToString());
     default:
       break;
   }
   throw Exception("BOOLEAN is not coercable to "
-      + Type::GetInstance(type_id).ToString());
+      + Type::GetInstance(type_id)->ToString());
 }
 
 }  // namespace peloton

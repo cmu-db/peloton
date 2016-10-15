@@ -42,18 +42,18 @@ class ConjunctionExpression : public AbstractExpression {
     switch (exp_type_) {
       case (EXPRESSION_TYPE_CONJUNCTION_AND): {
         if (vl->IsTrue() && vr->IsTrue())
-          return std::unique_ptr<Value>(new BooleanValue(1));
+          return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 1));
         if (vl->IsFalse() || vr->IsFalse())
-          return std::unique_ptr<Value>(new BooleanValue(0));
-        return std::unique_ptr<Value>(new BooleanValue(
+          return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 0));
+        return std::unique_ptr<Value>(new Value(Type::BOOLEAN,
             PELOTON_BOOLEAN_NULL));
       }
       case (EXPRESSION_TYPE_CONJUNCTION_OR): {
         if (vl->IsFalse() && vr->IsFalse())
-          return std::unique_ptr<Value>(new BooleanValue(0));
+          return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 0));
         if (vl->IsTrue() || vr->IsTrue())
-          return std::unique_ptr<Value>(new BooleanValue(1));
-        return std::unique_ptr<Value>(new BooleanValue(
+          return std::unique_ptr<Value>(new Value(Type::BOOLEAN, 1));
+        return std::unique_ptr<Value>(new Value(Type::BOOLEAN,
             PELOTON_BOOLEAN_NULL));
       }
       default:

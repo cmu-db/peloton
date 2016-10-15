@@ -211,8 +211,7 @@ class ContainerTuple<std::vector<common::Value *>> : public AbstractTuple {
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       std::unique_ptr<common::Value> lhs(GetValue(column_itr));
       std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
-      std::unique_ptr<common::Value> cmp(static_cast<BooleanValue *>(
-        lhs->CompareNotEquals(*rhs)));
+      std::unique_ptr<common::Value> cmp(lhs->CompareNotEquals(*rhs));
       if (cmp->IsTrue())
         return false;
     }

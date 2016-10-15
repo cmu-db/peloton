@@ -101,7 +101,7 @@ class AbstractExpression : public Printable {
 
     os << "\tExpression :: "
        << " expression type = " << GetExpressionType() << ","
-       << " value type = " << Type::GetInstance(GetValueType()).ToString() << ","
+       << " value type = " << Type::GetInstance(GetValueType())->ToString() << ","
        << std::endl;
 
     return os.str();

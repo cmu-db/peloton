@@ -67,5 +67,5 @@
 //  Type &element_type_;
 //};
 
-}  // namespace peloton
-}  // namespace common
+//}  // namespace peloton
+//}  // namespace common

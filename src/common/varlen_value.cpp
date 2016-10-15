@@ -136,7 +136,7 @@ size_t VarlenType::Hash(const Value& val) const {
 
 void VarlenType::HashCombine(const Value& val, size_t &seed) const {
   std::string str = val.ToString();
-  hash_combine<std::string>(seed, str);
+  val.hash_combine<std::string>(seed, str);
 }
 
 void VarlenType::SerializeTo(const Value& val, SerializeOutput &out) const {
@@ -187,7 +187,7 @@ Value *VarlenType::CastAs(const Value& val, const Type::TypeId type_id) const {
     break;
   }
   throw Exception(
-      "VARCHAR is not coercable to " + Type::GetInstance(type_id).ToString());
+      "VARCHAR is not coercable to " + Type::GetInstance(type_id)->ToString());
 }
 
 }  // namespace common

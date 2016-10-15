@@ -42,7 +42,7 @@ class VarlenType : public Type {
   Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
-  bool IsInlined(const Value& val) const override { return false; }
+  bool IsInlined(const Value&) const override { return false; }
 
   // Debug
   std::string ToString(const Value& val) const override;

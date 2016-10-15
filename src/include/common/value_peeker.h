@@ -70,7 +70,7 @@ class ValuePeeker {
 
   static inline const char *PeekVarchar(const Value *value) {
     PL_ASSERT(value->GetTypeId() == Type::VARCHAR);
-    return ((VarlenValue *)value)->GetData();
+    return value->GetData();
   }
 };
 

@@ -219,7 +219,7 @@ class ExpressionUtil {
       ExpressionType type,
       const std::list<expression::AbstractExpression *> &child_exprs) {
     if (child_exprs.empty())
-      return new ConstantValueExpression(common::BooleanValue(1));
+      return new ConstantValueExpression(common::Value(Type::BOOLEAN, 1));
     AbstractExpression *left = nullptr;
     AbstractExpression *right = nullptr;
     for (auto expr : child_exprs) {

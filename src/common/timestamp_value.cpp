@@ -107,7 +107,7 @@ size_t TimestampType::Hash(const Value& val) const {
 }
 
 void TimestampType::HashCombine(const Value& val, size_t &seed) const {
-  hash_combine<int64_t>(seed, val.value_.timestamp);
+  val.hash_combine<int64_t>(seed, val.value_.timestamp);
 }
 
 void TimestampType::SerializeTo(const Value& val, SerializeOutput &out) const {
@@ -136,7 +136,7 @@ Value *TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const
       break;
   }
   throw Exception("TIMESTAMP is not coercable to "
-      + Type::GetInstance(type_id).ToString());
+      + Type::GetInstance(type_id)->ToString());
 }
 
 }  // namespace peloton

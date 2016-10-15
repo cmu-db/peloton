@@ -30,9 +30,7 @@ class TimestampType : public Type {
   Value *CompareGreaterThan(const Value& left, const Value &right) const override;
   Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Type::TypeId type_id) const override;
-
-  bool IsInlined(const Value& val) const override { return true; }
+  bool IsInlined(const Value&) const override { return true; }
 
   // Debug
   std::string ToString(const Value& val) const override;
@@ -49,7 +47,7 @@ class TimestampType : public Type {
   // Create a copy of this value
   Value *Copy(const Value& val) const override;
 
-  Value *CastAs(const Value& val, const Type::TypeId type_id) const = 0;
+  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 };
 
 }  // namespace peloton

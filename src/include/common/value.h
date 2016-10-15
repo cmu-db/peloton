@@ -15,7 +15,6 @@
 #include "common/type.h"
 #include "common/varlen_pool.h"
 #include "serializeio.h"
-#include "common/serializer.h"
 #include "printable.h"
 #include <climits>
 #include <cfloat>
@@ -24,6 +23,8 @@
 
 namespace peloton {
 namespace common {
+
+class Type;
 
 static const double DBL_LOWEST = std::numeric_limits<double>::lowest();
 static const double FLT_LOWEST = std::numeric_limits<float>::lowest();
@@ -188,6 +189,39 @@ class Value : public Printable {
   Value *Copy() const;
 
   Value *CastAs(const Type::TypeId type_id) const;
+
+
+  // For unordered_map
+  struct equal_to {
+    bool operator()(const Value *x, const Value *y) const {
+      std::unique_ptr<Value> cmp(x->type_->CompareEquals(*x, *y));
+      return (cmp->IsTrue());
+    }
+  };
+
+  template <class T>
+  inline void hash_combine(std::size_t &seed, const T &v) const {
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  struct hash {
+    size_t operator()(const Value *x) const {
+      return x->type_->Hash(*x);
+    }
+  };
+
+  friend struct equal_to;
+  friend struct hash_combine;
+  friend struct hash;
+  friend class Type;
+  friend class BooleanType;
+  friend class NumericType;
+  friend class IntegerType;
+  friend class DecimalType;
+  friend class VarlenType;
+  friend class TimestampType;
+
 
  protected:
   // The data type
