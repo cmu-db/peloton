@@ -14,10 +14,10 @@
 #include <iostream>
 #include <cstdint>
 #include <cmath>
-#include "common/numeric_value.h"
-#include "common/boolean_value.h"
-#include "common/decimal_value.h"
-#include "common/varlen_value.h"
+#include "../../src/include/common/boolean_type.h"
+#include "../../src/include/common/decimal_type.h"
+#include "../../src/include/common/numeric_type.h"
+#include "../../src/include/common/varlen_type.h"
 #include "common/harness.h"
 
 namespace peloton {

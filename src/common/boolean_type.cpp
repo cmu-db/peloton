@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/boolean_value.h"
-#include "common/varlen_value.h"
+#include "common/boolean_type.h"
+
 #include <iostream>
+#include "common/varlen_type.h"
 
 namespace peloton {
 namespace common {

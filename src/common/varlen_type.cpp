@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/varlen_value.h"
-#include "common/boolean_value.h"
+#include "common/varlen_type.h"
+
 #include "common/value_factory.h"
 #include <boost/functional/hash_fwd.hpp>
+#include "common/boolean_type.h"
 
 namespace peloton {
 namespace common {

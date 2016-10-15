@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// decimal_value.h
+// varlen_value.h
 //
-// Identification: src/backend/common/decimal_value.h
+// Identification: src/backend/common/varlen_value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,27 +12,24 @@
 
 #pragma once
 
-#include "common/numeric_value.h"
+#include "common/value.h"
+#include "common/varlen.h"
 
 namespace peloton {
 namespace common {
 
-class DecimalType : public NumericType {
+// A varlen value is an abstract class representing all objects that have
+// variable length.
+class VarlenType : public Type {
  public:
+  VarlenType(TypeId type);
+  ~VarlenType();
+  
+  // Access the raw variable length data
+  const char *GetData(const Value& val) const;
 
-  DecimalType();
-  //DecimalValue(DecDef definition);
-
-  // Other mathematical functions
-  Value *Add(const Value& left, const Value &right) const override;
-  Value *Subtract(const Value& left, const Value &right) const override;
-  Value *Multiply(const Value& left, const Value &right) const override;
-  Value *Divide(const Value& left, const Value &right) const override;
-  Value *Modulo(const Value& left, const Value &right) const override;
-  Value *Min(const Value& left, const Value &right) const override;
-  Value *Max(const Value& left, const Value &right) const override;
-  Value *Sqrt(const Value& val) const override;
-  bool IsZero(const Value& val) const override;
+  // Get the length of the variable length data
+  uint32_t GetLength(const Value& val) const;
 
   // Comparison functions
   Value *CompareEquals(const Value& left, const Value &right) const override;
@@ -45,7 +42,7 @@ class DecimalType : public NumericType {
   Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
-  bool IsInlined(const Value&) const override { return true; }
+  bool IsInlined(const Value&) const override { return false; }
 
   // Debug
   std::string ToString(const Value& val) const override;
@@ -61,10 +58,7 @@ class DecimalType : public NumericType {
 
   // Create a copy of this value
   Value *Copy(const Value& val) const override;
-
- private:
-  Value *OperateNull(const Value& left, const Value &right) const override;
 };
 
-}  // namespace peloton
 }  // namespace common
+}  // namespace peloton

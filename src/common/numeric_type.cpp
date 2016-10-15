@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/numeric_value.h"
-#include "common/decimal_value.h"
-#include "common/boolean_value.h"
-#include "common/varlen_value.h"
+#include "common/numeric_type.h"
+
 #include <cmath>
 #include <iostream>
+#include "common/boolean_type.h"
+#include "common/decimal_type.h"
+#include "common/varlen_type.h"
 
 namespace peloton {
 namespace common {
