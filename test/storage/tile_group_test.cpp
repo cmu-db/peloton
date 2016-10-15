@@ -499,7 +499,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
         reinterpret_cast<common::Value *>(
           tile->GetValue(tup_itr, uninlined_col_index)));
       uninlined_col_object_len = uninlined_col_value->GetLength();
-      uninlined_col_object_ptr = uninlined_col_value->GetAs<char *>();
+      uninlined_col_object_ptr = (char *)uninlined_col_value->GetData();
       std::string uninlined_varchar_str(
           reinterpret_cast<char const *>(uninlined_col_object_ptr),
           uninlined_col_object_len);
@@ -508,7 +508,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
         reinterpret_cast<common::Value *>(
           new_tile->GetValue(tup_itr, uninlined_col_index)));
       new_uninlined_col_object_len = new_uninlined_col_value->GetLength();
-      new_uninlined_col_object_ptr = new_uninlined_col_value->GetAs<char *>();
+      new_uninlined_col_object_ptr = (char *)new_uninlined_col_value->GetData();
       std::string new_uninlined_varchar_str(
           reinterpret_cast<char const *>(new_uninlined_col_object_ptr),
           new_uninlined_col_object_len);

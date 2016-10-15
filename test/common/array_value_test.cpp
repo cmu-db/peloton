@@ -181,7 +181,7 @@ TEST_F(ArrayValueTests, InListTest) {
   }
   EXPECT_THROW(array_bool->InList(ValueFactory::GetIntegerValue(0)), peloton::Exception);
   EXPECT_THROW(array_bool->InList(ValueFactory::GetDoubleValue(0.0)), peloton::Exception);
-  EXPECT_THROW(array_bool->InList(ValueFactory::GetVarcharValue(nullptr, 0)), peloton::Exception);
+  EXPECT_THROW(array_bool->InList(Value(Type::VARCHAR, nullptr, 0)), peloton::Exception);
   EXPECT_THROW(array_bool->InList(*array_bool), peloton::Exception);
   delete array_bool;
 
@@ -207,7 +207,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_tinyint->InList(ValueFactory::GetBooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_tinyint->InList(ValueFactory::GetVarcharValue(nullptr, 0)), peloton::Exception);
+  EXPECT_THROW(array_tinyint->InList(Value(Type::VARCHAR, nullptr, 0)), peloton::Exception);
   EXPECT_THROW(array_tinyint->InList(*array_tinyint), peloton::Exception);
   delete array_tinyint;
 
@@ -233,7 +233,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_smallint->InList(ValueFactory::GetBooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_smallint->InList(ValueFactory::GetVarcharValue(nullptr, 0)), peloton::Exception);
+  EXPECT_THROW(array_smallint->InList(Value(Type::VARCHAR, nullptr, 0)), peloton::Exception);
   EXPECT_THROW(array_smallint->InList(*array_smallint), peloton::Exception);
   delete array_smallint;
 
@@ -259,7 +259,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_integer->InList(ValueFactory::GetBooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_integer->InList(ValueFactory::GetVarcharValue(nullptr, 0)), peloton::Exception);
+  EXPECT_THROW(array_integer->InList(Value(Type::VARCHAR, nullptr, 0)), peloton::Exception);
   EXPECT_THROW(array_integer->InList(*array_integer), peloton::Exception);
   delete array_integer;
 
@@ -285,7 +285,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_bigint->InList(ValueFactory::GetBooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_bigint->InList(ValueFactory::GetVarcharValue(nullptr, 0)), peloton::Exception);
+  EXPECT_THROW(array_bigint->InList(Value(Type::VARCHAR, nullptr, 0)), peloton::Exception);
   EXPECT_THROW(array_bigint->InList(*array_bigint), peloton::Exception);
   delete array_bigint;
 
@@ -311,7 +311,7 @@ TEST_F(ArrayValueTests, InListTest) {
     }
   }
   EXPECT_THROW(array_decimal->InList(ValueFactory::GetBooleanValue(0)), peloton::Exception);
-  EXPECT_THROW(array_decimal->InList(ValueFactory::GetVarcharValue(nullptr, 0)), peloton::Exception);
+  EXPECT_THROW(array_decimal->InList(Value(Type::VARCHAR, nullptr, 0)), peloton::Exception);
   EXPECT_THROW(array_decimal->InList(*array_decimal), peloton::Exception);
   delete array_decimal;
 
@@ -322,7 +322,7 @@ TEST_F(ArrayValueTests, InListTest) {
   Value *array_varchar = new Value(Type::ARRAY, vec_varchar,
     Type::VARCHAR);
   for (size_t i = 0; i < n; i++) {
-    Value *in_list = array_varchar->InList(ValueFactory::GetVarcharValue(vec_varchar[i], 0));
+    Value *in_list = array_varchar->InList(Value(Type::VARCHAR, vec_varchar[i]));
     EXPECT_TRUE((in_list)->IsTrue());
     delete in_list;
   }
@@ -331,7 +331,7 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<std::string>::iterator it = find(vec_varchar.begin(),
       vec_varchar.end(), val);
     if (it == vec_varchar.end()) {
-      Value *in_list = array_varchar->InList(ValueFactory::GetVarcharValue(val, 0));
+      Value *in_list = array_varchar->InList(Value(Type::VARCHAR, val));
       EXPECT_TRUE((in_list)->IsFalse());
       delete in_list;
     }
@@ -423,7 +423,7 @@ TEST_F(ArrayValueTests, CompareTest) {
   EXPECT_THROW(v->CompareEquals(ValueFactory::GetDoubleValue(0.0)), peloton::Exception);
 
   // Test null varchar
-  std::unique_ptr<Value> cmp(v->CompareEquals(ValueFactory::GetVarcharValue(nullptr, 0)));
+  std::unique_ptr<Value> cmp(v->CompareEquals(Value(Type::VARCHAR, nullptr, 0)));
   EXPECT_TRUE(cmp->IsNull());
   delete v;
 }
