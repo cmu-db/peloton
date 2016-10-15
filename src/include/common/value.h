@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <vector>
 #include "common/macros.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace common {
@@ -229,7 +230,11 @@ class Value : public Printable {
   friend class ArrayType;
   friend class BooleanType;
   friend class NumericType;
+  friend class IntegerParentType;
+  friend class TinyintType;
+  friend class SmallintType;
   friend class IntegerType;
+  friend class BigintType;
   friend class DecimalType;
   friend class VarlenType;
   friend class TimestampType;
@@ -259,6 +264,22 @@ class Value : public Printable {
     } array;
   } value_;
 };
+
+//ARRAY here to ease creation of templates
+template<class T>
+Value::Value(Type::TypeId type, const std::vector<T> &vals, Type::TypeId element_type)
+                            : Value(Type::ARRAY){
+  switch (type) {
+    case Type::ARRAY:
+      value_.array.data = (char *) &vals;
+      value_.array.array_type = element_type;
+      break;
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+          "Invalid Type for constructor");
+    }
+
+  }
 
 }  // namespace common
 }  // namespace peloton

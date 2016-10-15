@@ -13,7 +13,6 @@
 #pragma once
 
 #include "common/value.h"
-#include "common/varlen.h"
 
 namespace peloton {
 namespace common {

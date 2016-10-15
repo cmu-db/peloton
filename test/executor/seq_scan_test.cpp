@@ -130,7 +130,7 @@ expression::AbstractExpression *CreatePredicate(
   PL_ASSERT(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConstantValueFactory(common::BooleanValue(0));
+      expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetBooleanValue(0));
 
   bool even = false;
   for (oid_t tuple_id : tuple_ids) {

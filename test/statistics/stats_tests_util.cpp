@@ -61,7 +61,7 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   tuple.SetValue(2, common::ValueFactory::GetDoubleValue(third_col_val),
                  testing_pool);
 
-  common::VarlenValue string_value =
+  common::Value string_value =
       common::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
   tuple.SetValue(3, string_value, testing_pool);
   return tuple;

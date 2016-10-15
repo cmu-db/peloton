@@ -21,6 +21,10 @@
 #include "common/value.h"
 #include "common/exception.h"
 #include "common/varlen_pool.h"
+#include "common/tinyint_type.h"
+#include "common/smallint_type.h"
+#include "common/integer_type.h"
+#include "common/bigint_type.h"
 
 namespace peloton {
 namespace common {
@@ -29,16 +33,16 @@ Type* Type::kTypes[] = {
   new Type(Type::INVALID),
   new IntegerType(Type::PARAMETER_OFFSET),
   new BooleanType(),
-  new IntegerType(Type::TINYINT),
-  new IntegerType(Type::SMALLINT),
+  new TinyintType(),
+  new SmallintType(),
   new IntegerType(Type::INTEGER),
-  new IntegerType(Type::BIGINT),
+  new BigintType(),
   new DecimalType(),
   new TimestampType(),
   new Type(Type::DATE), // not yet implemented
   new VarlenType(Type::VARCHAR),
   new VarlenType(Type::VARBINARY),
-  new ArrayType(), // not yet implemented
+  new ArrayType(),
   new Type(Type::UDT), // not yet implemented
 };
 

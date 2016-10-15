@@ -495,8 +495,8 @@ TEST_F(TileGroupTests, TileCopyTest) {
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
       //Value uninlined_col_value, new_uninlined_col_value;
 
-      std::unique_ptr<common::VarlenValue> uninlined_col_value(
-        reinterpret_cast<common::VarlenValue *>(
+      std::unique_ptr<common::Value> uninlined_col_value(
+        reinterpret_cast<common::Value *>(
           tile->GetValue(tup_itr, uninlined_col_index)));
       uninlined_col_object_len = uninlined_col_value->GetLength();
       uninlined_col_object_ptr = uninlined_col_value->GetAs<char *>();
@@ -504,8 +504,8 @@ TEST_F(TileGroupTests, TileCopyTest) {
           reinterpret_cast<char const *>(uninlined_col_object_ptr),
           uninlined_col_object_len);
 
-      std::unique_ptr<common::VarlenValue> new_uninlined_col_value(
-        reinterpret_cast<common::VarlenValue *>(
+      std::unique_ptr<common::Value> new_uninlined_col_value(
+        reinterpret_cast<common::Value *>(
           new_tile->GetValue(tup_itr, uninlined_col_index)));
       new_uninlined_col_object_len = new_uninlined_col_value->GetLength();
       new_uninlined_col_object_ptr = new_uninlined_col_value->GetAs<char *>();
