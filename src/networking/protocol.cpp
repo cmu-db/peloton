@@ -299,10 +299,15 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     return;
   }
   // Prepare statement
-  std::shared_ptr<Statement> statement;
+  std::shared_ptr<Statement> statement(nullptr);
   auto &tcop = tcop::TrafficCop::GetInstance();
-  statement =
-      tcop.PrepareStatement(statement_name, query_string, error_message);
+  if (query_string != "") {
+    statement =
+        tcop.PrepareStatement(statement_name, query_string, error_message);
+  } else {
+    LOG_DEBUG("Encountered an empty SQL string");
+    error_message = "";
+  }
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
     SendErrorResponse({{'M', error_message}}, responses);

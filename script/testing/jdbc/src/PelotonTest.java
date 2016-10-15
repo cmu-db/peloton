@@ -13,6 +13,7 @@
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Date;
 
 public class PelotonTest {
   private final String url = "jdbc:postgresql://localhost:54321/";
@@ -265,6 +266,23 @@ public class PelotonTest {
     stmt.execute(DELETE_A);
     System.out.println("Scan test passed.");
   }
+
+  public void Nop_Test() throws Exception {
+    conn.setAutoCommit(true);
+    long startTime = System.currentTimeMillis();
+    long elapsedTime = 0L;
+
+    Statement stmt = conn.createStatement();
+    long numOps = 1000 * 1000;
+    for (long i = 0; i < numOps; i++) {
+        try {
+            stmt.execute(";");
+        } catch (Exception e) { }
+    }
+    elapsedTime = (new Date()).getTime() - startTime;
+    System.out.println("Nop throughput: " + numOps * 1000 / elapsedTime);
+  }
+
 
   /**
    * Test SeqScan and IndexScan
@@ -723,6 +741,8 @@ public class PelotonTest {
         BasicTest();
       } else if (args[0].equals("stats")) {
         StatsTest();
+      } else if (args[0].equals("nop")) {
+        NopTest();
       }
   }
 
@@ -750,4 +770,11 @@ public class PelotonTest {
     pt.Close();
   }
 
+  static public void NopTest() throws Exception {
+    System.out.println("Nop Tests");
+    PelotonTest pt = new PelotonTest();
+    pt.Init();
+    pt.Nop_Test();
+    pt.Close();
+  }
 }
