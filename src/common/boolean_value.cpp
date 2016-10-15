@@ -17,87 +17,86 @@
 namespace peloton {
 namespace common {
 
-BooleanValue::BooleanValue(int8_t val)
-  : Value(Type::GetInstance(Type::BOOLEAN)) {
-  value_.boolean = (int8_t)val;
+BooleanType::BooleanType()
+  : Type(Type::BOOLEAN) {
 }
 
-Value *BooleanValue::CompareEquals(const Value &o) const {
+Value *BooleanType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(value_.boolean == o.GetAs<int8_t>());
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.value_.boolean == right.GetAs<int8_t>());
 }
 
-Value *BooleanValue::CompareNotEquals(const Value &o) const {
+Value *BooleanType::CompareNotEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(value_.boolean != o.GetAs<int8_t>());
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.value_.boolean != right.GetAs<int8_t>());
 }
 
-Value *BooleanValue::CompareLessThan(const Value &o) const {
+Value *BooleanType::CompareLessThan(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(value_.boolean < o.GetAs<int8_t>());
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.value_.boolean < right.GetAs<int8_t>());
 }
 
-Value *BooleanValue::CompareLessThanEquals(const Value &o) const {
+Value *BooleanType::CompareLessThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(value_.boolean <= o.GetAs<int8_t>());
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.value_.boolean <= right.GetAs<int8_t>());
 }
 
-Value *BooleanValue::CompareGreaterThan(const Value &o) const {
+Value *BooleanType::CompareGreaterThan(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(value_.boolean > o.GetAs<int8_t>());
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.value_.boolean > right.GetAs<int8_t>());
 }
 
-Value *BooleanValue::CompareGreaterThanEquals(const Value &o) const {
+Value *BooleanType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(value_.boolean >= o.GetAs<int8_t>());
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.value_.boolean >= right.GetAs<int8_t>());
 }
 
-std::string BooleanValue::ToString() const {
-  if (IsTrue())
+std::string BooleanType::ToString(const Value& val) const {
+  if (val.IsTrue())
     return "true";
-  if (IsFalse())
+  if (val.IsFalse())
     return "false";
   return "boolean_null";
 }
 
-size_t BooleanValue::Hash() const {
-  return std::hash<int8_t>{}(value_.boolean);
+size_t BooleanType::Hash(const Value& val) const {
+  return std::hash<int8_t>{}(val.value_.boolean);
 }
 
-void BooleanValue::HashCombine(size_t &seed) const {
-  hash_combine<int8_t>(seed, value_.boolean);
+void BooleanType::HashCombine(const Value& val, size_t &seed) const {
+  hash_combine<int8_t>(seed, val.value_.boolean);
 }
 
-Value *BooleanValue::Copy() const {
-  return new BooleanValue(value_.boolean);
+Value *BooleanType::Copy(const Value& val) const {
+  return new Value(type_id_, val.value_.boolean);
 }
 
-Value *BooleanValue::CastAs(const Type::TypeId type_id) const {
+Value *BooleanType::CastAs(const Value& val, const Type::TypeId type_id) const {
   switch (type_id) {
     case Type::BOOLEAN:
-      return Copy();
+      return val.Copy();
     case Type::VARCHAR:
-      if (IsNull())
-        return new VarlenValue(nullptr, 0, false);
-      return new VarlenValue(ToString(), false);
+      if (val.IsNull())
+        return new Value(Type::VARCHAR, nullptr, 0);
+      return new Value(Type::VARCHAR, val.ToString(), false);
     default:
       break;
   }

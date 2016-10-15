@@ -23,48 +23,42 @@ namespace common {
 class VarlenValue : public Value {
  public:
   VarlenValue(const char *data, uint32_t len, bool binary);
-  VarlenValue(const std::string &data, bool binary);
+  VarlenValue(const std::string &data, bool binary) ;
   ~VarlenValue();
   
   // Access the raw variable length data
-  const char *GetData() const;
+  const char *GetData(const Value& val) const;
 
   // Get the length of the variable length data
-  uint32_t GetLength() const;
+  uint32_t GetLength(const Value& val) const;
 
-  // Varchar string comparisons will be complicated
-  Value *CompareEquals(const Value &o) const override;
-  Value *CompareNotEquals(const Value &o) const override;
-  Value *CompareLessThan(const Value &o) const override;
-  Value *CompareLessThanEquals(const Value &o) const override;
-  Value *CompareGreaterThan(const Value &o) const override;
-  Value *CompareGreaterThanEquals(const Value &o) const override;
+  // Comparison functions
+  Value *CompareEquals(const Value& left, const Value &right) const override;
+  Value *CompareNotEquals(const Value& left, const Value &right) const override;
+  Value *CompareLessThan(const Value& left, const Value &right) const override;
+  Value *CompareLessThanEquals(const Value& left, const Value &right) const override;
+  Value *CompareGreaterThan(const Value& left, const Value &right) const override;
+  Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
   Value *CastAs(const Type::TypeId type_id) const override;
 
-  bool IsInlined() const override { return false; }
+  // Decimal types are always inlined
+  bool IsInlined(const Value& val) const override { return false; }
 
   // Debug
-  std::string ToString() const override;
+  std::string ToString(const Value& val) const override;
 
   // Compute a hash value
-  size_t Hash() const override;
-  void HashCombine(size_t &seed) const override;
+  size_t Hash(const Value& val) const override;
+  void HashCombine(const Value& val, size_t &seed) const override;
 
   // Serialize this value into the given storage space
-  void SerializeTo(SerializeOutput &out) const override;
-  void SerializeTo(char *storage, bool inlined,
+  void SerializeTo(const Value& val, SerializeOutput &out) const override;
+  void SerializeTo(const Value& val, char *storage, bool inlined,
                    VarlenPool *pool) const override;
 
   // Create a copy of this value
-  Value *Copy() const override;
-
- private:
-  // If this val is not inlined, it may be beneficial to cache the length
-  // into Value::buffer_ to avoid a secondary lookup. This field indicates
-  // whether the length has been cached in the buffer. It should be set after
-  // the first access.
-  //bool cached_;
+  Value *Copy(const Value& val) const override;
 };
 
 }  // namespace common

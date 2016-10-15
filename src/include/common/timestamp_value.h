@@ -17,32 +17,33 @@
 namespace peloton {
 namespace common {
 
-class TimestampValue : public Value {
+class TimestampType : public Type {
  public:
-  ~TimestampValue() {}
-  TimestampValue(uint64_t val);
+  ~TimestampType() {}
+  TimestampType();
   
   // Comparison functions
-  Value *CompareEquals(const Value &o) const override;
-  Value *CompareNotEquals(const Value &o) const override;
-  Value *CompareLessThan(const Value &o) const override;
-  Value *CompareLessThanEquals(const Value &o) const override;
-  Value *CompareGreaterThan(const Value &o) const override;
-  Value *CompareGreaterThanEquals(const Value &o) const override;
+  Value *CompareEquals(const Value& left, const Value &right) const override;
+  Value *CompareNotEquals(const Value& left, const Value &right) const override;
+  Value *CompareLessThan(const Value& left, const Value &right) const override;
+  Value *CompareLessThanEquals(const Value& left, const Value &right) const override;
+  Value *CompareGreaterThan(const Value& left, const Value &right) const override;
+  Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
   Value *CastAs(const Type::TypeId type_id) const override;
 
-  bool IsInlined() const override { return true; }
+  bool IsInlined(const Value& val) const override { return true; }
 
   // Debug
-  std::string ToString() const override;
+  std::string ToString(const Value& val) const override;
 
   // Compute a hash value
-  size_t Hash() const override;
-  void HashCombine(size_t &seed) const override;
+  size_t Hash(const Value& val) const override;
+  void HashCombine(const Value& val, size_t &seed) const override;
 
-  void SerializeTo(SerializeOutput &out) const override;
-  void SerializeTo(char *storage, bool inlined,
+  // Serialize this value into the given storage space
+  void SerializeTo(const Value& val, SerializeOutput &out) const override;
+  void SerializeTo(const Value& val, char *storage, bool inlined,
                    VarlenPool *pool) const override;
 
   // Create a copy of this value

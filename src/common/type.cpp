@@ -22,7 +22,7 @@
 namespace peloton {
 namespace common {
 
-Type Type::kTypes[] = {
+Type* Type::kTypes[] = {
   Type(Type::INVALID),
   Type(Type::PARAMETER_OFFSET),
   Type(Type::BOOLEAN),
@@ -39,10 +39,10 @@ Type Type::kTypes[] = {
   Type(Type::UDT),
 };
 
-// Is this type equivalent to the other
-bool Type::Equals(const Type &other) const {
-  return (type_id_ == other.type_id_);
-}
+//// Is this type equivalent to the other
+//bool Type::Equals(const Type &other) const {
+//  return (type_id_ == other.type_id_);
+//}
 
 // Get the size of this data type in bytes
 uint64_t Type::GetTypeSize(const TypeId type_id) {
@@ -199,8 +199,8 @@ Value *Type::GetMaxValue(TypeId type_id) {
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get maximal value.");
 }
 
-Type &Type::GetInstance(TypeId type_id) {
-  return kTypes[type_id];
+Type *Type::GetInstance(TypeId type_id) {
+  return &kTypes[type_id];
 }
 
 Type::TypeId Type::GetTypeId() const {

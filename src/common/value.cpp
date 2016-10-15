@@ -20,7 +20,153 @@
 namespace peloton {
 namespace common {
 
-Value::~Value() {}
+// BOOLEAN and TINYINT
+Value::Value(Type::TypeId type, int8_t i) :
+    Value(type) {
+  switch (type) {
+  case Type::BOOLEAN:
+    value_.boolean = i;
+    break;
+  case Type::TINYINT:
+    value_.tinyint = i;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+//SMALLINT
+Value::Value(Type::TypeId type, int16_t i) :
+    Value(type) {
+  switch (type) {
+  case Type::SMALLINT:
+    value_.smallint = i;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+//INTEGER and PARAMETER_OFFSET
+Value::Value(Type::TypeId type, int32_t i) :
+    Value(type) {
+  switch (type) {
+  case Type::INTEGER:
+  case Type::PARAMETER_OFFSET:
+    value_.integer = i;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+//BIGINT and TIMESTAMP
+Value::Value(Type::TypeId type, int64_t i) :
+    Value(type) {
+  switch (type) {
+  case Type::BIGINT:
+    value_.bigint = i;
+    break;
+  case Type::TIMESTAMP:
+    value_.timestamp = i;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+//BIGINT
+Value::Value(Type::TypeId type, uint64_t i) :
+    Value(type) {
+  switch (type) {
+  case Type::TIMESTAMP:
+    value_.timestamp = i;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+//DECIMAL
+Value::Value(Type::TypeId type, double d) :
+    Value(type) {
+  switch (type) {
+  case Type::DECIMAL:
+    value_.decimal = d;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+Value::Value(Type::TypeId type, float f) :
+    Value(type) {
+  switch (type) {
+  case Type::DECIMAL:
+    value_.decimal = f;
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+//VARCHAR and VARBINARY
+Value::Value(Type::TypeId type, const char *data, uint32_t len) :
+    Value(type) {
+  switch (type) {
+  case Type::VARCHAR:
+  case Type::VARBINARY:
+    if (len == PELOTON_VARCHAR_MAX_LEN) {
+        value_.ptr = new char[sizeof(uint32_t)];
+        PL_ASSERT(value_.ptr != nullptr);
+        (*(uint32_t *) value_.ptr) = len;
+      } else {
+        value_.ptr = new char[len + sizeof(uint32_t)];
+        PL_ASSERT(value_.ptr != nullptr);
+        (*(uint32_t *) value_.ptr) = len;
+        char *dest = value_.ptr + sizeof(uint32_t);
+        PL_MEMCPY(dest, data, len);
+      }
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+Value::Value(Type::TypeId type, const std::string &data) :
+    Value(type) {
+  switch (type) {
+  case Type::VARCHAR:
+  case Type::VARBINARY:
+    uint32_t len = data.length() + (type == Type::VARCHAR);
+    value_.ptr = new char[len + sizeof(uint32_t)];
+    PL_ASSERT(value_.ptr != nullptr);
+    (*(uint32_t *) value_.ptr) = len;
+    char *dest = value_.ptr + sizeof(uint32_t);
+    PL_MEMCPY(dest, data.c_str(), len);
+    break;
+  default:
+    throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        "Invalid Type for constructor: %s", Type::GetInstance(type).ToString());
+  }
+}
+
+
+Value::~Value() {
+  switch(type_->GetTypeId()){
+  case Type::VARBINARY:
+  case Type::VARCHAR:
+    delete[] value_.ptr;
+  }
+}
 
 const std::string Value::GetInfo() const {
   std::ostringstream os;
