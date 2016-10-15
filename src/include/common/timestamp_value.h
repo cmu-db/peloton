@@ -47,7 +47,9 @@ class TimestampType : public Type {
                    VarlenPool *pool) const override;
 
   // Create a copy of this value
-  Value *Copy() const override;
+  Value *Copy(const Value& val) const override;
+
+  Value *CastAs(const Value& val, const Type::TypeId type_id) const = 0;
 };
 
 }  // namespace peloton

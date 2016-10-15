@@ -87,7 +87,7 @@ class Value : public Printable {
   Value(Type::TypeId type, const std::string &data) ;
 
 
-  ~Value() = 0;
+  ~Value();
 
   // Get the type of this value
   Type::TypeId GetTypeId() const { return type_->GetTypeId(); }
@@ -111,28 +111,28 @@ class Value : public Printable {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  Value *CompareEquals(const Value &o) const = 0;
-  Value *CompareNotEquals(const Value &o) const = 0;
-  Value *CompareLessThan(const Value &o) const = 0;
-  Value *CompareLessThanEquals(const Value &o) const = 0;
-  Value *CompareGreaterThan(const Value &o) const = 0;
-  Value *CompareGreaterThanEquals(const Value &o) const = 0;
+  Value *CompareEquals(const Value &o) const;
+  Value *CompareNotEquals(const Value &o) const;
+  Value *CompareLessThan(const Value &o) const;
+  Value *CompareLessThanEquals(const Value &o) const;
+  Value *CompareGreaterThan(const Value &o) const;
+  Value *CompareGreaterThanEquals(const Value &o) const;
 
   // Other mathematical functions
-  Value *Add(const Value &o) const = 0;
-  Value *Subtract(const Value &o) const = 0;
-  Value *Multiply(const Value &o) const = 0;
-  Value *Divide(const Value &o) const = 0;
-  Value *Modulo(const Value &o) const = 0;
-  Value *Min(const Value &o) const = 0;
-  Value *Max(const Value &o) const = 0;
-  Value *Sqrt() const = 0;
-  Value *OperateNull(const Value &o) const = 0;
-  bool IsZero() const = 0;
+  Value *Add(const Value &o) const;
+  Value *Subtract(const Value &o) const;
+  Value *Multiply(const Value &o) const;
+  Value *Divide(const Value &o) const;
+  Value *Modulo(const Value &o) const;
+  Value *Min(const Value &o) const;
+  Value *Max(const Value &o) const;
+  Value *Sqrt() const;
+  Value *OperateNull(const Value &o) const;
+  bool IsZero() const;
 
   // Is the data inlined into this classes storage space, or must it be accessed
   // through an indirection/pointer?
-  bool IsInlined() const = 0;
+  bool IsInlined() const;
 
   // Is a value null?
   bool IsNull() const;
@@ -154,31 +154,11 @@ class Value : public Printable {
   }
 
   // Return a stringified version of this value
-  std::string ToString() const = 0;
+  std::string ToString() const;
 
   // Compute a hash value
-  size_t Hash() const = 0;
-  void HashCombine(size_t &seed) const = 0;
-
-  // For unordered_map
-  struct equal_to {
-    bool operator()(const Value *x, const Value *y) const {
-      std::unique_ptr<Value> cmp(x->CompareEquals(*y));
-      return (cmp->IsTrue());
-    }
-  };
-
-  template <class T>
-  inline void hash_combine(std::size_t &seed, const T &v) const {
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-  }
-
-  struct hash {
-    size_t operator()(const Value *x) const {
-      return x->Hash();
-    }
-  };
+  size_t Hash() const;
+  void HashCombine(size_t &seed) const;
 
   // Serialize this value into the given storage space. The inlined parameter
   // indicates whether we are allowed to inline this value into the storage
@@ -186,8 +166,8 @@ class Value : public Printable {
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
   void SerializeTo(char *storage, bool inlined,
-                           VarlenPool *pool) const = 0;
-  void SerializeTo(SerializeOutput &out) const = 0;
+                           VarlenPool *pool) const;
+  void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize a value of the given type from the given storage space.
   static Value *DeserializeFrom(const char *storage, const Type::TypeId type_id, 
@@ -196,18 +176,18 @@ class Value : public Printable {
                                 VarlenPool *pool = nullptr);
 
   // Access the raw variable length data
-  const char *GetData(const Value& val) const;
+  const char *GetData() const;
 
   // Get the length of the variable length data
-  uint32_t GetLength(const Value& val) const;
+  uint32_t GetLength() const;
 
   template <class T>
   T GetAs() const { return *reinterpret_cast<const T*>(&value_); }
 
   // Create a copy of this value
-  Value *Copy() const = 0;
+  Value *Copy() const;
 
-  Value *CastAs(const Type::TypeId type_id) const = 0;
+  Value *CastAs(const Type::TypeId type_id) const;
 
  protected:
   // The data type

@@ -57,7 +57,7 @@ class Type {
   static Value *GetMinValue(TypeId type_id);
   static Value *GetMaxValue(TypeId type_id);
 
-  static Type &GetInstance(TypeId type_id);
+  static Type * GetInstance(TypeId type_id);
   TypeId GetTypeId() const;
 
   Type(TypeId type_id) : type_id_(type_id) {}
@@ -120,15 +120,35 @@ class Type {
   virtual void SerializeTo(const Value& val, SerializeOutput &out) const = 0;
 
   // Create a copy of this value
-  virtual Value *Copy(Value& val) const = 0;
+  virtual Value *Copy(const Value& val) const = 0;
 
-  virtual Value *CastAs(Value& val, const Type::TypeId type_id) const = 0;
+  virtual Value *CastAs(const Value& val, const Type::TypeId type_id) const = 0;
 
   // Access the raw variable length data
   virtual const char *GetData(const Value& val) const;
 
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
+
+  // For unordered_map
+  struct equal_to {
+    bool operator()(const Value *x, const Value *y) const {
+      std::unique_ptr<Value> cmp(x->CompareEquals(*y));
+      return (cmp->IsTrue());
+    }
+  };
+
+  template <class T>
+  inline void hash_combine(std::size_t &seed, const T &v) const {
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  struct hash {
+    size_t operator()(const Value *x) const {
+      return x->Hash();
+    }
+  };
 
  private:
   // The actual type ID

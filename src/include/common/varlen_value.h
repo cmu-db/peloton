@@ -20,11 +20,10 @@ namespace common {
 
 // A varlen value is an abstract class representing all objects that have
 // variable length.
-class VarlenValue : public Value {
+class VarlenType : public Type {
  public:
-  VarlenValue(const char *data, uint32_t len, bool binary);
-  VarlenValue(const std::string &data, bool binary) ;
-  ~VarlenValue();
+  VarlenType(TypeId type);
+  ~VarlenType();
   
   // Access the raw variable length data
   const char *GetData(const Value& val) const;
@@ -40,7 +39,7 @@ class VarlenValue : public Value {
   Value *CompareGreaterThan(const Value& left, const Value &right) const override;
   Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Type::TypeId type_id) const override;
+  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value& val) const override { return false; }

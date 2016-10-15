@@ -17,58 +17,57 @@
 namespace peloton {
 namespace common {
 
-TimestampValue::TimestampValue(uint64_t val)
-  : Value(Type::GetInstance(Type::TIMESTAMP)) {
-  value_.timestamp = val;
+TimestampType::TimestampType()
+  : Type(Type::TIMESTAMP) {
 }
 
-Value *TimestampValue::CompareEquals(const Value &o) const {
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(GetAs<uint64_t>() == o.GetAs<uint64_t>());
+Value *TimestampType::CompareEquals(const Value& left, const Value &right) const {
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
-Value *TimestampValue::CompareNotEquals(const Value &o) const {
-  CheckComparable(o);
-  if (o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(GetAs<uint64_t>() != o.GetAs<uint64_t>());
+Value *TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
+  left.CheckComparable(right);
+  if (right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
-Value *TimestampValue::CompareLessThan(const Value &o) const {
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(GetAs<uint64_t>() < o.GetAs<uint64_t>());
+Value *TimestampType::CompareLessThan(const Value& left, const Value &right) const {
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
-Value *TimestampValue::CompareLessThanEquals(const Value &o) const {
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(GetAs<uint64_t>() <= o.GetAs<uint64_t>());
+Value *TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
-Value *TimestampValue::CompareGreaterThan(const Value &o) const {
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(GetAs<int64_t>() > o.GetAs<int64_t>());
+Value *TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
-Value *TimestampValue::CompareGreaterThanEquals(const Value &o) const {
-  CheckComparable(o);
-  if (IsNull() || o.IsNull())
-    return new BooleanValue(PELOTON_BOOLEAN_NULL);
-  return new BooleanValue(GetAs<uint64_t>() >= o.GetAs<uint64_t>());
+Value *TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
+  left.CheckComparable(right);
+  if (left.IsNull() || right.IsNull())
+    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
 }
 
 // Debug
-std::string TimestampValue::ToString() const {
-  if (IsNull())
+std::string TimestampType::ToString(const Value& val) const {
+  if (val.IsNull())
     return "timestamp_null";
-  uint64_t tm = value_.timestamp;
+  uint64_t tm = val.value_.timestamp;
   uint32_t micro = tm % 1000000;
   tm /= 1000000;
   uint32_t second = tm % 100000;
@@ -103,36 +102,36 @@ std::string TimestampValue::ToString() const {
 }
 
 // Compute a hash value
-size_t TimestampValue::Hash() const {
-  return std::hash<uint64_t>{}(value_.timestamp);
+size_t TimestampType::Hash(const Value& val) const {
+  return std::hash<uint64_t>{}(val.value_.timestamp);
 }
 
-void TimestampValue::HashCombine(size_t &seed) const {
-  hash_combine<int64_t>(seed, value_.timestamp);
+void TimestampType::HashCombine(const Value& val, size_t &seed) const {
+  hash_combine<int64_t>(seed, val.value_.timestamp);
 }
 
-void TimestampValue::SerializeTo(SerializeOutput &out) const {
-  out.WriteLong(value_.timestamp);
+void TimestampType::SerializeTo(const Value& val, SerializeOutput &out) const {
+  out.WriteLong(val.value_.timestamp);
 }
 
-void TimestampValue::SerializeTo(char *storage, bool inlined UNUSED_ATTRIBUTE,
+void TimestampType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
                                  VarlenPool *pool UNUSED_ATTRIBUTE) const {
-  *reinterpret_cast<uint64_t *>(storage) = value_.timestamp;
+  *reinterpret_cast<uint64_t *>(storage) = val.value_.timestamp;
 }
 
 // Create a copy of this value
-Value *TimestampValue::Copy() const {
-  return new TimestampValue(value_.timestamp);
+Value *TimestampType::Copy(const Value& val) const {
+  return new Value(Type::TIMESTAMP, val.value_.timestamp);
 }
 
-Value *TimestampValue::CastAs(const Type::TypeId type_id) const {
+Value *TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const {
   switch (type_id) {
     case Type::TIMESTAMP:
-      return Copy();
+      return val.Copy();
     case Type::VARCHAR:
-      if (IsNull())
-        return new VarlenValue(nullptr, 0, false);
-      return new VarlenValue(ToString(), false);
+      if (val.IsNull())
+        return new Value(Type::VARCHAR, nullptr, 0);
+      return new Value(Type::VARCHAR, val.ToString());
     default:
       break;
   }

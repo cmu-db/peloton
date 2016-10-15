@@ -42,7 +42,7 @@ class DecimalType : public NumericType {
   Value *CompareGreaterThan(const Value& left, const Value &right) const override;
   Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Type::TypeId type_id) const override;
+  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value& val) const override { return true; }

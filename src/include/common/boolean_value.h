@@ -57,7 +57,7 @@ class BooleanType : public Type {
   // Create a copy of this value
   Value *Copy(const Value& val) const override;
 
-  Value *CastAs(Value& val, const Type::TypeId type_id);
+  Value *CastAs(const Value& val, const Type::TypeId type_id) const;
 };
 
 }  // namespace peloton

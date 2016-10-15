@@ -150,23 +150,23 @@ std::string Type::ToString() const {
 Value *Type::GetMinValue(TypeId type_id) {
   switch (type_id) {
     case BOOLEAN:
-      return new BooleanValue(0);
+      return new Value(type_id, 0);
     case TINYINT:
-      return new IntegerValue((int8_t) PELOTON_INT8_MIN);
+      return new Value(type_id, (int8_t) PELOTON_INT8_MIN);
     case SMALLINT:
-      return new IntegerValue((int16_t) PELOTON_INT16_MIN);
+      return new Value(type_id, (int16_t) PELOTON_INT16_MIN);
     case INTEGER:
-      return new IntegerValue((int32_t) PELOTON_INT32_MIN);
+      return new Value(type_id, (int32_t) PELOTON_INT32_MIN);
     case BIGINT:
-      return new IntegerValue((int64_t) PELOTON_INT64_MIN);
+      return new Value(type_id, (int64_t) PELOTON_INT64_MIN);
     case DECIMAL:
-      return new DecimalValue(PELOTON_DECIMAL_MIN);
+      return new Value(type_id, PELOTON_DECIMAL_MIN);
     case TIMESTAMP:
-      return new TimestampValue(0);
+      return new Value(type_id, 0);
     case VARCHAR:
-      return new VarlenValue("", false);
+      return new Value(type_id, "", false);
     case VARBINARY:
-      return new VarlenValue("", true);
+      return new Value(type_id, "", true);
     default:
       break;
   }
@@ -176,23 +176,23 @@ Value *Type::GetMinValue(TypeId type_id) {
 Value *Type::GetMaxValue(TypeId type_id) {
   switch (type_id) {
     case BOOLEAN:
-      return new BooleanValue(1);
+      return new Value(type_id, 1);
     case TINYINT:
-      return new IntegerValue((int8_t) PELOTON_INT8_MAX);
+      return new Value(type_id, (int8_t) PELOTON_INT8_MAX);
     case SMALLINT:
-      return new IntegerValue((int16_t) PELOTON_INT16_MAX);
+      return new Value(type_id, (int16_t) PELOTON_INT16_MAX);
     case INTEGER:
-      return new IntegerValue((int32_t) PELOTON_INT32_MAX);
+      return new Value(type_id, (int32_t) PELOTON_INT32_MAX);
     case BIGINT:
-      return new IntegerValue((int64_t) PELOTON_INT64_MAX);
+      return new Value(type_id, (int64_t) PELOTON_INT64_MAX);
     case DECIMAL:
-      return new DecimalValue(PELOTON_DECIMAL_MAX);
+      return new Value(type_id,PELOTON_DECIMAL_MAX);
     case TIMESTAMP:
-      return new TimestampValue(PELOTON_TIMESTAMP_MAX);
+      return new Value(type_id,PELOTON_TIMESTAMP_MAX);
     case VARCHAR:
-      return new VarlenValue(nullptr, 0, false);
+      return new Value(type_id, nullptr, 0);
     case VARBINARY:
-      return new VarlenValue(nullptr, 0, true);
+      return new Value(type_id, nullptr, 0);
     default:
       break;
   }

@@ -268,35 +268,34 @@ Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
       break;
     case Type::TINYINT: {
       int8_t val = *reinterpret_cast<const int8_t *>(storage);
-      return new IntegerValue(val);
+      return new Value(type_id, val);
     }
     case Type::SMALLINT: {
       int16_t val = *reinterpret_cast<const int16_t *>(storage);
-      return new IntegerValue(val);
+      return new Value(type_id, val);
     }
     case Type::INTEGER: {
       int32_t val = *reinterpret_cast<const int32_t *>(storage);
-      return new IntegerValue(val);
+      return new Value(type_id, val);
     }
     case Type::BIGINT: {
       int64_t val = *reinterpret_cast<const int64_t *>(storage);
-      return new IntegerValue(val);
+      return new Value(type_id, val);
     }
     case Type::DECIMAL: {
       double val = *reinterpret_cast<const double *>(storage);
-      return new DecimalValue(val);
+      return new Value(type_id, val);
     }
     case Type::TIMESTAMP: {
       uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
-      return new TimestampValue(val);
+      return new Value(type_id, val);
     }
     case Type::VARCHAR:
     case Type::VARBINARY:{
-      bool isBinary = type_id == Type::VARBINARY;
       const char *ptr = *reinterpret_cast<const char *const *>(storage);
-      if (ptr == nullptr) return new VarlenValue(nullptr, 0, isBinary);
+      if (ptr == nullptr) return new Value(type_id, nullptr, 0);
       uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-      return new VarlenValue(ptr + sizeof(uint32_t), len, isBinary);
+      return new Value(type_id, ptr + sizeof(uint32_t), len);
     }
     default:
       break;
@@ -310,29 +309,132 @@ Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
     case Type::BOOLEAN:
       break;
     case Type::TINYINT:
-      return new IntegerValue(in.ReadByte());
+      return new Value(type_id, in.ReadByte());
     case Type::SMALLINT:
-      return new IntegerValue(in.ReadShort());
+      return new Value(type_id, in.ReadShort());
     case Type::INTEGER:
-      return new IntegerValue(in.ReadInt());
+      return new Value(type_id, in.ReadInt());
     case Type::BIGINT:
-      return new IntegerValue(in.ReadLong());
+      return new Value(type_id, in.ReadLong());
     case Type::DECIMAL:
-      return new DecimalValue(in.ReadDouble());
+      return new Value(type_id, in.ReadDouble());
     case Type::TIMESTAMP:
-      return new IntegerValue(in.ReadLong());
+      return new Value(type_id, in.ReadLong());
     case Type::VARCHAR:
     case Type::VARBINARY:{
-      bool isBinary = type_id == Type::VARBINARY;
       uint32_t len = in.ReadInt();
       const char *data = (char *)in.getRawPointer(len);
-      return new VarlenValue(data, len, isBinary);
+      return new Value(type_id, data, len);
     }
     default:
       break;
   }
   throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
 }
+
+  Value *Value::CompareEquals(const Value &o) const{
+    return type_->CompareEquals(*this, o);
+  }
+  Value *Value::CompareNotEquals(const Value &o) const{
+    return type_->CompareNotEquals(*this, o);
+  }
+  Value *Value::Value::CompareLessThan(const Value &o) const{
+    return type_->CompareLessThan(*this, o);
+  }
+  Value *Value::CompareLessThanEquals(const Value &o) const{
+    return type_->CompareLessThanEquals(*this, o);
+  }
+  Value *Value::CompareGreaterThan(const Value &o) const{
+    return type_->CompareGreaterThan(*this, o);
+  }
+  Value *Value::CompareGreaterThanEquals(const Value &o) const{
+    return type_->CompareGreaterThanEquals(*this, o);
+  }
+
+  // Other mathematical functions
+  Value *Value::Add(const Value &o) const{
+    return type_->Add(*this, o);
+  }
+  Value *Value::Subtract(const Value &o) const{
+    return type_->Subtract(*this, o);
+  }
+  Value *Value::Multiply(const Value &o) const{
+    return type_->Multiply(*this, o);
+  }
+  Value *Value::Divide(const Value &o) const{
+    return type_->Multiply(*this, o);
+  }
+  Value *Value::Modulo(const Value &o) const{
+    return type_->Modulo(*this, o);
+  }
+  Value *Value::Min(const Value &o) const{
+    return type_->Min(*this, o);
+  }
+  Value *Value::Max(const Value &o) const{
+    return type_->Max(*this, o);
+  }
+  Value *Value::Sqrt() const{
+    return type_->Sqrt(*this);
+  }
+  Value *Value::OperateNull(const Value &o) const{
+    return type_->OperateNull(*this, o);
+  }
+  bool Value::IsZero() const{
+    return type_->IsZero(*this);
+  }
+
+  // Is the data inlined into this classes storage space, or must it be accessed
+  // through an indirection/pointer?
+  bool Value::IsInlined() const{
+    return type_->IsInlined(*this);
+  }
+
+  // Return a stringified version of this value
+  std::string Value::ToString() const{
+    return type_->ToString(*this);
+  }
+
+  // Compute a hash value
+  size_t Value::Hash() const{
+    return type_->Hash(*this);
+  }
+  void Value::HashCombine(size_t &seed) const{
+    return type_->HashCombine(*this, seed);
+  }
+
+  // Serialize this value into the given storage space. The inlined parameter
+  // indicates whether we are allowed to inline this value into the storage
+  // space, or whether we must store only a reference to this value. If inlined
+  // is false, we may use the provided data pool to allocate space for this
+  // value, storing a reference into the allocated pool space in the storage.
+  void Value::SerializeTo(char *storage, bool inlined,
+                           VarlenPool *pool) const{
+    type_->SerializeTo(*this, storage, inlined, pool);
+  }
+  void Value::SerializeTo(SerializeOutput &out) const{
+    type_->SerializeTo(*this, out);
+  }
+
+  // Create a copy of this value
+  Value *Value::Copy() const{
+    return type_->Copy(*this);
+  }
+
+  Value *Value::CastAs(const Type::TypeId type_id) const{
+    return type_->CastAs(*this, type_id);
+  }
+
+  // Access the raw variable length data
+  const char *Value::GetData() const{
+    return type_->GetData(*this);
+  }
+
+  // Get the length of the variable length data
+  uint32_t Value::GetLength() const{
+    return type_->GetLength(*this);
+  }
+
+
 
 }  // namespace peloton
 }  // namespace common
