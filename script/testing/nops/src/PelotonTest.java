@@ -129,7 +129,6 @@ public class PelotonTest {
 
   private Connection makeConnection() throws SQLException {
     Connection conn = DriverManager.getConnection(url[mode], user[mode], pass[mode]);
-    //Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:54321/postgres", "postgres", "postgres");
     return conn;
   }
 
@@ -145,12 +144,15 @@ public class PelotonTest {
   public void Init() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
-    stmt.execute(DROP);
-    stmt.execute(DDL);
-    // TT
-    /*try {
+    if (mode != TIMESTEN) {
+      stmt.execute(DROP);
+      stmt.execute(DDL);
+    } else {
+      try {
         stmt.execute("DROP TABLE A;");
-    } catch (Exception e) {}*/
+      } catch (Exception e) {}
+      stmt.execute("CREATE TABLE A(id INT, data INT);");
+    } 
   }
 
   public void ShowTable() throws SQLException {
@@ -170,17 +172,6 @@ public class PelotonTest {
       throw new SQLException("No rows should be returned");
     }
     System.out.println("Test db created.");
-  }
-
-  // TODO: remove this test - doesn't work on Postgres either.
-  public void Multiple_Test() throws SQLException {
-    PreparedStatement stmt = conn.prepareStatement("SELECT * FROM A WHERE id=?;SELECT * FROM A WHERE id=?");
-    stmt.setInt(1, 1); 
-    stmt.setInt(2, 1);
-    ResultSet r = stmt.executeQuery(); 
-    while (r.next()) {
-      System.out.println("Multiple: id = " + r.getString(1) + ", " + r.getString(2));
-    } 
   }
 
   /**
@@ -208,19 +199,6 @@ public class PelotonTest {
 
     stmt.execute(INDEXSCAN);
     stmt.execute(INDEXSCAN_COLUMN);
-
-    // TODO: Aggregations not yet supported in Peloton
-    stmt.execute(AGG_COUNT);
-    stmt.execute(AGG_COUNT_2);
-    PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
-    pstmt.setInt(1, 1);
-    pstmt.execute();
-
-    for (int i = 1; i < 3; i++)
-        IndexScanParam(i);
-    // TODO: Causes failed assertion on Peloton
-    stmt.execute(DELETE_A);
-    System.out.println("Scan test passed.");
   }
 
   public void Nop_Test() throws Exception {
@@ -290,18 +268,6 @@ public class PelotonTest {
       stmt.setString(2, data1);
       stmt.setString(4, data2);
       int ret = stmt.executeUpdate();
-      /*
-      String data = TABLE.A.name() + " says hello world and id = " + i;
-      stmtA.setInt(1, i);
-      stmtA.setString(2, data);
-      data = TABLE.B.name();
-      stmtB.setInt(1, i);
-      stmtB.setString(2, data);
-      int ret = stmtA.executeUpdate();
-      System.out.println("A Used server side prepare " + pgstmt.isUseServerPrepare() + ", Inserted: " + ret);
-      ret = stmtB.executeUpdate();
-      System.out.println("B Used server side prepare " + pgstmt.isUseServerPrepare() + ", Inserted: " + ret);
-      */
     }
     conn.commit();
     conn.setAutoCommit(true);
@@ -334,11 +300,6 @@ public class PelotonTest {
     stmt.setInt(1, i);
     stmt.execute();
     conn.commit();
-    //ResultSet r = stmt.executeQuery();
-    //while (r.next()) {
-    //  System.out.println("IndexScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
-    //}
-    //r.close();
   }
 
   /**
