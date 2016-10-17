@@ -4,7 +4,7 @@
 //
 // PelotonTest.java
 //
-// Identification: script/testing/jdbc/src/PelotonTest.java
+// Identification: script/testing/nops/src/PelotonTest.java
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,21 +17,21 @@ import java.util.Date;
 import java.util.Properties;
 
 public class PelotonTest {
-  private final String postgresUrl = "jdbc:postgresql://dev1.db.pdl.cmu.local:57721/postgres";
-  private final String pelotonUrl = "jdbc:postgresql://dev1.db.pdl.cmu.local:54321";
-  private final String postgresUsername = "haibinl";
-  private final String postgresPass = "postgres";
+  // Peloton, Postgres, Timesten
+  private final String[] url = {
+     //"jdbc:postgresql://localhost:54321/postgres",  // PELOTON 
+     "jdbc:postgresql://dev1.db.pdl.cmu.local:54321/postgres",  // PELOTON 
+     "jdbc:postgresql://localhost:57721/postgres",   // POSTGRES
+     //"jdbc:postgresql://dev1.db.pdl.cmu.local:57721/postgres",   // POSTGRES
+     "jdbc:timesten:client:TTC_SERVER_DSN=cmudb_ttdb;TTC_SERVER=dev1.db.pdl.cmu.local;TCP_PORT=53397"}; // TIMESTEN
+
+  private final String[] user = {"postgres", "haibinl", "cmudb"};
+  private final String[] pass = {"postgres", "postgres", "cmudb"};
+  private final String[] driver = {"org.postgresql.Driver", "org.postgresql.Driver", "com.timesten.jdbc.TimesTenDriver"};
+  
   private final int LOG_LEVEL = 0;
 
-  private final String timestenUrl = "jdbc:timesten:client:TTC_SERVER_DSN=cmudb_ttdb;TTC_SERVER=dev1.db.pdl.cmu.local;TCP_PORT=53397";
-  private final String timestenUsername = "cmudb";
-  private final String timestenPass = "cmudb";
-
   private final int STAT_INTERVAL_MS = 1000;
-
-  private final String TIMESTEN_DRIVER = "";
-  private final String POSTGRES_DRIVER = "org.postgresql.Driver";
-
 
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
@@ -110,19 +110,12 @@ public class PelotonTest {
 
   private enum TABLE {A, B, AB}
 
-  // To test the database stats colleced
-  private final String SELECT_DB_METRIC = "SELECT * FROM catalog_db.database_metric;";
-
-  // To test the query stats colleced
-  private final String SELECT_QUERY_METRIC = "SELECT * FROM catalog_db.query_metric;";
-
-  // To test the index stats colleced
-  private final String SELECT_INDEX_METRIC = "SELECT * FROM catalog_db.index_metric;";
+  private int mode; 
 
   public PelotonTest(int mode) throws SQLException {
+    this.mode = mode;
     try {
-      Class.forName(POSTGRES_DRIVER);
-      //Class.forName("com.timesten.jdbc.TimesTenDriver");
+      Class.forName(driver[mode]);
       if (LOG_LEVEL != 0) {
         org.postgresql.Driver.setLogLevel(LOG_LEVEL);
         DriverManager.setLogStream(System.out);
@@ -135,7 +128,8 @@ public class PelotonTest {
   }
 
   private Connection makeConnection() throws SQLException {
-    Connection conn = DriverManager.getConnection(postgresUrl, postgresUsername, postgresPass);
+    Connection conn = DriverManager.getConnection(url[mode], user[mode], pass[mode]);
+    //Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:54321/postgres", "postgres", "postgres");
     return conn;
   }
 
@@ -546,8 +540,10 @@ public class PelotonTest {
     }
   }
 
-  public static final int PELOTON = 1;
- 
+  public static final int PELOTON = 0;
+  public static final int POSTGRES = 1;
+  public static final int TIMESTEN = 2;
+
   static public void main(String[] args) throws Exception {
       if (args.length == 0) {
         System.out.println("Please specify target: [peloton|timesten|postgres]");
@@ -556,10 +552,14 @@ public class PelotonTest {
       int target = PELOTON;
       if (args[0].equals("peloton")) {
         target = PELOTON;
-      } else if (args[0].equals("stats")) {
-// echo "Please set env var LD_LIBRARY_PATH if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib"
-
-      } else if (args[0].equals("nop")) {
+      } else if (args[0].equals("postgres")) {
+        target = POSTGRES;
+        // echo "Please set env var LD_LIBRARY_PATH if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib"
+      } else if (args[0].equals("timesten")) {
+        target = TIMESTEN;
+      } else {
+        System.out.println("Please specify target: [peloton|timesten|postgres]");
+        return;
       }
       PelotonTest pt = new PelotonTest(target);
       pt.Init();
