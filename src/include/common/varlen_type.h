@@ -55,6 +55,12 @@ class VarlenType : public Type {
   void SerializeTo(const Value& val, char *storage, bool inlined,
                    VarlenPool *pool) const override;
 
+  // Deserialize a value of the given type from the given storage space.
+  Value *DeserializeFrom(const char *storage,
+                                const bool inlined, VarlenPool *pool = nullptr) const override;
+  Value *DeserializeFrom(SerializeInput &in,
+                                VarlenPool *pool = nullptr) const override;
+
   // Create a copy of this value
   Value *Copy(const Value& val) const override;
 };

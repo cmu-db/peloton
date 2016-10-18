@@ -399,6 +399,17 @@ void DecimalType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
   *reinterpret_cast<double *>(storage) = val.value_.decimal;
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *DecimalType::DeserializeFrom(const char *storage ,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  double val = *reinterpret_cast<const double *>(storage);
+  return new Value(type_id_, val);
+}
+Value *DecimalType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  return new Value(type_id_, in.ReadDouble());
+}
+
 Value *DecimalType::Copy(const Value& val) const {
   return new Value(Type::DECIMAL, val.value_.decimal);
 }

@@ -414,6 +414,17 @@ void IntegerType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
   throw Exception("type error");
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *IntegerType::DeserializeFrom(const char *storage ,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  int32_t val = *reinterpret_cast<const int32_t *>(storage);
+  return new Value(type_id_, val);
+}
+Value *IntegerType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  return new Value(type_id_, in.ReadInt());
+}
+
 Value *IntegerType::Copy(const Value& val) const {
   val.CheckInteger();
   return new Value(val.GetTypeId(), val.value_.integer);

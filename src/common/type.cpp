@@ -299,6 +299,16 @@ void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out U
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *Type::DeserializeFrom(const char *storage UNUSED_ATTRIBUTE,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+Value *Type::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
 // Create a copy of this value
 Value *Type::Copy(const Value& val UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");

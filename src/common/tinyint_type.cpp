@@ -403,6 +403,17 @@ void TinyintType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
 
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *TinyintType::DeserializeFrom(const char *storage ,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  int8_t val = *reinterpret_cast<const int8_t *>(storage);
+  return new Value(type_id_, val);
+}
+Value *TinyintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  return new Value(type_id_, in.ReadByte());
+}
+
 Value *TinyintType::Copy(const Value& val) const {
   val.CheckInteger();
   return new Value(Type::TINYINT, val.value_.tinyint);

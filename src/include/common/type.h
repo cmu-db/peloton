@@ -14,10 +14,9 @@
 
 #include <cstdint>
 #include <string>
+#include "serializeio.h"
 
 namespace peloton {
-class SerializeOutput;
-
 namespace common {
 
 class VarlenPool;
@@ -124,6 +123,12 @@ class Type {
   virtual void SerializeTo(const Value& val, char *storage, bool inlined,
                            VarlenPool *pool) const;
   virtual void SerializeTo(const Value& val, SerializeOutput &out) const;
+
+  // Deserialize a value of the given type from the given storage space.
+  virtual Value *DeserializeFrom(const char *storage,
+                                const bool inlined, VarlenPool *pool = nullptr) const;
+  virtual Value *DeserializeFrom(SerializeInput &in,
+                                VarlenPool *pool = nullptr) const;
 
   // Create a copy of this value
   virtual Value *Copy(const Value& val) const;

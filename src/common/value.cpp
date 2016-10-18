@@ -316,74 +316,12 @@ void Value::CheckInteger() const {
 Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
 UNUSED_ATTRIBUTE const bool inlined,
 UNUSED_ATTRIBUTE VarlenPool *pool) {
-  switch (type_id) {
-  case Type::BOOLEAN:
-    break;
-  case Type::TINYINT: {
-    int8_t val = *reinterpret_cast<const int8_t *>(storage);
-    return new Value(type_id, val);
-  }
-  case Type::SMALLINT: {
-    int16_t val = *reinterpret_cast<const int16_t *>(storage);
-    return new Value(type_id, val);
-  }
-  case Type::INTEGER: {
-    int32_t val = *reinterpret_cast<const int32_t *>(storage);
-    return new Value(type_id, val);
-  }
-  case Type::BIGINT: {
-    int64_t val = *reinterpret_cast<const int64_t *>(storage);
-    return new Value(type_id, val);
-  }
-  case Type::DECIMAL: {
-    double val = *reinterpret_cast<const double *>(storage);
-    return new Value(type_id, val);
-  }
-  case Type::TIMESTAMP: {
-    uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
-    return new Value(type_id, val);
-  }
-  case Type::VARCHAR:
-  case Type::VARBINARY: {
-    const char *ptr = *reinterpret_cast<const char * const *>(storage);
-    if (ptr == nullptr)
-      return new Value(type_id, nullptr, 0);
-    uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-    return new Value(type_id, ptr + sizeof(uint32_t), len);
-  }
-  default:
-    break;
-  }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+  return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
 }
 
 Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
     VarlenPool *pool UNUSED_ATTRIBUTE) {
-  switch (type_id) {
-  case Type::BOOLEAN:
-    break;
-  case Type::TINYINT:
-    return new Value(type_id, in.ReadByte());
-  case Type::SMALLINT:
-    return new Value(type_id, in.ReadShort());
-  case Type::INTEGER:
-    return new Value(type_id, in.ReadInt());
-  case Type::BIGINT:
-    return new Value(type_id, in.ReadLong());
-  case Type::DECIMAL:
-    return new Value(type_id, in.ReadDouble());
-  case Type::TIMESTAMP:
-    return new Value(type_id, in.ReadLong());
-  case Type::VARCHAR:
-  case Type::VARBINARY: {
-    uint32_t len = in.ReadInt();
-    const char *data = (char *) in.getRawPointer(len);
-    return new Value(type_id, data, len);
-  }
-  default:
-    break;
-  }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+  return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
 }
 
 Value *Value::CompareEquals(const Value &o) const {

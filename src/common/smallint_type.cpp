@@ -441,6 +441,17 @@ void SmallintType::SerializeTo(const Value& val, char *storage, bool inlined UNU
 
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *SmallintType::DeserializeFrom(const char *storage ,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  int16_t val = *reinterpret_cast<const int16_t *>(storage);
+  return new Value(type_id_, val);
+}
+Value *SmallintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  return new Value(type_id_, in.ReadShort());
+}
+
 Value *SmallintType::Copy(const Value& val) const {
   val.CheckInteger();
 

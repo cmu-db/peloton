@@ -60,6 +60,12 @@ class IntegerParentType : public NumericType {
   virtual void SerializeTo(const Value& val, char *storage, bool inlined,
                    VarlenPool *pool) const override = 0;
 
+  // Deserialize a value of the given type from the given storage space.
+  virtual Value *DeserializeFrom(const char *storage,
+                                const bool inlined, VarlenPool *pool = nullptr) const override = 0;
+  virtual Value *DeserializeFrom(SerializeInput &in,
+                                VarlenPool *pool = nullptr) const override = 0;
+
   // Create a copy of this value
   virtual Value *Copy(const Value& val) const override = 0;
 

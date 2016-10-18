@@ -120,6 +120,17 @@ void TimestampType::SerializeTo(const Value& val, char *storage, bool inlined UN
   *reinterpret_cast<uint64_t *>(storage) = val.value_.timestamp;
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *TimestampType::DeserializeFrom(const char *storage ,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
+  return new Value(type_id_, val);
+}
+Value *TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  return new Value(type_id_, in.ReadLong());
+}
+
 // Create a copy of this value
 Value *TimestampType::Copy(const Value& val) const {
   return new Value(Type::TIMESTAMP, val.value_.timestamp);

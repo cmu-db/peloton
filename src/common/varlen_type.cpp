@@ -156,6 +156,22 @@ void VarlenType::SerializeTo(const Value& val, char *storage, bool inlined UNUSE
   PL_MEMCPY(data + sizeof(uint32_t), val.value_.varlen.data, size-sizeof(uint32_t));
 }
 
+// Deserialize a value of the given type from the given storage space.
+Value *VarlenType::DeserializeFrom(const char *storage ,
+                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  const char *ptr = *reinterpret_cast<const char * const *>(storage);
+  if (ptr == nullptr)
+  return new Value(type_id_, nullptr, 0);
+  uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
+  return new Value(type_id_, ptr + sizeof(uint32_t), len);
+}
+Value *VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+  uint32_t len = in.ReadInt();
+  const char *data = (char *) in.getRawPointer(len);
+  return new Value(type_id_, data, len);
+}
+
 Value *VarlenType::Copy(const Value& val) const {
   uint32_t len = val.GetLength();
   return new Value(val.GetTypeId(), val.GetData(), len);
