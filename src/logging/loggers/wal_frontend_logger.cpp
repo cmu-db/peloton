@@ -451,8 +451,8 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
         // construct a physical tuple from the logical tuple
         std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
         for (auto column_id : column_ids) {
-          std::unique_ptr<common::Value> val(cur_tuple.GetValue(column_id));
-          tuple->SetValue(column_id, *val,
+          common::Value val = cur_tuple.GetValue(column_id);
+          tuple->SetValue(column_id, val,
                           recovery_pool);
         }
 

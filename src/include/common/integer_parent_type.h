@@ -26,24 +26,24 @@ class IntegerParentType : public NumericType {
   IntegerParentType(TypeId type);
 
   // Other mathematical functions
-  virtual Value *Add(const Value& left, const Value &right) const override = 0;
-  virtual Value *Subtract(const Value& left, const Value &right) const override = 0;
-  virtual Value *Multiply(const Value& left, const Value &right) const override = 0;
-  virtual Value *Divide(const Value& left, const Value &right) const override = 0;
-  virtual Value *Modulo(const Value& left, const Value &right) const override = 0;
-  Value *Min(const Value& left, const Value &right) const override;
-  Value *Max(const Value& left, const Value &right) const override;
-  virtual Value *Sqrt(const Value& val) const override = 0;
+  virtual Value Add(const Value& left, const Value &right) const override = 0;
+  virtual Value Subtract(const Value& left, const Value &right) const override = 0;
+  virtual Value Multiply(const Value& left, const Value &right) const override = 0;
+  virtual Value Divide(const Value& left, const Value &right) const override = 0;
+  virtual Value Modulo(const Value& left, const Value &right) const override = 0;
+  Value Min(const Value& left, const Value &right) const override;
+  Value Max(const Value& left, const Value &right) const override;
+  virtual Value Sqrt(const Value& val) const override = 0;
 
   // Comparison functions
-  virtual Value *CompareEquals(const Value& left, const Value &right) const override = 0;
-  virtual Value *CompareNotEquals(const Value& left, const Value &right) const override = 0;
-  virtual Value *CompareLessThan(const Value& left, const Value &right) const override = 0;
-  virtual Value *CompareLessThanEquals(const Value& left, const Value &right) const override = 0;
-  virtual Value *CompareGreaterThan(const Value& left, const Value &right) const override = 0;
-  virtual Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override = 0;
+  virtual Value CompareEquals(const Value& left, const Value &right) const override = 0;
+  virtual Value CompareNotEquals(const Value& left, const Value &right) const override = 0;
+  virtual Value CompareLessThan(const Value& left, const Value &right) const override = 0;
+  virtual Value CompareLessThanEquals(const Value& left, const Value &right) const override = 0;
+  virtual Value CompareGreaterThan(const Value& left, const Value &right) const override = 0;
+  virtual Value CompareGreaterThanEquals(const Value& left, const Value &right) const override = 0;
 
-  virtual Value *CastAs(const Value& val, const Type::TypeId type_id) const override = 0;
+  virtual Value CastAs(const Value& val, const Type::TypeId type_id) const override = 0;
 
   // Integer types are always inlined
   bool IsInlined(const Value&) const override { return true; }
@@ -61,33 +61,33 @@ class IntegerParentType : public NumericType {
                    VarlenPool *pool) const override = 0;
 
   // Deserialize a value of the given type from the given storage space.
-  virtual Value *DeserializeFrom(const char *storage,
+  virtual Value DeserializeFrom(const char *storage,
                                 const bool inlined, VarlenPool *pool = nullptr) const override = 0;
-  virtual Value *DeserializeFrom(SerializeInput &in,
+  virtual Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const override = 0;
 
   // Create a copy of this value
-  virtual Value *Copy(const Value& val) const override = 0;
+  virtual Value Copy(const Value& val) const override = 0;
 
  protected:
   template<class T1, class T2>
-  Value *AddValue(const Value& left, const Value &right) const;
+  Value AddValue(const Value& left, const Value &right) const;
   template<class T1, class T2>
-  Value *SubtractValue(const Value& left, const Value &right) const;
+  Value SubtractValue(const Value& left, const Value &right) const;
   template<class T1, class T2>
-  Value *MultiplyValue(const Value& left, const Value &right) const;
+  Value MultiplyValue(const Value& left, const Value &right) const;
   template<class T1, class T2>
-  Value *DivideValue(const Value& left, const Value &right) const;
+  Value DivideValue(const Value& left, const Value &right) const;
   template<class T1, class T2>
-  Value *ModuloValue(const Value& left, const Value &right) const;
+  Value ModuloValue(const Value& left, const Value &right) const;
 
-  virtual Value *OperateNull(const Value& left, const Value &right) const override = 0;
+  virtual Value OperateNull(const Value& left, const Value &right) const override = 0;
 
   virtual bool IsZero(const Value& val) const override = 0;
 };
 
 template<class T1, class T2>
-Value *IntegerParentType::AddValue(const Value& left, const Value &right) const {
+Value IntegerParentType::AddValue(const Value& left, const Value &right) const {
   T1 x = left.GetAs<T1>();
   T2 y = right.GetAs<T2>();
   T1 sum1 = (T1)(x + y);
@@ -113,7 +113,7 @@ Value *IntegerParentType::AddValue(const Value& left, const Value &right) const 
 }
 
 template<class T1, class T2>
-Value *IntegerParentType::SubtractValue(const Value& left, const Value &right) const {
+Value IntegerParentType::SubtractValue(const Value& left, const Value &right) const {
   T1 x = left.GetAs<T1>();
   T2 y = right.GetAs<T2>();
   T1 diff1 = (T1)(x - y);
@@ -138,7 +138,7 @@ Value *IntegerParentType::SubtractValue(const Value& left, const Value &right) c
 }
 
 template<class T1, class T2>
-Value *IntegerParentType::MultiplyValue(const Value& left, const Value &right) const {
+Value IntegerParentType::MultiplyValue(const Value& left, const Value &right) const {
   T1 x = left.GetAs<T1>();
   T2 y = right.GetAs<T2>();
   T1 prod1 = (T1)(x * y);
@@ -163,7 +163,7 @@ Value *IntegerParentType::MultiplyValue(const Value& left, const Value &right) c
 }
 
 template<class T1, class T2>
-Value *IntegerParentType::DivideValue(const Value& left, const Value &right) const {
+Value IntegerParentType::DivideValue(const Value& left, const Value &right) const {
   T1 x = left.GetAs<T1>();
   T2 y = right.GetAs<T2>();
   if (y == 0) {
@@ -179,7 +179,7 @@ Value *IntegerParentType::DivideValue(const Value& left, const Value &right) con
 }
 
 template<class T1, class T2>
-Value *IntegerParentType::ModuloValue(const Value& left, const Value &right) const {
+Value IntegerParentType::ModuloValue(const Value& left, const Value &right) const {
   T1 x = left.GetAs<T1>();
   T2 y = right.GetAs<T2>();
   if (y == 0) {

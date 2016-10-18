@@ -27,7 +27,7 @@ IntegerParentType::IntegerParentType(TypeId type)
 
 
 
-Value *IntegerParentType::Min(const Value& left, const Value &right) const {
+Value IntegerParentType::Min(const Value& left, const Value &right) const {
  left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -39,7 +39,7 @@ Value *IntegerParentType::Min(const Value& left, const Value &right) const {
   return right.Copy();
 }
 
-Value *IntegerParentType::Max(const Value& left, const Value &right) const {
+Value IntegerParentType::Max(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())

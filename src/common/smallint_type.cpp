@@ -29,7 +29,7 @@ bool SmallintType::IsZero(const Value& val) const {
   return (val.value_.smallint == 0);
 }
 
-Value *SmallintType::Add(const Value& left, const Value &right) const {
+Value SmallintType::Add(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -55,7 +55,7 @@ Value *SmallintType::Add(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *SmallintType::Subtract(const Value& left, const Value &right) const {
+Value SmallintType::Subtract(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -81,7 +81,7 @@ Value *SmallintType::Subtract(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *SmallintType::Multiply(const Value& left, const Value &right) const {
+Value SmallintType::Multiply(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -107,7 +107,7 @@ Value *SmallintType::Multiply(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *SmallintType::Divide(const Value& left, const Value &right) const {
+Value SmallintType::Divide(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -137,7 +137,7 @@ Value *SmallintType::Divide(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *SmallintType::Modulo(const Value& left, const Value &right) const {
+Value SmallintType::Modulo(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -167,33 +167,33 @@ Value *SmallintType::Modulo(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *SmallintType::Sqrt(const Value& val) const {
+Value SmallintType::Sqrt(const Value& val) const {
   val.CheckInteger();
   if (val.IsNull())
-    return new Value(Type::DECIMAL, PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
 
   if (val.value_.smallint < 0) {
     throw Exception(EXCEPTION_TYPE_DECIMAL,
         "Cannot take square root of a negative number.");
   }
-  return new Value(Type::DECIMAL, sqrt(val.value_.smallint));
+  return ValueFactory::GetDoubleValue(sqrt(val.value_.smallint));
 
   throw Exception("type error");
 }
 
-Value *SmallintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right) const {
+Value SmallintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right) const {
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
   case Type::SMALLINT:
-    return new Value(Type::SMALLINT, (int16_t) PELOTON_INT16_NULL);
+    return ValueFactory::GetSmallIntValue((int16_t) PELOTON_INT16_NULL);
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
     return new Value(right.GetTypeId(), (int32_t) PELOTON_INT32_NULL);
   case Type::BIGINT:
     return new Value(right.GetTypeId(), (int64_t) PELOTON_INT64_NULL);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL, (double) PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDoubleValue((double) PELOTON_DECIMAL_NULL);
   default:
     break;
   }
@@ -201,13 +201,13 @@ Value *SmallintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value
   throw Exception("type error");
 }
 
-Value *SmallintType::CompareEquals(const Value& left,
+Value SmallintType::CompareEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
 
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -233,12 +233,12 @@ Value *SmallintType::CompareEquals(const Value& left,
   throw Exception("type error");
 }
 
-Value *SmallintType::CompareNotEquals(const Value& left,
+Value SmallintType::CompareNotEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -264,12 +264,12 @@ Value *SmallintType::CompareNotEquals(const Value& left,
   throw Exception("type error");
 }
 
-Value *SmallintType::CompareLessThan(const Value& left,
+Value SmallintType::CompareLessThan(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -295,12 +295,12 @@ Value *SmallintType::CompareLessThan(const Value& left,
   throw Exception("type error");
 }
 
-Value *SmallintType::CompareLessThanEquals(const Value& left,
+Value SmallintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -325,12 +325,12 @@ Value *SmallintType::CompareLessThanEquals(const Value& left,
   throw Exception("type error");
 }
 
-Value *SmallintType::CompareGreaterThan(const Value& left,
+Value SmallintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -356,12 +356,12 @@ Value *SmallintType::CompareGreaterThan(const Value& left,
   throw Exception("type error");
 }
 
-Value *SmallintType::CompareGreaterThanEquals(const Value& left,
+Value SmallintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -442,40 +442,40 @@ void SmallintType::SerializeTo(const Value& val, char *storage, bool inlined UNU
 }
 
 // Deserialize a value of the given type from the given storage space.
-Value *SmallintType::DeserializeFrom(const char *storage ,
+Value SmallintType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   int16_t val = *reinterpret_cast<const int16_t *>(storage);
   return new Value(type_id_, val);
 }
-Value *SmallintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+Value SmallintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
   return new Value(type_id_, in.ReadShort());
 }
 
-Value *SmallintType::Copy(const Value& val) const {
+Value SmallintType::Copy(const Value& val) const {
   val.CheckInteger();
 
-  return new Value(Type::SMALLINT, val.value_.smallint);
+  return ValueFactory::GetSmallIntValue(val.value_.smallint);
 
   throw Exception("type error");
 }
 
-Value *SmallintType::CastAs(const Value& val,
+Value SmallintType::CastAs(const Value& val,
     const Type::TypeId type_id) const {
   switch (type_id) {
   case Type::TINYINT: {
     if (val.IsNull())
-      return new Value(Type::TINYINT, PELOTON_INT8_NULL);
+      return ValueFactory::GetTinyIntValue(PELOTON_INT8_NULL);
     if (val.GetAs<int16_t>() > PELOTON_INT8_MAX
         || val.GetAs<int16_t>() < PELOTON_INT8_MIN)
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
           "Numeric value out of range.");
-    return new Value(Type::TINYINT, (int8_t) val.GetAs<int16_t>());
+    return ValueFactory::GetTinyIntValue((int8_t) val.GetAs<int16_t>());
 
   }
   case Type::SMALLINT: {
     if (val.IsNull())
-      return new Value(Type::SMALLINT, PELOTON_INT16_NULL);
+      return ValueFactory::GetSmallIntValue(PELOTON_INT16_NULL);
     return val.Copy();
   }
   case Type::INTEGER:
@@ -488,21 +488,21 @@ Value *SmallintType::CastAs(const Value& val,
   }
   case Type::BIGINT: {
     if (val.IsNull())
-      return new Value(Type::BIGINT, PELOTON_INT64_NULL);
+      return ValueFactory::GetBigIntValue(PELOTON_INT64_NULL);
 
-    return new Value(Type::BIGINT, (int64_t) val.GetAs<int16_t>());
+    return ValueFactory::GetBigIntValue((int64_t) val.GetAs<int16_t>());
 
   }
   case Type::DECIMAL: {
     if (val.IsNull())
-      return new Value(Type::DECIMAL, PELOTON_DECIMAL_NULL);
+      return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
 
-    return new Value(Type::DECIMAL, (double) val.GetAs<int16_t>());
+    return ValueFactory::GetDoubleValue((double) val.GetAs<int16_t>());
   }
   case Type::VARCHAR:
     if (val.IsNull())
-      return new Value(Type::VARCHAR, nullptr, 0);
-    return new Value(Type::VARCHAR, val.ToString());
+      return ValueFactory::GetVarcharValue(nullptr, 0);
+    return ValueFactory::GetVarcharValue(val.ToString());
   default:
     break;
   }

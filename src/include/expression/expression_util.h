@@ -57,7 +57,7 @@ class ExpressionUtil {
    * a value from the value vector
    */
   static void ConvertParameterExpressions(
-      expression::AbstractExpression *expression, std::vector<Value *> *values,
+      expression::AbstractExpression *expression, std::vector<Value> *values,
       catalog::Schema *schema) {
     LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 

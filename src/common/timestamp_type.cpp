@@ -22,46 +22,46 @@ TimestampType::TimestampType()
   : Type(Type::TIMESTAMP) {
 }
 
-Value *TimestampType::CompareEquals(const Value& left, const Value &right) const {
+Value TimestampType::CompareEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
-  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
-Value *TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
+Value TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
-  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
-Value *TimestampType::CompareLessThan(const Value& left, const Value &right) const {
+Value TimestampType::CompareLessThan(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
-  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
-Value *TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
+Value TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
-  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
-Value *TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
+Value TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
-  return new Value(Type::BOOLEAN, left.GetAs<int64_t>() > right.GetAs<int64_t>());
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+  return ValueFactory::GetBooleanValue(left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
-Value *TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
+Value TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
-  return new Value(Type::BOOLEAN, left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
 }
 
 // Debug
@@ -121,29 +121,29 @@ void TimestampType::SerializeTo(const Value& val, char *storage, bool inlined UN
 }
 
 // Deserialize a value of the given type from the given storage space.
-Value *TimestampType::DeserializeFrom(const char *storage ,
+Value TimestampType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
   return new Value(type_id_, val);
 }
-Value *TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+Value TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
   return new Value(type_id_, in.ReadLong());
 }
 
 // Create a copy of this value
-Value *TimestampType::Copy(const Value& val) const {
-  return new Value(Type::TIMESTAMP, val.value_.timestamp);
+Value TimestampType::Copy(const Value& val) const {
+  return ValueFactory::GetTimestampValue(val.value_.timestamp);
 }
 
-Value *TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const {
   switch (type_id) {
     case Type::TIMESTAMP:
       return val.Copy();
     case Type::VARCHAR:
       if (val.IsNull())
-        return new Value(Type::VARCHAR, nullptr, 0);
-      return new Value(Type::VARCHAR, val.ToString());
+        return ValueFactory::GetVarcharValue(nullptr, 0);
+      return ValueFactory::GetVarcharValue(val.ToString());
     default:
       break;
   }

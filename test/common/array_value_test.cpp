@@ -417,7 +417,7 @@ TEST_F(ArrayValueTests, CompareTest) {
   }
 
   // Test type mismatch
-  Value *v = new Value(Type::VARCHAR, "");
+  Value *v = ValueFactory::GetVarcharValue("");
   EXPECT_THROW(v->CompareEquals(ValueFactory::GetBooleanValue(0)), peloton::Exception);
   EXPECT_THROW(v->CompareEquals(ValueFactory::GetIntegerValue(0)), peloton::Exception);
   EXPECT_THROW(v->CompareEquals(ValueFactory::GetDoubleValue(0.0)), peloton::Exception);

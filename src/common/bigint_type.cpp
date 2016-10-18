@@ -30,7 +30,7 @@ bool BigintType::IsZero(const Value& val) const {
 
 }
 
-Value *BigintType::Add(const Value& left, const Value &right) const {
+Value BigintType::Add(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -47,14 +47,14 @@ Value *BigintType::Add(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return AddValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL, left.value_.bigint + right.GetAs<double>());
+    return ValueFactory::GetDoubleValue(left.value_.bigint + right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::Subtract(const Value& left, const Value &right) const {
+Value BigintType::Subtract(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -71,14 +71,14 @@ Value *BigintType::Subtract(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return SubtractValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL, left.value_.bigint - right.GetAs<double>());
+    return ValueFactory::GetDoubleValue(left.value_.bigint - right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::Multiply(const Value& left, const Value &right) const {
+Value BigintType::Multiply(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -95,7 +95,7 @@ Value *BigintType::Multiply(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return MultiplyValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL, left.value_.bigint * right.GetAs<double>());
+    return ValueFactory::GetDoubleValue(left.value_.bigint * right.GetAs<double>());
   default:
     break;
   }
@@ -103,7 +103,7 @@ Value *BigintType::Multiply(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *BigintType::Divide(const Value& left, const Value &right) const {
+Value BigintType::Divide(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -124,14 +124,14 @@ Value *BigintType::Divide(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return DivideValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL, left.value_.bigint / right.GetAs<double>());
+    return ValueFactory::GetDoubleValue(left.value_.bigint / right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::Modulo(const Value& left, const Value &right) const {
+Value BigintType::Modulo(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
@@ -160,20 +160,20 @@ Value *BigintType::Modulo(const Value& left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value *BigintType::Sqrt(const Value& val) const {
+Value BigintType::Sqrt(const Value& val) const {
   val.CheckInteger();
   if (val.IsNull())
-    return new Value(Type::DECIMAL, PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
 
   if (val.value_.bigint < 0) {
     throw Exception(EXCEPTION_TYPE_DECIMAL,
         "Cannot take square root of a negative number.");
   }
-  return new Value(Type::DECIMAL, sqrt(val.value_.bigint));
+  return ValueFactory::GetDoubleValue(sqrt(val.value_.bigint));
 
 }
 
-Value *BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right) const {
+Value BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right) const {
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -181,25 +181,25 @@ Value *BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
   case Type::BIGINT:
-    return new Value(Type::BIGINT, (int64_t) PELOTON_INT64_NULL);
+    return ValueFactory::GetBigIntValue((int64_t) PELOTON_INT64_NULL);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL, (double) PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDoubleValue((double) PELOTON_DECIMAL_NULL);
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::CompareEquals(const Value& left, const Value &right) const {
+Value BigintType::CompareEquals(const Value& left, const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
 
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint == right.GetAs<int8_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint == right.GetAs<int8_t>());
   case Type::SMALLINT:
     return new Value(Type::BOOLEAN,
         left.value_.bigint == right.GetAs<int16_t>());
@@ -211,23 +211,23 @@ Value *BigintType::CompareEquals(const Value& left, const Value &right) const {
     return new Value(Type::BOOLEAN,
         left.value_.bigint == right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN, left.value_.bigint == right.GetAs<double>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint == right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::CompareNotEquals(const Value& left,
+Value BigintType::CompareNotEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint != right.GetAs<int8_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint != right.GetAs<int8_t>());
   case Type::SMALLINT:
     return new Value(Type::BOOLEAN,
         left.value_.bigint != right.GetAs<int16_t>());
@@ -239,48 +239,48 @@ Value *BigintType::CompareNotEquals(const Value& left,
     return new Value(Type::BOOLEAN,
         left.value_.bigint != right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN, left.value_.bigint != right.GetAs<double>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint != right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::CompareLessThan(const Value& left,
+Value BigintType::CompareLessThan(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint < right.GetAs<int8_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint < right.GetAs<int16_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN, left.value_.bigint < right.GetAs<int32_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint < right.GetAs<int64_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN, left.value_.bigint < right.GetAs<double>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::CompareLessThanEquals(const Value& left,
+Value BigintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint <= right.GetAs<int8_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint <= right.GetAs<int8_t>());
   case Type::SMALLINT:
     return new Value(Type::BOOLEAN,
         left.value_.bigint <= right.GetAs<int16_t>());
@@ -292,32 +292,32 @@ Value *BigintType::CompareLessThanEquals(const Value& left,
     return new Value(Type::BOOLEAN,
         left.value_.bigint <= right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN, left.value_.bigint <= right.GetAs<double>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint <= right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value *BigintType::CompareGreaterThan(const Value& left,
+Value BigintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint > right.GetAs<int8_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint > right.GetAs<int16_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN, left.value_.bigint > right.GetAs<int32_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint > right.GetAs<int64_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN, left.value_.bigint > right.GetAs<double>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<double>());
   default:
     break;
   }
@@ -325,16 +325,16 @@ Value *BigintType::CompareGreaterThan(const Value& left,
   throw Exception("type error");
 }
 
-Value *BigintType::CompareGreaterThanEquals(const Value& left,
+Value BigintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN, left.value_.bigint >= right.GetAs<int8_t>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint >= right.GetAs<int8_t>());
   case Type::SMALLINT:
     return new Value(Type::BOOLEAN,
         left.value_.bigint >= right.GetAs<int16_t>());
@@ -346,7 +346,7 @@ Value *BigintType::CompareGreaterThanEquals(const Value& left,
     return new Value(Type::BOOLEAN,
         left.value_.bigint >= right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN, left.value_.bigint >= right.GetAs<double>());
+    return ValueFactory::GetBooleanValue(left.value_.bigint >= right.GetAs<double>());
   default:
     break;
   }
@@ -390,41 +390,41 @@ void BigintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSE
 }
 
 // Deserialize a value of the given type from the given storage space.
-Value *BigintType::DeserializeFrom(const char *storage ,
+Value BigintType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   int64_t val = *reinterpret_cast<const int64_t *>(storage);
   return new Value(type_id_, val);
 }
-Value *BigintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+Value BigintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
   return new Value(type_id_, in.ReadLong());
 }
 
-Value *BigintType::Copy(const Value& val) const {
+Value BigintType::Copy(const Value& val) const {
 
-  return new Value(Type::BIGINT, val.value_.bigint);
+  return ValueFactory::GetBigIntValue(val.value_.bigint);
 
 }
 
-Value *BigintType::CastAs(const Value& val, const Type::TypeId type_id) const {
+Value BigintType::CastAs(const Value& val, const Type::TypeId type_id) const {
   switch (type_id) {
   case Type::TINYINT: {
     if (val.IsNull())
-      return new Value(Type::TINYINT, PELOTON_INT8_NULL);
+      return ValueFactory::GetTinyIntValue(PELOTON_INT8_NULL);
     if (val.GetAs<int64_t>() > PELOTON_INT8_MAX
         || val.GetAs<int64_t>() < PELOTON_INT8_MIN)
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
           "Numeric value out of range.");
-    return new Value(Type::TINYINT, (int8_t) val.GetAs<int64_t>());
+    return ValueFactory::GetTinyIntValue((int8_t) val.GetAs<int64_t>());
   }
   case Type::SMALLINT: {
     if (val.IsNull())
-      return new Value(Type::SMALLINT, PELOTON_INT16_NULL);
+      return ValueFactory::GetSmallIntValue(PELOTON_INT16_NULL);
     if (val.GetAs<int64_t>() > PELOTON_INT16_MAX
         || val.GetAs<int64_t>() < PELOTON_INT16_MIN)
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
           "Numeric value out of range.");
-    return new Value(Type::SMALLINT, (int16_t) val.GetAs<int64_t>());
+    return ValueFactory::GetSmallIntValue((int16_t) val.GetAs<int64_t>());
   }
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET: {
@@ -440,20 +440,20 @@ Value *BigintType::CastAs(const Value& val, const Type::TypeId type_id) const {
   }
   case Type::BIGINT: {
     if (val.IsNull())
-      return new Value(Type::BIGINT, PELOTON_INT64_NULL);
+      return ValueFactory::GetBigIntValue(PELOTON_INT64_NULL);
 
     return val.Copy();
   }
   case Type::DECIMAL: {
     if (val.IsNull())
-      return new Value(Type::DECIMAL, PELOTON_DECIMAL_NULL);
+      return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
 
-    return new Value(Type::DECIMAL, (double) val.GetAs<int64_t>());
+    return ValueFactory::GetDoubleValue((double) val.GetAs<int64_t>());
   }
   case Type::VARCHAR:
     if (val.IsNull())
-      return new Value(Type::VARCHAR, nullptr, 0);
-    return new Value(Type::VARCHAR, val.ToString());
+      return ValueFactory::GetVarcharValue(nullptr, 0);
+    return ValueFactory::GetVarcharValue(val.ToString());
   default:
     break;
   }

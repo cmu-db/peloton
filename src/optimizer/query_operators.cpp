@@ -42,7 +42,7 @@ void Variable::accept(QueryNodeVisitor *v) const { v->visit(this); }
 //===--------------------------------------------------------------------===//
 // Constant
 //===--------------------------------------------------------------------===//
-Constant::Constant(common::Value *value) : value(value->Copy()) {}
+Constant::Constant(common::Value &value) : value(value.Copy()) {}
 
 ExpressionType Constant::GetExpressionType() const {
   return EXPRESSION_TYPE_VALUE_CONSTANT;

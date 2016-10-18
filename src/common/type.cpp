@@ -156,7 +156,7 @@ std::string Type::ToString() const {
   throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
 }
 
-Value *Type::GetMinValue(TypeId type_id) {
+Value Type::GetMinValue(TypeId type_id) {
   switch (type_id) {
     case BOOLEAN:
       return new Value(type_id, 0);
@@ -182,7 +182,7 @@ Value *Type::GetMinValue(TypeId type_id) {
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get minimal value.");
 }
 
-Value *Type::GetMaxValue(TypeId type_id) {
+Value Type::GetMaxValue(TypeId type_id) {
   switch (type_id) {
     case BOOLEAN:
       return new Value(type_id, 1);
@@ -216,51 +216,51 @@ Type::TypeId Type::GetTypeId() const {
   return type_id_;
 }
 
-Value *Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Other mathematical functions
-Value *Type::Add(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Add(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Subtract(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Subtract(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Multiply(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Multiply(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Divide(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Divide(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Modulo(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Modulo(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Min(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Min(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Max(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Max(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::Sqrt(const Value& val UNUSED_ATTRIBUTE) const{
+Value Type::Sqrt(const Value& val UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::OperateNull(const Value& val UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::OperateNull(const Value& val UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 bool Type::IsZero(const Value& val UNUSED_ATTRIBUTE) const{
@@ -300,21 +300,21 @@ void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out U
 }
 
 // Deserialize a value of the given type from the given storage space.
-Value *Type::DeserializeFrom(const char *storage UNUSED_ATTRIBUTE,
+Value Type::DeserializeFrom(const char *storage UNUSED_ATTRIBUTE,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value *Type::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+Value Type::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Create a copy of this value
-Value *Type::Copy(const Value& val UNUSED_ATTRIBUTE) const{
+Value Type::Copy(const Value& val UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
-Value *Type::CastAs(const Value& val UNUSED_ATTRIBUTE, const Type::TypeId type_id UNUSED_ATTRIBUTE) const{
+Value Type::CastAs(const Value& val UNUSED_ATTRIBUTE, const Type::TypeId type_id UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
@@ -329,7 +329,7 @@ uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const{
 }
 
 // Get the element at a given index in this array
-Value *Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE, uint64_t idx UNUSED_ATTRIBUTE) const{
+Value Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE, uint64_t idx UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
@@ -338,7 +338,7 @@ Type::TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const{
 }
 
   // Does this value exist in this array?
-Value *Type::InList(const Value& list UNUSED_ATTRIBUTE, const Value &object UNUSED_ATTRIBUTE) const{
+Value Type::InList(const Value& list UNUSED_ATTRIBUTE, const Value &object UNUSED_ATTRIBUTE) const{
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 

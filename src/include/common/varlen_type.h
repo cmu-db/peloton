@@ -31,14 +31,14 @@ class VarlenType : public Type {
   uint32_t GetLength(const Value& val) const;
 
   // Comparison functions
-  Value *CompareEquals(const Value& left, const Value &right) const override;
-  Value *CompareNotEquals(const Value& left, const Value &right) const override;
-  Value *CompareLessThan(const Value& left, const Value &right) const override;
-  Value *CompareLessThanEquals(const Value& left, const Value &right) const override;
-  Value *CompareGreaterThan(const Value& left, const Value &right) const override;
-  Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  Value CompareEquals(const Value& left, const Value &right) const override;
+  Value CompareNotEquals(const Value& left, const Value &right) const override;
+  Value CompareLessThan(const Value& left, const Value &right) const override;
+  Value CompareLessThanEquals(const Value& left, const Value &right) const override;
+  Value CompareGreaterThan(const Value& left, const Value &right) const override;
+  Value CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value&) const override { return false; }
@@ -56,13 +56,13 @@ class VarlenType : public Type {
                    VarlenPool *pool) const override;
 
   // Deserialize a value of the given type from the given storage space.
-  Value *DeserializeFrom(const char *storage,
+  Value DeserializeFrom(const char *storage,
                                 const bool inlined, VarlenPool *pool = nullptr) const override;
-  Value *DeserializeFrom(SerializeInput &in,
+  Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const override;
 
   // Create a copy of this value
-  Value *Copy(const Value& val) const override;
+  Value Copy(const Value& val) const override;
 };
 
 }  // namespace common

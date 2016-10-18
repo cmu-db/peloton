@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 
-#include "common/array_type.h"
 #include "common/boolean_type.h"
 #include "common/macros.h"
 #include "common/serializer.h"
@@ -20,7 +19,7 @@ namespace common {
 
 class ValueFactory {
  public:
-  static inline Value *Clone(const Value &src,
+  static inline Value Clone(const Value &src,
                              UNUSED_ATTRIBUTE VarlenPool *dataPool = nullptr) {
     return src.Copy();
   }
@@ -59,8 +58,7 @@ class ValueFactory {
 
   static inline Value GetVarcharValue(
       const char *value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    std::string str(value);
-    return Value(Type::VARCHAR, str);
+    return Value(Type::VARCHAR, value, value == nullptr ? 0 : strlen(value));
   }
 
   static inline Value GetVarcharValue(
@@ -79,74 +77,78 @@ class ValueFactory {
     return Value(Type::VARBINARY, (const char *)rawBuf, rawLength);
   }
 
-  static inline Value *GetNullValueByType(Type::TypeId type_id) {
+  static inline Value GetNullValueByType(Type::TypeId type_id) {
     switch (type_id) {
       case Type::BOOLEAN:
-        return new Value(type_id, PELOTON_BOOLEAN_NULL);
+        return GetBooleanValue(PELOTON_BOOLEAN_NULL);
       case Type::TINYINT:
-        return new Value(type_id, PELOTON_INT8_NULL);
+        return GetTinyIntValue(PELOTON_INT8_NULL);
       case Type::SMALLINT:
-        return new Value(type_id, PELOTON_INT16_NULL);
+        return GetSmallIntValue(PELOTON_INT16_NULL);
       case Type::INTEGER:
-        return new Value(type_id, PELOTON_INT32_NULL);
+        return GetIntegerValue(PELOTON_INT32_NULL);
       case Type::BIGINT:
-        return new Value(type_id, PELOTON_INT64_NULL);
+        return GetBigIntValue(PELOTON_INT64_NULL);
       case Type::DECIMAL:
-        return new Value(type_id, PELOTON_DECIMAL_NULL);
+        return GetDoubleValue(PELOTON_DECIMAL_NULL);
       case Type::TIMESTAMP:
-        return new Value(type_id, PELOTON_TIMESTAMP_NULL);
+        return GetTimestampValue(PELOTON_TIMESTAMP_NULL);
       case Type::VARCHAR:
-        return new Value(type_id, nullptr, 0);
+        return GetVarcharValue(nullptr, 0);
+      case Type::VARBINARY:
+        return GetVarbinaryValue(nullptr, 0);
       default:
         break;
     }
     throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
   }
 
-  static inline Value *GetZeroValueByType(Type::TypeId type_id) {
+  static inline Value GetZeroValueByType(Type::TypeId type_id) {
     std::string zero_string("0");
 
     switch (type_id) {
       case Type::BOOLEAN:
-        return new Value(type_id, 0);
+        return GetBooleanValue(0);
       case Type::TINYINT:
-        return new Value(type_id, 0);
+        return GetTinyIntValue(0);
       case Type::SMALLINT:
-        return new Value(type_id, 0);
+        return GetSmallIntValue(0);
       case Type::INTEGER:
-        return new Value(type_id, 0);
+        return GetIntegerValue(0);
       case Type::BIGINT:
-        return new Value(type_id, 0);
+        return GetBigIntValue(0);
       case Type::DECIMAL:
-        return new Value(type_id, (double)0);
+        return GetDoubleValue((double)0);
       case Type::TIMESTAMP:
-        return new Value(type_id, 0);
+        return GetTimestampValue(0);
       case Type::VARCHAR:
-        return new Value(type_id, zero_string);
+        return GetVarcharValue(zero_string);
+      case Type::VARBINARY:
+        return GetVarbinaryValue(zero_string);
       default:
         break;
     }
     throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
   }
 
-  static inline Value *CastAsBigInt(const Value &value) {
+  static inline Value CastAsBigInt(const Value &value) {
     if (Type::GetInstance(Type::BIGINT)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL);
+      if (value.IsNull()) return ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL);
       switch (value.GetTypeId()) {
         case Type::TINYINT:
-          return new Value(Type::BIGINT, (int64_t)value.GetAs<int8_t>());
+          return ValueFactory::GetBigIntValue((int64_t)value.GetAs<int8_t>());
         case Type::SMALLINT:
-          return new Value(Type::BIGINT, (int64_t)value.GetAs<int16_t>());
+          return ValueFactory::GetBigIntValue((int64_t)value.GetAs<int16_t>());
         case Type::INTEGER:
-          return new Value(Type::BIGINT, (int64_t)value.GetAs<int32_t>());
+          return ValueFactory::GetBigIntValue((int64_t)value.GetAs<int32_t>());
         case Type::BIGINT:
-          return new Value(Type::BIGINT, value.GetAs<int64_t>());
+          return ValueFactory::GetBigIntValue(value.GetAs<int64_t>());
         case Type::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT64_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT64_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::BIGINT, (int64_t)value.GetAs<double>());
+          return ValueFactory::GetBigIntValue((int64_t)value.GetAs<double>());
         }
         case Type::VARCHAR: {
           std::string str = value.ToString();
@@ -160,7 +162,7 @@ class ValueFactory {
           if (bigint > PELOTON_INT64_MAX || bigint < PELOTON_INT64_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::BIGINT, bigint);
+          return ValueFactory::GetBigIntValue(bigint);
         }
         default:
           break;
@@ -170,29 +172,29 @@ class ValueFactory {
                     " is not coercable to BIGINT.");
   }
 
-  static inline Value *CastAsInteger(const Value &value) {
+  static inline Value CastAsInteger(const Value &value) {
     if (Type::GetInstance(Type::INTEGER)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL);
+      if (value.IsNull()) return ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL);
       switch (value.GetTypeId()) {
         case Type::TINYINT:
-          return new Value(Type::INTEGER, (int32_t)value.GetAs<int8_t>());
+          return ValueFactory::GetIntegerValue((int32_t)value.GetAs<int8_t>());
         case Type::SMALLINT:
-          return new Value(Type::INTEGER, (int32_t)value.GetAs<int16_t>());
+          return ValueFactory::GetIntegerValue((int32_t)value.GetAs<int16_t>());
         case Type::INTEGER:
-          return new Value(Type::INTEGER, value.GetAs<int32_t>());
+          return ValueFactory::GetIntegerValue(value.GetAs<int32_t>());
         case Type::BIGINT: {
           if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT32_MAX ||
               value.GetAs<int64_t>() < (int64_t)PELOTON_INT32_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::INTEGER, (int32_t)value.GetAs<int64_t>());
+          return ValueFactory::GetIntegerValue((int32_t)value.GetAs<int64_t>());
         }
         case Type::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT32_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT32_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::INTEGER, (int32_t)value.GetAs<double>());
+          return ValueFactory::GetIntegerValue((int32_t)value.GetAs<double>());
         }
         case Type::VARCHAR: {
           std::string str = value.ToString();
@@ -206,7 +208,7 @@ class ValueFactory {
           if (integer > PELOTON_INT32_MAX || integer < PELOTON_INT32_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::INTEGER, integer);
+          return ValueFactory::GetIntegerValue(integer);
         }
         default:
           break;
@@ -216,34 +218,34 @@ class ValueFactory {
                     " is not coercable to INTEGER.");
   }
 
-  static inline Value *CastAsSmallInt(const Value &value) {
+  static inline Value CastAsSmallInt(const Value &value) {
     if (Type::GetInstance(Type::SMALLINT)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL);
+      if (value.IsNull()) return ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL);
       switch (value.GetTypeId()) {
         case Type::TINYINT:
-          return new Value(Type::SMALLINT, (int16_t)value.GetAs<int8_t>());
+          return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<int8_t>());
         case Type::SMALLINT:
-          return new Value(Type::SMALLINT, value.GetAs<int16_t>());
+          return ValueFactory::GetSmallIntValue(value.GetAs<int16_t>());
         case Type::INTEGER: {
           if (value.GetAs<int32_t>() > (int32_t)PELOTON_INT16_MAX ||
               value.GetAs<int32_t>() < (int32_t)PELOTON_INT16_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::SMALLINT, (int16_t)value.GetAs<int32_t>());
+          return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<int32_t>());
         }
         case Type::BIGINT: {
           if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT16_MAX ||
               value.GetAs<int64_t>() < (int64_t)PELOTON_INT16_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::SMALLINT, (int16_t)value.GetAs<int64_t>());
+          return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<int64_t>());
         }
         case Type::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT16_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT16_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::SMALLINT, (int16_t)value.GetAs<double>());
+          return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<double>());
         }
         case Type::VARCHAR: {
           std::string str = value.ToString();
@@ -257,7 +259,7 @@ class ValueFactory {
           if (smallint < PELOTON_INT16_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::SMALLINT, smallint);
+          return ValueFactory::GetSmallIntValue(smallint);
         }
         default:
           break;
@@ -267,39 +269,39 @@ class ValueFactory {
                     " is not coercable to SMALLINT.");
   }
 
-  static inline Value *CastAsTinyInt(const Value &value) {
+  static inline Value CastAsTinyInt(const Value &value) {
     if (Type::GetInstance(Type::TINYINT)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::TINYINT, PELOTON_INT8_NULL);
+      if (value.IsNull()) return ValueFactory::GetTinyIntValue(PELOTON_INT8_NULL);
       switch (value.GetTypeId()) {
         case Type::TINYINT:
-          return new Value(Type::TINYINT, value.GetAs<int8_t>());
+          return ValueFactory::GetTinyIntValue(value.GetAs<int8_t>());
         case Type::SMALLINT: {
           if (value.GetAs<int16_t>() > PELOTON_INT8_MAX ||
               value.GetAs<int16_t>() < PELOTON_INT8_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::TINYINT, (int8_t)value.GetAs<int16_t>());
+          return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int16_t>());
         }
         case Type::INTEGER: {
           if (value.GetAs<int32_t>() > (int32_t)PELOTON_INT8_MAX ||
               value.GetAs<int32_t>() < (int32_t)PELOTON_INT8_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::TINYINT, (int8_t)value.GetAs<int32_t>());
+          return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int32_t>());
         }
         case Type::BIGINT: {
           if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT8_MAX ||
               value.GetAs<int64_t>() < (int64_t)PELOTON_INT8_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::TINYINT, (int8_t)value.GetAs<int64_t>());
+          return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int64_t>());
         }
         case Type::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT8_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT8_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::TINYINT, (int8_t)value.GetAs<double>());
+          return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<double>());
         }
         case Type::VARCHAR: {
           std::string str = value.ToString();
@@ -313,7 +315,7 @@ class ValueFactory {
           if (tinyint < PELOTON_INT8_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::TINYINT, tinyint);
+          return ValueFactory::GetTinyIntValue(tinyint);
         }
         default:
           break;
@@ -323,20 +325,20 @@ class ValueFactory {
                     " is not coercable to TINYINT.");
   }
 
-  static inline Value *CastAsDecimal(const Value &value) {
+  static inline Value CastAsDecimal(const Value &value) {
     if (Type::GetInstance(Type::DECIMAL)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL);
+      if (value.IsNull()) return ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL);
       switch (value.GetTypeId()) {
         case Type::TINYINT:
-          return new Value(Type::DECIMAL, (double)value.GetAs<int8_t>());
+          return ValueFactory::GetDoubleValue((double)value.GetAs<int8_t>());
         case Type::SMALLINT:
-          return new Value(Type::DECIMAL, (double)value.GetAs<int16_t>());
+          return ValueFactory::GetDoubleValue((double)value.GetAs<int16_t>());
         case Type::INTEGER:
-          return new Value(Type::DECIMAL, (double)value.GetAs<int32_t>());
+          return ValueFactory::GetDoubleValue((double)value.GetAs<int32_t>());
         case Type::BIGINT:
-          return new Value(Type::DECIMAL, (double)value.GetAs<int64_t>());
+          return ValueFactory::GetDoubleValue((double)value.GetAs<int64_t>());
         case Type::DECIMAL:
-          return new Value(Type::DECIMAL, value.GetAs<double>());
+          return ValueFactory::GetDoubleValue(value.GetAs<double>());
         case Type::VARCHAR: {
           std::string str = value.ToString();
           double res = 0;
@@ -349,7 +351,7 @@ class ValueFactory {
           if (res > PELOTON_DECIMAL_MAX || res < PELOTON_DECIMAL_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return new Value(Type::DECIMAL, res);
+          return ValueFactory::GetDoubleValue(res);
         }
         default:
           break;
@@ -359,9 +361,9 @@ class ValueFactory {
                     " is not coercable to DECIMAL.");
   }
 
-  static inline Value *CastAsVarchar(const Value &value) {
+  static inline Value CastAsVarchar(const Value &value) {
     if (Type::GetInstance(Type::VARCHAR)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::VARCHAR, nullptr, 0);
+      if (value.IsNull()) return ValueFactory::GetVarcharValue(nullptr, 0);
       switch (value.GetTypeId()) {
         case Type::BOOLEAN:
         case Type::TINYINT:
@@ -371,7 +373,7 @@ class ValueFactory {
         case Type::DECIMAL:
         case Type::TIMESTAMP:
         case Type::VARCHAR:
-          return new Value(Type::VARCHAR, value.ToString());
+          return ValueFactory::GetVarcharValue(value.ToString());
         default:
           break;
       }
@@ -380,12 +382,12 @@ class ValueFactory {
                     " is not coercable to VARCHAR.");
   }
 
-  static inline Value *CastAsTimestamp(const Value &value) {
+  static inline Value CastAsTimestamp(const Value &value) {
     if (Type::GetInstance(Type::TIMESTAMP)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::TIMESTAMP, PELOTON_TIMESTAMP_NULL);
+      if (value.IsNull()) return ValueFactory::GetTimestampValue(PELOTON_TIMESTAMP_NULL);
       switch (value.GetTypeId()) {
         case Type::TIMESTAMP:
-          return new Value(Type::TIMESTAMP, value.GetAs<uint64_t>());
+          return ValueFactory::GetTimestampValue(value.GetAs<uint64_t>());
         case Type::VARCHAR: {
           std::string str = value.ToString();
           if (str.length() == 22)
@@ -442,7 +444,7 @@ class ValueFactory {
           res += hour * 3600 + min * 60 + sec;
           res *= 1000000;
           res += micro;
-          return new Value(Type::TIMESTAMP, res);
+          return ValueFactory::GetTimestampValue(res);
         }
         default:
           break;
@@ -452,18 +454,18 @@ class ValueFactory {
                     " is not coercable to TIMESTAMP.");
   }
 
-  static inline Value *CastAsBoolean(const Value &value) {
+  static inline Value CastAsBoolean(const Value &value) {
     if (Type::GetInstance(Type::BOOLEAN)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
+      if (value.IsNull()) return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
       switch (value.GetTypeId()) {
         case Type::BOOLEAN:
-          return new Value(Type::BOOLEAN, value.GetAs<int8_t>());
+          return ValueFactory::GetBooleanValue(value.GetAs<int8_t>());
         case Type::VARCHAR: {
           std::string str = value.ToString();
           if (str == "true" || str == "TURE" || str == "1")
-            return new Value(Type::BOOLEAN, 1);
+            return ValueFactory::GetBooleanValue(1);
           else if (str == "flase" || str == "FALSE" || str == "0")
-            return new Value(Type::BOOLEAN, 0);
+            return ValueFactory::GetBooleanValue(0);
           else
             throw Exception("Boolean value format error.");
         }

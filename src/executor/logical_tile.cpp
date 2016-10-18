@@ -161,7 +161,7 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
  *         or VALUE_TYPE_INVALID if it doesn't exist.
  */
 // TODO: Deprecated. Avoid calling this function if possible.
-common::Value *LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
+common::Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(column_id < schema_.size());
   PL_ASSERT(tuple_id < total_tuples_);
   PL_ASSERT(visible_rows_[tuple_id]);

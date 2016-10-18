@@ -32,7 +32,7 @@ Tuple::~Tuple() {
 }
 
 // Get the value of a specified column (const)
-common::Value *Tuple::GetValue(oid_t column_id) const {
+common::Value Tuple::GetValue(oid_t column_id) const {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
   const common::Type::TypeId column_type = tuple_schema->GetType(column_id);
@@ -64,8 +64,8 @@ void Tuple::SetValue(const oid_t column_offset, const common::Value &value,
   if (type == value.GetTypeId()) {
     value.SerializeTo(value_location, is_inlined, data_pool);
   } else {
-    std::unique_ptr<common::Value> casted_value(value.CastAs(type));
-    casted_value->SerializeTo(value_location, is_inlined, data_pool);
+    common::Value casted_value = (value.CastAs(type));
+    casted_value.SerializeTo(value_location, is_inlined, data_pool);
   }
 }
 
@@ -89,8 +89,8 @@ void Tuple::SetValue(oid_t column_offset, const common::Value &value) {
   if (type == value.GetTypeId()) {
     value.SerializeTo(value_location, is_inlined, nullptr);
   } else {
-    common::Value *casted_value = value.CastAs(type);
-    casted_value->SerializeTo(value_location, is_inlined, nullptr);
+    common::Value casted_value = value.CastAs(type);
+    casted_value.SerializeTo(value_location, is_inlined, nullptr);
     // Do not clean up immediately
     // casted_value.SetCleanUp(false);
   }
@@ -103,8 +103,8 @@ void Tuple::SetFromTuple(const AbstractTuple *tuple,
   // this tuple's schema
   oid_t this_col_itr = 0;
   for (auto col : columns) {
-    std::unique_ptr<common::Value> fetched_value(tuple->GetValue(col));
-    SetValue(this_col_itr, *fetched_value, pool);
+    common::Value fetched_value = (tuple->GetValue(col));
+    SetValue(this_col_itr, fetched_value, pool);
     this_col_itr++;
   }
 }
@@ -133,10 +133,10 @@ void Tuple::Copy(const void *source, common::VarlenPool *pool) {
           tuple_schema->GetUninlinedColumn(column_itr);
 
       // Get original value from uninlined pool
-      common::Value *value = GetValue(unlineable_column_id);
+      common::Value value = GetValue(unlineable_column_id);
 
       // Make a copy of the value at a new location in uninlined pool
-      SetValue(unlineable_column_id, *value, pool);
+      SetValue(unlineable_column_id, value, pool);
     }
   }
 }
@@ -172,9 +172,9 @@ size_t Tuple::ExportSerializationSize() const {
       case common::Type::VARBINARY:
         // 32 bit length preceding value and
         // actual character data without null string terminator.
-        if (!GetValue(column_itr)->IsNull()) {
+        if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) +
-                    GetValue(column_itr)->GetLength());
+                    GetValue(column_itr).GetLength());
         }
         break;
 
@@ -200,9 +200,9 @@ size_t Tuple::GetUninlinedMemorySize() const {
       if ((GetType(column_itr) == common::Type::VARCHAR ||
            (GetType(column_itr) == common::Type::VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
-        if (!GetValue(column_itr)->IsNull()) {
+        if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) +
-                    GetValue(column_itr)->GetLength());
+                    GetValue(column_itr).GetLength());
         }
       }
     }
@@ -280,8 +280,8 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> value(GetValue(column_itr));
-    value->SerializeTo(output);
+    common::Value value = GetValue(column_itr);
+    value.SerializeTo(output);
   }
 
   int32_t serialized_size =
@@ -297,8 +297,8 @@ void Tuple::SerializeTo(SerializeOutput &output) {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> value(GetValue(column_itr));
-    value->SerializeTo(output);
+    common::Value value(GetValue(column_itr));
+    value.SerializeTo(output);
   }
 
   output.WriteIntAt(
@@ -321,8 +321,8 @@ void Tuple::SerializeToExport(SerializeOutput &output, int colOffset,
       continue;
     }
 
-    std::unique_ptr<common::Value> val(GetValue(column_itr));
-    val->SerializeTo(output);
+    common::Value val = GetValue(column_itr);
+    val.SerializeTo(output);
   }
 }
 
@@ -340,10 +340,10 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
-    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
-    std::unique_ptr<common::Value> res(lhs->CompareNotEquals(*rhs));
-    if (res->IsTrue()) {
+    common::Value lhs = (GetValue(column_itr));
+    common::Value rhs = (other.GetValue(column_itr));
+    common::Value res = (lhs.CompareNotEquals(rhs));
+    if (res.IsTrue()) {
       return false;
     }
   }
@@ -354,10 +354,10 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
 bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
                                 const std::vector<oid_t> &columns) const {
   for (auto column_itr : columns) {
-    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
-    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
-    std::unique_ptr<common::Value> res(lhs->CompareNotEquals(*rhs));
-    if (res->IsTrue()) {
+    common::Value lhs = (GetValue(column_itr));
+    common::Value rhs = (other.GetValue(column_itr));
+    common::Value res = (lhs.CompareNotEquals(rhs));
+    if (res.IsTrue()) {
       return false;
     }
   }
@@ -371,10 +371,10 @@ void Tuple::SetAllNulls() {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> value(
+    common::Value value = (
         common::ValueFactory::GetNullValueByType(
             tuple_schema->GetType(column_itr)));
-    SetValue(column_itr, *value, nullptr);
+    SetValue(column_itr, value, nullptr);
   }
 }
 
@@ -384,10 +384,10 @@ void Tuple::SetAllZeros() {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> value(
+    common::Value value(
         common::ValueFactory::GetZeroValueByType(
             tuple_schema->GetType(column_itr)));
-    SetValue(column_itr, *value, nullptr);
+    SetValue(column_itr, value, nullptr);
   }
 }
 
@@ -395,14 +395,14 @@ int Tuple::Compare(const Tuple &other) const {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
-    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
-    std::unique_ptr<common::Value> res_gt(lhs->CompareGreaterThan(*rhs));
-    if (res_gt->IsTrue()) {
+    common::Value lhs = (GetValue(column_itr));
+    common::Value rhs = (other.GetValue(column_itr));
+    common::Value res_gt = (lhs.CompareGreaterThan(rhs));
+    if (res_gt.IsTrue()) {
       return 1;
     }
-    std::unique_ptr<common::Value> res_lt(lhs->CompareLessThan(*rhs));
-    if (res_lt->IsTrue()) {
+    common::Value res_lt = (lhs.CompareLessThan(rhs));
+    if (res_lt.IsTrue()) {
       return -1;
     }
   }
@@ -413,14 +413,14 @@ int Tuple::Compare(const Tuple &other) const {
 int Tuple::Compare(const Tuple &other,
                    const std::vector<oid_t> &columns) const {
   for (auto column_itr : columns) {
-    std::unique_ptr<common::Value> lhs(GetValue(column_itr));
-    std::unique_ptr<common::Value> rhs(other.GetValue(column_itr));
-    std::unique_ptr<common::Value> res_gt(lhs->CompareGreaterThan(*rhs));
-    if (res_gt->IsTrue()) {
+    common::Value lhs =(GetValue(column_itr));
+    common::Value rhs = (other.GetValue(column_itr));
+    common::Value res_gt = (lhs.CompareGreaterThan(rhs));
+    if (res_gt.IsTrue()) {
       return 1;
     }
-    std::unique_ptr<common::Value> res_lt(lhs->CompareLessThan(*rhs));
-    if (res_lt->IsTrue()) {
+    common::Value res_lt = (lhs.CompareLessThan(rhs));
+    if (res_lt.IsTrue()) {
       return -1;
     }
   }
@@ -432,8 +432,8 @@ size_t Tuple::HashCode(size_t seed) const {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    std::unique_ptr<common::Value> value(GetValue(column_itr));
-    value->HashCombine(seed);
+    common::Value value = (GetValue(column_itr));
+    value.HashCombine(seed);
   }
 
   return seed;
@@ -470,8 +470,8 @@ const std::string Tuple::GetInfo() const {
     if (IsNull(column_itr)) {
       os << "<NULL>";
     } else {
-      std::unique_ptr<common::Value> val(GetValue(column_itr));
-      os << val->GetInfo();
+      common::Value val = (GetValue(column_itr));
+      os << val.GetInfo();
     }
     os << ")";
   }

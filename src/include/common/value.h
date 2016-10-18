@@ -62,7 +62,7 @@ static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 // some materialized state. All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.
 class Value : public Printable {
- public:
+ private:
   Value(const Type::TypeId type) : type_(Type::GetInstance(type)) {}
 
   //ARRAY values
@@ -90,9 +90,9 @@ class Value : public Printable {
   Value(Type::TypeId type, const char *data, uint32_t len);
   Value(Type::TypeId type, const std::string &data);
 
+ public:
 
-
-
+  Value();
   ~Value();
 
   // Get the type of this value
@@ -117,23 +117,23 @@ class Value : public Printable {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  Value *CompareEquals(const Value &o) const;
-  Value *CompareNotEquals(const Value &o) const;
-  Value *CompareLessThan(const Value &o) const;
-  Value *CompareLessThanEquals(const Value &o) const;
-  Value *CompareGreaterThan(const Value &o) const;
-  Value *CompareGreaterThanEquals(const Value &o) const;
+  Value CompareEquals(const Value &o) const;
+  Value CompareNotEquals(const Value &o) const;
+  Value CompareLessThan(const Value &o) const;
+  Value CompareLessThanEquals(const Value &o) const;
+  Value CompareGreaterThan(const Value &o) const;
+  Value CompareGreaterThanEquals(const Value &o) const;
 
   // Other mathematical functions
-  Value *Add(const Value &o) const;
-  Value *Subtract(const Value &o) const;
-  Value *Multiply(const Value &o) const;
-  Value *Divide(const Value &o) const;
-  Value *Modulo(const Value &o) const;
-  Value *Min(const Value &o) const;
-  Value *Max(const Value &o) const;
-  Value *Sqrt() const;
-  Value *OperateNull(const Value &o) const;
+  Value Add(const Value &o) const;
+  Value Subtract(const Value &o) const;
+  Value Multiply(const Value &o) const;
+  Value Divide(const Value &o) const;
+  Value Modulo(const Value &o) const;
+  Value Min(const Value &o) const;
+  Value Max(const Value &o) const;
+  Value Sqrt() const;
+  Value OperateNull(const Value &o) const;
   bool IsZero() const;
 
   // Is the data inlined into this classes storage space, or must it be accessed
@@ -176,9 +176,9 @@ class Value : public Printable {
   void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize a value of the given type from the given storage space.
-  static Value *DeserializeFrom(const char *storage, const Type::TypeId type_id, 
+  static Value DeserializeFrom(const char *storage, const Type::TypeId type_id,
                                 const bool inlined, VarlenPool *pool = nullptr);
-  static Value *DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
+  static Value DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
                                 VarlenPool *pool = nullptr);
 
   // Access the raw variable length data
@@ -191,23 +191,23 @@ class Value : public Printable {
   T GetAs() const { return *reinterpret_cast<const T*>(&value_); }
 
   // Create a copy of this value
-  Value *Copy() const;
+  Value Copy() const;
 
-  Value *CastAs(const Type::TypeId type_id) const;
+  Value CastAs(const Type::TypeId type_id) const;
 
   // Get the element at a given index in this array
-  Value *GetElementAt(uint64_t idx) const;
+  Value GetElementAt(uint64_t idx) const;
 
   Type::TypeId GetElementType() const;
 
   // Does this value exist in this array?
-  Value *InList(const Value &object) const;
+  Value InList(const Value &object) const;
 
   // For unordered_map
   struct equal_to {
-    bool operator()(const Value *x, const Value *y) const {
-      std::unique_ptr<Value> cmp(x->type_->CompareEquals(*x, *y));
-      return (cmp->IsTrue());
+    bool operator()(const Value& x, const Value& y) const {
+      Value cmp(x.type_->CompareEquals(x, y));
+      return cmp.IsTrue();
     }
   };
 
@@ -218,14 +218,17 @@ class Value : public Printable {
   }
 
   struct hash {
-    size_t operator()(const Value *x) const {
-      return x->type_->Hash(*x);
+    size_t operator()(const Value& x) const {
+      return x.type_->Hash(x);
     }
   };
+
 
   friend struct equal_to;
   friend struct hash_combine;
   friend struct hash;
+
+  //Type classes
   friend class Type;
   friend class ArrayType;
   friend class BooleanType;
@@ -238,6 +241,8 @@ class Value : public Printable {
   friend class DecimalType;
   friend class VarlenType;
   friend class TimestampType;
+
+  friend class ValueFactory;
 
 
  protected:

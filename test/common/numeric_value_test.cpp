@@ -126,7 +126,7 @@ void CheckCompare1(T1 x, T2 y, Type::TypeId xtype, Type::TypeId ytype) {
 template<class T>
 void CheckCompare2(T x, double y, Type::TypeId xtype) {
   Value *v1 = new Value(xtype, x);
-  Value *v2 = new Value(Type::DECIMAL, y);
+  Value *v2 = ValueFactory::GetDoubleValue(y);
   if (x == y)
     CheckEqual(v1, v2);
   else if (x < y)
@@ -140,7 +140,7 @@ void CheckCompare2(T x, double y, Type::TypeId xtype) {
 // Compare decimal and integer
 template<class T>
 void CheckCompare3(double x, T y, Type::TypeId ytype ) {
-  Value *v1 = new Value(Type::DECIMAL, x);
+  Value *v1 = ValueFactory::GetDoubleValue(x);
   Value *v2 = new Value(ytype, y);
   if (x == y)
     CheckEqual(v1, v2);
@@ -154,8 +154,8 @@ void CheckCompare3(double x, T y, Type::TypeId ytype ) {
 
 // Compare two decimals
 void CheckCompare4(double x, double y) {
-  Value *v1 = new Value(Type::DECIMAL, x);
-  Value *v2 = new Value(Type::DECIMAL, y);
+  Value *v1 = ValueFactory::GetDoubleValue(x);
+  Value *v2 = ValueFactory::GetDoubleValue(y);
   if (x == y)
     CheckEqual(v1, v2);
   else if (x < y)
@@ -284,7 +284,7 @@ void CheckMath1(T1 x, T2 y, Type::TypeId xtype, Type::TypeId ytype) {
       peloton::Exception);
   else {
     v1 = Value(xtype, x).Sqrt();
-    v2 = new Value(Type::DECIMAL, sqrt(x));
+    v2 = ValueFactory::GetDoubleValue(sqrt(x));
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -295,20 +295,20 @@ void CheckMath1(T1 x, T2 y, Type::TypeId xtype, Type::TypeId ytype) {
 template<class T>
 void CheckMath2(T x, double y, Type::TypeId xtype) {
   Value *v1, *v2;
-  v1 = Value(xtype, x).Add(Value(Type::DECIMAL, y));
-  v2 = new Value(Type::DECIMAL, x + y);
+  v1 = Value(xtype, x).Add(ValueFactory::GetDoubleValue(y));
+  v2 = ValueFactory::GetDoubleValue(x + y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  v1 = Value(xtype, x).Subtract(Value(Type::DECIMAL, y));
-  v2 = new Value(Type::DECIMAL, x - y);
+  v1 = Value(xtype, x).Subtract(ValueFactory::GetDoubleValue(y));
+  v2 = ValueFactory::GetDoubleValue(x - y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  v1 = Value(xtype, x).Multiply(Value(Type::DECIMAL, y));
-  v2 = new Value(Type::DECIMAL, x * y);
+  v1 = Value(xtype, x).Multiply(ValueFactory::GetDoubleValue(y));
+  v2 = ValueFactory::GetDoubleValue(x * y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
@@ -316,11 +316,11 @@ void CheckMath2(T x, double y, Type::TypeId xtype) {
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
-    EXPECT_THROW(Value(xtype, x).Divide(Value(Type::DECIMAL, y)),
+    EXPECT_THROW(Value(xtype, x).Divide(ValueFactory::GetDoubleValue(y)),
       peloton::Exception);
   else {
-    v1 = Value(xtype, x).Divide(Value(Type::DECIMAL, y));
-    v2 = new Value(Type::DECIMAL, x / y);
+    v1 = Value(xtype, x).Divide(ValueFactory::GetDoubleValue(y));
+    v2 = ValueFactory::GetDoubleValue(x / y);
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -329,11 +329,11 @@ void CheckMath2(T x, double y, Type::TypeId xtype) {
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
-    EXPECT_THROW(Value(xtype, x).Modulo(Value(Type::DECIMAL, y)),
+    EXPECT_THROW(Value(xtype, x).Modulo(ValueFactory::GetDoubleValue(y)),
       peloton::Exception);
   else {
-    v1 = Value(xtype, x).Modulo(Value(Type::DECIMAL, y));
-    v2 = new Value(Type::DECIMAL, ValMod(x, y));
+    v1 = Value(xtype, x).Modulo(ValueFactory::GetDoubleValue(y));
+    v2 = ValueFactory::GetDoubleValue(ValMod(x, y));
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -345,20 +345,20 @@ template<class T>
 void CheckMath3(double x, T y, Type::TypeId ytype) {
   Value *v1, *v2;
 
-  v1 = Value(Type::DECIMAL, x).Add(Value(ytype, y));
-  v2 = new Value(Type::DECIMAL, x + y);
+  v1 = ValueFactory::GetDoubleValue(x).Add(Value(ytype, y));
+  v2 = ValueFactory::GetDoubleValue(x + y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  v1 = Value(Type::DECIMAL, x).Subtract(Value(ytype, y));
-  v2 = new Value(Type::DECIMAL, x - y);
+  v1 = ValueFactory::GetDoubleValue(x).Subtract(Value(ytype, y));
+  v2 = ValueFactory::GetDoubleValue(x - y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  v1 = Value(Type::DECIMAL, x).Multiply(Value(ytype, y));
-  v2 = new Value(Type::DECIMAL, x * y);
+  v1 = ValueFactory::GetDoubleValue(x).Multiply(Value(ytype, y));
+  v2 = ValueFactory::GetDoubleValue(x * y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
@@ -366,11 +366,11 @@ void CheckMath3(double x, T y, Type::TypeId ytype) {
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
-   EXPECT_THROW(Value(Type::DECIMAL, x).Divide(Value(ytype, y)),
+   EXPECT_THROW(ValueFactory::GetDoubleValue(x).Divide(Value(ytype, y)),
       peloton::Exception);
   else {
-    v1 = Value(Type::DECIMAL, x).Divide(Value(ytype, y));
-    v2 = new Value(Type::DECIMAL, x / y);
+    v1 = ValueFactory::GetDoubleValue(x).Divide(Value(ytype, y));
+    v2 = ValueFactory::GetDoubleValue(x / y);
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -379,11 +379,11 @@ void CheckMath3(double x, T y, Type::TypeId ytype) {
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
-   EXPECT_THROW(Value(Type::DECIMAL, x).Modulo(Value(ytype, y)),
+   EXPECT_THROW(ValueFactory::GetDoubleValue(x).Modulo(Value(ytype, y)),
       peloton::Exception);
   else {
-    v1 = Value(Type::DECIMAL, x).Modulo(Value(ytype, y));
-    v2 = new Value(Type::DECIMAL, ValMod(x, y));
+    v1 = ValueFactory::GetDoubleValue(x).Modulo(Value(ytype, y));
+    v2 = ValueFactory::GetDoubleValue(ValMod(x, y));
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -394,20 +394,20 @@ void CheckMath3(double x, T y, Type::TypeId ytype) {
 void CheckMath4(double x, double y) {
   Value *v1, *v2;
 
-  v1 = Value(Type::DECIMAL, x).Add(Value(Type::DECIMAL, y));
-  v2 = new Value(Type::DECIMAL, x + y);
+  v1 = ValueFactory::GetDoubleValue(x).Add(ValueFactory::GetDoubleValue(y));
+  v2 = ValueFactory::GetDoubleValue(x + y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  v1 = Value(Type::DECIMAL, x).Subtract(Value(Type::DECIMAL, y));
-  v2 = new Value(Type::DECIMAL, x - y);
+  v1 = ValueFactory::GetDoubleValue(x).Subtract(ValueFactory::GetDoubleValue(y));
+  v2 = ValueFactory::GetDoubleValue(x - y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
 
-  v1 = Value(Type::DECIMAL, x).Multiply(Value(Type::DECIMAL, y));
-  v2 = new Value(Type::DECIMAL, x * y);
+  v1 = ValueFactory::GetDoubleValue(x).Multiply(ValueFactory::GetDoubleValue(y));
+  v2 = ValueFactory::GetDoubleValue(x * y);
   CheckEqual(v1, v2);
   delete v1;
   delete v2;
@@ -415,11 +415,11 @@ void CheckMath4(double x, double y) {
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
-   EXPECT_THROW(Value(Type::DECIMAL, x).Divide(Value(Type::DECIMAL, y)),
+   EXPECT_THROW(ValueFactory::GetDoubleValue(x).Divide(ValueFactory::GetDoubleValue(y)),
       peloton::Exception);
   else {
-    v1 = Value(Type::DECIMAL, x).Divide(Value(Type::DECIMAL, y));
-    v2 = new Value(Type::DECIMAL, x / y);
+    v1 = ValueFactory::GetDoubleValue(x).Divide(ValueFactory::GetDoubleValue(y));
+    v2 = ValueFactory::GetDoubleValue(x / y);
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -428,11 +428,11 @@ void CheckMath4(double x, double y) {
   v1 = nullptr;
   // Divide by zero detection
   if (y == 0)
-   EXPECT_THROW(Value(Type::DECIMAL, x).Modulo(Value(Type::DECIMAL, y)),
+   EXPECT_THROW(ValueFactory::GetDoubleValue(x).Modulo(ValueFactory::GetDoubleValue(y)),
       peloton::Exception);
   else {
-    v1 = Value(Type::DECIMAL, x).Modulo(Value(Type::DECIMAL, y));
-    v2 = new Value(Type::DECIMAL, ValMod(x, y));
+    v1 = ValueFactory::GetDoubleValue(x).Modulo(ValueFactory::GetDoubleValue(y));
+    v2 = ValueFactory::GetDoubleValue(ValMod(x, y));
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -440,11 +440,11 @@ void CheckMath4(double x, double y) {
   
   v1 = nullptr;
   if (x < 0)
-   EXPECT_THROW(Value(Type::DECIMAL, x).Sqrt(),
+   EXPECT_THROW(ValueFactory::GetDoubleValue(x).Sqrt(),
       peloton::Exception);
   else {
-    v1 = Value(Type::DECIMAL, x).Sqrt();
-    v2 = new Value(Type::DECIMAL, sqrt(x));
+    v1 = ValueFactory::GetDoubleValue(x).Sqrt();
+    v2 = ValueFactory::GetDoubleValue(sqrt(x));
     CheckEqual(v1, v2);
     delete v2;
   }
@@ -564,62 +564,62 @@ TEST_F(NumericValueTests, NullValueTest) {
   Value *result[5] = { nullptr };
 
   // Compare null
-  result[0] = Value(Type::INTEGER, rand()).CompareEquals(
-    Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL));
-  result[1] = Value(Type::INTEGER, rand()).CompareEquals(
-    Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL));
-  result[2] = Value(Type::INTEGER, rand()).CompareEquals(
-    Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL));
-  result[3] = Value(Type::INTEGER, rand()).CompareEquals(
-    Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL));
-  result[4] = Value(Type::INTEGER, rand()).CompareEquals(
-    Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL));
+  result[0] = ValueFactory::GetIntegerValue(rand()).CompareEquals(
+    ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL));
+  result[1] = ValueFactory::GetIntegerValue(rand()).CompareEquals(
+    ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL));
+  result[2] = ValueFactory::GetIntegerValue(rand()).CompareEquals(
+    ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL));
+  result[3] = ValueFactory::GetIntegerValue(rand()).CompareEquals(
+    ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL));
+  result[4] = ValueFactory::GetIntegerValue(rand()).CompareEquals(
+    ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).CompareEquals(
-    Value(Type::INTEGER, rand()));
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).CompareEquals(
-    Value(Type::INTEGER, rand()));
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).CompareEquals(
-    Value(Type::INTEGER, rand()));
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).CompareEquals(
-    Value(Type::INTEGER, rand()));
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).CompareEquals(
-    Value(Type::INTEGER, rand()));
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).CompareEquals(
+    ValueFactory::GetIntegerValue(rand()));
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).CompareEquals(
+    ValueFactory::GetIntegerValue(rand()));
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).CompareEquals(
+    ValueFactory::GetIntegerValue(rand()));
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).CompareEquals(
+    ValueFactory::GetIntegerValue(rand()));
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).CompareEquals(
+    ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
   // Operate null
-  result[0] = Value(Type::INTEGER, rand()).Add(
-    Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL));
-  result[1] = Value(Type::INTEGER, rand()).Add(
-    Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL));
-  result[2] = Value(Type::INTEGER, rand()).Add(
-    Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL));
-  result[3] = Value(Type::INTEGER, rand()).Add(
-    Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL));
-  result[4] = Value(Type::INTEGER, rand()).Add(
-    Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL));
+  result[0] = ValueFactory::GetIntegerValue(rand()).Add(
+    ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL));
+  result[1] = ValueFactory::GetIntegerValue(rand()).Add(
+    ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL));
+  result[2] = ValueFactory::GetIntegerValue(rand()).Add(
+    ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL));
+  result[3] = ValueFactory::GetIntegerValue(rand()).Add(
+    ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL));
+  result[4] = ValueFactory::GetIntegerValue(rand()).Add(
+    ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::INTEGER, rand()).Subtract(
-    Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL));
-  result[1] = Value(Type::INTEGER, rand()).Subtract(
-    Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL));
-  result[2] = Value(Type::INTEGER, rand()).Subtract(
-    Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL));
-  result[3] = Value(Type::INTEGER, rand()).Subtract(
-    Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL));
-  result[4] = Value(Type::INTEGER, rand()).Subtract(
-    Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL));
+  result[0] = ValueFactory::GetIntegerValue(rand()).Subtract(
+    ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL));
+  result[1] = ValueFactory::GetIntegerValue(rand()).Subtract(
+    ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL));
+  result[2] = ValueFactory::GetIntegerValue(rand()).Subtract(
+    ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL));
+  result[3] = ValueFactory::GetIntegerValue(rand()).Subtract(
+    ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL));
+  result[4] = ValueFactory::GetIntegerValue(rand()).Subtract(
+    ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
@@ -627,132 +627,132 @@ TEST_F(NumericValueTests, NullValueTest) {
 
 
 
-  result[0] = Value(Type::INTEGER, rand()).Multiply(
-    Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL));
-  result[1] = Value(Type::INTEGER, rand()).Multiply(
-    Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL));
-  result[2] = Value(Type::INTEGER, rand()).Multiply(
-    Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL));
-  result[3] = Value(Type::INTEGER, rand()).Multiply(
-    Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL));
-  result[4] = Value(Type::INTEGER, rand()).Multiply(
-    Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL));
+  result[0] = ValueFactory::GetIntegerValue(rand()).Multiply(
+    ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL));
+  result[1] = ValueFactory::GetIntegerValue(rand()).Multiply(
+    ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL));
+  result[2] = ValueFactory::GetIntegerValue(rand()).Multiply(
+    ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL));
+  result[3] = ValueFactory::GetIntegerValue(rand()).Multiply(
+    ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL));
+  result[4] = ValueFactory::GetIntegerValue(rand()).Multiply(
+    ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::INTEGER, rand()).Divide(
-    Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL));
-  result[1] = Value(Type::INTEGER, rand()).Divide(
-    Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL));
-  result[2] = Value(Type::INTEGER, rand()).Divide(
-    Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL));
-  result[3] = Value(Type::INTEGER, rand()).Divide(
-    Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL));
-  result[4] = Value(Type::INTEGER, rand()).Divide(
-    Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL));
+  result[0] = ValueFactory::GetIntegerValue(rand()).Divide(
+    ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL));
+  result[1] = ValueFactory::GetIntegerValue(rand()).Divide(
+    ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL));
+  result[2] = ValueFactory::GetIntegerValue(rand()).Divide(
+    ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL));
+  result[3] = ValueFactory::GetIntegerValue(rand()).Divide(
+    ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL));
+  result[4] = ValueFactory::GetIntegerValue(rand()).Divide(
+    ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::INTEGER, rand()).Modulo(
-    Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL));
-  result[1] = Value(Type::INTEGER, rand()).Modulo(
-    Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL));
-  result[2] = Value(Type::INTEGER, rand()).Modulo(
-    Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL));
-  result[3] = Value(Type::INTEGER, rand()).Modulo(
-    Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL));
-  result[4] = Value(Type::INTEGER, rand()).Modulo(
-    Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL));
+  result[0] = ValueFactory::GetIntegerValue(rand()).Modulo(
+    ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL));
+  result[1] = ValueFactory::GetIntegerValue(rand()).Modulo(
+    ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL));
+  result[2] = ValueFactory::GetIntegerValue(rand()).Modulo(
+    ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL));
+  result[3] = ValueFactory::GetIntegerValue(rand()).Modulo(
+    ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL));
+  result[4] = ValueFactory::GetIntegerValue(rand()).Modulo(
+    ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).Add(
-    Value(Type::INTEGER, rand()));
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).Add(
-    Value(Type::INTEGER, rand()));
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).Add(
-    Value(Type::INTEGER, rand()));
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).Add(
-    Value(Type::INTEGER, rand()));
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).Add(
-    Value(Type::INTEGER, rand()));
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).Add(
+    ValueFactory::GetIntegerValue(rand()));
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).Add(
+    ValueFactory::GetIntegerValue(rand()));
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).Add(
+    ValueFactory::GetIntegerValue(rand()));
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).Add(
+    ValueFactory::GetIntegerValue(rand()));
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).Add(
+    ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).Subtract(
-    Value(Type::INTEGER, rand()));
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).Subtract(
-    Value(Type::INTEGER, rand()));
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).Subtract(
-    Value(Type::INTEGER, rand()));
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).Subtract(
-    Value(Type::INTEGER, rand()));
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).Subtract(
-    Value(Type::INTEGER, rand()));
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).Subtract(
+    ValueFactory::GetIntegerValue(rand()));
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).Subtract(
+    ValueFactory::GetIntegerValue(rand()));
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).Subtract(
+    ValueFactory::GetIntegerValue(rand()));
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).Subtract(
+    ValueFactory::GetIntegerValue(rand()));
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).Subtract(
+    ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).Multiply(
-    Value(Type::INTEGER, rand()));
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).Multiply(
-    Value(Type::INTEGER, rand()));
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).Multiply(
-    Value(Type::INTEGER, rand()));
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).Multiply(
-    Value(Type::INTEGER, rand()));
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).Multiply(
-    Value(Type::INTEGER, rand()));
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).Multiply(
+    ValueFactory::GetIntegerValue(rand()));
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).Multiply(
+    ValueFactory::GetIntegerValue(rand()));
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).Multiply(
+    ValueFactory::GetIntegerValue(rand()));
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).Multiply(
+    ValueFactory::GetIntegerValue(rand()));
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).Multiply(
+    ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).Divide(
-    Value(Type::INTEGER, rand()));
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).Divide(
-    Value(Type::INTEGER, rand()));
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).Divide(
-    Value(Type::INTEGER, rand()));
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).Divide(
-    Value(Type::INTEGER, rand()));
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).Divide(
-    Value(Type::INTEGER, rand()));
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).Divide(
+    ValueFactory::GetIntegerValue(rand()));
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).Divide(
+    ValueFactory::GetIntegerValue(rand()));
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).Divide(
+    ValueFactory::GetIntegerValue(rand()));
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).Divide(
+    ValueFactory::GetIntegerValue(rand()));
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).Divide(
+    ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
   
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).Modulo(
-    Value(Type::INTEGER, rand()));
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).Modulo(
-    Value(Type::INTEGER, rand()));
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).Modulo(
-    Value(Type::INTEGER, rand()));
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).Modulo(
-    Value(Type::INTEGER, rand()));
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).Modulo(
-    Value(Type::INTEGER, rand()));
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).Modulo(
+    ValueFactory::GetIntegerValue(rand()));
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).Modulo(
+    ValueFactory::GetIntegerValue(rand()));
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).Modulo(
+    ValueFactory::GetIntegerValue(rand()));
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).Modulo(
+    ValueFactory::GetIntegerValue(rand()));
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).Modulo(
+    ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];
   }
 
 
-  result[0] = Value(Type::TINYINT, (int8_t)PELOTON_INT8_NULL).Sqrt();
-  result[1] = Value(Type::SMALLINT, (int16_t)PELOTON_INT16_NULL).Sqrt();
-  result[2] = Value(Type::INTEGER, (int32_t)PELOTON_INT32_NULL).Sqrt();
-  result[3] = Value(Type::BIGINT, (int64_t)PELOTON_INT64_NULL).Sqrt();
-  result[4] = Value(Type::DECIMAL, (double)PELOTON_DECIMAL_NULL).Sqrt();
+  result[0] = ValueFactory::GetTinyIntValue((int8_t)PELOTON_INT8_NULL).Sqrt();
+  result[1] = ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL).Sqrt();
+  result[2] = ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL).Sqrt();
+  result[3] = ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL).Sqrt();
+  result[4] = ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL).Sqrt();
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i]->IsNull());
     delete result[i];

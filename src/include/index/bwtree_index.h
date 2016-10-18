@@ -95,7 +95,7 @@ class BWTreeIndex : public Index {
                        ItemPointer *value,
                        std::function<bool(const void *)> predicate);
 
-  void Scan(const std::vector<common::Value *> &values,
+  void Scan(const std::vector<common::Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
             const ScanDirectionType &scan_direction,

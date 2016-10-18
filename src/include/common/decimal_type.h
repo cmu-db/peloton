@@ -24,25 +24,25 @@ class DecimalType : public NumericType {
   //DecimalValue(DecDef definition);
 
   // Other mathematical functions
-  Value *Add(const Value& left, const Value &right) const override;
-  Value *Subtract(const Value& left, const Value &right) const override;
-  Value *Multiply(const Value& left, const Value &right) const override;
-  Value *Divide(const Value& left, const Value &right) const override;
-  Value *Modulo(const Value& left, const Value &right) const override;
-  Value *Min(const Value& left, const Value &right) const override;
-  Value *Max(const Value& left, const Value &right) const override;
-  Value *Sqrt(const Value& val) const override;
+  Value Add(const Value& left, const Value &right) const override;
+  Value Subtract(const Value& left, const Value &right) const override;
+  Value Multiply(const Value& left, const Value &right) const override;
+  Value Divide(const Value& left, const Value &right) const override;
+  Value Modulo(const Value& left, const Value &right) const override;
+  Value Min(const Value& left, const Value &right) const override;
+  Value Max(const Value& left, const Value &right) const override;
+  Value Sqrt(const Value& val) const override;
   bool IsZero(const Value& val) const override;
 
   // Comparison functions
-  Value *CompareEquals(const Value& left, const Value &right) const override;
-  Value *CompareNotEquals(const Value& left, const Value &right) const override;
-  Value *CompareLessThan(const Value& left, const Value &right) const override;
-  Value *CompareLessThanEquals(const Value& left, const Value &right) const override;
-  Value *CompareGreaterThan(const Value& left, const Value &right) const override;
-  Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  Value CompareEquals(const Value& left, const Value &right) const override;
+  Value CompareNotEquals(const Value& left, const Value &right) const override;
+  Value CompareLessThan(const Value& left, const Value &right) const override;
+  Value CompareLessThanEquals(const Value& left, const Value &right) const override;
+  Value CompareGreaterThan(const Value& left, const Value &right) const override;
+  Value CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value&) const override { return true; }
@@ -60,16 +60,16 @@ class DecimalType : public NumericType {
                    VarlenPool *pool) const override;
 
   // Deserialize a value of the given type from the given storage space.
-  Value *DeserializeFrom(const char *storage,
+  Value DeserializeFrom(const char *storage,
                                 const bool inlined, VarlenPool *pool = nullptr) const override;
-  Value *DeserializeFrom(SerializeInput &in,
+  Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const override;
 
   // Create a copy of this value
-  Value *Copy(const Value& val) const override;
+  Value Copy(const Value& val) const override;
 
  private:
-  Value *OperateNull(const Value& left, const Value &right) const override;
+  Value OperateNull(const Value& left, const Value &right) const override;
 };
 
 }  // namespace peloton

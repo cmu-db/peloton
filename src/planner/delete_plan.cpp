@@ -72,7 +72,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
-                       std::vector<common::Value *> &values, oid_t &index_id) {
+                       std::vector<common::Value> &values, oid_t &index_id) {
   std::vector<oid_t> columns;
   BuildInitialDeletePlan(delete_statemenet);
   // Create index scan desc
@@ -89,7 +89,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet,
   AddChild(std::move(index_scan_node));
 }
 
-void DeletePlan::SetParameterValues(std::vector<common::Value *> *values) {
+void DeletePlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Delete");
   auto &children = GetChildren();
   // One sequential scan

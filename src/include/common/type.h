@@ -61,8 +61,8 @@ class Type {
   // Debug
   std::string ToString() const;
 
-  static Value *GetMinValue(TypeId type_id);
-  static Value *GetMaxValue(TypeId type_id);
+  static Value GetMinValue(TypeId type_id);
+  static Value GetMaxValue(TypeId type_id);
 
   static Type * GetInstance(TypeId type_id);
   TypeId GetTypeId() const;
@@ -85,23 +85,23 @@ class Type {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  virtual Value *CompareEquals(const Value& left, const Value &right) const;
-  virtual Value *CompareNotEquals(const Value& left, const Value &right) const;
-  virtual Value *CompareLessThan(const Value& left, const Value &right) const;
-  virtual Value *CompareLessThanEquals(const Value& left, const Value &right) const;
-  virtual Value *CompareGreaterThan(const Value& left, const Value &right) const;
-  virtual Value *CompareGreaterThanEquals(const Value& left, const Value &right) const;
+  virtual Value CompareEquals(const Value& left, const Value &right) const;
+  virtual Value CompareNotEquals(const Value& left, const Value &right) const;
+  virtual Value CompareLessThan(const Value& left, const Value &right) const;
+  virtual Value CompareLessThanEquals(const Value& left, const Value &right) const;
+  virtual Value CompareGreaterThan(const Value& left, const Value &right) const;
+  virtual Value CompareGreaterThanEquals(const Value& left, const Value &right) const;
 
   // Other mathematical functions
-  virtual Value *Add(const Value& left, const Value &right) const;
-  virtual Value *Subtract(const Value& left, const Value &right) const;
-  virtual Value *Multiply(const Value& left, const Value &right) const;
-  virtual Value *Divide(const Value& left, const Value &right) const;
-  virtual Value *Modulo(const Value& left, const Value &right) const;
-  virtual Value *Min(const Value& left, const Value &right) const;
-  virtual Value *Max(const Value& left, const Value &right) const;
-  virtual Value *Sqrt(const Value& val) const;
-  virtual Value *OperateNull(const Value& val, const Value &right) const;
+  virtual Value Add(const Value& left, const Value &right) const;
+  virtual Value Subtract(const Value& left, const Value &right) const;
+  virtual Value Multiply(const Value& left, const Value &right) const;
+  virtual Value Divide(const Value& left, const Value &right) const;
+  virtual Value Modulo(const Value& left, const Value &right) const;
+  virtual Value Min(const Value& left, const Value &right) const;
+  virtual Value Max(const Value& left, const Value &right) const;
+  virtual Value Sqrt(const Value& val) const;
+  virtual Value OperateNull(const Value& val, const Value &right) const;
   virtual bool IsZero(const Value& val) const;
 
   // Is the data inlined into this classes storage space, or must it be accessed
@@ -125,15 +125,15 @@ class Type {
   virtual void SerializeTo(const Value& val, SerializeOutput &out) const;
 
   // Deserialize a value of the given type from the given storage space.
-  virtual Value *DeserializeFrom(const char *storage,
+  virtual Value DeserializeFrom(const char *storage,
                                 const bool inlined, VarlenPool *pool = nullptr) const;
-  virtual Value *DeserializeFrom(SerializeInput &in,
+  virtual Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const;
 
   // Create a copy of this value
-  virtual Value *Copy(const Value& val) const;
+  virtual Value Copy(const Value& val) const;
 
-  virtual Value *CastAs(const Value& val, const Type::TypeId type_id) const;
+  virtual Value CastAs(const Value& val, const Type::TypeId type_id) const;
 
   // Access the raw variable length data
   virtual const char *GetData(const Value& val) const;
@@ -142,12 +142,12 @@ class Type {
   virtual uint32_t GetLength(const Value& val) const;
 
   // Get the element at a given index in this array
-  virtual Value *GetElementAt(const Value& val, uint64_t idx) const;
+  virtual Value GetElementAt(const Value& val, uint64_t idx) const;
 
   virtual TypeId GetElementType(const Value& val) const;
 
     // Does this value exist in this array?
-  virtual Value *InList(const Value& list, const Value &object) const;
+  virtual Value InList(const Value& list, const Value &object) const;
 
  protected:
   // The actual type ID

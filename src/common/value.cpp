@@ -207,6 +207,10 @@ Value::Value(Type::TypeId type, const std::string &data) :
   }
 }
 
+Value::Value() :
+    Value(Type::INVALID) {
+}
+
 Value::~Value() {
   switch (type_->GetTypeId()) {
   case Type::VARBINARY:
@@ -313,62 +317,62 @@ void Value::CheckInteger() const {
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
 }
 
-Value *Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
+Value Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
 UNUSED_ATTRIBUTE const bool inlined,
 UNUSED_ATTRIBUTE VarlenPool *pool) {
   return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
 }
 
-Value *Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
+Value Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
     VarlenPool *pool UNUSED_ATTRIBUTE) {
   return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
 }
 
-Value *Value::CompareEquals(const Value &o) const {
+Value Value::CompareEquals(const Value &o) const {
   return type_->CompareEquals(*this, o);
 }
-Value *Value::CompareNotEquals(const Value &o) const {
+Value Value::CompareNotEquals(const Value &o) const {
   return type_->CompareNotEquals(*this, o);
 }
-Value *Value::Value::CompareLessThan(const Value &o) const {
+Value Value::Value::CompareLessThan(const Value &o) const {
   return type_->CompareLessThan(*this, o);
 }
-Value *Value::CompareLessThanEquals(const Value &o) const {
+Value Value::CompareLessThanEquals(const Value &o) const {
   return type_->CompareLessThanEquals(*this, o);
 }
-Value *Value::CompareGreaterThan(const Value &o) const {
+Value Value::CompareGreaterThan(const Value &o) const {
   return type_->CompareGreaterThan(*this, o);
 }
-Value *Value::CompareGreaterThanEquals(const Value &o) const {
+Value Value::CompareGreaterThanEquals(const Value &o) const {
   return type_->CompareGreaterThanEquals(*this, o);
 }
 
 // Other mathematical functions
-Value *Value::Add(const Value &o) const {
+Value Value::Add(const Value &o) const {
   return type_->Add(*this, o);
 }
-Value *Value::Subtract(const Value &o) const {
+Value Value::Subtract(const Value &o) const {
   return type_->Subtract(*this, o);
 }
-Value *Value::Multiply(const Value &o) const {
+Value Value::Multiply(const Value &o) const {
   return type_->Multiply(*this, o);
 }
-Value *Value::Divide(const Value &o) const {
+Value Value::Divide(const Value &o) const {
   return type_->Divide(*this, o);
 }
-Value *Value::Modulo(const Value &o) const {
+Value Value::Modulo(const Value &o) const {
   return type_->Modulo(*this, o);
 }
-Value *Value::Min(const Value &o) const {
+Value Value::Min(const Value &o) const {
   return type_->Min(*this, o);
 }
-Value *Value::Max(const Value &o) const {
+Value Value::Max(const Value &o) const {
   return type_->Max(*this, o);
 }
-Value *Value::Sqrt() const {
+Value Value::Sqrt() const {
   return type_->Sqrt(*this);
 }
-Value *Value::OperateNull(const Value &o) const {
+Value Value::OperateNull(const Value &o) const {
   return type_->OperateNull(*this, o);
 }
 bool Value::IsZero() const {
@@ -407,11 +411,11 @@ void Value::SerializeTo(SerializeOutput &out) const {
 }
 
 // Create a copy of this value
-Value *Value::Copy() const {
+Value Value::Copy() const {
   return type_->Copy(*this);
 }
 
-Value *Value::CastAs(const Type::TypeId type_id) const {
+Value Value::CastAs(const Type::TypeId type_id) const {
   return type_->CastAs(*this, type_id);
 }
 
@@ -426,7 +430,7 @@ uint32_t Value::GetLength() const {
 }
 
 // Get the element at a given index in this array
-Value *Value::GetElementAt(uint64_t idx) const {
+Value Value::GetElementAt(uint64_t idx) const {
   return type_->GetElementAt(*this, idx);
 }
 
@@ -435,7 +439,7 @@ Type::TypeId Value::GetElementType() const {
 }
 
 // Does this value exist in this array?
-Value *Value::InList(const Value &object) const {
+Value Value::InList(const Value &object) const {
   return type_->InList(*this, object);
 }
 

@@ -15,11 +15,14 @@
 #include "common/macros.h"
 #include "common/type.h"
 #include "common/exception.h"
+#include "common/value_factory.h"
 
 #include <vector>
 
 namespace peloton {
 namespace common {
+
+class ValueFactory;
 
 class ArrayType : public Type {
  public:
@@ -27,21 +30,21 @@ class ArrayType : public Type {
   ~ArrayType() {}
 
   // Get the element at a given index in this array
-  Value *GetElementAt(const Value& val, uint64_t idx) const;
+  Value GetElementAt(const Value& val, uint64_t idx) const;
 
   Type::TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const;
 
   // Does this value exist in this array?
-  Value *InList(const Value& list, const Value &object) const;
+  Value InList(const Value& list, const Value &object) const;
 
-  Value *CompareEquals(const Value& left, const Value &right) const override;
-  Value *CompareNotEquals(const Value& left, const Value &right) const override;
-  Value *CompareLessThan(const Value& left, const Value &right) const override;
-  Value *CompareLessThanEquals(const Value& left, const Value &right) const override;
-  Value *CompareGreaterThan(const Value& left, const Value &right) const override;
-  Value *CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  Value CompareEquals(const Value& left, const Value &right) const override;
+  Value CompareNotEquals(const Value& left, const Value &right) const override;
+  Value CompareLessThan(const Value& left, const Value &right) const override;
+  Value CompareLessThanEquals(const Value& left, const Value &right) const override;
+  Value CompareGreaterThan(const Value& left, const Value &right) const override;
+  Value CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
-  Value *CastAs(const Value& val, const Type::TypeId type_id) const override;
+  Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 
   bool IsInlined(const Value& val UNUSED_ATTRIBUTE) const override { return false; }
   std::string ToString(const Value& val UNUSED_ATTRIBUTE) const override { return ""; }
@@ -58,7 +61,7 @@ class ArrayType : public Type {
     throw Exception("Can't serialize array types to storage");
   }
 
-  Value *Copy(const Value& val UNUSED_ATTRIBUTE) const override { return nullptr; }
+  Value Copy(const Value& val UNUSED_ATTRIBUTE) const override { return ValueFactory::GetNullValueByType(type_id_); }
 
 };
 

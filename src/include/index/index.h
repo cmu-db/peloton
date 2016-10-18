@@ -219,7 +219,7 @@ class Index : public Printable {
   // Index Scan
   ///////////////////////////////////////////////////////////////////
 
-  virtual void Scan(const std::vector<common::Value *> &value_list,
+  virtual void Scan(const std::vector<common::Value> &value_list,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
                     const ScanDirectionType &scan_direction,
@@ -229,7 +229,7 @@ class Index : public Printable {
   // This is the version used to test scan
   // Since it does scan planning everytime, it is slow, and should
   // only be used for correctness testing
-  virtual void ScanTest(const std::vector<common::Value *> &value_list,
+  virtual void ScanTest(const std::vector<common::Value> &value_list,
                         const std::vector<oid_t> &tuple_column_id_list,
                         const std::vector<ExpressionType> &expr_list,
                         const ScanDirectionType &scan_direction,
@@ -310,7 +310,7 @@ class Index : public Printable {
   bool Compare(const AbstractTuple &index_key,
                const std::vector<oid_t> &column_ids,
                const std::vector<ExpressionType> &expr_types,
-               const std::vector<common::Value *> &values);
+               const std::vector<common::Value> &values);
 
   common::VarlenPool *GetPool() const { return pool; }
 
@@ -336,7 +336,7 @@ class Index : public Printable {
 
   // Set the lower bound tuple for index iteration
   bool ConstructLowerBoundTuple(storage::Tuple *index_key,
-                                const std::vector<common::Value*> &values,
+                                const std::vector<common::Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
 

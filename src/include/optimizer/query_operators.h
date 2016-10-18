@@ -83,13 +83,13 @@ struct Variable : QueryExpression {
 // Constant
 //===--------------------------------------------------------------------===//
 struct Constant : QueryExpression {
-  Constant(common::Value *value);
+  Constant(common::Value &value);
 
   virtual ExpressionType GetExpressionType() const override;
 
   virtual void accept(QueryNodeVisitor *v) const override;
 
-  common::Value *value;
+  common::Value value;
 };
 
 //===--------------------------------------------------------------------===//

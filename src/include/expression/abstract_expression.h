@@ -59,7 +59,7 @@ class AbstractExpression : public Printable {
       delete right_;
   }
 
-  virtual std::unique_ptr<Value> Evaluate(const AbstractTuple *tuple1,
+  virtual Value Evaluate(const AbstractTuple *tuple1,
                               const AbstractTuple *tuple2,
                               executor::ExecutorContext *context) const = 0;
 

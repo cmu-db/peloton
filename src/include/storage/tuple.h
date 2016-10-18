@@ -103,7 +103,7 @@ class Tuple : public AbstractTuple {
 
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
-  common::Value *GetValue(oid_t column_id) const;
+  common::Value GetValue(oid_t column_id) const;
 
   /**
    * Allocate space to copy strings that can't be inlined rather
@@ -124,8 +124,8 @@ class Tuple : public AbstractTuple {
 
   // Is the column value null ?
   inline bool IsNull(const uint64_t column_id) const {
-    std::unique_ptr<common::Value> value(GetValue(column_id));
-    return value->IsNull();
+    common::Value value = (GetValue(column_id));
+    return value.IsNull();
   }
 
   // Is the tuple null ?
