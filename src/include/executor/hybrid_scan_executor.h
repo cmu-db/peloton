@@ -84,7 +84,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
   std::vector<oid_t> column_ids_;
 
-  std::vector<common::Value *> values_;
+  std::vector<common::Value> values_;
 
   std::vector<oid_t> full_column_ids_;
 

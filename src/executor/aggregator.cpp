@@ -62,15 +62,13 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 
 /* Handle distinct */
 Agg::~Agg() {
-  for (auto val : distinct_set_)
-    delete val;
 }
 
 void Agg::Advance(const common::Value val) {
   if (is_distinct_) {
     // Insert a deep copy
     common::Value val_copy = (val.Copy());
-    auto itr = distinct_set_.insert(val_copy);
+    distinct_set_.insert(val_copy);
   } else {
     DAdvance(val);
   }
@@ -124,10 +122,7 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
 
   auto predicate = node->GetPredicate();
   if (nullptr != predicate &&
-      (predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext))->IsFalse()) {
-    for (auto val : aggregate_values) {
-      delete val;
-    }
+      (predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext)).IsFalse()) {
     return true;  // Qual fails, do nothing
   }
 
@@ -143,18 +138,11 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   auto location = output_table->InsertTuple(tuple.get());
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple ");
-    for (auto val : aggregate_values) {
-      delete val;
-    }
     return false;
   } else {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
     tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
-  }
-
-  for (auto val : aggregate_values) {
-    delete val;
   }
   return true;
 }
@@ -179,12 +167,6 @@ HashAggregator::~HashAggregator() {
       delete entry.second->aggregates[aggno];
     }
     delete[] entry.second->aggregates;
-    for (auto val : entry.first) {
-      delete val;
-    }
-    for (auto val :entry.second->first_tuple_values) {
-      delete val;
-    }
     delete entry.second;
   }
 }
@@ -230,8 +212,6 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   // Otherwise, the list is the second item of the pair.
   else {
     aggregate_list = map_itr->second;
-    for (auto val : group_by_key_values)
-      delete val;
   }
 
   // Update the aggregation calculation
@@ -286,9 +266,6 @@ SortedAggregator::~SortedAggregator() {
        column_itr++) {
     delete aggregates[column_itr];
   }
-  for (auto val : delegate_tuple_values_) {
-    delete val;
-  }
   delete[] aggregates;
 }
 
@@ -342,9 +319,6 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     }
 
     // Update delegate tuple values
-    for (auto val : delegate_tuple_values_) {
-      delete val;
-    }
     delegate_tuple_values_.clear();
 
     for (oid_t col_id = 0; col_id < num_input_columns_; col_id++) {
@@ -360,10 +334,10 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     common::Value value =
         common::ValueFactory::GetIntegerValue(1);
     if (predicate) {
-      value.reset(node->GetUniqueAggTerms()[aggno].expression->Evaluate(
-          next_tuple, nullptr, this->executor_context)->Copy());
+      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
+          next_tuple, nullptr, this->executor_context);
     }
-    aggregates[aggno]->Advance(value.get());
+    aggregates[aggno]->Advance(value);
   }
 
   return true;

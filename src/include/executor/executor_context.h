@@ -40,7 +40,7 @@ class ExecutorContext {
   ExecutorContext(concurrency::Transaction *transaction);
 
   ExecutorContext(concurrency::Transaction *transaction,
-                  const std::vector<common::Value *> &params);
+                  const std::vector<common::Value> &params);
 
   ~ExecutorContext();
 
