@@ -19,19 +19,19 @@ import java.util.Properties;
 public class PelotonTest {
   // Peloton, Postgres, Timesten
   private final String[] url = {
-     //"jdbc:postgresql://localhost:54321/postgres",  // PELOTON 
-     "jdbc:postgresql://dev1.db.pdl.cmu.local:54321/postgres",  // PELOTON 
+     "jdbc:postgresql://localhost:54321/postgres",  // PELOTON 
      "jdbc:postgresql://localhost:57721/postgres",   // POSTGRES
-     //"jdbc:postgresql://dev1.db.pdl.cmu.local:57721/postgres",   // POSTGRES
-     "jdbc:timesten:client:TTC_SERVER_DSN=cmudb_ttdb;TTC_SERVER=dev1.db.pdl.cmu.local;TCP_PORT=53397"}; // TIMESTEN
+     "jdbc:timesten:client:TTC_SERVER_DSN=xxx;TTC_SERVER=xxx;TCP_PORT=xxx"}; // TIMESTEN
 
-  private final String[] user = {"postgres", "haibinl", "cmudb"};
-  private final String[] pass = {"postgres", "postgres", "cmudb"};
+  private final String[] user = {"postgres", "postgres", "xxx"};
+  private final String[] pass = {"postgres", "postgres", "xxx"};
   private final String[] driver = {"org.postgresql.Driver", "org.postgresql.Driver", "com.timesten.jdbc.TimesTenDriver"};
   
   private final int LOG_LEVEL = 0;
+  private int query_type = SIMPLE_SELECT;  
 
-  private final int STAT_INTERVAL_MS = 1000;
+  public static final int SEMICOLON = 0;
+  public static final int SIMPLE_SELECT = 1;
 
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
@@ -110,12 +110,12 @@ public class PelotonTest {
 
   private enum TABLE {A, B, AB}
 
-  private int mode; 
+  private int target; 
 
-  public PelotonTest(int mode) throws SQLException {
-    this.mode = mode;
+  public PelotonTest(int target) throws SQLException {
+    this.target = target;
     try {
-      Class.forName(driver[mode]);
+      Class.forName(driver[target]);
       if (LOG_LEVEL != 0) {
         org.postgresql.Driver.setLogLevel(LOG_LEVEL);
         DriverManager.setLogStream(System.out);
@@ -128,7 +128,7 @@ public class PelotonTest {
   }
 
   private Connection makeConnection() throws SQLException {
-    Connection conn = DriverManager.getConnection(url[mode], user[mode], pass[mode]);
+    Connection conn = DriverManager.getConnection(url[target], user[target], pass[target]);
     return conn;
   }
 
@@ -144,7 +144,7 @@ public class PelotonTest {
   public void Init() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
-    if (mode != TIMESTEN) {
+    if (target != TIMESTEN) {
       stmt.execute(DROP);
       stmt.execute(DDL);
     } else {
@@ -204,13 +204,24 @@ public class PelotonTest {
   public void Nop_Test() throws Exception {
     long startTime = System.currentTimeMillis();
     long elapsedTime = 0L;
-
-    Statement stmt = conn.createStatement();
     long numOps = 1000 * 1000;
-    for (long i = 0; i < numOps; i++) {
+    if (query_type == SEMICOLON) {
+      Statement stmt = conn.createStatement();
+      for (long i = 0; i < numOps; i++) {
         try {
             stmt.execute(";");
         } catch (Exception e) { }
+      } 
+    } else {
+      PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
+      conn.setAutoCommit(false);
+      for (long i = 0; i < numOps; i++) {
+         try {
+            stmt.setInt(1, 0);
+            stmt.execute();
+            conn.commit();
+         } catch (Exception e) { }
+      }
     }
     elapsedTime = (new Date()).getTime() - startTime;
     System.out.println("Nop throughput: " + numOps * 1000 / elapsedTime);
@@ -302,37 +313,6 @@ public class PelotonTest {
     conn.commit();
   }
 
-  /**
-   * Perform Index Scan with a simple equal qualifier
-   *
-   * @param i the param for the equal qualifier
-   * @throws SQLException
-   */
-  public void BitmapScan(int i, int j) throws SQLException {
-    System.out.println("\nBitmapScan Test: ? = " + i + ", " + j);
-    System.out.println("Query: " + BITMAPSCAN);
-    PreparedStatement stmt = conn.prepareStatement(BITMAPSCAN);
-    stmt.setInt(1, i);
-    stmt.setInt(2, j);
-    ResultSet r = stmt.executeQuery();
-    while (r.next()) {
-      System.out.println("BitmapScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
-    }
-    r.close();
-  }
-
-  public void UpdateByIndex(int i) throws SQLException {
-    System.out.println("\nUpdate Test: ? = " + i);
-    System.out.println("Query: " + UPDATE_BY_INDEXSCAN);
-    PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
-    stmt.setInt(2, i);
-    stmt.setString(1, "Updated");
-    stmt.executeUpdate();
-    System.out.println("Updated: id: " + i + ", data: Updated");
-
-  }
-
-
   public void UpdateBySeqScan() throws SQLException {
     System.out.println("\nUpdate Test: ");
     System.out.println("Query: " + UPDATE_BY_SCANSCAN);
@@ -351,27 +331,6 @@ public class PelotonTest {
     stmt.setInt(1, i);
     stmt.executeUpdate();
     System.out.println("Deleted: id = " + i);
-  }
-
-  public void ReadModifyWrite(int i) throws SQLException {
-    System.out.println("\nReadModifyWrite Test: ");
-    System.out.println("Query: " + SELECT_FOR_UPDATE);
-    PreparedStatement stmt = conn.prepareStatement(SELECT_FOR_UPDATE);
-
-    stmt.setInt(1, i);
-    ResultSet r = stmt.executeQuery();
-    while (r.next()) {
-      System.out.println("ReadModifyWriteTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
-    }
-
-    r.close();
-
-    stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
-    stmt.setInt(2, i);
-    stmt.setString(1, "Updated");
-    stmt.executeUpdate();
-
-    System.out.println("Updated: id: " + i + ", data: Updated");
   }
 
   public void Union(int i) throws SQLException {
