@@ -641,12 +641,17 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
+bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses,
+                                  bool &force_flush) {
   LOG_TRACE("message type: %c", pkt->msg_type);
+  // We don't set force_flush to true for `PBDE` messages because they're
+  // part of the extended protocol. Buffer responses and don't flush until
+  // we see a `S`
   switch (pkt->msg_type) {
     case 'Q': {
       LOG_DEBUG("Q");
       ExecQueryMessage(pkt, responses);
+      force_flush = true;
     } break;
     case 'P': {
       LOG_DEBUG("P");
@@ -667,13 +672,16 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
     case 'S': {
       LOG_DEBUG("S");
       SendReadyForQuery(txn_state_, responses);
+      force_flush = true;
     } break;
     case 'X': {
       LOG_DEBUG("X");
+      force_flush = true;
       return false;
     } break;
     case NULL: {
       LOG_DEBUG("NULL");
+      force_flush = true;
       return false;
     } break;
     default: {
@@ -726,7 +734,7 @@ bool PacketManager::ManageStartupPacket() {
     return false;
   }
   status = ProcessStartupPacket(&pkt, responses);
-  if (!WritePackets(responses, &client_) || !status) {
+  if (!WritePackets(responses, &client_, true) || status == false) {
     // close client on write failure or status failure
     CloseClient();
     return false;
@@ -744,10 +752,11 @@ bool PacketManager::ManagePacket() {
   // While can process more packets from buffer
   while (read_status) {
     // Process the read packet
-    status = ProcessPacket(&pkt, responses);
+    bool force_flush = false;
+    status = ProcessPacket(&pkt, responses, force_flush);
 
     // Write response
-    if (!WritePackets(responses, &client_) || status == false) {
+    if (!WritePackets(responses, &client_, force_flush) || status == false) {
       // close client on write failure or status failure
       CloseClient();
       return false;

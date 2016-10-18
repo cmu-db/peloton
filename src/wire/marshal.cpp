@@ -208,8 +208,8 @@ bool ReadPacket(Packet *pkt, bool has_type_field, Client *client) {
   return true;
 }
 
-bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
-                  Client *client) {
+bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets, Client *client,
+                  const bool &force_flush) {
   // iterate through all the packets
   for (size_t i = 0; i < packets.size(); i++) {
     auto pkt = packets[i].get();
@@ -220,7 +220,10 @@ bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
   }
   // clear packets
   packets.clear();
-  return client->sock->FlushWriteBuffer();
+  if (force_flush) {
+    return client->sock->FlushWriteBuffer();
+  }
+  return true;
 }
 
 }  // end wire
