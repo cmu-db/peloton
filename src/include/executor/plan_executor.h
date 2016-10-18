@@ -61,11 +61,8 @@ struct ExchangeParams {
 
   inline ExchangeParams(const planner::AbstractPlan *plan,
                         const std::vector<common::Value *>& params,
-                        int parallelism_count, int partition_id,
                         const std::vector<int> &result_format)
       : plan(plan), params(params),
-        parallelism_count(parallelism_count),
-        partition_id(partition_id),
         result_format(result_format) {
     f = p.get_future();
   }
@@ -96,21 +93,11 @@ class PlanExecutor {
     }
   }
 
-  /* TODO: Delete this method
-    static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                      ParamListInfo m_param_list,
-                                      TupleDesc m_tuple_desc);
-  */
-
   /*
    * @brief Use std::vector<common::Value *> as params to make it more elegant
-   * for
-   * networking
-   * Before ExecutePlan, a node first receives value list, so we should pass
-   * value list directly rather than passing Postgres's ParamListInfo.
-   *
-   * Also pass parallelism details if we are doing intra-query parallelism
-   *
+   * for networking Before ExecutePlan, a node first receives value list,
+   * so we should pass value list directly rather than passing Postgres's
+   * ParamListInfo.
    */
   static void ExecutePlanLocal(ExchangeParams **exchg_params_arg);
 

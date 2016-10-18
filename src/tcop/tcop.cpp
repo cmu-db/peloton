@@ -113,40 +113,20 @@ bridge::peloton_status TrafficCop::ExchangeOperator(
     const std::vector<common::Value *> &params,
     std::vector<ResultType>& result, const std::vector<int> &result_format) {
 
-  std::vector<std::shared_ptr<bridge::ExchangeParams>> exchg_params_list;
-  int num_executor_threads = 1;
   bridge::peloton_status final_status;
-  final_status.m_processed = 0;
 
-  if(plan != nullptr && plan->GetPlanNodeType() ==
-                            PlanNodeType::PLAN_NODE_TYPE_SEQSCAN) {
-    // provide intra-query parallelism for sequential scans
-    num_executor_threads = std::thread::hardware_concurrency();
-  }
+  // make the exchg params list
+  std::unique_ptr<bridge::ExchangeParams> exchg_params(
+      new bridge::ExchangeParams(plan, params, result_format));
+  exchg_params->self = exchg_params.get();
+  executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanLocal,
+                                  &exchg_params->self);
 
-  for(int i=0; i<num_executor_threads; i++) {
-    // in first pass make the exch params list
-    std::shared_ptr<bridge::ExchangeParams> exchg_params(
-        new bridge::ExchangeParams(plan, params, num_executor_threads, i, result_format));
-    exchg_params->self = exchg_params.get();
-    exchg_params_list.push_back(exchg_params);
-    executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanLocal,
-                                    &exchg_params->self);
-  }
+  // wait for executor thread to return result
+  final_status = exchg_params->f.get();
 
-  for(int i=0; i<num_executor_threads; i++) {
-    // wait for executor thread to return result
-    auto temp_status = exchg_params_list[i]->f.get();
-    final_status.m_processed += temp_status.m_processed;
-
-    // persist failure states across iterations
-    if (final_status.m_result == peloton::Result::RESULT_SUCCESS)
-      final_status.m_result = temp_status.m_result;
-    final_status.m_result_slots = nullptr;
-
-    result.insert(result.end(), exchg_params_list[i]->result.begin(),
-                  exchg_params_list[i]->result.end());
-  }
+  result.insert(result.end(), exchg_params->result.begin(),
+                exchg_params->result.end());
 
   return final_status;
 }

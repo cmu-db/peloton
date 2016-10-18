@@ -59,13 +59,8 @@ class TrafficCop {
 
   /*
  * @brief Based on the Volcano 'Exchange' intra-query parallelism model.
- * Currently supported only for sequential scans. This operator spawns
- * multiple execution trees (tasks), each deployed on a different executor
- * thread. For now, the operator spawns as many tasks as there are cores
- * in the system. The tiles to be processed are divided into modulo
- * partitions such that each thread gets roughly the same amount of work.
- * The intermediate results from each thread are coalesced to give the
- * final output.
+ * This operator hands off the query from the libevent thread to the
+ * query executor pool and blocks the libevent thread till the equery executes
  */
   static bridge::peloton_status ExchangeOperator(
       const planner::AbstractPlan *plan,

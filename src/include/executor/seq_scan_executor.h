@@ -45,14 +45,6 @@ class SeqScanExecutor : public AbstractScanExecutor {
   /** @brief Keeps track of the number of tile groups to scan. */
   oid_t table_tile_group_count_ = INVALID_OID;
 
-  // number of tile groups that this thread
-  // of execution will work on
-  int num_tile_groups_processed_ = 0;
-
-  // number of sequential tile groups each
-  // thread of execution will work on
-  int num_tile_groups_per_thread_;
-
   //===--------------------------------------------------------------------===//
   // Plan Info
   //===--------------------------------------------------------------------===//
