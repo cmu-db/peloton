@@ -69,7 +69,7 @@ class ExpressionUtil {
         // left expression is parameter
         auto left = (ParameterValueExpression *)expression->GetLeft();
         auto value =
-            new ConstantValueExpression(*values->at(left->GetValueIdx()));
+            new ConstantValueExpression(values->at(left->GetValueIdx()));
         LOG_TRACE("left in vector type: %s",
                   values->at(left->GetValueIdx())->GetInfo().c_str());
         LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
@@ -92,7 +92,7 @@ class ExpressionUtil {
         LOG_TRACE("right in vector type: %s",
                   values->at(right->GetValueIdx())->GetInfo().c_str());
         auto value =
-            new ConstantValueExpression(*values->at(right->GetValueIdx()));
+            new ConstantValueExpression(values->at(right->GetValueIdx()));
         LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
                   std::unique_ptr<common::Value>(value->GetValue())
                       ->GetInfo()
@@ -219,7 +219,7 @@ class ExpressionUtil {
       ExpressionType type,
       const std::list<expression::AbstractExpression *> &child_exprs) {
     if (child_exprs.empty())
-      return new ConstantValueExpression(common::Value(Type::BOOLEAN, 1));
+      return new ConstantValueExpression(common::ValueFactory::GetBooleanValue(1));
     AbstractExpression *left = nullptr;
     AbstractExpression *right = nullptr;
     for (auto expr : child_exprs) {

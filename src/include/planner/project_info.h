@@ -71,7 +71,7 @@ class ProjectInfo {
 
   std::string Debug() const;
 
-  void transformParameterToConstantValueExpression(std::vector<common::Value *>* values, catalog::Schema* schema);
+  void transformParameterToConstantValueExpression(std::vector<common::Value>* values, catalog::Schema* schema);
 
   ~ProjectInfo();
 

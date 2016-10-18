@@ -286,7 +286,7 @@ class BTrimExpression : public AbstractExpression {
     std::string from = vr.ToString();
 
     if (str.length() == 0)
-      return (ValueFactory::GetVarcharValue("", false));
+      return (ValueFactory::GetVarcharValue(""));
 
     size_t pos = str.length() - 1;
     bool erase = 0;

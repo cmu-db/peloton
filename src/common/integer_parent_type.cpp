@@ -33,8 +33,8 @@ Value IntegerParentType::Min(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(left.CompareGreaterThanEquals(right));
-  if (cmp->IsTrue())
+  Value cmp = (left.CompareGreaterThanEquals(right));
+  if (cmp.IsTrue())
     return left.Copy();
   return right.Copy();
 }
@@ -45,8 +45,8 @@ Value IntegerParentType::Max(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(left.CompareGreaterThanEquals(right));
-  if (cmp->IsTrue())
+  Value cmp = (left.CompareGreaterThanEquals(right));
+  if (cmp.IsTrue())
     return left.Copy();
   return right.Copy();
 }

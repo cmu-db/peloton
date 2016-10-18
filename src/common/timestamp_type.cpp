@@ -14,6 +14,7 @@
 
 #include "common/boolean_type.h"
 #include "common/varlen_type.h"
+#include "common/value_factory.h"
 
 namespace peloton {
 namespace common {
@@ -124,11 +125,11 @@ void TimestampType::SerializeTo(const Value& val, char *storage, bool inlined UN
 Value TimestampType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
-  return new Value(type_id_, val);
+  return Value(type_id_, val);
 }
 Value TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
-  return new Value(type_id_, in.ReadLong());
+  return Value(type_id_, in.ReadLong());
 }
 
 // Create a copy of this value

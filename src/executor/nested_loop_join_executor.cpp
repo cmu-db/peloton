@@ -182,7 +182,7 @@ bool NestedLoopJoinExecutor::DExecute() {
           // Join predicate is false. Skip pair and continue.
           auto eval = predicate_->Evaluate(&left_tuple,
                                           &right_tuple, executor_context_);
-          if (eval->IsFalse()) {
+          if (eval.IsFalse()) {
             continue;
           }
         }

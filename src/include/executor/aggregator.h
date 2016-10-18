@@ -170,7 +170,7 @@ class CountStarAgg : public Agg {
 
   void DAdvance(const common::Value &val UNUSED_ATTRIBUTE) { ++count; }
 
-  common::Value *DFinalize() {
+  common::Value DFinalize() {
     return common::ValueFactory::GetBigIntValue(count);
   }
 
@@ -305,7 +305,7 @@ class HashAggregator : public AbstractAggregator {
     size_t operator()(const std::vector<common::Value> &values) const {
       size_t seed = 0;
       for (auto v : values) {
-        v->HashCombine(seed);
+        v.HashCombine(seed);
       }
       return seed;
     }

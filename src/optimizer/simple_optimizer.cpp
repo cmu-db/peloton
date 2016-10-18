@@ -415,7 +415,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // column predicates passing to the  index
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
-      std::vector<common::Value*> values;
+      std::vector<common::Value> values;
       oid_t index_id;
 
       parser::DeleteStatement* deleteStmt =
@@ -444,7 +444,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // column predicates passing to the index
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
-      std::vector<common::Value*> values;
+      std::vector<common::Value> values;
       oid_t index_id;
 
       parser::UpdateStatement* updateStmt =
@@ -504,7 +504,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
     storage::DataTable* target_table,
     expression::AbstractExpression* expression,
     std::vector<oid_t>& key_column_ids, std::vector<ExpressionType>& expr_types,
-    std::vector<common::Value*>& values, oid_t& index_id) {
+    std::vector<common::Value>& values, oid_t& index_id) {
   bool index_searchable = false;
   index_id = 0;
 
@@ -512,7 +512,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
   // clause
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<common::Value*> predicate_values;
+  std::vector<common::Value> predicate_values;
 
   if (expression != NULL) {
     index_searchable = true;
@@ -543,9 +543,6 @@ bool SimpleOptimizer::CheckIndexSearchable(
   }
 
   if (!index_searchable) {
-    for (common::Value* value : predicate_values) {
-      delete value;
-    }
     return false;
   }
 
@@ -576,7 +573,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // column predicates passing to the index
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value*> values;
+  std::vector<common::Value> values;
 
   // index_searchable = false;
   // using the index scan causes an error:
@@ -658,7 +655,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 void SimpleOptimizer::GetPredicateColumns(
     catalog::Schema* schema, expression::AbstractExpression* expression,
     std::vector<oid_t>& column_ids, std::vector<ExpressionType>& expr_types,
-    std::vector<common::Value*>& values, bool& index_searchable) {
+    std::vector<common::Value>& values, bool& index_searchable) {
   // For now, all conjunctions should be AND when using index scan.
   if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_OR)
     index_searchable = false;
@@ -799,7 +796,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   bool index_searchable;
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<common::Value*> predicate_values;
+  std::vector<common::Value> predicate_values;
   std::vector<oid_t> column_ids = {4};
   std::vector<expression::AbstractExpression*> runtime_keys;
 

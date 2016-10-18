@@ -152,7 +152,7 @@ Value BigintType::Modulo(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return ModuloValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL,
+    return ValueFactory::GetDoubleValue(
         ValMod(left.value_.bigint, right.GetAs<double>()));
   default:
     break;
@@ -201,14 +201,14 @@ Value BigintType::CompareEquals(const Value& left, const Value &right) const {
   case Type::TINYINT:
     return ValueFactory::GetBooleanValue(left.value_.bigint == right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint == right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint == right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint == right.GetAs<int64_t>());
   case Type::DECIMAL:
     return ValueFactory::GetBooleanValue(left.value_.bigint == right.GetAs<double>());
@@ -229,14 +229,14 @@ Value BigintType::CompareNotEquals(const Value& left,
   case Type::TINYINT:
     return ValueFactory::GetBooleanValue(left.value_.bigint != right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint != right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint != right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint != right.GetAs<int64_t>());
   case Type::DECIMAL:
     return ValueFactory::GetBooleanValue(left.value_.bigint != right.GetAs<double>());
@@ -282,14 +282,14 @@ Value BigintType::CompareLessThanEquals(const Value& left,
   case Type::TINYINT:
     return ValueFactory::GetBooleanValue(left.value_.bigint <= right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint <= right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint <= right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint <= right.GetAs<int64_t>());
   case Type::DECIMAL:
     return ValueFactory::GetBooleanValue(left.value_.bigint <= right.GetAs<double>());
@@ -336,14 +336,14 @@ Value BigintType::CompareGreaterThanEquals(const Value& left,
   case Type::TINYINT:
     return ValueFactory::GetBooleanValue(left.value_.bigint >= right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint >= right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint >= right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.bigint >= right.GetAs<int64_t>());
   case Type::DECIMAL:
     return ValueFactory::GetBooleanValue(left.value_.bigint >= right.GetAs<double>());
@@ -393,11 +393,11 @@ void BigintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSE
 Value BigintType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   int64_t val = *reinterpret_cast<const int64_t *>(storage);
-  return new Value(type_id_, val);
+  return Value(type_id_, val);
 }
 Value BigintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
-  return new Value(type_id_, in.ReadLong());
+  return Value(type_id_, in.ReadLong());
 }
 
 Value BigintType::Copy(const Value& val) const {
@@ -429,13 +429,13 @@ Value BigintType::CastAs(const Value& val, const Type::TypeId type_id) const {
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET: {
     if (val.IsNull())
-      return new Value(type_id, PELOTON_INT32_NULL);
+      return Value(type_id, PELOTON_INT32_NULL);
 
     if (val.GetAs<int64_t>() > PELOTON_INT32_MAX
         || val.GetAs<int64_t>() < PELOTON_INT32_MIN)
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
           "Numeric value out of range.");
-    return new Value(type_id, (int32_t) val.GetAs<int64_t>());
+    return Value(type_id, (int32_t) val.GetAs<int64_t>());
 
   }
   case Type::BIGINT: {

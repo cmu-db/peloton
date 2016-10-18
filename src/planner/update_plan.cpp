@@ -103,7 +103,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
-                       std::vector<common::Value *> &values, oid_t &index_id) {
+                       std::vector<common::Value> &values, oid_t &index_id) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
   // Create index scan desc
@@ -120,7 +120,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
   AddChild(std::move(index_scan_node));
 }
 
-void UpdatePlan::SetParameterValues(std::vector<common::Value *> *values) {
+void UpdatePlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Update");
   // First update project_info_ target list
   // Create new project_info_

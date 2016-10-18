@@ -16,6 +16,7 @@
 #include <cmath>
 #include "common/boolean_type.h"
 #include "common/varlen_type.h"
+#include "common/value_factory.h"
 
 namespace peloton {
 namespace common {
@@ -108,7 +109,6 @@ Value DecimalType::Divide(const Value& left, const Value &right) const {
   if (right.IsZero()) {
     throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
                     "Division by zero.");
-    return nullptr;
   }
   switch(right.GetTypeId()) {
     case Type::TINYINT:
@@ -158,8 +158,8 @@ Value DecimalType::Min(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(left.CompareLessThanEquals(right));
-  if (cmp->IsTrue())
+  Value cmp = (left.CompareLessThanEquals(right));
+  if (cmp.IsTrue())
     return left.Copy();
   return right.Copy();
 }
@@ -170,8 +170,8 @@ Value DecimalType::Max(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  std::unique_ptr<Value> cmp(left.CompareGreaterThanEquals(right));
-  if (cmp->IsTrue())
+  Value cmp = (left.CompareGreaterThanEquals(right));
+  if (cmp.IsTrue())
     return left.Copy();
   return right.Copy();
 }
@@ -403,11 +403,11 @@ void DecimalType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
 Value DecimalType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   double val = *reinterpret_cast<const double *>(storage);
-  return new Value(type_id_, val);
+  return Value(type_id_, val);
 }
 Value DecimalType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
-  return new Value(type_id_, in.ReadDouble());
+  return Value(type_id_, in.ReadDouble());
 }
 
 Value DecimalType::Copy(const Value& val) const {

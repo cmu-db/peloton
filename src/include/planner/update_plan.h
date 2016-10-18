@@ -48,7 +48,7 @@ class UpdatePlan : public AbstractPlan {
   explicit UpdatePlan(parser::UpdateStatement *parse_tree,
                       std::vector<oid_t> &key_column_ids,
                       std::vector<ExpressionType> &expr_types,
-                      std::vector<common::Value *> &values,
+                      std::vector<common::Value> &values,
                       oid_t &index_id);
 
   inline ~UpdatePlan() {
@@ -71,7 +71,7 @@ class UpdatePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "UpdatePlan"; }
 
-  void SetParameterValues(std::vector<common::Value *> *values);
+  void SetParameterValues(std::vector<common::Value> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(

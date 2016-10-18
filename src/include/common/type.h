@@ -21,6 +21,7 @@ namespace common {
 
 class VarlenPool;
 class Value;
+class ValueFactory;
 
 
 class Type {

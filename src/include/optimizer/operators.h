@@ -1,3 +1,4 @@
+
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -227,17 +228,17 @@ class ExprVariable : public OperatorNode<ExprVariable> {
 //===--------------------------------------------------------------------===//
 class ExprConstant : public OperatorNode<ExprConstant> {
   ~ExprConstant() {
-    delete value;
+
   }
   
  public:
-  static Operator make(const common::Value *value);
+  static Operator make(const common::Value value);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  common::Value *value;
+  common::Value value;
 };
 
 //===--------------------------------------------------------------------===//

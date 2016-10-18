@@ -14,6 +14,7 @@
 
 #include "common/numeric_type.h"
 #include "common/exception.h"
+#include "common/value_factory.h"
 
 namespace peloton {
 namespace common {
@@ -103,13 +104,13 @@ Value IntegerParentType::AddValue(const Value& left, const Value &right) const {
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
     }
-    return new Value(left.GetTypeId(), sum1);
+    return Value(left.GetTypeId(), sum1);
   }
   if ((x > 0 && y > 0 && sum2 < 0) || (x < 0 && y < 0 && sum2 > 0)) {
     throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
   }
-  return new Value(right.GetTypeId(), sum2);
+  return Value(right.GetTypeId(), sum2);
 }
 
 template<class T1, class T2>
@@ -128,13 +129,13 @@ Value IntegerParentType::SubtractValue(const Value& left, const Value &right) co
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
     }
-    return new Value(left.GetTypeId(), diff1);
+    return Value(left.GetTypeId(), diff1);
   }
   if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0)) {
     throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
   }
-  return new Value(right.GetTypeId(), diff2);
+  return Value(right.GetTypeId(), diff2);
 }
 
 template<class T1, class T2>
@@ -153,13 +154,13 @@ Value IntegerParentType::MultiplyValue(const Value& left, const Value &right) co
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
     }
-    return new Value(left.GetTypeId(), prod1);
+    return Value(left.GetTypeId(), prod1);
   }
   if (y != 0 && prod2 / y != x) {
     throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                     "Numeric value out of range.");
   }
-  return new Value(right.GetTypeId(), prod2);
+  return Value(right.GetTypeId(), prod2);
 }
 
 template<class T1, class T2>
@@ -173,9 +174,9 @@ Value IntegerParentType::DivideValue(const Value& left, const Value &right) cons
   T1 quot1 = (T1)(x / y);
   T2 quot2 = (T2)(x / y);
   if (sizeof(x) >= sizeof(y)) {
-    return new Value(left.GetTypeId(), quot1);
+    return Value(left.GetTypeId(), quot1);
   }
-  return new Value(right.GetTypeId(), quot2);
+  return Value(right.GetTypeId(), quot2);
 }
 
 template<class T1, class T2>
@@ -189,9 +190,9 @@ Value IntegerParentType::ModuloValue(const Value& left, const Value &right) cons
   T1 quot1 = (T1)(x % y);
   T2 quot2 = (T2)(x % y);
   if (sizeof(x) >= sizeof(y)) {
-    return new Value(left.GetTypeId(), quot1);
+    return Value(left.GetTypeId(), quot1);
   }
-  return new Value(right.GetTypeId(), quot2);
+  return Value(right.GetTypeId(), quot2);
 }
 
 }  // namespace common

@@ -310,7 +310,7 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   return index;
 }
 
-void SeqScanPlan::SetParameterValues(std::vector<common::Value *> *values) {
+void SeqScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
   auto predicate = predicate_with_params_->Copy();
   expression::ExpressionUtil::ConvertParameterExpressions(

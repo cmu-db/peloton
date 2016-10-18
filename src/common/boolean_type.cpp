@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include "common/varlen_type.h"
+#include "common/value_factory.h"
 
 namespace peloton {
 namespace common {
@@ -87,7 +88,7 @@ void BooleanType::HashCombine(const Value& val, size_t &seed) const {
 }
 
 Value BooleanType::Copy(const Value& val) const {
-  return new Value(type_id_, val.value_.boolean);
+  return Value(type_id_, val.value_.boolean);
 }
 
 Value BooleanType::CastAs(const Value& val, const Type::TypeId type_id) const {

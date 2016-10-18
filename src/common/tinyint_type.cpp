@@ -151,7 +151,7 @@ Value TinyintType::Modulo(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return ModuloValue<int8_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return new Value(Type::DECIMAL,
+    return ValueFactory::GetDoubleValue(
         ValMod(left.value_.tinyint, right.GetAs<double>()));
   default:
     break;
@@ -177,14 +177,14 @@ Value TinyintType::Sqrt(const Value& val) const {
 Value TinyintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right) const {
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(right.GetTypeId(), (int8_t) PELOTON_INT8_NULL);
+    return Value(right.GetTypeId(), (int8_t) PELOTON_INT8_NULL);
   case Type::SMALLINT:
-    return new Value(right.GetTypeId(), (int16_t) PELOTON_INT16_NULL);
+    return Value(right.GetTypeId(), (int16_t) PELOTON_INT16_NULL);
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(right.GetTypeId(), (int32_t) PELOTON_INT32_NULL);
+    return Value(right.GetTypeId(), (int32_t) PELOTON_INT32_NULL);
   case Type::BIGINT:
-    return new Value(right.GetTypeId(), (int64_t) PELOTON_INT64_NULL);
+    return Value(right.GetTypeId(), (int64_t) PELOTON_INT64_NULL);
   case Type::DECIMAL:
     return ValueFactory::GetDoubleValue((double) PELOTON_DECIMAL_NULL);
   default:
@@ -202,20 +202,20 @@ Value TinyintType::CompareEquals(const Value& left, const Value &right) const {
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint == right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint == right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint == right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint == right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint == right.GetAs<double>());
   default:
     break;
@@ -232,20 +232,20 @@ Value TinyintType::CompareNotEquals(const Value& left,
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint != right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint != right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint != right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint != right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint != right.GetAs<double>());
   default:
     break;
@@ -265,14 +265,14 @@ Value TinyintType::CompareLessThan(const Value& left,
   case Type::TINYINT:
     return ValueFactory::GetBooleanValue(left.value_.tinyint < right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint < right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint < right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint < right.GetAs<int64_t>());
   case Type::DECIMAL:
     return ValueFactory::GetBooleanValue(left.value_.tinyint < right.GetAs<double>());
@@ -292,20 +292,20 @@ Value TinyintType::CompareLessThanEquals(const Value& left,
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint <= right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint <= right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint <= right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint <= right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint <= right.GetAs<double>());
   default:
     break;
@@ -325,14 +325,14 @@ Value TinyintType::CompareGreaterThan(const Value& left,
   case Type::TINYINT:
     return ValueFactory::GetBooleanValue(left.value_.tinyint > right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint > right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint > right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint > right.GetAs<int64_t>());
   case Type::DECIMAL:
     return ValueFactory::GetBooleanValue(left.value_.tinyint > right.GetAs<double>());
@@ -351,20 +351,20 @@ Value TinyintType::CompareGreaterThanEquals(const Value& left,
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint >= right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint >= right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint >= right.GetAs<int32_t>());
   case Type::BIGINT:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint >= right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return new Value(Type::BOOLEAN,
+    return Value(Type::BOOLEAN,
         left.value_.tinyint >= right.GetAs<double>());
   default:
     break;
@@ -407,11 +407,11 @@ void TinyintType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
 Value TinyintType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   int8_t val = *reinterpret_cast<const int8_t *>(storage);
-  return new Value(type_id_, val);
+  return Value(type_id_, val);
 }
 Value TinyintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
-  return new Value(type_id_, in.ReadByte());
+  return Value(type_id_, in.ReadByte());
 }
 
 Value TinyintType::Copy(const Value& val) const {
@@ -435,8 +435,8 @@ Value TinyintType::CastAs(const Value& val, const Type::TypeId type_id) const {
       case Type::INTEGER:
       case Type::PARAMETER_OFFSET: {
         if (val.IsNull())
-          return new Value(type_id, PELOTON_INT32_NULL);
-            new Value(type_id, (int32_t)val.GetAs<int8_t>());
+          return Value(type_id, PELOTON_INT32_NULL);
+            Value(type_id, (int32_t)val.GetAs<int8_t>());
       }
       case Type::BIGINT: {
         if (val.IsNull())

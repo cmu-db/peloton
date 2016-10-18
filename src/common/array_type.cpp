@@ -65,8 +65,8 @@ Value ArrayType::GetElementAt(const Value& val, uint64_t idx) const {
 
 // Does this value exist in this array?
 Value ArrayType::InList(const Value& list, const Value &object) const {
-  std::unique_ptr<Value> ele(list.GetElementAt(0));
-  ele->CheckComparable(object);
+  Value ele = (list.GetElementAt(0));
+  ele.CheckComparable(object);
   if (object.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   switch (list.GetElementType()) {
@@ -75,9 +75,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<bool>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = ValueFactory::GetBooleanValue(*it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -86,9 +86,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<int8_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = Value(Type::TINYINT, *it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -97,9 +97,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<int16_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = Value(Type::SMALLINT, *it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -108,9 +108,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<int32_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = ValueFactory::GetIntegerValue(*it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -119,9 +119,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<int64_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = ValueFactory::GetBigIntValue(*it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -130,9 +130,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<double>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = ValueFactory::GetDoubleValue(*it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -141,9 +141,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<uint64_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = ValueFactory::GetTimestampValue(*it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
@@ -152,9 +152,9 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
       std::vector<std::string>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = Value(Type::VARCHAR, *it).CompareEquals(object);
-        if (res->IsTrue())
+        if (res.IsTrue())
           return res;
-        delete res;
+
       }
       return ValueFactory::GetBooleanValue(0);
     }
