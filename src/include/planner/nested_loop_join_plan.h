@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_join_plan.h"
 
 namespace peloton {
-namespace expression{
+namespace expression {
 class AbstractExpression;
 }
 namespace planner {
@@ -41,8 +40,6 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   }
 
   const std::string GetInfo() const { return "NestedLoopJoin"; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(

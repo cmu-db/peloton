@@ -50,6 +50,8 @@ TEST_F(UpdateTests, Updating) {
   auto id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
       "dept_id", true);
+  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+  id_column.AddConstraint(constraint);
   auto manager_id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
       "manager_id", true);

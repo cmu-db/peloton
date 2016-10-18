@@ -17,8 +17,8 @@
 #include <string>
 #include <utility>
 
-#include "common/types.h"
 #include "common/logger.h"
+#include "common/types.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
@@ -62,50 +62,13 @@ const std::string AbstractPlan::GetInfo() const {
   return os.str();
 }
 
-/**
- * This function replaces all COLUMN_REF expressions with TupleValue expressions
- */
-void AbstractPlan::ReplaceColumnExpressions(
-    catalog::Schema *schema, expression::AbstractExpression *expression) {
-  LOG_TRACE("Expression Type --> %s",
-            ExpressionTypeToString(expression->GetExpressionType()).c_str());
-  if (expression->GetLeft() != nullptr) {
-    LOG_TRACE("Left Type --> %s",
-              ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
-                  .c_str());
-    if (expression->GetLeft()->GetExpressionType() ==
-        EXPRESSION_TYPE_COLUMN_REF) {
-      auto expr = expression->GetModifiableLeft();
-      std::string col_name(expr->GetName());
-      LOG_TRACE("Column name: %s", col_name.c_str());
-      delete expr;
-      expression->setLeftExpression(
-          expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
-                                                                    col_name));
-
-    } else {
-      ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
-    }
+void AbstractPlan::SetParameterValues(std::vector<common::Value *> *values) {
+  LOG_TRACE("Setting parameter values in all child plans of %s",
+            GetInfo().c_str());
+  for (auto &child_plan : GetChildren()) {
+    child_plan->SetParameterValues(values);
   }
-
-  if (expression->GetRight() != nullptr) {
-    LOG_TRACE("Right Type --> %s",
-              ExpressionTypeToString(
-                  expression->GetRight()->GetExpressionType()).c_str());
-    if (expression->GetRight()->GetExpressionType() ==
-        EXPRESSION_TYPE_COLUMN_REF) {
-      auto expr = expression->GetModifiableRight();
-      std::string col_name(expr->GetName());
-      LOG_TRACE("Column name: %s", col_name.c_str());
-      delete expr;
-      expression->setRightExpression(
-          expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
-                                                                    col_name));
-    } else {
-      ReplaceColumnExpressions(schema, expression->GetModifiableRight());
-    }
-  }
-}
+};
 
 }  // namespace planner
 }  // namespace peloton

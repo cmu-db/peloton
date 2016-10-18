@@ -164,7 +164,9 @@ Value *Type::GetMinValue(TypeId type_id) {
     case TIMESTAMP:
       return new TimestampValue(0);
     case VARCHAR:
-      return new VarlenValue("");
+      return new VarlenValue("", false);
+    case VARBINARY:
+      return new VarlenValue("", true);
     default:
       break;
   }
@@ -188,7 +190,9 @@ Value *Type::GetMaxValue(TypeId type_id) {
     case TIMESTAMP:
       return new TimestampValue(PELOTON_TIMESTAMP_MAX);
     case VARCHAR:
-      return new VarlenValue(nullptr, 0);
+      return new VarlenValue(nullptr, 0, false);
+    case VARBINARY:
+      return new VarlenValue(nullptr, 0, true);
     default:
       break;
   }

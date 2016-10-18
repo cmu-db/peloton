@@ -131,8 +131,8 @@ Value *TimestampValue::CastAs(const Type::TypeId type_id) const {
       return Copy();
     case Type::VARCHAR:
       if (IsNull())
-        return new VarlenValue(nullptr, 0);
-      return new VarlenValue(ToString());
+        return new VarlenValue(nullptr, 0, false);
+      return new VarlenValue(ToString(), false);
     default:
       break;
   }

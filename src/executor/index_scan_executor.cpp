@@ -146,6 +146,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   // Grab info from plan node
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+  bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
@@ -211,7 +212,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // if passed evaluation, then perform write.
         if (eval == true) {
           auto res =
-              transaction_manager.PerformRead(current_txn, tuple_location);
+              transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
@@ -307,6 +308,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   // Grab info from plan node
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+  bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
@@ -396,7 +398,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // if passed evaluation, then perform write.
         if (eval == true) {
           auto res =
-              transaction_manager.PerformRead(current_txn, tuple_location);
+              transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);

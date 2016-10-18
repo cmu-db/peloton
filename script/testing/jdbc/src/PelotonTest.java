@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// delete_plan.h
+// PelotonTest.java
 //
 // Identification: script/testing/jdbc/src/PelotonTest.java
 //
@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 import java.sql.*;
-import org.postgresql.util.*;
+import java.util.Arrays;
+import java.util.Random;
 
 public class PelotonTest {
   private final String url = "jdbc:postgresql://localhost:54321/";
@@ -108,7 +109,18 @@ public class PelotonTest {
 
   // To test the table stats colleced
   private final String SELECT_TABLE_METRIC = "SELECT * FROM catalog_db.table_metric;";
-  ;
+  
+  private final String INVALID_TABLE_SQL = "SELECT * FROM INVALID_TABLE;";
+
+  private final String INVALID_DB_SQL = "SELECT * FROM INVALID_DB.A;";
+
+  private final String INVALID_SYNTAX_SQL = "INVALIDKEYWORD * FROM A;";
+
+  private final String UNSUPPORTED_JOIN_SQL = "SELECT * FROM A, B;";
+
+  private final String UNSUPPORTED_INNER_JOIN_SQL = "SELECT * FROM A INNER JOIN B ON A.id = B.id;";
+
+  private final String UNSUPPORTED_SELECT_FOR_UPDATE_SQL = "SELECT id FROM A FOR UPDATE where A.id = 1;";
 
   public PelotonTest() throws SQLException {
     try {
@@ -594,6 +606,32 @@ public class PelotonTest {
     conn.commit();
   }
 
+  public void Invalid_SQL() throws SQLException {
+    conn.setAutoCommit(true);
+    Statement stmt = conn.createStatement();
+
+    int validQueryIndex = -1;
+    String statements[] = new String[6];
+    statements[0] = INVALID_TABLE_SQL;
+    statements[1] = INVALID_DB_SQL;
+    statements[2] = INVALID_SYNTAX_SQL;
+    statements[3] = UNSUPPORTED_JOIN_SQL;
+    statements[4] = UNSUPPORTED_INNER_JOIN_SQL;
+    statements[5] = UNSUPPORTED_SELECT_FOR_UPDATE_SQL;
+    for (int i = 0; i < 6; i++) {
+      try {
+        stmt.execute(statements[i]);
+        validQueryIndex = i;
+        break;
+      } catch (Exception e) {
+        // Great! Exception is expected!
+      }
+    }
+    if (validQueryIndex != -1) {
+      throw new SQLException("This should be an invalid SQL: " + statements[validQueryIndex]);
+    }
+  }
+
   public void Batch_Update() throws SQLException{
     PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
 
@@ -642,6 +680,43 @@ public class PelotonTest {
     stmt.execute();
     conn.commit();
   }
+  
+  //tests inserting and reading back large binary values
+  public void BlobTest() throws SQLException {
+    Random rand = new Random(12345L);
+    for (int i = 1; i < 20; i++) {
+      Statement initstmt = conn.createStatement();
+      initstmt.execute("DROP TABLE IF EXISTS A;");
+      initstmt.execute("CREATE TABLE A (id INT PRIMARY KEY, data VARBINARY)");
+      PreparedStatement stmt = conn.prepareStatement("INSERT INTO A VALUES (?,?);");
+      
+      System.out.println(i);
+      int numbytes = 1 << i;
+      byte[] sentbytes = new byte[numbytes];
+      rand.nextBytes(sentbytes);
+      stmt.setInt(1, 1);
+      stmt.setBytes(2, sentbytes);
+      stmt.execute();
+
+      initstmt.execute(SEQSCAN);
+      ResultSet rs = initstmt.getResultSet();
+      if (!rs.next()) {
+        System.err.println("failed at " + (numbytes) + " bytes");
+        throw new SQLException("Did not get result after inserting into varbinary");
+      }
+      int recvint = rs.getInt(1);
+      byte[] recvbytes = rs.getBytes(2);
+      if (recvint != 1 || !Arrays.equals(sentbytes, recvbytes)) {
+        System.err.println("failed at " + (numbytes) + " bytes");
+        throw new SQLException(
+            "byte mismatch: \n before: " + Arrays.toString(sentbytes) + "\n after:  " + Arrays.toString(recvbytes));
+      }
+      if (rs.next()) {
+        System.err.println("failed at " + (numbytes) + " bytes");
+        throw new SQLException("Too many results");
+      }
+    }
+  }
 
   static public void main(String[] args) throws Exception {
       if (args.length == 0 || args[0].equals("basic")) {
@@ -662,6 +737,8 @@ public class PelotonTest {
     pt.Batch_Insert();
     pt.Batch_Update();
     pt.Batch_Delete();
+    pt.Invalid_SQL();
+    pt.BlobTest();
     pt.Close();
   }
 

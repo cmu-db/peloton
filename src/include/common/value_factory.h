@@ -58,23 +58,23 @@ class ValueFactory {
   static inline VarlenValue GetVarcharValue(
       const char *value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
     std::string str(value);
-    return VarlenValue(str);
+    return VarlenValue(str, false);
   }
 
   static inline VarlenValue GetVarcharValue(
-      const std::string value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return VarlenValue(value);
-  }
-
-  static inline VarlenValue GetVarlenValue(
       const std::string &value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return VarlenValue(value);
+    return VarlenValue(value, false);
   }
 
-  static inline VarlenValue GetVarlenValue(
+  static inline VarlenValue GetVarbinaryValue(
+      const std::string &value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+    return VarlenValue(value, true);
+  }
+
+  static inline VarlenValue GetVarbinaryValue(
       const unsigned char *rawBuf, int32_t rawLength,
       UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return VarlenValue((const char *)rawBuf, rawLength);
+    return VarlenValue((const char *)rawBuf, rawLength, true);
   }
 
   static inline Value *GetNullValueByType(Type::TypeId type_id) {
@@ -94,7 +94,7 @@ class ValueFactory {
       case Type::TIMESTAMP:
         return new TimestampValue(PELOTON_TIMESTAMP_NULL);
       case Type::VARCHAR:
-        return new VarlenValue(nullptr, 0);
+        return new VarlenValue(nullptr, 0, false);
       default:
         break;
     }
@@ -120,7 +120,7 @@ class ValueFactory {
       case Type::TIMESTAMP:
         return new TimestampValue(0);
       case Type::VARCHAR:
-        return new VarlenValue(zero_string);
+        return new VarlenValue(zero_string, false);
       default:
         break;
     }
@@ -359,7 +359,7 @@ class ValueFactory {
 
   static inline Value *CastAsVarchar(const Value &value) {
     if (Type::GetInstance(Type::VARCHAR).IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return new VarlenValue(nullptr, 0);
+      if (value.IsNull()) return new VarlenValue(nullptr, 0, false);
       switch (value.GetTypeId()) {
         case Type::BOOLEAN:
         case Type::TINYINT:
@@ -369,7 +369,7 @@ class ValueFactory {
         case Type::DECIMAL:
         case Type::TIMESTAMP:
         case Type::VARCHAR:
-          return new VarlenValue(value.ToString());
+          return new VarlenValue(value.ToString(), false);
         default:
           break;
       }

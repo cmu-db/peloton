@@ -15,6 +15,7 @@
 #include "common/config.h"
 
 #include "gc/gc_manager_factory.h"
+#include "storage/data_table.h"
 
 #include "libcds/cds/init.h"
 
@@ -44,6 +45,10 @@ void PelotonInit::Initialize() {
   // threads. Too many active clients might starve execution.
   executor_thread_pool.Initialize(std::thread::hardware_concurrency(), 0);
 
+  int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
+  storage::DataTable::SetActiveTileGroupCount(parallelism);
+  storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
+  
   // the garbage collector is assigned to dedicated threads.
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   gc_manager.StartGC();

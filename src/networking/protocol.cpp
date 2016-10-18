@@ -304,8 +304,9 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   statement =
       tcop.PrepareStatement(statement_name, query_string, error_message);
   if (statement.get() == nullptr) {
+    skipped_stmt_ = true;
     SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state_, responses);
+    LOG_TRACE("ExecParse Error");
     return;
   }
 
@@ -476,6 +477,11 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             param_values.push_back(
                 common::ValueFactory::GetDoubleValue(float_val).Copy());
           } break;
+          case POSTGRES_VALUE_TYPE_VARBINARY: {
+            bind_parameters.push_back(std::make_pair(
+                common::Type::VARBINARY, std::string(reinterpret_cast<char *>(&param[0]), param_len)));
+            param_values.push_back(common::ValueFactory::GetVarbinaryValue(&param[0], param_len).Copy());
+          } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
           } break;
@@ -507,6 +513,10 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   if (param_values.size() > 0) {
+    LOG_TRACE("Binding values:");
+    for (UNUSED_ATTRIBUTE auto value : param_values) {
+      LOG_TRACE("%s", value->GetInfo().c_str());
+    }
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 

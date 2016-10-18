@@ -24,17 +24,22 @@
 namespace peloton {
 namespace stats {
 
-CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
-    BackendStatsContext::stats_context_map_;
+CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>> &
+  BackendStatsContext::GetBackendContextMap() {
+  static CuckooMap<std::thread::id, std::shared_ptr<BackendStatsContext>>
+      stats_context_map;
+  return stats_context_map;
+}
 
 BackendStatsContext* BackendStatsContext::GetInstance() {
 
   // Each thread gets a backend stats context
   std::thread::id this_id = std::this_thread::get_id();
   std::shared_ptr<BackendStatsContext> result(nullptr);
-  if (stats_context_map_.Find(this_id, result) == false) {
+  auto &stats_context_map = GetBackendContextMap();
+  if (stats_context_map.Find(this_id, result) == false) {
     result.reset(new BackendStatsContext(LATENCY_MAX_HISTORY_THREAD, true));
-    stats_context_map_.Insert(this_id, result);
+    stats_context_map.Insert(this_id, result);
   }
   return result.get();
 }
@@ -210,8 +215,6 @@ void BackendStatsContext::InitQueryMetric(std::string query_string,
                                           oid_t database_oid) {
   ongoing_query_metric_.reset(
       new QueryMetric(QUERY_METRIC, query_string, database_oid));
-  ongoing_query_metric_->GetQueryLatency().StartTimer();
-  LOG_TRACE("Query metric initialized");
 }
 
 //===--------------------------------------------------------------------===//
@@ -347,6 +350,7 @@ std::string BackendStatsContext::ToString() const {
 
 void BackendStatsContext::CompleteQueryMetric() {
   if (ongoing_query_metric_ != nullptr) {
+    ongoing_query_metric_->GetProcessorMetric().RecordTime();
     ongoing_query_metric_->GetQueryLatency().RecordLatency();
     completed_query_metrics_.Enqueue(ongoing_query_metric_);
     ongoing_query_metric_.reset();

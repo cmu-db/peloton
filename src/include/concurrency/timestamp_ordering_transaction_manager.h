@@ -48,6 +48,13 @@ class TimestampOrderingTransactionManager : public TransactionManager {
                        const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 
+  // This method tests whether the current transaction has created this version of the tuple
+  virtual bool IsWritten(
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id
+  );
+
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
       Transaction *const current_txn,
@@ -73,7 +80,8 @@ class TimestampOrderingTransactionManager : public TransactionManager {
                              ItemPointer *index_entry_ptr = nullptr);
 
   virtual bool PerformRead(Transaction *const current_txn,
-                           const ItemPointer &location);
+                           const ItemPointer &location,
+                           bool acquire_ownership = false);
 
   virtual void PerformUpdate(Transaction *const current_txn,
                              const ItemPointer &old_location,

@@ -99,7 +99,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   if (select_node->where_clause != NULL) {
     auto predicate = select_node->where_clause->Copy();
     // Replace COLUMN_REF expressions with TupleValue expressions
-    ReplaceColumnExpressions(GetTable()->GetSchema(), predicate);
+    expression::ExpressionUtil::ReplaceColumnExpressions(GetTable()->GetSchema(), predicate);
     predicate_with_params_ =
         std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
     SetPredicate(predicate);

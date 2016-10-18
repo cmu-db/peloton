@@ -52,7 +52,7 @@ void DeletePlan::BuildInitialDeletePlan(
   } else {
     expr_ = delete_statemenet->expr->Copy();
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
-    ReplaceColumnExpressions(target_table_->GetSchema(), expr_);
+    expression::ExpressionUtil::ReplaceColumnExpressions(target_table_->GetSchema(), expr_);
   }
 }
 

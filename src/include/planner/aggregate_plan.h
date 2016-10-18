@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "common/types.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
-#include "common/types.h"
 
 namespace peloton {
 
@@ -97,13 +97,6 @@ class AggregatePlan : public AbstractPlan {
   }
 
   const std::string GetInfo() const { return "AggregatePlan"; }
-
-  void SetParameterValues(std::vector<common::Value *> *values) {
-    LOG_TRACE("Setting parameter values in Aggregate Plan");
-    for (auto &child_plan : GetChildren()) {
-      child_plan->SetParameterValues(values);
-    }
-  };
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 

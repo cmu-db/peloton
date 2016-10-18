@@ -53,8 +53,10 @@ class Database : public Printable {
 
   storage::DataTable *GetTable(const oid_t table_offset) const;
 
+  // Throw CatalogException if such table is not found
   storage::DataTable *GetTableWithOid(const oid_t table_oid) const;
 
+  // Throw CatalogException if such table is not found
   storage::DataTable *GetTableWithName(const std::string table_name) const;
 
   oid_t GetTableCount() const;

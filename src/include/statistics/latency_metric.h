@@ -16,7 +16,9 @@
 #include <sstream>
 
 #include "common/timer.h"
+#include "common/macros.h"
 #include "common/types.h"
+#include "common/exception.h"
 #include "container/circular_buffer.h"
 #include "statistics/abstract_metric.h"
 #include <mutex>
@@ -74,9 +76,7 @@ class LatencyMetric : public AbstractMetric {
 
   // Returns the first latency value recorded
   inline double GetFirstLatencyValue() {
-    if (latencies_.begin() == latencies_.end()) {
-      return -1;
-    }
+    PL_ASSERT(latencies_.begin() != latencies_.end());
     return *(latencies_.begin());
   }
 

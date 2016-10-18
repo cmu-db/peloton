@@ -19,13 +19,14 @@ namespace stats {
 
 TableMetric::TableMetric(MetricType type, oid_t database_id, oid_t table_id)
     : AbstractMetric(type), database_id_(database_id), table_id_(table_id) {
-  auto table =
-      catalog::Catalog::GetInstance()->GetTableWithOid(database_id, table_id);
-  if (table == nullptr) {
-    table_name_ = "";
-  } else {
+  try {
+    auto table =
+        catalog::Catalog::GetInstance()->GetTableWithOid(database_id, table_id);
     table_name_ = table->GetName();
     for (auto& ch : table_name_) ch = toupper(ch);
+  }
+  catch (CatalogException& e) {
+    table_name_ = "";
   }
 }
 

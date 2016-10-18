@@ -104,15 +104,18 @@ bool DeleteExecutor::DExecute() {
 
     bool is_owner = 
         transaction_manager.IsOwner(current_txn, tile_group_header, physical_tuple_id);
+    bool is_written =
+      transaction_manager.IsWritten(current_txn, tile_group_header, physical_tuple_id);
+    PL_ASSERT((is_owner == false && is_written == true) == false);
 
-    if (is_owner == true) {
+    if (is_owner == true && is_written == true) {
       // if the thread is the owner of the tuple, then directly update in place.
       LOG_TRACE("Thread is owner of the tuple");
       transaction_manager.PerformDelete(current_txn, old_location);
 
     } else {
 
-      bool is_ownable = 
+      bool is_ownable = is_owner ||
           transaction_manager.IsOwnable(current_txn, tile_group_header, physical_tuple_id);
 
       if (is_ownable == true) {
@@ -120,7 +123,7 @@ bool DeleteExecutor::DExecute() {
         // transaction.
       	LOG_TRACE("Thread is not the owner of the tuple, but still visible");
 
-        bool acquire_ownership_success = 
+        bool acquire_ownership_success = is_owner ||
             transaction_manager.AcquireOwnership(current_txn, tile_group_header, physical_tuple_id);
 
 
@@ -139,7 +142,10 @@ bool DeleteExecutor::DExecute() {
         // the YieldOwnership() function helps us release the acquired write lock.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-          transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
+          if (is_owner == false) {
+            // If the ownership is acquire inside this update executor, we release it here
+            transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
+          }
           transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
           return false;
         }

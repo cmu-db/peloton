@@ -40,13 +40,6 @@ class HashPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Hash"; }
 
-  void SetParameterValues(std::vector<common::Value *> *values) {
-    LOG_TRACE("Setting parameter values in Hash Plan");
-    for (auto &child_plan : GetChildren()) {
-      child_plan->SetParameterValues(values);
-    }
-  };
-
   inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
     return this->hash_keys_;
   }

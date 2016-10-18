@@ -192,7 +192,8 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
 std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     catalog::Schema *schema, std::string query_name, oid_t database_id,
     int64_t reads, int64_t updates, int64_t deletes, int64_t inserts,
-    int64_t latency, int64_t time_stamp, common::VarlenPool *pool) {
+    int64_t latency, int64_t cpu_time, int64_t time_stamp,
+    common::VarlenPool *pool) {
 
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
@@ -203,7 +204,8 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
   auto val5 = common::ValueFactory::GetIntegerValue(deletes);
   auto val6 = common::ValueFactory::GetIntegerValue(inserts);
   auto val7 = common::ValueFactory::GetIntegerValue(latency);
-  auto val8 = common::ValueFactory::GetIntegerValue(time_stamp);
+  auto val8 = common::ValueFactory::GetIntegerValue(cpu_time);
+  auto val9 = common::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, nullptr);
@@ -213,6 +215,7 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
   tuple->SetValue(5, val6, nullptr);
   tuple->SetValue(6, val7, nullptr);
   tuple->SetValue(7, val8, nullptr);
+  tuple->SetValue(8, val9, nullptr);
   return std::move(tuple);
 }
 
@@ -227,9 +230,9 @@ std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema,
     std::string database_name, common::VarlenPool *pool){
 	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 	auto val1 = common::ValueFactory::GetIntegerValue(table_id);
-	auto val2 = common::ValueFactory::GetVarlenValue(table_name, nullptr);
+	auto val2 = common::ValueFactory::GetVarcharValue(table_name, nullptr);
 	auto val3 = common::ValueFactory::GetIntegerValue(database_id);
-	auto val4 = common::ValueFactory::GetVarlenValue(database_name, nullptr);
+	auto val4 = common::ValueFactory::GetVarcharValue(database_name, nullptr);
 	tuple->SetValue(0, val1, pool);
 	tuple->SetValue(1, val2, pool);
 	tuple->SetValue(2, val3, pool);

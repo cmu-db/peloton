@@ -146,13 +146,15 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
     auto deletes = table_access.GetDeletes();
     auto inserts = table_access.GetInserts();
     auto latency = query_metric->GetQueryLatency().GetFirstLatencyValue();
-    PL_ASSERT(latency >= 0);
+    auto cpu_system = query_metric->GetProcessorMetric().GetSystemDuration();
+    auto cpu_user = query_metric->GetProcessorMetric().GetUserDuration();
 
     // Generate and insert the tuple
     auto query_tuple = catalog::GetQueryMetricsCatalogTuple(
         query_metrics_table->GetSchema(), query_metric->GetName(),
         query_metric->GetDatabaseId(), reads, updates, deletes, inserts,
-        (int64_t)latency, time_stamp, pool_.get());
+        (int64_t)latency, (int64_t)(cpu_system + cpu_user), time_stamp,
+        pool_.get());
     catalog::InsertTuple(query_metrics_table, std::move(query_tuple), txn);
     LOG_TRACE("Query Metric Tuple inserted");
   }

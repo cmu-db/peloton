@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
@@ -29,7 +28,6 @@ class Schema;
 namespace planner {
 class DropPlan : public AbstractPlan {
  public:
-
   DropPlan() = delete;
   DropPlan(const DropPlan &) = delete;
   DropPlan &operator=(const DropPlan &) = delete;
@@ -42,17 +40,13 @@ class DropPlan : public AbstractPlan {
 
   explicit DropPlan(parser::DropStatement *parse_tree);
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_DROP;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DROP; }
 
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";
-  returned_string += "\tTable name: " + table_name + "\n";
+    returned_string += "\tTable name: " + table_name + "\n";
     return returned_string;
   }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new DropPlan(target_table_));
@@ -67,7 +61,6 @@ class DropPlan : public AbstractPlan {
   storage::DataTable *target_table_ = nullptr;
   std::string table_name;
   bool missing;
-
 };
 }
 }

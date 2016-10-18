@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -18,9 +17,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "planner/abstract_plan.h"
-#include "common/types.h"
 #include "catalog/schema.h"
+#include "common/types.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 
@@ -56,8 +55,6 @@ class MaterializationPlan : public AbstractPlan {
   }
 
   const std::string GetInfo() const { return "Materialize"; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value *>* values) { };
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(

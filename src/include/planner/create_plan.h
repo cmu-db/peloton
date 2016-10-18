@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
@@ -19,17 +18,16 @@ namespace peloton {
 namespace catalog {
 class Schema;
 }
-namespace storage{
+namespace storage {
 class DataTable;
 }
-namespace parser{
+namespace parser {
 class CreateStatement;
 }
 
 namespace planner {
 class CreatePlan : public AbstractPlan {
  public:
-
   CreatePlan() = delete;
   CreatePlan(const CreatePlan &) = delete;
   CreatePlan &operator=(const CreatePlan &) = delete;
@@ -47,9 +45,6 @@ class CreatePlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_CREATE; }
 
   const std::string GetInfo() const { return "Create Plan"; }
-
-  void SetParameterValues(
-      UNUSED_ATTRIBUTE std::vector<common::Value *> *values) {};
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new CreatePlan(target_table_));

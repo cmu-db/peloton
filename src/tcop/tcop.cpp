@@ -97,15 +97,18 @@ Result TrafficCop::ExecuteStatement(
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 
-  auto status = ExchangeOperator(statement->GetPlanTree().get(),
-                                 params, result, result_format);
-
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
-
-  rows_changed = status.m_processed;
-  return status.m_result;
+  try {
+    bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+    auto status = ExchangeOperator(statement->GetPlanTree().get(),
+                                   params, result, result_format);
+    LOG_TRACE("Statement executed. Result: %d", status.m_result);
+    rows_changed = status.m_processed;
+    return status.m_result;
+  } catch (Exception &e) {
+    error_message = e.what();
+    return Result::RESULT_FAILURE;
+  }
 }
 
 bridge::peloton_status TrafficCop::ExchangeOperator(
@@ -140,24 +143,31 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
   statement.reset(new Statement(statement_name, query_string));
-
-  auto &peloton_parser = parser::Parser::GetInstance();
-  auto sql_stmt = peloton_parser.BuildParseTree(query_string);
-
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
-
-  for (auto stmt : sql_stmt->GetStatements()) {
-    if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
-      auto tuple_descriptor = GenerateTupleDescriptor(query_string);
-      statement->SetTupleDescriptor(tuple_descriptor);
+  try {
+    auto &peloton_parser = parser::Parser::GetInstance();
+    auto sql_stmt = peloton_parser.BuildParseTree(query_string);
+    if (sql_stmt->is_valid == false) {
+      throw ParserException("Error parsing SQL statement");
     }
-    break;
-  }
+    statement->SetPlanTree(
+        optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_DEBUG("Statement Prepared!");
-  return std::move(statement);
+    for (auto stmt : sql_stmt->GetStatements()) {
+      if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
+        auto tuple_descriptor = GenerateTupleDescriptor(query_string);
+        statement->SetTupleDescriptor(tuple_descriptor);
+      }
+      break;
+    }
+
+    bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+    LOG_DEBUG("Statement Prepared!");
+    return std::move(statement);
+  }
+  catch (Exception &e) {
+    error_message = e.what();
+    return nullptr;
+  }
 }
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
@@ -255,32 +265,25 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   return tuple_descriptor;
 }
 
-FieldInfoType TrafficCop::GetColumnFieldForValueType(
-    std::string column_name, common::Type::TypeId column_type) {
-  if (column_type == common::Type::INTEGER) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-  }
 
-  if (column_type == common::Type::DECIMAL) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
-  }
+FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , common::Type::TypeId column_type){
+  switch(column_type){
+    case common::Type::INTEGER:
+      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_INTEGER , 4);
+    case common::Type::DECIMAL:
+      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DOUBLE , 8);
+    case common::Type::VARCHAR:
+    case common::Type::VARBINARY:
+      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
+    case common::Type::TIMESTAMP:
+      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TIMESTAMPS , 64);
+    default:
+      // Type not Identified
+      LOG_ERROR("Unrecognized column type: %d", column_type);
+      // return String
+      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
+    }
 
-  if (column_type == common::Type::VARCHAR) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
-  }
-
-  if (column_type == common::Type::DECIMAL) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DECIMAL, 16);
-  }
-
-  if (column_type == common::Type::TIMESTAMP) {
-    return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
-  }
-
-  // Type not Identified
-  LOG_ERROR("Unrecognized column type: %d", column_type);
-  // return String
-  return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
 
 FieldInfoType TrafficCop::GetColumnFieldForAggregates(

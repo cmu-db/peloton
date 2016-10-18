@@ -94,10 +94,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   select_stmt->from_table->join != NULL);
         LOG_TRACE("have sub select statement? %d",
                   select_stmt->from_table->select != NULL);
+        try {
+          catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                            "order_line");
+          auto child_SelectPlan = CreateHackingJoinPlan();
+          child_plan = std::move(child_SelectPlan);
+          break;
+        }
+        catch (Exception& e) {
+          throw NotImplementedException("Error: Joins are not implemented yet");
+        }
+      }
 
-        auto child_SelectPlan = CreateHackingJoinPlan();
-        child_plan = std::move(child_SelectPlan);
-        break;
+      if (select_stmt->from_table->join != NULL) {
+        throw NotImplementedException("Error: Joins are not implemented yet");
       }
 
       storage::DataTable* target_table =
@@ -136,10 +146,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
           std::vector<oid_t> keys;
-          for (auto elem : *select_stmt->select_list) {
-            std::string col_name(elem->GetName());
-            auto column_id = target_table->GetSchema()->GetColumnID(col_name);
-            keys.push_back(column_id);
+          // Add all selected columns to the output
+          // We already generated the "real" physical output schema in the scan
+          // plan, so now we just need to directly copy all the columns
+          for (size_t column_ctr = 0;
+               column_ctr < select_stmt->select_list->size(); column_ctr++) {
+            keys.push_back(column_ctr);
           }
 
           std::vector<bool> flags;
@@ -149,9 +161,18 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string col_name(select_stmt->order->expr->GetName());
-          auto column_id = target_table->GetSchema()->GetColumnID(col_name);
-          key.push_back(column_id);
+          std::string sort_col_name(select_stmt->order->expr->GetName());
+          for (size_t column_ctr = 0;
+               column_ctr < select_stmt->select_list->size(); column_ctr++) {
+            std::string col_name(
+                select_stmt->select_list->at(column_ctr)->GetName());
+            if (col_name == sort_col_name) key.push_back(column_ctr);
+          }
+          if (key.size() == 0) {
+            LOG_ERROR(
+                "Not supported: Ordering column is not an element of select "
+                "list!");
+          }
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
           order_by_plan->AddChild(std::move(child_SelectPlan));
@@ -165,10 +186,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           child_plan = std::move(limit_plan);
         } else if (select_stmt->order != NULL) {
           std::vector<oid_t> keys;
-          for (auto elem : *select_stmt->select_list) {
-            std::string col_name(elem->GetName());
-            auto column_id = target_table->GetSchema()->GetColumnID(col_name);
-            keys.push_back(column_id);
+          for (size_t column_ctr = 0;
+               column_ctr < select_stmt->select_list->size(); column_ctr++) {
+            keys.push_back(column_ctr);
           }
 
           std::vector<bool> flags;
@@ -178,9 +198,18 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string col_name(select_stmt->order->expr->GetName());
-          auto column_id = target_table->GetSchema()->GetColumnID(col_name);
-          key.push_back(column_id);
+          std::string sort_col_name(select_stmt->order->expr->GetName());
+          for (size_t column_ctr = 0;
+               column_ctr < select_stmt->select_list->size(); column_ctr++) {
+            std::string col_name(
+                select_stmt->select_list->at(column_ctr)->GetName());
+            if (col_name == sort_col_name) key.push_back(column_ctr);
+          }
+          if (key.size() == 0) {
+            LOG_ERROR(
+                "Not supported: Ordering column is not an element of select "
+                "list!");
+          }
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
           order_by_plan->AddChild(std::move(child_SelectPlan));
@@ -315,6 +344,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               output_schema_columns.push_back(column);
             } else {
               LOG_TRACE("Unrecognized type in function expression!");
+              throw PlannerException(
+                  "Error: Unrecognized type in function expression");
             }
             ++agg_id;
           }
@@ -387,26 +418,24 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::vector<common::Value*> values;
       oid_t index_id;
 
-      parser::DeleteStatement* deleteStmt = 
+      parser::DeleteStatement* deleteStmt =
           (parser::DeleteStatement*)parse_tree2;
       auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-                  deleteStmt->GetDatabaseName(), 
-                  deleteStmt->GetTableName());
+          deleteStmt->GetDatabaseName(), deleteStmt->GetTableName());
       if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
-                                expr_types, values, index_id)) {
+                               expr_types, values, index_id)) {
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-            new planner::DeletePlan(deleteStmt, key_column_ids, 
-                expr_types, values, index_id));
+            new planner::DeletePlan(deleteStmt, key_column_ids, expr_types,
+                                    values, index_id));
         child_plan = std::move(child_DeletePlan);
-      }
-      else {
+      } else {
         // Create sequential scan plan
         std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-          new planner::DeletePlan(deleteStmt));
+            new planner::DeletePlan(deleteStmt));
         child_plan = std::move(child_DeletePlan);
       }
-      
+
     } break;
 
     case STATEMENT_TYPE_UPDATE: {
@@ -418,31 +447,33 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::vector<common::Value*> values;
       oid_t index_id;
 
-      parser::UpdateStatement* updateStmt = 
+      parser::UpdateStatement* updateStmt =
           (parser::UpdateStatement*)parse_tree2;
       auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-                            updateStmt->table->GetDatabaseName(), 
-                            updateStmt->table->GetTableName());
-      
+          updateStmt->table->GetDatabaseName(),
+          updateStmt->table->GetTableName());
+
       if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
-                                expr_types, values, index_id)) {
+                               expr_types, values, index_id)) {
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-            new planner::UpdatePlan(updateStmt, key_column_ids, 
-                expr_types, values, index_id));
+            new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
+                                    values, index_id));
         child_plan = std::move(child_InsertPlan);
-      }
-      else {
+      } else {
         // Create sequential scan plan
         std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::UpdatePlan(updateStmt));
+            new planner::UpdatePlan(updateStmt));
         child_plan = std::move(child_InsertPlan);
       }
 
     } break;
 
+    case STATEMENT_TYPE_TRANSACTION: {
+    } break;
     default:
-      LOG_TRACE("Unsupported Parse Node Type");
+      LOG_ERROR("Unsupported Parse Node Type %d", parse_item_node_type);
+      throw NotImplementedException("Error: Query plan not implemented");
   }
 
   if (child_plan != nullptr) {
@@ -465,16 +496,15 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
 /**
  * This function checks whether the current expression can enable index
- * scan for the statement. If it is index searchable, returns true and 
+ * scan for the statement. If it is index searchable, returns true and
  * set the corresponding data structures that will be used in creating
  * index scan node. Otherwise, returns false.
  */
-bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table, 
-                                            expression::AbstractExpression *expression,
-                                            std::vector<oid_t> &key_column_ids,
-                                            std::vector<ExpressionType> &expr_types,
-                                            std::vector<common::Value *> &values,
-                                            oid_t &index_id) {
+bool SimpleOptimizer::CheckIndexSearchable(
+    storage::DataTable* target_table,
+    expression::AbstractExpression* expression,
+    std::vector<oid_t>& key_column_ids, std::vector<ExpressionType>& expr_types,
+    std::vector<common::Value*>& values, oid_t& index_id) {
   bool index_searchable = false;
   index_id = 0;
 
@@ -513,7 +543,7 @@ bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table,
   }
 
   if (!index_searchable) {
-    for (common::Value *value : predicate_values) {
+    for (common::Value* value : predicate_values) {
       delete value;
     }
     return false;
@@ -539,8 +569,6 @@ bool SimpleOptimizer::CheckIndexSearchable(storage::DataTable* target_table,
   return true;
 }
 
-
-
 std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     storage::DataTable* target_table, parser::SelectStatement* select_stmt) {
   oid_t index_id = 0;
@@ -559,9 +587,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // 'peloton::TypeMismatchException'
   // what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast
   // as BIGINT...
-  // 
+  //
 
-  if (!CheckIndexSearchable(target_table, select_stmt->where_clause, 
+  if (!CheckIndexSearchable(target_table, select_stmt->where_clause,
                             key_column_ids, expr_types, values, index_id)) {
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
@@ -578,6 +606,10 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   bool update_flag = false;
   if (select_stmt->is_for_update == true) {
+    // FIXME: These are commented out for now to profile TPC-C. Eventually we
+    // have to support select for update.
+    //throw NotImplementedException(
+    //    "Error: select .. for update is not implemented yet!");
     update_flag = true;
   }
   // Create index scan desc
@@ -661,7 +693,8 @@ void SimpleOptimizer::GetPredicateColumns(
       // peloton::do_allocation(unsigned long, bool) (allocator.cpp:27)
       // operator new(unsigned long) (allocator.cpp:40)
       // peloton::common::IntegerValue::Copy() const (numeric_value.cpp:1288)
-      // peloton::expression::ConstantValueExpression::GetValue() const (constant_value_expression.h:40)
+      // peloton::expression::ConstantValueExpression::GetValue() const
+      // (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableRight())

@@ -165,12 +165,15 @@ bool TimestampOrderingTransactionManager::IsOccupied(
   bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
 
   // there are exactly two versions that can be owned by a transaction.
-  // unless it is an insertion.
+  // unless it is an insertion/select for update.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       PL_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
+    } else if (current_txn->GetRWType(position) == RW_TYPE_READ_OWN) {
+      // the ownership is from a select-for-update read operation
+      return VISIBILITY_OK;
     } else {
       // the older version is not visible.
       return false;
@@ -214,6 +217,7 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  oid_t tile_group_id = tile_group_header->GetTileGroup()->GetTileGroupId();
 
   // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
@@ -234,11 +238,14 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
   }
 
   // there are exactly two versions that can be owned by a transaction,
-  // unless it is an insertion.
+  // unless it is an insertion/select-for-update
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       PL_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted/updated one.
+      return VISIBILITY_OK;
+    } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) == RW_TYPE_READ_OWN) {
+      // the ownership is from a select-for-update read operation
       return VISIBILITY_OK;
     } else if (tuple_end_cid == INVALID_CID) {
       // tuple being deleted by current txn
@@ -282,6 +289,16 @@ bool TimestampOrderingTransactionManager::IsOwner(
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
   return tuple_txn_id == current_txn->GetTransactionId();
+}
+
+// This method tests whether the current transaction has created this version of the tuple
+bool TimestampOrderingTransactionManager::IsWritten(
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id
+  ) {
+  return IsOwner(current_txn, tile_group_header, tuple_id)
+      && tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID;
 }
 
 // if the tuple is not owned by any transaction and is visible to current
@@ -347,7 +364,7 @@ void TimestampOrderingTransactionManager::YieldOwnership(
 }
 
 bool TimestampOrderingTransactionManager::PerformRead(
-    Transaction *const current_txn, const ItemPointer &location) {
+    Transaction *const current_txn, const ItemPointer &location, bool acquire_ownership) {
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -356,6 +373,23 @@ bool TimestampOrderingTransactionManager::PerformRead(
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
+
+  // Check if it's select for update before we check the ownership and modify the
+  // last reader tid
+  if (acquire_ownership == true
+      && IsOwner(current_txn, tile_group_header, tuple_id) == false) {
+    // Acquire ownership if we haven't
+    if (IsOwnable(current_txn, tile_group_header, tuple_id) == false) {
+      // Can not own
+      return false;
+    }
+    if (AcquireOwnership(current_txn, tile_group_header, tuple_id) == false) {
+      // Can not acquire ownership
+      return false;
+    }
+    // Promote to RW_TYPE_READ_OWN
+    current_txn->RecordReadOwn(location);
+  }
 
   // if the current transaction has already owned this tuple, then perform read
   // directly.
@@ -702,7 +736,11 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_UPDATE) {
+      if (tuple_entry.second == RW_TYPE_READ_OWN) {
+        // A read operation has acquired ownership but hasn't done any further update/delete yet
+        // Yield the ownership
+        YieldOwnership(current_txn, tile_group_id, tuple_slot);
+      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we must guarantee that, at any time point, only one version is
         // visible.
         ItemPointer new_version =
@@ -839,7 +877,11 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
 
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_UPDATE) {
+      if (tuple_entry.second == RW_TYPE_READ_OWN) {
+        // A read operation has acquired ownership but hasn't done any further update/delete yet
+        // Yield the ownership
+        YieldOwnership(current_txn, tile_group_id, tuple_slot);
+      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 

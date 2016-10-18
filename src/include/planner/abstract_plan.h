@@ -12,19 +12,19 @@
 
 #pragma once
 
-#include <iostream>
-#include <memory>
 #include <cstdint>
-#include <vector>
+#include <iostream>
 #include <map>
+#include <memory>
+#include <vector>
 #include <vector>
 
+#include "catalog/schema.h"
 #include "common/printable.h"
+#include "common/serializeio.h"
+#include "common/serializer.h"
 #include "common/types.h"
 #include "common/value.h"
-#include "common/serializer.h"
-#include "common/serializeio.h"
-#include "catalog/schema.h"
 
 namespace peloton {
 
@@ -77,7 +77,7 @@ class AbstractPlan : public Printable {
   virtual PlanNodeType GetPlanNodeType() const = 0;
 
   // Setting values of the parameters in the prepare statement
-  virtual void SetParameterValues(std::vector<common::Value *> *values) = 0;
+  virtual void SetParameterValues(std::vector<common::Value *> *values);
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -110,10 +110,6 @@ class AbstractPlan : public Printable {
  protected:
   // only used by its derived classes (when deserialization)
   AbstractPlan *Parent() { return parent_; }
-
-  // Convert COLUMN_REF in AbstractExpression to TupleValueExpression
-  void ReplaceColumnExpressions(catalog::Schema *schema,
-                                expression::AbstractExpression *expression);
 
  private:
   // A plan node can have multiple children

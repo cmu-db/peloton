@@ -180,6 +180,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_BOOLEAN = 16,
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
   POSTGRES_VALUE_TYPE_INTEGER = 23,
+  POSTGRES_VALUE_TYPE_VARBINARY = 17,
   POSTGRES_VALUE_TYPE_BIGINT = 20,
   POSTGRES_VALUE_TYPE_REAL = 700,
   POSTGRES_VALUE_TYPE_DOUBLE = 701,
@@ -824,8 +825,10 @@ enum MetricType {
   LATENCY_METRIC = 7,
   // Timestamp, e.g., creation time of a table/index
   TEMPORAL_METRIC = 8,
-  //  Statistics for a specific table
+  // Statistics for a specific table
   QUERY_METRIC = 9,
+  // Statistics for CPU
+  PROCESSOR_METRIC = 10,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;
@@ -956,11 +959,13 @@ struct ItemPointerHasher {
 //===--------------------------------------------------------------------===//
 
 enum RWType {
+  RW_TYPE_INVALID,
   RW_TYPE_READ,
+  RW_TYPE_READ_OWN, // select for update
   RW_TYPE_UPDATE,
   RW_TYPE_INSERT,
   RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL  // delete after insert.
+  RW_TYPE_INS_DEL,  // delete after insert.
 };
 
 enum GCSetType {
