@@ -734,7 +734,7 @@ bool PacketManager::ManageStartupPacket() {
     return false;
   }
   status = ProcessStartupPacket(&pkt, responses);
-  if (!WritePackets(responses, &client_, true) || status == false) {
+  if (!WritePackets(responses, &client_) || status == false) {
     // close client on write failure or status failure
     CloseClient();
     return false;
