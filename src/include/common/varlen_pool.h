@@ -12,19 +12,20 @@
 
 #pragma once
 
-#include "common/types.h"
 #include "common/macros.h"
+#include "common/platform.h"
+#include "common/types.h"
 
-#include <cstddef>
 #include <stdint.h>
-#include <vector>
-#include <list>
-#include <unordered_map>
-#include <cstring>
 #include <stdlib.h>
+#include <cstddef>
+#include <cstring>
+#include <list>
 #include <mutex>
+#include <unordered_map>
+#include <vector>
 
-static const size_t BUFFER_SIZE = (1 << 17);    // Bytes
+static const size_t BUFFER_SIZE = (1 << 17);  // Bytes
 static const size_t MAX_POOL_SIZE = (1L << 60);
 static const size_t MIN_BLOCK_SIZE = 16;
 static const size_t MAX_BLOCK_NUM = BUFFER_SIZE / MIN_BLOCK_SIZE;
@@ -42,10 +43,9 @@ class Buffer {
   size_t buf_size_;
   size_t blk_size_;
   size_t allocated_cnt_;
-  char *buf_begin_;
+  std::shared_ptr<char> buf_begin_;
   std::vector<bool> bitmap_;
   Buffer(size_t buf_size, size_t block_size);
-  ~Buffer();
 };
 
 // A memory pool that can quickly allocate chunks of memory to clients.
@@ -78,8 +78,8 @@ class VarlenPool {
   void Free(void *ptr);
 
   // Get the total number of bytes that have been allocated by this pool.
-  uint64_t GetTotalAllocatedSpace() const;
-  
+  uint64_t GetTotalAllocatedSpace();
+
   // Get the maximum size of this pool.
   uint64_t GetMaximumPoolSize() const;
 
@@ -92,13 +92,13 @@ class VarlenPool {
   std::list<Buffer> buf_list_[MAX_LIST_NUM];
 
   // Total buffer size in the pool
-  size_t pool_size_;
+  std::atomic<size_t> pool_size_;
 
   // Number of empty buffers in each list
   size_t empty_cnt_[MAX_LIST_NUM];
 
   // Each buffer list has a mutex
-  mutable std::mutex list_lock_[MAX_LIST_NUM];
+  Spinlock list_lock_[MAX_LIST_NUM];
 };
 
 }  // namespace common
