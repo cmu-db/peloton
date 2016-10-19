@@ -23,6 +23,8 @@ namespace executor {
 /**
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
+ *
+ * by default we are running the query is running on a single thread
  */
 AbstractExecutor::AbstractExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context)

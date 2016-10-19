@@ -18,6 +18,8 @@ class ThreadPool;
 
 extern ThreadPool thread_pool;
 
+extern ThreadPool executor_thread_pool;
+
 //===--------------------------------------------------------------------===//
 // Global Setup and Teardown
 //===--------------------------------------------------------------------===//

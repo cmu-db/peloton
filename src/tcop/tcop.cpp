@@ -28,7 +28,10 @@
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
 
-#include <boost/algorithm/string.hpp>
+#include "common/thread_pool.h"
+#include <include/common/init.h>
+#include <tuple>
+#include <include/tcop/tcop.h>
 
 namespace peloton {
 namespace tcop {
@@ -83,6 +86,7 @@ Result TrafficCop::ExecuteStatement(
     UNUSED_ATTRIBUTE const bool unnamed, const std::vector<int> &result_format,
     std::vector<ResultType> &result, int &rows_changed,
     UNUSED_ATTRIBUTE std::string &error_message) {
+
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
         statement->GetQueryString(), DEFAULT_DB_ID);
@@ -93,18 +97,41 @@ Result TrafficCop::ExecuteStatement(
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetStatementName().c_str());
   std::vector<common::Value *> params;
+
   try {
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-    bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-        statement->GetPlanTree().get(), params, result, result_format);
+    auto status = ExchangeOperator(statement->GetPlanTree().get(),
+                                   params, result, result_format);
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
     rows_changed = status.m_processed;
     return status.m_result;
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
+}
+
+bridge::peloton_status TrafficCop::ExchangeOperator(
+    const planner::AbstractPlan *plan,
+    const std::vector<common::Value *> &params,
+    std::vector<ResultType>& result, const std::vector<int> &result_format) {
+
+  bridge::peloton_status final_status;
+
+  // make the exchg params list
+  std::unique_ptr<bridge::ExchangeParams> exchg_params(
+      new bridge::ExchangeParams(plan, params, result_format));
+  exchg_params->self = exchg_params.get();
+  executor_thread_pool.SubmitTask(bridge::PlanExecutor::ExecutePlanLocal,
+                                  &exchg_params->self);
+
+  // wait for executor thread to return result
+  final_status = exchg_params->f.get();
+
+  result.insert(result.end(), exchg_params->result.begin(),
+                exchg_params->result.end());
+
+  return final_status;
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(

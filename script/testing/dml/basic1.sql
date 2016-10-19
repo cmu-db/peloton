@@ -56,4 +56,3 @@ select * from foo;
 
 insert into foo values (1, 1000);
 select * from foo;
-

@@ -15,6 +15,8 @@
 #include "common/statement.h"
 #include "common/types.h"
 #include "executor/abstract_executor.h"
+#include "boost/thread/future.hpp"
+
 
 namespace peloton {
 namespace bridge {
@@ -44,6 +46,29 @@ typedef struct peloton_status {
 
 } peloton_status;
 
+/*
+ * Struct to hold parameters used by the exchange operator
+ */
+struct ExchangeParams {
+  boost::promise<bridge::peloton_status> p;
+  boost::unique_future<bridge::peloton_status> f;
+  std::vector<ResultType> result;
+  const planner::AbstractPlan *plan;
+  const std::vector<common::Value *> params;
+  int parallelism_count, partition_id;
+  const std::vector<int> result_format;
+  ExchangeParams *self;
+
+  inline ExchangeParams(const planner::AbstractPlan *plan,
+                        const std::vector<common::Value *>& params,
+                        const std::vector<int> &result_format)
+      : plan(plan), params(params),
+        result_format(result_format) {
+    f = p.get_future();
+  }
+};
+
+
 class PlanExecutor {
  public:
   PlanExecutor(const PlanExecutor &) = delete;
@@ -68,34 +93,24 @@ class PlanExecutor {
     }
   }
 
-  /* TODO: Delete this mothod
-    static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                      ParamListInfo m_param_list,
-                                      TupleDesc m_tuple_desc);
-  */
-
   /*
    * @brief Use std::vector<common::Value *> as params to make it more elegant
-   * for
-   * networking
-   *        Before ExecutePlan, a node first receives value list, so we should
-   * pass
-   *        value list directly rather than passing Postgres's ParamListInfo
+   * for networking Before ExecutePlan, a node first receives value list,
+   * so we should pass value list directly rather than passing Postgres's
+   * ParamListInfo.
    */
-  static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                    const std::vector<common::Value *> &params,
-                                    std::vector<ResultType> &result,
-                                    const std::vector<int> &result_format);
+  static void ExecutePlanLocal(ExchangeParams **exchg_params_arg);
 
   /*
-   * @brief When a peloton node recvs a query plan, this function is invoked
+   * @brief When a peloton node recvs a query plan in rpc mode,
+   * this function is invoked
    * @param plan and params
    * @return the number of tuple it executes and logical_tile_list
    */
-  static int ExecutePlan(
-      const planner::AbstractPlan *plan,
-      const std::vector<common::Value *> &params,
-      std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
+  static void ExecutePlanRemote(
+      const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
+      std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list,
+      boost::promise<int> &p);
 };
 
 }  // namespace bridge

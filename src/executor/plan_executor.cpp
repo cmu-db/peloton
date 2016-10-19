@@ -43,13 +43,14 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
-peloton_status PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan,
-    const std::vector<common::Value *> &params, std::vector<ResultType> &result,
-    const std::vector<int> &result_format) {
+void PlanExecutor::ExecutePlanLocal(ExchangeParams **exchg_params_arg) {
   peloton_status p_status;
+  ExchangeParams *exchg_params = *exchg_params_arg;
 
-  if (plan == nullptr) return p_status;
+  if (exchg_params->plan == nullptr) {
+    exchg_params->p.set_value(p_status);
+    return;
+  }
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -72,11 +73,11 @@ peloton_status PlanExecutor::ExecutePlan(
   // Use const std::vector<common::Value *> &params to make it more elegant for
   // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-      BuildExecutorContext(params, txn));
+      BuildExecutorContext(exchg_params->params, txn));
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
-      BuildExecutorTree(nullptr, plan, executor_context.get()));
+      BuildExecutorTree(nullptr, exchg_params->plan, executor_context.get()));
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -91,7 +92,7 @@ peloton_status PlanExecutor::ExecutePlan(
   }
 
   LOG_TRACE("Running the executor tree");
-  result.clear();
+  exchg_params->result.clear();
 
   // Execute the tree until we get result tiles from root node
   while (status == true) {
@@ -107,7 +108,7 @@ peloton_status PlanExecutor::ExecutePlan(
           logical_tile->GetPhysicalSchema());  // Physical schema of the tile
       std::vector<std::vector<std::string>> answer_tuples;
       answer_tuples =
-          std::move(logical_tile->GetAllValuesAsStrings(result_format));
+          std::move(logical_tile->GetAllValuesAsStrings(exchg_params->result_format));
 
       // Construct the returned results
       for (auto tuple : answer_tuples) {
@@ -121,7 +122,7 @@ peloton_status PlanExecutor::ExecutePlan(
           if (tuple[col_index - 1].c_str() != nullptr) {
             LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
           }
-          result.push_back(res);
+          exchg_params->result.push_back(res);
         }
       }
     }
@@ -158,7 +159,7 @@ cleanup:
   // clean up executor tree
   CleanExecutorTree(executor_tree.get());
 
-  return p_status;
+  exchg_params->p.set_value(p_status);
 }
 
 /**
@@ -169,11 +170,12 @@ cleanup:
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
-int PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan,
-    const std::vector<common::Value *> &params,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
-  if (plan == nullptr) return -1;
+
+void PlanExecutor::ExecutePlanRemote(
+    const planner::AbstractPlan *plan, const std::vector<common::Value *> &params,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list,
+    boost::promise<int> &p) {
+  if (plan == nullptr) return p.set_value(-1);
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -252,17 +254,17 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        return executor_context->num_processed;
+        return p.set_value(executor_context->num_processed);
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-        return -1;
+        return p.set_value(-1);
     }
   }
-  return executor_context->num_processed;
+  return p.set_value(executor_context->num_processed);
 }
 
 /**

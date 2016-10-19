@@ -54,7 +54,8 @@ bool SeqScanExecutor::DInit() {
   const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
 
   target_table_ = node.GetTable();
-  
+
+  // offset by partition_id when multiple threads run the query
   current_tile_group_offset_ = START_OID;
 
   if (target_table_ != nullptr) {
@@ -110,6 +111,8 @@ bool SeqScanExecutor::DExecute() {
   }
   // Scanning a table
   else if (children_.size() == 0) {
+    // support intra-query parallelism, be parallelism count aware
+
     LOG_TRACE("Seq Scan executor :: 0 child ");
 
     PL_ASSERT(target_table_ != nullptr);
@@ -124,8 +127,13 @@ bool SeqScanExecutor::DExecute() {
 
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
+
       auto tile_group =
-          target_table_->GetTileGroup(current_tile_group_offset_++);
+          target_table_->GetTileGroup(current_tile_group_offset_);
+
+      // move to next offset
+      current_tile_group_offset_++;
+
       auto tile_group_header = tile_group->GetHeader();
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
