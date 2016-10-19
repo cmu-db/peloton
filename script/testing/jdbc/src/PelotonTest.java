@@ -13,11 +13,14 @@
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Date;
+import java.util.Properties;
 
 public class PelotonTest {
   private final String url = "jdbc:postgresql://localhost:54321/";
   private final String username = "postgres";
   private final String pass = "postgres";
+  private final int LOG_LEVEL = 0;
 
   private final int STAT_INTERVAL_MS = 1000;
 
@@ -125,6 +128,10 @@ public class PelotonTest {
   public PelotonTest() throws SQLException {
     try {
       Class.forName("org.postgresql.Driver");
+      if (LOG_LEVEL != 0) {
+        org.postgresql.Driver.setLogLevel(LOG_LEVEL);
+        DriverManager.setLogStream(System.out);
+      }
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
     }
@@ -723,7 +730,7 @@ public class PelotonTest {
         BasicTest();
       } else if (args[0].equals("stats")) {
         StatsTest();
-      }
+      } 
   }
 
   static public void BasicTest() throws Exception {
@@ -749,5 +756,4 @@ public class PelotonTest {
     pt.Stat_Test();
     pt.Close();
   }
-
 }

@@ -79,7 +79,7 @@ extern void GetStringToken(Packet *pkt, std::string &result);
 
 /* Write a batch of packets to the socket write buffer */
 extern bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
-                         Client *client);
+                         Client *client, const bool &force_flush = true);
 
 /* Read a single packet from the socket read buffer */
 extern bool ReadPacket(Packet *pkt, bool has_type_field, Client *client);
