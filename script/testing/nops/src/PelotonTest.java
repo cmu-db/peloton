@@ -28,10 +28,16 @@ public class PelotonTest {
   private final String[] driver = {"org.postgresql.Driver", "org.postgresql.Driver", "com.timesten.jdbc.TimesTenDriver"};
   
   private final int LOG_LEVEL = 0;
-  private int query_type = SIMPLE_SELECT;  
+  private int query_type = SIMPLE_SELECT;
 
   public static final int SEMICOLON = 0;
   public static final int SIMPLE_SELECT = 1;
+
+  public static final int PELOTON = 0;
+  public static final int POSTGRES = 1;
+  public static final int TIMESTEN = 2;
+
+
 
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
@@ -180,126 +186,6 @@ public class PelotonTest {
     elapsedTime = (new Date()).getTime() - startTime;
     System.out.println("Nop throughput: " + numOps * 1000 / elapsedTime);
   }
-
-
-  /**
-   * Insert a record
-   *
-   * @param n the id of the record
-   * @throws SQLException
-   */
-  public void Insert(int n, TABLE table) throws SQLException {
-    PreparedStatement stmt = null;
-    switch (table) {
-      case A:
-        stmt = conn.prepareStatement(INSERT_A);
-        break;
-      case B:
-        stmt = conn.prepareStatement(INSERT_B);
-        break;
-    }
-    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
-    pgstmt.setPrepareThreshold(1);
-    //System.out.println("Prepare threshold" + pgstmt.getPrepareThreshold());
-    for (int i = 0; i < n; i++) {
-      String data = table.name() + " says hello world and id = " + i;
-      stmt.setInt(1, i);
-      stmt.setString(2, data);
-      boolean usingServerPrepare = pgstmt.isUseServerPrepare();
-      int ret = stmt.executeUpdate();
-      System.out.println("Used server side prepare " + usingServerPrepare + ", Inserted: " + ret);
-    }
-    return;
-  }
-
-  /**
-   * Insert a record
-   *
-   * @param n the id of the record
-   * @throws SQLException
-   */
-  public void Insert(int n) throws SQLException {
-    conn.setAutoCommit(false);
-    PreparedStatement stmt = conn.prepareStatement(INSERT);
-    PreparedStatement stmtA = conn.prepareStatement(INSERT_A);
-    PreparedStatement stmtB = conn.prepareStatement(INSERT_B);
-    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
-    pgstmt.setPrepareThreshold(1);
-    for (int i = 0; i < n; i++) {
-      String data1 = "Ming says hello world and id = " + i;
-      String data2 = "Joy says hello world and id = " + i;
-      stmt.setInt(1, i);
-      stmt.setInt(3, i);
-      stmt.setString(2, data1);
-      stmt.setString(4, data2);
-      int ret = stmt.executeUpdate();
-    }
-    conn.commit();
-    conn.setAutoCommit(true);
-    return;
-  }
-
-
-  public void SeqScan() throws SQLException {
-    System.out.println("\nSeqScan Test:");
-    System.out.println("Query: " + SEQSCAN);
-    PreparedStatement stmt = conn.prepareStatement(SEQSCAN);
-    ResultSet r = stmt.executeQuery();
-    while (r.next()) {
-      System.out.println("SeqScan: id = " + r.getString(1) + ", " + r.getString(2));
-    }
-    r.close();
-  }
-
-  /**
-   * Perform Index Scan with a simple equal qualifier
-   *
-   * @param i the param for the equal qualifier
-   * @throws SQLException
-   */
-  public void IndexScanParam(int i) throws SQLException {
-    System.out.println("\nIndexScan Test: ? = " + i);
-    System.out.println("Query: " + INDEXSCAN_PARAM);
-    PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
-    conn.setAutoCommit(false);
-    stmt.setInt(1, i);
-    stmt.execute();
-    conn.commit();
-  }
-
-  public void UpdateBySeqScan() throws SQLException {
-    System.out.println("\nUpdate Test: ");
-    System.out.println("Query: " + UPDATE_BY_SCANSCAN);
-    PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_SCANSCAN);
-    stmt.setString(1, "Updated");
-    stmt.executeUpdate();
-    System.out.println("Updated: data: Updated");
-
-  }
-
-
-  public void DeleteByIndexScan(int i) throws SQLException {
-    System.out.println("\nDelete Test: ");
-    System.out.println("Query: " + DELETE_BY_INDEXSCAN);
-    PreparedStatement stmt = conn.prepareStatement(DELETE_BY_INDEXSCAN);
-    stmt.setInt(1, i);
-    stmt.executeUpdate();
-    System.out.println("Deleted: id = " + i);
-  }
-
-  public void Union(int i) throws SQLException {
-    PreparedStatement stmt = conn.prepareStatement(UNION);
-
-    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
-    pgstmt.setPrepareThreshold(0);
-    stmt.setInt(1, i);
-    stmt.setInt(2, i);
-    ResultSet r = stmt.executeQuery();
-
-    System.out.println(r.getString(1));
-  public static final int PELOTON = 0;
-  public static final int POSTGRES = 1;
-  public static final int TIMESTEN = 2;
 
 
   static public void main(String[] args) throws Exception {
