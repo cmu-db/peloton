@@ -72,7 +72,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   LOG_INFO("Plan created");
   bridge::PlanExecutor::PrintPlan(del_plan, "Delete Plan");
 
-  auto values = new std::vector<common::Value *>();
+  auto values = new std::vector<common::Value>();
 
   // id = 15
   LOG_INFO("Binding values");
@@ -85,9 +85,6 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  for (auto val : *values) {
-    delete val;
-  }
   delete values;
   delete del_plan;
   delete delete_statement;
@@ -150,7 +147,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   LOG_INFO("Plan created");
   bridge::PlanExecutor::PrintPlan(update_plan, "Update Plan");
 
-  auto values = new std::vector<common::Value *>();
+  auto values = new std::vector<common::Value>();
 
   // name = CS, id = 1
   LOG_INFO("Binding values");
@@ -164,9 +161,6 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  for (auto val : *values) {
-    delete val;
-  }
   delete values;
   delete update_statement;
   delete update_plan;
@@ -216,12 +210,12 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
-  auto values = new std::vector<common::Value *>();
+  auto values = new std::vector<common::Value>();
   values->push_back(common::ValueFactory::GetIntegerValue(1).Copy());
   values->push_back(common::ValueFactory::GetVarcharValue(
       "CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
-  LOG_INFO("Value 1: %s", values->at(0)->GetInfo().c_str());
-  LOG_INFO("Value 2: %s", values->at(1)->GetInfo().c_str());
+  LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
+  LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
   // bind values to parameters in plan
   insert_plan->SetParameterValues(values);
 
@@ -229,9 +223,6 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  for (auto val : *values) {
-    delete val;
-  }
   delete values;
   delete insert_plan;
   delete insert_statement;

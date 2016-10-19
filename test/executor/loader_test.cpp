@@ -68,9 +68,9 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    std::unique_ptr<common::Value> value(
+    common::Value value = (
         tuple->GetValue(col_id));
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(*value);
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
   }
 

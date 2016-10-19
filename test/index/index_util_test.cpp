@@ -246,7 +246,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
 
-  std::vector<common::Value *> value_list{};
+  std::vector<common::Value> value_list{};
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
@@ -295,7 +295,6 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   // The condition means first index column does not equal 100
   ///////////////////////////////////////////////////////////////////
 
-  for (auto val : value_list) delete val;
   value_list = {
       common::ValueFactory::GetIntegerValue(100).Copy(),
   };
@@ -327,7 +326,6 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 
   IndexScanPredicate isp2{};
 
-  for (auto val : value_list) delete val;
   value_list = {
       common::ValueFactory::GetIntegerValue(100).Copy(),
       common::ValueFactory::GetVarcharValue("Peloton!").Copy(),
@@ -360,8 +358,6 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   ///////////////////////////////////////////////////////////////////
   delete index_p;
 
-  for (auto val : value_list) delete val;
-
   return;
 }
 
@@ -374,7 +370,7 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
 
-  std::vector<common::Value *> value_list{};
+  std::vector<common::Value> value_list{};
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
@@ -417,13 +413,13 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   LOG_INFO("High key (NOT BINDED) = %s", cl[0].GetHighKey()->GetInfo().c_str());
 
   // Bind real value
-  std::unique_ptr<common::Value> val1(
+  common::Value val1 = (
       common::ValueFactory::GetIntegerValue(100).Copy());
-  std::unique_ptr<common::Value> val2(
+  common::Value val2 = (
       common::ValueFactory::GetIntegerValue(200).Copy());
-  std::unique_ptr<common::Value> val3(
+  common::Value val3 = (
       common::ValueFactory::GetIntegerValue(300).Copy());
-  isp.LateBindValues(index_p, {val1.get(), val2.get(), val3.get()});
+  isp.LateBindValues(index_p, {val1, val2, val3});
 
   // This is important - Since binding does not change the number of
   // binding points, and their information is preserved for next
@@ -438,8 +434,6 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   // End of all tests
   ///////////////////////////////////////////////////////////////////
   delete index_p;
-
-  for (auto val : value_list) delete val;
 
   return;
 }

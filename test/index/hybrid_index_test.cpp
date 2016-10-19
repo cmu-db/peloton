@@ -198,7 +198,7 @@ expression::AbstractExpression *GetPredicate() {
 
 void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
                               std::vector<ExpressionType>& expr_types,
-                              std::vector<common::Value *>& values) {
+                              std::vector<common::Value>& values) {
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
   values.push_back(common::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
@@ -297,7 +297,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value *> values;
+  std::vector<common::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
@@ -343,7 +343,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value *> values;
+  std::vector<common::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   CreateIndexScanPredicate(key_column_ids, expr_types, values);

@@ -53,7 +53,7 @@ TEST_F(RuleTests, SimpleRuleApplyTest) {
   auto right_get = std::make_shared<OpExpression>(LogicalGet::make(0, {}));
   auto val = common::ValueFactory::GetBooleanValue(1);
   auto pred =
-    std::make_shared<OpExpression>(ExprConstant::make(& val));
+    std::make_shared<OpExpression>(ExprConstant::make(val));
   auto join = std::make_shared<OpExpression>(LogicalInnerJoin::make());
   join->PushChild(left_get);
   join->PushChild(right_get);

@@ -62,7 +62,11 @@ static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 // some materialized state. All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.
 class Value : public Printable {
+#ifdef VALUE_TESTS
+public:
+#else
  private:
+#endif
   Value(const Type::TypeId type) : type_(Type::GetInstance(type)) {}
 
   //ARRAY values

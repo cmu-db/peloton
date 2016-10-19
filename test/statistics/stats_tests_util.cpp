@@ -32,7 +32,7 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
-  std::vector<common::Value *> params;
+  std::vector<common::Value> params;
   std::vector<ResultType> result;
   std::string sql = "SELECT * FROM " + database_name + "." + table_name;
   statement.reset(new Statement("SELECT", sql));

@@ -50,23 +50,23 @@ TEST_F(TupleTests, BasicTest) {
   tuple->SetValue(1, common::ValueFactory::GetIntegerValue(45), pool);
   tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
 
-  std::unique_ptr<common::Value> val0(tuple->GetValue(0));
-  std::unique_ptr<common::Value> val1(tuple->GetValue(1));
-  std::unique_ptr<common::Value> val2(tuple->GetValue(2));
+  common::Value val0 = (tuple->GetValue(0));
+  common::Value val1 = (tuple->GetValue(1));
+  common::Value val2 = (tuple->GetValue(2));
 
-  std::unique_ptr<common::Value> cmp(val0->CompareEquals(
+  common::Value cmp = (val0.CompareEquals(
       common::ValueFactory::GetIntegerValue(23)));
-  EXPECT_TRUE(cmp->IsTrue());
-  cmp.reset(val1->CompareEquals(common::ValueFactory::GetIntegerValue(45)));
-  EXPECT_TRUE(cmp->IsTrue());
-  cmp.reset(val2->CompareEquals(common::ValueFactory::GetIntegerValue(1)));
-  EXPECT_TRUE(cmp->IsTrue());
+  EXPECT_TRUE(cmp.IsTrue());
+  cmp = (val1.CompareEquals(common::ValueFactory::GetIntegerValue(45)));
+  EXPECT_TRUE(cmp.IsTrue());
+  cmp = (val2.CompareEquals(common::ValueFactory::GetIntegerValue(1)));
+  EXPECT_TRUE(cmp.IsTrue());
 
   tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
 
-  val2.reset(tuple->GetValue(2));
-  cmp.reset(val2->CompareEquals(common::ValueFactory::GetIntegerValue(2)));
-  EXPECT_TRUE(cmp->IsTrue());
+  val2 = (tuple->GetValue(2));
+  cmp = (val2.CompareEquals(common::ValueFactory::GetIntegerValue(2)));
+  EXPECT_TRUE(cmp.IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 
@@ -99,21 +99,21 @@ TEST_F(TupleTests, VarcharTest) {
   tuple->SetValue(1, common::ValueFactory::GetIntegerValue(45), pool);
   tuple->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
 
-  auto val = common::ValueFactory::GetVarcharValue("hello hello world", pool);
+  common::Value val = common::ValueFactory::GetVarcharValue("hello hello world", pool);
   tuple->SetValue(3, val, pool);
-  std::unique_ptr<common::Value> value3(tuple->GetValue(3));
-  std::unique_ptr<common::Value> cmp(value3->CompareEquals(val));
-  EXPECT_TRUE(cmp->IsTrue());
+  common::Value value3 = (tuple->GetValue(3));
+  common::Value cmp = (value3.CompareEquals(val));
+  EXPECT_TRUE(cmp.IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 
   auto val2 = common::ValueFactory::GetVarcharValue("hi joy !", pool);
   tuple->SetValue(3, val2, pool);
-  value3.reset(tuple->GetValue(3));
-  cmp.reset(value3->CompareNotEquals(val));
-  EXPECT_TRUE(cmp->IsTrue());
-  cmp.reset(value3->CompareEquals(val2));
-  EXPECT_TRUE(cmp->IsTrue());
+  value3 = (tuple->GetValue(3));
+  cmp = (value3.CompareNotEquals(val));
+  EXPECT_TRUE(cmp.IsTrue());
+  cmp = (value3.CompareEquals(val2));
+  EXPECT_TRUE(cmp.IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 

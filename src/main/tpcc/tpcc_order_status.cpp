@@ -122,7 +122,7 @@ bool RunOrderStatus(const size_t &thread_id){
        COL_IDX_C_LAST, COL_IDX_C_BALANCE};
     std::vector<oid_t> customer_key_column_ids = {COL_IDX_C_W_ID, COL_IDX_C_D_ID, COL_IDX_C_ID};
     std::vector<ExpressionType> customer_expr_types;
-    std::vector<common::Value *> customer_key_values;
+    std::vector<common::Value > customer_key_values;
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
@@ -167,7 +167,7 @@ bool RunOrderStatus(const size_t &thread_id){
        COL_IDX_C_LAST, COL_IDX_C_BALANCE};
     std::vector<oid_t> customer_key_column_ids = {COL_IDX_C_W_ID, COL_IDX_C_D_ID, COL_IDX_C_LAST};
     std::vector<ExpressionType> customer_expr_types;
-    std::vector<common::Value *> customer_key_values;
+    std::vector<common::Value > customer_key_values;
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
@@ -227,7 +227,7 @@ bool RunOrderStatus(const size_t &thread_id){
   , COL_IDX_O_CARRIER_ID, COL_IDX_O_ENTRY_D};
   std::vector<oid_t> orders_key_column_ids = {COL_IDX_O_W_ID, COL_IDX_O_D_ID, COL_IDX_O_C_ID};
   std::vector<ExpressionType> orders_expr_types;
-  std::vector<common::Value *> orders_key_values;
+  std::vector<common::Value > orders_key_values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
@@ -281,7 +281,7 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_SUPPLY_W_ID, COL_IDX_OL_I_ID, COL_IDX_OL_QUANTITY, COL_IDX_OL_AMOUNT, COL_IDX_OL_DELIVERY_D};
     std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID};
     std::vector<ExpressionType> order_line_expr_types;
-    std::vector<common::Value *> order_line_key_values;
+    std::vector<common::Value > order_line_key_values;
 
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(common::ValueFactory::GetIntegerValue(w_id).Copy());

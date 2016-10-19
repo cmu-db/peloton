@@ -372,7 +372,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
 
   // Execute insert
-  std::vector<common::Value *> params;
+  std::vector<common::Value> params;
   std::vector<ResultType> result;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(

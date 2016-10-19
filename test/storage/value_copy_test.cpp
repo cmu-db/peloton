@@ -40,17 +40,17 @@ TEST_F(ValueCopyTests, VarcharTest) {
 
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  std::unique_ptr<common::Value> val1(
+  common::Value val1 = (
       common::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
-  std::unique_ptr<common::Value> val2(
+  common::Value val2 = (
       common::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
 
-  tuple->SetValue(0, *val1, pool);
-  tuple->SetValue(1, *val2, pool);
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
 
-  std::unique_ptr<common::Value> val3(tuple->GetValue(0));
+  common::Value val3 = (tuple->GetValue(0));
 
-  LOG_INFO("%s", val3->GetInfo().c_str());
+  LOG_INFO("%s", val3.GetInfo().c_str());
 
   delete tuple;
   delete schema;
