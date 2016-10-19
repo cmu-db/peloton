@@ -155,52 +155,6 @@ public class PelotonTest {
     } 
   }
 
-  public void ShowTable() throws SQLException {
-    int numRows;
-    conn.setAutoCommit(true);
-    Statement stmt = conn.createStatement();
-
-    stmt.execute(SEQSCAN);
-
-    ResultSet rs = stmt.getResultSet();
-
-    ResultSetMetaData rsmd = rs.getMetaData();
-
-    if (rsmd.getColumnCount() != 2) {
-      throw new SQLException("Table should have 2 columns");
-    } else if (rs.next()) {
-      throw new SQLException("No rows should be returned");
-    }
-    System.out.println("Test db created.");
-  }
-
-  /**
-   * Test SeqScan and IndexScan
-   *
-   * @throws SQLException
-   */
-  public void Scan_Test() throws SQLException {
-    conn.setAutoCommit(true);
-    Statement stmt = conn.createStatement();
-    stmt.execute(INSERT_A_1);
-    stmt.execute(INSERT_A_2);
-    stmt.execute(SEQSCAN);
-
-    ResultSet rs = stmt.getResultSet();
-    rs.next();
-    String row1 = rs.getString(1) + "," + rs.getString(2);
-    rs.next();
-    String row2 = rs.getString(1) + "," + rs.getString(2);
-    if (rs.next()) {
-      throw new SQLException("More than 2 rows returned");
-    } else if (row1.equals(row2)) {
-      throw new SQLException("Rows aren't distinct");
-    }
-
-    stmt.execute(INDEXSCAN);
-    stmt.execute(INDEXSCAN_COLUMN);
-  }
-
   public void Nop_Test() throws Exception {
     long startTime = System.currentTimeMillis();
     long elapsedTime = 0L;

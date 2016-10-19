@@ -140,10 +140,7 @@ public class PelotonTest {
   }
 
   private Connection makeConnection() throws SQLException {
-    Properties props = new Properties();
-    props.setProperty("user", username);
-    props.setProperty("password", pass);
-    Connection conn = DriverManager.getConnection(url, props);
+    Connection conn = DriverManager.getConnection(url, username, pass);
     return conn;
   }
 
@@ -275,22 +272,6 @@ public class PelotonTest {
     stmt.execute(DELETE_A);
     System.out.println("Scan test passed.");
   }
-
-  public void Nop_Test() throws Exception {
-    long startTime = System.currentTimeMillis();
-    long elapsedTime = 0L;
-
-    Statement stmt = conn.createStatement();
-    long numOps = 1000 * 1000;
-    for (long i = 0; i < numOps; i++) {
-        try {
-            stmt.execute(";");
-        } catch (Exception e) { }
-    }
-    elapsedTime = (new Date()).getTime() - startTime;
-    System.out.println("Nop throughput: " + numOps * 1000 / elapsedTime);
-  }
-
 
   /**
    * Test SeqScan and IndexScan
@@ -749,9 +730,7 @@ public class PelotonTest {
         BasicTest();
       } else if (args[0].equals("stats")) {
         StatsTest();
-      } else if (args[0].equals("nop")) {
-        NopTest();
-      }
+      } 
   }
 
   static public void BasicTest() throws Exception {
@@ -775,14 +754,6 @@ public class PelotonTest {
     PelotonTest pt = new PelotonTest();
     pt.Init();
     pt.Stat_Test();
-    pt.Close();
-  }
-
-  static public void NopTest() throws Exception {
-    System.out.println("Nop Tests");
-    PelotonTest pt = new PelotonTest();
-    pt.Init();
-    pt.Nop_Test();
     pt.Close();
   }
 }
