@@ -26,42 +26,42 @@ TimestampType::TimestampType()
 Value TimestampType::CompareEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareLessThan(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
 Value TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
 }
 

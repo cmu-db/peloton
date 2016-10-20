@@ -195,7 +195,7 @@ Value BigintType::CompareEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
 
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -223,7 +223,7 @@ Value BigintType::CompareNotEquals(const Value& left,
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -251,7 +251,7 @@ Value BigintType::CompareLessThan(const Value& left,
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -276,7 +276,7 @@ Value BigintType::CompareLessThanEquals(const Value& left,
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -304,7 +304,7 @@ Value BigintType::CompareGreaterThan(const Value& left,
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
@@ -330,7 +330,7 @@ Value BigintType::CompareGreaterThanEquals(const Value& left,
   left.CheckInteger();
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:

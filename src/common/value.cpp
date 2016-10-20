@@ -21,6 +21,29 @@
 namespace peloton {
 namespace common {
 
+Value::Value(const Value& other){
+  type_ = other.type_;
+  switch(type_->GetTypeId()){
+  case Type::VARCHAR:
+  case Type::VARBINARY:
+    value_.varlen.len = other.value_.varlen.len;
+    value_.varlen.data = new char[value_.varlen.len];
+    PL_MEMCPY(value_.varlen.data, other.value_.varlen.data, value_.varlen.len);
+    break;
+  default:
+    value_ = other.value_;
+  }
+}
+
+Value::Value(Value&& other) : Value(){
+  swap(*this, other);
+}
+
+Value& Value::operator=(Value other){
+  swap(*this, other);
+  return *this;
+}
+
 // ARRAY is implemented in the header to ease template creation
 
 // BOOLEAN and TINYINT
@@ -209,6 +232,7 @@ Value::Value(Type::TypeId type, const std::string &data) :
 
 Value::Value() :
     Value(Type::INVALID) {
+  memset(&value_, 0, sizeof(value_));
 }
 
 Value::~Value() {

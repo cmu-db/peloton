@@ -67,6 +67,7 @@ public:
 #else
  private:
 #endif
+
   Value(const Type::TypeId type) : type_(Type::GetInstance(type)) {}
 
   //ARRAY values
@@ -97,7 +98,17 @@ public:
  public:
 
   Value();
+  Value(Value&& other);
+  Value(const Value& other);
   ~Value();
+
+  friend void swap(Value& first, Value& second) // nothrow
+  {
+      std::swap(first.type_, second.type_);
+      std::swap(first.value_, second.value_);
+  }
+
+  Value& operator=(Value other);
 
   // Get the type of this value
   Type::TypeId GetTypeId() const { return type_->GetTypeId(); }

@@ -27,6 +27,14 @@ VarlenType::~VarlenType() {
 
 }
 
+inline static int CompareStrings(const char *str1, int len1, const char *str2, int len2){
+  int ret = strncmp(str1, str2, std::min(len1, len2));
+  if (ret != 0 &&len1 != len2){
+    ret = len1-len2;
+  }
+  return ret;
+}
+
 // Access the raw variable length data
 const char *VarlenType::GetData(const Value& val) const {
   return val.value_.varlen.data;
@@ -40,7 +48,7 @@ uint32_t VarlenType::GetLength(const Value& val) const {
 Value VarlenType::CompareEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
       || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
     return ValueFactory::GetBooleanValue(left.GetLength() == right.GetLength());
@@ -48,13 +56,13 @@ Value VarlenType::CompareEquals(const Value& left, const Value &right) const {
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(strcmp(str1, str2) == 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) == 0);
 }
 
 Value VarlenType::CompareNotEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
       || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
     return ValueFactory::GetBooleanValue(left.GetLength() != right.GetLength());
@@ -62,13 +70,13 @@ Value VarlenType::CompareNotEquals(const Value& left, const Value &right) const 
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(strcmp(str1, str2) != 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) != 0);
 }
 
 Value VarlenType::CompareLessThan(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
       || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
     return ValueFactory::GetBooleanValue(left.GetLength() < right.GetLength());
@@ -76,13 +84,13 @@ Value VarlenType::CompareLessThan(const Value& left, const Value &right) const {
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(strcmp(str1, str2) < 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) < 0);
 }
 
 Value VarlenType::CompareLessThanEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
       || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
     return ValueFactory::GetBooleanValue(left.GetLength() <= right.GetLength());
@@ -90,13 +98,13 @@ Value VarlenType::CompareLessThanEquals(const Value& left, const Value &right) c
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(strcmp(str1, str2) <= 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) <= 0);
 }
 
 Value VarlenType::CompareGreaterThan(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
       || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
     return ValueFactory::GetBooleanValue(left.GetLength() > right.GetLength());
@@ -104,13 +112,13 @@ Value VarlenType::CompareGreaterThan(const Value& left, const Value &right) cons
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(strcmp(str1, str2) > 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) > 0);
 }
 
 Value VarlenType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
       || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
     return ValueFactory::GetBooleanValue(left.GetLength() >= right.GetLength());
@@ -118,7 +126,7 @@ Value VarlenType::CompareGreaterThanEquals(const Value& left, const Value &right
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(strcmp(str1, str2) >= 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) >= 0);
 }
 
 std::string VarlenType::ToString(const Value& val) const {

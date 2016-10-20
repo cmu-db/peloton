@@ -80,7 +80,7 @@ class ValueFactory {
   static inline Value GetNullValueByType(Type::TypeId type_id) {
     switch (type_id) {
       case Type::BOOLEAN:
-        return GetBooleanValue(PELOTON_BOOLEAN_NULL);
+        return Value(Type::BOOLEAN, PELOTON_BOOLEAN_NULL);
       case Type::TINYINT:
         return GetTinyIntValue(PELOTON_INT8_NULL);
       case Type::SMALLINT:

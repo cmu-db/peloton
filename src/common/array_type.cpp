@@ -68,7 +68,7 @@ Value ArrayType::InList(const Value& list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
   ele.CheckComparable(object);
   if (object.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   switch (list.GetElementType()) {
     case Type::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array.data);

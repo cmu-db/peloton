@@ -195,7 +195,7 @@ Value DecimalType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
     
   switch(right.GetTypeId()) {
     case Type::TINYINT:
@@ -217,7 +217,7 @@ Value DecimalType::CompareNotEquals(const Value& left, const Value &right) const
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch(right.GetTypeId()) {
     case Type::TINYINT:
@@ -239,7 +239,7 @@ Value DecimalType::CompareLessThan(const Value& left, const Value &right) const 
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch(right.GetTypeId()) {
     case Type::TINYINT:
@@ -261,7 +261,7 @@ Value DecimalType::CompareLessThanEquals(const Value& left, const Value &right) 
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch(right.GetTypeId()) {
     case Type::TINYINT:
@@ -283,7 +283,7 @@ Value DecimalType::CompareGreaterThan(const Value& left, const Value &right) con
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
   switch(right.GetTypeId()) {
     case Type::TINYINT:
@@ -305,7 +305,7 @@ Value DecimalType::CompareGreaterThanEquals(const Value& left, const Value &righ
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   left.CheckComparable(right);
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
     
   switch(right.GetTypeId()) {
     case Type::TINYINT:
