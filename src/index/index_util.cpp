@@ -332,15 +332,15 @@ void FindMaxMinInColumns(oid_t leading_column_id,
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
-                non_leading_columns[column_id].first->GetInfo().size(),
-                non_leading_columns[column_id].second->GetInfo().c_str());
+                non_leading_columns[column_id].first.GetInfo().size(),
+                non_leading_columns[column_id].second.GetInfo().c_str());
     }
 
     if (DefinesLowerBound(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("min cur %lu compare with %s\n",
-                non_leading_columns[column_id].first->GetInfo().size(),
-                values[i]->GetInfo().c_str());
+                non_leading_columns[column_id].first.GetInfo().size(),
+                values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].first
             .CompareGreaterThan(values[i]).IsTrue()) {
@@ -352,8 +352,8 @@ void FindMaxMinInColumns(oid_t leading_column_id,
     if (DefinesUpperBound(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("max cur %s compare with %s\n",
-                non_leading_columns[column_id].second->GetInfo().c_str(),
-                values[i]->GetInfo().c_str());
+                non_leading_columns[column_id].second.GetInfo().c_str(),
+                values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].second.
             CompareLessThan(values[i]).IsTrue()) {

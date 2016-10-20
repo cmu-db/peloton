@@ -371,7 +371,7 @@ bool RunPayment(const size_t &thread_id){
   common::Value  warehouse_new_balance_value = common::ValueFactory::GetDoubleValue(warehouse_new_balance).Copy();
 
   warehouse_target_list.emplace_back(
-    8, expression::ExpressionUtil::ConstantValueFactory(*warehouse_new_balance_value)
+    8, expression::ExpressionUtil::ConstantValueFactory(warehouse_new_balance_value)
   );
 
   std::unique_ptr<const planner::ProjectInfo> warehouse_project_info(
@@ -430,7 +430,7 @@ bool RunPayment(const size_t &thread_id){
   common::Value  district_new_balance_value = common::ValueFactory::GetDoubleValue(district_new_balance).Copy();
   
   district_target_list.emplace_back(
-    9, expression::ExpressionUtil::ConstantValueFactory(*district_new_balance_value)
+    9, expression::ExpressionUtil::ConstantValueFactory(district_new_balance_value)
   );
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
@@ -516,10 +516,10 @@ bool RunPayment(const size_t &thread_id){
     common::Value customer_new_paycnt_value = common::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
     common::Value customer_new_data_value = common::ValueFactory::GetVarcharValue(data_constant.c_str()).Copy();
 
-    customer_bc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(*customer_new_balance_value));
-    customer_bc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(*customer_new_ytd_value));
-    customer_bc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(*customer_new_paycnt_value));
-    customer_bc_target_list.emplace_back(20, expression::ExpressionUtil::ConstantValueFactory(*customer_new_data_value));
+    customer_bc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
+    customer_bc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value));
+    customer_bc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value));
+    customer_bc_target_list.emplace_back(20, expression::ExpressionUtil::ConstantValueFactory(customer_new_data_value));
 
     std::unique_ptr<const planner::ProjectInfo> customer_bc_project_info(
       new planner::ProjectInfo(

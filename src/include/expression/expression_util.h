@@ -71,9 +71,9 @@ class ExpressionUtil {
         auto value =
             new ConstantValueExpression(values->at(left->GetValueIdx()));
         LOG_TRACE("left in vector type: %s",
-                  values->at(left->GetValueIdx())->GetInfo().c_str());
+                  values->at(left->GetValueIdx()).GetInfo().c_str());
         LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
-                  value->GetValue()->GetInfo().c_str());
+                  value->GetValue().GetInfo().c_str());
         delete left;
         expression->setLeftExpression(value);
       } else {
@@ -90,12 +90,12 @@ class ExpressionUtil {
         // right expression is parameter
         auto right = (ParameterValueExpression *)expression->GetRight();
         LOG_TRACE("right in vector type: %s",
-                  values->at(right->GetValueIdx())->GetInfo().c_str());
+                  values->at(right->GetValueIdx()).GetInfo().c_str());
         auto value =
             new ConstantValueExpression(values->at(right->GetValueIdx()));
         LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
-                  std::unique_ptr<common::Value>(value->GetValue())
-                      ->GetInfo()
+                  value->GetValue()
+                      .GetInfo()
                       .c_str());
         delete right;
         expression->setRightExpression(value);

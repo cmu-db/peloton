@@ -246,7 +246,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateZipfTheta(state);
   ValidateGCBackendCount(state);
 
-  LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run exponential backoff", state.exp_backoff);
   LOG_TRACE("%s : %d", "Run string mode", state.string_mode);
   LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
   

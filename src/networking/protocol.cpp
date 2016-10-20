@@ -520,7 +520,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   if (param_values.size() > 0) {
     LOG_TRACE("Binding values:");
     for (UNUSED_ATTRIBUTE auto value : param_values) {
-      LOG_TRACE("%s", value->GetInfo().c_str());
+      LOG_TRACE("%s", value.GetInfo().c_str());
     }
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }

@@ -203,8 +203,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateWarehouseCount(state);
   ValidateGCBackendCount(state);
 
-  LOG_TRACE("%s : %d", "Run client affinity", state.run_affinity);
-  LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run client affinity", state.affinity);
+  LOG_TRACE("%s : %d", "Run exponential backoff", state.exp_backoff);
   LOG_TRACE("%s : %d", "Run garbage collection", state.gc_mode);
 }
 

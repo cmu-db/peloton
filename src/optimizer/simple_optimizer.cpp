@@ -558,7 +558,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
       values.push_back(predicate_values[column_idx]);
       LOG_TRACE("Adding for IndexScanDesc: id(%d), expr(%s), values(%s)",
                 column_id, ExpressionTypeToString(*expr_types.rbegin()).c_str(),
-                (*values.rbegin())->GetInfo().c_str());
+                (*values.rbegin()).GetInfo().c_str());
     }
     column_idx++;
   }
@@ -707,7 +707,7 @@ void SimpleOptimizer::GetPredicateColumns(
                     expression->GetModifiableRight())
                     ->GetValueIdx())
                 .Copy());
-      LOG_TRACE("Parameter offset: %s", (*values.rbegin())->GetInfo().c_str());
+      LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
@@ -737,7 +737,7 @@ void SimpleOptimizer::GetPredicateColumns(
                     expression->GetModifiableLeft())
                     ->GetValueIdx())
                 .Copy());
-      LOG_TRACE("Parameter offset: %s", (*values.rbegin())->GetInfo().c_str());
+      LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
     GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,

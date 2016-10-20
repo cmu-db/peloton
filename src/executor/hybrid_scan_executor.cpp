@@ -95,7 +95,7 @@ bool HybridScanExecutor::DInit() {
 
         for (auto expr : runtime_keys_) {
           auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-          LOG_TRACE("Evaluated runtime scan key: %s", value->GetInfo().c_str());
+          LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
           values_.push_back(value.Copy());
         }
 
@@ -153,7 +153,7 @@ bool HybridScanExecutor::DInit() {
 
         for (auto expr : runtime_keys_) {
           auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-          LOG_TRACE("Evaluated runtime scan key: %s", value->GetInfo().c_str());
+          LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
           values_.push_back(value.Copy());
         }
 

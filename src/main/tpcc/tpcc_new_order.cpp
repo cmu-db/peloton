@@ -369,7 +369,7 @@ bool RunNewOrder(const size_t &thread_id){
   common::Value  district_update_val = common::ValueFactory::GetIntegerValue(district_update_value).Copy();
   
   district_target_list.emplace_back(
-      10, expression::ExpressionUtil::ConstantValueFactory(*district_update_val));
+      10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
       new planner::ProjectInfo(std::move(district_target_list),
@@ -606,7 +606,7 @@ bool RunNewOrder(const size_t &thread_id){
     // TODO: workaround!!! I don't know how to get float from Value.
     order_line_tuple->SetValue(8, common::ValueFactory::GetDoubleValue(0), nullptr);
     // OL_DIST_INFO
-    order_line_tuple->SetValue(9, *s_data, nullptr);
+    order_line_tuple->SetValue(9, s_data, nullptr);
 
     planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());

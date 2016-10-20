@@ -362,7 +362,7 @@ class ConjunctionScanPredicate {
 
       LOG_TRACE("bind item: %d", bind_item.second);
       LOG_TRACE("bind value: %s",
-                value_list[bind_item.second]->GetInfo().c_str());
+                value_list[bind_item.second].GetInfo().c_str());
 
       // This could not be other values since all values must be
       // valid during the binding stage

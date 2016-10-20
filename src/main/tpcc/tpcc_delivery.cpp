@@ -179,7 +179,7 @@ bool RunDelivery(const size_t &thread_id){
     // result: NO_O_ID
     auto no_o_id = new_order_ids[0][0];
 
-    LOG_TRACE("no_o_id = %d", ValuePeeker::PeekInteger(no_o_id));
+    LOG_TRACE("no_o_id = %d", common::ValuePeeker::PeekInteger(no_o_id));
 
     LOG_TRACE("getCId: SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
 
@@ -354,7 +354,7 @@ bool RunDelivery(const size_t &thread_id){
     common::Value orders_update_val = common::ValueFactory::GetIntegerValue(o_carrier_id).Copy();
 
     orders_target_list.emplace_back(
-      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(*orders_update_val)
+      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(orders_update_val)
     );
 
     std::unique_ptr<const planner::ProjectInfo> orders_project_info(
@@ -411,7 +411,7 @@ bool RunDelivery(const size_t &thread_id){
     common::Value order_line_update_val = common::ValueFactory::GetTimestampValue(0).Copy();
 
     order_line_target_list.emplace_back(
-      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(*order_line_update_val)
+      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(order_line_update_val)
     );
 
     std::unique_ptr<const planner::ProjectInfo> order_line_project_info(

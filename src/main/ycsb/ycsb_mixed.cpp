@@ -144,7 +144,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
         int update_raw_value = 1;
         common::Value  update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
           target_list.emplace_back(
-                col_itr, expression::ExpressionUtil::ConstantValueFactory(*update_val));
+                col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
         }
         else {
           direct_map_list.emplace_back(col_itr,
