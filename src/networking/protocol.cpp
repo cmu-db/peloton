@@ -298,16 +298,22 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     responses.push_back(std::move(response));
     return;
   }
+
+  // For empty queries, just send parse complete response
+  if (query_string == "") {
+    skipped_stmt_ = true;
+    std::unique_ptr<Packet> response(new Packet());
+    response->msg_type = '1';
+    responses.push_back(std::move(response));
+    return;
+  }
+
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
   auto &tcop = tcop::TrafficCop::GetInstance();
-  if (query_string != "") {
-    statement =
-        tcop.PrepareStatement(statement_name, query_string, error_message);
-  } else {
-    LOG_DEBUG("Encountered an empty SQL string");
-    error_message = "";
-  }
+
+  statement =
+      tcop.PrepareStatement(statement_name, query_string, error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
     SendErrorResponse({{'M', error_message}}, responses);
@@ -552,6 +558,13 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
 bool PacketManager::ExecDescribeMessage(Packet *pkt,
                                         ResponseBuffer &responses) {
+  if (skipped_stmt_) {
+    // send 'no-data' message
+    std::unique_ptr<Packet> response(new Packet());
+    response->msg_type = 'n';
+    responses.push_back(std::move(response));
+  }
+
   PktBuf mode;
   std::string portal_name;
   PacketGetBytes(pkt, 1, mode);
