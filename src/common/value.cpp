@@ -232,7 +232,6 @@ Value::Value(Type::TypeId type, const std::string &data) :
 
 Value::Value() :
     Value(Type::INVALID) {
-  memset(&value_, 0, sizeof(value_));
 }
 
 Value::~Value() {
