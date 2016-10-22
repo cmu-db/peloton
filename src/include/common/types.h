@@ -406,6 +406,35 @@ enum ExpressionType {
 };
 
 //===--------------------------------------------------------------------===//
+// Network Message Types
+//===--------------------------------------------------------------------===//
+
+enum NetworkMessageType {
+  // Responses
+  PARSE_COMPLETE = '1',
+  BIND_COMPLETE = '2',
+  COMMAND_COMPLETE = 'C',
+  PARAMETER_STATUS = 'S',
+  AUTHENTICATION_REQUEST = 'R',
+  ERROR_RESPONSE = 'E',
+  EMPTY_QUERY_RESPONSE = 'I',
+  NO_DATA_RESPONSE = 'n',
+  READ_FOR_QUERY = 'Z',
+  ROW_DESCRIPTION = 'T',
+  DATA_ROW = 'D',
+  // Errors
+  HUMAN_READABLE_ERROR = 'M',
+  // Commands
+  EXECUTE_COMMAND = 'E',
+  SYNC_COMMAND = 'S',
+  TERMINATE_COMMAND = 'X',
+  DESCRIBE_COMMAND = 'D',
+  BIND_COMMAND = 'B',
+  PARSE_COMMAND = 'P',
+  SIMPLE_QUERY_COMMAND = 'Q',
+};
+
+//===--------------------------------------------------------------------===//
 // Storage Backend Types
 //===--------------------------------------------------------------------===//
 
