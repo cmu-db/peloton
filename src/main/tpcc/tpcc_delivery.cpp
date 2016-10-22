@@ -135,7 +135,7 @@ bool RunDelivery(const size_t &thread_id){
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
     
-    std::vector<common::Value *> new_order_key_values;
+    std::vector<common::Value> new_order_key_values;
     
     new_order_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
     new_order_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
@@ -179,7 +179,7 @@ bool RunDelivery(const size_t &thread_id){
     // result: NO_O_ID
     auto no_o_id = new_order_ids[0][0];
 
-    LOG_TRACE("no_o_id = %d", ValuePeeker::PeekInteger(no_o_id));
+    LOG_TRACE("no_o_id = %d", common::ValuePeeker::PeekInteger(no_o_id));
 
     LOG_TRACE("getCId: SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
 
@@ -193,7 +193,7 @@ bool RunDelivery(const size_t &thread_id){
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     
-    std::vector<common::Value *> orders_key_values;
+    std::vector<common::Value> orders_key_values;
 
     orders_key_values.push_back(no_o_id);
     orders_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
@@ -239,7 +239,7 @@ bool RunDelivery(const size_t &thread_id){
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    std::vector<common::Value *> order_line_key_values;
+    std::vector<common::Value> order_line_key_values;
 
     order_line_key_values.push_back(no_o_id);
     order_line_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
@@ -284,7 +284,7 @@ bool RunDelivery(const size_t &thread_id){
     new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    std::vector<common::Value *> new_order_delete_key_values;
+    std::vector<common::Value> new_order_delete_key_values;
 
     new_order_delete_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
     new_order_delete_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
@@ -324,7 +324,7 @@ bool RunDelivery(const size_t &thread_id){
     std::vector<oid_t> orders_update_column_ids = {COL_IDX_O_CARRIER_ID};
 
 
-    std::vector<common::Value *> orders_update_key_values;
+    std::vector<common::Value> orders_update_key_values;
 
     orders_update_key_values.push_back(no_o_id);
     orders_update_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
@@ -351,10 +351,10 @@ bool RunDelivery(const size_t &thread_id){
         orders_direct_map_list.emplace_back(col_itr, std::make_pair(0, col_itr));
       }
     }
-    common::Value * orders_update_val = common::ValueFactory::GetIntegerValue(o_carrier_id).Copy();
+    common::Value orders_update_val = common::ValueFactory::GetIntegerValue(o_carrier_id).Copy();
 
     orders_target_list.emplace_back(
-      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(*orders_update_val)
+      COL_IDX_O_CARRIER_ID, expression::ExpressionUtil::ConstantValueFactory(orders_update_val)
     );
 
     std::unique_ptr<const planner::ProjectInfo> orders_project_info(
@@ -382,7 +382,7 @@ bool RunDelivery(const size_t &thread_id){
     std::vector<oid_t> order_line_update_column_ids = {COL_IDX_OL_DELIVERY_D};
 
 
-    std::vector<common::Value *> order_line_update_key_values;
+    std::vector<common::Value> order_line_update_key_values;
 
     order_line_update_key_values.push_back(no_o_id);
     order_line_update_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
@@ -408,10 +408,10 @@ bool RunDelivery(const size_t &thread_id){
        order_line_direct_map_list.emplace_back(col_itr, std::make_pair(0, col_itr));
      }
     }
-    common::Value * order_line_update_val = common::ValueFactory::GetTimestampValue(0).Copy();
+    common::Value order_line_update_val = common::ValueFactory::GetTimestampValue(0).Copy();
 
     order_line_target_list.emplace_back(
-      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(*order_line_update_val)
+      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(order_line_update_val)
     );
 
     std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
@@ -443,7 +443,7 @@ bool RunDelivery(const size_t &thread_id){
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-    std::vector<common::Value *> customer_key_values;
+    std::vector<common::Value> customer_key_values;
 
     customer_key_values.push_back(c_id);
     customer_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());

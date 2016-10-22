@@ -177,7 +177,7 @@ expression::AbstractExpression *CreateScanPredicate(std::vector<oid_t> key_attrs
 void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
                               std::vector<oid_t>& key_column_ids,
                               std::vector<ExpressionType>& expr_types,
-                              std::vector<common::Value *>& values) {
+                              std::vector<common::Value>& values) {
   const int tuple_start_offset = GetLowerBound();
   const int tuple_end_offset = GetUpperBound();
 
@@ -406,7 +406,7 @@ void RunDirectTest() {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value *> values;
+  std::vector<common::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   // Create index scan predicate
@@ -501,7 +501,7 @@ void RunInsertTest() {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  std::vector<common::Value *> values;
+  std::vector<common::Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
   TargetList target_list;
   DirectMapList direct_map_list;

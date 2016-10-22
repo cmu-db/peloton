@@ -76,9 +76,9 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   void visit(const Constant *op) override {
     output_expr = std::make_shared<OpExpression>(ExprConstant::make(op->value));
-    output_type = op->value->GetTypeId();
+    output_type = op->value.GetTypeId();
     output_size = common::Type::GetTypeSize(output_type);
-    output_inlined = op->value->IsInlined();
+    output_inlined = op->value.IsInlined();
   }
 
   void visit(const OperatorExpression *op) override {

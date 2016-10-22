@@ -34,27 +34,27 @@ class ConjunctionExpression : public AbstractExpression {
                         AbstractExpression *right)
     : AbstractExpression(type, Type::BOOLEAN, left, right) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {
       case (EXPRESSION_TYPE_CONJUNCTION_AND): {
-        if (vl->IsTrue() && vr->IsTrue())
-          return std::unique_ptr<Value>(new BooleanValue(1));
-        if (vl->IsFalse() || vr->IsFalse())
-          return std::unique_ptr<Value>(new BooleanValue(0));
-        return std::unique_ptr<Value>(new BooleanValue(
-            PELOTON_BOOLEAN_NULL));
+        if (vl.IsTrue() && vr.IsTrue())
+          return ValueFactory::GetBooleanValue(1);
+        if (vl.IsFalse() || vr.IsFalse())
+          return ValueFactory::GetBooleanValue(0);
+        return ValueFactory::GetBooleanValue(
+            PELOTON_BOOLEAN_NULL);
       }
       case (EXPRESSION_TYPE_CONJUNCTION_OR): {
-        if (vl->IsFalse() && vr->IsFalse())
-          return std::unique_ptr<Value>(new BooleanValue(0));
-        if (vl->IsTrue() || vr->IsTrue())
-          return std::unique_ptr<Value>(new BooleanValue(1));
-        return std::unique_ptr<Value>(new BooleanValue(
-            PELOTON_BOOLEAN_NULL));
+        if (vl.IsFalse() && vr.IsFalse())
+          return ValueFactory::GetBooleanValue(0);
+        if (vl.IsTrue() || vr.IsTrue())
+          return ValueFactory::GetBooleanValue(1);
+        return ValueFactory::GetBooleanValue(
+            PELOTON_BOOLEAN_NULL);
       }
       default:
         throw Exception("Invalid conjunction expression type.");

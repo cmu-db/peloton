@@ -150,7 +150,7 @@ bool RunPayment(const size_t &thread_id){
   std::unique_ptr<executor::ExecutorContext> context(
     new executor::ExecutorContext(txn));
   
-  std::vector<common::Value *> customer;
+  std::vector<common::Value > customer;
   
   if (customer_id >= 0) {
     LOG_TRACE("getCustomerByCustomerId:  WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ? , # w_id = %d, d_id = %d, c_id = %d", warehouse_id, district_id, customer_id);
@@ -166,7 +166,7 @@ bool RunPayment(const size_t &thread_id){
     customer_pexpr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     
-    std::vector<common::Value *> customer_pkey_values;
+    std::vector<common::Value > customer_pkey_values;
 
     customer_pkey_values.push_back(common::ValueFactory::GetIntegerValue(customer_id).Copy());
     customer_pkey_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
@@ -215,7 +215,7 @@ bool RunPayment(const size_t &thread_id){
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     
-    std::vector<common::Value *> customer_key_values;
+    std::vector<common::Value > customer_key_values;
 
     customer_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
     customer_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
@@ -261,7 +261,7 @@ bool RunPayment(const size_t &thread_id){
   warehouse_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   
-  std::vector<common::Value *> warehouse_key_values;
+  std::vector<common::Value > warehouse_key_values;
 
   warehouse_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
@@ -305,7 +305,7 @@ bool RunPayment(const size_t &thread_id){
   district_expr_types.push_back(
     ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   
-  std::vector<common::Value *> district_key_values;
+  std::vector<common::Value > district_key_values;
 
   district_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
   district_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
@@ -346,7 +346,7 @@ bool RunPayment(const size_t &thread_id){
 
   std::vector<oid_t> warehouse_update_column_ids = {8};
 
-  std::vector<common::Value *> warehouse_update_key_values;
+  std::vector<common::Value > warehouse_update_key_values;
 
   warehouse_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
@@ -368,10 +368,10 @@ bool RunPayment(const size_t &thread_id){
     warehouse_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
   // Update the 9th column
-  common::Value * warehouse_new_balance_value = common::ValueFactory::GetDoubleValue(warehouse_new_balance).Copy();
+  common::Value  warehouse_new_balance_value = common::ValueFactory::GetDoubleValue(warehouse_new_balance).Copy();
 
   warehouse_target_list.emplace_back(
-    8, expression::ExpressionUtil::ConstantValueFactory(*warehouse_new_balance_value)
+    8, expression::ExpressionUtil::ConstantValueFactory(warehouse_new_balance_value)
   );
 
   std::unique_ptr<const planner::ProjectInfo> warehouse_project_info(
@@ -403,7 +403,7 @@ bool RunPayment(const size_t &thread_id){
   std::vector<oid_t> district_update_column_ids = {9};
 
 
-  std::vector<common::Value *> district_update_key_values;
+  std::vector<common::Value > district_update_key_values;
 
   district_update_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
   district_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
@@ -427,10 +427,10 @@ bool RunPayment(const size_t &thread_id){
     }
   }
   // Update the 10th column
-  common::Value * district_new_balance_value = common::ValueFactory::GetDoubleValue(district_new_balance).Copy();
+  common::Value  district_new_balance_value = common::ValueFactory::GetDoubleValue(district_new_balance).Copy();
   
   district_target_list.emplace_back(
-    9, expression::ExpressionUtil::ConstantValueFactory(*district_new_balance_value)
+    9, expression::ExpressionUtil::ConstantValueFactory(district_new_balance_value)
   );
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
@@ -478,7 +478,7 @@ bool RunPayment(const size_t &thread_id){
     customer_pexpr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     
-    std::vector<common::Value *> customer_pkey_values;
+    std::vector<common::Value > customer_pkey_values;
 
     customer_pkey_values.push_back(common::ValueFactory::GetIntegerValue(customer_id).Copy());
     customer_pkey_values.push_back(common::ValueFactory::GetIntegerValue(customer_district_id).Copy());
@@ -511,15 +511,15 @@ bool RunPayment(const size_t &thread_id){
       customer_bc_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
     }
 
-    common::Value *customer_new_balance_value = common::ValueFactory::GetDoubleValue(customer_balance).Copy();
-    common::Value *customer_new_ytd_value = common::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
-    common::Value *customer_new_paycnt_value = common::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
-    common::Value *customer_new_data_value = common::ValueFactory::GetVarcharValue(data_constant.c_str()).Copy();
+    common::Value customer_new_balance_value = common::ValueFactory::GetDoubleValue(customer_balance).Copy();
+    common::Value customer_new_ytd_value = common::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
+    common::Value customer_new_paycnt_value = common::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
+    common::Value customer_new_data_value = common::ValueFactory::GetVarcharValue(data_constant.c_str()).Copy();
 
-    customer_bc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(*customer_new_balance_value));
-    customer_bc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(*customer_new_ytd_value));
-    customer_bc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(*customer_new_paycnt_value));
-    customer_bc_target_list.emplace_back(20, expression::ExpressionUtil::ConstantValueFactory(*customer_new_data_value));
+    customer_bc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
+    customer_bc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value));
+    customer_bc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value));
+    customer_bc_target_list.emplace_back(20, expression::ExpressionUtil::ConstantValueFactory(customer_new_data_value));
 
     std::unique_ptr<const planner::ProjectInfo> customer_bc_project_info(
       new planner::ProjectInfo(
@@ -551,7 +551,7 @@ bool RunPayment(const size_t &thread_id){
     customer_pexpr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     
-    std::vector<common::Value *> customer_pkey_values;
+    std::vector<common::Value > customer_pkey_values;
 
     customer_pkey_values.push_back(common::ValueFactory::GetIntegerValue(customer_id).Copy());
     customer_pkey_values.push_back(common::ValueFactory::GetIntegerValue(customer_district_id).Copy());
@@ -582,13 +582,13 @@ bool RunPayment(const size_t &thread_id){
       }
       customer_gc_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
     }
-    common::Value * customer_new_balance_value = common::ValueFactory::GetDoubleValue(customer_balance).Copy();
-    common::Value * customer_new_ytd_value = common::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
-    common::Value * customer_new_paycnt_value = common::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
+    common::Value  customer_new_balance_value = common::ValueFactory::GetDoubleValue(customer_balance).Copy();
+    common::Value  customer_new_ytd_value = common::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
+    common::Value  customer_new_paycnt_value = common::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
 
-    customer_gc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(*customer_new_balance_value));
-    customer_gc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(*customer_new_ytd_value));
-    customer_gc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(*customer_new_paycnt_value));
+    customer_gc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
+    customer_gc_target_list.emplace_back(17, expression::ExpressionUtil::ConstantValueFactory(customer_new_ytd_value));
+    customer_gc_target_list.emplace_back(18, expression::ExpressionUtil::ConstantValueFactory(customer_new_paycnt_value));
 
     std::unique_ptr<const planner::ProjectInfo> customer_gc_project_info(
       new planner::ProjectInfo(

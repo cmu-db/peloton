@@ -433,14 +433,10 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
   auto val2 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
   auto val3 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
   auto val4 = common::ValueFactory::GetNullValueByType(common::Type::VARCHAR);
-  tuple->SetValue(0, *val1, pool);
-  tuple->SetValue(1, *val2, pool);
-  tuple->SetValue(2, *val3, pool);
-  tuple->SetValue(3, *val4, pool);
-  delete val1;
-  delete val2;
-  delete val3;
-  delete val4;
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
+  tuple->SetValue(2, val3, pool);
+  tuple->SetValue(3, val4, pool);
 
   return tuple;
 }
@@ -451,9 +447,8 @@ void ExecutorTestsUtil::PrintTileVector(
     for (UNUSED_ATTRIBUTE oid_t tuple_id : *tile) {
       LOG_INFO("<");
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        LOG_INFO("%s", std::unique_ptr<common::Value>(
-                           tile->GetValue(tuple_id, col_id))
-                           ->GetInfo()
+        LOG_INFO("%s",
+                           tile->GetValue(tuple_id, col_id).GetInfo()
                            .c_str());
       }
       LOG_INFO(">");

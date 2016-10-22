@@ -57,7 +57,7 @@ class ExpressionUtil {
    * a value from the value vector
    */
   static void ConvertParameterExpressions(
-      expression::AbstractExpression *expression, std::vector<Value *> *values,
+      expression::AbstractExpression *expression, std::vector<Value> *values,
       catalog::Schema *schema) {
     LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
@@ -69,11 +69,11 @@ class ExpressionUtil {
         // left expression is parameter
         auto left = (ParameterValueExpression *)expression->GetLeft();
         auto value =
-            new ConstantValueExpression(*values->at(left->GetValueIdx()));
+            new ConstantValueExpression(values->at(left->GetValueIdx()));
         LOG_TRACE("left in vector type: %s",
-                  values->at(left->GetValueIdx())->GetInfo().c_str());
+                  values->at(left->GetValueIdx()).GetInfo().c_str());
         LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
-                  value->GetValue()->GetInfo().c_str());
+                  value->GetValue().GetInfo().c_str());
         delete left;
         expression->setLeftExpression(value);
       } else {
@@ -90,12 +90,12 @@ class ExpressionUtil {
         // right expression is parameter
         auto right = (ParameterValueExpression *)expression->GetRight();
         LOG_TRACE("right in vector type: %s",
-                  values->at(right->GetValueIdx())->GetInfo().c_str());
+                  values->at(right->GetValueIdx()).GetInfo().c_str());
         auto value =
-            new ConstantValueExpression(*values->at(right->GetValueIdx()));
+            new ConstantValueExpression(values->at(right->GetValueIdx()));
         LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
-                  std::unique_ptr<common::Value>(value->GetValue())
-                      ->GetInfo()
+                  value->GetValue()
+                      .GetInfo()
                       .c_str());
         delete right;
         expression->setRightExpression(value);
@@ -219,7 +219,7 @@ class ExpressionUtil {
       ExpressionType type,
       const std::list<expression::AbstractExpression *> &child_exprs) {
     if (child_exprs.empty())
-      return new ConstantValueExpression(common::BooleanValue(1));
+      return new ConstantValueExpression(common::ValueFactory::GetBooleanValue(1));
     AbstractExpression *left = nullptr;
     AbstractExpression *right = nullptr;
     for (auto expr : child_exprs) {

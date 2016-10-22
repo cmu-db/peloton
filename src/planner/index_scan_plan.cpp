@@ -53,7 +53,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
 
   // copy the value over for binding purpose
   for (auto val : values_with_params_) {
-    values_.push_back(val->Copy());
+    values_.push_back(val.Copy());
   }
 
   // Then add the only conjunction predicate into the index predicate list
@@ -64,7 +64,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   return;
 }
 
-void IndexScanPlan::SetParameterValues(std::vector<common::Value *> *values) {
+void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Index Scans");
 
   auto where = predicate_with_params_->Copy();
@@ -74,23 +74,19 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value *> *values) {
 
   // Destroy the values of the last plan and copy the original values over for
   // binding
-  for (auto val : values_) {
-    delete val;
-  }
   values_.clear();
   for (auto val : values_with_params_) {
-    values_.push_back(val->Copy());
+    values_.push_back(val.Copy());
   }
 
   for (unsigned int i = 0; i < values_.size(); ++i) {
     auto value = values_[i];
     auto column_id = key_column_ids_[i];
-    if (value->GetTypeId() == common::Type::PARAMETER_OFFSET) {
-      int offset = value->GetAs<int32_t>();
-      delete value;
+    if (value.GetTypeId() == common::Type::PARAMETER_OFFSET) {
+      int offset = value.GetAs<int32_t>();
       values_[i] =
-          (values->at(offset))
-              ->CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
+          (values->at(offset)).
+              CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 

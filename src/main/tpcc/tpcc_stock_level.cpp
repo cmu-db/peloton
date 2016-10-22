@@ -107,7 +107,7 @@ bool RunStockLevel(const size_t &thread_id) {
   std::vector<oid_t> district_column_ids = {COL_IDX_D_NEXT_O_ID};
   std::vector<oid_t> district_key_column_ids = {COL_IDX_D_W_ID, COL_IDX_D_ID};
   std::vector<ExpressionType> district_expr_types;
-  std::vector<common::Value *> district_key_values;
+  std::vector<common::Value > district_key_values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   district_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
@@ -138,7 +138,7 @@ bool RunStockLevel(const size_t &thread_id) {
     PL_ASSERT(false);
   }
 
-  common::Value * o_id = districts[0][0];
+  common::Value  o_id = districts[0][0];
 
   LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
   
@@ -173,7 +173,7 @@ bool RunStockLevel(const size_t &thread_id) {
     /////////// Construct left table index scan ////////////////////
     ////////////////////////////////////////////////////////////////
 
-    std::vector<common::Value *> order_line_key_values;
+    std::vector<common::Value > order_line_key_values;
     
     order_line_key_values.push_back(common::ValueFactory::GetIntegerValue(w_id).Copy());
     order_line_key_values.push_back(common::ValueFactory::GetIntegerValue(d_id).Copy());
@@ -209,7 +209,7 @@ bool RunStockLevel(const size_t &thread_id) {
     ///////////// Construct right table index scan ///////////////////
     //////////////////////////////////////////////////////////////////
 
-    std::vector<common::Value *> stock_key_values;
+    std::vector<common::Value > stock_key_values;
 
     stock_key_values.push_back(common::ValueFactory::GetIntegerValue(w_id).Copy());
     stock_key_values.push_back(item_id);

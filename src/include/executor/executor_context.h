@@ -40,15 +40,15 @@ class ExecutorContext {
   ExecutorContext(concurrency::Transaction *transaction);
 
   ExecutorContext(concurrency::Transaction *transaction,
-                  const std::vector<common::Value *> &params);
+                  const std::vector<common::Value> &params);
 
   ~ExecutorContext();
 
   concurrency::Transaction *GetTransaction() const;
 
-  const std::vector<common::Value *> &GetParams() const;
+  const std::vector<common::Value> &GetParams() const;
 
-  void SetParams(common::Value *value);
+  void SetParams(common::Value &value);
 
   void ClearParams();
 
@@ -67,7 +67,7 @@ class ExecutorContext {
   concurrency::Transaction *transaction_;
 
   // params
-  std::vector<common::Value *> params_;
+  std::vector<common::Value> params_;
 
   // pool
   std::unique_ptr<common::VarlenPool> pool_;

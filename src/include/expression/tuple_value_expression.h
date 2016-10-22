@@ -34,16 +34,16 @@ class TupleValueExpression : public AbstractExpression {
 
   ~TupleValueExpression() {}
 
-  std::unique_ptr<Value> Evaluate(const AbstractTuple *tuple1,
+  Value Evaluate(const AbstractTuple *tuple1,
                                   const AbstractTuple *tuple2,
           UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (tuple_idx_ == 0) {
       assert(tuple1 != nullptr);
-      return std::unique_ptr<Value>(tuple1->GetValue(value_idx_));
+      return (tuple1->GetValue(value_idx_));
     }
     else {
       assert(tuple2 != nullptr);
-      return std::unique_ptr<Value>(tuple2->GetValue(value_idx_));
+      return (tuple2->GetValue(value_idx_));
     }
   }
 

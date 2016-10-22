@@ -21,8 +21,6 @@
 
 namespace peloton {
 
-//class Value;
-
 namespace planner {
 class AbstractPlan;
 }
@@ -65,7 +63,7 @@ class AbstractExecutor {
   const planner::AbstractPlan *GetRawNode() const { return node_; }
 
   // set the context
-  void SetContext(common::Value *value);
+  void SetContext(common::Value &value);
 
   // clear the context
   void ClearContext();

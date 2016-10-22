@@ -206,8 +206,8 @@ TransactionTestsUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    std::unique_ptr<common::Value> value(tuple->GetValue(col_id));
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(*value);
+    common::Value value = (tuple->GetValue(col_id));
+    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -253,7 +253,7 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
   auto index = table->GetIndex(0);
   std::vector<expression::AbstractExpression *> runtime_keys;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value *> values;
+  std::vector<common::Value> values;
 
   std::vector<oid_t> key_column_ids = {0};
 
@@ -291,8 +291,8 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
     result = -1;
   else {
     EXPECT_EQ(1, result_tile->GetTupleCount());
-    std::unique_ptr<common::Value> val(result_tile->GetValue(0, 1));
-    result = val->GetAs<int32_t>();
+    common::Value val = (result_tile->GetValue(0, 1));
+    result = val.GetAs<int32_t>();
   }
 
   return true;
@@ -432,8 +432,8 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
       seq_scan_executor.GetOutput());
 
   for (size_t i = 0; i < result_tile->GetTupleCount(); i++) {
-    std::unique_ptr<common::Value> val(result_tile->GetValue(i, 1));
-    results.push_back(val->GetAs<int32_t>());
+    common::Value val = (result_tile->GetValue(i, 1));
+    results.push_back(val.GetAs<int32_t>());
   }
   return true;
 }

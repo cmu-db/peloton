@@ -422,7 +422,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::pair<int, std::string>> bind_parameters;
   auto param_types = statement->GetParamTypes();
 
-  std::vector<common::Value *> param_values;
+  std::vector<common::Value> param_values;
 
   PktBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
@@ -520,15 +520,12 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   if (param_values.size() > 0) {
     LOG_TRACE("Binding values:");
     for (UNUSED_ATTRIBUTE auto value : param_values) {
-      LOG_TRACE("%s", value->GetInfo().c_str());
+      LOG_TRACE("%s", value.GetInfo().c_str());
     }
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 
   // clean up param_values
-  for (auto val_ptr : param_values) {
-    delete val_ptr;
-  }
   param_values.clear();
 
   // Construct a portal

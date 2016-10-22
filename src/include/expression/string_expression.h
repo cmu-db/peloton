@@ -14,13 +14,13 @@ class AsciiExpression : public AbstractExpression {
   AsciiExpression(AbstractExpression *lc)
       : AbstractExpression(EXPRESSION_TYPE_ASCII, Type::INTEGER, lc, nullptr) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
+    Value vl = left_->Evaluate(tuple1, tuple2, context);
+    std::string str = vl.ToString();
     int32_t val = str[0];
-    return std::unique_ptr<IntegerValue>(new IntegerValue(val));
+    return ValueFactory::GetIntegerValue(val);
   }
 
   AbstractExpression *Copy() const override {
@@ -33,13 +33,13 @@ class ChrExpression : public AbstractExpression {
   ChrExpression(AbstractExpression *lc)
       : AbstractExpression(EXPRESSION_TYPE_CHAR, Type::VARCHAR, lc, nullptr) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    int32_t val = vl->GetAs<int32_t>();
+    Value vl = left_->Evaluate(tuple1, tuple2, context);
+    int32_t val = vl.GetAs<int32_t>();
     std::string str(1, char(static_cast<char>(val)));
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return ValueFactory::GetVarcharValue(str);
   }
 
   AbstractExpression *Copy() const override {
@@ -60,15 +60,15 @@ class SubstrExpression : public AbstractExpression {
     delete len_;
   }
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
-    int32_t from = vr->GetAs<int32_t>() - 1;
-    int32_t len = (len_->Evaluate(nullptr, nullptr, nullptr))->GetAs<int32_t>();
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str.substr(from, len), false));
+    std::string str = vl.ToString();
+    int32_t from = vr.GetAs<int32_t>() - 1;
+    int32_t len = (len_->Evaluate(nullptr, nullptr, nullptr)).GetAs<int32_t>();
+    return ValueFactory::GetVarcharValue(str.substr(from, len));
   }
 
   AbstractExpression *Copy() const override {
@@ -86,13 +86,13 @@ class CharLengthExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_CHAR_LEN,
                            Type::INTEGER, lc, nullptr) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
+    std::string str = vl.ToString();
     int32_t len = str.length();
-    return std::unique_ptr<IntegerValue>(new IntegerValue(len));
+    return (ValueFactory::GetIntegerValue(len));
   }
 
   AbstractExpression *Copy() const override {
@@ -106,13 +106,13 @@ class ConcatExpression : public AbstractExpression {
                    AbstractExpression *rc)
       : AbstractExpression(EXPRESSION_TYPE_CONCAT, Type::VARCHAR, lc, rc) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString() + vr->ToString();
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    std::string str = vl.ToString() + vr.ToString();
+    return (ValueFactory::GetVarcharValue(str));
   }
 
   AbstractExpression *Copy() const override {
@@ -127,13 +127,13 @@ class OctetLengthExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_OCTET_LEN,
                            Type::INTEGER, lc, nullptr) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
+    std::string str = vl.ToString();
     int32_t len = str.length();
-    return std::unique_ptr<IntegerValue>(new IntegerValue(len));
+    return (ValueFactory::GetIntegerValue(len));
   }
 
   AbstractExpression *Copy() const override {
@@ -148,18 +148,18 @@ class RepeatExpression : public AbstractExpression {
                    AbstractExpression *rc)
       : AbstractExpression(EXPRESSION_TYPE_REPEAT, Type::VARCHAR, lc, rc) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
-    int32_t num = vr->GetAs<int32_t>();
+    std::string str = vl.ToString();
+    int32_t num = vr.GetAs<int32_t>();
     std::string ret = "";
     while (num--) {
       ret = ret + str;
     }
-    return std::unique_ptr<VarlenValue>(new VarlenValue(ret, false));
+    return (ValueFactory::GetVarcharValue(ret));
   }
 
   AbstractExpression *Copy() const override {
@@ -181,20 +181,20 @@ class ReplaceExpression : public AbstractExpression {
     delete to_;
   }
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
-    std::string from = vr->ToString();
-    std::string to = (to_->Evaluate(nullptr, nullptr, nullptr))->ToString();
+    std::string str = vl.ToString();
+    std::string from = vr.ToString();
+    std::string to = (to_->Evaluate(nullptr, nullptr, nullptr)).ToString();
     size_t pos = 0;
     while((pos = str.find(from, pos)) != std::string::npos) {
       str.replace(pos, from.length(), to);
       pos += to.length();
     }
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return (ValueFactory::GetVarcharValue(str));
   }
 
   AbstractExpression *Copy() const override {
@@ -213,13 +213,13 @@ class LTrimExpression : public AbstractExpression {
                   AbstractExpression *rc)
       : AbstractExpression(EXPRESSION_TYPE_LTRIM, Type::VARCHAR, lc, rc) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
-    std::string from = vr->ToString();
+    std::string str = vl.ToString();
+    std::string from = vr.ToString();
     size_t pos = 0;
     bool erase = 0;
     while (from.find(str[pos]) != std::string::npos) {
@@ -228,7 +228,7 @@ class LTrimExpression : public AbstractExpression {
     }
     if (erase)
       str.erase(0, pos);
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return (ValueFactory::GetVarcharValue(str));
   }
 
   AbstractExpression *Copy() const override {
@@ -244,15 +244,15 @@ class RTrimExpression : public AbstractExpression {
                   AbstractExpression *rc)
       : AbstractExpression(EXPRESSION_TYPE_RTRIM, Type::VARCHAR, lc, rc) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
-    std::string from = vr->ToString();
+    std::string str = vl.ToString();
+    std::string from = vr.ToString();
     if (str.length() == 0)
-      return std::unique_ptr<VarlenValue>(new VarlenValue("", false));
+      return (ValueFactory::GetVarcharValue(""));
     size_t pos = str.length() - 1;
     bool erase = 0;
     while (from.find(str[pos]) != std::string::npos) {
@@ -261,7 +261,7 @@ class RTrimExpression : public AbstractExpression {
     }
     if (erase)
       str.erase(pos + 1, str.length() - pos - 1);
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return (ValueFactory::GetVarcharValue(str));
   }
 
   AbstractExpression *Copy() const override {
@@ -277,16 +277,16 @@ class BTrimExpression : public AbstractExpression {
                   AbstractExpression *rc)
       : AbstractExpression(EXPRESSION_TYPE_BTRIM, Type::VARCHAR, lc, rc) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
-    std::string str = vl->ToString();
-    std::string from = vr->ToString();
+    std::string str = vl.ToString();
+    std::string from = vr.ToString();
 
     if (str.length() == 0)
-      return std::unique_ptr<VarlenValue>(new VarlenValue("", false));
+      return (ValueFactory::GetVarcharValue(""));
 
     size_t pos = str.length() - 1;
     bool erase = 0;
@@ -305,7 +305,7 @@ class BTrimExpression : public AbstractExpression {
     }
     if (erase)
       str.erase(0, pos);
-    return std::unique_ptr<VarlenValue>(new VarlenValue(str, false));
+    return (ValueFactory::GetVarcharValue(str));
   }
 
   AbstractExpression *Copy() const override {

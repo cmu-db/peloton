@@ -77,7 +77,7 @@ class AbstractPlan : public Printable {
   virtual PlanNodeType GetPlanNodeType() const = 0;
 
   // Setting values of the parameters in the prepare statement
-  virtual void SetParameterValues(std::vector<common::Value *> *values);
+  virtual void SetParameterValues(std::vector<common::Value> *values);
 
   //===--------------------------------------------------------------------===//
   // Utilities

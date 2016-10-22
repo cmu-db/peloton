@@ -22,16 +22,16 @@ namespace index {
 class IndexMetadata;
 
 void ConstructIntervals(oid_t leading_column_id,
-                        const std::vector<common::Value *> &values,
+                        const std::vector<common::Value> &values,
                         const std::vector<oid_t> &key_column_ids,
                         const std::vector<ExpressionType> &expr_types,
-                        std::vector<std::pair<common::Value *, common::Value *>> &intervals);
+                        std::vector<std::pair<common::Value, common::Value>> &intervals);
 
 void FindMaxMinInColumns(oid_t leading_column_id,
-                         const std::vector<common::Value *> &values,
+                         const std::vector<common::Value> &values,
                          const std::vector<oid_t> &key_column_ids,
                          const std::vector<ExpressionType> &expr_types,
-                         std::map<oid_t, std::pair<common::Value *, common::Value*>> &non_leading_columns);
+                         std::map<oid_t, std::pair<common::Value, common::Value>> &non_leading_columns);
                          
 bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types);
 

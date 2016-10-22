@@ -82,7 +82,7 @@ class LogicalTile : public Printable {
 
   storage::Tile *GetBaseTile(oid_t column_id);
 
-  common::Value *GetValue(oid_t tuple_id, oid_t column_id);
+  common::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(common::Value &value, oid_t tuple_id, oid_t column_id);
 

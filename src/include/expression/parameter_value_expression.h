@@ -33,10 +33,10 @@ class ParameterValueExpression : public AbstractExpression {
 
   int GetValueIdx() const { return value_idx_; }
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       executor::ExecutorContext *context) const override {
-    return std::unique_ptr<Value>(context->GetParams().at(value_idx_));
+    return context->GetParams().at(value_idx_);
   }
 
   AbstractExpression *Copy() const override {

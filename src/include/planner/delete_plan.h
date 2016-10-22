@@ -52,7 +52,7 @@ class DeletePlan : public AbstractPlan {
   explicit DeletePlan(parser::DeleteStatement *delete_statemenet,
                       std::vector<oid_t> &key_column_ids,
                       std::vector<ExpressionType> &expr_types,
-                      std::vector<common::Value *> &values, oid_t &index_id);
+                      std::vector<common::Value> &values, oid_t &index_id);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
@@ -60,7 +60,7 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
-  void SetParameterValues(std::vector<common::Value *> *values) override;
+  void SetParameterValues(std::vector<common::Value> *values) override;
 
   bool GetTruncate() const { return truncate; }
 

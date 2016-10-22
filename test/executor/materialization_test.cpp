@@ -77,22 +77,22 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
 
   // Check that the base tile has the correct values.
   for (int i = 0; i < tuple_count; i++) {
-    std::unique_ptr<common::Value> val0(result_base_tile->GetValue(i, 0));
-    std::unique_ptr<common::Value> val1(result_base_tile->GetValue(i, 1));
-    std::unique_ptr<common::Value> cmp(val0->CompareEquals(
+    common::Value val0 = (result_base_tile->GetValue(i, 0));
+    common::Value val1 = (result_base_tile->GetValue(i, 1));
+    common::Value cmp = (val0.CompareEquals(
       common::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0))));
-    EXPECT_TRUE(cmp->IsTrue());
-    cmp.reset(val1->CompareEquals(common::ValueFactory::GetIntegerValue(
-        ExecutorTestsUtil::PopulatedValue(i, 1))));
-    EXPECT_TRUE(cmp->IsTrue());
+    EXPECT_TRUE(cmp.IsTrue());
+    cmp = val1.CompareEquals(common::ValueFactory::GetIntegerValue(
+        ExecutorTestsUtil::PopulatedValue(i, 1)));
+    EXPECT_TRUE(cmp.IsTrue());
 
     // Double check that logical tile is functioning.
-    std::unique_ptr<common::Value> logic_val0(result_logical_tile->GetValue(i, 0));
-    std::unique_ptr<common::Value> logic_val1(result_logical_tile->GetValue(i, 1));
-    cmp.reset(logic_val0->CompareEquals(*val0));
-    EXPECT_TRUE(cmp->IsTrue());
-    cmp.reset(logic_val1->CompareEquals(*val1));
-    EXPECT_TRUE(cmp->IsTrue());
+    common::Value logic_val0 = (result_logical_tile->GetValue(i, 0));
+    common::Value logic_val1 = (result_logical_tile->GetValue(i, 1));
+    cmp = (logic_val0.CompareEquals(val0));
+    EXPECT_TRUE(cmp.IsTrue());
+    cmp = (logic_val1.CompareEquals(val1));
+    EXPECT_TRUE(cmp.IsTrue());
   }
 }
 
@@ -148,34 +148,34 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
 
   // Check that the base tile has the correct values.
   for (int i = 0; i < tuple_count; i++) {
-    std::unique_ptr<common::Value> val0(result_base_tile->GetValue(i, 0));
-    std::unique_ptr<common::Value> val1(result_base_tile->GetValue(i, 1));
-    std::unique_ptr<common::Value> val2(result_base_tile->GetValue(i, 2));
+    common::Value val0(result_base_tile->GetValue(i, 0));
+    common::Value val1(result_base_tile->GetValue(i, 1));
+    common::Value val2(result_base_tile->GetValue(i, 2));
     // Output column 2.
-    std::unique_ptr<common::Value> cmp(val2->CompareEquals(
+    common::Value cmp(val2.CompareEquals(
       common::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0))));
-    EXPECT_TRUE(cmp->IsTrue());
+    EXPECT_TRUE(cmp.IsTrue());
 
     // Output column 1.
-    cmp.reset(val1->CompareEquals(common::ValueFactory::GetIntegerValue(
+    cmp = (val1.CompareEquals(common::ValueFactory::GetIntegerValue(
         ExecutorTestsUtil::PopulatedValue(i, 1))));
-    EXPECT_TRUE(cmp->IsTrue());
+    EXPECT_TRUE(cmp.IsTrue());
 
     // Output column 0.
-    cmp.reset(val0->CompareEquals(common::ValueFactory::GetVarcharValue(
+    cmp = (val0.CompareEquals(common::ValueFactory::GetVarcharValue(
         std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3)))));
-    EXPECT_TRUE(cmp->IsTrue());
+    EXPECT_TRUE(cmp.IsTrue());
 
     // Double check that logical tile is functioning.
-    std::unique_ptr<common::Value> logic_val0(result_logical_tile->GetValue(i, 0));
-    std::unique_ptr<common::Value> logic_val1(result_logical_tile->GetValue(i, 1));
-    std::unique_ptr<common::Value> logic_val2(result_logical_tile->GetValue(i, 2));
-    cmp.reset(logic_val0->CompareEquals(*val0));
-    EXPECT_TRUE(cmp->IsTrue());
-    cmp.reset(logic_val1->CompareEquals(*val1));
-    EXPECT_TRUE(cmp->IsTrue());
-    cmp.reset(logic_val2->CompareEquals(*val2));
-    EXPECT_TRUE(cmp->IsTrue());
+    common::Value logic_val0 = (result_logical_tile->GetValue(i, 0));
+    common::Value logic_val1 = (result_logical_tile->GetValue(i, 1));
+    common::Value logic_val2 = (result_logical_tile->GetValue(i, 2));
+    cmp = (logic_val0.CompareEquals(val0));
+    EXPECT_TRUE(cmp.IsTrue());
+    cmp = (logic_val1.CompareEquals(val1));
+    EXPECT_TRUE(cmp.IsTrue());
+    cmp = (logic_val2.CompareEquals(val2));
+    EXPECT_TRUE(cmp.IsTrue());
   }
 }
 

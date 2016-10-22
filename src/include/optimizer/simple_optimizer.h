@@ -71,14 +71,14 @@ class SimpleOptimizer : public AbstractOptimizer {
                                   expression::AbstractExpression *expression,
                                   std::vector<oid_t> &column_ids,
                                   std::vector<ExpressionType> &expr_types,
-                                  std::vector<common::Value *> &values,
+                                  std::vector<common::Value> &values,
                                   bool &index_searchable);
   
   static bool CheckIndexSearchable(storage::DataTable* target_table, 
                                     expression::AbstractExpression *expression,
                                     std::vector<oid_t> &key_column_ids,
                                     std::vector<ExpressionType> &expr_types,
-                                    std::vector<common::Value *> &values,
+                                    std::vector<common::Value> &values,
                                     oid_t &index_id); 
 
   // create a scan plan for a select statement

@@ -31,22 +31,22 @@ class ConstantValueExpression : public AbstractExpression {
     : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT,
                          value.GetTypeId()), value_(value.Copy()) {}
   
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    return std::unique_ptr<Value>(value_->Copy());
+    return value_;
   }
 
-  Value *GetValue() const { return value_->Copy(); }
+  Value GetValue() const { return value_;}
 
   bool HasParameter() const override { return false; }
 
   AbstractExpression *Copy() const override {
-    return new ConstantValueExpression(*value_);
+    return new ConstantValueExpression(value_);
   }
 
  protected:
-  std::unique_ptr<Value> value_;
+  Value value_;
 };
 
 }  // End expression namespace

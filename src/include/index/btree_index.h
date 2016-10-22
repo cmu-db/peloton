@@ -53,7 +53,7 @@ class BTreeIndex : public Index {
   bool CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
                        std::function<bool(const void *)> predicate);
 
-  void Scan(const std::vector<common::Value *> &value_list,
+  void Scan(const std::vector<common::Value> &value_list,
             const std::vector<oid_t> &tuple_column_id_list,
             const std::vector<ExpressionType> &expr_list,
             const ScanDirectionType &scan_direction,

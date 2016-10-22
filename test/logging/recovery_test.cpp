@@ -292,10 +292,10 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
   cid_t test_commit_id = 10;
 
-  std::unique_ptr<common::Value> val0(tuples[0]->GetValue(0));
-  std::unique_ptr<common::Value> val1(tuples[0]->GetValue(1));
-  std::unique_ptr<common::Value> val2(tuples[0]->GetValue(2));
-  std::unique_ptr<common::Value> val3(tuples[0]->GetValue(3));
+  common::Value val0 = (tuples[0]->GetValue(0));
+  common::Value val1 = (tuples[0]->GetValue(1));
+  common::Value val2 = (tuples[0]->GetValue(2));
+  common::Value val3 = (tuples[0]->GetValue(3));
   auto curr_rec = new logging::TupleRecord(
       LOGRECORD_TYPE_TUPLE_INSERT, test_commit_id, recovery_table->GetOid(),
       ItemPointer(100, 5), INVALID_ITEMPOINTER, tuples[0], DEFAULT_DB_ID);
@@ -307,18 +307,18 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   EXPECT_TRUE(tg_header->GetBeginCommitId(5) <= test_commit_id);
   EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
 
-  std::unique_ptr<common::Value> rval0(recovery_table->GetTileGroupById(100)->GetValue(5, 0));
-  std::unique_ptr<common::Value> cmp0(val0->CompareEquals(*rval0));
-  EXPECT_TRUE(cmp0->IsTrue());
-  std::unique_ptr<common::Value> rval1(recovery_table->GetTileGroupById(100)->GetValue(5, 1));
-  std::unique_ptr<common::Value> cmp1(val1->CompareEquals(*rval1));
-  EXPECT_TRUE(cmp1->IsTrue());
-  std::unique_ptr<common::Value> rval2(recovery_table->GetTileGroupById(100)->GetValue(5, 2));
-  std::unique_ptr<common::Value> cmp2(val2->CompareEquals(*rval2));
-  EXPECT_TRUE(cmp2->IsTrue());
-  std::unique_ptr<common::Value> rval3(recovery_table->GetTileGroupById(100)->GetValue(5, 3));
-  std::unique_ptr<common::Value> cmp3(val3->CompareEquals(*rval3));
-  EXPECT_TRUE(cmp3->IsTrue());
+  common::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
+  common::Value cmp0 = (val0.CompareEquals(rval0));
+  EXPECT_TRUE(cmp0.IsTrue());
+  common::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
+  common::Value cmp1 = (val1.CompareEquals(rval1));
+  EXPECT_TRUE(cmp1.IsTrue());
+  common::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
+  common::Value cmp2 = (val2.CompareEquals(rval2));
+  EXPECT_TRUE(cmp2.IsTrue());
+  common::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
+  common::Value cmp3 = (val3.CompareEquals(rval3));
+  EXPECT_TRUE(cmp3.IsTrue());
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 1);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
@@ -341,10 +341,10 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
   cid_t test_commit_id = 10;
 
-  std::unique_ptr<common::Value> val0(tuples[0]->GetValue(0));
-  std::unique_ptr<common::Value> val1(tuples[0]->GetValue(1));
-  std::unique_ptr<common::Value> val2(tuples[0]->GetValue(2));
-  std::unique_ptr<common::Value> val3(tuples[0]->GetValue(3));
+  common::Value val0 = (tuples[0]->GetValue(0));
+  common::Value val1 = (tuples[0]->GetValue(1));
+  common::Value val2 = (tuples[0]->GetValue(2));
+  common::Value val3 = (tuples[0]->GetValue(3));
 
   auto curr_rec = new logging::TupleRecord(
       LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id, recovery_table->GetOid(),
@@ -358,18 +358,18 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
   EXPECT_EQ(tg_header->GetEndCommitId(4), test_commit_id);
 
-  std::unique_ptr<common::Value> rval0(recovery_table->GetTileGroupById(100)->GetValue(5, 0));
-  std::unique_ptr<common::Value> cmp0(val0->CompareEquals(*rval0));
-  EXPECT_TRUE(cmp0->IsTrue());
-  std::unique_ptr<common::Value> rval1(recovery_table->GetTileGroupById(100)->GetValue(5, 1));
-  std::unique_ptr<common::Value> cmp1(val1->CompareEquals(*rval1));
-  EXPECT_TRUE(cmp1->IsTrue());
-  std::unique_ptr<common::Value> rval2(recovery_table->GetTileGroupById(100)->GetValue(5, 2));
-  std::unique_ptr<common::Value> cmp2(val2->CompareEquals(*rval2));
-  EXPECT_TRUE(cmp2->IsTrue());
-  std::unique_ptr<common::Value> rval3(recovery_table->GetTileGroupById(100)->GetValue(5, 3));
-  std::unique_ptr<common::Value> cmp3(val3->CompareEquals(*rval3));
-  EXPECT_TRUE(cmp3->IsTrue());
+  common::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
+  common::Value cmp0 = (val0.CompareEquals(rval0));
+  EXPECT_TRUE(cmp0.IsTrue());
+  common::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
+  common::Value cmp1 = (val1.CompareEquals(rval1));
+  EXPECT_TRUE(cmp1.IsTrue());
+  common::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
+  common::Value cmp2 = (val2.CompareEquals(rval2));
+  EXPECT_TRUE(cmp2.IsTrue());
+  common::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
+  common::Value cmp3 = (val3.CompareEquals(rval3));
+  EXPECT_TRUE(cmp3.IsTrue());
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);

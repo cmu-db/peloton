@@ -22,7 +22,7 @@ ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
     : transaction_(transaction) {}
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
-                                 const std::vector<common::Value *> &params)
+                                 const std::vector<common::Value> &params)
     : transaction_(transaction),
       params_(params) {}
 
@@ -34,11 +34,11 @@ concurrency::Transaction *ExecutorContext::GetTransaction() const {
   return transaction_;
 }
 
-const std::vector<common::Value *> &ExecutorContext::GetParams() const {
+const std::vector<common::Value> &ExecutorContext::GetParams() const {
   return params_;
 }
 
-void ExecutorContext::SetParams(common::Value *value) {
+void ExecutorContext::SetParams(common::Value &value) {
   params_.push_back(value);
 }
 

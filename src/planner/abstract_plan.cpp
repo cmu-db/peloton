@@ -62,7 +62,7 @@ const std::string AbstractPlan::GetInfo() const {
   return os.str();
 }
 
-void AbstractPlan::SetParameterValues(std::vector<common::Value *> *values) {
+void AbstractPlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in all child plans of %s",
             GetInfo().c_str());
   for (auto &child_plan : GetChildren()) {

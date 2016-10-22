@@ -233,8 +233,8 @@ class IntsKey {
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
         case Type::BIGINT: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(ii));
-          const int64_t value = ValuePeeker::PeekBigInt(val.get());
+          common::Value val = tuple->GetValue(ii);
+          const int64_t value = ValuePeeker::PeekBigInt(val);
           const uint64_t key_value =
               ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
                   value);
@@ -242,8 +242,8 @@ class IntsKey {
           break;
         }
         case Type::INTEGER: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(ii));
-          const int32_t value = ValuePeeker::PeekInteger(val.get());
+          common::Value val = tuple->GetValue(ii);
+          const int32_t value = ValuePeeker::PeekInteger(val);
           const uint32_t key_value =
               ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
                   value);
@@ -251,8 +251,8 @@ class IntsKey {
           break;
         }
         case Type::SMALLINT: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(ii));
-          const int16_t value = ValuePeeker::PeekSmallInt(val.get());
+          common::Value val = tuple->GetValue(ii);
+          const int16_t value = ValuePeeker::PeekSmallInt(val);
           const uint16_t key_value =
               ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
                   value);
@@ -260,8 +260,8 @@ class IntsKey {
           break;
         }
         case Type::TINYINT: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(ii));
-          const int8_t value = ValuePeeker::PeekTinyInt(val.get());
+          common::Value val = tuple->GetValue(ii);
+          const int8_t value = ValuePeeker::PeekTinyInt(val);
           const uint8_t key_value =
               ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
                   value);
@@ -286,8 +286,8 @@ class IntsKey {
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
         case Type::BIGINT: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(indices[ii]));
-          const int64_t value = ValuePeeker::PeekBigInt(val.get());
+          common::Value val = tuple->GetValue(indices[ii]);
+          const int64_t value = ValuePeeker::PeekBigInt(val);
           const uint64_t key_value =
               ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
                   value);
@@ -295,9 +295,9 @@ class IntsKey {
           break;
         }
         case Type::INTEGER: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(indices[ii]));
+          common::Value val = tuple->GetValue(indices[ii]);
           const int32_t value =
-              ValuePeeker::PeekInteger(val.get());
+              ValuePeeker::PeekInteger(val);
           const uint32_t key_value =
               ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
                   value);
@@ -305,8 +305,8 @@ class IntsKey {
           break;
         }
         case Type::SMALLINT: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(indices[ii]));
-          const int16_t value = ValuePeeker::PeekSmallInt(val.get());
+          common::Value val = tuple->GetValue(indices[ii]);
+          const int16_t value = ValuePeeker::PeekSmallInt(val);
           const uint16_t key_value =
               ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
                   value);
@@ -314,8 +314,8 @@ class IntsKey {
           break;
         }
         case Type::TINYINT: {
-          std::unique_ptr<common::Value> val(tuple->GetValue(indices[ii]));
-          const int8_t value = ValuePeeker::PeekTinyInt(val.get());
+          common::Value val = tuple->GetValue(indices[ii]);
+          const int8_t value = ValuePeeker::PeekTinyInt(val);
           const uint8_t key_value =
               ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
                   value);
@@ -457,7 +457,7 @@ class GenericKey {
     return storage::Tuple(key_schema, data);
   }
 
-  inline const Value *ToValueFast(const catalog::Schema *schema,
+  inline const Value ToValueFast(const catalog::Schema *schema,
                                  int column_id) const {
     const Type::TypeId column_type = schema->GetType(column_id);
     const char *data_ptr = &data[schema->GetOffset(column_id)];
@@ -484,19 +484,19 @@ class GenericComparator {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      std::unique_ptr<const common::Value> lhs_value(
+      const common::Value lhs_value = (
           lhs.ToValueFast(schema, column_itr));
-      std::unique_ptr<const common::Value> rhs_value(
+      const common::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
       
-      std::unique_ptr<common::Value> res_lt(
-          lhs_value->CompareLessThan(*rhs_value));
-      if (res_lt->IsTrue())
+      common::Value res_lt = (
+          lhs_value.CompareLessThan(rhs_value));
+      if (res_lt.IsTrue())
         return true;
 
-      std::unique_ptr<common::Value> res_gt(
-          lhs_value->CompareGreaterThan(*rhs_value));
-      if (res_gt->IsTrue())
+      common::Value res_gt = (
+          lhs_value.CompareGreaterThan(rhs_value));
+      if (res_gt.IsTrue())
         return false;
     }
 
@@ -519,19 +519,19 @@ class GenericComparatorRaw {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      std::unique_ptr<const common::Value> lhs_value(
+      const common::Value lhs_value = (
           lhs.ToValueFast(schema, column_itr));
-      std::unique_ptr<const common::Value> rhs_value(
+      const common::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
 
-      std::unique_ptr<common::Value> res_lt(
-        lhs_value->CompareLessThan(*rhs_value));
-      if (res_lt->IsTrue())
+      common::Value res_lt = (
+        lhs_value.CompareLessThan(rhs_value));
+      if (res_lt.IsTrue())
         return VALUE_COMPARE_LESSTHAN;
 
-      std::unique_ptr<common::Value> res_gt(
-        lhs_value->CompareGreaterThan(*rhs_value));
-      if (res_gt->IsTrue())
+      common::Value res_gt = (
+        lhs_value.CompareGreaterThan(rhs_value));
+      if (res_gt.IsTrue())
         return VALUE_COMPARE_GREATERTHAN;
     }
 
@@ -686,19 +686,19 @@ class TupleKeyComparator {
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      std::unique_ptr<common::Value> lhValue(
+      common::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      std::unique_ptr<common::Value> rhValue(
+      common::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
-      std::unique_ptr<common::Value> res_lt(
-          lhValue->CompareLessThan(*rhValue));
-      if (res_lt->IsTrue())
+      common::Value res_lt = (
+          lhValue.CompareLessThan(rhValue));
+      if (res_lt.IsTrue())
         return true;
 
-      std::unique_ptr<common::Value> res_gt(
-          lhValue->CompareGreaterThan(*rhValue));
-      if (res_gt->IsTrue())
+      common::Value res_gt = (
+          lhValue.CompareGreaterThan(rhValue));
+      if (res_gt.IsTrue())
         return false;
     }
     return false;
@@ -721,19 +721,19 @@ class TupleKeyComparatorRaw {
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      std::unique_ptr<common::Value> lhValue(
+      common::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      std::unique_ptr<common::Value> rhValue(
+      common::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
-      std::unique_ptr<common::Value> res_lt(
-          lhValue->CompareLessThan(*rhValue));
-      if (res_lt->IsTrue())
+      common::Value res_lt = (
+          lhValue.CompareLessThan(rhValue));
+      if (res_lt.IsTrue())
         return VALUE_COMPARE_LESSTHAN;
 
-      std::unique_ptr<common::Value> res_gt(
-          lhValue->CompareGreaterThan(*rhValue));
-      if (res_gt->IsTrue())
+      common::Value res_gt(
+          lhValue.CompareGreaterThan(rhValue));
+      if (res_gt.IsTrue())
         return VALUE_COMPARE_GREATERTHAN;
     }
 
@@ -758,13 +758,13 @@ class TupleKeyEqualityChecker {
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      std::unique_ptr<common::Value> lhValue(
+      common::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      std::unique_ptr<common::Value> rhValue(
+      common::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
-      std::shared_ptr<common::Value> res(lhValue->CompareNotEquals(*rhValue));
-      if (res->IsTrue())
+      common::Value res = (lhValue.CompareNotEquals(rhValue));
+      if (res.IsTrue())
         return false;
     }
     return true;
