@@ -16,6 +16,7 @@
 #include "common/macros.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
+#include <fcntl.h>
 
 namespace peloton {
 namespace wire {
@@ -81,6 +82,10 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
                     UNUSED_ATTRIBUTE int socklen, UNUSED_ATTRIBUTE void *ctx) {
 
   LOG_INFO("New connection on fd %d", int(client_fd));
+
+  auto flags = fcntl(client_fd, F_GETFL);
+  flags |= O_NONBLOCK;
+  fcntl(client_fd, F_SETFL, flags);
 
   // No delay for TCP
   SetTCPNoDelay(client_fd);
