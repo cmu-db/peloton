@@ -17,7 +17,8 @@ import java.util.Date;
 import java.util.Properties;
 
 public class PelotonTest {
-  // Peloton, Postgres, Timesten
+	
+  // Peloton, Postgres, Timesten Endpoints
   private final String[] url = {
      "jdbc:postgresql://localhost:54321/postgres",  // PELOTON 
      "jdbc:postgresql://localhost:57721/postgres",   // POSTGRES
@@ -46,7 +47,7 @@ public class PelotonTest {
 
   private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
 
-  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
+  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET id=99 WHERE id=?";
   
   private final Connection conn;
   private enum TABLE {A, B, AB}
@@ -123,11 +124,9 @@ public class PelotonTest {
     } else if (query_type == BATCH_UPDATE) {
       PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
       conn.setAutoCommit(false);
-      numOps /= 10;
       for (long batch = 0; batch < numOps / 10; batch++) { 
 	      for(int i=1; i <= 10;i++){
-	        stmt.setString(1,"x");
-	        stmt.setInt(2,i);
+	        stmt.setInt(1,i);
 	        stmt.addBatch();
 	      }
 	      int[] res = stmt.executeBatch();
@@ -153,30 +152,45 @@ public class PelotonTest {
     	return;
       }
       int target = PELOTON;
-      if (args[0].equals("peloton")) {
-        target = PELOTON;
-      } else if (args[0].equals("postgres")) {
-        target = POSTGRES;
-        System.out.println("Please set env var LD_LIBRARY_PATH " + 
-          "if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib");
-      } else if (args[0].equals("timesten")) {
-        target = TIMESTEN;
-      } else {
-    	printHelpMessage();
-      	return;
+      switch (args[0]) {	      
+	      case ("peloton"): {
+	        target = PELOTON;
+	        break;
+	      } 
+	      case ("postgres"): {
+	        target = POSTGRES;
+	        System.out.println("Please set env var LD_LIBRARY_PATH " + 
+	          "if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib");
+	        break;
+	      } 
+	      case ("timesten"): {
+	        target = TIMESTEN;
+	        break;
+	      } 
+	      default: {
+	    	printHelpMessage();
+	      	return;
+	      }
       }
 
-      // TODO change to switch statement
       int query_type = SEMICOLON;
-      if (args[1].equals("semicolon")) {
-        query_type = SEMICOLON;
-      } else if (args[1].equals("select")) {
-    	query_type = SIMPLE_SELECT;
-      } else if (args[1].equals("batch")) {
-    	query_type = BATCH_UPDATE;
-      } else {
-    	printHelpMessage();
-      	return;
+      switch (args[1]) {
+	      case "semicolon":  {
+	        query_type = SEMICOLON;
+	        break;
+	      }
+	      case "select": {
+	    	query_type = SIMPLE_SELECT;
+	    	break;
+	      } 
+	      case "batch": {
+	    	query_type = BATCH_UPDATE;
+	    	break;
+	      } 
+	      default: {
+	      	printHelpMessage();
+	      	return;
+	      }
       }
       
       PelotonTest pt = new PelotonTest(target, query_type);
