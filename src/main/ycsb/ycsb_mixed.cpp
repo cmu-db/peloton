@@ -141,10 +141,20 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       // update multiple attributes
       for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
         if (col_itr == 1) {
-        int update_raw_value = 1;
-        common::Value  update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
-          target_list.emplace_back(
-                col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
+          if (state.string_mode == true) {
+
+            std::string update_raw_value(100, 'a');
+            common::Value update_val = common::ValueFactory::GetVarcharValue(update_raw_value).Copy();
+            target_list.emplace_back(
+                  col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));             
+
+          } else {
+
+            int update_raw_value = 1;
+            common::Value update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
+            target_list.emplace_back(
+                  col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val)); 
+          }
         }
         else {
           direct_map_list.emplace_back(col_itr,

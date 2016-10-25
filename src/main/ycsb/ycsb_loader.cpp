@@ -50,7 +50,7 @@ storage::DataTable *user_table = nullptr;
 
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
-  const bool is_inlined = true;
+  const bool is_inlined = false;
 
   /////////////////////////////////////////////////////////
   // Create tables
@@ -74,11 +74,20 @@ void CreateYCSBDatabase() {
                       "YCSB_KEY", is_inlined);
   columns.push_back(column);
 
-  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      auto column =
-          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-                          "FIELD" + std::to_string(col_itr), is_inlined);
-      columns.push_back(column);
+  if (state.string_mode == true) {
+    for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+        auto column =
+            catalog::Column(common::Type::VARCHAR, 100,
+                            "FIELD" + std::to_string(col_itr), is_inlined);
+        columns.push_back(column);
+    }
+  } else {
+    for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+        auto column =
+            catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+                            "FIELD" + std::to_string(col_itr), is_inlined);
+        columns.push_back(column);
+    }
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
@@ -125,6 +134,8 @@ void LoadYCSBDatabase() {
   // Load in the data
   /////////////////////////////////////////////////////////
 
+  std::unique_ptr<common::VarlenPool> pool(new common::VarlenPool(BACKEND_TYPE_MM));
+
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
@@ -136,10 +147,21 @@ void LoadYCSBDatabase() {
   for (rowid = 0; rowid < tuple_count; rowid++) {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
-    auto key_value = common::ValueFactory::GetIntegerValue(rowid);
 
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      tuple->SetValue(col_itr, key_value, nullptr);
+    auto primary_key_value = common::ValueFactory::GetIntegerValue(rowid);
+    tuple->SetValue(0, primary_key_value, nullptr);
+
+
+    if (state.string_mode == true) {
+      auto key_value = common::ValueFactory::GetVarcharValue(std::string(100, 'z'));
+      for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+        tuple->SetValue(col_itr, key_value, pool.get());
+      }
+    } else {
+      auto key_value = common::ValueFactory::GetIntegerValue(rowid);
+      for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+        tuple->SetValue(col_itr, key_value, nullptr);
+      }
     }
 
     planner::InsertPlan node(user_table, std::move(tuple));
