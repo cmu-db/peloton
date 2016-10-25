@@ -36,6 +36,9 @@ public class PelotonTest {
   public static final int SIMPLE_SELECT = 1;
   public static final int BATCH_UPDATE = 2;
   public static final int COMPLEX_SELECT = 3;
+  public static final int SIMPLE_UPDATE = 4;
+  public static final int LARGE_UPDATE = 5;
+  
   
   public static int numThreads = 1;
 
@@ -47,7 +50,8 @@ public class PelotonTest {
   // QUERY TEMPLATES
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
-  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT, field1 INT, field2 INT, field3 INT, field4 INT);";
+  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data VARCHAR(100), " + 
+          "field1 INT, field2 INT, field3 INT, field4 INT);";
 
   private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
 
@@ -55,6 +59,11 @@ public class PelotonTest {
 		  "SELECT * FROM A WHERE id = ? AND field1 = ? AND field2 = ? AND field3 = ? AND field4 = ?";
   
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET id=99 WHERE id=?";
+
+  private final String UPDATE_BY_DATA = "UPDATE A SET id=99 WHERE data=?";
+  
+  private final String LARGE_STRING =  "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+		 + "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
   
   private final Connection conn;
   private enum TABLE {A, B, AB}
@@ -83,8 +92,10 @@ public class PelotonTest {
 	            PreparedStatement prepStmt = connection.prepareStatement(INDEXSCAN_PARAM);
 	            if (query_type == COMPLEX_SELECT) {
 	            	prepStmt = connection.prepareStatement(INDEXSCAN_PARAM_MULTI_VAR);
-	            } else if (query_type == BATCH_UPDATE) {
+	            } else if (query_type == BATCH_UPDATE || query_type == SIMPLE_UPDATE) {
 	            	prepStmt = connection.prepareStatement(UPDATE_BY_INDEXSCAN);	
+	            } else if (query_type == LARGE_UPDATE) {
+	            	prepStmt = connection.prepareStatement(UPDATE_BY_DATA);
 	            }
 	            connection.setAutoCommit(false);
 
@@ -95,7 +106,8 @@ public class PelotonTest {
 				        	PerformNopQuery(stmt, numOps);
 				        	break;
 			        	}
-			        	case SIMPLE_SELECT: {
+			        	case SIMPLE_SELECT: 
+			        	case SIMPLE_UPDATE: {
 				            for (long i = 0; i < numOps; i++) {
 				               try {
 				            	   prepStmt.setInt(1, 0);
@@ -138,6 +150,18 @@ public class PelotonTest {
 			          	      connection.commit();
 			                }
 			                break;
+			        	}		
+			        	case LARGE_UPDATE: {
+			        		 for (long i = 0; i < numOps; i++) {
+					               try {
+					            	   prepStmt.setString(1, LARGE_STRING);
+					            	   prepStmt.execute();
+					            	   connection.commit();
+					               } catch (Exception e) {
+					            	   e.printStackTrace();
+					               }
+					            }
+				            break;
 			        	}
 			        	default: {
 			        		System.out.println("Unrecognized query type");
@@ -270,7 +294,8 @@ public class PelotonTest {
   }
 
   static private void printHelpMessage() {
-	  System.out.println("Please specify target: [peloton|timesten|postgres] [semicolon|select|batch]");
+	  System.out.println("Please specify target: [peloton|timesten|postgres] " + 
+			  "[semicolon|select|batch|complex_select|simple_update|large_update]");
   }
   
   static public void main(String[] args) throws Exception {
@@ -319,6 +344,14 @@ public class PelotonTest {
 	    	query_type = BATCH_UPDATE;
 	    	break;
 	      } 
+	      case "simple_update" : {
+	    	  query_type = SIMPLE_UPDATE;
+	    	  break;
+	      }
+	      case "large_update" : {
+	    	  query_type = LARGE_UPDATE;
+	    	  break;
+	      }
 	      default: {
 	      	printHelpMessage();
 	      	return;
