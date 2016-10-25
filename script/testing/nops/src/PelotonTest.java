@@ -35,6 +35,7 @@ public class PelotonTest {
   public static final int SEMICOLON = 0;
   public static final int SIMPLE_SELECT = 1;
   public static final int BATCH_UPDATE = 2;
+  public static final int COMPLEX_SELECT = 3;
   
   public static int numThreads = 1;
 
@@ -46,10 +47,13 @@ public class PelotonTest {
   // QUERY TEMPLATES
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
-  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);";
+  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT, field1 INT, field2 INT, field3 INT, field4 DOUBLE);";
 
   private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
 
+  private final String INDEXSCAN_PARAM_MULTI_VAR = 
+		  "SELECT * FROM A WHERE id = ? AND field1 = ? AND field2 = ? AND field3 = ? AND field4 = ?";
+  
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET id=99 WHERE id=?";
   
   private final Connection conn;
@@ -77,6 +81,9 @@ public class PelotonTest {
 		        long startTime = System.currentTimeMillis();
 	            Statement stmt = connection.createStatement();
 	            PreparedStatement prepStmt = connection.prepareStatement(INDEXSCAN_PARAM);
+	            if (query_type == COMPLEX_SELECT) {
+	            	prepStmt = connection.prepareStatement(INDEXSCAN_PARAM_MULTI_VAR);
+	            }
 	            connection.setAutoCommit(false);
 
 		        long numOps = 1000;
@@ -97,6 +104,22 @@ public class PelotonTest {
 				               }
 				            }
 				            break;
+			        	}
+			        	case COMPLEX_SELECT: {
+				            for (long i = 0; i < numOps; i++) {
+					            try {
+					            	prepStmt.setInt(1, 0);
+					            	prepStmt.setInt(2, 0);
+					            	prepStmt.setInt(3, 0);
+					            	prepStmt.setInt(4, 0);
+					            	prepStmt.setDouble(5, 0.0);			            	
+					            	prepStmt.execute();
+					            	connection.commit();
+					            } catch (Exception e) {
+					            	e.printStackTrace();
+					            }
+					        }
+					        break;	
 			        	}
 			        	default: {
 			        		System.out.println("Unrecognized query type");
@@ -237,6 +260,7 @@ public class PelotonTest {
     	printHelpMessage();
     	return;
       }
+	  
       int target = PELOTON;
       switch (args[0]) {	      
 	      case ("peloton"): {
@@ -269,6 +293,10 @@ public class PelotonTest {
 	    	query_type = SIMPLE_SELECT;
 	    	break;
 	      } 
+	      case "complex_select": {
+	    	query_type = COMPLEX_SELECT;
+	    	break;
+	      }
 	      case "batch": {
 	    	query_type = BATCH_UPDATE;
 	    	break;
@@ -288,7 +316,7 @@ public class PelotonTest {
           pt.Timed_Nop_Test();    	  
       } else {
           pt.Nop_Test();
-      }      
+      }
   }
 
 }
