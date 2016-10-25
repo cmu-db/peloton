@@ -553,6 +553,7 @@ bool PacketManager::ExecDescribeMessage(Packet *pkt,
     std::unique_ptr<Packet> response(new Packet());
     response->msg_type = NO_DATA_RESPONSE;
     responses.push_back(std::move(response));
+    return true;
   }
 
   PktBuf mode;

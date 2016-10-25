@@ -15,13 +15,14 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.*;
 
 public class PelotonTest {
-	
+
   // Peloton, Postgres, Timesten Endpoints
   private final String[] url = {
      "jdbc:postgresql://localhost:54321/postgres",  // PELOTON 
-     "jdbc:postgresql://localhost:57721/postgres",   // POSTGRES
+     "jdbc:postgresql://localhost:5432/postgres",   // POSTGRES
      "jdbc:timesten:client:TTC_SERVER_DSN=xxx;TTC_SERVER=xxx;TCP_PORT=xxx"}; // TIMESTEN
 
   private final String[] user = {"postgres", "postgres", "xxx"};
@@ -34,12 +35,14 @@ public class PelotonTest {
   public static final int SEMICOLON = 0;
   public static final int SIMPLE_SELECT = 1;
   public static final int BATCH_UPDATE = 2;
+  
+  public static int numThreads = 1;
 
   // Endpoint types
   public static final int PELOTON = 0;
   public static final int POSTGRES = 1;
   public static final int TIMESTEN = 2;
-  
+    
   // QUERY TEMPLATES
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
@@ -55,6 +58,40 @@ public class PelotonTest {
   private int target; 
   private int query_type;
 
+  class QueryWorker extends Thread {
+	    public long runningTime;
+	    public long totalOps = 0;
+	    public Connection connection;
+	    
+	    public QueryWorker(long runningTime) {
+	        this.runningTime = runningTime;
+	        try {
+	        	this.connection = DriverManager.getConnection(url[target], user[target], pass[target]);
+	        } catch (Exception e) {
+	        	e.printStackTrace();
+	        }
+	    }
+	    
+	    public void run() {
+	        try {
+		        long startTime = System.currentTimeMillis();
+	            Statement stmt = connection.createStatement();
+		        long numOps = 1000;
+		        while (totalOps < 400000) {
+		        	PerformNopQuery(stmt, numOps);
+		        	totalOps += numOps;
+		            if (runningTime < (System.currentTimeMillis() - startTime)) {
+		                break;
+		            }
+		        }
+		        connection.close();
+	        } catch (Exception e) { 
+	        	e.printStackTrace();
+	        }
+	    }
+	}
+
+  
   public PelotonTest(int target, int query_type) throws SQLException {
     this.target = target;
     this.query_type = query_type;
@@ -100,17 +137,42 @@ public class PelotonTest {
     } 
   }
 
-  public void Nop_Test() throws Exception {
-    long startTime = System.currentTimeMillis();
-    long elapsedTime = 0L;
-    long numOps = 1000 * 1000;
-    if (query_type == SEMICOLON) {
-      Statement stmt = conn.createStatement();
+  
+  public void Timed_Nop_Test() throws Exception {
+	  int runningTime = 15;
+	  QueryWorker[] workers = new QueryWorker[numThreads];
+	  for (int i = 0; i < numThreads; i++) {
+		  workers[i] = new QueryWorker(1000 * runningTime);
+	  }
+	  ExecutorService executorPool = Executors.newFixedThreadPool(numThreads);
+      for (int i = 0; i < numThreads; i++) {
+    	  // TODO use invokeAll
+    	  executorPool.submit(workers[i]);	  
+      }
+      executorPool.shutdown();
+      executorPool.awaitTermination(runningTime + 3, TimeUnit.SECONDS);
+      long totalThroughput = 0;
+      for (int i = 0; i < numThreads; i++) {
+    	  totalThroughput += workers[i].totalOps * 1.0 / runningTime;
+      }
+	  System.out.println(totalThroughput);
+  }
+  
+  private void PerformNopQuery(Statement stmt, long numOps) throws Exception {
       for (long i = 0; i < numOps; i++) {
         try {
             stmt.execute(";");
         } catch (Exception e) { }
       } 
+  }
+  
+  public void Nop_Test() throws Exception {
+    long startTime = System.currentTimeMillis();
+    long elapsedTime = 0L;
+    long numOps = 200 * 1000;
+    if (query_type == SEMICOLON) {
+    	Statement stmt = conn.createStatement();
+    	PerformNopQuery(stmt, numOps);
     } else if (query_type == SIMPLE_SELECT) {
       PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
       conn.setAutoCommit(false);
@@ -159,12 +221,12 @@ public class PelotonTest {
 	      } 
 	      case ("postgres"): {
 	        target = POSTGRES;
-	        System.out.println("Please set env var LD_LIBRARY_PATH " + 
-	          "if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib");
 	        break;
 	      } 
 	      case ("timesten"): {
 	        target = TIMESTEN;
+	        System.out.println("Please set env var LD_LIBRARY_PATH " + 
+	  	          "if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib");
 	        break;
 	      } 
 	      default: {
@@ -193,10 +255,16 @@ public class PelotonTest {
 	      }
       }
       
-      PelotonTest pt = new PelotonTest(target, query_type);
-      pt.Init();
-      pt.Nop_Test();
-      pt.Close();
+      PelotonTest pt = new PelotonTest(target, query_type);      
+      pt.Init();          
+      
+      if (args.length == 3) {
+    	  numThreads = Integer.parseInt(args[2]);
+          pt.Close();
+          pt.Timed_Nop_Test();    	  
+      } else {
+          pt.Nop_Test();
+      }      
   }
 
 }

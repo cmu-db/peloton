@@ -585,7 +585,7 @@ public class PelotonTest {
   }
 
 
-  public void Batch_Insert() throws SQLException{
+  public void Batch_Insert() throws Exception{
     PreparedStatement stmt = conn.prepareStatement(TEMPLATE_FOR_BATCH_INSERT);
 
     conn.setAutoCommit(false);
