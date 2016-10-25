@@ -83,6 +83,8 @@ public class PelotonTest {
 	            PreparedStatement prepStmt = connection.prepareStatement(INDEXSCAN_PARAM);
 	            if (query_type == COMPLEX_SELECT) {
 	            	prepStmt = connection.prepareStatement(INDEXSCAN_PARAM_MULTI_VAR);
+	            } else if (query_type == BATCH_UPDATE) {
+	            	prepStmt = connection.prepareStatement(UPDATE_BY_INDEXSCAN);	
 	            }
 	            connection.setAutoCommit(false);
 
@@ -119,7 +121,23 @@ public class PelotonTest {
 					            	e.printStackTrace();
 					            }
 					        }
-					        break;	
+					        break;
+			        	}
+			        	case BATCH_UPDATE: {
+			                for (long batch = 0; batch < numOps / 10; batch++) { 
+			          	      for(int i=1; i <= 10;i++){
+			          	    	prepStmt.setInt(1,i);
+			          	        prepStmt.addBatch();
+			          	      }
+			          	      int[] res = prepStmt.executeBatch();
+			          	      for(int i=0; i < res.length; i++) {
+			          		      if (res[i] < 0) {
+			          		          throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
+			          		      }
+			          	      }
+			          	      connection.commit();
+			                }
+			                break;
 			        	}
 			        	default: {
 			        		System.out.println("Unrecognized query type");
