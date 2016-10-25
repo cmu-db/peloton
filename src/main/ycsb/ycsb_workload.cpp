@@ -263,10 +263,10 @@ void RunWorkload() {
 // HARNESS
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<common::Value *>> ExecuteRead(executor::AbstractExecutor* executor) {
+std::vector<std::vector<common::Value >> ExecuteRead(executor::AbstractExecutor* executor) {
   executor->Init();
 
-  std::vector<std::vector<common::Value *>> logical_tile_values;
+  std::vector<std::vector<common::Value >> logical_tile_values;
 
   // Execute stuff
   while (executor->Execute() == true) {
@@ -282,7 +282,7 @@ std::vector<std::vector<common::Value *>> ExecuteRead(executor::AbstractExecutor
     for (oid_t tuple_id : *result_tile) {
       expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
                                                                   tuple_id);
-      std::vector<common::Value *> tuple_values;
+      std::vector<common::Value > tuple_values;
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
          auto value = cur_tuple.GetValue(column_itr);
          tuple_values.push_back(value);

@@ -57,7 +57,7 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(create_stmt));
 
-  std::vector<common::Value*> params;
+  std::vector<common::Value> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format;

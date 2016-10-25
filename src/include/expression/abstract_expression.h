@@ -59,7 +59,7 @@ class AbstractExpression : public Printable {
       delete right_;
   }
 
-  virtual std::unique_ptr<Value> Evaluate(const AbstractTuple *tuple1,
+  virtual Value Evaluate(const AbstractTuple *tuple1,
                               const AbstractTuple *tuple2,
                               executor::ExecutorContext *context) const = 0;
 
@@ -101,7 +101,7 @@ class AbstractExpression : public Printable {
 
     os << "\tExpression :: "
        << " expression type = " << GetExpressionType() << ","
-       << " value type = " << Type::GetInstance(GetValueType()).ToString() << ","
+       << " value type = " << Type::GetInstance(GetValueType())->ToString() << ","
        << std::endl;
 
     return os.str();

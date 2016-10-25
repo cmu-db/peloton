@@ -45,7 +45,7 @@ size_t GenerateWarehouseId(const size_t &thread_id);
 
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<common::Value *>> ExecuteRead(executor::AbstractExecutor* executor);
+std::vector<std::vector<common::Value>> ExecuteRead(executor::AbstractExecutor* executor);
 
 void ExecuteUpdate(executor::AbstractExecutor* executor);
 

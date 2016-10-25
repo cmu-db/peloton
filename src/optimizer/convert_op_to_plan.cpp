@@ -67,7 +67,7 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
   }
 
   void visit(const ExprConstant *op) override {
-    output_expr = expression::ExpressionUtil::ConstantValueFactory(*op->value);
+    output_expr = expression::ExpressionUtil::ConstantValueFactory(op->value);
   }
 
   void visit(const ExprCompare *op) override {

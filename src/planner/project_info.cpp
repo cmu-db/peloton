@@ -59,7 +59,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
-    dest->SetValue(col_id, *value, pool);
+    dest->SetValue(col_id, value, pool);
   }
 
   // (B) Execute direct map
@@ -70,12 +70,12 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
     auto src_col_id = dm.second.second;
 
     if (tuple_index == 0) {
-      std::unique_ptr<common::Value> value(tuple1->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, *value, pool);
+      common::Value value = (tuple1->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, value, pool);
     }
     else {
-      std::unique_ptr<common::Value> value(tuple2->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, *value, pool);
+      common::Value value = (tuple2->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, value, pool);
     }
   }
 
@@ -92,7 +92,7 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest,
     auto col_id = target.first;
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
-    dest->SetValue(col_id, *value);
+    dest->SetValue(col_id, value);
   }
 
   // (B) Execute direct map
@@ -103,12 +103,12 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest,
     auto src_col_id = dm.second.second;
 
     if (tuple_index == 0) {
-      std::unique_ptr<common::Value> val1(tuple1->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, *val1);
+      common::Value val1 = (tuple1->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, val1);
     }
     else {
-      std::unique_ptr<common::Value> val2(tuple2->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, *val2);
+      common::Value val2 = (tuple2->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, val2);
     }
   }
 
@@ -133,7 +133,7 @@ std::string ProjectInfo::Debug() const {
 }
 
 void ProjectInfo::transformParameterToConstantValueExpression(
-    std::vector<common::Value *> *values, catalog::Schema *schema) {
+    std::vector<common::Value> *values, catalog::Schema *schema) {
   LOG_TRACE("Setting parameter values in Projection");
   for (unsigned int i = 0; i < target_list_.size(); ++i) {
     // The assignment parameter is an expression with left and right
@@ -152,9 +152,9 @@ void ProjectInfo::transformParameterToConstantValueExpression(
         auto param_expr =
             (expression::ParameterValueExpression *)target_list_[i].second;
         LOG_TRACE("Setting parameter %u to value %s", param_expr->GetValueIdx(),
-                  values->at(param_expr->GetValueIdx())->GetInfo().c_str());
+                  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
         auto value = new expression::ConstantValueExpression(
-            *values->at(param_expr->GetValueIdx()));
+            values->at(param_expr->GetValueIdx()));
         delete param_expr;
         target_list_[i].second = value;
       }

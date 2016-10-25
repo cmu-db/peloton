@@ -131,7 +131,7 @@ bool SocketManager<B>::FlushWriteBuffer() {
   wbuf.buf_ptr = 0;
   // still outstanding bytes
   while ((int)wbuf.buf_size > 0) {
-   written_bytes=0;
+    written_bytes = 0;
     while (written_bytes <= 0) {
       written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
       // Write failed

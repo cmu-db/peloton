@@ -62,7 +62,7 @@ class InsertPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
-  void SetParameterValues(std::vector<common::Value *>* values);
+  void SetParameterValues(std::vector<common::Value>* values);
 
   storage::DataTable *GetTable() const { return target_table_; }
 

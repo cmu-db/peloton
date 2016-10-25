@@ -150,13 +150,13 @@ bool MergeJoinExecutor::DExecute() {
           clause.right_->Evaluate(&left_tuple, &right_tuple, nullptr);
 
       // Compare the values
-      std::unique_ptr<common::Value> cmp_less(
-          left_value->CompareLessThan(*right_value));
-      std::unique_ptr<common::Value> cmp_greater(
-        left_value->CompareGreaterThan(*right_value));
+      common::Value cmp_less = (
+          left_value.CompareLessThan(right_value));
+      common::Value cmp_greater = (
+        left_value.CompareGreaterThan(right_value));
 
       // Left key < Right key, advance left
-      if (cmp_less->IsTrue()) {
+      if (cmp_less.IsTrue()) {
         LOG_TRACE("left < right, advance left ");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
@@ -164,7 +164,7 @@ bool MergeJoinExecutor::DExecute() {
         break;
       }
       // Left key > Right key, advance right
-      else if (cmp_greater->IsTrue()) {
+      else if (cmp_greater.IsTrue()) {
         LOG_TRACE("left > right, advance right ");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile, right_start_row, false);
@@ -188,7 +188,7 @@ bool MergeJoinExecutor::DExecute() {
     if (predicate_ != nullptr) {
       auto eval = predicate_->Evaluate(&left_tuple,
                                       &right_tuple, executor_context_);
-      if (eval->IsFalse()) {
+      if (eval.IsFalse()) {
       //if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
       //        .IsFalse()) {
         // Join predicate is false. Advance both.
@@ -271,9 +271,9 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
       auto next_value =
           expr->Evaluate(&next_tuple, &next_tuple, executor_context_);
 
-      std::unique_ptr<common::Value> cmp(
-          this_value->CompareEquals(*next_value));
-      if (!cmp->IsTrue()) {
+      common::Value cmp = (
+          this_value.CompareEquals(next_value));
+      if (!cmp.IsTrue()) {
         diff = true;
         break;
       }

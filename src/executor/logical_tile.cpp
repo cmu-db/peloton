@@ -161,7 +161,7 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
  *         or VALUE_TYPE_INVALID if it doesn't exist.
  */
 // TODO: Deprecated. Avoid calling this function if possible.
-common::Value *LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
+common::Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   PL_ASSERT(column_id < schema_.size());
   PL_ASSERT(tuple_id < total_tuples_);
   PL_ASSERT(visible_rows_[tuple_id]);
@@ -441,12 +441,12 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
       const LogicalTile::ColumnInfo &cp = schema_[column_itr];
       oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
       // get the value from the base physical tile
-      std::unique_ptr<common::Value> val;
+      common::Value val;
       if (base_tuple_id == NULL_OID) {
-        val.reset(common::ValueFactory::GetNullValueByType(
-            cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
+        val = common::ValueFactory::GetNullValueByType(
+            cp.base_tile->GetSchema()->GetType(cp.origin_column_id));
       } else {
-        val.reset(cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
+        val = cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id);
       }
 
       // LM: I put varchar here because we don't need to do endian conversion
@@ -454,7 +454,7 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
       if (result_format[column_itr] == 0 ||
           cp.base_tile->GetSchema()->GetType(cp.origin_column_id) ==
               common::Type::VARCHAR) {
-        row.push_back(val->ToString());
+        row.push_back(val.ToString());
       } else {
         auto data_length =
             cp.base_tile->GetSchema()->GetLength(cp.origin_column_id);
@@ -463,7 +463,7 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
         bool is_inlined = false;
         common::VarlenPool *pool = nullptr;
 
-        val->SerializeTo(val_binary, is_inlined, pool);
+        val.SerializeTo(val_binary, is_inlined, pool);
 
         // convert little endian to big endian...
         // TODO: This is stupid.... But I think this hack is fine for now.
@@ -502,14 +502,14 @@ const std::string LogicalTile::GetInfo() const {
       oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
       // get the value from the base physical tile
       if (base_tuple_id == NULL_OID) {
-        std::unique_ptr<common::Value> value(
+        common::Value value =
             common::ValueFactory::GetNullValueByType(
-                cp.base_tile->GetSchema()->GetType(cp.origin_column_id)));
-        os << value->GetInfo() << " ";
+                cp.base_tile->GetSchema()->GetType(cp.origin_column_id));
+        os << value.GetInfo() << " ";
       } else {
-        std::unique_ptr<common::Value> value(
+        common::Value value = (
             cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
-        os << value->GetInfo() << " ";
+        os << value.GetInfo() << " ";
       }
     }
 
@@ -670,7 +670,7 @@ void LogicalTile::MaterializeRowAtAtATime(
                   new_column_offsets[col_itr]);
 
         dest_tile->SetValueFast(
-            *value, new_tuple_id, new_column_offsets[col_itr],
+            value, new_tuple_id, new_column_offsets[col_itr],
             new_is_inlineds[col_itr], new_column_lengths[col_itr]);
 
         // Go to next column
@@ -736,13 +736,13 @@ void LogicalTile::MaterializeColumnAtATime(
       ///////////////////////////
       for (oid_t old_tuple_id : *this) {
         oid_t base_tuple_id = column_position_list[old_tuple_id];
-        std::unique_ptr<common::Value> value(old_tile->GetValueFast(
+        common::Value value = (old_tile->GetValueFast(
             base_tuple_id, old_column_offset, old_column_type, old_is_inlined));
 
         LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
         LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);
 
-        dest_tile->SetValueFast(*value, new_tuple_id, new_column_offset,
+        dest_tile->SetValueFast(value, new_tuple_id, new_column_offset,
                                 new_is_inlined, new_column_length);
 
         // Go to next tuple

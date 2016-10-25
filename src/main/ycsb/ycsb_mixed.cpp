@@ -114,7 +114,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<common::Value *> values;
+      std::vector<common::Value > values;
 
       auto lookup_key = zipf.GetNextNumber();
 
@@ -144,16 +144,16 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
           if (state.string_mode == true) {
 
             std::string update_raw_value(100, 'a');
-            common::Value * update_val = common::ValueFactory::GetVarcharValue(update_raw_value).Copy();
-              target_list.emplace_back(
-                    col_itr, expression::ExpressionUtil::ConstantValueFactory(*update_val));             
+            common::Value update_val = common::ValueFactory::GetVarcharValue(update_raw_value).Copy();
+            target_list.emplace_back(
+                  col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));             
 
           } else {
 
             int update_raw_value = 1;
-            common::Value * update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
-              target_list.emplace_back(
-                    col_itr, expression::ExpressionUtil::ConstantValueFactory(*update_val)); 
+            common::Value update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
+            target_list.emplace_back(
+                  col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val)); 
           }
         }
         else {
@@ -184,7 +184,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<common::Value *> values;
+      std::vector<common::Value > values;
 
       auto lookup_key = zipf.GetNextNumber();
 

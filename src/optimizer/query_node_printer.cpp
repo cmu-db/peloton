@@ -36,7 +36,7 @@ void QueryNodePrinter::visit(const Variable *op) {
 }
 
 void QueryNodePrinter::visit(const Constant *op) {
-  append("Constant: " + op->value->GetInfo());
+  append("Constant: " + op->value.GetInfo());
   (void)op;
 }
 

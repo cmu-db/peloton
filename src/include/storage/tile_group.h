@@ -161,7 +161,7 @@ class TileGroup : public Printable {
 
   oid_t GetTileColumnId(oid_t column_id);
 
-  common::Value *GetValue(oid_t tuple_id, oid_t column_id);
+  common::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(common::Value &value, oid_t tuple_id, oid_t column_id);
 

@@ -203,7 +203,7 @@ void MaterializeRowAtAtATime(
 
         oid_t base_tuple_id = column_position_list[old_tuple_id];
 
-        std::unique_ptr<common::Value> value(old_tiles[col_itr]->GetValueFast(
+        common::Value value = (old_tiles[col_itr]->GetValueFast(
             base_tuple_id, old_column_offsets[col_itr],
             old_column_types[col_itr], old_is_inlineds[col_itr]));
 
@@ -212,7 +212,7 @@ void MaterializeRowAtAtATime(
                   new_column_offsets[col_itr]);
 
         dest_tile->SetValueFast(
-            *value, new_tuple_id, new_column_offsets[col_itr],
+            value, new_tuple_id, new_column_offsets[col_itr],
             new_is_inlineds[col_itr], new_column_lengths[col_itr]);
 
         // Go to next column
@@ -278,14 +278,14 @@ void MaterializeColumnAtATime(
       ///////////////////////////
       for (oid_t old_tuple_id : *source_tile) {
         oid_t base_tuple_id = column_position_list[old_tuple_id];
-        std::unique_ptr<common::Value> value(
+        common::Value value = (
           old_tile->GetValueFast(base_tuple_id, old_column_offset,
             old_column_type, old_is_inlined));
 
         LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
         LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);
 
-        dest_tile->SetValueFast(*value, new_tuple_id, new_column_offset,
+        dest_tile->SetValueFast(value, new_tuple_id, new_column_offset,
                                 new_is_inlined, new_column_length);
 
         // Go to next tuple

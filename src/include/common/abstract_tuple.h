@@ -31,7 +31,7 @@ class AbstractTuple {
   virtual ~AbstractTuple(){};
 
   /** @brief Get the value at the given column id. */
-  virtual common::Value *GetValue(oid_t column_id) const = 0;
+  virtual common::Value GetValue(oid_t column_id) const = 0;
 
   /** @brief Set the value at the given column id. */
   virtual void SetValue(oid_t column_id, const common::Value &value) = 0;

@@ -95,8 +95,8 @@ bool HybridScanExecutor::DInit() {
 
         for (auto expr : runtime_keys_) {
           auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-          LOG_TRACE("Evaluated runtime scan key: %s", value->GetInfo().c_str());
-          values_.push_back(value->Copy());
+          LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+          values_.push_back(value.Copy());
         }
 
         key_ready_ = true;
@@ -153,8 +153,8 @@ bool HybridScanExecutor::DInit() {
 
         for (auto expr : runtime_keys_) {
           auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-          LOG_TRACE("Evaluated runtime scan key: %s", value->GetInfo().c_str());
-          values_.push_back(value->Copy());
+          LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+          values_.push_back(value.Copy());
         }
 
         key_ready_ = true;
@@ -223,7 +223,7 @@ bool HybridScanExecutor::SeqScanUtil() {
         else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                                tuple_id);
-          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)->IsTrue();
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             position_list.push_back(tuple_id);
           }
@@ -233,7 +233,7 @@ bool HybridScanExecutor::SeqScanUtil() {
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                              tuple_id);
         auto eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_)->IsTrue();
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
           auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);

@@ -32,7 +32,7 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::Parser::GetInstance();
-  std::vector<common::Value *> params;
+  std::vector<common::Value> params;
   std::vector<ResultType> result;
   std::string sql = "SELECT * FROM " + database_name + "." + table_name;
   statement.reset(new Statement("SELECT", sql));
@@ -61,7 +61,7 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   tuple.SetValue(2, common::ValueFactory::GetDoubleValue(third_col_val),
                  testing_pool);
 
-  common::VarlenValue string_value =
+  common::Value string_value =
       common::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
   tuple.SetValue(3, string_value, testing_pool);
   return tuple;

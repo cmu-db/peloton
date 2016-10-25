@@ -98,7 +98,7 @@ class ConjunctionScanPredicate {
    * Construction - Initializes boundary keys
    */
   ConjunctionScanPredicate(Index *index_p,
-                           const std::vector<common::Value *> &value_list,
+                           const std::vector<common::Value> &value_list,
                            const std::vector<oid_t> &tuple_column_id_list,
                            const std::vector<ExpressionType> &expr_list) {
     // It contains a pointer to the index key schema
@@ -226,7 +226,7 @@ class ConjunctionScanPredicate {
 
     if (bind_type == common::Type::PARAMETER_OFFSET) {
       return static_cast<oid_t>(
-          common::ValuePeeker::PeekParameterOffset(&value));
+          common::ValuePeeker::PeekParameterOffset(value));
     }
 
     // This is the type of the actual column
@@ -238,8 +238,8 @@ class ConjunctionScanPredicate {
     if (column_type == bind_type) {
       index_key_p->SetValue(index, value, index_p->GetPool());
     } else {
-      std::unique_ptr<common::Value> casted_val(value.CastAs(column_type));
-      index_key_p->SetValue(index, *casted_val, index_p->GetPool());
+      common::Value casted_val = value.CastAs(column_type);
+      index_key_p->SetValue(index, casted_val, index_p->GetPool());
     }
 
     return INVALID_OID;
@@ -257,7 +257,7 @@ class ConjunctionScanPredicate {
    * NOTE 2: This function should not be called if full_index_scan is true
    */
   void ConstructScanInterval(Index *index_p,
-                             const std::vector<common::Value *> &value_list,
+                             const std::vector<common::Value> &value_list,
                              const std::vector<oid_t> &tuple_column_id_list,
                              const std::vector<ExpressionType> &expr_list) {
     // This must hold for all cases
@@ -297,12 +297,12 @@ class ConjunctionScanPredicate {
 
         // We set the value using index's varlen pool, if any VARCHAR is
         // involved (this is OK since the routine only runs for once)
-        std::unique_ptr<common::Value> val(
+        common::Value val = (
             common::Type::GetMinValue(index_key_column_type));
-        low_key_p_->SetValue(i, *val, index_p->GetPool());
+        low_key_p_->SetValue(i, val, index_p->GetPool());
       } else {
         oid_t bind_ret = BindValueToIndexKey(
-            index_p, *value_list[index_pair.first], low_key_p_, i);
+            index_p, value_list[index_pair.first], low_key_p_, i);
 
         if (bind_ret != INVALID_OID) {
           LOG_TRACE("Low key for column %u needs late binding!", i);
@@ -319,12 +319,12 @@ class ConjunctionScanPredicate {
         if (index_pair.second == INVALID_OID) {
           // We set the value using index's varlen pool, if any VARCHAR is
           // involved (this is OK since the routine only runs for once)
-          std::unique_ptr<common::Value> val(
+          common::Value val(
               common::Type::GetMaxValue(index_key_column_type));
-          high_key_p_->SetValue(i, *val, index_p->GetPool());
+          high_key_p_->SetValue(i, val, index_p->GetPool());
         } else {
           oid_t bind_ret = BindValueToIndexKey(
-              index_p, *value_list[index_pair.second], high_key_p_, i);
+              index_p, value_list[index_pair.second], high_key_p_, i);
 
           if (bind_ret != INVALID_OID) {
             LOG_TRACE("High key for column %u needs late binding!", i);
@@ -350,7 +350,7 @@ class ConjunctionScanPredicate {
    *
    * NOTE: This function could not be called if full_index_scan is true
    */
-  void LateBind(Index *index_p, const std::vector<common::Value *> &value_list,
+  void LateBind(Index *index_p, const std::vector<common::Value > &value_list,
                 const std::vector<std::pair<oid_t, oid_t>> key_bind_list,
                 storage::Tuple *index_key_p) {
     PL_ASSERT(full_index_scan_ == false);
@@ -358,11 +358,11 @@ class ConjunctionScanPredicate {
     // For each item <key column index, value list index> do the binding job
     for (auto &bind_item : key_bind_list) {
       oid_t bind_ret = BindValueToIndexKey(
-          index_p, *value_list[bind_item.second], index_key_p, bind_item.first);
+          index_p, value_list[bind_item.second], index_key_p, bind_item.first);
 
       LOG_TRACE("bind item: %d", bind_item.second);
       LOG_TRACE("bind value: %s",
-                value_list[bind_item.second]->GetInfo().c_str());
+                value_list[bind_item.second].GetInfo().c_str());
 
       // This could not be other values since all values must be
       // valid during the binding stage
@@ -389,7 +389,7 @@ class ConjunctionScanPredicate {
    * NOTE 3: This function could not be called if full_index_scan if true
    */
   void LateBindValues(Index *index_p,
-                      const std::vector<common::Value *> &value_list) {
+                      const std::vector<common::Value > &value_list) {
     PL_ASSERT(full_index_scan_ == false);
 
     // Bind values to low key and high key respectively
@@ -512,7 +512,7 @@ class IndexScanPredicate {
    * updating the low key and high key
    */
   void AddConjunctionScanPredicate(
-      Index *index_p, const std::vector<common::Value *> &value_list,
+      Index *index_p, const std::vector<common::Value> &value_list,
       const std::vector<oid_t> &tuple_column_id_list,
       const std::vector<ExpressionType> &expr_list) {
     // Construct a conjunction predicate in-place and initialize all
@@ -540,7 +540,7 @@ class IndexScanPredicate {
    * key and high key with full index scan
    */
   void LateBindValues(Index *index_p,
-                      const std::vector<common::Value *> &value_list) {
+                      const std::vector<common::Value> &value_list) {
     if (full_index_scan_ == true) {
       LOG_INFO("Fast path: For full index scan do not bind");
 

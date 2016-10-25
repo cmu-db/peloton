@@ -152,7 +152,7 @@ bool RunNewOrder(const size_t &thread_id){
     
     LOG_TRACE("getItemInfo: SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = %d", item_id);
     
-    std::vector<common::Value *> item_key_values;
+    std::vector<common::Value > item_key_values;
     
     item_key_values.push_back(common::ValueFactory::GetIntegerValue(item_id).Copy());
 
@@ -191,7 +191,7 @@ bool RunNewOrder(const size_t &thread_id){
   warehouse_expr_types.push_back(
     ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-  std::vector<common::Value *> warehouse_key_values;
+  std::vector<common::Value > warehouse_key_values;
 
   warehouse_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
@@ -243,7 +243,7 @@ bool RunNewOrder(const size_t &thread_id){
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
 
-  std::vector<common::Value *> district_key_values;
+  std::vector<common::Value > district_key_values;
   district_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
   district_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
@@ -295,7 +295,7 @@ bool RunNewOrder(const size_t &thread_id){
   customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
-  std::vector<common::Value *> customer_key_values;
+  std::vector<common::Value > customer_key_values;
   customer_key_values.push_back(common::ValueFactory::GetIntegerValue(customer_id).Copy());
   customer_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
   customer_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
@@ -343,7 +343,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   std::vector<oid_t> district_update_column_ids = {10}; // D_NEXT_O_ID
 
-  std::vector<common::Value *> district_update_key_values;
+  std::vector<common::Value > district_update_key_values;
   district_update_key_values.push_back(common::ValueFactory::GetIntegerValue(district_id).Copy());
   district_update_key_values.push_back(common::ValueFactory::GetIntegerValue(warehouse_id).Copy());
 
@@ -366,10 +366,10 @@ bool RunNewOrder(const size_t &thread_id){
       district_direct_map_list.emplace_back(col_itr,
                                    std::pair<oid_t, oid_t>(0, col_itr));
   }
-  common::Value * district_update_val = common::ValueFactory::GetIntegerValue(district_update_value).Copy();
+  common::Value  district_update_val = common::ValueFactory::GetIntegerValue(district_update_value).Copy();
   
   district_target_list.emplace_back(
-      10, expression::ExpressionUtil::ConstantValueFactory(*district_update_val));
+      10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
 
   std::unique_ptr<const planner::ProjectInfo> district_project_info(
       new planner::ProjectInfo(std::move(district_target_list),
@@ -471,7 +471,7 @@ bool RunNewOrder(const size_t &thread_id){
     
     LOG_TRACE("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = %d AND S_W_ID = %d", item_id, ol_w_id);
     
-    std::vector<common::Value *> stock_key_values;
+    std::vector<common::Value > stock_key_values;
     
     stock_key_values.push_back(common::ValueFactory::GetIntegerValue(item_id).Copy());
     stock_key_values.push_back(common::ValueFactory::GetIntegerValue(ol_w_id).Copy());
@@ -480,7 +480,7 @@ bool RunNewOrder(const size_t &thread_id){
         stock_pkey_index, stock_key_column_ids, stock_expr_types,
         stock_key_values, runtime_keys);
 
-    std::vector<common::Value *> stock_update_key_values;
+    std::vector<common::Value > stock_update_key_values;
     
     stock_update_key_values.push_back(common::ValueFactory::GetIntegerValue(item_id).Copy());
     stock_update_key_values.push_back(common::ValueFactory::GetIntegerValue(ol_w_id).Copy());
@@ -518,7 +518,7 @@ bool RunNewOrder(const size_t &thread_id){
       s_quantity = s_quantity + 91 - ol_qty;
     }
 
-    common::Value * s_data = gsi_lists_values[0][1];
+    common::Value  s_data = gsi_lists_values[0][1];
 
     int s_ytd = common::ValuePeeker::PeekInteger(gsi_lists_values[0][2]) + ol_qty;
 
@@ -606,7 +606,7 @@ bool RunNewOrder(const size_t &thread_id){
     // TODO: workaround!!! I don't know how to get float from Value.
     order_line_tuple->SetValue(8, common::ValueFactory::GetDoubleValue(0), nullptr);
     // OL_DIST_INFO
-    order_line_tuple->SetValue(9, *s_data, nullptr);
+    order_line_tuple->SetValue(9, s_data, nullptr);
 
     planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());

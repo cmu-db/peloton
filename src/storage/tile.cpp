@@ -107,7 +107,7 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
  * Returns value present at slot
  */
 // column id is a 0-based column number
-common::Value *Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
+common::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_id < schema.GetColumnCount());
 
@@ -125,7 +125,7 @@ common::Value *Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
  * By amortizing schema lookups
  */
 // column offset is the actual offset of the column within the tuple slot
-common::Value *Tile::GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+common::Value Tile::GetValueFast(const oid_t tuple_offset, const size_t column_offset,
                          const common::Type::TypeId column_type, const bool is_inlined) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_offset < schema.GetLength());
@@ -200,9 +200,9 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       // Copy the column over to the new tile group
       for (oid_t tuple_itr = 0; tuple_itr < allocated_tuple_count;
            tuple_itr++) {
-        std::unique_ptr<common::Value> val(
+        common::Value val = (
             new_tile->GetValue(tuple_itr, uninlined_col_offset));
-        new_tile->SetValue(*val, tuple_itr, uninlined_col_offset);
+        new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
       }
     }
   }

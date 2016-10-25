@@ -76,15 +76,15 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
         } else {
           expression::ConstantValueExpression *const_expr_elem =
               dynamic_cast<expression::ConstantValueExpression *>(elem);
-          std::unique_ptr<common::Value> const_expr_elem_val(const_expr_elem->GetValue());
+          common::Value const_expr_elem_val = (const_expr_elem->GetValue());
           switch (const_expr_elem->GetValueType()) {
             case common::Type::VARCHAR:
             case common::Type::VARBINARY:
-              tuple->SetValue(col_cntr, *const_expr_elem_val,
+              tuple->SetValue(col_cntr, const_expr_elem_val,
                               GetPlanPool());
               break;
             default: {
-              tuple->SetValue(col_cntr, *const_expr_elem_val, nullptr);
+              tuple->SetValue(col_cntr, const_expr_elem_val, nullptr);
             }
           }
         }
@@ -117,7 +117,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
             //}
             //default:
               tuple->SetValue(col_cntr,
-                  *common::ValueFactory::GetNullValueByType(elem.GetType()),nullptr);
+                  common::ValueFactory::GetNullValueByType(elem.GetType()),nullptr);
           //}
         } else {
           // If it's varchar or varbinary then use data pool, otherwise allocate
@@ -142,8 +142,8 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
             expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<expression::ConstantValueExpression *>(
                     values->at(pos));
-            std::unique_ptr<common::Value> val(const_expr_elem->GetValue());
-            tuple->SetValue(col_cntr, *val, data_pool);
+            common::Value val = (const_expr_elem->GetValue());
+            tuple->SetValue(col_cntr, val, data_pool);
           }
         }
 
@@ -165,7 +165,7 @@ common::VarlenPool *InsertPlan::GetPlanPool() {
   return pool_.get();
 }
 
-void InsertPlan::SetParameterValues(std::vector<common::Value *> *values) {
+void InsertPlan::SetParameterValues(std::vector<common::Value> *values) {
   PL_ASSERT(values->size() == parameter_vector_->size());
   LOG_TRACE("Set Parameter Values in Insert");
   for (unsigned int i = 0; i < values->size(); ++i) {
@@ -176,13 +176,13 @@ void InsertPlan::SetParameterValues(std::vector<common::Value *> *values) {
     switch (param_type) {
       case common::Type::VARBINARY:
       case common::Type::VARCHAR: {
-        std::unique_ptr<common::Value> val(value->CastAs(param_type));
-        tuple_->SetValue(parameter_vector_->at(i).first, *val, GetPlanPool());
+        common::Value val = (value.CastAs(param_type));
+        tuple_->SetValue(parameter_vector_->at(i).first, val, GetPlanPool());
         break;
       }
       default: {
-        std::unique_ptr<common::Value> val(value->CastAs(param_type));
-        tuple_->SetValue(parameter_vector_->at(i).first, *val, nullptr);
+        common::Value val = (value.CastAs(param_type));
+        tuple_->SetValue(parameter_vector_->at(i).first, val, nullptr);
       }
     }
   }

@@ -83,7 +83,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<ExpressionType> expr_types_;
 
   // values for evaluation.
-  std::vector<common::Value *> values_;
+  std::vector<common::Value> values_;
 
   std::vector<expression::AbstractExpression *> runtime_keys_;
 

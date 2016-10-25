@@ -75,7 +75,7 @@ class PlanExecutor {
   */
 
   /*
-   * @brief Use std::vector<common::Value *> as params to make it more elegant
+   * @brief Use std::vector<common::Value> as params to make it more elegant
    * for
    * networking
    *        Before ExecutePlan, a node first receives value list, so we should
@@ -83,7 +83,7 @@ class PlanExecutor {
    *        value list directly rather than passing Postgres's ParamListInfo
    */
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                    const std::vector<common::Value *> &params,
+                                    const std::vector<common::Value> &params,
                                     std::vector<ResultType> &result,
                                     const std::vector<int> &result_format);
 
@@ -94,7 +94,7 @@ class PlanExecutor {
    */
   static int ExecutePlan(
       const planner::AbstractPlan *plan,
-      const std::vector<common::Value *> &params,
+      const std::vector<common::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 

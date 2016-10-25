@@ -499,12 +499,12 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   key2->SetValue(0, common::ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, common::ValueFactory::GetVarcharValue("c"), pool);
 
-  std::unique_ptr<common::Value> key0_val0(key0->GetValue(0));
-  std::unique_ptr<common::Value> key0_val1(key0->GetValue(1));
-  std::unique_ptr<common::Value> key1_val0(key1->GetValue(0));
-  std::unique_ptr<common::Value> key1_val1(key1->GetValue(1));
-  std::unique_ptr<common::Value> key2_val0(key2->GetValue(0));
-  std::unique_ptr<common::Value> key2_val1(key2->GetValue(1));
+  common::Value key0_val0 = (key0->GetValue(0));
+  common::Value key0_val1 = (key0->GetValue(1));
+  common::Value key1_val0 = (key1->GetValue(0));
+  common::Value key1_val1 = (key1->GetValue(1));
+  common::Value key2_val0 = (key2->GetValue(0));
+  common::Value key2_val1 = (key2->GetValue(1));
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -524,27 +524,27 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->ScanTest({key1_val0.get()}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1_val0}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -656,15 +656,15 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  std::unique_ptr<common::Value> key0_val0(key0->GetValue(0));
-  std::unique_ptr<common::Value> key0_val1(key0->GetValue(1));
-  std::unique_ptr<common::Value> key1_val0(key1->GetValue(0));
-  std::unique_ptr<common::Value> key1_val1(key1->GetValue(1));
-  std::unique_ptr<common::Value> key2_val0(key2->GetValue(0));
-  std::unique_ptr<common::Value> key2_val1(key2->GetValue(1));
-  std::unique_ptr<common::Value> key4_val0(key4->GetValue(0));
-  std::unique_ptr<common::Value> key4_val1(key4->GetValue(1));
-  index->ScanTest({key1_val0.get()}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  common::Value key0_val0 = (key0->GetValue(0));
+  common::Value key0_val1 = (key0->GetValue(1));
+  common::Value key1_val0 = (key1->GetValue(0));
+  common::Value key1_val1 = (key1->GetValue(1));
+  common::Value key2_val0 = (key2->GetValue(0));
+  common::Value key2_val1 = (key2->GetValue(1));
+  common::Value key4_val0 = (key4->GetValue(0));
+  common::Value key4_val1 = (key4->GetValue(1));
+  index->ScanTest({key1_val0}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
@@ -676,7 +676,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
@@ -689,7 +689,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
@@ -702,14 +702,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
-      {key2_val0.get(), key2_val1.get()}, {0, 1},
+      {key2_val0, key2_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
@@ -722,8 +722,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key0_val0.get(), key0_val1.get(),
-       key2_val0.get(), key2_val1.get()},
+      {key0_val0, key0_val1,
+       key2_val0, key2_val1},
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
@@ -737,8 +737,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   location_ptrs.clear();
 
-  index->ScanTest({key0_val0.get(), key0_val1.get(),
-                   key4_val0.get(), key4_val1.get()},
+  index->ScanTest({key0_val0, key0_val1,
+                   key4_val0, key4_val1},
                   {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                                  EXPRESSION_TYPE_COMPARE_GREATERTHAN,
                                  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
@@ -754,7 +754,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // REVERSE SCAN
-  index->ScanTest({key1_val0.get()}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1_val0}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
@@ -766,7 +766,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -779,7 +779,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -792,7 +792,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key1_val0.get(), key1_val1.get()}, {0, 1},
+      {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -801,7 +801,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key2_val0.get(), key2_val1.get()}, {0, 1},
+      {key2_val0, key2_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
@@ -814,8 +814,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key0_val0.get(), key0_val1.get(),
-       key2_val0.get(), key2_val1.get()},
+      {key0_val0, key0_val1,
+       key2_val0, key2_val1},
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
@@ -829,8 +829,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   location_ptrs.clear();
 
-  index->ScanTest({key0_val0.get(), key0_val1.get(),
-                   key4_val0.get(), key4_val1.get()},
+  index->ScanTest({key0_val0, key0_val1,
+                   key4_val0, key4_val1},
                   {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                                  EXPRESSION_TYPE_COMPARE_GREATERTHAN,
                                  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,

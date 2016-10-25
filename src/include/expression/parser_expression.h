@@ -63,11 +63,11 @@ class ParserExpression : public AbstractExpression {
     delete[] alias;
   }
 
-  std::unique_ptr<Value> Evaluate(
+  Value Evaluate(
       UNUSED_ATTRIBUTE const AbstractTuple* tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple* tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext* context) const override {
-    return std::unique_ptr<BooleanValue>(new BooleanValue(1));
+    return ValueFactory::GetBooleanValue(1);
   }
 
   AbstractExpression* Copy() const override {

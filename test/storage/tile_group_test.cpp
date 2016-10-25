@@ -495,28 +495,26 @@ TEST_F(TileGroupTests, TileCopyTest) {
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
       //Value uninlined_col_value, new_uninlined_col_value;
 
-      std::unique_ptr<common::VarlenValue> uninlined_col_value(
-        reinterpret_cast<common::VarlenValue *>(
-          tile->GetValue(tup_itr, uninlined_col_index)));
-      uninlined_col_object_len = uninlined_col_value->GetLength();
-      uninlined_col_object_ptr = uninlined_col_value->GetAs<char *>();
+      common::Value uninlined_col_value = (
+          tile->GetValue(tup_itr, uninlined_col_index));
+      uninlined_col_object_len = uninlined_col_value.GetLength();
+      uninlined_col_object_ptr = (char *)uninlined_col_value.GetData();
       std::string uninlined_varchar_str(
           reinterpret_cast<char const *>(uninlined_col_object_ptr),
           uninlined_col_object_len);
 
-      std::unique_ptr<common::VarlenValue> new_uninlined_col_value(
-        reinterpret_cast<common::VarlenValue *>(
-          new_tile->GetValue(tup_itr, uninlined_col_index)));
-      new_uninlined_col_object_len = new_uninlined_col_value->GetLength();
-      new_uninlined_col_object_ptr = new_uninlined_col_value->GetAs<char *>();
+      common::Value new_uninlined_col_value = (
+          new_tile->GetValue(tup_itr, uninlined_col_index));
+      new_uninlined_col_object_len = new_uninlined_col_value.GetLength();
+      new_uninlined_col_object_ptr = (char *)new_uninlined_col_value.GetData();
       std::string new_uninlined_varchar_str(
           reinterpret_cast<char const *>(new_uninlined_col_object_ptr),
           new_uninlined_col_object_len);
 
       // Compare original and copied tile details for current tuple
-      std::unique_ptr<common::Value> cmp(uninlined_col_value->CompareNotEquals(
-          *new_uninlined_col_value));
-      int is_value_not_same = cmp->IsTrue();
+      common::Value cmp = (uninlined_col_value.CompareNotEquals(
+          new_uninlined_col_value));
+      int is_value_not_same = cmp.IsTrue();
       int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
       int is_pointer_same =
           uninlined_col_object_ptr == new_uninlined_col_object_ptr;

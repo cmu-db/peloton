@@ -80,13 +80,13 @@ class Tile : public Printable {
   /**
    * Returns value present at slot
    */
-  common::Value *GetValue(const oid_t tuple_offset, const oid_t column_id);
+  common::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
 
   /*
    * Faster way to get value
    * By amortizing schema lookups
    */
-  common::Value *GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+  common::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
                      const common::Type::TypeId column_type,
                      const bool is_inlined);
 

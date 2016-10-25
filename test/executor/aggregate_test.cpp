@@ -123,19 +123,19 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
 
-  std::unique_ptr<common::Value> val(result_tile->GetValue(0, 2));
-  std::unique_ptr<common::Value> cmp(
-      val->CompareEquals(common::ValueFactory::GetIntegerValue(1)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(0, 3));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetDoubleValue(2)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(5, 2));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(51)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(5, 3));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetDoubleValue(52)));
-  EXPECT_TRUE(cmp->IsTrue());
+  common::Value val = (result_tile->GetValue(0, 2));
+  common::Value cmp = (
+      val.CompareEquals(common::ValueFactory::GetIntegerValue(1)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(0, 3));
+  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(2)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(5, 2));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(51)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(5, 3));
+  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(52)));
+  EXPECT_TRUE(cmp.IsTrue());
 }
 
 TEST_F(AggregateTests, SortedSumGroupByTest) {
@@ -224,19 +224,19 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  std::shared_ptr<common::Value> val(result_tile->GetValue(0, 0));
-  std::shared_ptr<common::Value> cmp(
-      val->CompareEquals(common::ValueFactory::GetIntegerValue(0)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(0, 1));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(105)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(1, 0));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(1, 1));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(355)));
-  EXPECT_TRUE(cmp->IsTrue());
+  common::Value val = (result_tile->GetValue(0, 0));
+  common::Value cmp = (
+      val.CompareEquals(common::ValueFactory::GetIntegerValue(0)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(0, 1));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(105)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(1, 0));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(1, 1));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(355)));
+  EXPECT_TRUE(cmp.IsTrue());
 }
 
 TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
@@ -329,19 +329,19 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  std::unique_ptr<common::Value> val(result_tile->GetValue(0, 0));
-  std::unique_ptr<common::Value> cmp(
-      val->CompareEquals(common::ValueFactory::GetIntegerValue(0)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(0, 1));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(105)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(0, 2));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetDoubleValue(42)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(1, 0));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp->IsTrue());
+  common::Value val = (result_tile->GetValue(0, 0));
+  common::Value cmp = (
+      val.CompareEquals(common::ValueFactory::GetIntegerValue(0)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(0, 1));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(105)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(0, 2));
+  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(42)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(1, 0));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  EXPECT_TRUE(cmp.IsTrue());
 }
 
 TEST_F(AggregateTests, HashDistinctTest) {
@@ -612,20 +612,20 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  std::unique_ptr<common::Value> val(result_tile->GetValue(0, 0));
-  std::unique_ptr<common::Value> cmp(
-      val->CompareEquals(common::ValueFactory::GetIntegerValue(0)));
-  std::unique_ptr<common::Value> cmp1(
-      val->CompareEquals(common::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp->IsTrue() || cmp1->IsTrue());
+  common::Value val = (result_tile->GetValue(0, 0));
+  common::Value cmp = (
+      val.CompareEquals(common::ValueFactory::GetIntegerValue(0)));
+  common::Value cmp1 = (
+      val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  EXPECT_TRUE(cmp.IsTrue() || cmp1.IsTrue());
 
-  val.reset(result_tile->GetValue(0, 1));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(5)));
-  EXPECT_TRUE(cmp->IsTrue());
+  val = (result_tile->GetValue(0, 1));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(5)));
+  EXPECT_TRUE(cmp.IsTrue());
 
-  val.reset(result_tile->GetValue(0, 2));
-  cmp.reset(val->CompareLessThanEquals(common::ValueFactory::GetIntegerValue(3)));
-  EXPECT_TRUE(cmp->IsTrue());
+  val = (result_tile->GetValue(0, 2));
+  cmp = (val.CompareLessThanEquals(common::ValueFactory::GetIntegerValue(3)));
+  EXPECT_TRUE(cmp.IsTrue());
 }
 
 TEST_F(AggregateTests, PlainSumCountDistinctTest) {
@@ -724,16 +724,16 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  std::shared_ptr<common::Value> val(result_tile->GetValue(0, 0));
-  std::shared_ptr<common::Value> cmp(
-      val->CompareEquals(common::ValueFactory::GetIntegerValue(50)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(0, 1));
-  cmp.reset(val->CompareEquals(common::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp->IsTrue());
-  val.reset(result_tile->GetValue(0, 2));
-  cmp.reset(val->CompareLessThanEquals(common::ValueFactory::GetIntegerValue(3)));
-  EXPECT_TRUE(cmp->IsTrue());
+  common::Value val = (result_tile->GetValue(0, 0));
+  common::Value cmp = (
+      val.CompareEquals(common::ValueFactory::GetIntegerValue(50)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(0, 1));
+  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  EXPECT_TRUE(cmp.IsTrue());
+  val = (result_tile->GetValue(0, 2));
+  cmp = (val.CompareLessThanEquals(common::ValueFactory::GetIntegerValue(3)));
+  EXPECT_TRUE(cmp.IsTrue());
 }
 
 }  // namespace test

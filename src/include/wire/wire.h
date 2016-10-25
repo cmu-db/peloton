@@ -159,8 +159,8 @@ class PacketManager {
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
 
   /* Main switch case wrapper to process every packet apart from the startup
-   * packet */
-  bool ProcessPacket(Packet* pkt, ResponseBuffer& responses);
+   * packet. Avoid flushing the response for extended protocols. */
+  bool ProcessPacket(Packet* pkt, ResponseBuffer& responses, bool& force_flush);
 
   /* Manage the startup packet */
   bool ManageStartupPacket();

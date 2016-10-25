@@ -92,7 +92,7 @@ Result TrafficCop::ExecuteStatement(
             statement->GetStatementName().c_str());
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetStatementName().c_str());
-  std::vector<common::Value *> params;
+  std::vector<common::Value> params;
   try {
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(

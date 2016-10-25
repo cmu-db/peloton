@@ -36,24 +36,24 @@ class ComparisonExpression : public AbstractExpression {
                        AbstractExpression *right)
     : AbstractExpression(type, Type::BOOLEAN, left, right) {}
 
-  std::unique_ptr<Value> Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     auto vl = left_->Evaluate(tuple1, tuple2, context);
     auto vr = right_->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {
       case (EXPRESSION_TYPE_COMPARE_EQUAL):
-        return std::unique_ptr<Value>(vl->CompareEquals(*vr));
+        return vl.CompareEquals(vr);
       case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-        return std::unique_ptr<Value>(vl->CompareNotEquals(*vr));
+        return vl.CompareNotEquals(vr);
       case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-        return std::unique_ptr<Value>(vl->CompareLessThan(*vr));
+        return vl.CompareLessThan(vr);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-        return std::unique_ptr<Value>(vl->CompareGreaterThan(*vr));
+        return vl.CompareGreaterThan(vr);
       case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-        return std::unique_ptr<Value>(vl->CompareLessThanEquals(*vr));
+        return vl.CompareLessThanEquals(vr);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-        return std::unique_ptr<Value>(vl->CompareGreaterThanEquals(*vr));
+        return vl.CompareGreaterThanEquals(vr);
       default:
         throw Exception("Invalid comparison expression type.");
     }
