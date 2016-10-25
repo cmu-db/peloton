@@ -99,7 +99,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(table_schema, true));
       int col_cntr = 0;
-      auto table_columns = table_schema->GetColumns();
+      auto &table_columns = table_schema->GetColumns();
       auto query_columns = parse_tree->columns;
       for (catalog::Column const &elem : table_columns) {
         std::size_t pos = std::find(query_columns->begin(),

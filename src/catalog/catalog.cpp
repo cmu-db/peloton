@@ -142,7 +142,8 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
 
       // Create the primary key index for that table if there's primary key
       bool has_primary_key = false;
-      for (auto &column : table->GetSchema()->GetColumns())
+      auto &schema_columns = table->GetSchema()->GetColumns();
+      for (auto &column : schema_columns)
         if (column.IsPrimary()) {
           has_primary_key = true;
           break;
@@ -162,7 +163,8 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
           std::move(tuple), txn);
       return Result::RESULT_SUCCESS;
     }
-  } catch (CatalogException &e) {
+  }
+  catch (CatalogException &e) {
     LOG_ERROR("Could not find a database with name %s", database_name.c_str());
     return Result::RESULT_FAILURE;
   }
@@ -188,7 +190,8 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 
     // Find primary index attributes
     int column_idx = 0;
-    for (auto &column : schema->GetColumns()) {
+    auto &schema_columns = schema->GetColumns();
+    for (auto &column : schema_columns) {
       if (column.IsPrimary()) {
         key_attrs.push_back(column_idx);
       }
@@ -240,7 +243,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
     auto schema = table->GetSchema();
 
     // check if index attributes are in table
-    auto columns = schema->GetColumns();
+    auto &columns = schema->GetColumns();
     for (auto attr : index_attr) {
       for (uint i = 0; i < columns.size(); ++i) {
         if (attr == columns[i].column_name) {
@@ -324,7 +327,8 @@ Result Catalog::DropDatabaseWithName(std::string database_name,
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
     databases_.erase(databases_.begin() + database_offset);
-  } catch (CatalogException &e) {
+  }
+  catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
     return Result::RESULT_FAILURE;
   }
@@ -354,7 +358,8 @@ void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
     databases_.erase(databases_.begin() + database_offset);
-  } catch (CatalogException &e) {
+  }
+  catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
   }
 }
@@ -383,7 +388,8 @@ Result Catalog::DropTable(std::string database_name, std::string table_name,
       LOG_TRACE("Could not find table");
       return Result::RESULT_FAILURE;
     }
-  } catch (CatalogException &e) {
+  }
+  catch (CatalogException &e) {
     LOG_TRACE("Could not find database");
     return Result::RESULT_FAILURE;
   }
@@ -399,8 +405,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 }
 
 // Find a database using its name
-storage::Database *Catalog::GetDatabaseWithName(
-    const std::string database_name) const {
+storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
+    const {
   for (auto database : databases_) {
     if (database != nullptr && database->GetDBName() == database_name)
       return database;
@@ -409,8 +415,8 @@ storage::Database *Catalog::GetDatabaseWithName(
   return nullptr;
 }
 
-storage::Database *Catalog::GetDatabaseWithOffset(
-    const oid_t database_offset) const {
+storage::Database *Catalog::GetDatabaseWithOffset(const oid_t database_offset)
+    const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
