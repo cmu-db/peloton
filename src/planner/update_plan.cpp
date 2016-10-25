@@ -68,7 +68,7 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
     tlist.emplace_back(col_id, update_expr);
   }
 
-  auto schema_columns = schema->GetColumns();
+  auto &schema_columns = schema->GetColumns();
   for (uint i = 0; i < schema_columns.size(); i++) {
     bool is_in_target_list = false;
     for (auto col_id : column_ids) {
@@ -139,7 +139,7 @@ void UpdatePlan::SetParameterValues(std::vector<common::Value> *values) {
         target_table_->GetSchema(), update_expr);
     tlist.emplace_back(col_id, update_expr);
   }
-  auto schema_columns = schema->GetColumns();
+  auto &schema_columns = schema->GetColumns();
   for (uint i = 0; i < schema_columns.size(); i++) {
     bool is_in_target_list = false;
     for (auto col_id : columns) {

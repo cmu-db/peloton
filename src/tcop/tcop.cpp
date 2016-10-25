@@ -184,7 +184,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   }
 
   // Get the columns of the table
-  auto table_columns = target_table->GetSchema()->GetColumns();
+  auto &table_columns = target_table->GetSchema()->GetColumns();
 
   // Get the columns information and set up
   // the columns description for the returned results
