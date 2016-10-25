@@ -76,9 +76,33 @@ public class PelotonTest {
 	        try {
 		        long startTime = System.currentTimeMillis();
 	            Statement stmt = connection.createStatement();
+	            PreparedStatement prepStmt = connection.prepareStatement(INDEXSCAN_PARAM);
+	            connection.setAutoCommit(false);
+
 		        long numOps = 1000;
 		        while (totalOps < 400000) {
-		        	PerformNopQuery(stmt, numOps);
+		        	switch (query_type) {
+			        	case SEMICOLON: {
+				        	PerformNopQuery(stmt, numOps);
+				        	break;
+			        	}
+			        	case SIMPLE_SELECT: {
+				            for (long i = 0; i < numOps; i++) {
+				               try {
+				            	   prepStmt.setInt(1, 0);
+				            	   prepStmt.execute();
+				            	   connection.commit();
+				               } catch (Exception e) {
+				            	   e.printStackTrace();
+				               }
+				            }
+				            break;
+			        	}
+			        	default: {
+			        		System.out.println("Unrecognized query type");
+			        	}
+		        	}		        	
+		        	
 		        	totalOps += numOps;
 		            if (runningTime < (System.currentTimeMillis() - startTime)) {
 		                break;
