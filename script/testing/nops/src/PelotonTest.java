@@ -47,7 +47,7 @@ public class PelotonTest {
   // QUERY TEMPLATES
   private final String DROP = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
-  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT, field1 INT, field2 INT, field3 INT, field4 DOUBLE);";
+  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT, field1 INT, field2 INT, field3 INT, field4 INT);";
 
   private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
 
@@ -89,7 +89,7 @@ public class PelotonTest {
 	            connection.setAutoCommit(false);
 
 		        long numOps = 1000;
-		        while (totalOps < 400000) {
+		        while (true) {
 		        	switch (query_type) {
 			        	case SEMICOLON: {
 				        	PerformNopQuery(stmt, numOps);
@@ -114,7 +114,7 @@ public class PelotonTest {
 					            	prepStmt.setInt(2, 0);
 					            	prepStmt.setInt(3, 0);
 					            	prepStmt.setInt(4, 0);
-					            	prepStmt.setDouble(5, 0.0);			            	
+					            	prepStmt.setInt(5, 0);			            	
 					            	prepStmt.execute();
 					            	connection.commit();
 					            } catch (Exception e) {
