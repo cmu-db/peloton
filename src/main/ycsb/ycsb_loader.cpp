@@ -74,7 +74,7 @@ void CreateYCSBDatabase() {
                       "YCSB_KEY", is_inlined);
   columns.push_back(column);
 
-  if (string_mode == true) {
+  if (state.string_mode == true) {
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         auto column =
             catalog::Column(common::Type::VARCHAR, 100,
@@ -148,14 +148,18 @@ void LoadYCSBDatabase() {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
 
-    if (string_mode == true) {
-      auto key_value = common::ValueFactory::GetVarcharValue(GetRandomAlphaNumericString(100));
-      for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    auto primary_key_value = common::ValueFactory::GetIntegerValue(rowid);
+    tuple->SetValue(0, primary_key_value, nullptr);
+
+
+    if (state.string_mode == true) {
+      auto key_value = common::ValueFactory::GetVarcharValue(std::string(100, 'z'));
+      for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         tuple->SetValue(col_itr, key_value, pool.get());
       }
     } else {
       auto key_value = common::ValueFactory::GetIntegerValue(rowid);
-      for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         tuple->SetValue(col_itr, key_value, nullptr);
       }
     }
