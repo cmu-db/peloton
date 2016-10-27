@@ -36,12 +36,12 @@ namespace tcop {
 // global singleton
 TrafficCop &TrafficCop::GetInstance(void) {
   static TrafficCop traffic_cop;
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   return traffic_cop;
 }
 
 TrafficCop::TrafficCop() {
   // Nothing to do here !
+catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 TrafficCop::~TrafficCop() {
