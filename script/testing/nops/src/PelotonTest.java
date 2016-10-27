@@ -58,9 +58,9 @@ public class PelotonTest {
 
 	private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET id=99 WHERE id=?";
 
-	private final String UPDATE_BY_LARGE_DATA = "UPDATE A SET id=99 WHERE data = ? "
-			+ " AND field1 = ? AND field2 = ? AND field3 = ? AND field4 = ? "
-			+ " AND field5 = ? AND field6 = ? AND field7 = ? AND field8 = ? AND field9 = ?;";
+	private final String UPDATE_BY_LARGE_DATA = "UPDATE A SET data = ?, "
+			+ "field1 = ?, field2 = ?, field3 = ?, field4 = ?, "
+			+ "field5 = ?, field6 = ?, field7 = ?, field8 = ?, field9 = ? WHERE id = 99;";
 
 	private final String LARGE_STRING = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
@@ -143,6 +143,7 @@ public class PelotonTest {
 								prepStmt.setString(j, LARGE_STRING);
 							}
 							prepStmt.execute();
+							prepStmt.commit();
 						}
 						break;
 					}
