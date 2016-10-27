@@ -443,14 +443,16 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         bind_parameters.push_back(
             std::make_pair(common::Type::VARCHAR, param_str));
         if (PostgresValueTypeToPelotonValueType(
-                     (PostgresValueType)param_types[param_idx]) == common::Type::VARCHAR) {
- 		param_values.push_back(common::ValueFactory::GetVarcharValue(param_str));
-	} else {
-       	 	param_values.push_back(
-            (common::ValueFactory::GetVarcharValue(param_str))
-                .CastAs(PostgresValueTypeToPelotonValueType(
-                     (PostgresValueType)param_types[param_idx])));
- 	}
+                (PostgresValueType)param_types[param_idx]) ==
+            common::Type::VARCHAR) {
+          param_values.push_back(
+              common::ValueFactory::GetVarcharValue(param_str));
+        } else {
+          param_values.push_back(
+              (common::ValueFactory::GetVarcharValue(param_str))
+                  .CastAs(PostgresValueTypeToPelotonValueType(
+                       (PostgresValueType)param_types[param_idx])));
+        }
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -488,8 +490,10 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
           } break;
           case POSTGRES_VALUE_TYPE_VARBINARY: {
             bind_parameters.push_back(std::make_pair(
-                common::Type::VARBINARY, std::string(reinterpret_cast<char *>(&param[0]), param_len)));
-            param_values.push_back(common::ValueFactory::GetVarbinaryValue(&param[0], param_len).Copy());
+                common::Type::VARBINARY,
+                std::string(reinterpret_cast<char *>(&param[0]), param_len)));
+            param_values.push_back(common::ValueFactory::GetVarbinaryValue(
+                &param[0], param_len).Copy());
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -522,10 +526,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   if (param_values.size() > 0) {
-    LOG_TRACE("Binding values:");
-    //for (UNUSED_ATTRIBUTE auto value : param_values) {
-      //LOG_TRACE("%s", value.GetInfo().c_str());
-    //}
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 
