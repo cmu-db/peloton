@@ -411,8 +411,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     skipped_stmt_ = true;
     skipped_query_string_ = query_string;
     std::unique_ptr<Packet> response(new Packet());
-    // Send Parse complete response
-    response->msg_type = PARSE_COMPLETE;
+    // Send Bind complete response
+    response->msg_type = BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
   }
@@ -442,10 +442,17 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters.push_back(
             std::make_pair(common::Type::VARCHAR, param_str));
-        param_values.push_back(
-            (common::ValueFactory::GetVarcharValue(param_str))
-                .CastAs(PostgresValueTypeToPelotonValueType(
-                     (PostgresValueType)param_types[param_idx])));
+        if (PostgresValueTypeToPelotonValueType(
+                (PostgresValueType)param_types[param_idx]) ==
+            common::Type::VARCHAR) {
+          param_values.push_back(
+              common::ValueFactory::GetVarcharValue(param_str));
+        } else {
+          param_values.push_back(
+              (common::ValueFactory::GetVarcharValue(param_str))
+                  .CastAs(PostgresValueTypeToPelotonValueType(
+                       (PostgresValueType)param_types[param_idx])));
+        }
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -483,8 +490,10 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
           } break;
           case POSTGRES_VALUE_TYPE_VARBINARY: {
             bind_parameters.push_back(std::make_pair(
-                common::Type::VARBINARY, std::string(reinterpret_cast<char *>(&param[0]), param_len)));
-            param_values.push_back(common::ValueFactory::GetVarbinaryValue(&param[0], param_len).Copy());
+                common::Type::VARBINARY,
+                std::string(reinterpret_cast<char *>(&param[0]), param_len)));
+            param_values.push_back(common::ValueFactory::GetVarbinaryValue(
+                &param[0], param_len).Copy());
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -517,10 +526,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   if (param_values.size() > 0) {
-    LOG_TRACE("Binding values:");
-    for (UNUSED_ATTRIBUTE auto value : param_values) {
-      LOG_TRACE("%s", value.GetInfo().c_str());
-    }
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 

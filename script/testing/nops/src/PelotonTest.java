@@ -48,39 +48,22 @@ public class PelotonTest {
 	public static final int TIMESTEN = 2;
 
 	// QUERY TEMPLATES
-	private final String DROP = "DROP TABLE IF EXISTS A;"
-			+ "DROP TABLE IF EXISTS B;";
+	private final String DROP = "DROP TABLE IF EXISTS A;";
+
 	private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data VARCHAR(100), "
-			+ "field1 INT, field2 INT, field3 INT, field4 INT);";
+			+ "field1 VARCHAR(100), field2 VARCHAR(100), field3 VARCHAR(100), field4 VARCHAR(100), "
+			+ "field5 VARCHAR(100), field6 VARCHAR(100), field7 VARCHAR(100), field8 VARCHAR(100), field9 VARCHAR(100));";
 
 	private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
 
-	private final String INDEXSCAN_PARAM_MULTI_VAR = "SELECT * FROM A WHERE id = ? AND field1 = ? AND field2 = ? AND field3 = ? AND field4 = ?";
-
 	private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET id=99 WHERE id=?";
 
-	private final String UPDATE_BY_DATA = "UPDATE A SET id=99 WHERE data=?";
+	private final String UPDATE_BY_LARGE_DATA = "UPDATE A SET data = ?, "
+			+ "field1 = ?, field2 = ?, field3 = ?, field4 = ?, "
+			+ "field5 = ?, field6 = ?, field7 = ?, field8 = ?, field9 = ? WHERE id = 99;";
 
-	private final String LARGE_STRING = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+	private final String LARGE_STRING = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
 	private final Connection conn;
 
@@ -112,14 +95,11 @@ public class PelotonTest {
 				Statement stmt = connection.createStatement();
 				PreparedStatement prepStmt = connection
 						.prepareStatement(INDEXSCAN_PARAM);
-				if (query_type == COMPLEX_SELECT) {
-					prepStmt = connection
-							.prepareStatement(INDEXSCAN_PARAM_MULTI_VAR);
-				} else if (query_type == BATCH_UPDATE
-						|| query_type == SIMPLE_UPDATE) {
+				if (query_type == BATCH_UPDATE || query_type == SIMPLE_UPDATE) {
 					prepStmt = connection.prepareStatement(UPDATE_BY_INDEXSCAN);
 				} else if (query_type == LARGE_UPDATE) {
-					prepStmt = connection.prepareStatement(UPDATE_BY_DATA);
+					prepStmt = connection
+							.prepareStatement(UPDATE_BY_LARGE_DATA);
 				}
 				connection.setAutoCommit(false);
 
@@ -134,29 +114,8 @@ public class PelotonTest {
 					case SIMPLE_SELECT:
 					case SIMPLE_UPDATE: {
 						for (long i = 0; i < numOps; i++) {
-							try {
-								prepStmt.setInt(1, 0);
-								prepStmt.execute();
-								connection.commit();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-						break;
-					}
-					case COMPLEX_SELECT: {
-						for (long i = 0; i < numOps; i++) {
-							try {
-								prepStmt.setInt(1, 0);
-								prepStmt.setInt(2, 0);
-								prepStmt.setInt(3, 0);
-								prepStmt.setInt(4, 0);
-								prepStmt.setInt(5, 0);
-								prepStmt.execute();
-								connection.commit();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
+							prepStmt.setInt(1, 0);
+							prepStmt.execute();
 						}
 						break;
 					}
@@ -179,13 +138,12 @@ public class PelotonTest {
 					}
 					case LARGE_UPDATE: {
 						for (long i = 0; i < numOps; i++) {
-							try {
-								prepStmt.setString(1, LARGE_STRING);
-								prepStmt.execute();
-								connection.commit();
-							} catch (Exception e) {
-								e.printStackTrace();
+							// We have to set 10 params in total
+							for (int j = 1; j <= 10; j++) {
+								prepStmt.setString(j, LARGE_STRING);
 							}
+							prepStmt.execute();
+							connection.commit();
 						}
 						break;
 					}
@@ -242,14 +200,15 @@ public class PelotonTest {
 		Statement stmt = conn.createStatement();
 		if (target != TIMESTEN) {
 			stmt.execute(DROP);
-			stmt.execute(DDL);
 		} else {
+			// Well, Timesten doesn't support `if exists` keyword
 			try {
 				stmt.execute("DROP TABLE A;");
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			stmt.execute("CREATE TABLE A(id INT, data INT);");
 		}
+		stmt.execute(DDL);
 	}
 
 	public void Timed_Nop_Test() throws Exception {
@@ -264,7 +223,7 @@ public class PelotonTest {
 		for (int i = 0; i < numThreads; i++) {
 			executorPool.submit(workers[i]);
 		}
-		// No more task to submit 
+		// No more task to submit
 		executorPool.shutdown();
 		// Wait for tasks to terminate
 		executorPool.awaitTermination(runningTime + 3, TimeUnit.SECONDS);
@@ -329,7 +288,7 @@ public class PelotonTest {
 	static private void printHelpMessage() {
 		System.out
 				.println("Please specify target: [peloton|timesten|postgres] "
-						+ "[semicolon|select|batch|complex_select|simple_update|large_update]");
+						+ "[semicolon|select|batch_update|simple_update|large_update]");
 	}
 
 	static public void main(String[] args) throws Exception {
@@ -371,11 +330,7 @@ public class PelotonTest {
 			query_type = SIMPLE_SELECT;
 			break;
 		}
-		case "complex_select": {
-			query_type = COMPLEX_SELECT;
-			break;
-		}
-		case "batch": {
+		case "batch_update": {
 			query_type = BATCH_UPDATE;
 			break;
 		}
@@ -395,7 +350,7 @@ public class PelotonTest {
 
 		PelotonTest pt = new PelotonTest(target, query_type);
 		pt.Init();
-		
+
 		// If the number of threads is specified, we turn on timed test
 		if (args.length == 3) {
 			numThreads = Integer.parseInt(args[2]);

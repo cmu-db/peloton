@@ -113,7 +113,7 @@ peloton_status PlanExecutor::ExecutePlan(
       for (auto tuple : answer_tuples) {
         unsigned int col_index = 0;
         auto &schema_columns = output_schema->GetColumns();
-        for (auto column : schema_columns) {
+        for (auto &column : schema_columns) {
           auto column_name = column.GetName();
           auto res = ResultType();
           PlanExecutor::copyFromTo(column_name, res.first);

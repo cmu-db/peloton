@@ -36,12 +36,12 @@ namespace tcop {
 // global singleton
 TrafficCop &TrafficCop::GetInstance(void) {
   static TrafficCop traffic_cop;
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   return traffic_cop;
 }
 
 TrafficCop::TrafficCop() {
   // Nothing to do here !
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 TrafficCop::~TrafficCop() {
@@ -238,25 +238,24 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   return tuple_descriptor;
 }
 
-
-FieldInfoType TrafficCop::GetColumnFieldForValueType(std::string column_name , common::Type::TypeId column_type){
-  switch(column_type){
+FieldInfoType TrafficCop::GetColumnFieldForValueType(
+    std::string column_name, common::Type::TypeId column_type) {
+  switch (column_type) {
     case common::Type::INTEGER:
-      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_INTEGER , 4);
+      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
     case common::Type::DECIMAL:
-      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_DOUBLE , 8);
+      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
     case common::Type::VARCHAR:
     case common::Type::VARBINARY:
-      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TEXT , 255);
+      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
     case common::Type::TIMESTAMP:
-      return std::make_tuple(column_name , POSTGRES_VALUE_TYPE_TIMESTAMPS , 64);
+      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
     default:
       // Type not Identified
       LOG_ERROR("Unrecognized column type: %d", column_type);
       // return String
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
-    }
-
+  }
 }
 
 FieldInfoType TrafficCop::GetColumnFieldForAggregates(
