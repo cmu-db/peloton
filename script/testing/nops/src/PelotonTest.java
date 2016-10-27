@@ -143,7 +143,7 @@ public class PelotonTest {
 								prepStmt.setString(j, LARGE_STRING);
 							}
 							prepStmt.execute();
-							prepStmt.commit();
+							connection.commit();
 						}
 						break;
 					}
