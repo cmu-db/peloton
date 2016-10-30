@@ -17,6 +17,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "common/statement.h"
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
@@ -107,7 +108,8 @@ class BackendStatsContext {
   void IncrementTxnAborted(oid_t database_id);
 
   // Initialize the query stat
-  void InitQueryMetric(std::string query_string, oid_t database_oid);
+  void InitQueryMetric(const std::shared_ptr<Statement> statement,
+                       const std::shared_ptr<QueryMetric::QueryParams> params);
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS

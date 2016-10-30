@@ -68,9 +68,11 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto index_metadata = table->GetIndex(0)->GetMetadata();
   auto db_oid = database->GetOid();
   auto context = stats::BackendStatsContext::GetInstance();
+  auto stmt = StatsTestsUtil::GetInsertStmt();
+  std::shared_ptr<std::vector<common::Value>> param_values(nullptr);
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
-    context->InitQueryMetric("query_string", db_oid);
+    context->InitQueryMetric(stmt, nullptr);
 
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
@@ -369,7 +371,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   // Inserting a tuple end-to-end
   auto statement = StatsTestsUtil::GetInsertStmt();
   // Initialize the query metric
-  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+  backend_context->InitQueryMetric(statement, nullptr);
 
   // Execute insert
   std::vector<common::Value> params;

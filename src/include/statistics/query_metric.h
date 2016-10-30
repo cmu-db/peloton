@@ -14,7 +14,7 @@
 
 #include <string>
 #include <sstream>
-
+#include <vector>
 #include "common/types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
@@ -22,14 +22,44 @@
 #include "statistics/processor_metric.h"
 
 namespace peloton {
+
 namespace stats {
+
+// Same type defined in wire/marshal.h
+typedef unsigned char uchar;
 
 /**
  * Metric for the access of a query
  */
 class QueryMetric : public AbstractMetric {
  public:
-  QueryMetric(MetricType type, std::string query_name, oid_t database_id);
+  class QueryParams {
+
+   public:
+    QueryParams(std::vector<uchar> &format_buf_copy,
+                std::vector<int32_t> &param_types_,
+                std::shared_ptr<std::vector<uchar>> val_buf_copy,
+                int num_params);
+
+    // TODO constructor from common::Value
+
+   private:
+    // A copy of paramter format buffer
+    std::vector<uchar> format_buf_copy_;
+
+    // The types of the params
+    std::vector<int32_t> param_types_;
+
+    // A copy of paramter value buffer
+    std::shared_ptr<std::vector<uchar>> val_buf_copy_;
+
+    // Number of parameters
+    int num_params_ = 0;
+  };
+
+  QueryMetric(MetricType type, const std::string &query_name,
+              std::shared_ptr<QueryParams> query_params,
+              const oid_t database_id);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -41,9 +71,13 @@ class QueryMetric : public AbstractMetric {
 
   inline ProcessorMetric &GetProcessorMetric() { return processor_metric_; }
 
-  inline std::string GetName() { return query_name_; }
+  inline std::string GetName() const { return query_name_; }
 
-  inline oid_t GetDatabaseId() { return database_id_; }
+  inline oid_t GetDatabaseId() const { return database_id_; }
+
+  inline std::shared_ptr<QueryParams> const GetQueryParams() {
+    return query_params_;
+  }
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
@@ -72,6 +106,9 @@ class QueryMetric : public AbstractMetric {
 
   // The name of this query
   std::string query_name_;
+
+  // The parameter of this query
+  std::shared_ptr<QueryParams> query_params_;
 
   // The number of tuple accesses
   AccessMetric query_access_{ACCESS_METRIC};

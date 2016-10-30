@@ -711,7 +711,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   auto statement = portal->GetStatement();
   const auto &query_type = statement->GetQueryType();
-  // TODO how do we handle params?
 
   auto param_stat = portal->GetParamStat();
   if (statement.get() == nullptr) {
