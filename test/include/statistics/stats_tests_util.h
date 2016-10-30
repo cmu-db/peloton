@@ -53,11 +53,11 @@ class StatsTestsUtil {
 
   static void CreateTable();
 
-  static std::unique_ptr<Statement> GetInsertStmt();
+  static std::shared_ptr<Statement> GetInsertStmt();
 
-  static std::unique_ptr<Statement> GetDeleteStmt();
+  static std::shared_ptr<Statement> GetDeleteStmt();
 
-  static std::unique_ptr<Statement> GetUpdateStmt();
+  static std::shared_ptr<Statement> GetUpdateStmt();
 
   static void ParseAndPlan(Statement *statement, std::string sql);
 };

@@ -18,17 +18,16 @@ namespace peloton {
 
 Portal::Portal(const std::string& portal_name,
                std::shared_ptr<Statement> statement,
-               std::vector<common::Value> bind_parameters)
+               std::vector<common::Value> bind_parameters,
+               std::shared_ptr<stats::QueryMetric::QueryParams> param_stat)
     : portal_name(portal_name),
       statement(statement),
-      bind_parameters(std::move(bind_parameters)) {}
+      bind_parameters(std::move(bind_parameters)),
+      param_stat_(param_stat) {}
 
 Portal::~Portal() { statement.reset(); }
 
 std::shared_ptr<Statement> Portal::GetStatement() const { return statement; }
 
-const std::vector<common::Value>& Portal::GetParameters() const {
-  return bind_parameters;
-}
-
+std::shared_ptr<Statement> Portal::GetStatement() const { return statement; }
 }  // namespace peloton

@@ -125,6 +125,18 @@ class PacketManager {
   /* closes the socket connection with the client */
   void CloseClient();
 
+  // TODO Add comment
+
+  static size_t ReadParamFormat(Packet* pkt, int num_params_format,
+                                std::vector<int16_t>& formats);
+
+  // TODO add comment
+
+  static size_t ReadParamValue(
+      Packet* pkt, int num_params, std::vector<int32_t>& param_types,
+      std::vector<std::pair<int, std::string>>& bind_parameters,
+      std::vector<common::Value>& param_values, std::vector<int16_t>& formats);
+
  public:
   Client client_;
 

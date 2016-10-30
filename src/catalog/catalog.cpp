@@ -132,7 +132,8 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
       database->GetTableWithName(table_name);
       LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
       return Result::RESULT_FAILURE;
-    } catch (CatalogException &e) {
+    }
+    catch (CatalogException &e) {
       // Table doesn't exist, now create it
       oid_t database_id = database->GetOid();
       storage::DataTable *table = storage::TableFactory::GetDataTable(
