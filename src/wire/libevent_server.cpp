@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/init.h"
+#include "common/config.h"
 #include "common/thread_pool.h"
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -22,8 +23,24 @@
 namespace peloton {
 namespace wire {
 
-std::vector<SocketManager<PktBuf> *> Server::socket_manager_vector_ = {};
-unsigned int Server::socket_manager_id = 0;
+std::vector<std::unique_ptr<LibeventSocket>>& GetGlobalSocketList() {
+  static std::vector<std::unique_ptr<LibeventSocket>>
+      global_socket_list(FLAGS_max_connections);
+  return global_socket_list;
+}
+
+LibeventSocket* LibeventServer::GetConn(const int& connfd) {
+  auto global_socket_list = GetGlobalSocketList();
+  return global_socket_list[connfd].get();
+}
+
+void LibeventServer::CreateNewConn(
+    const int& connfd, short ev_flags,
+    std::shared_ptr<LibeventThread>& thread) {
+  auto global_socket_list = GetGlobalSocketList();
+  global_socket_list[connfd].reset(new LibeventSocket(connfd, ev_flags, thread));
+}
+
 
 /**
  * Stop signal handling
@@ -51,30 +68,30 @@ void SetNonBlocking(evutil_socket_t fd) {
 /**
  * Process refill the buffer and process all packets that can be processed
  */
-void ManageRead(SocketManager<PktBuf> **socket_manager) {
+void ManageRead(LibeventSocket<PktBuf> **conn) {
 #ifdef LOG_INFO_ENABLED
   std::ostringstream ss;
   ss << std::this_thread::get_id();
   std::string id_str = ss.str();
 #endif
-  LOG_INFO("New thread %s started execution for socket manager %u",
-           id_str.c_str(), (*socket_manager)->id);
+  LOG_INFO("New thread %s started execution for connfd %u",
+           id_str.c_str(), (*conn)->sock_fd);
   // Startup packet
-  if (!(*socket_manager)->socket_pkt_manager->ManageStartupPacket()) {
+  if (!(*conn)->pkt_manager->ManageStartupPacket()) {
 	  LOG_INFO(
 	  "Thread %s Executing for socket manager %u failed to manage packet",
-	  id_str.c_str(), (*socket_manager)->id);
-      close((*socket_manager)->GetSocketFD());
+	  id_str.c_str(), (*conn)->sock_fd);
+      close((*conn)->sock_fd);
     return;
   }
 
   // Regular packet
-  if (!(*socket_manager)->socket_pkt_manager->ManagePacket() ||
-      (*socket_manager)->disconnected == true) {
+  if (!(*conn)->pkt_manager->ManagePacket() ||
+      (*conn)->is_disconnected == true) {
     LOG_INFO(
         "Thread %s Executing for socket manager %u failed to manage packet",
-        id_str.c_str(), (*socket_manager)->id);
-    close((*socket_manager)->GetSocketFD());
+        id_str.c_str(), (*conn)->sock_fd);
+    close((*conn)->sock_fd);
     return;
   }
 }
@@ -99,24 +116,14 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
 
   /* We've accepted a new client, allocate a socket manager to
      maintain the state of this client. */
-  SocketManager<PktBuf> *socket_manager =
-      new SocketManager<PktBuf>(client_fd, ++Server::socket_manager_id);
-  socket_manager->socket_pkt_manager.reset(new PacketManager(socket_manager));
 
-  Server::AddSocketManager(socket_manager);
-
-  socket_manager->self = socket_manager;
-
-  // New thread for this socket manager
-  thread_pool.SubmitTask(ManageRead, &socket_manager->self);
 
 }
 
-Server::Server() {
+LibeventServer::LibeventServer() {
   struct event_base *base;
   struct evconnlistener *listener;
   struct event *evstop;
-  socket_manager_id = 0;
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
 

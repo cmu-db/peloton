@@ -10,18 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "wire/socket_base.h"
-#include "wire/wire.h"
-#include "common/exception.h"
-
-#include <sys/un.h>
-#include <string>
+#include "wire/libevent_socket.h"
 
 namespace peloton {
 namespace wire {
 
 template <typename B>
-bool SocketManager<B>::RefillReadBuffer() {
+bool LibeventSocket<B>::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
   bool done = false;
@@ -107,7 +102,7 @@ bool SocketManager<B>::RefillReadBuffer() {
       } else if (bytes_read == 0) {
         // If the length of bytes returned by read is 0, this means
         // that the client disconnected
-        disconnected = true;
+        is_disconnected = true;
         return false;
       } else {
         done = true;
@@ -125,7 +120,7 @@ bool SocketManager<B>::RefillReadBuffer() {
 }
 
 template <typename B>
-bool SocketManager<B>::FlushWriteBuffer() {
+bool LibeventSocket<B>::FlushWriteBuffer() {
   fd_set wset;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
@@ -227,7 +222,7 @@ bool SocketManager<B>::FlushWriteBuffer() {
  * 		false on failure. B can be any STL container.
  */
 template <typename B>
-bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
+bool LibeventSocket<B>::ReadBytes(B &pkt_buf, size_t bytes) {
   size_t window, pkt_buf_idx = 0;
   // while data still needs to be read
   while (bytes) {
@@ -269,7 +264,7 @@ bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
 }
 
 template <typename B>
-void SocketManager<B>::PrintWriteBuffer() {
+void LibeventSocket<B>::PrintWriteBuffer() {
   LOG_TRACE("Write Buffer:");
 
   for (size_t i = 0; i < wbuf.buf_size; ++i) {
@@ -278,7 +273,7 @@ void SocketManager<B>::PrintWriteBuffer() {
 }
 
 template <typename B>
-bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
+bool LibeventSocket<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   size_t window, pkt_buf_ptr = 0;
   int len_nb;  // length in network byte order
 
@@ -344,7 +339,7 @@ bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
 }
 
 template <typename B>
-void SocketManager<B>::CloseSocket() {
+void LibeventSocket<B>::CloseSocket() {
   for (;;) {
     int status = close(sock_fd);
     if (status < 0) {
@@ -359,7 +354,7 @@ void SocketManager<B>::CloseSocket() {
 }
 
 // explicit template instantiation for read_bytes
-template class SocketManager<PktBuf>;
+template class LibeventSocket<PktBuf>;
 
 }  // End wire namespace
 }  // End peloton namespace

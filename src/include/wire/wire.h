@@ -22,7 +22,7 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
-#include "wire/socket_base.h"
+#include "wire/libevent_socket.h"
 
 // TXN state definitions
 #define BUFFER_INIT_SIZE 100
@@ -40,14 +40,21 @@ struct Packet;
 typedef std::vector<std::unique_ptr<Packet>> ResponseBuffer;
 
 struct Client {
-  SocketManager<PktBuf>* sock;  // handle to socket manager
+  LibeventSocket<PktBuf> *sock;  // handle to libevent socket
 
   // Authentication details
   std::string dbname;
   std::string user;
   std::unordered_map<std::string, std::string> cmdline_options;
 
-  inline Client(SocketManager<PktBuf>* sock) : sock(sock) {}
+  inline Client(LibeventSocket<PktBuf>* sock) : sock(sock) {}
+
+  inline void Reset(LibeventSocket<PktBuf>* sock) {
+    this->sock = sock;
+    dbname.clear();
+    user.clear();
+    cmdline_options.clear();
+  }
 };
 
 struct Packet {
@@ -176,7 +183,7 @@ class PacketManager {
   // packets ready for read
   size_t pkt_cntr_;
 
-  inline PacketManager(SocketManager<PktBuf>* sock)
+  inline PacketManager(LibeventSocket<PktBuf>* sock)
       : client_(sock), txn_state_(TXN_IDLE), pkt_cntr_(0) {}
 
   /* Startup packet processing logic */

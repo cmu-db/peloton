@@ -10,15 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <unistd.h>
 #include <iostream>
-
-#include "common/stack_trace.h"
 #include "common/init.h"
 #include "common/config.h"
-#include "common/macros.h"
 #include "wire/libevent_server.h"
-#include "wire/socket_base.h"
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
@@ -37,7 +32,7 @@ int main(int argc, char *argv[]) {
   peloton::PelotonInit::Initialize();
 
   // Launch server
-  peloton::wire::Server server;
+  peloton::wire::LibeventServer libeventserver;
 
   // Teardown
   peloton::PelotonInit::Shutdown();
