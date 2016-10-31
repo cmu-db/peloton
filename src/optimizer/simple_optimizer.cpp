@@ -1240,5 +1240,33 @@ std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
       new catalog::Schema({column}));
 }
 
+std::unique_ptr<planner::AbstractPlan>
+SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
+  std::cout<<"in func"<<std::endl;
+  // std::cout<<((select_stmt->select_list)[0]).at(0)->GetInfo()<<std::endl;
+  std::cout<<(select_stmt->from_table->join != NULL)<<std::endl;
+  // std::cout<<select_stmt->from_table->join->left->GetTableName()<<std::endl;
+  // std::cout<<select_stmt->from_table->join->right->GetTableName()<<std::endl;
+
+  // std::cout<<(select_stmt->from_table->list->at(0)->GetTableName())<<std::endl;
+  // std::cout<<(select_stmt->from_table->list->at(1)->GetTableName())<<std::endl;
+  // std::cout<<(select_stmt->GetType() == STATEMENT_TYPE_SELECT)<<std::endl;
+  // std::cout<<select_stmt->GetInfo()<<std::endl;
+  // std::cout<<select_stmt->from_table->table_name<<std::endl;
+  // std::cout<<select_stmt->from_table->list->at(0)->GetTableName()<<std::endl;
+  // std::cout<<select_stmt->from_table->list->at(1)->GetTableName()<<std::endl;
+  auto left_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, select_stmt->from_table->join->left->GetTableName());
+  auto right_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, select_stmt->from_table->join->right->GetTableName());
+
+  std::cout<<"\nGot tables\n\n";
+  auto left_scan_plan = CreateScanPlan(left_table, select_stmt);
+  auto right_scan_plan = CreateScanPlan(right_table, select_stmt);
+
+  return NULL;
+  
+}
+
 }  // namespace optimizer
 }  // namespace peloton
