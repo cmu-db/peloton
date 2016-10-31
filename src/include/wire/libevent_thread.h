@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// wire.h
+// libevent_thread.h
 //
-// Identification: src/include/wire/libevent_server.h
+// Identification: src/include/wire/libevent_thread.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -42,30 +42,54 @@ namespace wire {
 class LibeventThread {
 
  public:
-  LibeventThread() {}
+  LibeventThread(unsigned int thread_id);
 
+  // TODO implement destructor
   inline ~LibeventThread() {}
 
-  static void ProcessConnRequest(int num);
+  // XXX Should we make this non-static?
+  static void CreateConnection(int client_fd, struct event_base *base);
 
-  static void MainLoop(void *arg);
+  static void ProcessConnection(evutil_socket_t fd, short event, void *arg);
+
+  // XXX Should we make this non-static?
+  static void DispatchConnection();
+
+  static void EventHandler(evutil_socket_t fd, short event, void *arg);
+
+  static void Init(int num_threads);
+
+  static void Loop(peloton::wire::LibeventThread *libevent_thread);
+
+  static std::shared_ptr<LibeventThread> GetLibeventThread(
+      unsigned int conn_thread_id);
+
+  static unsigned int connection_thread_id;
+
+  static int num_threads;
+
+ public:
+  struct event_base *libevent_base;
 
   // TODO change back to private
  public:
-  /* libevent handle this thread uses */
-  struct event_base *libevent_base_;
+  // The connection thread id
+  unsigned int thread_id_;
 
-  /* listen event for notify pipe */
-  struct event *notify_new_conn_;
+  // New connection event
+  struct event *new_conn_event_;
 
-  /* receiving end of notify pipe */
-  int notify_receive_fd_;
+  // Notify new connection pipe(receive end)
+  int new_conn_receive_fd_;
 
-  /* sending end of notify pipe */
-  int notify_send_fd_;
+  // Notify new connection pipe(send end)
+  int new_conn_send_fd_;
 
   // The queue for new connection requests
   // LockFreeQueue<std::shared_ptr<int64_t >> new_conn_queue;
+
+ private:
+  static std::vector<std::shared_ptr<LibeventThread>> &GetLibeventThreads();
 };
 }
 }

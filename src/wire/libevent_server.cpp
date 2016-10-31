@@ -17,6 +17,7 @@
 #include "common/init.h"
 #include "common/thread_pool.h"
 #include <fcntl.h>
+#include <sys/socket.h>
 
 namespace peloton {
 namespace wire {
@@ -142,23 +143,55 @@ Server::Server() {
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
 
+  LibeventThread::Init(std::thread::hardware_concurrency());
+
+  // TODO should we create thread object for the main thread, too??
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons(port_);
-    listener = evconnlistener_new_bind(
-        base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
-        -1, (struct sockaddr *)&sin, sizeof(sin));
-    if (!listener) {
-      LOG_INFO("Couldn't create listener");
+
+    int socket_to_listen;
+
+    socket_to_listen = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (socket_to_listen < 0) {
+      LOG_ERROR("Failed to create listen socket");
       exit(EXIT_FAILURE);
     }
 
+    if (bind(socket_to_listen, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+      LOG_ERROR("Failed to bind");
+      exit(EXIT_FAILURE);
+    }
+
+    int conn_backlog = 12;
+    if (listen(socket_to_listen, conn_backlog) < 0) {
+      LOG_ERROR("Failed to listen to socket");
+      exit(EXIT_FAILURE);
+    }
+
+    LibeventThread::CreateConnection(socket_to_listen, base);
+    // TODO Set socket option: Close on free, Reusable
+    // TODO set non blocking as well
+    // setsockopt(socketlisten, SOL_SOCKET, SO_REUSEADDR, &reuse,
+    // sizeof(reuse));
+    //  setnonblock(socketlisten);
+
+    //    listener = evconnlistener_new_bind(
+    //            base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE |
+    // LEV_OPT_REUSEABLE,
+    //        -1, (struct sockaddr *)&sin, sizeof(sin));
+    //    if (!listener) {
+    //      LOG_INFO("Couldn't create listener");
+    //      exit(EXIT_FAILURE);
+    //    }
+
     event_base_dispatch(base);
 
-    evconnlistener_free(listener);
+    //    evconnlistener_free(listener);
     event_free(evstop);
     event_base_free(base);
   }

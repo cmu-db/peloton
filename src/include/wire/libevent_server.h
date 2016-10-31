@@ -31,6 +31,7 @@
 #include "common/config.h"
 #include "wire/wire.h"
 #include "wire/socket_base.h"
+#include "wire/libevent_thread.h"
 
 namespace peloton {
 
@@ -38,7 +39,7 @@ namespace wire {
 
 class Server {
 
-  public:
+ public:
   Server();
 
   inline ~Server() {
@@ -47,21 +48,20 @@ class Server {
     }
   }
 
-	// Remove socket manager with the same fd and add the new one
+  // Remove socket manager with the same fd and add the new one
   inline static void AddSocketManager(SocketManager<PktBuf>* socket_manager) {
-  // If a socket manager with the same file descriptor exists, remove it first
+    // If a socket manager with the same file descriptor exists, remove it first
     auto it = std::begin(socket_manager_vector_);
-    while(it != std::end(socket_manager_vector_)) {
-	  if((*it)->GetSocketFD() == socket_manager->GetSocketFD()) {
-		  LOG_INFO("Removing socket manager on existing fd");
-		  delete(*it);
-		  it = socket_manager_vector_.erase(it);
-	  }
-	  else {
-	    ++it;
-	  }
-	}
-	socket_manager_vector_.push_back(socket_manager);
+    while (it != std::end(socket_manager_vector_)) {
+      if ((*it)->GetSocketFD() == socket_manager->GetSocketFD()) {
+        LOG_INFO("Removing socket manager on existing fd");
+        delete (*it);
+        it = socket_manager_vector_.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    socket_manager_vector_.push_back(socket_manager);
   }
 
   // To keep track of socket managers for deletion
@@ -70,6 +70,8 @@ class Server {
   // socket manager id cntr
   static unsigned int socket_manager_id;
 
+  // connection thread id cntr
+  static unsigned int connection_thread_id;
 
  private:
   // For logging purposes
