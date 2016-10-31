@@ -53,6 +53,8 @@ void LibeventThread::EventHandler(evutil_socket_t fd, short event, void *arg) {
   (void)arg;
   (void)event;
   (void)fd;
+
+  // LOG_ERROR("Handler invoked");
   bool done = false;
   int state = 1;
   // Assume 1 is for LISTEN_STATE..
@@ -61,6 +63,13 @@ void LibeventThread::EventHandler(evutil_socket_t fd, short event, void *arg) {
   while (done == false) {
     switch (state) {
       case 1: {
+
+        struct sockaddr_storage addr;
+        socklen_t addrlen = sizeof(addr);
+        int client_fd = accept(fd, (struct sockaddr *)&addr, &addrlen);
+        if (client_fd == -1) {
+          LOG_ERROR("Failed to accept");
+        }
         DispatchConnection();
         done = true;
         break;
@@ -75,10 +84,12 @@ void LibeventThread::CreateConnection(int client_fd, struct event_base *base) {
 
   // TODO create connection object for the connection
 
-  // TODO pass the main thread connection object here
-  struct event *event = event_new(base, client_fd, EV_READ | EV_PERSIST,
-                                  LibeventThread::EventHandler, nullptr);
-  if (event_add(event, 0) == -1) {
+  struct ConnectionPlaceHolder *conn = new ConnectionPlaceHolder();
+
+  // TODO pass the main thread connection object here, instead of `base`
+  conn->event = event_new(base, client_fd, EV_READ | EV_PERSIST,
+                          LibeventThread::EventHandler, conn);
+  if (event_add(conn->event, 0) == -1) {
     LOG_ERROR("Event add failed\n");
     exit(1);
   }
@@ -110,14 +121,20 @@ void LibeventThread::ProcessConnection(evutil_socket_t fd, short event,
   (void)fd;
   (void)event;
 
+  char buf[1];
+
+  if (read(fd, buf, 1) != 1) {
+    LOG_ERROR("Can't read from libevent pipe\n");
+    return;
+  }
+
   // TODO Pull pending connection requests from the queue
   // queue->deque
 
   LOG_ERROR("Thread %d is processing conn request",
             (int)libevent_thread->thread_id_);
 
-  // TODO
-  // CreateConnection(fd, base);
+  CreateConnection(fd, libevent_thread->libevent_base);
   //
 }
 

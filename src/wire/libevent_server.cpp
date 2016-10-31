@@ -116,8 +116,6 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
 
   /* We've accepted a new client, allocate a socket manager to
      maintain the state of this client. */
-
-
 }
 
 LibeventServer::LibeventServer() {
@@ -186,15 +184,6 @@ LibeventServer::LibeventServer() {
     // setsockopt(socketlisten, SOL_SOCKET, SO_REUSEADDR, &reuse,
     // sizeof(reuse));
     //  setnonblock(socketlisten);
-
-    //    listener = evconnlistener_new_bind(
-    //            base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE |
-    // LEV_OPT_REUSEABLE,
-    //        -1, (struct sockaddr *)&sin, sizeof(sin));
-    //    if (!listener) {
-    //      LOG_INFO("Couldn't create listener");
-    //      exit(EXIT_FAILURE);
-    //    }
 
     event_base_dispatch(base);
 
