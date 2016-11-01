@@ -36,6 +36,7 @@
 
 #define SOCKET_BUFFER_SIZE 8192
 #define QUEUE_SIZE 100
+#define MASTER_THREAD_ID -1
 
 namespace peloton {
 namespace wire {
@@ -48,6 +49,30 @@ void WorkerHandleNewConn(evutil_socket_t local_fd, short ev_flags, void *arg);
 
 /* Used by a worker to execute the main event loop for a connection */
 void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
+
+
+/* Helpers */
+
+/* Helper used by master thread to dispatch new connection to worker thread */
+void DispatchConnection(int new_conn_fd, short event_flags);
+
+/* Runs the state machine for the protocol. Invoked by event handler callback */
+void StateMachine(LibeventSocket *conn);
+
+/* Set the socket to non-blocking mode */
+inline void SetNonBlocking(evutil_socket_t fd) {
+  auto flags = fcntl(fd, F_GETFL);
+  flags |= O_NONBLOCK;
+  if (fcntl(fd, F_SETFL, flags) < 0) {
+    LOG_ERROR("Failed to set non-blocking socket");
+  }
+}
+
+/* Set TCP No Delay for lower latency */
+inline void SetTCPNoDelay(evutil_socket_t fd) {
+  int one = 1;
+  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
+}
 
 // Buffers used to batch messages at the socket
 struct Buffer {
@@ -79,8 +104,8 @@ class LibeventThread {
   /* libevent handle this thread uses */
   struct event_base *libevent_base_;
 
-  /* listen event for notify pipe */
-  struct event *notify_new_conn_;
+  // The connection thread id
+  const int thread_id_;
 
   /* receiving end of notify pipe */
   int notify_receive_fd_;
@@ -92,13 +117,24 @@ class LibeventThread {
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
 
  public:
+
+  LibeventThread(const int thread_id);
+
+  // TODO implement destructor
   inline ~LibeventThread() {}
 
-  static void ProcessConnRequest(int num);
+  // Dummy test worker callback
+  //  static void ProcessConnection(evutil_socket_t fd, short event, void *arg);
 
-  static void MainLoop(void *arg);
+  static void Init(int num_threads);
 
-  LibeventThread() : new_conn_queue(QUEUE_SIZE) {}
+  static void Loop(peloton::wire::LibeventThread *libevent_thread);
+
+  static unsigned int connection_thread_id;
+
+  static int num_threads;
+
+  static std::vector<std::shared_ptr<LibeventThread>> &GetLibeventThreads();
 };
 
 
@@ -124,10 +160,14 @@ class LibeventSocket {
   bool RefillReadBuffer();
 
   inline void Init(short event_flags, LibeventThread *thread) {
+    SetNonBlocking(sock_fd);
+    SetTCPNoDelay(sock_fd);
     is_disconnected = false;
     this->event_flags = event_flags;
     this->thread = thread;
-    event = event_new(thread->libevent_base_, sock_fd, event_flags, EventHandler, nullptr);
+
+    // TODO: Maybe switch to event_assign once State machine is implemented
+    event = event_new(thread->libevent_base_, sock_fd, event_flags, EventHandler, this);
     event_add(event, nullptr);
   }
 

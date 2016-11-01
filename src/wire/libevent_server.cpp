@@ -17,6 +17,7 @@
 #include "common/config.h"
 #include "common/thread_pool.h"
 
+
 namespace peloton {
 namespace wire {
 
@@ -47,19 +48,6 @@ void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   struct event_base *base = (event_base *)arg;
   LOG_INFO("stop");
   event_base_loopexit(base, NULL);
-}
-
-void SetTCPNoDelay(evutil_socket_t fd) {
-  int one = 1;
-  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
-}
-
-void SetNonBlocking(evutil_socket_t fd) {
-  auto flags = fcntl(fd, F_GETFL);
-  flags |= O_NONBLOCK;
-  if (fcntl(fd, F_SETFL, flags) < 0) {
-    LOG_ERROR("Failed to set non-blocking socket");
-  }
 }
 
 /**
@@ -122,6 +110,7 @@ LibeventServer::LibeventServer() {
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
 
+
   // For logging purposes
   //  event_enable_debug_mode();
   //  event_set_log_callback(LogCallback);
@@ -145,6 +134,9 @@ LibeventServer::LibeventServer() {
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
 
+  std::unique_ptr<LibeventThread> master_thread_ptr(new LibeventThread(MASTER_THREAD_ID));
+
+  // TODO: Make pool size a global
   LibeventThread::Init(std::thread::hardware_concurrency());
 
   // TODO should we create thread object for the main thread, too??
@@ -175,49 +167,21 @@ LibeventServer::LibeventServer() {
       exit(EXIT_FAILURE);
     }
 
-    LibeventThread::CreateConnection(socket_to_listen, base);
-    // TODO Set socket option: Close on free, Reusable
-    // TODO set non blocking as well
-    // setsockopt(socketlisten, SOL_SOCKET, SO_REUSEADDR, &reuse,
-    // sizeof(reuse));
-    //  setnonblock(socketlisten);
+    int reuse = 1;
+    setsockopt(socket_to_listen, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
+    LibeventServer::CreateNewConn(socket_to_listen, EV_READ|EV_PERSIST,
+                                  master_thread_ptr.get());
 
     event_base_dispatch(base);
-
-    //    evconnlistener_free(listener);
     event_free(evstop);
     event_base_free(base);
   }
+
   // This socket family code is not implemented yet
-  else if (FLAGS_socket_family == "AF_UNIX") {
-    struct sockaddr_un serv_addr;
-    int len;
-
-    std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(port_);
-    PL_MEMSET(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sun_family = AF_UNIX;
-    strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
-            sizeof(serv_addr.sun_path) - 1);
-    unlink(serv_addr.sun_path);
-    len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
-
-    listener = evconnlistener_new_bind(
-        base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
-        -1, (struct sockaddr *)&serv_addr, len);
-    if (!listener) {
-      LOG_INFO("Couldn't create listener");
-      exit(EXIT_FAILURE);
-    }
-
-    event_base_dispatch(base);
-
-    evconnlistener_free(listener);
-    event_free(evstop);
-    event_base_free(base);
-
-  } else {
-    LOG_ERROR("Socket family %s not supported", FLAGS_socket_family.c_str());
-    exit(EXIT_FAILURE);
+  else {
+    LOG_ERROR("Unsupported socket family");
+    exit(1);
   }
 }
 

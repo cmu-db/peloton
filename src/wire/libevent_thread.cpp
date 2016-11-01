@@ -31,12 +31,6 @@ LibeventThread::GetLibeventThreads() {
   return libevent_threads;
 }
 
-std::shared_ptr<LibeventThread> LibeventThread::GetLibeventThread(
-    unsigned int conn_thread_id) {
-  auto &threads = GetLibeventThreads();
-  return threads[conn_thread_id];
-}
-
 void LibeventThread::Init(int num_threads) {
   auto &threads = GetLibeventThreads();
   for (int i = 0; i < num_threads; i++) {
@@ -142,7 +136,8 @@ void LibeventThread::Loop(peloton::wire::LibeventThread *libevent_thread) {
   event_base_loop(libevent_thread->libevent_base, 0);
 }
 
-LibeventThread::LibeventThread(unsigned int thread_id) : thread_id_(thread_id) {
+LibeventThread::LibeventThread(const int thread_id)
+    : thread_id_(thread_id), new_conn_queue_(QUEUE_SIZE) {
   int fds[2];
   if (pipe(fds)) {
     LOG_ERROR("Can't create notify pipe to accept connections");
