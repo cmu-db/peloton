@@ -16,6 +16,7 @@
 #include "common/macros.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
+#include <fcntl.h>
 
 namespace peloton {
 namespace wire {
@@ -38,6 +39,13 @@ void SetTCPNoDelay(evutil_socket_t fd) {
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
 }
 
+void SetNonBlocking(evutil_socket_t fd) {
+  auto flags = fcntl(fd, F_GETFL);
+  flags |= O_NONBLOCK;
+  if (fcntl(fd, F_SETFL, flags) < 0) {
+    LOG_ERROR("Failed to set non-blocking socket");
+  }
+}
 
 /**
  * Process refill the buffer and process all packets that can be processed
@@ -84,6 +92,9 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
 
   // No delay for TCP
   SetTCPNoDelay(client_fd);
+
+  // Set non blocking
+  SetNonBlocking(client_fd);
 
   /* We've accepted a new client, allocate a socket manager to
      maintain the state of this client. */

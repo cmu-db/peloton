@@ -68,7 +68,8 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   // Pass all columns
   // TODO: This isn't efficient. Needs to be fixed
   if (function_found) {
-    for (auto column : GetTable()->GetSchema()->GetColumns()) {
+    auto &schema_columns = GetTable()->GetSchema()->GetColumns();
+    for (auto column : schema_columns) {
       oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
       SetColumnId(col_id);
     }
@@ -299,7 +300,7 @@ int SeqScanPlan::SerializeSize() {
 }
 
 oid_t SeqScanPlan::GetColumnID(std::string col_name) {
-  auto columns = GetTable()->GetSchema()->GetColumns();
+  auto &columns = GetTable()->GetSchema()->GetColumns();
   oid_t index = -1;
   for (oid_t i = 0; i < columns.size(); ++i) {
     if (columns[i].column_name == col_name) {

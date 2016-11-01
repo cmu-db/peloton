@@ -29,7 +29,7 @@ VarlenType::~VarlenType() {
 
 inline static int CompareStrings(const char *str1, int len1, const char *str2, int len2){
   int ret = strncmp(str1, str2, std::min(len1, len2));
-  if (ret != 0 &&len1 != len2){
+  if (ret == 0 &&len1 != len2){
     ret = len1-len2;
   }
   return ret;

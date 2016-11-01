@@ -126,21 +126,21 @@ class Schema : public Printable {
   }
 
   inline oid_t GetColumnID(std::string col_name) {
-	  oid_t index = -1;
-	  for(oid_t i = 0; i < columns.size(); ++i) {
-		  if(columns[i].column_name == col_name){
-			  index = i;
-			  break;
-		  }
-	  }
-	  return index;
+    oid_t index = -1;
+    for (oid_t i = 0; i < columns.size(); ++i) {
+      if (columns[i].column_name == col_name) {
+        index = i;
+        break;
+      }
+    }
+    return index;
   }
 
   inline oid_t GetUninlinedColumn(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
 
-  inline std::vector<Column> GetColumns() const { return columns; }
+  inline const std::vector<Column> &GetColumns() const { return columns; }
 
   // Return the number of columns in the schema for the tuple.
   inline oid_t GetColumnCount() const { return column_count; }

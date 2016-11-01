@@ -15,200 +15,350 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.*;
 
 public class PelotonTest {
-  // Peloton, Postgres, Timesten
-  private final String[] url = {
-     "jdbc:postgresql://localhost:54321/postgres",  // PELOTON 
-     "jdbc:postgresql://localhost:57721/postgres",   // POSTGRES
-     "jdbc:timesten:client:TTC_SERVER_DSN=xxx;TTC_SERVER=xxx;TCP_PORT=xxx"}; // TIMESTEN
 
-  private final String[] user = {"postgres", "postgres", "xxx"};
-  private final String[] pass = {"postgres", "postgres", "xxx"};
-  private final String[] driver = {"org.postgresql.Driver", "org.postgresql.Driver", "com.timesten.jdbc.TimesTenDriver"};
-  
-  private final int LOG_LEVEL = 0;
-  private int query_type = SIMPLE_SELECT;
+	// Peloton, Postgres, Timesten Endpoints
+	private final String[] url = {
+			"jdbc:postgresql://localhost:54321/postgres", // PELOTON
+			"jdbc:postgresql://localhost:5432/postgres", // POSTGRES
+			"jdbc:timesten:client:TTC_SERVER_DSN=xxx;TTC_SERVER=xxx;TCP_PORT=xxx" }; // TIMESTEN
 
-  public static final int SEMICOLON = 0;
-  public static final int SIMPLE_SELECT = 1;
+	private final String[] user = { "postgres", "postgres", "xxx" };
+	private final String[] pass = { "postgres", "postgres", "xxx" };
+	private final String[] driver = { "org.postgresql.Driver",
+			"org.postgresql.Driver", "com.timesten.jdbc.TimesTenDriver" };
 
-  public static final int PELOTON = 0;
-  public static final int POSTGRES = 1;
-  public static final int TIMESTEN = 2;
+	private final int LOG_LEVEL = 0;
 
+	// Query types
+	public static final int SEMICOLON = 0;
+	public static final int SIMPLE_SELECT = 1;
+	public static final int BATCH_UPDATE = 2;
+	public static final int COMPLEX_SELECT = 3;
+	public static final int SIMPLE_UPDATE = 4;
+	public static final int LARGE_UPDATE = 5;
 
+	public static int numThreads = 1;
 
-  private final String DROP = "DROP TABLE IF EXISTS A;" +
-          "DROP TABLE IF EXISTS B;";
-  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);";
+	// Endpoint types
+	public static final int PELOTON = 0;
+	public static final int POSTGRES = 1;
+	public static final int TIMESTEN = 2;
 
-  private final String DATA_A = "1,'1961-06-16'";
-  private final String DATA_B = "2,'Full Clip'";
-  private final String INSERT_A = "INSERT INTO A VALUES ("+ DATA_A +");";
-  private final String INSERT_B = "INSERT INTO A VALUES ("+ DATA_B +")";
+	// QUERY TEMPLATES
+	private final String DROP = "DROP TABLE IF EXISTS A;";
 
-  private final String INSERT_A_1 = "INSERT INTO A VALUES ("+ DATA_A +");";
-  private final String INSERT_A_2 = "INSERT INTO A VALUES ("+ DATA_B +")";
-  private final String DELETE_A = "DELETE FROM A WHERE id=1";
+	private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data VARCHAR(100), "
+			+ "field1 VARCHAR(100), field2 VARCHAR(100), field3 VARCHAR(100), field4 VARCHAR(100), "
+			+ "field5 VARCHAR(100), field6 VARCHAR(100), field7 VARCHAR(100), field8 VARCHAR(100), field9 VARCHAR(100));";
 
-  private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
-  private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
-  private final String AGG_COUNT_3 = "SELECT AVG(id) FROM A WHERE id < ? + 1";
+	private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
 
-  private final String TEMPLATE_FOR_BATCH_INSERT = "INSERT INTO A VALUES (?,?);";
+	private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET id=99 WHERE id=?";
 
-  private final String INSERT = "BEGIN;" +
-          "INSERT INTO A VALUES (1,'Fly High');" +
-          "COMMIT;";
+	private final String UPDATE_BY_LARGE_DATA = "UPDATE A SET data = ?, "
+			+ "field1 = ?, field2 = ?, field3 = ?, field4 = ?, "
+			+ "field5 = ?, field6 = ?, field7 = ?, field8 = ?, field9 = ? WHERE id = 99;";
 
-  private final String SEQSCAN = "SELECT * FROM A";
-  private final String INDEXSCAN = "SELECT * FROM A WHERE id = 1";
-  private final String INDEXSCAN_COLUMN = "SELECT data FROM A WHERE id = 1";
-  private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
-  private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
-  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
-  private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data='YO'";
-  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
-  private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = 1 FOR UPDATE";
-  private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
-  
-  // To test the join in TPCC
-  private final String CREATE_STOCK_TABLE = "CREATE TABLE STOCK ("
-        + "S_W_ID INT PRIMARY KEY,"
-        + "S_I_ID INT PRIMARY KEY,"
-        + "S_QUANTITY DECIMAL NOT NULL);";
-        //+ "PRIMARY KEY (S_W_ID, S_I_ID));";
-  private final String CREATE_ORDER_LINE_TABLE = "CREATE TABLE ORDER_LINE ("
-        + "OL_W_ID INT NOT NULL PRIMARY KEY,"
-        + "OL_D_ID INT NOT NULL PRIMARY KEY,"
-        + "OL_O_ID INT NOT NULL PRIMARY KEY,"
-        + "OL_NUMBER INT NOT NULL PRIMARY KEY,"
-        + "OL_I_ID INT NOT NULL);";
-        //+ "PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER));";
+	private final String LARGE_STRING = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+			+ "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
-  private final String INSERT_STOCK_1 = "INSERT INTO STOCK VALUES (1, 2, 0);";
-  private final String INSERT_STOCK_2 = "INSERT INTO STOCK VALUES (1, 5, 1);";
-  private final String INSERT_STOCK_3 = "INSERT INTO STOCK VALUES (1, 7, 6);";
-  private final String SELECT_STOCK = "SELECT * FROM STOCK;";
-  // Test general expression evaluation
-  private final String SELECT_STOCK_COMPLEX = "SELECT * FROM STOCK WHERE"
-      + " S_W_ID + S_I_ID = ? + S_QUANTITY + 1;";
-  
-  private final String INSERT_ORDER_LINE = "INSERT INTO ORDER_LINE VALUES (1, 2, 3, 4, 5);";
-  private final String STOCK_LEVEL = "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
-      + " FROM " + "ORDER_LINE, STOCK"
-      //+ " FROM " + "ORDER_LINE JOIN STOCK on S_I_ID = OL_I_ID"
-      + " WHERE OL_W_ID = ?"
-      + " AND OL_D_ID = ?"
-      + " AND OL_O_ID < ?"
-      + " AND OL_O_ID >= ? - 20"
-      + " AND S_W_ID = ?"
-      + " AND S_I_ID = OL_I_ID"
-      + " AND S_QUANTITY < ?";
+	private final Connection conn;
 
-  private final String CREATE_TIMESTAMP_TABLE = "CREATE TABLE TS ("
-      + "id INT NOT NULL,"
-      + "ts TIMESTAMP NOT NULL);";
-  private final String INSERT_TIMESTAMP = "INSERT INTO TS VALUES (1, ?);";
+	private enum TABLE {
+		A, B, AB
+	}
 
-  private final Connection conn;
+	private int target;
+	private int query_type;
 
-  private enum TABLE {A, B, AB}
+	class QueryWorker extends Thread {
+		public long runningTime;
+		public long totalOps = 0;
+		public Connection connection;
 
-  private int target; 
+		public QueryWorker(long runningTime) {
+			this.runningTime = runningTime;
+			try {
+				this.connection = DriverManager.getConnection(url[target],
+						user[target], pass[target]);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 
-  public PelotonTest(int target) throws SQLException {
-    this.target = target;
-    try {
-      Class.forName(driver[target]);
-      if (LOG_LEVEL != 0) {
-        org.postgresql.Driver.setLogLevel(LOG_LEVEL);
-        DriverManager.setLogStream(System.out);
-      }
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-    conn = this.makeConnection();
-    return;
-  }
+		public void run() {
+			try {
+				long startTime = System.currentTimeMillis();
+				Statement stmt = connection.createStatement();
+				PreparedStatement prepStmt = connection
+						.prepareStatement(INDEXSCAN_PARAM);
+				if (query_type == BATCH_UPDATE || query_type == SIMPLE_UPDATE) {
+					prepStmt = connection.prepareStatement(UPDATE_BY_INDEXSCAN);
+				} else if (query_type == LARGE_UPDATE) {
+					prepStmt = connection
+							.prepareStatement(UPDATE_BY_LARGE_DATA);
+				}
+				connection.setAutoCommit(false);
 
-  private Connection makeConnection() throws SQLException {
-    Connection conn = DriverManager.getConnection(url[target], user[target], pass[target]);
-    return conn;
-  }
+				long numOps = 1000;
+				// TODO refactor me
+				while (true) {
+					switch (query_type) {
+					case SEMICOLON: {
+						PerformNopQuery(stmt, numOps);
+						break;
+					}
+					case SIMPLE_SELECT:
+					case SIMPLE_UPDATE: {
+						for (long i = 0; i < numOps; i++) {
+							prepStmt.setInt(1, 0);
+							prepStmt.execute();
+						}
+						break;
+					}
+					case BATCH_UPDATE: {
+						for (long batch = 0; batch < numOps / 10; batch++) {
+							for (int i = 1; i <= 10; i++) {
+								prepStmt.setInt(1, i);
+								prepStmt.addBatch();
+							}
+							int[] res = prepStmt.executeBatch();
+							for (int i = 0; i < res.length; i++) {
+								if (res[i] < 0) {
+									throw new SQLException("Query " + (i + 1)
+											+ " returned " + res[i]);
+								}
+							}
+							connection.commit();
+						}
+						break;
+					}
+					case LARGE_UPDATE: {
+						for (long i = 0; i < numOps; i++) {
+							// We have to set 10 params in total
+							for (int j = 1; j <= 10; j++) {
+								prepStmt.setString(j, LARGE_STRING);
+							}
+							prepStmt.execute();
+							connection.commit();
+						}
+						break;
+					}
+					default: {
+						System.out.println("Unrecognized query type");
+					}
+					}
 
-  public void Close() throws SQLException {
-    conn.close();
-  }
+					totalOps += numOps;
+					if (runningTime < (System.currentTimeMillis() - startTime)) {
+						break;
+					}
+				}
+				connection.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
-  /**
-   * Drop if exists and create testing database
-   *
-   * @throws SQLException
-   */
-  public void Init() throws SQLException {
-    conn.setAutoCommit(true);
-    Statement stmt = conn.createStatement();
-    if (target != TIMESTEN) {
-      stmt.execute(DROP);
-      stmt.execute(DDL);
-    } else {
-      try {
-        stmt.execute("DROP TABLE A;");
-      } catch (Exception e) {}
-      stmt.execute("CREATE TABLE A(id INT, data INT);");
-    } 
-  }
+	public PelotonTest(int target, int query_type) throws SQLException {
+		this.target = target;
+		this.query_type = query_type;
+		try {
+			Class.forName(driver[target]);
+			if (LOG_LEVEL != 0) {
+				org.postgresql.Driver.setLogLevel(LOG_LEVEL);
+				DriverManager.setLogStream(System.out);
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		conn = this.makeConnection();
+		return;
+	}
 
-  public void Nop_Test() throws Exception {
-    long startTime = System.currentTimeMillis();
-    long elapsedTime = 0L;
-    long numOps = 1000 * 1000;
-    if (query_type == SEMICOLON) {
-      Statement stmt = conn.createStatement();
-      for (long i = 0; i < numOps; i++) {
-        try {
-            stmt.execute(";");
-        } catch (Exception e) { }
-      } 
-    } else {
-      PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
-      conn.setAutoCommit(false);
-      for (long i = 0; i < numOps; i++) {
-         try {
-            stmt.setInt(1, 0);
-            stmt.execute();
-            conn.commit();
-         } catch (Exception e) { }
-      }
-    }
-    elapsedTime = (new Date()).getTime() - startTime;
-    System.out.println("Nop throughput: " + numOps * 1000 / elapsedTime);
-  }
+	private Connection makeConnection() throws SQLException {
+		Connection conn = DriverManager.getConnection(url[target],
+				user[target], pass[target]);
+		return conn;
+	}
 
+	public void Close() throws SQLException {
+		conn.close();
+	}
 
-  static public void main(String[] args) throws Exception {
-      if (args.length == 0) {
-        System.out.println("Please specify target: [peloton|timesten|postgres]");
-        return;
-      }
-      int target = PELOTON;
-      if (args[0].equals("peloton")) {
-        target = PELOTON;
-      } else if (args[0].equals("postgres")) {
-        target = POSTGRES;
-        // echo "Please set env var LD_LIBRARY_PATH if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib"
-      } else if (args[0].equals("timesten")) {
-        target = TIMESTEN;
-      } else {
-        System.out.println("Please specify target: [peloton|timesten|postgres]");
-        return;
-      }
-      PelotonTest pt = new PelotonTest(target);
-      pt.Init();
-      pt.Nop_Test();
-      pt.Close();
-  }
+	/**
+	 * Drop if exists and create testing database
+	 *
+	 * @throws SQLException
+	 */
+	public void Init() throws SQLException {
+		conn.setAutoCommit(true);
+		Statement stmt = conn.createStatement();
+		if (target != TIMESTEN) {
+			stmt.execute(DROP);
+		} else {
+			// Well, Timesten doesn't support `if exists` keyword
+			try {
+				stmt.execute("DROP TABLE A;");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		stmt.execute(DDL);
+	}
+
+	public void Timed_Nop_Test() throws Exception {
+		int runningTime = 15;
+		QueryWorker[] workers = new QueryWorker[numThreads];
+		// Initialize all worker threads
+		for (int i = 0; i < numThreads; i++) {
+			workers[i] = new QueryWorker(1000 * runningTime);
+		}
+		// Submit to thread pool
+		ExecutorService executorPool = Executors.newFixedThreadPool(numThreads);
+		for (int i = 0; i < numThreads; i++) {
+			executorPool.submit(workers[i]);
+		}
+		// No more task to submit
+		executorPool.shutdown();
+		// Wait for tasks to terminate
+		executorPool.awaitTermination(runningTime + 3, TimeUnit.SECONDS);
+		// Calculate the total number of ops
+		long totalThroughput = 0;
+		for (int i = 0; i < numThreads; i++) {
+			totalThroughput += workers[i].totalOps * 1.0 / runningTime;
+		}
+		System.out.println(totalThroughput);
+	}
+
+	private void PerformNopQuery(Statement stmt, long numOps) throws Exception {
+		for (long i = 0; i < numOps; i++) {
+			try {
+				stmt.execute(";");
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	public void Nop_Test() throws Exception {
+		long startTime = System.currentTimeMillis();
+		long elapsedTime = 0L;
+		long numOps = 200 * 1000;
+		// TODO refactor me
+		if (query_type == SEMICOLON) {
+			Statement stmt = conn.createStatement();
+			PerformNopQuery(stmt, numOps);
+		} else if (query_type == SIMPLE_SELECT) {
+			PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
+			conn.setAutoCommit(false);
+			for (long i = 0; i < numOps; i++) {
+				try {
+					stmt.setInt(1, 0);
+					stmt.execute();
+					conn.commit();
+				} catch (Exception e) {
+				}
+			}
+		} else if (query_type == BATCH_UPDATE) {
+			PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
+			conn.setAutoCommit(false);
+			for (long batch = 0; batch < numOps / 10; batch++) {
+				for (int i = 1; i <= 10; i++) {
+					stmt.setInt(1, i);
+					stmt.addBatch();
+				}
+				int[] res = stmt.executeBatch();
+				for (int i = 0; i < res.length; i++) {
+					if (res[i] < 0) {
+						throw new SQLException("Query " + (i + 1)
+								+ " returned " + res[i]);
+					}
+				}
+				conn.commit();
+			}
+		}
+		elapsedTime = (new Date()).getTime() - startTime;
+		System.out.println("Nop throughput: " + numOps * 1000 / elapsedTime);
+	}
+
+	static private void printHelpMessage() {
+		System.out
+				.println("Please specify target: [peloton|timesten|postgres] "
+						+ "[semicolon|select|batch_update|simple_update|large_update]");
+	}
+
+	static public void main(String[] args) throws Exception {
+		if (args.length < 2) {
+			printHelpMessage();
+			return;
+		}
+
+		int target = PELOTON;
+		switch (args[0]) {
+		case ("peloton"): {
+			target = PELOTON;
+			break;
+		}
+		case ("postgres"): {
+			target = POSTGRES;
+			break;
+		}
+		case ("timesten"): {
+			target = TIMESTEN;
+			System.out
+					.println("Please set env var LD_LIBRARY_PATH "
+							+ "if you're using timesten. e.g. /home/rxian/TimesTen/ttdev2/lib");
+			break;
+		}
+		default: {
+			printHelpMessage();
+			return;
+		}
+		}
+
+		int query_type = SEMICOLON;
+		switch (args[1]) {
+		case "semicolon": {
+			query_type = SEMICOLON;
+			break;
+		}
+		case "select": {
+			query_type = SIMPLE_SELECT;
+			break;
+		}
+		case "batch_update": {
+			query_type = BATCH_UPDATE;
+			break;
+		}
+		case "simple_update": {
+			query_type = SIMPLE_UPDATE;
+			break;
+		}
+		case "large_update": {
+			query_type = LARGE_UPDATE;
+			break;
+		}
+		default: {
+			printHelpMessage();
+			return;
+		}
+		}
+
+		PelotonTest pt = new PelotonTest(target, query_type);
+		pt.Init();
+
+		// If the number of threads is specified, we turn on timed test
+		if (args.length == 3) {
+			numThreads = Integer.parseInt(args[2]);
+			pt.Close();
+			pt.Timed_Nop_Test();
+		} else {
+			pt.Nop_Test();
+		}
+	}
 
 }
