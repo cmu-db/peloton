@@ -15,12 +15,46 @@
 #include <vector>
 #include <string>
 
-#include "wire/socket_base.h"
-#include "wire/wire.h"
 #include "common/logger.h"
+#include "common/types.h"
+
+#define BUFFER_INIT_SIZE 100
 
 namespace peloton {
 namespace wire {
+
+class LibeventSocket;
+
+struct Packet {
+	PktBuf buf;      // stores packet contents
+	size_t len;      // size of packet
+	size_t ptr;      // PktBuf cursor
+	uchar msg_type;  // header
+
+	// reserve buf's size as maximum packet size
+	inline Packet() { Reset(); }
+
+	inline void Reset() {
+		buf.resize(BUFFER_INIT_SIZE);
+		buf.shrink_to_fit();
+		buf.clear();
+		len = ptr = msg_type = 0;
+	}
+};
+
+struct Client {
+	// Authentication details
+	std::string dbname;
+	std::string user;
+	std::unordered_map<std::string, std::string> cmdline_options;
+
+	inline void Reset() {
+		dbname.clear();
+		user.clear();
+		cmdline_options.clear();
+	}
+};
+
 
 /*
  * Marshallers
@@ -75,11 +109,11 @@ extern void GetStringToken(Packet *pkt, std::string &result);
  */
 
 /* Write a batch of packets to the socket write buffer */
-extern bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
-                         Client *client, const bool &force_flush = true);
-
-/* Read a single packet from the socket read buffer */
-extern bool ReadPacket(Packet *pkt, bool has_type_field, Client *client);
+//extern bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
+//                         Client *client, const bool &force_flush = true);
+//
+///* Read a single packet from the socket read buffer */
+//extern bool ReadPacket(Packet *pkt, bool has_type_field, Client *client);
 
 }  // End wire namespace
 }  // End peloton namespace

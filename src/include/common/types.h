@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "common/type.h"
+#include "common/config.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -1121,6 +1122,19 @@ typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
 
+
+//===--------------------------------------------------------------------===//
+// Wire protocol typedefs
+//===--------------------------------------------------------------------===//
+#define SOCKET_BUFFER_SIZE 8192
+
+/* byte type */
 typedef unsigned char uchar;
+
+/* Packet buffer type */
+typedef std::vector<uchar> PktBuf;
+
+/* use array as memory for the socket buffers can be fixed */
+typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
 
 }  // End peloton namespace

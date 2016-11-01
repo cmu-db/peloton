@@ -12,32 +12,29 @@
 #include <fstream>
 
 #include "wire/libevent_server.h"
-#include "common/logger.h"
 #include "common/macros.h"
 #include "common/init.h"
 #include "common/config.h"
 #include "common/thread_pool.h"
-#include <fcntl.h>
-#include <sys/socket.h>
 
 namespace peloton {
 namespace wire {
 
-std::vector<std::unique_ptr<LibeventSocket>>& GetGlobalSocketList() {
+std::vector<std::unique_ptr<LibeventSocket>>& LibeventServer::GetGlobalSocketList() {
   static std::vector<std::unique_ptr<LibeventSocket>>
       global_socket_list(FLAGS_max_connections);
   return global_socket_list;
 }
 
 LibeventSocket* LibeventServer::GetConn(const int& connfd) {
-  auto global_socket_list = GetGlobalSocketList();
+  auto &global_socket_list = GetGlobalSocketList();
   return global_socket_list[connfd].get();
 }
 
 void LibeventServer::CreateNewConn(
     const int& connfd, short ev_flags,
-    std::shared_ptr<LibeventThread>& thread) {
-  auto global_socket_list = GetGlobalSocketList();
+    LibeventThread *thread) {
+  auto &global_socket_list = GetGlobalSocketList();
   global_socket_list[connfd].reset(new LibeventSocket(connfd, ev_flags, thread));
 }
 
@@ -68,7 +65,7 @@ void SetNonBlocking(evutil_socket_t fd) {
 /**
  * Process refill the buffer and process all packets that can be processed
  */
-void ManageRead(LibeventSocket<PktBuf> **conn) {
+void ManageRead(LibeventSocket **conn) {
 #ifdef LOG_INFO_ENABLED
   std::ostringstream ss;
   ss << std::this_thread::get_id();
@@ -76,24 +73,24 @@ void ManageRead(LibeventSocket<PktBuf> **conn) {
 #endif
   LOG_INFO("New thread %s started execution for connfd %u",
            id_str.c_str(), (*conn)->sock_fd);
-  // Startup packet
-  if (!(*conn)->pkt_manager->ManageStartupPacket()) {
-	  LOG_INFO(
-	  "Thread %s Executing for socket manager %u failed to manage packet",
-	  id_str.c_str(), (*conn)->sock_fd);
-      close((*conn)->sock_fd);
-    return;
-  }
-
-  // Regular packet
-  if (!(*conn)->pkt_manager->ManagePacket() ||
-      (*conn)->is_disconnected == true) {
-    LOG_INFO(
-        "Thread %s Executing for socket manager %u failed to manage packet",
-        id_str.c_str(), (*conn)->sock_fd);
-    close((*conn)->sock_fd);
-    return;
-  }
+//  // Startup packet
+//  if (!(*conn)->pkt_manager->ManageStartupPacket()) {
+//	  LOG_INFO(
+//	  "Thread %s Executing for socket manager %u failed to manage packet",
+//	  id_str.c_str(), (*conn)->sock_fd);
+//      close((*conn)->sock_fd);
+//    return;
+//  }
+//
+//  // Regular packet
+//  if (!(*conn)->pkt_manager->ManagePacket() ||
+//      (*conn)->is_disconnected == true) {
+//    LOG_INFO(
+//        "Thread %s Executing for socket manager %u failed to manage packet",
+//        id_str.c_str(), (*conn)->sock_fd);
+//    close((*conn)->sock_fd);
+//    return;
+//  }
 }
 
 
@@ -224,26 +221,26 @@ LibeventServer::LibeventServer() {
   }
 }
 
-void Server::LogCallback(int severity, UNUSED_ATTRIBUTE const char *msg) {
-  UNUSED_ATTRIBUTE const char *s;
-  switch (severity) {
-    case _EVENT_LOG_DEBUG:
-      s = "debug";
-      break;
-    case _EVENT_LOG_MSG:
-      s = "msg";
-      break;
-    case _EVENT_LOG_WARN:
-      s = "warn";
-      break;
-    case _EVENT_LOG_ERR:
-      s = "error";
-      break;
-    default:
-      s = "?";
-      break; /* Should not get this far */
-  }
-  LOG_INFO("[%s] %s\n", s, msg);
-}
+//void Libserver::LogCallback(int severity, UNUSED_ATTRIBUTE const char *msg) {
+//  UNUSED_ATTRIBUTE const char *s;
+//  switch (severity) {
+//    case _EVENT_LOG_DEBUG:
+//      s = "debug";
+//      break;
+//    case _EVENT_LOG_MSG:
+//      s = "msg";
+//      break;
+//    case _EVENT_LOG_WARN:
+//      s = "warn";
+//      break;
+//    case _EVENT_LOG_ERR:
+//      s = "error";
+//      break;
+//    default:
+//      s = "?";
+//      break; /* Should not get this far */
+//  }
+//  LOG_INFO("[%s] %s\n", s, msg);
+//}
 }
 }

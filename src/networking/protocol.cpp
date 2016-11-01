@@ -19,6 +19,7 @@
 #include "common/types.h"
 #include "tcop/tcop.h"
 #include "wire/marshal.h"
+#include "wire/wire.h"
 
 #include "common/value.h"
 #include "common/value_factory.h"
@@ -47,7 +48,7 @@ const std::unordered_map<std::string, std::string>
 /*
  * close_client - Close the socket of the underlying client
  */
-void PacketManager::CloseClient() { client_.sock->CloseSocket(); }
+//void PacketManager::CloseClient() { client_.sock->CloseSocket(); }
 
 void PacketManager::MakeHardcodedParameterStatus(
     ResponseBuffer &responses, const std::pair<std::string, std::string> &kv) {
@@ -811,49 +812,49 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
   responses.push_back(std::move(pkt));
 }
 
-bool PacketManager::ManageStartupPacket() {
-  Packet pkt;
-  ResponseBuffer responses;
-  bool status;
-  // fetch the startup packet
-  if (!ReadPacket(&pkt, false, &client_)) {
-    CloseClient();
-    return false;
-  }
-  status = ProcessStartupPacket(&pkt, responses);
-  if (!WritePackets(responses, &client_) || status == false) {
-    // close client on write failure or status failure
-    CloseClient();
-    return false;
-  }
-  return true;
-}
+//bool PacketManager::ManageStartupPacket() {
+//  Packet pkt;
+//  ResponseBuffer responses;
+//  bool status;
+//  // fetch the startup packet
+//  if (!ReadPacket(&pkt, false, &client_)) {
+//    CloseClient();
+//    return false;
+//  }
+//  status = ProcessStartupPacket(&pkt, responses);
+//  if (!WritePackets(responses, &client_) || status == false) {
+//    // close client on write failure or status failure
+//    CloseClient();
+//    return false;
+//  }
+//  return true;
+//}
 
-bool PacketManager::ManagePacket() {
-  Packet pkt;
-  ResponseBuffer responses;
-  bool status, read_status;
-
-  read_status = ReadPacket(&pkt, true, &client_);
-
-  // While can process more packets from buffer
-  while (read_status) {
-    // Process the read packet
-    bool force_flush = false;
-    status = ProcessPacket(&pkt, responses, force_flush);
-
-    // Write response
-    if (!WritePackets(responses, &client_, force_flush) || status == false) {
-      // close client on write failure or status failure
-      CloseClient();
-      return false;
-    }
-
-    pkt.Reset();
-    read_status = ReadPacket(&pkt, true, &client_);
-  }
-  return true;
-}
+//bool PacketManager::ManagePacket() {
+//  Packet pkt;
+//  ResponseBuffer responses;
+//  bool status, read_status;
+//
+//  read_status = ReadPacket(&pkt, true, &client_);
+//
+//  // While can process more packets from buffer
+//  while (read_status) {
+//    // Process the read packet
+//    bool force_flush = false;
+//    status = ProcessPacket(&pkt, responses, force_flush);
+//
+//    // Write response
+//    if (!WritePackets(responses, &client_, force_flush) || status == false) {
+//      // close client on write failure or status failure
+//      CloseClient();
+//      return false;
+//    }
+//
+//    pkt.Reset();
+//    read_status = ReadPacket(&pkt, true, &client_);
+//  }
+//  return true;
+//}
 
 }  // End wire namespace
 }  // End peloton namespace

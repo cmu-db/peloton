@@ -10,19 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
+#include <unistd.h>
 #include "libevent_server.h"
+#include "common/macros.h"
 
 namespace peloton {
-
 namespace wire {
 
-void WorkerHandleNewConn(evutil_socket_t local_fd, short ev_flags, void *arg) {
+void WorkerHandleNewConn(evutil_socket_t local_fd, UNUSED_ATTRIBUTE short ev_flags, void *arg) {
 	char m_buf[1]; // buffer used to receive messages from the main thread
 	std::shared_ptr<NewConnQueueItem> item;
 	LibeventSocket *conn;
-	std::shared_ptr<LibeventThread> thread = static_cast<std::shared_ptr<LibeventThread>>(arg);
+	LibeventThread *thread = static_cast<LibeventThread *>(arg);
 
 	// read the operation that needs to be performed
 	if (read(local_fd, m_buf, 1)) {
@@ -56,8 +55,6 @@ void EventHandler(evutil_socket_t connfd,
 									UNUSED_ATTRIBUTE short ev_flags,
 									UNUSED_ATTRIBUTE void *arg) {
 	LOG_ERROR("Event callback fired for connfd:%d", connfd);
-}
-
 }
 
 }

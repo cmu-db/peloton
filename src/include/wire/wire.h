@@ -22,10 +22,9 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
-#include "wire/libevent_socket.h"
+#include "wire/marshal.h"
 
 // TXN state definitions
-#define BUFFER_INIT_SIZE 100
 #define TXN_IDLE 'I'
 #define TXN_BLOCK 'T'
 #define TXN_FAIL 'E'
@@ -33,46 +32,7 @@
 namespace peloton {
 namespace wire {
 
-typedef std::vector<uchar> PktBuf;
-
-struct Packet;
-
 typedef std::vector<std::unique_ptr<Packet>> ResponseBuffer;
-
-struct Client {
-  LibeventSocket<PktBuf> *sock;  // handle to libevent socket
-
-  // Authentication details
-  std::string dbname;
-  std::string user;
-  std::unordered_map<std::string, std::string> cmdline_options;
-
-  inline Client(LibeventSocket<PktBuf>* sock) : sock(sock) {}
-
-  inline void Reset(LibeventSocket<PktBuf>* sock) {
-    this->sock = sock;
-    dbname.clear();
-    user.clear();
-    cmdline_options.clear();
-  }
-};
-
-struct Packet {
-  PktBuf buf;      // stores packet contents
-  size_t len;      // size of packet
-  size_t ptr;      // PktBuf cursor
-  uchar msg_type;  // header
-
-  // reserve buf's size as maximum packet size
-  inline Packet() { Reset(); }
-
-  inline void Reset() {
-    buf.resize(BUFFER_INIT_SIZE);
-    buf.shrink_to_fit();
-    buf.clear();
-    len = ptr = msg_type = 0;
-  }
-};
 
 class PacketManager {
   /* Note: The responses argument in every subsequent function
@@ -130,7 +90,7 @@ class PacketManager {
   void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response);
 
   /* closes the socket connection with the client */
-  void CloseClient();
+//  void CloseClient();
 
  public:
   // Deserialize the parameter types from packet
@@ -183,8 +143,8 @@ class PacketManager {
   // packets ready for read
   size_t pkt_cntr_;
 
-  inline PacketManager(LibeventSocket<PktBuf>* sock)
-      : client_(sock), txn_state_(TXN_IDLE), pkt_cntr_(0) {}
+  inline PacketManager()
+      : txn_state_(TXN_IDLE), pkt_cntr_(0) {}
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
@@ -194,10 +154,10 @@ class PacketManager {
   bool ProcessPacket(Packet* pkt, ResponseBuffer& responses, bool& force_flush);
 
   /* Manage the startup packet */
-  bool ManageStartupPacket();
+  //  bool ManageStartupPacket();
 
-  /* Manage subsequent packets */
-  bool ManagePacket();
+    /* Manage subsequent packets */
+  //  bool ManagePacket();
 };
 
 }  // End wire namespace

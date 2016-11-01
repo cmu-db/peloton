@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "wire/libevent_socket.h"
+#include <unistd.h>
+#include "wire/libevent_server.h"
 
 namespace peloton {
 namespace wire {
 
-template <typename B>
-bool LibeventSocket<B>::RefillReadBuffer() {
+bool LibeventSocket::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
   bool done = false;
@@ -119,8 +119,7 @@ bool LibeventSocket<B>::RefillReadBuffer() {
   return true;
 }
 
-template <typename B>
-bool LibeventSocket<B>::FlushWriteBuffer() {
+bool LibeventSocket::FlushWriteBuffer() {
   fd_set wset;
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
@@ -221,8 +220,7 @@ bool LibeventSocket<B>::FlushWriteBuffer() {
  * success.
  * 		false on failure. B can be any STL container.
  */
-template <typename B>
-bool LibeventSocket<B>::ReadBytes(B &pkt_buf, size_t bytes) {
+bool LibeventSocket::ReadBytes(PktBuf &pkt_buf, size_t bytes) {
   size_t window, pkt_buf_idx = 0;
   // while data still needs to be read
   while (bytes) {
@@ -263,8 +261,7 @@ bool LibeventSocket<B>::ReadBytes(B &pkt_buf, size_t bytes) {
   return true;
 }
 
-template <typename B>
-void LibeventSocket<B>::PrintWriteBuffer() {
+void LibeventSocket::PrintWriteBuffer() {
   LOG_TRACE("Write Buffer:");
 
   for (size_t i = 0; i < wbuf.buf_size; ++i) {
@@ -272,8 +269,7 @@ void LibeventSocket<B>::PrintWriteBuffer() {
   }
 }
 
-template <typename B>
-bool LibeventSocket<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
+bool LibeventSocket::BufferWriteBytes(PktBuf &pkt_buf, size_t len, uchar type) {
   size_t window, pkt_buf_ptr = 0;
   int len_nb;  // length in network byte order
 
@@ -338,8 +334,7 @@ bool LibeventSocket<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   return true;
 }
 
-template <typename B>
-void LibeventSocket<B>::CloseSocket() {
+void LibeventSocket::CloseSocket() {
   for (;;) {
     int status = close(sock_fd);
     if (status < 0) {
@@ -353,8 +348,6 @@ void LibeventSocket<B>::CloseSocket() {
   }
 }
 
-// explicit template instantiation for read_bytes
-template class LibeventSocket<PktBuf>;
 
 }  // End wire namespace
 }  // End peloton namespace
