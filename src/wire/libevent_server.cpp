@@ -104,12 +104,24 @@ void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
 }
 
 LibeventServer::LibeventServer() {
-  struct event_base *base;
-  struct evconnlistener *listener;
+  struct event_base *base = event_base_new();
   struct event *evstop;
+
+  // Create our event base
+  if (!base) {
+    LOG_INFO("Couldn't open event base");
+    exit(EXIT_FAILURE);
+  }
+  // Add hang up signal event
+  evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
+  evsignal_add(evstop, NULL);
+
+  // TODO: Make pool size a global
+  std::shared_ptr<LibeventThread>
+      master_thread(new LibeventMasterThread(std::thread::hardware_concurrency(), base));
+
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
-
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -124,22 +136,6 @@ LibeventServer::LibeventServer() {
   // when the client disconnects
   signal(SIGPIPE, SIG_IGN);
 
-  // Create our event base
-  base = event_base_new();
-  if (!base) {
-    LOG_INFO("Couldn't open event base");
-    exit(EXIT_FAILURE);
-  }
-  // Add hang up signal event
-  evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
-  evsignal_add(evstop, NULL);
-
-  std::unique_ptr<LibeventThread> master_thread_ptr(new LibeventThread(MASTER_THREAD_ID));
-
-  // TODO: Make pool size a global
-  LibeventThread::Init(std::thread::hardware_concurrency());
-
-  // TODO should we create thread object for the main thread, too??
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -147,31 +143,31 @@ LibeventServer::LibeventServer() {
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons(port_);
 
-    int socket_to_listen;
+    int listen_fd;
 
-    socket_to_listen = socket(AF_INET, SOCK_STREAM, 0);
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (socket_to_listen < 0) {
+    if (listen_fd < 0) {
       LOG_ERROR("Failed to create listen socket");
       exit(EXIT_FAILURE);
     }
 
-    if (bind(socket_to_listen, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+    if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
       LOG_ERROR("Failed to bind");
       exit(EXIT_FAILURE);
     }
 
     int conn_backlog = 12;
-    if (listen(socket_to_listen, conn_backlog) < 0) {
+    if (listen(listen_fd, conn_backlog) < 0) {
       LOG_ERROR("Failed to listen to socket");
       exit(EXIT_FAILURE);
     }
 
     int reuse = 1;
-    setsockopt(socket_to_listen, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
-    LibeventServer::CreateNewConn(socket_to_listen, EV_READ|EV_PERSIST,
-                                  master_thread_ptr.get());
+    LibeventServer::CreateNewConn(listen_fd, EV_READ|EV_PERSIST,
+                                  master_thread.get());
 
     event_base_dispatch(base);
     event_free(evstop);

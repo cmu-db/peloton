@@ -12,7 +12,7 @@
 #include <fstream>
 #include <vector>
 
-#include "wire/libevent_thread.h"
+#include "wire/libevent_server.h"
 //#include "common/logger.h"
 //#include "common/macros.h"
 #include "common/init.h"
@@ -22,23 +22,21 @@
 namespace peloton {
 namespace wire {
 
-unsigned int LibeventThread::connection_thread_id = 0;
-int LibeventThread::num_threads = 0;
 
-std::vector<std::shared_ptr<LibeventThread>> &
-LibeventThread::GetLibeventThreads() {
-  static std::vector<std::shared_ptr<LibeventThread>> libevent_threads;
-  return libevent_threads;
+std::vector<std::shared_ptr<LibeventWorkerThread>> &LibeventMasterThread::GetWorkerThreads() {
+  static std::vector<std::shared_ptr<LibeventWorkerThread>> worker_threads;
+  return worker_threads;
 }
 
-void LibeventThread::Init(int num_threads) {
-  auto &threads = GetLibeventThreads();
+LibeventMasterThread::LibeventMasterThread(const int num_threads,
+                                           struct event_base *libevent_base)
+    : LibeventThread(MASTER_THREAD_ID, libevent_base), num_threads_(num_threads) {
+  auto &threads = GetWorkerThreads();
   for (int i = 0; i < num_threads; i++) {
-    threads.push_back(std::shared_ptr<LibeventThread>(
-        new LibeventThread(connection_thread_id++)));
-    thread_pool.SubmitDedicatedTask(LibeventThread::Loop, threads[i].get());
+    threads.push_back(
+        std::shared_ptr<LibeventWorkerThread>(new LibeventWorkerThread(i)));
+    thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker, threads[i].get());
   }
-  LibeventThread::num_threads = num_threads;
   // TODO wait for all threads to be up before exit from Init()
 }
 
@@ -132,12 +130,12 @@ void LibeventThread::ProcessConnection(evutil_socket_t fd, short event,
   //
 }
 
-void LibeventThread::Loop(peloton::wire::LibeventThread *libevent_thread) {
-  event_base_loop(libevent_thread->libevent_base, 0);
+void LibeventMasterThread::StartWorker(LibeventWorkerThread *worker_thread) {
+  event_base_loop(worker_thread->GetEventBase(), 0);
 }
 
-LibeventThread::LibeventThread(const int thread_id)
-    : thread_id_(thread_id), new_conn_queue_(QUEUE_SIZE) {
+LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
+    : LibeventThread(thread_id, event_base_new()), new_conn_queue(QUEUE_SIZE) {
   int fds[2];
   if (pipe(fds)) {
     LOG_ERROR("Can't create notify pipe to accept connections");
@@ -145,17 +143,11 @@ LibeventThread::LibeventThread(const int thread_id)
   }
 
   new_conn_receive_fd_ = fds[0];
-  new_conn_send_fd_ = fds[1];
-
-  libevent_base = event_base_new();
-  if (!libevent_base) {
-    LOG_ERROR("Can't allocate event base\n");
-    exit(1);
-  }
+  new_conn_send_fd = fds[1];
 
   // Listen for notifications from other threads
-  new_conn_event_ = event_new(libevent_base, new_conn_receive_fd_,
-                              EV_READ | EV_PERSIST, ProcessConnection, this);
+  new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd_,
+                              EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
   if (event_add(new_conn_event_, 0) == -1) {
     LOG_ERROR("Can't monitor libevent notify pipe\n");
@@ -164,5 +156,25 @@ LibeventThread::LibeventThread(const int thread_id)
 
   // TODO init connection queue here
 }
+
+void LibeventMasterThread::DispatchConnection(int new_conn_fd, short event_flags) {
+  char buf[1];
+  buf[0] = 'c';
+
+  auto &threads = GetWorkerThreads();
+
+  // Dispatch by rand number
+  std::shared_ptr<LibeventWorkerThread> worker_thread =
+      threads[rand() % num_threads_];
+
+  // TODO: Add init_state arg
+  std::shared_ptr<NewConnQueueItem> item(new NewConnQueueItem(new_conn_fd, event_flags));
+  worker_thread->new_conn_queue.Enqueue(item);
+
+  if (write(worker_thread->new_conn_send_fd, buf, 1) != 1) {
+    LOG_ERROR("Writing to thread notify pipe");
+  }
+}
+
 }
 }

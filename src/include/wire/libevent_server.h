@@ -96,47 +96,61 @@ struct NewConnQueueItem {
   short event_flags;
 };
 
-
 class LibeventThread {
-
-  // TODO change back to private
- public:
-  /* libevent handle this thread uses */
-  struct event_base *libevent_base_;
-
+ protected:
   // The connection thread id
   const int thread_id_;
+  struct event_base *libevent_base_;
 
-  /* receiving end of notify pipe */
-  int notify_receive_fd_;
+ public:
+  LibeventThread(const int thread_id, struct event_base *libevent_base)
+      : thread_id_(thread_id), libevent_base_(libevent_base) {
+    if (libevent_base_ == nullptr) {
+      LOG_ERROR("Can't allocate event base\n");
+      exit(1);
+    }
+  };
 
-  /* sending end of notify pipe */
-  int notify_send_fd_;
+  struct event_base *GetEventBase() {
+    return libevent_base_;
+  }
+
+  // TODO implement destructor
+  inline ~LibeventThread() {}
+};
+
+class LibeventWorkerThread : public LibeventThread {
+ private:
+  // New connection event
+  struct event *new_conn_event_;
+
+  // Notify new connection pipe(receive end)
+  int new_conn_receive_fd_;
+
+ public:
+  // Notify new connection pipe(send end)
+  int new_conn_send_fd;
 
   /* The queue for new connection requests */
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
 
  public:
+  LibeventWorkerThread(const int thread_id);
 
-  LibeventThread(const int thread_id);
-
-  // TODO implement destructor
-  inline ~LibeventThread() {}
-
-  // Dummy test worker callback
-  //  static void ProcessConnection(evutil_socket_t fd, short event, void *arg);
-
-  static void Init(int num_threads);
-
-  static void Loop(peloton::wire::LibeventThread *libevent_thread);
-
-  static unsigned int connection_thread_id;
-
-  static int num_threads;
-
-  static std::vector<std::shared_ptr<LibeventThread>> &GetLibeventThreads();
 };
 
+class LibeventMasterThread : public LibeventThread {
+ private:
+  const int num_threads_;
+ public:
+  LibeventMasterThread(const int num_threads, struct event_base *libevent_base);
+
+  void DispatchConnection(int new_conn_fd, short event_flags);
+
+  std::vector<std::shared_ptr<LibeventWorkerThread>> &GetWorkerThreads();
+
+  static void StartWorker(peloton::wire::LibeventWorkerThread *worker_thread);
+};
 
 /*
  * SocketManager - Wrapper for managing socket.
@@ -167,7 +181,7 @@ class LibeventSocket {
     this->thread = thread;
 
     // TODO: Maybe switch to event_assign once State machine is implemented
-    event = event_new(thread->libevent_base_, sock_fd, event_flags, EventHandler, this);
+    event = event_new(thread->GetEventBase(), sock_fd, event_flags, EventHandler, this);
     event_add(event, nullptr);
   }
 

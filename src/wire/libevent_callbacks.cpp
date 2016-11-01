@@ -23,7 +23,7 @@ void WorkerHandleNewConn(evutil_socket_t local_fd, UNUSED_ATTRIBUTE short ev_fla
 	char m_buf[1]; // buffer used to receive messages from the main thread
 	std::shared_ptr<NewConnQueueItem> item;
 	LibeventSocket *conn;
-	LibeventThread *thread = static_cast<LibeventThread *>(arg);
+	LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
 
 	// read the operation that needs to be performed
 	if (read(local_fd, m_buf, 1)) {
@@ -35,15 +35,15 @@ void WorkerHandleNewConn(evutil_socket_t local_fd, UNUSED_ATTRIBUTE short ev_fla
 		/* new connection case */
 		case 'c': {
 			// fetch the new connection fd from the queue
-			thread->new_conn_queue_.Dequeue(item);
+			thread->new_conn_queue.Dequeue(item);
 			conn = LibeventServer::GetConn(item->new_conn_fd);
 			if (conn == nullptr) {
 				/* create a new connection object */
 				LibeventServer::CreateNewConn(item->new_conn_fd, item->event_flags,
-																			thread);
+																			static_cast<LibeventThread*>(thread));
 			} else {
 				/* otherwise reset and reuse the existing conn object */
-				conn->Reset(item->event_flags, thread);
+				conn->Reset(item->event_flags, static_cast<LibeventThread*>(thread));
 			}
 			break;
 		}
@@ -62,24 +62,6 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg) {
 	StateMachine(conn);
 }
 
-void DispatchConnection(int new_conn_fd, short event_flags) {
-	char buf[1];
-	buf[0] = 'c';
-
-	auto &threads = LibeventThread::GetLibeventThreads();
-
-	// Dispatch by rand number
-	std::shared_ptr<LibeventThread> worker_thread =
-			threads[rand() % LibeventThread::num_threads];
-
-	// TODO: Add init_state arg
-	std::shared_ptr<NewConnQueueItem> item(new NewConnQueueItem(new_conn_fd, event_flags));
-	worker_thread->new_conn_queue_.Enqueue(item);
-
-	if (write(worker_thread->new_conn_send_fd_, buf, 1) != 1) {
-		LOG_ERROR("Writing to thread notify pipe");
-	}
-}
 
 void StateMachine(LibeventSocket *conn) {
 	// LOG_ERROR("Handler invoked");
@@ -97,7 +79,8 @@ void StateMachine(LibeventSocket *conn) {
 				if (new_conn_fd == -1) {
 					LOG_ERROR("Failed to accept");
 				}
-				DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
+				(static_cast<LibeventMasterThread *>(conn->thread))->DispatchConnection(
+						new_conn_fd, EV_READ | EV_PERSIST);
 				done = true;
 				break;
 			}
