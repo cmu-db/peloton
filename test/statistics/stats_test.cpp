@@ -123,10 +123,12 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-      "id", true);
+      "dept_id", true);
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
-  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
+  auto name_column = catalog::Column(
+      common::Type::VARCHAR, common::Type::GetTypeSize(common::Type::INTEGER),
+      "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   catalog->CreateDatabase("emp_db", txn);

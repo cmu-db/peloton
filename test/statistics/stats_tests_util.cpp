@@ -109,33 +109,33 @@ void StatsTestsUtil::CreateTable() {
 }
 
 std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
-  std::unique_ptr<Statement> statement;
+  std::shared_ptr<Statement> statement;
   std::string sql =
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
       "(1,'hello_1');";
   LOG_INFO("Query: %s", sql.c_str());
-  statement.reset(new Statement("DELETE", sql));
+  statement.reset(new Statement("INSERT", sql));
   ParseAndPlan(statement.get(), sql);
-  return std::move(statement);
+  return statement;
 }
 
 std::shared_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
-  std::unique_ptr<Statement> statement;
+  std::shared_ptr<Statement> statement;
   std::string sql = "DELETE FROM EMP_DB.department_table";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("DELETE", sql));
   ParseAndPlan(statement.get(), sql);
-  return std::move(statement);
+  return statement;
 }
 
 std::shared_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
-  std::unique_ptr<Statement> statement;
+  std::shared_ptr<Statement> statement;
   std::string sql =
       "UPDATE EMP_DB.department_table SET dept_name = 'CS' WHERE dept_id = 1";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("UPDATE", sql));
   ParseAndPlan(statement.get(), sql);
-  return std::move(statement);
+  return statement;
 }
 
 void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
