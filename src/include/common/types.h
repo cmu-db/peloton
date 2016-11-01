@@ -1109,4 +1109,6 @@ typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
 
+typedef unsigned char uchar;
+
 }  // End peloton namespace

@@ -22,8 +22,6 @@
 namespace peloton {
 namespace wire {
 
-typedef unsigned char uchar;
-
 /*
  * Marshallers
  */

@@ -53,6 +53,8 @@ class StatsTestsUtil {
 
   static void CreateTable();
 
+  static std::shared_ptr<stats::QueryMetric::QueryParams> GetQueryParams();
+
   static std::shared_ptr<Statement> GetInsertStmt();
 
   static std::shared_ptr<Statement> GetDeleteStmt();

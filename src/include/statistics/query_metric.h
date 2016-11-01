@@ -43,6 +43,14 @@ class QueryMetric : public AbstractMetric {
 
     // TODO constructor from common::Value
 
+    inline int GetNumParams() { return num_params_; }
+
+    inline std::vector<uchar> &GetFormatBuf() { return format_buf_copy_; }
+
+    inline std::shared_ptr<std::vector<uchar>> GetValueBuf() {
+      return val_buf_copy_;
+    }
+
    private:
     // A copy of paramter format buffer
     std::vector<uchar> format_buf_copy_;

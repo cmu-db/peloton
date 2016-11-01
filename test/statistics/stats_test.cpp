@@ -69,7 +69,6 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto db_oid = database->GetOid();
   auto context = stats::BackendStatsContext::GetInstance();
   auto stmt = StatsTestsUtil::GetInsertStmt();
-  std::shared_ptr<std::vector<common::Value>> param_values(nullptr);
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
     context->InitQueryMetric(stmt, nullptr);
@@ -130,15 +129,15 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog->CreateDatabase("EMP_DB", txn);
-  catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "emp_table",
+  catalog->CreateDatabase("emp_db", txn);
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", "department_table",
                                                std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // Create multiple stat worker threads
   int num_threads = 8;
-  storage::Database *database = catalog->GetDatabaseWithName("EMP_DB");
-  storage::DataTable *table = database->GetTableWithName("emp_table");
+  storage::Database *database = catalog->GetDatabaseWithName("emp_db");
+  storage::DataTable *table = database->GetTableWithName("department_table");
   LaunchParallelTest(num_threads, TransactionTest, database, table);
 
   // Wait for aggregation to finish
@@ -186,7 +185,7 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
             num_threads * NUM_ITERATION * NUM_INDEX_INSERT);
 
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName("EMP_DB", txn);
+  catalog->DropDatabaseWithName("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -367,11 +366,12 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   LOG_INFO("Table created!");
 
   auto backend_context = stats::BackendStatsContext::GetInstance();
+  auto query_params = StatsTestsUtil::GetQueryParams();
 
   // Inserting a tuple end-to-end
   auto statement = StatsTestsUtil::GetInsertStmt();
-  // Initialize the query metric
-  backend_context->InitQueryMetric(statement, nullptr);
+  // Initialize the query metric, with prep stmt parameters
+  backend_context->InitQueryMetric(statement, query_params);
 
   // Execute insert
   std::vector<common::Value> params;
@@ -383,9 +383,9 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   LOG_INFO("Tuple inserted!");
 
   // Now Updating end-to-end
-  statement = std::move(StatsTestsUtil::GetUpdateStmt());
+  statement = StatsTestsUtil::GetUpdateStmt();
   // Initialize the query metric
-  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+  backend_context->InitQueryMetric(statement, nullptr);
 
   // Execute update
   params.clear();
@@ -400,7 +400,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   // Deleting end-to-end
   statement = std::move(StatsTestsUtil::GetDeleteStmt());
   // Initialize the query metric
-  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+  backend_context->InitQueryMetric(statement, nullptr);
 
   // Execute delete
   params.clear();

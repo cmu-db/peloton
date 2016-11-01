@@ -29,13 +29,19 @@ class Column : public Printable {
  public:
   Column() {};
 
-  Column(common::Type::TypeId value_type, oid_t column_length, std::string column_name,
-         bool is_inlined = false, oid_t column_offset = INVALID_OID)
+  Column(common::Type::TypeId value_type, oid_t column_length,
+         std::string column_name, bool is_inlined = false,
+         oid_t column_offset = INVALID_OID)
       : column_type(value_type),
         column_name(column_name),
         is_inlined(is_inlined),
         column_offset(column_offset) {
     SetInlined();
+
+    // We should not have an inline value of length 0
+    if (is_inlined && column_length == 0) {
+      assert(false);
+    }
 
     SetLength(column_length);
   }

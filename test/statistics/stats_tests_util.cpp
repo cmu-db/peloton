@@ -67,6 +67,22 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
+std::shared_ptr<stats::QueryMetric::QueryParams>
+StatsTestsUtil::GetQueryParams() {
+  //   Construct a query param object
+  std::vector<uchar> format_buf;
+  format_buf.push_back('x');
+  std::vector<int32_t> param_types;
+  param_types.push_back(1);
+  std::shared_ptr<std::vector<uchar>> value_buf(new std::vector<uchar>(1));
+  value_buf->push_back('y');
+
+  std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
+      new stats::QueryMetric::QueryParams(format_buf, param_types, value_buf,
+                                          1));
+  return query_params;
+}
+
 void StatsTestsUtil::CreateTable() {
   LOG_INFO("Creating a table...");
 
@@ -92,7 +108,7 @@ void StatsTestsUtil::CreateTable() {
   txn_manager.CommitTransaction(txn);
 }
 
-std::unique_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
+std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
   std::unique_ptr<Statement> statement;
   std::string sql =
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
@@ -103,7 +119,7 @@ std::unique_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
   return std::move(statement);
 }
 
-std::unique_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
+std::shared_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
   std::unique_ptr<Statement> statement;
   std::string sql = "DELETE FROM EMP_DB.department_table";
   LOG_INFO("Query: %s", sql.c_str());
@@ -112,7 +128,7 @@ std::unique_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
   return std::move(statement);
 }
 
-std::unique_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
+std::shared_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
   std::unique_ptr<Statement> statement;
   std::string sql =
       "UPDATE EMP_DB.department_table SET dept_name = 'CS' WHERE dept_id = 1";
