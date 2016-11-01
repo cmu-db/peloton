@@ -111,8 +111,12 @@ class LibeventThread {
     }
   };
 
-  struct event_base *GetEventBase() {
+  inline struct event_base *GetEventBase() {
     return libevent_base_;
+  }
+
+  inline int GetThreadID() const {
+    return thread_id_;
   }
 
   // TODO implement destructor
@@ -124,12 +128,12 @@ class LibeventWorkerThread : public LibeventThread {
   // New connection event
   struct event *new_conn_event_;
 
-  // Notify new connection pipe(receive end)
-  int new_conn_receive_fd_;
-
  public:
   // Notify new connection pipe(send end)
   int new_conn_send_fd;
+
+  // Notify new connection pipe(receive end)
+  int new_conn_receive_fd;
 
   /* The queue for new connection requests */
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;

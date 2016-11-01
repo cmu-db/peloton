@@ -19,14 +19,18 @@
 namespace peloton {
 namespace wire {
 
-void WorkerHandleNewConn(evutil_socket_t local_fd, UNUSED_ATTRIBUTE short ev_flags, void *arg) {
+void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd, UNUSED_ATTRIBUTE short ev_flags, void *arg) {
 	char m_buf[1]; // buffer used to receive messages from the main thread
 	std::shared_ptr<NewConnQueueItem> item;
 	LibeventSocket *conn;
 	LibeventWorkerThread *thread = static_cast<LibeventWorkerThread *>(arg);
 
+	// pipe fds should match
+	PL_ASSERT(new_conn_recv_fd == thread->new_conn_receive_fd);
+
+	LOG_ERROR("TID:%d", thread->GetThreadID());
 	// read the operation that needs to be performed
-	if (read(local_fd, m_buf, 1)) {
+	if (read(new_conn_recv_fd, m_buf, 1) != 1) {
 		LOG_ERROR("Can't read from the libevent pipe");
 		return;
 	}

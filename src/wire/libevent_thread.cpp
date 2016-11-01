@@ -142,11 +142,11 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
     exit(1);
   }
 
-  new_conn_receive_fd_ = fds[0];
+  new_conn_receive_fd = fds[0];
   new_conn_send_fd = fds[1];
 
   // Listen for notifications from other threads
-  new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd_,
+  new_conn_event_ = event_new(libevent_base_, new_conn_receive_fd,
                               EV_READ | EV_PERSIST, WorkerHandleNewConn, this);
 
   if (event_add(new_conn_event_, 0) == -1) {
@@ -172,7 +172,7 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd, short event_flags
   worker_thread->new_conn_queue.Enqueue(item);
 
   if (write(worker_thread->new_conn_send_fd, buf, 1) != 1) {
-    LOG_ERROR("Writing to thread notify pipe");
+    LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
 
