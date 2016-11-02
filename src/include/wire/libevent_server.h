@@ -41,6 +41,15 @@
 namespace peloton {
 namespace wire {
 
+// Libevent Thread States
+enum ConnState {
+  LISTENING,
+  READ,
+  WRITE,
+  WAIT,
+  CLOSING,
+};
+
 /* Libevent Callbacks */
 
 /* Used by a worker thread to receive a new connection from the main thread and
@@ -111,13 +120,9 @@ class LibeventThread {
     }
   };
 
-  inline struct event_base *GetEventBase() {
-    return libevent_base_;
-  }
+  inline struct event_base *GetEventBase() { return libevent_base_; }
 
-  inline int GetThreadID() const {
-    return thread_id_;
-  }
+  inline int GetThreadID() const { return thread_id_; }
 
   // TODO implement destructor
   inline ~LibeventThread() {}
@@ -140,12 +145,12 @@ class LibeventWorkerThread : public LibeventThread {
 
  public:
   LibeventWorkerThread(const int thread_id);
-
 };
 
 class LibeventMasterThread : public LibeventThread {
  private:
   const int num_threads_;
+
  public:
   LibeventMasterThread(const int num_threads, struct event_base *libevent_base);
 
@@ -162,14 +167,14 @@ class LibeventMasterThread : public LibeventThread {
  */
 class LibeventSocket {
  public:
-  int sock_fd;  // socket file descriptor
-  bool is_disconnected; // is the connection disconnected
-  struct event *event; // libevent handle
-  short event_flags;  // event flags mask
-  Buffer rbuf;  // Socket's read buffer
-  Buffer wbuf;  // Socket's write buffer
-  LibeventThread *thread; // reference to the libevent thread
-  std::unique_ptr<PacketManager> pkt_manager; // Stores state for this socket
+  int sock_fd;             // socket file descriptor
+  bool is_disconnected;    // is the connection disconnected
+  struct event *event;     // libevent handle
+  short event_flags;       // event flags mask
+  Buffer rbuf;             // Socket's read buffer
+  Buffer wbuf;             // Socket's write buffer
+  LibeventThread *thread;  // reference to the libevent thread
+  std::unique_ptr<PacketManager> pkt_manager;  // Stores state for this socket
 
  private:
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
@@ -185,17 +190,16 @@ class LibeventSocket {
     this->thread = thread;
 
     // TODO: Maybe switch to event_assign once State machine is implemented
-    event = event_new(thread->GetEventBase(), sock_fd, event_flags, EventHandler, this);
+    event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+                      EventHandler, this);
     event_add(event, nullptr);
   }
 
  public:
-  inline LibeventSocket(int sock_fd, short event_flags,
-                        LibeventThread *thread) :
-      sock_fd(sock_fd), event_flags(event_flags), thread(thread) {
+  inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread)
+      : sock_fd(sock_fd) {
     Init(event_flags, thread);
   }
-
 
   // Reads a packet of length "bytes" from the head of the buffer
   bool ReadBytes(PktBuf &pkt_buf, size_t bytes);
@@ -225,22 +229,21 @@ class LibeventSocket {
 struct LibeventServer {
  private:
   // For logging purposes
-  static void LogCallback(int severity, const char* msg);
-  uint64_t port_;             // port number
+  static void LogCallback(int severity, const char *msg);
+  uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
 
  public:
   LibeventServer();
-  static LibeventSocket* GetConn(const int& connfd);
-  static void CreateNewConn(const int& connfd, short ev_flags, LibeventThread *thread);
+  static LibeventSocket *GetConn(const int &connfd);
+  static void CreateNewConn(const int &connfd, short ev_flags,
+                            LibeventThread *thread);
 
  private:
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::vector<std::unique_ptr<LibeventSocket>>& GetGlobalSocketList();
-
+  static std::vector<std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
 };
-
 }
 }
