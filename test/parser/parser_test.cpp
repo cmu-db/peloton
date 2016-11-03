@@ -103,11 +103,19 @@ TEST_F(ParserTest, BasicTest) {
   queries.push_back("EXECUTE prep_inst(1, 2, 3);");
   queries.push_back("EXECUTE prep;");
 
+  queries.push_back(
+      "COPY catalog_db.query_metric TO '/home/user/output.csv' DELIMITER ',';");
+
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     parser::SQLStatementList* stmt_list =
         parser::Parser::ParseSQLString(query.c_str());
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }
@@ -361,6 +369,37 @@ TEST_F(ParserTest, IndexTest) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
     EXPECT_EQ(result->is_valid, true);
+
+    if (result) {
+      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      delete result;
+    }
+  }
+}
+
+TEST_F(ParserTest, CopyTest) {
+
+  std::vector<std::string> queries;
+
+  queries.push_back(
+      "COPY catalog_db.query_metric TO '/home/user/output.csv' DELIMITER ',';");
+
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    parser::SQLStatementList* result =
+        parser::Parser::ParseSQLString(query.c_str());
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    parser::CopyStatement* copy_stmt =
+        static_cast<parser::CopyStatement*>(result->GetStatement(0));
+
+    EXPECT_STREQ(std::string(1, copy_stmt->GetDelimiter()).c_str(), ",");
+    EXPECT_STREQ(copy_stmt->GetFilePath(), "/home/user/output.csv");
 
     if (result) {
       LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());

@@ -152,6 +152,7 @@ struct PARSER_CUST_LTYPE {
 	peloton::parser::PrepareStatement*     prep_stmt;
 	peloton::parser::ExecuteStatement*     exec_stmt;
 	peloton::parser::TransactionStatement* txn_stmt;
+	peloton::parser::CopyStatement* 	   copy_stmt;
 
 	peloton::parser::TableRef* table;
 	peloton::expression::AbstractExpression* expr;
@@ -199,7 +200,7 @@ struct PARSER_CUST_LTYPE {
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
 %token AND ASC CSV FOR INT KEY NOT OFF SET TOP AS BY IF
 %token IN IS OF ON OR TO
-
+%token COPY DELIMITER STDOUT
 
 /*********************************
  ** Non-Terminal types (http://www.gnu.org/software/bison/manual/html_node/Type-Decl.html)
@@ -215,6 +216,7 @@ struct PARSER_CUST_LTYPE {
 %type <update_stmt> update_statement
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
+%type <copy_stmt>   copy_statement
 %type <sval> 		opt_alias alias
 %type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique opt_update
 %type <uval>		opt_join_type column_type opt_column_width opt_index_type
@@ -299,6 +301,7 @@ preparable_statement:
 	|	drop_statement { $$ = $1; }
 	|	execute_statement { $$ = $1; }
 	|	transaction_statement { $$ = $1; }	
+	|	copy_statement { $$ = $1; }
 	;
 
 
@@ -918,6 +921,23 @@ join_table:
 join_condition:
 		expr
 		;
+
+
+/******************************
+ * Copy Statement
+ * COPY catalog_db.query_metric TO '/home/user/query_metric.csv' DELIMITER ','
+ * TODO: Support nested query such as 
+ * COPY (SELECT id FROM A WHERE val = 1) TO '/path/file.csv' DELIMITER ';'
+ ******************************/
+
+copy_statement:
+		COPY table_name TO string_literal DELIMITER string_literal {
+			$$ = new CopyStatement(peloton::COPY_TYPE_EXPORT_OTHER);
+			$$->table_name = $2;
+			$$->file_path = $4;
+			$$->delimiter = $6;
+		}
+	;
 
 
 /******************************
