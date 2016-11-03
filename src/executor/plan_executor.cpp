@@ -402,6 +402,10 @@ executor::AbstractExecutor *BuildExecutorTree(
       LOG_TRACE("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
+    case PLAN_NODE_TYPE_COPY:
+      LOG_TRACE("Adding Copy Executer");
+      child_executor = new executor::CopyExecutor(plan, executor_context);
+      break;
 
     default:
       LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);

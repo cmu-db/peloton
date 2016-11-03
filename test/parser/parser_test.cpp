@@ -399,7 +399,7 @@ TEST_F(ParserTest, CopyTest) {
         static_cast<parser::CopyStatement*>(result->GetStatement(0));
 
     EXPECT_STREQ(std::string(1, copy_stmt->GetDelimiter()).c_str(), ",");
-    EXPECT_STREQ(copy_stmt->GetFilePath(), "/home/user/output.csv");
+    EXPECT_STREQ(copy_stmt->GetFilePath().c_str(), "/home/user/output.csv");
 
     if (result) {
       LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());

@@ -698,8 +698,8 @@ enum CopyType {
   COPY_TYPE_IMPORT_CSV,     // Import csv data to database
   COPY_TYPE_IMPORT_TSV,     // Import tsv data to database
   COPY_TYPE_EXPORT_CSV,     // Export data to csv file
-  COPY_TYPE_EXPORT_STDOUT,  // Export data to csv file
-  COPY_TYPE_EXPORT_OTHER,   // Export data to csv file
+  COPY_TYPE_EXPORT_STDOUT,  // Export data to std out
+  COPY_TYPE_EXPORT_OTHER,   // Export data to other file format
 };
 
 //===--------------------------------------------------------------------===//

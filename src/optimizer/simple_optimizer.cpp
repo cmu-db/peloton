@@ -412,8 +412,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case STATEMENT_TYPE_COPY: {
       LOG_TRACE("Adding Copy plan...");
+      parser::CopyStatement* copy_parse_tree =
+          static_cast<parser::CopyStatement*>(parse_tree2);
       std::unique_ptr<planner::AbstractPlan> child_CopyPlan(
-          new planner::CopyPlan((parser::CopyStatement*)parse_tree2));
+          new planner::CopyPlan(copy_parse_tree));
       child_plan = std::move(child_CopyPlan);
     } break;
 

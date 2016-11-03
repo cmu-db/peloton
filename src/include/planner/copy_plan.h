@@ -14,6 +14,7 @@
 
 #include "planner/abstract_plan.h"
 #include "parser/statement_copy.h"
+#include "parser/statement_select.h"
 
 namespace peloton {
 
@@ -43,18 +44,13 @@ class CopyPlan : public AbstractPlan {
     (void)values;
   }
 
-  storage::DataTable *GetTable() const { return target_table_; }
-
   const std::string GetInfo() const { return "CopyPlan"; }
 
   // TODO: Add copying mechanism
   std::unique_ptr<AbstractPlan> Copy() const { return nullptr; }
 
  private:
-  /** @brief Target table. */
-  storage::DataTable *target_table_ = nullptr;
-
-  // TODO we should have a child plan which performs seq_scan
+  std::string file_path_;
 };
 
 }  // namespace planner
