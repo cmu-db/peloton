@@ -17,28 +17,30 @@
 #include "common/config.h"
 #include "common/thread_pool.h"
 
-
 namespace peloton {
 namespace wire {
 
-std::vector<std::unique_ptr<LibeventSocket>>& LibeventServer::GetGlobalSocketList() {
+std::vector<std::unique_ptr<LibeventSocket>> &
+LibeventServer::GetGlobalSocketList() {
+  // 2 fd's per thread for pipe and 1 listening socket
   static std::vector<std::unique_ptr<LibeventSocket>>
-      global_socket_list(FLAGS_max_connections);
+      global_socket_list(FLAGS_max_connections +
+                         std::thread::hardware_concurrency() * 2 + 1);
   return global_socket_list;
 }
 
-LibeventSocket* LibeventServer::GetConn(const int& connfd) {
+LibeventSocket *LibeventServer::GetConn(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
   return global_socket_list[connfd].get();
 }
 
-void LibeventServer::CreateNewConn(
-    const int& connfd, short ev_flags,
-    LibeventThread *thread) {
+void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
+                                   LibeventThread *thread,
+                                   ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
-  global_socket_list[connfd].reset(new LibeventSocket(connfd, ev_flags, thread));
+  global_socket_list[connfd]
+      .reset(new LibeventSocket(connfd, ev_flags, thread, init_state));
 }
-
 
 /**
  * Stop signal handling
@@ -59,26 +61,26 @@ void ManageRead(LibeventSocket **conn) {
   ss << std::this_thread::get_id();
   std::string id_str = ss.str();
 #endif
-  LOG_INFO("New thread %s started execution for connfd %u",
-           id_str.c_str(), (*conn)->sock_fd);
-//  // Startup packet
-//  if (!(*conn)->pkt_manager->ManageStartupPacket()) {
-//	  LOG_INFO(
-//	  "Thread %s Executing for socket manager %u failed to manage packet",
-//	  id_str.c_str(), (*conn)->sock_fd);
-//      close((*conn)->sock_fd);
-//    return;
-//  }
-//
-//  // Regular packet
-//  if (!(*conn)->pkt_manager->ManagePacket() ||
-//      (*conn)->is_disconnected == true) {
-//    LOG_INFO(
-//        "Thread %s Executing for socket manager %u failed to manage packet",
-//        id_str.c_str(), (*conn)->sock_fd);
-//    close((*conn)->sock_fd);
-//    return;
-//  }
+  LOG_INFO("New thread %s started execution for connfd %u", id_str.c_str(),
+           (*conn)->sock_fd);
+  //  // Startup packet
+  //  if (!(*conn)->pkt_manager->ManageStartupPacket()) {
+  //	  LOG_INFO(
+  //	  "Thread %s Executing for socket manager %u failed to manage packet",
+  //	  id_str.c_str(), (*conn)->sock_fd);
+  //      close((*conn)->sock_fd);
+  //    return;
+  //  }
+  //
+  //  // Regular packet
+  //  if (!(*conn)->pkt_manager->ManagePacket() ||
+  //      (*conn)->is_disconnected == true) {
+  //    LOG_INFO(
+  //        "Thread %s Executing for socket manager %u failed to manage packet",
+  //        id_str.c_str(), (*conn)->sock_fd);
+  //    close((*conn)->sock_fd);
+  //    return;
+  //  }
 }
 
 
@@ -117,8 +119,8 @@ LibeventServer::LibeventServer() {
   evsignal_add(evstop, NULL);
 
   // TODO: Make pool size a global
-  std::shared_ptr<LibeventThread>
-      master_thread(new LibeventMasterThread(std::thread::hardware_concurrency(), base));
+  std::shared_ptr<LibeventThread> master_thread(
+      new LibeventMasterThread(std::thread::hardware_concurrency(), base));
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -166,8 +168,8 @@ LibeventServer::LibeventServer() {
     int reuse = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
-    LibeventServer::CreateNewConn(listen_fd, EV_READ|EV_PERSIST,
-                                  master_thread.get());
+    LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
+                                  master_thread.get(), CONN_LISTENING);
 
     event_base_dispatch(base);
     event_free(evstop);
@@ -181,7 +183,7 @@ LibeventServer::LibeventServer() {
   }
 }
 
-//void Libserver::LogCallback(int severity, UNUSED_ATTRIBUTE const char *msg) {
+// void Libserver::LogCallback(int severity, UNUSED_ATTRIBUTE const char *msg) {
 //  UNUSED_ATTRIBUTE const char *s;
 //  switch (severity) {
 //    case _EVENT_LOG_DEBUG:

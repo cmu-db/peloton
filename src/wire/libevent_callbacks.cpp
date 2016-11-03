@@ -30,7 +30,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   // pipe fds should match
   PL_ASSERT(new_conn_recv_fd == thread->new_conn_receive_fd);
 
-  LOG_ERROR("TID:%d", thread->GetThreadID());
+  LOG_DEBUG("TID: %d", thread->GetThreadID());
   // read the operation that needs to be performed
   if (read(new_conn_recv_fd, m_buf, 1) != 1) {
     LOG_ERROR("Can't read from the libevent pipe");
@@ -46,10 +46,12 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
       if (conn == nullptr) {
         /* create a new connection object */
         LibeventServer::CreateNewConn(item->new_conn_fd, item->event_flags,
-                                      static_cast<LibeventThread *>(thread));
+                                      static_cast<LibeventThread *>(thread),
+                                      CONN_READ);
       } else {
         /* otherwise reset and reuse the existing conn object */
-        conn->Reset(item->event_flags, static_cast<LibeventThread *>(thread));
+        conn->Reset(item->event_flags, static_cast<LibeventThread *>(thread),
+                    CONN_READ);
       }
       break;
     }
@@ -60,7 +62,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 }
 
 void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg) {
-  LOG_ERROR("Event callback fired for connfd:%d", connfd);
+  LOG_INFO("Event callback fired for connfd: %d", connfd);
   LibeventSocket *conn = static_cast<LibeventSocket *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;
@@ -88,7 +90,16 @@ void StateMachine(LibeventSocket *conn) {
         done = true;
         break;
       }
-
+      case CONN_WRITE: {
+        LOG_INFO("Write is not implemented yet");
+        done = true;
+        break;
+      }
+      case CONN_CLOSING: {
+        LOG_INFO("Close is not implemented yet");
+        done = true;
+        break;
+      }
       // TODO handle other states, too
       default: {}
     }

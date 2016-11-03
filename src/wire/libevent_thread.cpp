@@ -161,14 +161,13 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
                                               short event_flags) {
   char buf[1];
   buf[0] = 'c';
-
   auto &threads = GetWorkerThreads();
 
   // Dispatch by rand number
-  std::shared_ptr<LibeventWorkerThread> worker_thread =
-      threads[rand() % num_threads_];
+  int thread_id = rand() % num_threads_;
+  std::shared_ptr<LibeventWorkerThread> worker_thread = threads[thread_id];
+  LOG_INFO("Dispatching connection to worker %d", thread_id);
 
-  // TODO: Add init_state arg
   std::shared_ptr<NewConnQueueItem> item(
       new NewConnQueueItem(new_conn_fd, event_flags, CONN_READ));
   worker_thread->new_conn_queue.Enqueue(item);

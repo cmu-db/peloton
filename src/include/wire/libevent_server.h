@@ -190,12 +190,14 @@ class LibeventSocket {
   */
   bool RefillReadBuffer();
 
-  inline void Init(short event_flags, LibeventThread *thread) {
+  inline void Init(short event_flags, LibeventThread *thread,
+                   ConnState init_state) {
     SetNonBlocking(sock_fd);
     SetTCPNoDelay(sock_fd);
     is_disconnected = false;
     this->event_flags = event_flags;
     this->thread = thread;
+    this->state = init_state;
 
     // TODO: Maybe switch to event_assign once State machine is implemented
     event = event_new(thread->GetEventBase(), sock_fd, event_flags,
@@ -204,9 +206,10 @@ class LibeventSocket {
   }
 
  public:
-  inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread)
+  inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread,
+                        ConnState init_state)
       : sock_fd(sock_fd) {
-    Init(event_flags, thread);
+    Init(event_flags, thread, init_state);
   }
 
   // Reads a packet of length "bytes" from the head of the buffer
@@ -225,12 +228,12 @@ class LibeventSocket {
   /* Resuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Reset(short event_flags, LibeventThread *thread) {
+  void Reset(short event_flags, LibeventThread *thread, ConnState init_state) {
     is_disconnected = false;
     rbuf.Reset();
     wbuf.Reset();
     pkt_manager.reset(nullptr);
-    Init(event_flags, thread);
+    Init(event_flags, thread, init_state);
   }
 };
 
@@ -245,7 +248,7 @@ struct LibeventServer {
   LibeventServer();
   static LibeventSocket *GetConn(const int &connfd);
   static void CreateNewConn(const int &connfd, short ev_flags,
-                            LibeventThread *thread);
+                            LibeventThread *thread, ConnState init_state);
 
  private:
   /* Maintain a global list of connections.
