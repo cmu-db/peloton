@@ -58,7 +58,7 @@ class ValueFactory {
 
   static inline Value GetVarcharValue(
       const char *value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return Value(Type::VARCHAR, value, value == nullptr ? 0 : strlen(value));
+    return Value(Type::VARCHAR, value, value == nullptr ? 0 : strlen(value) + 1);
   }
 
   static inline Value GetVarcharValue(
