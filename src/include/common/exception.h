@@ -27,8 +27,6 @@
 
 namespace peloton {
 
-
-
 //===--------------------------------------------------------------------===//
 // Exception Types
 //===--------------------------------------------------------------------===//
@@ -54,7 +52,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_EXECUTOR = 17,          // executor related
   EXCEPTION_TYPE_CONSTRAINT = 18,        // constraint related
   EXCEPTION_TYPE_INDEX = 19,             // index related
-  EXCEPTION_TYPE_STAT = 20               // stat related
+  EXCEPTION_TYPE_STAT = 20,              // stat related
+  EXCEPTION_TYPE_CONNECTION = 21,        // connection related
 };
 
 class Exception : public std::runtime_error {
@@ -115,6 +114,10 @@ class Exception : public std::runtime_error {
         return "Constraint";
       case EXCEPTION_TYPE_INDEX:
         return "Index";
+      case EXCEPTION_TYPE_STAT:
+        return "Stat";
+      case EXCEPTION_TYPE_CONNECTION:
+        return "Connection";
       default:
         return "Unknown";
     }
@@ -394,7 +397,15 @@ class StatException : public Exception {
   StatException() = delete;
 
  public:
-  StatException(std::string msg) : Exception(EXCEPTION_TYPE_INDEX, msg) {}
+  StatException(std::string msg) : Exception(EXCEPTION_TYPE_STAT, msg) {}
+};
+
+class ConnectionException : public Exception {
+  ConnectionException() = delete;
+
+ public:
+  ConnectionException(std::string msg)
+      : Exception(EXCEPTION_TYPE_CONNECTION, msg) {}
 };
 
 }  // End peloton namespace

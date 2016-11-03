@@ -89,8 +89,53 @@ void StateMachine(LibeventSocket *conn) {
         done = true;
         break;
       }
+      case CONN_READ: {
+        char buf[100];
+        ssize_t bytes_read = read(conn->sock_fd, buf, 100);
+        if (bytes_read > 0) {
+          std::unique_ptr<Packet> response(new Packet());
+          response->msg_type = PARSE_COMPLETE;
+          PacketPutString(response, "dummy string to test");
+          conn->responses.push_back(std::move(response));
+
+          if (conn->WritePackets(true) == false) {
+            TransitState(conn, CONN_WRITE);
+            UpdateEvent(conn, EV_WRITE | EV_PERSIST);
+          }
+        } else {
+          // should also check error code
+          TransitState(conn, CONN_WAIT);
+        }
+        //
+        // if bytes_read doesn't meet expected size, then go to wait state
+        // if we have enough bytes read, then process packet,
+        //   try write to local buffer
+        //   if local buffer doesn't have enough space or it's sync message
+        // then
+        //		try flush
+        //      if socket is not ready for flush, then to go write state
+        //   continue reading
+
+        // bool force_flush = false;
+        break;
+        // done = true;
+      }
+
       case CONN_WRITE: {
-        LOG_INFO("Write is not implemented yet");
+        // If the socket is still not ready, remain in CONN_WRITE state
+        if (conn->WritePackets(true) == false) {
+          // do nothing. remain in write state
+        } else {
+          // transit to read state
+          UpdateEvent(conn, EV_READ | EV_PERSIST);
+          TransitState(conn, CONN_READ);
+        }
+        done = true;
+        break;
+      }
+      case CONN_WAIT: {
+        UpdateEvent(conn, EV_READ | EV_PERSIST);
+        TransitState(conn, CONN_READ);
         done = true;
         break;
       }

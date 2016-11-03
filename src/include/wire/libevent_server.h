@@ -29,6 +29,7 @@
 
 #include "common/logger.h"
 #include "common/config.h"
+#include "common/exception.h"
 #include "container/lock_free_queue.h"
 #include <sys/file.h>
 #include <fstream>
@@ -92,15 +93,17 @@ inline void SetTCPNoDelay(evutil_socket_t fd) {
 
 // Buffers used to batch messages at the socket
 struct Buffer {
-  size_t buf_ptr;   // buffer cursor
-  size_t buf_size;  // buffer size
+  size_t buf_ptr;        // buffer cursor
+  size_t buf_size;       // buffer size
+  size_t buf_flush_ptr;  // buffer cursor for write
   SockBuf buf;
 
-  inline Buffer() : buf_ptr(0), buf_size(0) {}
+  inline Buffer() : buf_ptr(0), buf_size(0), buf_flush_ptr(0) {}
 
   inline void Reset() {
     buf_ptr = 0;
     buf_size = 0;
+    buf_flush_ptr = 0;
   }
 
   inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
@@ -180,19 +183,25 @@ class LibeventMasterThread : public LibeventThread {
  */
 class LibeventSocket {
  public:
-  int sock_fd;             // socket file descriptor
-  bool is_disconnected;    // is the connection disconnected
-  struct event *event;     // libevent handle
-  short event_flags;       // event flags mask
-  Buffer rbuf;             // Socket's read buffer
-  Buffer wbuf;             // Socket's write buffer
+  int sock_fd;           // socket file descriptor
+  bool is_disconnected;  // is the connection disconnected
+  struct event *event;   // libevent handle
+  short event_flags;     // event flags mask
+
   LibeventThread *thread;  // reference to the libevent thread
   std::unique_ptr<PacketManager> pkt_manager;  // Stores state for this socket
   ConnState state = CONN_INVALID;
 
+  // TODO declare a response buffer pool so that we can reuse the responses
+  // so that we don't have to new packet each time
+  ResponseBuffer responses;
+
  private:
-  /* refill_read_buffer - Used to repopulate read buffer with a fresh
-  * batch of data from the socket
+  Buffer rbuf;                      // Socket's read buffer
+  Buffer wbuf;                      // Socket's write buffer
+  unsigned int next_response_ = 0;  // The next response in the response buffer
+
+  /* Used to repopulate read buffer with a fresh batch of data from the socket
   */
   bool RefillReadBuffer();
 
@@ -218,35 +227,37 @@ class LibeventSocket {
     Init(event_flags, thread, init_state);
   }
 
+  bool WritePackets(const bool &force_flush = true);
+
   // Reads a packet of length "bytes" from the head of the buffer
   bool ReadBytes(PktBuf &pkt_buf, size_t bytes);
 
-  // Writes a packet into the write buffer
-  bool BufferWriteBytes(PktBuf &pkt_buf, size_t len, uchar type);
-
   void PrintWriteBuffer();
-
-  // Used to invoke a write into the Socket, once the write buffer is ready
-  bool FlushWriteBuffer();
 
   void CloseSocket();
 
   /* Resuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Reset(short event_flags, LibeventThread *thread, ConnState init_state) {
-    is_disconnected = false;
-    rbuf.Reset();
-    wbuf.Reset();
-    pkt_manager.reset(nullptr);
-    Init(event_flags, thread, init_state);
-  }
+  void Reset(short event_flags, LibeventThread *thread, ConnState init_state);
+
+ private:
+  // Writes a packet's header (type, size) into the write buffer
+  bool BufferWriteBytesHeader(Packet *pkt);
+
+  // Writes a packet's content into the write buffer
+  bool BufferWriteBytesContent(Packet *pkt);
+
+  // Used to invoke a write into the Socket, returns false if the socket is not
+  // ready for write
+  bool FlushWriteBuffer();
 };
 
 struct LibeventServer {
  private:
   // For logging purposes
-  static void LogCallback(int severity, const char *msg);
+  // static void LogCallback(int severity, const char *msg);
+
   uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
 

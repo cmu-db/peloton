@@ -16,6 +16,35 @@
 namespace peloton {
 namespace wire {
 
+/**
+ * Public Functions
+ */
+
+bool LibeventSocket::WritePackets(const bool &force_flush) {
+
+  // iterate through all the packets
+  for (; next_response_ < responses.size(); next_response_++) {
+    auto pkt = responses[next_response_].get();
+    // write is not ready during write. transit to CONN_WRITE
+    if (BufferWriteBytesHeader(pkt) == false ||
+        BufferWriteBytesContent(pkt) == false) {
+      return false;
+    }
+  }
+
+  // Done writing all packets. clear packets
+  responses.clear();
+  next_response_ = 0;
+
+  if (force_flush) {
+    return FlushWriteBuffer();
+  }
+  return true;
+}
+
+/**
+ * Private Functions
+ */
 bool LibeventSocket::RefillReadBuffer() {
   ssize_t bytes_read = 0;
   fd_set rset;
@@ -120,14 +149,13 @@ bool LibeventSocket::RefillReadBuffer() {
 }
 
 bool LibeventSocket::FlushWriteBuffer() {
-  fd_set wset;
   ssize_t written_bytes = 0;
-  wbuf.buf_ptr = 0;
-  // still outstanding bytes
+  // while we still have outstanding bytes to write
   while ((int)wbuf.buf_size > 0) {
     written_bytes = 0;
     while (written_bytes <= 0) {
-      written_bytes = write(sock_fd, &wbuf.buf[wbuf.buf_ptr], wbuf.buf_size);
+      written_bytes =
+          write(sock_fd, &wbuf.buf[wbuf.buf_flush_ptr], wbuf.buf_size);
       // Write failed
       if (written_bytes < 0) {
         switch (errno) {
@@ -174,37 +202,24 @@ bool LibeventSocket::FlushWriteBuffer() {
           // Write would have blocked if the socket was
           // in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN) {
-          FD_ZERO(&wset);
-          FD_SET(sock_fd, &wset);
-          written_bytes = select(sock_fd + 1, NULL, &wset, NULL, NULL);
-          if (written_bytes < 0) {
-            LOG_INFO("written_bytes < 0 after select. Fatal");
-            exit(EXIT_FAILURE);
-          } else if (written_bytes == 0) {
-            // timed out without writing any data
-            LOG_INFO("Timeout without writing");
-            exit(EXIT_FAILURE);
-          }
-          // else, socket is now readable, so loop back up and do the read()
-          // again
-          written_bytes = 0;
-          continue;
+          // We should go to CONN_WRITE state
+          return false;
         } else {
           // fatal errors
-          return false;
+          throw ConnectionException("Fatal error during write");
         }
       }
 
       // weird edge case?
       if (written_bytes == 0 && wbuf.buf_size != 0) {
         LOG_INFO("Not all data is written");
-        // fatal
-        return false;
+        // fatal error
+        throw ConnectionException("Not all data is written");
       }
     }
 
-    // update bookkeping
-    wbuf.buf_ptr += written_bytes;
+    // update book keeping
+    wbuf.buf_flush_ptr += written_bytes;
     wbuf.buf_size -= written_bytes;
   }
 
@@ -269,18 +284,28 @@ void LibeventSocket::PrintWriteBuffer() {
   }
 }
 
-bool LibeventSocket::BufferWriteBytes(PktBuf &pkt_buf, size_t len, uchar type) {
-  size_t window, pkt_buf_ptr = 0;
-  int len_nb;  // length in network byte order
-
-  // check if we don't have enough space in the buffer
-  if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
-    // buffer needs to be flushed before adding header
-    FlushWriteBuffer();
+// Writes a packet's header (type, size) into the write buffer.
+// Return false when the socket is not ready for write
+bool LibeventSocket::BufferWriteBytesHeader(Packet *pkt) {
+  // If we should not write
+  if (pkt->skip_header_write) {
+    return true;
   }
 
-  // assuming wbuf is now large enough to
-  // fit type and size fields in one go
+  size_t len = pkt->len;
+  uchar type = pkt->msg_type;
+  int len_nb;  // length in network byte order
+
+  // check if we have enough space in the buffer
+  if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
+    // buffer needs to be flushed before adding header
+    if (FlushWriteBuffer() == false) {
+      // Socket is not ready for write
+      return false;
+    }
+  }
+
+  // assuming wbuf is now large enough to fit type and size fields in one go
   if (type != 0) {
     // type shouldn't be ignored
     wbuf.buf[wbuf.buf_ptr++] = type;
@@ -298,35 +323,53 @@ bool LibeventSocket::BufferWriteBytes(PktBuf &pkt_buf, size_t len, uchar type) {
   wbuf.buf_ptr += sizeof(int32_t);
   wbuf.buf_size = wbuf.buf_ptr;
 
+  // Header is written to socket buf. No need to write it in the future
+  pkt->skip_header_write = true;
+  return true;
+}
+
+// Writes a packet's content into the write buffer
+// Return false when the socket is not ready for write
+bool LibeventSocket::BufferWriteBytesContent(Packet *pkt) {
+  // the packet content to write
+  PktBuf &pkt_buf = pkt->buf;
+  // the length of remaining content to write
+  size_t len = pkt->len;
+  // window is the size of remaining space in socket's wbuf
+  size_t window = 0;
+
   // fill the contents
   while (len) {
+    // calculate the remaining space in wbuf
     window = wbuf.GetMaxSize() - wbuf.buf_ptr;
     if (len <= window) {
       // contents fit in the window, range copy "len" bytes
-      std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
-                std::begin(pkt_buf) + pkt_buf_ptr + len,
+      std::copy(std::begin(pkt_buf) + pkt->write_ptr,
+                std::begin(pkt_buf) + pkt->write_ptr + len,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
 
       // Move the cursor and update size of socket buffer
       wbuf.buf_ptr += len;
       wbuf.buf_size = wbuf.buf_ptr;
+      LOG_DEBUG("Content fit in window. Write content successful");
       return true;
     } else {
-      /* contents longer than socket buffer size, fill up the socket buffer
-       *  with "window" bytes
-       */
-      std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
-                std::begin(pkt_buf) + pkt_buf_ptr + window,
+      // contents longer than socket buffer size, fill up the socket buffer
+      // with "window" bytes
+
+      std::copy(std::begin(pkt_buf) + pkt->write_ptr,
+                std::begin(pkt_buf) + pkt->write_ptr + window,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
 
       // move the packet's cursor
-      pkt_buf_ptr += window;
+      pkt->write_ptr += window;
       len -= window;
-
+      // Now the wbuf is full
       wbuf.buf_size = wbuf.GetMaxSize();
 
-      // write failure
-      if (!FlushWriteBuffer()) {
+      LOG_DEBUG("Content doesn't fit in window. Try flushing");
+      // flush before write the remaining content
+      if (FlushWriteBuffer() == false) {
         return false;
       }
     }
@@ -348,6 +391,15 @@ void LibeventSocket::CloseSocket() {
   }
 }
 
+void LibeventSocket::Reset(short event_flags, LibeventThread *thread,
+                           ConnState init_state) {
+  is_disconnected = false;
+  rbuf.Reset();
+  wbuf.Reset();
+  // TODO: Reuse packet manager, don't destroy
+  pkt_manager.reset(nullptr);
+  Init(event_flags, thread, init_state);
+}
 
 }  // End wire namespace
 }  // End peloton namespace

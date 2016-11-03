@@ -134,8 +134,7 @@ LibeventServer::LibeventServer() {
   //  event_enable_debug_logging(EVENT_DBG_ALL);
 
   // Ignore the broken pipe signal
-  // We don't want to exit on write
-  // when the client disconnects
+  // We don't want to exit on write when the client disconnects
   signal(SIGPIPE, SIG_IGN);
 
   if (FLAGS_socket_family == "AF_INET") {

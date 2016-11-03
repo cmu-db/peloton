@@ -210,23 +210,5 @@ void PacketPutCbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
 //  return true;
 //}
 
-//bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets, Client *client,
-//                  const bool &force_flush) {
-//  // iterate through all the packets
-//  for (size_t i = 0; i < packets.size(); i++) {
-//    auto pkt = packets[i].get();
-//    if (!client->sock->BufferWriteBytes(pkt->buf, pkt->len, pkt->msg_type)) {
-//      packets.clear();
-//      return false;
-//    }
-//  }
-//  // clear packets
-//  packets.clear();
-//  if (force_flush) {
-//    return client->sock->FlushWriteBuffer();
-//  }
-//  return true;
-//}
-
 }  // end wire
 }  // end peloton
