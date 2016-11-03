@@ -13,8 +13,6 @@
 #include <vector>
 
 #include "wire/libevent_server.h"
-//#include "common/logger.h"
-//#include "common/macros.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
 #include <sys/file.h>
@@ -22,20 +20,22 @@
 namespace peloton {
 namespace wire {
 
-
-std::vector<std::shared_ptr<LibeventWorkerThread>> &LibeventMasterThread::GetWorkerThreads() {
+std::vector<std::shared_ptr<LibeventWorkerThread>> &
+LibeventMasterThread::GetWorkerThreads() {
   static std::vector<std::shared_ptr<LibeventWorkerThread>> worker_threads;
   return worker_threads;
 }
 
 LibeventMasterThread::LibeventMasterThread(const int num_threads,
                                            struct event_base *libevent_base)
-    : LibeventThread(MASTER_THREAD_ID, libevent_base), num_threads_(num_threads) {
+    : LibeventThread(MASTER_THREAD_ID, libevent_base),
+      num_threads_(num_threads) {
   auto &threads = GetWorkerThreads();
   for (int i = 0; i < num_threads; i++) {
     threads.push_back(
         std::shared_ptr<LibeventWorkerThread>(new LibeventWorkerThread(i)));
-    thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker, threads[i].get());
+    thread_pool.SubmitDedicatedTask(LibeventMasterThread::StartWorker,
+                                    threads[i].get());
   }
   // TODO wait for all threads to be up before exit from Init()
 }
@@ -157,7 +157,8 @@ LibeventWorkerThread::LibeventWorkerThread(const int thread_id)
   // TODO init connection queue here
 }
 
-void LibeventMasterThread::DispatchConnection(int new_conn_fd, short event_flags) {
+void LibeventMasterThread::DispatchConnection(int new_conn_fd,
+                                              short event_flags) {
   char buf[1];
   buf[0] = 'c';
 
@@ -168,13 +169,13 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd, short event_flags
       threads[rand() % num_threads_];
 
   // TODO: Add init_state arg
-  std::shared_ptr<NewConnQueueItem> item(new NewConnQueueItem(new_conn_fd, event_flags));
+  std::shared_ptr<NewConnQueueItem> item(
+      new NewConnQueueItem(new_conn_fd, event_flags, CONN_READ));
   worker_thread->new_conn_queue.Enqueue(item);
 
   if (write(worker_thread->new_conn_send_fd, buf, 1) != 1) {
     LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
-
 }
 }

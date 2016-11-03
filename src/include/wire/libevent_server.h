@@ -43,11 +43,12 @@ namespace wire {
 
 // Libevent Thread States
 enum ConnState {
-  LISTENING,
-  READ,
-  WRITE,
-  WAIT,
-  CLOSING,
+  CONN_LISTENING,
+  CONN_READ,
+  CONN_WRITE,
+  CONN_WAIT,
+  CONN_CLOSING,
+  CONN_INVALID,
 };
 
 /* Libevent Callbacks */
@@ -101,8 +102,14 @@ struct Buffer {
 
 struct NewConnQueueItem {
   int new_conn_fd;
-  // enum conn_states init_state;
   short event_flags;
+  ConnState init_state;
+
+  inline NewConnQueueItem(int new_conn_fd, short event_flags,
+                          ConnState init_state)
+      : new_conn_fd(new_conn_fd),
+        event_flags(event_flags),
+        init_state(init_state) {}
 };
 
 class LibeventThread {
@@ -175,6 +182,7 @@ class LibeventSocket {
   Buffer wbuf;             // Socket's write buffer
   LibeventThread *thread;  // reference to the libevent thread
   std::unique_ptr<PacketManager> pkt_manager;  // Stores state for this socket
+  ConnState state = CONN_INVALID;
 
  private:
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
