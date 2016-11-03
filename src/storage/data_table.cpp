@@ -148,6 +148,11 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // new tile group.
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
+// when updating a tuple, we will invoke this function with the argument set to nullptr.
+// this is because we want to minimize data copy overhead by performing
+// in-place update at executor level.
+// however, when performing insert, we have to copy data immediately,
+// and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
 
   //=============== garbage collection==================
@@ -155,6 +160,11 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
+    // when inserting a tuple
+    if (tuple != nullptr) {
+      auto tile_group = catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
+      tile_group->CopyTuple(tuple, free_item_pointer.offset);
+    }
     return free_item_pointer;
   }
   //====================================================
