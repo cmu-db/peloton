@@ -69,6 +69,12 @@ void DispatchConnection(int new_conn_fd, short event_flags);
 /* Runs the state machine for the protocol. Invoked by event handler callback */
 void StateMachine(LibeventSocket *conn);
 
+// Transit to the target state
+void TransitState(LibeventSocket *conn, ConnState next_state);
+
+// Update event
+void UpdateEvent(LibeventSocket *conn, short flags);
+
 /* Set the socket to non-blocking mode */
 inline void SetNonBlocking(evutil_socket_t fd) {
   auto flags = fcntl(fd, F_GETFL);

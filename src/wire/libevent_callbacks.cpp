@@ -73,10 +73,9 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg) {
 void StateMachine(LibeventSocket *conn) {
   LOG_DEBUG("StateMachine invoked");
   bool done = false;
-  int state = conn->state;
 
   while (done == false) {
-    switch (state) {
+    switch (conn->state) {
       case CONN_LISTENING: {
         struct sockaddr_storage addr;
         socklen_t addrlen = sizeof(addr);
@@ -103,6 +102,24 @@ void StateMachine(LibeventSocket *conn) {
       // TODO handle other states, too
       default: {}
     }
+  }
+}
+
+void TransitState(LibeventSocket *conn, ConnState next_state) {
+  PL_ASSERT(conn != nullptr);
+  conn->state = next_state;
+  LOG_TRACE("conn %d transit to state %d", conn->sock_fd, (int)next_state);
+}
+
+// Update event
+void UpdateEvent(LibeventSocket *conn, short flags) {
+  PL_ASSERT(conn != nullptr);
+  auto base = conn->thread->GetEventBase();
+  auto event = conn->event;
+  auto result =
+      event_assign(event, base, conn->sock_fd, flags, EventHandler, conn);
+  if (result != 0) {
+    LOG_ERROR("Failed to update event");
   }
 }
 }

@@ -26,33 +26,33 @@ namespace wire {
 class LibeventSocket;
 
 struct Packet {
-	PktBuf buf;      // stores packet contents
-	size_t len;      // size of packet
-	size_t ptr;      // PktBuf cursor
-	uchar msg_type;  // header
+  PktBuf buf;      // stores packet contents
+  size_t len;      // size of packet
+  size_t ptr;      // PktBuf cursor
+  uchar msg_type;  // header
 
-	// reserve buf's size as maximum packet size
-	inline Packet() { Reset(); }
+  // reserve buf's size as maximum packet size
+  inline Packet() { Reset(); }
 
-	inline void Reset() {
-		buf.resize(BUFFER_INIT_SIZE);
-		buf.shrink_to_fit();
-		buf.clear();
-		len = ptr = msg_type = 0;
-	}
+  inline void Reset() {
+    buf.resize(BUFFER_INIT_SIZE);
+    buf.shrink_to_fit();
+    buf.clear();
+    len = ptr = msg_type = 0;
+  }
 };
 
 struct Client {
-	// Authentication details
-	std::string dbname;
-	std::string user;
-	std::unordered_map<std::string, std::string> cmdline_options;
+  // Authentication details
+  std::string dbname;
+  std::string user;
+  std::unordered_map<std::string, std::string> cmdline_options;
 
-	inline void Reset() {
-		dbname.clear();
-		user.clear();
-		cmdline_options.clear();
-	}
+  inline void Reset() {
+    dbname.clear();
+    user.clear();
+    cmdline_options.clear();
+  }
 };
 
 
