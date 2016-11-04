@@ -401,7 +401,7 @@ TEST_F(ParserTest, CopyTest) {
     EXPECT_STREQ(std::string(1, copy_stmt->GetDelimiter()).c_str(), ",");
     EXPECT_STREQ(copy_stmt->GetFilePath().c_str(), "/home/user/output.csv");
 
-    if (result) {
+    if (result != nullptr) {
       LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }

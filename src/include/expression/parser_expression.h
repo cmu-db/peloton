@@ -63,19 +63,44 @@ class ParserExpression : public AbstractExpression {
     delete[] alias;
   }
 
-  Value Evaluate(
-      UNUSED_ATTRIBUTE const AbstractTuple* tuple1,
-      UNUSED_ATTRIBUTE const AbstractTuple* tuple2,
-      UNUSED_ATTRIBUTE executor::ExecutorContext* context) const override {
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple* tuple1,
+                 UNUSED_ATTRIBUTE const AbstractTuple* tuple2,
+                 UNUSED_ATTRIBUTE executor::ExecutorContext* context) const
+      override {
     return ValueFactory::GetBooleanValue(1);
   }
 
   AbstractExpression* Copy() const override {
-    // TODO: Fix copy based on other constructors
     std::string str(name);
     char* new_cstr = new char[str.length() + 1];
     std::strcpy(new_cstr, str.c_str());
-    return new ParserExpression(this->GetExpressionType(), new_cstr);
+
+    switch (this->GetExpressionType()) {
+      case EXPRESSION_TYPE_STAR:
+      case EXPRESSION_TYPE_FUNCTION_REF: {
+        return new ParserExpression(this->GetExpressionType(), new_cstr);
+      }
+      case EXPRESSION_TYPE_PLACEHOLDER: {
+        delete new_cstr;
+        return new ParserExpression(this->GetExpressionType(), ival);
+      }
+      case EXPRESSION_TYPE_COLUMN_REF: {
+        std::string ref(column);
+        char* new_ref = new char[ref.length() + 1];
+        std::strcpy(new_ref, ref.c_str());
+        return new ParserExpression(this->GetExpressionType(), new_cstr,
+                                    new_ref);
+      }
+      case EXPRESSION_TYPE_TABLE_REF: {
+        std::string ref(database);
+        char* new_ref = new char[ref.length() + 1];
+        std::strcpy(new_ref, ref.c_str());
+        return new ParserExpression(this->GetExpressionType(), new_cstr,
+                                    new_ref);
+      }
+      default: { LOG_ERROR("Unexpected type"); }
+    }
+    return nullptr;
   }
 };
 

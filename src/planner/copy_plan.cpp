@@ -26,7 +26,7 @@ namespace peloton {
 namespace planner {
 
 CopyPlan::CopyPlan(parser::CopyStatement* copy_parse_tree)
-    : file_path_(copy_parse_tree->GetFilePath()) {
+    : file_path(copy_parse_tree->GetFilePath()) {
   LOG_DEBUG("Creating a Copy Plan");
 
   // Hard code star expression
@@ -43,19 +43,20 @@ CopyPlan::CopyPlan(parser::CopyStatement* copy_parse_tree)
   // Populate seq scan table ref
   parser::TableRef* table_ref =
       new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-  table_ref->table_name = copy_parse_tree->table_name;
+  table_ref->table_name = static_cast<expression::ParserExpression*>(
+      copy_parse_tree->table_name->Copy());
 
   // Construct select stmt
-  auto select_stmt = new parser::SelectStatement();
+  std::unique_ptr<parser::SelectStatement> select_stmt(
+      new parser::SelectStatement());
   select_stmt->from_table = table_ref;
   select_stmt->select_list = select_list;
 
   std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-      new planner::SeqScanPlan(select_stmt));
+      new planner::SeqScanPlan(select_stmt.get()));
   LOG_TRACE("Sequential scan plan created");
 
   AddChild(std::move(child_SelectPlan));
 }
-
 }  // namespace planner
 }  // namespace peloton

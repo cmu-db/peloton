@@ -110,7 +110,7 @@ peloton_status PlanExecutor::ExecutePlan(
           std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
       // Construct the returned results
-      for (auto tuple : answer_tuples) {
+      for (auto &tuple : answer_tuples) {
         unsigned int col_index = 0;
         auto &schema_columns = output_schema->GetColumns();
         for (auto &column : schema_columns) {

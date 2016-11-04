@@ -39,9 +39,8 @@ class CopyPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_COPY; }
 
-  void SetParameterValues(std::vector<common::Value> *values) {
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value> *values) {
     // Ignore prepared statement for COPY for now
-    (void)values;
   }
 
   const std::string GetInfo() const { return "CopyPlan"; }
@@ -49,8 +48,8 @@ class CopyPlan : public AbstractPlan {
   // TODO: Add copying mechanism
   std::unique_ptr<AbstractPlan> Copy() const { return nullptr; }
 
- private:
-  std::string file_path_;
+  // The path of the target file
+  std::string file_path;
 };
 
 }  // namespace planner

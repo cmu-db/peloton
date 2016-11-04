@@ -55,7 +55,8 @@ class StatsTestsUtil {
 
   static std::shared_ptr<stats::QueryMetric::QueryParams> GetQueryParams();
 
-  static std::shared_ptr<Statement> GetInsertStmt();
+  static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
+                                                  std::string val = "hello");
 
   static std::shared_ptr<Statement> GetDeleteStmt();
 

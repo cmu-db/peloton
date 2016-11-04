@@ -108,11 +108,13 @@ void StatsTestsUtil::CreateTable() {
   txn_manager.CommitTransaction(txn);
 }
 
-std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
+std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt(int id,
+                                                         std::string val) {
   std::shared_ptr<Statement> statement;
   std::string sql =
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
-      "(1,'hello_1');";
+      "(" +
+      std::to_string(id) + ",'" + val + "');";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("INSERT", sql));
   ParseAndPlan(statement.get(), sql);

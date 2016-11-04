@@ -33,8 +33,9 @@ struct CopyStatement : SQLStatement {
         delimiter(NULL) {};
 
   virtual ~CopyStatement() {
-    free(file_path);
     delete table_name;
+    delete file_path;
+    delete delimiter;
   }
 
   // Get the name of the database of this table
@@ -51,11 +52,10 @@ struct CopyStatement : SQLStatement {
     auto val_expression =
         static_cast<expression::ConstantValueExpression*>(delimiter);
     auto value = val_expression->GetValue();
-    if (value.GetLength() > 1) {
+    if (value.GetLength() != 2) {
       throw ParserException("Single character delimiter expected");
     }
-    std::cout << "The delimiter string is: " + value.ToString() << std::endl;
-
+    LOG_TRACE("The delimiter string is: %s", value.ToString().c_str());
     return *(value.GetData());
   }
 
