@@ -19,133 +19,99 @@ namespace wire {
 /**
  * Public Functions
  */
-
-bool LibeventSocket::WritePackets(const bool &force_flush) {
-
-  // iterate through all the packets
-  for (; next_response_ < responses.size(); next_response_++) {
-    auto pkt = responses[next_response_].get();
-    // write is not ready during write. transit to CONN_WRITE
-    if (BufferWriteBytesHeader(pkt) == false ||
-        BufferWriteBytesContent(pkt) == false) {
-      return false;
-    }
-  }
-
-  // Done writing all packets. clear packets
-  responses.clear();
-  next_response_ = 0;
-
-  if (force_flush) {
-    return FlushWriteBuffer();
-  }
-  return true;
+void LibeventSocket::TransitState(ConnState next_state) {
+  if (next_state != state)
+    LOG_TRACE("conn %d transit to state %d", conn->sock_fd, (int)next_state);
+  state = next_state;
 }
 
-/**
- * Private Functions
- */
-bool LibeventSocket::RefillReadBuffer() {
+ReadState LibeventSocket::FillReadBuffer() {
+  ReadState result = READ_NO_DATA_RECEIVED;
   ssize_t bytes_read = 0;
   fd_set rset;
   bool done = false;
 
-  // our buffer is to be emptied
-  rbuf.Reset();
+  // client has sent more data than it should?
+  if (rbuf.buf_size - rbuf.buf_ptr == SOCKET_BUFFER_SIZE) {
+    LOG_ERROR("Conn %d has exceeded read buffer size. Terminating.", sock_fd);
+    TransitState(CONN_CLOSING);
+  }
+
+  // reset buffer if all the contents have been read
+  if (rbuf.buf_ptr == rbuf.buf_size)
+    rbuf.Reset();
 
   // return explicitly
-  while (!done) {
-    while (bytes_read <= 0) {
-      //  try to fill the available space in the buffer
+  while (done == false) {
+    if (rbuf.buf_size == SOCKET_BUFFER_SIZE) {
+      // we have filled the whole buffer, exit loop
+      done = true;
+    } else {
+      // try to fill the available space in the buffer
       bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                         SOCKET_BUFFER_SIZE - rbuf.buf_size);
 
-      // Read failed
-      if (bytes_read < 0) {
-        // Some other error occurred, close the socket, remove
-        // the event and free the client structure.
-        switch (errno) {
-          case EINTR:
-            LOG_DEBUG("Error Reading: EINTR");
-            break;
-          case EAGAIN:
-            LOG_DEBUG("Error Reading: EAGAIN");
-            break;
-          case EBADF:
-            LOG_DEBUG("Error Reading: EBADF");
-            break;
-          case EDESTADDRREQ:
-            LOG_DEBUG("Error Reading: EDESTADDRREQ");
-            break;
-          case EDQUOT:
-            LOG_DEBUG("Error Reading: EDQUOT");
-            break;
-          case EFAULT:
-            LOG_DEBUG("Error Reading: EFAULT");
-            break;
-          case EFBIG:
-            LOG_DEBUG("Error Reading: EFBIG");
-            break;
-          case EINVAL:
-            LOG_DEBUG("Error Reading: EINVAL");
-            break;
-          case EIO:
-            LOG_DEBUG("Error Reading: EIO");
-            break;
-          case ENOSPC:
-            LOG_DEBUG("Error Reading: ENOSPC");
-            break;
-          case EPIPE:
-            LOG_DEBUG("Error Reading: EPIPE");
-            break;
-          default:
-            LOG_DEBUG("Error Reading: UNKNOWN");
+      if (bytes_read > 0) {
+        // read succeeded, update buffer size
+        rbuf.buf_size += bytes_read;
+        result = READ_DATA_RECEIVED;
+      } else if (bytes_read == 0) {
+        // Read failed
+        return READ_ERROR;
+      } else if (bytes_read < 0) {
+        // related to non-blocking?
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+          // return whatever results we have
+          LOG_DEBUG("Received: EAGAIN or EWOULDBLOCK");
+          done = true;
         }
+
         if (errno == EINTR) {
           // interrupts are ok, try again
+          LOG_DEBUG("Error Reading: EINTR");
           bytes_read = 0;
           continue;
-
-          // Read would have blocked if the scoket
-          // was in blocking mode. Wait till it's readable
-        } else if (errno == EAGAIN) {
-          FD_ZERO(&rset);
-          FD_SET(sock_fd, &rset);
-          bytes_read = select(sock_fd + 1, &rset, NULL, NULL, NULL);
-          if (bytes_read < 0) {
-            LOG_INFO("bytes_read < 0 after select. Fatal");
-            exit(EXIT_FAILURE);
-          } else if (bytes_read == 0) {
-            // timed out without writing any data
-            LOG_INFO("Timeout without reading");
-            exit(EXIT_FAILURE);
-          }
-          // else, socket is now readable, so loop back up and do the read()
-          // again
-          bytes_read = 0;
-          continue;
-        } else {
-          // fatal errors
-          return false;
         }
-      } else if (bytes_read == 0) {
-        // If the length of bytes returned by read is 0, this means
-        // that the client disconnected
-        is_disconnected = true;
-        return false;
-      } else {
-        done = true;
+
+        // otherwise, we have some other error
+        switch (errno) {
+          case EBADF:
+          LOG_DEBUG("Error Reading: EBADF");
+            break;
+          case EDESTADDRREQ:
+          LOG_DEBUG("Error Reading: EDESTADDRREQ");
+            break;
+          case EDQUOT:
+          LOG_DEBUG("Error Reading: EDQUOT");
+            break;
+          case EFAULT:
+          LOG_DEBUG("Error Reading: EFAULT");
+            break;
+          case EFBIG:
+          LOG_DEBUG("Error Reading: EFBIG");
+            break;
+          case EINVAL:
+          LOG_DEBUG("Error Reading: EINVAL");
+            break;
+          case EIO:
+          LOG_DEBUG("Error Reading: EIO");
+            break;
+          case ENOSPC:
+          LOG_DEBUG("Error Reading: ENOSPC");
+            break;
+          case EPIPE:
+          LOG_DEBUG("Error Reading: EPIPE");
+            break;
+          default:
+          LOG_DEBUG("Error Reading: UNKNOWN");
+        }
+
+        // some other error occured
+        return READ_ERROR;
       }
     }
-
-    // read success, update buffer size
-    rbuf.buf_size += bytes_read;
-
-    // reset buffer ptr, to cover special case
-    rbuf.buf_ptr = 0;
-    return true;
   }
-  return true;
+  return result;
 }
 
 bool LibeventSocket::FlushWriteBuffer() {

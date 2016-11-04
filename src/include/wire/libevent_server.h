@@ -35,7 +35,6 @@
 #include <fstream>
 #include "wire/wire.h"
 
-#define SOCKET_BUFFER_SIZE 8192
 #define QUEUE_SIZE 100
 #define MASTER_THREAD_ID -1
 
@@ -44,12 +43,19 @@ namespace wire {
 
 // Libevent Thread States
 enum ConnState {
-  CONN_LISTENING,
-  CONN_READ,
-  CONN_WRITE,
-  CONN_WAIT,
-  CONN_CLOSING,
-  CONN_INVALID,
+  CONN_LISTENING,  // State that listens for new connections
+  CONN_READ,       // State that reads data from the network
+  CONN_WRITE,      // State the writes data to the network
+  CONN_WAIT,       // State for waiting for some event to happen
+  CONN_PROCESS,    // State that runs the wire protocol on received data
+  CONN_CLOSING,    // State for closing the client connection
+  CONN_INVALID,    // Invalid STate
+};
+
+enum ReadState {
+  READ_DATA_RECEIVED,
+  READ_NO_DATA_RECEIVED,
+  READ_ERROR,
 };
 
 /* Libevent Callbacks */
@@ -69,9 +75,6 @@ void DispatchConnection(int new_conn_fd, short event_flags);
 
 /* Runs the state machine for the protocol. Invoked by event handler callback */
 void StateMachine(LibeventSocket *conn);
-
-// Transit to the target state
-void TransitState(LibeventSocket *conn, ConnState next_state);
 
 // Update event
 void UpdateEvent(LibeventSocket *conn, short flags);
@@ -197,14 +200,6 @@ class LibeventSocket {
   ResponseBuffer responses;
 
  private:
-  Buffer rbuf;                      // Socket's read buffer
-  Buffer wbuf;                      // Socket's write buffer
-  unsigned int next_response_ = 0;  // The next response in the response buffer
-
-  /* Used to repopulate read buffer with a fresh batch of data from the socket
-  */
-  bool RefillReadBuffer();
-
   inline void Init(short event_flags, LibeventThread *thread,
                    ConnState init_state) {
     SetNonBlocking(sock_fd);
@@ -227,7 +222,13 @@ class LibeventSocket {
     Init(event_flags, thread, init_state);
   }
 
-  bool WritePackets(const bool &force_flush = true);
+  /* refill_read_buffer - Used to repopulate read buffer with a fresh
+   * batch of data from the socket
+   */
+  ReadState FillReadBuffer();
+
+  // Transit to the target state
+  void TransitState(ConnState next_state);
 
   // Reads a packet of length "bytes" from the head of the buffer
   bool ReadBytes(PktBuf &pkt_buf, size_t bytes);
