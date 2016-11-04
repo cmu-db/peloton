@@ -19,7 +19,7 @@
 #include "common/value_factory.h"
 #include "executor/abstract_executor.h"
 #include "planner/aggregate_plan.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate

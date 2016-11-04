@@ -19,7 +19,7 @@
 #include "common/types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 #include <boost/functional/hash.hpp>
 

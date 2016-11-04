@@ -19,7 +19,7 @@
 #include "executor/aggregator.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile_factory.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "planner/aggregate_plan.h"
 #include "storage/table_factory.h"
 

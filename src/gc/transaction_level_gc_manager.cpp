@@ -16,7 +16,7 @@
 #include "storage/tile_group.h"
 #include "catalog/manager.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace gc {
