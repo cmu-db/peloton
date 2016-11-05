@@ -170,6 +170,7 @@ struct PARSER_CUST_LTYPE {
 	std::vector<peloton::parser::ColumnDefinition*>* column_vec;
 	std::vector<peloton::parser::UpdateClause*>* update_vec;
 	std::vector<peloton::expression::AbstractExpression*>* expr_vec;
+	std::vector<std::vector<peloton::expression::AbstractExpression*>*>* insert_tuple_vec;
 }
 
 
@@ -230,11 +231,12 @@ struct PARSER_CUST_LTYPE {
 %type <update_t>	update_clause
 %type <group_t>		opt_group
 
-%type <str_vec>		ident_commalist opt_column_list
-%type <expr_vec> 	expr_list select_list literal_list
-%type <table_vec> 	table_ref_commalist
-%type <update_vec>	update_clause_commalist
-%type <column_vec>	column_def_commalist 
+%type <str_vec>				ident_commalist opt_column_list
+%type <expr_vec>			expr_list select_list literal_list
+%type <table_vec>			table_ref_commalist
+%type <update_vec>			update_clause_commalist
+%type <column_vec>			column_def_commalist 
+%type <insert_tuple_vec>	insert_list
 
 /******************************
  ** Token Precedence and Associativity
@@ -533,11 +535,11 @@ truncate_statement:
  * INSERT INTO employees SELECT * FROM stundents
  ******************************/
 insert_statement:
-		INSERT INTO table_name opt_column_list VALUES '(' literal_list ')' {
+		INSERT INTO table_name opt_column_list VALUES insert_list {
 			$$ = new InsertStatement(peloton::INSERT_TYPE_VALUES);
 			$$->table_name = $3;
 			$$->columns = $4;
-			$$->values = $7;
+			$$->insert_values = $6;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
 			$$ = new InsertStatement(peloton::INSERT_TYPE_SELECT);
@@ -547,6 +549,10 @@ insert_statement:
 		}
 	;
 
+insert_list:
+		'(' literal_list ')' { $$ = new std::vector<std::vector<peloton::expression::AbstractExpression*>*>; $$->push_back($2);}
+	|	'(' literal_list ')' ',' insert_list {$$ = $5; $$->push_back($2);}
+	;
 
 opt_column_list:
 		'(' ident_commalist ')' { $$ = $2; }
