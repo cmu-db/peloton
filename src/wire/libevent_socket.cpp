@@ -16,14 +16,95 @@
 namespace peloton {
 namespace wire {
 
-/**
- * Public Functions
- */
+void LibeventSocket::Init(short event_flags, LibeventThread *thread,
+                          ConnState init_state) {
+  SetNonBlocking(sock_fd);
+  SetTCPNoDelay(sock_fd);
+  is_disconnected = false;
+  is_started = false;
+
+  this->event_flags = event_flags;
+  this->thread = thread;
+  this->state = init_state;
+
+  // clear out packet
+  rpkt.Reset();
+
+  // TODO: Maybe switch to event_assign once State machine is implemented
+  event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+                    EventHandler, this);
+  event_add(event, nullptr);
+}
+
 void LibeventSocket::TransitState(ConnState next_state) {
   if (next_state != state)
     LOG_TRACE("conn %d transit to state %d", conn->sock_fd, (int)next_state);
   state = next_state;
 }
+
+void LibeventSocket::GetSizeFromPktHeader(size_t &start_index) {
+  rpkt.len = 0;
+  // directly converts from network byte order to little-endian
+  for (size_t i=start_index; i<start_index+sizeof(uint32_t); i++) {
+    rpkt.len = (rpkt.len << 8) | rbuf.GetByte(i);
+  }
+  // packet size includes initial bytes read as well
+  rpkt.len = rpkt.len - sizeof(int32_t);
+  rpkt.header_parsed = true;
+}
+
+bool LibeventSocket::IsReadDataAvailable(size_t bytes) {
+  return ((rbuf.buf_ptr - 1) + bytes < rbuf.buf_size);
+}
+
+// The function tries to do a preliminary read to fetch the size value and
+// then reads the rest of the packet.
+// Assume: Packet length field is always 32-bit int
+bool LibeventSocket::ReadPacketHeader() {
+  size_t initial_read_size = sizeof(int32_t), packet_size;
+  if (is_started == true) {
+    // All packets other than the startup packet have a 5B header
+    initial_read_size++;
+  }
+  // check if header bytes are available
+  if (IsReadDataAvailable(initial_read_size) == false) {
+    // nothing more to read
+    return false;
+  }
+
+  // get packet size from the header
+  if (is_started == true) {
+    // Header also contains msg type
+    rpkt.msg_type = rbuf.GetByte(rbuf.buf_ptr);
+    // extract packet size
+    GetSizeFromPktHeader(rbuf.buf_ptr+1);
+  } else {
+    GetSizeFromPktHeader(rbuf.buf_ptr);
+  }
+
+  // we have processed the data, move buffer pointer
+  rbuf.buf_ptr += initial_read_size;
+
+  return true;
+}
+
+// Tries to read the contents of a single packet, returns true on success, false
+// on failure.
+bool LibeventSocket::ReadPacket() {
+  if (IsReadDataAvailable(rpkt.len) == false) {
+    // data not available yet, return
+    return false;
+  }
+
+  // Initialize the packet's "contents"
+  rpkt.InitializePacket(rbuf.buf_ptr, rbuf.Begin());
+
+  // We have processed the data, move buffer pointer
+  rbuf.buf_ptr += rpkt.len;
+
+  return true;
+}
+
 
 ReadState LibeventSocket::FillReadBuffer() {
   ReadState result = READ_NO_DATA_RECEIVED;
@@ -41,6 +122,21 @@ ReadState LibeventSocket::FillReadBuffer() {
   if (rbuf.buf_ptr == rbuf.buf_size)
     rbuf.Reset();
 
+  if (rbuf.buf_ptr > rbuf.buf_size) {
+    LOG_WARN("ReadBuf ptr overflowed. This shouldn't happen!");
+    rbuf.Reset();
+  }
+
+  /* Do we have leftover data and are we at the end of the buffer?
+   * Move the data to the head of the buffer and clear out all the old data
+   * Note: The assumption here is that all the packets/headers till
+   *  rbuf.buf_ptr have been fully processed
+   */
+  if (rbuf.buf_ptr < rbuf.buf_size && rbuf.buf_size == SOCKET_BUFFER_SIZE) {
+    // Move this data to the head of rbuf
+    std::memmove(rbuf.GetPtr(0), rbuf.GetPtr(rbuf.buf_ptr),
+                 rbuf.buf_size - rbuf.buf_ptr);
+  }
   // return explicitly
   while (done == false) {
     if (rbuf.buf_size == SOCKET_BUFFER_SIZE) {
@@ -196,51 +292,6 @@ bool LibeventSocket::FlushWriteBuffer() {
   return true;
 }
 
-/*
- * read - Tries to read "bytes" bytes into packet's buffer. Returns true on
- * success.
- * 		false on failure. B can be any STL container.
- */
-bool LibeventSocket::ReadBytes(PktBuf &pkt_buf, size_t bytes) {
-  size_t window, pkt_buf_idx = 0;
-  // while data still needs to be read
-  while (bytes) {
-    // how much data is available
-    window = rbuf.buf_size - rbuf.buf_ptr;
-    if (bytes <= window) {
-      pkt_buf.insert(std::end(pkt_buf), std::begin(rbuf.buf) + rbuf.buf_ptr,
-                     std::begin(rbuf.buf) + rbuf.buf_ptr + bytes);
-
-      // move the pointer
-      rbuf.buf_ptr += bytes;
-
-      // move pkt_buf_idx as well
-      pkt_buf_idx += bytes;
-
-      return true;
-    } else {
-      // read what is available for non-trivial window
-      if (window > 0) {
-        pkt_buf.insert(std::end(pkt_buf), std::begin(rbuf.buf) + rbuf.buf_ptr,
-                       std::begin(rbuf.buf) + rbuf.buf_size);
-
-        // update bytes leftover
-        bytes -= window;
-
-        // update pkt_buf_idx
-        pkt_buf_idx += window;
-      }
-
-      // refill buffer, reset buf ptr here
-      if (!RefillReadBuffer()) {
-        // nothing more to read, end
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
 
 void LibeventSocket::PrintWriteBuffer() {
   LOG_TRACE("Write Buffer:");

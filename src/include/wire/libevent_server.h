@@ -109,7 +109,58 @@ struct Buffer {
     buf_flush_ptr = 0;
   }
 
+  // single buffer element accessor
+  inline uchar GetByte(size_t &index) {
+    return buf[index];
+  }
+
+  // Get pointer to index location
+  inline uchar* GetPtr(size_t &index) {
+    return &buf[index];
+  }
+
+  inline SockBuf::const_iterator Begin() {
+    return std::begin(buf);
+  }
+
+  inline SockBuf::const_iterator End() {
+    return std::end(buf);
+  }
+
   inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
+};
+
+struct InputPacket {
+  uchar msg_type;   // header
+  size_t len;       // size of packet
+  size_t ptr;       // PktBuf cursor
+  SockBuf::const_iterator begin, end; // start and end iterators of the buffer
+  bool header_parsed;   // has the header been parsed
+  bool is_initialized;  // has the packet been initialized
+
+  // reserve buf's size as maximum packet size
+  inline InputPacket() { Reset(); }
+
+  inline void Reset() {
+    is_initialized = false;
+    len = ptr = msg_type = 0;
+  }
+
+  inline void InitializePacket(size_t &pkt_start_index,
+                               SockBuf::const_iterator rbuf_begin) {
+    this->ptr = pkt_start_index;
+    this->begin = rbuf_begin + pkt_start_index;
+    this->end = rbuf_begin + len;
+    is_initialized = true;
+  }
+
+  SockBuf::const_iterator Begin() {
+    return begin;
+  }
+
+  SockBuf::const_iterator End() {
+    return end;
+  }
 };
 
 struct NewConnQueueItem {
@@ -193,27 +244,23 @@ class LibeventSocket {
 
   LibeventThread *thread;  // reference to the libevent thread
   std::unique_ptr<PacketManager> pkt_manager;  // Stores state for this socket
-  ConnState state = CONN_INVALID;
+  ConnState state = CONN_INVALID;  // Initial state of connection
+  InputPacket rpkt;        // Used for reading a single Postgres packet
+  bool is_started;   // has the startup packet been received for this connection
 
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
   ResponseBuffer responses;
 
  private:
-  inline void Init(short event_flags, LibeventThread *thread,
-                   ConnState init_state) {
-    SetNonBlocking(sock_fd);
-    SetTCPNoDelay(sock_fd);
-    is_disconnected = false;
-    this->event_flags = event_flags;
-    this->thread = thread;
-    this->state = init_state;
+  void Init(short event_flags, LibeventThread *thread, ConnState init_state);
 
-    // TODO: Maybe switch to event_assign once State machine is implemented
-    event = event_new(thread->GetEventBase(), sock_fd, event_flags,
-                      EventHandler, this);
-    event_add(event, nullptr);
-  }
+  // Is the requested amount of data available from the current position in
+  // the reader buffer?
+  bool IsReadDataAvailable(size_t bytes);
+
+  // Parses out packet size from its header
+  void GetSizeFromPktHeader(size_t &start_index);
 
  public:
   inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread,
@@ -230,8 +277,11 @@ class LibeventSocket {
   // Transit to the target state
   void TransitState(ConnState next_state);
 
-  // Reads a packet of length "bytes" from the head of the buffer
-  bool ReadBytes(PktBuf &pkt_buf, size_t bytes);
+  // Extracts the header of a Postgres packet from the read socket buffer
+  bool ReadPacketHeader();
+
+  // Extracts the contents of Postgres packet from the read socket buffer
+  bool ReadPacket();
 
   void PrintWriteBuffer();
 

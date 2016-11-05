@@ -25,28 +25,6 @@ namespace wire {
 
 class LibeventSocket;
 
-struct Packet {
-  PktBuf buf;      // stores packet contents
-  size_t len;      // size of packet
-  size_t ptr;      // PktBuf cursor, which is used for get and put
-  uchar msg_type;  // header
-
-  bool skip_header_write;  // whether we should write header to socket wbuf
-  size_t write_ptr;        // cursor used to write packet content to socket wbuf
-
-  // reserve buf's size as maximum packet size
-  inline Packet() { Reset(); }
-
-  // TODO could packet be reused?
-  inline void Reset() {
-    buf.resize(BUFFER_INIT_SIZE);
-    buf.shrink_to_fit();
-    buf.clear();
-    len = ptr = write_ptr = msg_type = 0;
-    skip_header_write = true;
-  }
-};
-
 struct Client {
   // Authentication details
   std::string dbname;

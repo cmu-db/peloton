@@ -23,7 +23,7 @@ namespace peloton {
 namespace wire {
 
 // checks for parsing overflows
-void CheckOverflow(Packet *pkt, size_t size) {
+inline void CheckOverflow(Packet *pkt, size_t size) {
   if (pkt->ptr + size - 1 >= pkt->len) {
     // overflow case, throw error
     LOG_WARN(
@@ -158,55 +158,21 @@ void PacketPutCbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
   pkt->len += len;
 }
 
-/*
- * read_packet - Tries to read a single packet, returns true on success,
- * 		false on failure. Accepts pointer to an empty packet, and if the
- * 		expected packet contains a type field. The function does a preliminary
- * 		read to fetch the size value and then reads the rest of the packet.
- *
- * 		Assume: Packet length field is always 32-bit int
- */
-
-//bool ReadPacket(Packet *pkt, bool has_type_field, Client *client) {
-//  uint32_t pkt_size = 0, initial_read_size = sizeof(int32_t);
-//
-//  if (has_type_field)
-//    // need to read type character as well
-//    initial_read_size++;
-//
-//  // reads the type and size of packet
-//  PktBuf init_pkt;
-//
-//  // read first size_field_end bytes
-//  if (!client->sock->ReadBytes(init_pkt,
-//                               static_cast<size_t>(initial_read_size))) {
-//    // nothing more to read
-//    return false;
+//bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets, Client *client,
+//                  const bool &force_flush) {
+//  // iterate through all the packets
+//  for (size_t i = 0; i < packets.size(); i++) {
+//    auto pkt = packets[i].get();
+//    if (!client->sock->BufferWriteBytes(pkt->buf, pkt->len, pkt->msg_type)) {
+//      packets.clear();
+//      return false;
+//    }
 //  }
-//
-//  if (has_type_field) {
-//    // packet includes type byte as well
-//    pkt->msg_type = init_pkt[0];
-//
-//    // extract packet size
-//    std::copy(init_pkt.begin() + 1, init_pkt.end(),
-//              reinterpret_cast<uchar *>(&pkt_size));
-//  } else {
-//    // directly extract packet size
-//    std::copy(init_pkt.begin(), init_pkt.end(),
-//              reinterpret_cast<uchar *>(&pkt_size));
+//  // clear packets
+//  packets.clear();
+//  if (force_flush) {
+//    return client->sock->FlushWriteBuffer();
 //  }
-//
-//  // packet size includes initial bytes read as well
-//  pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-//
-//  if (!client->sock->ReadBytes(pkt->buf, static_cast<size_t>(pkt_size))) {
-//    // nothing more to read
-//    return false;
-//  }
-//
-//  pkt->len = pkt_size;
-//
 //  return true;
 //}
 
