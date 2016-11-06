@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
+#include <include/wire/libevent_server.h>
 #include "wire/libevent_server.h"
 #include "common/macros.h"
 
@@ -112,13 +113,37 @@ void StateMachine(LibeventSocket *conn) {
       }
 
       case CONN_WAIT : {
-        LOG_INFO("Wait not implemented yet");
+        if (conn->UpdateEvent(EV_READ | EV_PERSIST) == false) {
+          LOG_ERROR("Failed to update event, closing");
+          conn->TransitState(CONN_CLOSING);
+          break;
+        }
+
+        conn->TransitState(CONN_READ);
         done = true;
         break;
       }
 
       case CONN_PROCESS : {
-        LOG_INFO("Process not implemented yet");
+        if (conn->rpkt.header_parsed == false) {
+          // parse out the header first
+          if (conn->ReadPacketHeader() == false) {
+            // need more data
+            conn->TransitState(CONN_WAIT);
+            break;
+          }
+        }
+
+        if (conn->rpkt.is_initialized == false) {
+          // packet needs to be initialized with rest of the contents
+          if (conn->ReadPacket() == false) {
+            // need more data
+            conn->TransitState(CONN_WAIT);
+            break;
+          }
+        }
+
+        auto status = conn->pkt_manager->ProcessPacket(&conn->rpkt, responses, force_flush);
         done = true;
         break;
       }
@@ -165,16 +190,5 @@ void StateMachine(LibeventSocket *conn) {
   }
 }
 
-// Update event
-void UpdateEvent(LibeventSocket *conn, short flags) {
-  PL_ASSERT(conn != nullptr);
-  auto base = conn->thread->GetEventBase();
-  auto event = conn->event;
-  auto result =
-      event_assign(event, base, conn->sock_fd, flags, EventHandler, conn);
-  if (result != 0) {
-    LOG_ERROR("Failed to update event");
-  }
-}
 }
 }

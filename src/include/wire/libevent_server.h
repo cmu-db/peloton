@@ -130,39 +130,6 @@ struct Buffer {
   inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
 };
 
-struct InputPacket {
-  uchar msg_type;   // header
-  size_t len;       // size of packet
-  size_t ptr;       // PktBuf cursor
-  SockBuf::const_iterator begin, end; // start and end iterators of the buffer
-  bool header_parsed;   // has the header been parsed
-  bool is_initialized;  // has the packet been initialized
-
-  // reserve buf's size as maximum packet size
-  inline InputPacket() { Reset(); }
-
-  inline void Reset() {
-    is_initialized = false;
-    len = ptr = msg_type = 0;
-  }
-
-  inline void InitializePacket(size_t &pkt_start_index,
-                               SockBuf::const_iterator rbuf_begin) {
-    this->ptr = pkt_start_index;
-    this->begin = rbuf_begin + pkt_start_index;
-    this->end = rbuf_begin + len;
-    is_initialized = true;
-  }
-
-  SockBuf::const_iterator Begin() {
-    return begin;
-  }
-
-  SockBuf::const_iterator End() {
-    return end;
-  }
-};
-
 struct NewConnQueueItem {
   int new_conn_fd;
   short event_flags;
@@ -276,6 +243,9 @@ class LibeventSocket {
 
   // Transit to the target state
   void TransitState(ConnState next_state);
+
+  // Update the existing event to listen to the passed flags
+  bool UpdateEvent(short flags);
 
   // Extracts the header of a Postgres packet from the read socket buffer
   bool ReadPacketHeader();

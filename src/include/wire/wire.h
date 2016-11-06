@@ -75,19 +75,19 @@ class PacketManager {
   bool HardcodedExecuteFilter(std::string query_type);
 
   /* Execute a Simple query protocol message */
-  void ExecQueryMessage(Packet* pkt, ResponseBuffer& responses);
+  void ExecQueryMessage(InputPacket* pkt, ResponseBuffer& responses);
 
   /* Process the PARSE message of the extended query protocol */
-  void ExecParseMessage(Packet* pkt, ResponseBuffer& responses);
+  void ExecParseMessage(InputPacket* pkt, ResponseBuffer& responses);
 
   /* Process the BIND message of the extended query protocol */
-  void ExecBindMessage(Packet* pkt, ResponseBuffer& responses);
+  void ExecBindMessage(InputPacket* pkt, ResponseBuffer& responses);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  bool ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
+  bool ExecDescribeMessage(InputPacket* pkt, ResponseBuffer& responses);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response);
+  void ExecExecuteMessage(InputPacket* pkt, ResponseBuffer& response);
 
   /* closes the socket connection with the client */
 //  void CloseClient();
@@ -147,11 +147,11 @@ class PacketManager {
       : txn_state_(TXN_IDLE), pkt_cntr_(0) {}
 
   /* Startup packet processing logic */
-  bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
+  bool ProcessStartupPacket(InputPacket* pkt, ResponseBuffer& responses);
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  bool ProcessPacket(Packet* pkt, ResponseBuffer& responses, bool& force_flush);
+  bool ProcessPacket(InputPacket* pkt, ResponseBuffer& responses, bool& force_flush);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();

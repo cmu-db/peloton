@@ -62,7 +62,7 @@ void PacketManager::MakeHardcodedParameterStatus(
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PacketManager::ProcessStartupPacket(Packet *pkt,
+bool PacketManager::ProcessStartupPacket(InputPacket *pkt,
                                          ResponseBuffer &responses) {
   std::string token, value;
   std::unique_ptr<Packet> response(new Packet());
@@ -218,7 +218,7 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
 }
 
 // The Simple Query Protocol
-void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecQueryMessage(InputPacket *pkt, ResponseBuffer &responses) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
 
@@ -278,7 +278,7 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
 /*
  * exec_parse_message - handle PARSE message
  */
-void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses) {
   std::string error_message, statement_name, query_string, query_type;
   GetStringToken(pkt, statement_name);
 
@@ -350,7 +350,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
   GetStringToken(pkt, portal_name);
@@ -358,7 +358,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   if (skipped_stmt_) {
     // send bind complete
-    std::unique_ptr<Packet> response(new Packet());
+    std::unique_ptr<InputPacket> response(new InputPacket());
     response->msg_type = BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
@@ -622,7 +622,7 @@ size_t PacketManager::ReadParamValue(
   return end - begin;
 }
 
-bool PacketManager::ExecDescribeMessage(Packet *pkt,
+bool PacketManager::ExecDescribeMessage(InputPacket *pkt,
                                         ResponseBuffer &responses) {
   if (skipped_stmt_) {
     // send 'no-data' message
@@ -667,7 +667,7 @@ bool PacketManager::ExecDescribeMessage(Packet *pkt,
   return true;
 }
 
-void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecExecuteMessage(InputPacket *pkt, ResponseBuffer &responses) {
   // EXECUTE message
   std::vector<ResultType> results;
   std::string error_message, portal_name;
@@ -729,7 +729,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses,
+bool PacketManager::ProcessPacket(InputPacket *pkt, ResponseBuffer &responses,
                                   bool &force_flush) {
   LOG_TRACE("message type: %c", pkt->msg_type);
   // We don't set force_flush to true for `PBDE` messages because they're

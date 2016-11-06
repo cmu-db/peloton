@@ -42,6 +42,31 @@ void LibeventSocket::TransitState(ConnState next_state) {
   state = next_state;
 }
 
+// Update event
+bool LibeventSocket::UpdateEvent(short flags) {
+  auto base = thread->GetEventBase();
+  if (event_del(event) == -1) {
+    LOG_ERROR("Failed to delete event");
+    return false;
+  }
+  auto result =
+      event_assign(event, base, sock_fd, flags, EventHandler, (void *) this);
+
+    if (result != 0) {
+    LOG_ERROR("Failed to update event");
+    return false;
+  }
+
+  event_flags = flags;
+
+  if (event_add(event, nullptr) == -1) {
+   LOG_ERROR("Failed to add event");
+    return false;
+  }
+
+  return true;
+}
+
 void LibeventSocket::GetSizeFromPktHeader(size_t &start_index) {
   rpkt.len = 0;
   // directly converts from network byte order to little-endian
@@ -137,6 +162,7 @@ ReadState LibeventSocket::FillReadBuffer() {
     std::memmove(rbuf.GetPtr(0), rbuf.GetPtr(rbuf.buf_ptr),
                  rbuf.buf_size - rbuf.buf_ptr);
   }
+
   // return explicitly
   while (done == false) {
     if (rbuf.buf_size == SOCKET_BUFFER_SIZE) {
