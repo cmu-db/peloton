@@ -113,6 +113,25 @@ TEST_F(InsertTests, InsertRecord) {
   EXPECT_TRUE(executor2.Execute());
   EXPECT_EQ(2, table->GetTupleCount());
 
+  auto values_ptr2 = new std::vector<expression::AbstractExpression *>;
+  insert_node->insert_values->push_back(values_ptr2);
+
+  values_ptr2->push_back(new expression::ConstantValueExpression(
+      common::ValueFactory::GetIntegerValue(100)));
+
+  values_ptr2->push_back(new expression::ConstantValueExpression(
+      common::ValueFactory::GetVarcharValue("Hello")));
+
+  delete values_ptr->at(0);
+  values_ptr->at(0) = new expression::ConstantValueExpression(
+      common::ValueFactory::GetIntegerValue(90));
+  planner::InsertPlan node3(insert_node.get());
+  executor::InsertExecutor executor3(&node3, context.get());
+
+  EXPECT_TRUE(executor3.Init());
+  EXPECT_TRUE(executor3.Execute());
+  EXPECT_EQ(4, table->GetTupleCount());
+
   txn_manager.CommitTransaction(txn);
 
   // free the database just created

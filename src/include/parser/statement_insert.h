@@ -45,7 +45,7 @@ struct InsertStatement : SQLStatement {
       for (auto tuple : *insert_values) {
         for( auto expr : *tuple){
           if (expr->GetExpressionType() != EXPRESSION_TYPE_PLACEHOLDER)
-                    delete expr;
+            delete expr;
         }
         delete tuple;
       }
