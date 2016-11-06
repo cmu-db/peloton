@@ -71,7 +71,7 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg) {
 }
 
 void StateMachine(LibeventSocket *conn) {
-  LOG_DEBUG("StateMachine invoked");
+  LOG_DEBUG("StateMachine invoked %d", conn->state);
   bool done = false;
 
   while (done == false) {
@@ -124,18 +124,24 @@ void StateMachine(LibeventSocket *conn) {
       }
 
       case CONN_WRITE: {
-        // If the socket is still not ready, remain in CONN_WRITE state
-        if (conn->WritePackets(true) == false) {
-          // do nothing. remain in write state
-        } else {
-          // transit to read state
-          UpdateEvent(conn, EV_READ | EV_PERSIST);
-          TransitState(conn, CONN_READ);
+        try {
+          // If the socket is still not ready, remain in CONN_WRITE state
+          if (conn->WritePackets(true) == false) {
+            // do nothing. remain in write state
+          } else {
+            // transit to read state
+            UpdateEvent(conn, EV_READ | EV_PERSIST);
+            TransitState(conn, CONN_READ);
+          }
         }
-        done = true;
+        catch (ConnectionException &e) {
+          e.PrintStackTrace();
+          TransitState(conn, CONN_CLOSING);
+        }
         break;
       }
       case CONN_WAIT: {
+
         UpdateEvent(conn, EV_READ | EV_PERSIST);
         TransitState(conn, CONN_READ);
         done = true;
@@ -143,7 +149,12 @@ void StateMachine(LibeventSocket *conn) {
       }
 
       case CONN_CLOSING: {
-        LOG_INFO("Close is not implemented yet");
+
+        conn->CloseSocket();
+        done = true;
+        break;
+      }
+      case CONN_CLOSED: {
         done = true;
         break;
       }

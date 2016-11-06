@@ -395,6 +395,12 @@ bool LibeventSocket::BufferWriteBytesContent(Packet *pkt) {
 }
 
 void LibeventSocket::CloseSocket() {
+  LOG_DEBUG("Attempt to close the connection %d", sock_fd);
+  // Remove listening event
+  event_del(event);
+
+  TransitState(this, CONN_CLOSED);
+
   for (;;) {
     int status = close(sock_fd);
     if (status < 0) {
