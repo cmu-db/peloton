@@ -4,7 +4,7 @@
 //
 // container_tuple_test.cpp
 //
-// Identification: test/expression/container_tuple_test.cpp
+// Identification: test/common/container_tuple_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
