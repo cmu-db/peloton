@@ -143,8 +143,15 @@ void StateMachine(LibeventSocket *conn) {
           }
         }
 
-        auto status = conn->pkt_manager->ProcessPacket(&conn->rpkt, responses, force_flush);
-        done = true;
+        auto status = conn->pkt_manager.ProcessPacket(&conn->rpkt);
+
+        if (status == false) {
+          // packet processing can't proceed further
+          conn->TransitState(CONN_CLOSING);
+        } else {
+          // We should have responses ready to send
+          conn->TransitState(CONN_WRITE);
+        }
         break;
       }
 
@@ -184,8 +191,10 @@ void StateMachine(LibeventSocket *conn) {
         break;
       }
 
-      // TODO handle other states, too
-      default: {}
+      case CONN_INVALID: {
+        PL_ASSERT(false);
+        break;
+      }
     }
   }
 }

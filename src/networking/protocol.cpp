@@ -358,7 +358,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
 
   if (skipped_stmt_) {
     // send bind complete
-    std::unique_ptr<InputPacket> response(new InputPacket());
+    std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;

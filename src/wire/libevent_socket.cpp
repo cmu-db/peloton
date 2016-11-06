@@ -86,8 +86,8 @@ bool LibeventSocket::IsReadDataAvailable(size_t bytes) {
 // then reads the rest of the packet.
 // Assume: Packet length field is always 32-bit int
 bool LibeventSocket::ReadPacketHeader() {
-  size_t initial_read_size = sizeof(int32_t), packet_size;
-  if (is_started == true) {
+  size_t initial_read_size = sizeof(int32_t);
+  if (pkt_manager.is_started == true) {
     // All packets other than the startup packet have a 5B header
     initial_read_size++;
   }
