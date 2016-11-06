@@ -43,7 +43,6 @@ struct InputPacket {
 
   inline void InitializePacket(size_t &pkt_start_index,
                                SockBuf::const_iterator rbuf_begin) {
-    this->ptr = pkt_start_index;
     this->begin = rbuf_begin + pkt_start_index;
     this->end = rbuf_begin + len;
     is_initialized = true;

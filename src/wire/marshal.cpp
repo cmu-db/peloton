@@ -24,12 +24,7 @@ namespace wire {
 
 // checks for parsing overflows
 inline void CheckOverflow(InputPacket *rpkt, size_t size) {
-  if (rpkt->ptr + size - 1 >= rpkt->len) {
-    // overflow case, throw error
-    LOG_WARN(
-        "Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
-        (int)rpkt->ptr, (int)size, (int)rpkt->len);
-  }
+  PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 
 int PacketGetInt(InputPacket *rpkt, uchar base) {
@@ -78,6 +73,9 @@ void PacketGetBytes(InputPacket *rpkt, size_t len, PktBuf &result) {
 }
 
 void PacketGetString(InputPacket *rpkt, size_t len, std::string &result) {
+  // return empty string
+  if (len == 0) return;
+
   // exclude null char for std string
   result =
       std::string(rpkt->Begin()+rpkt->ptr, rpkt->Begin()+rpkt->ptr+len-1);
@@ -93,21 +91,21 @@ void GetStringToken(InputPacket *rpkt, std::string &result) {
   if (find_itr == rpkt->End()) {
     // no match? consider the remaining vector
     // as a single string and continue
-    rpkt->ptr = rpkt->len;
     result = std::string(rpkt->Begin() + rpkt->ptr, rpkt->End());
+    rpkt->ptr = rpkt->len;
     return;
+  } else {
+    // update ptr position
+    rpkt->ptr = find_itr - rpkt->Begin() + 1;
+
+    // edge case
+    if (start == find_itr) {
+      result = std::string("");
+      return;
+    }
+
+    result = std::string(start, find_itr);
   }
-
-  // update ptr position
-  rpkt->ptr = find_itr - rpkt->Begin() + 1;
-
-  // edge case
-  if (start == find_itr) {
-    result = std::string("");
-    return;
-  }
-
-  result = std::string(start, find_itr);
 }
 
 //void PacketPutByte(std::unique_ptr<Packet> &pkt, const uchar c) {

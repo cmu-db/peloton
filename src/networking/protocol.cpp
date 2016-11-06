@@ -35,6 +35,7 @@
 namespace peloton {
 namespace wire {
 
+// TODO: Remove hardcoded auth strings
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
     PacketManager::parameter_status_map_ =
@@ -506,7 +507,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
   responses.push_back(std::move(response));
 }
 
-size_t PacketManager::ReadParamType(Packet *pkt, int num_params,
+size_t PacketManager::ReadParamType(InputPacket *pkt, int num_params,
                                     std::vector<int32_t> &param_types) {
   auto begin = pkt->ptr;
   // get the type of each parameter
@@ -518,7 +519,7 @@ size_t PacketManager::ReadParamType(Packet *pkt, int num_params,
   return end - begin;
 }
 
-size_t PacketManager::ReadParamFormat(Packet *pkt, int num_params_format,
+size_t PacketManager::ReadParamFormat(InputPacket *pkt, int num_params_format,
                                       std::vector<int16_t> &formats) {
   auto begin = pkt->ptr;
   // get the format of each parameter
@@ -531,7 +532,7 @@ size_t PacketManager::ReadParamFormat(Packet *pkt, int num_params_format,
 
 // For consistency, this function assumes the input vectors has the correct size
 size_t PacketManager::ReadParamValue(
-    Packet *pkt, int num_params, std::vector<int32_t> &param_types,
+    InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
     std::vector<std::pair<int, std::string>> &bind_parameters,
     std::vector<common::Value> &param_values, std::vector<int16_t> &formats) {
 
@@ -810,6 +811,24 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
   PacketPutByte(pkt, txn_status);
 
   responses.push_back(std::move(pkt));
+}
+
+void PacketManager::Reset() {
+  client_.Reset();
+  is_started = false;
+  force_flush = false;
+
+  responses.clear();
+  unnamed_statement_.reset();
+  result_format_.clear();
+  txn_state_ = TXN_IDLE;
+  skipped_stmt_ = false;
+  skipped_query_string_.clear();
+  skipped_query_type_.clear();
+
+  statement_cache_.clear();
+  portals_.clear();
+  pkt_cntr_ = 0;
 }
 
 //bool PacketManager::ManageStartupPacket() {

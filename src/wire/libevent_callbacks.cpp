@@ -45,11 +45,13 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
       thread->new_conn_queue.Dequeue(item);
       conn = LibeventServer::GetConn(item->new_conn_fd);
       if (conn == nullptr) {
+        LOG_INFO("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
         LibeventServer::CreateNewConn(item->new_conn_fd, item->event_flags,
                                       static_cast<LibeventThread *>(thread),
                                       CONN_READ);
       } else {
+        LOG_INFO("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset(item->event_flags, static_cast<LibeventThread *>(thread),
                     CONN_READ);
@@ -132,6 +134,14 @@ void StateMachine(LibeventSocket *conn) {
             // need more data
             conn->TransitState(CONN_WAIT);
             break;
+          } else {
+            // We now have the length of the rest of the packet
+            // check if the rest of the packet is too huge to handle
+            if (conn->CheckPacketOverflow() == true) {
+              // close conn
+              conn->TransitState(CONN_CLOSING);
+              break;
+            }
           }
         }
 
@@ -143,6 +153,7 @@ void StateMachine(LibeventSocket *conn) {
             break;
           }
         }
+        PL_ASSERT(conn->rpkt.is_initialized == true);
 
         if (conn->pkt_manager.is_started == false) {
           // We need to handle startup packet first

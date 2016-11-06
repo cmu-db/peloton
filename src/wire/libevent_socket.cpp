@@ -75,7 +75,6 @@ void LibeventSocket::GetSizeFromPktHeader(size_t &start_index) {
   }
   // packet size includes initial bytes read as well
   rpkt.len = rpkt.len - sizeof(int32_t);
-  rpkt.header_parsed = true;
 }
 
 bool LibeventSocket::IsReadDataAvailable(size_t bytes) {
@@ -108,7 +107,8 @@ bool LibeventSocket::ReadPacketHeader() {
   }
 
   // we have processed the data, move buffer pointer
-  rbuf.buf_ptr += initial_read_size;
+  rbuf_.buf_ptr += initial_read_size;
+  rpkt.header_parsed = true;
 
   return true;
 }
@@ -442,11 +442,12 @@ void LibeventSocket::CloseSocket() {
 
 void LibeventSocket::Reset(short event_flags, LibeventThread *thread,
                            ConnState init_state) {
-  is_disconnected = false;
-  rbuf.Reset();
-  wbuf.Reset();
-  // TODO: Reuse packet manager, don't destroy
-  pkt_manager.reset(nullptr);
+  rbuf_.Reset();
+  wbuf_.Reset();
+  pkt_manager.Reset();
+  state = CONN_INVALID;
+  rpkt.Reset();
+  next_response_ = 0;
   Init(event_flags, thread, init_state);
 }
 

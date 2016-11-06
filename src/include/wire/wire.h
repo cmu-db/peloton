@@ -35,9 +35,47 @@ namespace wire {
 typedef std::vector<std::unique_ptr<Packet>> ResponseBuffer;
 
 class PacketManager {
-  /* Note: The responses argument in every subsequent function
-   * is used to batch all the generated packets ofr that unit */
+ public:
+  Client client_;
+  bool is_started = false;   // has the startup packet been received for this connection
+  bool force_flush = false;   // Should we send the buffered packets right away?
 
+  // TODO declare a response buffer pool so that we can reuse the responses
+  // so that we don't have to new packet each time
+  ResponseBuffer responses;
+
+  // Manage standalone queries
+  std::shared_ptr<Statement> unnamed_statement_;
+  // The result-column format code
+  std::vector<int> result_format_;
+  // gloabl txn state
+  uchar txn_state_;
+  // state to mang skipped queries
+  bool skipped_stmt_ = false;
+  std::string skipped_query_string_;
+  std::string skipped_query_type_;
+
+  static const std::unordered_map<std::string, std::string>
+      parameter_status_map_;
+
+  // Statement cache
+  Cache<std::string, Statement> statement_cache_;
+  //  Portals
+  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
+  // packets ready for read
+  size_t pkt_cntr_;
+
+  // Manage parameter types for unnamed statement
+  stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
+
+  // Parameter types for statements
+  // Warning: the data in the param buffer becomes invalid when the value stored
+  // in stat table is destroyed
+  std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
+      statement_param_types_;
+
+
+private:
   // Generic error protocol packet
   void SendErrorResponse(
       std::vector<std::pair<uchar, std::string>> error_status,
@@ -94,57 +132,21 @@ class PacketManager {
 
  public:
   // Deserialize the parameter types from packet
-  static size_t ReadParamType(Packet* pkt, int num_params,
+  static size_t ReadParamType(InputPacket* pkt, int num_params,
                               std::vector<int32_t>& param_types);
 
   // Deserialize the parameter format from packet
-  static size_t ReadParamFormat(Packet* pkt, int num_params_format,
+  static size_t ReadParamFormat(InputPacket* pkt, int num_params_format,
                                 std::vector<int16_t>& formats);
 
   // Deserialize the parameter value from packet
   static size_t ReadParamValue(
-      Packet* pkt, int num_params, std::vector<int32_t>& param_types,
+      InputPacket* pkt, int num_params, std::vector<int32_t>& param_types,
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<common::Value>& param_values, std::vector<int16_t>& formats);
 
-  Client client_;
-
-  // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_statement_;
-
-  // Manage parameter types for unnamed statement
-  stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
-
-  // The result-column format code
-  std::vector<int> result_format_;
-
-  // gloabl txn state
-  uchar txn_state_;
-
-  // state to mang skipped queries
-  bool skipped_stmt_ = false;
-  std::string skipped_query_string_;
-  std::string skipped_query_type_;
-
-  static const std::unordered_map<std::string, std::string>
-      parameter_status_map_;
-
-  // Statement cache
-  Cache<std::string, Statement> statement_cache_;
-
-  // Parameter types for statements
-  // Warning: the data in the param buffer becomes invalid when the value stored
-  // in stat table is destroyed
-  std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
-      statement_param_types_;
-
-  //  Portals
-  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
-  // packets ready for read
-  size_t pkt_cntr_;
-
   inline PacketManager()
-      : txn_state_(TXN_IDLE), pkt_cntr_(0) {}
+    : txn_state_(TXN_IDLE), pkt_cntr_(0) {}
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(InputPacket* pkt, ResponseBuffer& responses);
@@ -155,9 +157,7 @@ class PacketManager {
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
-
-    /* Manage subsequent packets */
-  //  bool ManagePacket();
+  void Reset();
 };
 
 }  // End wire namespace

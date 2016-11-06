@@ -108,6 +108,9 @@ template <class Key, class Value>
 void Cache<Key, Value>::clear(void) {
   list_.clear();
   map_.clear();
+  counts_.clear();
+  capacity_ = DEFAULT_CACHE_SIZE;
+  insert_threshold_ = DEFAULT_CACHE_INSERT_THRESHOLD;
 }
 
 /** @brief is the cache empty
