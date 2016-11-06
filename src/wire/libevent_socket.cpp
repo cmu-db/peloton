@@ -104,7 +104,7 @@ bool LibeventSocket::ReadPacketHeader() {
     // extract packet size
     GetSizeFromPktHeader(rbuf.buf_ptr+1);
   } else {
-    GetSizeFromPktHeader(rbuf.buf_ptr);
+    GetSizeFromPktHeader(rbuf_.buf_ptr);
   }
 
   // we have processed the data, move buffer pointer

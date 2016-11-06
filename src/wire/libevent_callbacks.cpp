@@ -125,6 +125,7 @@ void StateMachine(LibeventSocket *conn) {
       }
 
       case CONN_PROCESS : {
+        bool status;
         if (conn->rpkt.header_parsed == false) {
           // parse out the header first
           if (conn->ReadPacketHeader() == false) {
@@ -143,7 +144,14 @@ void StateMachine(LibeventSocket *conn) {
           }
         }
 
-        auto status = conn->pkt_manager.ProcessPacket(&conn->rpkt);
+        if (conn->pkt_manager.is_started == false) {
+          // We need to handle startup packet first
+          status = conn->pkt_manager.ProcessStartupPacket(&conn->rpkt);
+          conn->pkt_manager.is_started = true;
+        } else {
+          // Process all other packets
+          status = conn->pkt_manager.ProcessPacket(&conn->rpkt);
+        }
 
         if (status == false) {
           // packet processing can't proceed further
