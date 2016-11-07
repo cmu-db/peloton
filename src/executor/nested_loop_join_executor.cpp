@@ -20,7 +20,7 @@
 #include "executor/executor_context.h"
 #include "planner/nested_loop_join_plan.h"
 #include "expression/abstract_expression.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace executor {

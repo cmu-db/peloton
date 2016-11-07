@@ -18,7 +18,7 @@
 #include "executor/logical_tile_factory.h"
 #include "executor/hash_join_executor.h"
 #include "expression/abstract_expression.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace executor {
