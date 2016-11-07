@@ -162,19 +162,6 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   // LOG_INFO("INDEX CREATED!");
   // txn_manager.CommitTransaction(txn);
 
-  auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "table_a");
-  // Expected 1 , Primary key index + created index
-  EXPECT_EQ(target_table_->GetIndexCount(), 1);
-
-  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, "table_b");
-  // Expected 1 , Primary key index + created index
-  EXPECT_EQ(target_table_->GetIndexCount(), 1);
-  std::cout<<"\nbefore check index\n";
-  EXPECT_EQ(target_table_->GetIndexColumns().at(0).size(), 1);
-  std::cout<<*(target_table_->GetIndexColumns().at(0).begin())<<" after check index\n";
-
   // // Test update tuple with index scan
   // LOG_INFO("Updating a tuple...");
   // LOG_INFO(
@@ -219,13 +206,36 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   // EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
   // Perform the join
   txn = txn_manager.BeginTransaction();
+  LOG_INFO("Select * ...");
+  LOG_INFO(
+      "Query: SELECT id FROM table_a WHERE id = 1;");
+  statement.reset(new Statement("SELECT",
+                                "SELECT id FROM table_a WHERE id = 1;"));
+
+  auto select_stmt = peloton_parser.BuildParseTree(
+      "SELECT id FROM table_a WHERE id = 1;");
+
+  statement->SetPlanTree(
+      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+                                             params, result, result_format);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Select * completed!");
+  txn_manager.CommitTransaction(txn);
+
+  LOG_INFO("Before Join\n\n\n\n\n\n\n\n\n\n\n");
+
+  txn = txn_manager.BeginTransaction();
   LOG_INFO("Join ...");
   LOG_INFO(
-      "Query: SELECT * FROM table_a INNER JOIN table_b ON A.id = B.id;");
+      "Query: SELECT * FROM table_a INNER JOIN table_b ON table_a.id = table_a.id;");
   statement.reset(new Statement("SELECT",
                                 "SELECT * FROM table_a INNER JOIN table_b ON table_a.id = table_b.id;"));
 
-  auto select_stmt = peloton_parser.BuildParseTree(
+  select_stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM table_a INNER JOIN table_b ON table_a.id = table_b.id;");
 
   statement->SetPlanTree(

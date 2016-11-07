@@ -705,6 +705,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
         index_index++;
       }
     }
+    std::cout<<predicate_column_ids.size()<<std::endl;
   }
 
   if (!index_searchable) {
@@ -1247,53 +1248,68 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
   std::cout<<"in func"<<std::endl;
   // std::cout<<(select_stmt->from_table->join != NULL)<<std::endl;
   // std::cout<<(select_stmt->getSelectList() != NULL)<<std::endl;
-  
+
   auto left_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, select_stmt->from_table->join->left->GetTableName());
   auto right_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, select_stmt->from_table->join->right->GetTableName());
 
-  oid_t index_id = 0;
-
+  // PelotonJoinType join_type = select_stmt->from_table->join->type;
+  auto join_condition = select_stmt->from_table->join->condition;
+  auto join_for_update = select_stmt->is_for_update;
+  
   // column predicates passing to the index
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<common::Value> values;
-
-  // auto join_type = select_stmt->from_table->join->type;
-  auto join_condition = select_stmt->from_table->join->condition;
-  // auto join_for_update = select_stmt->is_for_update;
-  // std::unique_ptr<planner::SeqScanPlan> left_SelectPlan;
-  // std::unique_ptr<planner::SeqScanPlan> right_SelectPlan;
-  // GetPredicateColumns(left_table->GetSchema(), join_condition, );
-  if (!CheckIndexSearchable(left_table, join_condition,
-                            key_column_ids, expr_types, values, index_id)) {
-    // Create sequential scan plan
-    LOG_INFO("No index, trying to create a sequential scan on left table.");
-    // left_SelectPlan = new planner::SeqScanPlan(left_table, join_condition, key_column_ids, join_for_update);
-    // LOG_TRACE("Sequential scan plan on left table created");
-  }
-  std::cout<<key_column_ids.size()<<std::endl;
-  std::cout<<expr_types.size()<<std::endl;
-  std::cout<<values.size()<<std::endl;
-  std::cout<<index_id<<std::endl;
-
-  std::cout<<std::endl;
-  if (!CheckIndexSearchable(right_table, join_condition,
-                            key_column_ids, expr_types, values, index_id)) {
-    // Create sequential scan plan
-    LOG_INFO("No index, trying to create a sequential scan on left table.");
-    // right_SelectPlan = new planner::SeqScanPlan(right_table, join_condition, key_column_ids, join_for_update);
-    // LOG_TRACE("Sequential scan plan on left table created");
-  }
-
-  std::cout<<key_column_ids.size()<<std::endl;
-  std::cout<<expr_types.size()<<std::endl;
-  std::cout<<values.size()<<std::endl;
-  std::cout<<index_id<<std::endl;
-  // assume index exists
   
+  std::unique_ptr<planner::SeqScanPlan> left_SelectPlan(new planner::SeqScanPlan(left_table, join_condition, key_column_ids, join_for_update));
+  std::unique_ptr<planner::SeqScanPlan> right_SelectPlan(new planner::SeqScanPlan(right_table, join_condition, key_column_ids, join_for_update));  
+  
+  // oid_t index_id = 0;
 
+  // auto left_key = expression::ExpressionUtil::ConvertToTupleValueExpression(left_table->GetSchema(), join_condition->GetLeft()->GetName());
+  // generate hash for right table
+  auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(right_table->GetSchema(), join_condition->GetRight()->GetName());
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+  hash_keys.emplace_back(right_key);
+
+  // Create hash plan node
+  std::unique_ptr<planner::HashPlan> hash_plan_node(new planner::HashPlan(hash_keys));
+  hash_plan_node->AddChild(std::move(right_SelectPlan));
+
+
+  std::vector<oid_t> output_column_ids = {};
+  bool function_found = false;
+  for (auto elem : *select_stmt->select_list) {
+    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+      function_found = true;
+      break;
+    }
+  }
+  std::vector<catalog::Column> output_table_columns = {};
+  // Pass all columns
+  if (function_found ||
+      select_stmt->select_list->at(0)->GetExpressionType() ==
+          EXPRESSION_TYPE_STAR) {
+    auto left_columns = left_table->GetSchema()->GetColumns();
+    for (auto left_column: left_columns) {
+      output_table_columns.push_back(left_column);
+    }
+    auto right_columns = right_table->GetSchema()->GetColumns();
+    for (auto right_column: right_columns) {
+      output_table_columns.push_back(right_column);
+    }
+  }
+  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(output_table_columns));
+  auto projection = CreateHackProjection();
+  LOG_TRACE("Index scan column size: %ld\n", output_table_columns.size());
+  // // Create hash join plan node.
+  // std::unique_ptr<planner::HashJoinPlan> hash_join_plan_node(
+  //     new planner::HashJoinPlan(join_type, std::move(join_condition),
+  //                               std::move(projection), schema));
+  // index only works on comparison with a constant
+  
   std::cout<<"\nGot tables "<<select_stmt->from_table->join->left->GetTableName()<<" "<<select_stmt->from_table->join->right->GetTableName()<<"\n\n";
 
   return NULL;
