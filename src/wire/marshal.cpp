@@ -23,7 +23,7 @@ namespace peloton {
 namespace wire {
 
 // checks for parsing overflows
-inline void CheckOverflow(InputPacket *rpkt, size_t size) {
+inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt, UNUSED_ATTRIBUTE size_t size) {
   PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 

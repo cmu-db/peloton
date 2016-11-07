@@ -64,7 +64,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   }
 }
 
-void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg) {
+void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags, void *arg) {
   LOG_INFO("Event callback fired for connfd: %d", connfd);
   LibeventSocket *conn = static_cast<LibeventSocket *>(arg);
   PL_ASSERT(conn != nullptr);
