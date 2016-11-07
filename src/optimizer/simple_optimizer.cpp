@@ -114,6 +114,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
 
       if (select_stmt->from_table->join != NULL) {
+        child_plan = CreateJoinPlan(select_stmt);
         throw NotImplementedException("Error: Joins are not implemented yet");
       }
 
@@ -1242,27 +1243,58 @@ std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
 
 std::unique_ptr<planner::AbstractPlan>
 SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
+  // assuming no aggregation
   std::cout<<"in func"<<std::endl;
-  // std::cout<<((select_stmt->select_list)[0]).at(0)->GetInfo()<<std::endl;
-  std::cout<<(select_stmt->from_table->join != NULL)<<std::endl;
-  // std::cout<<select_stmt->from_table->join->left->GetTableName()<<std::endl;
-  // std::cout<<select_stmt->from_table->join->right->GetTableName()<<std::endl;
-
-  // std::cout<<(select_stmt->from_table->list->at(0)->GetTableName())<<std::endl;
-  // std::cout<<(select_stmt->from_table->list->at(1)->GetTableName())<<std::endl;
-  // std::cout<<(select_stmt->GetType() == STATEMENT_TYPE_SELECT)<<std::endl;
-  // std::cout<<select_stmt->GetInfo()<<std::endl;
-  // std::cout<<select_stmt->from_table->table_name<<std::endl;
-  // std::cout<<select_stmt->from_table->list->at(0)->GetTableName()<<std::endl;
-  // std::cout<<select_stmt->from_table->list->at(1)->GetTableName()<<std::endl;
+  // std::cout<<(select_stmt->from_table->join != NULL)<<std::endl;
+  // std::cout<<(select_stmt->getSelectList() != NULL)<<std::endl;
+  
   auto left_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, select_stmt->from_table->join->left->GetTableName());
   auto right_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, select_stmt->from_table->join->right->GetTableName());
 
-  std::cout<<"\nGot tables\n\n";
-  auto left_scan_plan = CreateScanPlan(left_table, select_stmt);
-  auto right_scan_plan = CreateScanPlan(right_table, select_stmt);
+  oid_t index_id = 0;
+
+  // column predicates passing to the index
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<common::Value> values;
+
+  // auto join_type = select_stmt->from_table->join->type;
+  auto join_condition = select_stmt->from_table->join->condition;
+  // auto join_for_update = select_stmt->is_for_update;
+  // std::unique_ptr<planner::SeqScanPlan> left_SelectPlan;
+  // std::unique_ptr<planner::SeqScanPlan> right_SelectPlan;
+  // GetPredicateColumns(left_table->GetSchema(), join_condition, );
+  if (!CheckIndexSearchable(left_table, join_condition,
+                            key_column_ids, expr_types, values, index_id)) {
+    // Create sequential scan plan
+    LOG_INFO("No index, trying to create a sequential scan on left table.");
+    // left_SelectPlan = new planner::SeqScanPlan(left_table, join_condition, key_column_ids, join_for_update);
+    // LOG_TRACE("Sequential scan plan on left table created");
+  }
+  std::cout<<key_column_ids.size()<<std::endl;
+  std::cout<<expr_types.size()<<std::endl;
+  std::cout<<values.size()<<std::endl;
+  std::cout<<index_id<<std::endl;
+
+  std::cout<<std::endl;
+  if (!CheckIndexSearchable(right_table, join_condition,
+                            key_column_ids, expr_types, values, index_id)) {
+    // Create sequential scan plan
+    LOG_INFO("No index, trying to create a sequential scan on left table.");
+    // right_SelectPlan = new planner::SeqScanPlan(right_table, join_condition, key_column_ids, join_for_update);
+    // LOG_TRACE("Sequential scan plan on left table created");
+  }
+
+  std::cout<<key_column_ids.size()<<std::endl;
+  std::cout<<expr_types.size()<<std::endl;
+  std::cout<<values.size()<<std::endl;
+  std::cout<<index_id<<std::endl;
+  // assume index exists
+  
+
+  std::cout<<"\nGot tables "<<select_stmt->from_table->join->left->GetTableName()<<" "<<select_stmt->from_table->join->right->GetTableName()<<"\n\n";
 
   return NULL;
   
