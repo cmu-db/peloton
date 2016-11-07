@@ -57,34 +57,32 @@ ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(uint64_t value) {
 }
 
 /*
+ * ConvertSignedValueToUnsignedValue() - As name suggests
+ *
  * Convert from a signed value to an unsigned value. The max value for the type
  * is supplied as a template
  * parameter. int64_t is used for all types to prevent overflow.
  */
-template <int64_t TypeMaxValue, typename SignedValueType,
+template <int64_t TypeMaxValue, 
+          typename SignedValueType,
           typename UnsignedValueType>
-inline static UnsignedValueType ConvertSignedValueToUnsignedValue(
-    SignedValueType value) {
+inline static 
+UnsignedValueType ConvertSignedValueToUnsignedValue(SignedValueType value) {
   return static_cast<UnsignedValueType>(value + TypeMaxValue + 1);
 }
 
 /*
- * Specialization for int64_ts necessary to prevent overflow.
+ * ConvertSignedValueToUnsignedValue() - As name suggests
+ *
+ * This is a template specialization to prevent integer oveflow for 
+ * int64_t value type.
  */
 template <>
-inline uint64_t ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
-    int64_t value) {
-  uint64_t retval = 0;
-  if (value < 0) {
-    value += INT64_MAX;
-    value++;
-    retval = static_cast<uint64_t>(value);
-  } else {
-    retval = static_cast<uint64_t>(value);
-    retval += INT64_MAX;
-    retval++;
-  }
-  return retval;
+inline uint64_t 
+ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(int64_t value) {
+  return (value < 0) ? \
+         (static_cast<uint64_t>(value + INT64_MAX + 1)) : \
+         (static_cast<uint64_t>(value) + INT64_MAX + 1);
 }
 
 /**
