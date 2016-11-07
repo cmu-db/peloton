@@ -85,8 +85,8 @@ ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(int64_t value) {
          (static_cast<uint64_t>(value) + INT64_MAX + 1);
 }
 
-/**
- *  class IntsKey - Integer key
+/*
+ * class IntsKey - Integer key
  *
  * Integer key that will pack all key data into KeySize number of uint64_t.
  * The minimum number of uint64_ts necessary to pack all the integers is used.
@@ -578,26 +578,30 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
 };
 
 /*
- * TupleKey is the all-purpose fallback key for indexes that can't be
- * better specialized. Each TupleKey wraps a pointer to a *persistent
- * table tuple*. TableIndex knows the column indices from the
- * persistent table that form the index key. TupleKey uses this data
- * to evaluate and compare keys by extracting and comparing
- * the appropriate columns' values.
+ * class TupleKey - General purpose key that represents a combination of columns
+ *                  inside a table
  *
- * Note that the index code will create keys in the schema of the
- * the index key. While all TupleKeys resident in the index itself
- * will point to persistent tuples, there are ephemeral TupleKey
- * instances that point to tuples in the index key schema.
+ * This class is used to represent index keys when the key could not be 
+ * coded as either IntsKey or GenricKey, and thus has the most loose restriction
+ * on the composition of the key as well as operations allowed. 
  *
- * Pros: supports any combination of columns in a key. Each index
- * key is 24 bytes (a pointer to a tuple and a pointer to the column
- * indices (which map index columns to table columns).
+ * TupleKey consists of three pointer, one pointing to the underlying tuple 
+ * in a persistent table (i.e. the lifetime of the index should at least be
+ * within the lifetime of the table to ensure safe memory access); another
+ * pointing to the schema of the table that defines methods on the key including
+ * comparison and equality check. The last pointer points to a mapping relation
+ * (an array of ints) that maps index column to table columns to assist 
+ * extrating necessary columns from a table tuple. 
  *
- * Cons: requires an indirection to evaluate a key (must follow the
- * the pointer to read the underlying storage::Tuple). Compares what are
- * probably very wide keys one column at a time by initializing and
- * comparing Values.
+ * Among the three data members, tuple pointer and schema pointer is 
+ * indispensable for a functioning TupleKey instance, while mapping relation
+ * may be nullptr for an emphermal key.
+ *
+ * The usage of TupleKey requires another level of indirection and thus is less
+ * efficient than the more specialized counterparts. Also, key comparison and
+ * equality checking requires an interpreted comparison of all its columns
+ * which further lowers the performance of TupleKey. Unless necessary users
+ * should always consider IntsKey or GenericKey whenever possible
  */
 class TupleKey {
  public:
