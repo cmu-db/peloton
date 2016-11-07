@@ -29,25 +29,29 @@ namespace index {
 using namespace peloton::common;
 
 /*
+ * ConvertUnsignedValueToSignedValue() - As name suggests
+ *
  * Convert from a uint64_t that has had a signed number packed into it to
  * the specified signed type. The max signed value for that type is supplied as
- * the TypeMaxValue template parameter.
+ * the TargetTypeMaxValue template parameter.
  */
-template <typename SignedType, int64_t TypeMaxValue>
-inline static SignedType ConvertUnsignedValueToSignedValue(uint64_t value) {
-  int64_t retval = static_cast<int64_t>(value);
-  retval -= TypeMaxValue + 1;
-  return static_cast<SignedType>(retval);
+template <typename TargetType, 
+          int64_t TargetTypeMaxValue>
+inline static TargetType ConvertUnsignedValueToSignedValue(uint64_t value) {
+  return static_cast<TargetType>(static_cast<int64_t>(value) - 
+                                 TargetTypeMaxValue + 
+                                 1);
 }
 
 /*
+ * ConvertUnsignedValueToSignedValue() - As name suggests
+ * 
  * Specialization of convertUnsignedValueToSignedValue for int64_t. int64_t
- * requires a comparison
- * to prevent overflow.
+ * requires a comparison to prevent overflow.
  */
 template <>
-inline int64_t ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
-    uint64_t value) {
+inline int64_t 
+ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(uint64_t value) {
   if (value > static_cast<uint64_t>(INT64_MAX) + 1) {
     value -= INT64_MAX;
     value--;
