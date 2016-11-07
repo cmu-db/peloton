@@ -188,10 +188,10 @@ public class PelotonTest {
       System.out.println(r.getInt(2));
       System.out.println(r.getBigDecimal(3));
    }
-   r.close();
+   r.close(); */
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
-    pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
+    PreparedStatement pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
     java.sql.Timestamp sysdate = new java.sql.Timestamp(
       System.currentTimeMillis());
     java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
@@ -202,7 +202,7 @@ public class PelotonTest {
     //pstmt.setTimestamp(1, datetime, null);
     pstmt.execute();
     System.out.println("Test db created.");
-    //System.exit(0);*/
+    //System.exit(0);
   }
 
   public void ShowTable() throws SQLException {

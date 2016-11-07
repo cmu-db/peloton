@@ -66,7 +66,7 @@ void PacketGetBytes(InputPacket *rpkt, size_t len, PktBuf &result) {
   if (len == 0) return;
 
   result.insert(std::end(result), rpkt->Begin() + rpkt->ptr,
-                rpkt->Begin() + rpkt->ptr + rpkt->len);
+                rpkt->Begin() + rpkt->ptr + len);
 
   // move the pointer
   rpkt->ptr += len;
