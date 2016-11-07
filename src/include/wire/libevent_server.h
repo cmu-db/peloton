@@ -253,6 +253,8 @@ class LibeventSocket {
   // Extracts the contents of Postgres packet from the read socket buffer
   bool ReadPacket();
 
+  WriteState WritePackets();
+
   void PrintWriteBuffer();
 
   void CloseSocket();

@@ -48,7 +48,7 @@ class PacketManager {
   std::shared_ptr<Statement> unnamed_statement_;
   // The result-column format code
   std::vector<int> result_format_;
-  // gloabl txn state
+  // global txn state
   uchar txn_state_;
   // state to mang skipped queries
   bool skipped_stmt_ = false;

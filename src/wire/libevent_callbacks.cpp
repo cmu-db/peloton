@@ -135,6 +135,7 @@ void StateMachine(LibeventSocket *conn) {
             conn->TransitState(CONN_WAIT);
             break;
           } else {
+            // TODO: We need to support blobs. Add extra copy buffer to rpkt
             // We now have the length of the rest of the packet
             // check if the rest of the packet is too huge to handle
             if (conn->CheckPacketOverflow() == true) {
@@ -175,14 +176,27 @@ void StateMachine(LibeventSocket *conn) {
       }
 
       case CONN_WRITE: {
-        try {
-          // If the socket is still not ready, remain in CONN_WRITE state
-          if (conn->WritePackets(true) == false) {
-            // do nothing. remain in write state
-          } else {
-            // transit to read state
-            UpdateEvent(conn, EV_READ | EV_PERSIST);
-            TransitState(conn, CONN_READ);
+        // examine write packets result
+        switch(conn->WritePackets()) {
+          case WRITE_COMPLETE: {
+            // Input Packet can now be reset, before we parse the next packet
+            conn->rpkt.Reset();
+            conn->UpdateEvent(EV_READ | EV_PERSIST);
+            conn->TransitState(CONN_PROCESS);
+            break;
+          }
+
+          case WRITE_NOT_READY: {
+            // we can't write right now. Exit state machine
+            // and wait for next callback
+            done = true;
+            break;
+          }
+
+          case WRITE_ERROR: {
+            LOG_ERROR("Error during write, closing connection");
+            conn->TransitState(CONN_CLOSING);
+            break;
           }
         }
         catch (ConnectionException &e) {

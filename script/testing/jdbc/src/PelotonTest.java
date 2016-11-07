@@ -145,6 +145,7 @@ public class PelotonTest {
   }
 
   public void Close() throws SQLException {
+    System.out.println("Close called");
     conn.close();
   }
 
@@ -154,6 +155,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Init() throws SQLException {
+    System.out.println("Init");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DROP);
@@ -204,6 +206,7 @@ public class PelotonTest {
   }
 
   public void ShowTable() throws SQLException {
+    System.out.println("Show table");
     int numRows;
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
@@ -239,6 +242,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Scan_Test() throws SQLException {
+    System.out.println("Scan Test");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(INSERT_A_1);
@@ -279,6 +283,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Stat_Test() throws Exception {
+    System.out.println("Stat Test");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
     int txn_committed = 0;
@@ -725,6 +730,7 @@ public class PelotonTest {
   
   //tests inserting and reading back large binary values
   public void BlobTest() throws SQLException {
+    System.out.println("Blob Test");
     Random rand = new Random(12345L);
     for (int i = 1; i < 20; i++) {
       Statement initstmt = conn.createStatement();

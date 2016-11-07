@@ -113,6 +113,15 @@ bool LibeventSocket::ReadPacketHeader() {
   return true;
 }
 
+bool LibeventSocket::CheckPacketOverflow() {
+  // cannot handle this huge packet. Give up.
+  if (rpkt.len >= rbuf_.GetMaxSize()) {
+    LOG_ERROR("Conn %d has exceeded read buffer size. Terminating.", sock_fd);
+    return true;
+  }
+  return false;
+}
+
 // Tries to read the contents of a single packet, returns true on success, false
 // on failure.
 bool LibeventSocket::ReadPacket() {
@@ -130,6 +139,33 @@ bool LibeventSocket::ReadPacket() {
   return true;
 }
 
+
+/**
+ * Public Functions
+ */
+
+WriteState LibeventSocket::WritePackets() {
+  // iterate through all the packets
+  for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
+    auto pkt = pkt_manager.responses[next_response_].get();
+    // write is not ready during write. transit to CONN_WRITE
+    auto result = BufferWriteBytesHeader(pkt);
+    if (result == WRITE_NOT_READY || result == WRITE_ERROR)
+      return result;
+    result = BufferWriteBytesContent(pkt);
+    if (result == WRITE_NOT_READY || result == WRITE_ERROR)
+      return result;
+  }
+
+  // Done writing all packets. clear packets
+  pkt_manager.responses.clear();
+  next_response_ = 0;
+
+  if (pkt_manager.force_flush == true) {
+    return FlushWriteBuffer();
+  }
+  return WRITE_COMPLETE;
+}
 
 ReadState LibeventSocket::FillReadBuffer() {
   ReadState result = READ_NO_DATA_RECEIVED;
@@ -170,8 +206,9 @@ ReadState LibeventSocket::FillReadBuffer() {
       done = true;
     } else {
       // try to fill the available space in the buffer
-      bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
-                        SOCKET_BUFFER_SIZE - rbuf.buf_size);
+
+      bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
+                        rbuf_.GetMaxSize() - rbuf_.buf_size);
 
       if (bytes_read > 0) {
         // read succeeded, update buffer size
@@ -313,6 +350,9 @@ bool LibeventSocket::FlushWriteBuffer() {
 
   // buffer is empty
   wbuf.Reset();
+
+  // we have flushed, disable force flush now
+  pkt_manager.force_flush = false;
 
   // we are ok
   return true;
