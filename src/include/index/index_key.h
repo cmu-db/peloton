@@ -627,14 +627,27 @@ class TupleKey {
     key_tuple_schema{nullptr} 
   {}
 
-  // Set a key from a key-schema tuple.
+  /*
+   * SetFromKey() - Moves a tuple's data and schema into this key
+   *
+   * This function is called before index operation in order to derive an
+   * TupleKey instance that has the data of a given tuple and also its schema
+   * 
+   * Note that this function does not involve any column mapping since the 
+   * tuple given here is the key without any unused column
+   */
   inline void SetFromKey(const storage::Tuple *tuple) {
     PL_ASSERT(tuple != nullptr);
 
+    // Do not use the column mapping - we use all columns in the tuple
+    // as index key
     column_indices = nullptr;
 
+    // The index key shares the same data and schema with the tuple
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();
+    
+    return;
   }
 
   // Set a key from a table-schema tuple.
