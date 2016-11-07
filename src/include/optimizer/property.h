@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/util.h"
@@ -19,12 +18,15 @@ namespace peloton {
 namespace optimizer {
 
 enum class PropertyType {
-  Sort,
-  Columns,
+  SORT,
+  COLUMNS,
+  PREDICATE,
 };
 
 class Property {
  public:
+  virtual ~Property();
+
   virtual PropertyType Type() const = 0;
 
   virtual hash_t Hash() const = 0;

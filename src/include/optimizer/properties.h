@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "optimizer/property.h"
+#include "expression/abstract_expression.h"
 #include "optimizer/column.h"
+#include "optimizer/property.h"
 
 namespace peloton {
 namespace optimizer {
@@ -39,6 +39,16 @@ class PropertySort : public Property {
  private:
   std::vector<Column *> sort_columns;
   std::vector<bool> sort_ascending;
+};
+
+class PropertyPredicate : public Property {
+ public:
+  PropertyPredicate(expression::AbstractExpression *predicate);
+
+  PropertyType Type() const override;
+
+ private:
+  expression::AbstractExpression *predicate_;
 };
 
 } /* namespace optimizer */

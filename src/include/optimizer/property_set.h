@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/property.h"
 #include "optimizer/util.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace peloton {
 namespace optimizer {
@@ -28,6 +27,8 @@ class PropertySet {
 
   const std::vector<std::shared_ptr<Property>> &Properties() const;
 
+  void AddProperty(Property *property);
+
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
 
   bool IsSubset(const PropertySet &r);
@@ -37,7 +38,7 @@ class PropertySet {
   bool operator==(const PropertySet &r) const;
 
  private:
-  std::vector<std::shared_ptr<Property>> properties;
+  std::vector<std::shared_ptr<Property>> properties_;
 };
 
 } /* namespace optimizer */

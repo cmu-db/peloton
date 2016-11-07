@@ -14,6 +14,7 @@
 #include "optimizer/convert_op_to_plan.h"
 #include "optimizer/convert_query_to_op.h"
 #include "optimizer/operator_visitor.h"
+#include "optimizer/query_property_extractor.h"
 #include "optimizer/rule_impls.h"
 
 #include "planner/order_by_plan.h"
@@ -94,8 +95,8 @@ std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 
 PropertySet Optimizer::GetQueryTreeRequiredProperties(
     parser::SQLStatement *tree) {
-  (void)tree;
-  return PropertySet();
+  QueryPropertyExtractor converter(column_manager);
+  return std::move(converter.GetProperties(tree));
 }
 
 planner::AbstractPlan *Optimizer::OptimizerPlanToPlannerPlan(

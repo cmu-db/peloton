@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/property_set.h"
 
 namespace peloton {
@@ -19,12 +18,16 @@ namespace optimizer {
 PropertySet::PropertySet() {}
 
 const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
-  return properties;
+  return properties_;
+}
+
+void PropertySet::AddProperty(Property *property) {
+  properties_.push_back(std::shared_ptr<Property>(property));
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
     PropertyType type) const {
-  for (auto &prop : properties) {
+  for (auto &prop : properties_) {
     if (prop->Type() == type) {
       return prop;
     }
@@ -38,18 +41,18 @@ bool PropertySet::IsSubset(const PropertySet &r) {
 }
 
 hash_t PropertySet::Hash() const {
-  size_t prop_size = properties.size();
+  size_t prop_size = properties_.size();
   hash_t hash = util::Hash<size_t>(&prop_size);
-  for (auto &prop : properties) {
+  for (auto &prop : properties_) {
     hash = util::CombineHashes(hash, prop->Hash());
   }
   return hash;
 }
 
 bool PropertySet::operator==(const PropertySet &r) const {
-  for (auto &left_prop : properties) {
+  for (auto &left_prop : properties_) {
     bool match = false;
-    for (auto &right_prop : r.properties) {
+    for (auto &right_prop : r.properties_) {
       match = match || (*left_prop == *right_prop);
     }
     if (!match) return false;
