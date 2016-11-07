@@ -605,15 +605,31 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
  */
 class TupleKey {
  public:
-  inline TupleKey() {
-    column_indices = nullptr;
-    key_tuple = nullptr;
-    key_tuple_schema = nullptr;
-  }
+  // TableIndex owns this array - NULL if an ephemeral key
+  const int *column_indices;
+
+  // Pointer a persistent tuple in non-ephemeral case.
+  char *key_tuple;
+  const catalog::Schema *key_tuple_schema;
+  
+ public:
+  
+  /*
+   * Default Constructor
+   *
+   * Normally this constructor should not be used since it constructs a key
+   * that could not be directly used. However, it is truly useful if we just
+   * need a placeholder that could be assigned values later
+   */
+  TupleKey() :
+    column_indices{nullptr},
+    key_tuple{nullptr},
+    key_tuple_schema{nullptr} 
+  {}
 
   // Set a key from a key-schema tuple.
   inline void SetFromKey(const storage::Tuple *tuple) {
-    PL_ASSERT(tuple);
+    PL_ASSERT(tuple != nullptr);
 
     column_indices = nullptr;
 
@@ -647,13 +663,6 @@ class TupleKey {
     else
       return column_indices[indexColumn];
   }
-
-  // TableIndex owns this array - NULL if an ephemeral key
-  const int *column_indices;
-
-  // Pointer a persistent tuple in non-ephemeral case.
-  char *key_tuple;
-  const catalog::Schema *key_tuple_schema;
 };
 
 /*
