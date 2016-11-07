@@ -38,30 +38,22 @@ using namespace peloton::common;
 template <typename TargetType, 
           int64_t TargetTypeMaxValue>
 inline static TargetType ConvertUnsignedValueToSignedValue(uint64_t value) {
-  return static_cast<TargetType>(static_cast<int64_t>(value) - 
-                                 TargetTypeMaxValue + 
-                                 1);
+  return static_cast<TargetType>(value - TargetTypeMaxValue + 1UL);
 }
 
 /*
  * ConvertUnsignedValueToSignedValue() - As name suggests
  * 
- * Specialization of convertUnsignedValueToSignedValue for int64_t. int64_t
- * requires a comparison to prevent overflow.
+ * This function is a template specialization of 
+ * ConvertUnsignedValueToSignedValue with int64_t, since with int64_t 
+ * computation it is possible that overflow appearing
  */
 template <>
 inline int64_t 
 ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(uint64_t value) {
-  if (value > static_cast<uint64_t>(INT64_MAX) + 1) {
-    value -= INT64_MAX;
-    value--;
-    return static_cast<int64_t>(value);
-  } else {
-    int64_t retval = static_cast<int64_t>(value);
-    retval -= INT64_MAX;
-    retval--;
-    return retval;
-  }
+  return (value > static_cast<uint64_t>(INT64_MAX) + 1) ? \
+         (static_cast<int64_t>(value - INT64_MAX - 1)) : \
+         (static_cast<int64_t>(value) - INT64_MAX - 1);
 }
 
 /*
