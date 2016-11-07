@@ -181,27 +181,5 @@ LibeventServer::LibeventServer() {
     exit(1);
   }
 }
-
-// void Libserver::LogCallback(int severity, UNUSED_ATTRIBUTE const char *msg) {
-//  UNUSED_ATTRIBUTE const char *s;
-//  switch (severity) {
-//    case _EVENT_LOG_DEBUG:
-//      s = "debug";
-//      break;
-//    case _EVENT_LOG_MSG:
-//      s = "msg";
-//      break;
-//    case _EVENT_LOG_WARN:
-//      s = "warn";
-//      break;
-//    case _EVENT_LOG_ERR:
-//      s = "error";
-//      break;
-//    default:
-//      s = "?";
-//      break; /* Should not get this far */
-//  }
-//  LOG_INFO("[%s] %s\n", s, msg);
-//}
 }
 }

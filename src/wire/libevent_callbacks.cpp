@@ -31,7 +31,6 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   // pipe fds should match
   PL_ASSERT(new_conn_recv_fd == thread->new_conn_receive_fd);
 
-  LOG_DEBUG("TID: %d", thread->GetThreadID());
   // read the operation that needs to be performed
   if (read(new_conn_recv_fd, m_buf, 1) != 1) {
     LOG_ERROR("Can't read from the libevent pipe");
@@ -45,13 +44,13 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
       thread->new_conn_queue.Dequeue(item);
       conn = LibeventServer::GetConn(item->new_conn_fd);
       if (conn == nullptr) {
-        LOG_INFO("Creating new socket fd:%d", item->new_conn_fd);
+        LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
         LibeventServer::CreateNewConn(item->new_conn_fd, item->event_flags,
                                       static_cast<LibeventThread *>(thread),
                                       CONN_READ);
       } else {
-        LOG_INFO("Reusing socket fd:%d", item->new_conn_fd);
+        LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset(item->event_flags, static_cast<LibeventThread *>(thread),
                     CONN_READ);
@@ -65,7 +64,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 }
 
 void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags, void *arg) {
-  LOG_INFO("Event callback fired for connfd: %d", connfd);
+  LOG_DEBUG("Event callback fired for connfd: %d", connfd);
   LibeventSocket *conn = static_cast<LibeventSocket *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;
@@ -74,7 +73,6 @@ void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags, void 
 }
 
 void StateMachine(LibeventSocket *conn) {
-  LOG_DEBUG("StateMachine invoked %d", conn->state);
   bool done = false;
 
   while (done == false) {

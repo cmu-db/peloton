@@ -831,49 +831,5 @@ void PacketManager::Reset() {
   pkt_cntr_ = 0;
 }
 
-//bool PacketManager::ManageStartupPacket() {
-//  Packet pkt;
-//  ResponseBuffer responses;
-//  bool status;
-//  // fetch the startup packet
-//  if (!ReadPacket(&pkt, false, &client_)) {
-//    CloseClient();
-//    return false;
-//  }
-//  status = ProcessStartupPacket(&pkt, responses);
-//  if (!WritePackets(responses, &client_) || status == false) {
-//    // close client on write failure or status failure
-//    CloseClient();
-//    return false;
-//  }
-//  return true;
-//}
-
-//bool PacketManager::ManagePacket() {
-//  Packet pkt;
-//  ResponseBuffer responses;
-//  bool status, read_status;
-//
-//  read_status = ReadPacket(&pkt, true, &client_);
-//
-//  // While can process more packets from buffer
-//  while (read_status) {
-//    // Process the read packet
-//    bool force_flush = false;
-//    status = ProcessPacket(&pkt, responses, force_flush);
-//
-//    // Write response
-//    if (!WritePackets(responses, &client_, force_flush) || status == false) {
-//      // close client on write failure or status failure
-//      CloseClient();
-//      return false;
-//    }
-//
-//    pkt.Reset();
-//    read_status = ReadPacket(&pkt, true, &client_);
-//  }
-//  return true;
-//}
-
 }  // End wire namespace
 }  // End peloton namespace

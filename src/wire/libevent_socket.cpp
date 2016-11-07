@@ -336,10 +336,9 @@ bool LibeventSocket::FlushWriteBuffer() {
       }
 
       // weird edge case?
-      if (written_bytes == 0 && wbuf.buf_size != 0) {
-        LOG_INFO("Not all data is written");
-        // fatal error
-        throw ConnectionException("Not all data is written");
+      if (written_bytes == 0 && wbuf_.buf_size != 0) {
+        LOG_DEBUG("Not all data is written");
+        continue;
       }
     }
 
@@ -432,10 +431,10 @@ bool LibeventSocket::BufferWriteBytesContent(Packet *pkt) {
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
 
       // Move the cursor and update size of socket buffer
-      wbuf.buf_ptr += len;
-      wbuf.buf_size = wbuf.buf_ptr;
-      LOG_DEBUG("Content fit in window. Write content successful");
-      return true;
+      wbuf_.buf_ptr += len;
+      wbuf_.buf_size = wbuf_.buf_ptr;
+      LOG_TRACE("Content fit in window. Write content successful");
+      return WRITE_COMPLETE;
     } else {
       // contents longer than socket buffer size, fill up the socket buffer
       // with "window" bytes
@@ -450,7 +449,8 @@ bool LibeventSocket::BufferWriteBytesContent(Packet *pkt) {
       // Now the wbuf is full
       wbuf.buf_size = wbuf.GetMaxSize();
 
-      LOG_DEBUG("Content doesn't fit in window. Try flushing");
+      LOG_TRACE("Content doesn't fit in window. Try flushing");
+      auto result = FlushWriteBuffer();
       // flush before write the remaining content
       if (FlushWriteBuffer() == false) {
         return false;
