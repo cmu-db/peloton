@@ -57,8 +57,7 @@ class AbstractScan : public AbstractPlan {
 
   inline storage::DataTable *GetTable() const { return target_table_; }
 
-  inline bool IsForUpdate() const { return is_for_update;}
-  
+  inline bool IsForUpdate() const { return is_for_update; }
 
  protected:
   // These methods only used by its derived classes (when deserialization)
@@ -69,12 +68,7 @@ class AbstractScan : public AbstractPlan {
   void SetPredicate(expression::AbstractExpression *predicate) {
     predicate_ = std::unique_ptr<expression::AbstractExpression>(predicate);
   }
-  void SetForUpdateFlag(bool flag){is_for_update = flag;}
-
-  /** @brief Predicate with ValueParameters inside. Needed to be binded at
-   * the binding stage to generate the "real" predicate.
-   */
-  std::unique_ptr<expression::AbstractExpression> predicate_with_params_;
+  void SetForUpdateFlag(bool flag) { is_for_update = flag; }
 
  private:
   /** @brief Pointer to table to scan from. */

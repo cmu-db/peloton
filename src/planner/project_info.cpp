@@ -12,9 +12,9 @@
 
 #include "planner/project_info.h"
 #include "executor/executor_context.h"
+#include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "expression/parameter_value_expression.h"
-#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -45,8 +45,7 @@ ProjectInfo::~ProjectInfo() {
  * @param tuple2  Source tuple 2.
  * @param econtext  ExecutorContext for expression evaluation.
  */
-bool ProjectInfo::Evaluate(storage::Tuple *dest, 
-                           const AbstractTuple *tuple1,
+bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // Get varlen pool
@@ -72,8 +71,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
     if (tuple_index == 0) {
       common::Value value = (tuple1->GetValue(src_col_id));
       dest->SetValue(dest_col_id, value, pool);
-    }
-    else {
+    } else {
       common::Value value = (tuple2->GetValue(src_col_id));
       dest->SetValue(dest_col_id, value, pool);
     }
@@ -82,9 +80,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
   return true;
 }
 
-
-bool ProjectInfo::Evaluate(AbstractTuple *dest, 
-                           const AbstractTuple *tuple1,
+bool ProjectInfo::Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // (A) Execute target list
@@ -105,8 +101,7 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest,
     if (tuple_index == 0) {
       common::Value val1 = (tuple1->GetValue(src_col_id));
       dest->SetValue(dest_col_id, val1);
-    }
-    else {
+    } else {
       common::Value val2 = (tuple2->GetValue(src_col_id));
       dest->SetValue(dest_col_id, val2);
     }
@@ -130,36 +125,6 @@ std::string ProjectInfo::Debug() const {
   }
 
   return (buffer.str());
-}
-
-void ProjectInfo::transformParameterToConstantValueExpression(
-    std::vector<common::Value> *values, catalog::Schema *schema) {
-  LOG_TRACE("Setting parameter values in Projection");
-  for (unsigned int i = 0; i < target_list_.size(); ++i) {
-    // The assignment parameter is an expression with left and right
-    if (target_list_[i].second->GetLeft() &&
-        target_list_[i].second->GetRight()) {
-      auto expr = target_list_[i].second->Copy();
-      delete target_list_[i].second;
-      expression::ExpressionUtil::ConvertParameterExpressions(expr, values,
-                                                              schema);
-      target_list_[i].second = expr;
-    }
-    // The assignment parameter is a single value
-    else {
-      if (target_list_[i].second->GetExpressionType() ==
-          EXPRESSION_TYPE_VALUE_PARAMETER) {
-        auto param_expr =
-            (expression::ParameterValueExpression *)target_list_[i].second;
-        LOG_TRACE("Setting parameter %u to value %s", param_expr->GetValueIdx(),
-                  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
-        auto value = new expression::ConstantValueExpression(
-            values->at(param_expr->GetValueIdx()));
-        delete param_expr;
-        target_list_[i].second = value;
-      }
-    }
-  }
 }
 
 } /* namespace planner */

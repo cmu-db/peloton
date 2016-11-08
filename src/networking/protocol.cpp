@@ -526,18 +526,13 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     }
   }
 
-  /*
   if (param_values.size() > 0) {
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 
-  // clean up param_values
-  param_values.clear();
-  */
-
-  // Construct a portal
+  // Construct a portal.
+  // Notice that this will move param_values so no value will be left there.
   auto portal = new Portal(portal_name, statement, std::move(param_values));
-  // LOG_ERROR("size after move: %ld", param_values.size());
   std::shared_ptr<Portal> portal_reference(portal);
 
   auto itr = portals_.find(portal_name);
