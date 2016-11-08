@@ -634,9 +634,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
-  // for (auto &value : param_values) {
-  //  LOG_ERROR("%s", value.GetInfo().c_str());
-  //}
 
   auto &tcop = tcop::TrafficCop::GetInstance();
   auto status =

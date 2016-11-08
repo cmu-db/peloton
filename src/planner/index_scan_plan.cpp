@@ -47,6 +47,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     predicate = predicate->Copy();
     expression::ExpressionUtil::ReplaceColumnExpressions(table->GetSchema(),
                                                          predicate);
+    SetPredicate(predicate);
   }
 
   // copy the value over for binding purpose

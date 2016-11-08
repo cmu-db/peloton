@@ -144,9 +144,6 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
     // Write the expression type
     ExpressionType expr_type = GetPredicate()->GetExpressionType();
     output.WriteByte(static_cast<int8_t>(expr_type));
-
-    // Write predicate
-    // GetPredicate()->SerializeTo(output);
   }
 
   // Write parent, but parent seems never be set or used right now
