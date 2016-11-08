@@ -474,7 +474,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         format_buf_copy.data(), format_buf_len).Copy();
 
     Packet packet;
-    const char *data = format_value_copy.GetData();
+    const char *data = format_value_copy.ToString().c_str();
     packet.len = format_value_copy.GetLength();
     packet.buf.resize(packet.len);
     for (size_t i = 0; i < packet.len; i++) {
@@ -496,12 +496,17 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
     Packet param_packet;
 
-    const char *param_data = param_value_copy.GetData();
+    const char *param_data =
+        param_value_copy.ToString().c_str();  // param_value_copy.GetData();
+
     param_packet.len = param_value_copy.GetLength();
     param_packet.buf.resize(param_packet.len);
     for (size_t i = 0; i < param_packet.len; i++) {
       param_packet.buf[i] = (*(param_data + i));
     }
+
+    param_packet.len = val_buf_len;
+    param_packet.buf = (*val_buf_copy);
 
     std::vector<std::pair<int, std::string>> bind_parameters2(num_params);
     std::vector<common::Value> param_values2;
@@ -511,6 +516,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
     assert(param_val_bytes_read2 == val_buf_len);
     for (int i = 0; i < num_params; i++) {
+      LOG_ERROR("%s", param_values2[i].ToString().c_str());
+      LOG_ERROR("%s", param_values[i].ToString().c_str());
+
       assert(param_values2[i].CompareEquals(param_values[i]).IsTrue());
     }
   }

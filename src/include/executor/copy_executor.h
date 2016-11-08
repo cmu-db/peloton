@@ -46,7 +46,11 @@ class CopyExecutor : public AbstractExecutor {
   // The handler for the output file
   FileHandle file_handle_ = INVALID_FILE_HANDLE;
 
+  // Field delimiter between columns
   char delimiter = ',';
+
+  // Whether we're copying the parameters which require deserialization
+  bool deserialize_parameters = false;
 };
 
 }  // namespace executor

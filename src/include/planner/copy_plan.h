@@ -45,11 +45,14 @@ class CopyPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "CopyPlan"; }
 
-  // TODO: Add copying mechanism
+  // TODO: Implement copy mechanism
   std::unique_ptr<AbstractPlan> Copy() const { return nullptr; }
 
   // The path of the target file
   std::string file_path;
+
+  // Whether we're copying the parameters which require deserialization
+  bool deserialize_parameters = false;
 };
 
 }  // namespace planner

@@ -54,7 +54,12 @@ CopyPlan::CopyPlan(parser::CopyStatement* copy_parse_tree)
 
   std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
       new planner::SeqScanPlan(select_stmt.get()));
-  LOG_TRACE("Sequential scan plan created");
+  LOG_TRACE("Sequential scan plan for copy created");
+
+  if (table_ref->table_name->GetName() == QUERY_METRIC_NAME) {
+    LOG_DEBUG("Copying the query_metric table.");
+    deserialize_parameters = true;
+  }
 
   AddChild(std::move(child_SelectPlan));
 }

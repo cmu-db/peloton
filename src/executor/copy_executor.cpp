@@ -25,6 +25,8 @@
 #include "common/exception.h"
 #include <sys/stat.h>
 #include <sys/mman.h>
+// TODO remove me in the future
+#include "wire/wire.h"
 
 namespace peloton {
 namespace executor {
@@ -53,6 +55,9 @@ bool CopyExecutor::DInit() {
 
   bool success = logging::LoggingUtil::InitFileHandle(node.file_path.c_str(),
                                                       file_handle_, "w");
+
+  deserialize_parameters = node.deserialize_parameters;
+
   if (success == false) {
     throw ExecutorException("Failed to create file " + node.file_path);
     return false;
@@ -70,30 +75,104 @@ bool CopyExecutor::DExecute() {
     return false;
   }
 
+  // TODO replay logs to serialize data
+
   while (children_[0]->Execute() == true) {
     // Get input tiles and Copy them
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
 
+    LOG_DEBUG("Looping over tile..");
+    char buff[4096];
+    size_t ptr = 0;
     // Physical schema of the tile
     std::unique_ptr<catalog::Schema> output_schema(
         logical_tile->GetPhysicalSchema());
-    std::vector<std::vector<std::string>> answer_tuples;
+
     auto col_count = output_schema->GetColumnCount();
+    std::vector<std::vector<std::string>> answer_tuples;
 
     // Construct result format for varchar
     std::vector<int> result_format(col_count, 0);
     answer_tuples =
         std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
-    LOG_DEBUG("Looping over tile..");
-    char buff[4096];
-    size_t ptr = 0;
+    // TODO also implement normal cases
+    PL_ASSERT(deserialize_parameters == true);
+
+    std::vector<int16_t> formats;
+    int num_params = 0;
+
+    // TODO resize it later
+    std::vector<std::pair<int, std::string>> bind_parameters;
+    std::vector<common::Value> param_values;
 
     // Construct the returned results
     for (auto &tuple : answer_tuples) {
       for (unsigned int col_index = 0; col_index < col_count; col_index++) {
+
+        // TODO now it copies a string, need to avoid this in the future
         auto &val = tuple[col_index];
         int len = val.length();
+
+        switch (col_index) {
+          case 2: {
+            // num_param column.
+            num_params = std::stoi(val);
+            break;
+          }
+          case 3: {
+
+            PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+                      common::Type::VARBINARY);
+
+            // param_formats column
+            wire::Packet packet;
+
+            // The actual length of data should include NULL?
+            packet.len = len;
+            packet.buf.resize(packet.len);
+
+            // Copy the data from string to packet buf...
+            for (size_t i = 0; i < len; i++) {
+              packet.buf[i] = val[i];
+            }
+
+            // Read param formats
+            wire::PacketManager::ReadParamFormat(&packet, num_params, formats);
+            break;
+          }
+          case 4: {
+
+            PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+                      common::Type::VARBINARY);
+
+            // param_values column
+            wire::Packet packet;
+
+            // The actual length of data should include NULL?
+            packet.len = len;
+            packet.buf.resize(packet.len);
+
+            // Copy the data from string to packet buf...
+            for (size_t i = 0; i < len; i++) {
+              packet.buf[i] = val[i];
+            }
+
+            // TODO store param types as well..?
+            wire::PacketManager::ReadParamValue(&packet, num_params,
+                                                param_types, bind_parameters,
+                                                param_values, formats);
+
+            break;
+          }
+          default: {
+            // other columns
+            // do it the normal way
+            break;
+          }
+        }
+        // TODO move the bottom up..
+
         if (ptr + len * 2 + 2 >= 4096) {
           fwrite(buff, sizeof(char), ptr, file_handle_.file);
           ptr = 0;
@@ -115,6 +194,7 @@ bool CopyExecutor::DExecute() {
     fclose(file_handle_.file);
     LOG_DEBUG("Finished writing to csv file");
   }
+
   done = true;
   return true;
 }
