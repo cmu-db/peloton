@@ -112,17 +112,8 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree)
 
           // If the column does not exist, insert a null value
           if (pos >= query_columns->size()) {
-            //switch (elem.GetType()) {
-              //case common::Type::VARCHAR:
-              //case common::Type::VARBINARY: {
-              //  tuple->SetValue(col_cntr, *common::ValueFactory::GetNullStringValue(),
-              //                  GetPlanPool());
-              //  break;
-              //}
-              //default:
-                tuple->SetValue(col_cntr,
-                    common::ValueFactory::GetNullValueByType(elem.GetType()),nullptr);
-            //}
+            tuple->SetValue(col_cntr,
+                common::ValueFactory::GetNullValueByType(elem.GetType()),nullptr);
           } else {
             // If it's varchar or varbinary then use data pool, otherwise allocate
             // inline
