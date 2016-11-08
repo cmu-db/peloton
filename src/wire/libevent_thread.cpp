@@ -94,7 +94,11 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
   auto &threads = GetWorkerThreads();
 
   // Dispatch by rand number
-  int thread_id = rand() % num_threads_;
+  int thread_id = next_thread_id_;
+
+  // update next threadID
+  next_thread_id_ = (next_thread_id_ + 1) % num_threads_;
+
   std::shared_ptr<LibeventWorkerThread> worker_thread = threads[thread_id];
   LOG_DEBUG("Dispatching connection to worker %d", thread_id);
 

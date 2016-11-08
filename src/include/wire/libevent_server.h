@@ -188,6 +188,9 @@ class LibeventMasterThread : public LibeventThread {
  private:
   const int num_threads_;
 
+  // TODO: have a smarter dispatch scheduler
+  int next_thread_id_ = 0; // next thread we dispatched to
+
  public:
   LibeventMasterThread(const int num_threads, struct event_base *libevent_base);
 
