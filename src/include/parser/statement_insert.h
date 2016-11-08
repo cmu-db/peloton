@@ -30,7 +30,7 @@ struct InsertStatement : SQLStatement {
         type(type),
         table_name(NULL),
         columns(NULL),
-        values(NULL),
+        insert_values(NULL),
         select(NULL) {}
 
   virtual ~InsertStatement() {
@@ -41,12 +41,15 @@ struct InsertStatement : SQLStatement {
       delete columns;
     }
 
-    if (values) {
-      for (auto expr : *values) {
-        if (expr->GetExpressionType() != EXPRESSION_TYPE_PLACEHOLDER)
-          delete expr;
+    if (insert_values) {
+      for (auto tuple : *insert_values) {
+        for( auto expr : *tuple){
+          if (expr->GetExpressionType() != EXPRESSION_TYPE_PLACEHOLDER)
+            delete expr;
+        }
+        delete tuple;
       }
-      delete values;
+      delete insert_values;
     }
 
     delete select;
@@ -65,7 +68,7 @@ struct InsertStatement : SQLStatement {
   InsertType type;
   expression::ParserExpression* table_name;
   std::vector<char*>* columns;
-  std::vector<expression::AbstractExpression*>* values;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* insert_values;
   SelectStatement* select;
 };
 

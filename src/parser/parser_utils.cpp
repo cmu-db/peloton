@@ -223,8 +223,11 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   switch (stmt->type) {
     case INSERT_TYPE_VALUES:
       inprint("-> Values", num_indent + 1);
-      for (expression::AbstractExpression* expr : *stmt->values) {
-        GetExpressionInfo(expr, num_indent + 2);
+      for (auto value_item : *stmt->insert_values){
+        // TODO this is a debugging method which is currently unused.
+        for (expression::AbstractExpression* expr : *value_item) {
+          GetExpressionInfo(expr, num_indent + 2);
+        }
       }
       break;
     case INSERT_TYPE_SELECT:

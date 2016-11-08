@@ -84,11 +84,14 @@ TEST_F(InsertTests, InsertRecord) {
   insert_node->columns->push_back(const_cast<char *>(col_1));
   insert_node->columns->push_back(const_cast<char *>(col_2));
 
-  insert_node->values = new std::vector<expression::AbstractExpression *>;
-  insert_node->values->push_back(new expression::ConstantValueExpression(
+  insert_node->insert_values = new std::vector<std::vector<expression::AbstractExpression *>*>;
+  auto values_ptr = new std::vector<expression::AbstractExpression *>;
+  insert_node->insert_values->push_back(values_ptr);
+
+  values_ptr->push_back(new expression::ConstantValueExpression(
       common::ValueFactory::GetIntegerValue(70)));
 
-  insert_node->values->push_back(new expression::ConstantValueExpression(
+  values_ptr->push_back(new expression::ConstantValueExpression(
       common::ValueFactory::GetVarcharValue("Hello")));
 
   insert_node->select = new parser::SelectStatement();
@@ -100,8 +103,8 @@ TEST_F(InsertTests, InsertRecord) {
   EXPECT_TRUE(executor.Execute());
   EXPECT_EQ(1, table->GetTupleCount());
 
-  delete insert_node->values->at(0);
-  insert_node->values->at(0) = new expression::ConstantValueExpression(
+  delete values_ptr->at(0);
+  values_ptr->at(0) = new expression::ConstantValueExpression(
       common::ValueFactory::GetIntegerValue(80));
   planner::InsertPlan node2(insert_node.get());
   executor::InsertExecutor executor2(&node2, context.get());
@@ -109,6 +112,25 @@ TEST_F(InsertTests, InsertRecord) {
   EXPECT_TRUE(executor2.Init());
   EXPECT_TRUE(executor2.Execute());
   EXPECT_EQ(2, table->GetTupleCount());
+
+  auto values_ptr2 = new std::vector<expression::AbstractExpression *>;
+  insert_node->insert_values->push_back(values_ptr2);
+
+  values_ptr2->push_back(new expression::ConstantValueExpression(
+      common::ValueFactory::GetIntegerValue(100)));
+
+  values_ptr2->push_back(new expression::ConstantValueExpression(
+      common::ValueFactory::GetVarcharValue("Hello")));
+
+  delete values_ptr->at(0);
+  values_ptr->at(0) = new expression::ConstantValueExpression(
+      common::ValueFactory::GetIntegerValue(90));
+  planner::InsertPlan node3(insert_node.get());
+  executor::InsertExecutor executor3(&node3, context.get());
+
+  EXPECT_TRUE(executor3.Init());
+  EXPECT_TRUE(executor3.Execute());
+  EXPECT_EQ(4, table->GetTupleCount());
 
   txn_manager.CommitTransaction(txn);
 

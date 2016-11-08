@@ -202,7 +202,8 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto parameter_exprs = new std::vector<expression::AbstractExpression *>();
   parameter_exprs->push_back(parameter_expr_1);
   parameter_exprs->push_back(parameter_expr_2);
-  insert_statement->values = parameter_exprs;
+  insert_statement->insert_values = new std::vector<std::vector<peloton::expression::AbstractExpression*>*>();
+  insert_statement->insert_values->push_back(parameter_exprs);
 
   auto insert_plan = new planner::InsertPlan(insert_statement);
   LOG_INFO("Plan created");
