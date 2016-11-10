@@ -152,20 +152,23 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
     // Get query params
     auto query_params = query_metric->GetQueryParams();
     auto num_params = 0;
-    std::shared_ptr<std::vector<uchar>> value_buf(nullptr);
-    std::vector<uchar> format_buf;
+    QueryMetric::QueryParamBuf value_buf;
+    QueryMetric::QueryParamBuf type_buf;
+    QueryMetric::QueryParamBuf format_buf;
 
     if (query_params != nullptr) {
-      value_buf = query_params->GetValueBuf();
-      num_params = query_params->GetNumParams();
-      format_buf = query_params->GetFormatBuf();
+      value_buf = query_params->val_buf_copy;
+      num_params = query_params->num_params;
+      format_buf = query_params->format_buf_copy;
+      type_buf = query_params->type_buf_copy;
+      PL_ASSERT(num_params > 0);
     }
 
     // Generate and insert the tuple
     auto query_tuple = catalog::GetQueryMetricsCatalogTuple(
         query_metrics_table->GetSchema(), query_metric->GetName(),
-        query_metric->GetDatabaseId(), num_params, format_buf, value_buf, reads,
-        updates, deletes, inserts, (int64_t)latency,
+        query_metric->GetDatabaseId(), num_params, type_buf, format_buf,
+        value_buf, reads, updates, deletes, inserts, (int64_t)latency,
         (int64_t)(cpu_system + cpu_user), time_stamp, pool_.get());
     catalog::InsertTuple(query_metrics_table, std::move(query_tuple), txn);
     LOG_TRACE("Query Metric Tuple inserted");

@@ -318,11 +318,24 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   int num_params = PacketGetInt(pkt, 2);
 
   // Read param types
+  // TODO refactor this
+
   std::vector<int32_t> param_types(num_params);
-  for (int i = 0; i < num_params; i++) {
-    int param_type = PacketGetInt(pkt, 4);
-    param_types[i] = param_type;
-  }
+
+  auto type_buf_begin = pkt->ptr;
+  auto type_buf_len = ReadParamType(pkt, num_params, param_types);
+
+  // Make a copy of param types for stat collection
+  stats::QueryMetric::QueryParamBuf query_type_buf;
+  query_type_buf.buf = new uchar[type_buf_len];
+  query_type_buf.len = type_buf_len;
+  std::memcpy(query_type_buf.buf, pkt->buf.data() + type_buf_begin,
+              type_buf_len);
+
+  //  std::shared_ptr<std::vector<uchar>> type_buf_copy(
+  //      new std::vector<uchar>(pkt->buf.begin() + type_buf_begin,
+  //                             pkt->buf.begin() + type_buf_begin +
+  // type_buf_len));
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
@@ -332,9 +345,11 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   // Unnamed statement
   if (unnamed_query) {
     unnamed_statement_ = statement;
+    unnamed_stmt_param_types_ = query_type_buf;
   } else {
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
+    statement_param_types_[statement_name] = query_type_buf;
   }
   // Send Parse complete response
   std::unique_ptr<Packet> response(new Packet());
@@ -375,8 +390,12 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   // Get statement info generated in PARSE message
   std::shared_ptr<Statement> statement;
 
+  stats::QueryMetric::QueryParamBuf param_type_buf;
+  // std::shared_ptr<std::vector<uchar>> param_type_buf;
+
   if (statement_name.empty()) {
     statement = unnamed_statement_;
+    param_type_buf = unnamed_stmt_param_types_;
 
     // Check unnamed statement
     if (statement.get() == nullptr) {
@@ -390,6 +409,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     // Did not find statement with same name
     if (statement_cache_itr != statement_cache_.end()) {
       statement = *statement_cache_itr;
+      param_type_buf = statement_param_types_[statement_name];
     }
     // Found statement with same name
     else {
@@ -417,7 +437,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Group the parameter types and the parameters in this vector
   std::vector<std::pair<int, std::string>> bind_parameters(num_params);
-  std::vector<common::Value> param_values;
+  std::vector<common::Value> param_values(num_params);
 
   auto param_types = statement->GetParamTypes();
 
@@ -453,28 +473,78 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     // executor context.
   }
 
+  bool test_val_deserialization = false;
+
+  // clean up param_values
+  if (test_val_deserialization == false) {
+    param_values.clear();
+  }
+
   // Make a copy of format for stat collection
-  std::vector<uchar> format_buf_copy(
-      pkt->buf.begin() + format_buf_begin,
-      pkt->buf.begin() + format_buf_begin + format_buf_len);
+  stats::QueryMetric::QueryParamBuf param_format_buf;
+  param_format_buf.buf = new uchar[format_buf_len];
+  param_format_buf.len = format_buf_len;
+  std::memcpy(param_format_buf.buf, pkt->buf.data() + format_buf_begin,
+              format_buf_len);
+  PL_ASSERT(format_buf_len > 0 || num_params == 0);
+
+  //  std::vector<uchar> format_buf_copy(
+  //      pkt->buf.begin() + format_buf_begin,
+  //      pkt->buf.begin() + format_buf_begin + format_buf_len);
 
   // Make a copy of value for stat collection
-  std::shared_ptr<std::vector<uchar>> val_buf_copy(
-      new std::vector<uchar>(pkt->buf.begin() + val_buf_begin,
-                             pkt->buf.begin() + val_buf_begin + val_buf_len));
+  stats::QueryMetric::QueryParamBuf param_val_buf;
+  param_val_buf.buf = new uchar[val_buf_len];
+  param_val_buf.len = val_buf_len;
+  std::memcpy(param_val_buf.buf, pkt->buf.data() + val_buf_begin, val_buf_len);
+  PL_ASSERT(val_buf_len > 0 || num_params == 0);
 
-  std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(
-      new stats::QueryMetric::QueryParams(
-          format_buf_copy, param_types, val_buf_copy, format_buf_copy.size()));
+  //  std::shared_ptr<std::vector<uchar>> val_buf_copy(
+  //      new std::vector<uchar>(pkt->buf.begin() + val_buf_begin,
+  //                             pkt->buf.begin() + val_buf_begin +
+  // val_buf_len));
 
-  // TODO remove me in the future when end-to-end test is ready
+  std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
+  if (num_params > 0) {
+    param_stat.reset(new stats::QueryMetric::QueryParams(
+        param_format_buf, param_type_buf, param_val_buf, num_params));
+  }
+
   bool test_format_deserialization = true;
+
+  bool test_type_deserialization = true;
+  // TODO remove me in the future when end-to-end test is ready
+
+  if (test_type_deserialization) {
+    common::Value type_value_copy = common::ValueFactory::GetVarbinaryValue(
+        param_type_buf.buf, param_type_buf.len);
+
+    Packet packet;
+    const char *data = type_value_copy.ToString().c_str();
+    LOG_ERROR("type_str TOSTRING: %s, %d", data, (int)param_type_buf.len);
+    packet.len = type_value_copy.GetLength();
+    packet.buf.resize(packet.len);
+    for (size_t i = 0; i < packet.len; i++) {
+      packet.buf[i] = (*(data + i));
+    }
+
+    std::vector<int32_t> true_type = statement->GetParamTypes();
+
+    std::vector<int32_t> types(num_params_format);
+    ReadParamType(&packet, num_params_format, types);
+    for (int i = 0; i < num_params_format; i++) {
+      // LOG_ERROR("types %d -> %d", true_type[i], types[i]);
+      assert(types[i] == true_type[i]);
+    }
+  }
+
   if (test_format_deserialization) {
     common::Value format_value_copy = common::ValueFactory::GetVarbinaryValue(
-        format_buf_copy.data(), format_buf_len).Copy();
+        param_format_buf.buf, format_buf_len);
 
     Packet packet;
     const char *data = format_value_copy.ToString().c_str();
+    LOG_ERROR("format_str TOSTRING: %s, %d", data, (int)format_buf_len);
     packet.len = format_value_copy.GetLength();
     packet.buf.resize(packet.len);
     for (size_t i = 0; i < packet.len; i++) {
@@ -485,28 +555,28 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     ReadParamFormat(&packet, num_params_format, formats2);
     for (int i = 0; i < num_params_format; i++) {
       assert(formats2[i] == formats[i]);
+      // LOG_ERROR("formats2 %d", formats2[i]);
     }
   }
 
-  bool test_val_deserialization = true;
   if (test_val_deserialization) {
 
     common::Value param_value_copy = common::ValueFactory::GetVarbinaryValue(
-        val_buf_copy->data(), val_buf_len).Copy();
+        param_val_buf.buf, val_buf_len).Copy();
 
     Packet param_packet;
 
-    const char *param_data =
-        param_value_copy.ToString().c_str();  // param_value_copy.GetData();
+    const char *param_data = param_value_copy.ToString().c_str();  //
+    param_value_copy.GetData();
 
     param_packet.len = param_value_copy.GetLength();
+
+    //    std::cout << "data:" << param_data << std::endl << std::cout.flush();
+
     param_packet.buf.resize(param_packet.len);
     for (size_t i = 0; i < param_packet.len; i++) {
       param_packet.buf[i] = (*(param_data + i));
     }
-
-    param_packet.len = val_buf_len;
-    param_packet.buf = (*val_buf_copy);
 
     std::vector<std::pair<int, std::string>> bind_parameters2(num_params);
     std::vector<common::Value> param_values2;
@@ -544,6 +614,18 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   responses.push_back(std::move(response));
 }
 
+size_t PacketManager::ReadParamType(Packet *pkt, int num_params,
+                                    std::vector<int32_t> &param_types) {
+  auto begin = pkt->ptr;
+  // get the type of each parameter
+  for (int i = 0; i < num_params; i++) {
+    int param_type = PacketGetInt(pkt, 4);
+    param_types[i] = param_type;
+  }
+  auto end = pkt->ptr;
+  return end - begin;
+}
+
 size_t PacketManager::ReadParamFormat(Packet *pkt, int num_params_format,
                                       std::vector<int16_t> &formats) {
   auto begin = pkt->ptr;
@@ -571,8 +653,8 @@ size_t PacketManager::ReadParamValue(
           static_cast<PostgresValueType>(param_types[param_idx]));
       bind_parameters[param_idx] =
           std::make_pair(peloton_type, std::string(""));
-      param_values.push_back(
-          common::ValueFactory::GetNullValueByType(peloton_type));
+      param_values[param_idx] =
+          common::ValueFactory::GetNullValueByType(peloton_type);
     } else {
       PacketGetBytes(pkt, param_len, param);
 
@@ -584,14 +666,15 @@ size_t PacketManager::ReadParamValue(
         if (PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
             common::Type::VARCHAR) {
-          param_values.push_back(
-              common::ValueFactory::GetVarcharValue(param_str));
+          param_values[param_idx] =
+              common::ValueFactory::GetVarcharValue(param_str);
         } else {
-          param_values.push_back(
+          param_values[param_idx] =
               (common::ValueFactory::GetVarcharValue(param_str))
                   .CastAs(PostgresValueTypeToPelotonValueType(
-                       (PostgresValueType)param_types[param_idx])));
+                       (PostgresValueType)param_types[param_idx]));
         }
+        PL_ASSERT(param_values[param_idx].GetTypeId() != common::Type::INVALID);
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -602,8 +685,8 @@ size_t PacketManager::ReadParamValue(
             }
             bind_parameters[param_idx] =
                 std::make_pair(common::Type::INTEGER, std::to_string(int_val));
-            param_values.push_back(
-                common::ValueFactory::GetIntegerValue(int_val).Copy());
+            param_values[param_idx] =
+                common::ValueFactory::GetIntegerValue(int_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_BIGINT: {
             int64_t int_val = 0;
@@ -612,8 +695,8 @@ size_t PacketManager::ReadParamValue(
             }
             bind_parameters[param_idx] =
                 std::make_pair(common::Type::BIGINT, std::to_string(int_val));
-            param_values.push_back(
-                common::ValueFactory::GetBigIntValue(int_val).Copy());
+            param_values[param_idx] =
+                common::ValueFactory::GetBigIntValue(int_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -624,20 +707,21 @@ size_t PacketManager::ReadParamValue(
             PL_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters[param_idx] = std::make_pair(
                 common::Type::DECIMAL, std::to_string(float_val));
-            param_values.push_back(
-                common::ValueFactory::GetDoubleValue(float_val).Copy());
+            param_values[param_idx] =
+                common::ValueFactory::GetDoubleValue(float_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_VARBINARY: {
             bind_parameters[param_idx] = std::make_pair(
                 common::Type::VARBINARY,
-                std::string(reinterpret_cast<char *>(&param[0]), param_len)));
-            param_values.push_back(common::ValueFactory::GetVarbinaryValue(
-                &param[0], param_len).Copy());
+                std::string(reinterpret_cast<char *>(&param[0]), param_len));
+            param_values[param_idx] = common::ValueFactory::GetVarbinaryValue(
+                &param[0], param_len).Copy();
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
           } break;
         }
+        PL_ASSERT(param_values[param_idx].GetTypeId() != common::Type::INVALID);
       }
     }
   }

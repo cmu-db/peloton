@@ -30,12 +30,12 @@ void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   if (file_handle.fd == -1) return;
   int ret = fflush(file_handle.file);
   if (ret != 0) {
-    LOG_ERROR("Error occured in fflush(%d)", ret);
+    LOG_ERROR("Error occured in fflush(%s)", strerror(errno));
   }
   // Finally, sync
   ret = fsync(file_handle.fd);
   if (ret != 0) {
-    LOG_ERROR("Error occured in fsync(%d)", ret);
+    LOG_ERROR("Error occured in fsync(%s)", strerror(errno));
   }
 }
 

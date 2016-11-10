@@ -56,7 +56,7 @@ CopyPlan::CopyPlan(parser::CopyStatement* copy_parse_tree)
       new planner::SeqScanPlan(select_stmt.get()));
   LOG_TRACE("Sequential scan plan for copy created");
 
-  if (table_ref->table_name->GetName() == QUERY_METRIC_NAME) {
+  if (std::string(table_ref->table_name->GetName()) == QUERY_METRIC_NAME) {
     LOG_DEBUG("Copying the query_metric table.");
     deserialize_parameters = true;
   }

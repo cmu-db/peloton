@@ -33,36 +33,29 @@ typedef unsigned char uchar;
  */
 class QueryMetric : public AbstractMetric {
  public:
-  class QueryParams {
+  // A wrapper of the query param buffer copy
+  struct QueryParamBuf {
+    uchar *buf = nullptr;
+    int len = 0;
+  };
 
-   public:
-    QueryParams(std::vector<uchar> &format_buf_copy,
-                std::vector<int32_t> &param_types_,
-                std::shared_ptr<std::vector<uchar>> val_buf_copy,
-                int num_params);
+  // A wrapper of the query params used in prepared statement
+  struct QueryParams {
 
-    // TODO constructor from common::Value
+    QueryParams(QueryParamBuf format_buf_copy, QueryParamBuf type_buf_copy,
+                QueryParamBuf val_buf_copy, int num_params);
 
-    inline int GetNumParams() { return num_params_; }
-
-    inline std::vector<uchar> &GetFormatBuf() { return format_buf_copy_; }
-
-    inline std::shared_ptr<std::vector<uchar>> GetValueBuf() {
-      return val_buf_copy_;
-    }
-
-   private:
     // A copy of paramter format buffer
-    std::vector<uchar> format_buf_copy_;
+    QueryParamBuf format_buf_copy;
 
-    // The types of the params
-    std::vector<int32_t> param_types_;
+    // A copy of the types of the params
+    QueryParamBuf type_buf_copy;
 
     // A copy of paramter value buffer
-    std::shared_ptr<std::vector<uchar>> val_buf_copy_;
+    QueryParamBuf val_buf_copy;
 
     // Number of parameters
-    int num_params_ = 0;
+    int num_params = 0;
   };
 
   QueryMetric(MetricType type, const std::string &query_name,

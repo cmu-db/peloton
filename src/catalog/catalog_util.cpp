@@ -94,9 +94,9 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
  * Input: The table schema, the database id, the database name
  * Returns: The generated tuple
  */
-std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(catalog::Schema *schema,
-		oid_t database_id,
-		std::string database_name, common::VarlenPool *pool){
+std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
+    catalog::Schema *schema, oid_t database_id, std::string database_name,
+    common::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = common::ValueFactory::GetIntegerValue(database_id);
   auto val2 = common::ValueFactory::GetVarcharValue(database_name, nullptr);
@@ -191,8 +191,9 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
  */
 std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     catalog::Schema *schema, std::string query_name, oid_t database_id,
-    int64_t num_params, std::vector<uchar> &format_buf,
-    std::shared_ptr<std::vector<uchar>> val_buf, int64_t reads, int64_t updates,
+    int64_t num_params, stats::QueryMetric::QueryParamBuf type_buf,
+    stats::QueryMetric::QueryParamBuf format_buf,
+    stats::QueryMetric::QueryParamBuf val_buf, int64_t reads, int64_t updates,
     int64_t deletes, int64_t inserts, int64_t latency, int64_t cpu_time,
     int64_t time_stamp, common::VarlenPool *pool) {
 
@@ -202,40 +203,47 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
   auto val2 = common::ValueFactory::GetIntegerValue(database_id);
   auto val3 = common::ValueFactory::GetIntegerValue(num_params);
 
+  common::Value param_type =
+      common::ValueFactory::GetNullValueByType(common::Type::VARBINARY);
   common::Value param_format =
-      common::ValueFactory::GetNullValueByType(common::Type::VARBINARY).Copy();
+      common::ValueFactory::GetNullValueByType(common::Type::VARBINARY);
   common::Value param_value =
-      common::ValueFactory::GetNullValueByType(common::Type::VARBINARY).Copy();
+      common::ValueFactory::GetNullValueByType(common::Type::VARBINARY);
 
   if (num_params != 0) {
-    param_format = common::ValueFactory::GetVarbinaryValue(
-        val_buf->data(), val_buf->size()).Copy();
-    param_value = common::ValueFactory::GetVarbinaryValue(
-        format_buf.data(), format_buf.size()).Copy();
+    param_type =
+        common::ValueFactory::GetVarbinaryValue(type_buf.buf, type_buf.len);
+    param_format =
+        common::ValueFactory::GetVarbinaryValue(format_buf.buf, format_buf.len);
+    param_value =
+        common::ValueFactory::GetVarbinaryValue(val_buf.buf, val_buf.len);
+    LOG_ERROR("writing %d, %d, %d", type_buf.len, format_buf.len, val_buf.len);
   }
 
-  auto val6 = common::ValueFactory::GetIntegerValue(reads);
-  auto val7 = common::ValueFactory::GetIntegerValue(updates);
-  auto val8 = common::ValueFactory::GetIntegerValue(deletes);
-  auto val9 = common::ValueFactory::GetIntegerValue(inserts);
-  auto val10 = common::ValueFactory::GetIntegerValue(latency);
-  auto val11 = common::ValueFactory::GetIntegerValue(cpu_time);
-  auto val12 = common::ValueFactory::GetIntegerValue(time_stamp);
+  auto val7 = common::ValueFactory::GetIntegerValue(reads);
+  auto val8 = common::ValueFactory::GetIntegerValue(updates);
+  auto val9 = common::ValueFactory::GetIntegerValue(deletes);
+  auto val10 = common::ValueFactory::GetIntegerValue(inserts);
+  auto val11 = common::ValueFactory::GetIntegerValue(latency);
+  auto val12 = common::ValueFactory::GetIntegerValue(cpu_time);
+  auto val13 = common::ValueFactory::GetIntegerValue(time_stamp);
 
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, nullptr);
   tuple->SetValue(2, val3, nullptr);
 
-  tuple->SetValue(3, param_format, pool);
-  tuple->SetValue(4, param_value, pool);
+  tuple->SetValue(3, param_type, pool);
+  tuple->SetValue(4, param_format, pool);
+  tuple->SetValue(5, param_value, pool);
 
-  tuple->SetValue(5, val6, nullptr);
   tuple->SetValue(6, val7, nullptr);
   tuple->SetValue(7, val8, nullptr);
   tuple->SetValue(8, val9, nullptr);
   tuple->SetValue(9, val10, nullptr);
   tuple->SetValue(10, val11, nullptr);
   tuple->SetValue(11, val12, nullptr);
+  tuple->SetValue(12, val13, nullptr);
+
   return std::move(tuple);
 }
 
@@ -245,19 +253,19 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
  * the database name
  * Returns: The generated tuple
  */
-std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema,
-		oid_t table_id, std::string table_name, oid_t database_id,
-    std::string database_name, common::VarlenPool *pool){
-	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-	auto val1 = common::ValueFactory::GetIntegerValue(table_id);
-	auto val2 = common::ValueFactory::GetVarcharValue(table_name, nullptr);
-	auto val3 = common::ValueFactory::GetIntegerValue(database_id);
-	auto val4 = common::ValueFactory::GetVarcharValue(database_name, nullptr);
-	tuple->SetValue(0, val1, pool);
-	tuple->SetValue(1, val2, pool);
-	tuple->SetValue(2, val3, pool);
-	tuple->SetValue(3, val4, pool);
-	return std::move(tuple);
+std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
+    catalog::Schema *schema, oid_t table_id, std::string table_name,
+    oid_t database_id, std::string database_name, common::VarlenPool *pool) {
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+  auto val1 = common::ValueFactory::GetIntegerValue(table_id);
+  auto val2 = common::ValueFactory::GetVarcharValue(table_name, nullptr);
+  auto val3 = common::ValueFactory::GetIntegerValue(database_id);
+  auto val4 = common::ValueFactory::GetVarcharValue(database_name, nullptr);
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
+  tuple->SetValue(2, val3, pool);
+  tuple->SetValue(3, val4, pool);
+  return std::move(tuple);
 }
 }
 }

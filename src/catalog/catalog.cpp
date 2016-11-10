@@ -726,10 +726,11 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {name_column,         database_id_column, num_param_column,
-       param_format_column, param_val_column,   reads_column,
-       updates_column,      deletes_column,     inserts_column,
-       latency_column,      cpu_time_column,    timestamp_column}));
+      {name_column,       database_id_column,  num_param_column,
+       param_type_column, param_format_column, param_val_column,
+       reads_column,      updates_column,      deletes_column,
+       inserts_column,    latency_column,      cpu_time_column,
+       timestamp_column}));
   return database_schema;
 }
 

@@ -70,16 +70,15 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
 std::shared_ptr<stats::QueryMetric::QueryParams>
 StatsTestsUtil::GetQueryParams() {
   //   Construct a query param object
+  std::shared_ptr<std::vector<uchar>> type_buf(new std::vector<uchar>(1));
+  type_buf->push_back('x');
   std::vector<uchar> format_buf;
-  format_buf.push_back('x');
-  std::vector<int32_t> param_types;
-  param_types.push_back(1);
+  format_buf.push_back('y');
   std::shared_ptr<std::vector<uchar>> value_buf(new std::vector<uchar>(1));
-  value_buf->push_back('y');
+  value_buf->push_back('z');
 
   std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
-      new stats::QueryMetric::QueryParams(format_buf, param_types, value_buf,
-                                          1));
+      new stats::QueryMetric::QueryParams(format_buf, type_buf, value_buf, 1));
   return query_params;
 }
 

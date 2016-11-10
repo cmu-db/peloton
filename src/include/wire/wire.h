@@ -125,6 +125,12 @@ class PacketManager {
   /* closes the socket connection with the client */
   void CloseClient();
 
+ public:
+  // TODO Add comment
+
+  static size_t ReadParamType(Packet* pkt, int num_params,
+                              std::vector<int32_t>& param_types);
+
   // TODO Add comment
 
   static size_t ReadParamFormat(Packet* pkt, int num_params_format,
@@ -137,11 +143,13 @@ class PacketManager {
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<common::Value>& param_values, std::vector<int16_t>& formats);
 
- public:
   Client client_;
 
   // Manage standalone queries
   std::shared_ptr<Statement> unnamed_statement_;
+
+  // Manage parameter types for unnamed statement
+  stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
 
   // The result-column format code
   std::vector<int> result_format_;
@@ -159,6 +167,13 @@ class PacketManager {
 
   // Statement cache
   Cache<std::string, Statement> statement_cache_;
+
+  // Parameter types for statements
+  // XXX the data in the param buffer becomes invalid when the value stored in
+  // stat table is destroyed
+  std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
+      statement_param_types_;
+
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
   // packets ready for read

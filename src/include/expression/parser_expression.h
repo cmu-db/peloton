@@ -85,6 +85,9 @@ class ParserExpression : public AbstractExpression {
         return new ParserExpression(this->GetExpressionType(), ival);
       }
       case EXPRESSION_TYPE_COLUMN_REF: {
+        if (column == nullptr) {
+          return new ParserExpression(this->GetExpressionType(), new_cstr);
+        }
         std::string ref(column);
         char* new_ref = new char[ref.length() + 1];
         std::strcpy(new_ref, ref.c_str());
@@ -92,6 +95,9 @@ class ParserExpression : public AbstractExpression {
                                     new_ref);
       }
       case EXPRESSION_TYPE_TABLE_REF: {
+        if (database == nullptr) {
+          return new ParserExpression(this->GetExpressionType(), new_cstr);
+        }
         std::string ref(database);
         char* new_ref = new char[ref.length() + 1];
         std::strcpy(new_ref, ref.c_str());
