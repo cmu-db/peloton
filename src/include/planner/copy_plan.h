@@ -40,7 +40,7 @@ class CopyPlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_COPY; }
 
   void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value> *values) {
-    // Ignore prepared statement for COPY for now
+    // XXX Ignore prepared statement for COPY for now
   }
 
   const std::string GetInfo() const { return "CopyPlan"; }

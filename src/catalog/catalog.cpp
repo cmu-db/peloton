@@ -691,15 +691,16 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   database_id_column.AddConstraint(not_null_constraint);
 
   // Parameters
-  auto num_param_column =
-      catalog::Column(integer_type, integer_type_size, "num_params", true);
+  auto num_param_column = catalog::Column(integer_type, integer_type_size,
+                                          QUERY_NUM_PARAM_COL_NAME, true);
   num_param_column.AddConstraint(not_null_constraint);
-  // For varbinary types, we don't want to inline it since it could be very
-  // large
+  // For varbinary types, we don't want to inline it since it could be large
+  auto param_type_column = catalog::Column(varbinary_type, varbinary_type_size,
+                                           QUERY_PARAM_TYPE_COL_NAME, false);
   auto param_format_column = catalog::Column(
-      varbinary_type, varbinary_type_size, "param_formats", false);
+      varbinary_type, varbinary_type_size, QUERY_PARAM_FORMAT_COL_NAME, false);
   auto param_val_column = catalog::Column(varbinary_type, varbinary_type_size,
-                                          "param_values", false);
+                                          QUERY_PARAM_VAL_COL_NAME, false);
 
   // Physical statistics
   auto reads_column =

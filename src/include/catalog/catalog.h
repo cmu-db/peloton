@@ -25,10 +25,16 @@
 #define CATALOG_DATABASE_NAME "catalog_db"
 #define DATABASE_CATALOG_NAME "database_catalog"
 #define TABLE_CATALOG_NAME "table_catalog"
+
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"
 #define INDEX_METRIC_NAME "index_metric"
 #define QUERY_METRIC_NAME "query_metric"
+
+#define QUERY_NUM_PARAM_COL_NAME "num_params"
+#define QUERY_PARAM_TYPE_COL_NAME "param_types"
+#define QUERY_PARAM_FORMAT_COL_NAME "param_formats"
+#define QUERY_PARAM_VAL_COL_NAME "param_values"
 
 namespace peloton {
 

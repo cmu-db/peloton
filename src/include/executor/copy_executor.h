@@ -42,6 +42,13 @@ class CopyExecutor : public AbstractExecutor {
 
   bool DExecute();
 
+  // Initialize the column ids for query parameters
+  void InitParamColIds();
+
+  // Flush the local buffer
+  void FlushBuffer();
+
+  // Copy and escape the content of column to local buffer
   void Copy(const char *data, int len, bool end_of_line);
 
   void CreateParamPacket(wire::Packet &packet, int len, std::string &val);
@@ -73,6 +80,12 @@ class CopyExecutor : public AbstractExecutor {
 
   // Total number of bytes written
   size_t total_bytes_written = 0;
+
+  // The special column ids in query_metric table
+  unsigned int num_param_col_id = -1;
+  unsigned int param_type_col_id = -1;
+  unsigned int param_format_col_id = -1;
+  unsigned int param_val_col_id = -1;
 };
 
 }  // namespace executor

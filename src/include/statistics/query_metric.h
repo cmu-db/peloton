@@ -37,6 +37,10 @@ class QueryMetric : public AbstractMetric {
   struct QueryParamBuf {
     uchar *buf = nullptr;
     int len = 0;
+
+    // Default constructor
+    QueryParamBuf() {}
+    QueryParamBuf(uchar *buf, int len) : buf(buf), len(len) {}
   };
 
   // A wrapper of the query params used in prepared statement

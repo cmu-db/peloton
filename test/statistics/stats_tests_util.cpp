@@ -67,18 +67,31 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
-std::shared_ptr<stats::QueryMetric::QueryParams>
-StatsTestsUtil::GetQueryParams() {
-  //   Construct a query param object
-  std::shared_ptr<std::vector<uchar>> type_buf(new std::vector<uchar>(1));
-  type_buf->push_back('x');
-  std::vector<uchar> format_buf;
-  format_buf.push_back('y');
-  std::shared_ptr<std::vector<uchar>> value_buf(new std::vector<uchar>(1));
-  value_buf->push_back('z');
+std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
+    std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
+    std::shared_ptr<uchar> &val_buf) {
 
+  // Type
+  uchar *type_buf_data = new uchar[1];
+  type_buf_data[0] = 'x';
+  type_buf.reset(type_buf_data);
+  stats::QueryMetric::QueryParamBuf type(type_buf_data, 1);
+
+  // Format
+  uchar *format_buf_data = new uchar[1];
+  format_buf_data[0] = 'y';
+  format_buf.reset(format_buf_data);
+  stats::QueryMetric::QueryParamBuf format(format_buf_data, 1);
+
+  // Value
+  uchar *val_buf_data = new uchar[1];
+  val_buf_data[0] = 'z';
+  val_buf.reset(val_buf_data);
+  stats::QueryMetric::QueryParamBuf val(val_buf_data, 1);
+
+  // Construct a query param object
   std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
-      new stats::QueryMetric::QueryParams(format_buf, type_buf, value_buf, 1));
+      new stats::QueryMetric::QueryParams(format, type, val, 1));
   return query_params;
 }
 
