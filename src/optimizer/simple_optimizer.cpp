@@ -115,7 +115,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
       if (select_stmt->from_table->join != NULL) {
         child_plan = CreateJoinPlan(select_stmt);
-        throw NotImplementedException("Error: Joins are not implemented yet");
+        break;
+        // throw NotImplementedException("Error: Joins are not implemented yet");
       }
 
       storage::DataTable* target_table =
@@ -1254,17 +1255,25 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
   auto right_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, select_stmt->from_table->join->right->GetTableName());
 
-  // PelotonJoinType join_type = select_stmt->from_table->join->type;
-  auto join_condition = select_stmt->from_table->join->condition;
+  PelotonJoinType join_type = select_stmt->from_table->join->type;
+  std::unique_ptr<const peloton::expression::AbstractExpression> join_condition(select_stmt->from_table->join->condition);;
   auto join_for_update = select_stmt->is_for_update;
   
   // column predicates passing to the index
-  std::vector<oid_t> key_column_ids;
+  std::vector<oid_t> key_column_ids = {0};
   std::vector<ExpressionType> expr_types;
   std::vector<common::Value> values;
   
-  std::unique_ptr<planner::SeqScanPlan> left_SelectPlan(new planner::SeqScanPlan(left_table, join_condition, key_column_ids, join_for_update));
-  std::unique_ptr<planner::SeqScanPlan> right_SelectPlan(new planner::SeqScanPlan(right_table, join_condition, key_column_ids, join_for_update));  
+  std::unique_ptr<planner::SeqScanPlan> left_SelectPlan(
+    new planner::SeqScanPlan(
+      left_table,
+      select_stmt->from_table->join->condition,
+      key_column_ids, join_for_update));
+  std::unique_ptr<planner::SeqScanPlan> right_SelectPlan(
+    new planner::SeqScanPlan(
+      right_table,
+      select_stmt->from_table->join->condition,
+      key_column_ids, join_for_update));  
   
   // oid_t index_id = 0;
 
@@ -1301,18 +1310,20 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
       output_table_columns.push_back(right_column);
     }
   }
-  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(output_table_columns));
+  std::shared_ptr<const peloton::catalog::Schema> schema(new catalog::Schema(output_table_columns));
   auto projection = CreateHackProjection();
   LOG_TRACE("Index scan column size: %ld\n", output_table_columns.size());
   // // Create hash join plan node.
-  // std::unique_ptr<planner::HashJoinPlan> hash_join_plan_node(
-  //     new planner::HashJoinPlan(join_type, std::move(join_condition),
-  //                               std::move(projection), schema));
+  std::unique_ptr<planner::HashJoinPlan> hash_join_plan_node(
+      new planner::HashJoinPlan(join_type, std::move(join_condition),
+                                std::move(projection), schema));
   // index only works on comparison with a constant
   
   std::cout<<"\nGot tables "<<select_stmt->from_table->join->left->GetTableName()<<" "<<select_stmt->from_table->join->right->GetTableName()<<"\n\n";
 
-  return NULL;
+  hash_join_plan_node->AddChild(std::move(left_SelectPlan));
+  hash_join_plan_node->AddChild(std::move(hash_plan_node));
+  return hash_join_plan_node;
   
 }
 

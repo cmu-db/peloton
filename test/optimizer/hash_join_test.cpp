@@ -40,15 +40,15 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   auto txn = txn_manager.BeginTransaction();
   LOG_INFO("Creating table");
   LOG_INFO(
-      "Query: CREATE TABLE table_a(id INT PRIMARY KEY,value INT);");
+      "Query: CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
   std::unique_ptr<Statement> statement;
   statement.reset(new Statement("CREATE",
-                                "CREATE TABLE table_a(id INT PRIMARY KEY,value INT);"));
+                                "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);"));
 
   auto& peloton_parser = parser::Parser::GetInstance();
 
   auto create_stmt = peloton_parser.BuildParseTree(
-      "CREATE TABLE table_a(id INT PRIMARY KEY,value INT);");
+      "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(create_stmt));
@@ -73,12 +73,12 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Creating table");
   LOG_INFO(
-      "Query: CREATE TABLE table_b(id INT PRIMARY KEY,value INT);");
+      "Query: CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
   statement.reset(new Statement("CREATE",
-                                "CREATE TABLE table_b(id INT PRIMARY KEY,value INT);"));
+                                "CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);"));
 
   create_stmt = peloton_parser.BuildParseTree(
-      "CREATE TABLE table_b(id INT PRIMARY KEY,value INT);");
+      "CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(create_stmt));
@@ -101,12 +101,12 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
-      "Query: INSERT INTO table_a(id, value) VALUES (1,1);");
+      "Query: INSERT INTO table_a(aid, value) VALUES (1,1);");
   statement.reset(new Statement("INSERT",
-                                "INSERT INTO table_a(id, value) VALUES (1, 1);"));
+                                "INSERT INTO table_a(aid, value) VALUES (1, 1);"));
 
   auto insert_stmt = peloton_parser.BuildParseTree(
-      "INSERT INTO table_a(id, value) VALUES (1, 1);");
+      "INSERT INTO table_a(aid, value) VALUES (1, 1);");
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
@@ -123,12 +123,12 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
-      "Query: INSERT INTO table_b(id, value) VALUES (1,2);");
+      "Query: INSERT INTO table_b(bid, value) VALUES (1,2);");
   statement.reset(new Statement("INSERT",
-                                "INSERT INTO table_b(id, value) VALUES (1, 2);"));
+                                "INSERT INTO table_b(bid, value) VALUES (1, 2);"));
 
   insert_stmt = peloton_parser.BuildParseTree(
-      "INSERT INTO table_b(id, value) VALUES (1, 2);");
+      "INSERT INTO table_b(bid, value) VALUES (1, 2);");
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
@@ -205,44 +205,44 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   // auto& del_scan_plan_seq = del_plan_seq->GetChildren().front();
   // EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
   // Perform the join
-  txn = txn_manager.BeginTransaction();
-  LOG_INFO("Select * ...");
-  LOG_INFO(
-      "Query: SELECT id FROM table_a WHERE id = 1;");
-  statement.reset(new Statement("SELECT",
-                                "SELECT id FROM table_a WHERE id = 1;"));
+  // txn = txn_manager.BeginTransaction();
+  // LOG_INFO("Select * ...");
+  // LOG_INFO(
+  //     "Query: SELECT id FROM table_a WHERE id = 1;");
+  // statement.reset(new Statement("SELECT",
+  //                               "SELECT id FROM table_a WHERE id = 1;"));
 
-  auto select_stmt = peloton_parser.BuildParseTree(
-      "SELECT id FROM table_a WHERE id = 1;");
+  // auto select_stmt = peloton_parser.BuildParseTree(
+  //     "SELECT id FROM table_a WHERE id = 1;");
 
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  // statement->SetPlanTree(
+  //     optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
 
-  result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Select * completed!");
-  txn_manager.CommitTransaction(txn);
+  // result_format =
+  //     std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  // status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+  //                                            params, result, result_format);
+  // LOG_INFO("Statement executed. Result: %d", status.m_result);
+  // LOG_INFO("Select * completed!");
+  // txn_manager.CommitTransaction(txn);
 
-  LOG_INFO("Before Join\n\n\n\n\n\n\n\n\n\n\n");
+  // LOG_INFO("Before Join\n\n\n\n\n\n\n\n\n\n\n");
 
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Join ...");
   LOG_INFO(
-      "Query: SELECT * FROM table_a INNER JOIN table_b ON table_a.id = table_a.id;");
+      "Query: SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
   statement.reset(new Statement("SELECT",
-                                "SELECT * FROM table_a INNER JOIN table_b ON table_a.id = table_b.id;"));
+                                "SELECT * FROM table_a INNER JOIN table_b ON aid = bid;"));
 
-  select_stmt = peloton_parser.BuildParseTree(
-      "SELECT * FROM table_a INNER JOIN table_b ON table_a.id = table_b.id;");
+  auto select_stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
 
   result_format =
-      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+      std::move(std::vector<int>(4, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
