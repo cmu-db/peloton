@@ -55,7 +55,7 @@ TEST_F(CopyTests, Copying) {
   size_t num_bytes_to_write = 0;
   size_t integer_len = 5;
   size_t default_delimiter_len = 2;
-  size_t extra_delimiter_len = 3;
+  size_t extra_delimiter_len = 6;
   for (int i = 0; i < num_tuples; i++) {
     // Choose a string and calculate the number of bytes to write
     std::string insert_str;

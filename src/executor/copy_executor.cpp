@@ -117,7 +117,7 @@ void CopyExecutor::InitParamColIds() {
 
 void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
   // Worst case we need to escape all character and two delimiters
-  while (COPY_BUFFER_SIZE - buff_size - buff_ptr < (size_t)len * 2) {
+  while (COPY_BUFFER_SIZE - buff_size - buff_ptr < (size_t)len * 3) {
     FlushBuffer();
   }
 
@@ -126,7 +126,10 @@ void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
   for (int i = 0; i < len; i++) {
     char ch = data[i];
     // Check delimiter
-    if (ch == delimiter || ch == new_line) {
+    if (ch == delimiter) {
+      buff[buff_size++] = '\\';
+      buff[buff_size++] = '\\';
+    } else if (ch == new_line) {
       buff[buff_size++] = '\\';
     }
     buff[buff_size++] = ch;
