@@ -81,7 +81,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
       for (auto col : *select_node->select_list) {
         LOG_TRACE("ExpressionType: %s",
                   ExpressionTypeToString(col->GetExpressionType()).c_str());
-        auto col_name = col->GetName();
+        auto col_name = ((expression::TupleValueExpression*)col)->col_name_;
         oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
         SetColumnId(col_id);
       }

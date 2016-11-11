@@ -14,6 +14,7 @@
 #include "common/value.h"
 #include "common/value_factory.h"
 #include "expression/abstract_expression.h"
+#include "expression/aggregate_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
@@ -25,6 +26,7 @@
 
 #include "parser/statements.h"
 #include "parser/sql_parser.h"
+#include "parser/parser_utils.h"
 
 using namespace std;
 using namespace peloton::parser;
@@ -196,11 +198,11 @@ struct PARSER_CUST_LTYPE {
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
 %token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
-%token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
+%token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER COUNT
 %token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE BTREE BWTREE SKIPLIST
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
-%token AND ASC CSV FOR INT KEY NOT OFF SET TOP AS BY IF
+%token AND ASC CSV FOR INT KEY NOT OFF SET TOP SUM MIN MAX AVG AS BY IF
 %token IN IS OF ON OR TO
 %token COPY DELIMITER
 
@@ -225,8 +227,8 @@ struct PARSER_CUST_LTYPE {
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias parameter_expr opt_default
-%type <expr> 		column_name literal int_literal num_literal string_literal
-%type <expr> 		comp_expr opt_where join_condition opt_having
+%type <expr> 		column_name literal int_literal num_literal string_literal aggregate_expr
+%type <expr> 		comp_expr opt_where join_condition opt_having placeholder_expr
 %type <table_info>	table_name
 %type <order>		opt_order
 %type <limit>		opt_limit
@@ -721,7 +723,7 @@ literal_list:
 expr_alias:
 		expr opt_alias {
 			$$ = $1;
-			$$->alias = $2;
+			$$->alias = CharsToStringDestructive($2);
 		}
 	;
 
@@ -730,6 +732,7 @@ expr:
 	|	scalar_expr
 	|	unary_expr
 	|	binary_expr
+	|	aggregate_expr
 	|	function_expr
 	;
 
@@ -770,21 +773,26 @@ function_expr:
 		IDENTIFIER '(' expr ')' { $$ = new peloton::expression::FunctionExpression($1, $3); }
 	;
 
-// TODO: this needs to be implemented
-//aggregate_expr:
-//		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::FunctionExpression($1, $4); }
-//	;
+
+aggregate_expr:
+		SUM '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_SUM, $3, $4); }
+	|	MIN '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_MIN, $3, $4); }
+	|	MAX '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_MAX, $3, $4); }
+	|	AVG '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_AVG, $3, $4); }
+	|	COUNT '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_COUNT, $3, $4); }
+
+	;
 	
 
 column_name:
-		IDENTIFIER { $$ = new peloton::expression::TupleValueExpression($1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::TupleValueExpression($1, $3); }
+		IDENTIFIER { $$ = new peloton::expression::TupleValueExpression(std::move(CharsToStringDestructive($1))); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::TupleValueExpression(std::move(CharsToStringDestructive($3)), std::move(CharsToStringDestructive($1))); }
 	;
 
 literal:
 		string_literal
 	|	num_literal
-//	|	placeholder_expr
+	|	placeholder_expr
 	|	parameter_expr
 	;
 
@@ -809,13 +817,12 @@ star_expr:
 	;
 
 
-// I think this is covered by parameter_expr but I'm not sure.
-//placeholder_expr:
-//		'?' {
-//			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
-//			yyloc.placeholder_list.push_back($$);
-//		}
-//	;
+placeholder_expr:
+		'?' {
+			$$ = new peloton::expression::ParameterValueExpression(yylloc.total_column);
+			yyloc.placeholder_list.push_back($$);
+		}
+	;
 	
 parameter_expr:
 	PREPAREPARAMETERS {
@@ -879,7 +886,7 @@ table_name:
 					 $$->table_name = $1;};
 	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::parser::TableInfo();
 									$$->table_name = $3;
-									$$->table_name = $1;}
+									$$->database_name = $1;}
 	;
 
 

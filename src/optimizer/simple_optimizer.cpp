@@ -17,6 +17,7 @@
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "expression/expression_util.h"
+#include "expression/aggregate_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "planner/abstract_plan.h"
@@ -254,7 +255,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
           // If an aggregate function is found
           if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-            auto func_expr = (expression::AggregeateExpression*)expr;
+            auto agg_expr = (expression::AggregateExpression*)expr;
             LOG_TRACE(
                 "Expression type in Function Expression: %s",
                 ExpressionTypeToString(func_expr->expr->GetExpressionType())
@@ -262,19 +263,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             LOG_TRACE("Distinct flag: %d", func_expr->distinct);
 
             // Count a column expression
-            if (func_expr->expr->GetExpressionType() ==
+            if (agg_expr->GetChild(0)->GetExpressionType() ==
                 EXPRESSION_TYPE_COLUMN_REF) {
-              LOG_TRACE("Function name: %s", ((expression::TupleValueExpression*)func_expr)->col_name_);
+              auto agg_over = (expression::TupleValueExpression*) agg_expr->GetChild(0);
+              LOG_TRACE("Function name: %s", ((expression::TupleValueExpression*)agg_expr)->GetExpressionName());
               LOG_TRACE(
                   "Aggregate type: %s",
                   ExpressionTypeToString(ParserExpressionNameToExpressionType(
                                              func_expr->GetExpressionName()))
                       .c_str());
               planner::AggregatePlan::AggTerm agg_term(
-                  ParserExpressionNameToExpressionType(func_expr->GetName()),
+                  agg_expr->GetExpressionType(),
                   expression::ExpressionUtil::ConvertToTupleValueExpression(
-                      target_table->GetSchema(), func_expr->expr->GetName()),
-                  func_expr->distinct);
+                      target_table->GetSchema(), agg_over->col_name_),
+                      agg_expr->distinct_);
               agg_terms.push_back(agg_term);
 
               std::pair<oid_t, oid_t> inner_pair = std::make_pair(1, agg_id);
@@ -285,7 +287,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                         outer_pair.second.first, outer_pair.second.second);
 
               // If aggregate type is average the value type should be double
-              if (ParserExpressionNameToExpressionType(func_expr->GetName()) ==
+              if (agg_expr->GetExpressionType() ==
                   EXPRESSION_TYPE_AGGREGATE_AVG) {
                 // COL_A should be used only when there is no AS
                 auto column = catalog::Column(
@@ -299,7 +301,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               // Else it is the same as the column type
               else {
                 oid_t old_col_id = target_table->GetSchema()->GetColumnID(
-                    func_expr->expr->GetName());
+                    agg_over->col_name_);
                 auto table_column =
                     target_table->GetSchema()->GetColumn(old_col_id);
 
@@ -317,14 +319,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             }
 
             // Check for COUNT STAR Expression
-            else if (func_expr->expr->GetExpressionType() ==
+            else if (agg_expr->GetExpressionType() ==
                      EXPRESSION_TYPE_STAR) {
               LOG_TRACE("Creating an aggregate plan");
               planner::AggregatePlan::AggTerm agg_term(
                   EXPRESSION_TYPE_AGGREGATE_COUNT_STAR,
                   nullptr,  // No predicate for star expression. Nothing to
                             // evaluate
-                  func_expr->distinct);
+                  agg_expr->distinct_);
               agg_terms.push_back(agg_term);
 
               std::pair<oid_t, oid_t> inner_pair = std::make_pair(1, agg_id);
@@ -355,7 +357,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           else {
             // There are columns in the query
             agg_type = AGGREGATE_TYPE_HASH;
-            std::string col_name(expr->GetName());
+            std::string col_name(expr->GetExpressionName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
             std::pair<oid_t, oid_t> inner_pair = std::make_pair(0, old_col_id);
@@ -690,11 +692,12 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   }
   // Pass columns in select_list
   else {
+    //TODO this should allow arbitrary expressions
     for (auto col : *select_stmt->select_list) {
       LOG_TRACE("ExpressionType: %s",
                 ExpressionTypeToString(col->GetExpressionType()).c_str());
       column_ids.push_back(
-          target_table->GetSchema()->GetColumnID(col->GetName()));
+          target_table->GetSchema()->GetColumnID(((expression::TupleValueExpression*)col)->col_name_));
     }
   }
   LOG_TRACE("Index scan column size: %ld\n", column_ids.size());
@@ -737,8 +740,8 @@ void SimpleOptimizer::GetPredicateColumns(
     auto right_type = expression->GetChild(1)->GetExpressionType();
     if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
-      auto expr = expression->GetChild(0);
-      std::string col_name(expr->GetName());
+      auto expr = (expression::TupleValueExpression*)expression->GetChild(0);
+      std::string col_name(expr->col_name_);
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
@@ -774,8 +777,8 @@ void SimpleOptimizer::GetPredicateColumns(
     auto left_type = expression->GetChild(0)->GetExpressionType();
     if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
-      auto expr = expression->GetChild(1);
-      std::string col_name(expr->GetName());
+      auto expr = (expression::TupleValueExpression*)expression->GetChild(1);
+      std::string col_name(expr->col_name_);
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       LOG_TRACE("Column id: %d", column_id);
@@ -826,13 +829,12 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   char ol_d_id_name[] = "ol_d_id";
   char ol_o_id_1_name[] = "ol_o_id";
   char ol_o_id_2_name[] = "ol_o_id";
-  auto ol_w_id = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
-                                                  ol_w_id_name);
-  auto ol_d_id = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+  auto ol_w_id = new expression::TupleValueExpression(ol_w_id_name);
+  auto ol_d_id = new expression::TupleValueExpression(
                                                   ol_d_id_name);
-  auto ol_o_id_1 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+  auto ol_o_id_1 = new expression::TupleValueExpression(
                                                     ol_o_id_1_name);
-  auto ol_o_id_2 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+  auto ol_o_id_2 = new expression::TupleValueExpression(
                                                     ol_o_id_2_name);
 
   auto predicate1 = new expression::ComparisonExpression(
@@ -878,8 +880,8 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   char s_w_id_name[] = "s_w_id";
   char s_quantity_name[] = "s_quantity";
   auto s_w_id =
-      new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF, s_w_id_name);
-  auto s_quantity = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+      new expression::TupleValueExpression( s_w_id_name);
+  auto s_quantity = new expression::TupleValueExpression(
                                                      s_quantity_name);
   auto predicate9 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, s_w_id, params[4]);

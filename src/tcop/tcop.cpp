@@ -220,7 +220,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
       // Get the parser expression that contains
       // the typr of the aggreataion function
-      auto func_expr = (expression::AggregeateExpression *)expr;
+      auto func_expr = (expression::AggregateExpression *)expr;
 
       std::string col_name = "";
       // check if expression has an alias

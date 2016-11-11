@@ -26,7 +26,14 @@ using namespace peloton::common;
 
 class TupleValueExpression: public AbstractExpression {
 public:
-  TupleValueExpression(char * col_name, char * table_name = nullptr) :
+
+  TupleValueExpression(std::string &&col_name) :
+      AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, Type::INVALID), value_idx_(
+          -1), tuple_idx_(-1) {
+    col_name_ = col_name;
+  }
+
+  TupleValueExpression(std::string &&col_name, std::string &&table_name) :
       AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, Type::INVALID), value_idx_(
           -1), tuple_idx_(-1) {
     table_name_ = table_name;

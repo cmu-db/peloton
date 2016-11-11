@@ -238,5 +238,17 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   }
 }
 
+std::string CharsToStringDestructive(char * str) {
+  // this should not make an extra copy because of the return value optimization
+  // ..hopefully
+  if (str == nullptr){
+    return "";
+  }else{
+    std::string ret_string(str);
+    delete str;
+    return ret_string;
+  }
+}
+
 }  // End parser namespace
 }  // End peloton namespace

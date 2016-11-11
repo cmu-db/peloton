@@ -70,12 +70,13 @@ class AbstractExpression : public Printable {
   }
 
   const AbstractExpression * GetChild(int index) const{
-    PL_ASSERT(index > 0 && index < (int)children_.size());
-    return children_[index].get();
+    return GetModifiableChild(index);
   }
 
   AbstractExpression * GetModifiableChild(int index) const{
-    PL_ASSERT(index > 0 && index < (int)children_.size());
+    if(index < 0 || index >= (int)children_.size()){
+      return nullptr;
+    }
     return children_[index].get();
   }
 
