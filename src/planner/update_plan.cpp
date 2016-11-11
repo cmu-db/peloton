@@ -122,42 +122,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
 
 void UpdatePlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Update");
-  // First update project_info_ target list
-  // Create new project_info_
-  TargetList tlist;
-  DirectMapList dmlist;
-  oid_t col_id;
-  auto schema = target_table_->GetSchema();
 
-  std::vector<oid_t> columns;
-  for (auto update : updates_) {
-    // get oid_t of the column and push it to the vector;
-    col_id = schema->GetColumnID(std::string(update->column));
-    columns.push_back(col_id);
-    auto update_expr = update->value->Copy();
-    expression::ExpressionUtil::ReplaceColumnExpressions(
-        target_table_->GetSchema(), update_expr);
-    tlist.emplace_back(col_id, update_expr);
-  }
-  auto &schema_columns = schema->GetColumns();
-  for (uint i = 0; i < schema_columns.size(); i++) {
-    bool is_in_target_list = false;
-    for (auto col_id : columns) {
-      if (schema_columns[i].column_name == schema_columns[col_id].column_name)
-        is_in_target_list = true;
-      break;
-    }
-    if (is_in_target_list == false)
-      dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
-  }
-
-  auto new_proj_info =
-      new planner::ProjectInfo(std::move(tlist), std::move(dmlist));
-  new_proj_info->transformParameterToConstantValueExpression(
-      values, target_table_->GetSchema());
-  project_info_.reset(new_proj_info);
-
-  LOG_TRACE("Setting values for parameters in where");
   auto &children = GetChildren();
   // One sequential scan
   children[0]->SetParameterValues(values);

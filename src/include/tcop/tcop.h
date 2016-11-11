@@ -47,6 +47,7 @@ class TrafficCop {
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
   Result ExecuteStatement(const std::shared_ptr<Statement> &statement,
+                          const std::vector<common::Value> &params,
                           const bool unnamed,
                           const std::vector<int> &result_format,
                           std::vector<ResultType> &result, int &rows_change,

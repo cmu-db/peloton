@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <utility>
@@ -51,7 +50,7 @@ class ProjectInfo {
   ProjectInfo(TargetList &tl, DirectMapList &dml) = delete;
 
   ProjectInfo(TargetList &&tl, DirectMapList &&dml)
-      : target_list_(tl), direct_map_list_(dml) { }
+      : target_list_(tl), direct_map_list_(dml) {}
 
   const TargetList &GetTargetList() const { return target_list_; }
 
@@ -59,19 +58,15 @@ class ProjectInfo {
 
   bool isNonTrivial() const { return target_list_.size() > 0; };
 
-  bool Evaluate(storage::Tuple *dest, 
-                const AbstractTuple *tuple1,
+  bool Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                 const AbstractTuple *tuple2,
                 executor::ExecutorContext *econtext) const;
 
-  bool Evaluate(AbstractTuple *dest, 
-                const AbstractTuple *tuple1,
+  bool Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
                 const AbstractTuple *tuple2,
                 executor::ExecutorContext *econtext) const;
 
   std::string Debug() const;
-
-  void transformParameterToConstantValueExpression(std::vector<common::Value>* values, catalog::Schema* schema);
 
   ~ProjectInfo();
 

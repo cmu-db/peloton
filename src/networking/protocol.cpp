@@ -451,7 +451,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
           param_values.push_back(
               (common::ValueFactory::GetVarcharValue(param_str))
                   .CastAs(PostgresValueTypeToPelotonValueType(
-                       (PostgresValueType)param_types[param_idx])));
+                      (PostgresValueType)param_types[param_idx])));
         }
       } else {
         // BINARY mode
@@ -492,8 +492,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             bind_parameters.push_back(std::make_pair(
                 common::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len)));
-            param_values.push_back(common::ValueFactory::GetVarbinaryValue(
-                &param[0], param_len).Copy());
+            param_values.push_back(
+                common::ValueFactory::GetVarbinaryValue(&param[0], param_len)
+                    .Copy());
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -529,11 +530,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     statement->GetPlanTree()->SetParameterValues(&param_values);
   }
 
-  // clean up param_values
-  param_values.clear();
-
-  // Construct a portal
-  auto portal = new Portal(portal_name, statement, bind_parameters);
+  // Construct a portal.
+  // Notice that this will move param_values so no value will be left there.
+  auto portal = new Portal(portal_name, statement, std::move(param_values));
   std::shared_ptr<Portal> portal_reference(portal);
 
   auto itr = portals_.find(portal_name);
@@ -634,10 +633,12 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
+  auto param_values = portal->GetParameters();
 
   auto &tcop = tcop::TrafficCop::GetInstance();
-  auto status = tcop.ExecuteStatement(statement, unnamed, result_format_,
-                                      results, rows_affected, error_message);
+  auto status =
+      tcop.ExecuteStatement(statement, param_values, unnamed, result_format_,
+                            results, rows_affected, error_message);
 
   if (status == Result::RESULT_FAILURE) {
     LOG_ERROR("Failed to execute: %s", error_message.c_str());
