@@ -126,18 +126,15 @@ class PacketManager {
   void CloseClient();
 
  public:
-  // TODO Add comment
-
+  // Deserialize the parameter types from packet
   static size_t ReadParamType(Packet* pkt, int num_params,
                               std::vector<int32_t>& param_types);
 
-  // TODO Add comment
-
+  // Deserialize the parameter format from packet
   static size_t ReadParamFormat(Packet* pkt, int num_params_format,
                                 std::vector<int16_t>& formats);
 
-  // TODO add comment
-
+  // Deserialize the parameter value from packet
   static size_t ReadParamValue(
       Packet* pkt, int num_params, std::vector<int32_t>& param_types,
       std::vector<std::pair<int, std::string>>& bind_parameters,
@@ -169,8 +166,8 @@ class PacketManager {
   Cache<std::string, Statement> statement_cache_;
 
   // Parameter types for statements
-  // XXX the data in the param buffer becomes invalid when the value stored in
-  // stat table is destroyed
+  // Warning: the data in the param buffer becomes invalid when the value stored
+  // in stat table is destroyed
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 

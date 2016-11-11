@@ -217,7 +217,6 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
         common::ValueFactory::GetVarbinaryValue(format_buf.buf, format_buf.len);
     param_value =
         common::ValueFactory::GetVarbinaryValue(val_buf.buf, val_buf.len);
-    LOG_ERROR("writing %d, %d, %d", type_buf.len, format_buf.len, val_buf.len);
   }
 
   auto val7 = common::ValueFactory::GetIntegerValue(reads);

@@ -200,7 +200,7 @@ struct PARSER_CUST_LTYPE {
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
 %token AND ASC CSV FOR INT KEY NOT OFF SET TOP AS BY IF
 %token IN IS OF ON OR TO
-%token COPY DELIMITER STDOUT
+%token COPY DELIMITER
 
 /*********************************
  ** Non-Terminal types (http://www.gnu.org/software/bison/manual/html_node/Type-Decl.html)
@@ -926,7 +926,7 @@ join_condition:
 /******************************
  * Copy Statement
  * COPY catalog_db.query_metric TO '/home/user/query_metric.csv' DELIMITER ','
- * TODO: Support nested query such as 
+ * TODO: Nested query like below is not supported yet
  * COPY (SELECT id FROM A WHERE val = 1) TO '/path/file.csv' DELIMITER ';'
  ******************************/
  

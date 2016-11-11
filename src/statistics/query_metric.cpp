@@ -39,7 +39,7 @@ QueryMetric::QueryParams::QueryParams(QueryParamBuf format_buf_copy,
       type_buf_copy(type_buf_copy),
       val_buf_copy(val_buf_copy),
       num_params(num_params) {
-  LOG_ERROR("query param: %d, %d, %d", type_buf_copy.len, format_buf_copy.len,
+  LOG_TRACE("query param: %d, %d, %d", type_buf_copy.len, format_buf_copy.len,
             val_buf_copy.len);
 }
 
