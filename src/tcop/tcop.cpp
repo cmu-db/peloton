@@ -65,6 +65,7 @@ Result TrafficCop::ExecuteStatement(
   // Then, execute the statement
   bool unnamed = true;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+  std::vector<common::Value> params;
   auto status =
       ExecuteStatement(statement, params, unnamed, nullptr, result_format,
                        result, rows_changed, error_message);
@@ -97,7 +98,6 @@ Result TrafficCop::ExecuteStatement(
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetStatementName().c_str());
   try {
-    std::vector<common::Value> params;
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
         statement->GetPlanTree().get(), params, result, result_format);

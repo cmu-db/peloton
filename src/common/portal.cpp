@@ -29,4 +29,8 @@ Portal::~Portal() { statement_.reset(); }
 
 std::shared_ptr<Statement> Portal::GetStatement() const { return statement_; }
 
+const std::vector<common::Value>& Portal::GetParameters() const {
+  return bind_parameters_;
+}
+
 }  // namespace peloton
