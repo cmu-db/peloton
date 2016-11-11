@@ -19,7 +19,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "executor/insert_executor.h"
-#include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "parser/statement_insert.h"
 #include "parser/statement_select.h"
 #include "planner/insert_plan.h"
@@ -69,8 +69,8 @@ TEST_F(InsertTests, InsertRecord) {
 
   char *name = new char[11]();
   strcpy(name, "TEST_TABLE");
-  expression::ParserExpression *table_name = new expression::ParserExpression(
-      EXPRESSION_TYPE_TABLE_REF, name, nullptr);
+  parser::TableInfo *table_info = new parser::TableInfo();
+  table_info->table_name = name;
 
   char *col_1 = new char[8]();
   strcpy(col_1, "dept_id");
@@ -78,7 +78,7 @@ TEST_F(InsertTests, InsertRecord) {
   char *col_2 = new char[10]();
   strcpy(col_2, "dept_name");
 
-  insert_node->table_name = table_name;
+  insert_node->table_info_ = table_info;
 
   insert_node->columns = new std::vector<char *>;
   insert_node->columns->push_back(const_cast<char *>(col_1));

@@ -60,7 +60,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   // Check if there is an aggregate function in query
   bool function_found = false;
   for (auto elem : *select_node->select_list) {
-    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+    if (expression::ExpressionUtil::IsAggregateExpression(elem->GetExpressionType())) {
       function_found = true;
       break;
     }

@@ -21,6 +21,7 @@
 #include "common/types.h"
 
 #include "expression/aggregate_expression.h"
+#include "expression/expression_util.h"
 
 #include "parser/parser.h"
 
@@ -217,7 +218,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     }
 
     // Query has aggregation Functions
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+    if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
       // Get the parser expression that contains
       // the typr of the aggreataion function
       auto func_expr = (expression::AggregateExpression *)expr;
@@ -230,13 +231,20 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
       } else {
         // Construct a String
         std::string agg_func_name = std::string(expr->GetExpressionName());
-        std::string col_name = std::string(func_expr->GetChild(0)->GetExpressionName());
 
-        // Example : Count(id)
-        std::string full_agg_name = agg_func_name + "(" + col_name + ")";
+        std::string full_agg_name;
+        if (expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR){
+          tuple_descriptor.push_back(GetColumnFieldForAggregates(
+                      agg_func_name, func_expr->GetExpressionType()));
+        }else{
+          std::string col_name = std::string(func_expr->GetChild(0)->GetExpressionName());
+          // Example : Count(id)
+          full_agg_name = agg_func_name + "(" + col_name + ")";
+          tuple_descriptor.push_back(GetColumnFieldForAggregates(
+                      full_agg_name, func_expr->GetChild(0)->GetExpressionType()));
+        }
 
-        tuple_descriptor.push_back(GetColumnFieldForAggregates(
-            full_agg_name, func_expr->GetChild(0)->GetExpressionType()));
+
       }
     }
   }

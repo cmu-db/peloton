@@ -135,7 +135,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // Check if there are any aggregate functions
       bool agg_flag = false;
       for (auto expr : *select_stmt->getSelectList()) {
-        if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+        if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
           LOG_TRACE("Query has aggregate functions");
           agg_flag = true;
           break;
@@ -254,7 +254,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                     ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
           // If an aggregate function is found
-          if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+          if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
             auto agg_expr = (expression::AggregateExpression*)expr;
             LOG_TRACE(
                 "Expression type in Function Expression: %s",
@@ -263,8 +263,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             LOG_TRACE("Distinct flag: %d", func_expr->distinct);
 
             // Count a column expression
-            if (agg_expr->GetChild(0)->GetExpressionType() ==
-                EXPRESSION_TYPE_COLUMN_REF) {
+            if (agg_expr->GetChild(0) != nullptr && agg_expr->GetChild(0)->GetExpressionType() ==
+                EXPRESSION_TYPE_VALUE_TUPLE) {
               auto agg_over = (expression::TupleValueExpression*) agg_expr->GetChild(0);
               LOG_TRACE("Function name: %s", ((expression::TupleValueExpression*)agg_expr)->GetExpressionName());
               LOG_TRACE(
@@ -320,7 +320,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
             // Check for COUNT STAR Expression
             else if (agg_expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_STAR) {
+                     EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
               LOG_TRACE("Creating an aggregate plan");
               planner::AggregatePlan::AggTerm agg_term(
                   EXPRESSION_TYPE_AGGREGATE_COUNT_STAR,
@@ -678,7 +678,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   std::vector<oid_t> column_ids = {};
   bool function_found = false;
   for (auto elem : *select_stmt->select_list) {
-    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+    if (expression::ExpressionUtil::IsAggregateExpression(elem->GetExpressionType())) {
       function_found = true;
       break;
     }
@@ -736,7 +736,7 @@ void SimpleOptimizer::GetPredicateColumns(
   // We're only supporting comparing a column_ref to a constant/parameter for
   // index scan right now
   if (expression->GetChild(0)->GetExpressionType() ==
-      EXPRESSION_TYPE_COLUMN_REF) {
+      EXPRESSION_TYPE_VALUE_TUPLE) {
     auto right_type = expression->GetChild(1)->GetExpressionType();
     if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
@@ -773,7 +773,7 @@ void SimpleOptimizer::GetPredicateColumns(
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
-             EXPRESSION_TYPE_COLUMN_REF) {
+      EXPRESSION_TYPE_VALUE_TUPLE) {
     auto left_type = expression->GetChild(0)->GetExpressionType();
     if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {

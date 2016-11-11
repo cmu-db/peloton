@@ -51,9 +51,9 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   parser::DeleteStatement *delete_statement = new parser::DeleteStatement();
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
-                                                     name, nullptr);
-  delete_statement->table_name = table_name;
+  auto table_info = new parser::TableInfo();
+  table_info->table_name = name;
+  delete_statement->table_info_ = table_info;
   // Value val =
   //    common::ValueFactory::GetNullValue();  // The value is not important at
   // this point
@@ -114,9 +114,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
-                                                     name, nullptr);
-  table_ref->table_name = table_name;
+  auto table_info = new parser::TableInfo();
+  table_info->table_name = name;
+  table_ref->table_info_ = table_info;
   update_statement->table = table_ref;
   // Value val =
   //    common::ValueFactory::GetNullValue();  // The value is not important at
@@ -188,9 +188,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
-  auto table_name = new expression::ParserExpression(EXPRESSION_TYPE_TABLE_REF,
-                                                     name, nullptr);
-  insert_statement->table_name = table_name;
+  auto table_info = new parser::TableInfo();
+  table_info->table_name = name;
+  insert_statement->table_info_ = table_info;
   std::vector<char *> *columns = NULL;  // will not be used
   insert_statement->columns = columns;
 
@@ -227,6 +227,8 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   delete values;
   delete insert_plan;
   delete insert_statement;
+  delete parameter_expr_1;
+  delete parameter_expr_2;
 }
 
 }  // End test namespace

@@ -116,15 +116,18 @@ class ExpressionUtil {
 
     if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE){
       expression::TupleValueExpression * tv_expr = (expression::TupleValueExpression *)expression;
-      PL_ASSERT(!tv_expr->col_name_.empty());
-      std::string col_name(tv_expr->col_name_);
-      oid_t col_id = schema->GetColumnID(col_name);
-      if (col_id == (oid_t)-1){
-        throw Exception("Invalid Column");
+      // if already set up ignore
+      if (expression->GetValueType() == Type::INVALID){
+        PL_ASSERT(!tv_expr->col_name_.empty());
+        std::string col_name(tv_expr->col_name_);
+        oid_t col_id = schema->GetColumnID(col_name);
+        if (col_id == (oid_t)-1){
+          throw Exception("Invalid Column");
+        }
+        // I think its okay here to assume results will come from the 'left' tuple
+        const catalog::Column &col = schema->GetColumn(col_id);
+        tv_expr->SetTupleValueExpressionParams(col.GetType(), col_id, 0);
       }
-      // I think its okay here to assume results will come from the 'left' tuple
-      const catalog::Column &col = schema->GetColumn(col_id);
-      tv_expr->SetTupleValueExpressionParams(col.GetType(), col_id, 0);
     }
 
     if (expression->GetChild(0) != nullptr) {
@@ -210,6 +213,23 @@ class ExpressionUtil {
     }
     return left;
   }
+
+  inline static bool IsAggregateExpression(ExpressionType type) {
+      switch (type) {
+      case EXPRESSION_TYPE_AGGREGATE_COUNT:
+      case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+      case EXPRESSION_TYPE_AGGREGATE_SUM:
+      case EXPRESSION_TYPE_AGGREGATE_MIN:
+      case EXPRESSION_TYPE_AGGREGATE_MAX:
+      case EXPRESSION_TYPE_AGGREGATE_AVG:
+      case EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT:
+      case EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG:
+      case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD:
+        return true;
+      default:
+        return false;
+      }
+    }
 };
 }
 }
