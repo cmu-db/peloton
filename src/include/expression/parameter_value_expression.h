@@ -45,6 +45,10 @@ class ParameterValueExpression : public AbstractExpression {
 
  protected:
   int value_idx_;
+
+  ParameterValueExpression(const ParameterValueExpression& other) : AbstractExpression(other), value_idx_(other.value_idx_){
+
+  }
 };
 
 }  // End expression namespace

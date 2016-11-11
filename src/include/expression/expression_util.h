@@ -114,43 +114,27 @@ class ExpressionUtil {
       catalog::Schema *schema, expression::AbstractExpression *expression) {
     LOG_TRACE("Expression Type --> %s",
               ExpressionTypeToString(expression->GetExpressionType()).c_str());
-    if (expression->GetLeft() != nullptr) {
-      LOG_TRACE(
-          "Left Type --> %s",
-          ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
-              .c_str());
-      if (expression->GetLeft()->GetExpressionType() ==
-          EXPRESSION_TYPE_COLUMN_REF) {
-        auto expr = expression->GetModifiableLeft();
-        std::string col_name(expr->GetName());
-        LOG_TRACE("Column name: %s", col_name.c_str());
-        delete expr;
-        expression->setLeftExpression(
-            expression::ExpressionUtil::ConvertToTupleValueExpression(
-                schema, col_name));
 
-      } else {
-        ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
+
+    if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE){
+      expression::TupleValueExpression * tv_expr = (expression::TupleValueExpression *)expression;
+      PL_ASSERT(tv_expr->column);
+      std::string col_name(tv_expr->column);
+      oid_t col_id = schema->GetColumnID(col_name);
+      if (col_id == (oid_t)-1){
+        throw Exception("Invalid Column");
       }
+      // I think its okay here to assume results will come from the 'left' tuple
+      const catalog::Column &col = schema->GetColumn(col_id);
+      tv_expr->SetTupleValueExpressionParams(col.GetType(), col_id, 0);
+    }
+
+    if (expression->GetLeft() != nullptr) {
+      ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
     }
 
     if (expression->GetRight() != nullptr) {
-      LOG_TRACE(
-          "Right Type --> %s",
-          ExpressionTypeToString(expression->GetRight()->GetExpressionType())
-              .c_str());
-      if (expression->GetRight()->GetExpressionType() ==
-          EXPRESSION_TYPE_COLUMN_REF) {
-        auto expr = expression->GetModifiableRight();
-        std::string col_name(expr->GetName());
-        LOG_TRACE("Column name: %s", col_name.c_str());
-        delete expr;
-        expression->setRightExpression(
-            expression::ExpressionUtil::ConvertToTupleValueExpression(
-                schema, col_name));
-      } else {
-        ReplaceColumnExpressions(schema, expression->GetModifiableRight());
-      }
+      ReplaceColumnExpressions(schema, expression->GetModifiableRight());
     }
   }
 

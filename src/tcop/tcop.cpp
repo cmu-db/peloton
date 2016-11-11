@@ -201,9 +201,9 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     }
 
     // if query has only certain columns
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
+    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
       // Get the column name
-      auto col_name = expr->GetName();
+      auto col_name = expr->column;
 
       // Traverse the table's columns
       for (auto column : table_columns) {

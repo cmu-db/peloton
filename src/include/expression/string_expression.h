@@ -24,8 +24,11 @@ class AsciiExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new AsciiExpression(left_->Copy());
+    return new AsciiExpression(*this);
   }
+
+ protected:
+  AsciiExpression(const AsciiExpression& other) : AbstractExpression(other){}
 };
 
 class ChrExpression : public AbstractExpression {
@@ -43,8 +46,11 @@ class ChrExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new ChrExpression(left_->Copy());
+    return new ChrExpression(*this);
   }
+
+ protected:
+  ChrExpression(const ChrExpression& other) : AbstractExpression(other){}
 };
 
 class SubstrExpression : public AbstractExpression {
@@ -72,11 +78,17 @@ class SubstrExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new SubstrExpression(left_->Copy(), right_->Copy(), len_->Copy());
+    return new SubstrExpression(*this);
   }
+
+ protected:
+  SubstrExpression(const SubstrExpression& other) : AbstractExpression(other),
+  len_(other.CopyUtil(other.len_)){}
 
  private:
   AbstractExpression *len_;
+
+
 };
 
 // Number of characters in string
@@ -96,8 +108,11 @@ class CharLengthExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new CharLengthExpression(left_->Copy());
+    return new CharLengthExpression(*this);
   }
+
+ protected:
+  CharLengthExpression(const CharLengthExpression& other) : AbstractExpression(other){}
 };
 
 class ConcatExpression : public AbstractExpression {
@@ -116,8 +131,11 @@ class ConcatExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new ConcatExpression(left_->Copy(), right_->Copy());
+    return new ConcatExpression(*this);
   }
+
+ protected:
+  ConcatExpression(const ConcatExpression& other) : AbstractExpression(other){}
 };
 
 // Number of bytes in string
@@ -137,8 +155,11 @@ class OctetLengthExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new OctetLengthExpression(left_->Copy());
+    return new OctetLengthExpression(*this);
   }
+
+ protected:
+  OctetLengthExpression(const OctetLengthExpression& other) : AbstractExpression(other){}
 };
 
 // Repeat string the specified number of times
@@ -163,8 +184,11 @@ class RepeatExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new RepeatExpression(left_->Copy(), right_->Copy());
+    return new RepeatExpression(*this);
   }
+
+ protected:
+  RepeatExpression(const RepeatExpression& other) : AbstractExpression(other){}
 };
 
 // Replace all occurrences in string of substring from with substring to
@@ -198,8 +222,12 @@ class ReplaceExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new ReplaceExpression(left_->Copy(), right_->Copy(), to_->Copy());
+    return new ReplaceExpression(*this);
   }
+
+ protected:
+  ReplaceExpression(const ReplaceExpression& other) : AbstractExpression(other),
+   to_(other.CopyUtil(other.to_)){}
 
  private:
   AbstractExpression *to_;
@@ -232,8 +260,11 @@ class LTrimExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new LTrimExpression(left_->Copy(), right_->Copy());
+    return new LTrimExpression(*this);
   }
+
+ protected:
+  LTrimExpression(const LTrimExpression& other) : AbstractExpression(other){}
 };
 
 // Remove the longest string containing only characters from characters
@@ -265,8 +296,11 @@ class RTrimExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new RTrimExpression(left_->Copy(), right_->Copy());
+    return new RTrimExpression(*this);
   }
+
+ protected:
+  RTrimExpression(const RTrimExpression& other) : AbstractExpression(other){}
 };
 
 // Remove the longest string consisting only of characters in characters
@@ -309,8 +343,11 @@ class BTrimExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new BTrimExpression(left_->Copy(), right_->Copy());
+    return new BTrimExpression(*this);
   }
+
+ protected:
+  BTrimExpression(const BTrimExpression& other) : AbstractExpression(other){}
 };
 
 }  // namespace expression

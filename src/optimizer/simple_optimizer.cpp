@@ -131,17 +131,17 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
 
       // Check if there are any aggregate functions
-      bool func_flag = false;
+      bool agg_flag = false;
       for (auto expr : *select_stmt->getSelectList()) {
         if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
           LOG_TRACE("Query has aggregate functions");
-          func_flag = true;
+          agg_flag = true;
           break;
         }
       }
 
       // If there is no aggregate functions, just do a sequential scan
-      if (!func_flag && group_by_columns.size() == 0) {
+      if (!agg_flag && group_by_columns.size() == 0) {
         LOG_TRACE("No aggregate functions found.");
         auto child_SelectPlan = CreateScanPlan(target_table, select_stmt);
 

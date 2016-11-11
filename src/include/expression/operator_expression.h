@@ -39,7 +39,8 @@ class OperatorExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (exp_type_ == EXPRESSION_TYPE_OPERATOR_NOT) {
-      Value vl = left_->Evaluate(tuple1, tuple2, context);
+      PL_ASSERT(children_.size() == 1);
+      Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (vl.IsTrue())
         return (ValueFactory::GetBooleanValue(0));
       else if (vl.IsFalse())
@@ -47,8 +48,9 @@ class OperatorExpression : public AbstractExpression {
       else
         return (ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL));
     }
-    Value vl = left_->Evaluate(tuple1, tuple2, context);
-    Value vr = right_->Evaluate(tuple1, tuple2, context);
+    PL_ASSERT(children_.size() == 2);
+    Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    Value vr = children_[1]->Evaluate(tuple1, tuple2, context);
 
     switch (exp_type_) {
       case (EXPRESSION_TYPE_OPERATOR_PLUS):
@@ -67,10 +69,11 @@ class OperatorExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new OperatorExpression(exp_type_, value_type_,
-                                  left_ ? left_->Copy() : nullptr,
-                                  right_ ? right_->Copy() :nullptr);
+    return new OperatorExpression(*this);
   }
+
+ protected:
+  OperatorExpression(const OperatorExpression& other) :AbstractExpression(other){}
 };
 
 class OperatorUnaryMinusExpression : public AbstractExpression {
@@ -82,14 +85,19 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   Value Evaluate(const AbstractTuple *tuple1,
                                   const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
+    PL_ASSERT(children_.size() == 1);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     Value zero(ValueFactory::GetIntegerValue(0));
     return zero.Subtract(vl);
   }
 
   AbstractExpression *Copy() const override {
-    return new OperatorUnaryMinusExpression(left_->Copy());
+    return new OperatorUnaryMinusExpression(*this);
   }
+
+ protected:
+  OperatorUnaryMinusExpression(const OperatorUnaryMinusExpression &other)
+        : AbstractExpression(other) {}
 };
 
 }  // End expression namespace
