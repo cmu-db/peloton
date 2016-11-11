@@ -19,7 +19,6 @@
 #include "executor/copy_executor.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile_factory.h"
-#include "expression/container_tuple.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
 #include "logging/logging_util.h"
@@ -244,10 +243,13 @@ bool CopyExecutor::DExecute() {
             auto param_value = param_values[i];
             LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
             // Avoid extra copy for varlen types
-            if (param_value.GetTypeId() == common::Type::VARBINARY ||
-                param_value.GetTypeId() == common::Type::VARCHAR) {
+            if (param_value.GetTypeId() == common::Type::VARBINARY) {
               const char *data = param_value.GetData();
               Copy(data, param_value.GetLength(), false);
+            } else if (param_value.GetTypeId() == common::Type::VARCHAR) {
+              const char *data = param_value.GetData();
+              // Don't write the NULL character for varchar
+              Copy(data, param_value.GetLength() - 1, false);
             } else {
               // Convert integer / double types to string before copying
               auto param_str = param_value.ToString();
