@@ -18,8 +18,10 @@
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
-#include "expression/parser_expression.h"
+#include "expression/function_expression.h"
 #include "expression/parameter_value_expression.h"
+#include "expression/star_expression.h"
+#include "expression/tuple_value_expression.h"
 
 #include "parser/statements.h"
 #include "parser/sql_parser.h"
@@ -155,8 +157,8 @@ struct PARSER_CUST_LTYPE {
 	peloton::parser::CopyStatement* 	   copy_stmt;
 
 	peloton::parser::TableRef* table;
+	peloton::parser::TableInfo* table_info;
 	peloton::expression::AbstractExpression* expr;
-	peloton::expression::ParserExpression* parser_expr;
 	peloton::parser::OrderDescription* order;
 	peloton::parser::OrderType order_type;
 	peloton::parser::LimitDescription* limit;
@@ -222,10 +224,10 @@ struct PARSER_CUST_LTYPE {
 %type <uval>		opt_join_type column_type opt_column_width opt_index_type
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
-%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr opt_default
+%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias parameter_expr opt_default
 %type <expr> 		column_name literal int_literal num_literal string_literal
 %type <expr> 		comp_expr opt_where join_condition opt_having
-%type <parser_expr>	table_name
+%type <table_info>	table_name
 %type <order>		opt_order
 %type <limit>		opt_limit
 %type <order_type>	opt_order_type
@@ -344,7 +346,7 @@ create_statement:
 		CREATE TABLE opt_not_exists table_name '(' column_def_commalist ')' {
 			$$ = new CreateStatement(CreateStatement::kTable);
 			$$->if_not_exists = $3;
-			$$->table_name = $4;
+			$$->table_info_ = $4;
 			$$->columns = $6;
 		}
 		|	CREATE DATABASE opt_not_exists IDENTIFIER {
@@ -356,7 +358,7 @@ create_statement:
 			$$ = new CreateStatement(CreateStatement::kIndex);
 			$$->unique = $2;
 			$$->index_name = $4;
-			$$->table_name = $6;
+			$$->table_info_ = $6;
 			$$->index_attrs = $8;
 			$$->index_type = peloton::INDEX_TYPE_BWTREE;
 		}
@@ -365,7 +367,7 @@ create_statement:
 			$$ = new CreateStatement(CreateStatement::kIndex);
 			$$->unique = $2;
 			$$->index_name = $4;
-			$$->table_name = $6;
+			$$->table_info_ = $6;
 			$$->index_attrs = $8;
 			$$->index_type = $11;
 		}
@@ -399,13 +401,13 @@ column_def:
 		FOREIGN KEY '(' ident_commalist ')' REFERENCES table_name '(' ident_commalist ')' {
 			$$ = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 			$$->foreign_key_source = $4;
-			$$->table_name = $7;
+			$$->table_info_ = $7;
 			$$->foreign_key_sink = $9;
 		}
 		;
 
 opt_column_width:
-	'(' int_literal ')' { $$ = $2->ival; delete $2; }
+	'(' int_literal ')' { $$ = $2->ival_; delete $2; }
 	| /* empty */ { $$ = 0; }
 	;    
 
@@ -464,7 +466,7 @@ drop_statement:
 		DROP TABLE opt_exists table_name {
 			$$ = new DropStatement(DropStatement::kTable);
 			$$->missing = $3;
-			$$->table_name = $4;
+			$$->table_info_ = $4;
 		}
 		|
 		DROP DATABASE IDENTIFIER {
@@ -475,7 +477,7 @@ drop_statement:
 		DROP INDEX IDENTIFIER ON table_name  {
 			$$ = new DropStatement(DropStatement::kIndex);
 			$$->index_name = $3;
-			$$->table_name = $5;
+			$$->table_info_ = $5;
 		}
 		|	
 		DEALLOCATE PREPARE IDENTIFIER {
@@ -520,7 +522,7 @@ opt_transaction:
 delete_statement:
 		DELETE FROM table_name opt_where {
 			$$ = new DeleteStatement();
-			$$->table_name = $3;
+			$$->table_info_ = $3;
 			$$->expr = $4;
 		}
 	;
@@ -528,7 +530,7 @@ delete_statement:
 truncate_statement:
 		TRUNCATE table_name {
 			$$ = new DeleteStatement();
-			$$->table_name = $2;
+			$$->table_info_ = $2;
 		}
 	;
 
@@ -540,13 +542,13 @@ truncate_statement:
 insert_statement:
 		INSERT INTO table_name opt_column_list VALUES insert_list {
 			$$ = new InsertStatement(peloton::INSERT_TYPE_VALUES);
-			$$->table_name = $3;
+			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->insert_values = $6;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
 			$$ = new InsertStatement(peloton::INSERT_TYPE_SELECT);
-			$$->table_name = $3;
+			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->select = $5;
 		}
@@ -698,8 +700,8 @@ opt_order_type:
 
 
 opt_limit:
-		LIMIT int_literal { $$ = new LimitDescription($2->ival, kNoOffset); delete $2; }
-	|	LIMIT int_literal OFFSET int_literal { $$ = new LimitDescription($2->ival, $4->ival); delete $2; delete $4; }
+		LIMIT int_literal { $$ = new LimitDescription($2->ival_, kNoOffset); delete $2; }
+	|	LIMIT int_literal OFFSET int_literal { $$ = new LimitDescription($2->ival_, $4->ival_); delete $2; delete $4; }
 	|	/* empty */ { $$ = NULL; }
 	;
 
@@ -765,18 +767,24 @@ comp_expr:
 	;
 
 function_expr:
-		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
+		IDENTIFIER '(' expr ')' { $$ = new peloton::expression::FunctionExpression($1, $3); }
 	;
 
+// TODO: this needs to be implemented
+//aggregate_expr:
+//		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::FunctionExpression($1, $4); }
+//	;
+	
+
 column_name:
-		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
+		IDENTIFIER { $$ = new peloton::expression::TupleValueExpression($1); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::TupleValueExpression($1, $3); }
 	;
 
 literal:
 		string_literal
 	|	num_literal
-	|	placeholder_expr
+//	|	placeholder_expr
 	|	parameter_expr
 	;
 
@@ -791,24 +799,24 @@ num_literal:
 	;
 
 int_literal:
-		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
+		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetIntegerValue($1)); $$->ival_ = $1; }
 	;
 
 star_expr:
 		'*' { 
-			char * star = new char[2];
-			strcpy(star, "*");
-			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR, star); 
+			$$ = new peloton::expression::StarExpression(); 
 		}
 	;
 
 
-placeholder_expr:
-		'?' {
-			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
-			yyloc.placeholder_list.push_back($$);
-		}
-	;
+// I think this is covered by parameter_expr but I'm not sure.
+//placeholder_expr:
+//		'?' {
+//			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
+//			yyloc.placeholder_list.push_back($$);
+//		}
+//	;
+	
 parameter_expr:
 	PREPAREPARAMETERS {
 			int val = atol($1);
@@ -853,7 +861,7 @@ table_ref_name:
 			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
 			tbl->alias = $2;
 			$$ = tbl;
-			tbl->table_name = $1;
+			tbl->table_info_ = $1;
 		}
 	;
 
@@ -861,14 +869,17 @@ table_ref_name:
 table_ref_name_no_alias:
 		table_name {
 			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-			$$->table_name = $1;
+			$$->table_info_ = $1;
 		}
 	;
 
 
 table_name:
-		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_TABLE_REF, $1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_TABLE_REF, $3, $1); }
+		IDENTIFIER { $$ = new peloton::parser::TableInfo();
+					 $$->table_name = $1;};
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::parser::TableInfo();
+									$$->table_name = $3;
+									$$->table_name = $1;}
 	;
 
 

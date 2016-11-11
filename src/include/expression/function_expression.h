@@ -25,8 +25,9 @@ using namespace peloton::common;
 
 class FunctionExpression: public AbstractExpression {
 public:
-  FunctionExpression(char * function_name) :
-      AbstractExpression(EXPRESSION_TYPE_FUNCTION), func_ptr_(nullptr) {
+  FunctionExpression(char * func_name, AbstractExpression* child) :
+      AbstractExpression(EXPRESSION_TYPE_FUNCTION), func_ptr_(nullptr), func_name_(func_name){
+    children_.push_back(std::unique_ptr<AbstractExpression>(child));
   }
 
   FunctionExpression(Value (*func_ptr)(Value&), Type::TypeId type_id,
@@ -43,7 +44,9 @@ public:
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
   UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
   UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    Value v1 = left_->Evaluate(tuple1, tuple2, context);
+    // for now support only one child
+    PL_ASSERT(children_.size() >= 1);
+    Value v1 = children_[0]->Evaluate(tuple1, tuple2, context);
     return func_ptr_(v1);
   }
 
@@ -53,10 +56,11 @@ public:
 
 protected:
   FunctionExpression(const FunctionExpression& other) :
-      AbstractExpression(other), func_ptr_(other.func_ptr_) {
+      AbstractExpression(other), func_ptr_(other.func_ptr_), func_name_(other.func_name_) {
   }
 private:
-  Value (*func_ptr_)(Value&, Value&);
+  Value (*func_ptr_)(Value&);
+  std::string func_name_;
 
 };
 

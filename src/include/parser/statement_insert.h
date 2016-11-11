@@ -24,17 +24,15 @@ namespace parser {
  * @brief Represents "INSERT INTO students VALUES ('Max', 1112233,
  * 'Musterhausen', 2.3)"
  */
-struct InsertStatement : SQLStatement {
+struct InsertStatement : TableRefStatement {
   InsertStatement(InsertType type)
-      : SQLStatement(STATEMENT_TYPE_INSERT),
+      : TableRefStatement(STATEMENT_TYPE_INSERT),
         type(type),
-        table_name(NULL),
         columns(NULL),
         insert_values(NULL),
         select(NULL) {}
 
   virtual ~InsertStatement() {
-    delete table_name;
 
     if (columns) {
       for (auto col : *columns) free(col);
@@ -55,18 +53,8 @@ struct InsertStatement : SQLStatement {
     delete select;
   }
 
-  // Get the name of the database of this table
-  inline std::string GetDatabaseName() {
-    if (table_name == nullptr || table_name->database == nullptr) {
-      return DEFAULT_DB_NAME;
-    }
-    return std::string(table_name->database);
-  }
-
-  inline std::string GetTableName() { return std::string(table_name->name); }
 
   InsertType type;
-  expression::ParserExpression* table_name;
   std::vector<char*>* columns;
   std::vector<std::vector<peloton::expression::AbstractExpression*>*>* insert_values;
   SelectStatement* select;

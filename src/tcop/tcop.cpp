@@ -20,7 +20,7 @@
 #include "common/type.h"
 #include "common/types.h"
 
-#include "expression/parser_expression.h"
+#include "expression/aggregate_expression.h"
 
 #include "parser/parser.h"
 
@@ -203,7 +203,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     // if query has only certain columns
     if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
       // Get the column name
-      auto col_name = expr->column;
+      auto tuple_expr = (expression::TupleValueExpression *) expr;
+      auto col_name = tuple_expr->col_name_;
 
       // Traverse the table's columns
       for (auto column : table_columns) {
@@ -219,23 +220,23 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
       // Get the parser expression that contains
       // the typr of the aggreataion function
-      auto func_expr = (expression::ParserExpression *)expr;
+      auto func_expr = (expression::AggregeateExpression *)expr;
 
       std::string col_name = "";
       // check if expression has an alias
-      if (expr->alias != NULL) {
+      if (!expr->alias.empty()) {
         tuple_descriptor.push_back(GetColumnFieldForAggregates(
-            std::string(expr->alias), func_expr->expr->GetExpressionType()));
+            std::string(expr->alias), func_expr->GetChild(0)->GetExpressionType()));
       } else {
         // Construct a String
-        std::string agg_func_name = std::string(expr->GetName());
-        std::string col_name = std::string(func_expr->expr->GetName());
+        std::string agg_func_name = std::string(expr->GetExpressionName());
+        std::string col_name = std::string(func_expr->GetChild(0)->GetExpressionName());
 
         // Example : Count(id)
         std::string full_agg_name = agg_func_name + "(" + col_name + ")";
 
         tuple_descriptor.push_back(GetColumnFieldForAggregates(
-            full_agg_name, func_expr->expr->GetExpressionType()));
+            full_agg_name, func_expr->GetChild(0)->GetExpressionType()));
       }
     }
   }

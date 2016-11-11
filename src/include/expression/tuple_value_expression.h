@@ -68,11 +68,13 @@ public:
     return value_idx_;
   }
 
+  std::string table_name_;
+  std::string col_name_;
+
 protected:
   int value_idx_;
   int tuple_idx_;
-  std::string table_name_;
-  std::string col_name_;
+
 
   TupleValueExpression(const TupleValueExpression& other) :
       AbstractExpression(other), value_idx_(other.value_idx_), tuple_idx_(

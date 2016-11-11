@@ -69,9 +69,21 @@ class AbstractExpression : public Printable {
     return false;
   }
 
-  AbstractExpression * getChild(int index){
-    PL_ASSERT(index > 0 && index < children_.size());
+  const AbstractExpression * GetChild(int index) const{
+    PL_ASSERT(index > 0 && index < (int)children_.size());
     return children_[index].get();
+  }
+
+  AbstractExpression * GetModifiableChild(int index) const{
+    PL_ASSERT(index > 0 && index < (int)children_.size());
+    return children_[index].get();
+  }
+
+  void SetChild(int index, AbstractExpression* expr){
+    if(index >= (int)children_.size()){
+      children_.resize(index+1);
+    }
+    children_[index].reset(expr);
   }
 
   /** accessors */
@@ -116,6 +128,7 @@ class AbstractExpression : public Printable {
   int ival_ = 0;
 
   std::string expr_name_;
+  std::string alias;
 
   bool distinct_ = false;
 

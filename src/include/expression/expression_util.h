@@ -61,34 +61,33 @@ class ExpressionUtil {
       catalog::Schema *schema) {
     LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
-    if (expression->GetLeft()) {
+    if (expression->GetChild(0)) {
       LOG_TRACE("expression->left: %s",
-                expression->GetLeft()->GetInfo().c_str());
-      if (expression->GetLeft()->GetExpressionType() ==
+                expression->GetChild(0)->GetInfo().c_str());
+      if (expression->GetChild(0)->GetExpressionType() ==
           EXPRESSION_TYPE_VALUE_PARAMETER) {
         // left expression is parameter
-        auto left = (ParameterValueExpression *)expression->GetLeft();
+        auto left = (ParameterValueExpression *)expression->GetChild(0);
         auto value =
             new ConstantValueExpression(values->at(left->GetValueIdx()));
         LOG_TRACE("left in vector type: %s",
                   values->at(left->GetValueIdx()).GetInfo().c_str());
         LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
                   value->GetValue().GetInfo().c_str());
-        delete left;
-        expression->setLeftExpression(value);
+        expression->SetChild(0, value);
       } else {
-        ConvertParameterExpressions(expression->GetModifiableLeft(), values,
+        ConvertParameterExpressions(expression->GetModifiableChild(0), values,
                                     schema);
       }
     }
 
-    if (expression->GetRight()) {
+    if (expression->GetChild(1)) {
       LOG_TRACE("expression->right: %s",
-                expression->GetRight()->GetInfo().c_str());
-      if (expression->GetRight()->GetExpressionType() ==
+                expression->GetChild(1)->GetInfo().c_str());
+      if (expression->GetChild(1)->GetExpressionType() ==
           EXPRESSION_TYPE_VALUE_PARAMETER) {
         // right expression is parameter
-        auto right = (ParameterValueExpression *)expression->GetRight();
+        auto right = (ParameterValueExpression *)expression->GetChild(1);
         LOG_TRACE("right in vector type: %s",
                   values->at(right->GetValueIdx()).GetInfo().c_str());
         auto value =
@@ -97,10 +96,9 @@ class ExpressionUtil {
                   value->GetValue()
                       .GetInfo()
                       .c_str());
-        delete right;
-        expression->setRightExpression(value);
+        expression->SetChild(1, value);
       } else {
-        ConvertParameterExpressions(expression->GetModifiableRight(), values,
+        ConvertParameterExpressions(expression->GetModifiableChild(1), values,
                                     schema);
       }
     }
@@ -118,8 +116,8 @@ class ExpressionUtil {
 
     if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE){
       expression::TupleValueExpression * tv_expr = (expression::TupleValueExpression *)expression;
-      PL_ASSERT(tv_expr->column);
-      std::string col_name(tv_expr->column);
+      PL_ASSERT(!tv_expr->col_name_.empty());
+      std::string col_name(tv_expr->col_name_);
       oid_t col_id = schema->GetColumnID(col_name);
       if (col_id == (oid_t)-1){
         throw Exception("Invalid Column");
@@ -129,12 +127,12 @@ class ExpressionUtil {
       tv_expr->SetTupleValueExpressionParams(col.GetType(), col_id, 0);
     }
 
-    if (expression->GetLeft() != nullptr) {
-      ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
+    if (expression->GetChild(0) != nullptr) {
+      ReplaceColumnExpressions(schema, expression->GetModifiableChild(0));
     }
 
-    if (expression->GetRight() != nullptr) {
-      ReplaceColumnExpressions(schema, expression->GetModifiableRight());
+    if (expression->GetChild(1) != nullptr) {
+      ReplaceColumnExpressions(schema, expression->GetModifiableChild(1));
     }
   }
 

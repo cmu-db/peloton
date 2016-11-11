@@ -120,7 +120,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (group_by != NULL) {
         LOG_TRACE("Found GROUP BY");
         for (auto elem : *group_by->columns) {
-          std::string col_name(elem->GetName());
+          auto tuple_elem = (expression::TupleValueExpression*) elem;
+          std::string col_name(tuple_elem->col_name_);
           auto column_id = target_table->GetSchema()->GetColumnID(col_name);
           group_by_columns.push_back(column_id);
         }
@@ -162,11 +163,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string sort_col_name(select_stmt->order->expr->GetName());
+
+          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->col_name_);
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
             std::string col_name(
-                select_stmt->select_list->at(column_ctr)->GetName());
+                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->col_name_);
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -199,11 +201,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string sort_col_name(select_stmt->order->expr->GetName());
+          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->col_name_);
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
             std::string col_name(
-                select_stmt->select_list->at(column_ctr)->GetName());
+                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->col_name_);
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -252,7 +254,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
           // If an aggregate function is found
           if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-            auto func_expr = (expression::ParserExpression*)expr;
+            auto func_expr = (expression::AggregeateExpression*)expr;
             LOG_TRACE(
                 "Expression type in Function Expression: %s",
                 ExpressionTypeToString(func_expr->expr->GetExpressionType())
@@ -262,11 +264,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             // Count a column expression
             if (func_expr->expr->GetExpressionType() ==
                 EXPRESSION_TYPE_COLUMN_REF) {
-              LOG_TRACE("Function name: %s", func_expr->GetName());
+              LOG_TRACE("Function name: %s", ((expression::TupleValueExpression*)func_expr)->col_name_);
               LOG_TRACE(
                   "Aggregate type: %s",
                   ExpressionTypeToString(ParserExpressionNameToExpressionType(
-                                             func_expr->GetName()))
+                                             func_expr->GetExpressionName()))
                       .c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   ParserExpressionNameToExpressionType(func_expr->GetName()),
@@ -720,22 +722,22 @@ void SimpleOptimizer::GetPredicateColumns(
 
   LOG_TRACE("Expression Type --> %s",
             ExpressionTypeToString(expression->GetExpressionType()).c_str());
-  if (!(expression->GetLeft() && expression->GetRight())) return;
+  if (!(expression->GetChild(0) && expression->GetChild(1))) return;
   LOG_TRACE("Left Type --> %s",
-            ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
+            ExpressionTypeToString(expression->GetChild(0)->GetExpressionType())
                 .c_str());
   LOG_TRACE("Right Type --> %s",
-            ExpressionTypeToString(expression->GetRight()->GetExpressionType())
+            ExpressionTypeToString(expression->GetChild(1)->GetExpressionType())
                 .c_str());
 
   // We're only supporting comparing a column_ref to a constant/parameter for
   // index scan right now
-  if (expression->GetLeft()->GetExpressionType() ==
+  if (expression->GetChild(0)->GetExpressionType() ==
       EXPRESSION_TYPE_COLUMN_REF) {
-    auto right_type = expression->GetRight()->GetExpressionType();
+    auto right_type = expression->GetChild(1)->GetExpressionType();
     if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
-      auto expr = expression->GetLeft();
+      auto expr = expression->GetChild(0);
       std::string col_name(expr->GetName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
@@ -752,27 +754,27 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableRight())
+                             expression->GetModifiableChild(1))
                              ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableRight())
+                      expression->GetModifiableChild(1))
                       ->GetValueType());
       } else
         values.push_back(
             common::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableRight())
+                    expression->GetModifiableChild(1))
                     ->GetValueIdx())
                 .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
-  } else if (expression->GetRight()->GetExpressionType() ==
+  } else if (expression->GetChild(1)->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
-    auto left_type = expression->GetLeft()->GetExpressionType();
+    auto left_type = expression->GetChild(0)->GetExpressionType();
     if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
-      auto expr = expression->GetRight();
+      auto expr = expression->GetChild(1);
       std::string col_name(expr->GetName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
@@ -782,25 +784,25 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableRight())
+                             expression->GetModifiableChild(1))
                              ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableLeft())
+                      expression->GetModifiableChild(0))
                       ->GetValueType());
       } else
         values.push_back(
             common::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableLeft())
+                    expression->GetModifiableChild(0))
                     ->GetValueIdx())
                 .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
-    GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,
+    GetPredicateColumns(schema, expression->GetModifiableChild(0), column_ids,
                         expr_types, values, index_searchable);
-    GetPredicateColumns(schema, expression->GetModifiableRight(), column_ids,
+    GetPredicateColumns(schema, expression->GetModifiableChild(1), column_ids,
                         expr_types, values, index_searchable);
   }
 }

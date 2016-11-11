@@ -17,7 +17,7 @@ class AsciiExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    Value vl = left_->Evaluate(tuple1, tuple2, context);
+    Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     int32_t val = str[0];
     return ValueFactory::GetIntegerValue(val);
@@ -39,7 +39,7 @@ class ChrExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    Value vl = left_->Evaluate(tuple1, tuple2, context);
+    Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
     int32_t val = vl.GetAs<int32_t>();
     std::string str(1, char(static_cast<char>(val)));
     return ValueFactory::GetVarcharValue(str);
@@ -69,8 +69,8 @@ class SubstrExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     int32_t from = vr.GetAs<int32_t>() - 1;
     int32_t len = (len_->Evaluate(nullptr, nullptr, nullptr)).GetAs<int32_t>();
@@ -101,7 +101,7 @@ class CharLengthExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     int32_t len = str.length();
     return (ValueFactory::GetIntegerValue(len));
@@ -124,8 +124,8 @@ class ConcatExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString() + vr.ToString();
     return (ValueFactory::GetVarcharValue(str));
   }
@@ -148,7 +148,7 @@ class OctetLengthExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     int32_t len = str.length();
     return (ValueFactory::GetIntegerValue(len));
@@ -172,8 +172,8 @@ class RepeatExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     int32_t num = vr.GetAs<int32_t>();
     std::string ret = "";
@@ -208,8 +208,8 @@ class ReplaceExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     std::string from = vr.ToString();
     std::string to = (to_->Evaluate(nullptr, nullptr, nullptr)).ToString();
@@ -244,8 +244,8 @@ class LTrimExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     std::string from = vr.ToString();
     size_t pos = 0;
@@ -278,8 +278,8 @@ class RTrimExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     std::string from = vr.ToString();
     if (str.length() == 0)
@@ -314,8 +314,8 @@ class BTrimExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     std::string str = vl.ToString();
     std::string from = vr.ToString();
 

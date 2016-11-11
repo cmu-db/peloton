@@ -22,7 +22,7 @@ namespace parser {
  * @struct DropStatement
  * @brief Represents "DROP TABLE"
  */
-struct DropStatement : SQLStatement {
+struct DropStatement : TableRefStatement {
   enum EntityType {
     kDatabase,
     kTable,
@@ -33,29 +33,18 @@ struct DropStatement : SQLStatement {
   };
 
   DropStatement(EntityType type)
-      : SQLStatement(STATEMENT_TYPE_DROP), type(type), missing(false) {}
+      : TableRefStatement(STATEMENT_TYPE_DROP), type(type), missing(false) {}
 
   virtual ~DropStatement() {
     free(database_name);
     free(index_name);
     free(prep_stmt);
-    delete table_name;
-  }
-
-  inline std::string GetTableName() { return std::string(table_name->name); }
-
-  inline std::string GetDatabaseName() {
-    if (table_name == nullptr || table_name->database == nullptr) {
-      return DEFAULT_DB_NAME;
-    }
-    return std::string(table_name->database);
   }
 
   EntityType type;
   char* database_name = nullptr;
   char* index_name = nullptr;
   char* prep_stmt = nullptr;
-  expression::ParserExpression* table_name = nullptr;
   bool missing;
 };
 
