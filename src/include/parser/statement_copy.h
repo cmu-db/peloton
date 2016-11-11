@@ -30,12 +30,11 @@ struct CopyStatement : SQLStatement {
         type(type),
         table_name(NULL),
         file_path(NULL),
-        delimiter(NULL) {};
+        delimiter(',') {};
 
   virtual ~CopyStatement() {
     delete table_name;
     delete file_path;
-    delete delimiter;
   }
 
   // Get the name of the database of this table
@@ -48,27 +47,11 @@ struct CopyStatement : SQLStatement {
 
   inline std::string GetTableName() { return std::string(table_name->name); }
 
-  inline char GetDelimiter() {
-    auto val_expression =
-        static_cast<expression::ConstantValueExpression*>(delimiter);
-    auto value = val_expression->GetValue();
-    if (value.GetLength() != 2) {
-      throw ParserException("Single character delimiter expected");
-    }
-    LOG_TRACE("The delimiter string is: %s", value.ToString().c_str());
-    return *(value.GetData());
-  }
-
-  inline std::string GetFilePath() {
-    auto val_expression =
-        static_cast<expression::ConstantValueExpression*>(file_path);
-    return val_expression->GetValue().ToString();
-  }
-
   CopyType type;
+
   expression::ParserExpression* table_name;
-  expression::AbstractExpression* file_path;
-  expression::AbstractExpression* delimiter;
+  char* file_path;
+  char delimiter;
 };
 
 }  // End parser namespace

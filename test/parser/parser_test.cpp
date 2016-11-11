@@ -380,9 +380,9 @@ TEST_F(ParserTest, IndexTest) {
 TEST_F(ParserTest, CopyTest) {
 
   std::vector<std::string> queries;
-
-  queries.push_back(
-      "COPY catalog_db.query_metric TO '/home/user/output.csv' DELIMITER ',';");
+  std::string file_path = "/home/user/output.csv";
+  queries.push_back("COPY catalog_db.query_metric TO '" + file_path +
+                    "' DELIMITER ',';");
 
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
@@ -391,15 +391,16 @@ TEST_F(ParserTest, CopyTest) {
         parser::Parser::ParseSQLString(query.c_str());
 
     if (result->is_valid == false) {
-      LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
     }
     EXPECT_EQ(result->is_valid, true);
 
     parser::CopyStatement* copy_stmt =
         static_cast<parser::CopyStatement*>(result->GetStatement(0));
 
-    EXPECT_STREQ(std::string(1, copy_stmt->GetDelimiter()).c_str(), ",");
-    EXPECT_STREQ(copy_stmt->GetFilePath().c_str(), "/home/user/output.csv");
+    EXPECT_EQ(copy_stmt->delimiter, ',');
+    EXPECT_STREQ(copy_stmt->file_path, "/home/user/output.csv");
 
     if (result != nullptr) {
       LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());

@@ -47,15 +47,11 @@ CopyExecutor::~CopyExecutor() {}
 bool CopyExecutor::DInit() {
   PL_ASSERT(children_.size() == 1);
 
-  LOG_TRACE("Copy executor :: 1 child ");
-
   // Grab info from plan node and check it
   const planner::CopyPlan &node = GetPlanNode<planner::CopyPlan>();
 
   bool success = logging::LoggingUtil::InitFileHandle(node.file_path.c_str(),
                                                       file_handle_, "w");
-
-  deserialize_parameters = node.deserialize_parameters;
 
   if (success == false) {
     throw ExecutorException("Failed to create file " + node.file_path +
@@ -65,21 +61,29 @@ bool CopyExecutor::DInit() {
   }
   LOG_DEBUG("Created target copy output file: %s", node.file_path.c_str());
 
-  if (deserialize_parameters) {
+  // Whether we're copying the parameters which require deserialization
+  if (node.deserialize_parameters) {
     InitParamColIds();
   }
   return true;
 }
 
+/**
+ * Write buffer data to the file. Although fwrite() is not a system call,
+ * calling fwrite frequently with small byte is not efficient because fwrite
+ * does many sanity checks. We use local buffer to amortize that.
+ */
 void CopyExecutor::FlushBuffer() {
   PL_ASSERT(buff_ptr < COPY_BUFFER_SIZE);
   PL_ASSERT(buff_size + buff_ptr <= COPY_BUFFER_SIZE);
   while (buff_size > 0) {
     size_t bytes_written =
         fwrite(buff + buff_ptr, sizeof(char), buff_size, file_handle_.file);
+    // Book keeping
     buff_ptr += bytes_written;
     buff_size -= bytes_written;
     total_bytes_written += bytes_written;
+    LOG_TRACE("fwrite %d bytes", (int)bytes_written);
   }
   buff_ptr = 0;
 }
@@ -113,41 +117,37 @@ void CopyExecutor::InitParamColIds() {
 }
 
 void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
-
-  // TODO use memcpy instead of looping?
   // Worst case we need to escape all character and two delimiters
   while (COPY_BUFFER_SIZE - buff_size - buff_ptr < (size_t)len * 2) {
     FlushBuffer();
   }
 
   // Now copy the string to local buffer and escape delimiters
+  // TODO A better way is to search for delimiter once and perform memcpy
   for (int i = 0; i < len; i++) {
+    char ch = data[i];
     // Check delimiter
-    if (data[i] == delimiter || data[i] == '\n') {
+    if (ch == delimiter || ch == new_line) {
       buff[buff_size++] = '\\';
     }
-    buff[buff_size++] = data[i];
+    buff[buff_size++] = ch;
   }
-  // Append col delimiter / new line delimiter
+
+  // Append col delimiter and new line delimiter
   if (end_of_line == false) {
     buff[buff_size++] = delimiter;
   } else {
-    buff[buff_size++] = '\n';
+    buff[buff_size++] = new_line;
   }
   PL_ASSERT(buff_size <= COPY_BUFFER_SIZE);
 }
 
 void CopyExecutor::CreateParamPacket(wire::Packet &packet, int len,
                                      std::string &val) {
-  // The actual length of data should include NULL?
+  // Copy the data from string to packet buf
   packet.len = len;
   packet.buf.resize(packet.len);
-
-  // Copy the data from string to packet buf
-  // TODO use memcopy
-  for (int i = 0; i < len; i++) {
-    packet.buf[i] = val[i];
-  }
+  std::memcpy(packet.buf.data(), val.data(), len);
 }
 
 /**
@@ -186,28 +186,21 @@ bool CopyExecutor::DExecute() {
     for (auto &tuple : answer_tuples) {
       // Loop over the columns
       for (unsigned int col_index = 0; col_index < col_count; col_index++) {
-
         auto val = tuple[col_index];
         auto origin_col_id =
             logical_tile->GetColumnInfo(col_index).origin_column_id;
         int len = val.length();
 
-        // TODO remove deserialize_parameters checks
-        if (deserialize_parameters && origin_col_id == num_param_col_id) {
+        if (origin_col_id == num_param_col_id) {
           // num_param column
           num_params = std::stoi(val);
           Copy(val.c_str(), val.length(), false);
 
-        } else if (deserialize_parameters &&
-                   origin_col_id == param_type_col_id) {
-
-          LOG_ERROR("types before deser %s, %d", val.c_str(),
-                    (int)val.length());
-
+        } else if (origin_col_id == param_type_col_id) {
+          // param_types column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     common::Type::VARBINARY);
 
-          // param_types column
           wire::Packet packet;
           CreateParamPacket(packet, len, val);
 
@@ -219,18 +212,12 @@ bool CopyExecutor::DExecute() {
           for (int i = 0; i < num_params; i++) {
             std::string type_str = std::to_string(types[i]);
             Copy(type_str.c_str(), type_str.length(), false);
-            // LOG_ERROR("type: %d", type);
           }
-        } else if (deserialize_parameters &&
-                   origin_col_id == param_format_col_id) {
-
+        } else if (origin_col_id == param_format_col_id) {
+          // param_formats column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     common::Type::VARBINARY);
 
-          LOG_ERROR("format before deser %s, %d", val.c_str(),
-                    (int)val.length());
-
-          // param_formats column
           wire::Packet packet;
           CreateParamPacket(packet, len, val);
 
@@ -238,15 +225,11 @@ bool CopyExecutor::DExecute() {
           formats.resize(num_params);
           wire::PacketManager::ReadParamFormat(&packet, num_params, formats);
 
-        } else if (deserialize_parameters &&
-                   origin_col_id == param_val_col_id) {
-
-          LOG_TRACE("val before deser %s, %d", val.c_str(), (int)val.length());
-
+        } else if (origin_col_id == param_val_col_id) {
+          // param_values column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     common::Type::VARBINARY);
 
-          // param_values column
           wire::Packet packet;
           CreateParamPacket(packet, len, val);
 
@@ -259,17 +242,18 @@ bool CopyExecutor::DExecute() {
           // Write all the values to output file
           for (int i = 0; i < num_params; i++) {
             auto param_value = param_values[i];
-            LOG_ERROR("param_value.GetTypeId(): %d", param_value.GetTypeId());
+            LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
+            // Avoid extra copy for varlen types
             if (param_value.GetTypeId() == common::Type::VARBINARY ||
                 param_value.GetTypeId() == common::Type::VARCHAR) {
               const char *data = param_value.GetData();
               Copy(data, param_value.GetLength(), false);
             } else {
+              // Convert integer / double types to string before copying
               auto param_str = param_value.ToString();
               Copy(param_str.c_str(), param_str.length(), false);
             }
           }
-
         } else {
           // For other columns, just copy the content to local buffer
           bool end_of_line = col_index == col_count - 1;

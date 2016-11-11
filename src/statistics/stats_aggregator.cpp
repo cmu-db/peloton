@@ -133,7 +133,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
                                          concurrency::Transaction *txn) {
   // Get the target query metrics table
-  LOG_DEBUG("Inserting Query Metric Tuples");
+  LOG_TRACE("Inserting Query Metric Tuples");
   auto query_metrics_table = GetMetricTable(QUERY_METRIC_NAME);
 
   std::shared_ptr<QueryMetric> query_metric;
@@ -181,7 +181,7 @@ void StatsAggregator::UpdateMetrics() {
   auto txn = txn_manager.BeginTransaction();
 
   // Get the target table metrics table
-  LOG_DEBUG("Inserting stat tuples into catalog database..");
+  LOG_TRACE("Inserting stat tuples into catalog database..");
   auto catalog = catalog::Catalog::GetInstance();
   auto database_metrics_table = GetMetricTable(DATABASE_METRIC_NAME);
 

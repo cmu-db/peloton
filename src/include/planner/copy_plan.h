@@ -51,7 +51,7 @@ class CopyPlan : public AbstractPlan {
   // The path of the target file
   std::string file_path;
 
-  // Whether we're copying the parameters which require deserialization
+  // Whether the copying requires deserialization of parameters
   bool deserialize_parameters = false;
 };
 

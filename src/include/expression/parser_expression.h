@@ -70,6 +70,8 @@ class ParserExpression : public AbstractExpression {
     return ValueFactory::GetBooleanValue(1);
   }
 
+  // XXX We should not have this complicated Copy() function, but rather just
+  // use the copy constructor.
   AbstractExpression* Copy() const override {
     std::string str(name);
     char* new_cstr = new char[str.length() + 1];

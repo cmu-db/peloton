@@ -95,14 +95,16 @@ std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
   return query_params;
 }
 
-void StatsTestsUtil::CreateTable() {
+void StatsTestsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 
   auto id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
       "dept_id", true);
-  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
-  id_column.AddConstraint(constraint);
+  if (has_primary_key) {
+    catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+    id_column.AddConstraint(constraint);
+  }
   auto name_column =
       catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(
@@ -127,7 +129,7 @@ std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt(int id,
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
       "(" +
       std::to_string(id) + ",'" + val + "');";
-  LOG_INFO("Query: %s", sql.c_str());
+  LOG_TRACE("Query: %s", sql.c_str());
   statement.reset(new Statement("INSERT", sql));
   ParseAndPlan(statement.get(), sql);
   return statement;
@@ -155,10 +157,10 @@ std::shared_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
 void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto &peloton_parser = parser::Parser::GetInstance();
   auto update_stmt = peloton_parser.BuildParseTree(sql);
-  LOG_DEBUG("Building plan tree...");
+  LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
-  LOG_DEBUG("Building plan tree completed!");
+  LOG_TRACE("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 }
 

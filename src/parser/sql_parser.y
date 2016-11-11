@@ -930,12 +930,15 @@ join_condition:
  * COPY (SELECT id FROM A WHERE val = 1) TO '/path/file.csv' DELIMITER ';'
  ******************************/
  
+ 
+ 
 copy_statement:
-		COPY table_name TO string_literal DELIMITER string_literal { 
+		COPY table_name TO STRING DELIMITER STRING { 
 			$$ = new CopyStatement(peloton::COPY_TYPE_EXPORT_OTHER);
 			$$->table_name = $2;
-			$$->file_path = std::move($4);
-			$$->delimiter = std::move($6); 
+			$$->file_path = $4; 
+			$$->delimiter = *($6);
+			delete $6;
 		}
 	;
 

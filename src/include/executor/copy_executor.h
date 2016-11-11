@@ -17,8 +17,8 @@
 #include <vector>
 #include "wire/wire.h"
 
-//#define COPY_BUFFER_SIZE 16384
-#define COPY_BUFFER_SIZE 4096
+#define COPY_BUFFER_SIZE 65536
+#define INVALID_COL_ID -1
 
 namespace peloton {
 namespace executor {
@@ -51,6 +51,7 @@ class CopyExecutor : public AbstractExecutor {
   // Copy and escape the content of column to local buffer
   void Copy(const char *data, int len, bool end_of_line);
 
+  // Create a packet for prepared statement parameter data before parsing it
   void CreateParamPacket(wire::Packet &packet, int len, std::string &val);
 
   //===--------------------------------------------------------------------===//
@@ -75,17 +76,17 @@ class CopyExecutor : public AbstractExecutor {
   // Field delimiter between columns
   char delimiter = ',';
 
-  // Whether we're copying the parameters which require deserialization
-  bool deserialize_parameters = false;
+  // New line delimiter between rows
+  char new_line = '\n';
 
   // Total number of bytes written
   size_t total_bytes_written = 0;
 
   // The special column ids in query_metric table
-  unsigned int num_param_col_id = -1;
-  unsigned int param_type_col_id = -1;
-  unsigned int param_format_col_id = -1;
-  unsigned int param_val_col_id = -1;
+  unsigned int num_param_col_id = INVALID_COL_ID;
+  unsigned int param_type_col_id = INVALID_COL_ID;
+  unsigned int param_format_col_id = INVALID_COL_ID;
+  unsigned int param_val_col_id = INVALID_COL_ID;
 };
 
 }  // namespace executor

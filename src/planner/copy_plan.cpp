@@ -25,11 +25,15 @@
 namespace peloton {
 namespace planner {
 
+/**
+ * XXX Copy plan by default assumes a seq scan plan node as it's child
+ * This can be extended when we support nested queries in COPY query
+ */
 CopyPlan::CopyPlan(parser::CopyStatement* copy_parse_tree)
-    : file_path(copy_parse_tree->GetFilePath()) {
+    : file_path(copy_parse_tree->file_path) {
   LOG_DEBUG("Creating a Copy Plan");
 
-  // Hard code star expression
+  // Hard code star expression :(
   char* star = new char[2];
   strcpy(star, "*");
   auto star_expr = new peloton::expression::ParserExpression(
@@ -52,16 +56,18 @@ CopyPlan::CopyPlan(parser::CopyStatement* copy_parse_tree)
   select_stmt->from_table = table_ref;
   select_stmt->select_list = select_list;
 
+  // Add the child seq scan plan
   std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
       new planner::SeqScanPlan(select_stmt.get()));
   LOG_TRACE("Sequential scan plan for copy created");
+  AddChild(std::move(child_SelectPlan));
 
+  // If we're copying the query metric table, then we need to handle the
+  // deserialization of prepared stmt parameters
   if (std::string(table_ref->table_name->GetName()) == QUERY_METRIC_NAME) {
     LOG_DEBUG("Copying the query_metric table.");
     deserialize_parameters = true;
   }
-
-  AddChild(std::move(child_SelectPlan));
 }
 }  // namespace planner
 }  // namespace peloton
