@@ -463,13 +463,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     // executor context.
   }
 
-  bool test_val_deserialization = false;
-
-  // clean up param_values
-  if (test_val_deserialization == false) {
-    param_values.clear();
-  }
-
   // Make a copy of format for stat collection
   stats::QueryMetric::QueryParamBuf param_format_buf;
   param_format_buf.buf = new uchar[format_buf_len];
@@ -743,38 +736,38 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses,
   // we see a SYNC
   switch (pkt->msg_type) {
     case SIMPLE_QUERY_COMMAND: {
-      LOG_DEBUG("SIMPLE_QUERY_COMMAND");
+      LOG_TRACE("SIMPLE_QUERY_COMMAND");
       ExecQueryMessage(pkt, responses);
       force_flush = true;
     } break;
     case PARSE_COMMAND: {
-      LOG_DEBUG("PARSE_COMMAND");
+      LOG_TRACE("PARSE_COMMAND");
       ExecParseMessage(pkt, responses);
     } break;
     case BIND_COMMAND: {
-      LOG_DEBUG("BIND_COMMAND");
+      LOG_TRACE("BIND_COMMAND");
       ExecBindMessage(pkt, responses);
     } break;
     case DESCRIBE_COMMAND: {
-      LOG_DEBUG("DESCRIBE_COMMAND");
+      LOG_TRACE("DESCRIBE_COMMAND");
       return ExecDescribeMessage(pkt, responses);
     } break;
     case EXECUTE_COMMAND: {
-      LOG_DEBUG("EXECUTE_COMMAND");
+      LOG_TRACE("EXECUTE_COMMAND");
       ExecExecuteMessage(pkt, responses);
     } break;
     case SYNC_COMMAND: {
-      LOG_DEBUG("SYNC_COMMAND");
+      LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_, responses);
       force_flush = true;
     } break;
     case TERMINATE_COMMAND: {
-      LOG_DEBUG("TERMINATE_COMMAND");
+      LOG_TRACE("TERMINATE_COMMAND");
       force_flush = true;
       return false;
     } break;
     case NULL: {
-      LOG_DEBUG("NULL");
+      LOG_TRACE("NULL");
       force_flush = true;
       return false;
     } break;

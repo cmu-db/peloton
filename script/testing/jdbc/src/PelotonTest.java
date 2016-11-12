@@ -302,13 +302,13 @@ public class PelotonTest {
     rs.last();
     int nums[] = new int[4];
     // Read
-    nums[0] = rs.getInt(3);
+    nums[0] = rs.getInt(7);
     // Update
-    nums[1] = rs.getInt(4);
+    nums[1] = rs.getInt(8);
     // Delete
-    nums[2] = rs.getInt(5);
+    nums[2] = rs.getInt(9);
     // Insert
-    nums[3] = rs.getInt(6);
+    nums[3] = rs.getInt(10);
     // Query
     String query = rs.getString(1);
     String row1 = query + "\tread:" + nums[0] + "\tupdate:" + nums[1]
