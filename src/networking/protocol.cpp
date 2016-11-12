@@ -326,8 +326,8 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   stats::QueryMetric::QueryParamBuf query_type_buf;
   query_type_buf.buf = new uchar[type_buf_len];
   query_type_buf.len = type_buf_len;
-  std::memcpy(query_type_buf.buf, pkt->buf.data() + type_buf_begin,
-              type_buf_len);
+
+  PL_MEMCPY(query_type_buf.buf, pkt->buf.data() + type_buf_begin, type_buf_len);
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
@@ -467,15 +467,15 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   stats::QueryMetric::QueryParamBuf param_format_buf;
   param_format_buf.buf = new uchar[format_buf_len];
   param_format_buf.len = format_buf_len;
-  std::memcpy(param_format_buf.buf, pkt->buf.data() + format_buf_begin,
-              format_buf_len);
+  PL_MEMCPY(param_format_buf.buf, pkt->buf.data() + format_buf_begin,
+            format_buf_len);
   PL_ASSERT(format_buf_len > 0 || num_params == 0);
 
   // Make a copy of value for stat collection
   stats::QueryMetric::QueryParamBuf param_val_buf;
   param_val_buf.buf = new uchar[val_buf_len];
   param_val_buf.len = val_buf_len;
-  std::memcpy(param_val_buf.buf, pkt->buf.data() + val_buf_begin, val_buf_len);
+  PL_MEMCPY(param_val_buf.buf, pkt->buf.data() + val_buf_begin, val_buf_len);
   PL_ASSERT(val_buf_len > 0 || num_params == 0);
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);

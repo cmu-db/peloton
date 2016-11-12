@@ -23,6 +23,7 @@
 #include "storage/table_factory.h"
 #include "logging/logging_util.h"
 #include "common/exception.h"
+#include "common/macros.h"
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -122,7 +123,7 @@ void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
   }
 
   // Now copy the string to local buffer and escape delimiters
-  // TODO A better way is to search for delimiter once and perform memcpy
+  // TODO A better way is to search for delimiter once and perform copy
   for (int i = 0; i < len; i++) {
     char ch = data[i];
     // Check delimiter
@@ -149,7 +150,7 @@ void CopyExecutor::CreateParamPacket(wire::Packet &packet, int len,
   // Copy the data from string to packet buf
   packet.len = len;
   packet.buf.resize(packet.len);
-  std::memcpy(packet.buf.data(), val.data(), len);
+  PL_MEMCPY(packet.buf.data(), val.data(), len);
 }
 
 /**
