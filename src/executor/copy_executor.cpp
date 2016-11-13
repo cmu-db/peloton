@@ -269,6 +269,7 @@ bool CopyExecutor::DExecute() {
     }
     LOG_DEBUG("Done writing to csv file for this tile");
   }
+  LOG_INFO("Done copying all logical tiles");
   FlushBuffer();
   logging::LoggingUtil::FFlushFsync(file_handle_);
   // Sync and close
