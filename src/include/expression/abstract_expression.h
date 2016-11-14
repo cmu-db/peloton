@@ -92,9 +92,12 @@ class AbstractExpression : public Printable {
   }
 
   /** accessors */
+
   ExpressionType GetExpressionType() const { return exp_type_; }
 
   Type::TypeId GetValueType() const { return value_type_; }
+
+  virtual void DeduceExpressionType() {}
 
   const std::string GetInfo() const {
     std::ostringstream os;

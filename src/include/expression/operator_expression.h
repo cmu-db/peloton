@@ -68,6 +68,14 @@ class OperatorExpression : public AbstractExpression {
     }
   }
 
+  void DeduceExpressionType(){
+    // if we are a decimal or int we should take the highest type id of both children
+    // This relies on a particular order in types.h
+    auto type = std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
+    PL_ASSERT(type <= Type::DECIMAL);
+    value_type_ = type;
+  }
+
   AbstractExpression *Copy() const override {
     return new OperatorExpression(*this);
   }

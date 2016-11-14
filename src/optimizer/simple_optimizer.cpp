@@ -33,6 +33,7 @@
 #include "planner/copy_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/order_by_plan.h"
+#include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
@@ -82,9 +83,10 @@ void SimpleOptimizer::FindColumns(std::unordered_map<oid_t, oid_t> &column_mappi
       val_expr->expr_name_ = val_expr->col_name_;
     }
     val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
-  }else{
+  }else if (expr->GetExpressionType() != EXPRESSION_TYPE_STAR){
     needs_projection = true;
   }
+  expr->DeduceExpressionType();
   // TODO: add function expressions
 
 }
@@ -194,11 +196,35 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If there is no aggregate functions, just do a sequential scan
       if (!agg_flag && group_by_columns.size() == 0) {
         LOG_TRACE("No aggregate functions found.");
-        auto child_SelectPlan = CreateScanPlan(target_table, column_ids, predicate, select_stmt->is_for_update);
+        std::unique_ptr<planner::AbstractPlan> child_SelectPlan = CreateScanPlan(target_table, column_ids, predicate, select_stmt->is_for_update);
+
 
         if (needs_projection){
+          auto &select_list = *select_stmt->getSelectList();
+          TargetList tl = TargetList();
+          DirectMapList dml = DirectMapList();
+          std::vector<catalog::Column> columns;
+          catalog::Schema *table_schema = target_table->GetSchema();
+          for (int i = 0; i < (int)select_list.size(); i++){
+            auto expr = select_list[i];
+            if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE){
+              auto tup_expr = (expression::TupleValueExpression*)expr;
+              oid_t old_col_id = table_schema->GetColumnID(tup_expr->col_name_);
+              columns.push_back(table_schema->GetColumn(old_col_id));
+              dml.push_back(DirectMap(i, std::make_pair(0, old_col_id)));
+            }else{
+              tl.push_back(Target(i, expr->Copy()));
+              columns.push_back(catalog::Column(expr->GetValueType(),common::Type::GetTypeSize(expr->GetValueType()), "expr"+ std::to_string(i)));
+            }
+          }
+          std::unique_ptr<planner::ProjectInfo> proj_info(new planner::ProjectInfo(std::move(tl), std::move(dml)));
+          std::shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
+          std::unique_ptr<planner::AbstractPlan> child_ProjectPlan(new planner::ProjectionPlan(std::move(proj_info), schema_ptr));
+          child_ProjectPlan->AddChild(std::move(child_SelectPlan));
+          child_SelectPlan = std::move(child_ProjectPlan);
 
         }
+
 
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
           std::vector<oid_t> keys;
@@ -697,8 +723,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
                             key_column_ids, expr_types, values, index_id)) {
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
+    auto predicate_cpy = predicate == nullptr ? nullptr : predicate->Copy();
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-        new planner::SeqScanPlan(target_table, predicate->Copy(), column_ids, for_update));
+        new planner::SeqScanPlan(target_table, predicate_cpy, column_ids, for_update));
     LOG_TRACE("Sequential scan plan created");
     return std::move(child_SelectPlan);
   }

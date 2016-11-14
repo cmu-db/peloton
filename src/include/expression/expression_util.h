@@ -112,7 +112,9 @@ class ExpressionUtil {
       catalog::Schema *schema, expression::AbstractExpression *expression) {
     LOG_TRACE("Expression Type --> %s",
               ExpressionTypeToString(expression->GetExpressionType()).c_str());
-
+    if (expression == nullptr){
+      return;
+    }
 
     if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE){
       expression::TupleValueExpression * tv_expr = (expression::TupleValueExpression *)expression;
@@ -215,6 +217,23 @@ class ExpressionUtil {
   }
 
   inline static bool IsAggregateExpression(ExpressionType type) {
+    switch (type) {
+    case EXPRESSION_TYPE_AGGREGATE_COUNT:
+    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+    case EXPRESSION_TYPE_AGGREGATE_SUM:
+    case EXPRESSION_TYPE_AGGREGATE_MIN:
+    case EXPRESSION_TYPE_AGGREGATE_MAX:
+    case EXPRESSION_TYPE_AGGREGATE_AVG:
+    case EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT:
+    case EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG:
+    case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  inline static bool IsOperatorExpression(ExpressionType type) {
       switch (type) {
       case EXPRESSION_TYPE_AGGREGATE_COUNT:
       case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
