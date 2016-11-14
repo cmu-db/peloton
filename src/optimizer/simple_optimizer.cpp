@@ -18,6 +18,7 @@
 #include "catalog/schema.h"
 #include "expression/expression_util.h"
 #include "expression/aggregate_expression.h"
+#include "expression/function_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "planner/abstract_plan.h"
@@ -85,6 +86,13 @@ void SimpleOptimizer::FindColumns(std::unordered_map<oid_t, oid_t> &column_mappi
     val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
   }else if (expr->GetExpressionType() != EXPRESSION_TYPE_STAR){
     needs_projection = true;
+  }
+
+  if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION){
+    auto func_expr = (expression::FunctionExpression*)expr;
+    auto  catalog = catalog::Catalog::GetInstance();
+    catalog::FunctionData func_data = catalog->GetFunction(func_expr->func_name_);
+    func_expr->SetFunctionExpressionParameters(func_data.func_ptr_, func_data.return_type_);
   }
   expr->DeduceExpressionType();
   // TODO: add function expressions

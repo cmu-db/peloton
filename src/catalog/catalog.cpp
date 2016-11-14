@@ -32,6 +32,8 @@ Catalog::Catalog() {
 
   // Create metrics table in default database
   CreateMetricsCatalog();
+
+  InitializeFunctions();
 }
 
 void Catalog::CreateMetricsCatalog() {
@@ -745,6 +747,30 @@ Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
   delete pool_;
+}
+
+common::Value plus_one(const common::Value& val){
+  return val.Add(common::ValueFactory::GetIntegerValue(1));
+}
+
+// add amd get methods for UDFs
+void Catalog::AddFunction(const std::string &name, const size_t num_arguments,
+    const common::Type::TypeId return_type,
+    common::Value (*func_ptr)(const common::Value&)){
+  PL_ASSERT(functions_.count(name) == 0);
+  functions_[name] = FunctionData{name, num_arguments, return_type, func_ptr};
+}
+
+FunctionData Catalog::GetFunction(const std::string &name){
+  return functions_[name];
+}
+
+void Catalog::RemoveFunction(const std::string &name){
+  functions_.erase(name);
+}
+
+void Catalog::InitializeFunctions(){
+  AddFunction("addone", 1, common::Type::INTEGER, plus_one);
 }
 }
 }

@@ -52,6 +52,14 @@ namespace catalog {
 // Catalog
 //===--------------------------------------------------------------------===//
 
+
+struct FunctionData{
+  std::string func_name_;
+  size_t num_arguments_;
+  common::Type::TypeId return_type_;
+  common::Value (*func_ptr_)(const common::Value&);
+};
+
 class Catalog {
 
  public:
@@ -158,6 +166,21 @@ class Catalog {
   // Get a new id for database, table, etc.
   oid_t GetNextOid();
 
+  void InitializeFunctions();
+
+  //===--------------------------------------------------------------------===//
+  // FUNCTION ACCESS
+  //===--------------------------------------------------------------------===//
+
+  // add amd get methods for UDFs
+  void AddFunction(const std::string &name, const size_t num_arguments,
+      const common::Type::TypeId return_type,
+      common::Value (*func_ptr)(const common::Value&));
+
+  FunctionData GetFunction(const std::string &name);
+
+  void RemoveFunction(const std::string &name);
+
   // Deconstruct the catalog database when destroy the catalog.
   ~Catalog();
 
@@ -176,6 +199,8 @@ class Catalog {
 
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
+
+  std::unordered_map<std::string, FunctionData> functions_;
 
  public:
   // The var len pool for new varlen tuple fields

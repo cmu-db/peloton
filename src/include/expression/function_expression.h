@@ -26,19 +26,20 @@ using namespace peloton::common;
 class FunctionExpression: public AbstractExpression {
 public:
   FunctionExpression(char * func_name, AbstractExpression* child) :
-      AbstractExpression(EXPRESSION_TYPE_FUNCTION), func_ptr_(nullptr), func_name_(func_name){
+      AbstractExpression(EXPRESSION_TYPE_FUNCTION), func_name_(func_name), func_ptr_(nullptr){
     children_.push_back(std::unique_ptr<AbstractExpression>(child));
   }
 
-  FunctionExpression(Value (*func_ptr)(Value&), Type::TypeId type_id,
+  FunctionExpression(Value (*func_ptr)(const Value&), Type::TypeId type_id,
       AbstractExpression *left, AbstractExpression *right) :
       AbstractExpression(EXPRESSION_TYPE_FUNCTION, type_id, left, right), func_ptr_(
           func_ptr) {
   }
 
-  void SetFunctionExpressionParameters(Value (*func_ptr_)(Value&),
+  void SetFunctionExpressionParameters(Value (*func_ptr)(const Value&),
       Type::TypeId val_type) {
-
+    func_ptr_ = func_ptr;
+    value_type_ = val_type;
   }
 
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
@@ -54,13 +55,15 @@ public:
     return new FunctionExpression(*this);
   }
 
+  std::string func_name_;
+
 protected:
   FunctionExpression(const FunctionExpression& other) :
-      AbstractExpression(other), func_ptr_(other.func_ptr_), func_name_(other.func_name_) {
+      AbstractExpression(other), func_name_(other.func_name_), func_ptr_(other.func_ptr_) {
   }
 private:
-  Value (*func_ptr_)(Value&);
-  std::string func_name_;
+  Value (*func_ptr_)(const Value&);
+
 
 };
 
