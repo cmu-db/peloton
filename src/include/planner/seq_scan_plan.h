@@ -46,12 +46,6 @@ class SeqScanPlan : public AbstractScan {
       : AbstractScan(table, predicate, column_ids) {
     LOG_DEBUG("Creating a Sequential Scan Plan");
 
-    // Store a copy of the original expression for binding multiple queries.
-    if (predicate != nullptr) {
-      predicate_with_params_ =
-          std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
-    }
-
     SetForUpdateFlag(is_for_update);
   }
 
