@@ -590,8 +590,42 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
                             key_column_ids, expr_types, values, index_id)) {
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
+    key_column_ids.clear();
+    bool function_found = false;
+    for (auto elem : *select_stmt->select_list) {
+      if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+        function_found = true;
+        break;
+      }
+    }
+    // Pass all columns
+    // TODO: This isn't efficient. Needs to be fixed
+    if (function_found) {
+      auto schema = target_table->GetSchema();
+      auto &schema_columns = schema->GetColumns();
+      for (auto column : schema_columns) {
+        oid_t col_id = schema->GetColumnID(column.column_name);
+        key_column_ids.push_back(col_id);
+      }
+    }
+    // Pass columns in select_list
+    else {
+      if (select_stmt->select_list->at(0)->GetExpressionType() !=
+          EXPRESSION_TYPE_STAR) {
+        for (auto col : *select_stmt->select_list) {
+          LOG_TRACE("ExpressionType: %s",
+                    ExpressionTypeToString(col->GetExpressionType()).c_str());
+          auto col_name = col->GetName();
+          oid_t col_id = target_table->GetSchema()->GetColumnID(std::string(col_name));
+          key_column_ids.push_back(col_id);
+        }
+      } else {
+        auto allColumns = target_table->GetSchema()->GetColumns();
+        for (uint i = 0; i < allColumns.size(); i++) key_column_ids.push_back(i);
+      }
+    }
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-        new planner::SeqScanPlan(select_stmt));
+        new planner::SeqScanPlan(target_table, select_stmt->where_clause, key_column_ids));
     LOG_TRACE("Sequential scan plan created");
     return std::move(child_SelectPlan);
   }
