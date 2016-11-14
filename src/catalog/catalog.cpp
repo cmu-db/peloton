@@ -132,7 +132,8 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
       database->GetTableWithName(table_name);
       LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
       return Result::RESULT_FAILURE;
-    } catch (CatalogException &e) {
+    }
+    catch (CatalogException &e) {
       // Table doesn't exist, now create it
       oid_t database_id = database->GetOid();
       storage::DataTable *table = storage::TableFactory::GetDataTable(
@@ -626,8 +627,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {database_id_column, table_id_column, reads_column, updates_column,
-       deletes_column, inserts_column, timestamp_column}));
+      {database_id_column, table_id_column, reads_column,    updates_column,
+       deletes_column,     inserts_column,  timestamp_column}));
   return database_schema;
 }
 
@@ -665,7 +666,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
       {database_id_column, table_id_column, index_id_column, reads_column,
-       deletes_column, inserts_column, timestamp_column}));
+       deletes_column,     inserts_column,  timestamp_column}));
   return database_schema;
 }
 
@@ -675,16 +676,33 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
   oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t varbinary_type_size =
+      common::Type::GetTypeSize(common::Type::VARBINARY);
 
-  // XXX maximum length of the query is set to 32.
-  auto name_column =
-      catalog::Column(common::Type::VARCHAR, max_name_size, "query_name", true);
+  common::Type::TypeId integer_type = common::Type::INTEGER;
+  common::Type::TypeId varbinary_type = common::Type::VARBINARY;
+
+  auto name_column = catalog::Column(
+      common::Type::VARCHAR, common::Type::GetTypeSize(common::Type::VARCHAR),
+      "query_name", false);
   name_column.AddConstraint(not_null_constraint);
   auto database_id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
   database_id_column.AddConstraint(not_null_constraint);
 
+  // Parameters
+  auto num_param_column = catalog::Column(integer_type, integer_type_size,
+                                          QUERY_NUM_PARAM_COL_NAME, true);
+  num_param_column.AddConstraint(not_null_constraint);
+  // For varbinary types, we don't want to inline it since it could be large
+  auto param_type_column = catalog::Column(varbinary_type, varbinary_type_size,
+                                           QUERY_PARAM_TYPE_COL_NAME, false);
+  auto param_format_column = catalog::Column(
+      varbinary_type, varbinary_type_size, QUERY_PARAM_FORMAT_COL_NAME, false);
+  auto param_val_column = catalog::Column(varbinary_type, varbinary_type_size,
+                                          QUERY_PARAM_VAL_COL_NAME, false);
+
+  // Physical statistics
   auto reads_column =
       catalog::Column(integer_type, integer_type_size, "reads", true);
   reads_column.AddConstraint(not_null_constraint);
@@ -708,10 +726,12 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
       catalog::Column(integer_type, integer_type_size, "time_stamp", true);
   timestamp_column.AddConstraint(not_null_constraint);
 
-  std::unique_ptr<catalog::Schema> database_schema(
-      new catalog::Schema({name_column, database_id_column, reads_column,
-                           updates_column, deletes_column, inserts_column,
-                           latency_column, cpu_time_column, timestamp_column}));
+  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+      {name_column,       database_id_column,  num_param_column,
+       param_type_column, param_format_column, param_val_column,
+       reads_column,      updates_column,      deletes_column,
+       inserts_column,    latency_column,      cpu_time_column,
+       timestamp_column}));
   return database_schema;
 }
 

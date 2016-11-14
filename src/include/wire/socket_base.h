@@ -30,6 +30,7 @@
 
 #include "common/logger.h"
 #include "common/config.h"
+#include "common/types.h"
 
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
@@ -42,12 +43,8 @@ namespace wire {
 
 class PacketManager;
 class Server;
-
-typedef unsigned char uchar;
-
 // use array as memory for the socket buffers can be fixed
 typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
-
 
 // Buffers used to batch meesages at the socket
 struct Buffer {

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 // This is just for convenience
@@ -33,3 +32,4 @@
 #include "executor/hash_set_op_executor.h"
 #include "executor/append_executor.h"
 #include "executor/projection_executor.h"
+#include "executor/copy_executor.h"

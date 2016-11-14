@@ -15,8 +15,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include "common/value.h"
+#include "statistics/query_metric.h"
 
 namespace peloton {
 
@@ -31,7 +31,8 @@ class Portal {
   Portal &operator=(Portal &&) = delete;
 
   Portal(const std::string &portal_name, std::shared_ptr<Statement> statement,
-         std::vector<common::Value> bind_parameters);
+         std::vector<common::Value> bind_parameters,
+         std::shared_ptr<stats::QueryMetric::QueryParams> param_stat);
 
   ~Portal();
 
@@ -39,15 +40,21 @@ class Portal {
 
   const std::vector<common::Value> &GetParameters() const;
 
- private:
+  inline std::shared_ptr<stats::QueryMetric::QueryParams> GetParamStat() const {
+    return param_stat_;
+  }
+
   // Portal name
-  std::string portal_name;
+  std::string portal_name_;
 
   // Prepared statement
-  std::shared_ptr<Statement> statement;
+  std::shared_ptr<Statement> statement_;
 
   // Values bound to the statement of this portal
-  std::vector<common::Value> bind_parameters;
+  std::vector<common::Value> bind_parameters_;
+
+  // The serialized params for stats collection
+  std::shared_ptr<stats::QueryMetric::QueryParams> param_stat_;
 };
 
 }  // namespace peloton

@@ -29,6 +29,7 @@
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/copy_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -407,6 +408,15 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
           new planner::InsertPlan((parser::InsertStatement*)parse_tree2));
       child_plan = std::move(child_InsertPlan);
+    } break;
+
+    case STATEMENT_TYPE_COPY: {
+      LOG_TRACE("Adding Copy plan...");
+      parser::CopyStatement* copy_parse_tree =
+          static_cast<parser::CopyStatement*>(parse_tree2);
+      std::unique_ptr<planner::AbstractPlan> child_CopyPlan(
+          new planner::CopyPlan(copy_parse_tree));
+      child_plan = std::move(child_CopyPlan);
     } break;
 
     case STATEMENT_TYPE_DELETE: {

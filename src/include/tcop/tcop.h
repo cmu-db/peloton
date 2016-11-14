@@ -46,12 +46,12 @@ class TrafficCop {
                           int &rows_changed, std::string &error_message);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
-  Result ExecuteStatement(const std::shared_ptr<Statement> &statement,
-                          const std::vector<common::Value> &params,
-                          const bool unnamed,
-                          const std::vector<int> &result_format,
-                          std::vector<ResultType> &result, int &rows_change,
-                          std::string &error_message);
+  Result ExecuteStatement(
+      const std::shared_ptr<Statement> &statement,
+      const std::vector<common::Value> &params, const bool unnamed,
+      std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+      const std::vector<int> &result_format, std::vector<ResultType> &result,
+      int &rows_change, std::string &error_message);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,

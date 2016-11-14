@@ -360,8 +360,7 @@ std::string StatementTypeToString(StatementType type) {
     case STATEMENT_TYPE_DELETE: { return "DELETE"; }
     case STATEMENT_TYPE_DROP: { return "DROP"; }
     case STATEMENT_TYPE_EXECUTE: { return "EXECUTE"; }
-    case STATEMENT_TYPE_EXPORT: { return "EXPORT"; }
-    case STATEMENT_TYPE_IMPORT: { return "IMPORT"; }
+    case STATEMENT_TYPE_COPY: { return "COPY"; }
     case STATEMENT_TYPE_INSERT: { return "INSERT"; }
     case STATEMENT_TYPE_INVALID: { return "INVALID"; }
     case STATEMENT_TYPE_PREPARE: { return "PREPARE"; }
@@ -583,6 +582,7 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_UPDATE: { return "UPDATE"; }
     case PLAN_NODE_TYPE_INSERT: { return "INSERT"; }
     case PLAN_NODE_TYPE_DELETE: { return "DELETE"; }
+    case PLAN_NODE_TYPE_COPY: { return "COPY"; }
     case PLAN_NODE_TYPE_SEND: { return "SEND"; }
     case PLAN_NODE_TYPE_RECEIVE: { return "RECEIVE"; }
     case PLAN_NODE_TYPE_PRINT: { return "PRINT"; }

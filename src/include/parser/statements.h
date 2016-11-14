@@ -23,4 +23,4 @@
 #include "parser/statement_execute.h"
 #include "parser/statement_transaction.h"
 #include "parser/statement_update.h"
-#include "parser/statement_import.h"
+#include "parser/statement_copy.h"

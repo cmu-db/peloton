@@ -588,6 +588,7 @@ enum PlanNodeType {
 
   // Utility
   PLAN_NODE_TYPE_RESULT = 70,
+  PLAN_NODE_TYPE_COPY = 71,
 
   // Test
   PLAN_NODE_TYPE_MOCK = 80
@@ -619,11 +620,10 @@ enum StatementType {
   STATEMENT_TYPE_DROP = 7,          // drop statement type
   STATEMENT_TYPE_PREPARE = 8,       // prepare statement type
   STATEMENT_TYPE_EXECUTE = 9,       // execute statement type
-  STATEMENT_TYPE_EXPORT = 10,       // export statement type
   STATEMENT_TYPE_RENAME = 11,       // rename statement type
   STATEMENT_TYPE_ALTER = 12,        // alter statement type
   STATEMENT_TYPE_TRANSACTION = 13,  // transaction statement type,
-  STATEMENT_TYPE_IMPORT = 14        // import type
+  STATEMENT_TYPE_COPY = 14          // copy type
 };
 
 //===--------------------------------------------------------------------===//
@@ -688,6 +688,18 @@ enum InsertType {
   INSERT_TYPE_INVALID = 0,  // invalid insert type
   INSERT_TYPE_VALUES = 1,   // values
   INSERT_TYPE_SELECT = 2    // select
+};
+
+//===--------------------------------------------------------------------===//
+// Copy Types
+//===--------------------------------------------------------------------===//
+
+enum CopyType {
+  COPY_TYPE_IMPORT_CSV,     // Import csv data to database
+  COPY_TYPE_IMPORT_TSV,     // Import tsv data to database
+  COPY_TYPE_EXPORT_CSV,     // Export data to csv file
+  COPY_TYPE_EXPORT_STDOUT,  // Export data to std out
+  COPY_TYPE_EXPORT_OTHER,   // Export data to other file format
 };
 
 //===--------------------------------------------------------------------===//
@@ -1108,5 +1120,7 @@ typedef std::vector<Target> TargetList;
 typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
+
+typedef unsigned char uchar;
 
 }  // End peloton namespace

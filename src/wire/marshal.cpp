@@ -15,6 +15,7 @@
 #include <iterator>
 
 #include "wire/marshal.h"
+#include "common/macros.h"
 
 #include <netinet/in.h>
 
@@ -28,6 +29,7 @@ void CheckOverflow(Packet *pkt, size_t size) {
     LOG_WARN(
         "Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
         (int)pkt->ptr, (int)size, (int)pkt->len);
+    PL_ASSERT(false);
   }
 }
 

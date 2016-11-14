@@ -66,8 +66,9 @@ Result TrafficCop::ExecuteStatement(
   bool unnamed = true;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   std::vector<common::Value> params;
-  auto status = ExecuteStatement(statement, params, unnamed, result_format,
-                                 result, rows_changed, error_message);
+  auto status =
+      ExecuteStatement(statement, params, unnamed, nullptr, result_format,
+                       result, rows_changed, error_message);
 
   if (status == Result::RESULT_SUCCESS) {
     LOG_TRACE("Execution succeeded!");
@@ -82,15 +83,14 @@ Result TrafficCop::ExecuteStatement(
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<common::Value> &params,
-    UNUSED_ATTRIBUTE const bool unnamed, const std::vector<int> &result_format,
-    std::vector<ResultType> &result, int &rows_changed,
-    UNUSED_ATTRIBUTE std::string &error_message) {
-  // for (auto &value : params) {
-  //  LOG_ERROR("%s", value.GetInfo().c_str());
-  //}
+    UNUSED_ATTRIBUTE const bool unnamed,
+    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+    const std::vector<int> &result_format, std::vector<ResultType> &result,
+    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
+
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->InitQueryMetric(
-        statement->GetQueryString(), DEFAULT_DB_ID);
+    stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
+                                                               param_stats);
   }
 
   LOG_TRACE("Execute Statement of name: %s",
@@ -104,7 +104,8 @@ Result TrafficCop::ExecuteStatement(
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
     rows_changed = status.m_processed;
     return status.m_result;
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
@@ -139,7 +140,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     LOG_DEBUG("Statement Prepared!");
     return std::move(statement);
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }

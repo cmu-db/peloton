@@ -211,10 +211,12 @@ void BackendStatsContext::IncrementTxnAborted(oid_t database_id) {
   CompleteQueryMetric();
 }
 
-void BackendStatsContext::InitQueryMetric(std::string query_string,
-                                          oid_t database_oid) {
-  ongoing_query_metric_.reset(
-      new QueryMetric(QUERY_METRIC, query_string, database_oid));
+void BackendStatsContext::InitQueryMetric(
+    const std::shared_ptr<Statement> statement,
+    const std::shared_ptr<QueryMetric::QueryParams> params) {
+  // TODO currently all queries belong to DEFAULT_DB
+  ongoing_query_metric_.reset(new QueryMetric(
+      QUERY_METRIC, statement->GetQueryString(), params, DEFAULT_DB_ID));
 }
 
 //===--------------------------------------------------------------------===//

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -22,8 +21,6 @@
 
 namespace peloton {
 namespace wire {
-
-typedef unsigned char uchar;
 
 /*
  * Marshallers

@@ -110,7 +110,7 @@ peloton_status PlanExecutor::ExecutePlan(
           std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
       // Construct the returned results
-      for (auto tuple : answer_tuples) {
+      for (auto &tuple : answer_tuples) {
         unsigned int col_index = 0;
         auto &schema_columns = output_schema->GetColumns();
         for (auto &column : schema_columns) {
@@ -401,6 +401,10 @@ executor::AbstractExecutor *BuildExecutorTree(
     case PLAN_NODE_TYPE_CREATE:
       LOG_TRACE("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
+      break;
+    case PLAN_NODE_TYPE_COPY:
+      LOG_TRACE("Adding Copy Executer");
+      child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
 
     default:

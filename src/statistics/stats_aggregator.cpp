@@ -133,13 +133,13 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
                                          concurrency::Transaction *txn) {
   // Get the target query metrics table
-  LOG_DEBUG("Inserting Query Metric Tuples");
+  LOG_TRACE("Inserting Query Metric Tuples");
   auto query_metrics_table = GetMetricTable(QUERY_METRIC_NAME);
 
   std::shared_ptr<QueryMetric> query_metric;
   auto &completed_query_metrics = aggregated_stats_.GetCompletedQueryMetrics();
   while (completed_query_metrics.Dequeue(query_metric)) {
-
+    // Get physical stats
     auto table_access = query_metric->GetQueryAccess();
     auto reads = table_access.GetReads();
     auto updates = table_access.GetUpdates();
@@ -149,12 +149,27 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
     auto cpu_system = query_metric->GetProcessorMetric().GetSystemDuration();
     auto cpu_user = query_metric->GetProcessorMetric().GetUserDuration();
 
+    // Get query params
+    auto query_params = query_metric->GetQueryParams();
+    auto num_params = 0;
+    QueryMetric::QueryParamBuf value_buf;
+    QueryMetric::QueryParamBuf type_buf;
+    QueryMetric::QueryParamBuf format_buf;
+
+    if (query_params != nullptr) {
+      value_buf = query_params->val_buf_copy;
+      num_params = query_params->num_params;
+      format_buf = query_params->format_buf_copy;
+      type_buf = query_params->type_buf_copy;
+      PL_ASSERT(num_params > 0);
+    }
+
     // Generate and insert the tuple
     auto query_tuple = catalog::GetQueryMetricsCatalogTuple(
         query_metrics_table->GetSchema(), query_metric->GetName(),
-        query_metric->GetDatabaseId(), reads, updates, deletes, inserts,
-        (int64_t)latency, (int64_t)(cpu_system + cpu_user), time_stamp,
-        pool_.get());
+        query_metric->GetDatabaseId(), num_params, type_buf, format_buf,
+        value_buf, reads, updates, deletes, inserts, (int64_t)latency,
+        (int64_t)(cpu_system + cpu_user), time_stamp, pool_.get());
     catalog::InsertTuple(query_metrics_table, std::move(query_tuple), txn);
     LOG_TRACE("Query Metric Tuple inserted");
   }
@@ -166,7 +181,7 @@ void StatsAggregator::UpdateMetrics() {
   auto txn = txn_manager.BeginTransaction();
 
   // Get the target table metrics table
-  LOG_DEBUG("Inserting stat tuples into catalog database..");
+  LOG_TRACE("Inserting stat tuples into catalog database..");
   auto catalog = catalog::Catalog::GetInstance();
   auto database_metrics_table = GetMetricTable(DATABASE_METRIC_NAME);
 

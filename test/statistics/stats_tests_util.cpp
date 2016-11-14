@@ -67,14 +67,44 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
-void StatsTestsUtil::CreateTable() {
+std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
+    std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
+    std::shared_ptr<uchar> &val_buf) {
+
+  // Type
+  uchar *type_buf_data = new uchar[1];
+  type_buf_data[0] = 'x';
+  type_buf.reset(type_buf_data);
+  stats::QueryMetric::QueryParamBuf type(type_buf_data, 1);
+
+  // Format
+  uchar *format_buf_data = new uchar[1];
+  format_buf_data[0] = 'y';
+  format_buf.reset(format_buf_data);
+  stats::QueryMetric::QueryParamBuf format(format_buf_data, 1);
+
+  // Value
+  uchar *val_buf_data = new uchar[1];
+  val_buf_data[0] = 'z';
+  val_buf.reset(val_buf_data);
+  stats::QueryMetric::QueryParamBuf val(val_buf_data, 1);
+
+  // Construct a query param object
+  std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
+      new stats::QueryMetric::QueryParams(format, type, val, 1));
+  return query_params;
+}
+
+void StatsTestsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 
   auto id_column = catalog::Column(
       common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
       "dept_id", true);
-  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
-  id_column.AddConstraint(constraint);
+  if (has_primary_key) {
+    catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+    id_column.AddConstraint(constraint);
+  }
   auto name_column =
       catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(
@@ -92,43 +122,45 @@ void StatsTestsUtil::CreateTable() {
   txn_manager.CommitTransaction(txn);
 }
 
-std::unique_ptr<Statement> StatsTestsUtil::GetInsertStmt() {
-  std::unique_ptr<Statement> statement;
+std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt(int id,
+                                                         std::string val) {
+  std::shared_ptr<Statement> statement;
   std::string sql =
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
-      "(1,'hello_1');";
-  LOG_INFO("Query: %s", sql.c_str());
-  statement.reset(new Statement("DELETE", sql));
+      "(" +
+      std::to_string(id) + ",'" + val + "');";
+  LOG_TRACE("Query: %s", sql.c_str());
+  statement.reset(new Statement("INSERT", sql));
   ParseAndPlan(statement.get(), sql);
-  return std::move(statement);
+  return statement;
 }
 
-std::unique_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
-  std::unique_ptr<Statement> statement;
+std::shared_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
+  std::shared_ptr<Statement> statement;
   std::string sql = "DELETE FROM EMP_DB.department_table";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("DELETE", sql));
   ParseAndPlan(statement.get(), sql);
-  return std::move(statement);
+  return statement;
 }
 
-std::unique_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
-  std::unique_ptr<Statement> statement;
+std::shared_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
+  std::shared_ptr<Statement> statement;
   std::string sql =
       "UPDATE EMP_DB.department_table SET dept_name = 'CS' WHERE dept_id = 1";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("UPDATE", sql));
   ParseAndPlan(statement.get(), sql);
-  return std::move(statement);
+  return statement;
 }
 
 void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto &peloton_parser = parser::Parser::GetInstance();
   auto update_stmt = peloton_parser.BuildParseTree(sql);
-  LOG_DEBUG("Building plan tree...");
+  LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
-  LOG_DEBUG("Building plan tree completed!");
+  LOG_TRACE("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 }
 
