@@ -54,7 +54,7 @@ class InsertPlan : public AbstractPlan {
                         std::unique_ptr<storage::Tuple> &&tuple,
                         oid_t bulk_insert_count = 1);
 
-  explicit InsertPlan(parser::InsertStatement* parse_tree, oid_t bulk_insert_count = 1);
+  explicit InsertPlan(parser::InsertStatement* parse_tree);
 
 
   // Get a varlen pool (will construct the pool only if needed)
@@ -72,7 +72,12 @@ class InsertPlan : public AbstractPlan {
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
-  const storage::Tuple *GetTuple() const { return tuple_.get(); }
+  const storage::Tuple *GetTuple(int tuple_idx) const {
+    if (tuple_idx >= (int)tuples_.size()){
+      return nullptr;
+    }
+    return tuples_[tuple_idx].get();
+  }
 
   const std::string GetInfo() const { return "InsertPlan"; }
 
@@ -91,10 +96,10 @@ class InsertPlan : public AbstractPlan {
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   /** @brief Tuple */
-  std::unique_ptr<storage::Tuple> tuple_;
+  std::vector<std::unique_ptr<storage::Tuple>> tuples_;
 
-  // <tuple_column_index, parameter_index>
-  std::unique_ptr<std::vector<std::pair<oid_t, oid_t>>> parameter_vector_;
+  // <tuple_index, tuple_column_index, parameter_index>
+  std::unique_ptr<std::vector<std::tuple<oid_t, oid_t, oid_t>>> parameter_vector_;
 
   // Parameter values
   std::unique_ptr<std::vector<common::Type::TypeId>> params_value_type_;

@@ -55,7 +55,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/expression_util.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 #include "index/index_factory.h"
 

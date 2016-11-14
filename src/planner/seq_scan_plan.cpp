@@ -11,14 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/seq_scan_plan.h"
-#include "storage/data_table.h"
-#include "catalog/manager.h"
-#include "common/types.h"
-#include "common/macros.h"
-#include "common/logger.h"
-#include "expression/expression_util.h"
-#include "catalog/schema.h"
 #include "catalog/catalog.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/types.h"
+#include "expression/expression_util.h"
+#include "storage/data_table.h"
 
 #include "parser/statement_select.h"
 
@@ -92,7 +92,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   }
 
   // Check for "For Update" flag
-  if(select_node->is_for_update == true){
+  if (select_node->is_for_update == true) {
     SetForUpdateFlag(true);
   }
 
@@ -100,9 +100,8 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   if (select_node->where_clause != NULL) {
     auto predicate = select_node->where_clause->Copy();
     // Replace COLUMN_REF expressions with TupleValue expressions
-    expression::ExpressionUtil::ReplaceColumnExpressions(GetTable()->GetSchema(), predicate);
-    predicate_with_params_ =
-        std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
+    expression::ExpressionUtil::ReplaceColumnExpressions(
+        GetTable()->GetSchema(), predicate);
     SetPredicate(predicate);
   }
 }
@@ -145,9 +144,6 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
     // Write the expression type
     ExpressionType expr_type = GetPredicate()->GetExpressionType();
     output.WriteByte(static_cast<int8_t>(expr_type));
-
-    // Write predicate
-    //GetPredicate()->SerializeTo(output);
   }
 
   // Write parent, but parent seems never be set or used right now
@@ -201,7 +197,8 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
 
   // Get table and set it to the member
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid, table_oid));
+      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid,
+                                                       table_oid));
   SetTargetTable(target_table);
 
   // Read the number of column_id and set them to column_ids_
@@ -313,10 +310,6 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
 
 void SeqScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
-  auto predicate = predicate_with_params_->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(
-      predicate, values, GetTable()->GetSchema());
-  SetPredicate(predicate);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);

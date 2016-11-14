@@ -71,6 +71,8 @@ TEST_F(ValueFactoryTests, PeekValueTest) {
   std::string str = "hello";
   common::Value v7(common::Type::VARCHAR, str);
   EXPECT_EQ(v7.GetData(), str);
+  common::Value v8 = common::ValueFactory::GetVarcharValue("hello");
+  EXPECT_EQ(v8.ToString(), str);
 }
 
 TEST_F(ValueFactoryTests, CastTest) {

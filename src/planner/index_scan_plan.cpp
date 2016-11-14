@@ -45,10 +45,9 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     // we need to copy it here because eventually predicate will be destroyed by
     // its owner...
     predicate = predicate->Copy();
-    expression::ExpressionUtil::ReplaceColumnExpressions(table->GetSchema(), predicate);
-    predicate_with_params_ =
-        std::unique_ptr<expression::AbstractExpression>(predicate);
-    SetPredicate(predicate_with_params_->Copy());
+    expression::ExpressionUtil::ReplaceColumnExpressions(table->GetSchema(),
+                                                         predicate);
+    SetPredicate(predicate);
   }
 
   // copy the value over for binding purpose
@@ -67,11 +66,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
 void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   LOG_TRACE("Setting parameter values in Index Scans");
 
-  auto where = predicate_with_params_->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(
-      where, values, GetTable()->GetSchema());
-  SetPredicate(where);
-
   // Destroy the values of the last plan and copy the original values over for
   // binding
   values_.clear();
@@ -85,8 +79,8 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
     if (value.GetTypeId() == common::Type::PARAMETER_OFFSET) {
       int offset = value.GetAs<int32_t>();
       values_[i] =
-          (values->at(offset)).
-              CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
+          (values->at(offset))
+              .CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 

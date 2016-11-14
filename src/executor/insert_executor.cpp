@@ -18,7 +18,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/executor_context.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 #include "storage/tuple_iterator.h"
@@ -127,7 +127,7 @@ bool InsertExecutor::DExecute() {
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
     auto project_info = node.GetProjectInfo();
-    auto tuple = node.GetTuple();
+    auto tuple = node.GetTuple(0);
     std::unique_ptr<storage::Tuple> project_tuple;
 
     // Check if this is not a raw tuple
@@ -151,7 +151,10 @@ bool InsertExecutor::DExecute() {
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
-
+      // if we are doing a bulk insert from values not project_info
+      if (!project_info){
+        tuple = node.GetTuple(insert_itr);
+      }
       // Carry out insertion
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer location = target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);

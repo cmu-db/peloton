@@ -23,7 +23,7 @@
 #include "executor/logical_tile_factory.h"
 #include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "index/index.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
