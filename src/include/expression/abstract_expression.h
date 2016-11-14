@@ -73,6 +73,10 @@ class AbstractExpression : public Printable {
     return GetModifiableChild(index);
   }
 
+  size_t GetChildrenSize() const{
+    return children_.size();
+  }
+
   AbstractExpression * GetModifiableChild(int index) const{
     if(index < 0 || index >= (int)children_.size()){
       return nullptr;

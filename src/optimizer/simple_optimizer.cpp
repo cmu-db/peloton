@@ -41,6 +41,7 @@
 #include "common/value_factory.h"
 
 #include <memory>
+#include <unordered_map>
 
 namespace peloton {
 namespace planner {
@@ -51,6 +52,42 @@ namespace optimizer {
 SimpleOptimizer::SimpleOptimizer(){};
 
 SimpleOptimizer::~SimpleOptimizer(){};
+
+void SimpleOptimizer::FindColumns(std::unordered_map<oid_t, oid_t> &column_mapping, std::vector<oid_t> &column_ids,
+    expression::AbstractExpression *expr, const catalog::Schema& schema, bool &needs_projection) {
+  size_t num_children = expr->GetChildrenSize();
+  for(size_t child = 0; child < num_children; child++){
+    FindColumns(column_mapping, column_ids, expr->GetModifiableChild(child), schema, needs_projection);
+  }
+  if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+    auto val_expr = (expression::TupleValueExpression *)expr;
+    auto col_id = schema.GetColumnID(val_expr->col_name_);
+    if (col_id == (oid_t)-1){
+      throw Exception("Column "+val_expr->col_name_ +" not found");
+    }
+    auto column = schema.GetColumn(col_id);
+
+    size_t mapped_position;
+    if (column_mapping.count(col_id) == 0){
+      mapped_position = column_ids.size();
+      column_ids.push_back(col_id);
+      column_mapping[col_id] = mapped_position;
+    }else{
+      mapped_position = column_mapping[col_id];
+    }
+    auto type = column.GetType();
+    if (val_expr->alias.size() > 0){
+      val_expr->expr_name_ = val_expr->alias;
+    }else{
+      val_expr->expr_name_ = val_expr->col_name_;
+    }
+    val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
+  }else{
+    needs_projection = true;
+  }
+  // TODO: add function expressions
+
+}
 
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList>& parse_tree) {
@@ -132,6 +169,18 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         having = group_by->having;
       }
 
+      std::unordered_map<oid_t, oid_t> column_mapping;
+      std::vector<oid_t> column_ids;
+      auto &schema = *target_table->GetSchema();
+      auto predicate = select_stmt->where_clause;
+      bool needs_projection = false;
+      expression::ExpressionUtil::ReplaceColumnExpressions(&schema, predicate);
+
+      for (auto col : *select_stmt->select_list){
+        FindColumns(column_mapping, column_ids,
+            col, schema, needs_projection);
+      }
+
       // Check if there are any aggregate functions
       bool agg_flag = false;
       for (auto expr : *select_stmt->getSelectList()) {
@@ -145,7 +194,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If there is no aggregate functions, just do a sequential scan
       if (!agg_flag && group_by_columns.size() == 0) {
         LOG_TRACE("No aggregate functions found.");
-        auto child_SelectPlan = CreateScanPlan(target_table, select_stmt);
+        auto child_SelectPlan = CreateScanPlan(target_table, column_ids, predicate, select_stmt->is_for_update);
+
+        if (needs_projection){
+
+        }
 
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
           std::vector<oid_t> keys;
@@ -235,12 +288,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
       // Else, do aggregations on top of scan
       else {
-        // Create sequential scan plan
-        target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            select_stmt->from_table->GetDatabaseName(),
-            select_stmt->from_table->GetTableName());
+//        // Create sequential scan plan
+//        target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+//            select_stmt->from_table->GetDatabaseName(),
+//            select_stmt->from_table->GetTableName());
         std::unique_ptr<planner::AbstractScan> scan_node =  // nullptr;
-            CreateScanPlan(target_table, select_stmt);
+            CreateScanPlan(target_table,column_ids, predicate, select_stmt->is_for_update);
 
         // Prepare aggregate plan
         std::vector<catalog::Column> output_schema_columns;
@@ -628,8 +681,11 @@ bool SimpleOptimizer::CheckIndexSearchable(
   return true;
 }
 
+
+
 std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
-    storage::DataTable* target_table, parser::SelectStatement* select_stmt) {
+    storage::DataTable* target_table, std::vector<oid_t> &column_ids,
+    expression::AbstractExpression *predicate, bool for_update) {
   oid_t index_id = 0;
 
   // column predicates passing to the index
@@ -637,23 +693,12 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   std::vector<ExpressionType> expr_types;
   std::vector<common::Value> values;
 
-  // index_searchable = false;
-  // using the index scan causes an error:
-  // Exception Type :: Mismatch Type
-  // Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be
-  // cast as BIGINT...
-  // terminate called after throwing an instance of
-  // 'peloton::TypeMismatchException'
-  // what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast
-  // as BIGINT...
-  //
-
-  if (!CheckIndexSearchable(target_table, select_stmt->where_clause,
+  if (!CheckIndexSearchable(target_table, predicate,
                             key_column_ids, expr_types, values, index_id)) {
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-        new planner::SeqScanPlan(select_stmt));
+        new planner::SeqScanPlan(target_table, predicate->Copy(), column_ids, for_update));
     LOG_TRACE("Sequential scan plan created");
     return std::move(child_SelectPlan);
   }
@@ -663,49 +708,15 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   auto index = target_table->GetIndex(index_id);
   std::vector<expression::AbstractExpression*> runtime_keys;
 
-  bool update_flag = false;
-  if (select_stmt->is_for_update == true) {
-    // FIXME: These are commented out for now to profile TPC-C. Eventually we
-    // have to support select for update.
-    //throw NotImplementedException(
-    //    "Error: select .. for update is not implemented yet!");
-    update_flag = true;
-  }
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
 
-  std::vector<oid_t> column_ids = {};
-  bool function_found = false;
-  for (auto elem : *select_stmt->select_list) {
-    if (expression::ExpressionUtil::IsAggregateExpression(elem->GetExpressionType())) {
-      function_found = true;
-      break;
-    }
-  }
-  // Pass all columns
-  if (function_found ||
-      select_stmt->select_list->at(0)->GetExpressionType() ==
-          EXPRESSION_TYPE_STAR) {
-    auto column_count = target_table->GetSchema()->GetColumnCount();
-    for (uint i = 0; i < column_count; i++) column_ids.push_back(i);
-  }
-  // Pass columns in select_list
-  else {
-    //TODO this should allow arbitrary expressions
-    for (auto col : *select_stmt->select_list) {
-      LOG_TRACE("ExpressionType: %s",
-                ExpressionTypeToString(col->GetExpressionType()).c_str());
-      column_ids.push_back(
-          target_table->GetSchema()->GetColumnID(((expression::TupleValueExpression*)col)->col_name_));
-    }
-  }
-  LOG_TRACE("Index scan column size: %ld\n", column_ids.size());
 
   // Create plan node.
   std::unique_ptr<planner::IndexScanPlan> node(
-      new planner::IndexScanPlan(target_table, select_stmt->where_clause,
-                                 column_ids, index_scan_desc, update_flag));
+      new planner::IndexScanPlan(target_table, predicate,
+                                 column_ids, index_scan_desc, for_update));
   LOG_TRACE("Index scan plan created");
 
   return std::move(node);

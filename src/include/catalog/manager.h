@@ -36,6 +36,20 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
+struct FunctionData{
+  FunctionData(const std::string &name, const size_t num_arguments,
+      const common::Type::TypeId return_type,
+      common::Value (*func_ptr)(const common::Value&)) :
+      func_name_(name), return_type_(return_type), num_arguments_(
+          num_arguments), func_ptr_(func_ptr) {
+  }
+
+  std::string func_name_;
+  common::Type::TypeId return_type_;
+  size_t num_arguments_;
+  common::Value (*func_ptr_)(const common::Value&);
+};
+
 class Manager {
  public:
   Manager() {}
@@ -82,6 +96,16 @@ class Manager {
 
   Manager(Manager const &) = delete;
 
+  //===--------------------------------------------------------------------===//
+  // FUNCTION ACCESS
+  //===--------------------------------------------------------------------===//
+
+  void AddFunction(const std::string &name, const size_t num_arguments,
+      const common::Type::TypeId return_type,
+      common::Value (*func_ptr)(const common::Value&));
+
+  const FunctionData& GetFunction(const std::string &name);
+
  private:
   //===--------------------------------------------------------------------===//
   // Data member for tile allocation
@@ -106,6 +130,8 @@ class Manager {
   LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
 
   static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
+
+  std::unordered_map<std::string, FunctionData> function_map_;
 };
 
 }  // End catalog namespace

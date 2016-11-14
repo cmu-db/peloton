@@ -151,8 +151,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     std::string query) {
   std::vector<FieldInfoType> tuple_descriptor;
-
-  // Set up parser
   auto &peloton_parser = parser::Parser::GetInstance();
   auto sql_stmt = peloton_parser.BuildParseTree(query);
 
@@ -191,62 +189,80 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   // Get the columns of the table
   auto &table_columns = target_table->GetSchema()->GetColumns();
 
+  std::unordered_map<oid_t, oid_t> column_mapping;
+  std::vector<oid_t> column_ids;
+  auto &schema = *target_table->GetSchema();
+  auto predicate = select_stmt->where_clause;
+  bool needs_projection = false;
+  expression::ExpressionUtil::ReplaceColumnExpressions(&schema, predicate);
+
+  for (auto col : *select_stmt->select_list){
+    optimizer::SimpleOptimizer::FindColumns(column_mapping, column_ids,
+        col, schema, needs_projection);
+  }
+
   // Get the columns information and set up
   // the columns description for the returned results
+  int count = 0;
   for (auto expr : *select_stmt->select_list) {
+    count++;
     if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
       for (auto column : table_columns) {
         tuple_descriptor.push_back(
             GetColumnFieldForValueType(column.column_name, column.column_type));
       }
+    }else{
+      std::string col_name = expr->expr_name_.empty() ? std::string("expr")+ std::to_string(count) : expr->expr_name_;
+      tuple_descriptor.push_back(
+                  GetColumnFieldForValueType(col_name, expr->GetValueType()));
     }
 
-    // if query has only certain columns
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
-      // Get the column name
-      auto tuple_expr = (expression::TupleValueExpression *) expr;
-      auto col_name = tuple_expr->col_name_;
-
-      // Traverse the table's columns
-      for (auto column : table_columns) {
-        // check if the column name matches
-        if (column.column_name == col_name) {
-          tuple_descriptor.push_back(
-              GetColumnFieldForValueType(col_name, column.column_type));
-        }
-      }
-    }
-
-    // Query has aggregation Functions
-    if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
-      // Get the parser expression that contains
-      // the typr of the aggreataion function
-      auto func_expr = (expression::AggregateExpression *)expr;
-
-      std::string col_name = "";
-      // check if expression has an alias
-      if (!expr->alias.empty()) {
-        tuple_descriptor.push_back(GetColumnFieldForAggregates(
-            std::string(expr->alias), func_expr->GetChild(0)->GetExpressionType()));
-      } else {
-        // Construct a String
-        std::string agg_func_name = std::string(expr->GetExpressionName());
-
-        std::string full_agg_name;
-        if (expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR){
-          tuple_descriptor.push_back(GetColumnFieldForAggregates(
-                      agg_func_name, func_expr->GetExpressionType()));
-        }else{
-          std::string col_name = std::string(func_expr->GetChild(0)->GetExpressionName());
-          // Example : Count(id)
-          full_agg_name = agg_func_name + "(" + col_name + ")";
-          tuple_descriptor.push_back(GetColumnFieldForAggregates(
-                      full_agg_name, func_expr->GetChild(0)->GetExpressionType()));
-        }
-
-
-      }
-    }
+//    // if query has only certain columns
+//    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+//      // Get the column name
+//      auto tuple_expr = (expression::TupleValueExpression *) expr;
+//      auto col_name = tuple_expr->col_name_;
+//
+//      // Traverse the table's columns
+//      for (auto column : table_columns) {
+//        // check if the column name matches
+//        if (column.column_name == col_name) {
+//          tuple_descriptor.push_back(
+//              GetColumnFieldForValueType(col_name, column.column_type));
+//        }
+//      }
+//    }
+//
+//    // Query has aggregation Functions
+//    if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
+//      // Get the parser expression that contains
+//      // the typr of the aggreataion function
+//      auto func_expr = (expression::AggregateExpression *)expr;
+//
+//      std::string col_name = "";
+//      // check if expression has an alias
+//      if (!expr->alias.empty()) {
+//        tuple_descriptor.push_back(GetColumnFieldForAggregates(
+//            std::string(expr->alias), func_expr->GetChild(0)->GetExpressionType()));
+//      } else {
+//        // Construct a String
+//        std::string agg_func_name = std::string(expr->GetExpressionName());
+//
+//        std::string full_agg_name;
+//        if (expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR){
+//          tuple_descriptor.push_back(GetColumnFieldForAggregates(
+//                      agg_func_name, func_expr->GetExpressionType()));
+//        }else{
+//          std::string col_name = std::string(func_expr->GetChild(0)->GetExpressionName());
+//          // Example : Count(id)
+//          full_agg_name = agg_func_name + "(" + col_name + ")";
+//          tuple_descriptor.push_back(GetColumnFieldForAggregates(
+//                      full_agg_name, func_expr->GetChild(0)->GetExpressionType()));
+//        }
+//
+//
+//      }
+//    }
   }
   return tuple_descriptor;
 }
