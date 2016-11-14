@@ -64,7 +64,7 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
 }
 
 void EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd, short ev_flags, void *arg) {
-  LOG_DEBUG("Event callback fired for connfd: %d", connfd);
+  LOG_TRACE("Event callback fired for connfd: %d", connfd);
   LibeventSocket *conn = static_cast<LibeventSocket *>(arg);
   PL_ASSERT(conn != nullptr);
   conn->event_flags = ev_flags;
@@ -132,15 +132,6 @@ void StateMachine(LibeventSocket *conn) {
             // need more data
             conn->TransitState(CONN_WAIT);
             break;
-          } else {
-            // TODO: We need to support blobs. Add extra copy buffer to rpkt
-            // We now have the length of the rest of the packet
-            // check if the rest of the packet is too huge to handle
-            if (conn->CheckPacketOverflow() == true) {
-              // close conn
-              conn->TransitState(CONN_CLOSING);
-              break;
-            }
           }
         }
 

@@ -1131,10 +1131,7 @@ typedef std::vector<DirectMap> DirectMapList;
 /* byte type */
 typedef unsigned char uchar;
 
-/* Packet buffer type */
-typedef std::vector<uchar> PktBuf;
-
-/* use array as memory for the socket buffers can be fixed */
-typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
+/* type for buffer of bytes */
+typedef std::vector<uchar> ByteBuf;
 
 }  // End peloton namespace

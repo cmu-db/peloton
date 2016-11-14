@@ -99,9 +99,12 @@ struct Buffer {
   size_t buf_ptr;        // buffer cursor
   size_t buf_size;       // buffer size
   size_t buf_flush_ptr;  // buffer cursor for write
-  SockBuf buf;
+  ByteBuf buf;
 
-  inline Buffer() : buf_ptr(0), buf_size(0), buf_flush_ptr(0) {}
+  inline Buffer() : buf_ptr(0), buf_size(0), buf_flush_ptr(0) {
+    // capacity of the buffer
+    buf.reserve(SOCKET_BUFFER_SIZE);
+  }
 
   inline void Reset() {
     buf_ptr = 0;
@@ -119,11 +122,11 @@ struct Buffer {
     return &buf[index];
   }
 
-  inline SockBuf::const_iterator Begin() {
+  inline ByteBuf::const_iterator Begin() {
     return std::begin(buf);
   }
 
-  inline SockBuf::const_iterator End() {
+  inline ByteBuf::const_iterator End() {
     return std::end(buf);
   }
 

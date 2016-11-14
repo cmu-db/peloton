@@ -25,35 +25,83 @@ namespace wire {
 
 class LibeventSocket;
 
-struct InputPacket {
+class InputPacket {
+ public:
   uchar msg_type;   // header
-  size_t len;       // size of packet
-  size_t ptr;       // PktBuf cursor
-  SockBuf::const_iterator begin, end; // start and end iterators of the buffer
+  size_t len;       // size of packet without header
+  size_t ptr;       // ByteBuf cursor
+  ByteBuf::const_iterator begin, end; // start and end iterators of the buffer
   bool header_parsed;   // has the header been parsed
   bool is_initialized;  // has the packet been initialized
+  bool is_extended;     // check if we need to use the extended buffer
 
+ private:
+  ByteBuf extended_buffer_; // used to store packets that don't fit in rbuf
+
+ public:
   // reserve buf's size as maximum packet size
   inline InputPacket() { Reset(); }
 
   inline void Reset() {
-    is_initialized = header_parsed = false;
+    is_initialized = header_parsed = is_extended = false;
     len = ptr = msg_type = 0;
+    extended_buffer_.clear();
+  }
+
+  inline void ReserveExtendedBuffer() {
+    // grow the buffer's capacity to len
+    extended_buffer_.reserve(len);
+  }
+
+  /* checks how many more bytes the extended packet requires */
+  inline size_t ExtendedBytesRequired() {
+    return len - extended_buffer_.size();
+  }
+
+  inline void AppendToExtendedBuffer(ByteBuf::const_iterator start,
+                                     ByteBuf::const_iterator end) {
+    extended_buffer_.insert(std::end(extended_buffer_), start, end);
   }
 
   inline void InitializePacket(size_t &pkt_start_index,
-                               SockBuf::const_iterator rbuf_begin) {
+                               ByteBuf::const_iterator rbuf_begin) {
     this->begin = rbuf_begin + pkt_start_index;
     this->end = rbuf_begin + len;
     is_initialized = true;
   }
 
-  SockBuf::const_iterator Begin() {
+  inline void InitializePacket() {
+    this->begin = extended_buffer_.begin();
+    this->end = extended_buffer_.end();
+    PL_ASSERT(extended_buffer_.size() == len);
+    is_initialized = true;
+  }
+
+  ByteBuf::const_iterator Begin() {
     return begin;
   }
 
-  SockBuf::const_iterator End() {
+  ByteBuf::const_iterator End() {
     return end;
+  }
+};
+
+struct OutputPacket {
+  ByteBuf buf;      // stores packet contents
+  size_t len;      // size of packet
+  size_t ptr;      // ByteBuf cursor, which is used for get and put
+  uchar msg_type;  // header
+
+  bool skip_header_write;  // whether we should write header to socket wbuf
+  size_t write_ptr;        // cursor used to write packet content to socket wbuf
+
+  // TODO could packet be reused?
+  inline void Reset() {
+    buf.resize(BUFFER_INIT_SIZE);
+    buf.shrink_to_fit();
+    buf.clear();
+    len = ptr = write_ptr = msg_type = 0;
+    skip_header_write = true;
   }
 };
 
@@ -111,7 +159,7 @@ extern int PacketGetInt(InputPacket *pkt, uchar base);
 extern void PacketGetString(InputPacket *pkt, size_t len, std::string &result);
 
 /* packet_get_bytes - Parse out "len" bytes of pkt as raw bytes */
-extern void PacketGetBytes(InputPacket *pkt, size_t len, PktBuf &result);
+extern void PacketGetBytes(InputPacket *pkt, size_t len, ByteBuf &result);
 
 /*
  * get_string_token - used to extract a string token

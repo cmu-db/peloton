@@ -59,7 +59,7 @@ int PacketGetInt(InputPacket *rpkt, uchar base) {
   return value;
 }
 
-void PacketGetBytes(InputPacket *rpkt, size_t len, PktBuf &result) {
+void PacketGetBytes(InputPacket *rpkt, size_t len, ByteBuf &result) {
   result.clear();
   CheckOverflow(rpkt, len);
 

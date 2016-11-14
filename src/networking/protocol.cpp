@@ -536,8 +536,8 @@ size_t PacketManager::ReadParamValue(
     std::vector<std::pair<int, std::string>> &bind_parameters,
     std::vector<common::Value> &param_values, std::vector<int16_t> &formats) {
 
-  PktBuf param;
   auto begin = pkt->ptr;
+  ByteBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
     int param_len = PacketGetInt(pkt, 4);
     // BIND packet NULL parameter case
@@ -633,7 +633,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt,
     return true;
   }
 
-  PktBuf mode;
+  ByteBuf mode;
   std::string portal_name;
   PacketGetBytes(pkt, 1, mode);
   GetStringToken(pkt, portal_name);

@@ -106,6 +106,15 @@ bool LibeventSocket::ReadPacketHeader() {
     GetSizeFromPktHeader(rbuf_.buf_ptr);
   }
 
+  // do we need to use the extended buffer for this packet?
+  rpkt.is_extended = (rpkt.len > rbuf_.GetMaxSize());
+
+  if (rpkt.is_extended) {
+    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
+    // reserve space for the extended buffer
+    rpkt.ReserveExtendedBuffer();
+  }
+
   // we have processed the data, move buffer pointer
   rbuf_.buf_ptr += initial_read_size;
   rpkt.header_parsed = true;
@@ -113,29 +122,36 @@ bool LibeventSocket::ReadPacketHeader() {
   return true;
 }
 
-bool LibeventSocket::CheckPacketOverflow() {
-  // cannot handle this huge packet. Give up.
-  if (rpkt.len >= rbuf_.GetMaxSize()) {
-    LOG_ERROR("Conn %d has exceeded read buffer size. Terminating.", sock_fd);
-    return true;
-  }
-  return false;
-}
-
 // Tries to read the contents of a single packet, returns true on success, false
 // on failure.
 bool LibeventSocket::ReadPacket() {
-  if (IsReadDataAvailable(rpkt.len) == false) {
-    // data not available yet, return
-    return false;
+  if (rpkt.is_extended) {
+    // extended packet mode
+    auto bytes_available = rbuf_.buf_size - rbuf_.buf_ptr;
+    auto bytes_required = rpkt.ExtendedBytesRequired();
+    // read minimum of the two ranges
+    auto read_size = std::min(bytes_available, bytes_required);
+    rpkt.AppendToExtendedBuffer(rbuf_.Begin()+rbuf_.buf_ptr,
+                                rbuf_.Begin()+rbuf_.buf_ptr+read_size);
+    // data has been copied, move ptr
+    rbuf_.buf_ptr += read_size;
+    if (bytes_required > bytes_available) {
+      // more data needs to be read
+      return false;
+    }
+    // all the data has been read
+    rpkt.InitializePacket();
+    return true;
+  } else {
+    if (IsReadDataAvailable(rpkt.len) == false) {
+      // data not available yet, return
+      return false;
+    }
+    // Initialize the packet's "contents"
+    rpkt.InitializePacket(rbuf_.buf_ptr, rbuf_.Begin());
+    // We have processed the data, move buffer pointer
+    rbuf_.buf_ptr += rpkt.len;
   }
-
-  // Initialize the packet's "contents"
-  rpkt.InitializePacket(rbuf.buf_ptr, rbuf.Begin());
-
-  // We have processed the data, move buffer pointer
-  rbuf.buf_ptr += rpkt.len;
-
   return true;
 }
 
@@ -414,7 +430,7 @@ bool LibeventSocket::BufferWriteBytesHeader(Packet *pkt) {
 // Return false when the socket is not ready for write
 bool LibeventSocket::BufferWriteBytesContent(Packet *pkt) {
   // the packet content to write
-  PktBuf &pkt_buf = pkt->buf;
+  ByteBuf &pkt_buf = pkt->buf;
   // the length of remaining content to write
   size_t len = pkt->len;
   // window is the size of remaining space in socket's wbuf
