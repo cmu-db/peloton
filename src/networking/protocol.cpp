@@ -46,11 +46,6 @@ const std::unordered_map<std::string, std::string>
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
-/*
- * close_client - Close the socket of the underlying client
- */
-//void PacketManager::CloseClient() { client_.sock->CloseSocket(); }
-
 void PacketManager::MakeHardcodedParameterStatus(const std::pair<std::string, 
     std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -111,6 +106,10 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
 
   // ready-for-query packet -> 'Z'
   SendReadyForQuery(TXN_IDLE);
+
+  // we need to send the response right away
+  force_flush = true;
+
   return true;
 }
 

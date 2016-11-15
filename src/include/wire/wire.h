@@ -123,9 +123,6 @@ private:
   /* Process the EXECUTE message of the extended query protocol */
   void ExecExecuteMessage(InputPacket* pkt);
 
-  /* closes the socket connection with the client */
-//  void CloseClient();
-
  public:
   // Deserialize the parameter types from packet
   static size_t ReadParamType(InputPacket* pkt, int num_params,
