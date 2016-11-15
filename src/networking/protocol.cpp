@@ -51,8 +51,8 @@ const std::unordered_map<std::string, std::string>
  */
 //void PacketManager::CloseClient() { client_.sock->CloseSocket(); }
 
-void PacketManager::MakeHardcodedParameterStatus(
-    ResponseBuffer &responses, const std::pair<std::string, std::string> &kv) {
+void PacketManager::MakeHardcodedParameterStatus(const std::pair<std::string, 
+    std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = PARAMETER_STATUS;
   PacketPutString(response.get(), kv.first);
@@ -63,8 +63,7 @@ void PacketManager::MakeHardcodedParameterStatus(
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PacketManager::ProcessStartupPacket(InputPacket *pkt,
-                                         ResponseBuffer &responses) {
+bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -107,17 +106,16 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt,
   // Send the parameterStatus map ('S')
   for (auto it = parameter_status_map_.begin();
        it != parameter_status_map_.end(); it++) {
-    MakeHardcodedParameterStatus(responses, *it);
+    MakeHardcodedParameterStatus(*it);
   }
 
   // ready-for-query packet -> 'Z'
-  SendReadyForQuery(TXN_IDLE, responses);
+  SendReadyForQuery(TXN_IDLE);
   return true;
 }
 
 void PacketManager::PutTupleDescriptor(
-    const std::vector<FieldInfoType> &tuple_descriptor,
-    ResponseBuffer &responses) {
+    const std::vector<FieldInfoType> &tuple_descriptor) {
   if (tuple_descriptor.empty()) return;
 
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
@@ -143,8 +141,7 @@ void PacketManager::PutTupleDescriptor(
 }
 
 void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
-                                 int &rows_affected,
-                                 ResponseBuffer &responses) {
+                                 int &rows_affected) {
   if (results.empty() || colcount == 0) return;
 
   size_t numrows = results.size() / colcount;
@@ -173,8 +170,7 @@ std::string get_query_type(std::string query) {
   return query_type;
 }
 
-void PacketManager::CompleteCommand(const std::string &query_type, int rows,
-                                    ResponseBuffer &responses) {
+void PacketManager::CompleteCommand(const std::string &query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = COMMAND_COMPLETE;
   std::string tag = query_type;
@@ -199,7 +195,7 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows,
 /*
  * put_empty_query_response - Informs the client that an empty query was sent
  */
-void PacketManager::SendEmptyQueryResponse(ResponseBuffer &responses) {
+void PacketManager::SendEmptyQueryResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = EMPTY_QUERY_RESPONSE;
   responses.push_back(std::move(response));
@@ -219,7 +215,7 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
 }
 
 // The Simple Query Protocol
-void PacketManager::ExecQueryMessage(InputPacket *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecQueryMessage(InputPacket *pkt) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
 
@@ -227,8 +223,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, ResponseBuffer &responses
   boost::split(queries, q_str, boost::is_any_of(";"));
 
   if (queries.size() == 1) {
-    SendEmptyQueryResponse(responses);
-    SendReadyForQuery(txn_state_, responses);
+    SendEmptyQueryResponse();
+    SendReadyForQuery(txn_state_);
     return;
   }
 
@@ -239,8 +235,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, ResponseBuffer &responses
     // iterate till before the empty string after the last ';'
     if (query != queries.back()) {
       if (query.empty()) {
-        SendEmptyQueryResponse(responses);
-        SendReadyForQuery(TXN_IDLE, responses);
+        SendEmptyQueryResponse();
+        SendReadyForQuery(TXN_IDLE);
         return;
       }
 
@@ -255,31 +251,31 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt, ResponseBuffer &responses
 
       // check status
       if (status == Result::RESULT_FAILURE) {
-        SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
+        SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
         break;
       }
 
       // send the attribute names
-      PutTupleDescriptor(tuple_descriptor, responses);
+      PutTupleDescriptor(tuple_descriptor);
 
       // send the result rows
-      SendDataRows(result, tuple_descriptor.size(), rows_affected, responses);
+      SendDataRows(result, tuple_descriptor.size(), rows_affected);
 
       // TODO: should change to query_type
-      CompleteCommand(query, rows_affected, responses);
+      CompleteCommand(query, rows_affected);
     } else if (queries.size() == 1) {
       // just a ';' sent
-      SendEmptyQueryResponse(responses);
+      SendEmptyQueryResponse();
     }
   }
 
-  SendReadyForQuery(READ_FOR_QUERY, responses);
+  SendReadyForQuery(READ_FOR_QUERY);
 }
 
 /*
  * exec_parse_message - handle PARSE message
  */
-void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecParseMessage(InputPacket *pkt) {
   std::string error_message, statement_name, query_string, query_type;
   GetStringToken(pkt, statement_name);
 
@@ -311,7 +307,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses
       tcop.PrepareStatement(statement_name, query_string, error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
-    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
+    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
     LOG_TRACE("ExecParse Error");
     return;
   }
@@ -321,7 +317,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
-  auto type_buf_begin = pkt->ptr;
+//  auto type_buf_begin = pkt->ptr;
   auto type_buf_len = ReadParamType(pkt, num_params, param_types);
 
   // Make a copy of param types for stat collection
@@ -352,7 +348,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses
   responses.push_back(std::move(response));
 }
 
-void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecBindMessage(InputPacket *pkt) {
   std::string portal_name, statement_name;
   // BIND message
   GetStringToken(pkt, portal_name);
@@ -370,7 +366,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
   int num_params_format = PacketGetInt(pkt, 2);
   std::vector<int16_t> formats(num_params_format);
 
-  auto format_buf_begin = pkt->ptr;
+//  auto format_buf_begin = pkt->ptr;
   auto format_buf_len = ReadParamFormat(pkt, num_params_format, formats);
 
   int num_params = PacketGetInt(pkt, 2);
@@ -378,7 +374,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
   if (num_params_format != num_params) {
     std::string error_message =
         "Malformed request: num_params_format is not equal to num_params";
-    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
+    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
     return;
   }
 
@@ -394,7 +390,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
     if (statement.get() == nullptr) {
       std::string error_message = "Invalid unnamed statement";
       LOG_ERROR("%s", error_message.c_str());
-      SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
+      SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
     }
   } else {
@@ -408,7 +404,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
     else {
       std::string error_message = "Prepared statement name already exists";
       LOG_ERROR("%s", error_message.c_str());
-      SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
+      SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
     }
   }
@@ -434,7 +430,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
 
   auto param_types = statement->GetParamTypes();
 
-  auto val_buf_begin = pkt->ptr;
+//  auto val_buf_begin = pkt->ptr;
   auto val_buf_len = ReadParamValue(pkt, num_params, param_types,
                                     bind_parameters, param_values, formats);
 
@@ -624,8 +620,7 @@ size_t PacketManager::ReadParamValue(
   return end - begin;
 }
 
-bool PacketManager::ExecDescribeMessage(InputPacket *pkt,
-                                        ResponseBuffer &responses) {
+bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   if (skipped_stmt_) {
     // send 'no-data' message
     std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -649,7 +644,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt,
     if (portal_itr == portals_.end()) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
-      PutTupleDescriptor(tuple_descriptor, responses);
+      PutTupleDescriptor(tuple_descriptor);
       return false;
     }
 
@@ -657,19 +652,19 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt,
     if (portal == nullptr) {
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
-      PutTupleDescriptor(tuple_descriptor, responses);
+      PutTupleDescriptor(tuple_descriptor);
       return false;
     }
 
     auto statement = portal->GetStatement();
-    PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
+    PutTupleDescriptor(statement->GetTupleDescriptor());
   } else {
     LOG_TRACE("Describe a prepared statement");
   }
   return true;
 }
 
-void PacketManager::ExecExecuteMessage(InputPacket *pkt, ResponseBuffer &responses) {
+void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   // EXECUTE message
   std::vector<ResultType> results;
   std::string error_message, portal_name;
@@ -680,9 +675,9 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt, ResponseBuffer &respons
   // execute them
   if (skipped_stmt_) {
     if (skipped_query_string_ == "") {
-      SendEmptyQueryResponse(responses);
+      SendEmptyQueryResponse();
     } else {
-      CompleteCommand(skipped_query_type_, rows_affected, responses);
+      CompleteCommand(skipped_query_type_, rows_affected);
     }
     skipped_stmt_ = false;
     return;
@@ -691,8 +686,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt, ResponseBuffer &respons
   auto portal = portals_[portal_name];
   if (portal.get() == nullptr) {
     LOG_ERROR("Did not find portal : %s", portal_name.c_str());
-    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
-    SendReadyForQuery(txn_state_, responses);
+    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
+    SendReadyForQuery(txn_state_);
     return;
   }
 
@@ -702,8 +697,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt, ResponseBuffer &respons
   auto param_stat = portal->GetParamStat();
   if (statement.get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
-    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
-    SendReadyForQuery(txn_state_, responses);
+    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
+    SendReadyForQuery(txn_state_);
     return;
   }
 
@@ -718,21 +713,20 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt, ResponseBuffer &respons
 
   if (status == Result::RESULT_FAILURE) {
     LOG_ERROR("Failed to execute: %s", error_message.c_str());
-    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}}, responses);
-    SendReadyForQuery(txn_state_, responses);
+    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
+    SendReadyForQuery(txn_state_);
   }
-  // put_row_desc(portal->rowdesc, responses);
+  // put_row_desc(portal->rowdesc);
   auto tuple_descriptor = statement->GetTupleDescriptor();
-  SendDataRows(results, tuple_descriptor.size(), rows_affected, responses);
-  CompleteCommand(query_type, rows_affected, responses);
+  SendDataRows(results, tuple_descriptor.size(), rows_affected);
+  CompleteCommand(query_type, rows_affected);
 }
 
 /*
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(InputPacket *pkt, ResponseBuffer &responses,
-                                  bool &force_flush) {
+bool PacketManager::ProcessPacket(InputPacket *pkt) {
   LOG_TRACE("message type: %c", pkt->msg_type);
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
@@ -740,28 +734,28 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, ResponseBuffer &responses,
   switch (pkt->msg_type) {
     case SIMPLE_QUERY_COMMAND: {
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
-      ExecQueryMessage(pkt, responses);
+      ExecQueryMessage(pkt);
       force_flush = true;
     } break;
     case PARSE_COMMAND: {
       LOG_TRACE("PARSE_COMMAND");
-      ExecParseMessage(pkt, responses);
+      ExecParseMessage(pkt);
     } break;
     case BIND_COMMAND: {
       LOG_TRACE("BIND_COMMAND");
-      ExecBindMessage(pkt, responses);
+      ExecBindMessage(pkt);
     } break;
     case DESCRIBE_COMMAND: {
       LOG_TRACE("DESCRIBE_COMMAND");
-      return ExecDescribeMessage(pkt, responses);
+      return ExecDescribeMessage(pkt);
     } break;
     case EXECUTE_COMMAND: {
       LOG_TRACE("EXECUTE_COMMAND");
-      ExecExecuteMessage(pkt, responses);
+      ExecExecuteMessage(pkt);
     } break;
     case SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");
-      SendReadyForQuery(txn_state_, responses);
+      SendReadyForQuery(txn_state_);
       force_flush = true;
     } break;
     case TERMINATE_COMMAND: {
@@ -787,8 +781,7 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, ResponseBuffer &responses,
  *    For now, it only supports the human readable 'M' message body
  */
 void PacketManager::SendErrorResponse(
-    std::vector<std::pair<uchar, std::string>> error_status,
-    ResponseBuffer &responses) {
+    std::vector<std::pair<uchar, std::string>> error_status) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = ERROR_RESPONSE;
 
@@ -804,8 +797,7 @@ void PacketManager::SendErrorResponse(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendReadyForQuery(uchar txn_status,
-                                      ResponseBuffer &responses) {
+void PacketManager::SendReadyForQuery(uchar txn_status) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = READ_FOR_QUERY;
 

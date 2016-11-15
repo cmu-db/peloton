@@ -52,7 +52,7 @@ class CopyExecutor : public AbstractExecutor {
   void Copy(const char *data, int len, bool end_of_line);
 
   // Create a packet for prepared statement parameter data before parsing it
-  void CreateParamPacket(wire::Packet &packet, int len, std::string &val);
+//  void CreateParamPacket(wire::Packet &packet, int len, std::string &val);
 
   //===--------------------------------------------------------------------===//
   // Executor State

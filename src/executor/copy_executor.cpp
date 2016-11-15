@@ -145,13 +145,13 @@ void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
   PL_ASSERT(buff_size <= COPY_BUFFER_SIZE);
 }
 
-void CopyExecutor::CreateParamPacket(wire::Packet &packet, int len,
-                                     std::string &val) {
-  // Copy the data from string to packet buf
-  packet.len = len;
-  packet.buf.resize(packet.len);
-  PL_MEMCPY(packet.buf.data(), val.data(), len);
-}
+//void CopyExecutor::CreateParamPacket(wire::Packet &packet, int len,
+//                                     std::string &val) {
+//  // Copy the data from string to packet buf
+//  packet.len = len;
+//  packet.buf.resize(packet.len);
+//  PL_MEMCPY(packet.buf.data(), val.data(), len);
+//}
 
 /**
  * @return true on success, false otherwise.

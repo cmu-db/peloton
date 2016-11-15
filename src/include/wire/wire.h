@@ -78,33 +78,29 @@ class PacketManager {
 private:
   // Generic error protocol packet
   void SendErrorResponse(
-      std::vector<std::pair<uchar, std::string>> error_status,
-      ResponseBuffer& responses);
+      std::vector<std::pair<uchar, std::string>> error_status);
 
   // Sends ready for query packet to the frontend
-  void SendReadyForQuery(uchar txn_status, ResponseBuffer& responses);
+  void SendReadyForQuery(uchar txn_status);
 
   // Sends the attribute headers required by SELECT queries
-  void PutTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor,
-                          ResponseBuffer& responses);
+  void PutTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
 
   // Send each row, one packet at a time, used by SELECT queries
   void SendDataRows(std::vector<ResultType>& results, int colcount,
-                    int& rows_affected, ResponseBuffer& responses);
+                    int& rows_affected);
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type, int rows,
-                       ResponseBuffer& responses);
+  void CompleteCommand(const std::string& query_type, int rows);
 
   // Specific response for empty or NULL queries
-  void SendEmptyQueryResponse(ResponseBuffer& responses);
+  void SendEmptyQueryResponse();
 
   /* Helper function used to make hardcoded ParameterStatus('S')
    * packets during startup
    */
-  void MakeHardcodedParameterStatus(
-      ResponseBuffer& responses, const std::pair<std::string, std::string>& kv);
+  void MakeHardcodedParameterStatus(const std::pair<std::string, std::string>& kv);
 
   /* SQLite doesn't support "SET" and "SHOW" SQL commands.
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
@@ -113,19 +109,19 @@ private:
   bool HardcodedExecuteFilter(std::string query_type);
 
   /* Execute a Simple query protocol message */
-  void ExecQueryMessage(InputPacket* pkt, ResponseBuffer& responses);
+  void ExecQueryMessage(InputPacket* pkt);
 
   /* Process the PARSE message of the extended query protocol */
-  void ExecParseMessage(InputPacket* pkt, ResponseBuffer& responses);
+  void ExecParseMessage(InputPacket* pkt);
 
   /* Process the BIND message of the extended query protocol */
-  void ExecBindMessage(InputPacket* pkt, ResponseBuffer& responses);
+  void ExecBindMessage(InputPacket* pkt);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  bool ExecDescribeMessage(InputPacket* pkt, ResponseBuffer& responses);
+  bool ExecDescribeMessage(InputPacket* pkt);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(InputPacket* pkt, ResponseBuffer& response);
+  void ExecExecuteMessage(InputPacket* pkt);
 
   /* closes the socket connection with the client */
 //  void CloseClient();
@@ -149,11 +145,11 @@ private:
     : txn_state_(TXN_IDLE), pkt_cntr_(0) {}
 
   /* Startup packet processing logic */
-  bool ProcessStartupPacket(InputPacket* pkt, ResponseBuffer& responses);
+  bool ProcessStartupPacket(InputPacket* pkt);
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  bool ProcessPacket(InputPacket* pkt, ResponseBuffer& responses, bool& force_flush);
+  bool ProcessPacket(InputPacket* pkt);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
