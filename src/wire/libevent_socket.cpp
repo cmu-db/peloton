@@ -29,8 +29,8 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
   rpkt.Reset();
 
   // TODO: Maybe switch to event_assign once State machine is implemented
-  event = event_new(thread->GetEventBase(), sock_fd, event_flags,
-                    EventHandler, this);
+  event = event_new(thread->GetEventBase(), sock_fd, event_flags, EventHandler,
+                    this);
   event_add(event, nullptr);
 }
 
@@ -48,7 +48,7 @@ bool LibeventSocket::UpdateEvent(short flags) {
     return false;
   }
   auto result =
-      event_assign(event, base, sock_fd, flags, EventHandler, (void *) this);
+      event_assign(event, base, sock_fd, flags, EventHandler, (void *)this);
 
   if (result != 0) {
     LOG_ERROR("Failed to update event");
@@ -68,7 +68,7 @@ bool LibeventSocket::UpdateEvent(short flags) {
 void LibeventSocket::GetSizeFromPktHeader(size_t start_index) {
   rpkt.len = 0;
   // directly converts from network byte order to little-endian
-  for (size_t i=start_index; i<start_index+sizeof(uint32_t); i++) {
+  for (size_t i = start_index; i < start_index + sizeof(uint32_t); i++) {
     rpkt.len = (rpkt.len << 8) | rbuf_.GetByte(i);
   }
   // packet size includes initial bytes read as well
@@ -99,7 +99,7 @@ bool LibeventSocket::ReadPacketHeader() {
     // Header also contains msg type
     rpkt.msg_type = rbuf_.GetByte(rbuf_.buf_ptr);
     // extract packet size
-    GetSizeFromPktHeader(rbuf_.buf_ptr+1);
+    GetSizeFromPktHeader(rbuf_.buf_ptr + 1);
   } else {
     GetSizeFromPktHeader(rbuf_.buf_ptr);
   }
@@ -129,8 +129,8 @@ bool LibeventSocket::ReadPacket() {
     auto bytes_required = rpkt.ExtendedBytesRequired();
     // read minimum of the two ranges
     auto read_size = std::min(bytes_available, bytes_required);
-    rpkt.AppendToExtendedBuffer(rbuf_.Begin()+rbuf_.buf_ptr,
-                                rbuf_.Begin()+rbuf_.buf_ptr+read_size);
+    rpkt.AppendToExtendedBuffer(rbuf_.Begin() + rbuf_.buf_ptr,
+                                rbuf_.Begin() + rbuf_.buf_ptr + read_size);
     // data has been copied, move ptr
     rbuf_.buf_ptr += read_size;
     if (bytes_required > bytes_available) {
@@ -163,11 +163,9 @@ WriteState LibeventSocket::WritePackets() {
     auto pkt = pkt_manager.responses[next_response_].get();
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR)
-      return result;
+    if (result == WRITE_NOT_READY || result == WRITE_ERROR) return result;
     result = BufferWriteBytesContent(pkt);
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR)
-      return result;
+    if (result == WRITE_NOT_READY || result == WRITE_ERROR) return result;
   }
 
   // Done writing all packets. clear packets
@@ -185,10 +183,8 @@ ReadState LibeventSocket::FillReadBuffer() {
   ssize_t bytes_read = 0;
   bool done = false;
 
-
   // reset buffer if all the contents have been read
-  if (rbuf_.buf_ptr == rbuf_.buf_size)
-    rbuf_.Reset();
+  if (rbuf_.buf_ptr == rbuf_.buf_size) rbuf_.Reset();
 
   // buf_ptr shouldn't overflow
   PL_ASSERT(rbuf_.buf_ptr <= rbuf_.buf_size);
@@ -201,8 +197,7 @@ ReadState LibeventSocket::FillReadBuffer() {
   if (rbuf_.buf_ptr < rbuf_.buf_size && rbuf_.buf_size == rbuf_.GetMaxSize()) {
     auto unprocessed_len = rbuf_.buf_size - rbuf_.buf_ptr;
     // Move this data to the head of rbuf_1
-    std::memmove(rbuf_.GetPtr(0), rbuf_.GetPtr(rbuf_.buf_ptr),
-                 unprocessed_len);
+    std::memmove(rbuf_.GetPtr(0), rbuf_.GetPtr(rbuf_.buf_ptr), unprocessed_len);
     // update pointers
     rbuf_.buf_ptr = 0;
     rbuf_.buf_size = unprocessed_len;
@@ -239,34 +234,34 @@ ReadState LibeventSocket::FillReadBuffer() {
           // otherwise, we have some other error
           switch (errno) {
             case EBADF:
-            LOG_DEBUG("Error Reading: EBADF");
+              LOG_DEBUG("Error Reading: EBADF");
               break;
             case EDESTADDRREQ:
-            LOG_DEBUG("Error Reading: EDESTADDRREQ");
+              LOG_DEBUG("Error Reading: EDESTADDRREQ");
               break;
             case EDQUOT:
-            LOG_DEBUG("Error Reading: EDQUOT");
+              LOG_DEBUG("Error Reading: EDQUOT");
               break;
             case EFAULT:
-            LOG_DEBUG("Error Reading: EFAULT");
+              LOG_DEBUG("Error Reading: EFAULT");
               break;
             case EFBIG:
-            LOG_DEBUG("Error Reading: EFBIG");
+              LOG_DEBUG("Error Reading: EFBIG");
               break;
             case EINVAL:
-            LOG_DEBUG("Error Reading: EINVAL");
+              LOG_DEBUG("Error Reading: EINVAL");
               break;
             case EIO:
-            LOG_DEBUG("Error Reading: EIO");
+              LOG_DEBUG("Error Reading: EIO");
               break;
             case ENOSPC:
-            LOG_DEBUG("Error Reading: ENOSPC");
+              LOG_DEBUG("Error Reading: ENOSPC");
               break;
             case EPIPE:
-            LOG_DEBUG("Error Reading: EPIPE");
+              LOG_DEBUG("Error Reading: EPIPE");
               break;
             default:
-            LOG_DEBUG("Error Reading: UNKNOWN");
+              LOG_DEBUG("Error Reading: UNKNOWN");
           }
           // some other error occured
           return READ_ERROR;
@@ -289,40 +284,40 @@ WriteState LibeventSocket::FlushWriteBuffer() {
       if (written_bytes < 0) {
         switch (errno) {
           case EINTR:
-          LOG_DEBUG("Error Writing: EINTR");
+            LOG_DEBUG("Error Writing: EINTR");
             break;
           case EAGAIN:
-          LOG_DEBUG("Error Writing: EAGAIN");
+            LOG_DEBUG("Error Writing: EAGAIN");
             break;
           case EBADF:
-          LOG_DEBUG("Error Writing: EBADF");
+            LOG_DEBUG("Error Writing: EBADF");
             break;
           case EDESTADDRREQ:
-          LOG_DEBUG("Error Writing: EDESTADDRREQ");
+            LOG_DEBUG("Error Writing: EDESTADDRREQ");
             break;
           case EDQUOT:
-          LOG_DEBUG("Error Writing: EDQUOT");
+            LOG_DEBUG("Error Writing: EDQUOT");
             break;
           case EFAULT:
-          LOG_DEBUG("Error Writing: EFAULT");
+            LOG_DEBUG("Error Writing: EFAULT");
             break;
           case EFBIG:
-          LOG_DEBUG("Error Writing: EFBIG");
+            LOG_DEBUG("Error Writing: EFBIG");
             break;
           case EINVAL:
-          LOG_DEBUG("Error Writing: EINVAL");
+            LOG_DEBUG("Error Writing: EINVAL");
             break;
           case EIO:
-          LOG_DEBUG("Error Writing: EIO");
+            LOG_DEBUG("Error Writing: EIO");
             break;
           case ENOSPC:
-          LOG_DEBUG("Error Writing: ENOSPC");
+            LOG_DEBUG("Error Writing: ENOSPC");
             break;
           case EPIPE:
-          LOG_DEBUG("Error Writing: EPIPE");
+            LOG_DEBUG("Error Writing: EPIPE");
             break;
           default:
-          LOG_DEBUG("Error Writing: UNKNOWN");
+            LOG_DEBUG("Error Writing: UNKNOWN");
         }
         if (errno == EINTR) {
           // interrupts are ok, try again
@@ -363,7 +358,6 @@ WriteState LibeventSocket::FlushWriteBuffer() {
   // we are ok
   return WRITE_COMPLETE;
 }
-
 
 void LibeventSocket::PrintWriteBuffer() {
   LOG_TRACE("Write Buffer:");
@@ -460,7 +454,7 @@ WriteState LibeventSocket::BufferWriteBytesContent(OutputPacket *pkt) {
       LOG_TRACE("Content doesn't fit in window. Try flushing");
       auto result = FlushWriteBuffer();
       // flush before write the remaining content
-      if (result == WRITE_NOT_READY || result == WRITE_ERROR ) {
+      if (result == WRITE_NOT_READY || result == WRITE_ERROR) {
         // need to retry or close connection
         return result;
       }

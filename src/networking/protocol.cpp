@@ -12,7 +12,6 @@
 
 #include <cstdio>
 #include <unordered_map>
-
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
@@ -46,8 +45,8 @@ const std::unordered_map<std::string, std::string>
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
-void PacketManager::MakeHardcodedParameterStatus(const std::pair<std::string, 
-    std::string> &kv) {
+void PacketManager::MakeHardcodedParameterStatus(
+    const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = PARAMETER_STATUS;
   PacketPutString(response.get(), kv.first);
@@ -316,7 +315,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
-//  auto type_buf_begin = pkt->ptr;
+  //  auto type_buf_begin = pkt->ptr;
   auto type_buf_len = ReadParamType(pkt, num_params, param_types);
 
   // Make a copy of param types for stat collection
@@ -325,7 +324,8 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   query_type_buf.len = type_buf_len;
 
   // TODO: @Haibin - Change packet parsing approach
-  // PL_MEMCPY(query_type_buf.buf, pkt->buf.data() + type_buf_begin, type_buf_len);
+  // PL_MEMCPY(query_type_buf.buf, pkt->buf.data() + type_buf_begin,
+  // type_buf_len);
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
@@ -365,7 +365,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   int num_params_format = PacketGetInt(pkt, 2);
   std::vector<int16_t> formats(num_params_format);
 
-//  auto format_buf_begin = pkt->ptr;
+  //  auto format_buf_begin = pkt->ptr;
   auto format_buf_len = ReadParamFormat(pkt, num_params_format, formats);
 
   int num_params = PacketGetInt(pkt, 2);
@@ -429,7 +429,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
 
   auto param_types = statement->GetParamTypes();
 
-//  auto val_buf_begin = pkt->ptr;
+  //  auto val_buf_begin = pkt->ptr;
   auto val_buf_len = ReadParamValue(pkt, num_params, param_types,
                                     bind_parameters, param_values, formats);
 

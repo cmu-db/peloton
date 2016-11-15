@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-
 #include "wire/marshal.h"
 #include "common/macros.h"
 
@@ -50,7 +49,7 @@ int PacketGetInt(InputPacket *rpkt, uchar base) {
       break;
 
     default:
-    LOG_ERROR("Parsing error: Invalid int base size");
+      LOG_ERROR("Parsing error: Invalid int base size");
       exit(EXIT_FAILURE);
   }
 
@@ -78,8 +77,8 @@ void PacketGetString(InputPacket *rpkt, size_t len, std::string &result) {
   if (len == 0) return;
 
   // exclude null char for std string
-  result =
-      std::string(rpkt->Begin()+rpkt->ptr, rpkt->Begin()+rpkt->ptr+len-1);
+  result = std::string(rpkt->Begin() + rpkt->ptr,
+                       rpkt->Begin() + rpkt->ptr + len - 1);
   rpkt->ptr += len;
 }
 
@@ -138,7 +137,7 @@ void PacketPutInt(OutputPacket *pkt, int n, int base) {
       break;
 
     default:
-    LOG_ERROR("Parsing error: Invalid base for int");
+      LOG_ERROR("Parsing error: Invalid base for int");
       exit(EXIT_FAILURE);
   }
 

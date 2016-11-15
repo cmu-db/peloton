@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 #include <fstream>
 #include <vector>
-
 #include "wire/libevent_server.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
@@ -25,7 +24,7 @@ namespace wire {
  * Get the vector of libevent worker threads
  */
 std::vector<std::shared_ptr<LibeventWorkerThread>> &
-    LibeventMasterThread::GetWorkerThreads() {
+LibeventMasterThread::GetWorkerThreads() {
   static std::vector<std::shared_ptr<LibeventWorkerThread>> worker_threads;
   return worker_threads;
 }
@@ -109,6 +108,5 @@ void LibeventMasterThread::DispatchConnection(int new_conn_fd,
     LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
-
 }
 }

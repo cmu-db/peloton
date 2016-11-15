@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include <fstream>
-
 #include "wire/libevent_server.h"
 #include "common/macros.h"
 #include "common/init.h"
@@ -22,10 +21,10 @@
 namespace peloton {
 namespace wire {
 
-std::vector<std::unique_ptr<LibeventSocket>>
-&LibeventServer::GetGlobalSocketList() {
+std::vector<std::unique_ptr<LibeventSocket>> &
+LibeventServer::GetGlobalSocketList() {
   static std::vector<std::unique_ptr<LibeventSocket>>
-  // 2 fd's per thread for pipe and 1 listening socket
+      // 2 fd's per thread for pipe and 1 listening socket
       global_socket_list(FLAGS_max_connections +
                          std::thread::hardware_concurrency() * 2 + 1);
   return global_socket_list;
@@ -124,12 +123,11 @@ LibeventServer::LibeventServer() {
     event_base_free(base);
   }
 
-    // This socket family code is not implemented yet
+  // This socket family code is not implemented yet
   else {
     LOG_ERROR("Unsupported socket family");
     exit(1);
   }
 }
-
 }
 }
