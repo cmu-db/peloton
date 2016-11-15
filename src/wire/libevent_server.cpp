@@ -104,7 +104,7 @@ LibeventServer::LibeventServer() {
 
     int reuse = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-    
+
     if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
       LOG_ERROR("Failed to bind");
       exit(EXIT_FAILURE);

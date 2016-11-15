@@ -214,98 +214,98 @@ class LibeventMasterThread : public LibeventThread {
  * SocketManager - Wrapper for managing socket.
  * 	B is the STL container type used as the protocol's buffer.
  */
-    class LibeventSocket {
-    public:
-      int sock_fd;           // socket file descriptor
-      struct event *event;   // libevent handle
-      short event_flags;     // event flags mask
+class LibeventSocket {
+ public:
+  int sock_fd;           // socket file descriptor
+  struct event *event;   // libevent handle
+  short event_flags;     // event flags mask
 
-      LibeventThread *thread;  // reference to the libevent thread
-      PacketManager pkt_manager;  // Stores state for this socket
-      ConnState state = CONN_INVALID;  // Initial state of connection
-      InputPacket rpkt;        // Used for reading a single Postgres packet
+  LibeventThread *thread;  // reference to the libevent thread
+  PacketManager pkt_manager;  // Stores state for this socket
+  ConnState state = CONN_INVALID;  // Initial state of connection
+  InputPacket rpkt;        // Used for reading a single Postgres packet
 
-    private:
-      Buffer rbuf_;                      // Socket's read buffer
-      Buffer wbuf_;                      // Socket's write buffer
-      unsigned int next_response_ = 0;  // The next response in the response buffer
+ private:
+  Buffer rbuf_;                      // Socket's read buffer
+  Buffer wbuf_;                      // Socket's write buffer
+  unsigned int next_response_ = 0;  // The next response in the response buffer
 
-    private:
-      void Init(short event_flags, LibeventThread *thread, ConnState init_state);
+ private:
+  void Init(short event_flags, LibeventThread *thread, ConnState init_state);
 
-      // Is the requested amount of data available from the current position in
-      // the reader buffer?
-      bool IsReadDataAvailable(size_t bytes);
+  // Is the requested amount of data available from the current position in
+  // the reader buffer?
+  bool IsReadDataAvailable(size_t bytes);
 
-      // Parses out packet size from its header
-      void GetSizeFromPktHeader(size_t start_index);
+  // Parses out packet size from its header
+  void GetSizeFromPktHeader(size_t start_index);
 
-    public:
-      inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread,
-                            ConnState init_state)
-          : sock_fd(sock_fd) {
-        Init(event_flags, thread, init_state);
-      }
-
-      /* refill_read_buffer - Used to repopulate read buffer with a fresh
-       * batch of data from the socket
-       */
-      ReadState FillReadBuffer();
-
-      // Transit to the target state
-      void TransitState(ConnState next_state);
-
-      // Update the existing event to listen to the passed flags
-      bool UpdateEvent(short flags);
-
-      // Extracts the header of a Postgres packet from the read socket buffer
-      bool ReadPacketHeader();
-
-      // Extracts the contents of Postgres packet from the read socket buffer
-      bool ReadPacket();
-
-      WriteState WritePackets();
-
-      void PrintWriteBuffer();
-
-      void CloseSocket();
-
-      /* Resuse this object for a new connection. We could be assigned to a
-       * new thread, change thread reference.
-       */
-      void Reset(short event_flags, LibeventThread *thread, ConnState init_state);
-
-    private:
-      // Writes a packet's header (type, size) into the write buffer
-      WriteState BufferWriteBytesHeader(OutputPacket *pkt);
-
-      // Writes a packet's content into the write buffer
-      WriteState BufferWriteBytesContent(OutputPacket *pkt);
-
-      // Used to invoke a write into the Socket, returns false if the socket is not
-      // ready for write
-      WriteState FlushWriteBuffer();
-    };
-
-    struct LibeventServer {
-    private:
-      // For logging purposes
-      // static void LogCallback(int severity, const char *msg);
-
-      uint64_t port_;           // port number
-      size_t max_connections_;  // maximum number of connections
-
-    public:
-      LibeventServer();
-      static LibeventSocket *GetConn(const int &connfd);
-      static void CreateNewConn(const int &connfd, short ev_flags,
-                                LibeventThread *thread, ConnState init_state);
-
-    private:
-      /* Maintain a global list of connections.
-       * Helps reuse connection objects when possible
-       */
-      static std::vector<std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
-    };
+ public:
+  inline LibeventSocket(int sock_fd, short event_flags, LibeventThread *thread,
+                        ConnState init_state)
+      : sock_fd(sock_fd) {
+    Init(event_flags, thread, init_state);
   }
+
+  /* refill_read_buffer - Used to repopulate read buffer with a fresh
+   * batch of data from the socket
+   */
+  ReadState FillReadBuffer();
+
+  // Transit to the target state
+  void TransitState(ConnState next_state);
+
+  // Update the existing event to listen to the passed flags
+  bool UpdateEvent(short flags);
+
+  // Extracts the header of a Postgres packet from the read socket buffer
+  bool ReadPacketHeader();
+
+  // Extracts the contents of Postgres packet from the read socket buffer
+  bool ReadPacket();
+
+  WriteState WritePackets();
+
+  void PrintWriteBuffer();
+
+  void CloseSocket();
+
+  /* Resuse this object for a new connection. We could be assigned to a
+   * new thread, change thread reference.
+   */
+  void Reset(short event_flags, LibeventThread *thread, ConnState init_state);
+
+ private:
+  // Writes a packet's header (type, size) into the write buffer
+  WriteState BufferWriteBytesHeader(OutputPacket *pkt);
+
+  // Writes a packet's content into the write buffer
+  WriteState BufferWriteBytesContent(OutputPacket *pkt);
+
+  // Used to invoke a write into the Socket, returns false if the socket is not
+  // ready for write
+  WriteState FlushWriteBuffer();
+};
+
+struct LibeventServer {
+ private:
+  // For logging purposes
+  // static void LogCallback(int severity, const char *msg);
+
+  uint64_t port_;           // port number
+  size_t max_connections_;  // maximum number of connections
+
+ public:
+  LibeventServer();
+  static LibeventSocket *GetConn(const int &connfd);
+  static void CreateNewConn(const int &connfd, short ev_flags,
+                            LibeventThread *thread, ConnState init_state);
+
+ private:
+  /* Maintain a global list of connections.
+   * Helps reuse connection objects when possible
+   */
+  static std::vector<std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
+};
+}
 }
