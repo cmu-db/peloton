@@ -14,498 +14,491 @@
 #include "wire/libevent_server.h"
 
 namespace peloton {
-namespace wire {
+  namespace wire {
 
-void LibeventSocket::Init(short event_flags, LibeventThread *thread,
-                          ConnState init_state) {
-  SetNonBlocking(sock_fd);
-  SetTCPNoDelay(sock_fd);
-  is_disconnected = false;
-  is_started = false;
+    void LibeventSocket::Init(short event_flags, LibeventThread *thread,
+                              ConnState init_state) {
+      SetNonBlocking(sock_fd);
+      SetTCPNoDelay(sock_fd);
 
-  this->event_flags = event_flags;
-  this->thread = thread;
-  this->state = init_state;
+      this->event_flags = event_flags;
+      this->thread = thread;
+      this->state = init_state;
 
-  // clear out packet
-  rpkt.Reset();
+      // clear out packet
+      rpkt.Reset();
 
-  // TODO: Maybe switch to event_assign once State machine is implemented
-  event = event_new(thread->GetEventBase(), sock_fd, event_flags,
-                    EventHandler, this);
-  event_add(event, nullptr);
-}
+      // TODO: Maybe switch to event_assign once State machine is implemented
+      event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+                        EventHandler, this);
+      event_add(event, nullptr);
+    }
 
-void LibeventSocket::TransitState(ConnState next_state) {
-  if (next_state != state)
-    LOG_TRACE("conn %d transit to state %d", conn->sock_fd, (int)next_state);
-  state = next_state;
-}
+    void LibeventSocket::TransitState(ConnState next_state) {
+      if (next_state != state)
+        LOG_TRACE("conn %d transit to state %d", conn->sock_fd, (int)next_state);
+      state = next_state;
+    }
 
 // Update event
-bool LibeventSocket::UpdateEvent(short flags) {
-  auto base = thread->GetEventBase();
-  if (event_del(event) == -1) {
-    LOG_ERROR("Failed to delete event");
-    return false;
-  }
-  auto result =
-      event_assign(event, base, sock_fd, flags, EventHandler, (void *) this);
+    bool LibeventSocket::UpdateEvent(short flags) {
+      auto base = thread->GetEventBase();
+      if (event_del(event) == -1) {
+        LOG_ERROR("Failed to delete event");
+        return false;
+      }
+      auto result =
+          event_assign(event, base, sock_fd, flags, EventHandler, (void *) this);
 
-    if (result != 0) {
-    LOG_ERROR("Failed to update event");
-    return false;
-  }
+      if (result != 0) {
+        LOG_ERROR("Failed to update event");
+        return false;
+      }
 
-  event_flags = flags;
+      event_flags = flags;
 
-  if (event_add(event, nullptr) == -1) {
-   LOG_ERROR("Failed to add event");
-    return false;
-  }
+      if (event_add(event, nullptr) == -1) {
+        LOG_ERROR("Failed to add event");
+        return false;
+      }
 
-  return true;
-}
+      return true;
+    }
 
-void LibeventSocket::GetSizeFromPktHeader(size_t &start_index) {
-  rpkt.len = 0;
-  // directly converts from network byte order to little-endian
-  for (size_t i=start_index; i<start_index+sizeof(uint32_t); i++) {
-    rpkt.len = (rpkt.len << 8) | rbuf.GetByte(i);
-  }
-  // packet size includes initial bytes read as well
-  rpkt.len = rpkt.len - sizeof(int32_t);
-}
+    void LibeventSocket::GetSizeFromPktHeader(size_t start_index) {
+      rpkt.len = 0;
+      // directly converts from network byte order to little-endian
+      for (size_t i=start_index; i<start_index+sizeof(uint32_t); i++) {
+        rpkt.len = (rpkt.len << 8) | rbuf_.GetByte(i);
+      }
+      // packet size includes initial bytes read as well
+      rpkt.len = rpkt.len - sizeof(int32_t);
+    }
 
-bool LibeventSocket::IsReadDataAvailable(size_t bytes) {
-  return ((rbuf.buf_ptr - 1) + bytes < rbuf.buf_size);
-}
+    bool LibeventSocket::IsReadDataAvailable(size_t bytes) {
+      return ((rbuf_.buf_ptr - 1) + bytes < rbuf_.buf_size);
+    }
 
 // The function tries to do a preliminary read to fetch the size value and
 // then reads the rest of the packet.
 // Assume: Packet length field is always 32-bit int
-bool LibeventSocket::ReadPacketHeader() {
-  size_t initial_read_size = sizeof(int32_t);
-  if (pkt_manager.is_started == true) {
-    // All packets other than the startup packet have a 5B header
-    initial_read_size++;
-  }
-  // check if header bytes are available
-  if (IsReadDataAvailable(initial_read_size) == false) {
-    // nothing more to read
-    return false;
-  }
+    bool LibeventSocket::ReadPacketHeader() {
+      size_t initial_read_size = sizeof(int32_t);
+      if (pkt_manager.is_started == true) {
+        // All packets other than the startup packet have a 5B header
+        initial_read_size++;
+      }
+      // check if header bytes are available
+      if (IsReadDataAvailable(initial_read_size) == false) {
+        // nothing more to read
+        return false;
+      }
 
-  // get packet size from the header
-  if (is_started == true) {
-    // Header also contains msg type
-    rpkt.msg_type = rbuf.GetByte(rbuf.buf_ptr);
-    // extract packet size
-    GetSizeFromPktHeader(rbuf.buf_ptr+1);
-  } else {
-    GetSizeFromPktHeader(rbuf_.buf_ptr);
-  }
+      // get packet size from the header
+      if (pkt_manager.is_started == true) {
+        // Header also contains msg type
+        rpkt.msg_type = rbuf_.GetByte(rbuf_.buf_ptr);
+        // extract packet size
+        GetSizeFromPktHeader(rbuf_.buf_ptr+1);
+      } else {
+        GetSizeFromPktHeader(rbuf_.buf_ptr);
+      }
 
-  // do we need to use the extended buffer for this packet?
-  rpkt.is_extended = (rpkt.len > rbuf_.GetMaxSize());
+      // do we need to use the extended buffer for this packet?
+      rpkt.is_extended = (rpkt.len > rbuf_.GetMaxSize());
 
-  if (rpkt.is_extended) {
-    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
-    // reserve space for the extended buffer
-    rpkt.ReserveExtendedBuffer();
-  }
+      if (rpkt.is_extended) {
+        LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
+        // reserve space for the extended buffer
+        rpkt.ReserveExtendedBuffer();
+      }
 
-  // we have processed the data, move buffer pointer
-  rbuf_.buf_ptr += initial_read_size;
-  rpkt.header_parsed = true;
+      // we have processed the data, move buffer pointer
+      rbuf_.buf_ptr += initial_read_size;
+      rpkt.header_parsed = true;
 
-  return true;
-}
+      return true;
+    }
 
 // Tries to read the contents of a single packet, returns true on success, false
 // on failure.
-bool LibeventSocket::ReadPacket() {
-  if (rpkt.is_extended) {
-    // extended packet mode
-    auto bytes_available = rbuf_.buf_size - rbuf_.buf_ptr;
-    auto bytes_required = rpkt.ExtendedBytesRequired();
-    // read minimum of the two ranges
-    auto read_size = std::min(bytes_available, bytes_required);
-    rpkt.AppendToExtendedBuffer(rbuf_.Begin()+rbuf_.buf_ptr,
-                                rbuf_.Begin()+rbuf_.buf_ptr+read_size);
-    // data has been copied, move ptr
-    rbuf_.buf_ptr += read_size;
-    if (bytes_required > bytes_available) {
-      // more data needs to be read
-      return false;
+    bool LibeventSocket::ReadPacket() {
+      if (rpkt.is_extended) {
+        // extended packet mode
+        auto bytes_available = rbuf_.buf_size - rbuf_.buf_ptr;
+        auto bytes_required = rpkt.ExtendedBytesRequired();
+        // read minimum of the two ranges
+        auto read_size = std::min(bytes_available, bytes_required);
+        rpkt.AppendToExtendedBuffer(rbuf_.Begin()+rbuf_.buf_ptr,
+                                    rbuf_.Begin()+rbuf_.buf_ptr+read_size);
+        // data has been copied, move ptr
+        rbuf_.buf_ptr += read_size;
+        if (bytes_required > bytes_available) {
+          // more data needs to be read
+          return false;
+        }
+        // all the data has been read
+        rpkt.InitializePacket();
+        return true;
+      } else {
+        if (IsReadDataAvailable(rpkt.len) == false) {
+          // data not available yet, return
+          return false;
+        }
+        // Initialize the packet's "contents"
+        rpkt.InitializePacket(rbuf_.buf_ptr, rbuf_.Begin());
+        // We have processed the data, move buffer pointer
+        rbuf_.buf_ptr += rpkt.len;
+      }
+      return true;
     }
-    // all the data has been read
-    rpkt.InitializePacket();
-    return true;
-  } else {
-    if (IsReadDataAvailable(rpkt.len) == false) {
-      // data not available yet, return
-      return false;
-    }
-    // Initialize the packet's "contents"
-    rpkt.InitializePacket(rbuf_.buf_ptr, rbuf_.Begin());
-    // We have processed the data, move buffer pointer
-    rbuf_.buf_ptr += rpkt.len;
-  }
-  return true;
-}
-
 
 /**
  * Public Functions
  */
 
-WriteState LibeventSocket::WritePackets() {
-  // iterate through all the packets
-  for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
-    auto pkt = pkt_manager.responses[next_response_].get();
-    // write is not ready during write. transit to CONN_WRITE
-    auto result = BufferWriteBytesHeader(pkt);
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR)
-      return result;
-    result = BufferWriteBytesContent(pkt);
-    if (result == WRITE_NOT_READY || result == WRITE_ERROR)
-      return result;
-  }
+    WriteState LibeventSocket::WritePackets() {
+      // iterate through all the packets
+      for (; next_response_ < pkt_manager.responses.size(); next_response_++) {
+        auto pkt = pkt_manager.responses[next_response_].get();
+        // write is not ready during write. transit to CONN_WRITE
+        auto result = BufferWriteBytesHeader(pkt);
+        if (result == WRITE_NOT_READY || result == WRITE_ERROR)
+          return result;
+        result = BufferWriteBytesContent(pkt);
+        if (result == WRITE_NOT_READY || result == WRITE_ERROR)
+          return result;
+      }
 
-  // Done writing all packets. clear packets
-  pkt_manager.responses.clear();
-  next_response_ = 0;
+      // Done writing all packets. clear packets
+      pkt_manager.responses.clear();
+      next_response_ = 0;
 
-  if (pkt_manager.force_flush == true) {
-    return FlushWriteBuffer();
-  }
-  return WRITE_COMPLETE;
-}
+      if (pkt_manager.force_flush == true) {
+        return FlushWriteBuffer();
+      }
+      return WRITE_COMPLETE;
+    }
 
-ReadState LibeventSocket::FillReadBuffer() {
-  ReadState result = READ_NO_DATA_RECEIVED;
-  ssize_t bytes_read = 0;
-  fd_set rset;
-  bool done = false;
+    ReadState LibeventSocket::FillReadBuffer() {
+      ReadState result = READ_NO_DATA_RECEIVED;
+      ssize_t bytes_read = 0;
+      bool done = false;
 
-  // client has sent more data than it should?
-  if (rbuf.buf_size - rbuf.buf_ptr == SOCKET_BUFFER_SIZE) {
-    LOG_ERROR("Conn %d has exceeded read buffer size. Terminating.", sock_fd);
-    TransitState(CONN_CLOSING);
-  }
 
-  // reset buffer if all the contents have been read
-  if (rbuf.buf_ptr == rbuf.buf_size)
-    rbuf.Reset();
+      // reset buffer if all the contents have been read
+      if (rbuf_.buf_ptr == rbuf_.buf_size)
+        rbuf_.Reset();
 
-  if (rbuf.buf_ptr > rbuf.buf_size) {
-    LOG_WARN("ReadBuf ptr overflowed. This shouldn't happen!");
-    rbuf.Reset();
-  }
+      // buf_ptr shouldn't overflow
+      PL_ASSERT(rbuf_.buf_ptr <= rbuf_.buf_size);
 
-  /* Do we have leftover data and are we at the end of the buffer?
-   * Move the data to the head of the buffer and clear out all the old data
-   * Note: The assumption here is that all the packets/headers till
-   *  rbuf.buf_ptr have been fully processed
-   */
-  if (rbuf.buf_ptr < rbuf.buf_size && rbuf.buf_size == SOCKET_BUFFER_SIZE) {
-    // Move this data to the head of rbuf
-    std::memmove(rbuf.GetPtr(0), rbuf.GetPtr(rbuf.buf_ptr),
-                 rbuf.buf_size - rbuf.buf_ptr);
-  }
+      /* Do we have leftover data and are we at the end of the buffer?
+       * Move the data to the head of the buffer and clear out all the old data
+       * Note: The assumption here is that all the packets/headers till
+       *  rbuf_.buf_ptr have been fully processed
+       */
+      if (rbuf_.buf_ptr < rbuf_.buf_size && rbuf_.buf_size == rbuf_.GetMaxSize()) {
+        auto unprocessed_len = rbuf_.buf_size - rbuf_.buf_ptr;
+        // Move this data to the head of rbuf_1
+        std::memmove(rbuf_.GetPtr(0), rbuf_.GetPtr(rbuf_.buf_ptr),
+                     unprocessed_len);
+        // update pointers
+        rbuf_.buf_ptr = 0;
+        rbuf_.buf_size = unprocessed_len;
+      }
 
-  // return explicitly
-  while (done == false) {
-    if (rbuf.buf_size == SOCKET_BUFFER_SIZE) {
-      // we have filled the whole buffer, exit loop
-      done = true;
-    } else {
-      // try to fill the available space in the buffer
-
-      bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
-                        rbuf_.GetMaxSize() - rbuf_.buf_size);
-
-      if (bytes_read > 0) {
-        // read succeeded, update buffer size
-        rbuf.buf_size += bytes_read;
-        result = READ_DATA_RECEIVED;
-      } else if (bytes_read == 0) {
-        // Read failed
-        return READ_ERROR;
-      } else if (bytes_read < 0) {
-        // related to non-blocking?
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          // return whatever results we have
-          LOG_DEBUG("Received: EAGAIN or EWOULDBLOCK");
+      // return explicitly
+      while (done == false) {
+        if (rbuf_.buf_size == rbuf_.GetMaxSize()) {
+          // we have filled the whole buffer, exit loop
           done = true;
-        }
-
-        if (errno == EINTR) {
-          // interrupts are ok, try again
-          LOG_DEBUG("Error Reading: EINTR");
-          bytes_read = 0;
-          continue;
-        }
-
-        // otherwise, we have some other error
-        switch (errno) {
-          case EBADF:
-          LOG_DEBUG("Error Reading: EBADF");
-            break;
-          case EDESTADDRREQ:
-          LOG_DEBUG("Error Reading: EDESTADDRREQ");
-            break;
-          case EDQUOT:
-          LOG_DEBUG("Error Reading: EDQUOT");
-            break;
-          case EFAULT:
-          LOG_DEBUG("Error Reading: EFAULT");
-            break;
-          case EFBIG:
-          LOG_DEBUG("Error Reading: EFBIG");
-            break;
-          case EINVAL:
-          LOG_DEBUG("Error Reading: EINVAL");
-            break;
-          case EIO:
-          LOG_DEBUG("Error Reading: EIO");
-            break;
-          case ENOSPC:
-          LOG_DEBUG("Error Reading: ENOSPC");
-            break;
-          case EPIPE:
-          LOG_DEBUG("Error Reading: EPIPE");
-            break;
-          default:
-          LOG_DEBUG("Error Reading: UNKNOWN");
-        }
-
-        // some other error occured
-        return READ_ERROR;
-      }
-    }
-  }
-  return result;
-}
-
-bool LibeventSocket::FlushWriteBuffer() {
-  ssize_t written_bytes = 0;
-  // while we still have outstanding bytes to write
-  while ((int)wbuf.buf_size > 0) {
-    written_bytes = 0;
-    while (written_bytes <= 0) {
-      written_bytes =
-          write(sock_fd, &wbuf.buf[wbuf.buf_flush_ptr], wbuf.buf_size);
-      // Write failed
-      if (written_bytes < 0) {
-        switch (errno) {
-          case EINTR:
-            LOG_DEBUG("Error Writing: EINTR");
-            break;
-          case EAGAIN:
-            LOG_DEBUG("Error Writing: EAGAIN");
-            break;
-          case EBADF:
-            LOG_DEBUG("Error Writing: EBADF");
-            break;
-          case EDESTADDRREQ:
-            LOG_DEBUG("Error Writing: EDESTADDRREQ");
-            break;
-          case EDQUOT:
-            LOG_DEBUG("Error Writing: EDQUOT");
-            break;
-          case EFAULT:
-            LOG_DEBUG("Error Writing: EFAULT");
-            break;
-          case EFBIG:
-            LOG_DEBUG("Error Writing: EFBIG");
-            break;
-          case EINVAL:
-            LOG_DEBUG("Error Writing: EINVAL");
-            break;
-          case EIO:
-            LOG_DEBUG("Error Writing: EIO");
-            break;
-          case ENOSPC:
-            LOG_DEBUG("Error Writing: ENOSPC");
-            break;
-          case EPIPE:
-            LOG_DEBUG("Error Writing: EPIPE");
-            break;
-          default:
-            LOG_DEBUG("Error Writing: UNKNOWN");
-        }
-        if (errno == EINTR) {
-          // interrupts are ok, try again
-          written_bytes = 0;
-          continue;
-          // Write would have blocked if the socket was
-          // in blocking mode. Wait till it's readable
-        } else if (errno == EAGAIN) {
-          // We should go to CONN_WRITE state
-          return false;
         } else {
-          // fatal errors
-          throw ConnectionException("Fatal error during write");
+          // try to fill the available space in the buffer
+          bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
+                            rbuf_.GetMaxSize() - rbuf_.buf_size);
+
+          if (bytes_read > 0) {
+            // read succeeded, update buffer size
+            rbuf_.buf_size += bytes_read;
+            result = READ_DATA_RECEIVED;
+          } else if (bytes_read == 0) {
+            // Read failed
+            return READ_ERROR;
+          } else if (bytes_read < 0) {
+            // related to non-blocking?
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+              // return whatever results we have
+              LOG_DEBUG("Received: EAGAIN or EWOULDBLOCK");
+              done = true;
+            } else if (errno == EINTR) {
+              // interrupts are ok, try again
+              LOG_DEBUG("Error Reading: EINTR");
+              continue;
+            } else {
+              // otherwise, we have some other error
+              switch (errno) {
+                case EBADF:
+                LOG_DEBUG("Error Reading: EBADF");
+                  break;
+                case EDESTADDRREQ:
+                LOG_DEBUG("Error Reading: EDESTADDRREQ");
+                  break;
+                case EDQUOT:
+                LOG_DEBUG("Error Reading: EDQUOT");
+                  break;
+                case EFAULT:
+                LOG_DEBUG("Error Reading: EFAULT");
+                  break;
+                case EFBIG:
+                LOG_DEBUG("Error Reading: EFBIG");
+                  break;
+                case EINVAL:
+                LOG_DEBUG("Error Reading: EINVAL");
+                  break;
+                case EIO:
+                LOG_DEBUG("Error Reading: EIO");
+                  break;
+                case ENOSPC:
+                LOG_DEBUG("Error Reading: ENOSPC");
+                  break;
+                case EPIPE:
+                LOG_DEBUG("Error Reading: EPIPE");
+                  break;
+                default:
+                LOG_DEBUG("Error Reading: UNKNOWN");
+              }
+              // some other error occured
+              return READ_ERROR;
+            }
+          }
         }
       }
-
-      // weird edge case?
-      if (written_bytes == 0 && wbuf_.buf_size != 0) {
-        LOG_DEBUG("Not all data is written");
-        continue;
-      }
+      return result;
     }
 
-    // update book keeping
-    wbuf.buf_flush_ptr += written_bytes;
-    wbuf.buf_size -= written_bytes;
-  }
+    WriteState LibeventSocket::FlushWriteBuffer() {
+      ssize_t written_bytes = 0;
+      // while we still have outstanding bytes to write
+      while (wbuf_.buf_size > 0) {
+        written_bytes = 0;
+        while (written_bytes <= 0) {
+          written_bytes =
+              write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+          // Write failed
+          if (written_bytes < 0) {
+            switch (errno) {
+              case EINTR:
+              LOG_DEBUG("Error Writing: EINTR");
+                break;
+              case EAGAIN:
+              LOG_DEBUG("Error Writing: EAGAIN");
+                break;
+              case EBADF:
+              LOG_DEBUG("Error Writing: EBADF");
+                break;
+              case EDESTADDRREQ:
+              LOG_DEBUG("Error Writing: EDESTADDRREQ");
+                break;
+              case EDQUOT:
+              LOG_DEBUG("Error Writing: EDQUOT");
+                break;
+              case EFAULT:
+              LOG_DEBUG("Error Writing: EFAULT");
+                break;
+              case EFBIG:
+              LOG_DEBUG("Error Writing: EFBIG");
+                break;
+              case EINVAL:
+              LOG_DEBUG("Error Writing: EINVAL");
+                break;
+              case EIO:
+              LOG_DEBUG("Error Writing: EIO");
+                break;
+              case ENOSPC:
+              LOG_DEBUG("Error Writing: ENOSPC");
+                break;
+              case EPIPE:
+              LOG_DEBUG("Error Writing: EPIPE");
+                break;
+              default:
+              LOG_DEBUG("Error Writing: UNKNOWN");
+            }
+            if (errno == EINTR) {
+              // interrupts are ok, try again
+              written_bytes = 0;
+              continue;
+              // Write would have blocked if the socket was
+              // in blocking mode. Wait till it's readable
+            } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+              // Listen for socket being enabled for write
+              UpdateEvent(EV_WRITE | EV_PERSIST);
+              // We should go to CONN_WRITE state
+              return WRITE_NOT_READY;
+            } else {
+              // fatal errors
+              LOG_ERROR("Fatal error during write");
+              return WRITE_ERROR;
+            }
+          }
 
-  // buffer is empty
-  wbuf.Reset();
+          // weird edge case?
+          if (written_bytes == 0 && wbuf_.buf_size != 0) {
+            LOG_DEBUG("Not all data is written");
+            continue;
+          }
+        }
 
-  // we have flushed, disable force flush now
-  pkt_manager.force_flush = false;
+        // update book keeping
+        wbuf_.buf_flush_ptr += written_bytes;
+        wbuf_.buf_size -= written_bytes;
+      }
 
-  // we are ok
-  return true;
-}
+      // buffer is empty
+      wbuf_.Reset();
+
+      // we have flushed, disable force flush now
+      pkt_manager.force_flush = false;
+
+      // we are ok
+      return WRITE_COMPLETE;
+    }
 
 
-void LibeventSocket::PrintWriteBuffer() {
-  LOG_TRACE("Write Buffer:");
+    void LibeventSocket::PrintWriteBuffer() {
+      LOG_TRACE("Write Buffer:");
 
-  for (size_t i = 0; i < wbuf.buf_size; ++i) {
-    LOG_TRACE("%u", wbuf.buf[i]);
-  }
-}
+      for (size_t i = 0; i < wbuf_.buf_size; ++i) {
+        LOG_TRACE("%u", wbuf_.buf[i]);
+      }
+    }
 
 // Writes a packet's header (type, size) into the write buffer.
 // Return false when the socket is not ready for write
-bool LibeventSocket::BufferWriteBytesHeader(Packet *pkt) {
-  // If we should not write
-  if (pkt->skip_header_write) {
-    return true;
-  }
+    WriteState LibeventSocket::BufferWriteBytesHeader(OutputPacket *pkt) {
+      // If we should not write
+      if (pkt->skip_header_write) {
+        return WRITE_COMPLETE;
+      }
 
-  size_t len = pkt->len;
-  uchar type = pkt->msg_type;
-  int len_nb;  // length in network byte order
+      size_t len = pkt->len;
+      uchar type = pkt->msg_type;
+      int len_nb;  // length in network byte order
 
-  // check if we have enough space in the buffer
-  if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
-    // buffer needs to be flushed before adding header
-    if (FlushWriteBuffer() == false) {
-      // Socket is not ready for write
-      return false;
+      // check if we have enough space in the buffer
+      if (wbuf_.GetMaxSize() - wbuf_.buf_ptr < 1 + sizeof(int32_t)) {
+        // buffer needs to be flushed before adding header
+        auto result = FlushWriteBuffer();
+        if (result == WRITE_NOT_READY || result == WRITE_ERROR) {
+          // Socket is not ready for write
+          return result;
+        }
+      }
+
+      // assuming wbuf is now large enough to fit type and size fields in one go
+      if (type != 0) {
+        // type shouldn't be ignored
+        wbuf_.buf[wbuf_.buf_ptr++] = type;
+      }
+
+      // make len include its field size as well
+      len_nb = htonl(len + sizeof(int32_t));
+
+      // append the bytes of this integer in network-byte order
+      std::copy(reinterpret_cast<uchar *>(&len_nb),
+                reinterpret_cast<uchar *>(&len_nb) + 4,
+                std::begin(wbuf_.buf) + wbuf_.buf_ptr);
+
+      // move the write buffer pointer and update size of the socket buffer
+      wbuf_.buf_ptr += sizeof(int32_t);
+      wbuf_.buf_size = wbuf_.buf_ptr;
+
+      // Header is written to socket buf. No need to write it in the future
+      pkt->skip_header_write = true;
+      return WRITE_COMPLETE;
     }
-  }
-
-  // assuming wbuf is now large enough to fit type and size fields in one go
-  if (type != 0) {
-    // type shouldn't be ignored
-    wbuf.buf[wbuf.buf_ptr++] = type;
-  }
-
-  // make len include its field size as well
-  len_nb = htonl(len + sizeof(int32_t));
-
-  // append the bytes of this integer in network-byte order
-  std::copy(reinterpret_cast<uchar *>(&len_nb),
-            reinterpret_cast<uchar *>(&len_nb) + 4,
-            std::begin(wbuf.buf) + wbuf.buf_ptr);
-
-  // move the write buffer pointer and update size of the socket buffer
-  wbuf.buf_ptr += sizeof(int32_t);
-  wbuf.buf_size = wbuf.buf_ptr;
-
-  // Header is written to socket buf. No need to write it in the future
-  pkt->skip_header_write = true;
-  return true;
-}
 
 // Writes a packet's content into the write buffer
 // Return false when the socket is not ready for write
-bool LibeventSocket::BufferWriteBytesContent(Packet *pkt) {
-  // the packet content to write
-  ByteBuf &pkt_buf = pkt->buf;
-  // the length of remaining content to write
-  size_t len = pkt->len;
-  // window is the size of remaining space in socket's wbuf
-  size_t window = 0;
+    WriteState LibeventSocket::BufferWriteBytesContent(OutputPacket *pkt) {
+      // the packet content to write
+      ByteBuf &pkt_buf = pkt->buf;
+      // the length of remaining content to write
+      size_t len = pkt->len;
+      // window is the size of remaining space in socket's wbuf
+      size_t window = 0;
 
-  // fill the contents
-  while (len) {
-    // calculate the remaining space in wbuf
-    window = wbuf.GetMaxSize() - wbuf.buf_ptr;
-    if (len <= window) {
-      // contents fit in the window, range copy "len" bytes
-      std::copy(std::begin(pkt_buf) + pkt->write_ptr,
-                std::begin(pkt_buf) + pkt->write_ptr + len,
-                std::begin(wbuf.buf) + wbuf.buf_ptr);
+      // fill the contents
+      while (len) {
+        // calculate the remaining space in wbuf
+        window = wbuf_.GetMaxSize() - wbuf_.buf_ptr;
+        if (len <= window) {
+          // contents fit in the window, range copy "len" bytes
+          std::copy(std::begin(pkt_buf) + pkt->write_ptr,
+                    std::begin(pkt_buf) + pkt->write_ptr + len,
+                    std::begin(wbuf_.buf) + wbuf_.buf_ptr);
 
-      // Move the cursor and update size of socket buffer
-      wbuf_.buf_ptr += len;
-      wbuf_.buf_size = wbuf_.buf_ptr;
-      LOG_TRACE("Content fit in window. Write content successful");
+          // Move the cursor and update size of socket buffer
+          wbuf_.buf_ptr += len;
+          wbuf_.buf_size = wbuf_.buf_ptr;
+          LOG_TRACE("Content fit in window. Write content successful");
+          return WRITE_COMPLETE;
+        } else {
+          // contents longer than socket buffer size, fill up the socket buffer
+          // with "window" bytes
+
+          std::copy(std::begin(pkt_buf) + pkt->write_ptr,
+                    std::begin(pkt_buf) + pkt->write_ptr + window,
+                    std::begin(wbuf_.buf) + wbuf_.buf_ptr);
+
+          // move the packet's cursor
+          pkt->write_ptr += window;
+          len -= window;
+          // Now the wbuf is full
+          wbuf_.buf_size = wbuf_.GetMaxSize();
+
+          LOG_TRACE("Content doesn't fit in window. Try flushing");
+          auto result = FlushWriteBuffer();
+          // flush before write the remaining content
+          if (result == WRITE_NOT_READY || result == WRITE_ERROR ) {
+            // need to retry or close connection
+            return result;
+          }
+        }
+      }
       return WRITE_COMPLETE;
-    } else {
-      // contents longer than socket buffer size, fill up the socket buffer
-      // with "window" bytes
+    }
 
-      std::copy(std::begin(pkt_buf) + pkt->write_ptr,
-                std::begin(pkt_buf) + pkt->write_ptr + window,
-                std::begin(wbuf.buf) + wbuf.buf_ptr);
+    void LibeventSocket::CloseSocket() {
+      LOG_DEBUG("Attempt to close the connection %d", sock_fd);
+      // Remove listening event
+      event_del(event);
 
-      // move the packet's cursor
-      pkt->write_ptr += window;
-      len -= window;
-      // Now the wbuf is full
-      wbuf.buf_size = wbuf.GetMaxSize();
+      TransitState(CONN_CLOSED);
 
-      LOG_TRACE("Content doesn't fit in window. Try flushing");
-      auto result = FlushWriteBuffer();
-      // flush before write the remaining content
-      if (FlushWriteBuffer() == false) {
-        return false;
+      for (;;) {
+        int status = close(sock_fd);
+        if (status < 0) {
+          // failed close
+          if (errno == EINTR) {
+            // interrupted, try closing again
+            continue;
+          }
+        }
+        return;
       }
     }
-  }
-  return true;
-}
 
-void LibeventSocket::CloseSocket() {
-  LOG_DEBUG("Attempt to close the connection %d", sock_fd);
-  // Remove listening event
-  event_del(event);
-
-  TransitState(this, CONN_CLOSED);
-
-  for (;;) {
-    int status = close(sock_fd);
-    if (status < 0) {
-      // failed close
-      if (errno == EINTR) {
-        // interrupted, try closing again
-        continue;
-      }
+    void LibeventSocket::Reset(short event_flags, LibeventThread *thread,
+                               ConnState init_state) {
+      rbuf_.Reset();
+      wbuf_.Reset();
+      pkt_manager.Reset();
+      state = CONN_INVALID;
+      rpkt.Reset();
+      next_response_ = 0;
+      Init(event_flags, thread, init_state);
     }
-    return;
-  }
-}
 
-void LibeventSocket::Reset(short event_flags, LibeventThread *thread,
-                           ConnState init_state) {
-  rbuf_.Reset();
-  wbuf_.Reset();
-  pkt_manager.Reset();
-  state = CONN_INVALID;
-  rpkt.Reset();
-  next_response_ = 0;
-  Init(event_flags, thread, init_state);
-}
-
-}  // End wire namespace
+  }  // End wire namespace
 }  // End peloton namespace

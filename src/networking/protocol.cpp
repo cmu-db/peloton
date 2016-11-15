@@ -53,10 +53,10 @@ const std::unordered_map<std::string, std::string>
 
 void PacketManager::MakeHardcodedParameterStatus(
     ResponseBuffer &responses, const std::pair<std::string, std::string> &kv) {
-  std::unique_ptr<Packet> response(new Packet());
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = PARAMETER_STATUS;
-  PacketPutString(response, kv.first);
-  PacketPutString(response, kv.second);
+  PacketPutString(response.get(), kv.first);
+  PacketPutString(response.get(), kv.second);
   responses.push_back(std::move(response));
 }
 /*
@@ -66,7 +66,7 @@ void PacketManager::MakeHardcodedParameterStatus(
 bool PacketManager::ProcessStartupPacket(InputPacket *pkt,
                                          ResponseBuffer &responses) {
   std::string token, value;
-  std::unique_ptr<Packet> response(new Packet());
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
 
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
 
@@ -101,7 +101,7 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt,
 
   // send auth-ok ('R')
   response->msg_type = AUTHENTICATION_REQUEST;
-  PacketPutInt(response, 0, 4);
+  PacketPutInt(response.get(), 0, 4);
   responses.push_back(std::move(response));
 
   // Send the parameterStatus map ('S')
@@ -120,24 +120,24 @@ void PacketManager::PutTupleDescriptor(
     ResponseBuffer &responses) {
   if (tuple_descriptor.empty()) return;
 
-  std::unique_ptr<Packet> pkt(new Packet());
+  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = ROW_DESCRIPTION;
-  PacketPutInt(pkt, tuple_descriptor.size(), 2);
+  PacketPutInt(pkt.get(), tuple_descriptor.size(), 2);
 
   for (auto col : tuple_descriptor) {
-    PacketPutString(pkt, std::get<0>(col));
+    PacketPutString(pkt.get(), std::get<0>(col));
     // TODO: Table Oid (int32)
-    PacketPutInt(pkt, 0, 4);
+    PacketPutInt(pkt.get(), 0, 4);
     // TODO: Attr id of column (int16)
-    PacketPutInt(pkt, 0, 2);
+    PacketPutInt(pkt.get(), 0, 2);
     // Field data type (int32)
-    PacketPutInt(pkt, std::get<1>(col), 4);
+    PacketPutInt(pkt.get(), std::get<1>(col), 4);
     // Data type size (int16)
-    PacketPutInt(pkt, std::get<2>(col), 2);
+    PacketPutInt(pkt.get(), std::get<2>(col), 2);
     // Type modifier (int32)
-    PacketPutInt(pkt, -1, 4);
+    PacketPutInt(pkt.get(), -1, 4);
     // Format code for text
-    PacketPutInt(pkt, 0, 2);
+    PacketPutInt(pkt.get(), 0, 2);
   }
   responses.push_back(std::move(pkt));
 }
@@ -151,14 +151,14 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
 
   // 1 packet per row
   for (size_t i = 0; i < numrows; i++) {
-    std::unique_ptr<Packet> pkt(new Packet());
+    std::unique_ptr<OutputPacket> pkt(new OutputPacket());
     pkt->msg_type = DATA_ROW;
-    PacketPutInt(pkt, colcount, 2);
+    PacketPutInt(pkt.get(), colcount, 2);
     for (int j = 0; j < colcount; j++) {
       // length of the row attribute
-      PacketPutInt(pkt, results[i * colcount + j].second.size(), 4);
+      PacketPutInt(pkt.get(), results[i * colcount + j].second.size(), 4);
       // contents of the row attribute
-      PacketPutBytes(pkt, results[i * colcount + j].second);
+      PacketPutBytes(pkt.get(), results[i * colcount + j].second);
     }
     responses.push_back(std::move(pkt));
   }
@@ -175,7 +175,7 @@ std::string get_query_type(std::string query) {
 
 void PacketManager::CompleteCommand(const std::string &query_type, int rows,
                                     ResponseBuffer &responses) {
-  std::unique_ptr<Packet> pkt(new Packet());
+  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = COMMAND_COMPLETE;
   std::string tag = query_type;
   /* After Begin, we enter a txn block */
@@ -191,7 +191,7 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows,
     tag += " 0 " + std::to_string(rows);
   else
     tag += " " + std::to_string(rows);
-  PacketPutString(pkt, tag);
+  PacketPutString(pkt.get(), tag);
 
   responses.push_back(std::move(pkt));
 }
@@ -200,7 +200,7 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows,
  * put_empty_query_response - Informs the client that an empty query was sent
  */
 void PacketManager::SendEmptyQueryResponse(ResponseBuffer &responses) {
-  std::unique_ptr<Packet> response(new Packet());
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = EMPTY_QUERY_RESPONSE;
   responses.push_back(std::move(response));
 }
@@ -297,7 +297,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses
     skipped_query_type_ = std::move(query_type);
 
     // Send Parse complete response
-    std::unique_ptr<Packet> response(new Packet());
+    std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = PARSE_COMPLETE;
     responses.push_back(std::move(response));
     return;
@@ -329,6 +329,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses
   query_type_buf.buf = new uchar[type_buf_len];
   query_type_buf.len = type_buf_len;
 
+  // TODO: @Haibin - Change packet parsing approach
   PL_MEMCPY(query_type_buf.buf, pkt->buf.data() + type_buf_begin, type_buf_len);
 
   // Cache the received query
@@ -346,7 +347,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt, ResponseBuffer &responses
     statement_param_types_[statement_name] = query_type_buf;
   }
   // Send Parse complete response
-  std::unique_ptr<Packet> response(new Packet());
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = PARSE_COMPLETE;
   responses.push_back(std::move(response));
 }
@@ -420,7 +421,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
   if (!HardcodedExecuteFilter(query_type)) {
     skipped_stmt_ = true;
     skipped_query_string_ = query_string;
-    std::unique_ptr<Packet> response(new Packet());
+    std::unique_ptr<OutputPacket> response(new OutputPacket());
     // Send Bind complete response
     response->msg_type = BIND_COMPLETE;
     responses.push_back(std::move(response));
@@ -502,7 +503,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt, ResponseBuffer &responses)
     portals_.insert(std::make_pair(portal_name, portal_reference));
   }
   // send bind complete
-  std::unique_ptr<Packet> response(new Packet());
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = BIND_COMPLETE;
   responses.push_back(std::move(response));
 }
@@ -627,7 +628,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt,
                                         ResponseBuffer &responses) {
   if (skipped_stmt_) {
     // send 'no-data' message
-    std::unique_ptr<Packet> response(new Packet());
+    std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NO_DATA_RESPONSE;
     responses.push_back(std::move(response));
     return true;
@@ -788,16 +789,16 @@ bool PacketManager::ProcessPacket(InputPacket *pkt, ResponseBuffer &responses,
 void PacketManager::SendErrorResponse(
     std::vector<std::pair<uchar, std::string>> error_status,
     ResponseBuffer &responses) {
-  std::unique_ptr<Packet> pkt(new Packet());
+  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = ERROR_RESPONSE;
 
   for (auto entry : error_status) {
-    PacketPutByte(pkt, entry.first);
-    PacketPutString(pkt, entry.second);
+    PacketPutByte(pkt.get(), entry.first);
+    PacketPutString(pkt.get(), entry.second);
   }
 
   // put null terminator
-  PacketPutByte(pkt, 0);
+  PacketPutByte(pkt.get(), 0);
 
   // don't care if write finished or not, we are closing anyway
   responses.push_back(std::move(pkt));
@@ -805,10 +806,10 @@ void PacketManager::SendErrorResponse(
 
 void PacketManager::SendReadyForQuery(uchar txn_status,
                                       ResponseBuffer &responses) {
-  std::unique_ptr<Packet> pkt(new Packet());
+  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = READ_FOR_QUERY;
 
-  PacketPutByte(pkt, txn_status);
+  PacketPutByte(pkt.get(), txn_status);
 
   responses.push_back(std::move(pkt));
 }

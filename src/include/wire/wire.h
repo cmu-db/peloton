@@ -32,7 +32,7 @@
 namespace peloton {
 namespace wire {
 
-typedef std::vector<std::unique_ptr<Packet>> ResponseBuffer;
+typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
 class PacketManager {
  public:
