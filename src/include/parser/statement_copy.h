@@ -15,6 +15,7 @@
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
 #include "expression/constant_value_expression.h"
+#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -24,13 +25,12 @@ namespace parser {
  * @brief Represents PSQL Copy statements.
  */
 struct CopyStatement : SQLStatement {
-
   CopyStatement(CopyType type)
       : SQLStatement(STATEMENT_TYPE_COPY),
         cpy_table(NULL),
         type(type),
         file_path(NULL),
-        delimiter(',') {};
+        delimiter(','){};
 
   virtual ~CopyStatement() {
     delete file_path;
@@ -38,6 +38,11 @@ struct CopyStatement : SQLStatement {
   }
 
   TableRef* cpy_table;
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->Visit(this);
+  }
+
   CopyType type;
 
   char* file_path;

@@ -24,7 +24,7 @@ class PrepareStatement;
 class ExecuteStatement;
 class TransactionStatement;
 class UpdateStatement;
-class ImportStatement;
+class CopyStatement;
 }
 
 namespace optimizer {
@@ -72,7 +72,7 @@ class QueryNodeVisitor {
   virtual void Visit(const parser::ExecuteStatement*) = 0;
   virtual void Visit(const parser::TransactionStatement*) = 0;
   virtual void Visit(const parser::UpdateStatement*) = 0;
-  virtual void Visit(const parser::ImportStatement*) = 0;
+  virtual void Visit(const parser::CopyStatement*) = 0;
 };
 
 } /* namespace optimizer */

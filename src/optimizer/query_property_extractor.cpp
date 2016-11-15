@@ -54,7 +54,7 @@ void QueryPropertyExtractor::Visit(
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::UpdateStatement *op) {}
 void QueryPropertyExtractor::Visit(
-    UNUSED_ATTRIBUTE const parser::ImportStatement *op) {}
+    UNUSED_ATTRIBUTE const parser::CopyStatement *op) {}
 
 } /* namespace optimizer */
 } /* namespace peloton */

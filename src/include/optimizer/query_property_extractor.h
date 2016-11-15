@@ -50,7 +50,7 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
   void Visit(const parser::ExecuteStatement *) override;
   void Visit(const parser::TransactionStatement *) override;
   void Visit(const parser::UpdateStatement *) override;
-  void Visit(const parser::ImportStatement *) override;
+  void Visit(const parser::CopyStatement *) override;
 
  private:
   ColumnManager &manager_;
