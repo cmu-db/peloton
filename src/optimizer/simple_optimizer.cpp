@@ -55,50 +55,6 @@ SimpleOptimizer::SimpleOptimizer(){};
 
 SimpleOptimizer::~SimpleOptimizer(){};
 
-void SimpleOptimizer::FindColumns(std::unordered_map<oid_t, oid_t> &column_mapping, std::vector<oid_t> &column_ids,
-    expression::AbstractExpression *expr, const catalog::Schema& schema, bool &needs_projection) {
-  size_t num_children = expr->GetChildrenSize();
-  for(size_t child = 0; child < num_children; child++){
-    FindColumns(column_mapping, column_ids, expr->GetModifiableChild(child), schema, needs_projection);
-  }
-  if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
-    auto val_expr = (expression::TupleValueExpression *)expr;
-    auto col_id = schema.GetColumnID(val_expr->col_name_);
-    if (col_id == (oid_t)-1){
-      throw Exception("Column "+val_expr->col_name_ +" not found");
-    }
-    auto column = schema.GetColumn(col_id);
-
-    size_t mapped_position;
-    if (column_mapping.count(col_id) == 0){
-      mapped_position = column_ids.size();
-      column_ids.push_back(col_id);
-      column_mapping[col_id] = mapped_position;
-    }else{
-      mapped_position = column_mapping[col_id];
-    }
-    auto type = column.GetType();
-    if (val_expr->alias.size() > 0){
-      val_expr->expr_name_ = val_expr->alias;
-    }else{
-      val_expr->expr_name_ = val_expr->col_name_;
-    }
-    val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
-  }else if (expr->GetExpressionType() != EXPRESSION_TYPE_STAR){
-    needs_projection = true;
-  }
-
-  if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION){
-    auto func_expr = (expression::FunctionExpression*)expr;
-    auto  catalog = catalog::Catalog::GetInstance();
-    catalog::FunctionData func_data = catalog->GetFunction(func_expr->func_name_);
-    func_expr->SetFunctionExpressionParameters(func_data.func_ptr_, func_data.return_type_);
-  }
-  expr->DeduceExpressionType();
-  // TODO: add function expressions
-
-}
-
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList>& parse_tree) {
   std::shared_ptr<planner::AbstractPlan> plan_tree;
@@ -184,10 +140,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto &schema = *target_table->GetSchema();
       auto predicate = select_stmt->where_clause;
       bool needs_projection = false;
-      expression::ExpressionUtil::ReplaceColumnExpressions(&schema, predicate);
+      expression::ExpressionUtil::TransformExpression(&schema, predicate);
 
       for (auto col : *select_stmt->select_list){
-        FindColumns(column_mapping, column_ids,
+        expression::ExpressionUtil::TransformExpression(column_mapping, column_ids,
             col, schema, needs_projection);
       }
 

@@ -54,8 +54,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format;
   auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor("SELECT * FROM " +
-                                                              table->GetName());
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor((parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
@@ -187,8 +186,7 @@ TEST_F(DeleteTests, VariousOperations) {
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
-          statement->GetQueryString());
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);

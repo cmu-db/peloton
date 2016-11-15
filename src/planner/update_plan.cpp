@@ -63,7 +63,7 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
     col_id = schema->GetColumnID(std::string(update->column));
     column_ids.push_back(col_id);
     auto update_expr = update->value->Copy();
-    expression::ExpressionUtil::ReplaceColumnExpressions(
+    expression::ExpressionUtil::TransformExpression(
         target_table_->GetSchema(), update_expr);
     tlist.emplace_back(col_id, update_expr);
   }
@@ -85,7 +85,7 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   project_info_ = std::move(project_info);
 
   where_ = parse_tree->where->Copy();
-  expression::ExpressionUtil::ReplaceColumnExpressions(
+  expression::ExpressionUtil::TransformExpression(
       target_table_->GetSchema(), where_);
 }
 

@@ -16,7 +16,9 @@
 #include <vector>
 
 #include "catalog/schema.h"
+#include "catalog/catalog.h"
 #include "expression/comparison_expression.h"
+#include "expression/function_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/constant_value_expression.h"
@@ -101,43 +103,6 @@ class ExpressionUtil {
         ConvertParameterExpressions(expression->GetModifiableChild(1), values,
                                     schema);
       }
-    }
-  }
-
-  /**
-   * This function replaces all COLUMN_REF expressions with TupleValue
-   * expressions
-   */
-  static void ReplaceColumnExpressions(
-      catalog::Schema *schema, expression::AbstractExpression *expression) {
-    LOG_TRACE("Expression Type --> %s",
-              ExpressionTypeToString(expression->GetExpressionType()).c_str());
-    if (expression == nullptr){
-      return;
-    }
-
-    if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE){
-      expression::TupleValueExpression * tv_expr = (expression::TupleValueExpression *)expression;
-      // if already set up ignore
-      if (expression->GetValueType() == Type::INVALID){
-        PL_ASSERT(!tv_expr->col_name_.empty());
-        std::string col_name(tv_expr->col_name_);
-        oid_t col_id = schema->GetColumnID(col_name);
-        if (col_id == (oid_t)-1){
-          throw Exception("Invalid Column");
-        }
-        // I think its okay here to assume results will come from the 'left' tuple
-        const catalog::Column &col = schema->GetColumn(col_id);
-        tv_expr->SetTupleValueExpressionParams(col.GetType(), col_id, 0);
-      }
-    }
-
-    if (expression->GetChild(0) != nullptr) {
-      ReplaceColumnExpressions(schema, expression->GetModifiableChild(0));
-    }
-
-    if (expression->GetChild(1) != nullptr) {
-      ReplaceColumnExpressions(schema, expression->GetModifiableChild(1));
     }
   }
 
@@ -234,21 +199,87 @@ class ExpressionUtil {
   }
 
   inline static bool IsOperatorExpression(ExpressionType type) {
-      switch (type) {
-      case EXPRESSION_TYPE_AGGREGATE_COUNT:
-      case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
-      case EXPRESSION_TYPE_AGGREGATE_SUM:
-      case EXPRESSION_TYPE_AGGREGATE_MIN:
-      case EXPRESSION_TYPE_AGGREGATE_MAX:
-      case EXPRESSION_TYPE_AGGREGATE_AVG:
-      case EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT:
-      case EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG:
-      case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD:
-        return true;
-      default:
-        return false;
-      }
+    switch (type) {
+    case EXPRESSION_TYPE_AGGREGATE_COUNT:
+    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+    case EXPRESSION_TYPE_AGGREGATE_SUM:
+    case EXPRESSION_TYPE_AGGREGATE_MIN:
+    case EXPRESSION_TYPE_AGGREGATE_MAX:
+    case EXPRESSION_TYPE_AGGREGATE_AVG:
+    case EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT:
+    case EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG:
+    case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD:
+      return true;
+    default:
+      return false;
     }
+  }
+
+  /**
+   * This function replaces all COLUMN_REF expressions with TupleValue
+   * expressions
+   */
+  static void TransformExpression(
+      catalog::Schema *schema, AbstractExpression *expr) {
+    bool dummy;
+    TransformExpression(nullptr, nullptr, expr, schema, dummy, false);
+  }
+
+  static void TransformExpression(std::unordered_map<oid_t, oid_t> &column_mapping, std::vector<oid_t> &column_ids,
+        AbstractExpression *expr, const catalog::Schema& schema, bool &needs_projection) {
+    TransformExpression(&column_mapping, &column_ids, expr, &schema, needs_projection, true);
+  }
+
+ private:
+  static void TransformExpression(std::unordered_map<oid_t, oid_t> *column_mapping, std::vector<oid_t> *column_ids,
+       AbstractExpression *expr, const catalog::Schema* schema, bool &needs_projection, bool find_columns) {
+    if (expr == nullptr){
+      return;
+    }
+    size_t num_children = expr->GetChildrenSize();
+    for(size_t child = 0; child < num_children; child++){
+      TransformExpression(column_mapping, column_ids, expr->GetModifiableChild(child), schema, needs_projection, find_columns);
+    }
+    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE && expr->GetValueType() == Type::INVALID) {
+      auto val_expr = (expression::TupleValueExpression *)expr;
+      auto col_id = schema->GetColumnID(val_expr->col_name_);
+      if (col_id == (oid_t)-1){
+        throw Exception("Column "+val_expr->col_name_ +" not found");
+      }
+      auto column = schema->GetColumn(col_id);
+
+      size_t mapped_position;
+      if (find_columns){
+        if (column_mapping->count(col_id) == 0){
+          mapped_position = column_ids->size();
+          column_ids->push_back(col_id);
+          (*column_mapping)[col_id] = mapped_position;
+        }else{
+          mapped_position = (*column_mapping)[col_id];
+        }
+      }else{
+        mapped_position = col_id;
+      }
+      auto type = column.GetType();
+      if (val_expr->alias.size() > 0){
+        val_expr->expr_name_ = val_expr->alias;
+      }else{
+        val_expr->expr_name_ = val_expr->col_name_;
+      }
+      val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
+    }else if (expr->GetExpressionType() != EXPRESSION_TYPE_STAR){
+      needs_projection = true;
+    }
+
+    if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION){
+      auto func_expr = (expression::FunctionExpression*)expr;
+      auto  catalog = catalog::Catalog::GetInstance();
+      catalog::FunctionData func_data = catalog->GetFunction(func_expr->func_name_);
+      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_, func_data.return_type_);
+    }
+    expr->DeduceExpressionType();
+  }
+
 };
 }
 }

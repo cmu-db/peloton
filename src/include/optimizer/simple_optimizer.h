@@ -62,9 +62,6 @@ class SimpleOptimizer : public AbstractOptimizer {
   static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree);
 
-  static void FindColumns(std::unordered_map<oid_t, oid_t> &column_mapping, std::vector<oid_t> &column_ids,
-      expression::AbstractExpression *expr, const catalog::Schema& schema, bool &needs_projection);
-
  private:
   //===--------------------------------------------------------------------===//
   // UTILITIES

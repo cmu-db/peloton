@@ -24,6 +24,7 @@
 #include "expression/expression_util.h"
 
 #include "parser/parser.h"
+#include "parser/statement_select.h"
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
@@ -132,7 +133,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
     for (auto stmt : sql_stmt->GetStatements()) {
       if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(query_string);
+        auto tuple_descriptor = GenerateTupleDescriptor(stmt);
         statement->SetTupleDescriptor(tuple_descriptor);
       }
       break;
@@ -149,18 +150,19 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 }
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
-    std::string query) {
+    parser::SQLStatement* stmt) {
   std::vector<FieldInfoType> tuple_descriptor;
-  auto &peloton_parser = parser::Parser::GetInstance();
-  auto sql_stmt = peloton_parser.BuildParseTree(query);
+  if (stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
+  auto select_stmt = (parser::SelectStatement*) stmt;
 
-  auto first_stmt = sql_stmt->GetStatement(0);
+  // TODO: this is a hack which I don't have time to fix now
+  // but it replaces a worse hack that was here before
+  // What should happen here is that plan nodes should store
+  // the schema of their expected results and here we should just read
+  // it and put it in the tuple descriptor
 
-  if (first_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
-
-  // Get the Select Statement
-  auto select_stmt = (parser::SelectStatement *)first_stmt;
-
+  // Get the columns information and set up
+  // the columns description for the returned results
   // Set up the table
   storage::DataTable *target_table = nullptr;
 
@@ -189,20 +191,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   // Get the columns of the table
   auto &table_columns = target_table->GetSchema()->GetColumns();
 
-  std::unordered_map<oid_t, oid_t> column_mapping;
-  std::vector<oid_t> column_ids;
-  auto &schema = *target_table->GetSchema();
-  auto predicate = select_stmt->where_clause;
-  bool needs_projection = false;
-  expression::ExpressionUtil::ReplaceColumnExpressions(&schema, predicate);
 
-  for (auto col : *select_stmt->select_list){
-    optimizer::SimpleOptimizer::FindColumns(column_mapping, column_ids,
-        col, schema, needs_projection);
-  }
-
-  // Get the columns information and set up
-  // the columns description for the returned results
   int count = 0;
   for (auto expr : *select_stmt->select_list) {
     count++;
@@ -216,53 +205,6 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
       tuple_descriptor.push_back(
                   GetColumnFieldForValueType(col_name, expr->GetValueType()));
     }
-
-//    // if query has only certain columns
-//    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
-//      // Get the column name
-//      auto tuple_expr = (expression::TupleValueExpression *) expr;
-//      auto col_name = tuple_expr->col_name_;
-//
-//      // Traverse the table's columns
-//      for (auto column : table_columns) {
-//        // check if the column name matches
-//        if (column.column_name == col_name) {
-//          tuple_descriptor.push_back(
-//              GetColumnFieldForValueType(col_name, column.column_type));
-//        }
-//      }
-//    }
-//
-//    // Query has aggregation Functions
-//    if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
-//      // Get the parser expression that contains
-//      // the typr of the aggreataion function
-//      auto func_expr = (expression::AggregateExpression *)expr;
-//
-//      std::string col_name = "";
-//      // check if expression has an alias
-//      if (!expr->alias.empty()) {
-//        tuple_descriptor.push_back(GetColumnFieldForAggregates(
-//            std::string(expr->alias), func_expr->GetChild(0)->GetExpressionType()));
-//      } else {
-//        // Construct a String
-//        std::string agg_func_name = std::string(expr->GetExpressionName());
-//
-//        std::string full_agg_name;
-//        if (expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR){
-//          tuple_descriptor.push_back(GetColumnFieldForAggregates(
-//                      agg_func_name, func_expr->GetExpressionType()));
-//        }else{
-//          std::string col_name = std::string(func_expr->GetChild(0)->GetExpressionName());
-//          // Example : Count(id)
-//          full_agg_name = agg_func_name + "(" + col_name + ")";
-//          tuple_descriptor.push_back(GetColumnFieldForAggregates(
-//                      full_agg_name, func_expr->GetChild(0)->GetExpressionType()));
-//        }
-//
-//
-//      }
-//    }
   }
   return tuple_descriptor;
 }
