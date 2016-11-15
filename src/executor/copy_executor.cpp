@@ -158,124 +158,124 @@ void CopyExecutor::CreateParamPacket(wire::Packet &packet, int len,
  */
 bool CopyExecutor::DExecute() {
   // skip if we're done
-  if (done) {
-    return false;
-  }
-
-  while (children_[0]->Execute() == true) {
-    // Get input a tile
-    std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
-    LOG_DEBUG("Looping over the output tile..");
-
-    // Get physical schema of the tile
-    std::unique_ptr<catalog::Schema> output_schema(
-        logical_tile->GetPhysicalSchema());
-
-    // vectors for prepared statement parameters
-    int num_params = 0;
-    std::vector<std::pair<int, std::string>> bind_parameters;
-    std::vector<common::Value> param_values;
-    std::vector<int16_t> formats;
-    std::vector<int32_t> types;
-
-    // Construct result format as varchar
-    auto col_count = output_schema->GetColumnCount();
-    std::vector<std::vector<std::string>> answer_tuples;
-    std::vector<int> result_format(col_count, 0);
-    answer_tuples =
-        std::move(logical_tile->GetAllValuesAsStrings(result_format));
-
-    // Loop over the returned results
-    for (auto &tuple : answer_tuples) {
-      // Loop over the columns
-      for (unsigned int col_index = 0; col_index < col_count; col_index++) {
-        auto val = tuple[col_index];
-        auto origin_col_id =
-            logical_tile->GetColumnInfo(col_index).origin_column_id;
-        int len = val.length();
-
-        if (origin_col_id == num_param_col_id) {
-          // num_param column
-          num_params = std::stoi(val);
-          Copy(val.c_str(), val.length(), false);
-
-        } else if (origin_col_id == param_type_col_id) {
-          // param_types column
-          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    common::Type::VARBINARY);
-
-          wire::Packet packet;
-          CreateParamPacket(packet, len, val);
-
-          // Read param types
-          types.resize(num_params);
-          wire::PacketManager::ReadParamType(&packet, num_params, types);
-
-          // Write all the types to output file
-          for (int i = 0; i < num_params; i++) {
-            std::string type_str = std::to_string(types[i]);
-            Copy(type_str.c_str(), type_str.length(), false);
-          }
-        } else if (origin_col_id == param_format_col_id) {
-          // param_formats column
-          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    common::Type::VARBINARY);
-
-          wire::Packet packet;
-          CreateParamPacket(packet, len, val);
-
-          // Read param formats
-          formats.resize(num_params);
-          wire::PacketManager::ReadParamFormat(&packet, num_params, formats);
-
-        } else if (origin_col_id == param_val_col_id) {
-          // param_values column
-          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    common::Type::VARBINARY);
-
-          wire::Packet packet;
-          CreateParamPacket(packet, len, val);
-
-          bind_parameters.resize(num_params);
-          param_values.resize(num_params);
-          wire::PacketManager::ReadParamValue(&packet, num_params, types,
-                                              bind_parameters, param_values,
-                                              formats);
-
-          // Write all the values to output file
-          for (int i = 0; i < num_params; i++) {
-            auto param_value = param_values[i];
-            LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
-            // Avoid extra copy for varlen types
-            if (param_value.GetTypeId() == common::Type::VARBINARY) {
-              const char *data = param_value.GetData();
-              Copy(data, param_value.GetLength(), false);
-            } else if (param_value.GetTypeId() == common::Type::VARCHAR) {
-              const char *data = param_value.GetData();
-              // Don't write the NULL character for varchar
-              Copy(data, param_value.GetLength() - 1, false);
-            } else {
-              // Convert integer / double types to string before copying
-              auto param_str = param_value.ToString();
-              Copy(param_str.c_str(), param_str.length(), false);
-            }
-          }
-        } else {
-          // For other columns, just copy the content to local buffer
-          bool end_of_line = col_index == col_count - 1;
-          Copy(val.c_str(), val.length(), end_of_line);
-        }
-      }
-    }
-    LOG_DEBUG("Done writing to csv file for this tile");
-  }
-  LOG_INFO("Done copying all logical tiles");
-  FlushBuffer();
-  logging::LoggingUtil::FFlushFsync(file_handle_);
-  // Sync and close
-  fclose(file_handle_.file);
-
-  done = true;
+//  if (done) {
+//    return false;
+//  }
+//
+//  while (children_[0]->Execute() == true) {
+//    // Get input a tile
+//    std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
+//    LOG_DEBUG("Looping over the output tile..");
+//
+//    // Get physical schema of the tile
+//    std::unique_ptr<catalog::Schema> output_schema(
+//        logical_tile->GetPhysicalSchema());
+//
+//    // vectors for prepared statement parameters
+//    int num_params = 0;
+//    std::vector<std::pair<int, std::string>> bind_parameters;
+//    std::vector<common::Value> param_values;
+//    std::vector<int16_t> formats;
+//    std::vector<int32_t> types;
+//
+//    // Construct result format as varchar
+//    auto col_count = output_schema->GetColumnCount();
+//    std::vector<std::vector<std::string>> answer_tuples;
+//    std::vector<int> result_format(col_count, 0);
+//    answer_tuples =
+//        std::move(logical_tile->GetAllValuesAsStrings(result_format));
+//
+//    // Loop over the returned results
+//    for (auto &tuple : answer_tuples) {
+//      // Loop over the columns
+//      for (unsigned int col_index = 0; col_index < col_count; col_index++) {
+//        auto val = tuple[col_index];
+//        auto origin_col_id =
+//            logical_tile->GetColumnInfo(col_index).origin_column_id;
+//        int len = val.length();
+//
+//        if (origin_col_id == num_param_col_id) {
+//          // num_param column
+//          num_params = std::stoi(val);
+//          Copy(val.c_str(), val.length(), false);
+//
+//        } else if (origin_col_id == param_type_col_id) {
+//          // param_types column
+//          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+//                    common::Type::VARBINARY);
+//
+//          wire::Packet packet;
+//          CreateParamPacket(packet, len, val);
+//
+//          // Read param types
+//          types.resize(num_params);
+//          wire::PacketManager::ReadParamType(&packet, num_params, types);
+//
+//          // Write all the types to output file
+//          for (int i = 0; i < num_params; i++) {
+//            std::string type_str = std::to_string(types[i]);
+//            Copy(type_str.c_str(), type_str.length(), false);
+//          }
+//        } else if (origin_col_id == param_format_col_id) {
+//          // param_formats column
+//          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+//                    common::Type::VARBINARY);
+//
+//          wire::Packet packet;
+//          CreateParamPacket(packet, len, val);
+//
+//          // Read param formats
+//          formats.resize(num_params);
+//          wire::PacketManager::ReadParamFormat(&packet, num_params, formats);
+//
+//        } else if (origin_col_id == param_val_col_id) {
+//          // param_values column
+//          PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
+//                    common::Type::VARBINARY);
+//
+//          wire::Packet packet;
+//          CreateParamPacket(packet, len, val);
+//
+//          bind_parameters.resize(num_params);
+//          param_values.resize(num_params);
+//          wire::PacketManager::ReadParamValue(&packet, num_params, types,
+//                                              bind_parameters, param_values,
+//                                              formats);
+//
+//          // Write all the values to output file
+//          for (int i = 0; i < num_params; i++) {
+//            auto param_value = param_values[i];
+//            LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
+//            // Avoid extra copy for varlen types
+//            if (param_value.GetTypeId() == common::Type::VARBINARY) {
+//              const char *data = param_value.GetData();
+//              Copy(data, param_value.GetLength(), false);
+//            } else if (param_value.GetTypeId() == common::Type::VARCHAR) {
+//              const char *data = param_value.GetData();
+//              // Don't write the NULL character for varchar
+//              Copy(data, param_value.GetLength() - 1, false);
+//            } else {
+//              // Convert integer / double types to string before copying
+//              auto param_str = param_value.ToString();
+//              Copy(param_str.c_str(), param_str.length(), false);
+//            }
+//          }
+//        } else {
+//          // For other columns, just copy the content to local buffer
+//          bool end_of_line = col_index == col_count - 1;
+//          Copy(val.c_str(), val.length(), end_of_line);
+//        }
+//      }
+//    }
+//    LOG_DEBUG("Done writing to csv file for this tile");
+//  }
+//  LOG_INFO("Done copying all logical tiles");
+//  FlushBuffer();
+//  logging::LoggingUtil::FFlushFsync(file_handle_);
+//  // Sync and close
+//  fclose(file_handle_.file);
+//
+//  done = true;
   return true;
 }
 
