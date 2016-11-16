@@ -541,7 +541,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
   select_stmt->select_list = select_list;
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, table_name);
+      table_ref->GetDatabaseName(), table_name);
 
   auto select_plan =
       SimpleOptimizer::CreateScanPlan(target_table, select_stmt.get());
