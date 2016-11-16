@@ -48,8 +48,8 @@ class RuleTests : public PelotonTest {};
 
 TEST_F(RuleTests, SimpleRuleApplyTest) {
   // Build op plan node to match rule
-  auto left_get = std::make_shared<OpExpression>(LogicalGet::make(0, {}));
-  auto right_get = std::make_shared<OpExpression>(LogicalGet::make(0, {}));
+  auto left_get = std::make_shared<OpExpression>(LogicalGet::make(0));
+  auto right_get = std::make_shared<OpExpression>(LogicalGet::make(0));
   auto val = common::ValueFactory::GetBooleanValue(true);
   auto pred = std::make_shared<OpExpression>(ExprConstant::make(val));
   auto join = std::make_shared<OpExpression>(LogicalInnerJoin::make());
