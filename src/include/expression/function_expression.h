@@ -45,7 +45,10 @@ public:
       Type::TypeId val_type, size_t num_args) {
     func_ptr_ = func_ptr;
     value_type_ = val_type;
-    PL_ASSERT(num_args = children_.size());
+    if (num_args != children_.size()){
+      throw Exception("Unexpected number of arguments to function: "+func_name_+". Expected: "+std::to_string(num_args)+ " Actual: " + std::to_string(children_.size()));
+    }
+
     num_args_ = num_args;
   }
 

@@ -175,7 +175,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               auto tup_expr = (expression::TupleValueExpression*)expr;
               oid_t old_col_id = table_schema->GetColumnID(tup_expr->col_name_);
               columns.push_back(table_schema->GetColumn(old_col_id));
-              dml.push_back(DirectMap(i, std::make_pair(0, old_col_id)));
+              dml.push_back(DirectMap(i, std::make_pair(0, tup_expr->value_idx_)));
             }else{
               tl.push_back(Target(i, expr->Copy()));
               columns.push_back(catalog::Column(expr->GetValueType(),common::Type::GetTypeSize(expr->GetValueType()), "expr"+ std::to_string(i)));

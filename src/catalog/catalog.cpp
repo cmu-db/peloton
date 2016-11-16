@@ -759,6 +759,9 @@ void Catalog::AddFunction(const std::string &name, const size_t num_arguments,
 }
 
 FunctionData Catalog::GetFunction(const std::string &name){
+  if (functions_.count(name) == 0){
+    throw Exception("function "+ name +" not found.");
+  }
   return functions_[name];
 }
 
@@ -773,6 +776,7 @@ void Catalog::InitializeFunctions(){
   AddFunction("ascii", 1, common::Type::INTEGER, expression::StringFunctions::Ascii);
   AddFunction("chr", 1, common::Type::VARCHAR, expression::StringFunctions::Chr);
   AddFunction("substr", 3, common::Type::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("concat", 2, common::Type::VARCHAR, expression::StringFunctions::Concat);
   AddFunction("char_length", 1, common::Type::INTEGER, expression::StringFunctions::CharLength);
   AddFunction("octet_length", 1, common::Type::INTEGER, expression::StringFunctions::OctetLength);
   AddFunction("repeat", 2, common::Type::VARCHAR, expression::StringFunctions::Repeat);

@@ -140,28 +140,6 @@ class ExpressionUtil {
       AbstractExpression *expr1, AbstractExpression *expr2,
       UNUSED_ATTRIBUTE AbstractExpression *expr3, UNUSED_ATTRIBUTE AbstractExpression *expr4) {
     switch (type) {
-//      case (EXPRESSION_TYPE_ASCII):
-//        return new FunctionExpression(expr1);
-//      case (EXPRESSION_TYPE_CHAR):
-//        return new ChrExpression(expr1);
-//      case (EXPRESSION_TYPE_SUBSTR):
-//        return new SubstrExpression(expr1, expr2, expr3);
-//      case (EXPRESSION_TYPE_CHAR_LEN):
-//        return new CharLengthExpression(expr1);
-//      case (EXPRESSION_TYPE_CONCAT):
-//        return new ConcatExpression(expr1, expr2);
-//      case (EXPRESSION_TYPE_OCTET_LEN):
-//        return new OctetLengthExpression(expr1);
-//      case (EXPRESSION_TYPE_REPEAT):
-//        return new RepeatExpression(expr1, expr2);
-//      case (EXPRESSION_TYPE_REPLACE):
-//        return new ReplaceExpression(expr1, expr2, expr3);
-//      case (EXPRESSION_TYPE_LTRIM):
-//        return new LTrimExpression(expr1, expr2);
-//      case (EXPRESSION_TYPE_RTRIM):
-//        return new RTrimExpression(expr1, expr2);
-//      case (EXPRESSION_TYPE_BTRIM):
-//        return new BTrimExpression(expr1, expr2);
       default:
         return new OperatorExpression(type, value_type, expr1, expr2);
     }
