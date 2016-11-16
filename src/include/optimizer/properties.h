@@ -25,6 +25,10 @@ class PropertyColumns : public Property {
 
   PropertyType Type() const override;
 
+  hash_t Hash() const override;
+
+  bool operator==(const Property &r) const override;
+
  private:
   std::vector<Column *> columns;
 };
@@ -36,6 +40,10 @@ class PropertySort : public Property {
 
   PropertyType Type() const override;
 
+  // hash_t Hash() const override;
+
+  // bool operator==(const Property &r) const override;
+
  private:
   std::vector<Column *> sort_columns;
   std::vector<bool> sort_ascending;
@@ -46,6 +54,10 @@ class PropertyPredicate : public Property {
   PropertyPredicate(expression::AbstractExpression *predicate);
 
   PropertyType Type() const override;
+
+  // hash_t Hash() const override;
+
+  // bool operator==(const Property &r) const override;
 
  private:
   expression::AbstractExpression *predicate_;

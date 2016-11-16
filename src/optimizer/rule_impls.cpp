@@ -69,7 +69,7 @@ void GetToScan::Transform(
   const LogicalGet *get = input->Op().as<LogicalGet>();
 
   auto result_plan = std::make_shared<OpExpression>(
-      PhysicalScan::make(get->table, get->columns));
+      PhysicalScan::make(get->table, std::vector<Column *>()));
 
   std::vector<std::shared_ptr<OpExpression>> children = input->Children();
   PL_ASSERT(children.size() == 1);

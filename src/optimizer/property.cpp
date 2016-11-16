@@ -17,5 +17,14 @@ namespace optimizer {
 
 Property::~Property() {}
 
+hash_t Property::Hash() const {
+  PropertyType t = Type();
+  return util::Hash(&t);
+}
+
+bool Property::operator==(const Property &r) const {
+  return Type() == r.Type();
+}
+
 } /* namespace optimizer */
 } /* namespace peloton */

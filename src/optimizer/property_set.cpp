@@ -36,7 +36,16 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
 }
 
 bool PropertySet::IsSubset(const PropertySet &r) {
-  (void)r;
+  for (auto r_property : r.properties_) {
+    bool has_property = false;
+    for (auto property : properties_) {
+      if (*property == *r_property) {
+        has_property = true;
+        break;
+      }
+    }
+    if (has_property == false) return false;
+  }
   return true;
 }
 

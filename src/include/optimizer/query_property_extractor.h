@@ -22,6 +22,11 @@ class SQLStatement;
 
 namespace optimizer {
 
+/*
+ * Extract physical properties from the parsed query.
+ * Physical properties are those fields that can be directly added to the plan,
+ * and don't need to perform transformations on.
+ */
 class QueryPropertyExtractor : public QueryNodeVisitor {
  public:
   QueryPropertyExtractor(ColumnManager &manager) : manager_(manager) {}

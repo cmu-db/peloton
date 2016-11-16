@@ -174,25 +174,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     output_expr = expr;
   }
 
-  void visit(const Table *op) override {
-    std::vector<Column *> columns;
-
-    storage::DataTable *table = op->data_table;
-    catalog::Schema *schema = table->GetSchema();
-    oid_t table_oid = table->GetOid();
-    for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
-      catalog::Column schema_col = schema->GetColumn(col_id);
-      Column *col = manager.LookupColumn(table_oid, col_id);
-      if (col == nullptr) {
-        col = manager.AddBaseColumn(
-            schema_col.GetType(), schema_col.GetLength(), schema_col.GetName(),
-            schema_col.IsInlined(), table_oid, col_id);
-      }
-      columns.push_back(col);
-    }
-    output_expr = std::make_shared<OpExpression>(
-        LogicalGet::make(op->data_table, columns));
-  }
+  void visit(UNUSED_ATTRIBUTE const Table *op) override {}
 
   void visit(const Join *op) override {
     // Self
@@ -262,26 +244,14 @@ class QueryToOpTransformer : public QueryNodeVisitor {
   }
 
   void Visit(const parser::SelectStatement *op) override {
-    std::vector<Column *> columns;
-
+    // Construct the logical get operator to visit the target table
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
             op->from_table->GetDatabaseName(), op->from_table->GetTableName());
-
     catalog::Schema *schema = target_table->GetSchema();
-    oid_t table_oid = target_table->GetOid();
-    for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
-      catalog::Column schema_col = schema->GetColumn(col_id);
-      Column *col = manager.LookupColumn(table_oid, col_id);
-      if (col == nullptr) {
-        col = manager.AddBaseColumn(
-            schema_col.GetType(), schema_col.GetLength(), schema_col.GetName(),
-            schema_col.IsInlined(), table_oid, col_id);
-      }
-      columns.push_back(col);
-    }
+
     auto get_expr =
-        std::make_shared<OpExpression>(LogicalGet::make(target_table, columns));
+        std::make_shared<OpExpression>(LogicalGet::make(target_table));
 
     // Add where predicate as a child OpExpression
     // LM: In the future we may want to remove this and change where predicate

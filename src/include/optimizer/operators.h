@@ -44,14 +44,13 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table, std::vector<Column *> cols);
+  static Operator make(storage::DataTable *table);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
   storage::DataTable *table;
-  std::vector<Column *> columns;
 };
 
 //===--------------------------------------------------------------------===//
@@ -241,10 +240,8 @@ class ExprVariable : public OperatorNode<ExprVariable> {
 // Constant
 //===--------------------------------------------------------------------===//
 class ExprConstant : public OperatorNode<ExprConstant> {
-  ~ExprConstant() {
+  ~ExprConstant() {}
 
-  }
-  
  public:
   static Operator make(const common::Value value);
 

@@ -27,11 +27,9 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(storage::DataTable *table,
-                          std::vector<Column *> cols) {
+Operator LogicalGet::make(storage::DataTable *table) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
-  get->columns = cols;
   return Operator(get);
 }
 
@@ -39,11 +37,7 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Get) return false;
   const LogicalGet &r = *static_cast<const LogicalGet *>(&node);
   if (table->GetOid() != r.table->GetOid()) return false;
-  if (columns.size() != r.columns.size()) return false;
 
-  for (size_t i = 0; i < columns.size(); ++i) {
-    if (columns[i] != r.columns[i]) return false;
-  }
   return true;
 }
 
@@ -51,9 +45,6 @@ hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table->GetOid();
   hash = util::CombineHashes(hash, util::Hash<oid_t>(&table_oid));
-  for (Column *col : columns) {
-    hash = util::CombineHashes(hash, col->Hash());
-  }
   return hash;
 }
 
