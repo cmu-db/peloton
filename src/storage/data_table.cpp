@@ -104,12 +104,6 @@ DataTable::~DataTable() {
     delete foreign_key;
   }
 
-  // Clean up indexes
-  auto index_count = GetIndexCount();
-  for (size_t i = 0; i < index_count; i++) {
-    DropIndexWithOid(GetIndex(i)->GetOid());
-  }
-
   // AbstractTable cleans up the schema
 }
 
