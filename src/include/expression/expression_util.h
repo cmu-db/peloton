@@ -25,9 +25,9 @@
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/parser_expression.h"
-#include "expression/string_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "string_functions.h"
 
 namespace peloton {
 namespace expression {
@@ -138,30 +138,30 @@ class ExpressionUtil {
   static AbstractExpression *OperatorFactory(
       ExpressionType type, common::Type::TypeId value_type,
       AbstractExpression *expr1, AbstractExpression *expr2,
-      AbstractExpression *expr3, UNUSED_ATTRIBUTE AbstractExpression *expr4) {
+      UNUSED_ATTRIBUTE AbstractExpression *expr3, UNUSED_ATTRIBUTE AbstractExpression *expr4) {
     switch (type) {
-      case (EXPRESSION_TYPE_ASCII):
-        return new AsciiExpression(expr1);
-      case (EXPRESSION_TYPE_CHAR):
-        return new ChrExpression(expr1);
-      case (EXPRESSION_TYPE_SUBSTR):
-        return new SubstrExpression(expr1, expr2, expr3);
-      case (EXPRESSION_TYPE_CHAR_LEN):
-        return new CharLengthExpression(expr1);
-      case (EXPRESSION_TYPE_CONCAT):
-        return new ConcatExpression(expr1, expr2);
-      case (EXPRESSION_TYPE_OCTET_LEN):
-        return new OctetLengthExpression(expr1);
-      case (EXPRESSION_TYPE_REPEAT):
-        return new RepeatExpression(expr1, expr2);
-      case (EXPRESSION_TYPE_REPLACE):
-        return new ReplaceExpression(expr1, expr2, expr3);
-      case (EXPRESSION_TYPE_LTRIM):
-        return new LTrimExpression(expr1, expr2);
-      case (EXPRESSION_TYPE_RTRIM):
-        return new RTrimExpression(expr1, expr2);
-      case (EXPRESSION_TYPE_BTRIM):
-        return new BTrimExpression(expr1, expr2);
+//      case (EXPRESSION_TYPE_ASCII):
+//        return new FunctionExpression(expr1);
+//      case (EXPRESSION_TYPE_CHAR):
+//        return new ChrExpression(expr1);
+//      case (EXPRESSION_TYPE_SUBSTR):
+//        return new SubstrExpression(expr1, expr2, expr3);
+//      case (EXPRESSION_TYPE_CHAR_LEN):
+//        return new CharLengthExpression(expr1);
+//      case (EXPRESSION_TYPE_CONCAT):
+//        return new ConcatExpression(expr1, expr2);
+//      case (EXPRESSION_TYPE_OCTET_LEN):
+//        return new OctetLengthExpression(expr1);
+//      case (EXPRESSION_TYPE_REPEAT):
+//        return new RepeatExpression(expr1, expr2);
+//      case (EXPRESSION_TYPE_REPLACE):
+//        return new ReplaceExpression(expr1, expr2, expr3);
+//      case (EXPRESSION_TYPE_LTRIM):
+//        return new LTrimExpression(expr1, expr2);
+//      case (EXPRESSION_TYPE_RTRIM):
+//        return new RTrimExpression(expr1, expr2);
+//      case (EXPRESSION_TYPE_BTRIM):
+//        return new BTrimExpression(expr1, expr2);
       default:
         return new OperatorExpression(type, value_type, expr1, expr2);
     }
@@ -275,7 +275,7 @@ class ExpressionUtil {
       auto func_expr = (expression::FunctionExpression*)expr;
       auto  catalog = catalog::Catalog::GetInstance();
       catalog::FunctionData func_data = catalog->GetFunction(func_expr->func_name_);
-      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_, func_data.return_type_);
+      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_, func_data.return_type_, func_data.num_arguments_);
     }
     expr->DeduceExpressionType();
   }

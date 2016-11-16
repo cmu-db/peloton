@@ -57,7 +57,7 @@ struct FunctionData{
   std::string func_name_;
   size_t num_arguments_;
   common::Type::TypeId return_type_;
-  common::Value (*func_ptr_)(const common::Value&);
+  common::Value (*func_ptr_)(const std::vector<common::Value>&);
 };
 
 class Catalog {
@@ -175,7 +175,7 @@ class Catalog {
   // add amd get methods for UDFs
   void AddFunction(const std::string &name, const size_t num_arguments,
       const common::Type::TypeId return_type,
-      common::Value (*func_ptr)(const common::Value&));
+      common::Value (*func_ptr)(const std::vector<common::Value>&));
 
   FunctionData GetFunction(const std::string &name);
 

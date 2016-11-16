@@ -770,7 +770,7 @@ comp_expr:
 	;
 
 function_expr:
-		IDENTIFIER '(' expr ')' { $$ = new peloton::expression::FunctionExpression($1, $3); }
+		IDENTIFIER '(' expr_list ')' { $$ = new peloton::expression::FunctionExpression($1, *$3); delete $3; }
 	;
 
 

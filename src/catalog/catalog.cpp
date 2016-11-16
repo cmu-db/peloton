@@ -17,6 +17,7 @@
 #include "common/exception.h"
 #include "common/macros.h"
 #include "index/index_factory.h"
+#include "expression/string_functions.h"
 
 namespace peloton {
 namespace catalog {
@@ -749,14 +750,10 @@ Catalog::~Catalog() {
   delete pool_;
 }
 
-common::Value plus_one(const common::Value& val){
-  return val.Add(common::ValueFactory::GetIntegerValue(1));
-}
-
 // add amd get methods for UDFs
 void Catalog::AddFunction(const std::string &name, const size_t num_arguments,
     const common::Type::TypeId return_type,
-    common::Value (*func_ptr)(const common::Value&)){
+    common::Value (*func_ptr)(const std::vector<common::Value>&)){
   PL_ASSERT(functions_.count(name) == 0);
   functions_[name] = FunctionData{name, num_arguments, return_type, func_ptr};
 }
@@ -770,7 +767,19 @@ void Catalog::RemoveFunction(const std::string &name){
 }
 
 void Catalog::InitializeFunctions(){
-  AddFunction("addone", 1, common::Type::INTEGER, plus_one);
+  /**
+   * string functions
+   */
+  AddFunction("ascii", 1, common::Type::INTEGER, expression::StringFunctions::Ascii);
+  AddFunction("chr", 1, common::Type::VARCHAR, expression::StringFunctions::Chr);
+  AddFunction("substr", 3, common::Type::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("char_length", 1, common::Type::INTEGER, expression::StringFunctions::CharLength);
+  AddFunction("octet_length", 1, common::Type::INTEGER, expression::StringFunctions::OctetLength);
+  AddFunction("repeat", 2, common::Type::VARCHAR, expression::StringFunctions::Repeat);
+  AddFunction("replace", 3, common::Type::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction("ltrim", 2, common::Type::VARCHAR, expression::StringFunctions::LTrim);
+  AddFunction("rtrim", 2, common::Type::VARCHAR, expression::StringFunctions::RTrim);
+  AddFunction("btrim", 2, common::Type::VARCHAR, expression::StringFunctions::BTrim);
 }
 }
 }
