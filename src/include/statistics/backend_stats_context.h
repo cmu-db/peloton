@@ -17,7 +17,6 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "common/statement.h"
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
@@ -27,6 +26,10 @@
 #include "container/lock_free_queue.h"
 
 #define QUERY_METRIC_QUEUE_SIZE 100000
+
+namespace peloton {
+class Statement;
+}
 
 namespace peloton {
 

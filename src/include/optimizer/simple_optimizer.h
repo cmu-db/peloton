@@ -24,6 +24,7 @@ namespace parser {
 class SQLStatement;
 class SQLStatementList;
 class SelectStatement;
+class CopyStatement;
 }
 
 namespace storage {
@@ -84,6 +85,10 @@ class SimpleOptimizer : public AbstractOptimizer {
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
       storage::DataTable *target_table, parser::SelectStatement *select_stmt);
+
+  // create a copy plan for a copy statement
+  static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
+      parser::CopyStatement *copy_stmt);
 
   static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
 };

@@ -145,14 +145,6 @@ void CopyExecutor::Copy(const char *data, int len, bool end_of_line) {
   PL_ASSERT(buff_size <= COPY_BUFFER_SIZE);
 }
 
-void CopyExecutor::CreateParamPacket(wire::Packet &packet, int len,
-                                     std::string &val) {
-  // Copy the data from string to packet buf
-  packet.len = len;
-  packet.buf.resize(packet.len);
-  PL_MEMCPY(packet.buf.data(), val.data(), len);
-}
-
 /**
  * @return true on success, false otherwise.
  */
@@ -204,8 +196,7 @@ bool CopyExecutor::DExecute() {
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     common::Type::VARBINARY);
 
-          wire::Packet packet;
-          CreateParamPacket(packet, len, val);
+          wire::InputPacket packet(len, val);
 
           // Read param types
           types.resize(num_params);
@@ -221,8 +212,7 @@ bool CopyExecutor::DExecute() {
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     common::Type::VARBINARY);
 
-          wire::Packet packet;
-          CreateParamPacket(packet, len, val);
+          wire::InputPacket packet(len, val);
 
           // Read param formats
           formats.resize(num_params);
@@ -233,9 +223,7 @@ bool CopyExecutor::DExecute() {
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
                     common::Type::VARBINARY);
 
-          wire::Packet packet;
-          CreateParamPacket(packet, len, val);
-
+          wire::InputPacket packet(len, val);
           bind_parameters.resize(num_params);
           param_values.resize(num_params);
           wire::PacketManager::ReadParamValue(&packet, num_params, types,

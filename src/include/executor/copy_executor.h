@@ -51,9 +51,6 @@ class CopyExecutor : public AbstractExecutor {
   // Copy and escape the content of column to local buffer
   void Copy(const char *data, int len, bool end_of_line);
 
-  // Create a packet for prepared statement parameter data before parsing it
-  void CreateParamPacket(wire::Packet &packet, int len, std::string &val);
-
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//

@@ -32,17 +32,17 @@ void PelotonInit::Initialize() {
   // Initialize CDS library
   cds::Initialize();
 
-
   // FIXME: A number for the available threads other than
   // std::thread::hardware_concurrency() should be
   // chosen. Assigning new task after reaching maximum will
   // block.
-  thread_pool.Initialize(std::thread::hardware_concurrency(), 0);
+  thread_pool.Initialize(std::thread::hardware_concurrency(),
+                         std::thread::hardware_concurrency());
 
   int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
-  
+
   // the garbage collector is assigned to dedicated threads.
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   gc_manager.StartGC();

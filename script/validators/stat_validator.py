@@ -126,6 +126,6 @@ if __name__ == '__main__':
 
         # try parse the stat result
         parse(PELOTON_STAT_CSV)
-
+        print("Parse successful")
         sys.exit(EXIT_SUCCESS)
 

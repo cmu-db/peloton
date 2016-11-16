@@ -35,13 +35,12 @@ class CopyPlan : public AbstractPlan {
   CopyPlan(CopyPlan &&) = delete;
   CopyPlan &operator=(CopyPlan &&) = delete;
 
-  explicit CopyPlan(parser::CopyStatement *parse_tree);
+  explicit CopyPlan(char *file_path, bool deserialize_parameters)
+      : file_path(file_path), deserialize_parameters(deserialize_parameters) {
+    LOG_DEBUG("Creating a Copy Plan");
+  }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_COPY; }
-
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<common::Value> *values) {
-    // XXX Ignore prepared statement for COPY for now
-  }
 
   const std::string GetInfo() const { return "CopyPlan"; }
 

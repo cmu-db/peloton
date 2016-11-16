@@ -145,6 +145,7 @@ public class PelotonTest {
   }
 
   public void Close() throws SQLException {
+    System.out.println("Close called");
     conn.close();
   }
 
@@ -154,6 +155,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Init() throws SQLException {
+    System.out.println("Init");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DROP);
@@ -186,10 +188,10 @@ public class PelotonTest {
       System.out.println(r.getInt(2));
       System.out.println(r.getBigDecimal(3));
    }
-   r.close();
+   r.close(); 
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
-    pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
+    PreparedStatement pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
     java.sql.Timestamp sysdate = new java.sql.Timestamp(
       System.currentTimeMillis());
     java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
@@ -198,12 +200,13 @@ public class PelotonTest {
     pstmt.setTimestamp(1, timestamp, null);
     //pstmt.setTimestamp(1, sysdate);
     //pstmt.setTimestamp(1, datetime, null);
-    pstmt.execute();
+    pstmt.execute();*/
     System.out.println("Test db created.");
-    //System.exit(0);*/
+    //System.exit(0);
   }
 
   public void ShowTable() throws SQLException {
+    System.out.println("Show table");
     int numRows;
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
@@ -239,6 +242,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Scan_Test() throws SQLException {
+    System.out.println("Scan Test");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(INSERT_A_1);
@@ -279,6 +283,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Stat_Test() throws Exception {
+    System.out.println("Stat Test");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
     int txn_committed = 0;
@@ -725,6 +730,7 @@ public class PelotonTest {
   
   //tests inserting and reading back large binary values
   public void BlobTest() throws SQLException {
+    System.out.println("Blob Test");
     Random rand = new Random(12345L);
     for (int i = 1; i < 20; i++) {
       Statement initstmt = conn.createStatement();
