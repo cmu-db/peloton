@@ -29,12 +29,6 @@ public:
       AbstractExpression(EXPRESSION_TYPE_STAR){
   }
 
-  StarExpression(Value (*func_ptr)(Value&), Type::TypeId type_id,
-      AbstractExpression *left, AbstractExpression *right) :
-      AbstractExpression(EXPRESSION_TYPE_STAR, type_id, left, right) {
-  }
-
-
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
   UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
   UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
