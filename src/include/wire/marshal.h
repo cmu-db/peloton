@@ -147,6 +147,7 @@ extern void PacketPutBytes(OutputPacket *pkt, const std::vector<uchar> &data);
 * Unmarshallers
 */
 
+/* Copy len bytes from the position indicated by begin to an array */
 extern uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len);
 /*
 * packet_get_int -  Parse an int out of the head of the

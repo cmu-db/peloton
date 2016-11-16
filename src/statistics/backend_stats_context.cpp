@@ -13,6 +13,7 @@
 #include <map>
 
 #include "common/types.h"
+#include "common/statement.h"
 #include "catalog/catalog.h"
 #include "index/index.h"
 #include "statistics/backend_stats_context.h"

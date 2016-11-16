@@ -15,6 +15,7 @@
 #include "common/printable.h"
 #include "catalog/constraint.h"
 #include "common/type.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace catalog {
@@ -40,7 +41,7 @@ class Column : public Printable {
 
     // We should not have an inline value of length 0
     if (is_inlined && column_length == 0) {
-      assert(false);
+      PL_ASSERT(false);
     }
 
     SetLength(column_length);

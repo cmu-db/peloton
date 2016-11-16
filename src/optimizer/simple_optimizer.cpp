@@ -285,13 +285,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               // If aggregate type is average the value type should be double
               if (ParserExpressionNameToExpressionType(func_expr->GetName()) ==
                   EXPRESSION_TYPE_AGGREGATE_AVG) {
+                // COL_A should be used only when there is no AS
                 auto column = catalog::Column(
                     common::Type::DECIMAL,
                     common::Type::GetTypeSize(common::Type::DECIMAL),
-                    "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
-                                                             // used only when
-                                                             // there is no AS
-                    true);
+                    "COL_" + std::to_string(col_cntr_id++), true);
 
                 output_schema_columns.push_back(column);
               }
@@ -414,9 +412,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement* copy_parse_tree =
           static_cast<parser::CopyStatement*>(parse_tree2);
-      std::unique_ptr<planner::AbstractPlan> child_CopyPlan(
-          new planner::CopyPlan(copy_parse_tree));
-      child_plan = std::move(child_CopyPlan);
+      child_plan = std::move(CreateCopyPlan(copy_parse_tree));
     } break;
 
     case STATEMENT_TYPE_DELETE: {
@@ -502,6 +498,58 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
    child_plan = std::move(child_parse);
    }*/
   return plan_tree;
+}
+
+std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
+    parser::CopyStatement* copy_stmt) {
+
+  std::string table_name(copy_stmt->table_name->GetName());
+  bool deserialize_parameters = false;
+
+  // If we're copying the query metric table, then we need to handle the
+  // deserialization of prepared stmt parameters
+  if (table_name == QUERY_METRIC_NAME) {
+    LOG_DEBUG("Copying the query_metric table.");
+    deserialize_parameters = true;
+  }
+
+  std::unique_ptr<planner::AbstractPlan> copy_plan(
+      new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
+
+  // Next, generate a dummy select * plan for target table
+  // Hard code star expression
+  char* star = new char[2];
+  strcpy(star, "*");
+  auto star_expr = new peloton::expression::ParserExpression(
+      peloton::EXPRESSION_TYPE_STAR, star);
+
+  // Push star expression to list
+  auto select_list =
+      new std::vector<peloton::expression::AbstractExpression*>();
+  select_list->push_back(star_expr);
+
+  // Populate seq scan table ref
+  parser::TableRef* table_ref =
+      new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
+  table_ref->table_name =
+      static_cast<expression::ParserExpression*>(copy_stmt->table_name->Copy());
+
+  // Construct select stmt
+  std::unique_ptr<parser::SelectStatement> select_stmt(
+      new parser::SelectStatement());
+  select_stmt->from_table = table_ref;
+  select_stmt->select_list = select_list;
+
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, table_name);
+
+  auto select_plan =
+      SimpleOptimizer::CreateScanPlan(target_table, select_stmt.get());
+  LOG_DEBUG("Sequential scan plan for copy created");
+
+  // Attach it to the copy plan
+  copy_plan->AddChild(std::move(select_plan));
+  return std::move(copy_plan);
 }
 
 /**
