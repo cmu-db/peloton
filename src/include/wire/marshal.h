@@ -27,20 +27,30 @@ class LibeventSocket;
 
 class InputPacket {
  public:
-  uchar msg_type;   // header
-  size_t len;       // size of packet without header
-  size_t ptr;       // ByteBuf cursor
-  ByteBuf::const_iterator begin, end; // start and end iterators of the buffer
-  bool header_parsed;   // has the header been parsed
-  bool is_initialized;  // has the packet been initialized
-  bool is_extended;     // check if we need to use the extended buffer
+  uchar msg_type;                      // header
+  size_t len;                          // size of packet without header
+  size_t ptr;                          // ByteBuf cursor
+  ByteBuf::const_iterator begin, end;  // start and end iterators of the buffer
+  bool header_parsed;                  // has the header been parsed
+  bool is_initialized;                 // has the packet been initialized
+  bool is_extended;  // check if we need to use the extended buffer
 
  private:
-  ByteBuf extended_buffer_; // used to store packets that don't fit in rbuf
+  ByteBuf extended_buffer_;  // used to store packets that don't fit in rbuf
 
  public:
   // reserve buf's size as maximum packet size
   inline InputPacket() { Reset(); }
+
+  // Create a packet for prepared statement parameter data before parsing it
+  inline InputPacket(int len, std::string &val) {
+    Reset();
+    // Copy the data from string to packet buf
+    this->len = len;
+    extended_buffer_.resize(len);
+    PL_MEMCPY(extended_buffer_.data(), val.data(), len);
+    InitializePacket();
+  }
 
   inline void Reset() {
     is_initialized = header_parsed = is_extended = false;
@@ -77,18 +87,13 @@ class InputPacket {
     is_initialized = true;
   }
 
-  ByteBuf::const_iterator Begin() {
-    return begin;
-  }
+  ByteBuf::const_iterator Begin() { return begin; }
 
-  ByteBuf::const_iterator End() {
-    return end;
-  }
+  ByteBuf::const_iterator End() { return end; }
 };
 
-
 struct OutputPacket {
-  ByteBuf buf;      // stores packet contents
+  ByteBuf buf;     // stores packet contents
   size_t len;      // size of packet
   size_t ptr;      // ByteBuf cursor, which is used for get and put
   uchar msg_type;  // header
@@ -105,7 +110,6 @@ struct OutputPacket {
     skip_header_write = true;
   }
 };
-
 
 struct Client {
   // Authentication details
@@ -143,6 +147,7 @@ extern void PacketPutBytes(OutputPacket *pkt, const std::vector<uchar> &data);
 * Unmarshallers
 */
 
+extern uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len);
 /*
 * packet_get_int -  Parse an int out of the head of the
 * 	packet. "base" bytes determine the number of bytes of integer

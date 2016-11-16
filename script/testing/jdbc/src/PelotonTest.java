@@ -188,7 +188,7 @@ public class PelotonTest {
       System.out.println(r.getInt(2));
       System.out.println(r.getBigDecimal(3));
    }
-   r.close(); */
+   r.close(); 
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
     PreparedStatement pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
@@ -200,7 +200,7 @@ public class PelotonTest {
     pstmt.setTimestamp(1, timestamp, null);
     //pstmt.setTimestamp(1, sysdate);
     //pstmt.setTimestamp(1, datetime, null);
-    pstmt.execute();
+    pstmt.execute();*/
     System.out.println("Test db created.");
     //System.exit(0);
   }

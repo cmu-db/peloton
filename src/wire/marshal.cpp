@@ -108,6 +108,12 @@ void GetStringToken(InputPacket *rpkt, std::string &result) {
   }
 }
 
+uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len) {
+  uchar *result = new uchar[len];
+  PL_MEMCPY(result, &(*begin), len);
+  return result;
+}
+
 void PacketPutByte(OutputPacket *pkt, const uchar c) {
   pkt->buf.push_back(c);
   pkt->len++;

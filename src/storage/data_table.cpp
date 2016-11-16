@@ -70,7 +70,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
 
   active_indirection_arrays_.resize(active_indirection_array_count_);
 
-
   // Create tile groups.
   for (size_t i = 0; i < active_tilegroup_count_; ++i) {
     AddDefaultTileGroup(i);
@@ -103,6 +102,12 @@ DataTable::~DataTable() {
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
+  }
+
+  // Clean up indexes
+  auto index_count = GetIndexCount();
+  for (size_t i = 0; i < index_count; i++) {
+    DropIndexWithOid(GetIndex(i)->GetOid());
   }
 
   // AbstractTable cleans up the schema
@@ -148,7 +153,8 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // new tile group.
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
-// when updating a tuple, we will invoke this function with the argument set to nullptr.
+// when updating a tuple, we will invoke this function with the argument set to
+// nullptr.
 // this is because we want to minimize data copy overhead by performing
 // in-place update at executor level.
 // however, when performing insert, we have to copy data immediately,
@@ -162,7 +168,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
-      auto tile_group = catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
+      auto tile_group =
+          catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
       tile_group->CopyTuple(tuple, free_item_pointer.offset);
     }
     return free_item_pointer;
@@ -328,16 +335,19 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
   int index_count = GetIndexCount();
 
-  size_t active_indirection_array_id = number_of_tuples_ % active_indirection_array_count_;
+  size_t active_indirection_array_id =
+      number_of_tuples_ % active_indirection_array_count_;
 
   size_t indirection_offset = INVALID_INDIRECTION_OFFSET;
-  
+
   while (true) {
-    auto active_indirection_array = active_indirection_arrays_[active_indirection_array_id];
+    auto active_indirection_array =
+        active_indirection_arrays_[active_indirection_array_id];
     indirection_offset = active_indirection_array->AllocateIndirection();
 
     if (indirection_offset != INVALID_INDIRECTION_OFFSET) {
-      *index_entry_ptr = active_indirection_array->GetIndirectionByOffset(indirection_offset);
+      *index_entry_ptr =
+          active_indirection_array->GetIndirectionByOffset(indirection_offset);
       break;
     }
   }
@@ -368,7 +378,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: 
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // get unique tuple from primary/unique index.
         // if in this index there has been a visible or uncommitted
@@ -385,7 +395,8 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     // Handle failure
     if (res == false) {
       // If some of the indexes have been inserted,
-      // the pointer has a chance to be dereferenced by readers and it cannot be deleted
+      // the pointer has a chance to be dereferenced by readers and it cannot be
+      // deleted
       *index_entry_ptr = nullptr;
       return false;
     } else {
@@ -624,8 +635,8 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   return column_map;
 }
 
-
-oid_t DataTable::AddDefaultIndirectionArray(const size_t &active_indirection_array_id) {
+oid_t DataTable::AddDefaultIndirectionArray(
+    const size_t &active_indirection_array_id) {
   std::shared_ptr<IndirectionArray> indirection_array(new IndirectionArray());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -664,7 +675,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
 
   // add tile group metadata in locator
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-  
+
   COMPILER_MEMORY_FENCE;
 
   active_tile_groups_[active_tile_group_id] = tile_group;
@@ -996,8 +1007,8 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 
     // Copy the column over to the new tile group
     for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
-      common::Value val = (
-        orig_tile->GetValue(tuple_itr, orig_tile_column_offset));
+      common::Value val =
+          (orig_tile->GetValue(tuple_itr, orig_tile_column_offset));
       new_tile->SetValue(val, tuple_itr, new_tile_column_offset);
     }
   }

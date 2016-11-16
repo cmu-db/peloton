@@ -315,31 +315,35 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
-  //  auto type_buf_begin = pkt->ptr;
+  auto type_buf_begin = pkt->Begin() + pkt->ptr;
   auto type_buf_len = ReadParamType(pkt, num_params, param_types);
-
-  // Make a copy of param types for stat collection
-  stats::QueryMetric::QueryParamBuf query_type_buf;
-  query_type_buf.buf = new uchar[type_buf_len];
-  query_type_buf.len = type_buf_len;
-
-  // TODO: @Haibin - Change packet parsing approach
-  // PL_MEMCPY(query_type_buf.buf, pkt->buf.data() + type_buf_begin,
-  // type_buf_len);
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
   statement->SetQueryType(query_type);
   statement->SetParamTypes(param_types);
 
+  // Stat
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    // Make a copy of param types for stat collection
+    stats::QueryMetric::QueryParamBuf query_type_buf;
+    query_type_buf.len = type_buf_len;
+    query_type_buf.buf = PacketCopyBytes(type_buf_begin, type_buf_len);
+
+    // Unnamed statement
+    if (unnamed_query) {
+      unnamed_stmt_param_types_ = query_type_buf;
+    } else {
+      statement_param_types_[statement_name] = query_type_buf;
+    }
+  }
+
   // Unnamed statement
   if (unnamed_query) {
     unnamed_statement_ = statement;
-    unnamed_stmt_param_types_ = query_type_buf;
   } else {
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
-    statement_param_types_[statement_name] = query_type_buf;
   }
   // Send Parse complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -365,7 +369,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   int num_params_format = PacketGetInt(pkt, 2);
   std::vector<int16_t> formats(num_params_format);
 
-  //  auto format_buf_begin = pkt->ptr;
+  auto format_buf_begin = pkt->Begin() + pkt->ptr;
   auto format_buf_len = ReadParamFormat(pkt, num_params_format, formats);
 
   int num_params = PacketGetInt(pkt, 2);
@@ -429,7 +433,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
 
   auto param_types = statement->GetParamTypes();
 
-  //  auto val_buf_begin = pkt->ptr;
+  auto val_buf_begin = pkt->Begin() + pkt->ptr;
   auto val_buf_len = ReadParamValue(pkt, num_params, param_types,
                                     bind_parameters, param_values, formats);
 
@@ -461,23 +465,20 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
     // executor context.
   }
 
-  // Make a copy of format for stat collection
-  stats::QueryMetric::QueryParamBuf param_format_buf;
-  param_format_buf.buf = new uchar[format_buf_len];
-  param_format_buf.len = format_buf_len;
-  // PL_MEMCPY(param_format_buf.buf, pkt->buf.data() + format_buf_begin,
-  //          format_buf_len);
-  PL_ASSERT(format_buf_len > 0 || num_params == 0);
-
-  // Make a copy of value for stat collection
-  stats::QueryMetric::QueryParamBuf param_val_buf;
-  param_val_buf.buf = new uchar[val_buf_len];
-  param_val_buf.len = val_buf_len;
-  // PL_MEMCPY(param_val_buf.buf, pkt->buf.data() + val_buf_begin, val_buf_len);
-  PL_ASSERT(val_buf_len > 0 || num_params == 0);
-
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (num_params > 0) {
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID && num_params > 0) {
+    // Make a copy of format for stat collection
+    stats::QueryMetric::QueryParamBuf param_format_buf;
+    param_format_buf.len = format_buf_len;
+    param_format_buf.buf = PacketCopyBytes(format_buf_begin, format_buf_len);
+    PL_ASSERT(format_buf_len > 0);
+
+    // Make a copy of value for stat collection
+    stats::QueryMetric::QueryParamBuf param_val_buf;
+    param_val_buf.len = val_buf_len;
+    param_val_buf.buf = PacketCopyBytes(val_buf_begin, val_buf_len);
+    PL_ASSERT(val_buf_len > 0);
+
     param_stat.reset(new stats::QueryMetric::QueryParams(
         param_format_buf, param_type_buf, param_val_buf, num_params));
   }
