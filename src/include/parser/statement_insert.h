@@ -14,7 +14,6 @@
 
 #include "parser/sql_statement.h"
 #include "parser/statement_select.h"
-#include "expression/parser_expression.h"
 
 namespace peloton {
 namespace parser {

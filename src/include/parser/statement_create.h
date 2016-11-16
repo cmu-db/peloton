@@ -13,7 +13,6 @@
 #pragma once
 
 #include "parser/sql_statement.h"
-#include "expression/parser_expression.h"
 #include "common/types.h"
 
 namespace peloton {

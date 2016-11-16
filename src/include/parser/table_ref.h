@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "expression/abstract_expression.h"
-#include "expression/parser_expression.h"
 #include "parser/sql_statement.h"
 
 #include "common/types.h"
