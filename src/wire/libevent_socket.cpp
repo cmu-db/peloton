@@ -27,10 +27,24 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
 
   // clear out packet
   rpkt.Reset();
+  if (event == nullptr) {
+    event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+                      EventHandler, this);
+  } else {
+    // Reuse the event object if already initialized
+    if (event_del(event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
 
-  // TODO: Maybe switch to event_assign once State machine is implemented
-  event = event_new(thread->GetEventBase(), sock_fd, event_flags, EventHandler,
-                    this);
+    auto result = event_assign(event, thread->GetEventBase(), sock_fd,
+                               event_flags, EventHandler, this);
+
+    if (result != 0) {
+      LOG_ERROR("Failed to update event");
+      PL_ASSERT(false);
+    }
+  }
   event_add(event, nullptr);
 }
 

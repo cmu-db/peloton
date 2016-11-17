@@ -216,18 +216,18 @@ class LibeventMasterThread : public LibeventThread {
  */
 class LibeventSocket {
  public:
-  int sock_fd;           // socket file descriptor
-  struct event *event;   // libevent handle
-  short event_flags;     // event flags mask
+  int sock_fd;                    // socket file descriptor
+  struct event *event = nullptr;  // libevent handle
+  short event_flags;              // event flags mask
 
-  LibeventThread *thread;  // reference to the libevent thread
-  PacketManager pkt_manager;  // Stores state for this socket
+  LibeventThread *thread;          // reference to the libevent thread
+  PacketManager pkt_manager;       // Stores state for this socket
   ConnState state = CONN_INVALID;  // Initial state of connection
-  InputPacket rpkt;        // Used for reading a single Postgres packet
+  InputPacket rpkt;                // Used for reading a single Postgres packet
 
  private:
-  Buffer rbuf_;                      // Socket's read buffer
-  Buffer wbuf_;                      // Socket's write buffer
+  Buffer rbuf_;                     // Socket's read buffer
+  Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
 
  private:
