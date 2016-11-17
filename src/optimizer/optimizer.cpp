@@ -153,7 +153,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     this->CostExpression(candidate);
 
     // Only include cost if it meets the property requirements
-    if (requirements.IsSubset(candidate->Op().ProvidedOutputProperties())) {
+    if (candidate->Op().ProvidedOutputProperties() >= requirements) {
       // Add to group as potential best cost
       Group *group = this->memo.GetGroupByID(candidate->GetGroupID());
       LOG_TRACE("Adding expression cost on group %d with op %s",

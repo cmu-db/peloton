@@ -22,7 +22,7 @@ hash_t Property::Hash() const {
   return util::Hash(&t);
 }
 
-bool Property::operator==(const Property &r) const {
+bool Property::operator>=(const Property &r) const {
   return Type() == r.Type();
 }
 

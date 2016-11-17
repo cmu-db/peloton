@@ -21,6 +21,7 @@
 namespace peloton {
 namespace optimizer {
 
+// A set of physical properties
 class PropertySet {
  public:
   PropertySet();
@@ -31,9 +32,9 @@ class PropertySet {
 
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
 
-  bool IsSubset(const PropertySet &r);
-
   hash_t Hash() const;
+
+  bool operator>=(const PropertySet &r) const;
 
   bool operator==(const PropertySet &r) const;
 

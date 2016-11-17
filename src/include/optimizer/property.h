@@ -23,6 +23,16 @@ enum class PropertyType {
   PREDICATE,
 };
 
+/*
+ * Physical properties are those fields that can be directly added to the plan,
+ * and don't need to perform transformations on.
+ *
+ * Note: Sometimes there're different choices of physical properties. E.g., the
+ * sorting order might be provided by either a sort executor or a underlying
+ * sort merge join. But those different implementations are directly specified
+ * when constructing the physical operator tree, other than using rule
+ * transformation.
+ */
 class Property {
  public:
   virtual ~Property();
@@ -31,7 +41,8 @@ class Property {
 
   virtual hash_t Hash() const;
 
-  virtual bool operator==(const Property &r) const;
+  // Provide partial order
+  virtual bool operator>=(const Property &r) const;
 };
 
 } /* namespace optimizer */

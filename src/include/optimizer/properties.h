@@ -19,6 +19,7 @@
 namespace peloton {
 namespace optimizer {
 
+// Specifies which columns should the query return
 class PropertyColumns : public Property {
  public:
   PropertyColumns(std::vector<Column *> columns);
@@ -27,12 +28,13 @@ class PropertyColumns : public Property {
 
   hash_t Hash() const override;
 
-  bool operator==(const Property &r) const override;
+  bool operator>=(const Property &r) const override;
 
  private:
   std::vector<Column *> columns;
 };
 
+// Specifies the required sorting order of the query
 class PropertySort : public Property {
  public:
   PropertySort(std::vector<Column *> sort_columns,
@@ -40,24 +42,25 @@ class PropertySort : public Property {
 
   PropertyType Type() const override;
 
-  // hash_t Hash() const override;
+  hash_t Hash() const override;
 
-  // bool operator==(const Property &r) const override;
+  bool operator>=(const Property &r) const override;
 
  private:
   std::vector<Column *> sort_columns;
   std::vector<bool> sort_ascending;
 };
 
+// Specifies the predicate that the tuples returned by the query should satisfy
 class PropertyPredicate : public Property {
  public:
   PropertyPredicate(expression::AbstractExpression *predicate);
 
   PropertyType Type() const override;
 
-  // hash_t Hash() const override;
+  hash_t Hash() const override;
 
-  // bool operator==(const Property &r) const override;
+  bool operator>=(const Property &r) const override;
 
  private:
   expression::AbstractExpression *predicate_;

@@ -32,14 +32,15 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
       return prop;
     }
   }
+
   return nullptr;
 }
 
-bool PropertySet::IsSubset(const PropertySet &r) {
-  for (auto r_property : r.properties_) {
+bool PropertySet::operator>=(const PropertySet &r) const {
+  for (auto property : r.properties_) {
     bool has_property = false;
-    for (auto property : properties_) {
-      if (*property == *r_property) {
+    for (auto r_property : properties_) {
+      if (*property >= *r_property) {
         has_property = true;
         break;
       }
@@ -49,6 +50,10 @@ bool PropertySet::IsSubset(const PropertySet &r) {
   return true;
 }
 
+bool PropertySet::operator==(const PropertySet &r) const {
+  return *this >= r && r >= *this;
+}
+
 hash_t PropertySet::Hash() const {
   size_t prop_size = properties_.size();
   hash_t hash = util::Hash<size_t>(&prop_size);
@@ -56,17 +61,6 @@ hash_t PropertySet::Hash() const {
     hash = util::CombineHashes(hash, prop->Hash());
   }
   return hash;
-}
-
-bool PropertySet::operator==(const PropertySet &r) const {
-  for (auto &left_prop : properties_) {
-    bool match = false;
-    for (auto &right_prop : r.properties_) {
-      match = match || (*left_prop == *right_prop);
-    }
-    if (!match) return false;
-  }
-  return true;
 }
 
 } /* namespace optimizer */
