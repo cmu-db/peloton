@@ -26,11 +26,17 @@ ItemPointer INVALID_ITEMPOINTER;
 
 FileHandle INVALID_FILE_HANDLE;
 
-// WARNING: It will limit scalability if tupers per tile group is too small,
+// WARNING: It will limit scalability if tuples per tile group is too small,
 // When a tile group is full, a new tile group needs to be allocated, until
 // then no new insertion of new versions or tuples are available in the table.
 int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
 int TEST_TUPLES_PER_TILEGROUP = 5;
+
+// For threads
+size_t QUERY_THREAD_COUNT = 1;
+size_t LOGGING_THREAD_COUNT = 1;
+size_t GC_THREAD_COUNT = 1;
+size_t EPOCH_THREAD_COUNT = 1;
 
 //===--------------------------------------------------------------------===//
 // Type utilities
