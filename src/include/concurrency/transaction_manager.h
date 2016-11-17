@@ -20,8 +20,7 @@
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction.h"
-#include "concurrency/epoch_manager.h"
-#include "gc/gc_manager.h"
+#include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
 
 namespace peloton {

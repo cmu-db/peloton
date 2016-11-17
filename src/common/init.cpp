@@ -16,7 +16,7 @@
 #include "common/config.h"
 
 #include "gc/gc_manager_factory.h"
-#include "concurrency/epoch_manager.h"
+#include "concurrency/epoch_manager_factory.h"
 #include "storage/data_table.h"
 
 #include "libcds/cds/init.h"
