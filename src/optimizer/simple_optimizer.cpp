@@ -19,6 +19,7 @@
 #include "expression/expression_util.h"
 #include "expression/aggregate_expression.h"
 #include "expression/function_expression.h"
+#include "expression/star_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "planner/abstract_plan.h"
@@ -550,7 +551,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
     parser::CopyStatement* copy_stmt) {
 
-  std::string table_name(copy_stmt->table_name->GetName());
+  std::string table_name(copy_stmt->cpy_table->GetTableName());
   bool deserialize_parameters = false;
 
   // If we're copying the query metric table, then we need to handle the
@@ -565,33 +566,30 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
 
   // Next, generate a dummy select * plan for target table
   // Hard code star expression
-  char* star = new char[2];
-  strcpy(star, "*");
-  auto star_expr = new peloton::expression::ParserExpression(
-      peloton::EXPRESSION_TYPE_STAR, star);
+  auto star_expr = new peloton::expression::StarExpression();
 
   // Push star expression to list
   auto select_list =
       new std::vector<peloton::expression::AbstractExpression*>();
   select_list->push_back(star_expr);
 
-  // Populate seq scan table ref
-  parser::TableRef* table_ref =
-      new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-  table_ref->table_name =
-      static_cast<expression::ParserExpression*>(copy_stmt->table_name->Copy());
-
   // Construct select stmt
   std::unique_ptr<parser::SelectStatement> select_stmt(
       new parser::SelectStatement());
-  select_stmt->from_table = table_ref;
+  select_stmt->from_table = copy_stmt->cpy_table;
+  copy_stmt->cpy_table = nullptr;
   select_stmt->select_list = select_list;
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      table_ref->GetDatabaseName(), table_name);
+      select_stmt->from_table->GetDatabaseName(), table_name);
+
+  std::unordered_map<oid_t, oid_t> column_mapping;
+  std::vector<oid_t> column_ids;
+  bool needs_projection = false;
+  expression::ExpressionUtil::TransformExpression(column_mapping, column_ids, nullptr, *target_table->GetSchema(), needs_projection);
 
   auto select_plan =
-      SimpleOptimizer::CreateScanPlan(target_table, select_stmt.get());
+      SimpleOptimizer::CreateScanPlan(target_table, column_ids, nullptr, false);
   LOG_DEBUG("Sequential scan plan for copy created");
 
   // Attach it to the copy plan
