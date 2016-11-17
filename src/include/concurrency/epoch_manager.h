@@ -59,6 +59,10 @@ class EpochManager {
     finish_ = true;
   }
 
+  void SetQueryThreadCount() {
+
+  }
+
   size_t EnterEpoch(cid_t begin_cid) {
     auto epoch = current_epoch_.load();
 
