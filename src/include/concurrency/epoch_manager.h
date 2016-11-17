@@ -23,8 +23,6 @@
 namespace peloton {
 namespace concurrency {
 
-#define EPOCH_LENGTH 40
-
 struct Epoch {
   std::atomic<int> txn_ref_count_;
   cid_t max_cid_;
