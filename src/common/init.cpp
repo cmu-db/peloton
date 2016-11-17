@@ -37,8 +37,7 @@ void PelotonInit::Initialize() {
   // std::thread::hardware_concurrency() should be
   // chosen. Assigning new task after reaching maximum will
   // block.
-  thread_pool.Initialize(std::thread::hardware_concurrency(),
-                         std::thread::hardware_concurrency());
+  thread_pool.Initialize(0, std::thread::hardware_concurrency());
 
   int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
