@@ -33,10 +33,13 @@ void PelotonInit::Initialize() {
   // Initialize CDS library
   cds::Initialize();
 
-  // FIXME: A number for the available threads other than
-  // std::thread::hardware_concurrency() should be
-  // chosen. Assigning new task after reaching maximum will
-  // block.
+
+  QUERY_THREAD_COUNT = std::thread::hardware_concurrency();
+  LOGGING_THREAD_COUNT = 1;
+  GC_THREAD_COUNT = 1;
+  EPOCH_THREAD_COUNT = 1;
+
+  // set max thread number.
   thread_pool.Initialize(0, std::thread::hardware_concurrency());
 
   int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
