@@ -16,6 +16,7 @@
 #include "common/config.h"
 
 #include "gc/gc_manager_factory.h"
+#include "concurrency/epoch_manager.h"
 #include "storage/data_table.h"
 
 #include "libcds/cds/init.h"
@@ -40,25 +41,26 @@ void PelotonInit::Initialize() {
   EPOCH_THREAD_COUNT = 1;
 
   // set max thread number.
-  thread_pool.Initialize(0, std::thread::hardware_concurrency());
+  thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
 
   int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
 
-  // the garbage collector is assigned to dedicated threads.
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  gc_manager.StartGC();
-
-  //initialize the catalog so we don't do this on the first query
+  // start epoch.
+  concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+  // start GC.
+  gc::GCManagerFactory::GetInstance().StartGC();
+  // initialize the catalog so we don't do this on the first query
   catalog::Catalog::GetInstance();
 }
 
 void PelotonInit::Shutdown() {
 
   // shut down GC.
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  gc_manager.StopGC();
+  gc::GCManagerFactory::GetInstance().StopGC();
+  // shut down epoch.
+  concurrency::EpochManagerFactory::GetInstance().StopEpoch();
 
   thread_pool.Shutdown();
 
