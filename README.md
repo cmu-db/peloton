@@ -26,6 +26,13 @@ For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/pelo
 
 Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki/Installation).
 
+## Supported Platforms
+
+Peloton is known to work on the following platforms. Please note that it will not compile on 32-bit systems.
+
+* Ubuntu Linux 14.04+ (64-bit)
+* <s>Mac OS X 10.9+ (64-bit)</s>
+
 ## Development / Contributing
 
 We invite you to help us build the future of self-driving DBMSs. Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
