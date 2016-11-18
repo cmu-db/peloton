@@ -52,11 +52,15 @@ namespace catalog {
 // Catalog
 //===--------------------------------------------------------------------===//
 
-
+// information about functions (for FunctionExpression)
 struct FunctionData{
+  // name of the function
   std::string func_name_;
+  // number of arguments
   size_t num_arguments_;
+  // funtion's return type
   common::Type::TypeId return_type_;
+  // pointer to the funtion
   common::Value (*func_ptr_)(const std::vector<common::Value>&);
 };
 
@@ -172,7 +176,7 @@ class Catalog {
   // FUNCTION ACCESS
   //===--------------------------------------------------------------------===//
 
-  // add amd get methods for UDFs
+  // add and get methods for functions
   void AddFunction(const std::string &name, const size_t num_arguments,
       const common::Type::TypeId return_type,
       common::Value (*func_ptr)(const std::vector<common::Value>&));
@@ -200,6 +204,7 @@ class Catalog {
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
 
+  // map of function names to data about functions (number of arguments, function ptr, return type)
   std::unordered_map<std::string, FunctionData> functions_;
 
  public:

@@ -62,7 +62,7 @@ public:
 
   void SetTupleValueExpressionParams(Type::TypeId type_id, int value_idx,
       int tuple_idx) {
-    value_type_ = type_id;
+    return_value_type_ = type_id;
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }

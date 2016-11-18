@@ -95,7 +95,7 @@ class AbstractExpression : public Printable {
 
   ExpressionType GetExpressionType() const { return exp_type_; }
 
-  Type::TypeId GetValueType() const { return value_type_; }
+  Type::TypeId GetValueType() const { return return_value_type_; }
 
   virtual void DeduceExpressionType() {}
 
@@ -142,25 +142,25 @@ class AbstractExpression : public Printable {
 
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type, Type::TypeId type_id)
-      : exp_type_(exp_type), value_type_(type_id) {}
-  AbstractExpression(ExpressionType exp_type, Type::TypeId type_id,
+  AbstractExpression(ExpressionType exp_type, Type::TypeId return_value_type)
+      : exp_type_(exp_type), return_value_type_(return_value_type) {}
+  AbstractExpression(ExpressionType exp_type, Type::TypeId return_value_type,
                      AbstractExpression *left,
                      AbstractExpression *right)
-      : exp_type_(exp_type), value_type_(type_id) {
+      : exp_type_(exp_type), return_value_type_(return_value_type) {
     // Order of these is important!
     children_.push_back(std::unique_ptr<AbstractExpression>(left));
     children_.push_back(std::unique_ptr<AbstractExpression>(right));
   }
   AbstractExpression(const AbstractExpression &other) : ival_(other.ival_), expr_name_(other.expr_name_), distinct_(other.distinct_), exp_type_(other.exp_type_),
-      value_type_(other.value_type_), has_parameter_(other.has_parameter_){
+      return_value_type_(other.return_value_type_), has_parameter_(other.has_parameter_){
     for (auto &child : other.children_){
       children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
     }
   }
 
   ExpressionType exp_type_ = EXPRESSION_TYPE_INVALID;
-  Type::TypeId value_type_ = Type::INVALID;
+  Type::TypeId return_value_type_ = Type::INVALID;
 
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 

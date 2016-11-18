@@ -25,17 +25,20 @@ using namespace peloton::common;
 
 class FunctionExpression: public AbstractExpression {
 public:
-  FunctionExpression(char * func_name, const std::vector<AbstractExpression*>& children) :
+  FunctionExpression(const char * func_name, const std::vector<AbstractExpression*>& children) :
       AbstractExpression(EXPRESSION_TYPE_FUNCTION), func_name_(func_name), func_ptr_(nullptr){
     for (auto &child : children){
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
   }
 
-  FunctionExpression(Value (*func_ptr)(const std::vector<Value>&), Type::TypeId type_id,
+  FunctionExpression(Value (*func_ptr)(const std::vector<Value>&), Type::TypeId return_type,
       size_t num_args, const std::vector<AbstractExpression*>& children) :
-      AbstractExpression(EXPRESSION_TYPE_FUNCTION, type_id), func_ptr_(
+      AbstractExpression(EXPRESSION_TYPE_FUNCTION, return_type), func_ptr_(
           func_ptr), num_args_(num_args) {
+    if (num_args != children_.size()){
+      throw Exception("Unexpected number of arguments to function: "+func_name_+". Expected: "+std::to_string(num_args)+ " Actual: " + std::to_string(children_.size()));
+    }
     for (auto &child : children){
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
@@ -44,7 +47,7 @@ public:
   void SetFunctionExpressionParameters(Value (*func_ptr)(const std::vector<Value>&),
       Type::TypeId val_type, size_t num_args) {
     func_ptr_ = func_ptr;
-    value_type_ = val_type;
+    return_value_type_ = val_type;
     if (num_args != children_.size()){
       throw Exception("Unexpected number of arguments to function: "+func_name_+". Expected: "+std::to_string(num_args)+ " Actual: " + std::to_string(children_.size()));
     }
@@ -52,17 +55,23 @@ public:
     num_args_ = num_args;
   }
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-  UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+  Value Evaluate(const AbstractTuple *tuple1,
+  const AbstractTuple *tuple2,
   UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     // for now support only one child
     std::vector<Value> child_values;
-
+    PL_ASSERT(func_ptr_ != nullptr);
     for (auto &child: children_){
       child_values.push_back(child->Evaluate(tuple1, tuple2, context));
     }
+    // this should always be true because we check
     PL_ASSERT(num_args_ == child_values.size());
-    return func_ptr_(child_values);
+    Value ret = func_ptr_(child_values);
+    // if this is false we should throw an exception
+    if (ret.GetElementType() != return_value_type_){
+      throw Exception("function "+func_name_+" returned an unexpected type.");
+    }
+    return ret;
   }
 
   AbstractExpression * Copy() const{
@@ -76,7 +85,7 @@ protected:
       AbstractExpression(other), func_name_(other.func_name_), func_ptr_(other.func_ptr_), num_args_(other.num_args_) {
   }
 private:
-  Value (*func_ptr_)(const std::vector<Value>&);
+  Value (*func_ptr_)(const std::vector<Value>&) = nullptr;
   size_t num_args_ = 0;
 
 

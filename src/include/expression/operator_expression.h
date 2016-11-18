@@ -73,7 +73,7 @@ class OperatorExpression : public AbstractExpression {
     // This relies on a particular order in types.h
     auto type = std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
     PL_ASSERT(type <= Type::DECIMAL);
-    value_type_ = type;
+    return_value_type_ = type;
   }
 
   AbstractExpression *Copy() const override {
