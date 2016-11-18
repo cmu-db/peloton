@@ -18,7 +18,9 @@
 #include "executor/nested_loop_join_executor.h"
 #include "executor/executor_context.h"
 #include "planner/nested_loop_join_plan.h"
+#include "planner/index_scan_plan.h"
 #include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "common/container_tuple.h"
 
 namespace peloton {
@@ -73,7 +75,7 @@ bool NestedLoopJoinExecutor::DInit() {
  * to join the left and right result.
  *
  */
-bool NestedLoopJoinExecutor::DExecute() {
+bool NestedLoopJoinExecutor::Old_DExecute() {
   LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
             GetJoinTypeString());
 
@@ -246,7 +248,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         advance_right_child = true;
         left_result_itr_ = 0;
       }
-
     }
     // Otherwise, we must attempt to execute the left child
     else {
@@ -266,6 +267,51 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
     }
 
+    left_tile = left_result_tiles_[left_result_itr_].get();
+
+    for (auto left_tile_row_itr : *left_tile) {
+      // Tuple result
+      expression::ContainerTuple<executor::LogicalTile> left_tuple(
+          left_tile, left_tile_row_itr);
+
+      // Pick out the join predicate column value for the left table.
+      // TODO: There might be multiple predicates
+      oid_t predicate_coloumn =
+          ((expression::TupleValueExpression *)predicate_->GetLeft())
+              ->GetColumnId();
+
+      common::Value predicate_value = left_tuple.GetValue(predicate_coloumn);
+
+      // Put this value into right child
+      // TODO: Adding multiple predicates and values
+      if (children_[1]->GetRawNode()->GetPlanNodeType() ==
+          PLAN_NODE_TYPE_INDEXSCAN) {
+        ((planner::IndexScanPlan *)children_[1]->GetRawNode())
+            ->ReplaceKeyValue(predicate_coloumn, predicate_value);
+      }
+
+      // Lookup right
+      if (advance_right_child == true || right_result_tiles_.empty()) {
+        // return if right tile is empty
+        if (right_child_done_ && right_result_tiles_.empty()) {
+          return BuildOuterJoinOutput();
+        }
+
+        PL_ASSERT(left_result_itr_ == 0);
+
+        // Right child is finished, no more tiles
+        while (children_[1]->Execute() == true) {
+          LOG_TRACE("Advance the Right child.");
+          BufferRightTile(children_[1]->GetOutput());
+
+          // return if left tile is empty
+          if (left_child_done_ && left_result_tiles_.empty()) {
+            return BuildOuterJoinOutput();
+          }
+        }
+      }
+    }  // Buffered all results
+
     if (advance_right_child == true || right_result_tiles_.empty()) {
       // return if right tile is empty
       if (right_child_done_ && right_result_tiles_.empty()) {
@@ -273,30 +319,9 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
 
       PL_ASSERT(left_result_itr_ == 0);
-
-      // Right child is finished, no more tiles
-      if (children_[1]->Execute() == false) {
-        LOG_TRACE("Right child is exhausted. Returning false.");
-
-        // Right child exhausted.
-        // Release cur Right tile. Clear right child's result buffer and return.
-        right_child_done_ = true;
-
-        return BuildOuterJoinOutput();
-      }
-      // Buffer the Right child's result
-      else {
-        LOG_TRACE("Advance the Right child.");
-        BufferRightTile(children_[1]->GetOutput());
-        // return if left tile is empty
-        if (left_child_done_ && left_result_tiles_.empty()) {
-          return BuildOuterJoinOutput();
-        }
-      }
     }
 
     right_tile = right_result_tiles_.back().get();
-    left_tile = left_result_tiles_[left_result_itr_].get();
 
     //===------------------------------------------------------------------===//
     // Build Join Tile
@@ -356,6 +381,76 @@ bool NestedLoopJoinExecutor::DExecute() {
     LOG_TRACE("This pair produces empty join result. Continue the loop.");
   }  // end the very beginning for loop
 }
+
+// bool NestedLoopJoinExecutor::DExecute() {
+//  LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
+//            GetJoinTypeString());
+//
+//  // Loop until we have non-empty result tile or exit
+//  // TODO: How to loop all tiles?
+//  for (;;) {
+//
+//    LogicalTile *left_tile = nullptr;
+//    LogicalTile *right_tile = nullptr;
+//
+//    // Build output logical tile
+//    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+//    // Build position lists
+//    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile,
+// right_tile);
+//
+//    // TODO: What means if execute if false. How to deal with that?
+//    if (children_[0]->Execute() == false) {
+//      return false;
+//    }
+//    // Success get the result of left
+//    else {
+//      // For each tuple in the result, pick out the predicate value
+//      for (auto left_itr : *(children_[0]->GetOutput())) {
+//        // Tuple result
+//        expression::ContainerTuple<executor::LogicalTile>
+// left_tuple(left_tile,
+//                                                                     left_itr);
+//
+//        // Pick out the join predicate column value for the left table.
+//        // TODO: There might be multiple predicates
+//        oid_t predicate_coloumn =
+//            ((expression::TupleValueExpression *)predicate_->GetLeft())
+//                ->GetColumnId();
+//
+//        common::Value predicate_value =
+// left_tuple.GetValue(predicate_coloumn);
+//
+//        // Put this value into right child
+//        // TODO: Adding multiple predicates and values
+//        if (children_[1]->GetRawNode()->GetPlanNodeType() ==
+//            PLAN_NODE_TYPE_INDEXSCAN) {
+//          ((planner::IndexScanPlan *)children_[1]->GetRawNode())
+//              ->ReplaceKeyValue(predicate_coloumn, predicate_value);
+//        }
+//
+//        // Loop right child and buffer result
+//        while (children_[1]->Execute() == true) {
+//          // For each right result, combine them in output tile
+//          for (auto right_itr : *(children_[1]->GetOutput())) {
+//            // Combine them in output tile
+//            pos_lists_builder.AddRow(left_itr, right_itr);
+//          }
+//        }  // End right loop
+//      }
+//
+//      // TODO: pos_lists_builder is ok here?
+//      if (pos_lists_builder.Size() > 0) {
+//        output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+//        SetOutput(output_tile.release());
+//        return true;
+//      } else {
+//        return false;
+//      }
+//    }
+//
+//  }  // end the very beginning for loop
+//}
 
 }  // namespace executor
 }  // namespace peloton

@@ -44,11 +44,14 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   std::unique_ptr<AbstractPlan> Copy() const {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         GetPredicate()->Copy());
+
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(GetSchema()));
+
     NestedLoopJoinPlan *new_plan =
         new NestedLoopJoinPlan(GetJoinType(), std::move(predicate_copy),
                                std::move(GetProjInfo()->Copy()), schema_copy);
+
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 };

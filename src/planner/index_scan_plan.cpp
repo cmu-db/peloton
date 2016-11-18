@@ -78,9 +78,8 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
     auto column_id = key_column_ids_[i];
     if (value.GetTypeId() == common::Type::PARAMETER_OFFSET) {
       int offset = value.GetAs<int32_t>();
-      values_[i] =
-          (values->at(offset))
-              .CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
+      values_[i] = (values->at(offset)).CastAs(
+          GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 
@@ -92,6 +91,22 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
   }
+}
+
+// This is used to replace one or several values in NestedLoopJoin
+// TODO: Add a list values
+void IndexScanPlan::ReplaceKeyValue(oid_t key_column_id, common::Value value) {
+  // Find out the position (offset) where is key_column_id
+  int offset = 0;
+  for (auto column_id : key_column_ids_) {
+    if (column_id == key_column_id) {
+      break;
+    } else {
+      offset++;
+    }
+  }
+
+  values_[offset] = value;
 }
 
 }  // namespace planner

@@ -966,7 +966,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 }
 
 std::unique_ptr<planner::AbstractPlan>
-SimpleOptimizer::CreateHackingNestLoopJoinPlan() {
+SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
   /*
   * "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
   + " FROM " + TPCCConstants.TABLENAME_ORDERLINE + ", " +
@@ -988,8 +988,8 @@ SimpleOptimizer::CreateHackingNestLoopJoinPlan() {
       DEFAULT_DB_NAME, "stock");
 
   // Manually constructing the predicate....
-  expression::ParameterValueExpression* params[6];
-  for (int i = 0; i < 6; ++i)
+  expression::ParameterValueExpression* params[7];
+  for (int i = 0; i < 7; ++i)
     params[i] = new expression::ParameterValueExpression(i);
 
   // Predicate for order_line table
@@ -1052,16 +1052,15 @@ SimpleOptimizer::CreateHackingNestLoopJoinPlan() {
   char s_i_id_name[] = "s_i_id";  // s_i_id should be set later
 
   // s_quantity is only used to compare with the join results
-  //  char s_quantity_name[] = "s_quantity";
+  char s_quantity_name[] = "s_quantity";
 
   auto s_w_id =
       new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF, s_w_id_name);
   auto s_i_id =
       new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF, s_i_id_name);
 
-  //  auto s_quantity = new
-  // expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
-  //                                                     s_quantity_name);
+  auto s_quantity = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+                                                     s_quantity_name);
 
   auto predicate9 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, s_w_id, params[4]);
@@ -1070,12 +1069,19 @@ SimpleOptimizer::CreateHackingNestLoopJoinPlan() {
   auto predicate11 = new expression::ConjunctionExpression(
       EXPRESSION_TYPE_CONJUNCTION_AND, predicate9, predicate10);
 
+  auto predicate12 = new expression::ComparisonExpression(
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[6]);
+
   // FIXME: should we use the above GetPredicateColumns?
   predicate_column_ids = {0, 1};
-  predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL};
+  predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL,
+                          EXPRESSION_TYPE_COMPARE_EQUAL};
 
-  // TODO: How to set the empty value here? S_I_ID is empty
-  predicate_values = {common::ValueFactory::GetParameterOffsetValue(4).Copy()};
+  // FIXME: Right? Get predicate ids, types, and values
+  GetPredicateColumns(stock_table->GetSchema(), predicate11,
+                      predicate_column_ids, predicate_expr_types,
+                      predicate_values, index_searchable);
+
   column_ids = {1};  // S_I_ID
 
   index = stock_table->GetIndex(0);
@@ -1085,7 +1091,7 @@ SimpleOptimizer::CreateHackingNestLoopJoinPlan() {
 
   // Create the index scan plan for STOCK
   std::unique_ptr<planner::IndexScanPlan> stock_scan_node(
-      new planner::IndexScanPlan(stock_table, predicate11, column_ids,
+      new planner::IndexScanPlan(stock_table, predicate12, column_ids,
                                  index_scan_desc2, false));
   LOG_DEBUG("Index scan plan for STOCK created");
 
@@ -1095,8 +1101,11 @@ SimpleOptimizer::CreateHackingNestLoopJoinPlan() {
   // LEFT.4 == RIGHT.1
   expression::TupleValueExpression* left_table_attr_4 =
       new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+
+  // FIXME: WHY there is 1 not 0? There is no one column in output
   expression::TupleValueExpression* right_table_attr_1 =
       new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
+
   std::unique_ptr<const expression::AbstractExpression> join_predicate(
       new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
                                            left_table_attr_4,

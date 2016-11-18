@@ -91,7 +91,8 @@ class SimpleOptimizer : public AbstractOptimizer {
       parser::CopyStatement *copy_stmt);
 
   static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
-  static std::unique_ptr<planner::AbstractPlan> CreateHackingNestLoopJoinPlan();
+  static std::unique_ptr<planner::AbstractPlan>
+      CreateHackingNestedLoopJoinPlan();
 };
 }  // namespace optimizer
 }  // namespace peloton

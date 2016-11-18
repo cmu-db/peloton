@@ -69,7 +69,7 @@ class IndexScanPlan : public AbstractScan {
           runtime_key_list(p_runtime_key_list) {}
 
     ~IndexScanDesc() {
-      //for (auto val : value_list)
+      // for (auto val : value_list)
       //  delete val;
     }
 
@@ -109,7 +109,8 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                const IndexScanDesc &index_scan_desc, bool for_update_flag = false);
+                const IndexScanDesc &index_scan_desc,
+                bool for_update_flag = false);
 
   ~IndexScanPlan() {
     for (auto expr : runtime_keys_) {
@@ -145,6 +146,7 @@ class IndexScanPlan : public AbstractScan {
   const std::string GetInfo() const { return "IndexScan"; }
 
   void SetParameterValues(std::vector<common::Value> *values);
+  void ReplaceKeyValue(oid_t key_column_id, common::Value value);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
@@ -155,7 +157,7 @@ class IndexScanPlan : public AbstractScan {
     IndexScanDesc desc(index_, key_column_ids_, expr_types_, values_,
                        new_runtime_keys);
     IndexScanPlan *new_plan = new IndexScanPlan(
-        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc , false);
+        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc, false);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
