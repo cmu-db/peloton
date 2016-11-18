@@ -31,6 +31,7 @@ Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki
 Peloton is known to work on the following platforms. Please note that it will not compile on 32-bit systems.
 
 * Ubuntu Linux 14.04+ (64-bit)
+* Fedora Linux 24+ (64-bit)
 * <s>Mac OS X 10.9+ (64-bit)</s>
 
 ## Development / Contributing
