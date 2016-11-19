@@ -330,8 +330,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                       .c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   agg_expr->GetExpressionType(),
-                  expression::ExpressionUtil::ConvertToTupleValueExpression(
-                      target_table->GetSchema(), agg_over->col_name_),
+                  agg_over->Copy(),
                       agg_expr->distinct_);
               agg_terms.push_back(agg_term);
 

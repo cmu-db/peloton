@@ -71,6 +71,28 @@ public:
     return new AggregateExpression(*this);
   }
 
+  void DeduceExpressionType() override{
+    switch (exp_type_){
+    // if count return an integer
+    case EXPRESSION_TYPE_AGGREGATE_COUNT:
+    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+      return_value_type_ = Type::INTEGER;
+      break;
+    // return the type of the base
+    case EXPRESSION_TYPE_AGGREGATE_MAX:
+    case EXPRESSION_TYPE_AGGREGATE_MIN:
+    case EXPRESSION_TYPE_AGGREGATE_SUM:
+      PL_ASSERT(children_.size() >= 1);
+      return_value_type_ = children_[0]->GetValueType();
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_AVG:
+      return_value_type_ = Type::DECIMAL;
+      break;
+    default:
+      break;
+    }
+  }
+
 protected:
   AggregateExpression(const AggregateExpression& other) :
       AbstractExpression(other){

@@ -201,7 +201,12 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
             GetColumnFieldForValueType(column.column_name, column.column_type));
       }
     }else{
-      std::string col_name = expr->expr_name_.empty() ? std::string("expr")+ std::to_string(count) : expr->expr_name_;
+      std::string col_name;
+      if (expr->alias.empty()){
+        col_name = expr->expr_name_.empty() ? std::string("expr")+ std::to_string(count) : expr->expr_name_;
+      }else{
+        col_name = expr->alias;
+      }
       tuple_descriptor.push_back(
                   GetColumnFieldForValueType(col_name, expr->GetValueType()));
     }
