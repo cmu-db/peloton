@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "catalog/catalog.h"
 
 #include "common/init.h"
 #include "common/thread_pool.h"
@@ -46,6 +47,9 @@ void PelotonInit::Initialize() {
   // the garbage collector is assigned to dedicated threads.
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   gc_manager.StartGC();
+
+  //initialize the catalog so we don't do this on the first query
+  catalog::Catalog::GetInstance();
 }
 
 void PelotonInit::Shutdown() {

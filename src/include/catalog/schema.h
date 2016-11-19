@@ -125,7 +125,7 @@ class Schema : public Printable {
     return columns[column_id];
   }
 
-  inline oid_t GetColumnID(std::string col_name) {
+  inline oid_t GetColumnID(std::string col_name) const{
     oid_t index = -1;
     for (oid_t i = 0; i < columns.size(); ++i) {
       if (columns[i].column_name == col_name) {

@@ -21,6 +21,7 @@
 #include "common/statement.h"
 #include "common/type.h"
 #include "common/types.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace tcop {
@@ -58,7 +59,7 @@ class TrafficCop {
                                               const std::string &query_string,
                                               std::string &error_message);
 
-  std::vector<FieldInfoType> GenerateTupleDescriptor(std::string query);
+  std::vector<FieldInfoType> GenerateTupleDescriptor(parser::SQLStatement* select_stmt);
 
   FieldInfoType GetColumnFieldForValueType(std::string column_name,
                                            common::Type::TypeId column_type);

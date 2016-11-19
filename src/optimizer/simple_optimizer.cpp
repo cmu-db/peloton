@@ -17,6 +17,9 @@
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "expression/expression_util.h"
+#include "expression/aggregate_expression.h"
+#include "expression/function_expression.h"
+#include "expression/star_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "planner/abstract_plan.h"
@@ -32,6 +35,7 @@
 #include "planner/copy_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/order_by_plan.h"
+#include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
@@ -40,6 +44,7 @@
 #include "common/value_factory.h"
 
 #include <memory>
+#include <unordered_map>
 
 namespace peloton {
 namespace planner {
@@ -120,7 +125,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (group_by != NULL) {
         LOG_TRACE("Found GROUP BY");
         for (auto elem : *group_by->columns) {
-          std::string col_name(elem->GetName());
+          auto tuple_elem = (expression::TupleValueExpression*) elem;
+          std::string col_name(tuple_elem->col_name_);
           auto column_id = target_table->GetSchema()->GetColumnID(col_name);
           group_by_columns.push_back(column_id);
         }
@@ -130,20 +136,76 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         having = group_by->having;
       }
 
+      std::unordered_map<oid_t, oid_t> column_mapping;
+      std::vector<oid_t> column_ids;
+      auto &schema = *target_table->GetSchema();
+      auto predicate = select_stmt->where_clause;
+      bool needs_projection = false;
+      expression::ExpressionUtil::TransformExpression(&schema, predicate);
+
+      for (auto col : *select_stmt->select_list){
+        expression::ExpressionUtil::TransformExpression(column_mapping, column_ids,
+            col, schema, needs_projection);
+      }
+
       // Check if there are any aggregate functions
-      bool func_flag = false;
+      bool agg_flag = false;
       for (auto expr : *select_stmt->getSelectList()) {
-        if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+        if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
           LOG_TRACE("Query has aggregate functions");
-          func_flag = true;
+          agg_flag = true;
           break;
         }
       }
 
       // If there is no aggregate functions, just do a sequential scan
-      if (!func_flag && group_by_columns.size() == 0) {
-        LOG_TRACE("No aggregate functions found.");
-        auto child_SelectPlan = CreateScanPlan(target_table, select_stmt);
+    if (!agg_flag && group_by_columns.size() == 0) {
+      LOG_TRACE("No aggregate functions found.");
+      std::unique_ptr<planner::AbstractPlan> child_SelectPlan = CreateScanPlan(
+          target_table, column_ids, predicate, select_stmt->is_for_update);
+
+      // if we have expressions which are not just columns, we need to add a projection plan node
+      if (needs_projection) {
+        auto &select_list = *select_stmt->getSelectList();
+        // expressions to evaluate
+        TargetList tl = TargetList();
+        // columns which can be returned directly
+        DirectMapList dml = DirectMapList();
+        // schema of the projections output
+        std::vector<catalog::Column> columns;
+        catalog::Schema *table_schema = target_table->GetSchema();
+        for (int i = 0; i < (int) select_list.size(); i++) {
+          auto expr = select_list[i];
+          // if the root of the expression is a column value we can
+          // just do a direct mapping
+          if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+            auto tup_expr = (expression::TupleValueExpression*) expr;
+            oid_t old_col_id = table_schema->GetColumnID(tup_expr->col_name_);
+            columns.push_back(table_schema->GetColumn(old_col_id));
+            dml.push_back(
+                DirectMap(i, std::make_pair(0, tup_expr->value_idx_)));
+          }
+          // otherwise we need to evaluat the expression
+          else {
+            tl.push_back(Target(i, expr->Copy()));
+            columns.push_back(
+                catalog::Column(expr->GetValueType(),
+                    common::Type::GetTypeSize(expr->GetValueType()),
+                    "expr" + std::to_string(i)));
+          }
+        }
+        // build the projection plan node and insert aboce the scan
+        std::unique_ptr<planner::ProjectInfo> proj_info(
+            new planner::ProjectInfo(std::move(tl), std::move(dml)));
+        std::shared_ptr<catalog::Schema> schema_ptr(
+            new catalog::Schema(columns));
+        std::unique_ptr<planner::AbstractPlan> child_ProjectPlan(
+            new planner::ProjectionPlan(std::move(proj_info), schema_ptr));
+        child_ProjectPlan->AddChild(std::move(child_SelectPlan));
+        child_SelectPlan = std::move(child_ProjectPlan);
+
+      }
+
 
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
           std::vector<oid_t> keys;
@@ -162,11 +224,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string sort_col_name(select_stmt->order->expr->GetName());
+
+          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->col_name_);
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
             std::string col_name(
-                select_stmt->select_list->at(column_ctr)->GetName());
+                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->col_name_);
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -199,11 +262,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string sort_col_name(select_stmt->order->expr->GetName());
+          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->col_name_);
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
             std::string col_name(
-                select_stmt->select_list->at(column_ctr)->GetName());
+                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->col_name_);
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -232,12 +295,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
       // Else, do aggregations on top of scan
       else {
-        // Create sequential scan plan
-        target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            select_stmt->from_table->GetDatabaseName(),
-            select_stmt->from_table->GetTableName());
-        std::unique_ptr<planner::AbstractScan> scan_node =  // nullptr;
-            CreateScanPlan(target_table, select_stmt);
+        std::unique_ptr<planner::AbstractScan> scan_node =
+            CreateScanPlan(target_table,column_ids, predicate, select_stmt->is_for_update);
 
         // Prepare aggregate plan
         std::vector<catalog::Column> output_schema_columns;
@@ -251,8 +310,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                     ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
           // If an aggregate function is found
-          if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-            auto func_expr = (expression::ParserExpression*)expr;
+          if (expression::ExpressionUtil::IsAggregateExpression(expr->GetExpressionType())) {
+            auto agg_expr = (expression::AggregateExpression*)expr;
             LOG_TRACE(
                 "Expression type in Function Expression: %s",
                 ExpressionTypeToString(func_expr->expr->GetExpressionType())
@@ -260,19 +319,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             LOG_TRACE("Distinct flag: %d", func_expr->distinct);
 
             // Count a column expression
-            if (func_expr->expr->GetExpressionType() ==
-                EXPRESSION_TYPE_COLUMN_REF) {
-              LOG_TRACE("Function name: %s", func_expr->GetName());
+            if (agg_expr->GetChild(0) != nullptr && agg_expr->GetChild(0)->GetExpressionType() ==
+                EXPRESSION_TYPE_VALUE_TUPLE) {
+              auto agg_over = (expression::TupleValueExpression*) agg_expr->GetChild(0);
+              LOG_TRACE("Function name: %s", ((expression::TupleValueExpression*)agg_expr)->GetExpressionName());
               LOG_TRACE(
                   "Aggregate type: %s",
                   ExpressionTypeToString(ParserExpressionNameToExpressionType(
-                                             func_expr->GetName()))
+                                             func_expr->GetExpressionName()))
                       .c_str());
               planner::AggregatePlan::AggTerm agg_term(
-                  ParserExpressionNameToExpressionType(func_expr->GetName()),
+                  agg_expr->GetExpressionType(),
                   expression::ExpressionUtil::ConvertToTupleValueExpression(
-                      target_table->GetSchema(), func_expr->expr->GetName()),
-                  func_expr->distinct);
+                      target_table->GetSchema(), agg_over->col_name_),
+                      agg_expr->distinct_);
               agg_terms.push_back(agg_term);
 
               std::pair<oid_t, oid_t> inner_pair = std::make_pair(1, agg_id);
@@ -283,7 +343,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                         outer_pair.second.first, outer_pair.second.second);
 
               // If aggregate type is average the value type should be double
-              if (ParserExpressionNameToExpressionType(func_expr->GetName()) ==
+              if (agg_expr->GetExpressionType() ==
                   EXPRESSION_TYPE_AGGREGATE_AVG) {
                 // COL_A should be used only when there is no AS
                 auto column = catalog::Column(
@@ -297,7 +357,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               // Else it is the same as the column type
               else {
                 oid_t old_col_id = target_table->GetSchema()->GetColumnID(
-                    func_expr->expr->GetName());
+                    agg_over->col_name_);
                 auto table_column =
                     target_table->GetSchema()->GetColumn(old_col_id);
 
@@ -315,14 +375,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             }
 
             // Check for COUNT STAR Expression
-            else if (func_expr->expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_STAR) {
+            else if (agg_expr->GetExpressionType() ==
+                     EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
               LOG_TRACE("Creating an aggregate plan");
               planner::AggregatePlan::AggTerm agg_term(
                   EXPRESSION_TYPE_AGGREGATE_COUNT_STAR,
                   nullptr,  // No predicate for star expression. Nothing to
                             // evaluate
-                  func_expr->distinct);
+                  agg_expr->distinct_);
               agg_terms.push_back(agg_term);
 
               std::pair<oid_t, oid_t> inner_pair = std::make_pair(1, agg_id);
@@ -353,7 +413,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           else {
             // There are columns in the query
             agg_type = AGGREGATE_TYPE_HASH;
-            std::string col_name(expr->GetName());
+            std::string col_name(expr->GetExpressionName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
             std::pair<oid_t, oid_t> inner_pair = std::make_pair(0, old_col_id);
@@ -503,7 +563,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
     parser::CopyStatement* copy_stmt) {
 
-  std::string table_name(copy_stmt->table_name->GetName());
+  std::string table_name(copy_stmt->cpy_table->GetTableName());
   bool deserialize_parameters = false;
 
   // If we're copying the query metric table, then we need to handle the
@@ -518,33 +578,30 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
 
   // Next, generate a dummy select * plan for target table
   // Hard code star expression
-  char* star = new char[2];
-  strcpy(star, "*");
-  auto star_expr = new peloton::expression::ParserExpression(
-      peloton::EXPRESSION_TYPE_STAR, star);
+  auto star_expr = new peloton::expression::StarExpression();
 
   // Push star expression to list
   auto select_list =
       new std::vector<peloton::expression::AbstractExpression*>();
   select_list->push_back(star_expr);
 
-  // Populate seq scan table ref
-  parser::TableRef* table_ref =
-      new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-  table_ref->table_name =
-      static_cast<expression::ParserExpression*>(copy_stmt->table_name->Copy());
-
   // Construct select stmt
   std::unique_ptr<parser::SelectStatement> select_stmt(
       new parser::SelectStatement());
-  select_stmt->from_table = table_ref;
+  select_stmt->from_table = copy_stmt->cpy_table;
+  copy_stmt->cpy_table = nullptr;
   select_stmt->select_list = select_list;
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      table_ref->GetDatabaseName(), table_name);
+      select_stmt->from_table->GetDatabaseName(), table_name);
+
+  std::unordered_map<oid_t, oid_t> column_mapping;
+  std::vector<oid_t> column_ids;
+  bool needs_projection = false;
+  expression::ExpressionUtil::TransformExpression(column_mapping, column_ids, nullptr, *target_table->GetSchema(), needs_projection);
 
   auto select_plan =
-      SimpleOptimizer::CreateScanPlan(target_table, select_stmt.get());
+      SimpleOptimizer::CreateScanPlan(target_table, column_ids, nullptr, false);
   LOG_DEBUG("Sequential scan plan for copy created");
 
   // Attach it to the copy plan
@@ -624,8 +681,11 @@ bool SimpleOptimizer::CheckIndexSearchable(
   return true;
 }
 
+
+
 std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
-    storage::DataTable* target_table, parser::SelectStatement* select_stmt) {
+    storage::DataTable* target_table, std::vector<oid_t> &column_ids,
+    expression::AbstractExpression *predicate, bool for_update) {
   oid_t index_id = 0;
 
   // column predicates passing to the index
@@ -633,23 +693,13 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   std::vector<ExpressionType> expr_types;
   std::vector<common::Value> values;
 
-  // index_searchable = false;
-  // using the index scan causes an error:
-  // Exception Type :: Mismatch Type
-  // Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be
-  // cast as BIGINT...
-  // terminate called after throwing an instance of
-  // 'peloton::TypeMismatchException'
-  // what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast
-  // as BIGINT...
-  //
-
-  if (!CheckIndexSearchable(target_table, select_stmt->where_clause,
+  if (!CheckIndexSearchable(target_table, predicate,
                             key_column_ids, expr_types, values, index_id)) {
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
+    auto predicate_cpy = predicate == nullptr ? nullptr : predicate->Copy();
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-        new planner::SeqScanPlan(select_stmt));
+        new planner::SeqScanPlan(target_table, predicate_cpy, column_ids, for_update));
     LOG_TRACE("Sequential scan plan created");
     return std::move(child_SelectPlan);
   }
@@ -659,48 +709,15 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   auto index = target_table->GetIndex(index_id);
   std::vector<expression::AbstractExpression*> runtime_keys;
 
-  bool update_flag = false;
-  if (select_stmt->is_for_update == true) {
-    // FIXME: These are commented out for now to profile TPC-C. Eventually we
-    // have to support select for update.
-    //throw NotImplementedException(
-    //    "Error: select .. for update is not implemented yet!");
-    update_flag = true;
-  }
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
 
-  std::vector<oid_t> column_ids = {};
-  bool function_found = false;
-  for (auto elem : *select_stmt->select_list) {
-    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-      function_found = true;
-      break;
-    }
-  }
-  // Pass all columns
-  if (function_found ||
-      select_stmt->select_list->at(0)->GetExpressionType() ==
-          EXPRESSION_TYPE_STAR) {
-    auto column_count = target_table->GetSchema()->GetColumnCount();
-    for (uint i = 0; i < column_count; i++) column_ids.push_back(i);
-  }
-  // Pass columns in select_list
-  else {
-    for (auto col : *select_stmt->select_list) {
-      LOG_TRACE("ExpressionType: %s",
-                ExpressionTypeToString(col->GetExpressionType()).c_str());
-      column_ids.push_back(
-          target_table->GetSchema()->GetColumnID(col->GetName()));
-    }
-  }
-  LOG_TRACE("Index scan column size: %ld\n", column_ids.size());
 
   // Create plan node.
   std::unique_ptr<planner::IndexScanPlan> node(
-      new planner::IndexScanPlan(target_table, select_stmt->where_clause,
-                                 column_ids, index_scan_desc, update_flag));
+      new planner::IndexScanPlan(target_table, predicate,
+                                 column_ids, index_scan_desc, for_update));
   LOG_TRACE("Index scan plan created");
 
   return std::move(node);
@@ -720,23 +737,23 @@ void SimpleOptimizer::GetPredicateColumns(
 
   LOG_TRACE("Expression Type --> %s",
             ExpressionTypeToString(expression->GetExpressionType()).c_str());
-  if (!(expression->GetLeft() && expression->GetRight())) return;
+  if (!(expression->GetChild(0) && expression->GetChild(1))) return;
   LOG_TRACE("Left Type --> %s",
-            ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
+            ExpressionTypeToString(expression->GetChild(0)->GetExpressionType())
                 .c_str());
   LOG_TRACE("Right Type --> %s",
-            ExpressionTypeToString(expression->GetRight()->GetExpressionType())
+            ExpressionTypeToString(expression->GetChild(1)->GetExpressionType())
                 .c_str());
 
   // We're only supporting comparing a column_ref to a constant/parameter for
   // index scan right now
-  if (expression->GetLeft()->GetExpressionType() ==
-      EXPRESSION_TYPE_COLUMN_REF) {
-    auto right_type = expression->GetRight()->GetExpressionType();
+  if (expression->GetChild(0)->GetExpressionType() ==
+      EXPRESSION_TYPE_VALUE_TUPLE) {
+    auto right_type = expression->GetChild(1)->GetExpressionType();
     if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
-      auto expr = expression->GetLeft();
-      std::string col_name(expr->GetName());
+      auto expr = (expression::TupleValueExpression*)expression->GetChild(0);
+      std::string col_name(expr->col_name_);
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
@@ -752,28 +769,28 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableRight())
+                             expression->GetModifiableChild(1))
                              ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableRight())
+                      expression->GetModifiableChild(1))
                       ->GetValueType());
       } else
         values.push_back(
             common::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableRight())
+                    expression->GetModifiableChild(1))
                     ->GetValueIdx())
                 .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
-  } else if (expression->GetRight()->GetExpressionType() ==
-             EXPRESSION_TYPE_COLUMN_REF) {
-    auto left_type = expression->GetLeft()->GetExpressionType();
+  } else if (expression->GetChild(1)->GetExpressionType() ==
+      EXPRESSION_TYPE_VALUE_TUPLE) {
+    auto left_type = expression->GetChild(0)->GetExpressionType();
     if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
-      auto expr = expression->GetRight();
-      std::string col_name(expr->GetName());
+      auto expr = (expression::TupleValueExpression*)expression->GetChild(1);
+      std::string col_name(expr->col_name_);
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       LOG_TRACE("Column id: %d", column_id);
@@ -782,25 +799,25 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableRight())
+                             expression->GetModifiableChild(1))
                              ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableLeft())
+                      expression->GetModifiableChild(0))
                       ->GetValueType());
       } else
         values.push_back(
             common::ValueFactory::GetParameterOffsetValue(
                 reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableLeft())
+                    expression->GetModifiableChild(0))
                     ->GetValueIdx())
                 .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
-    GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,
+    GetPredicateColumns(schema, expression->GetModifiableChild(0), column_ids,
                         expr_types, values, index_searchable);
-    GetPredicateColumns(schema, expression->GetModifiableRight(), column_ids,
+    GetPredicateColumns(schema, expression->GetModifiableChild(1), column_ids,
                         expr_types, values, index_searchable);
   }
 }
@@ -824,13 +841,12 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   char ol_d_id_name[] = "ol_d_id";
   char ol_o_id_1_name[] = "ol_o_id";
   char ol_o_id_2_name[] = "ol_o_id";
-  auto ol_w_id = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
-                                                  ol_w_id_name);
-  auto ol_d_id = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+  auto ol_w_id = new expression::TupleValueExpression(ol_w_id_name);
+  auto ol_d_id = new expression::TupleValueExpression(
                                                   ol_d_id_name);
-  auto ol_o_id_1 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+  auto ol_o_id_1 = new expression::TupleValueExpression(
                                                     ol_o_id_1_name);
-  auto ol_o_id_2 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+  auto ol_o_id_2 = new expression::TupleValueExpression(
                                                     ol_o_id_2_name);
 
   auto predicate1 = new expression::ComparisonExpression(
@@ -876,8 +892,8 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   char s_w_id_name[] = "s_w_id";
   char s_quantity_name[] = "s_quantity";
   auto s_w_id =
-      new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF, s_w_id_name);
-  auto s_quantity = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+      new expression::TupleValueExpression( s_w_id_name);
+  auto s_quantity = new expression::TupleValueExpression(
                                                      s_quantity_name);
   auto predicate9 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, s_w_id, params[4]);

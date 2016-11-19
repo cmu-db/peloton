@@ -20,7 +20,7 @@ namespace peloton{
 namespace planner{
 
 ProjectionPlan::ProjectionPlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                 std::shared_ptr<const catalog::Schema> &schema)
+                 const std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 }
 }

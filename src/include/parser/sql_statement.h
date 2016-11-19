@@ -26,6 +26,16 @@
 namespace peloton {
 namespace parser {
 
+struct TableInfo{
+
+  ~TableInfo(){
+    delete[] table_name;
+    delete[] database_name;
+  }
+  char * table_name = nullptr;;
+  char * database_name = nullptr;
+};
+
 // Base class for every SQLStatement
 class SQLStatement {
  public:
@@ -40,6 +50,28 @@ class SQLStatement {
 
  private:
   StatementType stmt_type;
+};
+
+class TableRefStatement : public SQLStatement{
+public:
+
+  TableRefStatement(StatementType type) : SQLStatement(type){}
+
+  virtual ~TableRefStatement(){
+    delete table_info_;
+  }
+
+  virtual inline std::string GetTableName() { return table_info_->table_name; }
+
+  // Get the name of the database of this table
+  virtual inline std::string GetDatabaseName() {
+    if (table_info_->database_name == nullptr) {
+      return DEFAULT_DB_NAME;
+    }
+    return table_info_->database_name;
+  }
+
+  TableInfo *table_info_ = nullptr;
 };
 
 // Represents the result of the SQLParser.

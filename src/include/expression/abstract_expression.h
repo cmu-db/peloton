@@ -51,13 +51,6 @@ using namespace peloton::common;
 
 class AbstractExpression : public Printable {
  public:
-  // destroy this node and all children
-  virtual ~AbstractExpression() {
-    if (left_ != nullptr)
-      delete left_;
-    if (right_ != nullptr)
-      delete right_;
-  }
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
                               const AbstractTuple *tuple2,
@@ -68,33 +61,43 @@ class AbstractExpression : public Printable {
    * substituted with a parameter.
    */
   virtual bool HasParameter() const {
-    if (left_ != nullptr && left_->HasParameter())
-      return true;
-    if (right_ != nullptr && right_->HasParameter())
-      return true;
+    for(auto &child : children_){
+      if (child->HasParameter()){
+        return true;
+      }
+    }
     return false;
   }
 
+  const AbstractExpression * GetChild(int index) const{
+    return GetModifiableChild(index);
+  }
+
+  size_t GetChildrenSize() const{
+    return children_.size();
+  }
+
+  AbstractExpression * GetModifiableChild(int index) const{
+    if(index < 0 || index >= (int)children_.size()){
+      return nullptr;
+    }
+    return children_[index].get();
+  }
+
+  void SetChild(int index, AbstractExpression* expr){
+    if(index >= (int)children_.size()){
+      children_.resize(index+1);
+    }
+    children_[index].reset(expr);
+  }
+
   /** accessors */
+
   ExpressionType GetExpressionType() const { return exp_type_; }
 
-  Type::TypeId GetValueType() const { return value_type_; }
+  Type::TypeId GetValueType() const { return return_value_type_; }
 
-  const AbstractExpression *GetLeft() const { return left_; }
-
-  const AbstractExpression *GetRight() const { return right_; }
-
-  AbstractExpression *GetModifiableLeft() { return left_; }
-
-  AbstractExpression *GetModifiableRight() { return right_; } 
-
-  void setLeftExpression(AbstractExpression *left) {
-    left_ = left;
-  }
-
-  void setRightExpression(AbstractExpression *right) {
-    right_ = right;
-  }
+  virtual void DeduceExpressionType() {}
 
   const std::string GetInfo() const {
     std::ostringstream os;
@@ -125,35 +128,41 @@ class AbstractExpression : public Printable {
 
   virtual int SerializeSize() { return 0; }
 
-  char* GetName() const {
-    return name;
+  const char* GetExpressionName() const {
+    return expr_name_.c_str();
   }
 
   // Parser stuff
-  int ival = 0;
-  AbstractExpression *expr = nullptr;
+  int ival_ = 0;
 
-  char *name = nullptr;
-  char *column = nullptr;
-  char *alias = nullptr;
-  char *database = nullptr;
+  std::string expr_name_;
+  std::string alias;
 
-  bool distinct = false;
+  bool distinct_ = false;
 
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type, Type::TypeId type_id)
-      : exp_type_(exp_type), value_type_(type_id) {}
-  AbstractExpression(ExpressionType exp_type, Type::TypeId type_id,
+  AbstractExpression(ExpressionType exp_type, Type::TypeId return_value_type)
+      : exp_type_(exp_type), return_value_type_(return_value_type) {}
+  AbstractExpression(ExpressionType exp_type, Type::TypeId return_value_type,
                      AbstractExpression *left,
                      AbstractExpression *right)
-      : exp_type_(exp_type), value_type_(type_id), left_(left), right_(right) {}
+      : exp_type_(exp_type), return_value_type_(return_value_type) {
+    // Order of these is important!
+    children_.push_back(std::unique_ptr<AbstractExpression>(left));
+    children_.push_back(std::unique_ptr<AbstractExpression>(right));
+  }
+  AbstractExpression(const AbstractExpression &other) : ival_(other.ival_), expr_name_(other.expr_name_), distinct_(other.distinct_), exp_type_(other.exp_type_),
+      return_value_type_(other.return_value_type_), has_parameter_(other.has_parameter_){
+    for (auto &child : other.children_){
+      children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
+    }
+  }
 
   ExpressionType exp_type_ = EXPRESSION_TYPE_INVALID;
-  Type::TypeId value_type_ = Type::INVALID;
+  Type::TypeId return_value_type_ = Type::INVALID;
 
-  AbstractExpression *left_ = nullptr;
-  AbstractExpression *right_ = nullptr;
+  std::vector<std::unique_ptr<AbstractExpression>> children_;
 
   bool has_parameter_ = false;
 };

@@ -13,7 +13,6 @@
 #pragma once
 
 #include "parser/sql_statement.h"
-#include "expression/parser_expression.h"
 #include "common/types.h"
 
 namespace peloton {
@@ -68,7 +67,7 @@ struct ColumnDefinition {
     }
 
     free(name);
-    delete table_name;
+    delete table_info_;
   }
 
   static common::Type::TypeId GetValueType(DataType type) {
@@ -133,7 +132,7 @@ struct ColumnDefinition {
   char* name = nullptr;
 
   // The name of the table and its database
-  expression::ParserExpression* table_name = nullptr;
+  TableInfo *table_info_ = nullptr;
 
   DataType type;
   size_t varlen = 0;
@@ -152,7 +151,7 @@ struct ColumnDefinition {
  * @brief Represents "CREATE TABLE students (name TEXT, student_number INTEGER,
  * city TEXT, grade DOUBLE)"
  */
-struct CreateStatement : SQLStatement {
+struct CreateStatement : TableRefStatement {
   enum CreateType {
     kTable,
     kDatabase,
@@ -160,7 +159,7 @@ struct CreateStatement : SQLStatement {
   };
 
   CreateStatement(CreateType type)
-      : SQLStatement(STATEMENT_TYPE_CREATE),
+      : TableRefStatement(STATEMENT_TYPE_CREATE),
         type(type),
         if_not_exists(false),
         columns(NULL) {};
@@ -178,7 +177,6 @@ struct CreateStatement : SQLStatement {
 
     free(index_name);
     free(database_name);
-    delete table_name;
   }
 
   CreateType type;
@@ -189,19 +187,9 @@ struct CreateStatement : SQLStatement {
 
   IndexType index_type;
 
-  inline std::string GetTableName() { return table_name->name; }
-
-  // Get the name of the database of this table
-  inline std::string GetDatabaseName() {
-    if (table_name == nullptr || table_name->database == nullptr) {
-      return DEFAULT_DB_NAME;
-    }
-    return std::string(table_name->database);
-  }
-
   char* index_name = nullptr;
   char* database_name = nullptr;
-  expression::ParserExpression* table_name = nullptr;
+
 
   bool unique = false;
 };
