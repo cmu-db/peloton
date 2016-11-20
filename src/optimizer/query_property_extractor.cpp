@@ -12,6 +12,7 @@
 
 #include "optimizer/query_property_extractor.h"
 #include "catalog/catalog.h"
+#include "expression/expression_util.h"
 #include "optimizer/properties.h"
 #include "parser/sql_statement.h"
 #include "parser/statement_select.h"
@@ -38,28 +39,49 @@ void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Join *){};
 void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const OrderBy *){};
 void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Select *){};
 
-void QueryPropertyExtractor::Visit(const parser::SelectStatement *stmt) {
+void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   std::vector<Column *> columns;
 
+  // Get table pointer, id, and schema.
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          stmt->from_table->GetDatabaseName(),
-          stmt->from_table->GetTableName());
+          select_stmt->from_table->GetDatabaseName(),
+          select_stmt->from_table->GetTableName());
+  auto &schema = *target_table->GetSchema();
 
-  catalog::Schema *schema = target_table->GetSchema();
-  oid_t table_oid = target_table->GetOid();
-  for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {
-    catalog::Column schema_col = schema->GetColumn(col_id);
-    Column *col = manager_.LookupColumn(table_oid, col_id);
-    if (col == nullptr) {
-      col = manager_.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
-                                   schema_col.GetName(), schema_col.IsInlined(),
-                                   table_oid, col_id);
-    }
-    columns.push_back(col);
+  // Add predicate property
+  auto predicate = select_stmt->where_clause;
+  expression::ExpressionUtil::TransformExpression(&schema, predicate);
+  property_set_.AddProperty(new PropertyPredicate(predicate->Copy()));
+
+  auto output_expressions =
+      std::vector<std::unique_ptr<expression::AbstractExpression> >();
+  for (auto col : *select_stmt->select_list) {
+    expression::ExpressionUtil::TransformExpression(&schema, col);
+    output_expressions.push_back(
+        std::unique_ptr<expression::AbstractExpression>(col->Copy()));
   }
 
-  property_set_.AddProperty(new PropertyColumns(std::move(columns)));
+  property_set_.AddProperty(
+      new PropertyOutputExpressions(std::move(output_expressions)));
+
+  /*
+      // Traverse the select list to get the columns required by the result
+      std::unordered_map<oid_t, oid_t> column_mapping;
+      std::vector<oid_t> column_ids;
+      bool needs_projection = false;
+     for (oid_t col_id : column_ids) {
+      catalog::Column schema_col = schema.GetColumn(col_id);
+      Column *col = manager_.LookupColumn(table_oid, col_id);
+      if (col == nullptr) {
+        col = manager_.AddBaseColumn(schema_col.GetType(),
+    schema_col.GetLength(),
+                                     schema_col.GetName(),
+    schema_col.IsInlined(),
+                                     table_oid, col_id);
+      }
+      columns.push_back(col);
+    }*/
 };
 
 void QueryPropertyExtractor::Visit(

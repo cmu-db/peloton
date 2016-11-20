@@ -46,7 +46,9 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
   void visit(const OrderBy *) override;
   void visit(const Select *) override;
 
+  // We only assume the statement is selecting from one table for now
   void Visit(const parser::SelectStatement *) override;
+
   void Visit(const parser::CreateStatement *) override;
   void Visit(const parser::InsertStatement *) override;
   void Visit(const parser::DeleteStatement *) override;
@@ -60,6 +62,7 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
  private:
   ColumnManager &manager_;
 
+  // Required properties by the visitor
   PropertySet property_set_;
 };
 

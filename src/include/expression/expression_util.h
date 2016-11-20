@@ -276,7 +276,7 @@ class ExpressionUtil {
  public:
   /**
    * Walks an expression tree and fills in information about
-   * columns and functions in their respective obejects
+   * columns and functions in their respective objects
    */
   static void TransformExpression(catalog::Schema *schema,
                                   AbstractExpression *expr) {
@@ -287,7 +287,7 @@ class ExpressionUtil {
   /**
    * This function walks an expression tree and fills in information about
    * columns and functions. Also generates a list of column ids we need to fetch
-   * from the base tile groups. Simultaniously generates a mapping of the
+   * from the base tile groups. Simultaneously generates a mapping of the
    * original column
    * id to the id in the logical tiles returned by the base tile groups
    *
@@ -306,8 +306,7 @@ class ExpressionUtil {
    * this is a private function for transforming expressions as described
    * above
    *
-   * find columns determines if we are building a column_mapping and
-   * column_ids
+   * find columns determines if we are building a column_mapping and column_ids
    * or we are just transforming
    * the expressions
    */
@@ -320,13 +319,13 @@ class ExpressionUtil {
       return;
     }
     size_t num_children = expr->GetChildrenSize();
-    // do dfs to transform all chilren
+    // do dfs to transform all children
     for (size_t child = 0; child < num_children; child++) {
       TransformExpression(column_mapping, column_ids,
                           expr->GetModifiableChild(child), schema,
                           needs_projection, find_columns);
     }
-    // if this is a column, we need to find if it is exists in the scema
+    // if this is a column, we need to find if it is exists in the schema
     if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE &&
         expr->GetValueType() == Type::INVALID) {
       auto val_expr = (expression::TupleValueExpression *)expr;
@@ -360,12 +359,12 @@ class ExpressionUtil {
       // point to the correct column returned in the logical tuple underneath
       val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
     }
-    // if we have any expression besides column expressiona and star, we
+    // if we have any expression besides column expressions and star, we
     // need to add a projection node
     else if (expr->GetExpressionType() != EXPRESSION_TYPE_STAR) {
       needs_projection = true;
     }
-    // if the expressio is a fucntion, do a lookup and make sure it exists
+    // if the expression is a function, do a lookup and make sure it exists
     if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();

@@ -248,42 +248,27 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
             op->from_table->GetDatabaseName(), op->from_table->GetTableName());
-    catalog::Schema *schema = target_table->GetSchema();
 
     auto get_expr =
         std::make_shared<OpExpression>(LogicalGet::make(target_table));
 
-    // Add where predicate as a child OpExpression
-    // LM: In the future we may want to remove this and change where predicate
-    // to physical property.
-    expression::AbstractExpression *where_clause = nullptr;
-    if (op->where_clause != nullptr) {
-      where_clause = op->where_clause->Copy();
-      expression::ExpressionUtil::ReplaceColumnExpressions(schema,
-                                                           where_clause);
+    // Check whether we need to add a logical project operator
+    bool needs_projection = false;
+    for (auto col : *op->select_list) {
+      if (col->GetExpressionType() != EXPRESSION_TYPE_STAR) {
+        needs_projection = true;
+        break;
+      }
     }
-    auto predicate_expr = std::make_shared<OpExpression>(
-        QueryExpressionOperator::make(where_clause));
-    get_expr->PushChild(predicate_expr);
 
-    // Add all attributes in output list as projection at top level
+    if (!needs_projection) {
+      output_expr = get_expr;
+      return;
+    }
+
+    // Add a projection at top level
     auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
     project_expr->PushChild(get_expr);
-    auto project_list = std::make_shared<OpExpression>(ExprProjectList::make());
-    project_expr->PushChild(project_list);
-
-    expression::AbstractExpression *expression;
-    for (auto &select_expr : *op->select_list) {
-      expression = nullptr;
-      if (select_expr != nullptr) {
-        expression = select_expr->Copy();
-        expression::ExpressionUtil::ReplaceColumnExpressions(schema,
-                                                             expression);
-      }
-      project_list->PushChild(std::make_shared<OpExpression>(
-          QueryExpressionOperator::make(expression)));
-    }
-
     output_expr = project_expr;
   }
   void Visit(UNUSED_ATTRIBUTE const parser::CreateStatement *op) override {}

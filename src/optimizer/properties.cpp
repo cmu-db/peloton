@@ -107,5 +107,21 @@ bool PropertyPredicate::operator>=(const Property &r) const {
 // TODO: Hash the content of the predicate expression
 hash_t PropertyPredicate::Hash() const { return Property::Hash(); }
 
+PropertyOutputExpressions::PropertyOutputExpressions(
+    std::vector<std::unique_ptr<expression::AbstractExpression> > expressions)
+    : expressions_(std::move(expressions)){};
+
+PropertyType PropertyOutputExpressions::Type() const {
+  return PropertyType::OUTPUT_EXPRESSION;
+}
+
+// PropertyOutputExpressions is only used for projection operator. We also
+// assume this is always going to be satisfied.
+bool PropertyOutputExpressions::operator>=(const Property &r) const {
+  return Property::operator>=(r);
+}
+
+hash_t PropertyOutputExpressions::Hash() const { return Property::Hash(); }
+
 } /* namespace optimizer */
 } /* namespace peloton */

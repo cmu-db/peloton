@@ -21,6 +21,7 @@ enum class PropertyType {
   SORT,
   COLUMNS,
   PREDICATE,
+  OUTPUT_EXPRESSION,
 };
 
 /*

@@ -19,7 +19,7 @@
 namespace peloton {
 namespace optimizer {
 
-// Specifies which columns should the query return
+// Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
   PropertyColumns(std::vector<Column *> columns);
@@ -32,6 +32,22 @@ class PropertyColumns : public Property {
 
  private:
   std::vector<Column *> columns;
+};
+
+// Specifies the output expressions of the query
+class PropertyOutputExpressions : public Property {
+ public:
+  PropertyOutputExpressions(
+      std::vector<std::unique_ptr<expression::AbstractExpression>> expressions);
+
+  PropertyType Type() const override;
+
+  hash_t Hash() const override;
+
+  bool operator>=(const Property &r) const override;
+
+ private:
+  std::vector<std::unique_ptr<expression::AbstractExpression>> expressions_;
 };
 
 // Specifies the required sorting order of the query
@@ -63,7 +79,7 @@ class PropertyPredicate : public Property {
   bool operator>=(const Property &r) const override;
 
  private:
-  expression::AbstractExpression *predicate_;
+  std::unique_ptr<expression::AbstractExpression> predicate_;
 };
 
 } /* namespace optimizer */
