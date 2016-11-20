@@ -1251,9 +1251,9 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
   // std::cout<<(select_stmt->getSelectList() != NULL)<<std::endl;
 
   auto left_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, select_stmt->from_table->join->left->GetTableName());
+      select_stmt->from_table->join->left->GetDatabaseName(), select_stmt->from_table->join->left->GetTableName());
   auto right_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, select_stmt->from_table->join->right->GetTableName());
+      select_stmt->from_table->join->right->GetDatabaseName(), select_stmt->from_table->join->right->GetTableName());
 
   PelotonJoinType join_type = select_stmt->from_table->join->type;
   std::unique_ptr<const peloton::expression::AbstractExpression> join_condition(select_stmt->from_table->join->condition);;
@@ -1264,6 +1264,8 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
   std::vector<ExpressionType> expr_types;
   std::vector<common::Value> values;
   
+  std::cout<<select_stmt->from_table->join->condition->GetInfo()<<std::endl;
+
   std::unique_ptr<planner::SeqScanPlan> left_SelectPlan(
     new planner::SeqScanPlan(
       left_table,

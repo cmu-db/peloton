@@ -29,7 +29,7 @@ class OptimizerTests : public PelotonTest {};
 
 // Test whether update stament will use index scan plan
 // TODO: Split the tests into separate test cases.
-TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
+TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Bootstrapping...");
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
