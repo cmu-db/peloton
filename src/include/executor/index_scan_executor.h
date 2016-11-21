@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -35,6 +34,19 @@ class IndexScanExecutor : public AbstractScanExecutor {
                              ExecutorContext *executor_context);
 
   ~IndexScanExecutor();
+
+  void ResetState() {
+    result_.clear();
+
+    result_itr_ = START_OID;
+
+    done_ = false;
+  }
+
+  // These two methods are for modifying values inside plan node
+  // TODO: Probably we can refactor this later
+  void SetPlan(planner::IndexScanPlan *plan) { plan_node_ = plan; }
+  planner::IndexScanPlan *GetPlan() const { return plan_node_; }
 
  protected:
   bool DInit();
@@ -88,6 +100,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<expression::AbstractExpression *> runtime_keys_;
 
   bool key_ready_ = false;
+
+  planner::IndexScanPlan *plan_node_;
 };
 
 }  // namespace executor

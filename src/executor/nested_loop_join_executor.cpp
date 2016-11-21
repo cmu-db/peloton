@@ -17,6 +17,7 @@
 #include "common/logger.h"
 #include "executor/nested_loop_join_executor.h"
 #include "executor/executor_context.h"
+#include "executor/index_scan_executor.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/index_scan_plan.h"
 #include "expression/abstract_expression.h"
@@ -279,28 +280,35 @@ bool NestedLoopJoinExecutor::DExecute() {
       oid_t predicate_coloumn =
           ((expression::TupleValueExpression *)predicate_->GetLeft())
               ->GetColumnId();
-
       common::Value predicate_value = left_tuple.GetValue(predicate_coloumn);
 
       // Put this value into right child
       // TODO: Adding multiple predicates and values
       if (children_[1]->GetRawNode()->GetPlanNodeType() ==
           PLAN_NODE_TYPE_INDEXSCAN) {
-        ((planner::IndexScanPlan *)children_[1]->GetRawNode())
-            ->ReplaceKeyValue(predicate_coloumn, predicate_value);
+        std::cout << "binggo" << std::endl;
+        bool replace =
+            ((executor::IndexScanExecutor *)children_[1])
+                ->GetPlan()
+                ->ReplaceKeyValue(predicate_coloumn, predicate_value);
+        if (replace == false) {
+          LOG_TRACE("Error comparison in Nested Loop.");
+          return false;
+        }
       }
 
       // Lookup right
-      if (advance_right_child == true || right_result_tiles_.empty()) {
-        // return if right tile is empty
-        if (right_child_done_ && right_result_tiles_.empty()) {
-          return BuildOuterJoinOutput();
-        }
 
-        PL_ASSERT(left_result_itr_ == 0);
+      // return if right tile is empty
+      if (right_child_done_ && right_result_tiles_.empty()) {
+        return BuildOuterJoinOutput();
+      }
 
-        // Right child is finished, no more tiles
-        while (children_[1]->Execute() == true) {
+      PL_ASSERT(left_result_itr_ == 0);
+
+      // Right child is finished, no more tiles
+      for (;;) {
+        if (children_[1]->Execute() == true) {
           LOG_TRACE("Advance the Right child.");
           BufferRightTile(children_[1]->GetOutput());
 
@@ -309,8 +317,18 @@ bool NestedLoopJoinExecutor::DExecute() {
             return BuildOuterJoinOutput();
           }
         }
-      }
-    }  // Buffered all results
+        // Right is finished
+        else {
+          if (!left_child_done_) {
+            // TODO: We should add type judgement, like IndexScan or SeqScan
+            ((executor::IndexScanExecutor *)children_[1])->ResetState();
+          } else {
+            right_child_done_ = true;
+          }
+          break;
+        }
+      }  // End for
+    }    // Buffered all results
 
     if (advance_right_child == true || right_result_tiles_.empty()) {
       // return if right tile is empty

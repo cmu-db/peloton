@@ -42,7 +42,7 @@ namespace executor {
  */
 IndexScanExecutor::IndexScanExecutor(const planner::AbstractPlan *node,
                                      ExecutorContext *executor_context)
-    : AbstractScanExecutor(node, executor_context) {}
+    : AbstractScanExecutor(node, executor_context), plan_node_(nullptr) {}
 
 IndexScanExecutor::~IndexScanExecutor() {
   // Nothing to do here
@@ -211,8 +211,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res =
-              transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
+          auto res = transaction_manager.PerformRead(
+              current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
@@ -397,8 +397,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res =
-              transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
+          auto res = transaction_manager.PerformRead(
+              current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
