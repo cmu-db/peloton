@@ -104,6 +104,12 @@ DataTable::~DataTable() {
     delete foreign_key;
   }
 
+  // drop all indirection arrays
+  for (auto indirection_array : active_indirection_arrays_) {
+    auto oid = indirection_array->GetOid();
+    catalog_manager.DropIndirectionArray(oid);
+  }
+
   // AbstractTable cleans up the schema
 }
 
@@ -631,11 +637,12 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
 
 oid_t DataTable::AddDefaultIndirectionArray(
     const size_t &active_indirection_array_id) {
-  std::shared_ptr<IndirectionArray> indirection_array(new IndirectionArray());
 
   auto &manager = catalog::Manager::GetInstance();
-
   oid_t indirection_array_id = manager.GetNextIndirectionArrayId();
+
+  std::shared_ptr<IndirectionArray> indirection_array(
+      new IndirectionArray(indirection_array_id));
   manager.AddIndirectionArray(indirection_array_id, indirection_array);
 
   COMPILER_MEMORY_FENCE;
