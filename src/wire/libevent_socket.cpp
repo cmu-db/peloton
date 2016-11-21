@@ -483,7 +483,7 @@ void LibeventSocket::CloseSocket() {
   event_del(event);
 
   TransitState(CONN_CLOSED);
-
+  Reset();
   for (;;) {
     int status = close(sock_fd);
     if (status < 0) {
@@ -497,15 +497,13 @@ void LibeventSocket::CloseSocket() {
   }
 }
 
-void LibeventSocket::Reset(short event_flags, LibeventThread *thread,
-                           ConnState init_state) {
+void LibeventSocket::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
   pkt_manager.Reset();
   state = CONN_INVALID;
   rpkt.Reset();
   next_response_ = 0;
-  Init(event_flags, thread, init_state);
 }
 
 }  // End wire namespace
