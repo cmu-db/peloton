@@ -41,17 +41,17 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   }
 
   // Lookup in hash table
-  auto it = group_expressions.find(gexpr.get());
+  auto it = group_expressions_.find(gexpr.get());
 
   bool new_expression;
-  if (it != group_expressions.end()) {
+  if (it != group_expressions_.end()) {
     new_expression = false;
     assert(target_group == UNDEFINED_GROUP ||
            target_group == (*it)->GetGroupID());
     gexpr->SetGroupID((*it)->GetGroupID());
   } else {
     new_expression = true;
-    group_expressions.insert(gexpr.get());
+    group_expressions_.insert(gexpr.get());
     // New expression, so try to insert into an existing group or
     // create a new group if none specified
     GroupID group_id;
@@ -67,13 +67,13 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   return new_expression;
 }
 
-const std::vector<Group> &Memo::Groups() const { return groups; }
+const std::vector<Group> &Memo::Groups() const { return groups_; }
 
-Group *Memo::GetGroupByID(GroupID id) { return &(groups[id]); }
+Group *Memo::GetGroupByID(GroupID id) { return &(groups_[id]); }
 
 GroupID Memo::AddNewGroup() {
-  GroupID new_group_id = groups.size();
-  groups.emplace_back(new_group_id);
+  GroupID new_group_id = groups_.size();
+  groups_.emplace_back(new_group_id);
   return new_group_id;
 }
 

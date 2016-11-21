@@ -10,15 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/group.h"
 #include "optimizer/op_expression.h"
 
+#include <map>
 #include <unordered_set>
 #include <vector>
-#include <map>
 
 namespace peloton {
 namespace optimizer {
@@ -61,9 +60,9 @@ class Memo {
   GroupID AddNewGroup();
 
   std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq>
-      group_expressions;
-  std::vector<Group> groups;
-  std::map<std::vector<Property>, size_t> lowest_cost_items;
+      group_expressions_;
+  std::vector<Group> groups_;
+  std::map<std::vector<Property>, size_t> lowest_cost_items_;
 };
 
 } /* namespace optimizer */

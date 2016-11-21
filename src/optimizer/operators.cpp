@@ -305,20 +305,20 @@ hash_t ExprCompare::Hash() const {
 //===--------------------------------------------------------------------===//
 Operator ExprBoolOp::make(BoolOpType type) {
   ExprBoolOp *bool_op = new ExprBoolOp;
-  bool_op->bool_type = type;
+  bool_op->bool_type_ = type;
   return Operator(bool_op);
 }
 
 bool ExprBoolOp::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::BoolOp) return false;
   const ExprBoolOp &r = *static_cast<const ExprBoolOp *>(&node);
-  if (bool_type != r.bool_type) return false;
+  if (bool_type_ != r.bool_type_) return false;
   return true;
 }
 
 hash_t ExprBoolOp::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, util::Hash<BoolOpType>(&bool_type));
+  hash = util::CombineHashes(hash, util::Hash<BoolOpType>(&bool_type_));
   return hash;
 }
 
@@ -327,24 +327,24 @@ hash_t ExprBoolOp::Hash() const {
 //===--------------------------------------------------------------------===//
 Operator ExprOp::make(ExpressionType type, common::Type::TypeId return_type) {
   ExprOp *op = new ExprOp;
-  op->expr_type = type;
-  op->return_type = return_type;
+  op->expr_type_ = type;
+  op->return_type_ = return_type;
   return Operator(op);
 }
 
 bool ExprOp::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Op) return false;
   const ExprOp &r = *static_cast<const ExprOp *>(&node);
-  if (expr_type != r.expr_type) return false;
-  if (return_type != r.return_type) return false;
+  if (expr_type_ != r.expr_type_) return false;
+  if (return_type_ != r.return_type_) return false;
   return true;
 }
 
 hash_t ExprOp::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, util::Hash<ExpressionType>(&expr_type));
-  hash =
-      util::CombineHashes(hash, util::Hash<common::Type::TypeId>(&return_type));
+  hash = util::CombineHashes(hash, util::Hash<ExpressionType>(&expr_type_));
+  hash = util::CombineHashes(hash,
+                             util::Hash<common::Type::TypeId>(&return_type_));
   return hash;
 }
 
@@ -361,20 +361,20 @@ Operator ExprProjectList::make() {
 //===--------------------------------------------------------------------===//
 Operator ExprProjectColumn::make(Column *column) {
   ExprProjectColumn *project_col = new ExprProjectColumn;
-  project_col->column = column;
+  project_col->column_ = column;
   return Operator(project_col);
 }
 
 bool ExprProjectColumn::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::ProjectColumn) return false;
   const ExprProjectColumn &r = *static_cast<const ExprProjectColumn *>(&node);
-  if (column != r.column) return false;
+  if (column_ != r.column_) return false;
   return true;
 }
 
 hash_t ExprProjectColumn::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, column->Hash());
+  hash = util::CombineHashes(hash, column_->Hash());
   return hash;
 }
 
@@ -498,126 +498,126 @@ void OperatorNode<ExprProjectColumn>::accept(OperatorVisitor *v) const {
 }
 
 template <>
-std::string OperatorNode<LeafOperator>::_name = "LeafOperator";
+std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
-std::string OperatorNode<LogicalGet>::_name = "LogicalGet";
+std::string OperatorNode<LogicalGet>::name_ = "LogicalGet";
 template <>
-std::string OperatorNode<LogicalProject>::_name = "LogicalProject";
+std::string OperatorNode<LogicalProject>::name_ = "LogicalProject";
 template <>
-std::string OperatorNode<LogicalFilter>::_name = "LogicalFilter";
+std::string OperatorNode<LogicalFilter>::name_ = "LogicalFilter";
 template <>
-std::string OperatorNode<LogicalInnerJoin>::_name = "LogicalInnerJoin";
+std::string OperatorNode<LogicalInnerJoin>::name_ = "LogicalInnerJoin";
 template <>
-std::string OperatorNode<LogicalLeftJoin>::_name = "LogicalLeftJoin";
+std::string OperatorNode<LogicalLeftJoin>::name_ = "LogicalLeftJoin";
 template <>
-std::string OperatorNode<LogicalRightJoin>::_name = "LogicalRightJoin";
+std::string OperatorNode<LogicalRightJoin>::name_ = "LogicalRightJoin";
 template <>
-std::string OperatorNode<LogicalOuterJoin>::_name = "LogicalOuterJoin";
+std::string OperatorNode<LogicalOuterJoin>::name_ = "LogicalOuterJoin";
 template <>
-std::string OperatorNode<LogicalAggregate>::_name = "LogicalAggregate";
+std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
 template <>
-std::string OperatorNode<LogicalLimit>::_name = "LogicalLimit";
+std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
-std::string OperatorNode<PhysicalScan>::_name = "PhysicalScan";
+std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
 template <>
-std::string OperatorNode<PhysicalComputeExprs>::_name = "PhysicalComputeExprs";
+std::string OperatorNode<PhysicalComputeExprs>::name_ = "PhysicalComputeExprs";
 template <>
-std::string OperatorNode<PhysicalFilter>::_name = "PhysicalFilter";
+std::string OperatorNode<PhysicalFilter>::name_ = "PhysicalFilter";
 template <>
-std::string OperatorNode<PhysicalInnerNLJoin>::_name = "PhysicalInnerNLJoin";
+std::string OperatorNode<PhysicalInnerNLJoin>::name_ = "PhysicalInnerNLJoin";
 template <>
-std::string OperatorNode<PhysicalLeftNLJoin>::_name = "PhysicalLeftNLJoin";
+std::string OperatorNode<PhysicalLeftNLJoin>::name_ = "PhysicalLeftNLJoin";
 template <>
-std::string OperatorNode<PhysicalRightNLJoin>::_name = "PhysicalRightNLJoin";
+std::string OperatorNode<PhysicalRightNLJoin>::name_ = "PhysicalRightNLJoin";
 template <>
-std::string OperatorNode<PhysicalOuterNLJoin>::_name = "PhysicalOuterNLJoin";
+std::string OperatorNode<PhysicalOuterNLJoin>::name_ = "PhysicalOuterNLJoin";
 template <>
-std::string OperatorNode<PhysicalInnerHashJoin>::_name =
+std::string OperatorNode<PhysicalInnerHashJoin>::name_ =
     "PhysicalInnerHashJoin";
 template <>
-std::string OperatorNode<PhysicalLeftHashJoin>::_name = "PhysicalLeftHashJoin";
+std::string OperatorNode<PhysicalLeftHashJoin>::name_ = "PhysicalLeftHashJoin";
 template <>
-std::string OperatorNode<PhysicalRightHashJoin>::_name =
+std::string OperatorNode<PhysicalRightHashJoin>::name_ =
     "PhysicalRightHashJoin";
 template <>
-std::string OperatorNode<PhysicalOuterHashJoin>::_name =
+std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
     "PhysicalOuterHashJoin";
 template <>
-std::string OperatorNode<QueryExpressionOperator>::_name =
+std::string OperatorNode<QueryExpressionOperator>::name_ =
     "QueryExpressionOperator";
 template <>
-std::string OperatorNode<ExprVariable>::_name = "ExprVariable";
+std::string OperatorNode<ExprVariable>::name_ = "ExprVariable";
 template <>
-std::string OperatorNode<ExprConstant>::_name = "ExprConstant";
+std::string OperatorNode<ExprConstant>::name_ = "ExprConstant";
 template <>
-std::string OperatorNode<ExprCompare>::_name = "ExprCompare";
+std::string OperatorNode<ExprCompare>::name_ = "ExprCompare";
 template <>
-std::string OperatorNode<ExprBoolOp>::_name = "ExprBoolOp";
+std::string OperatorNode<ExprBoolOp>::name_ = "ExprBoolOp";
 template <>
-std::string OperatorNode<ExprOp>::_name = "ExprOp";
+std::string OperatorNode<ExprOp>::name_ = "ExprOp";
 template <>
-std::string OperatorNode<ExprProjectList>::_name = "ExprProjectList";
+std::string OperatorNode<ExprProjectList>::name_ = "ExprProjectList";
 template <>
-std::string OperatorNode<ExprProjectColumn>::_name = "ExprProjectColumn";
+std::string OperatorNode<ExprProjectColumn>::name_ = "ExprProjectColumn";
 
 template <>
-OpType OperatorNode<LeafOperator>::_type = OpType::Leaf;
+OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
-OpType OperatorNode<LogicalGet>::_type = OpType::Get;
+OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalProject>::_type = OpType::Project;
+OpType OperatorNode<LogicalProject>::type_ = OpType::Project;
 template <>
-OpType OperatorNode<LogicalFilter>::_type = OpType::LogicalFilter;
+OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
 template <>
-OpType OperatorNode<LogicalInnerJoin>::_type = OpType::InnerJoin;
+OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
 template <>
-OpType OperatorNode<LogicalLeftJoin>::_type = OpType::LeftJoin;
+OpType OperatorNode<LogicalLeftJoin>::type_ = OpType::LeftJoin;
 template <>
-OpType OperatorNode<LogicalRightJoin>::_type = OpType::RightJoin;
+OpType OperatorNode<LogicalRightJoin>::type_ = OpType::RightJoin;
 template <>
-OpType OperatorNode<LogicalOuterJoin>::_type = OpType::OuterJoin;
+OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
-OpType OperatorNode<LogicalAggregate>::_type = OpType::Aggregate;
+OpType OperatorNode<LogicalAggregate>::type_ = OpType::Aggregate;
 template <>
-OpType OperatorNode<LogicalLimit>::_type = OpType::Limit;
+OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
-OpType OperatorNode<PhysicalScan>::_type = OpType::Scan;
+OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
 template <>
-OpType OperatorNode<PhysicalComputeExprs>::_type = OpType::ComputeExprs;
+OpType OperatorNode<PhysicalComputeExprs>::type_ = OpType::ComputeExprs;
 template <>
-OpType OperatorNode<PhysicalFilter>::_type = OpType::Filter;
+OpType OperatorNode<PhysicalFilter>::type_ = OpType::Filter;
 template <>
-OpType OperatorNode<PhysicalInnerNLJoin>::_type = OpType::InnerNLJoin;
+OpType OperatorNode<PhysicalInnerNLJoin>::type_ = OpType::InnerNLJoin;
 template <>
-OpType OperatorNode<PhysicalLeftNLJoin>::_type = OpType::LeftNLJoin;
+OpType OperatorNode<PhysicalLeftNLJoin>::type_ = OpType::LeftNLJoin;
 template <>
-OpType OperatorNode<PhysicalRightNLJoin>::_type = OpType::RightNLJoin;
+OpType OperatorNode<PhysicalRightNLJoin>::type_ = OpType::RightNLJoin;
 template <>
-OpType OperatorNode<PhysicalOuterNLJoin>::_type = OpType::OuterNLJoin;
+OpType OperatorNode<PhysicalOuterNLJoin>::type_ = OpType::OuterNLJoin;
 template <>
-OpType OperatorNode<PhysicalInnerHashJoin>::_type = OpType::InnerHashJoin;
+OpType OperatorNode<PhysicalInnerHashJoin>::type_ = OpType::InnerHashJoin;
 template <>
-OpType OperatorNode<PhysicalLeftHashJoin>::_type = OpType::LeftHashJoin;
+OpType OperatorNode<PhysicalLeftHashJoin>::type_ = OpType::LeftHashJoin;
 template <>
-OpType OperatorNode<PhysicalRightHashJoin>::_type = OpType::RightHashJoin;
+OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
 template <>
-OpType OperatorNode<PhysicalOuterHashJoin>::_type = OpType::OuterHashJoin;
+OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
 template <>
-OpType OperatorNode<QueryExpressionOperator>::_type = OpType::Expression;
+OpType OperatorNode<QueryExpressionOperator>::type_ = OpType::Expression;
 template <>
-OpType OperatorNode<ExprVariable>::_type = OpType::Variable;
+OpType OperatorNode<ExprVariable>::type_ = OpType::Variable;
 template <>
-OpType OperatorNode<ExprConstant>::_type = OpType::Constant;
+OpType OperatorNode<ExprConstant>::type_ = OpType::Constant;
 template <>
-OpType OperatorNode<ExprCompare>::_type = OpType::Compare;
+OpType OperatorNode<ExprCompare>::type_ = OpType::Compare;
 template <>
-OpType OperatorNode<ExprBoolOp>::_type = OpType::BoolOp;
+OpType OperatorNode<ExprBoolOp>::type_ = OpType::BoolOp;
 template <>
-OpType OperatorNode<ExprOp>::_type = OpType::Op;
+OpType OperatorNode<ExprOp>::type_ = OpType::Op;
 template <>
-OpType OperatorNode<ExprProjectList>::_type = OpType::ProjectList;
+OpType OperatorNode<ExprProjectList>::type_ = OpType::ProjectList;
 template <>
-OpType OperatorNode<ExprProjectColumn>::_type = OpType::ProjectColumn;
+OpType OperatorNode<ExprProjectColumn>::type_ = OpType::ProjectColumn;
 
 template <>
 bool OperatorNode<LeafOperator>::IsLogical() const {

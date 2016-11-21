@@ -10,15 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
+#include "optimizer/group_expression.h"
 #include "optimizer/operator_node.h"
 #include "optimizer/property.h"
-#include "optimizer/group_expression.h"
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace peloton {
 namespace optimizer {
@@ -45,12 +44,18 @@ class Group {
   const std::vector<std::shared_ptr<GroupExpression>> &GetExpressions() const;
 
  private:
-  GroupID id;
-  std::vector<Operator> items;
-  std::vector<std::shared_ptr<GroupExpression>> expressions;
+  GroupID id_;
+  std::vector<Operator> items_;
+  std::vector<std::shared_ptr<GroupExpression>> expressions_;
   std::unordered_map<PropertySet,
                      std::tuple<double, std::shared_ptr<GroupExpression>>>
-      lowest_cost_expressions;
+      lowest_cost_expressions_;
+
+  // Whether equivalent logical expressions have been explored for this group
+  bool has_explored_;
+
+  // Whether physical operators have been implemented for this group
+  bool has_implemented_;
 };
 
 } /* namespace optimizer */

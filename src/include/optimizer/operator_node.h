@@ -100,17 +100,17 @@ template <typename T>
 struct OperatorNode : public BaseOperatorNode {
   void accept(OperatorVisitor *v) const;
 
-  std::string name() const { return _name; }
+  std::string name() const { return name_; }
 
-  OpType type() const { return _type; }
+  OpType type() const { return type_; }
 
   bool IsLogical() const;
 
   bool IsPhysical() const;
 
-  static std::string _name;
+  static std::string name_;
 
-  static OpType _type;
+  static OpType type_;
 };
 
 class Operator {

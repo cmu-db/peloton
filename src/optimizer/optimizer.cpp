@@ -34,14 +34,14 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-  rules.emplace_back(new InnerJoinCommutativity());
-  rules.emplace_back(new GetToScan());
-  rules.emplace_back(new LogicalFilterToPhysical());
-  rules.emplace_back(new ProjectToComputeExprs());
-  rules.emplace_back(new InnerJoinToInnerNLJoin());
-  rules.emplace_back(new LeftJoinToLeftNLJoin());
-  rules.emplace_back(new RightJoinToRightNLJoin());
-  rules.emplace_back(new OuterJoinToOuterNLJoin());
+  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
+  physical_implementation_rules_.emplace_back(new GetToScan());
+  physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
+  physical_implementation_rules_.emplace_back(new ProjectToComputeExprs());
+  physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
+  physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());
+  physical_implementation_rules_.emplace_back(new RightJoinToRightNLJoin());
+  physical_implementation_rules_.emplace_back(new OuterJoinToOuterNLJoin());
   // rules.emplace_back(new InnerJoinToInnerHashJoin());
 }
 
@@ -56,10 +56,6 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
-
-  // One to one Mapping
-  // auto parse_item_node_type =
-  // parse_tree_list->GetStatements().at(0)->GetType();
 
   auto parse_tree = parse_tree_list->GetStatements().at(0);
 
@@ -169,7 +165,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     // rules
   } else {
     // Apply transformations and cost those which match the requirements
-    for (const std::unique_ptr<Rule> &rule : rules) {
+    for (const std::unique_ptr<Rule> &rule : logical_transformation_rules_) {
       // Apply all rules to operator which match. We apply all rules to one
       // operator before moving on to the next operator in the group because
       // then we avoid missing the application of a rule e.g. an application
@@ -239,7 +235,7 @@ void Optimizer::ExploreExpression(std::shared_ptr<GroupExpression> gexpr) {
   LOG_TRACE("Exploring expression of group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
-  for (const std::unique_ptr<Rule> &rule : rules) {
+  for (const std::unique_ptr<Rule> &rule : logical_transformation_rules_) {
     // See comment in OptimizeExpression
     std::vector<std::shared_ptr<GroupExpression>> candidates =
         TransformExpression(gexpr, *(rule.get()));

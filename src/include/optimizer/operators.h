@@ -283,7 +283,7 @@ class ExprBoolOp : public OperatorNode<ExprBoolOp> {
 
   hash_t Hash() const override;
 
-  BoolOpType bool_type;
+  BoolOpType bool_type_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -297,8 +297,8 @@ class ExprOp : public OperatorNode<ExprOp> {
 
   hash_t Hash() const override;
 
-  ExpressionType expr_type;
-  common::Type::TypeId return_type;
+  ExpressionType expr_type_;
+  common::Type::TypeId return_type_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -320,7 +320,7 @@ class ExprProjectColumn : public OperatorNode<ExprProjectColumn> {
 
   hash_t Hash() const override;
 
-  Column *column;
+  Column *column_;
 };
 
 } /* namespace optimizer */

@@ -54,6 +54,7 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   expression::ExpressionUtil::TransformExpression(&schema, predicate);
   property_set_.AddProperty(new PropertyPredicate(predicate->Copy()));
 
+  // Add output expressions property
   auto output_expressions =
       std::vector<std::unique_ptr<expression::AbstractExpression> >();
   for (auto col : *select_stmt->select_list) {
