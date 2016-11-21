@@ -12,4 +12,5 @@ dnf install -y git \
 	boost-devel \
 	jemalloc-devel \
 	valgrind \
-	lcov
+	lcov \
+	postgresql-contrib
