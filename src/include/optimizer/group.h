@@ -43,6 +43,12 @@ class Group {
 
   const std::vector<std::shared_ptr<GroupExpression>> &GetExpressions() const;
 
+  inline void SetExplorationFlag() { has_explored_ = true; }
+  inline bool HasExplored() { return has_explored_; }
+
+  inline void SetImplementationFlag() { has_implemented_ = true; }
+  inline bool HasImplemented() { return has_implemented_; }
+
  private:
   GroupID id_;
   std::vector<Operator> items_;

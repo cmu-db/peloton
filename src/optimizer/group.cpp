@@ -18,7 +18,10 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-Group::Group(GroupID id) : id_(id) {}
+Group::Group(GroupID id) : id_(id) {
+  has_explored_ = false;
+  has_implemented_ = false;
+}
 void Group::add_item(Operator op) {
   // TODO(abpoms): do duplicate checking
   items_.push_back(op);

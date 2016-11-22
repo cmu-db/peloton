@@ -127,7 +127,7 @@ class Optimizer : public AbstractOptimizer {
 
   /* ExploreGroup - exploration equivalent of OptimizeGroup.
    *
-   * gexpr: the group to explore
+   * id: the group to explore
    */
   void ExploreGroup(GroupID id);
 
@@ -139,6 +139,18 @@ class Optimizer : public AbstractOptimizer {
    * gexpr: the group expression to apply rules to
    */
   void ExploreExpression(std::shared_ptr<GroupExpression> gexpr);
+
+  /* ImplementGroup - Implement physical operators of a group
+   *
+   * id: the group to explore
+   */
+  void ImplementGroup(GroupID id);
+
+  /* ImplementExpression - Implement physical operators of a group expression
+   *
+   * gexpr: the group expression to apply rules to
+   */
+  void ImplementExpression(std::shared_ptr<GroupExpression> gexpr);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Rule application

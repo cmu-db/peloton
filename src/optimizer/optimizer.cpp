@@ -66,6 +66,12 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Get the physical properties the final plan must output
   PropertySet properties = GetQueryTreeRequiredProperties(parse_tree);
 
+  // Explore the logically equivalent plans from the root group
+  ExploreGroup(root_id);
+
+  // Implement all the physical operators
+  ImplementGroup(root_id);
+
   // Find least cost plan for root group
   OptimizeExpression(gexpr, properties);
 
@@ -229,24 +235,55 @@ void Optimizer::ExploreGroup(GroupID id) {
        memo.GetGroupByID(id)->GetExpressions()) {
     ExploreExpression(gexpr);
   }
+  memo.GetGroupByID(id)->SetExplorationFlag();
 }
 
 void Optimizer::ExploreExpression(std::shared_ptr<GroupExpression> gexpr) {
   LOG_TRACE("Exploring expression of group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
+  PL_ASSERT(gexpr->Op().IsLogical());
+
+  // Explore logically equivalent plans
   for (const std::unique_ptr<Rule> &rule : logical_transformation_rules_) {
     // See comment in OptimizeExpression
     std::vector<std::shared_ptr<GroupExpression>> candidates =
         TransformExpression(gexpr, *(rule.get()));
 
     for (std::shared_ptr<GroupExpression> candidate : candidates) {
-      // If logical...
-      if (candidate->Op().IsLogical()) {
-        // Explore the expression
-        ExploreExpression(candidate);
-      }
+      // Explore the expression
+      ExploreExpression(candidate);
     }
+  }
+
+  // Explore child groups
+  for (auto child_id : gexpr->GetChildGroupIDs()) {
+    if (!memo.GetGroupByID(child_id)->HasExplored()) ExploreGroup(child_id);
+  }
+}
+
+void Optimizer::ImplementGroup(GroupID id) {
+  LOG_TRACE("Implementing group %d", id);
+  for (std::shared_ptr<GroupExpression> gexpr :
+       memo.GetGroupByID(id)->GetExpressions()) {
+    if (gexpr->Op().IsPhysical()) ExploreExpression(gexpr);
+  }
+  memo.GetGroupByID(id)->SetImplementationFlag();
+}
+
+void Optimizer::ImplementExpression(std::shared_ptr<GroupExpression> gexpr) {
+  LOG_TRACE("Implementing expression of group %d with op %s",
+            gexpr->GetGroupID(), gexpr->Op().name().c_str());
+
+  // Explore implement physical expressions
+  for (const std::unique_ptr<Rule> &rule : physical_implementation_rules_) {
+    TransformExpression(gexpr, *(rule.get()));
+  }
+
+  // Explore child groups
+  for (auto child_id : gexpr->GetChildGroupIDs()) {
+    if (!memo.GetGroupByID(child_id)->HasImplemented())
+      ImplementGroup(child_id);
   }
 }
 
