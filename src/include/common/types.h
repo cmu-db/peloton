@@ -12,17 +12,17 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
-#include <climits>
-#include <limits>
 #include <bitset>
-#include <vector>
+#include <climits>
+#include <cstdint>
 #include <functional>
+#include <limits>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include "common/type.h"
+#include <vector>
 #include "common/config.h"
+#include "common/type.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -75,7 +75,7 @@ enum ReplicationType {
 enum GarbageCollectionType {
   GARBAGE_COLLECTION_TYPE_INVALID = 0,
   GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
-  GARBAGE_COLLECTION_TYPE_ON = 2  // turn on GC
+  GARBAGE_COLLECTION_TYPE_ON = 2    // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
@@ -91,7 +91,7 @@ enum GarbageCollectionType {
 namespace peloton {
 
 // forward declare
-//class Value;
+// class Value;
 
 //===--------------------------------------------------------------------===//
 // NULL-related Constants
@@ -202,7 +202,7 @@ enum PostgresValueType {
 };
 
 enum ValueType {
-    // TODO
+  // TODO
 };
 
 //===--------------------------------------------------------------------===//
@@ -213,7 +213,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_INVALID = 0,
 
   // TODO: Add the expression types that you implemented
-  
+
 
   // -----------------------------
   // String operators
@@ -470,7 +470,6 @@ enum IsolationLevelType {
 // Garbage Collection Types
 //===--------------------------------------------------------------------===//
 
-
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
   BACKEND_TYPE_MM = 1,       // on volatile memory
@@ -484,10 +483,10 @@ enum BackendType {
 //===--------------------------------------------------------------------===//
 
 enum IndexType {
-  INDEX_TYPE_INVALID = 0,   // invalid index type
-  INDEX_TYPE_BTREE = 1,     // btree
-  INDEX_TYPE_BWTREE = 2,    // bwtree
-  INDEX_TYPE_HASH = 3       // hash
+  INDEX_TYPE_INVALID = 0,  // invalid index type
+  INDEX_TYPE_BTREE = 1,    // btree
+  INDEX_TYPE_BWTREE = 2,   // bwtree
+  INDEX_TYPE_HASH = 3      // hash
 };
 
 enum IndexConstraintType {
@@ -901,10 +900,7 @@ enum EntityType {
 // Endianess
 // ------------------------------------------------------------------
 
-enum Endianess {
-  BYTE_ORDER_BIG_ENDIAN = 0,
-  BYTE_ORDER_LITTLE_ENDIAN = 1
-};
+enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
@@ -945,13 +941,11 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 // For epoch
 static const size_t EPOCH_LENGTH = 10;
 
-
 // For threads
 extern size_t QUERY_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;
 extern size_t GC_THREAD_COUNT;
 extern size_t EPOCH_THREAD_COUNT;
-
 
 //===--------------------------------------------------------------------===//
 // TupleMetadata
@@ -1014,19 +1008,17 @@ struct ItemPointerHasher {
 enum RWType {
   RW_TYPE_INVALID,
   RW_TYPE_READ,
-  RW_TYPE_READ_OWN, // select for update
+  RW_TYPE_READ_OWN,  // select for update
   RW_TYPE_UPDATE,
   RW_TYPE_INSERT,
   RW_TYPE_DELETE,
   RW_TYPE_INS_DEL,  // delete after insert.
 };
 
-enum GCSetType {
-  GC_SET_TYPE_COMMITTED,
-  GC_SET_TYPE_ABORTED
-};
+enum GCSetType { GC_SET_TYPE_COMMITTED, GC_SET_TYPE_ABORTED };
 
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> ReadWriteSet;
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
+    ReadWriteSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
@@ -1059,7 +1051,7 @@ bool IsNumeric(ValueType type);
 bool IsIntegralType(ValueType type);
 
 // for testing, obtain a random instance of the specified type
-//Value GetRandomValue(ValueType type);
+// Value GetRandomValue(ValueType type);
 
 int64_t GetMaxTypeValue(ValueType type);
 
@@ -1080,6 +1072,8 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(const std::string &str);
 
+std::string TypeIdToString(common::Type::TypeId type);
+common::Type::TypeId StringToTypeId(const std::string &str);
 std::string ValueTypeToString(ValueType type);
 ValueType StringToValueType(const std::string &str);
 ValueType PostgresStringToValueType(std::string str);
@@ -1132,7 +1126,6 @@ typedef std::vector<Target> TargetList;
 typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
-
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs
