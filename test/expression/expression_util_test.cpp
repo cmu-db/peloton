@@ -37,9 +37,18 @@ expression::AbstractExpression* createExpTree() {
       common::ValueFactory::GetIntegerValue(1));
   auto exp2 = expression::ExpressionUtil::ConstantValueFactory(
       common::ValueFactory::GetIntegerValue(1));
-  auto root = expression::ExpressionUtil::ComparisonFactory(
+  auto exp3 = expression::ExpressionUtil::ComparisonFactory(
       EXPRESSION_TYPE_COMPARE_EQUAL, exp1, exp2);
 
+  auto exp4 = expression::ExpressionUtil::ConstantValueFactory(
+	  common::ValueFactory::GetVarcharValue("ABC"));
+  auto exp5 = expression::ExpressionUtil::ConstantValueFactory(
+  	  common::ValueFactory::GetVarcharValue("XYZ"));
+  auto exp6 = expression::ExpressionUtil::ComparisonFactory(
+      EXPRESSION_TYPE_COMPARE_NOTEQUAL, exp4, exp5);
+
+  auto root = expression::ExpressionUtil::ConjunctionFactory(
+		  EXPRESSION_TYPE_CONJUNCTION_AND, exp3, exp6);
   return (root);
 }
 
@@ -49,7 +58,7 @@ TEST_F(ExpressionUtilTest, GetInfoTest) {
 
   std::string info = expression::ExpressionUtil::GetInfo(root);
 
-  LOG_INFO("%s", info.c_str());
+  printf("%s", info.c_str());
 
   EXPECT_TRUE(info.size() > 0);
 

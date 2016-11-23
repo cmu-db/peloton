@@ -248,9 +248,9 @@ Value::~Value() {
 const std::string Value::GetInfo() const {
   std::ostringstream os;
 
-  os << "\tValue :: " << " type = "
+  os << "Value :: " << " type = "
       << Type::GetInstance(GetTypeId())->ToString() << "," << " value = "
-      << ToString() << std::endl;
+      << ToString();
 
   return os.str();
 }

@@ -196,7 +196,7 @@ class ExpressionUtil {
 
   /**
    * Generate a pretty-printed string representation of the entire
-   * Expresssion tree
+   * Expresssion tree for the given root node
    */
   static std::string GetInfo(AbstractExpression *expr) {
     std::ostringstream os;
@@ -205,6 +205,41 @@ class ExpressionUtil {
     return os.str();
   }
 
+private:
+
+  /**
+   * Internal method for recursively traversing the expression tree
+   * and generating debug output
+   */
+  static void GetInfo(const AbstractExpression *expr, std::ostringstream &os,
+                      std::string spacer) {
+    ExpressionType etype = expr->GetExpressionType();
+    Type::TypeId vtype = expr->GetValueType();
+
+    // Basic Information
+    os << spacer << "+ " << ExpressionTypeToString(etype) << "::"
+       << "ValueType[" << TypeIdToString(vtype) << "]";
+
+    switch (etype) {
+    case EXPRESSION_TYPE_VALUE_CONSTANT: {
+    	const ConstantValueExpression *c_expr = dynamic_cast<const ConstantValueExpression*>(expr);
+    	os << " -> Value=" << c_expr->GetValue().ToString();
+    	break;
+    }
+    default: {
+    	break;
+    }
+    } // SWITCH
+
+    os << std::endl;
+    spacer += "   ";
+    for (int i = 0, cnt = expr->GetChildrenSize(); i < cnt; i++) {
+      GetInfo(expr->GetChild(i), os, spacer);
+    }
+    return;
+  }
+
+public:
   /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective obejects
@@ -232,31 +267,7 @@ class ExpressionUtil {
                         needs_projection, true);
   }
 
- private:
-  /**
-   *
-   */
-  static void GetInfo(const AbstractExpression *expr, std::ostringstream &os,
-                      std::string &spacer) {
-    std::string orig_spacer(spacer);
-    ExpressionType etype = expr->GetExpressionType();
-    Type::TypeId vtype = expr->GetValueType();
-
-    // spacer += "   ";
-    std::string info = ExpressionTypeToString(etype);
-
-    // Basic Information
-    os << spacer << "ValueType[" << TypeIdToString(vtype) << "]";
-    os << "[" << ExpressionTypeToString(etype) << "]";
-    os << "[NumChildren=" << expr->GetChildrenSize() << "]\n";
-
-    for (int i = 0, cnt = expr->GetChildrenSize(); i < cnt; i++) {
-      os << spacer << "[" << i << "]   ";
-      GetInfo(expr->GetChild(i), os, spacer);
-      os << "\n";
-    }
-    return;
-  }
+private:
 
   /**
    * this is a private function for transforming expressions as described
