@@ -126,7 +126,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         LOG_TRACE("Found GROUP BY");
         for (auto elem : *group_by->columns) {
           auto tuple_elem = (expression::TupleValueExpression*) elem;
-          std::string col_name(tuple_elem->col_name_);
+          std::string col_name(tuple_elem->GetColumnName());
           auto column_id = target_table->GetSchema()->GetColumnID(col_name);
           group_by_columns.push_back(column_id);
         }
@@ -180,7 +180,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           // just do a direct mapping
           if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
             auto tup_expr = (expression::TupleValueExpression*) expr;
-            oid_t old_col_id = table_schema->GetColumnID(tup_expr->col_name_);
+            oid_t old_col_id = table_schema->GetColumnID(tup_expr->GetColumnName());
             columns.push_back(table_schema->GetColumn(old_col_id));
             dml.push_back(
                 DirectMap(i, std::make_pair(0, tup_expr->GetColumnId())));
@@ -225,11 +225,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           }
           std::vector<oid_t> key;
 
-          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->col_name_);
+          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->GetColumnName());
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
             std::string col_name(
-                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->col_name_);
+                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->GetColumnName());
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -262,11 +262,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             flags.push_back(true);
           }
           std::vector<oid_t> key;
-          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->col_name_);
+          std::string sort_col_name(((expression::TupleValueExpression*)select_stmt->order->expr)->GetColumnName());
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
             std::string col_name(
-                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->col_name_);
+                ((expression::TupleValueExpression*)select_stmt->select_list->at(column_ctr))->GetColumnName());
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -356,7 +356,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               // Else it is the same as the column type
               else {
                 oid_t old_col_id = target_table->GetSchema()->GetColumnID(
-                    agg_over->col_name_);
+                    agg_over->GetColumnName());
                 auto table_column =
                     target_table->GetSchema()->GetColumn(old_col_id);
 
@@ -752,7 +752,7 @@ void SimpleOptimizer::GetPredicateColumns(
     if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
       auto expr = (expression::TupleValueExpression*)expression->GetChild(0);
-      std::string col_name(expr->col_name_);
+      std::string col_name(expr->GetColumnName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
@@ -789,7 +789,7 @@ void SimpleOptimizer::GetPredicateColumns(
     if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
       auto expr = (expression::TupleValueExpression*)expression->GetChild(1);
-      std::string col_name(expr->col_name_);
+      std::string col_name(expr->GetColumnName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       LOG_TRACE("Column id: %d", column_id);

@@ -240,6 +240,43 @@ private:
   }
 
 public:
+
+  /**
+   * Return a list of all of the catalog::Column objects referenced
+   * in the given expression tree
+   */
+  static std::vector<catalog::Column> GetReferencedColumns(
+		  UNUSED_ATTRIBUTE catalog::Schema *schema,
+		  AbstractExpression *expr) {
+	  PL_ASSERT(expr != nullptr);
+	  PL_ASSERT(schema != nullptr);
+	  std::vector<catalog::Column> columns;
+
+	  return (columns);
+  }
+
+private:
+
+  static void GetReferencedColumns(
+		  UNUSED_ATTRIBUTE catalog::Schema *schema,
+		  AbstractExpression *expr,
+		  UNUSED_ATTRIBUTE std::vector<catalog::Column> &columns) {
+	  PL_ASSERT(schema != nullptr);
+	  PL_ASSERT(expr != nullptr);
+
+	  ExpressionType etype = expr->GetExpressionType();
+	  if (etype == EXPRESSION_TYPE_VALUE_TUPLE) {
+		  // TODO: Get the table + column name and grab the
+		  // the handle from schema object!
+
+	  }
+
+    }
+
+
+
+
+public:
   /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective obejects
@@ -297,10 +334,10 @@ private:
     if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE &&
         expr->GetValueType() == Type::INVALID) {
       auto val_expr = (expression::TupleValueExpression *)expr;
-      auto col_id = schema->GetColumnID(val_expr->col_name_);
+      auto col_id = schema->GetColumnID(val_expr->GetColumnName());
       // exception if we can't find the requested column by name
       if (col_id == (oid_t)-1) {
-        throw Exception("Column " + val_expr->col_name_ + " not found");
+        throw Exception("Column " + val_expr->GetColumnName() + " not found");
       }
       auto column = schema->GetColumn(col_id);
       // make sure the column we need is returned from the scan
@@ -322,7 +359,7 @@ private:
       if (val_expr->alias.size() > 0) {
         val_expr->expr_name_ = val_expr->alias;
       } else {
-        val_expr->expr_name_ = val_expr->col_name_;
+        val_expr->expr_name_ = val_expr->GetColumnName();
       }
       // point to the correct column returned in the logical tuple underneath
       val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
