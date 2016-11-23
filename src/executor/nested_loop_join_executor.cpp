@@ -291,7 +291,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         join_values.push_back(predicate_value);
       }
 
-      // Pass the result to right executor
+      // Pass the columns and values to right executor
       children_[1]->UpdatePredicate(join_column_ids_, join_values);
 
       // return if right tile is empty

@@ -86,6 +86,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
 oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile);
 
 void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile);
+void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile);
 
 void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
@@ -239,7 +240,8 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    tuple.SetValue(1, common::ValueFactory::GetIntegerValue(50 * rowid).Copy(),
+    tuple.SetValue(1,
+                   common::ValueFactory::GetIntegerValue(50 * rowid * 2).Copy(),
                    testing_pool);
 
     tuple.SetValue(2, common::ValueFactory::GetDoubleValue(1.5).Copy(),
@@ -316,7 +318,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
 
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values.push_back(common::ValueFactory::GetIntegerValue(100).Copy());
+  values.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
@@ -333,7 +335,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   executor::IndexScanExecutor left_table_scan_executor(&left_table_node,
                                                        context.get());
 
-  // Right ATTR 0 = 400
+  // Right ATTR 0 =
   auto index_right = right_table->GetIndex(0);
   std::vector<oid_t> key_column_ids_right;
   std::vector<ExpressionType> expr_types_right;
@@ -342,7 +344,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
 
   key_column_ids_right.push_back(0);
   expr_types_right.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values_right.push_back(common::ValueFactory::GetIntegerValue(200).Copy());
+  values_right.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc_right(
@@ -406,8 +408,10 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
     if (result_logical_tile != nullptr) {
       result_tuple_count += result_logical_tile->GetTupleCount();
       tuples_with_null += CountTuplesWithNullFields(result_logical_tile.get());
-      ValidateJoinLogicalTile(result_logical_tile.get());
-      LOG_TRACE("result tile info: %s", result_logical_tile->GetInfo().c_str());
+      ValidateNestedLoopJoinLogicalTile(result_logical_tile.get());
+      LOG_INFO("result tile info: %s", result_logical_tile->GetInfo().c_str());
+      LOG_INFO("result_tuple_count: %u", result_tuple_count);
+      LOG_INFO("tuples_with_null: %u", tuples_with_null);
     }
   }
 
@@ -907,6 +911,31 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }
 }
+
+void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
+  PL_ASSERT(logical_tile);
+
+  // Get column count
+  auto column_count = logical_tile->GetColumnCount();
+
+  // Check # of columns
+  EXPECT_EQ(column_count, 4);
+
+  // Check the attribute values
+  // Go over the tile
+  for (auto logical_tile_itr : *logical_tile) {
+    const expression::ContainerTuple<executor::LogicalTile> join_tuple(
+        logical_tile, logical_tile_itr);
+
+    // Check the join fields
+    common::Value left_tuple_join_attribute_val = (join_tuple.GetValue(2));
+    common::Value right_tuple_join_attribute_val = (join_tuple.GetValue(3));
+    common::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
+        right_tuple_join_attribute_val));
+    EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
+  }
+}
+
 void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
   // Expect zero result tiles from the child
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(false));

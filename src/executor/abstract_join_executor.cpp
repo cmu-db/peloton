@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "common/types.h"
@@ -275,6 +274,15 @@ std::vector<std::vector<oid_t>> AbstractJoinExecutor::BuildPostitionLists(
  * to the new result tile
  */
 void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
+
+  // Debug
+  if (left_tile != nullptr) {
+    oid_t result_tuple_count = left_tile->GetTupleCount();
+    LOG_INFO("result tile info: %s", left_tile->GetInfo().c_str());
+    LOG_INFO("result_tuple_count: %u", result_tuple_count);
+  }
+  // end
+
   PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
   left_result_tiles_.emplace_back(left_tile);
   switch (join_type_) {
@@ -293,6 +301,14 @@ void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
  * to the new result tile
  */
 void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
+  // Debug
+  if (right_tile != nullptr) {
+    oid_t result_tuple_count = right_tile->GetTupleCount();
+    LOG_INFO("result tile info: %s", right_tile->GetInfo().c_str());
+    LOG_INFO("result_tuple_count: %u", result_tuple_count);
+  }
+  // end
+
   PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
   right_result_tiles_.emplace_back(right_tile);
   switch (join_type_) {
@@ -367,13 +383,9 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
   PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
 
   switch (join_type_) {
-    case JOIN_TYPE_LEFT: {
-      return BuildLeftJoinOutput();
-    }
+    case JOIN_TYPE_LEFT: { return BuildLeftJoinOutput(); }
 
-    case JOIN_TYPE_RIGHT: {
-      return BuildRightJoinOutput();
-    }
+    case JOIN_TYPE_RIGHT: { return BuildRightJoinOutput(); }
 
     case JOIN_TYPE_OUTER: {
       bool status = BuildLeftJoinOutput();
@@ -386,9 +398,7 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
       break;
     }
 
-    case JOIN_TYPE_INNER: {
-      return false;
-    }
+    case JOIN_TYPE_INNER: { return false; }
 
     default: {
       throw Exception("Unsupported join type : " + std::to_string(join_type_));
