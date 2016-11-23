@@ -75,16 +75,23 @@ public:
     return value_idx_;
   }
 
+  int GetTupleId() const {
+	  return tuple_idx_;
+  }
+
+  // XXX: These should not be public!
   std::string table_name_;
   std::string col_name_;
-  int value_idx_;
-  int tuple_idx_;
+
 
 protected:
   TupleValueExpression(const TupleValueExpression& other) :
       AbstractExpression(other), table_name_(other.table_name_), col_name_(other.col_name_), value_idx_(other.value_idx_), tuple_idx_(
           other.tuple_idx_) {
   }
+
+  int value_idx_;
+  int tuple_idx_;
 
 };
 

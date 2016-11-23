@@ -183,7 +183,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             oid_t old_col_id = table_schema->GetColumnID(tup_expr->col_name_);
             columns.push_back(table_schema->GetColumn(old_col_id));
             dml.push_back(
-                DirectMap(i, std::make_pair(0, tup_expr->value_idx_)));
+                DirectMap(i, std::make_pair(0, tup_expr->GetColumnId())));
           }
           // otherwise we need to evaluat the expression
           else {
