@@ -67,6 +67,13 @@ class AbstractExecutor {
   // clear the context
   void ClearContext();
 
+  // Update the predicate in runtime. This is used in Nested Loop Join. Since
+  // some executor do not need this function, we set it to empty function.
+  virtual void UpdatePredicate(std::vector<oid_t> &key_column_ids
+                                   UNUSED_ATTRIBUTE,
+                               std::vector<common::Value> &values
+                                   UNUSED_ATTRIBUTE) {}
+
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times

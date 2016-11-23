@@ -1102,7 +1102,6 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
   expression::TupleValueExpression* left_table_attr_4 =
       new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
 
-  // FIXME: WHY there is 1 not 0? There is no one column in output
   expression::TupleValueExpression* right_table_attr_1 =
       new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
 

@@ -37,6 +37,9 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   size_t right_result_itr_ = 0;
 
   size_t left_result_itr_ = 0;  // added by Michael
+
+  // columns in left table for join predicate.
+  std::vector<oid_t> join_column_ids_;
 };
 
 }  // namespace executor

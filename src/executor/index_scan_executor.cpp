@@ -489,5 +489,12 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   return true;
 }
 
+void IndexScanExecutor::UpdatePredicate(std::vector<oid_t> &key_column_ids
+                                            UNUSED_ATTRIBUTE,
+                                        std::vector<common::Value> &values
+                                            UNUSED_ATTRIBUTE) {
+  std::cout << "this is index scan executor" << std::endl;
+}
+
 }  // namespace executor
 }  // namespace peloton

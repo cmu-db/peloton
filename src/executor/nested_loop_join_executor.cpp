@@ -268,41 +268,31 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
     }
 
-    // TODO: Handle right Join in the future
+    // FIXME: combine the beginning right_child_done_
     if (left_child_done_) {
-      return false;
+      return BuildOuterJoinOutput();
     }
 
     left_tile = left_result_tiles_[left_result_itr_].get();
+
+    //===------------------------------------------------------------------===//
+    // Look up the right table using the left result
+    //===------------------------------------------------------------------===//
 
     for (auto left_tile_row_itr : *left_tile) {
       // Tuple result
       expression::ContainerTuple<executor::LogicalTile> left_tuple(
           left_tile, left_tile_row_itr);
 
-      // Pick out the join predicate column value for the left table.
-      // TODO: There might be multiple predicates
-      oid_t predicate_coloumn =
-          ((expression::TupleValueExpression *)predicate_->GetLeft())
-              ->GetColumnId();
-      common::Value predicate_value = left_tuple.GetValue(predicate_coloumn);
-
-      // Put this value into right child
-      // TODO: Adding multiple predicates and values
-      if (children_[1]->GetRawNode()->GetPlanNodeType() ==
-          PLAN_NODE_TYPE_INDEXSCAN) {
-        std::cout << "binggo" << std::endl;
-        bool replace =
-            ((executor::IndexScanExecutor *)children_[1])
-                ->GetPlan()
-                ->ReplaceKeyValue(predicate_coloumn, predicate_value);
-
-        // The value and key column should correspond with each other
-        if (replace == false) {
-          LOG_TRACE("Error comparison in Nested Loop.");
-          return false;
-        }
+      // Grab the values
+      std::vector<common::Value> join_values;
+      for (auto column_id : join_column_ids_) {
+        common::Value predicate_value = left_tuple.GetValue(column_id);
+        join_values.push_back(predicate_value);
       }
+
+      // Pass the result to right executor
+      children_[1]->UpdatePredicate(join_column_ids_, join_values);
 
       // return if right tile is empty
       if (right_child_done_ && right_result_tiles_.empty()) {
