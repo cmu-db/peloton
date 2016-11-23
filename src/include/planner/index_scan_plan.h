@@ -146,7 +146,8 @@ class IndexScanPlan : public AbstractScan {
   const std::string GetInfo() const { return "IndexScan"; }
 
   void SetParameterValues(std::vector<common::Value> *values);
-  bool ReplaceKeyValue(oid_t key_column_id, common::Value value);
+  void UpdateKeyValue(std::vector<oid_t> &key_column_ids,
+                      std::vector<common::Value> &values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;

@@ -93,17 +93,21 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   }
 }
 
-// This is used to replace one or several values in NestedLoopJoin
-// TODO: Add a list values
-bool IndexScanPlan::ReplaceKeyValue(oid_t key_column_id, common::Value value) {
+// Replace one or several values (used in NestedLoopJoin)
+void IndexScanPlan::UpdateKeyValue(std::vector<oid_t> &key_column_ids,
+                                   std::vector<common::Value> &values) {
+  PL_ASSERT(key_column_ids.size() == values.size());
+  PL_ASSERT(key_column_ids_.size() == values_.size());
+  PL_ASSERT(key_column_ids.size() < key_column_ids_.size());
+
   // Find out the position (offset) where is key_column_id
-  for (unsigned int i = 0; i < values_.size(); ++i) {
-    if (key_column_id == key_column_ids_[i]) {
-      values_[i] = value;
-      return true;
+  for (oid_t i = 0; i < key_column_ids.size(); i++) {
+    for (unsigned int j = 0; j < values_.size(); ++j) {
+      if (key_column_ids[i] == key_column_ids_[j]) {
+        values_[j] = values[i];
+      }
     }
   }
-  return false;
 }
 
 }  // namespace planner
