@@ -32,6 +32,10 @@ namespace test {
 
 class ExpressionUtilTest : public PelotonTest {};
 
+std::string CONSTANT_VALUE_STRING1 = "ABC";
+std::string CONSTANT_VALUE_STRING2 = "XYZ";
+
+
 expression::AbstractExpression* createExpTree() {
   auto exp1 = expression::ExpressionUtil::ConstantValueFactory(
       common::ValueFactory::GetIntegerValue(1));
@@ -41,9 +45,9 @@ expression::AbstractExpression* createExpTree() {
       EXPRESSION_TYPE_COMPARE_EQUAL, exp1, exp2);
 
   auto exp4 = expression::ExpressionUtil::ConstantValueFactory(
-	  common::ValueFactory::GetVarcharValue("ABC"));
+	  common::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING1));
   auto exp5 = expression::ExpressionUtil::ConstantValueFactory(
-  	  common::ValueFactory::GetVarcharValue("XYZ"));
+  	  common::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING2));
   auto exp6 = expression::ExpressionUtil::ComparisonFactory(
       EXPRESSION_TYPE_COMPARE_NOTEQUAL, exp4, exp5);
 
@@ -55,12 +59,12 @@ expression::AbstractExpression* createExpTree() {
 // Make sure that we can traverse a tree
 TEST_F(ExpressionUtilTest, GetInfoTest) {
   auto root = createExpTree();
-
   std::string info = expression::ExpressionUtil::GetInfo(root);
 
-  printf("%s", info.c_str());
-
+  // Just make sure that it has our constant strings
   EXPECT_TRUE(info.size() > 0);
+  EXPECT_NE(std::string::npos, info.find(CONSTANT_VALUE_STRING1));
+  EXPECT_NE(std::string::npos, info.find(CONSTANT_VALUE_STRING2));
 
   delete root;
 }

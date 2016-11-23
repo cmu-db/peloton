@@ -241,40 +241,42 @@ private:
 
 public:
 
-  /**
-   * Return a list of all of the catalog::Column objects referenced
-   * in the given expression tree
-   */
-  static std::vector<catalog::Column> GetReferencedColumns(
-		  UNUSED_ATTRIBUTE catalog::Schema *schema,
-		  AbstractExpression *expr) {
-	  PL_ASSERT(expr != nullptr);
-	  PL_ASSERT(schema != nullptr);
-	  std::vector<catalog::Column> columns;
-
-	  return (columns);
-  }
-
-private:
-
-  static void GetReferencedColumns(
-		  UNUSED_ATTRIBUTE catalog::Schema *schema,
-		  AbstractExpression *expr,
-		  UNUSED_ATTRIBUTE std::vector<catalog::Column> &columns) {
-	  PL_ASSERT(schema != nullptr);
-	  PL_ASSERT(expr != nullptr);
-
-	  ExpressionType etype = expr->GetExpressionType();
-	  if (etype == EXPRESSION_TYPE_VALUE_TUPLE) {
-		  // TODO: Get the table + column name and grab the
-		  // the handle from schema object!
-
-	  }
-
-    }
-
-
-
+// TODO: Andy is commenting this out for now so that he can come back
+// 	 	 and fix it once we sort out our catalog information.
+//
+//  /**
+//   * Return a list of all of the catalog::Column objects referenced
+//   * in the given expression tree
+//   */
+//  static std::vector<catalog::Column> GetReferencedColumns(
+//		  catalog::Catalog *catalog,
+//		  AbstractExpression *expr) {
+//	  PL_ASSERT(catalog != nullptr);
+//	  PL_ASSERT(expr != nullptr);
+//	  std::vector<catalog::Column> columns;
+//
+//	  GetReferencedColumns(catalog, expr, columns);
+//
+//	  return (columns);
+//  }
+//
+//private:
+//
+//  static void GetReferencedColumns(
+//		  catalog::Catalog *catalog,
+//		  const AbstractExpression *expr,
+//		  std::vector<catalog::Column> &columns) {
+//
+//	  ExpressionType etype = expr->GetExpressionType();
+//	  if (etype == EXPRESSION_TYPE_VALUE_TUPLE) {
+//		  // TODO: Get the table + column name and grab the
+//		  // the handle from schema object!
+//		  const TupleValueExpression t_expr = dynamic_cast<const TupleValueExpression*>(expr);
+//		  // catalog->Get
+//
+//	  }
+//
+//    }
 
 public:
   /**
