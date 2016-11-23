@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/operator_node.h"
 
 namespace peloton {
@@ -58,13 +57,6 @@ std::vector<PropertySet> Operator::RequiredInputProperties() const {
     return node->RequiredInputProperties();
   }
   return {};
-}
-
-PropertySet Operator::ProvidedOutputProperties() const {
-  if (defined()) {
-    return node->ProvidedOutputProperties();
-  }
-  return PropertySet();
 }
 
 hash_t Operator::Hash() const {

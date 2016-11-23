@@ -83,8 +83,6 @@ struct BaseOperatorNode {
     return {};
   }
 
-  virtual PropertySet ProvidedOutputProperties() const { return PropertySet(); }
-
   virtual hash_t Hash() const {
     OpType t = type();
     return util::Hash(&t);
@@ -130,8 +128,6 @@ class Operator {
   bool IsPhysical() const;
 
   std::vector<PropertySet> RequiredInputProperties() const;
-
-  PropertySet ProvidedOutputProperties() const;
 
   hash_t Hash() const;
 

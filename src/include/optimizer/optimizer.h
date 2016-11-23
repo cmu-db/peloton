@@ -117,13 +117,10 @@ class Optimizer : public AbstractOptimizer {
   void OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
                           PropertySet requirements);
 
-  /* CostExpression - determine the cost of the provided group expression by
-   *     recursively optimizing and deriving statistics from child groups to be
-   *     used in producing the cost and statics of the expression.
-   *
-   * gexpr: the group to cost
-   */
-  void CostExpression(std::shared_ptr<GroupExpression> gexpr);
+  // Get alternatives of the <output properties, input child property list> pair
+  std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
+  DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
+                        PropertySet requirements);
 
   /* ExploreGroup - exploration equivalent of OptimizeGroup.
    *
