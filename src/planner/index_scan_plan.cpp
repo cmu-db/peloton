@@ -45,7 +45,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     // we need to copy it here because eventually predicate will be destroyed by
     // its owner...
     predicate = predicate->Copy();
-    expression::ExpressionUtil::ReplaceColumnExpressions(table->GetSchema(),
+    expression::ExpressionUtil::TransformExpression(table->GetSchema(),
                                                          predicate);
     SetPredicate(predicate);
   }

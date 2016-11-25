@@ -334,7 +334,7 @@ Value Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE, uint64_t idx UNUSED_
 }
 
 Type::TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const{
-  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+  return type_id_;
 }
 
   // Does this value exist in this array?

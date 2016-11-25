@@ -51,7 +51,8 @@ void WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
       } else {
         LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
-        conn->Reset(item->event_flags, static_cast<LibeventThread *>(thread),
+        conn->Reset();
+        conn->Init(item->event_flags, static_cast<LibeventThread *>(thread),
                     CONN_READ);
       }
       break;

@@ -42,10 +42,12 @@ class ConstantValueExpression : public AbstractExpression {
   bool HasParameter() const override { return false; }
 
   AbstractExpression *Copy() const override {
-    return new ConstantValueExpression(value_);
+    return new ConstantValueExpression(*this);
   }
 
  protected:
+  ConstantValueExpression(const ConstantValueExpression& other) : AbstractExpression(other), value_(other.value_){}
+
   Value value_;
 };
 

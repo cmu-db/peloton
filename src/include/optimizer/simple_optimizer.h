@@ -84,7 +84,10 @@ class SimpleOptimizer : public AbstractOptimizer {
 
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
-      storage::DataTable *target_table, parser::SelectStatement *select_stmt);
+      storage::DataTable* target_table, std::vector<oid_t> &column_ids,
+      expression::AbstractExpression *predicate, bool for_update);
+
+
 
   // create a copy plan for a copy statement
   static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(

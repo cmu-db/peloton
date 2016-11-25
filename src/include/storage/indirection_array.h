@@ -20,7 +20,7 @@ const size_t INVALID_INDIRECTION_OFFSET = std::numeric_limits<size_t>::max();
 
 class IndirectionArray {
  public:
-  IndirectionArray() {
+  IndirectionArray(oid_t oid) : oid_(oid) {
     indirections_.reset(new indirection_array_t());
   }
 
@@ -31,8 +31,9 @@ class IndirectionArray {
       return INVALID_INDIRECTION_OFFSET;
     }
 
-    size_t indirection_id = indirection_counter_.fetch_add(1, std::memory_order_relaxed);
-    
+    size_t indirection_id =
+        indirection_counter_.fetch_add(1, std::memory_order_relaxed);
+
     if (indirection_id >= INDIRECTION_ARRAY_MAX_SIZE) {
       return INVALID_INDIRECTION_OFFSET;
     }
@@ -43,15 +44,17 @@ class IndirectionArray {
     return &(indirections_->at(offset));
   }
 
- private:
+  inline oid_t GetOid() { return oid_; }
 
-  typedef std::array<ItemPointer, INDIRECTION_ARRAY_MAX_SIZE> indirection_array_t;
+ private:
+  typedef std::array<ItemPointer, INDIRECTION_ARRAY_MAX_SIZE>
+      indirection_array_t;
 
   std::unique_ptr<indirection_array_t> indirections_;
-  
+
   std::atomic<size_t> indirection_counter_ = ATOMIC_VAR_INIT(0);
+
+  oid_t oid_;
 };
-
-
 }
 }

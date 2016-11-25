@@ -19,11 +19,11 @@
 #include "common/macros.h"
 #include "common/types.h"
 #include "common/platform.h"
+#include "common/init.h"
+#include "common/thread_pool.h"
 
 namespace peloton {
 namespace concurrency {
-
-#define EPOCH_LENGTH 40
 
 struct Epoch {
   std::atomic<int> txn_ref_count_;
@@ -46,40 +46,22 @@ class EpochManager {
         queue_tail_gc(true),
         max_cid(0),
         finish_(false) {
-    // ts_thread_.reset(new std::thread(&EpochManager::Start, this));
-    // ts_thread_->detach();
-    ts_thread_ = std::thread(&EpochManager::Start, this);
   }
 
-  void Reset() {
-    finish_ = true;
-    ts_thread_.join();
+  ~EpochManager() {}
 
-    queue_tail_ = 0;
-    current_epoch_ = 0;
-    epoch_queue_[0].Init();
-    queue_tail_gc = true;
-    max_cid = 0;
-
+  void StartEpoch() {
     finish_ = false;
-    ts_thread_ = std::thread(&EpochManager::Start, this);
+    thread_pool.SubmitDedicatedTask(&EpochManager::Start, this);
   }
 
-  ~EpochManager() {
+  void StopEpoch() {
     finish_ = true;
-    ts_thread_.join();
   }
 
-  //    static uint64_t GetEpoch() {
-  //
-  //      COMPILER_MEMORY_FENCE;
-  //
-  //      uint64_t ret_ts = curr_epoch_;
-  //
-  //      COMPILER_MEMORY_FENCE;
-  //
-  //      return ret_ts;
-  //    }
+  void SetQueryThreadCount() {
+
+  }
 
   size_t EnterEpoch(cid_t begin_cid) {
     auto epoch = current_epoch_.load();
@@ -142,7 +124,7 @@ class EpochManager {
  private:
   void Start() {
     while (!finish_) {
-      // the epoch advances every 40 milliseconds.
+      // the epoch advances every EPOCH_LENGTH milliseconds.
       std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
 
       auto next_idx = (current_epoch_.load() + 1) % epoch_queue_size_;
@@ -222,16 +204,7 @@ class EpochManager {
   std::atomic<bool> queue_tail_gc;
   cid_t max_cid;
   bool finish_;
-
-  std::thread ts_thread_;
 };
 
-class EpochManagerFactory {
- public:
-  static EpochManager& GetInstance() {
-    static EpochManager epoch_manager;
-    return epoch_manager;
-  }
-};
 }
 }

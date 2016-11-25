@@ -60,7 +60,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   // Check if there is an aggregate function in query
   bool function_found = false;
   for (auto elem : *select_node->select_list) {
-    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+    if (expression::ExpressionUtil::IsAggregateExpression(elem->GetExpressionType())) {
       function_found = true;
       break;
     }
@@ -81,7 +81,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
       for (auto col : *select_node->select_list) {
         LOG_TRACE("ExpressionType: %s",
                   ExpressionTypeToString(col->GetExpressionType()).c_str());
-        auto col_name = col->GetName();
+        auto col_name = ((expression::TupleValueExpression*)col)->GetColumnName();
         oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
         SetColumnId(col_id);
       }
@@ -100,7 +100,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   if (select_node->where_clause != NULL) {
     auto predicate = select_node->where_clause->Copy();
     // Replace COLUMN_REF expressions with TupleValue expressions
-    expression::ExpressionUtil::ReplaceColumnExpressions(
+    expression::ExpressionUtil::TransformExpression(
         GetTable()->GetSchema(), predicate);
     SetPredicate(predicate);
   }

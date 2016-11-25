@@ -14,15 +14,19 @@
 #include "common/value.h"
 #include "common/value_factory.h"
 #include "expression/abstract_expression.h"
+#include "expression/aggregate_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
-#include "expression/parser_expression.h"
+#include "expression/function_expression.h"
 #include "expression/parameter_value_expression.h"
+#include "expression/star_expression.h"
+#include "expression/tuple_value_expression.h"
 
 #include "parser/statements.h"
 #include "parser/sql_parser.h"
+#include "parser/parser_utils.h"
 
 using namespace std;
 using namespace peloton::parser;
@@ -155,8 +159,8 @@ struct PARSER_CUST_LTYPE {
 	peloton::parser::CopyStatement* 	   copy_stmt;
 
 	peloton::parser::TableRef* table;
+	peloton::parser::TableInfo* table_info;
 	peloton::expression::AbstractExpression* expr;
-	peloton::expression::ParserExpression* parser_expr;
 	peloton::parser::OrderDescription* order;
 	peloton::parser::OrderType order_type;
 	peloton::parser::LimitDescription* limit;
@@ -194,11 +198,11 @@ struct PARSER_CUST_LTYPE {
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
 %token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
-%token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
+%token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER COUNT
 %token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE BTREE BWTREE SKIPLIST
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
-%token AND ASC CSV FOR INT KEY NOT OFF SET TOP AS BY IF
+%token AND ASC CSV FOR INT KEY NOT OFF SET TOP SUM MIN MAX AVG AS BY IF
 %token IN IS OF ON OR TO
 %token COPY DELIMITER
 
@@ -222,10 +226,10 @@ struct PARSER_CUST_LTYPE {
 %type <uval>		opt_join_type column_type opt_column_width opt_index_type
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
-%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr opt_default
-%type <expr> 		column_name literal int_literal num_literal string_literal
-%type <expr> 		comp_expr opt_where join_condition opt_having
-%type <parser_expr>	table_name
+%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias parameter_expr opt_default
+%type <expr> 		column_name literal int_literal num_literal string_literal aggregate_expr
+%type <expr> 		comp_expr opt_where join_condition opt_having placeholder_expr
+%type <table_info>	table_name
 %type <order>		opt_order
 %type <limit>		opt_limit
 %type <order_type>	opt_order_type
@@ -344,7 +348,7 @@ create_statement:
 		CREATE TABLE opt_not_exists table_name '(' column_def_commalist ')' {
 			$$ = new CreateStatement(CreateStatement::kTable);
 			$$->if_not_exists = $3;
-			$$->table_name = $4;
+			$$->table_info_ = $4;
 			$$->columns = $6;
 		}
 		|	CREATE DATABASE opt_not_exists IDENTIFIER {
@@ -356,7 +360,7 @@ create_statement:
 			$$ = new CreateStatement(CreateStatement::kIndex);
 			$$->unique = $2;
 			$$->index_name = $4;
-			$$->table_name = $6;
+			$$->table_info_ = $6;
 			$$->index_attrs = $8;
 			$$->index_type = peloton::INDEX_TYPE_BWTREE;
 		}
@@ -365,7 +369,7 @@ create_statement:
 			$$ = new CreateStatement(CreateStatement::kIndex);
 			$$->unique = $2;
 			$$->index_name = $4;
-			$$->table_name = $6;
+			$$->table_info_ = $6;
 			$$->index_attrs = $8;
 			$$->index_type = $11;
 		}
@@ -399,13 +403,13 @@ column_def:
 		FOREIGN KEY '(' ident_commalist ')' REFERENCES table_name '(' ident_commalist ')' {
 			$$ = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 			$$->foreign_key_source = $4;
-			$$->table_name = $7;
+			$$->table_info_ = $7;
 			$$->foreign_key_sink = $9;
 		}
 		;
 
 opt_column_width:
-	'(' int_literal ')' { $$ = $2->ival; delete $2; }
+	'(' int_literal ')' { $$ = $2->ival_; delete $2; }
 	| /* empty */ { $$ = 0; }
 	;    
 
@@ -464,7 +468,7 @@ drop_statement:
 		DROP TABLE opt_exists table_name {
 			$$ = new DropStatement(DropStatement::kTable);
 			$$->missing = $3;
-			$$->table_name = $4;
+			$$->table_info_ = $4;
 		}
 		|
 		DROP DATABASE IDENTIFIER {
@@ -475,7 +479,7 @@ drop_statement:
 		DROP INDEX IDENTIFIER ON table_name  {
 			$$ = new DropStatement(DropStatement::kIndex);
 			$$->index_name = $3;
-			$$->table_name = $5;
+			$$->table_info_ = $5;
 		}
 		|	
 		DEALLOCATE PREPARE IDENTIFIER {
@@ -520,7 +524,7 @@ opt_transaction:
 delete_statement:
 		DELETE FROM table_name opt_where {
 			$$ = new DeleteStatement();
-			$$->table_name = $3;
+			$$->table_info_ = $3;
 			$$->expr = $4;
 		}
 	;
@@ -528,7 +532,7 @@ delete_statement:
 truncate_statement:
 		TRUNCATE table_name {
 			$$ = new DeleteStatement();
-			$$->table_name = $2;
+			$$->table_info_ = $2;
 		}
 	;
 
@@ -540,13 +544,13 @@ truncate_statement:
 insert_statement:
 		INSERT INTO table_name opt_column_list VALUES insert_list {
 			$$ = new InsertStatement(peloton::INSERT_TYPE_VALUES);
-			$$->table_name = $3;
+			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->insert_values = $6;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
 			$$ = new InsertStatement(peloton::INSERT_TYPE_SELECT);
-			$$->table_name = $3;
+			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->select = $5;
 		}
@@ -698,8 +702,8 @@ opt_order_type:
 
 
 opt_limit:
-		LIMIT int_literal { $$ = new LimitDescription($2->ival, kNoOffset); delete $2; }
-	|	LIMIT int_literal OFFSET int_literal { $$ = new LimitDescription($2->ival, $4->ival); delete $2; delete $4; }
+		LIMIT int_literal { $$ = new LimitDescription($2->ival_, kNoOffset); delete $2; }
+	|	LIMIT int_literal OFFSET int_literal { $$ = new LimitDescription($2->ival_, $4->ival_); delete $2; delete $4; }
 	|	/* empty */ { $$ = NULL; }
 	;
 
@@ -719,7 +723,7 @@ literal_list:
 expr_alias:
 		expr opt_alias {
 			$$ = $1;
-			$$->alias = $2;
+			$$->alias = CharsToStringDestructive($2);
 		}
 	;
 
@@ -728,6 +732,7 @@ expr:
 	|	scalar_expr
 	|	unary_expr
 	|	binary_expr
+	|	aggregate_expr
 	|	function_expr
 	;
 
@@ -765,12 +770,23 @@ comp_expr:
 	;
 
 function_expr:
-		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
+		IDENTIFIER '(' expr_list ')' { $$ = new peloton::expression::FunctionExpression($1, *$3); delete $3; }
 	;
 
+
+aggregate_expr:
+		SUM '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_SUM, $3, $4); }
+	|	MIN '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_MIN, $3, $4); }
+	|	MAX '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_MAX, $3, $4); }
+	|	AVG '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_AVG, $3, $4); }
+	|	COUNT '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_COUNT, $3, $4); }
+
+	;
+	
+
 column_name:
-		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
+		IDENTIFIER { $$ = new peloton::expression::TupleValueExpression(std::move(CharsToStringDestructive($1))); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::TupleValueExpression(std::move(CharsToStringDestructive($3)), std::move(CharsToStringDestructive($1))); }
 	;
 
 literal:
@@ -791,24 +807,23 @@ num_literal:
 	;
 
 int_literal:
-		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
+		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetIntegerValue($1)); $$->ival_ = $1; }
 	;
 
 star_expr:
 		'*' { 
-			char * star = new char[2];
-			strcpy(star, "*");
-			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR, star); 
+			$$ = new peloton::expression::StarExpression(); 
 		}
 	;
 
 
 placeholder_expr:
 		'?' {
-			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
+			$$ = new peloton::expression::ParameterValueExpression(yylloc.total_column);
 			yyloc.placeholder_list.push_back($$);
 		}
 	;
+	
 parameter_expr:
 	PREPAREPARAMETERS {
 			int val = atol($1);
@@ -853,7 +868,7 @@ table_ref_name:
 			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
 			tbl->alias = $2;
 			$$ = tbl;
-			tbl->table_name = $1;
+			tbl->table_info_ = $1;
 		}
 	;
 
@@ -861,14 +876,17 @@ table_ref_name:
 table_ref_name_no_alias:
 		table_name {
 			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
-			$$->table_name = $1;
+			$$->table_info_ = $1;
 		}
 	;
 
 
 table_name:
-		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_TABLE_REF, $1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_TABLE_REF, $3, $1); }
+		IDENTIFIER { $$ = new peloton::parser::TableInfo();
+					 $$->table_name = $1;};
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::parser::TableInfo();
+									$$->table_name = $3;
+									$$->database_name = $1;}
 	;
 
 
@@ -933,9 +951,9 @@ join_condition:
  
  
 copy_statement:
-		COPY table_name TO STRING DELIMITER STRING { 
+		COPY table_ref_name TO STRING DELIMITER STRING { 
 			$$ = new CopyStatement(peloton::COPY_TYPE_EXPORT_OTHER);
-			$$->table_name = $2;
+			$$->cpy_table = $2;
 			$$->file_path = $4; 
 			$$->delimiter = *($6);
 			delete $6;

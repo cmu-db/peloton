@@ -27,10 +27,24 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
 
   // clear out packet
   rpkt.Reset();
+  if (event == nullptr) {
+    event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+                      EventHandler, this);
+  } else {
+    // Reuse the event object if already initialized
+    if (event_del(event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
 
-  // TODO: Maybe switch to event_assign once State machine is implemented
-  event = event_new(thread->GetEventBase(), sock_fd, event_flags, EventHandler,
-                    this);
+    auto result = event_assign(event, thread->GetEventBase(), sock_fd,
+                               event_flags, EventHandler, this);
+
+    if (result != 0) {
+      LOG_ERROR("Failed to update event");
+      PL_ASSERT(false);
+    }
+  }
   event_add(event, nullptr);
 }
 
@@ -469,7 +483,7 @@ void LibeventSocket::CloseSocket() {
   event_del(event);
 
   TransitState(CONN_CLOSED);
-
+  Reset();
   for (;;) {
     int status = close(sock_fd);
     if (status < 0) {
@@ -483,15 +497,13 @@ void LibeventSocket::CloseSocket() {
   }
 }
 
-void LibeventSocket::Reset(short event_flags, LibeventThread *thread,
-                           ConnState init_state) {
+void LibeventSocket::Reset() {
   rbuf_.Reset();
   wbuf_.Reset();
   pkt_manager.Reset();
   state = CONN_INVALID;
   rpkt.Reset();
   next_response_ = 0;
-  Init(event_flags, thread, init_state);
 }
 
 }  // End wire namespace

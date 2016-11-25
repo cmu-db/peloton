@@ -9,24 +9,24 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include <fstream>
 #include "wire/libevent_server.h"
-#include "common/macros.h"
-#include "common/init.h"
-#include "common/config.h"
-#include "common/thread_pool.h"
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/socket.h>
+#include <fstream>
+#include "common/config.h"
+#include "common/init.h"
+#include "common/macros.h"
+#include "common/thread_pool.h"
 
 namespace peloton {
 namespace wire {
 
-std::vector<std::unique_ptr<LibeventSocket>> &
-LibeventServer::GetGlobalSocketList() {
+std::vector<std::unique_ptr<LibeventSocket>>
+    &LibeventServer::GetGlobalSocketList() {
   static std::vector<std::unique_ptr<LibeventSocket>>
       // 2 fd's per thread for pipe and 1 listening socket
-      global_socket_list(FLAGS_max_connections +
-                         std::thread::hardware_concurrency() * 2 + 1);
+      global_socket_list(FLAGS_max_connections + QUERY_THREAD_COUNT * 2 + 1);
   return global_socket_list;
 }
 
@@ -39,8 +39,8 @@ void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
                                    LibeventThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
-  global_socket_list[connfd]
-      .reset(new LibeventSocket(connfd, ev_flags, thread, init_state));
+  global_socket_list[connfd].reset(
+      new LibeventSocket(connfd, ev_flags, thread, init_state));
 }
 
 /**
@@ -68,7 +68,7 @@ LibeventServer::LibeventServer() {
 
   // TODO: Make pool size a global
   std::shared_ptr<LibeventThread> master_thread(
-      new LibeventMasterThread(std::thread::hardware_concurrency(), base));
+      new LibeventMasterThread(QUERY_THREAD_COUNT, base));
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
@@ -105,7 +105,7 @@ LibeventServer::LibeventServer() {
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
     if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-      LOG_ERROR("Failed to bind");
+      LOG_ERROR("Failed to bind socket to port %" PRIu64, port_);
       exit(EXIT_FAILURE);
     }
 

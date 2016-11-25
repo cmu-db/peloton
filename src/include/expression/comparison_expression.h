@@ -39,8 +39,9 @@ class ComparisonExpression : public AbstractExpression {
   Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    PL_ASSERT(children_.size() == 2);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {
       case (EXPRESSION_TYPE_COMPARE_EQUAL):
         return vl.CompareEquals(vr);
@@ -60,10 +61,12 @@ class ComparisonExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new ComparisonExpression(exp_type_,
-                                    left_ ? left_->Copy() : nullptr,
-                                    right_ ? right_->Copy() : nullptr);
+    return new ComparisonExpression(*this);
   }
+
+ protected:
+  ComparisonExpression(const ComparisonExpression& other)
+    : AbstractExpression(other) {}
 };
 
 }  // End expression namespace

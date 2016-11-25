@@ -17,6 +17,7 @@
 #include "common/exception.h"
 #include "common/macros.h"
 #include "index/index_factory.h"
+#include "expression/string_functions.h"
 
 namespace peloton {
 namespace catalog {
@@ -32,6 +33,8 @@ Catalog::Catalog() {
 
   // Create metrics table in default database
   CreateMetricsCatalog();
+
+  InitializeFunctions();
 }
 
 void Catalog::CreateMetricsCatalog() {
@@ -745,6 +748,42 @@ Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
   delete pool_;
+}
+
+// add amd get methods for UDFs
+void Catalog::AddFunction(const std::string &name, const size_t num_arguments,
+    const common::Type::TypeId return_type,
+    common::Value (*func_ptr)(const std::vector<common::Value>&)){
+  PL_ASSERT(functions_.count(name) == 0);
+  functions_[name] = FunctionData{name, num_arguments, return_type, func_ptr};
+}
+
+FunctionData Catalog::GetFunction(const std::string &name){
+  if (functions_.count(name) == 0){
+    throw Exception("function "+ name +" not found.");
+  }
+  return functions_[name];
+}
+
+void Catalog::RemoveFunction(const std::string &name){
+  functions_.erase(name);
+}
+
+void Catalog::InitializeFunctions(){
+  /**
+   * string functions
+   */
+  AddFunction("ascii", 1, common::Type::INTEGER, expression::StringFunctions::Ascii);
+  AddFunction("chr", 1, common::Type::VARCHAR, expression::StringFunctions::Chr);
+  AddFunction("substr", 3, common::Type::VARCHAR, expression::StringFunctions::Substr);
+  AddFunction("concat", 2, common::Type::VARCHAR, expression::StringFunctions::Concat);
+  AddFunction("char_length", 1, common::Type::INTEGER, expression::StringFunctions::CharLength);
+  AddFunction("octet_length", 1, common::Type::INTEGER, expression::StringFunctions::OctetLength);
+  AddFunction("repeat", 2, common::Type::VARCHAR, expression::StringFunctions::Repeat);
+  AddFunction("replace", 3, common::Type::VARCHAR, expression::StringFunctions::Replace);
+  AddFunction("ltrim", 2, common::Type::VARCHAR, expression::StringFunctions::LTrim);
+  AddFunction("rtrim", 2, common::Type::VARCHAR, expression::StringFunctions::RTrim);
+  AddFunction("btrim", 2, common::Type::VARCHAR, expression::StringFunctions::BTrim);
 }
 }
 }

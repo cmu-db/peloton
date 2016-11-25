@@ -177,9 +177,9 @@ TEST_F(ParserTest, SelectParserTest) {
   // Select List
   EXPECT_EQ(stmt->select_list->size(), 2);
   EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(),
-            EXPRESSION_TYPE_COLUMN_REF);
+            EXPRESSION_TYPE_VALUE_TUPLE);
   EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(),
-            EXPRESSION_TYPE_FUNCTION_REF);
+            EXPRESSION_TYPE_AGGREGATE_SUM);
 
   // Join Table
   parser::JoinDefinition* join = stmt->from_table->join;
@@ -195,7 +195,7 @@ TEST_F(ParserTest, SelectParserTest) {
   // Order By
   EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
   EXPECT_EQ(stmt->order->expr->GetExpressionType(),
-            EXPRESSION_TYPE_FUNCTION_REF);
+            EXPRESSION_TYPE_AGGREGATE_SUM);
 
   // Limit
   EXPECT_EQ(stmt->limit->limit, 5);
