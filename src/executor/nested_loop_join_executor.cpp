@@ -279,6 +279,15 @@ bool NestedLoopJoinExecutor::DExecute() {
     // Look up the right table using the left result
     //===------------------------------------------------------------------===//
 
+    // Grab info from plan node and check it
+    const planner::NestedLoopJoinPlan &node =
+        GetPlanNode<planner::NestedLoopJoinPlan>();
+
+    // Pick out the left and right columns
+    const std::vector<oid_t> &join_column_ids_left = node.GetJoinColumnsLeft();
+    const std::vector<oid_t> &join_column_ids_right =
+        node.GetJoinColumnsRight();
+
     for (auto left_tile_row_itr : *left_tile) {
       // Tuple result
       expression::ContainerTuple<executor::LogicalTile> left_tuple(
@@ -286,13 +295,13 @@ bool NestedLoopJoinExecutor::DExecute() {
 
       // Grab the values
       std::vector<common::Value> join_values;
-      for (auto column_id : join_column_ids_) {
+      for (auto column_id : join_column_ids_left) {
         common::Value predicate_value = left_tuple.GetValue(column_id);
         join_values.push_back(predicate_value);
       }
 
       // Pass the columns and values to right executor
-      children_[1]->UpdatePredicate(join_column_ids_, join_values);
+      children_[1]->UpdatePredicate(join_column_ids_right, join_values);
 
       // return if right tile is empty
       if (right_child_done_ && right_result_tiles_.empty()) {

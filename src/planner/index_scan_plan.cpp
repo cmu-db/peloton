@@ -94,8 +94,8 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
 }
 
 // Replace one or several values (used in NestedLoopJoin)
-void IndexScanPlan::UpdateKeyValue(std::vector<oid_t> &key_column_ids,
-                                   std::vector<common::Value> &values) {
+void IndexScanPlan::UpdateKeyValue(const std::vector<oid_t> &key_column_ids,
+                                   const std::vector<common::Value> &values) {
   PL_ASSERT(key_column_ids.size() == values.size());
   PL_ASSERT(key_column_ids_.size() == values_.size());
   PL_ASSERT(key_column_ids.size() < key_column_ids_.size());

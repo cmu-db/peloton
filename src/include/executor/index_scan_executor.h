@@ -48,8 +48,10 @@ class IndexScanExecutor : public AbstractScanExecutor {
   void SetPlan(planner::IndexScanPlan *plan) { plan_node_ = plan; }
   planner::IndexScanPlan *GetPlan() const { return plan_node_; }
 
-  void UpdatePredicate(std::vector<oid_t> &key_column_ids UNUSED_ATTRIBUTE,
-                       std::vector<common::Value> &values UNUSED_ATTRIBUTE);
+  void UpdatePredicate(const std::vector<oid_t> &key_column_ids
+                           UNUSED_ATTRIBUTE,
+                       const std::vector<common::Value> &values
+                           UNUSED_ATTRIBUTE);
 
  protected:
   bool DInit();
