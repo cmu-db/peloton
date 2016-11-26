@@ -58,6 +58,26 @@ TEST_F(TransactionTests, TransactionTest) {
   }
 }
 
+TEST_F(TransactionTests, ReadonlyTransactionTest) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(test_type);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+    // Just scan the table
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager, true);
+      scheduler.Txn(0).Scan(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      // Snapshot read can not read the recent insert
+      EXPECT_EQ(0, scheduler.schedules[0].results.size());
+    }
+  }
+}
+
 TEST_F(TransactionTests, SingleTransactionTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);

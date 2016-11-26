@@ -103,9 +103,13 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual Transaction *BeginTransaction();
 
+  virtual Transaction *BeginReadonlyTransaction();
+
   virtual void EndTransaction(Transaction *current_txn);
 
- private:
+  virtual void EndReadonlyTransaction(Transaction *current_txn);
+
+private:
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
 
