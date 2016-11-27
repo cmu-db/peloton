@@ -171,8 +171,8 @@ class Optimizer : public AbstractOptimizer {
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group);
 
-  Memo memo;
-  ColumnManager column_manager;
+  Memo memo_;
+  ColumnManager column_manager_;
 
   // Rules to transform logical plan to equivalent logical plans
   std::vector<std::unique_ptr<Rule>> logical_transformation_rules_;

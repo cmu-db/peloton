@@ -24,7 +24,7 @@ namespace optimizer {
 // Base Binding Iterator
 //===--------------------------------------------------------------------===//
 BindingIterator::BindingIterator(Optimizer &optimizer)
-    : optimizer(optimizer), memo(optimizer.memo) {}
+    : optimizer(optimizer), memo(optimizer.memo_) {}
 
 //===--------------------------------------------------------------------===//
 // Group Binding Iterator

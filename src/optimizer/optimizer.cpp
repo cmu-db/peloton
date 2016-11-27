@@ -89,7 +89,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
   std::shared_ptr<OpExpression> initial =
-      ConvertQueryToOpExpression(column_manager, tree);
+      ConvertQueryToOpExpression(column_manager_, tree);
   std::shared_ptr<GroupExpression> gexpr;
   assert(RecordTransformedExpression(initial, gexpr));
   return gexpr;
@@ -97,7 +97,7 @@ std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 
 PropertySet Optimizer::GetQueryTreeRequiredProperties(
     parser::SQLStatement *tree) {
-  QueryPropertyExtractor converter(column_manager);
+  QueryPropertyExtractor converter(column_manager_);
   return std::move(converter.GetProperties(tree));
 }
 
@@ -110,7 +110,7 @@ std::shared_ptr<OpExpression> Optimizer::ChooseBestPlan(
     GroupID id, PropertySet requirements) {
   LOG_TRACE("Choosing best plan for group %d", id);
 
-  Group *group = memo.GetGroupByID(id);
+  Group *group = memo_.GetGroupByID(id);
   std::shared_ptr<GroupExpression> gexpr =
       group->GetBestExpression(requirements);
 
@@ -135,7 +135,7 @@ std::shared_ptr<OpExpression> Optimizer::ChooseBestPlan(
 
 void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
   LOG_TRACE("Optimizing group %d", id);
-  Group *group = memo.GetGroupByID(id);
+  Group *group = memo_.GetGroupByID(id);
 
   // Whether required properties have already been optimized for the group
   if (group->GetBestExpression(requirements) != nullptr) return;
@@ -180,7 +180,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
 
       // Find best child expression
       std::shared_ptr<GroupExpression> best_expression =
-          memo.GetGroupByID(child_group_id)
+          memo_.GetGroupByID(child_group_id)
               ->GetBestExpression(input_properties);
       // TODO(abpoms): we should allow for failure in the case where no
       // expression
@@ -199,7 +199,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     // Only include cost if it meets the property requirements
     if (output_properties >= requirements) {
       // Add to group as potential best cost
-      Group *group = this->memo.GetGroupByID(gexpr->GetGroupID());
+      Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
       LOG_TRACE("Adding expression cost on group %d with op %s",
                 candidate->GetGroupID(), candidate->Op().name().c_str());
       group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
@@ -218,10 +218,10 @@ Optimizer::DeriveChildProperties(
 void Optimizer::ExploreGroup(GroupID id) {
   LOG_TRACE("Exploring group %d", id);
   for (std::shared_ptr<GroupExpression> gexpr :
-       memo.GetGroupByID(id)->GetExpressions()) {
+       memo_.GetGroupByID(id)->GetExpressions()) {
     ExploreExpression(gexpr);
   }
-  memo.GetGroupByID(id)->SetExplorationFlag();
+  memo_.GetGroupByID(id)->SetExplorationFlag();
 }
 
 void Optimizer::ExploreExpression(std::shared_ptr<GroupExpression> gexpr) {
@@ -248,17 +248,17 @@ void Optimizer::ExploreExpression(std::shared_ptr<GroupExpression> gexpr) {
 
   // Explore child groups
   for (auto child_id : gexpr->GetChildGroupIDs()) {
-    if (!memo.GetGroupByID(child_id)->HasExplored()) ExploreGroup(child_id);
+    if (!memo_.GetGroupByID(child_id)->HasExplored()) ExploreGroup(child_id);
   }
 }
 
 void Optimizer::ImplementGroup(GroupID id) {
   LOG_TRACE("Implementing group %d", id);
   for (std::shared_ptr<GroupExpression> gexpr :
-       memo.GetGroupByID(id)->GetExpressions()) {
+       memo_.GetGroupByID(id)->GetExpressions()) {
     if (gexpr->Op().IsPhysical()) ExploreExpression(gexpr);
   }
-  memo.GetGroupByID(id)->SetImplementationFlag();
+  memo_.GetGroupByID(id)->SetImplementationFlag();
 }
 
 void Optimizer::ImplementExpression(std::shared_ptr<GroupExpression> gexpr) {
@@ -272,7 +272,7 @@ void Optimizer::ImplementExpression(std::shared_ptr<GroupExpression> gexpr) {
 
   // Explore child groups
   for (auto child_id : gexpr->GetChildGroupIDs()) {
-    if (!memo.GetGroupByID(child_id)->HasImplemented())
+    if (!memo_.GetGroupByID(child_id)->HasImplemented())
       ImplementGroup(child_id);
   }
 }
@@ -339,7 +339,7 @@ GroupID Optimizer::MemoTransformedExpression(
   std::shared_ptr<GroupExpression> gexpr = MakeGroupExpression(expr);
   // Ignore whether this expression is new or not as we only care about that
   // at the top level
-  (void)memo.InsertExpression(gexpr);
+  (void)memo_.InsertExpression(gexpr);
   return gexpr->GetGroupID();
 }
 
@@ -353,7 +353,7 @@ bool Optimizer::RecordTransformedExpression(
     std::shared_ptr<OpExpression> expr, std::shared_ptr<GroupExpression> &gexpr,
     GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
-  return memo.InsertExpression(gexpr, target_group);
+  return memo_.InsertExpression(gexpr, target_group);
 }
 
 }  // namespace optimizer
