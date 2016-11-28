@@ -15,6 +15,11 @@
 #include "optimizer/operator_visitor.h"
 
 namespace peloton {
+
+namespace optimizer {
+class ColumnManager;
+}
+
 namespace optimizer {
 
 class ChildPropertyGenerator : public OperatorVisitor {

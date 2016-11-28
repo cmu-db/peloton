@@ -10,9 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
 #include "optimizer/child_property_generator.h"
+#include "optimizer/column_manager.h"
 
 namespace peloton {
 namespace optimizer {

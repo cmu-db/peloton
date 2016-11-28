@@ -14,6 +14,10 @@
 
 #include "optimizer/operators.h"
 
+namespace optimizer {
+class ColumnManager;
+}
+
 namespace peloton {
 namespace optimizer {
 
