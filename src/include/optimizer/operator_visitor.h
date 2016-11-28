@@ -14,10 +14,6 @@
 
 #include "optimizer/operators.h"
 
-namespace optimizer {
-class ColumnManager;
-}
-
 namespace peloton {
 namespace optimizer {
 
@@ -29,35 +25,35 @@ class OperatorVisitor {
  public:
   virtual ~OperatorVisitor(){};
 
-  virtual void visit(const LeafOperator *);
-  virtual void visit(const LogicalGet *);
-  virtual void visit(const LogicalProject *);
-  virtual void visit(const LogicalFilter *);
-  virtual void visit(const LogicalInnerJoin *);
-  virtual void visit(const LogicalLeftJoin *);
-  virtual void visit(const LogicalRightJoin *);
-  virtual void visit(const LogicalOuterJoin *);
-  virtual void visit(const LogicalAggregate *);
-  virtual void visit(const LogicalLimit *);
-  virtual void visit(const PhysicalScan *);
-  virtual void visit(const PhysicalComputeExprs *);
-  virtual void visit(const PhysicalFilter *);
-  virtual void visit(const PhysicalInnerNLJoin *);
-  virtual void visit(const PhysicalLeftNLJoin *);
-  virtual void visit(const PhysicalRightNLJoin *);
-  virtual void visit(const PhysicalOuterNLJoin *);
-  virtual void visit(const PhysicalInnerHashJoin *);
-  virtual void visit(const PhysicalLeftHashJoin *);
-  virtual void visit(const PhysicalRightHashJoin *);
-  virtual void visit(const PhysicalOuterHashJoin *);
-  virtual void visit(const QueryExpressionOperator *);
-  virtual void visit(const ExprVariable *);
-  virtual void visit(const ExprConstant *);
-  virtual void visit(const ExprCompare *);
-  virtual void visit(const ExprBoolOp *);
-  virtual void visit(const ExprOp *);
-  virtual void visit(const ExprProjectList *);
-  virtual void visit(const ExprProjectColumn *);
+  virtual void visit(const LeafOperator *) = 0;
+  virtual void visit(const LogicalGet *) = 0;
+  virtual void visit(const LogicalProject *) = 0;
+  virtual void visit(const LogicalFilter *) = 0;
+  virtual void visit(const LogicalInnerJoin *) = 0;
+  virtual void visit(const LogicalLeftJoin *) = 0;
+  virtual void visit(const LogicalRightJoin *) = 0;
+  virtual void visit(const LogicalOuterJoin *) = 0;
+  virtual void visit(const LogicalAggregate *) = 0;
+  virtual void visit(const LogicalLimit *) = 0;
+  virtual void visit(const PhysicalScan *) = 0;
+  virtual void visit(const PhysicalComputeExprs *) = 0;
+  virtual void visit(const PhysicalFilter *) = 0;
+  virtual void visit(const PhysicalInnerNLJoin *) = 0;
+  virtual void visit(const PhysicalLeftNLJoin *) = 0;
+  virtual void visit(const PhysicalRightNLJoin *) = 0;
+  virtual void visit(const PhysicalOuterNLJoin *) = 0;
+  virtual void visit(const PhysicalInnerHashJoin *) = 0;
+  virtual void visit(const PhysicalLeftHashJoin *) = 0;
+  virtual void visit(const PhysicalRightHashJoin *) = 0;
+  virtual void visit(const PhysicalOuterHashJoin *) = 0;
+  virtual void visit(const QueryExpressionOperator *) = 0;
+  virtual void visit(const ExprVariable *) = 0;
+  virtual void visit(const ExprConstant *) = 0;
+  virtual void visit(const ExprCompare *) = 0;
+  virtual void visit(const ExprBoolOp *) = 0;
+  virtual void visit(const ExprOp *) = 0;
+  virtual void visit(const ExprProjectList *) = 0;
+  virtual void visit(const ExprProjectColumn *) = 0;
 };
 
 } /* namespace optimizer */
