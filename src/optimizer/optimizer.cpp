@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/optimizer.h"
+#include "optimizer/child_property_generator.h"
 #include "optimizer/convert_op_to_plan.h"
 #include "optimizer/convert_query_to_op.h"
 #include "optimizer/operator_visitor.h"
@@ -212,7 +213,8 @@ std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
 Optimizer::DeriveChildProperties(
     UNUSED_ATTRIBUTE std::shared_ptr<GroupExpression> gexpr,
     UNUSED_ATTRIBUTE PropertySet requirements) {
-  return std::vector<std::pair<PropertySet, std::vector<PropertySet>>>();
+  ChildPropertyGenerator converter(column_manager_);
+  return std::move(converter.GetProperties(tree));
 }
 
 void Optimizer::ExploreGroup(GroupID id) {
