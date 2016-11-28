@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// sample_test.cpp
+// boolean_value_test.cpp
 //
-// Identification: test/common/sample_test.cpp
+// Identification: test/common/boolean_value_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -115,12 +115,20 @@ TEST_F(BooleanValueTests, NullTest) {
 TEST_F(BooleanValueTests, CastTest) {
   common::Value result;
 
-  auto valTrue = common::ValueFactory::GetVarcharValue("TrUe");
-  result = common::ValueFactory::CastAsBoolean(valTrue);
+  auto valTrue0 = common::ValueFactory::GetVarcharValue("TrUe");
+  result = common::ValueFactory::CastAsBoolean(valTrue0);
   EXPECT_TRUE(result.IsTrue());
 
-  auto valFalse = common::ValueFactory::GetVarcharValue("FaLsE");
-  result = common::ValueFactory::CastAsBoolean(valFalse);
+  auto valTrue1 = common::ValueFactory::GetVarcharValue("1");
+  result = common::ValueFactory::CastAsBoolean(valTrue1);
+  EXPECT_TRUE(result.IsTrue());
+
+  auto valFalse0 = common::ValueFactory::GetVarcharValue("FaLsE");
+  result = common::ValueFactory::CastAsBoolean(valFalse0);
+  EXPECT_TRUE(result.IsFalse());
+
+  auto valFalse1 = common::ValueFactory::GetVarcharValue("0");
+  result = common::ValueFactory::CastAsBoolean(valFalse1);
   EXPECT_TRUE(result.IsFalse());
 
   auto valBustedLike = common::ValueFactory::GetVarcharValue("YourMom");
