@@ -22,6 +22,7 @@ class ColumnManager;
 
 namespace optimizer {
 
+// Generate child property requirements for physical operators
 class ChildPropertyGenerator : public OperatorVisitor {
  public:
   ChildPropertyGenerator(ColumnManager &manager) : manager(manager) {}
@@ -33,16 +34,6 @@ class ChildPropertyGenerator : public OperatorVisitor {
         std::vector<std::pair<PropertySet, std::vector<PropertySet>>>());
   }
 
-  void visit(const LeafOperator *) override;
-  void visit(const LogicalGet *) override;
-  void visit(const LogicalProject *) override;
-  void visit(const LogicalFilter *) override;
-  void visit(const LogicalInnerJoin *) override;
-  void visit(const LogicalLeftJoin *) override;
-  void visit(const LogicalRightJoin *) override;
-  void visit(const LogicalOuterJoin *) override;
-  void visit(const LogicalAggregate *) override;
-  void visit(const LogicalLimit *) override;
   void visit(const PhysicalScan *) override;
   void visit(const PhysicalComputeExprs *) override;
   void visit(const PhysicalFilter *) override;
@@ -54,14 +45,6 @@ class ChildPropertyGenerator : public OperatorVisitor {
   void visit(const PhysicalLeftHashJoin *) override;
   void visit(const PhysicalRightHashJoin *) override;
   void visit(const PhysicalOuterHashJoin *) override;
-  void visit(const QueryExpressionOperator *) override;
-  void visit(const ExprVariable *) override;
-  void visit(const ExprConstant *) override;
-  void visit(const ExprCompare *) override;
-  void visit(const ExprBoolOp *) override;
-  void visit(const ExprOp *) override;
-  void visit(const ExprProjectList *) override;
-  void visit(const ExprProjectColumn *) override;
 
  private:
   ColumnManager &manager;

@@ -23,30 +23,6 @@
 namespace peloton {
 namespace optimizer {
 
-namespace {
-
-class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
- public:
-  expression::AbstractExpression *ConvertOpExpression(
-      std::shared_ptr<OpExpression> op) {
-    VisitOpExpression(op);
-    return output_expr;
-  }
-
-  void visit(const QueryExpressionOperator *op) override {
-    if (op->expression_ != nullptr) {
-      output_expr = op->expression_->Copy();
-    }
-  }
-
- private:
-  void VisitOpExpression(std::shared_ptr<OpExpression> op) {
-    op->Op().accept(this);
-  }
-
-  expression::AbstractExpression *output_expr = nullptr;
-};
-
 class OpToPlanTransformer : public OperatorVisitor {
  public:
   OpToPlanTransformer() {}
@@ -198,8 +174,9 @@ class OpToPlanTransformer : public OperatorVisitor {
   }
 
   expression::AbstractExpression *ConvertToAbstractExpression(
-      std::shared_ptr<OpExpression> op) {
-    return ConvertOpExpressionToAbstractExpression(op);
+      UNUSED_ATTRIBUTE std::shared_ptr<OpExpression> op) {
+    // FIXME: LM: fix this later.
+    return nullptr;
   }
 
   catalog::Schema *BuildSchemaFromColumns(std::vector<Column *> columns) {
@@ -248,13 +225,6 @@ class OpToPlanTransformer : public OperatorVisitor {
   std::vector<Column *> left_columns;
   std::vector<Column *> right_columns;
 };
-}
-
-expression::AbstractExpression *ConvertOpExpressionToAbstractExpression(
-    std::shared_ptr<OpExpression> op_expr) {
-  ExprOpToAbstractExpressionTransformer transformer;
-  return transformer.ConvertOpExpression(op_expr);
-}
 
 planner::AbstractPlan *ConvertOpExpressionToPlan(
     std::shared_ptr<OpExpression> plan) {

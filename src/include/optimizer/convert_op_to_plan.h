@@ -21,9 +21,6 @@
 namespace peloton {
 namespace optimizer {
 
-expression::AbstractExpression *ConvertOpExpressionToAbstractExpression(
-    std::shared_ptr<OpExpression> op_expr);
-
 planner::AbstractPlan *ConvertOpExpressionToPlan(
     std::shared_ptr<OpExpression> plan);
 
