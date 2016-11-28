@@ -12,16 +12,16 @@
 
 #pragma once
 
-#include "common/type.h"
-#include "common/varlen_pool.h"
-#include "serializeio.h"
-#include "printable.h"
-#include <climits>
 #include <cfloat>
+#include <climits>
 #include <cstdint>
 #include <vector>
-#include "common/macros.h"
 #include "common/exception.h"
+#include "common/macros.h"
+#include "common/type.h"
+#include "common/varlen_pool.h"
+#include "printable.h"
+#include "serializeio.h"
 
 namespace peloton {
 namespace common {
@@ -63,57 +63,57 @@ static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 // subclasses implement other type-specific functionality.
 class Value : public Printable {
 #ifdef VALUE_TESTS
-public:
+ public:
 #else
  private:
 #endif
 
   Value(const Type::TypeId type) : type_(Type::GetInstance(type)) {}
 
-  //ARRAY values
-  template<class T>
-  Value(Type::TypeId type, const std::vector<T> &vals, Type::TypeId element_type);
+  // ARRAY values
+  template <class T>
+  Value(Type::TypeId type, const std::vector<T> &vals,
+        Type::TypeId element_type);
 
-  //BOOLEAN and TINYINT
+  // BOOLEAN and TINYINT
   Value(Type::TypeId type, int8_t val);
 
-  //DECIMAL
+  // DECIMAL
   Value(Type::TypeId type, double d);
   Value(Type::TypeId type, float f);
 
-  //SMALLINT
+  // SMALLINT
   Value(Type::TypeId type, int16_t i);
-  //INTEGER and PARAMETER_OFFSET
+  // INTEGER and PARAMETER_OFFSET
   Value(Type::TypeId type, int32_t i);
-  //BIGINT
+  // BIGINT
   Value(Type::TypeId type, int64_t i);
 
-  //TIMESTAMP
+  // TIMESTAMP
   Value(Type::TypeId type, uint64_t i);
 
-  //VARCHAR and VARBINARY
+  // VARCHAR and VARBINARY
   Value(Type::TypeId type, const char *data, uint32_t len);
   Value(Type::TypeId type, const std::string &data);
 
  public:
-
   Value();
-  Value(Value&& other);
-  Value(const Value& other);
+  Value(Value &&other);
+  Value(const Value &other);
   ~Value();
 
-  friend void swap(Value& first, Value& second) // nothrow
+  friend void swap(Value &first, Value &second)  // nothrow
   {
-      std::swap(first.type_, second.type_);
-      std::swap(first.value_, second.value_);
+    std::swap(first.type_, second.type_);
+    std::swap(first.value_, second.value_);
   }
 
-  Value& operator=(Value other);
+  Value &operator=(Value other);
 
   // Get the type of this value
   Type::TypeId GetTypeId() const { return type_->GetTypeId(); }
   const std::string GetInfo() const override;
-  
+
   // Comparison functions
   //
   // NOTE:
@@ -186,15 +186,14 @@ public:
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  void SerializeTo(char *storage, bool inlined,
-                           VarlenPool *pool) const;
+  void SerializeTo(char *storage, bool inlined, VarlenPool *pool) const;
   void SerializeTo(SerializeOutput &out) const;
 
   // Deserialize a value of the given type from the given storage space.
   static Value DeserializeFrom(const char *storage, const Type::TypeId type_id,
-                                const bool inlined, VarlenPool *pool = nullptr);
+                               const bool inlined, VarlenPool *pool = nullptr);
   static Value DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
-                                VarlenPool *pool = nullptr);
+                               VarlenPool *pool = nullptr);
 
   // Access the raw variable length data
   const char *GetData() const;
@@ -203,7 +202,9 @@ public:
   uint32_t GetLength() const;
 
   template <class T>
-  T GetAs() const { return *reinterpret_cast<const T*>(&value_); }
+  T GetAs() const {
+    return *reinterpret_cast<const T *>(&value_);
+  }
 
   // Create a copy of this value
   Value Copy() const;
@@ -220,7 +221,7 @@ public:
 
   // For unordered_map
   struct equal_to {
-    bool operator()(const Value& x, const Value& y) const {
+    bool operator()(const Value &x, const Value &y) const {
       Value cmp(x.type_->CompareEquals(x, y));
       return cmp.IsTrue();
     }
@@ -233,17 +234,14 @@ public:
   }
 
   struct hash {
-    size_t operator()(const Value& x) const {
-      return x.type_->Hash(x);
-    }
+    size_t operator()(const Value &x) const { return x.type_->Hash(x); }
   };
-
 
   friend struct equal_to;
   friend struct hash_combine;
   friend struct hash;
 
-  //Type classes
+  // Type classes
   friend class Type;
   friend class ArrayType;
   friend class BooleanType;
@@ -259,7 +257,6 @@ public:
 
   friend class ValueFactory;
 
-
  protected:
   // The data type
   Type *type_;
@@ -273,33 +270,33 @@ public:
     int64_t bigint;
     double decimal;
     uint64_t timestamp;
-//    char *ptr;
-    struct{
+    //    char *ptr;
+    struct {
       uint32_t len;
       char *data;
-    }varlen;
-    struct{
+    } varlen;
+    struct {
       Type::TypeId array_type;
       char *data;
     } array;
   } value_;
 };
 
-//ARRAY here to ease creation of templates
-template<class T>
-Value::Value(Type::TypeId type, const std::vector<T> &vals, Type::TypeId element_type)
-                            : Value(Type::ARRAY){
+// ARRAY here to ease creation of templates
+template <class T>
+Value::Value(Type::TypeId type, const std::vector<T> &vals,
+             Type::TypeId element_type)
+    : Value(Type::ARRAY) {
   switch (type) {
     case Type::ARRAY:
-      value_.array.data = (char *) &vals;
+      value_.array.data = (char *)&vals;
       value_.array.array_type = element_type;
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-          "Invalid Type for constructor");
-    }
-
+                      "Invalid Type for constructor");
   }
+}
 
 }  // namespace common
 }  // namespace peloton

@@ -11,17 +11,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "index/index.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/varlen_pool.h"
-#include "catalog/schema.h"
-#include "catalog/manager.h"
 #include "storage/tuple.h"
 
 #include "index/scan_optimizer.h"
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 namespace peloton {
 namespace index {
@@ -61,7 +61,6 @@ IndexMetadata::IndexMetadata(
       key_attrs(key_attrs),
       tuple_attrs(),
       unique_keys(unique_keys) {
-
   // Push the reverse mapping relation into tuple_attrs which maps
   // tuple key's column into index key's column
   // resize() automatially does allocation, extending and insertion
@@ -119,7 +118,6 @@ const std::string IndexMetadata::GetInfo() const {
  */
 Index::Index(IndexMetadata *metadata)
     : metadata(metadata), indexed_tile_group_offset(0) {
-
   // This is redundant
   index_oid = metadata->GetOid();
 
@@ -128,7 +126,7 @@ Index::Index(IndexMetadata *metadata)
 
   // initialize pool
   pool = new common::VarlenPool(BACKEND_TYPE_MM);
-  
+
   return;
 }
 
@@ -136,7 +134,6 @@ Index::Index(IndexMetadata *metadata)
  * Destructor
  */
 Index::~Index() {
-
   // Free metadata which frees the key schema but not tuple schema
   // This is passed in as construction argument but Index object is
   // responsible for its destruction
@@ -172,9 +169,9 @@ void Index::ScanTest(const std::vector<common::Value> &value_list,
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
-                    const std::vector<common::Value > &value_list) {
-  //int diff;
-  
+                    const std::vector<common::Value> &value_list) {
+  // int diff;
+
   // The size of these three arrays must be the same
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
   PL_ASSERT(expr_list.size() == value_list.size());
@@ -204,11 +201,11 @@ bool Index::Compare(const AbstractTuple &index_key,
 
     // This the comparison right hand side operand
     const common::Value &rhs = value_list[i];
-    
+
     // Also retrieve left hand side operand using index key column ID
     common::Value val = (index_key.GetValue(index_key_column_id));
     const common::Value &lhs = val;
-    
+
     // Expression type. We use this to interpret comparison result
     //
     // Possible results of comparison are: EQ, >, <
@@ -251,8 +248,7 @@ bool Index::Compare(const AbstractTuple &index_key,
           throw IndexException("Unsupported expression type : " +
                                std::to_string(expr_type));
       }
-    }
-    else {
+    } else {
       common::Value cmp_lt = (lhs.CompareLessThan(rhs));
       if (cmp_lt.IsTrue()) {
         switch (expr_type) {
@@ -271,8 +267,7 @@ bool Index::Compare(const AbstractTuple &index_key,
             throw IndexException("Unsupported expression type : " +
                                  std::to_string(expr_type));
         }
-      }
-      else {
+      } else {
         common::Value cmp_gt(lhs.CompareGreaterThan(rhs));
         if (cmp_gt.IsTrue()) {
           switch (expr_type) {
@@ -291,7 +286,7 @@ bool Index::Compare(const AbstractTuple &index_key,
               throw IndexException("Unsupported expression type : " +
                                    std::to_string(expr_type));
           }
-        }else {
+        } else {
           // Since it is an AND predicate, we could directly return false
           return false;
         }
@@ -317,11 +312,9 @@ bool Index::Compare(const AbstractTuple &index_key,
  * index_util impossible.
  */
 bool Index::ConstructLowerBoundTuple(
-    storage::Tuple *index_key,
-    const std::vector<common::Value > &values,
+    storage::Tuple *index_key, const std::vector<common::Value> &values,
     const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types) {
-
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
   bool all_constraints_equal = true;
@@ -329,18 +322,16 @@ bool Index::ConstructLowerBoundTuple(
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
-
     // If the current column of the key has a predicate item
     // specified in the key column list
     auto key_column_itr =
         std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
 
     bool placeholder = false;
-    common::Value value = common::ValueFactory::GetBooleanValue(0);
+    common::Value value = common::ValueFactory::GetBooleanValue(false);
 
     // This column is part of the key column ids
     if (key_column_itr != key_column_ids.end()) {
-
       // This is the index into value list and expression type list
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
 
@@ -368,9 +359,8 @@ bool Index::ConstructLowerBoundTuple(
       index_key->SetValue(column_itr, value, GetPool());
     } else {
       auto value_type = schema->GetType(column_itr);
-      
-      index_key->SetValue(column_itr,
-                          common::Type::GetMinValue(value_type),
+
+      index_key->SetValue(column_itr, common::Type::GetMinValue(value_type),
                           GetPool());
     }
   }  // for all columns in index key
