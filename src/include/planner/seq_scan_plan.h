@@ -49,8 +49,6 @@ class SeqScanPlan : public AbstractScan {
     SetForUpdateFlag(is_for_update);
   }
 
-  SeqScanPlan(parser::SelectStatement *select_node);
-
   SeqScanPlan() : AbstractScan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
