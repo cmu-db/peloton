@@ -379,123 +379,41 @@ hash_t ExprProjectColumn::Hash() const {
 }
 
 //===--------------------------------------------------------------------===//
+template <typename T>
+void OperatorNode<T>::accept(OperatorVisitor *v) const {
+  v->visit((const T *)this);
+}
 
 template <>
-void OperatorNode<LeafOperator>::accept(OperatorVisitor *v) const {
-  v->visit((const LeafOperator *)this);
-}
+void OperatorNode<LeafOperator>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalGet>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalGet *)this);
-}
+void OperatorNode<LogicalGet>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalProject>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalProject *)this);
-}
+void OperatorNode<LogicalProject>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalFilter>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalFilter *)this);
-}
+void OperatorNode<LogicalFilter>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalInnerJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalInnerJoin *)this);
-}
+void OperatorNode<LogicalInnerJoin>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalLeftJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalLeftJoin *)this);
-}
+void OperatorNode<LogicalLeftJoin>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalRightJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalRightJoin *)this);
-}
+void OperatorNode<LogicalRightJoin>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalOuterJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalOuterJoin *)this);
-}
+void OperatorNode<LogicalOuterJoin>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalAggregate>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalAggregate *)this);
-}
+void OperatorNode<LogicalAggregate>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalLimit>::accept(OperatorVisitor *v) const {
-  v->visit((const LogicalLimit *)this);
-}
-template <>
-void OperatorNode<PhysicalScan>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalScan *)this);
-}
-template <>
-void OperatorNode<PhysicalComputeExprs>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalComputeExprs *)this);
-}
-template <>
-void OperatorNode<PhysicalFilter>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalFilter *)this);
-}
-template <>
-void OperatorNode<PhysicalInnerNLJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalInnerNLJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalLeftNLJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalLeftNLJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalRightNLJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalRightNLJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalOuterNLJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalOuterNLJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalInnerHashJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalInnerHashJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalLeftHashJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalLeftHashJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalRightHashJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalRightHashJoin *)this);
-}
-template <>
-void OperatorNode<PhysicalOuterHashJoin>::accept(OperatorVisitor *v) const {
-  v->visit((const PhysicalOuterHashJoin *)this);
-}
-template <>
-void OperatorNode<QueryExpressionOperator>::accept(OperatorVisitor *v) const {
-  v->visit((const QueryExpressionOperator *)this);
-}
-template <>
-void OperatorNode<ExprVariable>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprVariable *)this);
-}
-template <>
-void OperatorNode<ExprConstant>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprConstant *)this);
-}
-template <>
-void OperatorNode<ExprCompare>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprCompare *)this);
-}
-template <>
-void OperatorNode<ExprBoolOp>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprBoolOp *)this);
-}
-template <>
-void OperatorNode<ExprOp>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprOp *)this);
-}
-template <>
-void OperatorNode<ExprProjectList>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprProjectList *)this);
-}
-template <>
-void OperatorNode<ExprProjectColumn>::accept(OperatorVisitor *v) const {
-  v->visit((const ExprProjectColumn *)this);
-}
+void OperatorNode<LogicalLimit>::accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 
 template <>
 std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";

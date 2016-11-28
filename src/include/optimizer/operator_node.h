@@ -96,6 +96,8 @@ struct BaseOperatorNode {
 // Curiously recurring template pattern
 template <typename T>
 struct OperatorNode : public BaseOperatorNode {
+  // Right now only accept physical operators, accept() of logical operators
+  // will be specialized to empty function.
   void accept(OperatorVisitor *v) const;
 
   std::string name() const { return name_; }
