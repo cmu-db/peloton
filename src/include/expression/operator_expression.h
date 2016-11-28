@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -27,24 +26,23 @@ using namespace peloton::common;
 class OperatorExpression : public AbstractExpression {
  public:
   OperatorExpression(ExpressionType type, Type::TypeId type_id)
-    : AbstractExpression(type, type_id) {}
+      : AbstractExpression(type, type_id) {}
 
-  OperatorExpression(ExpressionType type,
-                     Type::TypeId type_id,
-                     AbstractExpression *left,
-                     AbstractExpression *right)
-    : AbstractExpression(type, type_id, left, right) {}
+  OperatorExpression(ExpressionType type, Type::TypeId type_id,
+                     AbstractExpression *left, AbstractExpression *right)
+      : AbstractExpression(type, type_id, left, right) {}
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (exp_type_ == EXPRESSION_TYPE_OPERATOR_NOT) {
       PL_ASSERT(children_.size() == 1);
       Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (vl.IsTrue())
-        return (ValueFactory::GetBooleanValue(0));
+        return (ValueFactory::GetBooleanValue(false));
       else if (vl.IsFalse())
-        return (ValueFactory::GetBooleanValue(1));
+        return (ValueFactory::GetBooleanValue(true));
       else
         return (ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL));
     }
@@ -68,10 +66,12 @@ class OperatorExpression : public AbstractExpression {
     }
   }
 
-  void DeduceExpressionType(){
-    // if we are a decimal or int we should take the highest type id of both children
+  void DeduceExpressionType() {
+    // if we are a decimal or int we should take the highest type id of both
+    // children
     // This relies on a particular order in types.h
-    auto type = std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
+    auto type =
+        std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
     PL_ASSERT(type <= Type::DECIMAL);
     return_value_type_ = type;
   }
@@ -81,7 +81,8 @@ class OperatorExpression : public AbstractExpression {
   }
 
  protected:
-  OperatorExpression(const OperatorExpression& other) :AbstractExpression(other){}
+  OperatorExpression(const OperatorExpression &other)
+      : AbstractExpression(other) {}
 };
 
 class OperatorUnaryMinusExpression : public AbstractExpression {
@@ -90,8 +91,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS,
                            left->GetValueType(), left, nullptr) {}
 
-  Value Evaluate(const AbstractTuple *tuple1,
-                                  const AbstractTuple *tuple2,
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
     PL_ASSERT(children_.size() == 1);
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
@@ -105,7 +105,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
 
  protected:
   OperatorUnaryMinusExpression(const OperatorUnaryMinusExpression &other)
-        : AbstractExpression(other) {}
+      : AbstractExpression(other) {}
 };
 
 }  // End expression namespace

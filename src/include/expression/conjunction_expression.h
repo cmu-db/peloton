@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -26,15 +25,14 @@ using namespace peloton::common;
 
 class ConjunctionExpression : public AbstractExpression {
  public:
-  ConjunctionExpression(ExpressionType type)
-    : AbstractExpression(type) {}
+  ConjunctionExpression(ExpressionType type) : AbstractExpression(type) {}
 
-  ConjunctionExpression(ExpressionType type,
-                        AbstractExpression *left,
+  ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
-    : AbstractExpression(type, Type::BOOLEAN, left, right) {}
+      : AbstractExpression(type, Type::BOOLEAN, left, right) {}
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     PL_ASSERT(children_.size() == 2);
@@ -43,19 +41,17 @@ class ConjunctionExpression : public AbstractExpression {
     switch (exp_type_) {
       case (EXPRESSION_TYPE_CONJUNCTION_AND): {
         if (vl.IsTrue() && vr.IsTrue())
-          return ValueFactory::GetBooleanValue(1);
+          return ValueFactory::GetBooleanValue(true);
         if (vl.IsFalse() || vr.IsFalse())
-          return ValueFactory::GetBooleanValue(0);
-        return ValueFactory::GetBooleanValue(
-            PELOTON_BOOLEAN_NULL);
+          return ValueFactory::GetBooleanValue(false);
+        return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
       }
       case (EXPRESSION_TYPE_CONJUNCTION_OR): {
         if (vl.IsFalse() && vr.IsFalse())
-          return ValueFactory::GetBooleanValue(0);
+          return ValueFactory::GetBooleanValue(false);
         if (vl.IsTrue() || vr.IsTrue())
-          return ValueFactory::GetBooleanValue(1);
-        return ValueFactory::GetBooleanValue(
-            PELOTON_BOOLEAN_NULL);
+          return ValueFactory::GetBooleanValue(true);
+        return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
       }
       default:
         throw Exception("Invalid conjunction expression type.");
@@ -67,7 +63,7 @@ class ConjunctionExpression : public AbstractExpression {
   }
 
  protected:
-  ConjunctionExpression(const ConjunctionExpression& other)
+  ConjunctionExpression(const ConjunctionExpression &other)
       : AbstractExpression(other) {}
 };
 
