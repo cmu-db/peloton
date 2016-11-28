@@ -1225,8 +1225,8 @@ std::unique_ptr<const planner::ProjectInfo> CreateHackProjection() {
 
   // direct map
   DirectMap direct_map1 = std::make_pair(0, std::make_pair(1, 0));
-
   direct_map_list.push_back(direct_map1);
+
 
   return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
       std::move(target_list), std::move(direct_map_list)));
@@ -1247,8 +1247,6 @@ std::unique_ptr<planner::AbstractPlan>
 SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
   // assuming no aggregation
   std::cout<<"in func"<<std::endl;
-  // std::cout<<(select_stmt->from_table->join != NULL)<<std::endl;
-  // std::cout<<(select_stmt->getSelectList() != NULL)<<std::endl;
 
   auto left_table = catalog::Catalog::GetInstance()->GetTableWithName(
       select_stmt->from_table->join->left->GetDatabaseName(), select_stmt->from_table->join->left->GetTableName());
@@ -1256,32 +1254,39 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
       select_stmt->from_table->join->right->GetDatabaseName(), select_stmt->from_table->join->right->GetTableName());
 
   PelotonJoinType join_type = select_stmt->from_table->join->type;
-  std::unique_ptr<const peloton::expression::AbstractExpression> join_condition(select_stmt->from_table->join->condition);;
+  std::unique_ptr<const peloton::expression::AbstractExpression> join_condition(select_stmt->from_table->join->condition->Copy());
   auto join_for_update = select_stmt->is_for_update;
-  
+
   // column predicates passing to the index
   std::vector<oid_t> key_column_ids = {0};
   std::vector<ExpressionType> expr_types;
   std::vector<common::Value> values;
-  
-  std::cout<<select_stmt->from_table->join->condition->GetInfo()<<std::endl;
 
   std::unique_ptr<planner::SeqScanPlan> left_SelectPlan(
     new planner::SeqScanPlan(
       left_table,
-      select_stmt->from_table->join->condition,
-      key_column_ids, join_for_update));
+      nullptr,
+      {}, join_for_update));
   std::unique_ptr<planner::SeqScanPlan> right_SelectPlan(
     new planner::SeqScanPlan(
       right_table,
-      select_stmt->from_table->join->condition,
-      key_column_ids, join_for_update));  
-  
-  // oid_t index_id = 0;
+	  nullptr,
+      {}, join_for_update));
 
-  // auto left_key = expression::ExpressionUtil::ConvertToTupleValueExpression(left_table->GetSchema(), join_condition->GetLeft()->GetName());
-  // generate hash for right table
-  auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(right_table->GetSchema(), join_condition->GetRight()->GetName());
+
+
+
+  auto left_schema = left_table->GetSchema();
+  auto right_schema = right_table->GetSchema();
+
+  // Get the key column name based on the join condition
+  auto right_key_col_name =
+		  static_cast<expression::TupleValueExpression*> (join_condition->GetModifiableChild(0))->GetColumnName();
+  if (right_schema->GetColumnID(right_key_col_name) == (oid_t)-1)
+	  right_key_col_name =
+			  static_cast<expression::TupleValueExpression*> (join_condition->GetModifiableChild(1))->GetColumnName();
+  // Generate hash for right table
+  auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(right_schema, right_key_col_name);
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   hash_keys.emplace_back(right_key);
 
@@ -1289,44 +1294,102 @@ SimpleOptimizer::CreateJoinPlan(parser::SelectStatement* select_stmt) {
   std::unique_ptr<planner::HashPlan> hash_plan_node(new planner::HashPlan(hash_keys));
   hash_plan_node->AddChild(std::move(right_SelectPlan));
 
-
-  std::vector<oid_t> output_column_ids = {};
-  bool function_found = false;
-  for (auto elem : *select_stmt->select_list) {
-    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-      function_found = true;
-      break;
-    }
-  }
   std::vector<catalog::Column> output_table_columns = {};
-  // Pass all columns
-  if (function_found ||
-      select_stmt->select_list->at(0)->GetExpressionType() ==
-          EXPRESSION_TYPE_STAR) {
-    auto left_columns = left_table->GetSchema()->GetColumns();
-    for (auto left_column: left_columns) {
-      output_table_columns.push_back(left_column);
-    }
-    auto right_columns = right_table->GetSchema()->GetColumns();
-    for (auto right_column: right_columns) {
-      output_table_columns.push_back(right_column);
-    }
+  // expressions to evaluate
+  TargetList tl = TargetList();
+  // columns which can be returned directly
+  DirectMapList dml = DirectMapList();
+  auto &select_list = *select_stmt->getSelectList();
+  int i = 0;
+
+  // SELECT * FROM A JOIN B
+  if (select_list[0]->GetExpressionType()==EXPRESSION_TYPE_STAR) {
+	auto &left_cols = left_schema->GetColumns();
+	auto &right_cols = right_schema->GetColumns();
+	output_table_columns = left_cols;
+	output_table_columns.insert(output_table_columns.end(), right_cols.begin(), right_cols.end());
+	int left_col_cnt = left_cols.size();
+	int right_col_cnt = right_cols.size();
+	for (int j=0; j<left_col_cnt; j++) {
+		dml.push_back(DirectMap(i++, std::make_pair(0, j)));
+	}
+	for (int j=0; j<right_col_cnt; j++) {
+		dml.push_back(DirectMap(i++, std::make_pair(1, j)));
+	}
   }
+
+  // SELECT col1, col2, fun1, ... FROM A JOIN B
+  else {
+	  for (auto expr : select_list) {
+		  auto expr_type = expr->GetExpressionType();
+		  // Column experssion
+		  if (expr_type == EXPRESSION_TYPE_VALUE_TUPLE) {
+			  auto tup_expr = (expression::TupleValueExpression*) expr;
+			  oid_t old_col_id = left_schema->GetColumnID(tup_expr->GetColumnName());
+			  catalog::Column column;
+			  // The current column is in the left table
+			  if (old_col_id!=(oid_t)-1) {
+				  column = left_schema->GetColumn(old_col_id);
+				  dml.push_back(DirectMap(i, std::make_pair(0, old_col_id)));
+			  }
+			  // The current column is in the right table
+			  else {
+				  old_col_id = right_schema->GetColumnID(tup_expr->GetColumnName());
+				  column = right_schema->GetColumn(old_col_id);
+				  dml.push_back(DirectMap(i, std::make_pair(1, old_col_id)));
+			  }
+			  output_table_columns.push_back(column);
+
+
+
+			auto type = column.GetType();
+			// set the expression name to the alias if we have one
+			if (tup_expr->alias.size() > 0) {
+				tup_expr->expr_name_ = tup_expr->alias;
+			} else {
+				tup_expr->expr_name_ = tup_expr->GetColumnName();
+			}
+			// point to the correct column returned in the logical tuple underneath
+			tup_expr->SetTupleValueExpressionParams(type, i, 0);
+		  }
+
+		  // Function Ref
+		  else {
+			  tl.push_back(Target(i, expr->Copy()));
+			  output_table_columns.push_back(
+				  catalog::Column(expr->GetValueType(),
+					  common::Type::GetTypeSize(expr->GetValueType()),
+					  "expr" + std::to_string(i)));
+		  }
+		  i++;
+	  }
+  }
+
   std::shared_ptr<const peloton::catalog::Schema> schema(new catalog::Schema(output_table_columns));
-  auto projection = CreateHackProjection();
-  LOG_TRACE("Index scan column size: %ld\n", output_table_columns.size());
+//  auto projection = CreateHackProjection();
+  std::unique_ptr<planner::ProjectInfo> proj_info(
+		  new planner::ProjectInfo(std::move(tl), std::move(dml)));
+//  if (!tl.empty()) {
+//	  proj_info = std::unique_ptr<planner::ProjectInfo> (
+//			  new planner::ProjectInfo(std::move(tl), std::move(dml)));
+//  }
+  LOG_DEBUG("Index scan column size: %ld\n", output_table_columns.size());
+  LOG_DEBUG("Schema info: %s", schema->GetInfo().c_str());
   // // Create hash join plan node.
+  std::unique_ptr<const peloton::expression::AbstractExpression> predicates=nullptr;
+  if (select_stmt->where_clause != nullptr)
+	  predicates = std::unique_ptr<const peloton::expression::AbstractExpression>(select_stmt->where_clause->Copy());
   std::unique_ptr<planner::HashJoinPlan> hash_join_plan_node(
-      new planner::HashJoinPlan(join_type, std::move(join_condition),
-                                std::move(projection), schema));
+      new planner::HashJoinPlan(join_type, std::move(predicates),
+                                std::move(proj_info), schema));
   // index only works on comparison with a constant
-  
+
   std::cout<<"\nGot tables "<<select_stmt->from_table->join->left->GetTableName()<<" "<<select_stmt->from_table->join->right->GetTableName()<<"\n\n";
 
   hash_join_plan_node->AddChild(std::move(left_SelectPlan));
   hash_join_plan_node->AddChild(std::move(hash_plan_node));
   return hash_join_plan_node;
-  
+
 }
 
 }  // namespace optimizer
