@@ -210,11 +210,10 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
 }
 
 std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
-Optimizer::DeriveChildProperties(
-    UNUSED_ATTRIBUTE std::shared_ptr<GroupExpression> gexpr,
-    UNUSED_ATTRIBUTE PropertySet requirements) {
+Optimizer::DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
+                                 PropertySet requirements) {
   ChildPropertyGenerator converter(column_manager_);
-  return std::move(converter.GetProperties(tree));
+  return std::move(converter.GetProperties(gexpr, requirements));
 }
 
 void Optimizer::ExploreGroup(GroupID id) {

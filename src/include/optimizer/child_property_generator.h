@@ -12,19 +12,18 @@
 
 #pragma once
 
-#include "optimizer/query_node_visitor.h"
+#include "optimizer/operator_visitor.h"
 
 namespace peloton {
 namespace optimizer {
 
-class ChildPropertyGenerator : public QueryNodeVisitor {
+class ChildPropertyGenerator : public OperatorVisitor {
  public:
   ChildPropertyGenerator(ColumnManager &manager) : manager(manager) {}
 
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
-      parser::SQLStatement *op) {
-    op->Accept(this);
-
+      UNUSED_ATTRIBUTE std::shared_ptr<GroupExpression> gexpr,
+      UNUSED_ATTRIBUTE PropertySet requirements) {
     return std::move(
         std::vector<std::pair<PropertySet, std::vector<PropertySet>>>());
   }
