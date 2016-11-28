@@ -43,34 +43,62 @@ TEST_F(BooleanValueTests, BasicTest) {
 }
 
 TEST_F(BooleanValueTests, ComparisonTest) {
-  auto valTrue = common::ValueFactory::GetBooleanValue(true);
-  auto valFalse = common::ValueFactory::GetBooleanValue(false);
+  std::vector<ExpressionType> compares = {
+      EXPRESSION_TYPE_COMPARE_EQUAL,
+      EXPRESSION_TYPE_COMPARE_NOTEQUAL,
+      EXPRESSION_TYPE_COMPARE_LESSTHAN,
+      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+      EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO};
 
-  common::Value result;
+  bool values[] = {true, false};
 
-  // TRUE == TRUE
-  result = valTrue.CompareEquals(valTrue);
-  EXPECT_TRUE(result.IsTrue());
-  EXPECT_FALSE(result.IsFalse());
-  EXPECT_FALSE(result.IsNull());
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      for (auto etype : compares) {
+        bool expected;
+        common::Value result;
+        auto val0 = common::ValueFactory::GetBooleanValue(values[i]);
+        auto val1 = common::ValueFactory::GetBooleanValue(values[j]);
 
-  // TRUE == FALSE
-  result = valTrue.CompareEquals(valFalse);
-  EXPECT_FALSE(result.IsTrue());
-  EXPECT_TRUE(result.IsFalse());
-  EXPECT_FALSE(result.IsNull());
+        switch (etype) {
+          case EXPRESSION_TYPE_COMPARE_EQUAL:
+            expected = values[i] == values[j];
+            result = val0.CompareEquals(val1);
+            break;
+          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+            expected = values[i] != values[j];
+            result = val0.CompareNotEquals(val1);
+            break;
+          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+            expected = values[i] < values[j];
+            result = val0.CompareLessThan(val1);
+            break;
+          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+            expected = values[i] <= values[j];
+            result = val0.CompareLessThanEquals(val1);
+            break;
+          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+            expected = values[i] > values[j];
+            result = val0.CompareGreaterThan(val1);
+            break;
+          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+            expected = values[i] >= values[j];
+            result = val0.CompareGreaterThanEquals(val1);
+            break;
+          default:
+            throw Exception("Unexpected comparison");
+        }  // SWITCH
+           //        printf("%s %s %s => %d | %d\n", val0.ToString().c_str(),
+           //               ExpressionTypeToString(etype).c_str(),
+           //               val1.ToString().c_str(),
+           //               expected, result.IsTrue());
 
-  // TRUE != TRUE
-  result = valTrue.CompareNotEquals(valTrue);
-  EXPECT_FALSE(result.IsTrue());
-  EXPECT_TRUE(result.IsFalse());
-  EXPECT_FALSE(result.IsNull());
-
-  // TRUE != FALSE
-  result = valTrue.CompareNotEquals(valFalse);
-  EXPECT_TRUE(result.IsTrue());
-  EXPECT_FALSE(result.IsFalse());
-  EXPECT_FALSE(result.IsNull());
+        EXPECT_EQ(expected, result.IsTrue());
+        EXPECT_FALSE(result.IsNull());
+      }
+    }
+  }
 }
 
 TEST_F(BooleanValueTests, NullTest) {
