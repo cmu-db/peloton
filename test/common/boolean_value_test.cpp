@@ -89,10 +89,9 @@ TEST_F(BooleanValueTests, ComparisonTest) {
           default:
             throw Exception("Unexpected comparison");
         }  // SWITCH
-           //        printf("%s %s %s => %d | %d\n", val0.ToString().c_str(),
-           //               ExpressionTypeToString(etype).c_str(),
-           //               val1.ToString().c_str(),
-           //               expected, result.IsTrue());
+        LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
+                  ExpressionTypeToString(etype).c_str(),
+                  val1.ToString().c_str(), expected, result.IsTrue());
 
         EXPECT_EQ(expected, result.IsTrue());
         EXPECT_FALSE(result.IsNull());
