@@ -105,6 +105,25 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
   return txn;
 }
 
+Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
+    txn_id_t txn_id = READONLY_TXN_ID;
+    auto &epoch_manager = EpochManagerFactory::GetInstance();
+
+    cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
+    Transaction *txn = new Transaction(txn_id, begin_cid, true);
+
+    auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance()
+        ->GetTxnLatencyMetric()
+        .StartTimer();
+    }
+
+    return txn;
+}
+
 void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
   auto &log_manager = logging::LogManager::GetInstance();
@@ -128,6 +147,20 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();
+  }
+}
+
+void TimestampOrderingTransactionManager::EndReadonlyTransaction(Transaction *current_txn) {
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
+  EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(current_txn->GetEpochId());
+
+  delete current_txn;
+  current_txn = nullptr;
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()
+      ->GetTxnLatencyMetric()
+      .RecordLatency();
   }
 }
 
@@ -366,6 +399,11 @@ void TimestampOrderingTransactionManager::YieldOwnership(
 bool TimestampOrderingTransactionManager::PerformRead(
     Transaction *const current_txn, const ItemPointer &location, bool acquire_ownership) {
 
+  if (current_txn->IsDeclaredReadOnly() == true) {
+    // Ignore read validation for all readonly transactions
+    return true;
+  }
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -425,6 +463,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
 void TimestampOrderingTransactionManager::PerformInsert(
     Transaction *const current_txn, const ItemPointer &location,
     ItemPointer *index_entry_ptr) {
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -461,6 +500,8 @@ void TimestampOrderingTransactionManager::PerformInsert(
 void TimestampOrderingTransactionManager::PerformUpdate(
     Transaction *const current_txn, const ItemPointer &old_location,
     const ItemPointer &new_location) {
+
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
   LOG_TRACE("Performing Write old tuple %u %u", old_location.block,
             old_location.offset);
@@ -555,6 +596,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformUpdate(
     Transaction *const current_txn, const ItemPointer &location) {
 
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -583,6 +626,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformDelete(
     Transaction *const current_txn, const ItemPointer &old_location,
     const ItemPointer &new_location) {
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
   LOG_TRACE("Performing Delete");
 
@@ -673,6 +717,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 void TimestampOrderingTransactionManager::PerformDelete(
     Transaction *const current_txn, const ItemPointer &location) {
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -706,6 +751,11 @@ void TimestampOrderingTransactionManager::PerformDelete(
 Result TimestampOrderingTransactionManager::CommitTransaction(
     Transaction *const current_txn) {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+
+  if (current_txn->IsDeclaredReadOnly() == true) {
+    EndReadonlyTransaction(current_txn);
+    return RESULT_SUCCESS;
+  }
 
   auto &manager = catalog::Manager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
@@ -855,6 +905,9 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
 
 Result TimestampOrderingTransactionManager::AbortTransaction(
     Transaction *const current_txn) {
+  // It's impossible that a pre-declared readonly transaction aborts
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
+
   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
