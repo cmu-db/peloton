@@ -74,6 +74,9 @@ class AbstractExecutor {
                                const std::vector<common::Value> &values
                                    UNUSED_ATTRIBUTE) {}
 
+  // Used to reset the state. For now it's overloaded by index scan executor
+  virtual void ResetState() {}
+
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times

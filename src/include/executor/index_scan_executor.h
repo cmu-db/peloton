@@ -35,14 +35,6 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   ~IndexScanExecutor();
 
-  void ResetState() {
-    result_.clear();
-
-    result_itr_ = START_OID;
-
-    done_ = false;
-  }
-
   // These two methods are for modifying values inside plan node
   // TODO: Probably we can refactor this later
   void SetPlan(planner::IndexScanPlan *plan) { plan_node_ = plan; }
@@ -52,6 +44,14 @@ class IndexScanExecutor : public AbstractScanExecutor {
                            UNUSED_ATTRIBUTE,
                        const std::vector<common::Value> &values
                            UNUSED_ATTRIBUTE);
+
+  void ResetState() {
+    result_.clear();
+
+    result_itr_ = START_OID;
+
+    done_ = false;
+  }
 
  protected:
   bool DInit();

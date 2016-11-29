@@ -39,6 +39,8 @@ class AbstractScanExecutor : public AbstractExecutor {
                                const std::vector<common::Value> &values
                                    UNUSED_ATTRIBUTE) {}
 
+  virtual void ResetState() {}
+
  protected:
   bool DInit();
 

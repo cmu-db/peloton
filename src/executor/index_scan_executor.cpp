@@ -493,12 +493,11 @@ void IndexScanExecutor::UpdatePredicate(const std::vector<oid_t> &key_column_ids
                                             UNUSED_ATTRIBUTE,
                                         const std::vector<common::Value> &values
                                             UNUSED_ATTRIBUTE) {
-  std::cout << "this is index scan executor" << std::endl;
 
   // Update index predicate
 
   // Update values in index plan node
-  plan_node_->UpdateKeyValue(key_column_ids, values);
+  // plan_node_->UpdateKeyValue(key_column_ids, values);
 }
 
 }  // namespace executor

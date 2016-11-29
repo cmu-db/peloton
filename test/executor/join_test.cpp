@@ -70,8 +70,9 @@ std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
                            ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
-std::vector<PlanNodeType> join_algorithms = {
-    PLAN_NODE_TYPE_NESTLOOP, PLAN_NODE_TYPE_MERGEJOIN, PLAN_NODE_TYPE_HASHJOIN};
+// PLAN_NODE_TYPE_NESTLOOP is picked out as a separated test
+std::vector<PlanNodeType> join_algorithms = {PLAN_NODE_TYPE_MERGEJOIN,
+                                             PLAN_NODE_TYPE_HASHJOIN};
 
 std::vector<PelotonJoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
                                            JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
@@ -109,109 +110,109 @@ enum JOIN_TEST_TYPE {
   RIGHT_TABLE_EMPTY = 5,
 };
 
-// TEST_F(JoinTests, BasicTest) {
-//  // Go over all join algorithms
-//  for (auto join_algorithm : join_algorithms) {
-//    LOG_INFO("JOIN ALGORITHM :: %s",
-//             PlanNodeTypeToString(join_algorithm).c_str());
-//    ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
-//  }
-//}
-//
-// TEST_F(JoinTests, EmptyTablesTest) {
-//  // Go over all join algorithms
-//  for (auto join_algorithm : join_algorithms) {
-//    LOG_INFO("JOIN ALGORITHM :: %s",
-//             PlanNodeTypeToString(join_algorithm).c_str());
-//    ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
-//  }
-//}
-//
-// TEST_F(JoinTests, JoinTypesTest) {
-//  // Go over all join algorithms
-//  for (auto join_algorithm : join_algorithms) {
-//    LOG_INFO("JOIN ALGORITHM :: %s",
-//             PlanNodeTypeToString(join_algorithm).c_str());
-//    // Go over all join types
-//    for (auto join_type : join_types) {
-//      LOG_INFO("JOIN TYPE :: %d", join_type);
-//      // Execute the join test
-//      ExecuteJoinTest(join_algorithm, join_type, BASIC_TEST);
-//    }
-//  }
-//}
-//
-// TEST_F(JoinTests, ComplicatedTest) {
-//  // Go over all join algorithms
-//  for (auto join_algorithm : join_algorithms) {
-//    LOG_INFO("JOIN ALGORITHM :: %s",
-//             PlanNodeTypeToString(join_algorithm).c_str());
-//    // Go over all join types
-//    for (auto join_type : join_types) {
-//      LOG_INFO("JOIN TYPE :: %d", join_type);
-//      // Execute the join test
-//      ExecuteJoinTest(join_algorithm, join_type, COMPLICATED_TEST);
-//    }
-//  }
-//}
-//
-// TEST_F(JoinTests, LeftTableEmptyTest) {
-//  // Go over all join algorithms
-//  for (auto join_algorithm : join_algorithms) {
-//    LOG_INFO("JOIN ALGORITHM :: %s",
-//             PlanNodeTypeToString(join_algorithm).c_str());
-//    // Go over all join types
-//    for (auto join_type : join_types) {
-//      LOG_INFO("JOIN TYPE :: %d", join_type);
-//      // Execute the join test
-//      ExecuteJoinTest(join_algorithm, join_type, LEFT_TABLE_EMPTY);
-//    }
-//  }
-//}
-//
-// TEST_F(JoinTests, RightTableEmptyTest) {
-//  // Go over all join algorithms
-//  for (auto join_algorithm : join_algorithms) {
-//    LOG_INFO("JOIN ALGORITHM :: %s",
-//             PlanNodeTypeToString(join_algorithm).c_str());
-//    // Go over all join types
-//    for (auto join_type : join_types) {
-//      LOG_INFO("JOIN TYPE :: %d", join_type);
-//      // Execute the join test
-//      ExecuteJoinTest(join_algorithm, join_type, RIGHT_TABLE_EMPTY);
-//    }
-//  }
-//}
-//
-// TEST_F(JoinTests, JoinPredicateTest) {
-//  oid_t join_test_types = 1;
-//
-//  // Go over all join test types
-//  for (oid_t join_test_type = 0; join_test_type < join_test_types;
-//       join_test_type++) {
-//    LOG_INFO("JOIN TEST_F ------------------------ :: %u", join_test_type);
-//
-//    // Go over all join algorithms
-//    for (auto join_algorithm : join_algorithms) {
-//      LOG_INFO("JOIN ALGORITHM :: %s",
-//               PlanNodeTypeToString(join_algorithm).c_str());
-//      // Go over all join types
-//      for (auto join_type : join_types) {
-//        LOG_INFO("JOIN TYPE :: %d", join_type);
-//        // Execute the join test
-//        ExecuteJoinTest(join_algorithm, join_type, join_test_type);
-//      }
-//    }
-//  }
-//}
-//
-// TEST_F(JoinTests, SpeedTest) {
-//  ExecuteJoinTest(PLAN_NODE_TYPE_HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
-//
-//  ExecuteJoinTest(PLAN_NODE_TYPE_MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
-//
-//  ExecuteJoinTest(PLAN_NODE_TYPE_NESTLOOP, JOIN_TYPE_OUTER, SPEED_TEST);
-//}
+TEST_F(JoinTests, BasicTest) {
+  // Go over all join algorithms
+  for (auto join_algorithm : join_algorithms) {
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
+    ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
+  }
+}
+
+TEST_F(JoinTests, EmptyTablesTest) {
+  // Go over all join algorithms
+  for (auto join_algorithm : join_algorithms) {
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
+    ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
+  }
+}
+
+TEST_F(JoinTests, JoinTypesTest) {
+  // Go over all join algorithms
+  for (auto join_algorithm : join_algorithms) {
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
+    // Go over all join types
+    for (auto join_type : join_types) {
+      LOG_INFO("JOIN TYPE :: %d", join_type);
+      // Execute the join test
+      ExecuteJoinTest(join_algorithm, join_type, BASIC_TEST);
+    }
+  }
+}
+
+TEST_F(JoinTests, ComplicatedTest) {
+  // Go over all join algorithms
+  for (auto join_algorithm : join_algorithms) {
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
+    // Go over all join types
+    for (auto join_type : join_types) {
+      LOG_INFO("JOIN TYPE :: %d", join_type);
+      // Execute the join test
+      ExecuteJoinTest(join_algorithm, join_type, COMPLICATED_TEST);
+    }
+  }
+}
+
+TEST_F(JoinTests, LeftTableEmptyTest) {
+  // Go over all join algorithms
+  for (auto join_algorithm : join_algorithms) {
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
+    // Go over all join types
+    for (auto join_type : join_types) {
+      LOG_INFO("JOIN TYPE :: %d", join_type);
+      // Execute the join test
+      ExecuteJoinTest(join_algorithm, join_type, LEFT_TABLE_EMPTY);
+    }
+  }
+}
+
+TEST_F(JoinTests, RightTableEmptyTest) {
+  // Go over all join algorithms
+  for (auto join_algorithm : join_algorithms) {
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
+    // Go over all join types
+    for (auto join_type : join_types) {
+      LOG_INFO("JOIN TYPE :: %d", join_type);
+      // Execute the join test
+      ExecuteJoinTest(join_algorithm, join_type, RIGHT_TABLE_EMPTY);
+    }
+  }
+}
+
+TEST_F(JoinTests, JoinPredicateTest) {
+  oid_t join_test_types = 1;
+
+  // Go over all join test types
+  for (oid_t join_test_type = 0; join_test_type < join_test_types;
+       join_test_type++) {
+    LOG_INFO("JOIN TEST_F ------------------------ :: %u", join_test_type);
+
+    // Go over all join algorithms
+    for (auto join_algorithm : join_algorithms) {
+      LOG_INFO("JOIN ALGORITHM :: %s",
+               PlanNodeTypeToString(join_algorithm).c_str());
+      // Go over all join types
+      for (auto join_type : join_types) {
+        LOG_INFO("JOIN TYPE :: %d", join_type);
+        // Execute the join test
+        ExecuteJoinTest(join_algorithm, join_type, join_test_type);
+      }
+    }
+  }
+}
+
+TEST_F(JoinTests, SpeedTest) {
+  ExecuteJoinTest(PLAN_NODE_TYPE_HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+
+  ExecuteJoinTest(PLAN_NODE_TYPE_MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+
+  ExecuteNestedLoopJoinTest(JOIN_TYPE_OUTER);
+}
 
 TEST_F(JoinTests, BasicNestedLoopTest) {
   LOG_INFO("PLAN_NODE_TYPE_NESTLOOP");

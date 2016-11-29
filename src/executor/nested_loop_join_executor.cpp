@@ -218,25 +218,21 @@ bool NestedLoopJoinExecutor::Old_DExecute() {
   }  // end the very beginning for loop
 }
 
+// For this version, the work flow is we first lookup the left table, and
+// use the result to lookup right table. If left table is done that means right
+// table is also done. So we only keep the left_child_done_ as the sign.
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
             GetJoinTypeString());
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
-    // Build outer join output when done
-    if (left_child_done_ && right_child_done_) {
-      return BuildOuterJoinOutput();
-    }
-
     //===------------------------------------------------------------------===//
     // Pick left and right tiles
     //===------------------------------------------------------------------===//
 
     LogicalTile *left_tile = nullptr;
     LogicalTile *right_tile = nullptr;
-
-    bool advance_right_child = false;
 
     // If we have already retrieved all left child's results in buffer
     if (left_child_done_ == true) {
@@ -246,7 +242,6 @@ bool NestedLoopJoinExecutor::DExecute() {
       left_result_itr_++;
 
       if (left_result_itr_ >= left_result_tiles_.size()) {
-        advance_right_child = true;
         left_result_itr_ = 0;
       }
     }
@@ -258,7 +253,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
         left_child_done_ = true;
         left_result_itr_ = 0;
-        advance_right_child = true;
       }
       // Buffer the left child's result
       else {
@@ -268,11 +262,16 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
     }
 
-    // FIXME: combine the beginning right_child_done_
-    if (left_child_done_) {
+    if (left_result_tiles_.empty() && !left_child_done_) {
+      // If there is no result for left lookup, continue the next tile
+      LOG_TRACE("Left is empty continue the left.");
+      continue;
+    } else if (left_child_done_) {
+      LOG_TRACE("Left_child_done, and return the result.");
       return BuildOuterJoinOutput();
     }
 
+    // We already checked whether results are empty
     left_tile = left_result_tiles_[left_result_itr_].get();
 
     //===------------------------------------------------------------------===//
@@ -324,8 +323,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         // Right is finished
         else {
           if (!left_child_done_) {
-            // TODO: We should add type judgement, like IndexScan or SeqScan
-            ((executor::IndexScanExecutor *)children_[1])->ResetState();
+            children_[1]->ResetState();
           } else {
             right_child_done_ = true;
           }
@@ -334,20 +332,22 @@ bool NestedLoopJoinExecutor::DExecute() {
       }  // End for
     }    // Buffered all results
 
-    if (advance_right_child == true || right_result_tiles_.empty()) {
-      // return if right tile is empty
-      if (right_child_done_ && right_result_tiles_.empty()) {
-        return BuildOuterJoinOutput();
-      }
-
-      PL_ASSERT(left_result_itr_ == 0);
+    // Return result
+    if (left_child_done_ && right_result_tiles_.empty()) {
+      LOG_TRACE("All done, and return the result.");
+      return BuildOuterJoinOutput();
+    } else if (right_result_tiles_.empty()) {
+      LOG_TRACE("Right is empty, continue the left.");
+      continue;
     }
 
+    // We already checked whether results are empty
     right_tile = right_result_tiles_.back().get();
 
     //===------------------------------------------------------------------===//
     // Build Join Tile
     //===------------------------------------------------------------------===//
+    LOG_TRACE("Build output logical tile.");
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
