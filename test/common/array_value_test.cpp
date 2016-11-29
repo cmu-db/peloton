@@ -13,17 +13,17 @@
 #define VALUE_TESTS
 
 #include <limits.h>
-#include <iostream>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
+#include <iostream>
 
 #include "common/array_type.h"
 #include "common/boolean_type.h"
 #include "common/decimal_type.h"
-#include "common/numeric_type.h"
-#include "common/varlen_type.h"
 #include "common/harness.h"
+#include "common/numeric_type.h"
 #include "common/value_factory.h"
+#include "common/varlen_type.h"
 
 namespace peloton {
 namespace test {
@@ -178,7 +178,7 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_tinyint.InList(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(array_tinyint.InList(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(array_tinyint.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
@@ -204,7 +204,7 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_smallint.InList(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(array_smallint.InList(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(array_smallint.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
@@ -229,7 +229,7 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_integer.InList(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(array_integer.InList(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(array_integer.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
@@ -254,7 +254,7 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_bigint.InList(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(array_bigint.InList(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(array_bigint.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
@@ -279,7 +279,7 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_decimal.InList(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(array_decimal.InList(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(array_decimal.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
@@ -304,7 +304,7 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_varchar.InList(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(array_varchar.InList(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(array_varchar.InList(ValueFactory::GetIntegerValue(0)),
                peloton::Exception);
@@ -380,7 +380,7 @@ TEST_F(ArrayValueTests, CompareTest) {
 
   // Test type mismatch
   Value v = ValueFactory::GetVarcharValue("");
-  EXPECT_THROW(v.CompareEquals(ValueFactory::GetBooleanValue(0)),
+  EXPECT_THROW(v.CompareEquals(ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
   EXPECT_THROW(v.CompareEquals(ValueFactory::GetIntegerValue(0)),
                peloton::Exception);
