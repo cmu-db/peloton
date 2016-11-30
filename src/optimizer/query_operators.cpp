@@ -10,99 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/query_operators.h"
 #include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace optimizer {
-
-//===--------------------------------------------------------------------===//
-// QueryExpression
-//===--------------------------------------------------------------------===//
-
-QueryExpression::QueryExpression() {}
-
-QueryExpression::~QueryExpression() {}
-
-const QueryExpression *QueryExpression::GetParent() const { return parent_; }
-
-//===--------------------------------------------------------------------===//
-// Variable
-//===--------------------------------------------------------------------===//
-Variable::Variable(oid_t base_table, oid_t column_index, catalog::Column col)
-    : base_table_oid(base_table), column_index(column_index), column(col) {}
-
-ExpressionType Variable::GetExpressionType() const {
-  return EXPRESSION_TYPE_COLUMN_REF;
-}
-
-void Variable::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
-//===--------------------------------------------------------------------===//
-// Constant
-//===--------------------------------------------------------------------===//
-Constant::Constant(common::Value &value) : value(value.Copy()) {}
-
-ExpressionType Constant::GetExpressionType() const {
-  return EXPRESSION_TYPE_VALUE_CONSTANT;
-}
-
-void Constant::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
-//===--------------------------------------------------------------------===//
-// OperatorExpression - matches with Peloton's operator_expression.h
-//===--------------------------------------------------------------------===//
-OperatorExpression::OperatorExpression(
-    peloton::ExpressionType type, common::Type::TypeId value_type,
-    const std::vector<QueryExpression *> &args)
-    : type(type), value_type(value_type), args(args) {}
-
-ExpressionType OperatorExpression::GetExpressionType() const { return type; }
-
-void OperatorExpression::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
-//===--------------------------------------------------------------------===//
-// Logical Operators
-//===--------------------------------------------------------------------===//
-AndOperator::AndOperator(const std::vector<QueryExpression *> args)
-    : args(args) {}
-
-ExpressionType AndOperator::GetExpressionType() const {
-  return EXPRESSION_TYPE_CONJUNCTION_AND;
-}
-
-void AndOperator::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
-OrOperator::OrOperator(const std::vector<QueryExpression *> args)
-    : args(args) {}
-
-ExpressionType OrOperator::GetExpressionType() const {
-  return EXPRESSION_TYPE_CONJUNCTION_OR;
-}
-
-void OrOperator::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
-NotOperator::NotOperator(QueryExpression *arg) : arg(arg) {}
-
-ExpressionType NotOperator::GetExpressionType() const {
-  return EXPRESSION_TYPE_OPERATOR_NOT;
-}
-
-void NotOperator::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
-//===--------------------------------------------------------------------===//
-// Attribute
-//===--------------------------------------------------------------------===//
-Attribute::Attribute(QueryExpression *expression, std::string name,
-                     bool intermediate)
-    : expression(expression), name(name), intermediate(intermediate) {}
-
-ExpressionType Attribute::GetExpressionType() const {
-  return EXPRESSION_TYPE_COLUMN_REF;
-}
-
-void Attribute::accept(QueryNodeVisitor *v) const { v->visit(this); }
 
 //===--------------------------------------------------------------------===//
 // QueryJoinNode
