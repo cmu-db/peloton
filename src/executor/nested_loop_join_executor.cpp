@@ -77,7 +77,7 @@ bool NestedLoopJoinExecutor::DInit() {
  *
  */
 
-// For this version, the work flow is we first lookup the left table, and
+// For this version, the work flow is that we first lookup the left table, and
 // use the result to lookup right table. If left table is done that means right
 // table is also done. So we only keep the left_child_done_ as the sign.
 bool NestedLoopJoinExecutor::DExecute() {
