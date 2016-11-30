@@ -493,7 +493,7 @@ void IndexScanExecutor::UpdatePredicate(const std::vector<oid_t> &key_column_ids
                                             UNUSED_ATTRIBUTE,
                                         const std::vector<common::Value> &values
                                             UNUSED_ATTRIBUTE) {
-
+  // TODO: ADD ziqi's API
   // Update index predicate
 
   // Update values in index plan node

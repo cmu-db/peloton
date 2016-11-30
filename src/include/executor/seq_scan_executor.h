@@ -28,10 +28,7 @@ class SeqScanExecutor : public AbstractScanExecutor {
   explicit SeqScanExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
-  void ResetState() {
-    // TODO: do we need to empty output?
-    current_tile_group_offset_ = START_OID;
-  }
+  void ResetState() { current_tile_group_offset_ = START_OID; }
 
  protected:
   bool DInit();
