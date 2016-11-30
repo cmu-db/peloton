@@ -32,16 +32,16 @@ InnerJoinCommutativity::InnerJoinCommutativity() {
   match_pattern->AddChild(predicate);
 }
 
-bool InnerJoinCommutativity::Check(std::shared_ptr<OpExpression> expr) const {
+bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr) const {
   (void)expr;
   return true;
 }
 
 void InnerJoinCommutativity::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
-  auto result_plan = std::make_shared<OpExpression>(LogicalInnerJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  auto result_plan = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
@@ -58,20 +58,20 @@ GetToScan::GetToScan() {
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
 
-bool GetToScan::Check(std::shared_ptr<OpExpression> plan) const {
+bool GetToScan::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void GetToScan::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().as<LogicalGet>();
 
-  auto result_plan = std::make_shared<OpExpression>(
+  auto result_plan = std::make_shared<OperatorExpression>(
       PhysicalScan::make(get->table, std::vector<Column *>()));
 
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 1);
   result_plan->PushChild(children[0]);
 
@@ -91,16 +91,16 @@ ProjectToComputeExprs::ProjectToComputeExprs() {
   match_pattern->AddChild(project_list);
 }
 
-bool ProjectToComputeExprs::Check(std::shared_ptr<OpExpression> plan) const {
+bool ProjectToComputeExprs::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void ProjectToComputeExprs::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
-  auto result = std::make_shared<OpExpression>(PhysicalComputeExprs::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  auto result = std::make_shared<OperatorExpression>(PhysicalComputeExprs::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
   result->PushChild(children[0]);
   result->PushChild(children[1]);
@@ -120,16 +120,16 @@ LogicalFilterToPhysical::LogicalFilterToPhysical() {
   match_pattern->AddChild(predicate);
 }
 
-bool LogicalFilterToPhysical::Check(std::shared_ptr<OpExpression> plan) const {
+bool LogicalFilterToPhysical::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void LogicalFilterToPhysical::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
-  auto result = std::make_shared<OpExpression>(PhysicalFilter::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  auto result = std::make_shared<OperatorExpression>(PhysicalFilter::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
   result->PushChild(children[0]);
   result->PushChild(children[1]);
@@ -158,18 +158,18 @@ InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   return;
 }
 
-bool InnerJoinToInnerNLJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool InnerJoinToInnerNLJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void InnerJoinToInnerNLJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   // first build an expression representing hash join
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalInnerNLJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalInnerNLJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   // Then push all children into the child list of the new operator
@@ -200,16 +200,16 @@ LeftJoinToLeftNLJoin::LeftJoinToLeftNLJoin() {
   return;
 }
 
-bool LeftJoinToLeftNLJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool LeftJoinToLeftNLJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void LeftJoinToLeftNLJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
-  auto result_plan = std::make_shared<OpExpression>(PhysicalLeftNLJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  auto result_plan = std::make_shared<OperatorExpression>(PhysicalLeftNLJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
@@ -239,17 +239,17 @@ RightJoinToRightNLJoin::RightJoinToRightNLJoin() {
   return;
 }
 
-bool RightJoinToRightNLJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool RightJoinToRightNLJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void RightJoinToRightNLJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalRightNLJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalRightNLJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
@@ -279,17 +279,17 @@ OuterJoinToOuterNLJoin::OuterJoinToOuterNLJoin() {
   return;
 }
 
-bool OuterJoinToOuterNLJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool OuterJoinToOuterNLJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return true;
 }
 
 void OuterJoinToOuterNLJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalOuterNLJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalOuterNLJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
@@ -322,19 +322,19 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
   return;
 }
 
-bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   // TODO(abpoms): Figure out how to determine if the join condition is hashable
   return false;
 }
 
 void InnerJoinToInnerHashJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   // first build an expression representing hash join
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalInnerHashJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalInnerHashJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   // Then push all children into the child list of the new operator
@@ -365,17 +365,17 @@ LeftJoinToLeftHashJoin::LeftJoinToLeftHashJoin() {
   return;
 }
 
-bool LeftJoinToLeftHashJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool LeftJoinToLeftHashJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return false;
 }
 
 void LeftJoinToLeftHashJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalLeftHashJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalLeftHashJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
@@ -405,17 +405,17 @@ RightJoinToRightHashJoin::RightJoinToRightHashJoin() {
   return;
 }
 
-bool RightJoinToRightHashJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool RightJoinToRightHashJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return false;
 }
 
 void RightJoinToRightHashJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalRightHashJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalRightHashJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);
@@ -445,17 +445,17 @@ OuterJoinToOuterHashJoin::OuterJoinToOuterHashJoin() {
   return;
 }
 
-bool OuterJoinToOuterHashJoin::Check(std::shared_ptr<OpExpression> plan) const {
+bool OuterJoinToOuterHashJoin::Check(std::shared_ptr<OperatorExpression> plan) const {
   (void)plan;
   return false;
 }
 
 void OuterJoinToOuterHashJoin::Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const {
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   auto result_plan =
-      std::make_shared<OpExpression>(PhysicalOuterHashJoin::make());
-  std::vector<std::shared_ptr<OpExpression>> children = input->Children();
+      std::make_shared<OperatorExpression>(PhysicalOuterHashJoin::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 3);
 
   result_plan->PushChild(children[0]);

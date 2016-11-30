@@ -13,11 +13,10 @@
 #pragma once
 
 #include "optimizer/group.h"
-#include "optimizer/op_expression.h"
-
 #include <map>
 #include <unordered_set>
 #include <vector>
+#include "operator_expression.h"
 
 namespace peloton {
 namespace optimizer {

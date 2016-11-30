@@ -79,7 +79,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the corresponding planner plan
    */
   planner::AbstractPlan *OptimizerPlanToPlannerPlan(
-      std::shared_ptr<OpExpression> plan);
+      std::shared_ptr<OperatorExpression> plan);
 
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties
@@ -89,7 +89,7 @@ class Optimizer : public AbstractOptimizer {
    *     must satisfy
    * return: the lowest cost tree of physical operators
    */
-  std::shared_ptr<OpExpression> ChooseBestPlan(GroupID id,
+  std::shared_ptr<OperatorExpression> ChooseBestPlan(GroupID id,
                                                PropertySet requirements);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
@@ -157,17 +157,17 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Memo insertion
   std::shared_ptr<GroupExpression> MakeGroupExpression(
-      std::shared_ptr<OpExpression> expr);
+      std::shared_ptr<OperatorExpression> expr);
 
   std::vector<GroupID> MemoTransformedChildren(
-      std::shared_ptr<OpExpression> expr);
+      std::shared_ptr<OperatorExpression> expr);
 
-  GroupID MemoTransformedExpression(std::shared_ptr<OpExpression> expr);
+  GroupID MemoTransformedExpression(std::shared_ptr<OperatorExpression> expr);
 
-  bool RecordTransformedExpression(std::shared_ptr<OpExpression> expr,
+  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
                                    std::shared_ptr<GroupExpression> &gexpr);
 
-  bool RecordTransformedExpression(std::shared_ptr<OpExpression> expr,
+  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group);
 

@@ -13,10 +13,10 @@
 #pragma once
 
 #include "optimizer/column_manager.h"
-#include "optimizer/op_expression.h"
 #include "optimizer/query_operators.h"
 
 #include <memory>
+#include "operator_expression.h"
 
 namespace peloton {
 
@@ -26,7 +26,7 @@ class SQLStatement;
 
 namespace optimizer {
 
-std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
+std::shared_ptr<OperatorExpression> ConvertQueryToOpExpression(
     ColumnManager &manager, parser::SQLStatement *tree);
 
 } /* namespace optimizer */

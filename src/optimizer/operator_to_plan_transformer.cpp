@@ -12,9 +12,9 @@
 
 #include "expression/expression_util.h"
 
-#include "optimizer/op_expression.h"
 #include "optimizer/operator_to_plan_transformer.h"
 
+#include "../include/optimizer/operator_expression.h"
 #include "planner/hash_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/projection_plan.h"
@@ -26,7 +26,7 @@ namespace optimizer {
 OperatorToPlanTransformer::OperatorToPlanTransformer() {}
 
 planner::AbstractPlan *OperatorToPlanTransformer::ConvertOpExpression(
-    std::shared_ptr<OpExpression> plan) {
+    std::shared_ptr<OperatorExpression> plan) {
   VisitOpExpression(plan);
   return output_plan.get();
 }
@@ -59,7 +59,7 @@ void OperatorToPlanTransformer::visit(const PhysicalComputeExprs *) {
   std::vector<Column *> proj_columns;
   std::vector<expression::AbstractExpression *> exprs;
   {
-    for (std::shared_ptr<OpExpression> op_expr : children[1]->Children()) {
+    for (std::shared_ptr<OperatorExpression> op_expr : children[1]->Children()) {
       /*
       assert(op_expr->Op().type() == OpType::ProjectColumn);
       assert(op_expr->Children().size() == 1);
@@ -159,10 +159,10 @@ void OperatorToPlanTransformer::visit(const PhysicalRightHashJoin *) {}
 void OperatorToPlanTransformer::visit(const PhysicalOuterHashJoin *) {}
 
 void OperatorToPlanTransformer::VisitOpExpression(
-    std::shared_ptr<OpExpression> op) {
+    std::shared_ptr<OperatorExpression> op) {
   // LM: I don't understand why we're copying prev information here and then
   // copy them back. It seems not used anywhere.
-  std::vector<std::shared_ptr<OpExpression>> prev_children = current_children;
+  std::vector<std::shared_ptr<OperatorExpression>> prev_children = current_children;
   auto prev_left_cols = left_columns;
   auto prev_right_cols = right_columns;
   current_children = op->Children();
@@ -174,7 +174,7 @@ void OperatorToPlanTransformer::VisitOpExpression(
 
 expression::AbstractExpression *
 OperatorToPlanTransformer::ConvertToAbstractExpression(
-    UNUSED_ATTRIBUTE std::shared_ptr<OpExpression> op) {
+    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> op) {
   // FIXME: LM: fix this later.
   return nullptr;
 }

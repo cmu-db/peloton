@@ -36,7 +36,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
  public:
   QueryToOpTransformer(ColumnManager &manager) : manager(manager) {}
 
-  std::shared_ptr<OpExpression> ConvertToOpExpression(
+  std::shared_ptr<OperatorExpression> ConvertToOpExpression(
       parser::SQLStatement *op) {
     op->Accept(this);
     return output_expr;
@@ -46,19 +46,19 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   void visit(const Join *op) override {
     // Self
-    std::shared_ptr<OpExpression> expr;
+    std::shared_ptr<OperatorExpression> expr;
     switch (op->join_type) {
       case JOIN_TYPE_INNER: {
-        expr = std::make_shared<OpExpression>(LogicalInnerJoin::make());
+        expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       } break;
       case JOIN_TYPE_LEFT: {
-        expr = std::make_shared<OpExpression>(LogicalLeftJoin::make());
+        expr = std::make_shared<OperatorExpression>(LogicalLeftJoin::make());
       } break;
       case JOIN_TYPE_RIGHT: {
-        expr = std::make_shared<OpExpression>(LogicalRightJoin::make());
+        expr = std::make_shared<OperatorExpression>(LogicalRightJoin::make());
       } break;
       case JOIN_TYPE_OUTER: {
-        expr = std::make_shared<OpExpression>(LogicalOuterJoin::make());
+        expr = std::make_shared<OperatorExpression>(LogicalOuterJoin::make());
       } break;
       default:
         assert(false);
@@ -88,7 +88,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
             op->from_table->GetDatabaseName(), op->from_table->GetTableName());
 
     auto get_expr =
-        std::make_shared<OpExpression>(LogicalGet::make(target_table));
+        std::make_shared<OperatorExpression>(LogicalGet::make(target_table));
 
     // Check whether we need to add a logical project operator
     bool needs_projection = false;
@@ -105,7 +105,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     }
 
     // Add a projection at top level
-    auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
+    auto project_expr = std::make_shared<OperatorExpression>(LogicalProject::make());
     project_expr->PushChild(get_expr);
     output_expr = project_expr;
   }
@@ -123,7 +123,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
  private:
   ColumnManager &manager;
 
-  std::shared_ptr<OpExpression> output_expr;
+  std::shared_ptr<OperatorExpression> output_expr;
   // For expr nodes
   common::Type::TypeId output_type;
   int output_size;
@@ -131,7 +131,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 };
 }
 
-std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
+std::shared_ptr<OperatorExpression> ConvertQueryToOpExpression(
     ColumnManager &manager, parser::SQLStatement *tree) {
   QueryToOpTransformer converter(manager);
   return converter.ConvertToOpExpression(tree);

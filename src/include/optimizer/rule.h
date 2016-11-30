@@ -13,10 +13,10 @@
 
 #pragma once
 
-#include "optimizer/op_expression.h"
 #include "optimizer/pattern.h"
 
 #include <memory>
+#include "operator_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -31,11 +31,11 @@ class Rule {
 
   bool IsLogical() const { return logical; }
 
-  virtual bool Check(std::shared_ptr<OpExpression> expr) const = 0;
+  virtual bool Check(std::shared_ptr<OperatorExpression> expr) const = 0;
 
   virtual void Transform(
-      std::shared_ptr<OpExpression> input,
-      std::vector<std::shared_ptr<OpExpression>> &transformed) const = 0;
+      std::shared_ptr<OperatorExpression> input,
+      std::vector<std::shared_ptr<OperatorExpression>> &transformed) const = 0;
 
  protected:
   std::shared_ptr<Pattern> match_pattern;

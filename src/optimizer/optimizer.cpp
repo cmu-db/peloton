@@ -76,7 +76,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Find least cost plan for root group
   OptimizeExpression(gexpr, properties);
 
-  std::shared_ptr<OpExpression> best_plan = ChooseBestPlan(root_id, properties);
+  std::shared_ptr<OperatorExpression> best_plan = ChooseBestPlan(root_id, properties);
 
   if (best_plan == nullptr) return nullptr;
 
@@ -89,7 +89,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
-  std::shared_ptr<OpExpression> initial =
+  std::shared_ptr<OperatorExpression> initial =
       ConvertQueryToOpExpression(column_manager_, tree);
   std::shared_ptr<GroupExpression> gexpr;
   assert(RecordTransformedExpression(initial, gexpr));
@@ -103,12 +103,12 @@ PropertySet Optimizer::GetQueryTreeRequiredProperties(
 }
 
 planner::AbstractPlan *Optimizer::OptimizerPlanToPlannerPlan(
-    std::shared_ptr<OpExpression> plan) {
+    std::shared_ptr<OperatorExpression> plan) {
   OperatorToPlanTransformer transformer;
   return transformer.ConvertOpExpression(plan);
 }
 
-std::shared_ptr<OpExpression> Optimizer::ChooseBestPlan(
+std::shared_ptr<OperatorExpression> Optimizer::ChooseBestPlan(
     GroupID id, PropertySet requirements) {
   LOG_TRACE("Choosing best plan for group %d", id);
 
@@ -123,11 +123,11 @@ std::shared_ptr<OpExpression> Optimizer::ChooseBestPlan(
     required_input_props.resize(child_groups.size(), PropertySet());
   }
 
-  std::shared_ptr<OpExpression> op =
-      std::make_shared<OpExpression>(gexpr->Op());
+  std::shared_ptr<OperatorExpression> op =
+      std::make_shared<OperatorExpression>(gexpr->Op());
 
   for (size_t i = 0; i < child_groups.size(); ++i) {
-    std::shared_ptr<OpExpression> child_op =
+    std::shared_ptr<OperatorExpression> child_op =
         ChooseBestPlan(child_groups[i], required_input_props[i]);
     op->PushChild(child_op);
   }
@@ -288,7 +288,7 @@ std::vector<std::shared_ptr<GroupExpression>> Optimizer::TransformExpression(
   std::vector<std::shared_ptr<GroupExpression>> output_plans;
   ItemBindingIterator iterator(*this, gexpr, pattern);
   while (iterator.HasNext()) {
-    std::shared_ptr<OpExpression> plan = iterator.Next();
+    std::shared_ptr<OperatorExpression> plan = iterator.Next();
     // Check rule condition function
     if (rule.Check(plan)) {
       LOG_TRACE("Rule matched expression of group %d with op %s",
@@ -297,11 +297,11 @@ std::vector<std::shared_ptr<GroupExpression>> Optimizer::TransformExpression(
       // We need to be able to analyze the transformations performed by this
       // rule in order to perform deduplication and launch an exploration of
       // the newly applied rule
-      std::vector<std::shared_ptr<OpExpression>> transformed_plans;
+      std::vector<std::shared_ptr<OperatorExpression>> transformed_plans;
       rule.Transform(plan, transformed_plans);
 
       // Integrate transformed plans back into groups and explore/cost if new
-      for (std::shared_ptr<OpExpression> plan : transformed_plans) {
+      for (std::shared_ptr<OperatorExpression> plan : transformed_plans) {
         LOG_TRACE("Trying to integrate expression with op %s",
                   plan->Op().name().c_str());
         std::shared_ptr<GroupExpression> new_gexpr;
@@ -321,15 +321,15 @@ std::vector<std::shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 //////////////////////////////////////////////////////////////////////////////
 /// Memo insertion
 std::shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
-    std::shared_ptr<OpExpression> expr) {
+    std::shared_ptr<OperatorExpression> expr) {
   std::vector<GroupID> child_groups = MemoTransformedChildren(expr);
   return std::make_shared<GroupExpression>(expr->Op(), child_groups);
 }
 
 std::vector<GroupID> Optimizer::MemoTransformedChildren(
-    std::shared_ptr<OpExpression> expr) {
+    std::shared_ptr<OperatorExpression> expr) {
   std::vector<GroupID> child_groups;
-  for (std::shared_ptr<OpExpression> child : expr->Children()) {
+  for (std::shared_ptr<OperatorExpression> child : expr->Children()) {
     child_groups.push_back(MemoTransformedExpression(child));
   }
 
@@ -337,7 +337,7 @@ std::vector<GroupID> Optimizer::MemoTransformedChildren(
 }
 
 GroupID Optimizer::MemoTransformedExpression(
-    std::shared_ptr<OpExpression> expr) {
+    std::shared_ptr<OperatorExpression> expr) {
   std::shared_ptr<GroupExpression> gexpr = MakeGroupExpression(expr);
   // Ignore whether this expression is new or not as we only care about that
   // at the top level
@@ -346,13 +346,13 @@ GroupID Optimizer::MemoTransformedExpression(
 }
 
 bool Optimizer::RecordTransformedExpression(
-    std::shared_ptr<OpExpression> expr,
+    std::shared_ptr<OperatorExpression> expr,
     std::shared_ptr<GroupExpression> &gexpr) {
   return RecordTransformedExpression(expr, gexpr, UNDEFINED_GROUP);
 }
 
 bool Optimizer::RecordTransformedExpression(
-    std::shared_ptr<OpExpression> expr, std::shared_ptr<GroupExpression> &gexpr,
+    std::shared_ptr<OperatorExpression> expr, std::shared_ptr<GroupExpression> &gexpr,
     GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
   return memo_.InsertExpression(gexpr, target_group);

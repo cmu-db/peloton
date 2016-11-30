@@ -25,7 +25,7 @@ class SeqScanPlan;
 }
 
 namespace optimizer {
-class OpExpression;
+class OperatorExpression;
 }
 
 namespace optimizer {
@@ -35,7 +35,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   OperatorToPlanTransformer();
 
   planner::AbstractPlan *ConvertOpExpression(
-      std::shared_ptr<OpExpression> plan);
+      std::shared_ptr<OperatorExpression> plan);
 
   void visit(const PhysicalScan *op) override;
 
@@ -60,10 +60,10 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   void visit(const PhysicalOuterHashJoin *) override;
 
  private:
-  void VisitOpExpression(std::shared_ptr<OpExpression> op);
+  void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
   expression::AbstractExpression *ConvertToAbstractExpression(
-      UNUSED_ATTRIBUTE std::shared_ptr<OpExpression> op);
+      UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> op);
 
   catalog::Schema *BuildSchemaFromColumns(std::vector<Column *> columns);
 
@@ -73,7 +73,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   std::vector<Column *> ConcatLeftAndRightColumns();
 
   std::unique_ptr<planner::AbstractPlan> output_plan;
-  std::vector<std::shared_ptr<OpExpression>> current_children;
+  std::vector<std::shared_ptr<OperatorExpression>> current_children;
   std::vector<Column *> output_columns;
   std::vector<Column *> left_columns;
   std::vector<Column *> right_columns;
