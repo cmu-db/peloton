@@ -36,6 +36,8 @@ enum class OpType {
   OuterJoin,
   Aggregate,
   Limit,
+  // Separate between logical and physical ops
+  LogicalPhysicalDelimiter,
   // Physical ops
   Scan,
   ComputeExprs,

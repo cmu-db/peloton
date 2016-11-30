@@ -350,174 +350,24 @@ OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
 template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
 
+template <typename T>
+bool OperatorNode<T>::IsLogical() const {
+  return type_ < OpType::LogicalPhysicalDelimiter;
+}
+
+template <typename T>
+bool OperatorNode<T>::IsPhysical() const {
+  return type_ > OpType::LogicalPhysicalDelimiter;
+}
+
 template <>
 bool OperatorNode<LeafOperator>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalGet>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalProject>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalFilter>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalInnerJoin>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalLeftJoin>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalRightJoin>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalOuterJoin>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalAggregate>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<LogicalLimit>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalScan>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalComputeExprs>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalFilter>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalInnerNLJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalLeftNLJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalRightNLJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalOuterNLJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalInnerHashJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalLeftHashJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalRightHashJoin>::IsLogical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalOuterHashJoin>::IsLogical() const {
   return false;
 }
 
 template <>
 bool OperatorNode<LeafOperator>::IsPhysical() const {
   return false;
-}
-template <>
-bool OperatorNode<LogicalGet>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalProject>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalFilter>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalInnerJoin>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalLeftJoin>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalRightJoin>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalOuterJoin>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalAggregate>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<LogicalLimit>::IsPhysical() const {
-  return false;
-}
-template <>
-bool OperatorNode<PhysicalScan>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalComputeExprs>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalFilter>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalInnerNLJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalLeftNLJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalRightNLJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalOuterNLJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalInnerHashJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalLeftHashJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalRightHashJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<PhysicalOuterHashJoin>::IsPhysical() const {
-  return true;
 }
 
 } /* namespace optimizer */
