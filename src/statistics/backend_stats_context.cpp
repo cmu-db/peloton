@@ -89,12 +89,17 @@ IndexMetric* BackendStatsContext::GetIndexMetric(oid_t database_id,
                                                  oid_t table_id,
                                                  oid_t index_id) {
   std::shared_ptr<IndexMetric> index_metric;
-  if (index_metrics_.Find(index_id, index_metric) == false) {
+  // Index metric doesn't exist yet
+  if (index_metrics_.Contains(index_id) == false) {
     index_metric.reset(
         new IndexMetric{INDEX_METRIC, database_id, table_id, index_id});
     index_metrics_.Insert(index_id, index_metric);
+    index_id_lock.Lock();
     index_ids_.insert(index_id);
+    index_id_lock.Unlock();
   }
+  // Get index metric from map
+  index_metrics_.Find(index_id, index_metric);
   return index_metric.get();
 }
 

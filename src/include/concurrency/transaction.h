@@ -48,6 +48,11 @@ class Transaction : public Printable {
     Init(txn_id, begin_cid);
   }
 
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid, bool ro) {
+    Init(txn_id, begin_cid);
+    declared_readonly_ = ro;
+  }
+
   ~Transaction() {}
 
   void Init(const txn_id_t &txn_id, const cid_t &begin_cid) {
@@ -55,6 +60,7 @@ class Transaction : public Printable {
     begin_cid_ = begin_cid;
     end_cid_ = MAX_CID;
     is_written_ = false;
+    declared_readonly_ = false;
     insert_count_ = 0;
     gc_set_.reset(new ReadWriteSet());
   }
@@ -109,6 +115,10 @@ class Transaction : public Printable {
     return is_written_ == false && insert_count_ == 0;
   }
 
+  inline bool IsDeclaredReadOnly() const {
+    return declared_readonly_;
+  }
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -136,6 +146,8 @@ class Transaction : public Printable {
 
   bool is_written_;
   size_t insert_count_;
+
+  bool declared_readonly_;
 };
 
 }  // End concurrency namespace

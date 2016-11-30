@@ -17,6 +17,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "common/platform.h"
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
@@ -151,6 +152,9 @@ class BackendStatsContext {
 
   // Index oids
   std::unordered_set<oid_t> index_ids_;
+
+  // Index oid spin lock
+  Spinlock index_id_lock;
 
   // Metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> completed_query_metrics_{

@@ -13,41 +13,41 @@
 #include "common/type.h"
 
 #include "common/array_type.h"
+#include "common/bigint_type.h"
 #include "common/boolean_type.h"
 #include "common/decimal_type.h"
-#include "common/numeric_type.h"
-#include "common/timestamp_type.h"
-#include "common/varlen_type.h"
-#include "common/value.h"
 #include "common/exception.h"
-#include "common/varlen_pool.h"
-#include "common/tinyint_type.h"
-#include "common/smallint_type.h"
 #include "common/integer_type.h"
-#include "common/bigint_type.h"
+#include "common/numeric_type.h"
+#include "common/smallint_type.h"
+#include "common/timestamp_type.h"
+#include "common/tinyint_type.h"
+#include "common/value.h"
+#include "common/varlen_pool.h"
+#include "common/varlen_type.h"
 
 namespace peloton {
 namespace common {
 
 Type* Type::kTypes[] = {
-  new Type(Type::INVALID),
-  new IntegerType(Type::PARAMETER_OFFSET),
-  new BooleanType(),
-  new TinyintType(),
-  new SmallintType(),
-  new IntegerType(Type::INTEGER),
-  new BigintType(),
-  new DecimalType(),
-  new TimestampType(),
-  new Type(Type::DATE), // not yet implemented
-  new VarlenType(Type::VARCHAR),
-  new VarlenType(Type::VARBINARY),
-  new ArrayType(),
-  new Type(Type::UDT), // not yet implemented
+    new Type(Type::INVALID),
+    new IntegerType(Type::PARAMETER_OFFSET),
+    new BooleanType(),
+    new TinyintType(),
+    new SmallintType(),
+    new IntegerType(Type::INTEGER),
+    new BigintType(),
+    new DecimalType(),
+    new TimestampType(),
+    new Type(Type::DATE),  // not yet implemented
+    new VarlenType(Type::VARCHAR),
+    new VarlenType(Type::VARBINARY),
+    new ArrayType(),
+    new Type(Type::UDT),  // not yet implemented
 };
 
 //// Is this type equivalent to the other
-//bool Type::Equals(const Type &other) const {
+// bool Type::Equals(const Type &other) const {
 //  return (type_id_ == other.type_id_);
 //}
 
@@ -82,7 +82,9 @@ uint64_t Type::GetTypeSize(const TypeId type_id) {
 bool Type::IsCoercableFrom(const TypeId type_id) const {
   switch (type_id_) {
     case INVALID:
-      return 0;
+      return false;
+    case BOOLEAN:
+      return true;
     case TINYINT:
     case SMALLINT:
     case INTEGER:
@@ -95,9 +97,9 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
         case BIGINT:
         case DECIMAL:
         case VARCHAR:
-          return 1;
+          return true;
         default:
-          return 0;
+          return false;
       }
       break;
     case TIMESTAMP:
@@ -112,9 +114,9 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
         case DECIMAL:
         case TIMESTAMP:
         case VARCHAR:
-          return 1;
+          return true;
         default:
-          return 0;
+          return false;
       }
       break;
     default:
@@ -161,13 +163,13 @@ Value Type::GetMinValue(TypeId type_id) {
     case BOOLEAN:
       return Value(type_id, 0);
     case TINYINT:
-      return Value(type_id, (int8_t) PELOTON_INT8_MIN);
+      return Value(type_id, (int8_t)PELOTON_INT8_MIN);
     case SMALLINT:
-      return Value(type_id, (int16_t) PELOTON_INT16_MIN);
+      return Value(type_id, (int16_t)PELOTON_INT16_MIN);
     case INTEGER:
-      return Value(type_id, (int32_t) PELOTON_INT32_MIN);
+      return Value(type_id, (int32_t)PELOTON_INT32_MIN);
     case BIGINT:
-      return Value(type_id, (int64_t) PELOTON_INT64_MIN);
+      return Value(type_id, (int64_t)PELOTON_INT64_MIN);
     case DECIMAL:
       return Value(type_id, PELOTON_DECIMAL_MIN);
     case TIMESTAMP:
@@ -187,17 +189,17 @@ Value Type::GetMaxValue(TypeId type_id) {
     case BOOLEAN:
       return Value(type_id, 1);
     case TINYINT:
-      return Value(type_id, (int8_t) PELOTON_INT8_MAX);
+      return Value(type_id, (int8_t)PELOTON_INT8_MAX);
     case SMALLINT:
-      return Value(type_id, (int16_t) PELOTON_INT16_MAX);
+      return Value(type_id, (int16_t)PELOTON_INT16_MAX);
     case INTEGER:
-      return Value(type_id, (int32_t) PELOTON_INT32_MAX);
+      return Value(type_id, (int32_t)PELOTON_INT32_MAX);
     case BIGINT:
-      return Value(type_id, (int64_t) PELOTON_INT64_MAX);
+      return Value(type_id, (int64_t)PELOTON_INT64_MAX);
     case DECIMAL:
-      return Value(type_id,PELOTON_DECIMAL_MAX);
+      return Value(type_id, PELOTON_DECIMAL_MAX);
     case TIMESTAMP:
-      return Value(type_id,PELOTON_TIMESTAMP_MAX);
+      return Value(type_id, PELOTON_TIMESTAMP_MAX);
     case VARCHAR:
       return Value(type_id, nullptr, 0);
     case VARBINARY:
@@ -208,81 +210,93 @@ Value Type::GetMaxValue(TypeId type_id) {
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get maximal value.");
 }
 
-Type *Type::GetInstance(TypeId type_id) {
-  return kTypes[type_id];
-}
+Type* Type::GetInstance(TypeId type_id) { return kTypes[type_id]; }
 
-Type::TypeId Type::GetTypeId() const {
-  return type_id_;
-}
+Type::TypeId Type::GetTypeId() const { return type_id_; }
 
-Value Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
+                          const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE,
+                             const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE,
+                            const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE,
+                                  const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE,
+                               const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE,
+                                     const Value& right
+                                         UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Other mathematical functions
-Value Type::Add(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Add(const Value& left UNUSED_ATTRIBUTE,
+                const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Subtract(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Subtract(const Value& left UNUSED_ATTRIBUTE,
+                     const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Multiply(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Multiply(const Value& left UNUSED_ATTRIBUTE,
+                     const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Divide(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Divide(const Value& left UNUSED_ATTRIBUTE,
+                   const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Modulo(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Modulo(const Value& left UNUSED_ATTRIBUTE,
+                   const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Min(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Min(const Value& left UNUSED_ATTRIBUTE,
+                const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Max(const Value& left UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::Max(const Value& left UNUSED_ATTRIBUTE,
+                const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::Sqrt(const Value& val UNUSED_ATTRIBUTE) const{
+Value Type::Sqrt(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::OperateNull(const Value& val UNUSED_ATTRIBUTE, const Value& right UNUSED_ATTRIBUTE) const{
+Value Type::OperateNull(const Value& val UNUSED_ATTRIBUTE,
+                        const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-bool Type::IsZero(const Value& val UNUSED_ATTRIBUTE) const{
+bool Type::IsZero(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Is the data inlined into this classes storage space, or must it be accessed
 // through an indirection/pointer?
-bool Type::IsInlined(const Value& val UNUSED_ATTRIBUTE) const{
+bool Type::IsInlined(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Return a stringified version of this value
-std::string Type::ToString(const Value& val UNUSED_ATTRIBUTE) const{
+std::string Type::ToString(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Compute a hash value
-size_t Type::Hash(const Value& val UNUSED_ATTRIBUTE) const{
+size_t Type::Hash(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-void Type::HashCombine(const Value& val UNUSED_ATTRIBUTE, size_t &seed UNUSED_ATTRIBUTE) const{
+void Type::HashCombine(const Value& val UNUSED_ATTRIBUTE,
+                       size_t& seed UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
@@ -291,54 +305,61 @@ void Type::HashCombine(const Value& val UNUSED_ATTRIBUTE, size_t &seed UNUSED_AT
 // space, or whether we must store only a reference to this value. If inlined
 // is false, we may use the provided data pool to allocate space for this
 // value, storing a reference into the allocated pool space in the storage.
-void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE, char *storage UNUSED_ATTRIBUTE, bool inlined UNUSED_ATTRIBUTE,
-                         VarlenPool *pool UNUSED_ATTRIBUTE) const{
+void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
+                       char* storage UNUSED_ATTRIBUTE,
+                       bool inlined UNUSED_ATTRIBUTE,
+                       VarlenPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const{
+void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
+                       SerializeOutput& out UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Deserialize a value of the given type from the given storage space.
-Value Type::DeserializeFrom(const char *storage UNUSED_ATTRIBUTE,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+Value Type::DeserializeFrom(const char* storage UNUSED_ATTRIBUTE,
+                            const bool inlined UNUSED_ATTRIBUTE,
+                            VarlenPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+Value Type::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
+                            VarlenPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Create a copy of this value
-Value Type::Copy(const Value& val UNUSED_ATTRIBUTE) const{
+Value Type::Copy(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
-Value Type::CastAs(const Value& val UNUSED_ATTRIBUTE, const Type::TypeId type_id UNUSED_ATTRIBUTE) const{
+Value Type::CastAs(const Value& val UNUSED_ATTRIBUTE,
+                   const Type::TypeId type_id UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Access the raw variable length data
-const char *Type::GetData(const Value& val UNUSED_ATTRIBUTE) const{
+const char* Type::GetData(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Get the length of the variable length data
-uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const{
+uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
 // Get the element at a given index in this array
-Value Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE, uint64_t idx UNUSED_ATTRIBUTE) const{
+Value Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE,
+                         uint64_t idx UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
-Type::TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const{
+Type::TypeId Type::GetElementType(const Value& val UNUSED_ATTRIBUTE) const {
   return type_id_;
 }
 
-  // Does this value exist in this array?
-Value Type::InList(const Value& list UNUSED_ATTRIBUTE, const Value &object UNUSED_ATTRIBUTE) const{
+// Does this value exist in this array?
+Value Type::InList(const Value& list UNUSED_ATTRIBUTE,
+                   const Value& object UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 

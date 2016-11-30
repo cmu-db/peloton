@@ -138,7 +138,11 @@ class TransactionManager {
 
   virtual Transaction *BeginTransaction() = 0;
 
+  virtual Transaction *BeginReadonlyTransaction() = 0;
+
   virtual void EndTransaction(Transaction *current_txn) = 0;
+
+  virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
 
   virtual Result CommitTransaction(Transaction *const current_txn) = 0;
 

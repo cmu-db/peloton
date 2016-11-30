@@ -148,7 +148,7 @@ class ExpressionUtil {
       const std::list<expression::AbstractExpression *> &child_exprs) {
     if (child_exprs.empty())
       return new ConstantValueExpression(
-          common::ValueFactory::GetBooleanValue(1));
+          common::ValueFactory::GetBooleanValue(true));
     AbstractExpression *left = nullptr;
     AbstractExpression *right = nullptr;
     for (auto expr : child_exprs) {
@@ -205,8 +205,7 @@ class ExpressionUtil {
     return os.str();
   }
 
-private:
-
+ private:
   /**
    * Internal method for recursively traversing the expression tree
    * and generating debug output
@@ -221,15 +220,14 @@ private:
        << "ValueType[" << TypeIdToString(vtype) << "]";
 
     switch (etype) {
-    case EXPRESSION_TYPE_VALUE_CONSTANT: {
-    	const ConstantValueExpression *c_expr = dynamic_cast<const ConstantValueExpression*>(expr);
-    	os << " -> Value=" << c_expr->GetValue().ToString();
-    	break;
-    }
-    default: {
-    	break;
-    }
-    } // SWITCH
+      case EXPRESSION_TYPE_VALUE_CONSTANT: {
+        const ConstantValueExpression *c_expr =
+            dynamic_cast<const ConstantValueExpression *>(expr);
+        os << " -> Value=" << c_expr->GetValue().ToString();
+        break;
+      }
+      default: { break; }
+    }  // SWITCH
 
     os << std::endl;
     spacer += "   ";
@@ -239,46 +237,46 @@ private:
     return;
   }
 
-public:
+ public:
+  // TODO: Andy is commenting this out for now so that he can come back
+  // 	 	 and fix it once we sort out our catalog information.
+  //
+  //  /**
+  //   * Return a list of all of the catalog::Column objects referenced
+  //   * in the given expression tree
+  //   */
+  //  static std::vector<catalog::Column> GetReferencedColumns(
+  //		  catalog::Catalog *catalog,
+  //		  AbstractExpression *expr) {
+  //	  PL_ASSERT(catalog != nullptr);
+  //	  PL_ASSERT(expr != nullptr);
+  //	  std::vector<catalog::Column> columns;
+  //
+  //	  GetReferencedColumns(catalog, expr, columns);
+  //
+  //	  return (columns);
+  //  }
+  //
+  // private:
+  //
+  //  static void GetReferencedColumns(
+  //		  catalog::Catalog *catalog,
+  //		  const AbstractExpression *expr,
+  //		  std::vector<catalog::Column> &columns) {
+  //
+  //	  ExpressionType etype = expr->GetExpressionType();
+  //	  if (etype == EXPRESSION_TYPE_VALUE_TUPLE) {
+  //		  // TODO: Get the table + column name and grab the
+  //		  // the handle from schema object!
+  //		  const TupleValueExpression t_expr = dynamic_cast<const
+  //TupleValueExpression*>(expr);
+  //		  // catalog->Get
+  //
+  //	  }
+  //
+  //    }
 
-// TODO: Andy is commenting this out for now so that he can come back
-// 	 	 and fix it once we sort out our catalog information.
-//
-//  /**
-//   * Return a list of all of the catalog::Column objects referenced
-//   * in the given expression tree
-//   */
-//  static std::vector<catalog::Column> GetReferencedColumns(
-//		  catalog::Catalog *catalog,
-//		  AbstractExpression *expr) {
-//	  PL_ASSERT(catalog != nullptr);
-//	  PL_ASSERT(expr != nullptr);
-//	  std::vector<catalog::Column> columns;
-//
-//	  GetReferencedColumns(catalog, expr, columns);
-//
-//	  return (columns);
-//  }
-//
-//private:
-//
-//  static void GetReferencedColumns(
-//		  catalog::Catalog *catalog,
-//		  const AbstractExpression *expr,
-//		  std::vector<catalog::Column> &columns) {
-//
-//	  ExpressionType etype = expr->GetExpressionType();
-//	  if (etype == EXPRESSION_TYPE_VALUE_TUPLE) {
-//		  // TODO: Get the table + column name and grab the
-//		  // the handle from schema object!
-//		  const TupleValueExpression t_expr = dynamic_cast<const TupleValueExpression*>(expr);
-//		  // catalog->Get
-//
-//	  }
-//
-//    }
-
-public:
+ public:
   /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective obejects
@@ -306,8 +304,7 @@ public:
                         needs_projection, true);
   }
 
-private:
-
+ private:
   /**
    * this is a private function for transforming expressions as described
    * above
