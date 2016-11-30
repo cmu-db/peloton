@@ -1011,8 +1011,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
       DEFAULT_DB_NAME, "stock");
 
   // Manually constructing the predicate....
-  expression::ParameterValueExpression* params[7];
-  for (int i = 0; i < 7; ++i)
+  expression::ParameterValueExpression* params[5];
+  for (int i = 0; i < 5; ++i)
     params[i] = new expression::ParameterValueExpression(i);
 
   // Predicate for order_line table
@@ -1067,38 +1067,20 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
   LOG_DEBUG("Index scan for order_line plan created");
 
   // predicate for scanning stock table
-  //  char s_w_id_name[] = "s_w_id";
-  //  char s_i_id_name[] = "s_i_id";  // s_i_id should be set later
-
-  // s_quantity is only used to compare with the join results
   char s_quantity_name[] = "s_quantity";
 
-  //  auto s_w_id = new expression::TupleValueExpression(s_w_id_name);
-  //  auto s_i_id = new expression::TupleValueExpression(s_i_id_name);
   auto s_quantity = new expression::TupleValueExpression(s_quantity_name);
-  //
-  //  auto predicate9 = new expression::ComparisonExpression(
-  //      EXPRESSION_TYPE_COMPARE_EQUAL, s_w_id, params[4]);
-  //  auto predicate10 = new expression::ComparisonExpression(
-  //      EXPRESSION_TYPE_COMPARE_EQUAL, s_i_id, params[5]);
-  //  auto predicate11 = new expression::ConjunctionExpression(
-  //      EXPRESSION_TYPE_CONJUNCTION_AND, predicate9, predicate10);
 
   auto predicate12 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[6]);
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[4]);
 
-  // FIXME: use GetPredicateColumns instead of hardcoding?
   predicate_column_ids = {0, 1};
   predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL,
                           EXPRESSION_TYPE_COMPARE_EQUAL};
 
+  // Hardcode wid=0 and iid=90
   predicate_values = {common::ValueFactory::GetIntegerValue(0).Copy(),
                       common::ValueFactory::GetIntegerValue(90).Copy()};
-
-  // FIXME: Get predicate ids, types, and values
-  //  GetPredicateColumns(stock_table->GetSchema(), predicate11,
-  //                      predicate_column_ids, predicate_expr_types,
-  //                      predicate_values, index_searchable);
 
   column_ids = {1};  // S_I_ID
 

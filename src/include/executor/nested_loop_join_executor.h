@@ -29,7 +29,6 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
 
  protected:
   bool DInit();
-  bool Old_DExecute();
   bool DExecute();
 
  private:

@@ -85,7 +85,7 @@ bool IndexScanExecutor::DInit() {
 
       for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
         values_.push_back(value.Copy());
       }
 
@@ -108,7 +108,7 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-  LOG_INFO("Index Scan executor :: 0 child");
+  LOG_TRACE("Index Scan executor :: 0 child");
 
   if (!done_) {
     if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
@@ -127,7 +127,7 @@ bool IndexScanExecutor::DExecute() {
       result_itr_++;
       continue;
     } else {
-      LOG_INFO("Information %s", result_[result_itr_]->GetInfo().c_str());
+      LOG_TRACE("Information %s", result_[result_itr_]->GetInfo().c_str());
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
@@ -139,7 +139,7 @@ bool IndexScanExecutor::DExecute() {
 }
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
-  LOG_INFO("Exec primary index lookup");
+  LOG_TRACE("Exec primary index lookup");
   PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
@@ -159,7 +159,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   if (tuple_location_ptrs.size() == 0) {
-    LOG_INFO("no tuple is retrieved from index.");
+    LOG_TRACE("no tuple is retrieved from index.");
     return false;
   }
 
@@ -192,14 +192,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
+                  tuple_location.offset);
         break;
       }
       // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
-        LOG_INFO("perform read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("perform read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
 
         bool eval = true;
         // if having predicate, then perform evaluation.
@@ -219,7 +219,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
-          LOG_INFO("Set visible_tuples");
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         }
 
@@ -229,8 +228,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
 
-        LOG_INFO("Invisible read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(
                                 tuple_location.offset) == INITIAL_TXN_ID);
@@ -275,7 +274,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         continue;
       }
     }
-    LOG_INFO("Traverse length: %d\n", (int)chain_length);
+    LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
 
   // Construct a logical tile for each block
@@ -296,13 +295,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   done_ = true;
 
-  LOG_INFO("Result tiles : %lu", result_.size());
+  LOG_TRACE("Result tiles : %lu", result_.size());
 
   return true;
 }
 
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
-  LOG_INFO("ExecSecondaryIndexLookup");
+  LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
@@ -322,7 +321,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   }
 
   if (tuple_location_ptrs.size() == 0) {
-    LOG_INFO("no tuple is retrieved from index.");
+    LOG_TRACE("no tuple is retrieved from index.");
     return false;
   }
 
@@ -357,14 +356,14 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
+                  tuple_location.offset);
         break;
       }
       // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
-        LOG_INFO("perform read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("perform read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
 
         // Further check if the version has the secondary key
         storage::Tuple key_tuple(index_->GetKeySchema(), true);
@@ -383,8 +382,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // Compare the key tuple and the key
         if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
             false) {
-          LOG_INFO("Secondary key mismatch: %u, %u\n", tuple_location.block,
-                   tuple_location.offset);
+          LOG_TRACE("Secondary key mismatch: %u, %u\n", tuple_location.block,
+                    tuple_location.offset);
           break;
         }
 
@@ -415,8 +414,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
 
-        LOG_INFO("Invisible read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(
                                 tuple_location.offset) == INITIAL_TXN_ID);
@@ -464,7 +463,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
-    LOG_INFO("Traverse length: %d\n", (int)chain_length);
+    LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
 
   // Construct a logical tile for each block
@@ -485,7 +484,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   done_ = true;
 
-  LOG_INFO("Result tiles : %lu", result_.size());
+  LOG_TRACE("Result tiles : %lu", result_.size());
 
   return true;
 }
