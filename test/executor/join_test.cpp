@@ -363,7 +363,6 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   // executor
   executor::IndexScanExecutor right_table_scan_executor(&right_table_node,
                                                         context.get());
-  right_table_scan_executor.SetPlan(&right_table_node);
 
   //===--------------------------------------------------------------------===//
   // Setup join plan nodes and executors and run them
