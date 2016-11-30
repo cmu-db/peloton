@@ -24,7 +24,7 @@ matrix:
 
 before_script:
     # setup environment
-    - sudo -H sh ./script/installation/packages.sh
+    - sudo ./script/installation/packages.sh
     - pip install --user cpp-coveralls
 
 script:
