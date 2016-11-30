@@ -1091,8 +1091,9 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
   predicate_column_ids = {0, 1};
   predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL,
                           EXPRESSION_TYPE_COMPARE_EQUAL};
-  predicate_values = {common::ValueFactory::GetIntegerValue(3).Copy(),
-                      common::ValueFactory::GetIntegerValue(110).Copy()};
+
+  predicate_values = {common::ValueFactory::GetIntegerValue(0).Copy(),
+                      common::ValueFactory::GetIntegerValue(90).Copy()};
 
   // FIXME: Get predicate ids, types, and values
   //  GetPredicateColumns(stock_table->GetSchema(), predicate11,
