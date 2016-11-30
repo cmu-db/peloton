@@ -32,23 +32,6 @@ namespace optimizer {
 
 namespace {
 
-bool IsCompareOp(ExpressionType et) {
-  switch (et) {
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-    case (EXPRESSION_TYPE_COMPARE_LIKE):
-    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
-    case (EXPRESSION_TYPE_COMPARE_IN):
-      return true;
-    default:
-      return false;
-  }
-}
-
 class QueryToOpTransformer : public QueryNodeVisitor {
  public:
   QueryToOpTransformer(ColumnManager &manager) : manager(manager) {}
@@ -57,121 +40,6 @@ class QueryToOpTransformer : public QueryNodeVisitor {
       parser::SQLStatement *op) {
     op->Accept(this);
     return output_expr;
-  }
-
-  void visit(const Variable *op) override {
-    catalog::Column schema_col = op->column;
-
-    oid_t table_oid = op->base_table_oid;
-    oid_t col_id = op->column_index;
-    assert(col_id != INVALID_OID);
-
-    Column *col = manager.LookupColumn(table_oid, col_id);
-    if (col == nullptr) {
-      col = manager.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
-                                  schema_col.GetName(), schema_col.IsInlined(),
-                                  table_oid, col_id);
-    }
-
-    output_expr = std::make_shared<OpExpression>(ExprVariable::make(col));
-    output_type = col->Type();
-    output_size = common::Type::GetTypeSize(output_type);
-    output_inlined = col->Inlined();
-  }
-
-  void visit(const Constant *op) override {
-    output_expr = std::make_shared<OpExpression>(ExprConstant::make(op->value));
-    output_type = op->value.GetTypeId();
-    output_size = common::Type::GetTypeSize(output_type);
-    output_inlined = op->value.IsInlined();
-  }
-
-  void visit(const OperatorExpression *op) override {
-    std::shared_ptr<OpExpression> expr;
-    if (IsCompareOp(op->type)) {
-      expr = std::make_shared<OpExpression>(ExprCompare::make(op->type));
-    } else {
-      expr = std::make_shared<OpExpression>(
-          ExprOp::make(op->type, op->value_type));
-    }
-
-    for (QueryExpression *arg : op->args) {
-      arg->accept(this);
-      expr->PushChild(output_expr);
-    }
-
-    if (IsCompareOp(op->type)) {
-      output_type = common::Type::BOOLEAN;
-      output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
-      output_inlined = true;
-    } else {
-      output_type = op->value_type;
-      output_size = common::Type::GetTypeSize(output_type);
-      // TODO(abpoms): how can this be determined?
-      output_inlined = true;
-    }
-
-    output_expr = expr;
-  }
-
-  void visit(const AndOperator *op) override {
-    auto expr =
-        std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::And));
-
-    for (QueryExpression *arg : op->args) {
-      arg->accept(this);
-      expr->PushChild(output_expr);
-    }
-
-    output_expr = expr;
-    output_type = common::Type::BOOLEAN;
-    output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
-    output_inlined = true;
-  }
-
-  void visit(const OrOperator *op) override {
-    auto expr =
-        std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::Or));
-
-    for (QueryExpression *arg : op->args) {
-      arg->accept(this);
-      expr->PushChild(output_expr);
-    }
-
-    output_expr = expr;
-    output_type = common::Type::BOOLEAN;
-    output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
-    output_inlined = true;
-  }
-
-  void visit(const NotOperator *op) override {
-    auto expr =
-        std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::Not));
-
-    QueryExpression *arg = op->arg;
-    arg->accept(this);
-    expr->PushChild(output_expr);
-
-    output_expr = expr;
-    output_type = common::Type::BOOLEAN;
-    output_size = common::Type::GetTypeSize(common::Type::BOOLEAN);
-    output_inlined = true;
-  }
-
-  void visit(const Attribute *op) override {
-    op->expression->accept(this);
-
-    // TODO(abpoms): actually figure out what the type should be by deriving
-    // it from the expression tree
-    if (output_size == 0) {
-      output_size = std::pow(2, 16);
-    }
-    Column *col = manager.AddExprColumn(output_type, output_size, op->name,
-                                        output_inlined);
-    auto expr = std::make_shared<OpExpression>(ExprProjectColumn::make(col));
-    expr->PushChild(output_expr);
-
-    output_expr = expr;
   }
 
   void visit(UNUSED_ATTRIBUTE const Table *op) override {}
@@ -228,6 +96,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     }
 
     // Add all attributes in output list as projection at top level
+    /*
     auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
     project_expr->PushChild(join_expr);
     auto project_list = std::make_shared<OpExpression>(ExprProjectList::make());
@@ -241,6 +110,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     }
 
     output_expr = project_expr;
+    */
   }
 
   void Visit(const parser::SelectStatement *op) override {

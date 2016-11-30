@@ -66,9 +66,11 @@ class OpToPlanTransformer : public OperatorVisitor {
         assert(op_expr->Op().type() == OpType::ProjectColumn);
         assert(op_expr->Children().size() == 1);
 
+        /*
         const ExprProjectColumn *proj_col =
             op_expr->Op().as<ExprProjectColumn>();
         proj_columns.push_back(proj_col->column_);
+        */
 
         exprs.push_back(ConvertToAbstractExpression(op_expr->Children()[0]));
       }

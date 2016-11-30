@@ -225,160 +225,6 @@ Operator PhysicalOuterHashJoin::make() {
 }
 
 //===--------------------------------------------------------------------===//
-// Variable
-//===--------------------------------------------------------------------===//
-Operator QueryExpressionOperator::make(
-    expression::AbstractExpression *expression) {
-  QueryExpressionOperator *var = new QueryExpressionOperator;
-  var->expression_.reset(expression);
-  return Operator(var);
-}
-
-//===--------------------------------------------------------------------===//
-// Variable
-//===--------------------------------------------------------------------===//
-Operator ExprVariable::make(Column *column) {
-  ExprVariable *var = new ExprVariable;
-  var->column = column;
-  return Operator(var);
-}
-
-bool ExprVariable::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::Variable) return false;
-  const ExprVariable &r = *static_cast<const ExprVariable *>(&node);
-  if (column != r.column) return false;
-  return true;
-}
-
-hash_t ExprVariable::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, column->Hash());
-  return hash;
-}
-
-//===--------------------------------------------------------------------===//
-// Constant
-//===--------------------------------------------------------------------===//
-Operator ExprConstant::make(const common::Value value) {
-  ExprConstant *constant = new ExprConstant;
-  constant->value = value.Copy();
-  return Operator(constant);
-}
-
-bool ExprConstant::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::Constant) return false;
-  const ExprConstant &r = *static_cast<const ExprConstant *>(&node);
-  if (!value.CompareEquals(r.value).IsTrue()) return false;
-  return true;
-}
-
-hash_t ExprConstant::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, value.Hash());
-  return hash;
-}
-
-//===--------------------------------------------------------------------===//
-// Compare
-//===--------------------------------------------------------------------===//
-Operator ExprCompare::make(ExpressionType type) {
-  ExprCompare *cmp = new ExprCompare;
-  cmp->expr_type = type;
-  return Operator(cmp);
-}
-
-bool ExprCompare::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::Compare) return false;
-  const ExprCompare &r = *static_cast<const ExprCompare *>(&node);
-  if (expr_type != r.expr_type) return false;
-  return true;
-}
-
-hash_t ExprCompare::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, util::Hash<ExpressionType>(&expr_type));
-  return hash;
-}
-
-//===--------------------------------------------------------------------===//
-// Boolean Operation
-//===--------------------------------------------------------------------===//
-Operator ExprBoolOp::make(BoolOpType type) {
-  ExprBoolOp *bool_op = new ExprBoolOp;
-  bool_op->bool_type_ = type;
-  return Operator(bool_op);
-}
-
-bool ExprBoolOp::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::BoolOp) return false;
-  const ExprBoolOp &r = *static_cast<const ExprBoolOp *>(&node);
-  if (bool_type_ != r.bool_type_) return false;
-  return true;
-}
-
-hash_t ExprBoolOp::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, util::Hash<BoolOpType>(&bool_type_));
-  return hash;
-}
-
-//===--------------------------------------------------------------------===//
-// Operation (e.g. +, -, string functions)
-//===--------------------------------------------------------------------===//
-Operator ExprOp::make(ExpressionType type, common::Type::TypeId return_type) {
-  ExprOp *op = new ExprOp;
-  op->expr_type_ = type;
-  op->return_type_ = return_type;
-  return Operator(op);
-}
-
-bool ExprOp::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::Op) return false;
-  const ExprOp &r = *static_cast<const ExprOp *>(&node);
-  if (expr_type_ != r.expr_type_) return false;
-  if (return_type_ != r.return_type_) return false;
-  return true;
-}
-
-hash_t ExprOp::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, util::Hash<ExpressionType>(&expr_type_));
-  hash = util::CombineHashes(hash,
-                             util::Hash<common::Type::TypeId>(&return_type_));
-  return hash;
-}
-
-//===--------------------------------------------------------------------===//
-// ProjectList
-//===--------------------------------------------------------------------===//
-Operator ExprProjectList::make() {
-  ExprProjectList *list = new ExprProjectList;
-  return Operator(list);
-}
-
-//===--------------------------------------------------------------------===//
-// ProjectColumn
-//===--------------------------------------------------------------------===//
-Operator ExprProjectColumn::make(Column *column) {
-  ExprProjectColumn *project_col = new ExprProjectColumn;
-  project_col->column_ = column;
-  return Operator(project_col);
-}
-
-bool ExprProjectColumn::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::ProjectColumn) return false;
-  const ExprProjectColumn &r = *static_cast<const ExprProjectColumn *>(&node);
-  if (column_ != r.column_) return false;
-  return true;
-}
-
-hash_t ExprProjectColumn::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
-  hash = util::CombineHashes(hash, column_->Hash());
-  return hash;
-}
-
-//===--------------------------------------------------------------------===//
 template <typename T>
 void OperatorNode<T>::accept(OperatorVisitor *v) const {
   v->visit((const T *)this);
@@ -460,23 +306,6 @@ std::string OperatorNode<PhysicalRightHashJoin>::name_ =
 template <>
 std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
     "PhysicalOuterHashJoin";
-template <>
-std::string OperatorNode<QueryExpressionOperator>::name_ =
-    "QueryExpressionOperator";
-template <>
-std::string OperatorNode<ExprVariable>::name_ = "ExprVariable";
-template <>
-std::string OperatorNode<ExprConstant>::name_ = "ExprConstant";
-template <>
-std::string OperatorNode<ExprCompare>::name_ = "ExprCompare";
-template <>
-std::string OperatorNode<ExprBoolOp>::name_ = "ExprBoolOp";
-template <>
-std::string OperatorNode<ExprOp>::name_ = "ExprOp";
-template <>
-std::string OperatorNode<ExprProjectList>::name_ = "ExprProjectList";
-template <>
-std::string OperatorNode<ExprProjectColumn>::name_ = "ExprProjectColumn";
 
 template <>
 OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
@@ -520,22 +349,6 @@ template <>
 OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
 template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
-template <>
-OpType OperatorNode<QueryExpressionOperator>::type_ = OpType::Expression;
-template <>
-OpType OperatorNode<ExprVariable>::type_ = OpType::Variable;
-template <>
-OpType OperatorNode<ExprConstant>::type_ = OpType::Constant;
-template <>
-OpType OperatorNode<ExprCompare>::type_ = OpType::Compare;
-template <>
-OpType OperatorNode<ExprBoolOp>::type_ = OpType::BoolOp;
-template <>
-OpType OperatorNode<ExprOp>::type_ = OpType::Op;
-template <>
-OpType OperatorNode<ExprProjectList>::type_ = OpType::ProjectList;
-template <>
-OpType OperatorNode<ExprProjectColumn>::type_ = OpType::ProjectColumn;
 
 template <>
 bool OperatorNode<LeafOperator>::IsLogical() const {
@@ -621,38 +434,6 @@ template <>
 bool OperatorNode<PhysicalOuterHashJoin>::IsLogical() const {
   return false;
 }
-template <>
-bool OperatorNode<QueryExpressionOperator>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprVariable>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprConstant>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprCompare>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprBoolOp>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprOp>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprProjectList>::IsLogical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprProjectColumn>::IsLogical() const {
-  return true;
-}
 
 template <>
 bool OperatorNode<LeafOperator>::IsPhysical() const {
@@ -735,39 +516,7 @@ bool OperatorNode<PhysicalRightHashJoin>::IsPhysical() const {
   return true;
 }
 template <>
-bool OperatorNode<QueryExpressionOperator>::IsPhysical() const {
-  return true;
-}
-template <>
 bool OperatorNode<PhysicalOuterHashJoin>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprVariable>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprConstant>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprCompare>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprBoolOp>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprOp>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprProjectList>::IsPhysical() const {
-  return true;
-}
-template <>
-bool OperatorNode<ExprProjectColumn>::IsPhysical() const {
   return true;
 }
 

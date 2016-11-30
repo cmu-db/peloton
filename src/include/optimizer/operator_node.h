@@ -48,15 +48,6 @@ enum class OpType {
   LeftHashJoin,
   RightHashJoin,
   OuterHashJoin,
-  // Exprs
-  Expression,
-  Variable,
-  Constant,
-  Compare,
-  BoolOp,
-  Op,
-  ProjectList,
-  ProjectColumn,
 };
 
 //===--------------------------------------------------------------------===//
