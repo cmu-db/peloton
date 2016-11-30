@@ -26,18 +26,9 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
   return property_set_;
 }
 
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Variable *){};
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Constant *){};
-void QueryPropertyExtractor::visit(
-    UNUSED_ATTRIBUTE const OperatorExpression *){};
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const AndOperator *){};
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const OrOperator *){};
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const NotOperator *){};
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Attribute *){};
 void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Table *){};
 void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Join *){};
 void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const OrderBy *){};
-void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Select *){};
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   std::vector<Column *> columns;

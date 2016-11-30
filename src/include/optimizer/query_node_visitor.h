@@ -54,7 +54,6 @@ class QueryNodeVisitor {
   virtual void visit(const Table *) = 0;
   virtual void visit(const Join *) = 0;
   virtual void visit(const OrderBy *) = 0;
-  virtual void visit(const Select *) = 0;
 
   virtual void Visit(const parser::SelectStatement *) = 0;
   virtual void Visit(const parser::CreateStatement *) = 0;
