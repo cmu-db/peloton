@@ -843,7 +843,6 @@ void DataTable::PrintTable() {
 
     for (oid_t tuple_id = 0; tuple_id < tile_tuple_count; tuple_id++) {
       common::Value value = tile_group->GetValue(tuple_id, 0);
-      // std::cout << value.GetInfo() << std::endl;
     }
     os << "Tile Group Id  : " << tile_group_itr
        << " Tuple Count : " << tile_tuple_count << "\n";
@@ -851,9 +850,6 @@ void DataTable::PrintTable() {
 
     tuple_count += tile_tuple_count;
   }
-
-  // std::cout << "Table " << table_id << " Tuple Count :: " << tuple_count
-  //          << "\n";
 }
 
 //===--------------------------------------------------------------------===//
