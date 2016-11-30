@@ -46,7 +46,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     // its owner...
     predicate = predicate->Copy();
     expression::ExpressionUtil::TransformExpression(table->GetSchema(),
-                                                         predicate);
+                                                    predicate);
     SetPredicate(predicate);
   }
 
@@ -78,9 +78,8 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
     auto column_id = key_column_ids_[i];
     if (value.GetTypeId() == common::Type::PARAMETER_OFFSET) {
       int offset = value.GetAs<int32_t>();
-      values_[i] =
-          (values->at(offset))
-              .CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
+      values_[i] = (values->at(offset)).CastAs(
+          GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 

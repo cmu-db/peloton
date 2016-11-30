@@ -215,7 +215,8 @@ void ExecuteSQLQuery(const std::string statement_name,
   LOG_INFO("Executing plan...");
   std::vector<int> result_format;
   auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(insert_stmt->GetStatement(0));
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+          insert_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   UNUSED_ATTRIBUTE bridge::peloton_status status =
       bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,

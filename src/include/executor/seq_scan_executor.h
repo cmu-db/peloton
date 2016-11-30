@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/seq_scan_plan.h"
@@ -28,6 +27,8 @@ class SeqScanExecutor : public AbstractScanExecutor {
 
   explicit SeqScanExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
+
+  void ResetState() { current_tile_group_offset_ = START_OID; }
 
  protected:
   bool DInit();

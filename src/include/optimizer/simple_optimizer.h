@@ -74,13 +74,13 @@ class SimpleOptimizer : public AbstractOptimizer {
                                   std::vector<ExpressionType> &expr_types,
                                   std::vector<common::Value> &values,
                                   bool &index_searchable);
-  
-  static bool CheckIndexSearchable(storage::DataTable* target_table, 
-                                    expression::AbstractExpression *expression,
-                                    std::vector<oid_t> &key_column_ids,
-                                    std::vector<ExpressionType> &expr_types,
-                                    std::vector<common::Value> &values,
-                                    oid_t &index_id); 
+
+  static bool CheckIndexSearchable(storage::DataTable *target_table,
+                                   expression::AbstractExpression *expression,
+                                   std::vector<oid_t> &key_column_ids,
+                                   std::vector<ExpressionType> &expr_types,
+                                   std::vector<common::Value> &values,
+                                   oid_t &index_id);
 
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
@@ -94,6 +94,8 @@ class SimpleOptimizer : public AbstractOptimizer {
       parser::CopyStatement *copy_stmt);
 
   static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
+  static std::unique_ptr<planner::AbstractPlan>
+      CreateHackingNestedLoopJoinPlan();
 };
 }  // namespace optimizer
 }  // namespace peloton

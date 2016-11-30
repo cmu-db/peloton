@@ -211,8 +211,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res =
-              transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
+          auto res = transaction_manager.PerformRead(
+              current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
@@ -397,8 +397,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
-          auto res =
-              transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
+          auto res = transaction_manager.PerformRead(
+              current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
@@ -487,6 +487,28 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("Result tiles : %lu", result_.size());
 
   return true;
+}
+
+void IndexScanExecutor::UpdatePredicate(const std::vector<oid_t> &key_column_ids
+                                            UNUSED_ATTRIBUTE,
+                                        const std::vector<common::Value> &values
+                                            UNUSED_ATTRIBUTE) {
+  // TODO: ADD ziqi's API
+  // Update index predicate
+
+  // Update values in index plan node
+  PL_ASSERT(key_column_ids.size() == values.size());
+  PL_ASSERT(key_column_ids_.size() == values_.size());
+  PL_ASSERT(key_column_ids.size() < key_column_ids_.size());
+
+  // Find out the position (offset) where is key_column_id
+  for (oid_t i = 0; i < key_column_ids.size(); i++) {
+    for (unsigned int j = 0; j < values_.size(); ++j) {
+      if (key_column_ids[i] == key_column_ids_[j]) {
+        values_[j] = values[i];
+      }
+    }
+  }
 }
 
 }  // namespace executor
