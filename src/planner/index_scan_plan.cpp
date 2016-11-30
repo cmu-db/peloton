@@ -46,7 +46,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     // its owner...
     predicate = predicate->Copy();
     expression::ExpressionUtil::TransformExpression(table->GetSchema(),
-                                                         predicate);
+                                                    predicate);
     SetPredicate(predicate);
   }
 
@@ -90,23 +90,6 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
-  }
-}
-
-// Replace one or several values (used in NestedLoopJoin)
-void IndexScanPlan::UpdateKeyValue(const std::vector<oid_t> &key_column_ids,
-                                   const std::vector<common::Value> &values) {
-  PL_ASSERT(key_column_ids.size() == values.size());
-  PL_ASSERT(key_column_ids_.size() == values_.size());
-  PL_ASSERT(key_column_ids.size() < key_column_ids_.size());
-
-  // Find out the position (offset) where is key_column_id
-  for (oid_t i = 0; i < key_column_ids.size(); i++) {
-    for (unsigned int j = 0; j < values_.size(); ++j) {
-      if (key_column_ids[i] == key_column_ids_[j]) {
-        values_[j] = values[i];
-      }
-    }
   }
 }
 

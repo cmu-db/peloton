@@ -35,11 +35,6 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   ~IndexScanExecutor();
 
-  // These two methods are for modifying values inside plan node
-  // TODO: Probably we can refactor this later
-  void SetPlan(planner::IndexScanPlan *plan) { plan_node_ = plan; }
-  planner::IndexScanPlan *GetPlan() const { return plan_node_; }
-
   void UpdatePredicate(const std::vector<oid_t> &key_column_ids
                            UNUSED_ATTRIBUTE,
                        const std::vector<common::Value> &values
@@ -105,8 +100,6 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<expression::AbstractExpression *> runtime_keys_;
 
   bool key_ready_ = false;
-
-  planner::IndexScanPlan *plan_node_;
 };
 
 }  // namespace executor
