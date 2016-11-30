@@ -81,38 +81,6 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   void visit(const OrderBy *op) override { (void)op; }
 
-  void visit(const Select *op) override {
-    // Add join tree op expression
-    op->join_tree->accept(this);
-    std::shared_ptr<OpExpression> join_expr = output_expr;
-
-    // Add filter for where predicate
-    if (op->where_predicate) {
-      auto select_expr = std::make_shared<OpExpression>(LogicalFilter::make());
-      select_expr->PushChild(join_expr);
-      op->where_predicate->accept(this);
-      select_expr->PushChild(output_expr);
-      join_expr = select_expr;
-    }
-
-    // Add all attributes in output list as projection at top level
-    /*
-    auto project_expr = std::make_shared<OpExpression>(LogicalProject::make());
-    project_expr->PushChild(join_expr);
-    auto project_list = std::make_shared<OpExpression>(ExprProjectList::make());
-    project_expr->PushChild(project_list);
-    for (Attribute *attr : op->output_list) {
-      // Ignore intermediate columns for output projection
-      if (!attr->intermediate) {
-        attr->accept(this);
-        project_list->PushChild(output_expr);
-      }
-    }
-
-    output_expr = project_expr;
-    */
-  }
-
   void Visit(const parser::SelectStatement *op) override {
     // Construct the logical get operator to visit the target table
     storage::DataTable *target_table =

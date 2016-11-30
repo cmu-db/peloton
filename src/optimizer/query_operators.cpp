@@ -72,18 +72,5 @@ OrderBy::OrderBy(int output_list_index, std::vector<bool> equality_fn,
 
 void OrderBy::accept(QueryNodeVisitor *v) const { v->visit(this); }
 
-//===--------------------------------------------------------------------===//
-// Select
-//===--------------------------------------------------------------------===//
-Select::Select(QueryJoinNode *join_tree, QueryExpression *where_predicate,
-               const std::vector<Attribute *> &output_list,
-               const std::vector<OrderBy *> &orderings)
-    : join_tree(join_tree),
-      where_predicate(where_predicate),
-      output_list(output_list),
-      orderings(orderings) {}
-
-void Select::accept(QueryNodeVisitor *v) const { v->visit(this); }
-
 } /* namespace optimizer */
 } /* namespace peloton */
