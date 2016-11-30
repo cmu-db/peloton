@@ -24,8 +24,6 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Operator Expr
 //===--------------------------------------------------------------------===//
-class OpExpressionVisitor;
-
 class OperatorExpression {
  public:
   OperatorExpression(Operator op);
