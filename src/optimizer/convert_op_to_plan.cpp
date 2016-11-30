@@ -63,10 +63,10 @@ class OpToPlanTransformer : public OperatorVisitor {
     std::vector<expression::AbstractExpression *> exprs;
     {
       for (std::shared_ptr<OpExpression> op_expr : children[1]->Children()) {
+        /*
         assert(op_expr->Op().type() == OpType::ProjectColumn);
         assert(op_expr->Children().size() == 1);
 
-        /*
         const ExprProjectColumn *proj_col =
             op_expr->Op().as<ExprProjectColumn>();
         proj_columns.push_back(proj_col->column_);
