@@ -10,23 +10,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/optimizer.h"
+#include <memory>
+
+#include "catalog/manager.h"
+
 #include "optimizer/child_property_generator.h"
-#include "optimizer/convert_op_to_plan.h"
 #include "optimizer/convert_query_to_op.h"
+#include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
+#include "optimizer/optimizer.h"
 #include "optimizer/query_property_extractor.h"
 #include "optimizer/rule_impls.h"
+
+#include "parser/sql_statement.h"
 
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
-
-#include "catalog/manager.h"
-
-#include "parser/sql_statement.h"
-
-#include <memory>
 
 namespace peloton {
 namespace optimizer {
@@ -104,7 +104,8 @@ PropertySet Optimizer::GetQueryTreeRequiredProperties(
 
 planner::AbstractPlan *Optimizer::OptimizerPlanToPlannerPlan(
     std::shared_ptr<OpExpression> plan) {
-  return ConvertOpExpressionToPlan(plan);
+  OperatorToPlanTransformer transformer;
+  return transformer.ConvertOpExpression(plan);
 }
 
 std::shared_ptr<OpExpression> Optimizer::ChooseBestPlan(
