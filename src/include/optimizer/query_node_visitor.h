@@ -29,7 +29,6 @@ class CopyStatement;
 
 namespace optimizer {
 
-class Get;
 class Join;
 class Table;
 class OrderBy;

@@ -15,11 +15,11 @@
 #include "catalog/manager.h"
 
 #include "optimizer/child_property_generator.h"
-#include "optimizer/convert_query_to_op.h"
 #include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/query_property_extractor.h"
+#include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
 
 #include "parser/sql_statement.h"
@@ -76,7 +76,8 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Find least cost plan for root group
   OptimizeExpression(gexpr, properties);
 
-  std::shared_ptr<OperatorExpression> best_plan = ChooseBestPlan(root_id, properties);
+  std::shared_ptr<OperatorExpression> best_plan =
+      ChooseBestPlan(root_id, properties);
 
   if (best_plan == nullptr) return nullptr;
 
@@ -89,8 +90,9 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
+  QueryToOperatorTransformer converter(column_manager_);
   std::shared_ptr<OperatorExpression> initial =
-      ConvertQueryToOpExpression(column_manager_, tree);
+      converter.ConvertToOpExpression(tree);
   std::shared_ptr<GroupExpression> gexpr;
   assert(RecordTransformedExpression(initial, gexpr));
   return gexpr;
@@ -352,8 +354,8 @@ bool Optimizer::RecordTransformedExpression(
 }
 
 bool Optimizer::RecordTransformedExpression(
-    std::shared_ptr<OperatorExpression> expr, std::shared_ptr<GroupExpression> &gexpr,
-    GroupID target_group) {
+    std::shared_ptr<OperatorExpression> expr,
+    std::shared_ptr<GroupExpression> &gexpr, GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
   return memo_.InsertExpression(gexpr, target_group);
 }
