@@ -118,6 +118,7 @@ LibeventServer::LibeventServer() {
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
                                   master_thread.get(), CONN_LISTENING);
 
+    LOG_INFO("Listening on port %" PRIu64, port_);
     event_base_dispatch(base);
     event_free(evstop);
     event_base_free(base);
