@@ -47,6 +47,24 @@ TEST_F(TypesTests, TypeIdTest) {
   EXPECT_THROW(peloton::StringToTypeId(invalid), peloton::Exception);
 }
 
+TEST_F(TypesTests, IndexTypeTest) {
+  std::vector<IndexType> list = {INDEX_TYPE_INVALID, INDEX_TYPE_BTREE,
+                                 INDEX_TYPE_BWTREE, INDEX_TYPE_HASH};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::IndexTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToIndexType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("DanaVanAkenSlaysMofos");
+  EXPECT_THROW(peloton::StringToIndexType(invalid), peloton::Exception);
+}
+
 TEST_F(TypesTests, StatementTypeTest) {
   std::vector<StatementType> list = {
       STATEMENT_TYPE_INVALID, STATEMENT_TYPE_SELECT,
@@ -69,6 +87,38 @@ TEST_F(TypesTests, StatementTypeTest) {
   // Then make sure that we can't cast garbage
   std::string invalid("PrashanthMenonTrillAsFuck");
   EXPECT_THROW(peloton::StringToStatementType(invalid), peloton::Exception);
+}
+
+TEST_F(TypesTests, PlanNodeTypeTest) {
+  std::vector<PlanNodeType> list = {
+      PLAN_NODE_TYPE_INVALID,     PLAN_NODE_TYPE_ABSTRACT_SCAN,
+      PLAN_NODE_TYPE_SEQSCAN,     PLAN_NODE_TYPE_INDEXSCAN,
+      PLAN_NODE_TYPE_NESTLOOP,    PLAN_NODE_TYPE_NESTLOOPINDEX,
+      PLAN_NODE_TYPE_MERGEJOIN,   PLAN_NODE_TYPE_HASHJOIN,
+      PLAN_NODE_TYPE_UPDATE,      PLAN_NODE_TYPE_INSERT,
+      PLAN_NODE_TYPE_DELETE,      PLAN_NODE_TYPE_DROP,
+      PLAN_NODE_TYPE_CREATE,      PLAN_NODE_TYPE_SEND,
+      PLAN_NODE_TYPE_RECEIVE,     PLAN_NODE_TYPE_PRINT,
+      PLAN_NODE_TYPE_AGGREGATE,   PLAN_NODE_TYPE_UNION,
+      PLAN_NODE_TYPE_ORDERBY,     PLAN_NODE_TYPE_PROJECTION,
+      PLAN_NODE_TYPE_MATERIALIZE, PLAN_NODE_TYPE_LIMIT,
+      PLAN_NODE_TYPE_DISTINCT,    PLAN_NODE_TYPE_SETOP,
+      PLAN_NODE_TYPE_APPEND,      PLAN_NODE_TYPE_AGGREGATE_V2,
+      PLAN_NODE_TYPE_HASH,        PLAN_NODE_TYPE_RESULT,
+      PLAN_NODE_TYPE_COPY,        PLAN_NODE_TYPE_MOCK};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::PlanNodeTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToPlanNodeType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("AndyPavloSmellsBad");
+  EXPECT_THROW(peloton::StringToPlanNodeType(invalid), peloton::Exception);
 }
 
 TEST_F(TypesTests, ExpressionTypeTest) {
