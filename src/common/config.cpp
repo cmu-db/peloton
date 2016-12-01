@@ -13,7 +13,7 @@
 #include "common/config.h"
 #include "common/types.h"
 
-DEFINE_uint64(port, 5432, "Peloton port (default: 5432)");
+DEFINE_uint64(port, 15721, "Peloton port (default: 15721)");
 
 DEFINE_uint64(max_connections, 64,
               "Maximum number of connections (default: 64)");
