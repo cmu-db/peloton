@@ -113,10 +113,6 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 };
 
-enum ValueType {
-  // TODO
-};
-
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types
 //===--------------------------------------------------------------------===//
@@ -957,17 +953,6 @@ extern FileHandle INVALID_FILE_HANDLE;
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
-
-/// Works only for fixed-length types
-std::size_t GetTypeSize(ValueType type);
-
-bool IsNumeric(ValueType type);
-bool IsIntegralType(ValueType type);
-
-// for testing, obtain a random instance of the specified type
-// Value GetRandomValue(ValueType type);
-
-int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
