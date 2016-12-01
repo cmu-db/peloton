@@ -13,11 +13,11 @@
 #include "planner/update_plan.h"
 
 #include "common/types.h"
+#include "parser/update_statement.h"
 #include "planner/project_info.h"
 
 #include "catalog/catalog.h"
 #include "expression/expression_util.h"
-#include "parser/statement_update.h"
 #include "parser/table_ref.h"
 #include "storage/data_table.h"
 

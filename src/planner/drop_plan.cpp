@@ -12,8 +12,8 @@
 
 #include "planner/drop_plan.h"
 
+#include "../include/parser/drop_statement.h"
 #include "storage/data_table.h"
-#include "parser/statement_drop.h"
 #include "catalog/catalog.h"
 
 namespace peloton {

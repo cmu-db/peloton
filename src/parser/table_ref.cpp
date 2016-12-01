@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "parser/statement_select.h"
 #include "parser/table_ref.h"
+#include "../include/parser/select_statement.h"
 
 namespace peloton {
 namespace parser {

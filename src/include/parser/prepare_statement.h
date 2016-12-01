@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
-#include "parser/statement_select.h"
 #include "expression/parameter_value_expression.h"
 #include "optimizer/query_node_visitor.h"
+#include "parser/select_statement.h"
+#include "parser/sql_statement.h"
 
 #include <algorithm>
 
@@ -33,7 +33,7 @@ struct PrepareStatement : SQLStatement {
 
   virtual ~PrepareStatement() {
     delete query;
-    free (name);
+    free(name);
   }
 
   /**
@@ -46,13 +46,16 @@ struct PrepareStatement : SQLStatement {
    */
   void setPlaceholders(std::vector<void*> ph) {
     for (void* e : ph) {
-      if (e != NULL) placeholders.push_back(std::unique_ptr<expression::ParameterValueExpression>((expression::ParameterValueExpression*)e));
+      if (e != NULL)
+        placeholders.push_back(
+            std::unique_ptr<expression::ParameterValueExpression>(
+                (expression::ParameterValueExpression*)e));
     }
     // Sort by col-id
-    std::sort(
-        placeholders.begin(), placeholders.end(),
-        [](const std::unique_ptr<expression::ParameterValueExpression>& i, const std::unique_ptr<expression::ParameterValueExpression>& j)
-            -> bool { return (i->ival_ < j->ival_); });
+    std::sort(placeholders.begin(), placeholders.end(),
+              [](const std::unique_ptr<expression::ParameterValueExpression>& i,
+                 const std::unique_ptr<expression::ParameterValueExpression>& j)
+                  -> bool { return (i->ival_ < j->ival_); });
 
     // Set the placeholder id on the Expr. This replaces the previously stored
     // column id
@@ -65,7 +68,8 @@ struct PrepareStatement : SQLStatement {
 
   char* name;
   SQLStatementList* query;
-  std::vector<std::unique_ptr<expression::ParameterValueExpression>> placeholders;
+  std::vector<std::unique_ptr<expression::ParameterValueExpression>>
+      placeholders;
 };
 
 }  // End parser namespace

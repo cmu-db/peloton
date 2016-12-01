@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/seq_scan_plan.h"
+
+#include "../include/parser/select_statement.h"
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
@@ -20,7 +22,6 @@
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
 
-#include "parser/statement_select.h"
 
 namespace peloton {
 namespace planner {

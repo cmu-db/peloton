@@ -13,6 +13,7 @@
 
 #include <cstdio>
 
+#include "../../src/include/parser/insert_statement.h"
 #include "gtest/gtest.h"
 
 #include "catalog/catalog.h"
@@ -20,7 +21,6 @@
 #include "common/logger.h"
 #include "executor/insert_executor.h"
 #include "expression/tuple_value_expression.h"
-#include "parser/statement_insert.h"
 #include "parser/statement_select.h"
 #include "planner/insert_plan.h"
 
