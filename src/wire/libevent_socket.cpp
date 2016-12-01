@@ -238,44 +238,44 @@ ReadState LibeventSocket::FillReadBuffer() {
         // related to non-blocking?
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
           // return whatever results we have
-          LOG_DEBUG("Received: EAGAIN or EWOULDBLOCK");
+          LOG_TRACE("Received: EAGAIN or EWOULDBLOCK");
           done = true;
         } else if (errno == EINTR) {
           // interrupts are ok, try again
-          LOG_DEBUG("Error Reading: EINTR");
+          LOG_TRACE("Error Reading: EINTR");
           continue;
         } else {
           // otherwise, we have some other error
           switch (errno) {
             case EBADF:
-              LOG_DEBUG("Error Reading: EBADF");
+              LOG_TRACE("Error Reading: EBADF");
               break;
             case EDESTADDRREQ:
-              LOG_DEBUG("Error Reading: EDESTADDRREQ");
+              LOG_TRACE("Error Reading: EDESTADDRREQ");
               break;
             case EDQUOT:
-              LOG_DEBUG("Error Reading: EDQUOT");
+              LOG_TRACE("Error Reading: EDQUOT");
               break;
             case EFAULT:
-              LOG_DEBUG("Error Reading: EFAULT");
+              LOG_TRACE("Error Reading: EFAULT");
               break;
             case EFBIG:
-              LOG_DEBUG("Error Reading: EFBIG");
+              LOG_TRACE("Error Reading: EFBIG");
               break;
             case EINVAL:
-              LOG_DEBUG("Error Reading: EINVAL");
+              LOG_TRACE("Error Reading: EINVAL");
               break;
             case EIO:
-              LOG_DEBUG("Error Reading: EIO");
+              LOG_TRACE("Error Reading: EIO");
               break;
             case ENOSPC:
-              LOG_DEBUG("Error Reading: ENOSPC");
+              LOG_TRACE("Error Reading: ENOSPC");
               break;
             case EPIPE:
-              LOG_DEBUG("Error Reading: EPIPE");
+              LOG_TRACE("Error Reading: EPIPE");
               break;
             default:
-              LOG_DEBUG("Error Reading: UNKNOWN");
+              LOG_TRACE("Error Reading: UNKNOWN");
           }
           // some other error occured
           return READ_ERROR;
@@ -298,40 +298,40 @@ WriteState LibeventSocket::FlushWriteBuffer() {
       if (written_bytes < 0) {
         switch (errno) {
           case EINTR:
-            LOG_DEBUG("Error Writing: EINTR");
+            LOG_TRACE("Error Writing: EINTR");
             break;
           case EAGAIN:
-            LOG_DEBUG("Error Writing: EAGAIN");
+            LOG_TRACE("Error Writing: EAGAIN");
             break;
           case EBADF:
-            LOG_DEBUG("Error Writing: EBADF");
+            LOG_TRACE("Error Writing: EBADF");
             break;
           case EDESTADDRREQ:
-            LOG_DEBUG("Error Writing: EDESTADDRREQ");
+            LOG_TRACE("Error Writing: EDESTADDRREQ");
             break;
           case EDQUOT:
-            LOG_DEBUG("Error Writing: EDQUOT");
+            LOG_TRACE("Error Writing: EDQUOT");
             break;
           case EFAULT:
-            LOG_DEBUG("Error Writing: EFAULT");
+            LOG_TRACE("Error Writing: EFAULT");
             break;
           case EFBIG:
-            LOG_DEBUG("Error Writing: EFBIG");
+            LOG_TRACE("Error Writing: EFBIG");
             break;
           case EINVAL:
-            LOG_DEBUG("Error Writing: EINVAL");
+            LOG_TRACE("Error Writing: EINVAL");
             break;
           case EIO:
-            LOG_DEBUG("Error Writing: EIO");
+            LOG_TRACE("Error Writing: EIO");
             break;
           case ENOSPC:
-            LOG_DEBUG("Error Writing: ENOSPC");
+            LOG_TRACE("Error Writing: ENOSPC");
             break;
           case EPIPE:
-            LOG_DEBUG("Error Writing: EPIPE");
+            LOG_TRACE("Error Writing: EPIPE");
             break;
           default:
-            LOG_DEBUG("Error Writing: UNKNOWN");
+            LOG_TRACE("Error Writing: UNKNOWN");
         }
         if (errno == EINTR) {
           // interrupts are ok, try again
