@@ -261,6 +261,7 @@ template <>
 void OperatorNode<LogicalLimit>::accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 
+//===--------------------------------------------------------------------===//
 template <>
 std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
@@ -307,6 +308,7 @@ template <>
 std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
     "PhysicalOuterHashJoin";
 
+//===--------------------------------------------------------------------===//
 template <>
 OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
@@ -350,6 +352,7 @@ OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
 template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
 
+//===--------------------------------------------------------------------===//
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
   return type_ < OpType::LogicalPhysicalDelimiter;
