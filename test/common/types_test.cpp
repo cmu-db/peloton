@@ -43,7 +43,7 @@ TEST_F(TypesTests, TypeIdTest) {
   }
 
   // Then make sure that we can't cast garbage
-  std::string invalid("JoyArulrajIsDangerous");
+  std::string invalid("JoyIsDangerous");
   EXPECT_THROW(peloton::StringToTypeId(invalid), peloton::Exception);
 }
 
@@ -61,7 +61,7 @@ TEST_F(TypesTests, IndexTypeTest) {
   }
 
   // Then make sure that we can't cast garbage
-  std::string invalid("DanaVanAkenSlaysMofos");
+  std::string invalid("DanaSlaysMofos");
   EXPECT_THROW(peloton::StringToIndexType(invalid), peloton::Exception);
 }
 
@@ -85,7 +85,7 @@ TEST_F(TypesTests, StatementTypeTest) {
   }
 
   // Then make sure that we can't cast garbage
-  std::string invalid("PrashanthMenonTrillAsFuck");
+  std::string invalid("PrashanthTrillAsFuck");
   EXPECT_THROW(peloton::StringToStatementType(invalid), peloton::Exception);
 }
 
@@ -117,8 +117,54 @@ TEST_F(TypesTests, PlanNodeTypeTest) {
   }
 
   // Then make sure that we can't cast garbage
-  std::string invalid("AndyPavloSmellsBad");
+  std::string invalid("AndySmellsBad");
   EXPECT_THROW(peloton::StringToPlanNodeType(invalid), peloton::Exception);
+}
+
+TEST_F(TypesTests, ParseNodeTypeTest) {
+  std::vector<ParseNodeType> list = {
+      PARSE_NODE_TYPE_INVALID,   PARSE_NODE_TYPE_SCAN,
+      PARSE_NODE_TYPE_CREATE,    PARSE_NODE_TYPE_DROP,
+      PARSE_NODE_TYPE_UPDATE,    PARSE_NODE_TYPE_INSERT,
+      PARSE_NODE_TYPE_DELETE,    PARSE_NODE_TYPE_PREPARE,
+      PARSE_NODE_TYPE_EXECUTE,   PARSE_NODE_TYPE_SELECT,
+      PARSE_NODE_TYPE_JOIN_EXPR, PARSE_NODE_TYPE_TABLE,
+      PARSE_NODE_TYPE_MOCK};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::ParseNodeTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToParseNodeType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("TerrierHasFleas");
+  EXPECT_THROW(peloton::StringToParseNodeType(invalid), peloton::Exception);
+}
+
+TEST_F(TypesTests, ConstraintTypeTest) {
+  std::vector<ConstraintType> list = {
+      CONSTRAINT_TYPE_INVALID,  CONSTRAINT_TYPE_NULL,
+      CONSTRAINT_TYPE_NOTNULL,  CONSTRAINT_TYPE_DEFAULT,
+      CONSTRAINT_TYPE_CHECK,    CONSTRAINT_TYPE_PRIMARY,
+      CONSTRAINT_TYPE_UNIQUE,   CONSTRAINT_TYPE_FOREIGN,
+      CONSTRAINT_TYPE_EXCLUSION};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::ConstraintTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToConstraintType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("ZiqiGottTheFlu");
+  EXPECT_THROW(peloton::StringToConstraintType(invalid), peloton::Exception);
 }
 
 TEST_F(TypesTests, ExpressionTypeTest) {
@@ -200,7 +246,7 @@ TEST_F(TypesTests, ExpressionTypeTest) {
   }
 
   // Then make sure that we can't cast garbage
-  std::string invalid("LinMaLovesEverybody");
+  std::string invalid("LinLovesEverybody");
   EXPECT_THROW(peloton::StringToExpressionType(invalid), peloton::Exception);
 }
 

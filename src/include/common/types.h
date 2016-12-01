@@ -33,50 +33,6 @@ namespace peloton {
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-// Logging type
-// LOGGING_TYPE_AAA_BBB
-// Data stored in AAA
-// Log stored in BBB
-enum LoggingType {
-  LOGGING_TYPE_INVALID = 0,
-
-  // Based on write behind logging
-  LOGGING_TYPE_NVM_WBL = 1,
-  LOGGING_TYPE_SSD_WBL = 2,
-  LOGGING_TYPE_HDD_WBL = 3,
-
-  // Based on write ahead logging
-  LOGGING_TYPE_NVM_WAL = 4,
-  LOGGING_TYPE_SSD_WAL = 5,
-  LOGGING_TYPE_HDD_WAL = 6,
-};
-
-/* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_TYPE_INVALID = 0,
-  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
-  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
-  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
-} LayoutType;
-
-enum LoggerMappingStrategyType {
-  LOGGER_MAPPING_TYPE_INVALID = 0,
-  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
-  LOGGER_MAPPING_TYPE_AFFINITY = 2,
-  LOGGER_MAPPING_TYPE_MANUAL = 3
-};
-
-enum CheckpointType {
-  CHECKPOINT_TYPE_INVALID = 0,
-  CHECKPOINT_TYPE_NORMAL = 1,
-};
-
-enum ReplicationType {
-  ASYNC_REPLICATION,
-  SYNC_REPLICATION,
-  SEMISYNC_REPLICATION
-};
-
 enum GarbageCollectionType {
   GARBAGE_COLLECTION_TYPE_INVALID = 0,
   GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
@@ -689,8 +645,51 @@ enum SetOpType {
 };
 
 //===--------------------------------------------------------------------===//
-// Log Types
+// Logging + Recovery Types
 //===--------------------------------------------------------------------===//
+
+// LOGGING_TYPE_AAA_BBB
+// Data stored in AAA
+// Log stored in BBB
+enum LoggingType {
+  LOGGING_TYPE_INVALID = 0,
+
+  // Based on write behind logging
+  LOGGING_TYPE_NVM_WBL = 1,
+  LOGGING_TYPE_SSD_WBL = 2,
+  LOGGING_TYPE_HDD_WBL = 3,
+
+  // Based on write ahead logging
+  LOGGING_TYPE_NVM_WAL = 4,
+  LOGGING_TYPE_SSD_WAL = 5,
+  LOGGING_TYPE_HDD_WAL = 6,
+};
+
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum LayoutType {
+  LAYOUT_TYPE_INVALID = 0,
+  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
+  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
+  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
+} LayoutType;
+
+enum LoggerMappingStrategyType {
+  LOGGER_MAPPING_TYPE_INVALID = 0,
+  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
+  LOGGER_MAPPING_TYPE_AFFINITY = 2,
+  LOGGER_MAPPING_TYPE_MANUAL = 3
+};
+
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL = 1,
+};
+
+enum ReplicationType {
+  ASYNC_REPLICATION,
+  SYNC_REPLICATION,
+  SEMISYNC_REPLICATION
+};
 
 enum LoggingStatus {
   LOGGING_STATUS_TYPE_INVALID = 0,
@@ -744,6 +743,10 @@ enum CheckpointStatus {
   CHECKPOINT_STATUS_DONE_RECOVERY = 3,
   CHECKPOINT_STATUS_CHECKPOINTING = 4,
 };
+
+//===--------------------------------------------------------------------===//
+// Statistics Types
+//===--------------------------------------------------------------------===//
 
 // Statistics Collection Type
 // Disable or enable
@@ -979,16 +982,12 @@ BackendType StringToBackendType(const std::string &str);
 
 std::string TypeIdToString(common::Type::TypeId type);
 common::Type::TypeId StringToTypeId(const std::string &str);
-std::string ValueTypeToString(ValueType type);
-ValueType StringToValueType(const std::string &str);
-ValueType PostgresStringToValueType(std::string str);
 
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
 
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(const std::string &str);
-
 ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 std::string IndexTypeToString(IndexType type);
@@ -1005,6 +1004,7 @@ ConstraintType StringToConstraintType(const std::string &str);
 
 std::string LoggingTypeToString(LoggingType type);
 std::string LoggingStatusToString(LoggingStatus type);
+
 std::string LoggerTypeToString(LoggerType type);
 std::string LogRecordTypeToString(LogRecordType type);
 

@@ -783,6 +783,10 @@ std::string IndexConstraintTypeToString(IndexConstraintType type) {
     case INDEX_CONSTRAINT_TYPE_UNIQUE: {
       return "UNIQUE";
     }
+    default: {
+      throw ConversionException(
+          "No conversion from IndexConstraintType");  // FIXME
+    }
   }
   return "INVALID";
 }
@@ -1016,6 +1020,9 @@ std::string ParseNodeTypeToString(ParseNodeType type) {
     case PARSE_NODE_TYPE_MOCK: {
       return "MOCK";
     }
+    default: {
+      throw ConversionException("No conversion from ParseNodeType");  // FIXME
+    }
   }
   return "INVALID";
 }
@@ -1048,7 +1055,7 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
   } else if (str == "MOCK") {
     return PARSE_NODE_TYPE_MOCK;
   } else {
-    throw ConversionException("No conversion from string :" + str);
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return PARSE_NODE_TYPE_INVALID;
 }
@@ -1060,31 +1067,34 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
 std::string ConstraintTypeToString(ConstraintType type) {
   switch (type) {
     case CONSTRAINT_TYPE_INVALID: {
-      return "INVALID";
+      return ("INVALID");
     }
     case CONSTRAINT_TYPE_NULL: {
-      return "NULL";
+      return ("NULL");
     }
     case CONSTRAINT_TYPE_NOTNULL: {
-      return "NOTNULL";
+      return ("NOTNULL");
     }
     case CONSTRAINT_TYPE_DEFAULT: {
-      return "DEFAULT";
+      return ("DEFAULT");
     }
     case CONSTRAINT_TYPE_CHECK: {
-      return "CHECK";
+      return ("CHECK");
     }
     case CONSTRAINT_TYPE_PRIMARY: {
-      return "PRIMARY_KEY";
+      return ("PRIMARY");
     }
     case CONSTRAINT_TYPE_UNIQUE: {
-      return "UNIQUE";
+      return ("UNIQUE");
     }
     case CONSTRAINT_TYPE_FOREIGN: {
-      return "FOREIGN_KEY";
+      return ("FOREIGN");
     }
     case CONSTRAINT_TYPE_EXCLUSION: {
-      return "EXCLUSION";
+      return ("EXCLUSION");
+    }
+    default: {
+      throw ConversionException("No conversion from ConstraintType");  // FIXME
     }
   }
   return "INVALID";
@@ -1097,18 +1107,20 @@ ConstraintType StringToConstraintType(const std::string& str) {
     return CONSTRAINT_TYPE_NULL;
   } else if (str == "NOTNULL") {
     return CONSTRAINT_TYPE_NOTNULL;
-  } else if (str == "CHECK") {
-    return CONSTRAINT_TYPE_DEFAULT;
   } else if (str == "DEFAULT") {
-    return CONSTRAINT_TYPE_UNIQUE;
-  } else if (str == "PRIMARY_KEY") {
+    return CONSTRAINT_TYPE_DEFAULT;
+  } else if (str == "CHECK") {
     return CONSTRAINT_TYPE_CHECK;
-  } else if (str == "UNIQUE") {
+  } else if (str == "PRIMARY") {
     return CONSTRAINT_TYPE_PRIMARY;
-  } else if (str == "FOREIGN_KEY") {
+  } else if (str == "UNIQUE") {
+    return CONSTRAINT_TYPE_UNIQUE;
+  } else if (str == "FOREIGN") {
     return CONSTRAINT_TYPE_FOREIGN;
   } else if (str == "EXCLUSION") {
     return CONSTRAINT_TYPE_EXCLUSION;
+  } else {
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return CONSTRAINT_TYPE_INVALID;
 }
