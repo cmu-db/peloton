@@ -10,27 +10,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
 #include "catalog/catalog.h"
+#include "common/harness.h"
 
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile_factory.h"
-#include "storage/data_table.h"
-#include "storage/tile.h"
 #include "logging/loggers/wal_frontend_logger.h"
 #include "logging/logging_util.h"
-#include "storage/table_factory.h"
+#include "storage/data_table.h"
 #include "storage/database.h"
+#include "storage/table_factory.h"
+#include "storage/tile.h"
 
-#include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
+#include "executor/mock_executor.h"
 #include "logging/logging_tests_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
 using ::testing::InSequence;
 
-extern LoggingType peloton_logging_mode;
+extern peloton::LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace test {
@@ -322,11 +322,10 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   log_manager.DropFrontendLoggers();
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
   // just start, write a few records and exit
-  catalog::Schema *table_schema =
-      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
-                           ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(2),
-                           ExecutorTestsUtil::GetColumnInfo(3)});
+  catalog::Schema *table_schema = new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(2),
+       ExecutorTestsUtil::GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
 
   // Create table.

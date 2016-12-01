@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "common/types.h"
 #include "common/logger.h"
+#include "common/types.h"
 #include "logging/records/transaction_record.h"
 #include "logging/records/tuple_record.h"
 #include "storage/data_table.h"
@@ -28,6 +27,12 @@ namespace logging {
 
 class LoggingUtil {
  public:
+  static BackendType GetBackendType(const LoggingType &logging_type);
+
+  static bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
+
+  static bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
+
   static void FFlushFsync(FileHandle &file_handle);
 
   static bool InitFileHandle(const char *name, FileHandle &file_handle,

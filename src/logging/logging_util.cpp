@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sys/stat.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <cstring>
 
 #include "catalog/catalog.h"
+#include "common/types.h"
 #include "logging/logging_util.h"
 #include "storage/database.h"
 
@@ -24,6 +25,74 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 // LoggingUtil
 //===--------------------------------------------------------------------===//
+
+BackendType LoggingUtil::GetBackendType(const LoggingType &logging_type) {
+  // Default backend type
+  BackendType backend_type = BACKEND_TYPE_MM;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WBL:
+      backend_type = BACKEND_TYPE_NVM;
+      break;
+
+    case LOGGING_TYPE_SSD_WBL:
+      backend_type = BACKEND_TYPE_SSD;
+      break;
+
+    case LOGGING_TYPE_HDD_WBL:
+      backend_type = BACKEND_TYPE_HDD;
+      break;
+
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_HDD_WAL:
+      backend_type = BACKEND_TYPE_MM;
+      break;
+
+    default:
+      break;
+  }
+
+  return backend_type;
+}
+
+bool LoggingUtil::IsBasedOnWriteAheadLogging(
+    const peloton::LoggingType &logging_type) {
+  bool status = false;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_HDD_WAL:
+      status = true;
+      break;
+
+    default:
+      status = false;
+      break;
+  }
+
+  return status;
+}
+
+bool LoggingUtil::IsBasedOnWriteBehindLogging(const LoggingType &logging_type) {
+  bool status = true;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WBL:
+    case LOGGING_TYPE_SSD_WBL:
+    case LOGGING_TYPE_HDD_WBL:
+      status = true;
+      break;
+
+    default:
+      status = false;
+      break;
+  }
+
+  return status;
+}
+
 void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   // First, flush
   PL_ASSERT(file_handle.fd != -1);

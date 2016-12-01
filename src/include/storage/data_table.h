@@ -12,23 +12,23 @@
 
 #pragma once
 
-#include <memory>
-#include <queue>
 #include <map>
+#include <memory>
 #include <mutex>
+#include <queue>
 #include <set>
 
 #include "common/platform.h"
-#include "storage/abstract_table.h"
 #include "container/lock_free_array.h"
 #include "index/index.h"
+#include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-extern LayoutType peloton_layout_mode;
+extern peloton::LayoutType peloton_layout_mode;
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables

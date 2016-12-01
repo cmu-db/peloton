@@ -10,25 +10,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <mutex>
 #include <map>
+#include <mutex>
 #include <vector>
 
-#include "logging/logger.h"
 #include "backend_logger.h"
-#include "frontend_logger.h"
 #include "concurrency/transaction.h"
+#include "frontend_logger.h"
 #include "loggers/wal_frontend_logger.h"
+#include "logging/logger.h"
 
 #define DEFAULT_NUM_FRONTEND_LOGGERS 1
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
-extern LoggingType peloton_logging_mode;
+extern peloton::LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace logging {
@@ -259,7 +258,8 @@ class LogManager {
   unsigned int num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
 
   // set the strategy for mapping frontend loggers to worker threads
-  LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_TYPE_INVALID;
+  LoggerMappingStrategyType logger_mapping_strategy_ =
+      LOGGER_MAPPING_TYPE_INVALID;
 
   // default log file size
   size_t log_file_size_limit_ = LOG_FILE_LEN;

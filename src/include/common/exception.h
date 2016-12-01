@@ -12,16 +12,17 @@
 
 #pragma once
 
-#include <iostream>
+#include <cxxabi.h>
+#include <errno.h>
+#include <execinfo.h>
+#include <signal.h>
 #include <cstdio>
 #include <cstdlib>
-#include <stdexcept>
-#include <execinfo.h>
-#include <errno.h>
-#include <cxxabi.h>
-#include <signal.h>
+#include <iostream>
 #include <memory>
+#include <stdexcept>
 
+#include "common/type.h"
 #include "common/types.h"
 
 namespace peloton {
@@ -86,7 +87,7 @@ class Exception : public std::runtime_error {
       case EXCEPTION_TYPE_MISMATCH_TYPE:
         return "Mismatch Type";
       case EXCEPTION_TYPE_DIVIDE_BY_ZERO:
-        return "Divede by Zero";
+        return "Divide by Zero";
       case EXCEPTION_TYPE_OBJECT_SIZE:
         return "Object Size";
       case EXCEPTION_TYPE_INCOMPATIBLE_TYPE:
@@ -204,33 +205,36 @@ class CastException : public Exception {
   CastException() = delete;
 
  public:
-  CastException(const ValueType origType, const ValueType newType)
+  CastException(const common::Type::TypeId origType,
+                const common::Type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
-                  "Type " + ValueTypeToString(origType) + " can't be cast as " +
-                      ValueTypeToString(newType)) {}
+                  "Type " + TypeIdToString(origType) + " can't be cast as " +
+                      TypeIdToString(newType)) {}
 };
 
 class ValueOutOfRangeException : public Exception {
   ValueOutOfRangeException() = delete;
 
  public:
-  ValueOutOfRangeException(const int64_t value, const ValueType origType,
-                           const ValueType newType)
+  ValueOutOfRangeException(const int64_t value,
+                           const common::Type::TypeId origType,
+                           const common::Type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
-                  "Type " + ValueTypeToString(origType) + " with value " +
+                  "Type " + TypeIdToString(origType) + " with value " +
                       std::to_string((intmax_t)value) +
                       " can't be cast as %s because the value is out of range "
                       "for the destination type " +
-                      ValueTypeToString(newType)) {}
+                      TypeIdToString(newType)) {}
 
-  ValueOutOfRangeException(const double value, const ValueType origType,
-                           const ValueType newType)
+  ValueOutOfRangeException(const double value,
+                           const common::Type::TypeId origType,
+                           const common::Type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
-                  "Type " + ValueTypeToString(origType) + " with value " +
+                  "Type " + TypeIdToString(origType) + " with value " +
                       std::to_string(value) +
                       " can't be cast as %s because the value is out of range "
                       "for the destination type " +
-                      ValueTypeToString(newType)) {}
+                      TypeIdToString(newType)) {}
 };
 
 class ConversionException : public Exception {
@@ -261,12 +265,11 @@ class TypeMismatchException : public Exception {
   TypeMismatchException() = delete;
 
  public:
-  TypeMismatchException(std::string msg, const ValueType type_1,
-                        const ValueType type_2)
+  TypeMismatchException(std::string msg, const common::Type::TypeId type_1,
+                        const common::Type::TypeId type_2)
       : Exception(EXCEPTION_TYPE_MISMATCH_TYPE,
-                  "Type " + ValueTypeToString(type_1) +
-                      " does not match with " + ValueTypeToString(type_2) +
-                      msg) {}
+                  "Type " + TypeIdToString(type_1) + " does not match with " +
+                      TypeIdToString(type_2) + msg) {}
 };
 
 class NumericValueOutOfRangeException : public Exception {
@@ -303,9 +306,10 @@ class IncompatibleTypeException : public Exception {
 
  public:
   IncompatibleTypeException(int type, std::string msg)
-      : Exception(
-            EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-            "Incompatible type " + ValueTypeToString((ValueType)type) + msg) {}
+      : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                  "Incompatible type " +
+                      TypeIdToString(static_cast<common::Type::TypeId>(type)) +
+                      msg) {}
 };
 
 class SerializationException : public Exception {

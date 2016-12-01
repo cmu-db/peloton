@@ -10,25 +10,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <cpuid.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <cpuid.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include <string>
 #include <iostream>
+#include <string>
 
-#include "common/types.h"
+#include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/exception.h"
+#include "common/types.h"
+#include "logging/logging_util.h"
 #include "storage/storage_manager.h"
 
 //===--------------------------------------------------------------------===//
@@ -36,7 +36,7 @@
 //===--------------------------------------------------------------------===//
 
 // Logging mode
-extern LoggingType peloton_logging_mode;
+extern peloton::LoggingType peloton_logging_mode;
 
 // Flush mode (for NVM WBL)
 extern int peloton_flush_mode;
@@ -251,31 +251,26 @@ static void drain_no_pcommit(void) {
 
 #define CPU_FREQ_MHZ (2593)
 
-static inline unsigned long read_tsc(void){
+static inline unsigned long read_tsc(void) {
   unsigned long var;
   unsigned int hi, lo;
 
-  asm volatile ("rdtsc" : "=a" (lo), "=d" (hi));
-  var = ((unsigned long long int) hi << 32) | lo;
+  asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+  var = ((unsigned long long int)hi << 32) | lo;
 
   return var;
 }
 
-static inline void cpu_pause(){
-    __asm__ volatile ("pause" ::: "memory");
-}
+static inline void cpu_pause() { __asm__ volatile("pause" ::: "memory"); }
 
-static inline void pcommit(unsigned long lat){
-
+static inline void pcommit(unsigned long lat) {
   // Special case
-  if(lat == 0)
-    return;
+  if (lat == 0) return;
 
-  unsigned long etsc = read_tsc() + (unsigned long)(lat*CPU_FREQ_MHZ/1000);
+  unsigned long etsc = read_tsc() + (unsigned long)(lat * CPU_FREQ_MHZ / 1000);
   while (read_tsc() < etsc) {
     cpu_pause();
   }
-
 }
 
 /*
@@ -288,11 +283,10 @@ static void drain_pcommit(void) {
   pcommit(peloton_pcommit_latency);
 
   // by default, this is zero
-  if(peloton_pcommit_latency == 0) {
+  if (peloton_pcommit_latency == 0) {
     _mm_pcommit();
     _mm_sfence();
   }
-
 }
 
 /*
@@ -320,14 +314,15 @@ StorageManager &StorageManager::GetInstance(void) {
 StorageManager::StorageManager()
     : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
   // Check if we need a data pool
-  if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
+  if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode) ==
+          true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
     return;
   }
 
   // Check for instruction availability and flush mode
   // (1 -- clflush or 2 -- clwb)
-  if(is_cpu_clwb_present() && peloton_flush_mode == 2) {
+  if (is_cpu_clwb_present() && peloton_flush_mode == 2) {
     LOG_TRACE("Found clwb \n");
     Func_flush = flush_clwb;
     Func_predrain_fence = predrain_fence_sfence;

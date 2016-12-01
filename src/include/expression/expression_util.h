@@ -166,9 +166,6 @@ class ExpressionUtil {
       case EXPRESSION_TYPE_AGGREGATE_MIN:
       case EXPRESSION_TYPE_AGGREGATE_MAX:
       case EXPRESSION_TYPE_AGGREGATE_AVG:
-      case EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT:
-      case EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG:
-      case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD:
         return true;
       default:
         return false;
@@ -269,7 +266,7 @@ class ExpressionUtil {
   //		  // TODO: Get the table + column name and grab the
   //		  // the handle from schema object!
   //		  const TupleValueExpression t_expr = dynamic_cast<const
-  //TupleValueExpression*>(expr);
+  // TupleValueExpression*>(expr);
   //		  // catalog->Get
   //
   //	  }

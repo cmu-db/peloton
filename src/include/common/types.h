@@ -24,53 +24,14 @@
 #include "common/config.h"
 #include "common/type.h"
 
+namespace peloton {
+
+// forward declare
+// class Value;
+
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
-
-// Logging type
-// LOGGING_TYPE_AAA_BBB
-// Data stored in AAA
-// Log stored in BBB
-enum LoggingType {
-  LOGGING_TYPE_INVALID = 0,
-
-  // Based on write behind logging
-  LOGGING_TYPE_NVM_WBL = 1,
-  LOGGING_TYPE_SSD_WBL = 2,
-  LOGGING_TYPE_HDD_WBL = 3,
-
-  // Based on write ahead logging
-  LOGGING_TYPE_NVM_WAL = 4,
-  LOGGING_TYPE_SSD_WAL = 5,
-  LOGGING_TYPE_HDD_WAL = 6,
-};
-
-/* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_TYPE_INVALID = 0,
-  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
-  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
-  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
-} LayoutType;
-
-enum LoggerMappingStrategyType {
-  LOGGER_MAPPING_TYPE_INVALID = 0,
-  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
-  LOGGER_MAPPING_TYPE_AFFINITY = 2,
-  LOGGER_MAPPING_TYPE_MANUAL = 3
-};
-
-enum CheckpointType {
-  CHECKPOINT_TYPE_INVALID = 0,
-  CHECKPOINT_TYPE_NORMAL = 1,
-};
-
-enum ReplicationType {
-  ASYNC_REPLICATION,
-  SYNC_REPLICATION,
-  SEMISYNC_REPLICATION
-};
 
 enum GarbageCollectionType {
   GARBAGE_COLLECTION_TYPE_INVALID = 0,
@@ -79,57 +40,8 @@ enum GarbageCollectionType {
 };
 
 //===--------------------------------------------------------------------===//
-// Filesystem directories
-//===--------------------------------------------------------------------===//
-
-#define NVM_DIR "/mnt/pmfs/"
-#define HDD_DIR "/data/"
-#define SSD_DIR "/data1/"
-
-#define TMP_DIR "/tmp/"
-
-namespace peloton {
-
-// forward declare
-// class Value;
-
-//===--------------------------------------------------------------------===//
 // NULL-related Constants
 //===--------------------------------------------------------------------===//
-/*
-// We use these values for NULL to make it compact and fast
-// "-1" is a hack to shut up gcc warning
-
-/// NULL
-#define INT8_NULL INT8_MIN
-#define INT16_NULL INT16_MIN
-#define INT32_NULL INT32_MIN
-#define INT64_NULL INT64_MIN
-
-/// Minimum value user can represent that is not NULL
-#define PELOTON_INT8_MIN INT8_NULL + 1
-#define PELOTON_INT16_MIN INT16_NULL + 1
-#define PELOTON_INT32_MIN INT32_NULL + 1
-#define PELOTON_INT64_MIN INT64_NULL + 1
-
-#define DECIMAL_MIN -9999999
-#define DECIMAL_MAX 9999999
-
-#define PELOTON_INT8_MAX -(INT8_NULL + 1)
-#define PELOTON_INT16_MAX -(INT16_NULL + 1)
-#define PELOTON_INT32_MAX -(INT32_NULL + 1)
-#define PELOTON_INT64_MAX -(INT64_NULL + 1)
-
-/// Float/Double less than these values are NULL
-#define FLOAT_NULL -3.4e+38f
-#define DOUBLE_NULL -1.7E+308
-
-// Values to be substituted as NULL
-#define FLOAT_MIN -3.40282347e+38f
-#define DOUBLE_MIN -1.7976931348623157E+308
-*/
-// Objects (i.e., VARCHAR) with length prefix of -1 are NULL
-#define OBJECTLENGTH_NULL -1
 
 #define VALUE_COMPARE_LESSTHAN -1
 #define VALUE_COMPARE_EQUAL 0
@@ -201,60 +113,10 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 };
 
-enum ValueType {
-  // TODO
-};
-
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types
 //===--------------------------------------------------------------------===//
-/*
-enum ExpressionType {
-  EXPRESSION_TYPE_INVALID = 0,
 
-  // TODO: Add the expression types that you implemented
-
-
-  // -----------------------------
-  // String operators
-  // -----------------------------
-  EXPRESSION_TYPE_SUBSTR = 500,
-  EXPRESSION_TYPE_ASCII = 501,
-  EXPRESSION_TYPE_OCTET_LEN = 502,
-  EXPRESSION_TYPE_CHAR = 503,
-  EXPRESSION_TYPE_CHAR_LEN = 504,
-  EXPRESSION_TYPE_SPACE = 505,
-  EXPRESSION_TYPE_REPEAT = 506,
-  EXPRESSION_TYPE_POSITION = 507,
-  EXPRESSION_TYPE_LEFT = 508,
-  EXPRESSION_TYPE_RIGHT = 509,
-  EXPRESSION_TYPE_CONCAT = 510,
-  EXPRESSION_TYPE_LTRIM = 511,
-  EXPRESSION_TYPE_RTRIM = 512,
-  EXPRESSION_TYPE_BTRIM = 513,
-  EXPRESSION_TYPE_REPLACE = 514,
-  EXPRESSION_TYPE_OVERLAY = 515,
-
-  // -----------------------------
-  // Date operators
-  // -----------------------------
-  EXPRESSION_TYPE_EXTRACT = 600,
-  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
-
-  // -----------------------------
-  // Parser
-  // -----------------------------
-  EXPRESSION_TYPE_STAR = 700,
-  EXPRESSION_TYPE_PLACEHOLDER = 701,
-  EXPRESSION_TYPE_COLUMN_REF = 702,
-  EXPRESSION_TYPE_FUNCTION_REF = 703,
-
-  // -----------------------------
-  // Misc
-  // -----------------------------
-  EXPRESSION_TYPE_CAST = 900
-};
-*/
 enum ExpressionType {
   EXPRESSION_TYPE_INVALID = 0,
 
@@ -330,9 +192,6 @@ enum ExpressionType {
   EXPRESSION_TYPE_AGGREGATE_MIN = 43,
   EXPRESSION_TYPE_AGGREGATE_MAX = 44,
   EXPRESSION_TYPE_AGGREGATE_AVG = 45,
-  EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT = 46,
-  EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG = 47,
-  EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD = 48,
 
   // -----------------------------
   // Functions
@@ -782,8 +641,51 @@ enum SetOpType {
 };
 
 //===--------------------------------------------------------------------===//
-// Log Types
+// Logging + Recovery Types
 //===--------------------------------------------------------------------===//
+
+// LOGGING_TYPE_AAA_BBB
+// Data stored in AAA
+// Log stored in BBB
+enum LoggingType {
+  LOGGING_TYPE_INVALID = 0,
+
+  // Based on write behind logging
+  LOGGING_TYPE_NVM_WBL = 1,
+  LOGGING_TYPE_SSD_WBL = 2,
+  LOGGING_TYPE_HDD_WBL = 3,
+
+  // Based on write ahead logging
+  LOGGING_TYPE_NVM_WAL = 4,
+  LOGGING_TYPE_SSD_WAL = 5,
+  LOGGING_TYPE_HDD_WAL = 6,
+};
+
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum LayoutType {
+  LAYOUT_TYPE_INVALID = 0,
+  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
+  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
+  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
+} LayoutType;
+
+enum LoggerMappingStrategyType {
+  LOGGER_MAPPING_TYPE_INVALID = 0,
+  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
+  LOGGER_MAPPING_TYPE_AFFINITY = 2,
+  LOGGER_MAPPING_TYPE_MANUAL = 3
+};
+
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL = 1,
+};
+
+enum ReplicationType {
+  ASYNC_REPLICATION,
+  SYNC_REPLICATION,
+  SEMISYNC_REPLICATION
+};
 
 enum LoggingStatus {
   LOGGING_STATUS_TYPE_INVALID = 0,
@@ -837,6 +739,10 @@ enum CheckpointStatus {
   CHECKPOINT_STATUS_DONE_RECOVERY = 3,
   CHECKPOINT_STATUS_CHECKPOINTING = 4,
 };
+
+//===--------------------------------------------------------------------===//
+// Statistics Types
+//===--------------------------------------------------------------------===//
 
 // Statistics Collection Type
 // Disable or enable
@@ -1048,24 +954,7 @@ extern FileHandle INVALID_FILE_HANDLE;
 // Utilities
 //===--------------------------------------------------------------------===//
 
-/// Works only for fixed-length types
-std::size_t GetTypeSize(ValueType type);
-
-bool IsNumeric(ValueType type);
-bool IsIntegralType(ValueType type);
-
-// for testing, obtain a random instance of the specified type
-// Value GetRandomValue(ValueType type);
-
-int64_t GetMaxTypeValue(ValueType type);
-
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
-
-bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
-
-bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
-
-BackendType GetBackendType(const LoggingType &logging_type);
 
 bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
@@ -1078,15 +967,12 @@ BackendType StringToBackendType(const std::string &str);
 
 std::string TypeIdToString(common::Type::TypeId type);
 common::Type::TypeId StringToTypeId(const std::string &str);
-std::string ValueTypeToString(ValueType type);
-ValueType StringToValueType(const std::string &str);
-ValueType PostgresStringToValueType(std::string str);
 
 std::string StatementTypeToString(StatementType type);
+StatementType StringToStatementType(const std::string &str);
 
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(const std::string &str);
-
 ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 std::string IndexTypeToString(IndexType type);
@@ -1103,6 +989,7 @@ ConstraintType StringToConstraintType(const std::string &str);
 
 std::string LoggingTypeToString(LoggingType type);
 std::string LoggingStatusToString(LoggingStatus type);
+
 std::string LoggerTypeToString(LoggerType type);
 std::string LogRecordTypeToString(LogRecordType type);
 

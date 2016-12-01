@@ -10,17 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <condition_variable>
+#include <memory>
+#include <vector>
 
-#include "logging/checkpoint.h"
 #include "common/logger.h"
+#include "logging/checkpoint.h"
 
-extern CheckpointType peloton_checkpoint_mode;
+extern peloton::CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
 namespace logging {

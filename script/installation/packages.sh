@@ -41,7 +41,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## ------------------------------------------------
 ## FEDORA/REDHAT
 ## ------------------------------------------------
-elif [ "$DISTRO" = "FEDORA" ]; then
+elif [[ "$DISTRO" == *"FEDORA"* ]]; then
     dnf install -y git \
         gcc-c++ \
         cmake \
