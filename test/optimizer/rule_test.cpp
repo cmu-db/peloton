@@ -51,11 +51,9 @@ TEST_F(RuleTests, SimpleRuleApplyTest) {
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make(0));
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make(0));
   auto val = common::ValueFactory::GetBooleanValue(true);
-  auto pred = std::make_shared<OperatorExpression>(ExprConstant::make(val));
   auto join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   join->PushChild(left_get);
   join->PushChild(right_get);
-  join->PushChild(pred);
 
   // Setup rule
   InnerJoinCommutativity rule;

@@ -24,7 +24,7 @@
 #include "expression/expression_util.h"
 
 #include "parser/parser.h"
-#include "parser/statement_select.h"
+#include "parser/select_statement.h"
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"

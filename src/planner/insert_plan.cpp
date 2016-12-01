@@ -12,14 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/insert_plan.h"
+#include "catalog/catalog.h"
+#include "catalog/column.h"
+#include "common/value.h"
 #include "parser/insert_statement.h"
+#include "parser/select_statement.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
-#include "parser/select_statement.h"
-#include "catalog/column.h"
-#include "catalog/catalog.h"
-#include "common/value.h"
 
 namespace peloton {
 namespace planner {

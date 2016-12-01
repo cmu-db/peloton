@@ -29,13 +29,6 @@ class CopyStatement;
 
 namespace optimizer {
 
-class Variable;
-class Constant;
-class OperatorExpression;
-class AndOperator;
-class OrOperator;
-class NotOperator;
-class Attribute;
 class Get;
 class Join;
 class Table;

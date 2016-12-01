@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
+#include "expression/abstract_expression.h"
 #include "optimizer/query_node_visitor.h"
+#include "parser/sql_statement.h"
+#include "parser/table_ref.h"
 
 namespace peloton {
 namespace parser {
