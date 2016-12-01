@@ -267,36 +267,6 @@ bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
   return true;
 }
 
-BackendType GetBackendType(const LoggingType& logging_type) {
-  // Default backend type
-  BackendType backend_type = BACKEND_TYPE_MM;
-
-  switch (logging_type) {
-    case LOGGING_TYPE_NVM_WBL:
-      backend_type = BACKEND_TYPE_NVM;
-      break;
-
-    case LOGGING_TYPE_SSD_WBL:
-      backend_type = BACKEND_TYPE_SSD;
-      break;
-
-    case LOGGING_TYPE_HDD_WBL:
-      backend_type = BACKEND_TYPE_HDD;
-      break;
-
-    case LOGGING_TYPE_NVM_WAL:
-    case LOGGING_TYPE_SSD_WAL:
-    case LOGGING_TYPE_HDD_WAL:
-      backend_type = BACKEND_TYPE_MM;
-      break;
-
-    default:
-      break;
-  }
-
-  return backend_type;
-}
-
 bool AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
   PL_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
   int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
@@ -355,6 +325,39 @@ std::string StatementTypeToString(StatementType type) {
     }
   }
   return "NOT A KNOWN TYPE - INVALID";
+}
+
+StatementType StringToStatementType(const std::string& str) {
+  if (str == "INVALID") {
+    return STATEMENT_TYPE_INVALID;
+  } else if (str == "SELECT") {
+    return STATEMENT_TYPE_SELECT;
+  } else if (str == "INSERT") {
+    return STATEMENT_TYPE_INSERT;
+  } else if (str == "UPDATE") {
+    return STATEMENT_TYPE_UPDATE;
+  } else if (str == "DELETE") {
+    return STATEMENT_TYPE_DELETE;
+  } else if (str == "CREATE") {
+    return STATEMENT_TYPE_CREATE;
+  } else if (str == "DROP") {
+    return STATEMENT_TYPE_DROP;
+  } else if (str == "PREPARE") {
+    return STATEMENT_TYPE_PREPARE;
+  } else if (str == "EXECUTE") {
+    return STATEMENT_TYPE_EXECUTE;
+  } else if (str == "RENAME") {
+    return STATEMENT_TYPE_RENAME;
+  } else if (str == "ALTER") {
+    return STATEMENT_TYPE_ALTER;
+  } else if (str == "TRANSACTION") {
+    return STATEMENT_TYPE_TRANSACTION;
+  } else if (str == "COPY") {
+    return STATEMENT_TYPE_COPY;
+  } else {
+    throw ConversionException("No conversion from string '" + str + "'");
+  }
+  return STATEMENT_TYPE_INVALID;
 }
 
 //===--------------------------------------------------------------------===//

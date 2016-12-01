@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "storage/tile_group_factory.h"
+#include "logging/logging_util.h"
 #include "storage/tile_group_header.h"
 
 //===--------------------------------------------------------------------===//
@@ -28,7 +29,8 @@ TileGroup *TileGroupFactory::GetTileGroup(
     AbstractTable *table, const std::vector<catalog::Schema> &schemas,
     const column_map_type &column_map, int tuple_count) {
   // Allocate the data on appropriate backend
-  BackendType backend_type = GetBackendType(peloton_logging_mode);
+  BackendType backend_type =
+      logging::LoggingUtil::GetBackendType(peloton_logging_mode);
 
   TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
   TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,

@@ -968,8 +968,6 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-BackendType GetBackendType(const LoggingType &logging_type);
-
 bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
@@ -986,6 +984,7 @@ ValueType StringToValueType(const std::string &str);
 ValueType PostgresStringToValueType(std::string str);
 
 std::string StatementTypeToString(StatementType type);
+StatementType StringToStatementType(const std::string &str);
 
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(const std::string &str);

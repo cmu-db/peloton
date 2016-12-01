@@ -27,6 +27,8 @@ namespace logging {
 
 class LoggingUtil {
  public:
+  static BackendType GetBackendType(const LoggingType &logging_type);
+
   static bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
 
   static bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);

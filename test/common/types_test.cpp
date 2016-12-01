@@ -47,6 +47,30 @@ TEST_F(TypesTests, TypeIdTest) {
   EXPECT_THROW(peloton::StringToTypeId(invalid), peloton::Exception);
 }
 
+TEST_F(TypesTests, StatementTypeTest) {
+  std::vector<StatementType> list = {
+      STATEMENT_TYPE_INVALID, STATEMENT_TYPE_SELECT,
+      STATEMENT_TYPE_INSERT,  STATEMENT_TYPE_UPDATE,
+      STATEMENT_TYPE_DELETE,  STATEMENT_TYPE_CREATE,
+      STATEMENT_TYPE_DROP,    STATEMENT_TYPE_PREPARE,
+      STATEMENT_TYPE_EXECUTE, STATEMENT_TYPE_RENAME,
+      STATEMENT_TYPE_ALTER,   STATEMENT_TYPE_TRANSACTION,
+      STATEMENT_TYPE_COPY};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::StatementTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToStatementType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("PrashanthMenonTrillAsFuck");
+  EXPECT_THROW(peloton::StringToStatementType(invalid), peloton::Exception);
+}
+
 TEST_F(TypesTests, ExpressionTypeTest) {
   std::vector<ExpressionType> list = {
       EXPRESSION_TYPE_INVALID,

@@ -26,6 +26,36 @@ namespace logging {
 // LoggingUtil
 //===--------------------------------------------------------------------===//
 
+BackendType LoggingUtil::GetBackendType(const LoggingType &logging_type) {
+  // Default backend type
+  BackendType backend_type = BACKEND_TYPE_MM;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WBL:
+      backend_type = BACKEND_TYPE_NVM;
+      break;
+
+    case LOGGING_TYPE_SSD_WBL:
+      backend_type = BACKEND_TYPE_SSD;
+      break;
+
+    case LOGGING_TYPE_HDD_WBL:
+      backend_type = BACKEND_TYPE_HDD;
+      break;
+
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_HDD_WAL:
+      backend_type = BACKEND_TYPE_MM;
+      break;
+
+    default:
+      break;
+  }
+
+  return backend_type;
+}
+
 bool LoggingUtil::IsBasedOnWriteAheadLogging(
     const peloton::LoggingType &logging_type) {
   bool status = false;

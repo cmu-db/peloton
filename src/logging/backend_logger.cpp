@@ -17,7 +17,6 @@
 #include "logging/loggers/wal_backend_logger.h"
 #include "logging/loggers/wbl_backend_logger.h"
 #include "logging/logging_util.h"
-#include "logging/logging_util.h"
 
 namespace peloton {
 namespace logging {
