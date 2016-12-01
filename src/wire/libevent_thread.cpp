@@ -9,13 +9,14 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "wire/libevent_thread.h"
+#include <sys/file.h>
 #include <fstream>
 #include <vector>
-#include "wire/libevent_server.h"
+#include "boost/thread/future.hpp"
 #include "common/init.h"
 #include "common/thread_pool.h"
-#include <sys/file.h>
-#include "boost/thread/future.hpp"
+#include "wire/libevent_server.h"
 
 namespace peloton {
 namespace wire {
@@ -23,8 +24,8 @@ namespace wire {
 /*
  * Get the vector of libevent worker threads
  */
-std::vector<std::shared_ptr<LibeventWorkerThread>> &
-LibeventMasterThread::GetWorkerThreads() {
+std::vector<std::shared_ptr<LibeventWorkerThread>>
+    &LibeventMasterThread::GetWorkerThreads() {
   static std::vector<std::shared_ptr<LibeventWorkerThread>> worker_threads;
   return worker_threads;
 }
