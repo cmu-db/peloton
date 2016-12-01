@@ -10,20 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/types.h"
 
 // Layout mode
-int peloton_layout_mode = LAYOUT_TYPE_ROW;
+int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 
 // Logging mode
-LoggingType peloton_logging_mode = LOGGING_TYPE_INVALID;
+peloton::LoggingType peloton_logging_mode = peloton::LOGGING_TYPE_INVALID;
 
 // GC mode
-GarbageCollectionType peloton_gc_mode;
+peloton::GarbageCollectionType peloton_gc_mode;
 
 // Checkpoint mode
-CheckpointType peloton_checkpoint_mode;
+peloton::CheckpointType peloton_checkpoint_mode;
 
 // Directory for peloton logs
 char *peloton_log_directory;

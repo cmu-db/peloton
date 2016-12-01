@@ -10,16 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <mutex>
 
-#include "common/types.h"
 #include "common/platform.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace storage {
+
+//===--------------------------------------------------------------------===//
+// Filesystem directories
+//===--------------------------------------------------------------------===//
+
+// TODO: These should be moved into a configuration file"
+#define NVM_DIR "/mnt/pmfs/"
+#define HDD_DIR "/data/"
+#define SSD_DIR "/data1/"
+
+#define TMP_DIR "/tmp/"
 
 //===--------------------------------------------------------------------===//
 // Storage Manager

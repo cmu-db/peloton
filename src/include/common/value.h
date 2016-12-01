@@ -58,6 +58,9 @@ static const int8_t PELOTON_BOOLEAN_NULL = SCHAR_MIN;
 
 static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 
+// Objects (i.e., VARCHAR) with length prefix of -1 are NULL
+#define OBJECTLENGTH_NULL -1
+
 // A value is an abstract class that represents a view over SQL data stored in
 // some materialized state. All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.

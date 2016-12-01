@@ -10,16 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <thread>
-#include <string>
+#include <fts.h>
 #include <getopt.h>
 #include <sys/stat.h>
-#include <fts.h>
 #include <unistd.h>
+#include <string>
+#include <thread>
 
-#include "concurrency/transaction_manager_factory.h"
 #include "common/value_factory.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "common/exception.h"
 #include "common/logger.h"
@@ -29,22 +28,22 @@
 
 #include "benchmark/logger/logger_workload.h"
 
-#include "benchmark/ycsb/ycsb_workload.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "benchmark/ycsb/ycsb_loader.h"
+#include "benchmark/ycsb/ycsb_workload.h"
 
-#include "benchmark/tpcc/tpcc_workload.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "benchmark/tpcc/tpcc_loader.h"
+#include "benchmark/tpcc/tpcc_workload.h"
 
-#include "logging/loggers/wbl_frontend_logger.h"
 #include "logging/checkpoint_manager.h"
+#include "logging/loggers/wbl_frontend_logger.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-extern CheckpointType peloton_checkpoint_mode;
+extern peloton::CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
 namespace benchmark {
@@ -68,12 +67,8 @@ namespace logger {
 void WriteOutput() {
   std::ofstream out("outputfile-log.summary");
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %d %d", 
-           state.benchmark_type,
-           state.logging_type,
-           state.nvm_latency, 
-           state.pcommit_latency,
-           state.flush_mode, 
+  LOG_INFO("%d %d %d %d %d %d", state.benchmark_type, state.logging_type,
+           state.nvm_latency, state.pcommit_latency, state.flush_mode,
            state.asynchronous_mode);
 
   out << state.benchmark_type << " ";
@@ -97,7 +92,6 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
 }
 
 void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
-
   auto& log_manager = logging::LogManager::GetInstance();
 
   if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
@@ -256,15 +250,17 @@ bool PrepareLogFile() {
   auto& log_manager = logging::LogManager::GetInstance();
   log_manager.SetLogDirectoryName(state.log_file_dir);
 
-  if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
-    log_manager.SetLogFileName(state.log_file_dir + "/" +
-                               logging::WriteAheadFrontendLogger::wal_directory_path);
+  if (LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
+    log_manager.SetLogFileName(
+        state.log_file_dir + "/" +
+        logging::WriteAheadFrontendLogger::wal_directory_path);
   } else {
     LOG_ERROR("currently, we do not support write behind logging.");
     PL_ASSERT(false);
   }
 
-  UNUSED_ATTRIBUTE auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
+  UNUSED_ATTRIBUTE auto& checkpoint_manager =
+      logging::CheckpointManager::GetInstance();
 
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");

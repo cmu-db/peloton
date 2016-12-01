@@ -35,16 +35,16 @@ TEST_F(TypesTests, TypeIdTest) {
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
-    const std::string str = TypeIdToString(val);
+    std::string str = peloton::TypeIdToString(val);
     EXPECT_TRUE(str.size() > 0);
 
-    auto newVal = StringToTypeId(str);
+    auto newVal = peloton::StringToTypeId(str);
     EXPECT_EQ(val, newVal);
   }
 
   // Then make sure that we can't cast garbage
   std::string invalid("JoyArulrajIsDangerous");
-  EXPECT_THROW(StringToTypeId(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::StringToTypeId(invalid), peloton::Exception);
 }
 
 TEST_F(TypesTests, ExpressionTypeTest) {
@@ -85,9 +85,6 @@ TEST_F(TypesTests, ExpressionTypeTest) {
       EXPRESSION_TYPE_AGGREGATE_MIN,
       EXPRESSION_TYPE_AGGREGATE_MAX,
       EXPRESSION_TYPE_AGGREGATE_AVG,
-      EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT,
-      EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG,
-      EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD,
       EXPRESSION_TYPE_FUNCTION,
       EXPRESSION_TYPE_HASH_RANGE,
       EXPRESSION_TYPE_OPERATOR_CASE_EXPR,
@@ -121,16 +118,16 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
-    const std::string str = ExpressionTypeToString(val);
+    std::string str = peloton::ExpressionTypeToString(val);
     EXPECT_TRUE(str.size() > 0);
 
-    auto newVal = StringToExpressionType(str);
+    auto newVal = peloton::StringToExpressionType(str);
     EXPECT_EQ(val, newVal);
   }
 
   // Then make sure that we can't cast garbage
   std::string invalid("LinMaLovesEverybody");
-  EXPECT_THROW(StringToTypeId(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::StringToExpressionType(invalid), peloton::Exception);
 }
 
 }  // End test namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 
@@ -19,7 +18,7 @@
 //===--------------------------------------------------------------------===//
 
 // Logging mode
-extern LoggingType peloton_logging_mode;
+extern peloton::LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace storage {
