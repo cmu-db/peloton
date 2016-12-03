@@ -21,6 +21,24 @@
 namespace peloton {
 
 /**
+ * This is the string that we should always use whenever we need
+ * to do nice formatting in GetInfo()
+ */
+static const std::string GETINFO_SPACER = "  ";
+
+/**
+ *
+ */
+static const std::string GETINFO_SINGLE_LINE =
+    "-------------------------------------------------------------";
+
+/**
+ *
+ */
+static const std::string GETINFO_THICK_LINE =
+    "=============================================================";
+
+/**
  * String Utility Functions
  */
 class StringUtil {
@@ -29,7 +47,7 @@ class StringUtil {
    * Repeat a string multiple times
    * http://stackoverflow.com/a/34321702
    */
-  static std::string repeat(std::string str, const std::size_t n) {
+  static std::string repeat(std::string &str, const std::size_t n) {
     if (n == 0) {
       str.clear();
       str.shrink_to_fit();
@@ -56,7 +74,10 @@ class StringUtil {
     return str;
   }
 
-  static std::vector<std::string> split(const std::string str) {
+  /**
+   * Split the input string based on newline char
+   */
+  static std::vector<std::string> split(const std::string &str) {
     std::stringstream ss(str);
     std::vector<std::string> lines;
     std::string temp;
