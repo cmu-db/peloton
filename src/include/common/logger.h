@@ -51,7 +51,7 @@ namespace peloton {
 #define LOG_LEVEL LOG_LEVEL_DEBUG
 #else
 //#pragma message("LOG_LEVEL_WARN is used instead as DEBUG option is off.")
-#define LOG_LEVEL LOG_LEVEL_WARN
+#define LOG_LEVEL LOG_LEVEL_INFO
 #endif
 //#pragma message("Give LOG_LEVEL compile option to overwrite the default
 // level.")
