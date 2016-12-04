@@ -39,6 +39,16 @@ static const std::string GETINFO_THICK_LINE =
     "=============================================================";
 
 /**
+ *
+ */
+static const int TUPLE_ID_WIDTH = 6;
+
+/**
+ *
+ */
+static const int TXN_ID_WIDTH = 10;
+
+/**
  * String Utility Functions
  * Note that these are not the most efficient implementations (i.e., they copy
  * memory) and therefore they should only be used for debug messages and other
@@ -50,7 +60,7 @@ class StringUtil {
    * Repeat a string multiple times
    */
   static std::string Repeat(const std::string &str, const std::size_t n) {
-    std::stringstream os;
+    std::ostringstream os;
     if (n == 0 || str.empty()) {
       return (os.str());
     }
@@ -80,11 +90,49 @@ class StringUtil {
     std::vector<std::string> lines = StringUtil::Split(str);
     if (lines.empty()) return ("");
 
-    std::stringstream os;
+    std::ostringstream os;
     for (int i = 0, cnt = lines.size(); i < cnt; i++) {
       if (i > 0) os << std::endl;
       os << prefix << lines[i];
     }  // FOR
+    return (os.str());
+  }
+
+  /**
+   * Return a string that formats the give number of bytes into the appropriate
+   * kilobyte, megabyte, gigabyte representation.
+   * http://ubuntuforums.org/showpost.php?p=10215516&postcount=5
+   */
+  static std::string FormatSize(long bytes) {
+    double BASE = 1024;
+    double KB = BASE;
+    double MB = KB * BASE;
+    double GB = MB * BASE;
+
+    std::ostringstream os;
+
+    if (bytes >= GB) {
+      os << std::fixed << std::setprecision(2) << (bytes / GB) << " GB";
+    } else if (bytes >= MB) {
+      os << std::fixed << std::setprecision(2) << (bytes / MB) << " MB";
+    } else if (bytes >= KB) {
+      os << std::fixed << std::setprecision(2) << (bytes / KB) << " KB";
+    } else {
+      os << std::to_string(bytes) + " bytes";
+    }
+    return (os.str());
+  }
+
+  /**
+   * Wrap the given string with the control characters
+   * to make the text appear bold in the console
+   */
+  static std::string Bold(const std::string &str) {
+    std::string SET_PLAIN_TEXT = "\033[0;0m";
+    std::string SET_BOLD_TEXT = "\033[0;1m";
+
+    std::ostringstream os;
+    os << SET_BOLD_TEXT << str << SET_PLAIN_TEXT;
     return (os.str());
   }
 };

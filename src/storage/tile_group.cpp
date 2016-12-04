@@ -413,22 +413,23 @@ void TileGroup::Sync() {
 const std::string TileGroup::GetInfo() const {
   std::ostringstream os;
 
-  os << "TILE GROUP :: ";
+  os << "** TILE GROUP[#" << tile_group_id << "] **" << std::endl;
   os << "Database[" << database_id << "] // ";
-  os << "Table[" << table_id << "] // ";
-  os << "TileGroup[" << tile_group_id << "]" << std::endl;
+  os << "Table[" << table_id << "] " << std::endl;
 
-  os << " TILE GROUP HEADER :: " << tile_group_header << std::endl;
+  os << "TILE GROUP HEADER :: " << tile_group_header << std::endl;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
-    if (tile != nullptr) os << (*tile);
+    if (tile != nullptr) {
+      os << std::endl << (*tile);
+    }
   }
 
-  auto header = GetHeader();
-  if (header != nullptr) os << (*header);
+  // auto header = GetHeader();
+  // if (header != nullptr) os << (*header);
 
-  return os.str();  // ??? .c_str();
+  return os.str();
 }
 
 }  // End storage namespace

@@ -15,6 +15,7 @@
 #include "common/logger.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace peloton {
@@ -74,6 +75,21 @@ TEST_F(StringUtilTests, PrefixTest) {
       std::string substr = line.substr(0, prefix.size());
       EXPECT_EQ(prefix, substr);
     }
+  }
+}
+
+TEST_F(StringUtilTests, FormatSizeTest) {
+  std::vector<std::pair<long, std::string>> data = {
+      std::make_pair(100, "100 bytes"), std::make_pair(1200, "1.17 KB"),
+      std::make_pair(15721000, "14.99 MB"),
+      std::make_pair(9990000000, "9.30 GB"),
+  };
+
+  for (auto x : data) {
+    std::string result = StringUtil::FormatSize(x.first);
+    EXPECT_FALSE(result.empty());
+    LOG_TRACE("[%ld / '%s'] => %s", x.first, x.second.c_str(), result.c_str());
+    EXPECT_EQ(x.second, result);
   }
 }
 

@@ -220,11 +220,10 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 const std::string Tile::GetInfo() const {
   std::ostringstream os;
 
-  os << "TILE :: ";
+  os << "TILE[#" << tile_id << "]" << std::endl;
   os << "Database[" << database_id << "] // ";
   os << "Table[" << table_id << "] // ";
-  os << "TileGroup[" << tile_group_id << "] // ";
-  os << "Tile[" << tile_id << "]" << std::endl;
+  os << "TileGroup[" << tile_group_id << "]" << std::endl;
 
   // Tuples
   os << GETINFO_SINGLE_LINE << std::endl;
@@ -234,8 +233,9 @@ const std::string Tile::GetInfo() const {
 
   int tupleCtr = 0;
   while (tile_itr.Next(tuple)) {
-    os << std::setfill('0') << std::setw(2) << tupleCtr++ << ": ";
-    os << tuple << std::endl;
+    if (tupleCtr > 0) os << std::endl;
+    os << std::setfill('0') << std::setw(TUPLE_ID_WIDTH) << tupleCtr++ << ": ";
+    os << tuple;
   }
   tuple.SetNull();
 
