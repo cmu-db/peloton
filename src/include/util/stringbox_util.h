@@ -41,13 +41,7 @@ class StringBoxUtil {
   static std::string MakeBox(const std::string &str, int max_len,
                              std::string &horzMark, std::string &vertMark,
                              std::string corners[]) {
-    std::stringstream os;
-    std::stringstream ss(str);
-    std::vector<std::string> lines;
-    std::string temp;
-    while (std::getline(ss, temp, '\n')) {
-      lines.push_back(temp);
-    }  // WHILE
+    std::vector<std::string> lines = StringUtil::Split(str);
     if (lines.size() == 0) return ("");
 
     // CORNERS:
@@ -68,9 +62,11 @@ class StringBoxUtil {
       }  // FOR
     }
 
+    std::stringstream os;
+
     // TOP LINE :: padding - two corners
     os << corners[0];
-    os << StringUtil::repeat(horzMark, max_len + 2);
+    os << StringUtil::Repeat(horzMark, max_len + 2);
     os << corners[1];
     os << std::endl;
 
@@ -83,7 +79,7 @@ class StringBoxUtil {
 
     // BOTTOM LINE :: padding - two corners
     os << corners[2];
-    os << StringUtil::repeat(horzMark, max_len + 2);
+    os << StringUtil::Repeat(horzMark, max_len + 2);
     os << corners[3];
 
     return (os.str());

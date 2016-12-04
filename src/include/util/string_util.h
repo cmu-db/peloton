@@ -40,44 +40,30 @@ static const std::string GETINFO_THICK_LINE =
 
 /**
  * String Utility Functions
+ * Note that these are not the most efficient implementations (i.e., they copy
+ * memory) and therefore they should only be used for debug messages and other
+ * such things.
  */
 class StringUtil {
  public:
   /**
    * Repeat a string multiple times
-   * http://stackoverflow.com/a/34321702
    */
-  static std::string repeat(std::string &str, const std::size_t n) {
-    if (n == 0) {
-      str.clear();
-      str.shrink_to_fit();
-      return str;
+  static std::string Repeat(const std::string &str, const std::size_t n) {
+    std::stringstream os;
+    if (n == 0 || str.empty()) {
+      return (os.str());
     }
-
-    if (n == 1 || str.empty()) return str;
-
-    const auto period = str.size();
-
-    if (period == 1) {
-      str.append(n - 1, str.front());
-      return str;
+    for (int i = 0; i < static_cast<int>(n); i++) {
+      os << str;
     }
-
-    str.reserve(period * n);
-
-    std::size_t m{2};
-
-    for (; m < n; m *= 2) str += str;
-
-    str.append(str.c_str(), (n - (m / 2)) * period);
-
-    return str;
+    return (os.str());
   }
 
   /**
    * Split the input string based on newline char
    */
-  static std::vector<std::string> split(const std::string &str) {
+  static std::vector<std::string> Split(const std::string &str) {
     std::stringstream ss(str);
     std::vector<std::string> lines;
     std::string temp;
@@ -85,6 +71,21 @@ class StringUtil {
       lines.push_back(temp);
     }  // WHILE
     return (lines);
+  }
+
+  /**
+   * Append the prefix to the beginning of each line in str
+   */
+  static std::string Prefix(const std::string &str, const std::string &prefix) {
+    std::vector<std::string> lines = StringUtil::Split(str);
+    if (lines.empty()) return ("");
+
+    std::stringstream os;
+    for (int i = 0, cnt = lines.size(); i < cnt; i++) {
+      if (i > 0) os << std::endl;
+      os << prefix << lines[i];
+    }  // FOR
+    return (os.str());
   }
 };
 
