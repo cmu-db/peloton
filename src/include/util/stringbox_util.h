@@ -27,20 +27,36 @@ namespace peloton {
  */
 class StringBoxUtil {
  public:
+  /**
+   * Create a box around whatever you string you throw at it.
+   * It will split the input based on newlines and pad the box
+   * with a single space character all around.
+   * It will automatically size the box based on the longest line in the input.
+   */
   static std::string Box(const std::string &str) {
-    return StringBoxUtil::MakeBox(str, -1, UNICODE_BOX_HORIZONTAL,
-                                  UNICODE_BOX_VERTICAL, UNICODE_BOX_CORNERS);
+    std::string UNICODE_BOX_CORNERS[] = {"\u250C", "\u2510", "\u2514", "\u2518"};
+    std::string UNICODE_BOX_VERTICAL = "\u2502";
+    std::string UNICODE_BOX_HORIZONTAL = "\u2500";
+
+    return StringBoxUtil::MakeBox(str, -1, UNICODE_BOX_HORIZONTAL, UNICODE_BOX_VERTICAL,
+                                  UNICODE_BOX_CORNERS);
   }
+
+  /**
+   * Same has StringBoxUtil::Box except that it uses thicker lines.
+   */
   static std::string HeavyBox(const std::string &str) {
-    return StringBoxUtil::MakeBox(str, -1, UNICODE_HEAVYBOX_HORIZONTAL,
-                                  UNICODE_HEAVYBOX_VERTICAL,
+    std::string UNICODE_HEAVYBOX_CORNERS[] = {"\u250F", "\u2513", "\u2517", "\u251B"};
+    std::string UNICODE_HEAVYBOX_VERTICAL = "\u2503";
+    std::string UNICODE_HEAVYBOX_HORIZONTAL = "\u2501";
+
+    return StringBoxUtil::MakeBox(str, -1, UNICODE_HEAVYBOX_HORIZONTAL, UNICODE_HEAVYBOX_VERTICAL,
                                   UNICODE_HEAVYBOX_CORNERS);
   }
 
  private:
-  static std::string MakeBox(const std::string &str, int max_len,
-                             std::string &horzMark, std::string &vertMark,
-                             std::string corners[]) {
+  static std::string MakeBox(const std::string &str, int max_len, std::string &horzMark,
+                             std::string &vertMark, std::string corners[]) {
     std::vector<std::string> lines = StringUtil::Split(str);
     if (lines.size() == 0) return ("");
 
@@ -49,9 +65,6 @@ class StringBoxUtil {
     //  1: Top-Right
     //  2: Bottom-Left
     //  3: Bottom-Right
-    if (corners == nullptr) {
-      corners = UNICODE_BOX_CORNERS;
-    }
 
     if (max_len <= 0) {
       for (std::string line : lines) {
@@ -84,26 +97,6 @@ class StringBoxUtil {
 
     return (os.str());
   }
-
-  // Regular Box
-  static std::string UNICODE_BOX_CORNERS[];
-  static std::string UNICODE_BOX_VERTICAL;
-  static std::string UNICODE_BOX_HORIZONTAL;
-
-  // Thick Box
-  static std::string UNICODE_HEAVYBOX_CORNERS[];
-  static std::string UNICODE_HEAVYBOX_VERTICAL;
-  static std::string UNICODE_HEAVYBOX_HORIZONTAL;
 };
-
-std::string StringBoxUtil::UNICODE_BOX_CORNERS[] = {"\u250C", "\u2510",
-                                                    "\u2514", "\u2518"};
-std::string StringBoxUtil::UNICODE_BOX_VERTICAL = "\u2502";
-std::string StringBoxUtil::UNICODE_BOX_HORIZONTAL = "\u2500";
-
-std::string StringBoxUtil::UNICODE_HEAVYBOX_CORNERS[] = {"\u250F", "\u2513",
-                                                         "\u2517", "\u251B"};
-std::string StringBoxUtil::UNICODE_HEAVYBOX_VERTICAL = "\u2503";
-std::string StringBoxUtil::UNICODE_HEAVYBOX_HORIZONTAL = "\u2501";
 
 }  // END peloton
