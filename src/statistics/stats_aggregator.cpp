@@ -70,10 +70,10 @@ void StatsAggregator::ShutdownAggregator() {
 void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
                                 double &weighted_avg_throughput) {
   interval_cnt++;
-  LOG_INFO(
+  LOG_DEBUG(
       "\n//////////////////////////////////////////////////////"
       "//////////////////////////////////////////////////////\n");
-  LOG_INFO("TIME ELAPSED: %ld sec\n", interval_cnt);
+  LOG_DEBUG("TIME ELAPSED: %ld sec\n", interval_cnt);
 
   aggregated_stats_.Reset();
   std::thread::id this_id = aggregator_thread_.get_id();
@@ -85,7 +85,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
     }
   }
   aggregated_stats_.Aggregate(stats_history_);
-  LOG_INFO("%s\n", aggregated_stats_.ToString().c_str());
+  LOG_DEBUG("%s\n", aggregated_stats_.ToString().c_str());
 
   int64_t current_txns_committed = 0;
   // Traverse the metric of all threads to get the total number of committed
@@ -108,9 +108,9 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 
   total_prev_txn_committed_ = current_txns_committed;
-  LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
-  LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
-  LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
+  LOG_DEBUG("Average throughput:     %lf txn/s\n", avg_throughput_);
+  LOG_DEBUG("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
+  LOG_DEBUG("Current throughput:     %lf txn/s\n\n", throughput_);
 
   // Write the stats to metric tables
   UpdateMetrics();
