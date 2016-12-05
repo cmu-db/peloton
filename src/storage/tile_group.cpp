@@ -14,15 +14,15 @@
 
 #include <numeric>
 
-#include "common/platform.h"
 #include "catalog/manager.h"
+#include "common/container_tuple.h"
 #include "common/logger.h"
+#include "common/platform.h"
 #include "common/types.h"
 #include "storage/abstract_table.h"
 #include "storage/tile.h"
-#include "storage/tuple.h"
 #include "storage/tile_group_header.h"
-#include "common/container_tuple.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace storage {
@@ -154,7 +154,8 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
     return INVALID_OID;
   }
 
-  // if the input tuple is nullptr, then it means that the tuple with be filled in
+  // if the input tuple is nullptr, then it means that the tuple with be filled
+  // in
   // outside the function. directly return the empty slot.
   if (tuple == nullptr) {
     return tuple_slot_id;
@@ -164,7 +165,8 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   CopyTuple(tuple, tuple_slot_id);
 
   // Set MVCC info
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
+            INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
@@ -357,13 +359,13 @@ common::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
-void TileGroup::SetValue(common::Value &value, oid_t tuple_id, oid_t column_id) {
+void TileGroup::SetValue(common::Value &value, oid_t tuple_id,
+                         oid_t column_id) {
   PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
-
 
 Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   PL_ASSERT(tile_offset < tile_count);
@@ -371,8 +373,8 @@ Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   return tile;
 }
 
-std::shared_ptr<Tile> TileGroup::GetTileReference(const oid_t tile_offset)
-    const {
+std::shared_ptr<Tile> TileGroup::GetTileReference(
+    const oid_t tile_offset) const {
   PL_ASSERT(tile_offset < tile_count);
   return tiles[tile_offset];
 }
@@ -411,26 +413,23 @@ void TileGroup::Sync() {
 const std::string TileGroup::GetInfo() const {
   std::ostringstream os;
 
-  os << "=============================================================\n";
+  os << "** TILE GROUP[#" << tile_group_id << "] **" << std::endl;
+  os << "Database[" << database_id << "] // ";
+  os << "Table[" << table_id << "] " << std::endl;
 
-  os << "TILE GROUP :\n";
-  os << "\tCatalog ::"
-     << " DB: " << database_id << " Table: " << table_id
-     << " Tile Group:  " << tile_group_id << "\n";
-
-  os << " TILE GROUP HEADER :: " << tile_group_header;
+  os << "TILE GROUP HEADER :: " << tile_group_header << std::endl;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     Tile *tile = GetTile(tile_itr);
-    if (tile != nullptr) os << (*tile);
+    if (tile != nullptr) {
+      os << std::endl << (*tile);
+    }
   }
 
-  auto header = GetHeader();
-  if (header != nullptr) os << (*header);
+  // auto header = GetHeader();
+  // if (header != nullptr) os << (*header);
 
-  os << "=============================================================\n";
-
-  return os.str().c_str();
+  return os.str();
 }
 
 }  // End storage namespace

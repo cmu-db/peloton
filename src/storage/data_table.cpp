@@ -15,25 +15,26 @@
 
 #include "brain/clusterer.h"
 #include "brain/sample.h"
+#include "catalog/catalog.h"
+#include "catalog/foreign_key.h"
+#include "common/exception.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "common/exception.h"
-#include "catalog/foreign_key.h"
-#include "catalog/catalog.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "logging/log_manager.h"
-#include "storage/tile_group.h"
-#include "storage/tuple.h"
-#include "storage/tile.h"
-#include "storage/tile_group_header.h"
-#include "storage/tile_group_factory.h"
 #include "storage/abstract_table.h"
-#include "storage/database.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tile_group_header.h"
+#include "storage/tuple.h"
+#include "util/stringbox_util.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -82,7 +83,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
 }
 
 DataTable::~DataTable() {
-
   // clean up tile groups by dropping the references in the catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_groups_size = tile_groups_.GetSize();
@@ -160,7 +160,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
-
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -245,7 +244,6 @@ ItemPointer DataTable::AcquireVersion() {
 bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
                                ItemPointer *index_entry_ptr) {
-
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
@@ -303,7 +301,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
 // insert tuple into a table that is without index.
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
-
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
@@ -332,7 +329,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location,
                                 concurrency::Transaction *transaction,
                                 ItemPointer **index_entry_ptr) {
-
   int index_count = GetIndexCount();
 
   size_t active_indirection_array_id =
@@ -479,8 +475,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(
+    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -637,7 +633,6 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
 
 oid_t DataTable::AddDefaultIndirectionArray(
     const size_t &active_indirection_array_id) {
-
   auto &manager = catalog::Manager::GetInstance();
   oid_t indirection_array_id = manager.GetNextIndirectionArrayId();
 
@@ -712,7 +707,6 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   auto tile_groups_exists = tile_groups_.Contains(tile_group_id);
 
   if (tile_groups_exists == false) {
-
     tile_groups_.Append(tile_group_id);
 
     LOG_TRACE("Added a tile group ");
@@ -732,7 +726,6 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
 // NOTE: This function is only used in test cases.
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
-
   size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
 
   active_tile_groups_[active_tile_group_id] = tile_group;
@@ -772,7 +765,6 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
 }
 
 void DataTable::DropTileGroups() {
-
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_groups_size = tile_groups_.GetSize();
   std::size_t tile_groups_itr;
@@ -794,62 +786,30 @@ void DataTable::DropTileGroups() {
 }
 
 const std::string DataTable::GetInfo() const {
-  std::ostringstream os;
-
-  // os << "=====================================================\n";
-  // os << "TABLE :\n";
-
-  oid_t tile_group_count = GetTileGroupCount();
-  // os << "Tile Group Count : " << tile_group_count << "\n";
-
+  std::ostringstream dataBuffer;
+  oid_t tile_group_count = this->GetTileGroupCount();
   oid_t tuple_count = 0;
-  oid_t table_id = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
-    auto tile_group = GetTileGroup(tile_group_itr);
-    table_id = tile_group->GetTableId();
+    if (tile_group_itr > 0) dataBuffer << std::endl;
+
+    auto tile_group = this->GetTileGroup(tile_group_itr);
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
-    // os << "Tile Group Id  : " << tile_group_itr
-    //    << " Tuple Count : " << tile_tuple_count << "\n";
-    // os << (*tile_group);
-
+    std::string tileData = tile_group->GetInfo();
+    //    dataBuffer << tileData;
+    dataBuffer << peloton::StringUtil::Prefix(
+        peloton::StringBoxUtil::Box(tileData), GETINFO_SPACER);
     tuple_count += tile_tuple_count;
   }
 
-  os << "Table " << table_id << " Tuple Count :: " << tuple_count << "\n";
+  std::ostringstream output;
+  output << "Table #" << table_oid << " [";
+  output << "NumTuples=" << tuple_count << ", ";
+  output << "NumTiles=" << tile_group_count << "]" << std::endl;
+  output << dataBuffer.str();
 
-  // os << "=====================================================\n";
-
-  return os.str();
-}
-
-void DataTable::PrintTable() {
-  std::ostringstream os;
-
-  // os << "=====================================================\n";
-  // os << "TABLE :\n";
-
-  oid_t tile_group_count = GetTileGroupCount();
-  // os << "Tile Group Count : " << tile_group_count << "\n";
-
-  oid_t tuple_count = 0;
-  oid_t table_id = 0;
-  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
-    auto tile_group = GetTileGroup(tile_group_itr);
-    table_id = tile_group->GetTableId();
-    auto tile_tuple_count = tile_group->GetNextTupleSlot();
-
-    for (oid_t tuple_id = 0; tuple_id < tile_tuple_count; tuple_id++) {
-      common::Value value = tile_group->GetValue(tuple_id, 0);
-    }
-    os << "Tile Group Id  : " << tile_group_itr
-       << " Tuple Count : " << tile_tuple_count << "\n";
-    os << (*tile_group) << table_id;
-
-    tuple_count += tile_tuple_count;
-  }
+  return output.str();
 }
 
 //===--------------------------------------------------------------------===//
@@ -878,7 +838,6 @@ void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
 
 std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
     const oid_t &index_oid) {
-
   std::shared_ptr<index::Index> ret_index;
   auto index_count = indexes_.GetSize();
 
@@ -917,7 +876,6 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 }
 
 std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
-
   PL_ASSERT(index_offset < indexes_.GetSize());
   auto ret_index = indexes_.Find(index_offset);
 

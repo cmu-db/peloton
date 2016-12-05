@@ -19,8 +19,8 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "storage/tuple.h"
 #include "common/value.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace storage {
@@ -173,8 +173,7 @@ size_t Tuple::ExportSerializationSize() const {
         // 32 bit length preceding value and
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) +
-                    GetValue(column_itr).GetLength());
+          bytes += (sizeof(int32_t) + GetValue(column_itr).GetLength());
         }
         break;
 
@@ -201,8 +200,7 @@ size_t Tuple::GetUninlinedMemorySize() const {
            (GetType(column_itr) == common::Type::VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) +
-                    GetValue(column_itr).GetLength());
+          bytes += (sizeof(int32_t) + GetValue(column_itr).GetLength());
         }
       }
     }
@@ -371,9 +369,8 @@ void Tuple::SetAllNulls() {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    common::Value value = (
-        common::ValueFactory::GetNullValueByType(
-            tuple_schema->GetType(column_itr)));
+    common::Value value = (common::ValueFactory::GetNullValueByType(
+        tuple_schema->GetType(column_itr)));
     SetValue(column_itr, value, nullptr);
   }
 }
@@ -384,9 +381,8 @@ void Tuple::SetAllZeros() {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    common::Value value(
-        common::ValueFactory::GetZeroValueByType(
-            tuple_schema->GetType(column_itr)));
+    common::Value value(common::ValueFactory::GetZeroValueByType(
+        tuple_schema->GetType(column_itr)));
     SetValue(column_itr, value, nullptr);
   }
 }
@@ -413,7 +409,7 @@ int Tuple::Compare(const Tuple &other) const {
 int Tuple::Compare(const Tuple &other,
                    const std::vector<oid_t> &columns) const {
   for (auto column_itr : columns) {
-    common::Value lhs =(GetValue(column_itr));
+    common::Value lhs = (GetValue(column_itr));
     common::Value rhs = (other.GetValue(column_itr));
     common::Value res_gt = (lhs.CompareGreaterThan(rhs));
     if (res_gt.IsTrue()) {
@@ -465,17 +461,22 @@ const std::string Tuple::GetInfo() const {
   std::stringstream os;
 
   oid_t column_count = GetColumnCount();
+  bool first = true;
+  os << "(";
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    os << "(";
+    if (first) {
+      first = false;
+    } else {
+      os << ", ";
+    }
     if (IsNull(column_itr)) {
       os << "<NULL>";
     } else {
       common::Value val = (GetValue(column_itr));
-      os << val.GetInfo();
+      os << val.ToString();
     }
-    os << ")";
   }
-
+  os << ")";
   return os.str();
 }
 
