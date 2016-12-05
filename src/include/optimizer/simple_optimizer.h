@@ -84,18 +84,16 @@ class SimpleOptimizer : public AbstractOptimizer {
 
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
-      storage::DataTable* target_table, std::vector<oid_t> &column_ids,
+      storage::DataTable *target_table, std::vector<oid_t> &column_ids,
       expression::AbstractExpression *predicate, bool for_update);
-
-
 
   // create a copy plan for a copy statement
   static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
       parser::CopyStatement *copy_stmt);
 
   static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
-  static std::unique_ptr<planner::AbstractPlan>
-      CreateHackingNestedLoopJoinPlan();
+  static std::unique_ptr<planner::AbstractPlan> CreateHackingNestedLoopJoinPlan(
+      const parser::SelectStatement *statement);
 };
 }  // namespace optimizer
 }  // namespace peloton

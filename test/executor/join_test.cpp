@@ -25,8 +25,8 @@
 #include "executor/nested_loop_join_executor.h"
 
 #include "expression/abstract_expression.h"
-#include "expression/expression_util.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
 
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
@@ -63,10 +63,11 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(0),
-       ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(
+      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(0),
+                           ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 // PLAN_NODE_TYPE_NESTLOOP is picked out as a separated test
@@ -92,13 +93,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>>
-        &table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(size_t table_tile_group_count,
-                             MockExecutor *table_scan_executor,
-                             std::vector<std::unique_ptr<executor::LogicalTile>>
-                                 &table_logical_tile_ptrs);
+void ExpectNormalTileResults(
+    size_t table_tile_group_count, MockExecutor *table_scan_executor,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -232,6 +233,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   for (int rowid = 0; rowid < num_rows; rowid++) {
+
     storage::Tuple tuple(schema, allocate);
 
     // First column is unique in this case
@@ -324,7 +326,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
       index, key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate_scan = nullptr;
-  std::vector<oid_t> column_ids({0, 1, 3});
+  std::vector<oid_t> column_ids({0, 1, 3});  // COL_A, B, D
 
   // Create plan node.
   planner::IndexScanPlan left_table_node(left_table.get(), predicate_scan,
@@ -941,18 +943,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>>
-        &table_logical_tile_ptrs) {
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(size_t table_tile_group_count,
-                             MockExecutor *table_scan_executor,
-                             std::vector<std::unique_ptr<executor::LogicalTile>>
-                                 &table_logical_tile_ptrs) {
+void ExpectNormalTileResults(
+    size_t table_tile_group_count, MockExecutor *table_scan_executor,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {
@@ -983,7 +985,7 @@ void ExpectNormalTileResults(size_t table_tile_group_count,
       EXPECT_CALL(*table_scan_executor, GetOutput())
           .InSequence(get_output_sequence)
           .WillOnce(
-              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
+               Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
     }
   }
 }

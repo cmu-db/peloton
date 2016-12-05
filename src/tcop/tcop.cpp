@@ -105,7 +105,8 @@ Result TrafficCop::ExecuteStatement(
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
     rows_changed = status.m_processed;
     return status.m_result;
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
@@ -140,7 +141,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     LOG_DEBUG("Statement Prepared!");
     return std::move(statement);
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }
