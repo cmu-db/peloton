@@ -25,8 +25,8 @@
 #include "executor/nested_loop_join_executor.h"
 
 #include "expression/abstract_expression.h"
-#include "expression/expression_util.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
 
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
@@ -233,6 +233,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   for (int rowid = 0; rowid < num_rows; rowid++) {
+
     storage::Tuple tuple(schema, allocate);
 
     // First column is unique in this case
