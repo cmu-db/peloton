@@ -105,7 +105,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
                                                             "order_line");
           // auto child_SelectPlan = CreateHackingJoinPlan();
-          auto child_SelectPlan = CreateHackingNestedLoopJoinPlan();
+          auto child_SelectPlan = CreateHackingNestedLoopJoinPlan(select_stmt);
           child_plan = std::move(child_SelectPlan);
           break;
         }
@@ -989,7 +989,8 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 }
 
 std::unique_ptr<planner::AbstractPlan>
-SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
+SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
+    const parser::SelectStatement* statement) {
   /*
   * "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
   + " FROM " + TPCCConstants.TABLENAME_ORDERLINE + ", " +
@@ -1163,6 +1164,11 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan() {
   LOG_DEBUG("Aggregation plan constructed");
 
   agg_plan->AddChild(std::move(nested_join_plan_node));
+
+  for (auto col : *statement->select_list) {
+    expression::ExpressionUtil::TransformExpression(
+        (catalog::Schema*)stock_table->GetSchema(), col);
+  }
 
   return std::move(agg_plan);
 }

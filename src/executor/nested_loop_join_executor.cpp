@@ -166,8 +166,6 @@ bool NestedLoopJoinExecutor::DExecute() {
         return BuildOuterJoinOutput();
       }
 
-      PL_ASSERT(left_result_itr_ == 0);
-
       // Right child is finished, no more tiles
       for (;;) {
         if (children_[1]->Execute() == true) {
