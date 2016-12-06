@@ -32,8 +32,7 @@ namespace test {
 // turn-on LOG_TRACE.
 void SQLTestsUtil::ShowTable(std::string database_name,
                              std::string table_name) {
-  std::vector<ResultType> result;
-  ExecuteSQLQuery("SELECT * FROM " + database_name + "." + table_name, result);
+  ExecuteSQLQuery("SELECT * FROM " + database_name + "." + table_name);
 }
 
 // Execute a SQL query end-to-end
@@ -50,6 +49,19 @@ Result SQLTestsUtil::ExecuteSQLQuery(
 
 Result SQLTestsUtil::ExecuteSQLQuery(const std::string query,
                                      std::vector<ResultType> &result) {
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  // execute the query using tcop
+  auto status = tcop::TrafficCop::GetInstance().ExecuteStatement(
+      query, result, tuple_descriptor, rows_affected, error_message);
+
+  return status;
+}
+
+Result SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
+  std::vector<ResultType> result;
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
   int rows_affected;

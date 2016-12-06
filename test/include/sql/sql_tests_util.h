@@ -38,6 +38,9 @@ class SQLTestsUtil {
   // A simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query,
                                 std::vector<ResultType> &result);
+
+  // A another simpler wrapper around ExecuteSQLQuery
+  static Result ExecuteSQLQuery(const std::string query);
 };
 }  // namespace test
 }  // namespace peloton
