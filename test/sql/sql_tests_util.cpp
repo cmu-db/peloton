@@ -53,7 +53,8 @@ void SQLTestsUtil::ShowTable(std::string database_name,
 
 // Execute a SQL query end-to-end
 void SQLTestsUtil::ExecuteSQLQuery(const std::string statement_name,
-                                   const std::string query_string) {
+                                   const std::string query_string,
+                                   std::vector<ResultType> &result) {
   LOG_INFO("Query: %s", query_string.c_str());
   static std::unique_ptr<Statement> statement;
   statement.reset(new Statement(statement_name, query_string));
@@ -66,7 +67,6 @@ void SQLTestsUtil::ExecuteSQLQuery(const std::string statement_name,
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<common::Value> params;
-  std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
   std::vector<int> result_format;
@@ -78,7 +78,6 @@ void SQLTestsUtil::ExecuteSQLQuery(const std::string statement_name,
       bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
                                         result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
-  ShowTable(DEFAULT_DB_NAME, "department_table");
 }
 }  // namespace test
 }  // namespace peloton

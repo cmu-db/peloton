@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "common/statement.h"
+
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
@@ -27,7 +29,8 @@ class SQLTestsUtil {
 
   // Execute a SQL query end-to-end
   static void ExecuteSQLQuery(const std::string statement_name,
-                              const std::string query_string);
+                              const std::string query_string,
+                              std::vector<ResultType> &result);
 };
 }  // namespace test
 }  // namespace peloton

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// index_scan_test.cpp
+// index_scan_sql_test.cpp
 //
-// Identification: test/executor/index_scan_test.cpp
+// Identification: test/sql/index_scan_sql_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -59,40 +59,45 @@ TEST_F(IndexScanSQLTests, SQLTest) {
             1);
   LOG_INFO("Table created!");
 
+  std::vector<ResultType> result;
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
       "INSERT",
-      "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
+      "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');",
+      result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
       "INSERT",
-      "INSERT INTO department_table(dept_id,dept_name) VALUES (2, 'hello_2');");
+      "INSERT INTO department_table(dept_id,dept_name) VALUES (2, 'hello_2');",
+      result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
       "INSERT",
-      "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
+      "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');",
+      result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Select a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "SELECT STAR", "SELECT * FROM department_table WHERE dept_id = 1;");
+      "SELECT STAR", "SELECT * FROM department_table WHERE dept_id = 1;",
+      result);
   LOG_INFO("Tuple selected");
 
   LOG_INFO("Select a column...");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT COLUMN",
-      "SELECT dept_name FROM department_table WHERE dept_id = 2;");
+      "SELECT dept_name FROM department_table WHERE dept_id = 2;", result);
   LOG_INFO("Column selected");
 
   LOG_INFO("Select COUNT(*)...");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT AGGREGATE",
-      "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;");
+      "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;", result);
   LOG_INFO("Aggregation selected");
 
   // free the database just created
