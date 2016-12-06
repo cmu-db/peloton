@@ -63,40 +63,34 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "INSERT",
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');",
       result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "INSERT",
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2, 'hello_2');",
       result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "INSERT",
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');",
       result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Select a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "SELECT STAR", "SELECT * FROM department_table WHERE dept_id = 1;",
-      result);
+      "SELECT * FROM department_table WHERE dept_id = 1;", result);
   LOG_INFO("Tuple selected");
 
   LOG_INFO("Select a column...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "SELECT COLUMN",
       "SELECT dept_name FROM department_table WHERE dept_id = 2;", result);
   LOG_INFO("Column selected");
 
   LOG_INFO("Select COUNT(*)...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "SELECT AGGREGATE",
       "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;", result);
   LOG_INFO("Aggregation selected");
 
