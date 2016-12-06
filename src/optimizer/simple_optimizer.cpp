@@ -16,8 +16,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
-#include "expression/expression_util.h"
 #include "expression/aggregate_expression.h"
+#include "expression/expression_util.h"
 #include "expression/function_expression.h"
 #include "expression/star_expression.h"
 #include "parser/sql_statement.h"
@@ -25,16 +25,16 @@
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/aggregate_plan.h"
+#include "planner/copy_plan.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/drop_plan.h"
-#include "planner/nested_loop_join_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
-#include "planner/copy_plan.h"
 #include "planner/limit_plan.h"
+#include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -53,9 +53,9 @@ class AbstractPlan;
 }
 namespace optimizer {
 
-SimpleOptimizer::SimpleOptimizer() {};
+SimpleOptimizer::SimpleOptimizer(){};
 
-SimpleOptimizer::~SimpleOptimizer() {};
+SimpleOptimizer::~SimpleOptimizer(){};
 
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList>& parse_tree) {
@@ -108,8 +108,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           auto child_SelectPlan = CreateHackingNestedLoopJoinPlan(select_stmt);
           child_plan = std::move(child_SelectPlan);
           break;
-        }
-        catch (Exception& e) {
+        } catch (Exception& e) {
           throw NotImplementedException("Error: Joins are not implemented yet");
         }
       }
@@ -234,9 +233,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   ->GetColumnName());
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            std::string col_name((
-                (expression::TupleValueExpression*)select_stmt->select_list->at(
-                    column_ctr))->GetColumnName());
+            std::string col_name(((expression::TupleValueExpression*)
+                                      select_stmt->select_list->at(column_ctr))
+                                     ->GetColumnName());
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -274,9 +273,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   ->GetColumnName());
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            std::string col_name((
-                (expression::TupleValueExpression*)select_stmt->select_list->at(
-                    column_ctr))->GetColumnName());
+            std::string col_name(((expression::TupleValueExpression*)
+                                      select_stmt->select_list->at(column_ctr))
+                                     ->GetColumnName());
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -321,10 +320,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           if (expression::ExpressionUtil::IsAggregateExpression(
                   expr->GetExpressionType())) {
             auto agg_expr = (expression::AggregateExpression*)expr;
-            LOG_TRACE("Expression type in Function Expression: %s",
-                      ExpressionTypeToString(
-                          func_expr->expr->GetExpressionType()).c_str());
-            LOG_TRACE("Distinct flag: %d", func_expr->distinct);
+            LOG_TRACE(
+                "Expression type in Function Expression: %s",
+                ExpressionTypeToString(expr->GetExpressionType()).c_str());
+            LOG_TRACE("Distinct flag: %d", agg_expr->distinct_);
 
             // Count a column expression
             if (agg_expr->GetChild(0) != nullptr &&
@@ -335,10 +334,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_TRACE("Function name: %s",
                         ((expression::TupleValueExpression*)agg_expr)
                             ->GetExpressionName());
-              LOG_TRACE("Aggregate type: %s",
-                        ExpressionTypeToString(
-                            ParserExpressionNameToExpressionType(
-                                func_expr->GetExpressionName())).c_str());
+              LOG_TRACE(
+                  "Aggregate type: %s",
+                  ExpressionTypeToString(ParserExpressionNameToExpressionType(
+                                             expr->GetExpressionName()))
+                      .c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   agg_expr->GetExpressionType(), agg_over->Copy(),
                   agg_expr->distinct_);
@@ -571,7 +571,6 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
 std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
     parser::CopyStatement* copy_stmt) {
-
   std::string table_name(copy_stmt->cpy_table->GetTableName());
   bool deserialize_parameters = false;
 
@@ -777,14 +776,19 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-            expression->GetModifiableChild(1))->GetValue());
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))->GetValueType());
+                      expression->GetModifiableChild(1))
+                      ->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetParameterOffsetValue(
-            reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableChild(1))->GetValueIdx()).Copy());
+        values.push_back(
+            common::ValueFactory::GetParameterOffsetValue(
+                reinterpret_cast<expression::ParameterValueExpression*>(
+                    expression->GetModifiableChild(1))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -802,14 +806,19 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-            expression->GetModifiableChild(1))->GetValue());
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))->GetValueType());
+                      expression->GetModifiableChild(0))
+                      ->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetParameterOffsetValue(
-            reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableChild(0))->GetValueIdx()).Copy());
+        values.push_back(
+            common::ValueFactory::GetParameterOffsetValue(
+                reinterpret_cast<expression::ParameterValueExpression*>(
+                    expression->GetModifiableChild(0))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
