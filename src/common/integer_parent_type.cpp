@@ -21,33 +21,25 @@
 namespace peloton {
 namespace common {
 
-IntegerParentType::IntegerParentType(TypeId type)
-                     : NumericType(type) {
-}
+IntegerParentType::IntegerParentType(TypeId type) : NumericType(type) {}
 
-
-
-Value IntegerParentType::Min(const Value& left, const Value &right) const {
- left.CheckInteger();
+Value IntegerParentType::Min(const Value& left, const Value& right) const {
+  left.CheckInteger();
   left.CheckComparable(right);
-  if (left.IsNull() || right.IsNull())
-    return left.OperateNull(right);
+  if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
 
-  Value cmp = (left.CompareGreaterThanEquals(right));
-  if (cmp.IsTrue())
-    return left.Copy();
+  Value cmp = (left.CompareLessThan(right));
+  if (cmp.IsTrue()) return left.Copy();
   return right.Copy();
 }
 
-Value IntegerParentType::Max(const Value& left, const Value &right) const {
+Value IntegerParentType::Max(const Value& left, const Value& right) const {
   left.CheckInteger();
   left.CheckComparable(right);
-  if (left.IsNull() || right.IsNull())
-    return left.OperateNull(right);
+  if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
 
   Value cmp = (left.CompareGreaterThanEquals(right));
-  if (cmp.IsTrue())
-    return left.Copy();
+  if (cmp.IsTrue()) return left.Copy();
   return right.Copy();
 }
 
