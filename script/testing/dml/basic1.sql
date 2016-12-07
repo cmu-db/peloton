@@ -18,42 +18,42 @@ insert into foo values(4, 400);
 insert into foo values(5, 400);
 insert into foo values(5, 500); -- should fail
 
-select * from foo;
+select * from foo order by id;
 
 -- select
 
-select * from foo where id < 3;
+select * from foo where id < 3 order by id;
 
-select * from foo where year > 200;
+select * from foo where year > 200 order by id;
 
 -- delete
 
 delete from foo where year = 200;
-select * from foo;
+select * from foo order by id;
 
 
 -- -- update
 
 update foo set year = 3000 where id = 3;
-select * from foo;
+select * from foo order by id;
 
 update foo set year = 1000 where year = 100; 
-select * from foo;
+select * from foo order by id;
 
 update foo set id = 3 where year = 1000; -- should fail
-select * from foo;
+select * from foo order by id;
 
 update foo set id= 10 where year = 1000;
-select * from foo;
+select * from foo order by id;
 
 -- insert again
 
 insert into foo values (2, 2000);
-select * from foo;
+select * from foo order by id;
 
 insert into foo values (4, 4000); -- should fail
-select * from foo;
+select * from foo order by id;
 
 insert into foo values (1, 1000);
-select * from foo;
+select * from foo order by id;
 
