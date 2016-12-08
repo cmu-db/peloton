@@ -63,8 +63,8 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
     col_id = schema->GetColumnID(std::string(update->column));
     column_ids.push_back(col_id);
     auto update_expr = update->value->Copy();
-    expression::ExpressionUtil::TransformExpression(
-        target_table_->GetSchema(), update_expr);
+    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                    update_expr);
     tlist.emplace_back(col_id, update_expr);
   }
 
@@ -72,9 +72,10 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   for (uint i = 0; i < schema_columns.size(); i++) {
     bool is_in_target_list = false;
     for (auto col_id : column_ids) {
-      if (schema_columns[i].column_name == schema_columns[col_id].column_name)
+      if (schema_columns[i].column_name == schema_columns[col_id].column_name) {
         is_in_target_list = true;
-      break;
+        break;
+      }
     }
     if (is_in_target_list == false)
       dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
@@ -85,8 +86,8 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   project_info_ = std::move(project_info);
 
   where_ = parse_tree->where->Copy();
-  expression::ExpressionUtil::TransformExpression(
-      target_table_->GetSchema(), where_);
+  expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                  where_);
 }
 
 // Creates the update plan with sequential scan.

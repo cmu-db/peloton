@@ -50,7 +50,7 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
 
 void LibeventSocket::TransitState(ConnState next_state) {
   if (next_state != state)
-    LOG_TRACE("conn %d transit to state %d", conn->sock_fd, (int)next_state);
+    LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
   state = next_state;
 }
 
