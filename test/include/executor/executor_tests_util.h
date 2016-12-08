@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "common/types.h"
 
@@ -47,6 +46,7 @@ class Backend;
 class TileGroup;
 class DataTable;
 class Tuple;
+class Database;
 }
 
 #define TESTS_TUPLES_PER_TILEGROUP 5
@@ -56,6 +56,13 @@ namespace test {
 
 class ExecutorTestsUtil {
  public:
+  /**
+   * @brief Intializes the catalog with a new database with the give name.
+   */
+  static storage::Database *InitializeDatabase(const std::string &db_name);
+
+  static void DeleteDatabase(const std::string &db_name);
+
   /**
    * @brief Creates a basic tile group with allocated but not populated
    *        tuples.

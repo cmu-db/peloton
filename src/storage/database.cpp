@@ -13,11 +13,11 @@
 #include <sstream>
 
 #include "catalog/foreign_key.h"
-#include "storage/database.h"
-#include "storage/table_factory.h"
+#include "common/exception.h"
 #include "common/logger.h"
 #include "index/index.h"
-#include "common/exception.h"
+#include "storage/database.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace storage {
@@ -46,16 +46,14 @@ void Database::AddTable(storage::DataTable *table) {
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   for (auto table : tables)
     if (table->GetOid() == table_oid) return table;
-  throw CatalogException("Table with oid = " + std::to_string(table_oid) +
-                         " is not found");
+  throw CatalogException("Table with oid = " + std::to_string(table_oid) + " is not found");
   return nullptr;
 }
 
-storage::DataTable *Database::GetTableWithName(const std::string table_name)
-    const {
+storage::DataTable *Database::GetTableWithName(const std::string table_name) const {
   for (auto table : tables)
     if (table->GetName() == table_name) return table;
-  throw CatalogException("Table " + table_name + " is not found");
+  throw CatalogException("Table '" + table_name + "' does not exist");
   return nullptr;
 }
 
@@ -103,8 +101,7 @@ const std::string Database::GetInfo() const {
   for (auto table : tables) {
     if (table != nullptr) {
       os << "(" << ++table_itr << "/" << table_count << ") "
-         << "Table Name(" << table->GetOid() << ") : " << table->GetName()
-         << std::endl;
+         << "Table Name(" << table->GetOid() << ") : " << table->GetName() << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 
@@ -133,8 +130,7 @@ const std::string Database::GetInfo() const {
         os << "foreign tables \n";
 
         oid_t foreign_key_count = table->GetForeignKeyCount();
-        for (oid_t foreign_key_itr = 0; foreign_key_itr < foreign_key_count;
-             foreign_key_itr++) {
+        for (oid_t foreign_key_itr = 0; foreign_key_itr < foreign_key_count; foreign_key_itr++) {
           auto foreign_key = table->GetForeignKey(foreign_key_itr);
 
           auto sink_table_oid = foreign_key->GetSinkTableOid();

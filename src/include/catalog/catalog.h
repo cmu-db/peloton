@@ -12,15 +12,15 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "catalog/schema.h"
-#include "storage/database.h"
-#include "storage/data_table.h"
-#include "storage/tuple.h"
-#include "storage/table_factory.h"
-#include "common/value_factory.h"
 #include "catalog/catalog_util.h"
+#include "catalog/schema.h"
+#include "common/types.h"
+#include "common/value_factory.h"
 #include "common/varlen_pool.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
+#include "storage/table_factory.h"
+#include "storage/tuple.h"
 
 #define CATALOG_DATABASE_NAME "catalog_db"
 #define DATABASE_CATALOG_NAME "database_catalog"
@@ -53,7 +53,7 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 
 // information about functions (for FunctionExpression)
-struct FunctionData{
+struct FunctionData {
   // name of the function
   std::string func_name_;
   // number of arguments
@@ -61,11 +61,10 @@ struct FunctionData{
   // funtion's return type
   common::Type::TypeId return_type_;
   // pointer to the funtion
-  common::Value (*func_ptr_)(const std::vector<common::Value>&);
+  common::Value (*func_ptr_)(const std::vector<common::Value> &);
 };
 
 class Catalog {
-
  public:
   // Global Singleton
   static Catalog *GetInstance(void);
@@ -112,6 +111,9 @@ class Catalog {
   // Drop a table
   Result DropTable(std::string database_name, std::string table_name,
                    concurrency::Transaction *txn);
+
+  // Returns true if the catalog contains the given database with the id
+  bool HasDatabase(const oid_t db_oid) const;
 
   // Find a database using its id
   // Throw CatalogException if not found
@@ -177,9 +179,10 @@ class Catalog {
   //===--------------------------------------------------------------------===//
 
   // add and get methods for functions
-  void AddFunction(const std::string &name, const size_t num_arguments,
+  void AddFunction(
+      const std::string &name, const size_t num_arguments,
       const common::Type::TypeId return_type,
-      common::Value (*func_ptr)(const std::vector<common::Value>&));
+      common::Value (*func_ptr)(const std::vector<common::Value> &));
 
   FunctionData GetFunction(const std::string &name);
 
@@ -204,7 +207,8 @@ class Catalog {
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
 
-  // map of function names to data about functions (number of arguments, function ptr, return type)
+  // map of function names to data about functions (number of arguments,
+  // function ptr, return type)
   std::unordered_map<std::string, FunctionData> functions_;
 
  public:

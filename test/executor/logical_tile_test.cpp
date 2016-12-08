@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -25,9 +24,9 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+#include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
-#include "storage/tile.h"
 
 #include "executor/executor_tests_util.h"
 
@@ -75,12 +74,15 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   auto tuple_id3 = tile_group->InsertTuple(&tuple1);
 
   ItemPointer *index_entry_ptr = nullptr;
-  txn_manager.PerformInsert(txn,
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id1), index_entry_ptr);
-  txn_manager.PerformInsert(txn,
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id2), index_entry_ptr);
-  txn_manager.PerformInsert(txn,
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id3), index_entry_ptr);
+  txn_manager.PerformInsert(
+      txn, ItemPointer(tile_group->GetTileGroupId(), tuple_id1),
+      index_entry_ptr);
+  txn_manager.PerformInsert(
+      txn, ItemPointer(tile_group->GetTileGroupId(), tuple_id2),
+      index_entry_ptr);
+  txn_manager.PerformInsert(
+      txn, ItemPointer(tile_group->GetTileGroupId(), tuple_id3),
+      index_entry_ptr);
 
   txn_manager.CommitTransaction(txn);
 
@@ -108,7 +110,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
     logical_tile->AddColumn(base_tile_ref, column_itr, column_itr);
   }
 
-  LOG_INFO("%s", logical_tile->GetInfo().c_str());
+  LOG_TRACE("%s", logical_tile->GetInfo().c_str());
 
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (2 BASE TILE)
@@ -140,7 +142,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
                             column_count1 + column_itr);
   }
 
-  LOG_INFO("%s", logical_tile->GetInfo().c_str());
+  LOG_TRACE("%s", logical_tile->GetInfo().c_str());
 }
 
 }  // End test namespace
