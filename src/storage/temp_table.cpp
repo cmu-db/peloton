@@ -22,7 +22,9 @@ namespace storage {
 
 TempTable::TempTable(const oid_t &table_oid, catalog::Schema *schema,
                      const bool own_schema)
-    : AbstractTable(table_oid, schema, own_schema) {}
+    : AbstractTable(table_oid, schema, own_schema) {
+  // Nothing to see, nothing to do
+}
 
 }  // End storage namespace
 }  // End peloton namespace

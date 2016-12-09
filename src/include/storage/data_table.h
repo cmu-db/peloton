@@ -38,8 +38,6 @@ extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
 
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
-
 namespace brain {
 class Sample;
 }
@@ -237,6 +235,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
+
+  inline std::string GetName() const { return (table_name); }
 
   inline oid_t GetDatabaseOid() const { return (database_oid); }
 

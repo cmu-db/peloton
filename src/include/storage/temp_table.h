@@ -26,7 +26,9 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 /**
- *
+ * A TempTable is a non-thread-safe place to store tuples that don't
+ * need to be durable, don't need indexes, don't need constraints.
+ * This is designed to be faster than DataTable.
  */
 class TempTable : public AbstractTable {
  public:
@@ -50,11 +52,15 @@ class TempTable : public AbstractTable {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  virtual bool HasPrimaryKey() const = 0;
+  inline bool HasPrimaryKey() const {return (false)};
 
-  virtual bool HasUniqueConstraints() const = 0;
+  inline bool HasUniqueConstraints() const {return (false)};
 
-  virtual bool HasForeignKeys() const = 0;
+  inline bool HasForeignKeys() const {return (false)};
+
+ private:
+  // This is where we're actually going to store the data for this
+  storage::TileGroup *data_;
 };
 
 }  // End storage namespace

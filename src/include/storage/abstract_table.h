@@ -19,9 +19,16 @@
 #include "common/printable.h"
 #include "common/types.h"
 
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <set>
 #include <string>
 
 namespace peloton {
+
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 namespace concurrency {
 class Transaction;
@@ -33,6 +40,8 @@ class Schema;
 }
 
 namespace storage {
+
+class Tuple;
 
 /**
  * Base class for all tables
@@ -68,7 +77,7 @@ class AbstractTable : public Printable {
 
   void SetSchema(catalog::Schema *given_schema) { schema = given_schema; }
 
-  const catalog::Schema *GetSchema() const { return (schema); }
+  catalog::Schema *GetSchema() const { return (schema); }
 
   virtual std::string GetName() const = 0;
 
@@ -86,6 +95,12 @@ class AbstractTable : public Printable {
   virtual bool HasForeignKeys() const = 0;
 
  protected:
+  //===--------------------------------------------------------------------===//
+  // INTERNAL METHODS
+  //===--------------------------------------------------------------------===//
+
+  column_map_type GetTileGroupLayout(LayoutType layout_type) const;
+
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//

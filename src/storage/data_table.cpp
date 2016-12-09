@@ -615,36 +615,6 @@ TileGroup *DataTable::GetTileGroupWithLayout(
   return tile_group;
 }
 
-column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
-  column_map_type column_map;
-
-  auto col_count = schema->GetColumnCount();
-
-  // pure row layout map
-  if (layout_type == LAYOUT_TYPE_ROW) {
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      column_map[col_itr] = std::make_pair(0, col_itr);
-    }
-  }
-  // pure column layout map
-  else if (layout_type == LAYOUT_TYPE_COLUMN) {
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      column_map[col_itr] = std::make_pair(col_itr, 0);
-    }
-  }
-  // hybrid layout map
-  else if (layout_type == LAYOUT_TYPE_HYBRID) {
-    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      column_map[col_itr] = std::make_pair(0, col_itr);
-    }
-  } else {
-    throw Exception("Unknown tilegroup layout option : " +
-                    std::to_string(layout_type));
-  }
-
-  return column_map;
-}
-
 oid_t DataTable::AddDefaultIndirectionArray(
     const size_t &active_indirection_array_id) {
   auto &manager = catalog::Manager::GetInstance();
