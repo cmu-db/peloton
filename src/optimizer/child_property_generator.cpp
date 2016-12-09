@@ -16,17 +16,17 @@
 namespace peloton {
 namespace optimizer {
 
-void ChildPropertyGenerator::visit(const PhysicalScan *){};
-void ChildPropertyGenerator::visit(const PhysicalComputeExprs *){};
-void ChildPropertyGenerator::visit(const PhysicalFilter *){};
-void ChildPropertyGenerator::visit(const PhysicalInnerNLJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalLeftNLJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalRightNLJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalOuterNLJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalInnerHashJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalLeftHashJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalRightHashJoin *){};
-void ChildPropertyGenerator::visit(const PhysicalOuterHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalScan *){};
+void ChildPropertyGenerator::Visit(const PhysicalComputeExprs *){};
+void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
+void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalRightNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalOuterNLJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalInnerHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
 
 } /* namespace optimizer */
 } /* namespace peloton */

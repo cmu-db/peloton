@@ -22,7 +22,7 @@ Operator::Operator() : node(nullptr) {}
 
 Operator::Operator(BaseOperatorNode *node) : node(node) {}
 
-void Operator::accept(OperatorVisitor *v) const { node->accept(v); }
+void Operator::Accept(OperatorVisitor *v) const { node->Accept(v); }
 
 std::string Operator::name() const {
   if (defined()) {

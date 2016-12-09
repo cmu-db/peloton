@@ -25,7 +25,7 @@ namespace optimizer {
 // Generate child property requirements for physical operators
 class ChildPropertyGenerator : public OperatorVisitor {
  public:
-  ChildPropertyGenerator(ColumnManager &manager) : manager(manager) {}
+  ChildPropertyGenerator(ColumnManager &manager) : manager_(manager) {}
 
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
       UNUSED_ATTRIBUTE std::shared_ptr<GroupExpression> gexpr,
@@ -34,20 +34,20 @@ class ChildPropertyGenerator : public OperatorVisitor {
         std::vector<std::pair<PropertySet, std::vector<PropertySet>>>());
   }
 
-  void visit(const PhysicalScan *) override;
-  void visit(const PhysicalComputeExprs *) override;
-  void visit(const PhysicalFilter *) override;
-  void visit(const PhysicalInnerNLJoin *) override;
-  void visit(const PhysicalLeftNLJoin *) override;
-  void visit(const PhysicalRightNLJoin *) override;
-  void visit(const PhysicalOuterNLJoin *) override;
-  void visit(const PhysicalInnerHashJoin *) override;
-  void visit(const PhysicalLeftHashJoin *) override;
-  void visit(const PhysicalRightHashJoin *) override;
-  void visit(const PhysicalOuterHashJoin *) override;
+  void Visit(const PhysicalScan *) override;
+  void Visit(const PhysicalComputeExprs *) override;
+  void Visit(const PhysicalFilter *) override;
+  void Visit(const PhysicalInnerNLJoin *) override;
+  void Visit(const PhysicalLeftNLJoin *) override;
+  void Visit(const PhysicalRightNLJoin *) override;
+  void Visit(const PhysicalOuterNLJoin *) override;
+  void Visit(const PhysicalInnerHashJoin *) override;
+  void Visit(const PhysicalLeftHashJoin *) override;
+  void Visit(const PhysicalRightHashJoin *) override;
+  void Visit(const PhysicalOuterHashJoin *) override;
 
  private:
-  ColumnManager &manager;
+  ColumnManager &manager_;
 };
 
 } /* namespace optimizer */

@@ -25,17 +25,17 @@ class OperatorVisitor {
  public:
   virtual ~OperatorVisitor(){};
 
-  virtual void visit(const PhysicalScan *) = 0;
-  virtual void visit(const PhysicalComputeExprs *) = 0;
-  virtual void visit(const PhysicalFilter *) = 0;
-  virtual void visit(const PhysicalInnerNLJoin *) = 0;
-  virtual void visit(const PhysicalLeftNLJoin *) = 0;
-  virtual void visit(const PhysicalRightNLJoin *) = 0;
-  virtual void visit(const PhysicalOuterNLJoin *) = 0;
-  virtual void visit(const PhysicalInnerHashJoin *) = 0;
-  virtual void visit(const PhysicalLeftHashJoin *) = 0;
-  virtual void visit(const PhysicalRightHashJoin *) = 0;
-  virtual void visit(const PhysicalOuterHashJoin *) = 0;
+  virtual void Visit(const PhysicalScan *) = 0;
+  virtual void Visit(const PhysicalComputeExprs *) = 0;
+  virtual void Visit(const PhysicalFilter *) = 0;
+  virtual void Visit(const PhysicalInnerNLJoin *) = 0;
+  virtual void Visit(const PhysicalLeftNLJoin *) = 0;
+  virtual void Visit(const PhysicalRightNLJoin *) = 0;
+  virtual void Visit(const PhysicalOuterNLJoin *) = 0;
+  virtual void Visit(const PhysicalInnerHashJoin *) = 0;
+  virtual void Visit(const PhysicalLeftHashJoin *) = 0;
+  virtual void Visit(const PhysicalRightHashJoin *) = 0;
+  virtual void Visit(const PhysicalOuterHashJoin *) = 0;
 };
 
 } /* namespace optimizer */

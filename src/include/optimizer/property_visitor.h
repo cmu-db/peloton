@@ -29,10 +29,10 @@ class PropertyVisitor {
  public:
   virtual ~PropertyVisitor(){};
 
-  virtual void visit(const PropertyColumns *) = 0;
-  virtual void visit(const PropertyOutputExpressions *) = 0;
-  virtual void visit(const PropertySort *) = 0;
-  virtual void visit(const PropertyPredicate *) = 0;
+  virtual void Visit(const PropertyColumns *) = 0;
+  virtual void Visit(const PropertyOutputExpressions *) = 0;
+  virtual void Visit(const PropertySort *) = 0;
+  virtual void Visit(const PropertyPredicate *) = 0;
 };
 
 } /* namespace optimizer */

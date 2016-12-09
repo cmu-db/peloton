@@ -31,7 +31,7 @@ planner::AbstractPlan *OperatorToPlanTransformer::ConvertOpExpression(
   return output_plan.get();
 }
 
-void OperatorToPlanTransformer::visit(const PhysicalScan *op) {
+void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   auto children = current_children;
   std::vector<oid_t> column_ids;
   for (Column *col : op->columns) {
@@ -48,7 +48,7 @@ void OperatorToPlanTransformer::visit(const PhysicalScan *op) {
   output_plan.reset(new planner::SeqScanPlan(op->table, predicate, column_ids));
 }
 
-void OperatorToPlanTransformer::visit(const PhysicalComputeExprs *) {
+void OperatorToPlanTransformer::Visit(const PhysicalComputeExprs *) {
   auto children = current_children;
   assert(children.size() == 2);
 
@@ -59,7 +59,8 @@ void OperatorToPlanTransformer::visit(const PhysicalComputeExprs *) {
   std::vector<Column *> proj_columns;
   std::vector<expression::AbstractExpression *> exprs;
   {
-    for (std::shared_ptr<OperatorExpression> op_expr : children[1]->Children()) {
+    for (std::shared_ptr<OperatorExpression> op_expr :
+         children[1]->Children()) {
       /*
       assert(op_expr->Op().type() == OpType::ProjectColumn);
       assert(op_expr->Children().size() == 1);
@@ -86,7 +87,7 @@ void OperatorToPlanTransformer::visit(const PhysicalComputeExprs *) {
   output_plan->AddChild(std::move(child_plan));
 }
 
-void OperatorToPlanTransformer::visit(const PhysicalFilter *) {
+void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {
   auto children = current_children;
   assert(children.size() == 2);
 
@@ -101,7 +102,7 @@ void OperatorToPlanTransformer::visit(const PhysicalFilter *) {
   output_plan->AddChild(std::move(child_plan));
 }
 
-void OperatorToPlanTransformer::visit(const PhysicalInnerNLJoin *) {
+void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {
   auto children = current_children;
   assert(children.size() == 3);
 
@@ -130,13 +131,13 @@ void OperatorToPlanTransformer::visit(const PhysicalInnerNLJoin *) {
   */
 }
 
-void OperatorToPlanTransformer::visit(const PhysicalLeftNLJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalLeftNLJoin *) {}
 
-void OperatorToPlanTransformer::visit(const PhysicalRightNLJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalRightNLJoin *) {}
 
-void OperatorToPlanTransformer::visit(const PhysicalOuterNLJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalOuterNLJoin *) {}
 
-void OperatorToPlanTransformer::visit(const PhysicalInnerHashJoin *) {
+void OperatorToPlanTransformer::Visit(const PhysicalInnerHashJoin *) {
   // auto children = current_children;
   // assert(children.size() == 2);
 
@@ -152,21 +153,22 @@ void OperatorToPlanTransformer::visit(const PhysicalInnerHashJoin *) {
   //   new planner::HashPlan();
 }
 
-void OperatorToPlanTransformer::visit(const PhysicalLeftHashJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
 
-void OperatorToPlanTransformer::visit(const PhysicalRightHashJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 
-void OperatorToPlanTransformer::visit(const PhysicalOuterHashJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
 
 void OperatorToPlanTransformer::VisitOpExpression(
     std::shared_ptr<OperatorExpression> op) {
   // LM: I don't understand why we're copying prev information here and then
   // copy them back. It seems not used anywhere.
-  std::vector<std::shared_ptr<OperatorExpression>> prev_children = current_children;
+  std::vector<std::shared_ptr<OperatorExpression>> prev_children =
+      current_children;
   auto prev_left_cols = left_columns;
   auto prev_right_cols = right_columns;
   current_children = op->Children();
-  op->Op().accept(this);
+  op->Op().Accept(this);
   current_children = prev_children;
   left_columns = prev_left_cols;
   right_columns = prev_right_cols;

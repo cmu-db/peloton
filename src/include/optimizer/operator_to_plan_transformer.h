@@ -37,27 +37,27 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   planner::AbstractPlan *ConvertOpExpression(
       std::shared_ptr<OperatorExpression> plan);
 
-  void visit(const PhysicalScan *op) override;
+  void Visit(const PhysicalScan *op) override;
 
-  void visit(const PhysicalComputeExprs *) override;
+  void Visit(const PhysicalComputeExprs *) override;
 
-  void visit(const PhysicalFilter *) override;
+  void Visit(const PhysicalFilter *) override;
 
-  void visit(const PhysicalInnerNLJoin *) override;
+  void Visit(const PhysicalInnerNLJoin *) override;
 
-  void visit(const PhysicalLeftNLJoin *) override;
+  void Visit(const PhysicalLeftNLJoin *) override;
 
-  void visit(const PhysicalRightNLJoin *) override;
+  void Visit(const PhysicalRightNLJoin *) override;
 
-  void visit(const PhysicalOuterNLJoin *) override;
+  void Visit(const PhysicalOuterNLJoin *) override;
 
-  void visit(const PhysicalInnerHashJoin *) override;
+  void Visit(const PhysicalInnerHashJoin *) override;
 
-  void visit(const PhysicalLeftHashJoin *) override;
+  void Visit(const PhysicalLeftHashJoin *) override;
 
-  void visit(const PhysicalRightHashJoin *) override;
+  void Visit(const PhysicalRightHashJoin *) override;
 
-  void visit(const PhysicalOuterHashJoin *) override;
+  void Visit(const PhysicalOuterHashJoin *) override;
 
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);

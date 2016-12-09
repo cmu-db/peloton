@@ -62,7 +62,7 @@ struct BaseOperatorNode {
 
   virtual ~BaseOperatorNode() {}
 
-  virtual void accept(OperatorVisitor *v) const = 0;
+  virtual void Accept(OperatorVisitor *v) const = 0;
 
   virtual std::string name() const = 0;
 
@@ -91,7 +91,7 @@ template <typename T>
 struct OperatorNode : public BaseOperatorNode {
   // Right now only accept physical operators, accept() of logical operators
   // will be specialized to empty function.
-  void accept(OperatorVisitor *v) const;
+  void Accept(OperatorVisitor *v) const;
 
   std::string name() const { return name_; }
 
@@ -112,7 +112,7 @@ class Operator {
 
   Operator(BaseOperatorNode *node);
 
-  void accept(OperatorVisitor *v) const;
+  void Accept(OperatorVisitor *v) const;
 
   std::string name() const;
 

@@ -226,39 +226,39 @@ Operator PhysicalOuterHashJoin::make() {
 
 //===--------------------------------------------------------------------===//
 template <typename T>
-void OperatorNode<T>::accept(OperatorVisitor *v) const {
-  v->visit((const T *)this);
+void OperatorNode<T>::Accept(OperatorVisitor *v) const {
+  v->Visit((const T *)this);
 }
 
 template <>
-void OperatorNode<LeafOperator>::accept(
+void OperatorNode<LeafOperator>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalGet>::accept(
+void OperatorNode<LogicalGet>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalProject>::accept(
+void OperatorNode<LogicalProject>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalFilter>::accept(
+void OperatorNode<LogicalFilter>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalInnerJoin>::accept(
+void OperatorNode<LogicalInnerJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalLeftJoin>::accept(
+void OperatorNode<LogicalLeftJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalRightJoin>::accept(
+void OperatorNode<LogicalRightJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalOuterJoin>::accept(
+void OperatorNode<LogicalOuterJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalAggregate>::accept(
+void OperatorNode<LogicalAggregate>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalLimit>::accept(
+void OperatorNode<LogicalLimit>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 
 //===--------------------------------------------------------------------===//

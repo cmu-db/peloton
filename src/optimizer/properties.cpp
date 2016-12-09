@@ -55,7 +55,7 @@ hash_t PropertyColumns::Hash() const {
   return hash;
 }
 
-void PropertyColumns::Accept(PropertyVisitor *v) const { v->visit(this); }
+void PropertyColumns::Accept(PropertyVisitor *v) const { v->Visit(this); }
 
 PropertySort::PropertySort(std::vector<Column *> sort_columns,
                            std::vector<bool> sort_ascending)
@@ -92,7 +92,7 @@ hash_t PropertySort::Hash() const {
   return hash;
 }
 
-void PropertySort::Accept(PropertyVisitor *v) const { v->visit(this); }
+void PropertySort::Accept(PropertyVisitor *v) const { v->Visit(this); }
 
 PropertyPredicate::PropertyPredicate(expression::AbstractExpression *predicate)
     : predicate_(predicate){};
@@ -112,7 +112,7 @@ bool PropertyPredicate::operator>=(const Property &r) const {
 // TODO: Hash the content of the predicate expression
 hash_t PropertyPredicate::Hash() const { return Property::Hash(); }
 
-void PropertyPredicate::Accept(PropertyVisitor *v) const { v->visit(this); }
+void PropertyPredicate::Accept(PropertyVisitor *v) const { v->Visit(this); }
 
 PropertyOutputExpressions::PropertyOutputExpressions(
     std::vector<std::unique_ptr<expression::AbstractExpression> > expressions)
@@ -131,7 +131,7 @@ bool PropertyOutputExpressions::operator>=(const Property &r) const {
 hash_t PropertyOutputExpressions::Hash() const { return Property::Hash(); }
 
 void PropertyOutputExpressions::Accept(PropertyVisitor *v) const {
-  v->visit(this);
+  v->Visit(this);
 }
 
 } /* namespace optimizer */
