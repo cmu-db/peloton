@@ -16,8 +16,8 @@
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/macros.h"
-#include "index/index_factory.h"
 #include "expression/string_functions.h"
+#include "index/index_factory.h"
 
 namespace peloton {
 namespace catalog {
@@ -60,7 +60,7 @@ void Catalog::CreateMetricsCatalog() {
   auto query_metrics_catalog =
       CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
   default_db->AddTable(query_metrics_catalog.release());
-  LOG_DEBUG("Metrics tables created");
+  LOG_TRACE("Metrics tables created");
 }
 
 // Creates the catalog database
@@ -75,7 +75,7 @@ void Catalog::CreateCatalogDatabase() {
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table);
   databases_.push_back(database);
-  LOG_DEBUG("Catalog database created");
+  LOG_TRACE("Catalog database created");
 }
 
 // Create a database
@@ -135,8 +135,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
       database->GetTableWithName(table_name);
       LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
       return Result::RESULT_FAILURE;
-    }
-    catch (CatalogException &e) {
+    } catch (CatalogException &e) {
       // Table doesn't exist, now create it
       oid_t database_id = database->GetOid();
       storage::DataTable *table = storage::TableFactory::GetDataTable(
@@ -167,8 +166,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
           std::move(tuple), txn);
       return Result::RESULT_SUCCESS;
     }
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_ERROR("Could not find a database with name %s", database_name.c_str());
     return Result::RESULT_FAILURE;
   }
@@ -331,8 +329,7 @@ Result Catalog::DropDatabaseWithName(std::string database_name,
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
     databases_.erase(databases_.begin() + database_offset);
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
     return Result::RESULT_FAILURE;
   }
@@ -362,8 +359,7 @@ void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
     databases_.erase(databases_.begin() + database_offset);
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
   }
 }
@@ -392,11 +388,16 @@ Result Catalog::DropTable(std::string database_name, std::string table_name,
       LOG_TRACE("Could not find table");
       return Result::RESULT_FAILURE;
     }
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_TRACE("Could not find database");
     return Result::RESULT_FAILURE;
   }
+}
+
+bool Catalog::HasDatabase(const oid_t db_oid) const {
+  for (auto database : databases_)
+    if (database->GetOid() == db_oid) return (true);
+  return (false);
 }
 
 // Find a database using its id
@@ -409,8 +410,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 }
 
 // Find a database using its name
-storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
-    const {
+storage::Database *Catalog::GetDatabaseWithName(
+    const std::string database_name) const {
   for (auto database : databases_) {
     if (database != nullptr && database->GetDBName() == database_name)
       return database;
@@ -419,8 +420,8 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
   return nullptr;
 }
 
-storage::Database *Catalog::GetDatabaseWithOffset(const oid_t database_offset)
-    const {
+storage::Database *Catalog::GetDatabaseWithOffset(
+    const oid_t database_offset) const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
@@ -630,8 +631,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {database_id_column, table_id_column, reads_column,    updates_column,
-       deletes_column,     inserts_column,  timestamp_column}));
+      {database_id_column, table_id_column, reads_column, updates_column,
+       deletes_column, inserts_column, timestamp_column}));
   return database_schema;
 }
 
@@ -669,7 +670,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
       {database_id_column, table_id_column, index_id_column, reads_column,
-       deletes_column,     inserts_column,  timestamp_column}));
+       deletes_column, inserts_column, timestamp_column}));
   return database_schema;
 }
 
@@ -730,10 +731,9 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   timestamp_column.AddConstraint(not_null_constraint);
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
-      {name_column,       database_id_column,  num_param_column,
-       param_type_column, param_format_column, param_val_column,
-       reads_column,      updates_column,      deletes_column,
-       inserts_column,    latency_column,      cpu_time_column,
+      {name_column, database_id_column, num_param_column, param_type_column,
+       param_format_column, param_val_column, reads_column, updates_column,
+       deletes_column, inserts_column, latency_column, cpu_time_column,
        timestamp_column}));
   return database_schema;
 }
@@ -751,39 +751,51 @@ Catalog::~Catalog() {
 }
 
 // add amd get methods for UDFs
-void Catalog::AddFunction(const std::string &name, const size_t num_arguments,
+void Catalog::AddFunction(
+    const std::string &name, const size_t num_arguments,
     const common::Type::TypeId return_type,
-    common::Value (*func_ptr)(const std::vector<common::Value>&)){
+    common::Value (*func_ptr)(const std::vector<common::Value> &)) {
   PL_ASSERT(functions_.count(name) == 0);
   functions_[name] = FunctionData{name, num_arguments, return_type, func_ptr};
 }
 
-FunctionData Catalog::GetFunction(const std::string &name){
-  if (functions_.count(name) == 0){
-    throw Exception("function "+ name +" not found.");
+FunctionData Catalog::GetFunction(const std::string &name) {
+  if (functions_.count(name) == 0) {
+    throw Exception("function " + name + " not found.");
   }
   return functions_[name];
 }
 
-void Catalog::RemoveFunction(const std::string &name){
+void Catalog::RemoveFunction(const std::string &name) {
   functions_.erase(name);
 }
 
-void Catalog::InitializeFunctions(){
+void Catalog::InitializeFunctions() {
   /**
    * string functions
    */
-  AddFunction("ascii", 1, common::Type::INTEGER, expression::StringFunctions::Ascii);
-  AddFunction("chr", 1, common::Type::VARCHAR, expression::StringFunctions::Chr);
-  AddFunction("substr", 3, common::Type::VARCHAR, expression::StringFunctions::Substr);
-  AddFunction("concat", 2, common::Type::VARCHAR, expression::StringFunctions::Concat);
-  AddFunction("char_length", 1, common::Type::INTEGER, expression::StringFunctions::CharLength);
-  AddFunction("octet_length", 1, common::Type::INTEGER, expression::StringFunctions::OctetLength);
-  AddFunction("repeat", 2, common::Type::VARCHAR, expression::StringFunctions::Repeat);
-  AddFunction("replace", 3, common::Type::VARCHAR, expression::StringFunctions::Replace);
-  AddFunction("ltrim", 2, common::Type::VARCHAR, expression::StringFunctions::LTrim);
-  AddFunction("rtrim", 2, common::Type::VARCHAR, expression::StringFunctions::RTrim);
-  AddFunction("btrim", 2, common::Type::VARCHAR, expression::StringFunctions::BTrim);
+  AddFunction("ascii", 1, common::Type::INTEGER,
+              expression::StringFunctions::Ascii);
+  AddFunction("chr", 1, common::Type::VARCHAR,
+              expression::StringFunctions::Chr);
+  AddFunction("substr", 3, common::Type::VARCHAR,
+              expression::StringFunctions::Substr);
+  AddFunction("concat", 2, common::Type::VARCHAR,
+              expression::StringFunctions::Concat);
+  AddFunction("char_length", 1, common::Type::INTEGER,
+              expression::StringFunctions::CharLength);
+  AddFunction("octet_length", 1, common::Type::INTEGER,
+              expression::StringFunctions::OctetLength);
+  AddFunction("repeat", 2, common::Type::VARCHAR,
+              expression::StringFunctions::Repeat);
+  AddFunction("replace", 3, common::Type::VARCHAR,
+              expression::StringFunctions::Replace);
+  AddFunction("ltrim", 2, common::Type::VARCHAR,
+              expression::StringFunctions::LTrim);
+  AddFunction("rtrim", 2, common::Type::VARCHAR,
+              expression::StringFunctions::RTrim);
+  AddFunction("btrim", 2, common::Type::VARCHAR,
+              expression::StringFunctions::BTrim);
 }
 }
 }

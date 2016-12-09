@@ -116,7 +116,7 @@ TEST_F(ParserTest, BasicTest) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
                 stmt_list->error_line, stmt_list->error_col);
     }
-    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }
 }
@@ -219,7 +219,7 @@ TEST_F(ParserTest, TransactionTest) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    LOG_INFO("%s", result->GetInfo().c_str());
+    LOG_TRACE("%s", result->GetInfo().c_str());
     delete result;
   }
 
@@ -281,7 +281,7 @@ TEST_F(ParserTest, CreateTest) {
     EXPECT_EQ(result->is_valid, true);
 
     if (result) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }
@@ -338,14 +338,13 @@ TEST_F(ParserTest, TM1Test) {
     EXPECT_EQ(result->is_valid, true);
 
     if (result) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }
 }
 
 TEST_F(ParserTest, IndexTest) {
-
   std::vector<std::string> queries;
 
   queries.push_back(
@@ -371,14 +370,13 @@ TEST_F(ParserTest, IndexTest) {
     EXPECT_EQ(result->is_valid, true);
 
     if (result) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }
 }
 
 TEST_F(ParserTest, CopyTest) {
-
   std::vector<std::string> queries;
   std::string file_path = "/home/user/output.csv";
   queries.push_back("COPY catalog_db.query_metric TO '" + file_path +
@@ -403,7 +401,7 @@ TEST_F(ParserTest, CopyTest) {
     EXPECT_STREQ(copy_stmt->file_path, "/home/user/output.csv");
 
     if (result != nullptr) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }

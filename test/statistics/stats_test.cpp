@@ -326,7 +326,7 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   txn = txn_manager.BeginTransaction();
   TransactionTestsUtil::ExecuteDelete(txn, data_table.get(),
                                       ExecutorTestsUtil::PopulatedValue(5, 0));
-  LOG_INFO("before read");
+  LOG_TRACE("before read");
   TransactionTestsUtil::ExecuteRead(
       txn, data_table.get(), ExecutorTestsUtil::PopulatedValue(1, 0), result);
   txn_manager.CommitTransaction(txn);
@@ -366,7 +366,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
                 ->GetDatabaseWithName(CATALOG_DATABASE_NAME)
                 ->GetTableCount(),
             6);
-  LOG_INFO("Table created!");
+  LOG_TRACE("Table created!");
 
   auto backend_context = stats::BackendStatsContext::GetInstance();
   // Get a query param object
@@ -387,8 +387,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple inserted!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple inserted!");
 
   // Now Updating end-to-end
   statement = StatsTestsUtil::GetUpdateStmt();
@@ -402,8 +402,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
-  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple updated!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple updated!");
 
   // Deleting end-to-end
   statement = std::move(StatsTestsUtil::GetDeleteStmt());
@@ -417,8 +417,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
-  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple deleted!");
 
   // Wait for aggregation to finish
   std::chrono::microseconds sleep_time(aggregate_interval * 2 * 1000);

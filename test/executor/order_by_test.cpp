@@ -64,7 +64,7 @@ void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
 
   // TODO: Verify
   for (UNUSED_ATTRIBUTE auto &tile : result_tiles) {
-    LOG_INFO("%s", tile->GetInfo().c_str());
+    LOG_TRACE("%s", tile->GetInfo().c_str());
   }
 }
 
