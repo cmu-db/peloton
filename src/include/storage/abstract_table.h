@@ -70,6 +70,21 @@ class AbstractTable : public Printable {
   virtual ItemPointer InsertTuple(const Tuple *tuple) = 0;
 
   //===--------------------------------------------------------------------===//
+  // TILE GROUP
+  //===--------------------------------------------------------------------===//
+
+  // Offset is a 0-based number local to the table
+  virtual std::shared_ptr<storage::TileGroup> GetTileGroup(
+      const std::size_t &tile_group_offset) const = 0;
+
+  // ID is the global identifier in the entire DBMS
+  virtual std::shared_ptr<storage::TileGroup> GetTileGroupById(
+      const oid_t &tile_group_id) const = 0;
+
+  // Number of TileGroups that the table has
+  virtual size_t GetTileGroupCount() const = 0;
+
+  //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 

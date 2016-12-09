@@ -26,5 +26,14 @@ TempTable::TempTable(const oid_t &table_oid, catalog::Schema *schema,
   // Nothing to see, nothing to do
 }
 
+ItemPointer TempTable::InsertTuple(const Tuple *tuple,
+                                   concurrency::Transaction *transaction,
+                                   ItemPointer **index_entry_ptr = nullptr) {
+  // WIP
+}
+ItemPointer TempTable::InsertTuple(const Tuple *tuple) {
+  // WIP
+}
+
 }  // End storage namespace
 }  // End peloton namespace
