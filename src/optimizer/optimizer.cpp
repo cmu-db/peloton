@@ -18,6 +18,7 @@
 #include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/property_enforcer.h"
 #include "optimizer/query_property_extractor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
@@ -65,7 +66,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   GroupID root_id = gexpr->GetGroupID();
 
   // Get the physical properties the final plan must output
-  PropertySet properties = GetQueryTreeRequiredProperties(parse_tree);
+  PropertySet properties = GetQueryRequiredProperties(parse_tree);
 
   // Explore the logically equivalent plans from the root group
   ExploreGroup(root_id);
@@ -98,8 +99,7 @@ std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
   return gexpr;
 }
 
-PropertySet Optimizer::GetQueryTreeRequiredProperties(
-    parser::SQLStatement *tree) {
+PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
   QueryPropertyExtractor converter(column_manager_);
   return std::move(converter.GetProperties(tree));
 }
@@ -169,8 +169,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
 
   for (size_t pair_offset = 0; pair_offset < num_property_pairs;
        ++pair_offset) {
-    const auto &output_properties =
-        output_input_property_pairs[pair_offset].first;
+    auto output_properties = output_input_property_pairs[pair_offset].first;
     const auto &input_properties_list =
         output_input_property_pairs[pair_offset].second;
 
@@ -198,18 +197,50 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     gexpr->DeriveStatsAndCost(output_properties, input_properties_list,
                               best_child_stats, best_child_costs);
 
-    // TODO: enforce missing properties
+    Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
+    // Add to group as potential best cost
+    group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
+                             output_properties);
 
-    // Only include cost if it meets the property requirements
-    if (output_properties >= requirements) {
-      // Add to group as potential best cost
-      Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
-      LOG_TRACE("Adding expression cost on group %d with op %s",
-                gexpr->GetGroupID(), gexpr->Op().name().c_str());
-      group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
-                               requirements);
+    // enforce missing properties
+    for (auto property : requirements.Properties()) {
+      if (output_properties.HasProperty(*property) == false) {
+        gexpr = EnforceProperty(gexpr, output_properties, property);
+        group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
+                                 output_properties);
+      }
     }
+
+    // After the enforcement it must have met the property requirements, so
+    // notice here we set the best cost plan for 'requirements' instead of
+    // 'output_properties'
+    group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
+                             requirements);
   }
+}
+
+std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
+    std::shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
+    const std::shared_ptr<Property> property) {
+  // new child input is the old output
+  auto child_input_properties = std::vector<PropertySet>();
+  child_input_properties.push_back(output_properties);
+
+  auto child_stats = std::vector<std::shared_ptr<Stats>>();
+  child_stats.push_back(gexpr->GetStats(output_properties));
+  auto child_costs = std::vector<double>();
+  child_costs.push_back(gexpr->GetCost(output_properties));
+
+  PropertyEnforcer enforcer(column_manager_);
+  auto enforced_gexpr =
+      enforcer.EnforceProperty(gexpr, &output_properties, property);
+
+  // new output property would have the enforced Property
+  output_properties.AddProperty(std::shared_ptr<Property>(property));
+
+  enforced_gexpr->DeriveStatsAndCost(output_properties, child_input_properties,
+                                     child_stats, child_costs);
+  return enforced_gexpr;
 }
 
 std::vector<std::pair<PropertySet, std::vector<PropertySet>>>

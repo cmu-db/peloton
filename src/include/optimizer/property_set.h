@@ -28,11 +28,14 @@ class PropertySet {
 
   const std::vector<std::shared_ptr<Property>> &Properties() const;
 
-  void AddProperty(Property *property);
+  void AddProperty(std::shared_ptr<Property> property);
 
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
 
   hash_t Hash() const;
+
+  // whether this property set contains a specific property
+  bool HasProperty(const Property &r_property) const;
 
   bool operator>=(const PropertySet &r) const;
 

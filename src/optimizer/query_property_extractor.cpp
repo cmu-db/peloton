@@ -44,7 +44,8 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   // Add predicate property
   auto predicate = select_stmt->where_clause;
   expression::ExpressionUtil::TransformExpression(&schema, predicate);
-  property_set_.AddProperty(new PropertyPredicate(predicate->Copy()));
+  property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
+      new PropertyPredicate(predicate->Copy())));
 
   // Add output expressions property
   auto output_expressions =
@@ -55,8 +56,8 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         std::unique_ptr<expression::AbstractExpression>(col->Copy()));
   }
 
-  property_set_.AddProperty(
-      new PropertyOutputExpressions(std::move(output_expressions)));
+  property_set_.AddProperty(std::shared_ptr<PropertyOutputExpressions>(
+      new PropertyOutputExpressions(std::move(output_expressions))));
 
   /*
       // Traverse the select list to get the columns required by the result

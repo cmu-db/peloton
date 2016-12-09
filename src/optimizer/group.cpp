@@ -34,6 +34,8 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr) {
 
 void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
                               double cost, PropertySet properties) {
+  LOG_TRACE("Adding expression cost on group %d with op %s", expr->GetGroupID(),
+            expr->Op().name().c_str());
   auto it = lowest_cost_expressions_.find(properties);
   if (it == lowest_cost_expressions_.end()) {
     // No other cost to compare against

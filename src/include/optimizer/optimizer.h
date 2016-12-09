@@ -70,7 +70,7 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the set of required physical properties for the query
    */
-  PropertySet GetQueryTreeRequiredProperties(parser::SQLStatement *tree);
+  PropertySet GetQueryRequiredProperties(parser::SQLStatement *tree);
 
   /* OptimizerPlanToPlannerPlan - convert a tree of physical operators to
    *     a Peloton planner plan for execution.
@@ -90,7 +90,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the lowest cost tree of physical operators
    */
   std::shared_ptr<OperatorExpression> ChooseBestPlan(GroupID id,
-                                               PropertySet requirements);
+                                                     PropertySet requirements);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
    *     most optimal physical operator tree and place it in the memo. After
@@ -121,6 +121,19 @@ class Optimizer : public AbstractOptimizer {
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
   DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
                         PropertySet requirements);
+
+  /* EnforceProperty - Enforce a physical property to a gruop expression.
+   * Typically this will lead to adding another physical operator on top of the
+   * current group expression.
+   *
+   * gexpr: the group expression to enforce property on
+   * property: the required property
+   *
+   * return: the new group expression that has the enforced property
+   */
+  std::shared_ptr<GroupExpression> EnforceProperty(
+      std::shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
+      const std::shared_ptr<Property> property);
 
   /* ExploreGroup - exploration equivalent of OptimizeGroup.
    *

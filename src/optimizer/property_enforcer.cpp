@@ -11,9 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/property_enforcer.h"
+#include "optimizer/property.h"
 
 namespace peloton {
 namespace optimizer {
+
+std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
+    std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
+    std::shared_ptr<Property> property) {
+  input_gexpr_ = gexpr;
+  input_properties_ = properties;
+  property->Accept(this);
+  return output_gexpr_;
+}
 
 void PropertyEnforcer::Visit(const PropertyColumns *) {}
 void PropertyEnforcer::Visit(const PropertyOutputExpressions *) {}

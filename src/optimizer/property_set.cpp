@@ -21,8 +21,8 @@ const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
   return properties_;
 }
 
-void PropertySet::AddProperty(Property *property) {
-  properties_.push_back(std::shared_ptr<Property>(property));
+void PropertySet::AddProperty(std::shared_ptr<Property> property) {
+  properties_.push_back(property);
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
@@ -36,16 +36,19 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
   return nullptr;
 }
 
-bool PropertySet::operator>=(const PropertySet &r) const {
-  for (auto property : r.properties_) {
-    bool has_property = false;
-    for (auto r_property : properties_) {
-      if (*property >= *r_property) {
-        has_property = true;
-        break;
-      }
+bool PropertySet::HasProperty(const Property &r_property) const {
+  for (auto property : properties_) {
+    if (*property >= r_property) {
+      return true;
     }
-    if (has_property == false) return false;
+  }
+
+  return false;
+}
+
+bool PropertySet::operator>=(const PropertySet &r) const {
+  for (auto r_property : r.properties_) {
+    if (HasProperty(*r_property) == false) return false;
   }
   return true;
 }
