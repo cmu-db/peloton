@@ -30,6 +30,8 @@ class PropertyColumns : public Property {
 
   bool operator>=(const Property &r) const override;
 
+  void Accept(PropertyVisitor *v) const override;
+
  private:
   std::vector<Column *> columns;
 };
@@ -45,6 +47,8 @@ class PropertyOutputExpressions : public Property {
   hash_t Hash() const override;
 
   bool operator>=(const Property &r) const override;
+
+  void Accept(PropertyVisitor *v) const override;
 
  private:
   std::vector<std::unique_ptr<expression::AbstractExpression>> expressions_;
@@ -62,6 +66,8 @@ class PropertySort : public Property {
 
   bool operator>=(const Property &r) const override;
 
+  void Accept(PropertyVisitor *v) const override;
+
  private:
   std::vector<Column *> sort_columns;
   std::vector<bool> sort_ascending;
@@ -77,6 +83,8 @@ class PropertyPredicate : public Property {
   hash_t Hash() const override;
 
   bool operator>=(const Property &r) const override;
+
+  void Accept(PropertyVisitor *v) const override;
 
  private:
   std::unique_ptr<expression::AbstractExpression> predicate_;

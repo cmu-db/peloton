@@ -12,6 +12,7 @@
 
 #include "optimizer/properties.h"
 #include "common/macros.h"
+#include "optimizer/property_visitor.h"
 
 namespace peloton {
 namespace optimizer {
@@ -54,6 +55,8 @@ hash_t PropertyColumns::Hash() const {
   return hash;
 }
 
+void PropertyColumns::Accept(PropertyVisitor *v) const { v->visit(this); }
+
 PropertySort::PropertySort(std::vector<Column *> sort_columns,
                            std::vector<bool> sort_ascending)
     : sort_columns(sort_columns), sort_ascending(sort_ascending) {}
@@ -89,6 +92,8 @@ hash_t PropertySort::Hash() const {
   return hash;
 }
 
+void PropertySort::Accept(PropertyVisitor *v) const { v->visit(this); }
+
 PropertyPredicate::PropertyPredicate(expression::AbstractExpression *predicate)
     : predicate_(predicate){};
 
@@ -107,6 +112,8 @@ bool PropertyPredicate::operator>=(const Property &r) const {
 // TODO: Hash the content of the predicate expression
 hash_t PropertyPredicate::Hash() const { return Property::Hash(); }
 
+void PropertyPredicate::Accept(PropertyVisitor *v) const { v->visit(this); }
+
 PropertyOutputExpressions::PropertyOutputExpressions(
     std::vector<std::unique_ptr<expression::AbstractExpression> > expressions)
     : expressions_(std::move(expressions)){};
@@ -122,6 +129,10 @@ bool PropertyOutputExpressions::operator>=(const Property &r) const {
 }
 
 hash_t PropertyOutputExpressions::Hash() const { return Property::Hash(); }
+
+void PropertyOutputExpressions::Accept(PropertyVisitor *v) const {
+  v->visit(this);
+}
 
 } /* namespace optimizer */
 } /* namespace peloton */

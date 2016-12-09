@@ -205,7 +205,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
       // Add to group as potential best cost
       Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
       LOG_TRACE("Adding expression cost on group %d with op %s",
-                candidate->GetGroupID(), candidate->Op().name().c_str());
+                gexpr->GetGroupID(), gexpr->Op().name().c_str());
       group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                                requirements);
     }

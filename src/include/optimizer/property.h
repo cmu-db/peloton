@@ -17,6 +17,8 @@
 namespace peloton {
 namespace optimizer {
 
+class PropertyVisitor;
+
 enum class PropertyType {
   SORT,
   COLUMNS,
@@ -44,6 +46,8 @@ class Property {
 
   // Provide partial order
   virtual bool operator>=(const Property &r) const;
+
+  virtual void Accept(PropertyVisitor *v) const = 0;
 };
 
 } /* namespace optimizer */
