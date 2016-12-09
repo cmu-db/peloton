@@ -287,9 +287,6 @@ class DataTable : public AbstractTable {
 
   oid_t AddDefaultIndirectionArray(const size_t &active_indirection_array_id);
 
-  // get a partitioning with given layout type
-  column_map_type GetTileGroupLayout(LayoutType layout_type);
-
   // Drop all tile groups of the table. Used by recovery
   void DropTileGroups();
 
