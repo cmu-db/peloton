@@ -10,41 +10,31 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "storage/abstract_table.h"
 
-#include "common/exception.h"
-#include "common/logger.h"
-#include "index/index.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
+#include "common/exception.h"
+#include "common/logger.h"
 #include "gc/gc_manager_factory.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace storage {
 
-AbstractTable::AbstractTable(oid_t database_oid, oid_t table_oid,
-                             std::string table_name, catalog::Schema *schema,
+AbstractTable::AbstractTable(id_t table_oid, catalog::Schema *schema,
                              bool own_schema)
-    : database_oid(database_oid),
-      table_oid(table_oid),
-      table_name(table_name),
-      schema(schema),
-      own_schema_(own_schema) {
-
+    : table_oid(table_oid), schema(schema), own_schema_(own_schema) {
   // Register table to GC manager.
   auto *gc_manager = &gc::GCManagerFactory::GetInstance();
   assert(gc_manager != nullptr);
   gc_manager->RegisterTable(table_oid);
-
 }
 
 AbstractTable::~AbstractTable() {
   // clean up schema
   if (own_schema_) delete schema;
 }
-
-const std::string AbstractTable::GetInfo() const { return "AbstractTable"; }
 
 }  // End storage namespace
 }  // End peloton namespace

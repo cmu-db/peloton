@@ -54,8 +54,13 @@ class LoggingUtil {
   static bool ReadTupleRecordHeader(TupleRecord &tuple_record,
                                     FileHandle &file_handle);
 
+<<<<<<< HEAD
   static storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema,
                                              type::VarlenPool *pool,
+=======
+  static storage::Tuple *ReadTupleRecordBody(const catalog::Schema *schema,
+                                             common::VarlenPool *pool,
+>>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
                                              FileHandle &file_handle);
 
   static void SkipTupleRecordBody(FileHandle &file_handle);

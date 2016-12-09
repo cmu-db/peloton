@@ -58,7 +58,9 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
                      const bool adapt_table)
-    : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
+    : AbstractTable(table_oid, schema, own_schema),
+      database_oid(database_oid),
+      table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
   // Init default partition
@@ -487,8 +489,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(
+    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -811,7 +813,7 @@ const std::string DataTable::GetInfo() const {
     std::string tileData = tile_group->GetInfo();
     //    dataBuffer << tileData;
     dataBuffer << peloton::StringUtil::Prefix(
-                      peloton::StringBoxUtil::Box(tileData), GETINFO_SPACER);
+        peloton::StringBoxUtil::Box(tileData), GETINFO_SPACER);
     tuple_count += tile_tuple_count;
   }
 

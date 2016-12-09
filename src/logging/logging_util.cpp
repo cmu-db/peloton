@@ -261,8 +261,13 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
   return true;
 }
 
+<<<<<<< HEAD
 storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
                                                  type::VarlenPool *pool,
+=======
+storage::Tuple *LoggingUtil::ReadTupleRecordBody(const catalog::Schema *schema,
+                                                 common::VarlenPool *pool,
+>>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
                                                  FileHandle &file_handle) {
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize(file_handle);

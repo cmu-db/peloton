@@ -111,6 +111,7 @@ class DataTable : public AbstractTable {
   // and then install the version
   // into all the corresponding indexes.
   ItemPointer AcquireVersion();
+
   // install an version in table. designed for update operation.
   // as we implement logical-pointer indexing mechanism, targets_ptr is
   // required.
@@ -237,11 +238,13 @@ class DataTable : public AbstractTable {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  bool HasPrimaryKey() { return has_primary_key_; }
+  inline oid_t GetDatabaseOid() const { return (database_oid); }
 
-  bool HasUniqueConstraints() { return (unique_constraint_count_ > 0); }
+  bool HasPrimaryKey() const { return (has_primary_key_); }
 
-  bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
+  bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
+
+  bool HasForeignKeys() const { return (GetForeignKeyCount() > 0); }
 
   std::map<oid_t, oid_t> GetColumnMapStats();
 
@@ -311,6 +314,9 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
+
+  oid_t database_oid;
+  std::string table_name;
 
   // number of tuples allocated per tilegroup
   size_t tuples_per_tilegroup_;
