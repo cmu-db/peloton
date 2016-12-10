@@ -44,9 +44,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan,
-    const std::vector<common::Value> &params, std::vector<ResultType> &result,
-    const std::vector<int> &result_format) {
+    const planner::AbstractPlan *plan, const std::vector<common::Value> &params,
+    std::vector<ResultType> &result, const std::vector<int> &result_format) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -171,8 +170,7 @@ cleanup:
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan,
-    const std::vector<common::Value> &params,
+    const planner::AbstractPlan *plan, const std::vector<common::Value> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   if (plan == nullptr) return -1;
 
