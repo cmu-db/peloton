@@ -487,7 +487,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     case STATEMENT_TYPE_DELETE: {
       LOG_TRACE("Adding Delete plan...");
 
-      // column predicates passing to the  index
+      // column predicates passing to the index
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
       std::vector<common::Value> values;
@@ -539,23 +539,32 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             target_table->GetSchema()->GetColumn(column_id).IsPrimary();
       }
 
-      // If updating primary index
-      if (update_primary_key) {
-        // Create delete plan and insert plan
+      if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
+                               expr_types, values, index_id)) {
+        // If updating primary index
+        if (update_primary_key) {
+          // Create delete plan
 
-      } else if (CheckIndexSearchable(target_table, updateStmt->where,
-                                      key_column_ids, expr_types, values,
-                                      index_id)) {
-        // Create index scan plan
-        std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-            new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
-                                    values, index_id));
-        child_plan = std::move(child_InsertPlan);
+          // Create insert plan
+
+        } else {
+          // Create index scan plan
+          std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
+              new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
+                                      values, index_id));
+          child_plan = std::move(child_UpdatePlan);
+        }
       } else {
-        // Create sequential scan plan
-        std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-            new planner::UpdatePlan(updateStmt));
-        child_plan = std::move(child_InsertPlan);
+        // If updating primary index
+        if (update_primary_key) {
+          // Create delete plan and insert plan
+
+        } else {
+          // Create sequential scan plan
+          std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
+              new planner::UpdatePlan(updateStmt));
+          child_plan = std::move(child_UpdatePlan);
+        }
       }
 
     } break;
