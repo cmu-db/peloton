@@ -53,9 +53,9 @@ class AbstractPlan;
 }
 namespace optimizer {
 
-SimpleOptimizer::SimpleOptimizer(){};
+SimpleOptimizer::SimpleOptimizer() {};
 
-SimpleOptimizer::~SimpleOptimizer(){};
+SimpleOptimizer::~SimpleOptimizer() {};
 
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList>& parse_tree) {
@@ -108,7 +108,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           auto child_SelectPlan = CreateHackingNestedLoopJoinPlan(select_stmt);
           child_plan = std::move(child_SelectPlan);
           break;
-        } catch (Exception& e) {
+        }
+        catch (Exception& e) {
           throw NotImplementedException("Error: Joins are not implemented yet");
         }
       }
@@ -233,9 +234,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   ->GetColumnName());
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            std::string col_name(((expression::TupleValueExpression*)
-                                      select_stmt->select_list->at(column_ctr))
-                                     ->GetColumnName());
+            std::string col_name((
+                (expression::TupleValueExpression*)select_stmt->select_list->at(
+                    column_ctr))->GetColumnName());
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -273,9 +274,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   ->GetColumnName());
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            std::string col_name(((expression::TupleValueExpression*)
-                                      select_stmt->select_list->at(column_ctr))
-                                     ->GetColumnName());
+            std::string col_name((
+                (expression::TupleValueExpression*)select_stmt->select_list->at(
+                    column_ctr))->GetColumnName());
             if (col_name == sort_col_name) key.push_back(column_ctr);
           }
           if (key.size() == 0) {
@@ -334,11 +335,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_TRACE("Function name: %s",
                         ((expression::TupleValueExpression*)agg_expr)
                             ->GetExpressionName());
-              LOG_TRACE(
-                  "Aggregate type: %s",
-                  ExpressionTypeToString(ParserExpressionNameToExpressionType(
-                                             expr->GetExpressionName()))
-                      .c_str());
+              LOG_TRACE("Aggregate type: %s",
+                        ExpressionTypeToString(
+                            ParserExpressionNameToExpressionType(
+                                expr->GetExpressionName())).c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   agg_expr->GetExpressionType(), agg_over->Copy(),
                   agg_expr->distinct_);
@@ -528,8 +528,24 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           updateStmt->table->GetDatabaseName(),
           updateStmt->table->GetTableName());
 
-      if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
-                               expr_types, values, index_id)) {
+      // Examine whether update primary index
+      bool update_primary_key = false;
+
+      for (auto update_clause : *(updateStmt->updates)) {
+        std::string column_name = update_clause->column;
+
+        oid_t column_id = target_table->GetSchema()->GetColumnID(column_name);
+        update_primary_key =
+            target_table->GetSchema()->GetColumn(column_id).IsPrimary();
+      }
+
+      // If updating primary index
+      if (update_primary_key) {
+        // Create delete plan and insert plan
+
+      } else if (CheckIndexSearchable(target_table, updateStmt->where,
+                                      key_column_ids, expr_types, values,
+                                      index_id)) {
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
             new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
@@ -776,19 +792,14 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))
-                             ->GetValue());
+            expression->GetModifiableChild(1))->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))
-                      ->GetValueType());
+                      expression->GetModifiableChild(1))->GetValueType());
       } else
-        values.push_back(
-            common::ValueFactory::GetParameterOffsetValue(
-                reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(1))
-                    ->GetValueIdx())
-                .Copy());
+        values.push_back(common::ValueFactory::GetParameterOffsetValue(
+            reinterpret_cast<expression::ParameterValueExpression*>(
+                expression->GetModifiableChild(1))->GetValueIdx()).Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -806,19 +817,14 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))
-                             ->GetValue());
+            expression->GetModifiableChild(1))->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))
-                      ->GetValueType());
+                      expression->GetModifiableChild(0))->GetValueType());
       } else
-        values.push_back(
-            common::ValueFactory::GetParameterOffsetValue(
-                reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(0))
-                    ->GetValueIdx())
-                .Copy());
+        values.push_back(common::ValueFactory::GetParameterOffsetValue(
+            reinterpret_cast<expression::ParameterValueExpression*>(
+                expression->GetModifiableChild(0))->GetValueIdx()).Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
