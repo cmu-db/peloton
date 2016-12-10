@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// convert_query_to_op.h
+// child_property_generator.cpp
 //
 // Identification: src/include/optimizer/child_property_generator.cpp
 //

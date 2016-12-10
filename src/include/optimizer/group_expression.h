@@ -44,10 +44,12 @@ class GroupExpression {
 
   double GetCost(PropertySet requirements) const;
 
-  void DeriveStatsAndCost(const PropertySet &output_properties,
-                          const std::vector<PropertySet> &input_properties_list,
-                          std::vector<std::shared_ptr<Stats>> child_stats,
-                          std::vector<double> child_costs);
+  void SetLocalHashTable(const PropertySet &output_properties,
+                         const std::vector<PropertySet> &input_properties_list,
+                         double cost, std::shared_ptr<Stats> stats);
+
+  void SetStats(const PropertySet &output_properties,
+                std::shared_ptr<Stats> stats);
 
   hash_t Hash() const;
 

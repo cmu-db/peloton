@@ -41,32 +41,21 @@ double GroupExpression::GetCost(PropertySet requirements) const {
   return std::get<0>(lowest_cost_table_.find(requirements)->second);
 }
 
-void GroupExpression::DeriveStatsAndCost(
+void GroupExpression::SetLocalHashTable(
     const PropertySet &output_properties,
-    const std::vector<PropertySet> &input_properties_list,
-    std::vector<std::shared_ptr<Stats>> child_stats,
-    std::vector<double> child_costs) {
-  (void)output_properties;
-  (void)input_properties_list;
-  (void)child_stats;
-  (void)child_costs;
-
-  Stats *new_stats_ptr = nullptr;
-  double new_cost = 0;
-
+    const std::vector<PropertySet> &input_properties_list, double cost,
+    std::shared_ptr<Stats> stats) {
   auto it = lowest_cost_table_.find(output_properties);
   if (it == lowest_cost_table_.end()) {
     // No other cost to compare against
     lowest_cost_table_.insert(std::make_pair(
-        output_properties,
-        std::make_tuple(new_cost, std::shared_ptr<Stats>(new_stats_ptr),
-                        input_properties_list)));
+        output_properties, std::make_tuple(cost, std::shared_ptr<Stats>(stats),
+                                           input_properties_list)));
   } else {
     // Only insert if the cost is lower than the existing cost
-    if (std::get<0>(it->second) > new_cost) {
-      lowest_cost_table_[output_properties] =
-          std::make_tuple(new_cost, std::shared_ptr<Stats>(new_stats_ptr),
-                          input_properties_list);
+    if (std::get<0>(it->second) > cost) {
+      lowest_cost_table_[output_properties] = std::make_tuple(
+          cost, std::shared_ptr<Stats>(stats), input_properties_list);
     }
   }
 }

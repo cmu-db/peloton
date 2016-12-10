@@ -117,10 +117,22 @@ class Optimizer : public AbstractOptimizer {
   void OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
                           PropertySet requirements);
 
-  // Get alternatives of the <output properties, input child property list> pair
+  /*
+   * Get alternatives of the <output properties, input child property list> pair
+   */
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
   DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
                         PropertySet requirements);
+
+  /*
+   * Derive the cost and stats for a group expression given the input/output
+   * properties and the children's stats and costs
+   */
+  void DeriveCostAndStats(std::shared_ptr<GroupExpression> gexpr,
+                          const PropertySet &output_properties,
+                          const std::vector<PropertySet> &input_properties_list,
+                          std::vector<std::shared_ptr<Stats>> child_stats,
+                          std::vector<double> child_costs);
 
   /* EnforceProperty - Enforce a physical property to a gruop expression.
    * Typically this will lead to adding another physical operator on top of the

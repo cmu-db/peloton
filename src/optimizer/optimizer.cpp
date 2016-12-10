@@ -15,6 +15,7 @@
 #include "catalog/manager.h"
 
 #include "optimizer/child_property_generator.h"
+#include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
@@ -95,7 +96,7 @@ std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
   std::shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   std::shared_ptr<GroupExpression> gexpr;
-  assert(RecordTransformedExpression(initial, gexpr));
+  PL_ASSERT(RecordTransformedExpression(initial, gexpr));
   return gexpr;
 }
 
@@ -194,8 +195,8 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     }
 
     // Perform costing
-    gexpr->DeriveStatsAndCost(output_properties, input_properties_list,
-                              best_child_stats, best_child_costs);
+    DeriveCostAndStats(gexpr, output_properties, input_properties_list,
+                       best_child_stats, best_child_costs);
 
     Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
     // Add to group as potential best cost
@@ -238,8 +239,8 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new output property would have the enforced Property
   output_properties.AddProperty(std::shared_ptr<Property>(property));
 
-  enforced_gexpr->DeriveStatsAndCost(output_properties, child_input_properties,
-                                     child_stats, child_costs);
+  DeriveCostAndStats(enforced_gexpr, output_properties, child_input_properties,
+                     child_stats, child_costs);
   return enforced_gexpr;
 }
 
@@ -248,6 +249,21 @@ Optimizer::DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
                                  PropertySet requirements) {
   ChildPropertyGenerator converter(column_manager_);
   return std::move(converter.GetProperties(gexpr, requirements));
+}
+
+void Optimizer::DeriveCostAndStats(
+    std::shared_ptr<GroupExpression> gexpr,
+    const PropertySet &output_properties,
+    const std::vector<PropertySet> &input_properties_list,
+    std::vector<std::shared_ptr<Stats>> child_stats,
+    std::vector<double> child_costs) {
+  CostAndStatsCalculator calculator(column_manager_);
+  calculator.CalculateCostAndStats(gexpr, &output_properties,
+                                   &input_properties_list, child_stats,
+                                   child_costs);
+  gexpr->SetLocalHashTable(output_properties, input_properties_list,
+                           calculator.GetOutputCost(),
+                           calculator.GetOutputStats());
 }
 
 void Optimizer::ExploreGroup(GroupID id) {
