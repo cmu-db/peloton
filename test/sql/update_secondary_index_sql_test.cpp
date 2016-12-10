@@ -50,7 +50,6 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
                                 rows_affected, error_message);
   // Check the return value
   EXPECT_EQ(result[6].second[0], '3');
-  std::cout << "second: " << result[6].second[2] << std::endl;
 
   // Perform update
   SQLTestsUtil::ExecuteSQLQuery("UPDATE test SET b=1000 WHERE c=200", result,
