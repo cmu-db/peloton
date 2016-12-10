@@ -52,7 +52,8 @@ void DeletePlan::BuildInitialDeletePlan(
   } else {
     expr_ = delete_statemenet->expr->Copy();
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
-    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(), expr_);
+    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                    expr_);
   }
 }
 
@@ -87,6 +88,25 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet,
                                  true));
   LOG_TRACE("Index scan plan created");
   AddChild(std::move(index_scan_node));
+}
+
+// Creates the delete plan. The index plan should be added outside
+DeletePlan::DeletePlan(storage::DataTable *table,
+                       expression::AbstractExpression *predicate) {
+  target_table_ = table;
+
+  // if expr is null , delete all tuples from table
+  if (predicate == nullptr) {
+    LOG_TRACE("No expression, setting truncate to true");
+    expr_ = nullptr;
+    truncate = true;
+
+  } else {
+    expr_ = predicate->Copy();
+    LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
+    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                    expr_);
+  }
 }
 
 void DeletePlan::SetParameterValues(std::vector<common::Value> *values) {

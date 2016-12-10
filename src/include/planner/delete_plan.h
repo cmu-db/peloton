@@ -54,6 +54,9 @@ class DeletePlan : public AbstractPlan {
                       std::vector<ExpressionType> &expr_types,
                       std::vector<common::Value> &values, oid_t &index_id);
 
+  explicit DeletePlan(storage::DataTable *table,
+                      expression::AbstractExpression *predicate);
+
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
   storage::DataTable *GetTable() const { return target_table_; }
@@ -75,6 +78,7 @@ class DeletePlan : public AbstractPlan {
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
 
+  // TODO: should be deleted after refacor
   std::string table_name_;
 
   expression::AbstractExpression *expr_ = nullptr;

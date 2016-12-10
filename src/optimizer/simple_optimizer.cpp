@@ -499,10 +499,26 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           deleteStmt->GetDatabaseName(), deleteStmt->GetTableName());
       if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
                                expr_types, values, index_id)) {
-        // Create index scan plan
+        // Create delete plan
         std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-            new planner::DeletePlan(deleteStmt, key_column_ids, expr_types,
-                                    values, index_id));
+            new planner::DeletePlan(target_table, deleteStmt->expr));
+
+        // Create index scan plan
+        std::vector<oid_t> columns;
+        std::vector<expression::AbstractExpression*> runtime_keys;
+        auto index = target_table->GetIndex(index_id);
+        planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+            index, key_column_ids, expr_types, values, runtime_keys);
+        LOG_TRACE("Creating a index scan plan");
+        std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+            new planner::IndexScanPlan(target_table, deleteStmt->expr, columns,
+                                       index_scan_desc, true));
+        LOG_TRACE("Index scan plan created");
+
+        // Add index scan plan
+        child_DeletePlan->AddChild(std::move(index_scan_node));
+
+        // Finish
         child_plan = std::move(child_DeletePlan);
       } else {
         // Create sequential scan plan
