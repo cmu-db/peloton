@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <fstream>
 
@@ -29,44 +28,15 @@ configuration state;
 
 // Main Entry Point
 void RunBenchmark() {
-  // Initialize settings
-  peloton_layout_mode = state.layout_mode;
 
-  // Generate sequence
-  GenerateSequence(state.column_count);
-
-  // Single run
-  if (state.experiment_type == EXPERIMENT_TYPE_INVALID) {
-    CreateAndLoadTable((LayoutType)peloton_layout_mode);
-
-    switch (state.operator_type) {
-      case OPERATOR_TYPE_DIRECT:
-        RunDirectTest();
-        break;
-
-      case OPERATOR_TYPE_INSERT:
-        RunInsertTest();
-        break;
-
-      default:
-        LOG_ERROR("Unsupported test type : %d", state.operator_type);
-        break;
-    }
-
+  if (state.multi_stage) {
+    // Run holistic indexing comparison benchmark
+    RunMultiStageBenchmark();
+  } else {
+    // Run a single sdbench test
+    RunSDBenchTest();
   }
-  // Experiment
-  else {
-    switch (state.experiment_type) {
 
-      case EXPERIMENT_TYPE_ADAPT:
-        RunAdaptExperiment();
-        break;
-
-      default:
-        LOG_ERROR("Unsupported experiment_type : %d", state.experiment_type);
-        break;
-    }
-  }
 }
 
 }  // namespace sdbench

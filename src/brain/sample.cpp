@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <sstream>
+#include <common/macros.h>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 #include "brain/sample.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace brain {
@@ -62,6 +63,8 @@ Sample &Sample::operator+(const Sample &rhs) {
   size_t column_itr;
   size_t column_count = columns_accessed_.size();
 
+  PL_ASSERT(rhs.columns_accessed_.size() == column_count);
+
   for (column_itr = 0; column_itr < column_count; column_itr++) {
     auto other_val = rhs.columns_accessed_[column_itr];
     this->columns_accessed_[column_itr] += other_val;
@@ -87,19 +90,18 @@ const std::string Sample::GetInfo() const {
 
   os << "Sample :: ";
 
-  for (auto column : columns_accessed_) os << std::round(column) << " ";
+  for (auto column_value : columns_accessed_) os << column_value << " ";
 
   os << "  ::  " << std::round(metric_);
 
   return os.str();
 }
 
-bool Sample::operator==(const Sample &other) const{
-
+bool Sample::operator==(const Sample &other) const {
   auto sample_size = columns_accessed_.size();
 
-  for(oid_t sample_itr = 0; sample_itr < sample_size; sample_itr++){
-    if(columns_accessed_[sample_itr] != other.columns_accessed_[sample_itr]){
+  for (oid_t sample_itr = 0; sample_itr < sample_size; sample_itr++) {
+    if (columns_accessed_[sample_itr] != other.columns_accessed_[sample_itr]) {
       return false;
     }
   }

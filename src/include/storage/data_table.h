@@ -165,6 +165,8 @@ class DataTable : public AbstractTable {
 
   oid_t GetIndexCount() const;
 
+  oid_t GetValidIndexCount() const;
+
   const std::vector<std::set<oid_t>> &GetIndexColumns() const {
     return indexes_columns_;
   }

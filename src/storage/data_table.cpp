@@ -883,8 +883,10 @@ std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
 }
 
 std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
-  PL_ASSERT(index_offset < indexes_columns_.size());
+  PL_ASSERT(index_offset < GetIndexCount());
+
   auto index_attrs = indexes_columns_.at(index_offset);
+
   return index_attrs;
 }
 
@@ -892,6 +894,23 @@ oid_t DataTable::GetIndexCount() const {
   size_t index_count = indexes_.GetSize();
 
   return index_count;
+}
+
+oid_t DataTable::GetValidIndexCount() const {
+  std::shared_ptr<index::Index> index;
+  auto index_count = indexes_.GetSize();
+  oid_t valid_index_count = 0;
+
+  for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
+    index = indexes_.Find(index_itr);
+    if (index == nullptr) {
+      continue;
+    }
+
+    valid_index_count++;
+  }
+
+  return valid_index_count;
 }
 
 //===--------------------------------------------------------------------===//

@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
 
 #include "common/printable.h"
-#include "common/types.h"
 #include "common/printable.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace brain {
@@ -29,8 +28,8 @@ namespace brain {
 enum SampleType {
   SAMPLE_TYPE_INVALID = 0,
 
-  SAMPLE_TYPE_ACCESS = 1,       // accessed attributes
-  SAMPLE_TYPE_UPDATE = 2        // updated attributes
+  SAMPLE_TYPE_ACCESS = 1,  // accessed attributes
+  SAMPLE_TYPE_UPDATE = 2   // updated attributes
 };
 
 //===--------------------------------------------------------------------===//
@@ -52,7 +51,7 @@ class Sample : public Printable {
       : columns_accessed_(columns_accessed),
         weight_(weight),
         sample_type_(sample_type),
-        metric_(metric){}
+        metric_(metric) {}
 
   // get the distance from other sample
   double GetDistance(const Sample &other) const;
@@ -97,21 +96,16 @@ class Sample : public Printable {
 namespace std {
 
 template <>
-struct hash<peloton::brain::Sample>
-{
-  size_t operator()(const peloton::brain::Sample& sample) const
-  {
+struct hash<peloton::brain::Sample> {
+  size_t operator()(const peloton::brain::Sample &sample) const {
     // Compute individual hash values using XOR and bit shifting:
     long hash = 31;
     auto sample_size = sample.columns_accessed_.size();
-    for(size_t sample_itr = 0; sample_itr < sample_size; sample_itr++){
-      hash *= ( sample.columns_accessed_[sample_itr] + 31);
+    for (size_t sample_itr = 0; sample_itr < sample_size; sample_itr++) {
+      hash *= (sample.columns_accessed_[sample_itr] + 31);
     }
 
     return hash;
   }
 };
-
 }
-
-

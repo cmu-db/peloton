@@ -21,13 +21,8 @@ namespace sdbench {
 
 extern configuration state;
 
-void CreateAndLoadTable(LayoutType layout_type);
-
-void RunDirectTest();
-
-void RunInsertTest();
-
-void RunAdaptExperiment();
+void RunSDBenchTest();
+void RunMultiStageBenchmark();
 
 }  // namespace sdbench
 }  // namespace benchmark

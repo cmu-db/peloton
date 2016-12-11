@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
 
-#include "brain/index_tuner.h"
 #include "brain/clusterer.h"
+#include "brain/index_tuner.h"
 
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "common/timer.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
@@ -32,15 +33,51 @@ IndexTuner& IndexTuner::GetInstance() {
 }
 
 IndexTuner::IndexTuner() {
+  tile_groups_indexed_ = 0;
   // Nothing to do here !
 }
 
 IndexTuner::~IndexTuner() {
-  // Nothing to do here !
+  // Calculate stats
+  double build_indices_mean, analyze_mean, update_index_util_mean, add_indexes_mean, get_suggested_indexes_mean, get_frequent_samples_mean, compute_rw_ratio_mean;
+  double build_indices_sum, analyze_sum, update_index_util_sum, add_indexes_sum, get_suggested_indexes_sum, get_frequent_samples_sum, compute_rw_ratio_sum;
+  CalculateStatistics(build_indices_times_, build_indices_mean, build_indices_sum);
+  CalculateStatistics(analyze_times_, analyze_mean, analyze_sum);
+  CalculateStatistics(update_index_util_times_, update_index_util_mean, update_index_util_sum);
+  CalculateStatistics(add_indexes_times_, add_indexes_mean, add_indexes_sum);
+  CalculateStatistics(get_suggested_indexes_times_, get_suggested_indexes_mean, get_suggested_indexes_sum);
+  CalculateStatistics(get_frequent_samples_times_, get_frequent_samples_mean, get_frequent_samples_sum);
+  CalculateStatistics(compute_rw_ratio_times_, compute_rw_ratio_mean, compute_rw_ratio_sum);
+
+  analyze_sum = update_index_util_sum + add_indexes_sum + get_suggested_indexes_sum + get_frequent_samples_sum + compute_rw_ratio_sum;
+
+  LOG_INFO("\t[INDEX]\t%s\t%f ms", "Total build index time ", build_indices_sum);
+  LOG_INFO("\t[INDEX]\t%s\t%d ", "Total tile groups indexed", tile_groups_indexed_);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms", "Avg build index time ", build_indices_sum / tile_groups_indexed_);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms", "Total analyze index time ", analyze_sum);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "GetFrequentSamples() ", get_frequent_samples_sum, get_frequent_samples_sum / analyze_sum * 100);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "ComputeWorkloadWriteRatio() ", compute_rw_ratio_sum, compute_rw_ratio_sum / analyze_sum * 100);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "GetSuggestedIndices() ", get_suggested_indexes_sum, get_suggested_indexes_sum / analyze_sum * 100);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "AddIndexes() ", add_indexes_sum, add_indexes_sum / analyze_sum * 100);
+  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "UpdateIndexUtility() ", update_index_util_sum, update_index_util_sum / analyze_sum * 100);
+}
+
+void IndexTuner::CalculateStatistics(const std::vector<double> data, double &mean, double &sum) {
+  if (data.size() == 0) {
+    mean = 0.0;
+    sum = 0.0;
+  }
+
+  sum = 0.0;
+
+  for (auto stat : data) {
+    sum += stat;
+  }
+
+  mean = sum / data.size();
 }
 
 void IndexTuner::Start() {
-
   // Set signal
   index_tuning_stop = false;
 
@@ -51,7 +88,6 @@ void IndexTuner::Start() {
 // Add an ad-hoc index
 static void AddIndex(storage::DataTable* table,
                      std::set<oid_t> suggested_index_attrs) {
-
   // Construct index metadata
   std::vector<oid_t> key_attrs(suggested_index_attrs.size());
   std::copy(suggested_index_attrs.begin(), suggested_index_attrs.end(),
@@ -86,12 +122,11 @@ static void AddIndex(storage::DataTable* table,
   // Add index
   table->AddIndex(adhoc_index);
 
-  LOG_TRACE("Added suggested index : %s", index_metadata->GetInfo().c_str());
+  LOG_TRACE("Creating index : %s", index_metadata->GetInfo().c_str());
 }
 
 void IndexTuner::BuildIndex(storage::DataTable* table,
                             std::shared_ptr<index::Index> index) {
-
   auto table_schema = table->GetSchema();
   auto index_tile_group_offset = index->GetIndexedTileGroupOff();
   auto table_tile_group_count = table->GetTileGroupCount();
@@ -102,8 +137,7 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
 
   while (index_tile_group_offset < table_tile_group_count &&
-         (tile_groups_indexed < max_tile_groups_indexed)) {
-
+         (tile_groups_indexed < tile_groups_indexed_per_iteration)) {
     std::unique_ptr<storage::Tuple> tuple_ptr(
         new storage::Tuple(table_schema, true));
 
@@ -122,37 +156,41 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
       key->SetFromTuple(tuple_ptr.get(), indexed_columns, index->GetPool());
 
       // Insert in specific index
-      // index->InsertEntry(key.get(), location);
+      // TODO: Allocate itempointer ?
+      index->InsertEntry(key.get(), &location);
     }
 
     // Update indexed tile group offset (set of tgs indexed)
     index->IncrementIndexedTileGroupOffset();
 
-    // Sleep a bit
-    // std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
-
     index_tile_group_offset++;
     tile_groups_indexed++;
   }
+
+  tile_groups_indexed_ += tile_groups_indexed;
 }
 
 void IndexTuner::BuildIndices(storage::DataTable* table) {
-
+  Timer<std::milli> timer;
+  timer.Start();
   oid_t index_count = table->GetIndexCount();
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-
     // Get index
     auto index = table->GetIndex(index_itr);
+    if(index == nullptr){
+      continue;
+    }
 
     // Build index
     BuildIndex(table, index);
   }
+  timer.Stop();
+  build_indices_times_.push_back(timer.GetDuration());
 }
 
 double IndexTuner::ComputeWorkloadWriteRatio(
     const std::vector<brain::Sample>& samples) {
-
   double write_ratio = 0;
 
   double total_read_duration = 0;
@@ -173,7 +211,7 @@ double IndexTuner::ComputeWorkloadWriteRatio(
   // Compute write ratio
   auto total_duration = total_read_duration + total_write_duration;
   PL_ASSERT(total_duration > 0);
-  write_ratio = total_read_duration / (total_duration);
+  write_ratio = total_write_duration / (total_duration);
 
   // Compute exponential moving average
   if (average_write_ratio == INVALID_RATIO) {
@@ -184,9 +222,8 @@ double IndexTuner::ComputeWorkloadWriteRatio(
         write_ratio * alpha + (1 - alpha) * average_write_ratio;
   }
 
-  LOG_INFO("Average write Ratio : %.2lf", average_write_ratio);
+  LOG_TRACE("Average write Ratio : %.2lf", average_write_ratio);
 
-  // TODO: Use average write ratio to throttle index creation
   return average_write_ratio;
 }
 
@@ -199,7 +236,6 @@ bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
 
 std::vector<sample_frequency_map_entry> GetFrequentSamples(
     const std::vector<brain::Sample>& samples) {
-
   std::unordered_map<brain::Sample, double> sample_frequency_map;
   double total_metric = 0;
 
@@ -210,7 +246,9 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
       sample_frequency_map[sample] += sample.metric_;
       total_metric += sample.metric_;
     } else if (sample.sample_type_ == SAMPLE_TYPE_UPDATE) {
-      // Ignore update samples
+      // Update sample count
+      sample_frequency_map[sample] += sample.metric_;
+      total_metric += sample.metric_;
     } else {
       throw Exception("Unknown sample type : " +
                       std::to_string(sample.sample_type_));
@@ -246,7 +284,6 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
 
 std::vector<std::vector<double>> GetSuggestedIndices(
     const std::vector<sample_frequency_map_entry>& list) {
-
   // Find frequent samples
   size_t frequency_rank_threshold = 10;
 
@@ -267,33 +304,9 @@ std::vector<std::vector<double>> GetSuggestedIndices(
   return suggested_indices;
 }
 
-size_t IndexTuner::CheckIndexStorageFootprint(storage::DataTable* table) {
-
-  // Construct indices in suggested index list
-  oid_t index_count = table->GetIndexCount();
-  size_t min_tuple_count = 1024;
-  auto tuple_count = std::max(min_tuple_count, table->GetTupleCount());
-
-  // Compute index storage footprint (in KB)
-  size_t per_index_storage_space = tuple_count * 80 / 1024;
-  size_t current_storage_space = index_count * per_index_storage_space;
-
-  LOG_TRACE("Per index storage space : %lu", per_index_storage_space);
-  LOG_TRACE("Current storage space : %lu", current_storage_space);
-
-  int available_storage_space = max_storage_space - current_storage_space;
-  int max_allowed_indexes = available_storage_space / per_index_storage_space;
-
-  LOG_TRACE("Available storage space : %d", available_storage_space);
-  LOG_INFO("Available index count : %d", max_allowed_indexes);
-
-  return max_allowed_indexes;
-}
-
 double GetCurrentIndexUtility(
     std::set<oid_t> suggested_index_set,
     const std::vector<sample_frequency_map_entry>& list) {
-
   double current_index_utility = 0;
   auto list_size = list.size();
 
@@ -315,53 +328,58 @@ double GetCurrentIndexUtility(
 }
 
 void IndexTuner::DropIndexes(storage::DataTable* table) {
-
   oid_t index_count = table->GetIndexCount();
 
   // Go over indices
   oid_t index_itr;
   for (index_itr = 0; index_itr < index_count; index_itr++) {
-
     auto index = table->GetIndex(index_itr);
-    auto index_metadata = index->GetMetadata();
-    auto average_index_utility = index_metadata->GetUtility();
+    if(index == nullptr){
+      continue;
+    }
+
+    // auto index_metadata = index->GetMetadata();
+    // auto average_index_utility = index_metadata->GetUtility();
     auto index_oid = index->GetOid();
 
     // Check if index utility below threshold and drop if needed
-    if (average_index_utility < index_utility_threshold) {
+    // if (average_index_utility < index_utility_threshold) {
       LOG_TRACE("Dropping index : %s", index_metadata->GetInfo().c_str());
+
       table->DropIndexWithOid(index_oid);
+
+      // Drop one index at a time
+      return;
 
       // Update index count
       index_count = table->GetIndexCount();
-    }
+    // }
   }
 }
 
-void AddIndexes(storage::DataTable* table,
-                const std::vector<std::vector<double>>& suggested_indices,
-                size_t max_allowed_indexes) {
-
+void IndexTuner::AddIndexes(storage::DataTable* table,
+                            const std::vector<std::vector<double>>& suggested_indices) {
+  oid_t valid_index_count = table->GetValidIndexCount();
   oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
 
+  // Check if we have constructed too many indexess
+  if(valid_index_count > index_count_threshold){
+    LOG_TRACE("Constructed too many indexes");
+    return;
+  }
+
   for (auto suggested_index : suggested_indices) {
-
-    // Check if we have storage space
-    if ((max_allowed_indexes <= 0) ||
-        (constructed_index_itr >= max_allowed_indexes)) {
-      LOG_INFO("No more index space");
-      break;
-    }
-
     std::set<oid_t> suggested_index_set(suggested_index.begin(),
                                         suggested_index.end());
+
+    if (suggested_index_set.empty())
+      continue;
 
     // Go over all indices
     bool suggested_index_found = false;
     oid_t index_itr;
     for (index_itr = 0; index_itr < index_count; index_itr++) {
-
       // Check attributes
       auto index_attrs = table->GetIndexAttrs(index_itr);
       if (index_attrs != suggested_index_set) {
@@ -375,7 +393,6 @@ void AddIndexes(storage::DataTable* table,
 
     // Did we find suggested index ?
     if (suggested_index_found == false) {
-
       LOG_TRACE("Did not find suggested index.");
 
       // Add adhoc index with given utility
@@ -389,13 +406,15 @@ void AddIndexes(storage::DataTable* table,
 
 void UpdateIndexUtility(storage::DataTable* table,
                         const std::vector<sample_frequency_map_entry>& list) {
-
   oid_t index_count = table->GetIndexCount();
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-
     // Get index
     auto index = table->GetIndex(index_itr);
+    if(index == nullptr){
+      continue;
+    }
+
     auto index_metadata = index->GetMetadata();
     auto index_key_attrs = index_metadata->GetKeyAttrs();
 
@@ -424,97 +443,158 @@ void UpdateIndexUtility(storage::DataTable* table,
 }
 
 void PrintIndexInformation(storage::DataTable* table) {
-
   oid_t index_count = table->GetIndexCount();
+  oid_t valid_index_count = table->GetValidIndexCount();
   auto table_tilegroup_count = table->GetTileGroupCount();
+  LOG_INFO("Index count : %u", valid_index_count);
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-
     // Get index
     auto index = table->GetIndex(index_itr);
-    UNUSED_ATTRIBUTE auto index_metadata = index->GetMetadata();
+    if(index == nullptr){
+      continue;
+    }
 
     auto indexed_tile_group_offset = index->GetIndexedTileGroupOff();
 
     // Get percentage completion
-    auto fraction = 0.0;
+    double fraction = 0.0;
     if (table_tilegroup_count != 0) {
-      fraction = indexed_tile_group_offset / table_tilegroup_count;
+      fraction =
+          (double)indexed_tile_group_offset / (double)table_tilegroup_count;
       fraction *= 100;
     }
 
-    LOG_INFO("%s %.1f%%", index_metadata->GetInfo().c_str(), fraction);
+    LOG_INFO("%s %.1f%%", index->GetMetadata()->GetInfo().c_str(), fraction);
   }
 }
 
 void IndexTuner::Analyze(storage::DataTable* table) {
-
+  Timer<std::milli> timer;
   // Process all samples in table
   auto& samples = table->GetIndexSamples();
-  auto sample_count = samples.size();
-
-  // Check if we have sufficient number of samples
-  if (sample_count < sample_count_threshold) {
-    return;
-  }
 
   // Check write ratio
+  timer.Start();
   auto average_write_ratio = ComputeWorkloadWriteRatio(samples);
+  timer.Stop();
+  compute_rw_ratio_times_.push_back(timer.GetDuration());
+  timer.Reset();
 
   // Determine frequent samples
+  timer.Start();
   auto sample_frequency_entry_list = GetFrequentSamples(samples);
+  timer.Stop();
+  get_frequent_samples_times_.push_back(timer.GetDuration());
+  timer.Reset();
 
   // Compute suggested indices
+  timer.Start();
   auto suggested_indices = GetSuggestedIndices(sample_frequency_entry_list);
+  timer.Stop();
+  get_suggested_indexes_times_.push_back(timer.GetDuration());
+  timer.Reset();
 
   // Check index storage footprint
-  auto max_indexes_allowed = CheckIndexStorageFootprint(table);
+  auto valid_index_count = table->GetValidIndexCount();
 
-  // Drop indexes if needed
-  auto index_creation_constraint = (max_indexes_allowed <= 0);
+  ////////////////////////////////////////////////
+  // Drop indexes if
+  // a) constructed too many indexes
+  // b) write intensive workloads
+  ////////////////////////////////////////////////
+
+  auto index_overflow = (valid_index_count > index_count_threshold);
   auto write_intensive_workload = (average_write_ratio > write_ratio_threshold);
-  if (index_creation_constraint == true || write_intensive_workload == true) {
+
+  // Skip drop table time
+  if (index_overflow == true || write_intensive_workload == true) {
     DropIndexes(table);
   }
 
   // Add indexes if needed
-  AddIndexes(table, suggested_indices, max_indexes_allowed);
-
-  // Clear all current samples in table
-  table->ClearIndexSamples();
+  timer.Start();
+  AddIndexes(table, suggested_indices);
+  timer.Stop();
+  add_indexes_times_.push_back(timer.GetDuration());
+  timer.Reset();
 
   // Update index utility
+  timer.Start();
   UpdateIndexUtility(table, sample_frequency_entry_list);
+  timer.Stop();
+  update_index_util_times_.push_back(timer.GetDuration());
+  timer.Reset();
 
   // Display index information
   PrintIndexInformation(table);
 }
 
 void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
+  // Process all samples in table
+  auto& samples = table->GetIndexSamples();
+  auto sample_count = samples.size();
 
-  // Add required indices
-  Analyze(table);
+  // Check if we have sufficient number of samples for build
+  if (sample_count >= analyze_sample_count_threshold) {
+
+    // Add required indices
+    Analyze(table);
+
+    // Clear samples
+    table->ClearIndexSamples();
+  }
 
   // Build desired indices
   BuildIndices(table);
+
+}
+
+oid_t IndexTuner::GetIndexCount() const {
+  oid_t index_count = 0;
+
+  // Go over all tables
+  for (auto table : tables) {
+    oid_t table_index_count = table->GetValidIndexCount();
+
+    // Update index count
+    index_count += table_index_count;
+  }
+
+  return index_count;
 }
 
 void IndexTuner::Tune() {
+  LOG_TRACE("Begin tuning");
+
+  Timer<std::milli> pause_timer;
+  pause_timer.Start();
 
   // Continue till signal is not false
   while (index_tuning_stop == false) {
 
     // Go over all tables
     for (auto table : tables) {
-
       // Update indices periodically
       IndexTuneHelper(table);
     }
+
+    pause_timer.Stop();
+    auto duration = pause_timer.GetDuration();
+
+    // Sleep a bit if needed
+    if(duration > duration_between_pauses){
+      LOG_INFO("TUNER PAUSE : %.0lf", duration);
+      std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
+      pause_timer.Reset();
+      pause_timer.Start();
+    }
+
   }
+
 }
 
 void IndexTuner::Stop() {
-
   // Stop tuning
   index_tuning_stop = true;
 

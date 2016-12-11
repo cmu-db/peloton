@@ -29,6 +29,8 @@ void LoadTable();
 
 void CreateAndLoadTable(LayoutType layout_type);
 
+void DropIndexes();
+
 }  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton
