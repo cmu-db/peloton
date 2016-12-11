@@ -167,15 +167,6 @@ class IndexTuner {
   // write intensive workload ratio threshold
   double write_ratio_threshold = 0.75;
 
-  // Profile time
-  std::vector<double> build_indices_times_;
-  std::vector<double> analyze_times_;
-  std::vector<double> add_indexes_times_;
-  std::vector<double> update_index_util_times_;
-  std::vector<double> compute_rw_ratio_times_;
-  std::vector<double> get_suggested_indexes_times_;
-  std::vector<double> get_frequent_samples_times_;
-
   oid_t tile_groups_indexed_;
 };
 

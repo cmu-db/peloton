@@ -38,43 +38,6 @@ IndexTuner::IndexTuner() {
 }
 
 IndexTuner::~IndexTuner() {
-  // Calculate stats
-  double build_indices_mean, analyze_mean, update_index_util_mean, add_indexes_mean, get_suggested_indexes_mean, get_frequent_samples_mean, compute_rw_ratio_mean;
-  double build_indices_sum, analyze_sum, update_index_util_sum, add_indexes_sum, get_suggested_indexes_sum, get_frequent_samples_sum, compute_rw_ratio_sum;
-  CalculateStatistics(build_indices_times_, build_indices_mean, build_indices_sum);
-  CalculateStatistics(analyze_times_, analyze_mean, analyze_sum);
-  CalculateStatistics(update_index_util_times_, update_index_util_mean, update_index_util_sum);
-  CalculateStatistics(add_indexes_times_, add_indexes_mean, add_indexes_sum);
-  CalculateStatistics(get_suggested_indexes_times_, get_suggested_indexes_mean, get_suggested_indexes_sum);
-  CalculateStatistics(get_frequent_samples_times_, get_frequent_samples_mean, get_frequent_samples_sum);
-  CalculateStatistics(compute_rw_ratio_times_, compute_rw_ratio_mean, compute_rw_ratio_sum);
-
-  analyze_sum = update_index_util_sum + add_indexes_sum + get_suggested_indexes_sum + get_frequent_samples_sum + compute_rw_ratio_sum;
-
-  LOG_INFO("\t[INDEX]\t%s\t%f ms", "Total build index time ", build_indices_sum);
-  LOG_INFO("\t[INDEX]\t%s\t%d ", "Total tile groups indexed", tile_groups_indexed_);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms", "Avg build index time ", build_indices_sum / tile_groups_indexed_);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms", "Total analyze index time ", analyze_sum);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "GetFrequentSamples() ", get_frequent_samples_sum, get_frequent_samples_sum / analyze_sum * 100);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "ComputeWorkloadWriteRatio() ", compute_rw_ratio_sum, compute_rw_ratio_sum / analyze_sum * 100);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "GetSuggestedIndices() ", get_suggested_indexes_sum, get_suggested_indexes_sum / analyze_sum * 100);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "AddIndexes() ", add_indexes_sum, add_indexes_sum / analyze_sum * 100);
-  LOG_INFO("\t[INDEX]\t%s\t%f ms\t%lf%%", "UpdateIndexUtility() ", update_index_util_sum, update_index_util_sum / analyze_sum * 100);
-}
-
-void IndexTuner::CalculateStatistics(const std::vector<double> data, double &mean, double &sum) {
-  if (data.size() == 0) {
-    mean = 0.0;
-    sum = 0.0;
-  }
-
-  sum = 0.0;
-
-  for (auto stat : data) {
-    sum += stat;
-  }
-
-  mean = sum / data.size();
 }
 
 void IndexTuner::Start() {
@@ -171,8 +134,6 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
 }
 
 void IndexTuner::BuildIndices(storage::DataTable* table) {
-  Timer<std::milli> timer;
-  timer.Start();
   oid_t index_count = table->GetIndexCount();
 
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
@@ -185,8 +146,7 @@ void IndexTuner::BuildIndices(storage::DataTable* table) {
     // Build index
     BuildIndex(table, index);
   }
-  timer.Stop();
-  build_indices_times_.push_back(timer.GetDuration());
+
 }
 
 double IndexTuner::ComputeWorkloadWriteRatio(
@@ -470,30 +430,17 @@ void PrintIndexInformation(storage::DataTable* table) {
 }
 
 void IndexTuner::Analyze(storage::DataTable* table) {
-  Timer<std::milli> timer;
   // Process all samples in table
   auto& samples = table->GetIndexSamples();
 
   // Check write ratio
-  timer.Start();
   auto average_write_ratio = ComputeWorkloadWriteRatio(samples);
-  timer.Stop();
-  compute_rw_ratio_times_.push_back(timer.GetDuration());
-  timer.Reset();
 
   // Determine frequent samples
-  timer.Start();
   auto sample_frequency_entry_list = GetFrequentSamples(samples);
-  timer.Stop();
-  get_frequent_samples_times_.push_back(timer.GetDuration());
-  timer.Reset();
 
   // Compute suggested indices
-  timer.Start();
   auto suggested_indices = GetSuggestedIndices(sample_frequency_entry_list);
-  timer.Stop();
-  get_suggested_indexes_times_.push_back(timer.GetDuration());
-  timer.Reset();
 
   // Check index storage footprint
   auto valid_index_count = table->GetValidIndexCount();
@@ -513,18 +460,10 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   }
 
   // Add indexes if needed
-  timer.Start();
   AddIndexes(table, suggested_indices);
-  timer.Stop();
-  add_indexes_times_.push_back(timer.GetDuration());
-  timer.Reset();
 
   // Update index utility
-  timer.Start();
   UpdateIndexUtility(table, sample_frequency_entry_list);
-  timer.Stop();
-  update_index_util_times_.push_back(timer.GetDuration());
-  timer.Reset();
 
   // Display index information
   PrintIndexInformation(table);
