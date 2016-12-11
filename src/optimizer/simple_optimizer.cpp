@@ -21,7 +21,6 @@
 #include "expression/function_expression.h"
 #include "expression/star_expression.h"
 #include "parser/sql_statement.h"
-#include "parser/statements.h"
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/aggregate_plan.h"
@@ -472,8 +471,17 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case STATEMENT_TYPE_INSERT: {
       LOG_TRACE("Adding Insert plan...");
+      parser::InsertStatement* insertStmt =
+          (parser::InsertStatement*)parse_tree2;
+
+      storage::DataTable* target_table =
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              insertStmt->GetDatabaseName(), insertStmt->GetTableName());
+
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::InsertPlan((parser::InsertStatement*)parse_tree2));
+          new planner::InsertPlan(target_table, insertStmt->columns,
+                                  insertStmt->insert_values));
+
       child_plan = std::move(child_InsertPlan);
     } break;
 
@@ -572,9 +580,43 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         // If updating primary index
         if (update_primary_key) {
           // Create delete plan
+          std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
+              new planner::DeletePlan(target_table, updateStmt->where));
+
+          // Create index scan plan
+          std::vector<oid_t> columns;
+          std::vector<expression::AbstractExpression*> runtime_keys;
+          auto index = target_table->GetIndex(index_id);
+          planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+              index, key_column_ids, expr_types, values, runtime_keys);
+          LOG_TRACE("Creating a index scan plan");
+          std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+              new planner::IndexScanPlan(target_table, updateStmt->where,
+                                         columns, index_scan_desc, true));
+          LOG_TRACE("Index scan plan created");
+
+          // Add index scan plan
+          LOG_TRACE("Add index scan plan to delete plan");
+          child_DeletePlan->AddChild(std::move(index_scan_node));
 
           // Create insert plan
+          std::vector<char*>* cols = nullptr;
+          std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
+              insert_values = nullptr;
 
+          // Set columns and insert_values
+          LOG_TRACE("Set columns and insert_values");
+          TransformUpdateToInsertPramerter(updateStmt, cols, insert_values);
+
+          LOG_TRACE("Create insert plan");
+          std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+              new planner::InsertPlan(target_table, cols, insert_values));
+
+          LOG_TRACE("Add Delete plan with insert plan");
+          child_InsertPlan->AddChild(std::move(child_DeletePlan));
+
+          // child_plan
+          child_plan = std::move(child_InsertPlan);
         } else {
           // Create index scan plan
           std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
@@ -585,8 +627,39 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       } else {
         // If updating primary index
         if (update_primary_key) {
-          // Create delete plan and insert plan
+          // Create delete plan
+          std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
+              new planner::DeletePlan(target_table, updateStmt->where));
 
+          // Create sequential scan plan
+          expression::AbstractExpression* scan_expr =
+              (updateStmt->where == nullptr ? nullptr
+                                            : updateStmt->where->Copy());
+          LOG_TRACE("Creating a sequential scan plan");
+          std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+              new planner::SeqScanPlan(target_table, scan_expr, {}));
+          LOG_TRACE("Sequential scan plan created");
+
+          // Add seq scan plan
+          child_DeletePlan->AddChild(std::move(seq_scan_node));
+          // Create insert plan
+          std::vector<char*>* cols = nullptr;
+          std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
+              insert_values = nullptr;
+
+          // Set columns and insert_values
+          LOG_TRACE("Set columns and insert_values");
+          TransformUpdateToInsertPramerter(updateStmt, cols, insert_values);
+
+          LOG_TRACE("Create insert plan");
+          std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+              new planner::InsertPlan(target_table, cols, insert_values));
+
+          LOG_TRACE("Add Delete plan with insert plan");
+          child_InsertPlan->AddChild(std::move(child_DeletePlan));
+
+          // child_plan
+          child_plan = std::move(child_InsertPlan);
         } else {
           // Create sequential scan plan
           std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
@@ -620,6 +693,32 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
    child_plan = std::move(child_parse);
    }*/
   return plan_tree;
+}
+
+void SimpleOptimizer::TransformUpdateToInsertPramerter(
+    parser::UpdateStatement* updateStmt, std::vector<char*>* columns,
+    std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
+        insert_values) {
+
+  PL_ASSERT(updateStmt != nullptr);
+  PL_ASSERT(columns == nullptr);
+  PL_ASSERT(insert_values == nullptr);
+
+  auto cols = new std::vector<char*>();
+  auto values =
+      new std::vector<std::vector<peloton::expression::AbstractExpression*>*>();
+  auto value = new std::vector<expression::AbstractExpression*>;
+
+  // Iterate update
+  for (auto item : *(updateStmt->updates)) {
+    cols->push_back(item->column);
+    value->push_back(item->value);
+  }
+
+  values->push_back(value);
+
+  columns = cols;
+  insert_values = values;
 }
 
 std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(

@@ -44,6 +44,118 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   LOG_TRACE("Creating an Insert Plan");
 }
 
+InsertPlan::InsertPlan(
+    storage::DataTable *table, std::vector<char *> *columns,
+    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+        insert_values)
+    : bulk_insert_count(insert_values->size()) {
+
+  parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
+  params_value_type_.reset(new std::vector<common::Type::TypeId>);
+
+  target_table_ = table;
+
+  if (target_table_) {
+    catalog::Schema *table_schema = target_table_->GetSchema();
+    // INSERT INTO table_name VALUES (val2, val2, ...)
+    if (columns == NULL) {
+      for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
+           tuple_idx++) {
+        auto values = (*insert_values)[tuple_idx];
+        PL_ASSERT(values->size() == table_schema->GetColumnCount());
+        std::unique_ptr<storage::Tuple> tuple(
+            new storage::Tuple(table_schema, true));
+        int col_cntr = 0;
+        int param_index = 0;
+        for (expression::AbstractExpression *elem : *values) {
+          if (elem->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
+            std::tuple<oid_t, oid_t, oid_t> pair =
+                std::make_tuple(tuple_idx, col_cntr, param_index++);
+            parameter_vector_->push_back(pair);
+            params_value_type_->push_back(
+                table_schema->GetColumn(col_cntr).GetType());
+          } else {
+            expression::ConstantValueExpression *const_expr_elem =
+                dynamic_cast<expression::ConstantValueExpression *>(elem);
+            common::Value const_expr_elem_val = (const_expr_elem->GetValue());
+            switch (const_expr_elem->GetValueType()) {
+              case common::Type::VARCHAR:
+              case common::Type::VARBINARY:
+                tuple->SetValue(col_cntr, const_expr_elem_val, GetPlanPool());
+                break;
+              default: {
+                tuple->SetValue(col_cntr, const_expr_elem_val, nullptr);
+              }
+            }
+          }
+          ++col_cntr;
+        }
+        tuples_.push_back(std::move(tuple));
+      }
+    }
+    // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+    else {
+      // columns has to be less than or equal that of schema
+      for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
+           tuple_idx++) {
+        auto values = (*insert_values)[tuple_idx];
+        PL_ASSERT(columns->size() <= table_schema->GetColumnCount());
+        std::unique_ptr<storage::Tuple> tuple(
+            new storage::Tuple(table_schema, true));
+        int col_cntr = 0;
+        auto &table_columns = table_schema->GetColumns();
+        auto query_columns = columns;
+        for (catalog::Column const &elem : table_columns) {
+          std::size_t pos = std::find(query_columns->begin(),
+                                      query_columns->end(), elem.GetName()) -
+                            query_columns->begin();
+
+          // If the column does not exist, insert a null value
+          if (pos >= query_columns->size()) {
+            tuple->SetValue(col_cntr, common::ValueFactory::GetNullValueByType(
+                                          elem.GetType()),
+                            nullptr);
+          } else {
+            // If it's varchar or varbinary then use data pool, otherwise
+            // allocate
+            // inline
+            auto data_pool = GetPlanPool();
+            if (elem.GetType() != common::Type::VARCHAR &&
+                elem.GetType() != common::Type::VARBINARY)
+              data_pool = nullptr;
+
+            LOG_TRACE(
+                "Column %d found in INSERT query, ExpressionType: %s", col_cntr,
+                ExpressionTypeToString(values->at(pos)->GetExpressionType())
+                    .c_str());
+
+            if (values->at(pos)->GetExpressionType() ==
+                EXPRESSION_TYPE_VALUE_PARAMETER) {
+              std::tuple<oid_t, oid_t, oid_t> pair =
+                  std::make_tuple(tuple_idx, col_cntr, pos);
+              parameter_vector_->push_back(pair);
+              params_value_type_->push_back(
+                  table_schema->GetColumn(col_cntr).GetType());
+            } else {
+              expression::ConstantValueExpression *const_expr_elem =
+                  dynamic_cast<expression::ConstantValueExpression *>(
+                      values->at(pos));
+              common::Value val = (const_expr_elem->GetValue());
+              tuple->SetValue(col_cntr, val, data_pool);
+            }
+          }
+
+          ++col_cntr;
+        }
+        LOG_TRACE("Tuple to be inserted: %s", tuple->GetInfo().c_str());
+        tuples_.push_back(std::move(tuple));
+      }
+    }
+  } else {
+    LOG_TRACE("Table does not exist!");
+  }
+}
+
 InsertPlan::InsertPlan(parser::InsertStatement *parse_tree)
     : bulk_insert_count(parse_tree->insert_values->size()) {
   LOG_TRACE("Creating an Insert Plan");
@@ -177,14 +289,14 @@ void InsertPlan::SetParameterValues(std::vector<common::Value> *values) {
       case common::Type::VARBINARY:
       case common::Type::VARCHAR: {
         common::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
-                                                GetPlanPool());
+        tuples_[std::get<0>(put_loc)]
+            ->SetValue(std::get<1>(put_loc), val, GetPlanPool());
         break;
       }
       default: {
         common::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
-                                                nullptr);
+        tuples_[std::get<0>(put_loc)]
+            ->SetValue(std::get<1>(put_loc), val, nullptr);
       }
     }
   }

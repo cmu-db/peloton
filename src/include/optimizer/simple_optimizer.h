@@ -15,6 +15,7 @@
 #include "optimizer/abstract_optimizer.h"
 #include "common/types.h"
 #include "common/value.h"
+#include "parser/statements.h"
 
 #include <memory>
 #include <vector>
@@ -86,6 +87,11 @@ class SimpleOptimizer : public AbstractOptimizer {
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
       storage::DataTable *target_table, std::vector<oid_t> &column_ids,
       expression::AbstractExpression *predicate, bool for_update);
+
+  static void TransformUpdateToInsertPramerter(
+      parser::UpdateStatement *updateStmt, std::vector<char *> *columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+          insert_values);
 
   // create a copy plan for a copy statement
   static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(

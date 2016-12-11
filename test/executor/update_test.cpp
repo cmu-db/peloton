@@ -178,6 +178,9 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Table created!");
 
+  storage::DataTable* table =
+      catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table");
+
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
@@ -212,6 +215,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
 
+  LOG_INFO("%s", table->GetInfo().c_str());
+
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating a tuple...");
@@ -237,6 +242,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
+
+  LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Updating another tuple...");
@@ -264,6 +271,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
+
+  LOG_INFO("%s", table->GetInfo().c_str());
 
   // Deleting now
   txn = txn_manager.BeginTransaction();
