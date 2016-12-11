@@ -521,12 +521,24 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         // Finish
         child_plan = std::move(child_DeletePlan);
       } else {
-        // Create sequential scan plan
+        // Create delete plan
         std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-            new planner::DeletePlan(deleteStmt));
+            new planner::DeletePlan(target_table, deleteStmt->expr));
+
+        // Create sequential scan plan
+        expression::AbstractExpression* scan_expr =
+            (deleteStmt->expr == nullptr ? nullptr : deleteStmt->expr->Copy());
+        LOG_TRACE("Creating a sequential scan plan");
+        std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+            new planner::SeqScanPlan(target_table, scan_expr, {}));
+        LOG_TRACE("Sequential scan plan created");
+
+        // Add seq scan plan
+        child_DeletePlan->AddChild(std::move(seq_scan_node));
+
+        // Finish
         child_plan = std::move(child_DeletePlan);
       }
-
     } break;
 
     case STATEMENT_TYPE_UPDATE: {
