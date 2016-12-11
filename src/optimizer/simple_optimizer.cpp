@@ -579,6 +579,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                                expr_types, values, index_id)) {
         // If updating primary index
         if (update_primary_key) {
+          std::cout << "Update primary key with index predicate" << std::endl;
           // Create delete plan
           std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
               new planner::DeletePlan(target_table, updateStmt->where));
@@ -618,6 +619,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           // child_plan
           child_plan = std::move(child_InsertPlan);
         } else {
+          std::cout << "Update normal with index predicate" << std::endl;
+
           // Create index scan plan
           std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
               new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
@@ -627,6 +630,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       } else {
         // If updating primary index
         if (update_primary_key) {
+          std::cout << "Update primary key with no index predicate"
+                    << std::endl;
+
           // Create delete plan
           std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
               new planner::DeletePlan(target_table, updateStmt->where));
@@ -661,6 +667,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           // child_plan
           child_plan = std::move(child_InsertPlan);
         } else {
+          std::cout << "Update normal column with no index predicate"
+                    << std::endl;
           // Create sequential scan plan
           std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
               new planner::UpdatePlan(updateStmt));
