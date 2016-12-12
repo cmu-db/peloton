@@ -274,6 +274,31 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
+  txn = txn_manager.BeginTransaction();
+  LOG_INFO("Updating primary key...");
+  LOG_INFO("Query: UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
+  statement.reset(new Statement(
+      "UPDATE", "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1"));
+  LOG_INFO("Building parse tree...");
+  update_stmt = peloton_parser.BuildParseTree(
+      "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(
+      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  LOG_INFO("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  result_format =
+      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+                                             params, result, result_format);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple Updated!");
+  txn_manager.CommitTransaction(txn);
+
+  LOG_INFO("%s", table->GetInfo().c_str());
+
   // Deleting now
   txn = txn_manager.BeginTransaction();
   LOG_INFO("Deleting a tuple...");

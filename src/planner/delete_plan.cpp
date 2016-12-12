@@ -57,6 +57,39 @@ void DeletePlan::BuildInitialDeletePlan(
   }
 }
 
+// Creates the update plan with sequential scan.
+DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
+  BuildInitialDeletePlan(delete_statemenet);
+  LOG_TRACE("Creating a sequential scan plan");
+  expression::AbstractExpression *scan_expr =
+      (expr_ == nullptr ? nullptr : expr_->Copy());
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(target_table_, scan_expr, {}));
+  LOG_TRACE("Sequential scan plan created");
+  AddChild(std::move(seq_scan_node));
+}
+
+// Creates the update plan with index scan.
+DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet,
+                       std::vector<oid_t> &key_column_ids,
+                       std::vector<ExpressionType> &expr_types,
+                       std::vector<common::Value> &values, oid_t &index_id) {
+  std::vector<oid_t> columns;
+  BuildInitialDeletePlan(delete_statemenet);
+  // Create index scan desc
+  std::vector<expression::AbstractExpression *> runtime_keys;
+  auto index = target_table_->GetIndex(index_id);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+  // Create plan node.
+  LOG_TRACE("Creating a index scan plan");
+  std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+      new planner::IndexScanPlan(target_table_, expr_, columns, index_scan_desc,
+                                 true));
+  LOG_TRACE("Index scan plan created");
+  AddChild(std::move(index_scan_node));
+}
+
 // Creates the delete plan. The index plan should be added outside
 DeletePlan::DeletePlan(storage::DataTable *table,
                        expression::AbstractExpression *predicate) {
@@ -67,7 +100,6 @@ DeletePlan::DeletePlan(storage::DataTable *table,
     LOG_TRACE("No expression, setting truncate to true");
     expr_ = nullptr;
     truncate = true;
-
   } else {
     expr_ = predicate->Copy();
     LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");

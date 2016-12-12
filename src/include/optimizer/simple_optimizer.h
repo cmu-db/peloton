@@ -89,8 +89,8 @@ class SimpleOptimizer : public AbstractOptimizer {
       expression::AbstractExpression *predicate, bool for_update);
 
   static void TransformUpdateToInsertPramerter(
-      parser::UpdateStatement *updateStmt, std::vector<char *> *columns,
-      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+      parser::UpdateStatement *updateStmt, std::vector<char *> *&columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *&
           insert_values);
 
   // create a copy plan for a copy statement

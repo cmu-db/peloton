@@ -65,9 +65,10 @@ bool InsertExecutor::DExecute() {
 
   auto current_txn = executor_context_->GetTransaction();
 
-  if(!target_table) {
-	  transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
-	         return false;
+  if (!target_table) {
+    transaction_manager.SetTransactionResult(current_txn,
+                                             peloton::Result::RESULT_FAILURE);
+    return false;
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
@@ -83,7 +84,10 @@ bool InsertExecutor::DExecute() {
     }
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
-    PL_ASSERT(logical_tile.get() != nullptr);
+    // PL_ASSERT(logical_tile.get() != nullptr);
+    if (logical_tile.get() == nullptr) {
+      goto normal;
+    }
     auto target_table_schema = target_table->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
 
@@ -103,12 +107,15 @@ bool InsertExecutor::DExecute() {
 
       // insert tuple into the table.
       ItemPointer *index_entry_ptr = nullptr;
-      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), current_txn, &index_entry_ptr);
+      peloton::ItemPointer location =
+          target_table->InsertTuple(tuple.get(), current_txn, &index_entry_ptr);
 
-      // it is possible that some concurrent transactions have inserted the same tuple.
+      // it is possible that some concurrent transactions have inserted the same
+      // tuple.
       // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
-        transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(
+            current_txn, peloton::Result::RESULT_FAILURE);
         return false;
       }
 
@@ -119,69 +126,71 @@ bool InsertExecutor::DExecute() {
 
     return true;
   }
-  // Inserting a collection of tuples from plan node
-  else if (children_.size() == 0) {
-    LOG_TRACE("Insert executor :: 0 child ");
+// Inserting a collection of tuples from plan node
+// else if (children_.size() == 0) {
+normal:
+  LOG_TRACE("Insert executor :: 0 child ");
 
-    // Extract expressions from plan node and construct the tuple.
-    // For now we just handle a single tuple
-    auto schema = target_table->GetSchema();
-    auto project_info = node.GetProjectInfo();
-    auto tuple = node.GetTuple(0);
-    std::unique_ptr<storage::Tuple> project_tuple;
+  // Extract expressions from plan node and construct the tuple.
+  // For now we just handle a single tuple
+  auto schema = target_table->GetSchema();
+  auto project_info = node.GetProjectInfo();
+  auto tuple = node.GetTuple(0);
+  std::unique_ptr<storage::Tuple> project_tuple;
 
-    // Check if this is not a raw tuple
-    if (tuple == nullptr) {
-      // Otherwise, there must exist a project info
-      PL_ASSERT(project_info);
-      // There should be no direct maps
-      PL_ASSERT(project_info->GetDirectMapList().size() == 0);
+  // Check if this is not a raw tuple
+  if (tuple == nullptr) {
+    // Otherwise, there must exist a project info
+    PL_ASSERT(project_info);
+    // There should be no direct maps
+    PL_ASSERT(project_info->GetDirectMapList().size() == 0);
 
-      project_tuple.reset(new storage::Tuple(schema, true));
+    project_tuple.reset(new storage::Tuple(schema, true));
 
-      for (auto target : project_info->GetTargetList()) {
-        auto value =
-            target.second->Evaluate(nullptr, nullptr, executor_context_);
-        project_tuple->SetValue(target.first, value, executor_pool);
-      }
-
-      // Set tuple to point to temporary project tuple
-      tuple = project_tuple.get();
+    for (auto target : project_info->GetTargetList()) {
+      auto value = target.second->Evaluate(nullptr, nullptr, executor_context_);
+      project_tuple->SetValue(target.first, value, executor_pool);
     }
 
-    // Bulk Insert Mode
-    for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
-      // if we are doing a bulk insert from values not project_info
-      if (!project_info){
-        tuple = node.GetTuple(insert_itr);
-      }
-      // Carry out insertion
-      ItemPointer *index_entry_ptr = nullptr;
-      ItemPointer location = target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
-      LOG_TRACE("Inserted into location: %u, %u", location.block,
-                location.offset);
-      if (tuple->GetColumnCount() > 2) {
-        common::Value val = (tuple->GetValue(2));
-        LOG_TRACE("value: %s", val.GetInfo().c_str());
-      }
-
-      if (location.block == INVALID_OID) {
-        LOG_TRACE("Failed to Insert. Set txn failure.");
-        transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
-        return false;
-      }
-
-      transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
-      
-      LOG_TRACE("Number of tuples in table after insert: %lu",
-                target_table->GetTupleCount());
-
-      executor_context_->num_processed += 1;  // insert one
-    }
-
-    done_ = true;
-    return true;
+    // Set tuple to point to temporary project tuple
+    tuple = project_tuple.get();
   }
+
+  // Bulk Insert Mode
+  for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
+    // if we are doing a bulk insert from values not project_info
+    if (!project_info) {
+      tuple = node.GetTuple(insert_itr);
+    }
+    // Carry out insertion
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer location =
+        target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
+    LOG_TRACE("Inserted into location: %u, %u", location.block,
+              location.offset);
+    if (tuple->GetColumnCount() > 2) {
+      common::Value val = (tuple->GetValue(2));
+      LOG_TRACE("value: %s", val.GetInfo().c_str());
+    }
+
+    if (location.block == INVALID_OID) {
+      LOG_TRACE("Failed to Insert. Set txn failure.");
+      transaction_manager.SetTransactionResult(current_txn,
+                                               Result::RESULT_FAILURE);
+      return false;
+    }
+
+    transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+
+    LOG_TRACE("Number of tuples in table after insert: %lu",
+              target_table->GetTupleCount());
+
+    executor_context_->num_processed += 1;  // insert one
+  }
+
+  done_ = true;
+  //  return true;
+  //}
 
   return true;
 }
