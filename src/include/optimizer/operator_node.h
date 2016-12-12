@@ -28,7 +28,7 @@ enum class OpType {
   Tree,
   // Logical ops
   Get,
-  Project,
+  LogicalProject,
   LogicalFilter,
   InnerJoin,
   LeftJoin,
@@ -40,6 +40,7 @@ enum class OpType {
   LogicalPhysicalDelimiter,
   // Physical ops
   Scan,
+  PhysicalProject,
   ComputeExprs,
   Filter,
   InnerNLJoin,

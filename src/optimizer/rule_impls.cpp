@@ -80,6 +80,33 @@ void GetToScan::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalProjectToPhysical
+LogicalProjectToPhysical::LogicalProjectToPhysical() {
+  physical = true;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalProject);
+}
+
+bool LogicalProjectToPhysical::Check(
+    std::shared_ptr<OperatorExpression> plan) const {
+  (void)plan;
+  return true;
+}
+
+void LogicalProjectToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  auto result_plan =
+      std::make_shared<OperatorExpression>(PhysicalProject::make());
+
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PL_ASSERT(children.size() == 1);
+  result_plan->PushChild(children[0]);
+
+  transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// ProjectToComputeExprs
 ProjectToComputeExprs::ProjectToComputeExprs() {
   physical = true;
@@ -87,7 +114,7 @@ ProjectToComputeExprs::ProjectToComputeExprs() {
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> project_list(
       std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern = std::make_shared<Pattern>(OpType::Project);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalProject);
   match_pattern->AddChild(child);
   match_pattern->AddChild(project_list);
 }

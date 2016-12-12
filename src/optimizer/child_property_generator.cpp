@@ -17,6 +17,7 @@ namespace peloton {
 namespace optimizer {
 
 void ChildPropertyGenerator::Visit(const PhysicalScan *){};
+void ChildPropertyGenerator::Visit(const PhysicalProject *) {}
 void ChildPropertyGenerator::Visit(const PhysicalComputeExprs *){};
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
 void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){};

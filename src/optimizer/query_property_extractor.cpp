@@ -12,10 +12,10 @@
 
 #include "optimizer/query_property_extractor.h"
 
-#include "../include/parser/select_statement.h"
 #include "catalog/catalog.h"
 #include "expression/expression_util.h"
 #include "optimizer/properties.h"
+#include "parser/select_statement.h"
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
 

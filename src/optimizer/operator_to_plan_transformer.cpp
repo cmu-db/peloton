@@ -48,6 +48,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   output_plan.reset(new planner::SeqScanPlan(op->table, predicate, column_ids));
 }
 
+void OperatorToPlanTransformer::Visit(const PhysicalProject *) {}
+
 void OperatorToPlanTransformer::Visit(const PhysicalComputeExprs *) {
   auto children = current_children;
   assert(children.size() == 2);

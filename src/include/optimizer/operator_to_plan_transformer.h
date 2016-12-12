@@ -39,6 +39,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalScan *op) override;
 
+  void Visit(const PhysicalProject *) override;
+
   void Visit(const PhysicalComputeExprs *) override;
 
   void Visit(const PhysicalFilter *) override;

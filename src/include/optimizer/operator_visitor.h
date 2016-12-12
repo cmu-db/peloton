@@ -26,6 +26,7 @@ class OperatorVisitor {
   virtual ~OperatorVisitor(){};
 
   virtual void Visit(const PhysicalScan *) = 0;
+  virtual void Visit(const PhysicalProject *) = 0;
   virtual void Visit(const PhysicalComputeExprs *) = 0;
   virtual void Visit(const PhysicalFilter *) = 0;
   virtual void Visit(const PhysicalInnerNLJoin *) = 0;

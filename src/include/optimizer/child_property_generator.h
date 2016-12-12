@@ -35,6 +35,7 @@ class ChildPropertyGenerator : public OperatorVisitor {
   }
 
   void Visit(const PhysicalScan *) override;
+  void Visit(const PhysicalProject *) override;
   void Visit(const PhysicalComputeExprs *) override;
   void Visit(const PhysicalFilter *) override;
   void Visit(const PhysicalInnerNLJoin *) override;

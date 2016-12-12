@@ -145,6 +145,14 @@ hash_t PhysicalScan::Hash() const {
 }
 
 //===--------------------------------------------------------------------===//
+// Project
+//===--------------------------------------------------------------------===//
+Operator PhysicalProject::make() {
+  PhysicalProject *project = new PhysicalProject;
+  return Operator(project);
+}
+
+//===--------------------------------------------------------------------===//
 // ComputeExprs
 //===--------------------------------------------------------------------===//
 Operator PhysicalComputeExprs::make() {
@@ -230,6 +238,8 @@ void OperatorNode<T>::Accept(OperatorVisitor *v) const {
   v->Visit((const T *)this);
 }
 
+// We don't need to visit logical operators for driving child properties,
+// costing plans, etc.
 template <>
 void OperatorNode<LeafOperator>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
@@ -285,6 +295,8 @@ std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
 template <>
 std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
 template <>
+std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
+template <>
 std::string OperatorNode<PhysicalComputeExprs>::name_ = "PhysicalComputeExprs";
 template <>
 std::string OperatorNode<PhysicalFilter>::name_ = "PhysicalFilter";
@@ -314,7 +326,7 @@ OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
 OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalProject>::type_ = OpType::Project;
+OpType OperatorNode<LogicalProject>::type_ = OpType::LogicalProject;
 template <>
 OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
 template <>
@@ -331,6 +343,8 @@ template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
 OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
+template <>
+OpType OperatorNode<PhysicalProject>::type_ = OpType::PhysicalProject;
 template <>
 OpType OperatorNode<PhysicalComputeExprs>::type_ = OpType::ComputeExprs;
 template <>

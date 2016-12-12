@@ -37,6 +37,7 @@ void CostAndStatsCalculator::CalculateCostAndStats(
 }
 
 void CostAndStatsCalculator::Visit(const PhysicalScan *){};
+void CostAndStatsCalculator::Visit(const PhysicalProject *) {}
 void CostAndStatsCalculator::Visit(const PhysicalComputeExprs *){};
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
 void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){};

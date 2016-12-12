@@ -307,7 +307,7 @@ void Optimizer::ImplementGroup(GroupID id) {
   LOG_TRACE("Implementing group %d", id);
   for (std::shared_ptr<GroupExpression> gexpr :
        memo_.GetGroupByID(id)->GetExpressions()) {
-    if (gexpr->Op().IsPhysical()) ExploreExpression(gexpr);
+    if (gexpr->Op().IsPhysical()) ImplementExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetImplementationFlag();
 }

@@ -133,6 +133,14 @@ class PhysicalScan : public OperatorNode<PhysicalScan> {
 };
 
 //===--------------------------------------------------------------------===//
+// PhysicalProject
+//===--------------------------------------------------------------------===//
+class PhysicalProject : public OperatorNode<PhysicalProject> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
 // ComputeExprs
 //===--------------------------------------------------------------------===//
 class PhysicalComputeExprs : public OperatorNode<PhysicalComputeExprs> {
