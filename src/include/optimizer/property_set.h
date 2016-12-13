@@ -30,8 +30,6 @@ class PropertySet {
 
   void AddProperty(std::shared_ptr<Property> property);
 
-  const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
-
   hash_t Hash() const;
 
   // whether this property set contains a specific property

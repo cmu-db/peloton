@@ -54,14 +54,6 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 };
 
 //===--------------------------------------------------------------------===//
-// Project
-//===--------------------------------------------------------------------===//
-class LogicalProject : public OperatorNode<LogicalProject> {
- public:
-  static Operator make();
-};
-
-//===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
 class LogicalFilter : public OperatorNode<LogicalFilter> {

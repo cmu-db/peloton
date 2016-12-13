@@ -40,7 +40,7 @@ enum class OpType {
   LogicalPhysicalDelimiter,
   // Physical ops
   Scan,
-  PhysicalProject,
+  Project,
   ComputeExprs,
   Filter,
   InnerNLJoin,

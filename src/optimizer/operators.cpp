@@ -49,14 +49,6 @@ hash_t LogicalGet::Hash() const {
 }
 
 //===--------------------------------------------------------------------===//
-// Project
-//===--------------------------------------------------------------------===//
-Operator LogicalProject::make() {
-  LogicalProject *project = new LogicalProject;
-  return Operator(project);
-}
-
-//===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
 Operator LogicalFilter::make() {
@@ -237,9 +229,6 @@ template <>
 void OperatorNode<LogicalGet>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
-void OperatorNode<LogicalProject>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
 void OperatorNode<LogicalFilter>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 template <>
@@ -266,8 +255,6 @@ template <>
 std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
 std::string OperatorNode<LogicalGet>::name_ = "LogicalGet";
-template <>
-std::string OperatorNode<LogicalProject>::name_ = "LogicalProject";
 template <>
 std::string OperatorNode<LogicalFilter>::name_ = "LogicalFilter";
 template <>
@@ -316,8 +303,6 @@ OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
 OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalProject>::type_ = OpType::LogicalProject;
-template <>
 OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
 template <>
 OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
@@ -334,7 +319,7 @@ OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
 template <>
 OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
 template <>
-OpType OperatorNode<PhysicalProject>::type_ = OpType::PhysicalProject;
+OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
 OpType OperatorNode<PhysicalComputeExprs>::type_ = OpType::ComputeExprs;
 template <>

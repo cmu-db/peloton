@@ -28,7 +28,15 @@ ChildPropertyGenerator::GetProperties(std::shared_ptr<GroupExpression> gexpr,
 }
 
 void ChildPropertyGenerator::Visit(const PhysicalScan *) {
-  output_.push_back(std::make_pair(requirements_, std::vector<PropertySet>()));
+  PropertySet provided_property;
+  for (auto &property : requirements_.Properties()) {
+    if (property->Type() == PropertyType::PREDICATE ||
+        property->Type() == PropertyType::COLUMNS) {
+      provided_property.AddProperty(property);
+    }
+  }
+  output_.push_back(
+      std::make_pair(std::move(provided_property), std::vector<PropertySet>()));
 };
 
 void ChildPropertyGenerator::Visit(const PhysicalProject *) {}

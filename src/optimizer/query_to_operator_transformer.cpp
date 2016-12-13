@@ -88,25 +88,7 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto get_expr =
       std::make_shared<OperatorExpression>(LogicalGet::make(target_table));
 
-  // Check whether we need to add a logical project operator
-  bool needs_projection = false;
-  for (auto col : *op->select_list) {
-    if (col->GetExpressionType() != EXPRESSION_TYPE_STAR) {
-      needs_projection = true;
-      break;
-    }
-  }
-
-  if (!needs_projection) {
-    output_expr = get_expr;
-    return;
-  }
-
-  // Add a projection at top level
-  auto project_expr =
-      std::make_shared<OperatorExpression>(LogicalProject::make());
-  project_expr->PushChild(get_expr);
-  output_expr = project_expr;
+  output_expr = get_expr;
 }
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
