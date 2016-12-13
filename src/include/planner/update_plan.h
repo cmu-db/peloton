@@ -71,6 +71,8 @@ class UpdatePlan : public AbstractPlan {
 
   void SetParameterValues(std::vector<common::Value> *values);
 
+  bool GetUpdatePrimaryKey() { return update_primary_key; }
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
         new UpdatePlan(target_table_, std::move(project_info_->Copy())));
@@ -94,6 +96,9 @@ class UpdatePlan : public AbstractPlan {
 
   // The where condition
   expression::AbstractExpression *where_;
+
+  // Whether update primary key
+  bool update_primary_key;
 };
 
 }  // namespace planner

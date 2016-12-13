@@ -47,13 +47,6 @@ class DeletePlan : public AbstractPlan {
 
   explicit DeletePlan(storage::DataTable *table, bool truncate);
 
-  explicit DeletePlan(parser::DeleteStatement *delete_statemenet);
-
-  explicit DeletePlan(parser::DeleteStatement *delete_statemenet,
-                      std::vector<oid_t> &key_column_ids,
-                      std::vector<ExpressionType> &expr_types,
-                      std::vector<common::Value> &values, oid_t &index_id);
-
   explicit DeletePlan(storage::DataTable *table,
                       expression::AbstractExpression *predicate);
 

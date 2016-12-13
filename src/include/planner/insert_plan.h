@@ -53,8 +53,6 @@ class InsertPlan : public AbstractPlan {
                       std::unique_ptr<storage::Tuple> &&tuple,
                       oid_t bulk_insert_count = 1);
 
-  explicit InsertPlan(parser::InsertStatement *parse_tree);
-
   explicit InsertPlan(
       storage::DataTable *table, std::vector<char *> *columns,
       std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
