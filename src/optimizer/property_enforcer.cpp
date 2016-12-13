@@ -26,7 +26,7 @@ std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
 }
 
 void PropertyEnforcer::Visit(const PropertyColumns *) {}
-void PropertyEnforcer::Visit(const PropertyOutputExpressions *) {}
+void PropertyEnforcer::Visit(const PropertyProjection *) {}
 void PropertyEnforcer::Visit(const PropertySort *) {}
 void PropertyEnforcer::Visit(const PropertyPredicate *) {}
 

@@ -114,33 +114,23 @@ Operator LogicalLimit::make() {
 //===--------------------------------------------------------------------===//
 // Scan
 //===--------------------------------------------------------------------===//
-Operator PhysicalScan::make(storage::DataTable *table,
-                            std::vector<Column *> cols) {
+Operator PhysicalScan::make(storage::DataTable *table) {
   PhysicalScan *scan = new PhysicalScan;
-  scan->table = table;
-  scan->columns = cols;
+  scan->table_ = table;
   return Operator(scan);
 }
 
 bool PhysicalScan::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Scan) return false;
   const PhysicalScan &r = *static_cast<const PhysicalScan *>(&node);
-  if (table->GetOid() != r.table->GetOid()) return false;
-  if (columns.size() != r.columns.size()) return false;
-
-  for (size_t i = 0; i < columns.size(); ++i) {
-    if (columns[i] != r.columns[i]) return false;
-  }
+  if (table_->GetOid() != r.table_->GetOid()) return false;
   return true;
 }
 
 hash_t PhysicalScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  oid_t table_oid = table->GetOid();
+  oid_t table_oid = table_->GetOid();
   hash = util::CombineHashes(hash, util::Hash<oid_t>(&table_oid));
-  for (Column *col : columns) {
-    hash = util::CombineHashes(hash, col->Hash());
-  }
   return hash;
 }
 

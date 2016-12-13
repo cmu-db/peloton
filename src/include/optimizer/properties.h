@@ -37,9 +37,9 @@ class PropertyColumns : public Property {
 };
 
 // Specifies the output expressions of the query
-class PropertyOutputExpressions : public Property {
+class PropertyProjection : public Property {
  public:
-  PropertyOutputExpressions(
+  PropertyProjection(
       std::vector<std::unique_ptr<expression::AbstractExpression>> expressions);
 
   PropertyType Type() const override;

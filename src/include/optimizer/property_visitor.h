@@ -16,7 +16,7 @@ namespace peloton {
 namespace optimizer {
 
 class PropertyColumns;
-class PropertyOutputExpressions;
+class PropertyProjection;
 class PropertySort;
 class PropertyPredicate;
 
@@ -30,7 +30,7 @@ class PropertyVisitor {
   virtual ~PropertyVisitor(){};
 
   virtual void Visit(const PropertyColumns *) = 0;
-  virtual void Visit(const PropertyOutputExpressions *) = 0;
+  virtual void Visit(const PropertyProjection *) = 0;
   virtual void Visit(const PropertySort *) = 0;
   virtual void Visit(const PropertyPredicate *) = 0;
 };

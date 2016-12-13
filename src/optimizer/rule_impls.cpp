@@ -69,8 +69,8 @@ void GetToScan::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().as<LogicalGet>();
 
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalScan::make(get->table, std::vector<Column *>()));
+  auto result_plan =
+      std::make_shared<OperatorExpression>(PhysicalScan::make(get->table));
 
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 1);

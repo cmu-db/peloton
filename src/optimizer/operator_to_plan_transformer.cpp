@@ -34,18 +34,12 @@ planner::AbstractPlan *OperatorToPlanTransformer::ConvertOpExpression(
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   auto children = current_children;
   std::vector<oid_t> column_ids;
-  for (Column *col : op->columns) {
-    TableColumn *table_col = dynamic_cast<TableColumn *>(col);
-    assert(table_col != nullptr);
-    column_ids.push_back(table_col->ColumnIndexOid());
-  }
-  left_columns = op->columns;
-  output_columns = op->columns;
 
   expression::AbstractExpression *predicate =
       ConvertToAbstractExpression(children[1]);
 
-  output_plan.reset(new planner::SeqScanPlan(op->table, predicate, column_ids));
+  output_plan.reset(
+      new planner::SeqScanPlan(op->table_, predicate, column_ids));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {}

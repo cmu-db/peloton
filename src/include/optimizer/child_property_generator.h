@@ -28,11 +28,7 @@ class ChildPropertyGenerator : public OperatorVisitor {
   ChildPropertyGenerator(ColumnManager &manager) : manager_(manager) {}
 
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
-      UNUSED_ATTRIBUTE std::shared_ptr<GroupExpression> gexpr,
-      UNUSED_ATTRIBUTE PropertySet requirements) {
-    return std::move(
-        std::vector<std::pair<PropertySet, std::vector<PropertySet>>>());
-  }
+      std::shared_ptr<GroupExpression> gexpr, PropertySet requirements);
 
   void Visit(const PhysicalScan *) override;
   void Visit(const PhysicalProject *) override;
@@ -49,6 +45,8 @@ class ChildPropertyGenerator : public OperatorVisitor {
 
  private:
   ColumnManager &manager_;
+  PropertySet requirements_;
+  std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
 };
 
 } /* namespace optimizer */

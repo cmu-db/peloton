@@ -120,24 +120,24 @@ void PropertyPredicate::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyPredicate *)this);
 }
 
-PropertyOutputExpressions::PropertyOutputExpressions(
+PropertyProjection::PropertyProjection(
     std::vector<std::unique_ptr<expression::AbstractExpression> > expressions)
     : expressions_(std::move(expressions)){};
 
-PropertyType PropertyOutputExpressions::Type() const {
+PropertyType PropertyProjection::Type() const {
   return PropertyType::OUTPUT_EXPRESSION;
 }
 
 // PropertyOutputExpressions is only used for projection operator. We also
 // assume this is always going to be satisfied.
-bool PropertyOutputExpressions::operator>=(const Property &r) const {
+bool PropertyProjection::operator>=(const Property &r) const {
   return Property::operator>=(r);
 }
 
-hash_t PropertyOutputExpressions::Hash() const { return Property::Hash(); }
+hash_t PropertyProjection::Hash() const { return Property::Hash(); }
 
-void PropertyOutputExpressions::Accept(PropertyVisitor *v) const {
-  v->Visit((const PropertyOutputExpressions *)this);
+void PropertyProjection::Accept(PropertyVisitor *v) const {
+  v->Visit((const PropertyProjection *)this);
 }
 
 } /* namespace optimizer */

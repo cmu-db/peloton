@@ -47,35 +47,40 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
       new PropertyPredicate(predicate->Copy())));
 
-  // Add output expressions property
-  auto output_expressions =
-      std::vector<std::unique_ptr<expression::AbstractExpression> >();
+  std::unordered_map<oid_t, oid_t> column_mapping;
+  std::vector<oid_t> column_ids;
+  bool needs_projection = false;
+
+  // Transform output expressions
   for (auto col : *select_stmt->select_list) {
-    expression::ExpressionUtil::TransformExpression(&schema, col);
-    output_expressions.push_back(
-        std::unique_ptr<expression::AbstractExpression>(col->Copy()));
+    expression::ExpressionUtil::TransformExpression(
+        column_mapping, column_ids, col, schema, needs_projection);
   }
 
-  property_set_.AddProperty(std::shared_ptr<PropertyOutputExpressions>(
-      new PropertyOutputExpressions(std::move(output_expressions))));
+  // Get the columns required by the result
+  auto table_oid = target_table->GetOid();
+  for (oid_t col_id : column_ids) {
+    catalog::Column schema_col = schema.GetColumn(col_id);
+    Column *col = manager_.LookupColumn(table_oid, col_id);
+    if (col == nullptr) {
+      col = manager_.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
+                                   schema_col.GetName(), schema_col.IsInlined(),
+                                   table_oid, col_id);
+    }
+    columns.push_back(col);
+  }
 
-  /*
-      // Traverse the select list to get the columns required by the result
-      std::unordered_map<oid_t, oid_t> column_mapping;
-      std::vector<oid_t> column_ids;
-      bool needs_projection = false;
-     for (oid_t col_id : column_ids) {
-      catalog::Column schema_col = schema.GetColumn(col_id);
-      Column *col = manager_.LookupColumn(table_oid, col_id);
-      if (col == nullptr) {
-        col = manager_.AddBaseColumn(schema_col.GetType(),
-    schema_col.GetLength(),
-                                     schema_col.GetName(),
-    schema_col.IsInlined(),
-                                     table_oid, col_id);
-      }
-      columns.push_back(col);
-    }*/
+  if (needs_projection) {
+    auto output_expressions =
+        std::vector<std::unique_ptr<expression::AbstractExpression> >();
+    // Add output expressions property
+    for (auto col : *select_stmt->select_list) {
+      output_expressions.push_back(
+          std::unique_ptr<expression::AbstractExpression>(col->Copy()));
+    }
+    property_set_.AddProperty(std::shared_ptr<PropertyProjection>(
+        new PropertyProjection(std::move(output_expressions))));
+  }
 };
 
 void QueryPropertyExtractor::Visit(

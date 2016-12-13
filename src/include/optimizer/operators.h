@@ -122,14 +122,13 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 class PhysicalScan : public OperatorNode<PhysicalScan> {
  public:
-  static Operator make(storage::DataTable *table, std::vector<Column *> cols);
+  static Operator make(storage::DataTable *table);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  storage::DataTable *table;
-  std::vector<Column *> columns;
+  storage::DataTable *table_;
 };
 
 //===--------------------------------------------------------------------===//

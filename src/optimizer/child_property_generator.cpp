@@ -16,7 +16,21 @@
 namespace peloton {
 namespace optimizer {
 
-void ChildPropertyGenerator::Visit(const PhysicalScan *){};
+std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
+ChildPropertyGenerator::GetProperties(std::shared_ptr<GroupExpression> gexpr,
+                                      PropertySet requirements) {
+  requirements_ = requirements;
+  output_.clear();
+
+  gexpr->Op().Accept(this);
+
+  return std::move(output_);
+}
+
+void ChildPropertyGenerator::Visit(const PhysicalScan *) {
+  output_.push_back(std::make_pair(requirements_, std::vector<PropertySet>()));
+};
+
 void ChildPropertyGenerator::Visit(const PhysicalProject *) {}
 void ChildPropertyGenerator::Visit(const PhysicalComputeExprs *){};
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};

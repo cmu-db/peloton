@@ -35,7 +35,7 @@ class PropertyEnforcer : public PropertyVisitor {
       std::shared_ptr<Property> property);
 
   virtual void Visit(const PropertyColumns *) override;
-  virtual void Visit(const PropertyOutputExpressions *) override;
+  virtual void Visit(const PropertyProjection *) override;
   virtual void Visit(const PropertySort *) override;
   virtual void Visit(const PropertyPredicate *) override;
 
