@@ -12,9 +12,9 @@
 
 #include "expression/expression_util.h"
 
+#include "optimizer/operator_expression.h"
 #include "optimizer/operator_to_plan_transformer.h"
-
-#include "../include/optimizer/operator_expression.h"
+#include "optimizer/properties.h"
 #include "planner/hash_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/projection_plan.h"
@@ -26,7 +26,10 @@ namespace optimizer {
 OperatorToPlanTransformer::OperatorToPlanTransformer() {}
 
 planner::AbstractPlan *OperatorToPlanTransformer::ConvertOpExpression(
-    std::shared_ptr<OperatorExpression> plan) {
+    std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
+    std::vector<PropertySet> *required_input_props) {
+  requirements_ = requirements;
+  required_input_props_ = required_input_props;
   VisitOpExpression(plan);
   return output_plan.get();
 }
@@ -35,11 +38,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   auto children = current_children;
   std::vector<oid_t> column_ids;
 
-  expression::AbstractExpression *predicate =
-      ConvertToAbstractExpression(children[1]);
+  auto predicate_prop =
+      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
+          ->As<PropertyPredicate>();
 
-  output_plan.reset(
-      new planner::SeqScanPlan(op->table_, predicate, column_ids));
+  output_plan.reset(new planner::SeqScanPlan(
+      op->table_, predicate_prop->GetPredicate()->Copy(), column_ids));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {}

@@ -67,7 +67,7 @@ bool GetToScan::Check(std::shared_ptr<OperatorExpression> plan) const {
 void GetToScan::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalGet *get = input->Op().as<LogicalGet>();
+  const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan =
       std::make_shared<OperatorExpression>(PhysicalScan::make(get->table));

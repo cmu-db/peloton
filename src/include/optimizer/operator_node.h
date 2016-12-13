@@ -130,7 +130,7 @@ class Operator {
   bool defined() const;
 
   template <typename T>
-  const T *as() const {
+  const T *As() const {
     if (node && typeid(*node) == typeid(T)) {
       return (const T *)node.get();
     }

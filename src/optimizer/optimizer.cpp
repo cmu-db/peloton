@@ -78,16 +78,11 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Find least cost plan for root group
   OptimizeExpression(gexpr, properties);
 
-  std::shared_ptr<OperatorExpression> best_plan =
-      ChooseBestPlan(root_id, properties);
+  auto best_plan = ChooseBestPlan(root_id, properties);
 
   if (best_plan == nullptr) return nullptr;
 
-  planner::AbstractPlan *top_plan = OptimizerPlanToPlannerPlan(best_plan);
-
-  std::shared_ptr<planner::AbstractPlan> final_plan(top_plan);
-
-  return final_plan;
+  return std::shared_ptr<planner::AbstractPlan>(best_plan);
 }
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
@@ -106,13 +101,15 @@ PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
 }
 
 planner::AbstractPlan *Optimizer::OptimizerPlanToPlannerPlan(
-    std::shared_ptr<OperatorExpression> plan) {
+    std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
+    std::vector<PropertySet> &required_input_props) {
   OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(plan);
+  return transformer.ConvertOpExpression(plan, &requirements,
+                                         &required_input_props);
 }
 
-std::shared_ptr<OperatorExpression> Optimizer::ChooseBestPlan(
-    GroupID id, PropertySet requirements) {
+planner::AbstractPlan *Optimizer::ChooseBestPlan(GroupID id,
+                                                 PropertySet requirements) {
   LOG_TRACE("Choosing best plan for group %d", id);
 
   Group *group = memo_.GetGroupByID(id);
@@ -127,13 +124,16 @@ std::shared_ptr<OperatorExpression> Optimizer::ChooseBestPlan(
   std::shared_ptr<OperatorExpression> op =
       std::make_shared<OperatorExpression>(gexpr->Op());
 
+  auto plan =
+      OptimizerPlanToPlannerPlan(op, requirements, required_input_props);
+
   for (size_t i = 0; i < child_groups.size(); ++i) {
-    std::shared_ptr<OperatorExpression> child_op =
+    planner::AbstractPlan *child_plan =
         ChooseBestPlan(child_groups[i], required_input_props[i]);
-    op->PushChild(child_op);
+    plan->AddChild(std::unique_ptr<planner::AbstractPlan>(child_plan));
   }
 
-  return op;
+  return plan;
 }
 
 void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/memo.h"
 
 #include "optimizer/operators.h"
@@ -33,7 +32,7 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
                             GroupID target_group) {
   // If leaf, then just return
   if (gexpr->Op().type() == OpType::Leaf) {
-    const LeafOperator *leaf = gexpr->Op().as<LeafOperator>();
+    const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
     assert(target_group == UNDEFINED_GROUP ||
            target_group == leaf->origin_group);
     gexpr->SetGroupID(leaf->origin_group);

@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <typeinfo>
+
 #include "optimizer/util.h"
 
 namespace peloton {
@@ -48,6 +50,14 @@ class Property {
   virtual bool operator>=(const Property &r) const;
 
   virtual void Accept(PropertyVisitor *v) const = 0;
+
+  template <typename T>
+  const T *As() const {
+    if (typeid(this) == typeid(T)) {
+      return (const T *)this;
+    }
+    return nullptr;
+  }
 };
 
 } /* namespace optimizer */

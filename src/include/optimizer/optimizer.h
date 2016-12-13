@@ -79,7 +79,8 @@ class Optimizer : public AbstractOptimizer {
    * return: the corresponding planner plan
    */
   planner::AbstractPlan *OptimizerPlanToPlannerPlan(
-      std::shared_ptr<OperatorExpression> plan);
+      std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
+      std::vector<PropertySet> &required_input_props);
 
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties
@@ -87,10 +88,9 @@ class Optimizer : public AbstractOptimizer {
    * id: the id of the group to produce the best physical
    * requirements: the set of properties the produced physical operator tree
    *     must satisfy
-   * return: the lowest cost tree of physical operators
+   * return: the lowest cost tree of physical plan nodes
    */
-  std::shared_ptr<OperatorExpression> ChooseBestPlan(GroupID id,
-                                                     PropertySet requirements);
+  planner::AbstractPlan *ChooseBestPlan(GroupID id, PropertySet requirements);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
    *     most optimal physical operator tree and place it in the memo. After

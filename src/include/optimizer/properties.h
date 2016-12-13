@@ -86,6 +86,10 @@ class PropertyPredicate : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
+  inline expression::AbstractExpression *GetPredicate() const {
+    return predicate_.get();
+  }
+
  private:
   std::unique_ptr<expression::AbstractExpression> predicate_;
 };
