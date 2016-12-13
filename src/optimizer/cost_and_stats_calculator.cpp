@@ -30,14 +30,18 @@ void CostAndStatsCalculator::CalculateCostAndStats(
   child_costs_ = child_costs;
 
   gexpr->Op().Accept(this);
+}
 
-  // TODO: Remove this after we generate "real" stats and cost in Visit function
+void CostAndStatsCalculator::Visit(const PhysicalScan *) {
+  // TODO: Replace with more accurate cost
+  output_stats_.reset(new Stats(nullptr));
+  output_cost_ = 1;
+};
+void CostAndStatsCalculator::Visit(const PhysicalProject *) {
+  // TODO: Replace with more accurate cost
   output_stats_.reset(new Stats(nullptr));
   output_cost_ = 0;
 }
-
-void CostAndStatsCalculator::Visit(const PhysicalScan *){};
-void CostAndStatsCalculator::Visit(const PhysicalProject *) {}
 void CostAndStatsCalculator::Visit(const PhysicalComputeExprs *){};
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
 void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){};

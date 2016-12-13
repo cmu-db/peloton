@@ -233,8 +233,12 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   child_costs.push_back(gexpr->GetCost(output_properties));
 
   PropertyEnforcer enforcer(column_manager_);
-  auto enforced_gexpr =
+  auto enforced_expr =
       enforcer.EnforceProperty(gexpr, &output_properties, property);
+
+  std::shared_ptr<GroupExpression> enforced_gexpr;
+  RecordTransformedExpression(enforced_expr, enforced_gexpr,
+                              gexpr->GetGroupID());
 
   // new output property would have the enforced Property
   output_properties.AddProperty(std::shared_ptr<Property>(property));
