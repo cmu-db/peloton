@@ -153,16 +153,10 @@ bool UpdateExecutor::DExecute() {
         project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
                                 executor_context_);
 
-        // Construct new tuple
-
-        // Delete tuple/version chain
-
         // get indirection.
         ItemPointer *indirection =
             tile_group_header->GetIndirection(old_location.offset);
         // finally install new version into the table
-
-        // insert tuple not install version
         bool ret = target_table_->InstallVersion(
             &new_tuple, &(project_info_->GetTargetList()), current_txn,
             indirection);

@@ -94,8 +94,6 @@ class UpdatePlan : public AbstractPlan {
 
   // The where condition
   expression::AbstractExpression *where_;
-
-  bool update_primary_key;
 };
 
 }  // namespace planner
