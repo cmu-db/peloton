@@ -88,11 +88,6 @@ class SimpleOptimizer : public AbstractOptimizer {
       storage::DataTable *target_table, std::vector<oid_t> &column_ids,
       expression::AbstractExpression *predicate, bool for_update);
 
-  static void TransformUpdateToInsertPramerter(
-      parser::UpdateStatement *updateStmt, std::vector<char *> *&columns,
-      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *&
-          insert_values);
-
   // create a copy plan for a copy statement
   static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
       parser::CopyStatement *copy_stmt);

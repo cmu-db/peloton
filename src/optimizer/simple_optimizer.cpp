@@ -608,33 +608,6 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   return plan_tree;
 }
 
-void SimpleOptimizer::TransformUpdateToInsertPramerter(
-    parser::UpdateStatement* updateStmt, std::vector<char*>*& columns,
-    std::vector<std::vector<peloton::expression::AbstractExpression*>*>*&
-        insert_values) {
-
-  PL_ASSERT(updateStmt != nullptr);
-  PL_ASSERT(columns == nullptr);
-  PL_ASSERT(insert_values == nullptr);
-
-  // TODO: Handle deleting these new
-  auto cols = new std::vector<char*>();
-  auto values =
-      new std::vector<std::vector<peloton::expression::AbstractExpression*>*>();
-  auto value = new std::vector<expression::AbstractExpression*>;
-
-  // Iterate update
-  for (auto item : *(updateStmt->updates)) {
-    cols->push_back(item->column);
-    value->push_back(item->value);
-  }
-
-  values->push_back(value);
-
-  columns = cols;
-  insert_values = values;
-}
-
 std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateCopyPlan(
     parser::CopyStatement* copy_stmt) {
   std::string table_name(copy_stmt->cpy_table->GetTableName());
