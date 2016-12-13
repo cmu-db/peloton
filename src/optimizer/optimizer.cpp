@@ -82,7 +82,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   if (best_plan == nullptr) return nullptr;
 
-  return std::shared_ptr<planner::AbstractPlan>(best_plan);
+  return std::move(best_plan);
 }
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
@@ -100,7 +100,7 @@ PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
   return std::move(converter.GetProperties(tree));
 }
 
-planner::AbstractPlan *Optimizer::OptimizerPlanToPlannerPlan(
+std::unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
     std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
     std::vector<PropertySet> &required_input_props) {
   OperatorToPlanTransformer transformer;
@@ -108,8 +108,8 @@ planner::AbstractPlan *Optimizer::OptimizerPlanToPlannerPlan(
                                          &required_input_props);
 }
 
-planner::AbstractPlan *Optimizer::ChooseBestPlan(GroupID id,
-                                                 PropertySet requirements) {
+std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
+    GroupID id, PropertySet requirements) {
   LOG_TRACE("Choosing best plan for group %d", id);
 
   Group *group = memo_.GetGroupByID(id);
@@ -128,9 +128,8 @@ planner::AbstractPlan *Optimizer::ChooseBestPlan(GroupID id,
       OptimizerPlanToPlannerPlan(op, requirements, required_input_props);
 
   for (size_t i = 0; i < child_groups.size(); ++i) {
-    planner::AbstractPlan *child_plan =
-        ChooseBestPlan(child_groups[i], required_input_props[i]);
-    plan->AddChild(std::unique_ptr<planner::AbstractPlan>(child_plan));
+    auto child_plan = ChooseBestPlan(child_groups[i], required_input_props[i]);
+    plan->AddChild(std::move(child_plan));
   }
 
   return plan;

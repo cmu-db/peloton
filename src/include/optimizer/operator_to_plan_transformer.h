@@ -34,7 +34,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
  public:
   OperatorToPlanTransformer();
 
-  planner::AbstractPlan *ConvertOpExpression(
+  std::unique_ptr<planner::AbstractPlan> ConvertOpExpression(
       std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
       std::vector<PropertySet> *required_input_props);
 
@@ -75,7 +75,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   std::vector<Column *> ConcatLeftAndRightColumns();
 
-  std::unique_ptr<planner::AbstractPlan> output_plan;
+  std::unique_ptr<planner::AbstractPlan> output_plan_;
   std::vector<std::shared_ptr<OperatorExpression>> current_children;
   std::vector<Column *> output_columns;
   std::vector<Column *> left_columns;

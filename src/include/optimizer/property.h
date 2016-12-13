@@ -25,7 +25,7 @@ enum class PropertyType {
   SORT,
   COLUMNS,
   PREDICATE,
-  OUTPUT_EXPRESSION,
+  PROJECT,
 };
 
 /*
@@ -52,9 +52,9 @@ class Property {
   virtual void Accept(PropertyVisitor *v) const = 0;
 
   template <typename T>
-  const T *As() const {
+  T *As() {
     if (typeid(this) == typeid(T)) {
-      return (const T *)this;
+      return reinterpret_cast<T *>(this);
     }
     return nullptr;
   }

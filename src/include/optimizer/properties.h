@@ -32,8 +32,10 @@ class PropertyColumns : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
+  inline std::vector<Column *> &GetColumns() { return columns_; }
+
  private:
-  std::vector<Column *> columns;
+  std::vector<Column *> columns_;
 };
 
 // Specifies the output expressions of the query
@@ -49,6 +51,12 @@ class PropertyProjection : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
+
+  inline size_t GetProjectionListSize() { return expressions_.size(); }
+
+  inline expression::AbstractExpression *GetProjection(size_t idx) {
+    return expressions_[idx].get();
+  }
 
  private:
   std::vector<std::unique_ptr<expression::AbstractExpression>> expressions_;

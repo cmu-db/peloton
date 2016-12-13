@@ -18,7 +18,7 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(std::vector<Column *> columns)
-    : columns(std::move(columns)) {}
+    : columns_(std::move(columns)) {}
 
 PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
@@ -30,9 +30,9 @@ bool PropertyColumns::operator>=(const Property &r) const {
 
   // check that every column in the right hand side property exists in the left
   // hand side property
-  for (auto column : columns) {
+  for (auto column : columns_) {
     bool has_column = false;
-    for (auto r_column : r_columns.columns) {
+    for (auto r_column : r_columns.columns_) {
       if (column->ID() == r_column->ID()) {
         has_column = true;
         break;
@@ -49,7 +49,7 @@ hash_t PropertyColumns::Hash() const {
   hash_t hash = Property::Hash();
 
   // hash columns
-  for (Column *col : columns) {
+  for (Column *col : columns_) {
     hash = util::CombineHashes(hash, col->Hash());
   }
   return hash;
@@ -125,7 +125,7 @@ PropertyProjection::PropertyProjection(
     : expressions_(std::move(expressions)){};
 
 PropertyType PropertyProjection::Type() const {
-  return PropertyType::OUTPUT_EXPRESSION;
+  return PropertyType::PROJECT;
 }
 
 // PropertyOutputExpressions is only used for projection operator. We also
