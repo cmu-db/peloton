@@ -41,6 +41,11 @@ double GroupExpression::GetCost(PropertySet requirements) const {
   return std::get<0>(lowest_cost_table_.find(requirements)->second);
 }
 
+std::vector<PropertySet> GroupExpression::GetInputProperties(
+    PropertySet requirements) const {
+  return std::get<2>(lowest_cost_table_.find(requirements)->second);
+}
+
 void GroupExpression::SetLocalHashTable(
     const PropertySet &output_properties,
     const std::vector<PropertySet> &input_properties_list, double cost,

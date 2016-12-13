@@ -44,6 +44,8 @@ class GroupExpression {
 
   double GetCost(PropertySet requirements) const;
 
+  std::vector<PropertySet> GetInputProperties(PropertySet requirements) const;
+
   void SetLocalHashTable(const PropertySet &output_properties,
                          const std::vector<PropertySet> &input_properties_list,
                          double cost, std::shared_ptr<Stats> stats);

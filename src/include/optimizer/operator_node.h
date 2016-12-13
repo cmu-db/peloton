@@ -123,8 +123,6 @@ class Operator {
 
   bool IsPhysical() const;
 
-  std::vector<PropertySet> RequiredInputProperties() const;
-
   hash_t Hash() const;
 
   bool operator==(const Operator &r);

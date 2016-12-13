@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/property_enforcer.h"
+#include "optimizer/operators.h"
 #include "optimizer/property.h"
 
 namespace peloton {

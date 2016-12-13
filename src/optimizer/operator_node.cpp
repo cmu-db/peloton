@@ -52,13 +52,6 @@ bool Operator::IsPhysical() const {
   return false;
 }
 
-std::vector<PropertySet> Operator::RequiredInputProperties() const {
-  if (defined()) {
-    return node->RequiredInputProperties();
-  }
-  return {};
-}
-
 hash_t Operator::Hash() const {
   if (defined()) {
     return node->Hash();

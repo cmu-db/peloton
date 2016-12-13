@@ -121,10 +121,8 @@ std::shared_ptr<OperatorExpression> Optimizer::ChooseBestPlan(
 
   std::vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   std::vector<PropertySet> required_input_props =
-      gexpr->Op().RequiredInputProperties();
-  if (required_input_props.empty()) {
-    required_input_props.resize(child_groups.size(), PropertySet());
-  }
+      std::move(gexpr->GetInputProperties(requirements));
+  PL_ASSERT(required_input_props.size() == child_groups.size());
 
   std::shared_ptr<OperatorExpression> op =
       std::make_shared<OperatorExpression>(gexpr->Op());
