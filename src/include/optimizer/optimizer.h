@@ -12,19 +12,12 @@
 
 #pragma once
 
-#include "common/logger.h"
+#include <memory>
+
 #include "optimizer/abstract_optimizer.h"
-#include "optimizer/binding.h"
 #include "optimizer/column_manager.h"
 #include "optimizer/memo.h"
-#include "optimizer/operator_node.h"
-#include "optimizer/pattern.h"
-#include "optimizer/property.h"
 #include "optimizer/property_set.h"
-#include "optimizer/rule.h"
-#include "planner/abstract_plan.h"
-
-#include <memory>
 
 namespace peloton {
 
@@ -32,6 +25,16 @@ namespace parser {
 class SQLStatementList;
 class SQLStatement;
 }
+
+namespace planner {
+class AbstractPlan;
+};
+
+namespace optimizer {
+class OperatorExpression;
+class Rule;
+}
+
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -52,7 +55,7 @@ class Optimizer : public AbstractOptimizer {
   static Optimizer &GetInstance();
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree);
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
  private:
   /* TransformQueryTree - create an initial operator tree for the given query

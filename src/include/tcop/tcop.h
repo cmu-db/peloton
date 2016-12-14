@@ -24,8 +24,12 @@
 #include "parser/sql_statement.h"
 
 namespace peloton {
-namespace tcop {
 
+namespace optimizer {
+class AbstractOptimizer;
+};
+
+namespace tcop {
 //===--------------------------------------------------------------------===//
 // TRAFFIC COP
 //===--------------------------------------------------------------------===//
@@ -42,6 +46,7 @@ class TrafficCop {
 
   // PortalExec - Execute query string
   Result ExecuteStatement(const std::string &query,
+                          optimizer::AbstractOptimizer &optimizer,
                           std::vector<ResultType> &result,
                           std::vector<FieldInfoType> &tuple_descriptor,
                           int &rows_changed, std::string &error_message);
@@ -55,11 +60,12 @@ class TrafficCop {
       int &rows_change, std::string &error_message);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
-                                              const std::string &query_string,
-                                              std::string &error_message);
+  std::shared_ptr<Statement> PrepareStatement(
+      const std::string &statement_name, const std::string &query_string,
+      optimizer::AbstractOptimizer &optimizer, std::string &error_message);
 
-  std::vector<FieldInfoType> GenerateTupleDescriptor(parser::SQLStatement* select_stmt);
+  std::vector<FieldInfoType> GenerateTupleDescriptor(
+      parser::SQLStatement *select_stmt);
 
   FieldInfoType GetColumnFieldForValueType(std::string column_name,
                                            common::Type::TypeId column_type);

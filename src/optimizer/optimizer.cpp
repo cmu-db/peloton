@@ -14,6 +14,7 @@
 
 #include "catalog/manager.h"
 
+#include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
 #include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/operator_to_plan_transformer.h"
@@ -48,7 +49,7 @@ Optimizer::Optimizer() {
 }
 
 Optimizer &Optimizer::GetInstance() {
-  thread_local static Optimizer optimizer;
+  static Optimizer optimizer;
   return optimizer;
 }
 

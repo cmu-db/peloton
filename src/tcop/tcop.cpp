@@ -51,14 +51,16 @@ TrafficCop::~TrafficCop() {
 }
 
 Result TrafficCop::ExecuteStatement(
-    const std::string &query, std::vector<ResultType> &result,
+    const std::string &query, optimizer::AbstractOptimizer &optimizer,
+    std::vector<ResultType> &result,
     std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
   std::string unnamed_statement = "unnamed";
-  auto statement = PrepareStatement(unnamed_statement, query, error_message);
+  auto statement =
+      PrepareStatement(unnamed_statement, query, optimizer, error_message);
 
   if (statement.get() == nullptr) {
     return Result::RESULT_FAILURE;
@@ -105,15 +107,16 @@ Result TrafficCop::ExecuteStatement(
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
     rows_changed = status.m_processed;
     return status.m_result;
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
-    const std::string &statement_name, const std::string &query_string,
+    const std::string &statement_name,
+    const std::string &query_string,
+    optimizer::AbstractOptimizer &optimizer,
     UNUSED_ATTRIBUTE std::string &error_message) {
   std::shared_ptr<Statement> statement;
 
@@ -128,7 +131,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       throw ParserException("Error parsing SQL statement");
     }
     statement->SetPlanTree(
-        optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
+        optimizer.BuildPelotonPlanTree(sql_stmt));
 
     for (auto stmt : sql_stmt->GetStatements()) {
       if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
@@ -141,8 +144,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     LOG_DEBUG("Statement Prepared!");
     return std::move(statement);
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }

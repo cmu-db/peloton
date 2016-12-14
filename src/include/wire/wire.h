@@ -22,6 +22,7 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
+#include "optimizer/abstract_optimizer.h"
 #include "wire/marshal.h"
 
 // TXN state definitions
@@ -37,8 +38,9 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 class PacketManager {
  public:
   Client client_;
-  bool is_started = false;   // has the startup packet been received for this connection
-  bool force_flush = false;   // Should we send the buffered packets right away?
+  bool is_started =
+      false;  // has the startup packet been received for this connection
+  bool force_flush = false;  // Should we send the buffered packets right away?
 
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
@@ -74,8 +76,10 @@ class PacketManager {
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 
+  // The optimizer used for this connection
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
-private:
+ private:
   // Generic error protocol packet
   void SendErrorResponse(
       std::vector<std::pair<uchar, std::string>> error_status);
@@ -100,7 +104,8 @@ private:
   /* Helper function used to make hardcoded ParameterStatus('S')
    * packets during startup
    */
-  void MakeHardcodedParameterStatus(const std::pair<std::string, std::string>& kv);
+  void MakeHardcodedParameterStatus(
+      const std::pair<std::string, std::string>& kv);
 
   /* SQLite doesn't support "SET" and "SHOW" SQL commands.
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
@@ -138,8 +143,7 @@ private:
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<common::Value>& param_values, std::vector<int16_t>& formats);
 
-  inline PacketManager()
-    : txn_state_(TXN_IDLE), pkt_cntr_(0) {}
+  PacketManager();
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(InputPacket* pkt);

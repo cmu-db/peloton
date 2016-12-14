@@ -12,20 +12,21 @@
 
 #include <cstdio>
 #include <unordered_map>
+
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
 #include "common/types.h"
-#include "tcop/tcop.h"
-#include "wire/marshal.h"
-#include "wire/wire.h"
-
 #include "common/value.h"
 #include "common/value_factory.h"
+#include "optimizer/simple_optimizer.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
+#include "tcop/tcop.h"
+#include "wire/marshal.h"
+#include "wire/wire.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -44,6 +45,10 @@ const std::unordered_map<std::string, std::string>
             "is_superuser", "on")("server_encoding", "UTF8")(
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
+
+PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
+  optimizer_.reset(new optimizer::SimpleOptimizer());
+}
 
 void PacketManager::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
@@ -244,8 +249,9 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
       int rows_affected;
 
       // execute the query using tcop
-      auto status = tcop.ExecuteStatement(query, result, tuple_descriptor,
-                                          rows_affected, error_message);
+      auto status =
+          tcop.ExecuteStatement(query, *(optimizer_.get()), result,
+                                tuple_descriptor, rows_affected, error_message);
 
       // check status
       if (status == Result::RESULT_FAILURE) {
@@ -301,8 +307,8 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   std::shared_ptr<Statement> statement(nullptr);
   auto &tcop = tcop::TrafficCop::GetInstance();
 
-  statement =
-      tcop.PrepareStatement(statement_name, query_string, error_message);
+  statement = tcop.PrepareStatement(statement_name, query_string,
+                                    *optimizer_.get(), error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
     SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
@@ -532,7 +538,6 @@ size_t PacketManager::ReadParamValue(
     InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
     std::vector<std::pair<int, std::string>> &bind_parameters,
     std::vector<common::Value> &param_values, std::vector<int16_t> &formats) {
-
   auto begin = pkt->ptr;
   ByteBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
@@ -563,7 +568,7 @@ size_t PacketManager::ReadParamValue(
           param_values[param_idx] =
               (common::ValueFactory::GetVarcharValue(param_str))
                   .CastAs(PostgresValueTypeToPelotonValueType(
-                       (PostgresValueType)param_types[param_idx]));
+                      (PostgresValueType)param_types[param_idx]));
         }
         PL_ASSERT(param_values[param_idx].GetTypeId() != common::Type::INVALID);
       } else {
@@ -605,8 +610,9 @@ size_t PacketManager::ReadParamValue(
             bind_parameters[param_idx] = std::make_pair(
                 common::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
-            param_values[param_idx] = common::ValueFactory::GetVarbinaryValue(
-                &param[0], param_len).Copy();
+            param_values[param_idx] =
+                common::ValueFactory::GetVarbinaryValue(&param[0], param_len)
+                    .Copy();
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
@@ -707,9 +713,9 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   auto param_values = portal->GetParameters();
 
   auto &tcop = tcop::TrafficCop::GetInstance();
-  auto status = tcop.ExecuteStatement(statement, param_values, unnamed,
-                                      param_stat, result_format_, results,
-                                      rows_affected, error_message);
+  auto status = tcop.ExecuteStatement(
+      statement, param_values, unnamed, param_stat,
+      result_format_, results, rows_affected, error_message);
 
   if (status == Result::RESULT_FAILURE) {
     LOG_ERROR("Failed to execute: %s", error_message.c_str());
