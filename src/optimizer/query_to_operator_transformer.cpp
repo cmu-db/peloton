@@ -40,45 +40,6 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   return output_expr;
 }
 
-void QueryToOperatorTransformer::visit(UNUSED_ATTRIBUTE const Table *op) {}
-
-void QueryToOperatorTransformer::visit(const Join *op) {
-  // Self
-  std::shared_ptr<OperatorExpression> expr;
-  switch (op->join_type) {
-    case JOIN_TYPE_INNER: {
-      expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
-    } break;
-    case JOIN_TYPE_LEFT: {
-      expr = std::make_shared<OperatorExpression>(LogicalLeftJoin::make());
-    } break;
-    case JOIN_TYPE_RIGHT: {
-      expr = std::make_shared<OperatorExpression>(LogicalRightJoin::make());
-    } break;
-    case JOIN_TYPE_OUTER: {
-      expr = std::make_shared<OperatorExpression>(LogicalOuterJoin::make());
-    } break;
-    default:
-      assert(false);
-  }
-
-  // Left child
-  op->left_node->accept(this);
-  expr->PushChild(output_expr);
-
-  // Right child
-  op->right_node->accept(this);
-  expr->PushChild(output_expr);
-
-  // Join condition predicate
-  op->predicate->accept(this);
-  expr->PushChild(output_expr);
-
-  output_expr = expr;
-}
-
-void QueryToOperatorTransformer::visit(const OrderBy *op) { (void)op; }
-
 void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   // Construct the logical get operator to visit the target table
   storage::DataTable *target_table =

@@ -29,11 +29,6 @@ class CopyStatement;
 
 namespace optimizer {
 
-class Join;
-class Table;
-class OrderBy;
-class Select;
-
 //===--------------------------------------------------------------------===//
 // Query Node Visitor
 //===--------------------------------------------------------------------===//
@@ -41,11 +36,6 @@ class Select;
 class QueryNodeVisitor {
  public:
   virtual ~QueryNodeVisitor(){};
-
-  // TODO: They're left here for compilation. Delete them later.
-  virtual void visit(const Table *) = 0;
-  virtual void visit(const Join *) = 0;
-  virtual void visit(const OrderBy *) = 0;
 
   virtual void Visit(const parser::SelectStatement *) = 0;
   virtual void Visit(const parser::CreateStatement *) = 0;

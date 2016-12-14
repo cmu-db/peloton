@@ -21,7 +21,6 @@
 #include "optimizer/pattern.h"
 #include "optimizer/property.h"
 #include "optimizer/property_set.h"
-#include "optimizer/query_operators.h"
 #include "optimizer/rule.h"
 #include "planner/abstract_plan.h"
 

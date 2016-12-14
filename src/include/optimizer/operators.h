@@ -16,7 +16,6 @@
 #include "optimizer/column.h"
 #include "optimizer/group.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/query_operators.h"
 #include "optimizer/util.h"
 
 #include <vector>
@@ -25,6 +24,10 @@ namespace peloton {
 
 namespace expression {
 class AbstractExpression;
+}
+
+namespace storage {
+class DataTable;
 }
 
 namespace optimizer {

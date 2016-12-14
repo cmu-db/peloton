@@ -12,8 +12,8 @@
 
 #pragma once
 
+#include "catalog/column.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/query_operators.h"
 #include "optimizer/util.h"
 
 #include "common/types.h"

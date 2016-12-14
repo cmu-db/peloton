@@ -12,6 +12,7 @@
 
 #include "optimizer/operators.h"
 #include "optimizer/operator_visitor.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace optimizer {

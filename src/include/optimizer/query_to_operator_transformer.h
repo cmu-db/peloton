@@ -30,11 +30,6 @@ class CopyStatement;
 }
 
 namespace optimizer {
-class Join;
-class Table;
-class OrderBy;
-class Select;
-
 class OperatorExpression;
 class ColumnManager;
 }
@@ -48,12 +43,6 @@ class QueryToOperatorTransformer : public QueryNodeVisitor {
 
   std::shared_ptr<OperatorExpression> ConvertToOpExpression(
       parser::SQLStatement *op);
-
-  void visit(const Table *op) override;
-
-  void visit(const Join *op) override;
-
-  void visit(const OrderBy *op) override;
 
   void Visit(const parser::SelectStatement *op) override;
   void Visit(const parser::CreateStatement *op) override;

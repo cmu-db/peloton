@@ -33,11 +33,6 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
 
   PropertySet GetProperties(parser::SQLStatement *tree);
 
-  // TODO: They're left here for compilation. Delete them later.
-  void visit(const Join *) override;
-  void visit(const OrderBy *) override;
-  void visit(const Table *) override;
-
   // We only assume the statement is selecting from one table for now
   void Visit(const parser::SelectStatement *) override;
 
