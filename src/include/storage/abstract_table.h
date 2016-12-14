@@ -42,6 +42,7 @@ class Schema;
 namespace storage {
 
 class Tuple;
+class TileGroup;
 
 /**
  * Base class for all tables

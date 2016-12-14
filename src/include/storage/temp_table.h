@@ -25,6 +25,9 @@ class Schema;
 
 namespace storage {
 
+class Tuple;
+class TileGroup;
+
 //===--------------------------------------------------------------------===//
 // TempTable
 //===--------------------------------------------------------------------===//
@@ -35,13 +38,14 @@ namespace storage {
  * This is designed to be faster than DataTable.
  */
 class TempTable : public AbstractTable {
- public:
-  virtual ~TempTable();
+  TempTable() = delete;
 
- protected:
+ public:
   // Table constructor
-  TempTable(const oid_t table_oid, catalog::Schema *schema,
+  TempTable(const oid_t &table_oid, catalog::Schema *schema,
             const bool own_schema);
+
+  ~TempTable();
 
   //===--------------------------------------------------------------------===//
   // TUPLE OPERATIONS
@@ -62,23 +66,11 @@ class TempTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // Offset is a 0-based number local to the table
-  inline std::shared_ptr<storage::TileGroup> GetTileGroup(
-      const std::size_t &tile_group_offset) const {
-    PL_ASSERT(tile_group_offset < GetTileGroupCount());
-    return (tile_groups_[tile_group_offset]));
-  }
+  std::shared_ptr<storage::TileGroup> GetTileGroup(
+      const std::size_t &tile_group_offset) const;
 
-  inline std::shared_ptr<storage::TileGroup> GetTileGroupById(
-      const oid_t &tile_group_id) const {
-    for (auto tg : tile_groups_) {
-      if (tg->GetTileGroupId() == tile_group_id) {
-        return (tg);
-      }
-    }
-    LOG_TRACE("No TileGroup with id %d exists in %s", tile_group_id,
-              this->GetName().c_str());
-    return (nullptr);
-  }
+  std::shared_ptr<storage::TileGroup> GetTileGroupById(
+      const oid_t &tile_group_id) const;
 
   // Number of TileGroups that the table has
   inline size_t GetTileGroupCount() const { return (tile_groups_.size()); }
@@ -94,13 +86,13 @@ class TempTable : public AbstractTable {
   }
 
   // Get a string representation for debugging
-  inline const std::string GetInfo() const { this->GetInfo(); }
+  inline const std::string GetInfo() const { return (this->GetName()); }
 
-  inline bool HasPrimaryKey() const {return (false)};
+  inline bool HasPrimaryKey() const { return (false); }
 
-  inline bool HasUniqueConstraints() const {return (false)};
+  inline bool HasUniqueConstraints() const { return (false); }
 
-  inline bool HasForeignKeys() const {return (false)};
+  inline bool HasForeignKeys() const { return (false); }
 
  private:
   // This is where we're actually going to store the data for this table
