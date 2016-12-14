@@ -43,7 +43,6 @@ TrafficCop &TrafficCop::GetInstance(void) {
 
 TrafficCop::TrafficCop() {
   // Nothing to do here !
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 TrafficCop::~TrafficCop() {
@@ -114,8 +113,7 @@ Result TrafficCop::ExecuteStatement(
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
-    const std::string &statement_name,
-    const std::string &query_string,
+    const std::string &statement_name, const std::string &query_string,
     optimizer::AbstractOptimizer &optimizer,
     UNUSED_ATTRIBUTE std::string &error_message) {
   std::shared_ptr<Statement> statement;
@@ -130,8 +128,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    statement->SetPlanTree(
-        optimizer.BuildPelotonPlanTree(sql_stmt));
+    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(sql_stmt));
 
     for (auto stmt : sql_stmt->GetStatements()) {
       if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
