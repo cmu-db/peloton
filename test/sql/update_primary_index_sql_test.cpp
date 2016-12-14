@@ -59,6 +59,16 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
   // Check the return value, it should not be changed
   EXPECT_EQ(result[6].second[0], '3');
 
+  // Perform another primary key update
+  SQLTestsUtil::ExecuteSQLQuery("UPDATE test SET a=5 WHERE c=300", result,
+                                tuple_descriptor, rows_affected, error_message);
+
+  // test
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
+                                rows_affected, error_message);
+  // Check the return value, it should not be changed
+  EXPECT_EQ(result[6].second[0], '5');
+
   // Perform normal update
   SQLTestsUtil::ExecuteSQLQuery("UPDATE test SET b=2000 WHERE c=200", result,
                                 tuple_descriptor, rows_affected, error_message);

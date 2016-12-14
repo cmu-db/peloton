@@ -33,7 +33,7 @@ class UpdateExecutor : public AbstractExecutor {
   bool PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
                                oid_t physical_tuple_id,
                                ItemPointer &old_location,
-                               storage::TileGroup *&tile_group);
+                               storage::TileGroup *tile_group);
 
   bool DInit();
 
