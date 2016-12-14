@@ -47,15 +47,29 @@ Result SQLTestsUtil::ExecuteSQLQuery(
   return status;
 }
 
+// Execute a SQL query end-to-end with the specific optimizer
+Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
+    optimizer::AbstractOptimizer *optimizer, const std::string query,
+    std::vector<ResultType> &result,
+    std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
+    std::string &error_message) {
+  traffic_cop_.SetOptimizer(optimizer);
+  // execute the query using tcop
+  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
+                                              rows_changed, error_message);
+
+  return status;
+}
+
 Result SQLTestsUtil::ExecuteSQLQuery(const std::string query,
                                      std::vector<ResultType> &result) {
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
-  int rows_affected;
+  int rows_changed;
 
   // execute the query using tcop
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_affected, error_message);
+                                              rows_changed, error_message);
 
   return status;
 }
@@ -64,11 +78,11 @@ Result SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<ResultType> result;
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
-  int rows_affected;
+  int rows_changed;
 
   // execute the query using tcop
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_affected, error_message);
+                                              rows_changed, error_message);
 
   return status;
 }

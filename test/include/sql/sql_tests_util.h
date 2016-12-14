@@ -38,7 +38,14 @@ class SQLTestsUtil {
   static Result ExecuteSQLQuery(const std::string query,
                                 std::vector<ResultType> &result,
                                 std::vector<FieldInfoType> &tuple_descriptor,
-                                int &rows_changed, std::string &error_message);
+                                int &rows_affected, std::string &error_message);
+
+  // Execute a SQL query end-to-end with the specific optimizer
+  static Result ExecuteSQLQueryWithOptimizer(
+      optimizer::AbstractOptimizer *optimizer, const std::string query,
+      std::vector<ResultType> &result,
+      std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
+      std::string &error_message);
 
   // A simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query,
