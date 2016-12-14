@@ -16,8 +16,8 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "executor/seq_scan_executor.h"
 #include "executor/copy_executor.h"
+#include "executor/seq_scan_executor.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
 #include "planner/seq_scan_plan.h"
@@ -38,6 +38,8 @@ TEST_F(CopyTests, Copying) {
   auto catalog = catalog::Catalog::GetInstance();
   catalog->CreateDatabase("emp_db", nullptr);
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  optimizer::SimpleOptimizer optimizer;
 
   // Create a table without primary key
   StatsTestsUtil::CreateTable(false);
@@ -97,7 +99,7 @@ TEST_F(CopyTests, Copying) {
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
   LOG_INFO("Building plan tree...");
-  auto copy_plan = optimizer::SimpleOptimizer::BuildPelotonPlanTree(copy_stmt);
+  auto copy_plan = optimizer.BuildPelotonPlanTree(copy_stmt);
   statement->SetPlanTree(copy_plan);
 
   LOG_INFO("Building executor tree...");

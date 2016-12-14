@@ -46,11 +46,12 @@ void ShowTable(std::string database_name, std::string table_name) {
   bridge::peloton_status status;
   std::vector<common::Value> params;
   std::vector<ResultType> result;
+  optimizer::SimpleOptimizer optimizer;
+
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
       peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format;
   auto tuple_descriptor =
@@ -65,6 +66,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Bootstrapping...");
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
+
+  optimizer::SimpleOptimizer optimizer;
 
   // Create a table first
   LOG_INFO("Creating a table...");
@@ -111,8 +114,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<common::Value> params;
   std::vector<ResultType> result;
@@ -138,8 +140,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -162,8 +163,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -186,8 +186,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "SELECT MAX(dept_id) FROM department_table;");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -210,8 +209,7 @@ TEST_F(DeleteTests, VariousOperations) {
       "DELETE FROM department_table WHERE dept_id < 2");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt_2));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt_2));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -233,8 +231,7 @@ TEST_F(DeleteTests, VariousOperations) {
       peloton_parser.BuildParseTree("DELETE FROM department_table");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");

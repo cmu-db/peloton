@@ -16,6 +16,10 @@
 
 namespace peloton {
 
+namespace optimizer {
+class AbstractOptimizer;
+}
+
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
@@ -31,6 +35,7 @@ class SQLTestsUtil {
 
   // Execute a SQL query end-to-end
   static Result ExecuteSQLQuery(const std::string query,
+                                optimizer::AbstractOptimizer &optimizer,
                                 std::vector<ResultType> &result,
                                 std::vector<FieldInfoType> &tuple_descriptor,
                                 int &rows_changed, std::string &error_message);
@@ -41,11 +46,6 @@ class SQLTestsUtil {
 
   // A another simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query);
-
-  // Execute a SQL query end-to-end with the specific optimizer
-  static Result ExecuteSQLQueryWithOptimizer(
-      const std::string query_string, std::vector<ResultType> &result,
-      std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
-      std::string &error_message);
+};
 }  // namespace test
 }  // namespace peloton

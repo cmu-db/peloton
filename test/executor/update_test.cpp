@@ -148,6 +148,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
+  optimizer::SimpleOptimizer optimizer;
+
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
@@ -199,8 +201,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       "(1,12,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<common::Value> params;
   std::vector<ResultType> result;
@@ -230,8 +231,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -259,8 +259,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       "1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -284,8 +283,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -310,8 +308,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       "DELETE FROM department_table WHERE dept_name = 'CS'");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");

@@ -34,6 +34,8 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
+  optimizer::SimpleOptimizer optimizer;
+
   // Create a table first
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -54,8 +56,7 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
       "dept_name TEXT);");
 
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(create_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
 
   std::vector<common::Value> params;
   std::vector<ResultType> result;
@@ -89,8 +90,7 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
       "INSERT INTO department_table(dept_id,student_id,dept_name) VALUES "
       "(1,52,'hello_1');");
 
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
 
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
@@ -110,8 +110,7 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   auto update_stmt = peloton_parser.BuildParseTree(
       "CREATE INDEX saif ON department_table (student_id);");
 
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
 
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
@@ -133,8 +132,7 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
       "52");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
-  auto update_plan =
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt);
+  auto update_plan = optimizer.BuildPelotonPlanTree(update_stmt);
 
   // Check scan plan
   ASSERT_FALSE(update_plan == nullptr);
@@ -144,16 +142,16 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
 
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_name = 'CS'");
-  update_plan =
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt);
-  EXPECT_EQ(update_plan->GetChildren().front()->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
+  update_plan = optimizer.BuildPelotonPlanTree(update_stmt);
+  EXPECT_EQ(update_plan->GetChildren().front()->GetPlanNodeType(),
+            PLAN_NODE_TYPE_SEQSCAN);
 
   // Test delete tuple with index scan
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE student_id = 52");
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE student_id = 52");
-  auto del_plan = optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt);
+  auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt);
 
   // Check scan plan
   EXPECT_EQ(del_plan->GetPlanNodeType(), PLAN_NODE_TYPE_DELETE);
@@ -164,8 +162,7 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
   // Test delete tuple with seq scan
   auto delete_stmt_seq = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
-  auto del_plan_seq =
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt_seq);
+  auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq);
   auto& del_scan_plan_seq = del_plan_seq->GetChildren().front();
   EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
 

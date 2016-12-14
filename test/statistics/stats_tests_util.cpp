@@ -38,7 +38,7 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   statement.reset(new Statement("SELECT", sql));
   auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+      optimizer::SimpleOptimizer().BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
@@ -70,7 +70,6 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
 std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
     std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
     std::shared_ptr<uchar> &val_buf) {
-
   // Type
   uchar *type_buf_data = new uchar[1];
   type_buf_data[0] = 'x';
@@ -159,7 +158,7 @@ void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+      optimizer::SimpleOptimizer().BuildPelotonPlanTree(update_stmt));
   LOG_TRACE("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 }
