@@ -42,8 +42,6 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalProject *) override;
 
-  void Visit(const PhysicalComputeExprs *) override;
-
   void Visit(const PhysicalFilter *) override;
 
   void Visit(const PhysicalInnerNLJoin *) override;
@@ -65,21 +63,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
-  expression::AbstractExpression *ConvertToAbstractExpression(
-      UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> op);
-
-  catalog::Schema *BuildSchemaFromColumns(std::vector<Column *> columns);
-
-  planner::ProjectInfo *BuildProjectInfoFromExprs(
-      std::vector<expression::AbstractExpression *> exprs);
-
-  std::vector<Column *> ConcatLeftAndRightColumns();
-
   std::unique_ptr<planner::AbstractPlan> output_plan_;
-  std::vector<std::shared_ptr<OperatorExpression>> current_children;
-  std::vector<Column *> output_columns;
-  std::vector<Column *> left_columns;
-  std::vector<Column *> right_columns;
 
   PropertySet *requirements_;
   std::vector<PropertySet> *required_input_props_;

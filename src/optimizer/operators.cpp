@@ -136,14 +136,6 @@ Operator PhysicalProject::make() {
 }
 
 //===--------------------------------------------------------------------===//
-// ComputeExprs
-//===--------------------------------------------------------------------===//
-Operator PhysicalComputeExprs::make() {
-  PhysicalComputeExprs *compute = new PhysicalComputeExprs;
-  return Operator(compute);
-}
-
-//===--------------------------------------------------------------------===//
 // Filter
 //===--------------------------------------------------------------------===//
 Operator PhysicalFilter::make() {
@@ -275,8 +267,6 @@ std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
 template <>
 std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
 template <>
-std::string OperatorNode<PhysicalComputeExprs>::name_ = "PhysicalComputeExprs";
-template <>
 std::string OperatorNode<PhysicalFilter>::name_ = "PhysicalFilter";
 template <>
 std::string OperatorNode<PhysicalInnerNLJoin>::name_ = "PhysicalInnerNLJoin";
@@ -321,8 +311,6 @@ template <>
 OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
 template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
-template <>
-OpType OperatorNode<PhysicalComputeExprs>::type_ = OpType::ComputeExprs;
 template <>
 OpType OperatorNode<PhysicalFilter>::type_ = OpType::Filter;
 template <>

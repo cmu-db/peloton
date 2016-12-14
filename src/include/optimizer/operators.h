@@ -135,14 +135,6 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 };
 
 //===--------------------------------------------------------------------===//
-// ComputeExprs
-//===--------------------------------------------------------------------===//
-class PhysicalComputeExprs : public OperatorNode<PhysicalComputeExprs> {
- public:
-  static Operator make();
-};
-
-//===--------------------------------------------------------------------===//
 // Filter
 //===--------------------------------------------------------------------===//
 class PhysicalFilter : public OperatorNode<PhysicalFilter> {

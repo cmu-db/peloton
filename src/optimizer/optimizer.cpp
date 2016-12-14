@@ -40,7 +40,6 @@ Optimizer::Optimizer() {
   logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
-  physical_implementation_rules_.emplace_back(new ProjectToComputeExprs());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());
   physical_implementation_rules_.emplace_back(new RightJoinToRightNLJoin());

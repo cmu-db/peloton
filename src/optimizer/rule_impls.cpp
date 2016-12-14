@@ -80,38 +80,6 @@ void GetToScan::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// ProjectToComputeExprs
-ProjectToComputeExprs::ProjectToComputeExprs() {
-  physical = true;
-
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> project_list(
-      std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalProject);
-  match_pattern->AddChild(child);
-  match_pattern->AddChild(project_list);
-}
-
-bool ProjectToComputeExprs::Check(
-    std::shared_ptr<OperatorExpression> plan) const {
-  (void)plan;
-  return true;
-}
-
-void ProjectToComputeExprs::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result =
-      std::make_shared<OperatorExpression>(PhysicalComputeExprs::make());
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 2);
-  result->PushChild(children[0]);
-  result->PushChild(children[1]);
-
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// SelectToFilter
 LogicalFilterToPhysical::LogicalFilterToPhysical() {
   physical = true;

@@ -42,7 +42,6 @@ void CostAndStatsCalculator::Visit(const PhysicalProject *) {
   output_stats_.reset(new Stats(nullptr));
   output_cost_ = 0;
 }
-void CostAndStatsCalculator::Visit(const PhysicalComputeExprs *){};
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
 void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalLeftNLJoin *){};

@@ -46,19 +46,6 @@ class GetToScan : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// ProjectToComputeExprs
-class ProjectToComputeExprs : public Rule {
- public:
-  ProjectToComputeExprs();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 /// LogicalFilterToPhysical
 class LogicalFilterToPhysical : public Rule {
  public:

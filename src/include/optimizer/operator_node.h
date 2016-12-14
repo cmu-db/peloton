@@ -25,7 +25,6 @@ enum class OpType {
   Undefined,
   // Special match operators
   Leaf,
-  Tree,
   // Logical ops
   Get,
   LogicalProject,
