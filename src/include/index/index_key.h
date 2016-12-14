@@ -739,6 +739,7 @@ class TupleKeyComparator {
         return true;
       }
       
+      // If there is a field in LHS > RHS then return false
       common::Value res_gt = \
           lhValue.CompareGreaterThan(rhValue);
           
@@ -758,33 +759,49 @@ class TupleKeyComparator {
   TupleKeyComparator() {};
 };
 
+/*
+ * class TupleComparatorRaw - Different kind of comparator that not only 
+ *                            determines partial ordering but also equality
+ *
+ * This class returns -1 (VALUE_COMPARE_LESSTHAN) for less than relation
+ *                     0 (VALUE_COMPARE_EQUAL) for equality relation
+ *                     1 (VALUE_COMPARE_GREATERTHAN) for greater than relation
+ */
 class TupleKeyComparatorRaw {
  public:
-  // return -1 if a < b ;  0 if a == b ;  1 if a > b
+  
+  /*
+   * operator()() - Returns partial ordering as well as equality relation
+   *
+   * Please refer to the class comment for more information about return value
+   */
   inline int operator()(const TupleKey &lhs, const TupleKey &rhs) const {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
+    
     auto schema = lhs.key_tuple_schema;
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      common::Value lhValue = (
-          lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      common::Value rhValue = (
-          rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
+      common::Value lhValue = \
+          lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
+      common::Value rhValue = \
+          rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
-      common::Value res_lt = (
-          lhValue.CompareLessThan(rhValue));
-      if (res_lt.IsTrue())
+      common::Value res_lt = \
+          lhValue.CompareLessThan(rhValue);
+      if (res_lt.IsTrue()) {
         return VALUE_COMPARE_LESSTHAN;
+      }
 
-      common::Value res_gt(
-          lhValue.CompareGreaterThan(rhValue));
-      if (res_gt.IsTrue())
+      common::Value res_gt = \
+          lhValue.CompareGreaterThan(rhValue);
+      if (res_gt.IsTrue()) {
         return VALUE_COMPARE_GREATERTHAN;
+      }
     }
 
-    /* equal */
+    // If all columns are equal then two keys are equal
     return VALUE_COMPARE_EQUAL;
   }
 
