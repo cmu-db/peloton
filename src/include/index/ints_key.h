@@ -86,70 +86,86 @@ template <std::size_t KeySize>
 class IntsKey {
  public:
   /*
-   * Take a value that is part of the key (already converted to a uint64_t) and
-   *inserts it into the
-   * most significant bytes available in the key. Templated on the size of the
-   *type of key being inserted.
-   * This allows the compiler to unroll the loop.
+   * InsertKeyValue() - Adding bytes from a key into the data array 
    *
+   * This function assumes:
+   *   1. The length of key is always aligned to bytes
+   *   2. Caller initializes key_offset and intra_key_offset to both 0
+   *      and will not change it outside this function
+   *   3. Even if length of the key exceeds uint64_t size, users cuold only
+   *      pass in uint64_t, representing MSB of the key
+   *   4. Length of the entire key is fixed, but whenever we push a key into 
+   *      the key we could change it
+   *   5. KeySize is the number of uint64_t in this object, not bytes
    *
-   * Algorithm is:
-   * Start with the most significant byte of the key_value we are inserting and
-   *put into the most significant byte
-   * of the uint64_t portion of the key that is indexed by key_offset. The most
-   *significant available byte within
-   * the uint64_t portion of the key is indexed by intra_key_offset. Both
-   *key_offset and intra_key_offset are passed
-   * by reference so they can be updated.
-   *
-   *
-   * Rinse and repeat with the less significant bytes.
-   *
+   * This function uses the data array as a big-endian huge integre. Bytes from
+   * key_value will be pushed into the data array byte wise from MSB to LSB
    */
   template <typename KeyValueType>
-  inline void InsertKeyValue(int &key_offset, int &intra_key_offset,
+  inline void InsertKeyValue(int &key_offset, 
+                             int &intra_key_offset,
                              uint64_t key_value) {
+                               
+    // Loop from the MSB to LSB of the key value and extract each byte
+    // bytes will be pushed into the data array one by one
     for (int ii = static_cast<int>(sizeof(KeyValueType)) - 1; ii >= 0; ii--) {
-      /*
-       * Extract the most significant byte from key_value by shifting it all the
-       * way to the right.
-       * Mask off the rest. Then shift it to the left to the most significant
-       * byte location available
-       * in the key and OR it in.
-       */
-      data[key_offset] |= (0xFF & (key_value >> (ii * 8)))
-                          << (intra_key_offset * 8);  //
-      intra_key_offset--;  // Move the offset inside the uint64 key back one.
-                           /*
-       * If there are no more bytes available in the uint64_t indexed by
-       * key_offset then increment key_offset
-       * to point to the next uint64_t and set intra_key_offset to index to the
-       * most significant byte
-       * in this next uint64_t.
-       */
+      // Extract the current byte we are working on
+      // Since ii always drcreses from high low, we extract MSB first
+      uint64_t current_byte = (0xFF & (key_value >> (ii * 8)));
+      
+      // This is the byte in the current element of uint64_t array
+      uint64_t byte_in_data = current_byte << (intra_key_offset * 8);
+      
+      // Plug the byte in data into the array
+      data[key_offset] |= byte_in_data;
+                         
+      // Adjust the next byte we will put into uint64_t (we also put into
+      // uint64_t from high to low) 
+      intra_key_offset--;
+      
+      // If the current uint64_t runs out we just switch to the next uint64_t
       if (intra_key_offset < 0) {
         intra_key_offset = sizeof(uint64_t) - 1;
         key_offset++;
       }
     }
+    
+    return;
   }
 
   /*
-   * Inverse of insertKeyValue.
+   * ExtractKeyValue() - This function does the reverse of InsertKeyValue()
+   *                     and fills in a uint64_t with bytes from the array
    */
   template <typename KeyValueType>
   inline uint64_t ExtractKeyValue(int &key_offset,
                                   int &intra_key_offset) const {
-    uint64_t retval = 0;
+    // Must set it to 0 first
+    uint64_t retval = 0x0;
+    
+    // Loop from the MSB to LSB for return value
     for (int ii = static_cast<int>(sizeof(KeyValueType)) - 1; ii >= 0; ii--) {
-      retval |= (0xFF & (data[key_offset] >> (intra_key_offset * 8)))
-                << (ii * 8);
+      // Note that the precedence of & is lower than >> and <<
+      uint64_t current_byte = \
+        0xFF & ((data[key_offset] >> (intra_key_offset * 8)));
+        
+      // Get the byte to MSB first and then LSB between iterations
+      uint64_t byte_in_result = current_byte << (ii * 8); 
+      
+      // Plug byte in the result
+      retval |= byte_in_result;
+      
+      // Go to lower byte in data array
       intra_key_offset--;
+      
+      // If we have run out of bytes in the current uint64_t just go to
+      // the next uint64_t
       if (intra_key_offset < 0) {
         intra_key_offset = sizeof(uint64_t) - 1;
         key_offset++;
       }
     }
+    
     return retval;
   }
 
