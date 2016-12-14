@@ -153,19 +153,85 @@ bool UpdateExecutor::DExecute() {
         project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
                                 executor_context_);
 
-        // Construct new tuple
+        bool ret = false;
+        // Update primary key
+        const planner::UpdatePlan &update_node =
+            GetPlanNode<planner::UpdatePlan>();
 
-        // Delete tuple/version chain
+        if (update_node.GetUpdatePrimaryKey()) {
+          ///////////////////////////////////////
+          // Delete tuple/version chain
+          ///////////////////////////////////////
+          ItemPointer new_location = target_table_->InsertEmptyVersion();
 
-        // get indirection.
-        ItemPointer *indirection =
-            tile_group_header->GetIndirection(old_location.offset);
-        // finally install new version into the table
+          // PerformUpdate() will not be executed if the insertion failed.
+          // There is a write lock acquired, but since it is not in the write
+          // set,
+          // because we haven't yet put them into the write set.
+          // the acquired lock can't be released when the txn is aborted.
+          // the YieldOwnership() function helps us release the acquired write
+          // lock.
+          if (new_location.IsNull() == true) {
+            LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+            if (is_owner == false) {
+              // If the ownership is acquire inside this update executor, we
+              // release it here
+              transaction_manager.YieldOwnership(current_txn, tile_group_id,
+                                                 physical_tuple_id);
+            }
+            transaction_manager.SetTransactionResult(current_txn,
+                                                     Result::RESULT_FAILURE);
+            return false;
+          }
+          transaction_manager.PerformDelete(current_txn, old_location,
+                                            new_location);
 
-        // insert tuple not install version
-        bool ret = target_table_->InstallVersion(
-            &new_tuple, &(project_info_->GetTargetList()), current_txn,
-            indirection);
+          ////////////////////////////////////////////
+          // Insert tuple rather than install version
+          ////////////////////////////////////////////
+          auto executor_pool = executor_context_->GetExecutorContextPool();
+
+          auto target_table_schema = target_table_->GetSchema();
+          auto column_count = target_table_schema->GetColumnCount();
+
+          std::unique_ptr<storage::Tuple> tuple(
+              new storage::Tuple(target_table_schema, true));
+
+          // Materialize the logical tile tuple
+          for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+            common::Value val = (new_tuple.GetValue(column_itr));
+            tuple->SetValue(column_itr, val, executor_pool);
+          }
+
+          // insert tuple into the table.
+          ItemPointer *index_entry_ptr = nullptr;
+          peloton::ItemPointer location = target_table_->InsertTuple(
+              tuple.get(), current_txn, &index_entry_ptr);
+
+          // it is possible that some concurrent transactions have inserted the
+          // same
+          // tuple.
+          // in this case, abort the transaction.
+          if (location.block == INVALID_OID) {
+            transaction_manager.SetTransactionResult(
+                current_txn, peloton::Result::RESULT_FAILURE);
+            return false;
+          }
+
+          transaction_manager.PerformInsert(current_txn, location,
+                                            index_entry_ptr);
+        }
+
+        // Normal update (no primary key)
+        else {
+          // get indirection.
+          ItemPointer *indirection =
+              tile_group_header->GetIndirection(old_location.offset);
+          // finally install new version into the table
+          ret = target_table_->InstallVersion(&new_tuple,
+                                              &(project_info_->GetTargetList()),
+                                              current_txn, indirection);
+        }
 
         // PerformUpdate() will not be executed if the insertion failed.
         // There is a write lock acquired, but since it is not in the write set,
