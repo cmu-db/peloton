@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -31,6 +30,11 @@ class UpdateExecutor : public AbstractExecutor {
                           ExecutorContext *executor_context);
 
  protected:
+  bool PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
+                               oid_t physical_tuple_id,
+                               ItemPointer &old_location,
+                               storage::TileGroup *&tile_group);
+
   bool DInit();
 
   bool DExecute();
