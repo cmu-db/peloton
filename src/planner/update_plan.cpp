@@ -37,11 +37,12 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       update_primary_key_(false) {
   LOG_TRACE("Creating an Update Plan");
 
-  // (A) Execute target list
-  for (auto target : project_info->GetTargetList()) {
-    auto col_id = target.first;
-    update_primary_key_ =
-        target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+  if (project_info_ != nullptr) {
+    for (auto target : project_info_->GetTargetList()) {
+      auto col_id = target.first;
+      update_primary_key_ =
+          target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+    }
   }
 }
 
@@ -105,7 +106,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
   BuildInitialUpdatePlan(parse_tree, column_ids);
 
   // Set primary key update flag
-  for (auto update_clause : *(parse_tree->updates)) {
+  for (auto update_clause : updates_) {
     std::string column_name = update_clause->column;
 
     oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
@@ -129,7 +130,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
   BuildInitialUpdatePlan(parse_tree, column_ids);
 
   // Set primary key update flag
-  for (auto update_clause : *(parse_tree->updates)) {
+  for (auto update_clause : updates_) {
     std::string column_name = update_clause->column;
 
     oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
