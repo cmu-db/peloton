@@ -18,6 +18,8 @@
 #include "common/logger.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
+#include "storage/tile_group.h"
+#include "util/stringbox_util.h"
 
 namespace peloton {
 namespace storage {
@@ -65,6 +67,34 @@ column_map_type AbstractTable::GetTileGroupLayout(
   }
 
   return column_map;
+}
+
+const std::string AbstractTable::GetInfo() const {
+  std::ostringstream inner;
+  oid_t tile_group_count = this->GetTileGroupCount();
+  oid_t tuple_count = 0;
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
+    if (tile_group_itr > 0) inner << std::endl;
+
+    auto tile_group = this->GetTileGroup(tile_group_itr);
+    auto tile_tuple_count = tile_group->GetNextTupleSlot();
+
+    std::string tileData = tile_group->GetInfo();
+    //    dataBuffer << tileData;
+    inner << peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(tileData),
+                                         GETINFO_SPACER);
+    tuple_count += tile_tuple_count;
+  }
+
+  std::ostringstream output;
+  output << "Table '" << GetName() << "' [";
+  output << "OID= " << GetOid() << ", ";
+  output << "NumTuples=" << tuple_count << ", ";
+  output << "NumTiles=" << tile_group_count << "]" << std::endl;
+  output << inner.str();
+
+  return output.str();
 }
 
 }  // End storage namespace

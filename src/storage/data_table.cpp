@@ -34,7 +34,6 @@
 #include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
-#include "util/stringbox_util.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -767,34 +766,6 @@ void DataTable::DropTileGroups() {
   tile_groups_.Clear(invalid_tile_group_id);
 
   tile_group_count_ = 0;
-}
-
-const std::string DataTable::GetInfo() const {
-  std::ostringstream dataBuffer;
-  oid_t tile_group_count = this->GetTileGroupCount();
-  oid_t tuple_count = 0;
-  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
-    if (tile_group_itr > 0) dataBuffer << std::endl;
-
-    auto tile_group = this->GetTileGroup(tile_group_itr);
-    auto tile_tuple_count = tile_group->GetNextTupleSlot();
-
-    std::string tileData = tile_group->GetInfo();
-    //    dataBuffer << tileData;
-    dataBuffer << peloton::StringUtil::Prefix(
-        peloton::StringBoxUtil::Box(tileData), GETINFO_SPACER);
-    tuple_count += tile_tuple_count;
-  }
-
-  std::ostringstream output;
-  output << "Table '" << table_name << "' [";
-  output << "OID= " << table_oid << ", ";
-  output << "NumTuples=" << tuple_count << ", ";
-  output << "NumTiles=" << tile_group_count << "]" << std::endl;
-  output << dataBuffer.str();
-
-  return output.str();
 }
 
 //===--------------------------------------------------------------------===//

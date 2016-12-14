@@ -98,7 +98,7 @@ class AbstractTable : public Printable {
   virtual std::string GetName() const = 0;
 
   // Get a string representation for debugging
-  virtual const std::string GetInfo() const = 0;
+  const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
   // UTILITIES

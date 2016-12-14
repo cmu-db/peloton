@@ -85,9 +85,6 @@ class TempTable : public AbstractTable {
     return (os.str());
   }
 
-  // Get a string representation for debugging
-  inline const std::string GetInfo() const { return (this->GetName()); }
-
   inline bool HasPrimaryKey() const { return (false); }
 
   inline bool HasUniqueConstraints() const { return (false); }

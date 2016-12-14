@@ -248,9 +248,6 @@ class DataTable : public AbstractTable {
 
   std::map<oid_t, oid_t> GetColumnMapStats();
 
-  // Get a string representation for debugging
-  const std::string GetInfo() const;
-
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new
   // tuple.
