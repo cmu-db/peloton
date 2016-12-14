@@ -28,9 +28,11 @@ namespace index {
 
 using namespace peloton::common;
 
+}  // End index namespace
+}  // End peloton namespace
+
 #include "ints_key.h"
 #include "generic_key.h" 
 #include "tuple_key.h" 
 
-}  // End index namespace
-}  // End peloton namespace
+

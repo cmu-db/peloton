@@ -1,3 +1,21 @@
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// tuple_key.h
+//
+// Identification: src/include/index/tuple_key.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+namespace peloton {
+namespace index {
+
 /*
  * class TupleKey - General purpose key that represents a combination of columns
  *                  inside a table
@@ -299,3 +317,6 @@ class TupleKeyEqualityChecker {
   TupleKeyEqualityChecker(const TupleKeyEqualityChecker &) {}
   TupleKeyEqualityChecker() {}
 };
+
+}  // End index namespace
+}  // End peloton namespace

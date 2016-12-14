@@ -1,3 +1,20 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// ints_key.h
+//
+// Identification: src/include/index/ints_key.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+namespace peloton {
+namespace index {
+
 /*
  * ConvertUnsignedValueToSignedValue() - As name suggests
  *
@@ -399,3 +416,6 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
   IntsHasher(const IntsHasher &) {}
   IntsHasher() {};
 };
+
+}  // End index namespace
+}  // End peloton namespace

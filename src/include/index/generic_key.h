@@ -1,4 +1,21 @@
-/**
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// generic_key.h
+//
+// Identification: src/include/index/generic_key.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+namespace peloton {
+namespace index {
+
+/*
  * class GenericKey - Key used for indexing with opaque data
  *
  * This key type uses an fixed length array to hold data for indexing
@@ -144,3 +161,6 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
   GenericHasher(const GenericHasher &) {}
   GenericHasher() {};
 };
+
+}  // End index namespace
+}  // End peloton namespace
