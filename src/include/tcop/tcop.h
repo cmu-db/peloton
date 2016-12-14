@@ -21,8 +21,8 @@
 #include "common/statement.h"
 #include "common/type.h"
 #include "common/types.h"
-#include "parser/sql_statement.h"
 #include "optimizer/abstract_optimizer.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 
@@ -39,9 +39,6 @@ class TrafficCop {
   TrafficCop(TrafficCop const &) = delete;
 
  public:
-  // global singleton
-  static TrafficCop &GetInstance(void);
-
   TrafficCop();
   ~TrafficCop();
 
@@ -60,9 +57,9 @@ class TrafficCop {
       int &rows_change, std::string &error_message);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  std::shared_ptr<Statement> PrepareStatement(
-      const std::string &statement_name, const std::string &query_string,
-      std::string &error_message);
+  std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
+                                              const std::string &query_string,
+                                              std::string &error_message);
 
   std::vector<FieldInfoType> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);

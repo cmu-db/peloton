@@ -35,31 +35,21 @@
 namespace peloton {
 namespace tcop {
 
-// global singleton
-TrafficCop &TrafficCop::GetInstance(void) {
-  static TrafficCop traffic_cop;
-  return traffic_cop;
-}
-
-TrafficCop::TrafficCop() {
-  optimizer_.reset(new optimizer::SimpleOptimizer());
-}
+TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
 
 TrafficCop::~TrafficCop() {
   // Nothing to do here !
 }
 
 Result TrafficCop::ExecuteStatement(
-    const std::string &query,
-    std::vector<ResultType> &result,
+    const std::string &query, std::vector<ResultType> &result,
     std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
   std::string unnamed_statement = "unnamed";
-  auto statement =
-      PrepareStatement(unnamed_statement, query, error_message);
+  auto statement = PrepareStatement(unnamed_statement, query, error_message);
 
   if (statement.get() == nullptr) {
     return Result::RESULT_FAILURE;

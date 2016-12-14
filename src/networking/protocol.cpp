@@ -231,9 +231,6 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
     return;
   }
 
-  // Get traffic cop
-  auto &tcop = tcop::TrafficCop::GetInstance();
-
   for (auto query : queries) {
     // iterate till before the empty string after the last ';'
     if (query != queries.back()) {
@@ -249,9 +246,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
       int rows_affected;
 
       // execute the query using tcop
-      auto status =
-          tcop.ExecuteStatement(query, result,
-                                tuple_descriptor, rows_affected, error_message);
+      auto status = traffic_cop_->ExecuteStatement(
+          query, result, tuple_descriptor, rows_affected, error_message);
 
       // check status
       if (status == Result::RESULT_FAILURE) {
@@ -305,10 +301,9 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
 
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
-  auto &tcop = tcop::TrafficCop::GetInstance();
 
-  statement = tcop.PrepareStatement(statement_name, query_string,
-                                    error_message);
+  statement = traffic_cop_->PrepareStatement(statement_name, query_string,
+                                             error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
     SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
@@ -712,10 +707,9 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   bool unnamed = statement_name.empty();
   auto param_values = portal->GetParameters();
 
-  auto &tcop = tcop::TrafficCop::GetInstance();
-  auto status = tcop.ExecuteStatement(
-      statement, param_values, unnamed, param_stat,
-      result_format_, results, rows_affected, error_message);
+  auto status = traffic_cop_->ExecuteStatement(
+      statement, param_values, unnamed, param_stat, result_format_, results,
+      rows_affected, error_message);
 
   if (status == Result::RESULT_FAILURE) {
     LOG_ERROR("Failed to execute: %s", error_message.c_str());
