@@ -84,7 +84,8 @@ TEST_F(InsertTests, InsertRecord) {
   insert_node->columns->push_back(const_cast<char *>(col_1));
   insert_node->columns->push_back(const_cast<char *>(col_2));
 
-  insert_node->insert_values = new std::vector<std::vector<expression::AbstractExpression *>*>;
+  insert_node->insert_values =
+      new std::vector<std::vector<expression::AbstractExpression *> *>;
   auto values_ptr = new std::vector<expression::AbstractExpression *>;
   insert_node->insert_values->push_back(values_ptr);
 
@@ -96,7 +97,8 @@ TEST_F(InsertTests, InsertRecord) {
 
   insert_node->select = new parser::SelectStatement();
 
-  planner::InsertPlan node(insert_node.get());
+  planner::InsertPlan node(table, insert_node->columns,
+                           insert_node->insert_values);
   executor::InsertExecutor executor(&node, context.get());
 
   EXPECT_TRUE(executor.Init());
@@ -106,7 +108,8 @@ TEST_F(InsertTests, InsertRecord) {
   delete values_ptr->at(0);
   values_ptr->at(0) = new expression::ConstantValueExpression(
       common::ValueFactory::GetIntegerValue(80));
-  planner::InsertPlan node2(insert_node.get());
+  planner::InsertPlan node2(table, insert_node->columns,
+                            insert_node->insert_values);
   executor::InsertExecutor executor2(&node2, context.get());
 
   EXPECT_TRUE(executor2.Init());
@@ -125,7 +128,8 @@ TEST_F(InsertTests, InsertRecord) {
   delete values_ptr->at(0);
   values_ptr->at(0) = new expression::ConstantValueExpression(
       common::ValueFactory::GetIntegerValue(90));
-  planner::InsertPlan node3(insert_node.get());
+  planner::InsertPlan node3(table, insert_node->columns,
+                            insert_node->insert_values);
   executor::InsertExecutor executor3(&node3, context.get());
 
   EXPECT_TRUE(executor3.Init());

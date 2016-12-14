@@ -21,7 +21,6 @@
 #include "expression/function_expression.h"
 #include "expression/star_expression.h"
 #include "parser/sql_statement.h"
-#include "parser/statements.h"
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/aggregate_plan.h"
@@ -472,8 +471,17 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case STATEMENT_TYPE_INSERT: {
       LOG_TRACE("Adding Insert plan...");
+      parser::InsertStatement* insertStmt =
+          (parser::InsertStatement*)parse_tree2;
+
+      storage::DataTable* target_table =
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              insertStmt->GetDatabaseName(), insertStmt->GetTableName());
+
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-          new planner::InsertPlan((parser::InsertStatement*)parse_tree2));
+          new planner::InsertPlan(target_table, insertStmt->columns,
+                                  insertStmt->insert_values));
+
       child_plan = std::move(child_InsertPlan);
     } break;
 
@@ -499,18 +507,49 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           deleteStmt->GetDatabaseName(), deleteStmt->GetTableName());
       if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
                                expr_types, values, index_id)) {
+        // Create delete plan
+        std::unique_ptr<planner::DeletePlan> child_DeletePlan(
+            new planner::DeletePlan(target_table, deleteStmt->expr));
+
         // Create index scan plan
-        std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-            new planner::DeletePlan(deleteStmt, key_column_ids, expr_types,
-                                    values, index_id));
+        std::vector<oid_t> columns;
+        std::vector<expression::AbstractExpression*> runtime_keys;
+        auto index = target_table->GetIndex(index_id);
+        planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+            index, key_column_ids, expr_types, values, runtime_keys);
+        LOG_TRACE("Creating a index scan plan");
+        std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+            new planner::IndexScanPlan(target_table,
+                                       child_DeletePlan->GetPredicate(),
+                                       columns, index_scan_desc, true));
+        LOG_TRACE("Index scan plan created");
+
+        // Add index scan plan
+        child_DeletePlan->AddChild(std::move(index_scan_node));
+
+        // Finish
         child_plan = std::move(child_DeletePlan);
       } else {
+        // Create delete plan
+        std::unique_ptr<planner::DeletePlan> child_DeletePlan(
+            new planner::DeletePlan(target_table, deleteStmt->expr));
+
         // Create sequential scan plan
-        std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
-            new planner::DeletePlan(deleteStmt));
+        expression::AbstractExpression* scan_expr =
+            (child_DeletePlan->GetPredicate() == nullptr
+                 ? nullptr
+                 : child_DeletePlan->GetPredicate()->Copy());
+        LOG_TRACE("Creating a sequential scan plan");
+        std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+            new planner::SeqScanPlan(target_table, scan_expr, {}));
+        LOG_TRACE("Sequential scan plan created");
+
+        // Add seq scan plan
+        child_DeletePlan->AddChild(std::move(seq_scan_node));
+
+        // Finish
         child_plan = std::move(child_DeletePlan);
       }
-
     } break;
 
     case STATEMENT_TYPE_UPDATE: {
@@ -528,45 +567,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           updateStmt->table->GetDatabaseName(),
           updateStmt->table->GetTableName());
 
-      // Examine whether update primary index
-      bool update_primary_key = false;
-
-      for (auto update_clause : *(updateStmt->updates)) {
-        std::string column_name = update_clause->column;
-
-        oid_t column_id = target_table->GetSchema()->GetColumnID(column_name);
-        update_primary_key =
-            target_table->GetSchema()->GetColumn(column_id).IsPrimary();
-      }
-
       if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
                                expr_types, values, index_id)) {
-        // If updating primary index
-        if (update_primary_key) {
-          // Create delete plan
+        // Create index scan plan
+        std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
+            new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
+                                    values, index_id));
+        child_plan = std::move(child_UpdatePlan);
 
-          // Create insert plan
-
-        } else {
-          // Create index scan plan
-          std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
-              new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
-                                      values, index_id));
-          child_plan = std::move(child_UpdatePlan);
-        }
       } else {
-        // If updating primary index
-        if (update_primary_key) {
-          // Create delete plan and insert plan
-
-        } else {
-          // Create sequential scan plan
-          std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
-              new planner::UpdatePlan(updateStmt));
-          child_plan = std::move(child_UpdatePlan);
-        }
+        // Create sequential scan plan
+        std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
+            new planner::UpdatePlan(updateStmt));
+        child_plan = std::move(child_UpdatePlan);
       }
-
     } break;
 
     case STATEMENT_TYPE_TRANSACTION: {

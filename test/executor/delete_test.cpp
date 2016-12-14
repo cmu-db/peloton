@@ -54,7 +54,8 @@ void ShowTable(std::string database_name, std::string table_name) {
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format;
   auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor((parser::SelectStatement*)select_stmt->GetStatement(0));
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+          (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
@@ -91,6 +92,9 @@ TEST_F(DeleteTests, VariousOperations) {
                 ->GetTableCount(),
             1);
   LOG_INFO("Table created!");
+
+  storage::DataTable* table = catalog::Catalog::GetInstance()->GetTableWithName(
+      DEFAULT_DB_NAME, "department_table");
 
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
@@ -170,6 +174,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Tuple inserted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
 
+  LOG_INFO("%s", table->GetInfo().c_str());
+
   // Just Counting number of tuples in table
   LOG_INFO("Selecting MAX(dept_id)");
   LOG_INFO("Query: SELECT MAX(dept_id) FROM department_table;");
@@ -186,33 +192,13 @@ TEST_F(DeleteTests, VariousOperations) {
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(select_stmt->GetStatement(0));
+      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
+          select_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Counted Tuples!");
-
-  // Now deleting end-to-end
-  LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table");
-  statement.reset(new Statement("DELETE", "DELETE FROM department_table"));
-  LOG_INFO("Building parse tree...");
-  auto delete_stmt =
-      peloton_parser.BuildParseTree("DELETE FROM department_table");
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
-  result_format = std::move(std::vector<int>(0, 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");
-  ShowTable(DEFAULT_DB_NAME, "department_table");
 
   // Test Another delete. Should not find any tuple to be deleted
   LOG_INFO("Deleting a tuple...");
@@ -235,6 +221,31 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
+
+  LOG_INFO("%s", table->GetInfo().c_str());
+
+  // Now deleting end-to-end
+  LOG_INFO("Deleting a tuple...");
+  LOG_INFO("Query: DELETE FROM department_table");
+  statement.reset(new Statement("DELETE", "DELETE FROM department_table"));
+  LOG_INFO("Building parse tree...");
+  auto delete_stmt =
+      peloton_parser.BuildParseTree("DELETE FROM department_table");
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(
+      optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
+  LOG_INFO("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  result_format = std::move(std::vector<int>(0, 0));
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+                                             params, result, result_format);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple deleted!");
+  ShowTable(DEFAULT_DB_NAME, "department_table");
+
+  LOG_INFO("%s", table->GetInfo().c_str());
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
