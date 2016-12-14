@@ -587,8 +587,8 @@ void DataTable::ResetDirty() { dirty_ = false; }
 TileGroup *DataTable::GetTileGroupWithLayout(
     const column_map_type &partitioning) {
   oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
-  return (GetTileGroupWithLayoutX(database_oid, tile_group_id, partitioning,
-                                  tuples_per_tilegroup_));
+  return (AbstractTable::GetTileGroupWithLayout(
+      database_oid, tile_group_id, partitioning, tuples_per_tilegroup_));
 }
 
 oid_t DataTable::AddDefaultIndirectionArray(

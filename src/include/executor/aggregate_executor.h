@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "executor/abstract_executor.h"
@@ -65,7 +64,7 @@ class AggregateExecutor : public AbstractExecutor {
   bool done = false;
 
   /** @brief Output table. */
-  storage::DataTable *output_table = nullptr;
+  storage::AbstractTable *output_table = nullptr;
 };
 
 }  // namespace executor

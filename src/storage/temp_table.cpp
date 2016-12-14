@@ -88,8 +88,8 @@ std::shared_ptr<storage::TileGroup> TempTable::GetTileGroupById(
       return (tg);
     }
   }
-  LOG_TRACE("No TileGroup with id %d exists in %s", tile_group_id,
-            this->GetName().c_str());
+  LOG_WARN("No TileGroup with id %d exists in %s", tile_group_id,
+           this->GetName().c_str());
   return (nullptr);
 }
 
@@ -108,7 +108,7 @@ oid_t TempTable::AddDefaultTileGroup() {
   column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
 
   // Create a tile group with that partitioning
-  std::shared_ptr<storage::TileGroup> tile_group(GetTileGroupWithLayoutX(
+  std::shared_ptr<storage::TileGroup> tile_group(GetTileGroupWithLayout(
       INVALID_OID, tile_group_id, column_map, TEMPTABLE_DEFAULT_SIZE));
   PL_ASSERT(tile_group.get());
 

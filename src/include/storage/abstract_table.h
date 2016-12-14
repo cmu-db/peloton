@@ -133,9 +133,9 @@ class AbstractTable : public Printable {
   // INTERNAL METHODS
   //===--------------------------------------------------------------------===//
 
-  TileGroup *GetTileGroupWithLayoutX(oid_t database_id, oid_t tile_group_id,
-                                     const column_map_type &partitioning,
-                                     const size_t num_tuples);
+  TileGroup *GetTileGroupWithLayout(oid_t database_id, oid_t tile_group_id,
+                                    const column_map_type &partitioning,
+                                    const size_t num_tuples);
 
   column_map_type GetTileGroupLayout(LayoutType layout_type) const;
 

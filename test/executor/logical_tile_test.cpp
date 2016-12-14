@@ -18,15 +18,16 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "type/types.h"
-#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+#include "storage/temp_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 
 #include "executor/executor_tests_util.h"
 
@@ -38,6 +39,59 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class LogicalTileTests : public PelotonTest {};
+
+TEST_F(LogicalTileTests, TempTableTest) {
+  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+
+  catalog::Schema *schema = new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(2)});
+
+  // Create our TempTable
+  storage::TempTable table(INVALID_OID, schema, true);
+  EXPECT_EQ(0, table.GetTupleCount());
+
+  // Then shove some tuples in it
+  for (int i = 0; i < tuple_count; i++) {
+    storage::Tuple *tuple = new storage::Tuple(table.GetSchema(), true);
+    auto val1 = type::ValueFactory::GetIntegerValue(
+        ExecutorTestsUtil::PopulatedValue(i, 0));
+    auto val2 = type::ValueFactory::GetIntegerValue(
+        ExecutorTestsUtil::PopulatedValue(i, 1));
+    auto val3 = type::ValueFactory::GetDoubleValue(
+        ExecutorTestsUtil::PopulatedValue(i, 2));
+    tuple->SetValue(0, val1, pool);
+    tuple->SetValue(1, val2, pool);
+    tuple->SetValue(2, val3, pool);
+    table.InsertTuple(tuple);
+  }
+  LOG_INFO("%s", table.GetInfo().c_str());
+  LOG_INFO("%s", GETINFO_SINGLE_LINE.c_str());
+
+  // Check to see whether we can wrap a LogicalTile around it
+  auto tile_group_count = table.GetTileGroupCount();
+  std::vector<executor::LogicalTile *> logicalTiles;
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
+    auto tile_group = table.GetTileGroup(tile_group_itr);
+    EXPECT_NE(nullptr, tile_group);
+    auto logical_tile = executor::LogicalTileFactory::WrapTileGroup(tile_group);
+    EXPECT_NE(nullptr, logical_tile);
+    logicalTiles.push_back(logical_tile);
+
+    // Make sure that we can iterate over the LogicalTile and get
+    // at our TempTable tuples
+    EXPECT_NE(0, logical_tile->GetTupleCount());
+
+    LOG_INFO("GetActiveTupleCount() = %d",
+             (int)tile_group->GetActiveTupleCount());
+    LOG_INFO("%s", tile_group->GetInfo().c_str());
+    LOG_INFO("*****************************************");
+    LOG_INFO("%s", logical_tile->GetInfo().c_str());
+  }
+  EXPECT_FALSE(logicalTiles.empty());
+}
 
 TEST_F(LogicalTileTests, TileMaterializationTest) {
   const int tuple_count = 4;

@@ -70,7 +70,7 @@ column_map_type AbstractTable::GetTileGroupLayout(
   return column_map;
 }
 
-TileGroup *AbstractTable::GetTileGroupWithLayoutX(
+TileGroup *AbstractTable::GetTileGroupWithLayout(
     oid_t database_id, oid_t tile_group_id, const column_map_type &partitioning,
     const size_t num_tuples) {
   std::vector<catalog::Schema> schemas;

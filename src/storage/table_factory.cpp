@@ -12,11 +12,12 @@
 
 #include "storage/table_factory.h"
 
+#include "catalog/catalog.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "index/index.h"
-#include "catalog/catalog.h"
 #include "storage/data_table.h"
+#include "storage/temp_table.h"
 
 #include <mutex>
 
@@ -35,14 +36,19 @@ DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
   return table;
 }
 
+TempTable *TableFactory::GetTempTable(catalog::Schema *schema,
+                                      bool own_schema) {
+  TempTable *table = new TempTable(INVALID_OID, schema, own_schema);
+  return (table);
+}
+
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
   auto catalog = catalog::Catalog::GetInstance();
   try {
     DataTable *table =
         (DataTable *)catalog->GetTableWithOid(database_oid, table_oid);
     delete table;
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     return false;
   }
   return true;

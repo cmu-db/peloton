@@ -82,34 +82,64 @@ const std::string TileGroupHeader::GetInfo() const {
     cid_t end_commit_id = GetEndCommitId(header_itr);
 
     if (header_itr > 0) os << std::endl;
-    os << std::setfill('0') << std::setw(TUPLE_ID_WIDTH) << header_itr << ": ";
+    os << std::right << std::setfill('0') << std::setw(TUPLE_ID_WIDTH)
+       << header_itr << ": ";
 
     os << "TxnId:";
     if (txn_id == MAX_TXN_ID)
-      os << std::setw(TXN_ID_WIDTH) << "MAX_TXN_ID";
+      os << std::left << std::setfill(' ') << std::setw(TXN_ID_WIDTH)
+         << "MAX_TXN_ID";
     else
-      os << std::setw(TXN_ID_WIDTH) << txn_id;
+      os << std::right << std::setfill('0') << std::setw(TXN_ID_WIDTH)
+         << txn_id;
     os << " ";
 
     os << "BeginCommitId:";
     if (beg_commit_id == MAX_CID)
-      os << std::setw(TXN_ID_WIDTH) << "MAX_CID";
+      os << std::left << std::setfill(' ') << std::setw(TXN_ID_WIDTH)
+         << "MAX_CID";
     else
-      os << std::setw(TXN_ID_WIDTH) << beg_commit_id;
+      os << std::right << std::setfill('0') << std::setw(TXN_ID_WIDTH)
+         << beg_commit_id;
     os << " ";
 
-    os << "EndCId: ";
+    os << "EndCId:";
     if (end_commit_id == MAX_CID)
-      os << std::setw(TXN_ID_WIDTH) << "MAX_CID";
+      os << std::left << std::setfill(' ') << std::setw(TXN_ID_WIDTH)
+         << "MAX_CID";
     else
-      os << std::setw(TXN_ID_WIDTH) << end_commit_id;
+      os << std::right << std::setfill('0') << std::setw(TXN_ID_WIDTH)
+         << end_commit_id;
     os << std::endl;
 
     peloton::ItemPointer location = GetNextItemPointer(header_itr);
     peloton::ItemPointer location2 = GetPrevItemPointer(header_itr);
     os << spacer;
-    os << "Next:[" << location.block << ", " << location.offset << "] ";
-    os << "Prev:[" << location2.block << ", " << location2.offset << "]";
+    os << "Next:[";
+    if (location.block == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << location.block;
+    }
+    os << ", ";
+    if (location.offset == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << location.offset;
+    }
+    os << "] Prev:[";
+    if (location2.block == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << location2.block;
+    }
+    os << ", ";
+    if (location2.offset == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << location2.offset;
+    }
+    os << "]";
   }
 
   return os.str();

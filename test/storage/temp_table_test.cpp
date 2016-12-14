@@ -83,16 +83,23 @@ TEST_F(TempTableTests, InsertTest) {
       storage::Tuple tuple(tile->GetSchema());
       storage::TupleIterator tuple_itr(tile);
       while (tuple_itr.Next(tuple)) {
-        auto val = tuple.GetValue(0);
-        EXPECT_FALSE(val.IsNull());
+        auto tupleVal = tuple.GetValue(0);
+        EXPECT_FALSE(tupleVal.IsNull());
+
+        // I have to do this because we can't put common::Value into a std::set
+        bool found = false;
+        for (auto val : values) {
+          found = val.CompareEquals(tupleVal).IsTrue();
+          if (found) break;
+        }  // FOR
+        EXPECT_TRUE(found);
         // EXPECT_NE(values.end(), values.find(val));
+
         found_tuple_count++;
       }
     }
   }  // FOR
   EXPECT_EQ(tuple_count, found_tuple_count);
-
-  // printf("%s\n", table.GetInfo().c_str());
 }
 
 }  // End test namespace

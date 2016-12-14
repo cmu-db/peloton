@@ -10,16 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <unordered_map>
 #include <unordered_set>
 
-#include "type/value_factory.h"
 #include "executor/abstract_executor.h"
 #include "planner/aggregate_plan.h"
-#include "common/container_tuple.h"
+#include "type/value_factory.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
@@ -28,7 +26,7 @@
 namespace peloton {
 
 namespace storage {
-class DataTable;
+class AbstractTable;
 }
 
 namespace executor {
@@ -50,7 +48,8 @@ class Agg {
   virtual type::Value DFinalize() = 0;
 
  private:
-  typedef std::unordered_set<type::Value , type::Value::hash, type::Value::equal_to>
+  typedef std::unordered_set<type::Value, type::Value::hash,
+                             type::Value::equal_to>
       DistinctSetType;
 
   DistinctSetType distinct_set_;
@@ -94,11 +93,9 @@ class AvgAgg : public Agg {
     default_delta = type::ValueFactory::GetIntegerValue(1);
   }
 
-  void DAdvance(const type::Value& val) {
-    this->DAdvance(val, default_delta);
-  }
+  void DAdvance(const type::Value &val) { this->DAdvance(val, default_delta); }
 
-  void DAdvance(const type::Value& val, const type::Value& delta) {
+  void DAdvance(const type::Value &val, const type::Value &delta) {
     if (val.IsNull()) {
       return;
     }
@@ -156,9 +153,7 @@ class CountAgg : public Agg {
     count++;
   }
 
-  type::Value DFinalize() {
-    return type::ValueFactory::GetBigIntValue(count);
-  }
+  type::Value DFinalize() { return type::ValueFactory::GetBigIntValue(count); }
 
  private:
   int64_t count;
@@ -170,9 +165,7 @@ class CountStarAgg : public Agg {
 
   void DAdvance(const type::Value &val UNUSED_ATTRIBUTE) { ++count; }
 
-  type::Value DFinalize() {
-    return type::ValueFactory::GetBigIntValue(count);
-  }
+  type::Value DFinalize() { return type::ValueFactory::GetBigIntValue(count); }
 
  private:
   int64_t count;
@@ -181,11 +174,10 @@ class CountStarAgg : public Agg {
 class MaxAgg : public Agg {
  public:
   MaxAgg() : have_advanced(false) {
-    aggregate =
-        type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+    aggregate = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
   }
 
-  void DAdvance(const type::Value& val) {
+  void DAdvance(const type::Value &val) {
     if (val.IsNull()) {
       return;
     }
@@ -197,9 +189,7 @@ class MaxAgg : public Agg {
     }
   }
 
-  type::Value DFinalize() {
-    return aggregate;
-  }
+  type::Value DFinalize() { return aggregate; }
 
  private:
   type::Value aggregate;
@@ -210,8 +200,7 @@ class MaxAgg : public Agg {
 class MinAgg : public Agg {
  public:
   MinAgg() : have_advanced(false) {
-    aggregate =
-        type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+    aggregate = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
   }
 
   void DAdvance(const type::Value &val) {
@@ -227,9 +216,7 @@ class MinAgg : public Agg {
     }
   }
 
-  type::Value DFinalize() {
-    return aggregate;
-  }
+  type::Value DFinalize() { return aggregate; }
 
  private:
   type::Value aggregate;
@@ -249,7 +236,7 @@ Agg *GetAggInstance(ExpressionType agg_type);
 class AbstractAggregator {
  public:
   AbstractAggregator(const planner::AggregatePlan *node,
-                     storage::DataTable *output_table,
+                     storage::AbstractTable *output_table,
                      executor::ExecutorContext *econtext)
       : node(node), output_table(output_table), executor_context(econtext) {}
 
@@ -264,7 +251,7 @@ class AbstractAggregator {
   const planner::AggregatePlan *node;
 
   /** @brief Output table */
-  storage::DataTable *output_table;
+  storage::AbstractTable *output_table;
 
   /** @brief Executor Context */
   executor::ExecutorContext *executor_context = nullptr;
@@ -277,7 +264,7 @@ class AbstractAggregator {
 class HashAggregator : public AbstractAggregator {
  public:
   HashAggregator(const planner::AggregatePlan *node,
-                 storage::DataTable *output_table,
+                 storage::AbstractTable *output_table,
                  executor::ExecutorContext *econtext, size_t num_input_columns);
 
   bool Advance(AbstractTuple *next_tuple) override;
@@ -316,18 +303,17 @@ class HashAggregator : public AbstractAggregator {
                     const std::vector<type::Value> &rhs) const {
       for (size_t i = 0; i < lhs.size() && i < rhs.size(); i++) {
         type::Value neq = (lhs[i].CompareNotEquals(rhs[i]));
-        if (neq.IsTrue())
-          return false;
+        if (neq.IsTrue()) return false;
       }
-      if (lhs.size() == rhs.size())
-        return true;
+      if (lhs.size() == rhs.size()) return true;
       return false;
     }
   };
 
   // Default equal_to should works well
   typedef std::unordered_map<std::vector<type::Value>, AggregateList *,
-                             ValueVectorHasher, ValueVectorCmp> HashAggregateMapType;
+                             ValueVectorHasher, ValueVectorCmp>
+      HashAggregateMapType;
 
   /** @brief Group by key values used */
   std::vector<type::Value> group_by_key_values;
@@ -342,7 +328,7 @@ class HashAggregator : public AbstractAggregator {
 class SortedAggregator : public AbstractAggregator {
  public:
   SortedAggregator(const planner::AggregatePlan *node,
-                   storage::DataTable *output_table,
+                   storage::AbstractTable *output_table,
                    executor::ExecutorContext *econtext,
                    size_t num_input_columns);
 
@@ -366,7 +352,7 @@ class SortedAggregator : public AbstractAggregator {
 class PlainAggregator : public AbstractAggregator {
  public:
   PlainAggregator(const planner::AggregatePlan *node,
-                  storage::DataTable *output_table,
+                  storage::AbstractTable *output_table,
                   executor::ExecutorContext *econtext);
 
   bool Advance(AbstractTuple *next_tuple) override;

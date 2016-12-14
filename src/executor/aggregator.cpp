@@ -9,16 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#include "executor/aggregator.h"
 
 #include <set>
 
-#include "executor/aggregator.h"
-#include "executor/executor_context.h"
-#include "common/logger.h"
-#include "storage/data_table.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "catalog/manager.h"
+#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "storage/abstract_table.h"
 
 namespace peloton {
 namespace executor {
@@ -61,8 +60,7 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 }
 
 /* Handle distinct */
-Agg::~Agg() {
-}
+Agg::~Agg() {}
 
 void Agg::Advance(const type::Value val) {
   if (is_distinct_) {
@@ -94,7 +92,7 @@ type::Value Agg::Finalize() {
  * Right is the tuple holding all aggregated values.
  */
 bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
-            storage::DataTable *output_table,
+            storage::AbstractTable *output_table,
             const AbstractTuple *delegate_tuple,
             executor::ExecutorContext *econtext) {
   auto schema = output_table->GetSchema();
@@ -117,12 +115,14 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
    * 2) Evaluate filter predicate;
    * if fail, just return
    */
-  std::unique_ptr<expression::ContainerTuple<std::vector<type::Value>>> aggref_tuple(
-      new expression::ContainerTuple<std::vector<type::Value>>(&aggregate_values));
+  std::unique_ptr<expression::ContainerTuple<std::vector<type::Value>>>
+      aggref_tuple(new expression::ContainerTuple<std::vector<type::Value>>(
+          &aggregate_values));
 
   auto predicate = node->GetPredicate();
   if (nullptr != predicate &&
-      (predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext)).IsFalse()) {
+      (predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext))
+          .IsFalse()) {
     return true;  // Qual fails, do nothing
   }
 
@@ -139,11 +139,22 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple ");
     return false;
-  } else {
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
-    tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
   }
+
+  // PAVLO: 2016-12-14
+  // Ok so here I am trying to replace DataTable with the new TempTable
+  // in the aggregation code. Then I come across this is little bit here
+  // where we are trying to set the TxnId flag in the header of the output
+  // table.
+  // I don't know why this is even necessary given that the output of
+  // an aggregation is supposed to be ephemeral.
+  // So I am just going to comment it out to see whether it makes a difference.
+  //  else {
+  //    auto &manager = catalog::Manager::GetInstance();
+  //    auto tile_group_header =
+  //    manager.GetTileGroup(location.block)->GetHeader();
+  //    tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
+  //  }
   return true;
 }
 
@@ -151,7 +162,7 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
 // Hash Aggregator
 //===--------------------------------------------------------------------===//
 HashAggregator::HashAggregator(const planner::AggregatePlan *node,
-                               storage::DataTable *output_table,
+                               storage::AbstractTable *output_table,
                                executor::ExecutorContext *econtext,
                                size_t num_input_columns)
     : AbstractAggregator(node, output_table, econtext),
@@ -194,8 +205,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
     // Make a deep copy of the first tuple we meet
     for (size_t col_id = 0; col_id < num_input_columns; col_id++) {
       // first_tuple_values has the ownership
-      aggregate_list->first_tuple_values.push_back(
-          cur_tuple->GetValue(col_id));
+      aggregate_list->first_tuple_values.push_back(cur_tuple->GetValue(col_id));
     };
 
     for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
@@ -217,8 +227,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
-    type::Value value =
-        type::ValueFactory::GetIntegerValue(1).Copy();
+    type::Value value = type::ValueFactory::GetIntegerValue(1).Copy();
     if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           cur_tuple, nullptr, this->executor_context);
@@ -233,7 +242,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 bool HashAggregator::Finalize() {
   for (auto entry : aggregates_map) {
     // Construct a container for the first tuple
-    expression::ContainerTuple<std::vector<type::Value >> first_tuple(
+    expression::ContainerTuple<std::vector<type::Value>> first_tuple(
         &entry.second->first_tuple_values);
     if (Helper(node, entry.second->aggregates, output_table, &first_tuple,
                this->executor_context) == false) {
@@ -248,7 +257,7 @@ bool HashAggregator::Finalize() {
 //===--------------------------------------------------------------------===//
 
 SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
-                                   storage::DataTable *output_table,
+                                   storage::AbstractTable *output_table,
                                    executor::ExecutorContext *econtext,
                                    size_t num_input_columns)
     : AbstractAggregator(node, output_table, econtext),
@@ -281,14 +290,13 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     // Check whether crossed group boundary
     for (oid_t grpColOffset = 0; grpColOffset < node->GetGroupbyColIds().size();
          grpColOffset++) {
-      type::Value lval = (
-          next_tuple->GetValue(node->GetGroupbyColIds()[grpColOffset]));
-      type::Value rval = (
-          delegate_tuple_.GetValue(node->GetGroupbyColIds()[grpColOffset]));
+      type::Value lval =
+          (next_tuple->GetValue(node->GetGroupbyColIds()[grpColOffset]));
+      type::Value rval =
+          (delegate_tuple_.GetValue(node->GetGroupbyColIds()[grpColOffset]));
       type::Value cmp = (lval.CompareNotEquals(rval));
-      bool not_equal = cmp.IsTrue();
 
-      if (not_equal) {
+      if (cmp.IsTrue()) {
         LOG_TRACE("Group-by columns changed.");
 
         // Call helper to output the current group result
@@ -331,8 +339,7 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
   // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
-    type::Value value =
-        type::ValueFactory::GetIntegerValue(1);
+    type::Value value = type::ValueFactory::GetIntegerValue(1);
     if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           next_tuple, nullptr, this->executor_context);
@@ -358,7 +365,7 @@ bool SortedAggregator::Finalize() {
 // Plain Aggregator
 //===--------------------------------------------------------------------===//
 PlainAggregator::PlainAggregator(const planner::AggregatePlan *node,
-                                 storage::DataTable *output_table,
+                                 storage::AbstractTable *output_table,
                                  executor::ExecutorContext *econtext)
     : AbstractAggregator(node, output_table, econtext) {
   // allocate aggregators
@@ -366,8 +373,9 @@ PlainAggregator::PlainAggregator(const planner::AggregatePlan *node,
 
   // initialize aggregators
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
-	  LOG_TRACE("Aggregate term type: %s", ExpressionTypeToString(
-        node->GetUniqueAggTerms()[aggno].aggtype).c_str());
+    LOG_TRACE("Aggregate term type: %s",
+              ExpressionTypeToString(node->GetUniqueAggTerms()[aggno].aggtype)
+                  .c_str());
     aggregates[aggno] =
         GetAggInstance(node->GetUniqueAggTerms()[aggno].aggtype);
 
@@ -380,11 +388,12 @@ bool PlainAggregator::Advance(AbstractTuple *next_tuple) {
   // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
-    type::Value value = (
-        type::ValueFactory::GetIntegerValue(1));
+    type::Value value = (type::ValueFactory::GetIntegerValue(1));
     if (predicate) {
-      value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
-          next_tuple, nullptr, this->executor_context).Copy();
+      value =
+          node->GetUniqueAggTerms()[aggno]
+              .expression->Evaluate(next_tuple, nullptr, this->executor_context)
+              .Copy();
     }
     aggregates[aggno]->Advance(value);
   }
