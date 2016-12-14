@@ -825,28 +825,56 @@ class TupleKeyComparatorRaw {
   TupleKeyComparatorRaw() {};
 };
 
+/*
+ * class TupleKeyEqualityChecker - Checks equality relation of tuple key
+ *
+ * This class has almost the same logic with class TupleKeyComparatorRaw
+ * however we could not directly use TupleKeyComparatorRaw because otherwise
+ * we will do two comparison instead of one to determine equality
+ */
 class TupleKeyEqualityChecker {
  public:
-  // return true if lhs == rhs
+  
+  /*
+   * operator()() - Determines whether two keys are equal
+   */
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
-    auto schema = lhs.key_tuple_schema;
+    
+    // The length of two schemas must be different from each other
+    auto lhs_schema = lhs.key_tuple_schema;
+    auto rhs_schema = rhs.key_tuple_schema;
+    assert(lhs_schema->GetColumnCount() == rhs_schema->GetColumnCount());
+    (void)rhs_schema;
 
-    for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
+    unsigned int columt_count = lhs_schema->GetColumnCount();
+
+    // Do a filed by field comparison
+    // This will return true for the first column in LHS that is smaller
+    // than the same column in RHS
+    for (unsigned int col_itr = 0; 
+         col_itr < columt_count;
          ++col_itr) {
       common::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
       common::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
+      // If any of these two columns differ then just return false
+      // because we know they could not be equal 
       common::Value res = (lhValue.CompareNotEquals(rhValue));
-      if (res.IsTrue())
+      if (res.IsTrue()) {
         return false;
+      }
     }
-    return true;
+    
+    return true; 
   }
 
+  /*
+   * Copy Constructor
+   */
   TupleKeyEqualityChecker(const TupleKeyEqualityChecker &) {}
   TupleKeyEqualityChecker() {}
 };
