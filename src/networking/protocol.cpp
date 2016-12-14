@@ -47,7 +47,7 @@ const std::unordered_map<std::string, std::string>
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
 PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
-  optimizer_.reset(new optimizer::SimpleOptimizer());
+  traffic_cop_.reset(new tcop::TrafficCop());
 }
 
 void PacketManager::MakeHardcodedParameterStatus(
@@ -250,7 +250,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
 
       // execute the query using tcop
       auto status =
-          tcop.ExecuteStatement(query, *(optimizer_.get()), result,
+          tcop.ExecuteStatement(query, result,
                                 tuple_descriptor, rows_affected, error_message);
 
       // check status
@@ -308,7 +308,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   auto &tcop = tcop::TrafficCop::GetInstance();
 
   statement = tcop.PrepareStatement(statement_name, query_string,
-                                    *optimizer_.get(), error_message);
+                                    error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
     SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});

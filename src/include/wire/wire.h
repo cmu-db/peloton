@@ -22,8 +22,8 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
-#include "optimizer/abstract_optimizer.h"
 #include "wire/marshal.h"
+#include "tcop/tcop.h"
 
 // TXN state definitions
 #define TXN_IDLE 'I'
@@ -31,6 +31,7 @@
 #define TXN_FAIL 'E'
 
 namespace peloton {
+
 namespace wire {
 
 typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
@@ -76,8 +77,8 @@ class PacketManager {
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
 
-  // The optimizer used for this connection
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+  // The traffic cop used for this connection
+  std::unique_ptr<tcop::TrafficCop> traffic_cop_;
 
  private:
   // Generic error protocol packet

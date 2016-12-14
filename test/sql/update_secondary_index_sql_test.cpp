@@ -45,23 +45,20 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::SimpleOptimizer optimizer;
 
   // test small int
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * from test", optimizer, result,
-                                tuple_descriptor, rows_affected, error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
+                                rows_affected, error_message);
   // Check the return value
   EXPECT_EQ(result[6].second[0], '3');
 
   // Perform update
-  SQLTestsUtil::ExecuteSQLQuery("UPDATE test SET b=1000 WHERE c=200", optimizer,
-                                result, tuple_descriptor, rows_affected,
-                                error_message);
+  SQLTestsUtil::ExecuteSQLQuery("UPDATE test SET b=1000 WHERE c=200", result,
+                                tuple_descriptor, rows_affected, error_message);
 
   // test update result
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test WHERE b=1000", optimizer,
-                                result, tuple_descriptor, rows_affected,
-                                error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test WHERE b=1000", result,
+                                tuple_descriptor, rows_affected, error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '2');
 

@@ -22,6 +22,7 @@
 #include "common/type.h"
 #include "common/types.h"
 #include "parser/sql_statement.h"
+#include "optimizer/abstract_optimizer.h"
 
 namespace peloton {
 
@@ -46,7 +47,6 @@ class TrafficCop {
 
   // PortalExec - Execute query string
   Result ExecuteStatement(const std::string &query,
-                          optimizer::AbstractOptimizer &optimizer,
                           std::vector<ResultType> &result,
                           std::vector<FieldInfoType> &tuple_descriptor,
                           int &rows_changed, std::string &error_message);
@@ -62,7 +62,7 @@ class TrafficCop {
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(
       const std::string &statement_name, const std::string &query_string,
-      optimizer::AbstractOptimizer &optimizer, std::string &error_message);
+      std::string &error_message);
 
   std::vector<FieldInfoType> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -75,6 +75,10 @@ class TrafficCop {
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
+
+ private:
+  // The optimizer used for this connection
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 };
 
 }  // End tcop namespace

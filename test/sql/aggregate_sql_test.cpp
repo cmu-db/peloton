@@ -58,7 +58,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   optimizer::SimpleOptimizer optimizer;
 
   // test small int
-  SQLTestsUtil::ExecuteSQLQuery("SELECT min(b) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT min(b) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
@@ -66,13 +66,13 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   // TODO: LM: Right now we cannot deduce TINYINT
   // EXPECT_EQ(PostgresValueType::TINYINT, std::get<1>(tuple_descriptor[0]));
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT max(b) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT max(b) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '4');
   // EXPECT_EQ(PostgresValueType::TINYINT, std::get<1>(tuple_descriptor[0]));
 
   // test int
-  SQLTestsUtil::ExecuteSQLQuery("SELECT min(a) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT min(a) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   // Check the return value
   EXPECT_EQ(result[0].second[0], '1');
@@ -80,14 +80,14 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_INTEGER,
             std::get<1>(tuple_descriptor[0]));
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT max(a) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT max(a) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '4');
   EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_INTEGER,
             std::get<1>(tuple_descriptor[0]));
 
   // test big int
-  SQLTestsUtil::ExecuteSQLQuery("SELECT min(d) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT min(d) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '1');
   // Check the return type
@@ -95,34 +95,34 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   // EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_BIGINT,
   //          std::get<1>(tuple_descriptor[0]));
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT max(d) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT max(d) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '4');
   // EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_BIGINT,
   //          std::get<1>(tuple_descriptor[0]));
 
   // test double
-  SQLTestsUtil::ExecuteSQLQuery("SELECT min(e) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT min(e) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '1');
   EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_DOUBLE,
             std::get<1>(tuple_descriptor[0]));
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT max(e) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT max(e) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '4');
   EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_DOUBLE,
             std::get<1>(tuple_descriptor[0]));
 
   // test decimal
-  SQLTestsUtil::ExecuteSQLQuery("SELECT min(f) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT min(f) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '1');
   // Right now we treat all double and decimal as double
   EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_DOUBLE,
             std::get<1>(tuple_descriptor[0]));
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT max(f) from test", optimizer, result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT max(f) from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '4');
   EXPECT_EQ(PostgresValueType::POSTGRES_VALUE_TYPE_DOUBLE,
