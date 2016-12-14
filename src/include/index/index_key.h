@@ -715,27 +715,39 @@ class TupleKeyComparator {
    * This function compares two keys
    */
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
+    // We assume two keys have the same schema (executor should guarantee this)
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
+    
     auto schema = lhs.key_tuple_schema;
 
-    for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
+    // Do a filed by field comparison
+    // This will return true for the first column in LHS that is smaller
+    // than the same column in RHS
+    for (unsigned int col_itr = 0; 
+         col_itr < schema->GetColumnCount(); 
          ++col_itr) {
-      common::Value lhValue = (
-          lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      common::Value rhValue = (
-          rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
+      common::Value lhValue = \
+        lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
+      common::Value rhValue = \
+        rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
-      common::Value res_lt = (
-          lhValue.CompareLessThan(rhValue));
-      if (res_lt.IsTrue())
+      // If there is a field in LHS < RHS then return true;
+      common::Value res_lt = \
+          lhValue.CompareLessThan(rhValue);
+      if (res_lt.IsTrue()) {
         return true;
-
-      common::Value res_gt = (
-          lhValue.CompareGreaterThan(rhValue));
-      if (res_gt.IsTrue())
+      }
+      
+      common::Value res_gt = \
+          lhValue.CompareGreaterThan(rhValue);
+          
+      if (res_gt.IsTrue()) {
         return false;
+      }
     }
+    
+    // If we get here then two keys are equal. Still return false
     return false;
   }
 
