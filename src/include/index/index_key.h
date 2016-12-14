@@ -719,13 +719,19 @@ class TupleKeyComparator {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     
-    auto schema = lhs.key_tuple_schema;
+    // The length of two schemas must be different from each other
+    auto lhs_schema = lhs.key_tuple_schema;
+    auto rhs_schema = rhs.key_tuple_schema;
+    assert(lhs_schema->GetColumnCount() == rhs_schema->GetColumnCount());
+    (void)rhs_schema;
+
+    unsigned int columt_count = lhs_schema->GetColumnCount();
 
     // Do a filed by field comparison
     // This will return true for the first column in LHS that is smaller
     // than the same column in RHS
     for (unsigned int col_itr = 0; 
-         col_itr < schema->GetColumnCount(); 
+         col_itr < columt_count;
          ++col_itr) {
       common::Value lhValue = \
         lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
@@ -779,9 +785,16 @@ class TupleKeyComparatorRaw {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     
-    auto schema = lhs.key_tuple_schema;
+    // The length of two schemas must be different from each other
+    auto lhs_schema = lhs.key_tuple_schema;
+    auto rhs_schema = rhs.key_tuple_schema;
+    assert(lhs_schema->GetColumnCount() == rhs_schema->GetColumnCount());
+    (void)rhs_schema;
+    
+    unsigned int columt_count = lhs_schema->GetColumnCount();
 
-    for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
+    for (unsigned int col_itr = 0; 
+         col_itr < columt_count;
          ++col_itr) {
       common::Value lhValue = \
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
