@@ -680,6 +680,9 @@ class TupleKey {
 
 /*
  * class TupleKeyHasher - Hash function for tuple keys
+ *
+ * This function is defined to fulfill requirements from the BwTree index
+ * because it uses bloom filter inside and needs hash value 
  */
 struct TupleKeyHasher {
 
@@ -696,9 +699,21 @@ struct TupleKeyHasher {
   TupleKeyHasher() {};
 };
 
+/*
+ * class TupleKeyComparator - Compares tuple keys for less than relation
+ *
+ * This function is needed in all kinds of indices based on partial ordering
+ * of keys. This invokation of the class instance returns true if one key
+ * is less than another 
+ */
 class TupleKeyComparator {
  public:
-  // return true if lhs < rhs
+  
+  /*
+   * operator()() - Function invocation
+   *
+   * This function compares two keys
+   */
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
