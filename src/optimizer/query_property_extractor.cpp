@@ -32,7 +32,7 @@ void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const Join *){};
 void QueryPropertyExtractor::visit(UNUSED_ATTRIBUTE const OrderBy *){};
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
-  std::vector<Column *> columns;
+  std::vector<Column *> columns = {};
 
   // Get table pointer, id, and schema.
   storage::DataTable *target_table =
@@ -43,9 +43,11 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
 
   // Add predicate property
   auto predicate = select_stmt->where_clause;
-  expression::ExpressionUtil::TransformExpression(&schema, predicate);
-  property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
-      new PropertyPredicate(predicate->Copy())));
+  if (predicate != nullptr) {
+    expression::ExpressionUtil::TransformExpression(&schema, predicate);
+    property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
+        new PropertyPredicate(predicate->Copy())));
+  }
 
   std::unordered_map<oid_t, oid_t> column_mapping;
   std::vector<oid_t> column_ids;
@@ -69,6 +71,9 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     }
     columns.push_back(col);
   }
+
+  property_set_.AddProperty(
+      std::shared_ptr<PropertyColumns>(new PropertyColumns(columns)));
 
   if (needs_projection) {
     auto output_expressions =

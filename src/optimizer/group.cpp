@@ -55,6 +55,7 @@ std::shared_ptr<GroupExpression> Group::GetBestExpression(
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);
   }
+  LOG_TRACE("Didn't get best expression with required properties!");
   return nullptr;
 }
 

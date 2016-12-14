@@ -72,9 +72,9 @@ void GetToScan::Transform(
   auto result_plan =
       std::make_shared<OperatorExpression>(PhysicalScan::make(get->table));
 
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 1);
-  result_plan->PushChild(children[0]);
+  UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
+      input->Children();
+  PL_ASSERT(children.size() == 0);
 
   transformed.push_back(result_plan);
 }

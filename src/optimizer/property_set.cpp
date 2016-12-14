@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/property_set.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace optimizer {
@@ -22,6 +23,7 @@ const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
 }
 
 void PropertySet::AddProperty(std::shared_ptr<Property> property) {
+  LOG_TRACE("Add property with type %d", static_cast<int>(property->Type()));
   properties_.push_back(property);
 }
 
@@ -32,6 +34,8 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
       return prop;
     }
   }
+
+  LOG_TRACE("Didn't find property with type %d", static_cast<int>(type));
 
   return nullptr;
 }

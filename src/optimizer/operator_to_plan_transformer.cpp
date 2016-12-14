@@ -43,15 +43,25 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
 
+  expression::AbstractExpression *predicate = nullptr;
+  if (predicate_prop != nullptr) {
+    predicate = predicate_prop->GetPredicate()->Copy();
+  }
+
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
 
-  for (auto column : column_prop->GetColumns()) {
-    column_ids.push_back(column->As<TableColumn>()->ColumnIndexOid());
+  PL_ASSERT(column_prop != nullptr);
+
+  for (size_t column_idx = 0; column_idx < column_prop->GetSize();
+       column_idx++) {
+    column_ids.push_back(column_prop->GetColumn(column_idx)
+                             ->As<TableColumn>()
+                             ->ColumnIndexOid());
   }
 
-  output_plan_.reset(new planner::SeqScanPlan(
-      op->table_, predicate_prop->GetPredicate()->Copy(), column_ids));
+  output_plan_.reset(
+      new planner::SeqScanPlan(op->table_, predicate, column_ids));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
@@ -214,6 +224,7 @@ void OperatorToPlanTransformer::VisitOpExpression(
     std::shared_ptr<OperatorExpression> op) {
   // LM: I don't understand why we're copying prev information here and then
   // copy them back. It seems not used anywhere.
+
   std::vector<std::shared_ptr<OperatorExpression>> prev_children =
       current_children;
   auto prev_left_cols = left_columns;

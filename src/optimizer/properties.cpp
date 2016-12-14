@@ -18,7 +18,9 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(std::vector<Column *> columns)
-    : columns_(std::move(columns)) {}
+    : columns_(std::move(columns)) {
+  LOG_TRACE("Size of column property: %ld", columns_.size());
+}
 
 PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
@@ -124,9 +126,7 @@ PropertyProjection::PropertyProjection(
     std::vector<std::unique_ptr<expression::AbstractExpression> > expressions)
     : expressions_(std::move(expressions)){};
 
-PropertyType PropertyProjection::Type() const {
-  return PropertyType::PROJECT;
-}
+PropertyType PropertyProjection::Type() const { return PropertyType::PROJECT; }
 
 // PropertyOutputExpressions is only used for projection operator. We also
 // assume this is always going to be satisfied.

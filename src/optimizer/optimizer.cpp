@@ -76,7 +76,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   ImplementGroup(root_id);
 
   // Find least cost plan for root group
-  OptimizeExpression(gexpr, properties);
+  OptimizeGroup(root_id, properties);
 
   auto best_plan = ChooseBestPlan(root_id, properties);
 
@@ -91,7 +91,7 @@ std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
   std::shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   std::shared_ptr<GroupExpression> gexpr;
-  PL_ASSERT(RecordTransformedExpression(initial, gexpr));
+  RecordTransformedExpression(initial, gexpr);
   return gexpr;
 }
 
@@ -115,6 +115,9 @@ std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   Group *group = memo_.GetGroupByID(id);
   std::shared_ptr<GroupExpression> gexpr =
       group->GetBestExpression(requirements);
+
+  LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
+            gexpr->Op().name().c_str());
 
   std::vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   std::vector<PropertySet> required_input_props =
@@ -269,6 +272,8 @@ void Optimizer::DeriveCostAndStats(
 
 void Optimizer::ExploreGroup(GroupID id) {
   LOG_TRACE("Exploring group %d", id);
+  if (memo_.GetGroupByID(id)->HasExplored()) return;
+
   for (std::shared_ptr<GroupExpression> gexpr :
        memo_.GetGroupByID(id)->GetExpressions()) {
     ExploreExpression(gexpr);
@@ -306,9 +311,11 @@ void Optimizer::ExploreExpression(std::shared_ptr<GroupExpression> gexpr) {
 
 void Optimizer::ImplementGroup(GroupID id) {
   LOG_TRACE("Implementing group %d", id);
+  if (memo_.GetGroupByID(id)->HasImplemented()) return;
+
   for (std::shared_ptr<GroupExpression> gexpr :
        memo_.GetGroupByID(id)->GetExpressions()) {
-    if (gexpr->Op().IsPhysical()) ImplementExpression(gexpr);
+    if (gexpr->Op().IsLogical()) ImplementExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetImplementationFlag();
 }

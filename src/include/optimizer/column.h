@@ -46,9 +46,9 @@ class Column {
   hash_t Hash() const;
 
   template <typename T>
-  T *As() {
-    if (typeid(this) == typeid(T)) {
-      return reinterpret_cast<T *>(this);
+  const T *As() const {
+    if (typeid(*this) == typeid(T)) {
+      return reinterpret_cast<const T *>(this);
     }
     return nullptr;
   }

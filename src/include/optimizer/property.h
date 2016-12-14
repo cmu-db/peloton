@@ -14,6 +14,7 @@
 
 #include <typeinfo>
 
+#include "common/logger.h"
 #include "optimizer/util.h"
 
 namespace peloton {
@@ -52,9 +53,9 @@ class Property {
   virtual void Accept(PropertyVisitor *v) const = 0;
 
   template <typename T>
-  T *As() {
-    if (typeid(this) == typeid(T)) {
-      return reinterpret_cast<T *>(this);
+  const T *As() const {
+    if (this != nullptr && typeid(*this) == typeid(T)) {
+      return reinterpret_cast<const T *>(this);
     }
     return nullptr;
   }

@@ -32,7 +32,9 @@ class PropertyColumns : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
-  inline std::vector<Column *> &GetColumns() { return columns_; }
+  inline Column *GetColumn(int idx) const { return columns_[idx]; }
+
+  inline size_t GetSize() const { return columns_.size(); }
 
  private:
   std::vector<Column *> columns_;
@@ -52,9 +54,9 @@ class PropertyProjection : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
-  inline size_t GetProjectionListSize() { return expressions_.size(); }
+  inline size_t GetProjectionListSize() const { return expressions_.size(); }
 
-  inline expression::AbstractExpression *GetProjection(size_t idx) {
+  inline expression::AbstractExpression *GetProjection(size_t idx) const {
     return expressions_[idx].get();
   }
 
