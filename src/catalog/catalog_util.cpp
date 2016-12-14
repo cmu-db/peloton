@@ -54,9 +54,9 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  LOG_INFO("Removing tuple with id %d from table %s", (int)id,
-           table->GetName().c_str());
-  LOG_INFO("Transaction ID: %d", (int)txn->GetTransactionId());
+  LOG_TRACE("Removing tuple with id %d from table %s", (int)id,
+            table->GetName().c_str());
+  LOG_TRACE("Transaction ID: %d", (int)txn->GetTransactionId());
   // Delete
   planner::DeletePlan delete_node(table, false);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
@@ -196,7 +196,6 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     stats::QueryMetric::QueryParamBuf val_buf, int64_t reads, int64_t updates,
     int64_t deletes, int64_t inserts, int64_t latency, int64_t cpu_time,
     int64_t time_stamp, common::VarlenPool *pool) {
-
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
   auto val1 = common::ValueFactory::GetVarcharValue(query_name, nullptr);

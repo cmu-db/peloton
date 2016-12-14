@@ -19,6 +19,7 @@
 
 #include "common/harness.h"
 
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/value.h"
@@ -29,6 +30,7 @@
 #include "executor/logical_tile.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 #include "storage/table_factory.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
@@ -42,6 +44,21 @@ using ::testing::Return;
 
 namespace peloton {
 namespace test {
+
+storage::Database *ExecutorTestsUtil::InitializeDatabase(
+    const std::string &db_name) {
+  auto catalog = catalog::Catalog::GetInstance();
+  auto result = catalog->CreateDatabase(db_name, nullptr);
+  EXPECT_EQ(RESULT_SUCCESS, result);
+  auto database = catalog->GetDatabaseWithName(db_name);
+  return (database);
+}
+
+void ExecutorTestsUtil::DeleteDatabase(const std::string &db_name) {
+  auto catalog = catalog::Catalog::GetInstance();
+  auto result = catalog->DropDatabaseWithName(db_name, nullptr);
+  EXPECT_EQ(RESULT_SUCCESS, result);
+}
 
 /** @brief Helper function for defining schema */
 /*
@@ -312,7 +329,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
-  std::string table_name("TEST_TABLE");
+  std::string table_name("test_table");
 
   // Create table.
   bool own_schema = true;
@@ -443,17 +460,17 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
 
 void ExecutorTestsUtil::PrintTileVector(
     std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
+  std::ostringstream os;
   for (auto &tile : tile_vec) {
     for (UNUSED_ATTRIBUTE oid_t tuple_id : *tile) {
-      LOG_INFO("<");
+      os << "<";
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        LOG_INFO("%s",
-                           tile->GetValue(tuple_id, col_id).GetInfo()
-                           .c_str());
+        os << tile->GetValue(tuple_id, col_id).GetInfo() << " ";
       }
-      LOG_INFO(">");
+      os << ">" << std::endl;
     }
   }
+  LOG_DEBUG("%s", os.str().c_str());
 }
 
 }  // namespace test

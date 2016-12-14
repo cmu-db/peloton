@@ -39,7 +39,7 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
 }
 
 StatsAggregator::~StatsAggregator() {
-  LOG_DEBUG("StatsAggregator destruction\n");
+  LOG_DEBUG("StatsAggregator destruction");
   ShutdownAggregator();
   try {
     ofs_.close();
@@ -71,7 +71,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   LOG_TRACE(
       "\n//////////////////////////////////////////////////////"
       "//////////////////////////////////////////////////////\n");
-  LOG_TRACE("TIME ELAPSED: %ld sec\n", interval_cnt);
+  LOG_TRACE("TIME ELAPSED: %ld sec", interval_cnt);
 
   aggregated_stats_.Reset();
   std::thread::id this_id = aggregator_thread_.get_id();
@@ -102,9 +102,9 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 
   total_prev_txn_committed_ = current_txns_committed;
-  LOG_TRACE("Average throughput:     %lf txn/s\n", avg_throughput_);
-  LOG_TRACE("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
-  LOG_TRACE("Current throughput:     %lf txn/s\n\n", throughput_);
+  LOG_TRACE("Average throughput:     %lf txn/s", avg_throughput_);
+  LOG_TRACE("Moving avg. throughput: %lf txn/s", weighted_avg_throughput);
+  LOG_TRACE("Current throughput:     %lf txn/s", throughput_);
 
   // Write the stats to metric tables
   UpdateMetrics();
@@ -115,7 +115,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
       ofs_ << aggregated_stats_.ToString();
       ofs_ << "Weighted avg. throughput=" << weighted_avg_throughput << std::endl;
       ofs_ << "Average throughput=" << avg_throughput_ << std::endl;
-      ofs_ << "Current throughput=" << throughput_ << std::endl;
+      ofs_ << "Current throughput=" << throughput_;
     } catch (std::ofstream::failure &e) {
       LOG_ERROR("Error when writing to the stats log file %s", e.what());
     }
@@ -262,7 +262,7 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database, storage::D
 }
 
 void StatsAggregator::RunAggregator() {
-  LOG_DEBUG("Aggregator is now running.\n");
+  LOG_DEBUG("Aggregator is now running.");
   std::mutex mtx;
   std::unique_lock<std::mutex> lck(mtx);
   int64_t interval_cnt = 0;
@@ -274,7 +274,7 @@ void StatsAggregator::RunAggregator() {
          is_aggregating_) {
     Aggregate(interval_cnt, alpha, weighted_avg_throughput);
   }
-  LOG_DEBUG("Aggregator done!\n");
+  LOG_DEBUG("Aggregator done!");
 }
 
 StatsAggregator &StatsAggregator::GetInstance(int64_t aggregation_interval_ms) {
@@ -297,7 +297,7 @@ void StatsAggregator::RegisterContext(std::thread::id id_, BackendStatsContext *
     thread_number_++;
     backend_stats_[id_] = context_;
   }
-  LOG_DEBUG("Stats aggregator hash map size: %ld\n", backend_stats_.size());
+  LOG_DEBUG("Stats aggregator hash map size: %ld", backend_stats_.size());
 }
 
 // Unregister a BackendStatsContext. Currently we directly reuse the thread id

@@ -21,7 +21,6 @@
 
 namespace peloton {
 
-
 namespace expression {
 class Expression;
 }
@@ -48,16 +47,15 @@ class UpdatePlan : public AbstractPlan {
   explicit UpdatePlan(parser::UpdateStatement *parse_tree,
                       std::vector<oid_t> &key_column_ids,
                       std::vector<ExpressionType> &expr_types,
-                      std::vector<common::Value> &values,
-                      oid_t &index_id);
+                      std::vector<common::Value> &values, oid_t &index_id);
 
   inline ~UpdatePlan() {
     if (where_ != nullptr) {
-      delete(where_);
+      delete (where_);
     }
 
-    for(size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
-    	delete(updates_[update_itr]);
+    for (size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
+      delete (updates_[update_itr]);
     }
   }
 
@@ -73,15 +71,17 @@ class UpdatePlan : public AbstractPlan {
 
   void SetParameterValues(std::vector<common::Value> *values);
 
+  bool GetUpdatePrimaryKey() { return update_primary_key; }
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
         new UpdatePlan(target_table_, std::move(project_info_->Copy())));
   }
 
  private:
-
   // Initialize private members and construct colum_ids given a UpdateStatement.
-  void BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree, std::vector<oid_t>& columns);
+  void BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
+                              std::vector<oid_t> &columns);
 
   /** @brief Target table. */
   storage::DataTable *target_table_;
@@ -96,6 +96,9 @@ class UpdatePlan : public AbstractPlan {
 
   // The where condition
   expression::AbstractExpression *where_;
+
+  // Whether update primary key
+  bool update_primary_key;
 };
 
 }  // namespace planner

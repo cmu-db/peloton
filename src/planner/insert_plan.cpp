@@ -44,20 +44,21 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   LOG_TRACE("Creating an Insert Plan");
 }
 
-InsertPlan::InsertPlan(parser::InsertStatement *parse_tree)
-    : bulk_insert_count(parse_tree->insert_values->size()) {
-  LOG_TRACE("Creating an Insert Plan");
-  auto insert_values = parse_tree->insert_values;
-  auto cols = parse_tree->columns;
+InsertPlan::InsertPlan(
+    storage::DataTable *table, std::vector<char *> *columns,
+    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+        insert_values)
+    : bulk_insert_count(insert_values->size()) {
+
   parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
   params_value_type_.reset(new std::vector<common::Type::TypeId>);
 
-  target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      parse_tree->GetDatabaseName(), parse_tree->GetTableName());
+  target_table_ = table;
+
   if (target_table_) {
     catalog::Schema *table_schema = target_table_->GetSchema();
     // INSERT INTO table_name VALUES (val2, val2, ...)
-    if (cols == NULL) {
+    if (columns == NULL) {
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
         auto values = (*insert_values)[tuple_idx];
@@ -98,12 +99,12 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree)
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
         auto values = (*insert_values)[tuple_idx];
-        PL_ASSERT(cols->size() <= table_schema->GetColumnCount());
+        PL_ASSERT(columns->size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;
         auto &table_columns = table_schema->GetColumns();
-        auto query_columns = parse_tree->columns;
+        auto query_columns = columns;
         for (catalog::Column const &elem : table_columns) {
           std::size_t pos = std::find(query_columns->begin(),
                                       query_columns->end(), elem.GetName()) -
@@ -177,14 +178,14 @@ void InsertPlan::SetParameterValues(std::vector<common::Value> *values) {
       case common::Type::VARBINARY:
       case common::Type::VARCHAR: {
         common::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
-                                                GetPlanPool());
+        tuples_[std::get<0>(put_loc)]
+            ->SetValue(std::get<1>(put_loc), val, GetPlanPool());
         break;
       }
       default: {
         common::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
-                                                nullptr);
+        tuples_[std::get<0>(put_loc)]
+            ->SetValue(std::get<1>(put_loc), val, nullptr);
       }
     }
   }

@@ -115,6 +115,7 @@ class DataTable : public AbstractTable {
   // as we implement logical-pointer indexing mechanism, targets_ptr is
   // required.
   bool InstallVersion(const AbstractTuple *tuple, const TargetList *targets_ptr,
+                      concurrency::Transaction *transaction,
                       ItemPointer *index_entry_ptr);
 
   // insert tuple in table. the pointer to the index entry is returned as
@@ -291,6 +292,7 @@ class DataTable : public AbstractTable {
 
   bool InsertInSecondaryIndexes(const AbstractTuple *tuple,
                                 const TargetList *targets_ptr,
+                                concurrency::Transaction *transaction,
                                 ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints

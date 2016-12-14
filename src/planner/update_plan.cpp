@@ -33,7 +33,8 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
                        std::unique_ptr<const planner::ProjectInfo> project_info)
     : target_table_(table),
       project_info_(std::move(project_info)),
-      where_(NULL) {
+      where_(NULL),
+      update_primary_key(false) {
   LOG_TRACE("Creating an Update Plan");
 }
 
@@ -91,7 +92,8 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
 }
 
 // Creates the update plan with sequential scan.
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
+UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
+    : update_primary_key(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
   LOG_TRACE("Creating a sequential scan plan");
@@ -104,7 +106,8 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
-                       std::vector<common::Value> &values, oid_t &index_id) {
+                       std::vector<common::Value> &values, oid_t &index_id)
+    : update_primary_key(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
   // Create index scan desc

@@ -243,9 +243,11 @@ ItemPointer DataTable::AcquireVersion() {
 
 bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
+                               concurrency::Transaction *transaction,
                                ItemPointer *index_entry_ptr) {
   // Index checks and updates
-  if (InsertInSecondaryIndexes(tuple, targets_ptr, index_entry_ptr) == false) {
+  if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
+                               index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
     return false;
   }
@@ -406,6 +408,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
 bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
                                          const TargetList *targets_ptr,
+                                         concurrency::Transaction *transaction,
                                          ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
   // Transaform the target list into a hash set
@@ -416,6 +419,15 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
   for (auto target : *targets_ptr) {
     targets_set.insert(target.first);
   }
+
+  bool res = true;
+
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::function<bool(const void *)> fn =
+      std::bind(&concurrency::TransactionManager::IsOccupied,
+                &transaction_manager, transaction, std::placeholders::_1);
 
   // Check existence for primary/unique indexes
   // Since this is NOT protected by a lock, concurrent insert may happen.
@@ -449,9 +461,9 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
 
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-        break;
-      case INDEX_CONSTRAINT_TYPE_UNIQUE:
-        break;
+      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        res = index->CondInsertEntry(key.get(), index_entry_ptr, fn);
+      } break;
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
         index->InsertEntry(key.get(), index_entry_ptr);
@@ -459,7 +471,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
     }
     LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
-  return true;
+  return res;
 }
 
 /**
@@ -804,7 +816,8 @@ const std::string DataTable::GetInfo() const {
   }
 
   std::ostringstream output;
-  output << "Table #" << table_oid << " [";
+  output << "Table '" << table_name << "' [";
+  output << "OID= " << table_oid << ", ";
   output << "NumTuples=" << tuple_count << ", ";
   output << "NumTiles=" << tile_group_count << "]" << std::endl;
   output << dataBuffer.str();

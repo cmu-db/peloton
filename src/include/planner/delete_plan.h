@@ -47,12 +47,8 @@ class DeletePlan : public AbstractPlan {
 
   explicit DeletePlan(storage::DataTable *table, bool truncate);
 
-  explicit DeletePlan(parser::DeleteStatement *parse_tree);
-
-  explicit DeletePlan(parser::DeleteStatement *delete_statemenet,
-                      std::vector<oid_t> &key_column_ids,
-                      std::vector<ExpressionType> &expr_types,
-                      std::vector<common::Value> &values, oid_t &index_id);
+  explicit DeletePlan(storage::DataTable *table,
+                      expression::AbstractExpression *predicate);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
@@ -63,6 +59,8 @@ class DeletePlan : public AbstractPlan {
   void SetParameterValues(std::vector<common::Value> *values) override;
 
   bool GetTruncate() const { return truncate; }
+
+  expression::AbstractExpression *GetPredicate() { return expr_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
@@ -75,6 +73,7 @@ class DeletePlan : public AbstractPlan {
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
 
+  // TODO: should be deleted after refacor
   std::string table_name_;
 
   expression::AbstractExpression *expr_ = nullptr;

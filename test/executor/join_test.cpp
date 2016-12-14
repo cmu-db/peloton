@@ -113,8 +113,7 @@ enum JOIN_TEST_TYPE {
 TEST_F(JoinTests, BasicTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s",
-             PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
   }
 }
@@ -122,8 +121,7 @@ TEST_F(JoinTests, BasicTest) {
 TEST_F(JoinTests, EmptyTablesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s",
-             PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
   }
 }
@@ -131,11 +129,10 @@ TEST_F(JoinTests, EmptyTablesTest) {
 TEST_F(JoinTests, JoinTypesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s",
-             PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_INFO("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, BASIC_TEST);
     }
@@ -145,11 +142,10 @@ TEST_F(JoinTests, JoinTypesTest) {
 TEST_F(JoinTests, ComplicatedTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s",
-             PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_INFO("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, COMPLICATED_TEST);
     }
@@ -159,11 +155,10 @@ TEST_F(JoinTests, ComplicatedTest) {
 TEST_F(JoinTests, LeftTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s",
-             PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_INFO("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, LEFT_TABLE_EMPTY);
     }
@@ -173,11 +168,10 @@ TEST_F(JoinTests, LeftTableEmptyTest) {
 TEST_F(JoinTests, RightTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s",
-             PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_INFO("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %d", join_type);
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, RIGHT_TABLE_EMPTY);
     }
@@ -188,17 +182,15 @@ TEST_F(JoinTests, JoinPredicateTest) {
   oid_t join_test_types = 1;
 
   // Go over all join test types
-  for (oid_t join_test_type = 0; join_test_type < join_test_types;
-       join_test_type++) {
-    LOG_INFO("JOIN TEST_F ------------------------ :: %u", join_test_type);
+  for (oid_t join_test_type = 0; join_test_type < join_test_types; join_test_type++) {
+    LOG_TRACE("JOIN TEST_F ------------------------ :: %u", join_test_type);
 
     // Go over all join algorithms
     for (auto join_algorithm : join_algorithms) {
-      LOG_INFO("JOIN ALGORITHM :: %s",
-               PlanNodeTypeToString(join_algorithm).c_str());
+      LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
       // Go over all join types
       for (auto join_type : join_types) {
-        LOG_INFO("JOIN TYPE :: %d", join_type);
+        LOG_TRACE("JOIN TYPE :: %d", join_type);
         // Execute the join test
         ExecuteJoinTest(join_algorithm, join_type, join_test_type);
       }
@@ -215,7 +207,7 @@ TEST_F(JoinTests, SpeedTest) {
 }
 
 TEST_F(JoinTests, BasicNestedLoopTest) {
-  LOG_INFO("PLAN_NODE_TYPE_NESTLOOP");
+  LOG_TRACE("PLAN_NODE_TYPE_NESTLOOP");
   ExecuteNestedLoopJoinTest(JOIN_TYPE_INNER);
 }
 
@@ -294,8 +286,8 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
 
   txn_manager.CommitTransaction(txn);
 
-  LOG_INFO("%s\n", left_table->GetInfo().c_str());
-  LOG_INFO("%s\n", right_table->GetInfo().c_str());
+  LOG_TRACE("%s\n", left_table->GetInfo().c_str());
+  LOG_TRACE("%s\n", right_table->GetInfo().c_str());
 
   //===--------------------------------------------------------------------===//
   // Begin nested loop
@@ -610,8 +602,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           tuples_with_null +=
               CountTuplesWithNullFields(result_logical_tile.get());
           ValidateJoinLogicalTile(result_logical_tile.get());
-          LOG_TRACE("result tile info: %s",
-                    result_logical_tile->GetInfo().c_str());
+          LOG_TRACE("result tile info: %s", result_logical_tile->GetInfo().c_str());
         }
       }
 
@@ -945,6 +936,7 @@ void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
     std::vector<std::unique_ptr<executor::LogicalTile>> &
         table_logical_tile_ptrs) {
+
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
@@ -955,6 +947,7 @@ void ExpectNormalTileResults(
     size_t table_tile_group_count, MockExecutor *table_scan_executor,
     std::vector<std::unique_ptr<executor::LogicalTile>> &
         table_logical_tile_ptrs) {
+
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {

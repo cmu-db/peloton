@@ -15,6 +15,7 @@
 #include "optimizer/abstract_optimizer.h"
 #include "common/types.h"
 #include "common/value.h"
+#include "parser/statements.h"
 
 #include <memory>
 #include <vector>
