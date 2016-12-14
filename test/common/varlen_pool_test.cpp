@@ -32,6 +32,9 @@ using namespace peloton::common;
 
 // Round up to block size
 size_t get_align(size_t size) {
+  // Add the size of reference count
+  size += VarlenPool::GetRefCountSize();
+
   if (size <= 16)
     return 16;
   size_t n = size - 1;
@@ -63,12 +66,38 @@ TEST_F(VarlenPoolTests, AllocateOnceTest) {
   delete pool;
 }
 
+// Allocate, increase the ref count, free twice
+TEST_F(VarlenPoolTests, AllocateTwiceTest) {
+  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
+  void *p = nullptr;
+  size_t size;
+  size_t total_size = 0;
+  size = 40;
+
+  total_size += get_align(size);
+  p = pool->Allocate(size);
+  EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+  EXPECT_TRUE(p != nullptr);
+
+  pool->AddRefCount(p);
+
+  pool->Free(p);
+  EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+
+  total_size -= get_align(size);
+  pool->Free(p);
+  EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+
+  delete pool;
+}
+
 // Allocate and free N blocks from each buffer list
 TEST_F(VarlenPoolTests, AllocateTest) {
-  std::srand(std::time(0));
+  std::srand(0);
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
   char *p[MAX_LIST_NUM][N];
   char *test_str = new char[str_len];
+  std::vector<std::vector<int>> ref_cnts(MAX_LIST_NUM, std::vector<int>(N, 1));
   size_t size, block_size;
   size_t total_size = 0;
 
@@ -79,8 +108,9 @@ TEST_F(VarlenPoolTests, AllocateTest) {
   }
 
   // Generate a random test string
-  for (size_t i = 0; i < str_len; i++)
+  for (size_t i = 0; i < str_len; i++) {
     test_str[i] = RANDOM(26) + 'a';
+  }
 
   // Allocate N blocks from each buffer list
   for (size_t i = 0; i < MAX_LIST_NUM; i++) {
@@ -88,10 +118,18 @@ TEST_F(VarlenPoolTests, AllocateTest) {
     for (size_t j = 0; j < N; j++) {
       size = j % (block_size >> 1) + (block_size >> 1);
       p[i][j] = (char*) pool->Allocate(size);
+
+      // Add ref counts
+      int ref_cnt = RANDOM(10) + 1;
+      ref_cnts[i][j] = ref_cnt;
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->AddRefCount(p[i][j]);
+      }
+
+      EXPECT_TRUE(p[i][j] != nullptr);
       for (size_t k = 0; k < size; k++) {
         p[i][j][k] = test_str[(i + j * k) % str_len];
       }
-      EXPECT_TRUE(p[i][j] != nullptr);
       total_size += get_align(size);
       EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
     }
@@ -99,6 +137,14 @@ TEST_F(VarlenPoolTests, AllocateTest) {
     // Free and reallocate some of the pointers
     for (size_t j = 0; j < N; j += 2) {
       size = j % (block_size >> 1) + (block_size >> 1);
+      int ref_cnt = ref_cnts[i][j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[i][j]));
+      for (int r = 1; r < ref_cnt; r++) {
+        pool->Free(p[i][j]);
+        EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+      }
+
+      // Final free
       pool->Free(p[i][j]);
       total_size -= get_align(size);
       EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
@@ -112,6 +158,8 @@ TEST_F(VarlenPoolTests, AllocateTest) {
       EXPECT_TRUE(p[i][j] != nullptr);
       total_size += get_align(size);
       EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+
+      ref_cnts[i][j] = 1;
     }
 
     // Compare the remaining strings with the random test string
@@ -125,6 +173,15 @@ TEST_F(VarlenPoolTests, AllocateTest) {
     // Free all the pointers
     for (size_t j = 0; j < N; j++) {
       size = j % (block_size >> 1) + (block_size >> 1);
+
+      int ref_cnt = ref_cnts[i][j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[i][j]));
+      for (int r = 1; r < ref_cnt; r++) {
+        pool->Free(p[i][j]);
+        EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+      }
+
+      // Final free
       pool->Free(p[i][j]);
       total_size -= get_align(size);
       EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
@@ -136,8 +193,8 @@ TEST_F(VarlenPoolTests, AllocateTest) {
 
   // Test compaction
   for (size_t i = 0; i < LARGE_LIST_ID; i++)
-    EXPECT_TRUE(MAX_EMPTY_NUM >= pool->empty_cnt_[i]);
-  EXPECT_EQ(0, pool->empty_cnt_[LARGE_LIST_ID]);
+    EXPECT_TRUE(int(MAX_EMPTY_NUM) >= pool->GetEmptyCountByListId(i));
+  EXPECT_EQ(0, pool->GetEmptyCountByListId(LARGE_LIST_ID));
 
   delete[] test_str;
   delete pool;
@@ -145,7 +202,7 @@ TEST_F(VarlenPoolTests, AllocateTest) {
 
 // Random allocation and free
 TEST_F(VarlenPoolTests, RandomTest) {
-  std::srand(std::time(0));
+  std::srand(0);
   VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
   char *p[M] = {nullptr};
   char *test_str = new char[BUFFER_SIZE << 1];
@@ -159,15 +216,24 @@ TEST_F(VarlenPoolTests, RandomTest) {
   // Repeat R times
   for (size_t i = 0; i < R; i++) {
     // Allocate all the pointers
+    std::vector<int> ref_cnts(M, 1);
     for (size_t j = 0; j < M; j++) {
       if (p[j] != nullptr)
         continue;
       size[j] = RANDOM(16 << i) + 1;
       p[j] = (char *) pool->Allocate(size[j]);
+
       EXPECT_TRUE(p[j] != nullptr);
       for (size_t k = 0; k < size[j]; k++) {
         p[j][k] = test_str[(j * k) % str_len];
       }
+
+      int ref_cnt = RANDOM(10) + 1;
+      ref_cnts[j] = ref_cnt;
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->AddRefCount(p[j]);
+      }
+
       total_size += get_align(size[j]);
       EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
     }
@@ -178,6 +244,15 @@ TEST_F(VarlenPoolTests, RandomTest) {
         continue;
       if (RANDOM(2) == 0)
         continue;
+
+      int ref_cnt = ref_cnts[j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[j]));
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->Free(p[j]);
+        EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+      }
+
+      // Final free
       pool->Free(p[j]);
       p[j] = nullptr;
       total_size -= get_align(size[j]);
@@ -192,15 +267,23 @@ TEST_F(VarlenPoolTests, RandomTest) {
         EXPECT_EQ(p[j][k], test_str[(j * k) % str_len]);
       }
     }
-  }
 
-  // Free all the pointers
-  for (size_t j = 0; j < M; j++) {
-    if (p[j] == nullptr)
-      continue;
-    pool->Free(p[j]);
-    total_size -= get_align(size[j]);
-    EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+    // Free all the pointers
+    for (size_t j = 0; j < M; j++) {
+      if (p[j] == nullptr)
+        continue;
+
+      int ref_cnt = ref_cnts[j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[j]));
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->Free(p[j]);
+        EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+      }
+      // Final free
+      pool->Free(p[j]);
+      total_size -= get_align(size[j]);
+      EXPECT_EQ(total_size, pool->GetTotalAllocatedSpace());
+    }
   }
 
   // All the pointers have been freed
@@ -208,8 +291,9 @@ TEST_F(VarlenPoolTests, RandomTest) {
 
   // Test compaction
   for (size_t i = 0; i < LARGE_LIST_ID; i++)
-    EXPECT_TRUE(MAX_EMPTY_NUM >= pool->empty_cnt_[i]);
-  EXPECT_EQ(0, pool->empty_cnt_[LARGE_LIST_ID]);
+    EXPECT_TRUE(int(MAX_EMPTY_NUM) >= pool->GetEmptyCountByListId(i));
+
+  EXPECT_EQ(0, pool->GetEmptyCountByListId(LARGE_LIST_ID));
 
   delete[] test_str;
   delete pool;
@@ -217,9 +301,10 @@ TEST_F(VarlenPoolTests, RandomTest) {
 
 // Allocate and free N/2 blocks from each buffer list
 void *thread_all(void *arg) {
-  std::srand(std::time(0));
+  std::srand(0);
   VarlenPool *pool = (VarlenPool *) arg;
   char *p[MAX_LIST_NUM][N/2];
+  std::vector<std::vector<int>> ref_cnts(MAX_LIST_NUM, std::vector<int>(N, 1));
   char *test_str = new char[str_len];
   size_t size, block_size;
 
@@ -243,11 +328,21 @@ void *thread_all(void *arg) {
         p[i][j][k] = test_str[(i * j * k) % str_len];
       }
       EXPECT_TRUE(p[i][j] != nullptr);
+
+      int ref_cnt = RANDOM(15) + 1;
+      ref_cnts[i][j] = ref_cnt;
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->AddRefCount(p[i][j]);
+      }
     }
 
     // Free and reallocate some of the pointers
     for (size_t j = 0; j < N/2; j += 2) {
-      pool->Free(p[i][j]);
+      int ref_cnt = ref_cnts[i][j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[i][j]));
+      for (int r = 0; r < ref_cnt; ++r) {
+        pool->Free(p[i][j]);
+      }
     }
     for (size_t j = 0; j < N/2; j += 2) {
       size = j % (block_size >> 1) + (block_size >> 1);
@@ -256,6 +351,12 @@ void *thread_all(void *arg) {
         p[i][j][k] = test_str[(i * j * k + 1) % str_len];
       }
       EXPECT_TRUE(p[i][j] != nullptr);
+
+      int ref_cnt = RANDOM(15) + 1;
+      ref_cnts[i][j] = ref_cnt;
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->AddRefCount(p[i][j]);
+      }
     }
 
     // Compare the remaining strings with the random test string
@@ -268,7 +369,10 @@ void *thread_all(void *arg) {
 
     // Free all the pointers
     for (size_t j = 0; j < N/2; j++) {
-      pool->Free(p[i][j]);
+      int ref_cnt = ref_cnts[i][j];
+      for (int r = 0; r < ref_cnt; ++r) {
+        pool->Free(p[i][j]);
+      }
       p[i][j] = nullptr;
     }
   }
@@ -283,7 +387,7 @@ void *thread_all(void *arg) {
 }
 
 void *thread_random(void *arg) {
-  std::srand(std::time(0));
+  std::srand(0);
   const size_t m = 1000;
   VarlenPool *pool = (VarlenPool *) arg;
   char *p[m] = {nullptr};
@@ -296,6 +400,7 @@ void *thread_random(void *arg) {
 
   // Repeat R times
   for (size_t i = 0; i < R; i++) {
+    std::vector<int> ref_cnts(m, 1);
     // Allocate all the pointers
     for (size_t j = 0; j < m; j++) {
       if (p[j] != nullptr)
@@ -306,6 +411,12 @@ void *thread_random(void *arg) {
       for (size_t k = 0; k < size[j]; k++) {
         p[j][k] = test_str[(j * k) % str_len];
       }
+
+      int ref_cnt = RANDOM(15) + 1;
+      ref_cnts[j] = ref_cnt;
+      for (int r = 1; r < ref_cnt; ++r) {
+        pool->AddRefCount(p[j]);
+      }
     }
 
     // Randomly free some pointers
@@ -314,7 +425,12 @@ void *thread_random(void *arg) {
         continue;
       if (RANDOM(2) == 0)
         continue;
-      pool->Free(p[j]);
+
+      int ref_cnt = ref_cnts[j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[j]));
+      for (int r = 0; r < ref_cnt; ++r) {
+        pool->Free(p[j]);
+      }
       p[j] = nullptr;
     }
 
@@ -326,13 +442,18 @@ void *thread_random(void *arg) {
         EXPECT_EQ(p[j][k], test_str[(j * k) % str_len]);
       }
     }
-  }
 
-  // Free all the pointers
-  for (size_t j = 0; j < m; j++) {
-    if (p[j] == nullptr)
-      continue;
-    pool->Free(p[j]);
+
+    // Free all the pointers
+    for (size_t j = 0; j < m; j++) {
+      if (p[j] == nullptr)
+        continue;
+      int ref_cnt = ref_cnts[j];
+      EXPECT_EQ(ref_cnt, pool->GetRefCount(p[j]));
+      for (int r = 0; r < ref_cnt; ++r) {
+        pool->Free(p[j]);
+      }
+    }
   }
 
   delete[] test_str;
@@ -354,8 +475,9 @@ TEST_F(VarlenPoolTests, MultithreadTest) {
 
   // Test compaction
   for (size_t i = 0; i < LARGE_LIST_ID; i++)
-    EXPECT_TRUE(MAX_EMPTY_NUM >= pool->empty_cnt_[i]);
-  EXPECT_EQ(0, pool->empty_cnt_[LARGE_LIST_ID]);
+    EXPECT_TRUE(int(MAX_EMPTY_NUM) >= pool->GetEmptyCountByListId(i));
+
+  EXPECT_EQ(0, pool->GetEmptyCountByListId(LARGE_LIST_ID));
 
   delete pool;
 }
@@ -375,8 +497,8 @@ TEST_F(VarlenPoolTests, MultithreadRandomTest) {
 
   // Test compaction
   for (size_t i = 0; i < LARGE_LIST_ID; i++)
-    EXPECT_TRUE(MAX_EMPTY_NUM >= pool->empty_cnt_[i]);
-  EXPECT_EQ(0, pool->empty_cnt_[LARGE_LIST_ID]);
+    EXPECT_TRUE(int(MAX_EMPTY_NUM) >= pool->GetEmptyCountByListId(i));
+  EXPECT_EQ(0, pool->GetEmptyCountByListId(LARGE_LIST_ID));
 
   delete pool;
 }
