@@ -16,18 +16,7 @@
 
 namespace peloton {
 
-namespace parser {
-class SelectStatement;
-class CreateStatement;
-class InsertStatement;
-class DeleteStatement;
-class DropStatement;
-class PrepareStatement;
-class ExecuteStatement;
-class TransactionStatement;
-class UpdateStatement;
-class CopyStatement;
-}
+namespace parser {}
 
 namespace optimizer {
 class OperatorExpression;
@@ -45,6 +34,11 @@ class QueryToOperatorTransformer : public QueryNodeVisitor {
       parser::SQLStatement *op);
 
   void Visit(const parser::SelectStatement *op) override;
+
+  void Visit(const parser::GroupByDescription *) override;
+  void Visit(const parser::OrderDescription *) override;
+  void Visit(const parser::LimitDescription *) override;
+
   void Visit(const parser::CreateStatement *op) override;
   void Visit(const parser::InsertStatement *op) override;
   void Visit(const parser::DeleteStatement *op) override;

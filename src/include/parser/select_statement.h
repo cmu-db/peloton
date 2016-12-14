@@ -33,6 +33,8 @@ struct OrderDescription {
 
   virtual ~OrderDescription() { delete expr; }
 
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+
   OrderType type;
   expression::AbstractExpression* expr;
 };
@@ -46,6 +48,8 @@ const int64_t kNoOffset = -1;
 struct LimitDescription {
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
+
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
 
   int64_t limit;
   int64_t offset;
@@ -65,6 +69,8 @@ struct GroupByDescription {
 
     delete having;
   }
+
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
 
   std::vector<expression::AbstractExpression*>* columns;
   expression::AbstractExpression* having;

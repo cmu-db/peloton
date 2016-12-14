@@ -51,6 +51,11 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
 
   output_expr = get_expr;
 }
+
+void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
+void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
+void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
+
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
 void QueryToOperatorTransformer::Visit(

@@ -25,6 +25,10 @@ class ExecuteStatement;
 class TransactionStatement;
 class UpdateStatement;
 class CopyStatement;
+
+class GroupByDescription;
+class OrderDescription;
+class LimitDescription;
 }
 
 namespace optimizer {
@@ -38,6 +42,12 @@ class QueryNodeVisitor {
   virtual ~QueryNodeVisitor(){};
 
   virtual void Visit(const parser::SelectStatement *) = 0;
+
+  // Some sub query nodes inside SelectStatement
+  virtual void Visit(const parser::GroupByDescription *) = 0;
+  virtual void Visit(const parser::OrderDescription *) = 0;
+  virtual void Visit(const parser::LimitDescription *) = 0;
+
   virtual void Visit(const parser::CreateStatement *) = 0;
   virtual void Visit(const parser::InsertStatement *) = 0;
   virtual void Visit(const parser::DeleteStatement *) = 0;

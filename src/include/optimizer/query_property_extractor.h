@@ -36,6 +36,10 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
   // We only assume the statement is selecting from one table for now
   void Visit(const parser::SelectStatement *) override;
 
+  void Visit(const parser::GroupByDescription *) override;
+  void Visit(const parser::OrderDescription *) override;
+  void Visit(const parser::LimitDescription *) override;
+
   void Visit(const parser::CreateStatement *) override;
   void Visit(const parser::InsertStatement *) override;
   void Visit(const parser::DeleteStatement *) override;

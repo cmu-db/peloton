@@ -84,6 +84,10 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   }
 };
 
+void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
+void QueryPropertyExtractor::Visit(const parser::OrderDescription *) {}
+void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
+
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
 void QueryPropertyExtractor::Visit(
