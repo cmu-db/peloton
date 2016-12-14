@@ -11,7 +11,7 @@
 
 * Peloton is a self-driving in-memory relational DBMS for real-time analytics. 
 * It contains domain-specific AI for automatically adapting to evolving real-world workloads. 
-* It is designed from the ground up to leverage the characteristics of <a href="https://www.engadget.com/2015/07/28/intel-3d-memory-1000-times-faster/">fast non-volatile memory technologies</a>.
+* It is designed from the ground up to leverage the characteristics of non-volatile memory.
 * It can handle both fast ACID transactions and complex analytical queries on the same database. 
 
 ## What Problem Does Peloton Solve?
