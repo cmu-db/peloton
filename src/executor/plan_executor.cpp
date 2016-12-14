@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "common/logger.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/executors.h"
 #include "optimizer/util.h"
@@ -44,8 +43,9 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<ResultType> &result, const std::vector<int> &result_format) {
+    const planner::AbstractPlan *plan, concurrency::Transaction *txn,
+    const std::vector<common::Value> &params, std::vector<ResultType> &result,
+    const std::vector<int> &result_format) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -57,12 +57,12 @@ peloton_status PlanExecutor::ExecutePlan(
   bool single_statement_txn = false;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // auto txn = peloton::concurrency::current_txn;
+
   // This happens for single statement queries in PG
-  // if (txn == nullptr) {
-  single_statement_txn = true;
-  auto txn = txn_manager.BeginTransaction();
-  // }
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
   PL_ASSERT(txn);
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
@@ -134,11 +134,10 @@ peloton_status PlanExecutor::ExecutePlan(
 // final cleanup
 cleanup:
 
-  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
-            single_statement_txn, init_failure, txn->GetResult());
-
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
+    LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
+              single_statement_txn, init_failure, txn->GetResult());
     auto status = txn->GetResult();
     switch (status) {
       case Result::RESULT_SUCCESS:

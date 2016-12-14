@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// wire.h
+// packet_manager.h
 //
-// Identification: src/include/wire/wire.h
+// Identification: src/include/wire/packet_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

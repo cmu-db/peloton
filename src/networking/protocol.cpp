@@ -29,6 +29,7 @@
 #include "wire/wire.h"
 
 #include <boost/algorithm/string.hpp>
+#include "wire/packet_manager.h"
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
@@ -818,6 +819,7 @@ void PacketManager::Reset() {
   skipped_stmt_ = false;
   skipped_query_string_.clear();
   skipped_query_type_.clear();
+  tcop_.Reset();
 
   statement_cache_.clear();
   portals_.clear();

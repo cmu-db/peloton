@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <mutex>
 #include <vector>
+#include <stack>
 
 #include "common/portal.h"
 #include "common/statement.h"
@@ -23,6 +24,8 @@
 #include "type/types.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
+
+#include "concurrency/transaction.h"
 
 namespace peloton {
 
@@ -37,6 +40,9 @@ class TrafficCop {
  public:
   TrafficCop();
   ~TrafficCop();
+
+  // reset this object
+  void Reset();
 
   // PortalExec - Execute query string
   Result ExecuteStatement(const std::string &query,
@@ -74,6 +80,18 @@ class TrafficCop {
  private:
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+
+  // to support nested-txns use a stack
+  std::stack<concurrency::Transaction*> txn_ptrs;
+
+ private:
+  concurrency::Transaction* GetCurrentTransaction();
+
+  Result BeginTransactionHelper();
+
+  Result CommitTransactionHelper();
+
+  Result AbortTransactionHelper();
 };
 
 }  // End tcop namespace

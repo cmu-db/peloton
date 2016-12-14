@@ -35,8 +35,54 @@ namespace tcop {
 
 TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
 
+void TrafficCop::Reset() {
+  std::stack<concurrency::Transaction*> new_txn_ptrs;
+  // clear out the stack
+  swap(txn_ptrs, new_txn_ptrs);
+}
+
 TrafficCop::~TrafficCop() {
   // Nothing to do here !
+}
+
+concurrency::Transaction* TrafficCop::GetCurrentTransaction() {
+  if (txn_ptrs.empty())
+    return nullptr;
+  return txn_ptrs.top();
+}
+
+Result TrafficCop::BeginTransactionHelper() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  // this shouldn' happen
+  if (txn == nullptr)
+    return Result::RESULT_FAILURE;
+  txn_ptrs.push(txn);
+  return Result::RESULT_SUCCESS;
+}
+
+Result TrafficCop::CommitTransactionHelper() {
+  // do nothing if we have no active txns
+  if (txn_ptrs.empty())
+    return Result::RESULT_NOOP;
+  auto txn = txn_ptrs.top();
+  txn_ptrs.pop();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto result = txn_manager.CommitTransaction(txn);
+  txn = nullptr;
+  return result;
+}
+
+Result TrafficCop::AbortTransactionHelper() {
+  // do nothing if we have no active txns
+  if (txn_ptrs.empty())
+    return Result::RESULT_NOOP;
+  auto txn = txn_ptrs.top();
+  txn_ptrs.pop();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto result = txn_manager.AbortTransaction(txn);
+  txn = nullptr;
+  return result;
 }
 
 Result TrafficCop::ExecuteStatement(
@@ -77,11 +123,11 @@ Result TrafficCop::ExecuteStatement(
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
+
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
-
   LOG_TRACE("Execute Statement of name: %s",
             statement->GetStatementName().c_str());
   LOG_TRACE("Execute Statement of query: %s",
@@ -90,12 +136,24 @@ Result TrafficCop::ExecuteStatement(
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   try {
-    bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-        statement->GetPlanTree().get(), params, result, result_format);
-    LOG_TRACE("Statement executed. Result: %d", status.m_result);
-    rows_changed = status.m_processed;
-    return status.m_result;
-  } catch (Exception &e) {
+    auto query_str = boost::to_upper_copy<std::string>(statement->GetQueryString());
+
+    if (query_str == "BEGIN")
+      return BeginTransactionHelper();
+    else if (query_str == "COMMIT")
+      return CommitTransactionHelper();
+    else if (query_str == "ABORT")
+      return AbortTransactionHelper();
+    else {
+      bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+          statement->GetPlanTree().get(), GetCurrentTransaction(), params,
+          result, result_format);
+      LOG_TRACE("Statement executed. Result: %d", status.m_result);
+      rows_changed = status.m_processed;
+      return status.m_result;
+    }
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
