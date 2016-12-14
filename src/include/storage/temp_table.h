@@ -28,6 +28,12 @@ namespace storage {
 class Tuple;
 class TileGroup;
 
+// FIXME
+const size_t TEMPTABLE_DEFAULT_SIZE = 100;  // # of tuples
+
+// FIXME
+const oid_t TEMPTABLE_TILEGROUP_ID = 99999;
+
 //===--------------------------------------------------------------------===//
 // TempTable
 //===--------------------------------------------------------------------===//
@@ -91,9 +97,39 @@ class TempTable : public AbstractTable {
 
   inline bool HasForeignKeys() const { return (false); }
 
+  //===--------------------------------------------------------------------===//
+  // STATS
+  //===--------------------------------------------------------------------===//
+
+  inline void IncreaseTupleCount(const size_t &amount) {
+    number_of_tuples_ += amount;
+  }
+
+  inline void DecreaseTupleCount(const size_t &amount) {
+    number_of_tuples_ -= amount;
+  }
+
+  inline void SetTupleCount(const size_t &num_tuples) {
+    number_of_tuples_ = num_tuples;
+  }
+
+  inline size_t GetTupleCount() const { return (number_of_tuples_); }
+
+ protected:
+  //===--------------------------------------------------------------------===//
+  // INTERNAL METHODS
+  //===--------------------------------------------------------------------===//
+
+  oid_t AddDefaultTileGroup();
+
  private:
   // This is where we're actually going to store the data for this table
   std::vector<std::shared_ptr<storage::TileGroup>> tile_groups_;
+
+  // Counter for the # of tuples that this TempTable currently holds.
+  // We don't need to protect this because a TempTable is not meant to be
+  // concurrent.
+  size_t number_of_tuples_ = 0;
 };
 
 }  // End storage namespace

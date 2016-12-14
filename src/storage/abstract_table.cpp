@@ -19,6 +19,7 @@
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
 #include "util/stringbox_util.h"
 
 namespace peloton {
@@ -69,6 +70,34 @@ column_map_type AbstractTable::GetTileGroupLayout(
   return column_map;
 }
 
+TileGroup *AbstractTable::GetTileGroupWithLayoutX(
+    oid_t database_id, oid_t tile_group_id, const column_map_type &partitioning,
+    const size_t num_tuples) {
+  std::vector<catalog::Schema> schemas;
+
+  // Figure out the columns in each tile in new layout
+  std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
+  for (auto entry : partitioning) {
+    tile_column_map[entry.second] = entry.first;
+  }
+
+  // Build the schema tile at a time
+  std::map<oid_t, std::vector<catalog::Column>> tile_schemas;
+  for (auto entry : tile_column_map) {
+    tile_schemas[entry.first.first].push_back(schema->GetColumn(entry.second));
+  }
+  for (auto entry : tile_schemas) {
+    catalog::Schema tile_schema(entry.second);
+    schemas.push_back(tile_schema);
+  }
+
+  TileGroup *tile_group =
+      TileGroupFactory::GetTileGroup(database_id, GetOid(), tile_group_id, this,
+                                     schemas, partitioning, num_tuples);
+
+  return tile_group;
+}
+
 const std::string AbstractTable::GetInfo() const {
   std::ostringstream inner;
   oid_t tile_group_count = this->GetTileGroupCount();
@@ -81,7 +110,6 @@ const std::string AbstractTable::GetInfo() const {
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     std::string tileData = tile_group->GetInfo();
-    //    dataBuffer << tileData;
     inner << peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(tileData),
                                          GETINFO_SPACER);
     tuple_count += tile_tuple_count;

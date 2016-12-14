@@ -586,32 +586,9 @@ void DataTable::ResetDirty() { dirty_ = false; }
 
 TileGroup *DataTable::GetTileGroupWithLayout(
     const column_map_type &partitioning) {
-  std::vector<catalog::Schema> schemas;
-  oid_t tile_group_id = INVALID_OID;
-
-  tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
-
-  // Figure out the columns in each tile in new layout
-  std::map<std::pair<oid_t, oid_t>, oid_t> tile_column_map;
-  for (auto entry : partitioning) {
-    tile_column_map[entry.second] = entry.first;
-  }
-
-  // Build the schema tile at a time
-  std::map<oid_t, std::vector<catalog::Column>> tile_schemas;
-  for (auto entry : tile_column_map) {
-    tile_schemas[entry.first.first].push_back(schema->GetColumn(entry.second));
-  }
-  for (auto entry : tile_schemas) {
-    catalog::Schema tile_schema(entry.second);
-    schemas.push_back(tile_schema);
-  }
-
-  TileGroup *tile_group = TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, schemas, partitioning,
-      tuples_per_tilegroup_);
-
-  return tile_group;
+  oid_t tile_group_id = catalog::Manager::GetInstance().GetNextTileGroupId();
+  return (GetTileGroupWithLayoutX(database_oid, tile_group_id, partitioning,
+                                  tuples_per_tilegroup_));
 }
 
 oid_t DataTable::AddDefaultIndirectionArray(

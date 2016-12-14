@@ -26,6 +26,12 @@
 #include <set>
 #include <string>
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
+extern peloton::LayoutType peloton_layout_mode;
+
 namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
@@ -110,10 +116,26 @@ class AbstractTable : public Printable {
 
   virtual bool HasForeignKeys() const = 0;
 
+  //===--------------------------------------------------------------------===//
+  // STATS
+  //===--------------------------------------------------------------------===//
+
+  virtual void IncreaseTupleCount(const size_t &amount) = 0;
+
+  virtual void DecreaseTupleCount(const size_t &amount) = 0;
+
+  virtual void SetTupleCount(const size_t &num_tuples) = 0;
+
+  virtual size_t GetTupleCount() const = 0;
+
  protected:
   //===--------------------------------------------------------------------===//
   // INTERNAL METHODS
   //===--------------------------------------------------------------------===//
+
+  TileGroup *GetTileGroupWithLayoutX(oid_t database_id, oid_t tile_group_id,
+                                     const column_map_type &partitioning,
+                                     const size_t num_tuples);
 
   column_map_type GetTileGroupLayout(LayoutType layout_type) const;
 
