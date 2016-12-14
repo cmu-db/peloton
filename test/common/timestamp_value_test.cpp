@@ -153,33 +153,40 @@ TEST_F(TimestampValueTests, HashTest) {
   }
 }
 
-// TEST_F(TimestampValueTests, CastTest) {
-//   common::Value result;
+TEST_F(TimestampValueTests, CopyTest) {
+  common::Value result;
+  common::Value val0 =
+    common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
+  common::Value val1 = val0.Copy();
+  EXPECT_EQ(val0.CompareEquals(val1).IsTrue(), true);
+}
 
-//   auto valTrue0 = common::ValueFactory::GetVarcharValue("TrUe");
-//   result = common::ValueFactory::CastAsTimestamp(valTrue0);
-//   EXPECT_TRUE(result.IsTrue());
-//   result = valTrue0.CastAs(common::Type::BOOLEAN);
-//   EXPECT_TRUE(result.IsTrue());
 
-//   auto valTrue1 = common::ValueFactory::GetVarcharValue("1");
-//   result = common::ValueFactory::CastAsTimestamp(valTrue1);
-//   EXPECT_TRUE(result.IsTrue());
+TEST_F(TimestampValueTests, CastTest) {
+  common::Value result;
 
-//   auto valFalse0 = common::ValueFactory::GetVarcharValue("FaLsE");
-//   result = common::ValueFactory::CastAsTimestamp(valFalse0);
-//   EXPECT_TRUE(result.IsFalse());
-//   result = valFalse0.CastAs(common::Type::BOOLEAN);
-//   EXPECT_TRUE(result.IsFalse());
+  auto strNull = common::ValueFactory::GetNullValueByType(common::Type::VARCHAR);
+  auto valNull = common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
 
-//   auto valFalse1 = common::ValueFactory::GetVarcharValue("0");
-//   result = common::ValueFactory::CastAsTimestamp(valFalse1);
-//   EXPECT_TRUE(result.IsFalse());
+  result = valNull.CastAs(common::Type::TIMESTAMP);
+  EXPECT_TRUE(result.IsNull());
+  EXPECT_EQ(result.CompareEquals(valNull).IsNull(), true);
+  EXPECT_EQ(result.GetTypeId(), valNull.GetTypeId());
 
-//   auto valBustedLike = common::ValueFactory::GetVarcharValue("YourMom");
-//   EXPECT_THROW(common::ValueFactory::CastAsTimestamp(valBustedLike),
-//                peloton::Exception);
-// }
+  result = valNull.CastAs(common::Type::VARCHAR);
+  EXPECT_TRUE(result.IsNull());
+  EXPECT_EQ(result.CompareEquals(strNull).IsNull(), true);
+  EXPECT_EQ(result.GetTypeId(), strNull.GetTypeId());
+
+  EXPECT_THROW(valNull.CastAs(common::Type::BOOLEAN),
+               peloton::Exception);
+
+  auto valValid =
+    common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1481746648));
+  result = valValid.CastAs(common::Type::VARCHAR);
+  EXPECT_FALSE(result.IsNull());
+}
+
 
 }  // End test namespace
 }  // End peloton namespace
