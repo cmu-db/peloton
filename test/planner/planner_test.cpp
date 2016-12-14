@@ -99,7 +99,6 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 }
 
 TEST_F(PlannerTests, UpdatePlanTestParameter) {
-
   // Bootstrapping peloton
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
