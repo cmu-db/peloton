@@ -26,10 +26,6 @@
 
 namespace peloton {
 
-namespace optimizer {
-class AbstractOptimizer;
-};
-
 namespace tcop {
 //===--------------------------------------------------------------------===//
 // TRAFFIC COP
@@ -72,6 +68,8 @@ class TrafficCop {
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
+
+  void SetOptimizer(optimizer::AbstractOptimizer *optimizer);
 
  private:
   // The optimizer used for this connection
