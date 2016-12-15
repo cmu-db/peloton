@@ -24,6 +24,7 @@
 #include "executor/insert_executor.h"
 #include "executor/delete_executor.h"
 #include "executor/update_executor.h"
+#include "executor/for_update_executor.h"
 #include "executor/nested_loop_join_executor.h"
 #include "executor/merge_join_executor.h"
 #include "executor/hash_join_executor.h"
