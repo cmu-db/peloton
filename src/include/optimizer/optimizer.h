@@ -52,8 +52,6 @@ class Optimizer : public AbstractOptimizer {
 
   Optimizer();
 
-  static Optimizer &GetInstance();
-
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 

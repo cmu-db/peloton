@@ -48,11 +48,6 @@ Optimizer::Optimizer() {
   // rules.emplace_back(new InnerJoinToInnerHashJoin());
 }
 
-Optimizer &Optimizer::GetInstance() {
-  static Optimizer optimizer;
-  return optimizer;
-}
-
 std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList> &parse_tree_list) {
   // Base Case

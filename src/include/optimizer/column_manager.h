@@ -35,7 +35,7 @@ class ColumnManager {
                         bool inlined);
 
  private:
-  ColumnID next_column_id;
+  ColumnID next_column_id = 0;
 
   std::vector<Column *> columns;
   std::map<std::tuple<oid_t, oid_t>, Column *> table_col_index_to_column;
