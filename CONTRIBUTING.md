@@ -25,6 +25,8 @@ Development
 
 Pull requests are very welcome! Please try to follow these simple rules if applicable:
 
+* Make sure you follow the [coding-style guidance](https://github.com/cmu-db/peloton/blob/master/script/coding_style.md) for Peloton.
 * Please create a topic branch for every separate change you make.
+* Make sure you use [`git rebase`](https://github.com/cmu-db/peloton/wiki/Git-survival-guide#rebase-or-how-to-screw-the-history) instead of `git merge` while updating your branch with the master.
 * Make sure your patches are well tested. All tests must pass when run on [Jenkins](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/).
 * Update the [README](https://github.com/cmu-db/peloton/blob/master/README.md).
