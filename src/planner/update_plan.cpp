@@ -34,8 +34,16 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
     : target_table_(table),
       project_info_(std::move(project_info)),
       where_(NULL),
-      update_primary_key(false) {
+      update_primary_key_(false) {
   LOG_TRACE("Creating an Update Plan");
+
+  if (project_info_ != nullptr) {
+    for (auto target : project_info_->GetTargetList()) {
+      auto col_id = target.first;
+      update_primary_key_ =
+          target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+    }
+  }
 }
 
 //  Initializes the update plan without adding any child nodes and
@@ -93,9 +101,19 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
 
 // Creates the update plan with sequential scan.
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
-    : update_primary_key(false) {
+    : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
+
+  // Set primary key update flag
+  for (auto update_clause : updates_) {
+    std::string column_name = update_clause->column;
+
+    oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
+    update_primary_key_ =
+        target_table_->GetSchema()->GetColumn(column_id).IsPrimary();
+  }
+
   LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(target_table_, where_->Copy(), column_ids));
@@ -107,9 +125,19 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
                        std::vector<common::Value> &values, oid_t &index_id)
-    : update_primary_key(false) {
+    : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
+
+  // Set primary key update flag
+  for (auto update_clause : updates_) {
+    std::string column_name = update_clause->column;
+
+    oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
+    update_primary_key_ =
+        target_table_->GetSchema()->GetColumn(column_id).IsPrimary();
+  }
+
   // Create index scan desc
   std::vector<expression::AbstractExpression *> runtime_keys;
   auto index = target_table_->GetIndex(index_id);

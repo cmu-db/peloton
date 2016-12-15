@@ -71,7 +71,7 @@ class UpdatePlan : public AbstractPlan {
 
   void SetParameterValues(std::vector<common::Value> *values);
 
-  bool GetUpdatePrimaryKey() { return update_primary_key; }
+  bool GetUpdatePrimaryKey() const { return update_primary_key_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
@@ -98,7 +98,7 @@ class UpdatePlan : public AbstractPlan {
   expression::AbstractExpression *where_;
 
   // Whether update primary key
-  bool update_primary_key;
+  bool update_primary_key_;
 };
 
 }  // namespace planner
