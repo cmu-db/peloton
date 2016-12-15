@@ -47,10 +47,13 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
 
+  std::string query("SELECT * from test");
+  auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
+
   // test small int
-  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * from test",
-                                             result, tuple_descriptor,
-                                             rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   // Check the return value
   // Should be: 1, 22, 333
   EXPECT_EQ(0, rows_changed);
@@ -86,10 +89,17 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
 
+  std::string query("SELECT a * 5 + b, -1 + c from test");
+
+  // check for plan node type
+  auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_PROJECTION);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PLAN_NODE_TYPE_SEQSCAN);
+
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT a * 5 + b, -1 + c from test", result, tuple_descriptor,
-      rows_changed, error_message);
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   // Check the return value
   // Should be: 27, 332
   EXPECT_EQ('2', result[0].second[0]);

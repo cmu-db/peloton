@@ -57,20 +57,16 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
   auto &peloton_parser = parser::Parser::GetInstance();
   std::vector<common::Value> params;
 
-  std::unique_ptr<Statement> statement(new Statement("unnamed", query));
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(parsed_stmt));
-
+  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt);
   tuple_descriptor = std::move(
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0)));
-
   auto result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
 
   try {
-    bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-    auto status = bridge::PlanExecutor::ExecutePlan(
-        statement->GetPlanTree().get(), params, result, result_format);
+    bridge::PlanExecutor::PrintPlan(plan.get(), "Plan");
+    auto status = bridge::PlanExecutor::ExecutePlan(plan.get(), params, result,
+                                                    result_format);
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %d", status.m_result);
     return status.m_result;
@@ -79,6 +75,16 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
+}
+
+std::shared_ptr<planner::AbstractPlan> SQLTestsUtil::GeneratePlanWithOptimizer(
+    std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+    const std::string query) {
+  auto &peloton_parser = parser::Parser::GetInstance();
+
+  auto parsed_stmt = peloton_parser.BuildParseTree(query);
+
+  return optimizer->BuildPelotonPlanTree(parsed_stmt);
 }
 
 Result SQLTestsUtil::ExecuteSQLQuery(const std::string query,

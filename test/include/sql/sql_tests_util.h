@@ -17,6 +17,10 @@
 
 namespace peloton {
 
+namespace planner {
+class AbstractPlan;
+}
+
 namespace optimizer {
 class AbstractOptimizer;
 }
@@ -49,6 +53,11 @@ class SQLTestsUtil {
       const std::string query, std::vector<ResultType> &result,
       std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
       std::string &error_message);
+
+  // Generate the plan tree for a SQL query with the specific optimizer
+  static std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
+      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      const std::string query);
 
   // A simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query,
