@@ -48,7 +48,7 @@ _Technology preview_: currently unsupported, may be functionally incomplete or u
 
 ## Contributors
 
-See the [contributors page](https://github.com/cmu-db/peloton/graphs/contributors).
+See the [people page](https://github.com/cmu-db/peloton/graphs/contributors) for the full listing of contributors.
 
 ## License
 
