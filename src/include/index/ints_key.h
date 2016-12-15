@@ -91,7 +91,8 @@ class IntsKey {
    * This function assumes:
    *   1. The length of key is always aligned to bytes
    *   2. Caller initializes key_offset and intra_key_offset to both 0
-   *      and will not change it outside this function
+   *      and will not change it outside this function; they will be
+   *      modified inside this function
    *   3. Even if length of the key exceeds uint64_t size, users cuold only
    *      pass in uint64_t, representing MSB of the key
    *   4. Length of the entire key is fixed, but whenever we push a key into 
@@ -169,11 +170,17 @@ class IntsKey {
     return retval;
   }
 
+  /*
+   * GetTupleForComparison() - This is not supported yet
+   */
   const storage::Tuple GetTupleForComparison(
       UNUSED_ATTRIBUTE const catalog::Schema *key_schema) const {
     throw IndexException("Tuple conversion not supported");
   }
 
+  /*
+   * Debug() - Get a debugging string from the object
+   */
   std::string Debug(const catalog::Schema *key_schema) const {
     std::ostringstream buffer;
     int key_offset = 0;
@@ -220,9 +227,14 @@ class IntsKey {
     return std::string(buffer.str());
   }
 
+  /*
+   * SetFromKey() - Sets the compact internal storage from a tuple
+   *                only comtaining key columns
+   */
   inline void SetFromKey(const storage::Tuple *tuple) {
     PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
     PL_ASSERT(tuple);
+    
     const catalog::Schema *key_schema = tuple->GetSchema();
     const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
