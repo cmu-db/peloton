@@ -25,6 +25,12 @@ TEST_SCRIPT="../script/testing/dml/basic1.sql"
 ## ---------------------------------------------
 set -e
 function cleanup {
+    # If this flag is not set to '1', then we know that
+    # our diff failed
+    if [ "$PASS" != "1" ]; then
+        echo "***FAIL***"
+        echo "$DIFF_RES"
+    fi
     # delete test output file
     if [ -f $TEMP_OUT_FILE ]; then
         rm $TEMP_OUT_FILE
@@ -53,13 +59,16 @@ sleep 3
 echo "\i $TEST_SCRIPT" | psql "$PELOTON_ARGS" -U $PELOTON_USER -h $PELOTON_HOST -p $PELOTON_PORT > $TEMP_OUT_FILE 2>&1
 
 # compute diff against reference output
-diff_res=$(diff $TEMP_OUT_FILE $REF_OUT_FILE 2>&1)
-if [[ -z $diff_res ]]; then
-    echo "PSQL TEST PASS"
+# diff will return a non-zero status code if the files are different
+# This will get trapped by our clean-up function, so we need to set
+# a flag to let us know that we ended because of our diff failed
+PASS=0
+DIFF_RES=$(diff $TEMP_OUT_FILE $REF_OUT_FILE) # 2>&1)
+if [[ -z $DIFF_RES ]]; then
+    PASS=1
+    echo "***PASS***"
     exit 0
-else
-    echo "***FAIL***"
-    echo "$diff_res"
-    exit -1
 fi
+# We should never get here, but just in case....
+exit -1
 

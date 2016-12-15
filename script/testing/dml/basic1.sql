@@ -32,18 +32,18 @@ DELETE FROM foo WHERE year = 200;
 SELECT id, year FROM foo ORDER BY id;
 
 
--- -- update
+-- -- UPDATE
 
-update foo set year = 3000 WHERE id = 3;
+UPDATE foo SET year = 3000 WHERE id = 3;
 SELECT id, year FROM foo ORDER BY id;
 
-update foo set year = 1000 WHERE year = 100; 
+UPDATE foo SET year = 1000 WHERE year = 100; 
 SELECT id, year FROM foo ORDER BY id;
 
-update foo set id = 3 WHERE year = 1000; -- should fail
+UPDATE foo SET id = 3 WHERE year = 1000; -- should fail
 SELECT id, year FROM foo ORDER BY id;
 
-update foo set id= 10 WHERE year = 1000;
+UPDATE foo SET id= 10 WHERE year = 1000;
 SELECT id, year FROM foo ORDER BY id;
 
 -- insert again

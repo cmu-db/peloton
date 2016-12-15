@@ -1,12 +1,12 @@
-drop table if exists foo 0
-create table foo(id integer PRIMARY KEY, year integer) 0
-insert into foo values(1, 100) 1
-insert into foo values(1, 200) 0
-insert into foo values(2, 200) 1
-insert into foo values(3, 300) 1
-insert into foo values(4, 400) 1
-insert into foo values(5, 400) 1
-insert into foo values(5, 500) 0
+DROP TABLE IF EXISTS foo 0
+CREATE TABLE foo(id integer PRIMARY KEY, year integer) 0
+INSERT INTO foo VALUES(1, 100) 1
+INSERT INTO foo VALUES(1, 200) 0
+INSERT INTO foo VALUES(2, 200) 1
+INSERT INTO foo VALUES(3, 300) 1
+INSERT INTO foo VALUES(4, 400) 1
+INSERT INTO foo VALUES(5, 400) 1
+INSERT INTO foo VALUES(5, 500) 0
  id | year 
 ----+------
   1 |  100
@@ -29,7 +29,7 @@ insert into foo values(5, 500) 0
   5 |  400
 (3 rows)
 
-delete from foo where year = 200 1
+DELETE FROM foo WHERE year = 200 1
  id | year 
 ----+------
   1 |  100
@@ -38,69 +38,70 @@ delete from foo where year = 200 1
   5 |  400
 (4 rows)
 
-update foo set year = 3000 where id = 3 1
+UPDATE foo SET year = 3000 WHERE id = 3 1
  id | year 
 ----+------
   1 |  100
+  3 | 3000
   4 |  400
   5 |  400
-  3 | 3000
 (4 rows)
 
-update foo set year = 1000 where year = 100 1
+UPDATE foo SET year = 1000 WHERE year = 100 1
  id | year 
 ----+------
-  4 |  400
-  5 |  400
-  3 | 3000
   1 | 1000
+  3 | 3000
+  4 |  400
+  5 |  400
 (4 rows)
 
-update foo set id = 3 where year = 1000 1
+UPDATE foo SET id = 3 WHERE year = 1000 0
  id | year 
 ----+------
+  1 | 1000
+  3 | 3000
   4 |  400
   5 |  400
-  3 | 3000
-  3 | 1000
 (4 rows)
 
-update foo set id= 10 where year = 1000 1
+UPDATE foo SET id= 10 WHERE year = 1000 1
  id | year 
 ----+------
+  3 | 3000
   4 |  400
   5 |  400
-  3 | 3000
  10 | 1000
 (4 rows)
 
-insert into foo values (2, 2000) 1
+INSERT INTO foo VALUES (2, 2000) 1
  id | year 
 ----+------
+  2 | 2000
+  3 | 3000
   4 |  400
   5 |  400
-  3 | 3000
  10 | 1000
-  2 | 2000
 (5 rows)
 
-insert into foo values (4, 4000) 0
+INSERT INTO foo VALUES (4, 4000) 0
  id | year 
 ----+------
+  2 | 2000
+  3 | 3000
   4 |  400
   5 |  400
-  3 | 3000
  10 | 1000
-  2 | 2000
 (5 rows)
 
-insert into foo values (1, 1000) 0
+INSERT INTO foo VALUES (1, 1000) 1
  id | year 
 ----+------
+  1 | 1000
+  2 | 2000
+  3 | 3000
   4 |  400
   5 |  400
-  3 | 3000
  10 | 1000
-  2 | 2000
-(5 rows)
+(6 rows)
 
