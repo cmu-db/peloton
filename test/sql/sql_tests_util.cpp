@@ -50,8 +50,8 @@ Result SQLTestsUtil::ExecuteSQLQuery(
 
 // Execute a SQL query end-to-end with the specific optimizer
 Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-    optimizer::AbstractOptimizer *optimizer, const std::string query,
-    std::vector<ResultType> &result,
+    std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+    const std::string query, std::vector<ResultType> &result,
     std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   auto &peloton_parser = parser::Parser::GetInstance();

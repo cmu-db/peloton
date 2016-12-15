@@ -45,8 +45,8 @@ class SQLTestsUtil {
   // may want to pass a transaction pointer here if that API is exposed after
   // the refactor by Siddharth
   static Result ExecuteSQLQueryWithOptimizer(
-      optimizer::AbstractOptimizer *optimizer, const std::string query,
-      std::vector<ResultType> &result,
+      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      const std::string query, std::vector<ResultType> &result,
       std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
       std::string &error_message);
 

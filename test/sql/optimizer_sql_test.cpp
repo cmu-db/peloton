@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// update_secondary_index_sql_test.cpp
+// optimizer_sql_test.cpp
 //
-// Identification: test/sql/update_secondary_index_sql_test.cpp
+// Identification: test/sql/optimizer_sql_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -48,9 +48,9 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
       new optimizer::Optimizer());
 
   // test small int
-  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer.get(), "SELECT * from test", result, tuple_descriptor,
-      rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * from test",
+                                             result, tuple_descriptor,
+                                             rows_changed, error_message);
   // Check the return value
   // Should be: 1, 22, 333
   EXPECT_EQ(0, rows_changed);
@@ -59,7 +59,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer.get(), "SELECT b, a, c from test", result, tuple_descriptor,
+      optimizer, "SELECT b, a, c from test", result, tuple_descriptor,
       rows_changed, error_message);
   // Check the return value
   // Should be: 22, 1, 333
@@ -88,8 +88,8 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer.get(), "SELECT a * 5 + b, -1 + c from test", result,
-      tuple_descriptor, rows_changed, error_message);
+      optimizer, "SELECT a * 5 + b, -1 + c from test", result, tuple_descriptor,
+      rows_changed, error_message);
   // Check the return value
   // Should be: 27, 332
   EXPECT_EQ('2', result[0].second[0]);
