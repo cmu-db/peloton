@@ -27,16 +27,9 @@ namespace test {
 class OptimizerSQLTests : public PelotonTest {};
 
 void CreateAndLoadTable() {
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  auto optimizer = new optimizer::SimpleOptimizer();
-
   // Create a table first
-  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);", result,
-      tuple_descriptor, rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
 
   // Insert tuples into table
   SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
@@ -51,12 +44,13 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  auto optimizer = new optimizer::Optimizer();
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
 
   // test small int
-  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(optimizer, "SELECT * from test",
-                                             result, tuple_descriptor,
-                                             rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer.get(), "SELECT * from test", result, tuple_descriptor,
+      rows_changed, error_message);
   // Check the return value
   // Should be: 1, 22, 333
   EXPECT_EQ(0, rows_changed);
@@ -65,7 +59,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT b, a, c from test", result, tuple_descriptor,
+      optimizer.get(), "SELECT b, a, c from test", result, tuple_descriptor,
       rows_changed, error_message);
   // Check the return value
   // Should be: 22, 1, 333
@@ -89,12 +83,13 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
   int rows_changed;
-  auto optimizer = new optimizer::Optimizer();
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT a * 5 + b, -1 + c from test", result, tuple_descriptor,
-      rows_changed, error_message);
+      optimizer.get(), "SELECT a * 5 + b, -1 + c from test", result,
+      tuple_descriptor, rows_changed, error_message);
   // Check the return value
   // Should be: 27, 332
   EXPECT_EQ('2', result[0].second[0]);

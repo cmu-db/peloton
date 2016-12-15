@@ -13,6 +13,7 @@
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "executor/plan_executor.h"
+#include "optimizer/rule.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
 #include "tcop/tcop.h"
@@ -43,7 +44,7 @@ Result SQLTestsUtil::ExecuteSQLQuery(
   LOG_INFO("Query: %s", query.c_str());
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
-  LOG_TRACE("Statement executed. Result: %d", status);
+  LOG_INFO("Statement executed. Result: %d", status);
   return status;
 }
 
@@ -53,12 +54,31 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
     std::vector<ResultType> &result,
     std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
-  traffic_cop_.SetOptimizer(optimizer);
-  // execute the query using tcop
-  auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
-                                              rows_changed, error_message);
+  auto &peloton_parser = parser::Parser::GetInstance();
+  std::vector<common::Value> params;
 
-  return status;
+  std::unique_ptr<Statement> statement(new Statement("unnamed", query));
+  auto parsed_stmt = peloton_parser.BuildParseTree(query);
+
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(parsed_stmt));
+
+  tuple_descriptor = std::move(
+      traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0)));
+
+  auto result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
+
+  try {
+    bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+    auto status = bridge::PlanExecutor::ExecutePlan(
+        statement->GetPlanTree().get(), params, result, result_format);
+    rows_changed = status.m_processed;
+    LOG_INFO("Statement executed. Result: %d", status.m_result);
+    return status.m_result;
+
+  } catch (Exception &e) {
+    error_message = e.what();
+    return Result::RESULT_FAILURE;
+  }
 }
 
 Result SQLTestsUtil::ExecuteSQLQuery(const std::string query,

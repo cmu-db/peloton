@@ -69,8 +69,6 @@ class TrafficCop {
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
 
-  void SetOptimizer(optimizer::AbstractOptimizer *optimizer);
-
  private:
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;

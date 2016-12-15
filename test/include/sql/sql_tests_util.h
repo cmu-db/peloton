@@ -41,6 +41,9 @@ class SQLTestsUtil {
                                 int &rows_affected, std::string &error_message);
 
   // Execute a SQL query end-to-end with the specific optimizer
+  // Note: right now this is not executed in the context of a transaction, we
+  // may want to pass a transaction pointer here if that API is exposed after
+  // the refactor by Siddharth
   static Result ExecuteSQLQueryWithOptimizer(
       optimizer::AbstractOptimizer *optimizer, const std::string query,
       std::vector<ResultType> &result,
