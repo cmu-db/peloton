@@ -85,12 +85,14 @@ ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(int64_t value) {
 template <std::size_t KeySize>
 class IntsKey {
  public:
+   
   /*
    * InsertKeyValue() - Adding bytes from a key into the data array 
    *
    * This function assumes:
    *   1. The length of key is always aligned to bytes
-   *   2. Caller initializes key_offset and intra_key_offset to both 0
+   *   2. Caller initializes key_offset and intra_key_offset to 0 and 
+   *      sizeof(uint64_t) - 1 (i.e. highest byte in a uint64_t)
    *      and will not change it outside this function; they will be
    *      modified inside this function
    *   3. Even if length of the key exceeds uint64_t size, users cuold only
@@ -230,16 +232,32 @@ class IntsKey {
   /*
    * SetFromKey() - Sets the compact internal storage from a tuple
    *                only comtaining key columns
+   *
+   * Since we assume this tuple only contains key columns and there is no
+   * other column, it is not necessary to specify a vector of object IDs
+   * to indicate index column
    */
   inline void SetFromKey(const storage::Tuple *tuple) {
+    // Must clear previous result first
     PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
+    
     PL_ASSERT(tuple);
     
+    // This returns schema of the tuple
+    // Note that the schema must contain only integral type
     const catalog::Schema *key_schema = tuple->GetSchema();
-    const int GetColumnCount = key_schema->GetColumnCount();
+    
+    // Need this to loop through columns
+    const int column_count = key_schema->GetColumnCount();
+    
+    // Init start with the first uint64_t element in data array, and also
+    // start with the highest byte of the integer such that comparison using
+    // the integer yields correct result
     int key_offset = 0;
     int intra_key_offset = sizeof(uint64_t) - 1;
-    for (int ii = 0; ii < GetColumnCount; ii++) {
+    
+    // Loop from most significant column to least significant column
+    for (int ii = 0; ii < column_count; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
         case Type::BIGINT: {
           common::Value val = tuple->GetValue(ii);
