@@ -12,11 +12,12 @@
 
 #pragma once
 
-#include "optimizer/group.h"
 #include <map>
 #include <unordered_set>
 #include <vector>
+
 #include "operator_expression.h"
+#include "optimizer/group.h"
 
 namespace peloton {
 namespace optimizer {
@@ -61,7 +62,6 @@ class Memo {
   std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq>
       group_expressions_;
   std::vector<Group> groups_;
-  std::map<std::vector<Property>, size_t> lowest_cost_items_;
 };
 
 } /* namespace optimizer */

@@ -80,6 +80,11 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   return std::move(best_plan);
 }
 
+void Optimizer::Reset() {
+  memo_ = std::move(Memo());
+  column_manager_ = std::move(ColumnManager());
+}
+
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree) {
   QueryToOperatorTransformer converter(column_manager_);

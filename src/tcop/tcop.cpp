@@ -248,5 +248,7 @@ FieldInfoType TrafficCop::GetColumnFieldForAggregates(
   return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
 
+void TrafficCop::Reset() { optimizer_->Reset(); }
+
 }  // End tcop namespace
 }  // End peloton namespace

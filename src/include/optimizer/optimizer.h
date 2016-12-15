@@ -55,6 +55,8 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
+  void Reset() override;
+
  private:
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.

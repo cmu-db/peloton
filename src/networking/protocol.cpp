@@ -822,6 +822,8 @@ void PacketManager::Reset() {
   statement_cache_.clear();
   portals_.clear();
   pkt_cntr_ = 0;
+
+  traffic_cop_->Reset();
 }
 
 }  // End wire namespace
