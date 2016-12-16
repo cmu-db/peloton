@@ -18,6 +18,7 @@
 #include <iostream>
 #include <ctime>
 #include <cstring>
+#include <random>
 
 #include "benchmark/tpcc/tpcc_loader.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
@@ -39,7 +40,7 @@
 #include "storage/database.h"
 
 // Logging mode
-extern LoggingType peloton_logging_mode;
+extern peloton::LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace benchmark {
