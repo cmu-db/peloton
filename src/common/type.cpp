@@ -327,6 +327,15 @@ Value Type::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
+// Perform a shallow copy from a serialized varlen value to another serialized varlen value
+// Only support VARCHAR/VARBINARY
+void Type::DoShallowCopy(char *dest UNUSED_ATTRIBUTE,
+                         char *src UNUSED_ATTRIBUTE,
+                         bool inlined UNUSED_ATTRIBUTE,
+                         VarlenPool *src_pool UNUSED_ATTRIBUTE) const {
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
 // Create a copy of this value
 Value Type::Copy(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");

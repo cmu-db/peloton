@@ -61,6 +61,9 @@ class VarlenType : public Type {
   Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const override;
 
+  // Perform a shallow copy from a serialized varlen value to another serialized varlen value
+  void DoShallowCopy(char *dest, char *src, bool inlined, VarlenPool *src_pool) const override;
+
   // Create a copy of this value
   Value Copy(const Value& val) const override;
 };

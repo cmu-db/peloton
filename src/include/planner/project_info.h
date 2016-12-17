@@ -20,6 +20,14 @@
 
 namespace peloton {
 
+namespace storage {
+  class TileGroup;
+}
+
+namespace expression {
+  template <class T> class ContainerTuple;
+}
+
 namespace planner {
 
 /**
@@ -62,9 +70,11 @@ class ProjectInfo {
                 const AbstractTuple *tuple2,
                 executor::ExecutorContext *econtext) const;
 
-  bool Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
-                const AbstractTuple *tuple2,
-                executor::ExecutorContext *econtext) const;
+  // Used by the update executor
+  bool Evaluate(expression::ContainerTuple<storage::TileGroup> *dest,
+                expression::ContainerTuple<storage::TileGroup> *src,
+                executor::ExecutorContext *econtext,
+                bool inplace) const;
 
   std::string Debug() const;
 

@@ -198,6 +198,10 @@ class Value : public Printable {
   static Value DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
                                VarlenPool *pool = nullptr);
 
+  // Perform a shallow copy from a serialized varlen value to another serialized varlen value
+  // Only support VARCHAR/VARBINARY
+  static void ShallowCopyTo(char *dest, char *src, const Type::TypeId type_id, bool inlined, VarlenPool *src_pool);
+
   // Access the raw variable length data
   const char *GetData() const;
 

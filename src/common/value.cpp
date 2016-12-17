@@ -394,6 +394,12 @@ void Value::SerializeTo(SerializeOutput &out) const {
   type_->SerializeTo(*this, out);
 }
 
+// Perform a shallow copy from a serialized varlen value to another serialized varlen value
+// Only support VARCHAR/VARBINARY
+void Value::ShallowCopyTo(char *dest, char *src, const Type::TypeId type_id, bool inlined, VarlenPool *src_pool) {
+  Type::GetInstance(type_id)->DoShallowCopy(dest, src, inlined, src_pool);
+}
+
 // Create a copy of this value
 Value Value::Copy() const { return type_->Copy(*this); }
 

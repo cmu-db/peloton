@@ -96,6 +96,11 @@ class Tile : public Printable {
   void SetValue(const common::Value &value, const oid_t tuple_offset,
                 const oid_t column_id);
 
+  // Copy a column from this tile to a destination tile.
+  // Note that we do shallow copy for varlen field
+  void CopyColumnValueTo(Tile *dest_tile, oid_t dest_tuple_offset, oid_t dest_col_id,
+                         oid_t src_tuple_offset, oid_t src_col_id);
+
   /*
    * Faster way to set value
    * By amortizing schema lookups

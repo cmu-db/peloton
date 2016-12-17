@@ -196,8 +196,7 @@ bool UpdateExecutor::DExecute() {
         expression::ContainerTuple<storage::TileGroup> old_tuple(
             tile_group, physical_tuple_id);
         // Execute the projections
-        project_info_->Evaluate(&old_tuple, &old_tuple, nullptr,
-                                executor_context_);
+        project_info_->Evaluate(&old_tuple, &old_tuple, executor_context_, true);
 
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
@@ -262,8 +261,7 @@ bool UpdateExecutor::DExecute() {
           // this triggers in-place update, and we do not need to allocate
           // another
           // version.
-          project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
-                                  executor_context_);
+          project_info_->Evaluate(&new_tuple, &old_tuple, executor_context_, false);
 
           // get indirection.
           ItemPointer *indirection =
