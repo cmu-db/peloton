@@ -59,9 +59,9 @@ LibeventServer::LibeventServer() {
 
   // Create our event base
   if (!base) {
-    LOG_INFO("Couldn't open event base");
-    exit(EXIT_FAILURE);
+    throw ConnectionException("Couldn't open event base");
   }
+
   // Add hang up signal event
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
@@ -97,22 +97,19 @@ LibeventServer::LibeventServer() {
     listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (listen_fd < 0) {
-      LOG_ERROR("Failed to create listen socket");
-      exit(EXIT_FAILURE);
+      throw ConnectionException("Failed to create listen socket");
     }
 
     int reuse = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
     if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-      LOG_ERROR("Failed to bind socket to port %" PRIu64, port_);
-      exit(EXIT_FAILURE);
+      throw ConnectionException("Failed to bind socket to port: " + std::to_string(port_));
     }
 
     int conn_backlog = 12;
     if (listen(listen_fd, conn_backlog) < 0) {
-      LOG_ERROR("Failed to listen to socket");
-      exit(EXIT_FAILURE);
+      throw ConnectionException("Failed to listen to socket");
     }
 
     LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
@@ -126,8 +123,7 @@ LibeventServer::LibeventServer() {
 
   // This socket family code is not implemented yet
   else {
-    LOG_ERROR("Unsupported socket family");
-    exit(1);
+    throw ConnectionException("Unsupported socket family");
   }
 }
 }
