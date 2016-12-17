@@ -11,9 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
+
+#include "configuration/configuration.h"
 #include "common/init.h"
 #include "common/logger.h"
-#include "configuration/configuration.h"
 #include "wire/libevent_server.h"
 
 // Peloton process begins execution here.
@@ -27,6 +28,11 @@ int main(int argc, char *argv[]) {
     FLAGS_help = true;
     ::google::SetUsageMessage("Usage Info: \n");
     ::google::HandleCommandLineHelpFlags();
+  }
+
+  // Print configuration
+  if (FLAGS_display_configuration == true) {
+    peloton::configuration::PrintConfiguration();
   }
 
   try {

@@ -10,20 +10,89 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "configuration/configuration.h"
+#include "common/logger.h"
 #include "common/types.h"
+#include "configuration/configuration.h"
 
-DEFINE_uint64(port, 15721, "Peloton port (default: 15721)");
+//===----------------------------------------------------------------------===//
+// GENERAL
+//===----------------------------------------------------------------------===//
 
-DEFINE_uint64(max_connections, 64,
+DEFINE_bool(h,
+            false,
+            "Show help");
+
+namespace peloton {
+namespace configuration {
+
+void PrintConfiguration(){
+
+  LOG_INFO("%30s", "//===-------------- PELOTON CONFIGURATION --------------===//");
+  LOG_INFO(" ");
+
+  LOG_INFO("%30s", "//===----------------- CONNECTIONS ---------------------===//");
+  LOG_INFO(" ");
+
+  LOG_INFO("%30s: %10lu","Port", FLAGS_port);
+  LOG_INFO("%30s: %10s","Socket Family", FLAGS_socket_family.c_str());
+  LOG_INFO("%30s: %10lu","Statistics", FLAGS_stats_mode);
+  LOG_INFO("%30s: %10lu","Max Connections", FLAGS_max_connections);
+
+  LOG_INFO(" ");
+  LOG_INFO("%30s", "//===---------------------------------------------------===//");
+
+}
+
+}  // End configuration namespace
+}  // End peloton namespace
+
+//===----------------------------------------------------------------------===//
+// FILE LOCATIONS
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// CONNECTIONS
+//===----------------------------------------------------------------------===//
+
+DEFINE_uint64(port,
+              15721,
+              "Peloton port (default: 15721)");
+
+DEFINE_uint64(max_connections,
+              64,
               "Maximum number of connections (default: 64)");
 
-DEFINE_string(socket_family, "AF_INET", "Socket family (AF_UNIX, AF_INET)");
+DEFINE_string(socket_family,
+              "AF_INET",
+              "Socket family (default: AF_INET)");
 
-DEFINE_uint64(stats_mode, peloton::STATS_TYPE_INVALID,
-              "Enable statistics collection (default: STATS_TYPE_INVALID)");
+//===----------------------------------------------------------------------===//
+// RESOURCE USAGE
+//===----------------------------------------------------------------------===//
 
-DEFINE_bool(h, false, "Show help");
+//===----------------------------------------------------------------------===//
+// WRITE AHEAD LOG
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// ERROR REPORTING AND LOGGING
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// CONFIGURATION
+//===----------------------------------------------------------------------===//
+
+DEFINE_bool(display_configuration,
+            false,
+            "Display configuration (default: false)");
+
+//===----------------------------------------------------------------------===//
+// STATISTICS
+//===----------------------------------------------------------------------===//
+
+DEFINE_uint64(stats_mode,
+              peloton::STATS_TYPE_INVALID,
+              "Enable statistics collection (default: 0)");
 
 // Layout mode
 int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
