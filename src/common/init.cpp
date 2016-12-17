@@ -11,9 +11,10 @@
 //===----------------------------------------------------------------------===//
 #include "catalog/catalog.h"
 
-#include "common/config.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
+
+#include "configuration/configuration.h"
 
 #include "concurrency/epoch_manager_factory.h"
 #include "gc/gc_manager_factory.h"

@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/logger.h"
-#include "common/config.h"
 #include "index/bwtree_index.h"
 #include "index/index_key.h"
 #include "storage/tuple.h"

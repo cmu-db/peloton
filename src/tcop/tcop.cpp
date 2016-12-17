@@ -13,12 +13,13 @@
 #include "tcop/tcop.h"
 
 #include "common/abstract_tuple.h"
-#include "common/config.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/portal.h"
 #include "common/type.h"
 #include "common/types.h"
+
+#include "configuration/configuration.h"
 
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
