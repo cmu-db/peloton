@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/tuple_sample.h"
@@ -23,10 +22,10 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 class Stats {
  public:
-  Stats(TupleSample *sample);
+  Stats(TupleSample *sample) : sample_(sample){};
 
  private:
-  TupleSample *sample;
+  TupleSample *sample_;
 };
 
 } /* namespace optimizer */

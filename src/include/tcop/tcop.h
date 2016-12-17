@@ -21,11 +21,12 @@
 #include "common/statement.h"
 #include "common/type.h"
 #include "common/types.h"
+#include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 
 namespace peloton {
-namespace tcop {
 
+namespace tcop {
 //===--------------------------------------------------------------------===//
 // TRAFFIC COP
 //===--------------------------------------------------------------------===//
@@ -34,9 +35,6 @@ class TrafficCop {
   TrafficCop(TrafficCop const &) = delete;
 
  public:
-  // global singleton
-  static TrafficCop &GetInstance(void);
-
   TrafficCop();
   ~TrafficCop();
 
@@ -59,7 +57,8 @@ class TrafficCop {
                                               const std::string &query_string,
                                               std::string &error_message);
 
-  std::vector<FieldInfoType> GenerateTupleDescriptor(parser::SQLStatement* select_stmt);
+  std::vector<FieldInfoType> GenerateTupleDescriptor(
+      parser::SQLStatement *select_stmt);
 
   FieldInfoType GetColumnFieldForValueType(std::string column_name,
                                            common::Type::TypeId column_type);
@@ -69,6 +68,12 @@ class TrafficCop {
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
+
+  void Reset();
+
+ private:
+  // The optimizer used for this connection
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 };
 
 }  // End tcop namespace

@@ -12,9 +12,9 @@
 
 #include "planner/delete_plan.h"
 
+#include "../include/parser/delete_statement.h"
 #include "catalog/catalog.h"
 #include "expression/expression_util.h"
-#include "parser/statement_delete.h"
 #include "storage/data_table.h"
 
 #include "planner/abstract_plan.h"

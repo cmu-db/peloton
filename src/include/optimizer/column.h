@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
+#include "catalog/column.h"
 #include "optimizer/operator_node.h"
-#include "optimizer/query_operators.h"
 #include "optimizer/util.h"
 
 #include "common/types.h"
@@ -29,7 +28,8 @@ using ColumnID = int32_t;
 //===--------------------------------------------------------------------===//
 class Column {
  public:
-  Column(ColumnID id, common::Type::TypeId type, int size, std::string name, bool inlined);
+  Column(ColumnID id, common::Type::TypeId type, int size, std::string name,
+         bool inlined);
 
   virtual ~Column() {}
 
@@ -45,6 +45,14 @@ class Column {
 
   hash_t Hash() const;
 
+  template <typename T>
+  const T *As() const {
+    if (typeid(*this) == typeid(T)) {
+      return reinterpret_cast<const T *>(this);
+    }
+    return nullptr;
+  }
+
  private:
   const ColumnID id;
   const common::Type::TypeId type;
@@ -58,8 +66,9 @@ class Column {
 //===--------------------------------------------------------------------===//
 class TableColumn : public Column {
  public:
-  TableColumn(ColumnID id, common::Type::TypeId type, int size, std::string name,
-              bool inlined, oid_t base_table, oid_t column_index);
+  TableColumn(ColumnID id, common::Type::TypeId type, int size,
+              std::string name, bool inlined, oid_t base_table,
+              oid_t column_index);
 
   oid_t BaseTableOid() const;
 

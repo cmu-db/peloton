@@ -12,7 +12,10 @@
 
 #pragma once
 
+#include "expression/abstract_expression.h"
+#include "optimizer/query_node_visitor.h"
 #include "parser/sql_statement.h"
+#include "parser/table_ref.h"
 
 namespace peloton {
 namespace parser {
@@ -67,6 +70,10 @@ struct UpdateStatement : SQLStatement {
 
     delete updates;
     if (where != NULL) delete where;
+  }
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->Visit(this);
   }
 
   // TODO: switch to char* instead of TableRef

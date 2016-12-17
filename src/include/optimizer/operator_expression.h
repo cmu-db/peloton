@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "optimizer/operator_node.h"
 #include "optimizer/group.h"
+#include "optimizer/operator_node.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace peloton {
 namespace optimizer {
@@ -25,23 +24,21 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Operator Expr
 //===--------------------------------------------------------------------===//
-class OpExpressionVisitor;
-
-class OpExpression {
+class OperatorExpression {
  public:
-  OpExpression(Operator op);
+  OperatorExpression(Operator op);
 
-  void PushChild(std::shared_ptr<OpExpression> op);
+  void PushChild(std::shared_ptr<OperatorExpression> op);
 
   void PopChild();
 
-  const std::vector<std::shared_ptr<OpExpression>> &Children() const;
+  const std::vector<std::shared_ptr<OperatorExpression>> &Children() const;
 
   const Operator &Op() const;
 
  private:
   Operator op;
-  std::vector<std::shared_ptr<OpExpression>> children;
+  std::vector<std::shared_ptr<OperatorExpression>> children;
 };
 
 } /* namespace optimizer */

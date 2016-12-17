@@ -12,11 +12,11 @@
 
 #pragma once
 
+#include "../parser/update_statement.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
 #include "common/types.h"
 #include "parser/table_ref.h"
-#include "parser/statement_update.h"
 #include "catalog/schema.h"
 
 namespace peloton {

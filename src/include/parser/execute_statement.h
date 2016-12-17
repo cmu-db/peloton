@@ -13,6 +13,7 @@
 #pragma once
 
 #include "parser/sql_statement.h"
+#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -33,6 +34,10 @@ struct ExecuteStatement : SQLStatement {
     }
 
     delete parameters;
+  }
+
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->Visit(this);
   }
 
   char* name;

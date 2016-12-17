@@ -10,16 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/operator_node.h"
 #include "optimizer/stats.h"
 #include "optimizer/util.h"
 
+#include <map>
 #include <tuple>
 #include <vector>
-#include <map>
 
 namespace peloton {
 namespace optimizer {
@@ -41,12 +40,18 @@ class GroupExpression {
 
   Operator Op() const;
 
-  std::shared_ptr<Stats> GetStats() const;
+  std::shared_ptr<Stats> GetStats(PropertySet requirements) const;
 
-  double GetCost() const;
+  double GetCost(PropertySet requirements) const;
 
-  void DeriveStatsAndCost(std::vector<std::shared_ptr<Stats>> child_stats,
-                          std::vector<double> child_costs);
+  std::vector<PropertySet> GetInputProperties(PropertySet requirements) const;
+
+  void SetLocalHashTable(const PropertySet &output_properties,
+                         const std::vector<PropertySet> &input_properties_list,
+                         double cost, std::shared_ptr<Stats> stats);
+
+  void SetStats(const PropertySet &output_properties,
+                std::shared_ptr<Stats> stats);
 
   hash_t Hash() const;
 
@@ -57,8 +62,11 @@ class GroupExpression {
   Operator op;
   std::vector<GroupID> child_groups;
 
-  std::shared_ptr<Stats> stats;
-  double cost;
+  // Mapping from output properties to the corresponding best cost, statistics,
+  // and child properties
+  std::unordered_map<PropertySet, std::tuple<double, std::shared_ptr<Stats>,
+                                             std::vector<PropertySet>>>
+      lowest_cost_table_;
 };
 
 } /* namespace optimizer */

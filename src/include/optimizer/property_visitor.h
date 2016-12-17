@@ -2,34 +2,38 @@
 //
 //                         Peloton
 //
-// postgres_shim.h
+// property_visitor.h
 //
-// Identification: src/include/optimizer/postgres_shim.h
+// Identification: src/include/optimizer/property_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
-
-#include "optimizer/optimizer.h"
-#include "optimizer/query_operators.h"
 
 namespace peloton {
 namespace optimizer {
 
+class PropertyColumns;
+class PropertyProjection;
+class PropertySort;
+class PropertyPredicate;
+
 //===--------------------------------------------------------------------===//
-// Compatibility with Postgres
+// Property Visitor
 //===--------------------------------------------------------------------===//
 
-bool ShouldPelotonOptimize(std::string parse);
+// Visit physical properties
+class PropertyVisitor {
+ public:
+  virtual ~PropertyVisitor(){};
 
-std::shared_ptr<Select> PostgresQueryToPelotonQuery(std::string parse);
-
-std::shared_ptr<planner::AbstractPlan> PelotonOptimize(
-    Optimizer &optimizer, std::string parse, int cursorOptions,
-    std::vector<int> boundParams);
+  virtual void Visit(const PropertyColumns *) = 0;
+  virtual void Visit(const PropertyProjection *) = 0;
+  virtual void Visit(const PropertySort *) = 0;
+  virtual void Visit(const PropertyPredicate *) = 0;
+};
 
 } /* namespace optimizer */
 } /* namespace peloton */

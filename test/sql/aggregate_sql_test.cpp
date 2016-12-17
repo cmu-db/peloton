@@ -15,6 +15,7 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
+#include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
 #include "sql/sql_tests_util.h"
@@ -54,6 +55,7 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   std::vector<FieldInfoType> tuple_descriptor;
   std::string error_message;
   int rows_affected;
+  optimizer::SimpleOptimizer optimizer;
 
   // test small int
   SQLTestsUtil::ExecuteSQLQuery("SELECT min(b) from test", result,

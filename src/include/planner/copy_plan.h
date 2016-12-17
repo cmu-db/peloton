@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "../parser/copy_statement.h"
+#include "../parser/select_statement.h"
 #include "planner/abstract_plan.h"
-#include "parser/statement_copy.h"
-#include "parser/statement_select.h"
 
 namespace peloton {
 

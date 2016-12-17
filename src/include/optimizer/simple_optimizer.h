@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "optimizer/abstract_optimizer.h"
 #include "common/types.h"
 #include "common/value.h"
+#include "optimizer/abstract_optimizer.h"
 #include "parser/statements.h"
 
 #include <memory>
@@ -60,8 +60,8 @@ class SimpleOptimizer : public AbstractOptimizer {
   SimpleOptimizer();
   virtual ~SimpleOptimizer();
 
-  static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree);
+  std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
  private:
   //===--------------------------------------------------------------------===//

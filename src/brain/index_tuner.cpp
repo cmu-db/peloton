@@ -37,8 +37,7 @@ IndexTuner::IndexTuner() {
   // Nothing to do here !
 }
 
-IndexTuner::~IndexTuner() {
-}
+IndexTuner::~IndexTuner() {}
 
 void IndexTuner::Start() {
   // Set signal
@@ -139,14 +138,13 @@ void IndexTuner::BuildIndices(storage::DataTable* table) {
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
     // Get index
     auto index = table->GetIndex(index_itr);
-    if(index == nullptr){
+    if (index == nullptr) {
       continue;
     }
 
     // Build index
     BuildIndex(table, index);
   }
-
 }
 
 double IndexTuner::ComputeWorkloadWriteRatio(
@@ -294,37 +292,40 @@ void IndexTuner::DropIndexes(storage::DataTable* table) {
   oid_t index_itr;
   for (index_itr = 0; index_itr < index_count; index_itr++) {
     auto index = table->GetIndex(index_itr);
-    if(index == nullptr){
+    if (index == nullptr) {
       continue;
     }
 
-    // auto index_metadata = index->GetMetadata();
+#ifdef LOG_TRACE_ENABLED
+    auto index_metadata = index->GetMetadata();
+#endif
     // auto average_index_utility = index_metadata->GetUtility();
     auto index_oid = index->GetOid();
 
     // Check if index utility below threshold and drop if needed
     // if (average_index_utility < index_utility_threshold) {
-      LOG_TRACE("Dropping index : %s", index_metadata->GetInfo().c_str());
+    LOG_TRACE("Dropping index : %s", index_metadata->GetInfo().c_str());
 
-      table->DropIndexWithOid(index_oid);
+    table->DropIndexWithOid(index_oid);
 
-      // Drop one index at a time
-      return;
+    // Drop one index at a time
+    return;
 
-      // Update index count
-      index_count = table->GetIndexCount();
+    // Update index count
+    index_count = table->GetIndexCount();
     // }
   }
 }
 
-void IndexTuner::AddIndexes(storage::DataTable* table,
-                            const std::vector<std::vector<double>>& suggested_indices) {
+void IndexTuner::AddIndexes(
+    storage::DataTable* table,
+    const std::vector<std::vector<double>>& suggested_indices) {
   oid_t valid_index_count = table->GetValidIndexCount();
   oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
 
   // Check if we have constructed too many indexess
-  if(valid_index_count > index_count_threshold){
+  if (valid_index_count > index_count_threshold) {
     LOG_TRACE("Constructed too many indexes");
     return;
   }
@@ -333,8 +334,7 @@ void IndexTuner::AddIndexes(storage::DataTable* table,
     std::set<oid_t> suggested_index_set(suggested_index.begin(),
                                         suggested_index.end());
 
-    if (suggested_index_set.empty())
-      continue;
+    if (suggested_index_set.empty()) continue;
 
     // Go over all indices
     bool suggested_index_found = false;
@@ -371,7 +371,7 @@ void UpdateIndexUtility(storage::DataTable* table,
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
     // Get index
     auto index = table->GetIndex(index_itr);
-    if(index == nullptr){
+    if (index == nullptr) {
       continue;
     }
 
@@ -411,7 +411,7 @@ void PrintIndexInformation(storage::DataTable* table) {
   for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
     // Get index
     auto index = table->GetIndex(index_itr);
-    if(index == nullptr){
+    if (index == nullptr) {
       continue;
     }
 
@@ -476,7 +476,6 @@ void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
 
   // Check if we have sufficient number of samples for build
   if (sample_count >= analyze_sample_count_threshold) {
-
     // Add required indices
     Analyze(table);
 
@@ -486,7 +485,6 @@ void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
 
   // Build desired indices
   BuildIndices(table);
-
 }
 
 oid_t IndexTuner::GetIndexCount() const {
@@ -511,7 +509,6 @@ void IndexTuner::Tune() {
 
   // Continue till signal is not false
   while (index_tuning_stop == false) {
-
     // Go over all tables
     for (auto table : tables) {
       // Update indices periodically
@@ -522,15 +519,13 @@ void IndexTuner::Tune() {
     auto duration = pause_timer.GetDuration();
 
     // Sleep a bit if needed
-    if(duration > duration_between_pauses){
+    if (duration > duration_between_pauses) {
       LOG_INFO("TUNER PAUSE : %.0lf", duration);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
       pause_timer.Reset();
       pause_timer.Start();
     }
-
   }
-
 }
 
 void IndexTuner::Stop() {

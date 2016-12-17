@@ -10,26 +10,55 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
+#include <typeinfo>
+
+#include "common/logger.h"
 #include "optimizer/util.h"
 
 namespace peloton {
 namespace optimizer {
 
+class PropertyVisitor;
+
 enum class PropertyType {
-  Sort,
-  Columns,
+  SORT,
+  COLUMNS,
+  PREDICATE,
+  PROJECT,
 };
 
+/*
+ * Physical properties are those fields that can be directly added to the plan,
+ * and don't need to perform transformations on.
+ *
+ * Note: Sometimes there're different choices of physical properties. E.g., the
+ * sorting order might be provided by either a sort executor or a underlying
+ * sort merge join. But those different implementations are directly specified
+ * when constructing the physical operator tree, other than using rule
+ * transformation.
+ */
 class Property {
  public:
+  virtual ~Property();
+
   virtual PropertyType Type() const = 0;
 
-  virtual hash_t Hash() const = 0;
+  virtual hash_t Hash() const;
 
-  virtual bool operator==(const Property &r) const = 0;
+  // Provide partial order
+  virtual bool operator>=(const Property &r) const;
+
+  virtual void Accept(PropertyVisitor *v) const = 0;
+
+  template <typename T>
+  const T *As() const {
+    if (this != nullptr && typeid(*this) == typeid(T)) {
+      return reinterpret_cast<const T *>(this);
+    }
+    return nullptr;
+  }
 };
 
 } /* namespace optimizer */

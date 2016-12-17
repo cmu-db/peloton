@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// update_secondary_index_sql_test.cpp
+// projection_sql_test.cpp
 //
-// Identification: test/sql/update_secondary_index_sql_test.cpp
+// Identification: test/sql/projection_sql_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,9 +23,9 @@
 namespace peloton {
 namespace test {
 
-class UpdateSecondaryIndexSQLTests : public PelotonTest {};
+class ProjectionSQLTests : public PelotonTest {};
 
-TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
+TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
@@ -34,12 +34,6 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
 
   // Insert tuples into table
   SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10, 100);");
-  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 20, 200);");
-  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 30, 300);");
-
-  SQLTestsUtil::ExecuteSQLQuery("CREATE UNIQUE INDEX b_idx on test (b);");
-
-  SQLTestsUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
   std::vector<ResultType> result;
   std::vector<FieldInfoType> tuple_descriptor;
@@ -47,20 +41,15 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
   int rows_affected;
 
   // test small int
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * from test", result, tuple_descriptor,
-                                rows_affected, error_message);
-  // Check the return value
-  EXPECT_EQ(result[6].second[0], '3');
-
-  // Perform update
-  SQLTestsUtil::ExecuteSQLQuery("UPDATE test SET b=1000 WHERE c=200", result,
-                                tuple_descriptor, rows_affected, error_message);
-
-  // test update result
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test WHERE b=1000", result,
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a*5+b, -1+c, 6, a from test", result,
                                 tuple_descriptor, rows_affected, error_message);
   // Check the return value
-  EXPECT_EQ(result[0].second[0], '2');
+  EXPECT_EQ(result[0].second[0], '1');
+  EXPECT_EQ(result[0].second[1], '5');
+  EXPECT_EQ(result[1].second[0], '9');
+  EXPECT_EQ(result[1].second[1], '9');
+  EXPECT_EQ(result[2].second[0], '6');
+  EXPECT_EQ(result[3].second[0], '1');
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

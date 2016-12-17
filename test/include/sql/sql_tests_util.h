@@ -13,8 +13,17 @@
 #pragma once
 
 #include "common/statement.h"
+#include "tcop/tcop.h"
 
 namespace peloton {
+
+namespace planner {
+class AbstractPlan;
+}
+
+namespace optimizer {
+class AbstractOptimizer;
+}
 
 //===--------------------------------------------------------------------===//
 // Utils
@@ -33,7 +42,22 @@ class SQLTestsUtil {
   static Result ExecuteSQLQuery(const std::string query,
                                 std::vector<ResultType> &result,
                                 std::vector<FieldInfoType> &tuple_descriptor,
-                                int &rows_changed, std::string &error_message);
+                                int &rows_affected, std::string &error_message);
+
+  // Execute a SQL query end-to-end with the specific optimizer
+  // Note: right now this is not executed in the context of a transaction, we
+  // may want to pass a transaction pointer here if that API is exposed after
+  // the refactor by Siddharth
+  static Result ExecuteSQLQueryWithOptimizer(
+      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      const std::string query, std::vector<ResultType> &result,
+      std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
+      std::string &error_message);
+
+  // Generate the plan tree for a SQL query with the specific optimizer
+  static std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
+      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      const std::string query);
 
   // A simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query,
@@ -41,6 +65,8 @@ class SQLTestsUtil {
 
   // A another simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query);
+
+  static tcop::TrafficCop traffic_cop_;
 };
 }  // namespace test
 }  // namespace peloton

@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/property_set.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace optimizer {
@@ -19,42 +19,55 @@ namespace optimizer {
 PropertySet::PropertySet() {}
 
 const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
-  return properties;
+  return properties_;
+}
+
+void PropertySet::AddProperty(std::shared_ptr<Property> property) {
+  LOG_TRACE("Add property with type %d", static_cast<int>(property->Type()));
+  properties_.push_back(property);
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
     PropertyType type) const {
-  for (auto &prop : properties) {
+  for (auto &prop : properties_) {
     if (prop->Type() == type) {
       return prop;
     }
   }
+
+  LOG_TRACE("Didn't find property with type %d", static_cast<int>(type));
+
   return nullptr;
 }
 
-bool PropertySet::IsSubset(const PropertySet &r) {
-  (void)r;
-  return true;
+bool PropertySet::HasProperty(const Property &r_property) const {
+  for (auto property : properties_) {
+    if (*property >= r_property) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
-hash_t PropertySet::Hash() const {
-  size_t prop_size = properties.size();
-  hash_t hash = util::Hash<size_t>(&prop_size);
-  for (auto &prop : properties) {
-    hash = util::CombineHashes(hash, prop->Hash());
+bool PropertySet::operator>=(const PropertySet &r) const {
+  for (auto r_property : r.properties_) {
+    if (HasProperty(*r_property) == false) return false;
   }
-  return hash;
+  return true;
 }
 
 bool PropertySet::operator==(const PropertySet &r) const {
-  for (auto &left_prop : properties) {
-    bool match = false;
-    for (auto &right_prop : r.properties) {
-      match = match || (*left_prop == *right_prop);
-    }
-    if (!match) return false;
+  return *this >= r && r >= *this;
+}
+
+hash_t PropertySet::Hash() const {
+  size_t prop_size = properties_.size();
+  hash_t hash = util::Hash<size_t>(&prop_size);
+  for (auto &prop : properties_) {
+    hash = util::CombineHashes(hash, prop->Hash());
   }
-  return true;
+  return hash;
 }
 
 } /* namespace optimizer */

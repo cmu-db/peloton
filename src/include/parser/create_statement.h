@@ -12,8 +12,9 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
 #include "common/types.h"
+#include "optimizer/query_node_visitor.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace parser {
@@ -87,8 +88,8 @@ struct ColumnDefinition {
         return common::Type::BIGINT;
         break;
 
-      //case DOUBLE:
-      //case FLOAT:
+      // case DOUBLE:
+      // case FLOAT:
       //  return common::Type::DOUBLE;
       //  break;
 
@@ -102,7 +103,7 @@ struct ColumnDefinition {
         return common::Type::BOOLEAN;
         break;
 
-      //case ADDRESS:
+      // case ADDRESS:
       //  return common::Type::ADDRESS;
       //  break;
 
@@ -132,7 +133,7 @@ struct ColumnDefinition {
   char* name = nullptr;
 
   // The name of the table and its database
-  TableInfo *table_info_ = nullptr;
+  TableInfo* table_info_ = nullptr;
 
   DataType type;
   size_t varlen = 0;
@@ -152,17 +153,13 @@ struct ColumnDefinition {
  * city TEXT, grade DOUBLE)"
  */
 struct CreateStatement : TableRefStatement {
-  enum CreateType {
-    kTable,
-    kDatabase,
-    kIndex
-  };
+  enum CreateType { kTable, kDatabase, kIndex };
 
   CreateStatement(CreateType type)
       : TableRefStatement(STATEMENT_TYPE_CREATE),
         type(type),
         if_not_exists(false),
-        columns(NULL) {};
+        columns(nullptr){};
 
   virtual ~CreateStatement() {
     if (columns) {
@@ -179,6 +176,10 @@ struct CreateStatement : TableRefStatement {
     free(database_name);
   }
 
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->Visit(this);
+  }
+
   CreateType type;
   bool if_not_exists;
 
@@ -189,7 +190,6 @@ struct CreateStatement : TableRefStatement {
 
   char* index_name = nullptr;
   char* database_name = nullptr;
-
 
   bool unique = false;
 };

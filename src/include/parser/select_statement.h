@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "optimizer/query_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
 
@@ -32,6 +33,8 @@ struct OrderDescription {
 
   virtual ~OrderDescription() { delete expr; }
 
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+
   OrderType type;
   expression::AbstractExpression* expr;
 };
@@ -45,6 +48,8 @@ const int64_t kNoOffset = -1;
 struct LimitDescription {
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
+
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
 
   int64_t limit;
   int64_t offset;
@@ -64,6 +69,8 @@ struct GroupByDescription {
 
     delete having;
   }
+
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
 
   std::vector<expression::AbstractExpression*>* columns;
   expression::AbstractExpression* having;
@@ -104,6 +111,9 @@ struct SelectStatement : SQLStatement {
     delete limit;
   }
 
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+    v->Visit(this);
+  }
 
   TableRef* from_table;
   bool select_distinct;
@@ -116,10 +126,10 @@ struct SelectStatement : SQLStatement {
   LimitDescription* limit;
   bool is_for_update;
 
-public:
-	const std::vector<expression::AbstractExpression*>* getSelectList() const {
-		return select_list;
-	}
+ public:
+  const std::vector<expression::AbstractExpression*>* getSelectList() const {
+    return select_list;
+  }
 };
 
 }  // End parser namespace

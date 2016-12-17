@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 #include "catalog/catalog.h"
 
+#include "common/config.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
-#include "common/config.h"
 
-#include "gc/gc_manager_factory.h"
 #include "concurrency/epoch_manager_factory.h"
+#include "gc/gc_manager_factory.h"
 #include "storage/data_table.h"
 
 #include "libcds/cds/init.h"
@@ -30,7 +30,6 @@ namespace peloton {
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
-
   // Initialize CDS library
   cds::Initialize();
 
@@ -50,12 +49,12 @@ void PelotonInit::Initialize() {
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
-  // initialize the catalog so we don't do this on the first query
-  catalog::Catalog::GetInstance();
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 void PelotonInit::Shutdown() {
-
   // shut down GC.
   gc::GCManagerFactory::GetInstance().StopGC();
   // shut down epoch.
@@ -74,13 +73,11 @@ void PelotonInit::Shutdown() {
 }
 
 void PelotonInit::SetUpThread() {
-
   // Attach thread to cds
   cds::threading::Manager::attachThread();
 }
 
 void PelotonInit::TearDownThread() {
-
   // Detach thread from cds
   cds::threading::Manager::detachThread();
 }

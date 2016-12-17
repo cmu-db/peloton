@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/group_expression.h"
 #include "optimizer/group.h"
 
@@ -33,15 +32,37 @@ const std::vector<GroupID> &GroupExpression::GetChildGroupIDs() const {
 
 Operator GroupExpression::Op() const { return op; }
 
-std::shared_ptr<Stats> GroupExpression::GetStats() const { return stats; }
+std::shared_ptr<Stats> GroupExpression::GetStats(
+    PropertySet requirements) const {
+  return std::get<1>(lowest_cost_table_.find(requirements)->second);
+}
 
-double GroupExpression::GetCost() const { return cost; }
+double GroupExpression::GetCost(PropertySet requirements) const {
+  return std::get<0>(lowest_cost_table_.find(requirements)->second);
+}
 
-void GroupExpression::DeriveStatsAndCost(
-    std::vector<std::shared_ptr<Stats>> child_stats,
-    std::vector<double> child_costs) {
-  (void)child_stats;
-  (void)child_costs;
+std::vector<PropertySet> GroupExpression::GetInputProperties(
+    PropertySet requirements) const {
+  return std::get<2>(lowest_cost_table_.find(requirements)->second);
+}
+
+void GroupExpression::SetLocalHashTable(
+    const PropertySet &output_properties,
+    const std::vector<PropertySet> &input_properties_list, double cost,
+    std::shared_ptr<Stats> stats) {
+  auto it = lowest_cost_table_.find(output_properties);
+  if (it == lowest_cost_table_.end()) {
+    // No other cost to compare against
+    lowest_cost_table_.insert(std::make_pair(
+        output_properties, std::make_tuple(cost, std::shared_ptr<Stats>(stats),
+                                           input_properties_list)));
+  } else {
+    // Only insert if the cost is lower than the existing cost
+    if (std::get<0>(it->second) > cost) {
+      lowest_cost_table_[output_properties] = std::make_tuple(
+          cost, std::shared_ptr<Stats>(stats), input_properties_list);
+    }
+  }
 }
 
 hash_t GroupExpression::Hash() const {

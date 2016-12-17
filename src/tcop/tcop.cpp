@@ -24,7 +24,7 @@
 #include "expression/expression_util.h"
 
 #include "parser/parser.h"
-#include "parser/statement_select.h"
+#include "parser/select_statement.h"
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
@@ -35,16 +35,7 @@
 namespace peloton {
 namespace tcop {
 
-// global singleton
-TrafficCop &TrafficCop::GetInstance(void) {
-  static TrafficCop traffic_cop;
-  return traffic_cop;
-}
-
-TrafficCop::TrafficCop() {
-  // Nothing to do here !
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-}
+TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
 
 TrafficCop::~TrafficCop() {
   // Nothing to do here !
@@ -105,8 +96,7 @@ Result TrafficCop::ExecuteStatement(
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
     rows_changed = status.m_processed;
     return status.m_result;
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
@@ -127,8 +117,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    statement->SetPlanTree(
-        optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
+    statement->SetPlanTree(optimizer_->BuildPelotonPlanTree(sql_stmt));
 
     for (auto stmt : sql_stmt->GetStatements()) {
       if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
@@ -141,8 +130,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     LOG_DEBUG("Statement Prepared!");
     return std::move(statement);
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }
@@ -259,5 +247,8 @@ FieldInfoType TrafficCop::GetColumnFieldForAggregates(
 
   return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
+
+void TrafficCop::Reset() { optimizer_->Reset(); }
+
 }  // End tcop namespace
 }  // End peloton namespace
