@@ -14,7 +14,7 @@
 
 #define private public
 
-#include "../../src/include/optimizer/operator_expression.h"
+#include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/rule.h"

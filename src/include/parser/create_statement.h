@@ -133,7 +133,7 @@ struct ColumnDefinition {
   char* name = nullptr;
 
   // The name of the table and its database
-  TableInfo *table_info_ = nullptr;
+  TableInfo* table_info_ = nullptr;
 
   DataType type;
   size_t varlen = 0;
@@ -153,17 +153,13 @@ struct ColumnDefinition {
  * city TEXT, grade DOUBLE)"
  */
 struct CreateStatement : TableRefStatement {
-  enum CreateType {
-    kTable,
-    kDatabase,
-    kIndex
-  };
+  enum CreateType { kTable, kDatabase, kIndex };
 
   CreateStatement(CreateType type)
       : TableRefStatement(STATEMENT_TYPE_CREATE),
         type(type),
         if_not_exists(false),
-        columns(NULL){};
+        columns(nullptr){};
 
   virtual ~CreateStatement() {
     if (columns) {
@@ -194,7 +190,6 @@ struct CreateStatement : TableRefStatement {
 
   char* index_name = nullptr;
   char* database_name = nullptr;
-
 
   bool unique = false;
 };
