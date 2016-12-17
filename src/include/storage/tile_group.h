@@ -27,6 +27,10 @@
 
 namespace peloton {
 
+namespace gc {
+  class GCManager;
+}
+
 namespace catalog {
 class Manager;
 class Schema;
@@ -63,6 +67,7 @@ typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 class TileGroup : public Printable {
   friend class Tile;
   friend class TileGroupFactory;
+  friend class gc::GCManager;
 
   TileGroup() = delete;
   TileGroup(TileGroup const &) = delete;

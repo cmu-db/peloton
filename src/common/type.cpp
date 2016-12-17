@@ -351,6 +351,11 @@ const char* Type::GetData(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
+// Access the raw varlen data stored from the tuple storage
+char * Type::GetData(char *storage UNUSED_ATTRIBUTE) {
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
 // Get the length of the variable length data
 uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");

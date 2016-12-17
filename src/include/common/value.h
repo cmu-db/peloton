@@ -205,6 +205,9 @@ class Value : public Printable {
   // Access the raw variable length data
   const char *GetData() const;
 
+  // Access the raw variable length data from a pointer pointed to a tuple storage
+  static char *GetDataFromStorage(Type::TypeId type_id, char *storage);
+
   // Get the length of the variable length data
   uint32_t GetLength() const;
 

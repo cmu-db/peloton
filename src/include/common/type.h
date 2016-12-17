@@ -144,6 +144,9 @@ class Type {
   // Access the raw variable length data
   virtual const char *GetData(const Value& val) const;
 
+  // Access the raw varlen data stored from the tuple storage
+  virtual char *GetData(char *storage);
+
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
 

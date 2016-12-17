@@ -23,6 +23,11 @@
 #include <mutex>
 
 namespace peloton {
+
+namespace gc {
+  class GCManager;
+}
+
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -45,6 +50,7 @@ class Tile : public Printable {
   friend class TileFactory;
   friend class TupleIterator;
   friend class TileGroupHeader;
+  friend class gc::GCManager;
 
   Tile() = delete;
   Tile(Tile const &) = delete;

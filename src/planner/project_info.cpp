@@ -95,7 +95,8 @@ bool ProjectInfo::Evaluate(expression::ContainerTuple<storage::TileGroup> *dest,
 
   // (B) Execute direct map
   if (inplace == false) {
-    // Only copy un-modified value if not in-place update
+    // For update that creates a new version, we copy all unmodified columns
+    // to the new version. Note that for varlen column, we perform shallow copy.
     for (auto dm : direct_map_list_) {
       // whether left tuple or right tuple ?
       auto tuple_index = dm.second.first;
@@ -108,6 +109,8 @@ bool ProjectInfo::Evaluate(expression::ContainerTuple<storage::TileGroup> *dest,
       }
     }
   }
+  // For inplace update, we don't need to do anything for unmodified columns
+  // because they are already there
 
   return true;
 }

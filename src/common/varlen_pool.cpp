@@ -163,6 +163,10 @@ int64_t VarlenPool::GetRefCount(void *ptr) {
 
 // Returns the provided chunk of memory back into the pool
 void VarlenPool::Free(void *ptr) {
+  if (ptr == nullptr) {
+    return;
+  }
+
   int64_t ref_cnt = GetRefCntPtr(ptr)->fetch_sub(1);
   PL_ASSERT(ref_cnt > 0);
   if (ref_cnt == 1) {

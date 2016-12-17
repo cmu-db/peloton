@@ -20,6 +20,11 @@
 #include "common/logger.h"
 
 namespace peloton {
+
+namespace storage {
+  class TileGroup;
+}
+
 namespace gc {
 
 //===--------------------------------------------------------------------===//
@@ -27,7 +32,7 @@ namespace gc {
 //===--------------------------------------------------------------------===//
 
 class GCManager {
- public:
+public:
   GCManager(const GCManager &) = delete;
   GCManager &operator=(const GCManager &) = delete;
   GCManager(GCManager &&) = delete;
@@ -59,7 +64,10 @@ class GCManager {
                                    const cid_t &timestamp UNUSED_ATTRIBUTE,
                                    const GCSetType gc_set_type UNUSED_ATTRIBUTE) {}
 
- private:
+protected:
+  void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);
+
+private:
   bool is_running_;
 };
 

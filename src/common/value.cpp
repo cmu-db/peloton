@@ -410,6 +410,19 @@ Value Value::CastAs(const Type::TypeId type_id) const {
 // Access the raw variable length data
 const char *Value::GetData() const { return type_->GetData(*this); }
 
+// Access the raw variable length data from a pointer pointed to a tuple storage
+char *Value::GetDataFromStorage(Type::TypeId type_id, char *storage) {
+  switch (type_id) {
+    case Type::VARCHAR:
+    case Type::VARBINARY: {
+      return Type::GetInstance(type_id)->GetData(storage);
+    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for getting raw data pointer");
+  }
+}
+
 // Get the length of the variable length data
 uint32_t Value::GetLength() const { return type_->GetLength(*this); }
 

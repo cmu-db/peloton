@@ -40,6 +40,12 @@ const char *VarlenType::GetData(const Value& val) const {
   return val.value_.varlen.data;
 }
 
+// Access the raw varlen data stored from the tuple storage
+char *VarlenType::GetData(char *storage) {
+  char *ptr = *reinterpret_cast<char **>(storage);
+  return ptr;
+}
+
 // Get the length of the variable length data
 uint32_t VarlenType::GetLength(const Value& val) const {
   return val.value_.varlen.len;
