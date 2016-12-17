@@ -1,4 +1,9 @@
+##################################################################################
+# SRC CMAKELISTS
+##################################################################################
+
 # --[ Proto library
+
 file(GLOB proto_files proto/*.proto)
 peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
 
@@ -7,7 +12,10 @@ add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
 set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-proto)
 
-# --[ BISON FLEX
+##################################################################################
+
+# --[ Parser library
+
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
@@ -18,9 +26,9 @@ set(SQLScanner_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
 
 # Skip rebuilding parser if it is already built
 if(EXISTS ${SQLParser_SOURCE})
-	message([STATUS] "Already built parser.")
+	message("-- Found peloton parser")
 else()
-  	message([STATUS] "Parser doesn't exist.")
+  	message("-- Building peloton parser")
 	BISON_TARGET(SQLParser ${SQLParser_BISON} ${SQLParser_SOURCE})
 	FLEX_TARGET(SQLScanner ${SQLScanner_FLEX} ${SQLScanner_SOURCE})
 	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
@@ -41,6 +49,8 @@ add_dependencies(peloton-parser peloton-parser-check)
 set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-parser)
 
+##################################################################################
+
 # --[ Peloton library
 
 # creates 'srcs' lists
@@ -54,13 +64,18 @@ peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
     VERSION   ${PELOTON_TARGET_VERSION}
     SOVERSION ${PELOTON_TARGET_SOVERSION}
-    )
+)
+
+##################################################################################
 
 # --[ Peloton
+
 set(peloton_main ${PROJECT_SOURCE_DIR}/src/main/peloton/peloton.cpp)
 add_executable(peloton-bin ${peloton_main})
 target_link_libraries(peloton-bin peloton)
 set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
+
+##################################################################################
 
 # --[ Benchmarks
 
@@ -102,7 +117,6 @@ endforeach()
 # --[ benchmark
 
 add_custom_target(benchmark)
-
 add_dependencies(benchmark tpcc ycsb sdbench logger)
 
 
