@@ -9,12 +9,14 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "wire/libevent_server.h"
+
 #include <fcntl.h>
 #include <inttypes.h>
 #include <sys/socket.h>
 #include <fstream>
-#include "common/config.h"
+
 #include "common/init.h"
 #include "common/macros.h"
 #include "common/thread_pool.h"

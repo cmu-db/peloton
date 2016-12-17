@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#include "common/config.h"
+#include "configuration/configuration.h"
 #include "common/harness.h"
 
 #include <sys/resource.h>

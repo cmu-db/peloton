@@ -14,7 +14,6 @@
 #include "index/index_key.h"
 #include "index/index_util.h"
 #include "common/logger.h"
-#include "common/config.h"
 #include "storage/tuple.h"
 #include "statistics/stats_aggregator.h"
 

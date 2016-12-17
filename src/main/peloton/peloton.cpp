@@ -12,8 +12,8 @@
 
 #include <iostream>
 #include "common/init.h"
-#include "common/config.h"
 #include "common/logger.h"
+#include "configuration/configuration.h"
 #include "wire/libevent_server.h"
 
 // Peloton process begins execution here.

@@ -16,7 +16,6 @@
 #include "concurrency/transaction_manager.h"
 #include "storage/tile_group.h"
 #include "statistics/stats_aggregator.h"
-#include "common/config.h"
 
 namespace peloton {
 namespace concurrency {

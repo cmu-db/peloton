@@ -21,7 +21,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "common/config.h"
+
+#include "configuration/configuration.h"
 #include "common/type.h"
 
 namespace peloton {
