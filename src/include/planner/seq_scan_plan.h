@@ -18,8 +18,8 @@
 
 #include "abstract_scan_plan.h"
 #include "common/logger.h"
-#include "common/serializer.h"
-#include "common/types.h"
+#include "type/serializer.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 
 namespace peloton {

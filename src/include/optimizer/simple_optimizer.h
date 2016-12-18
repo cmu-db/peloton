@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/statements.h"
 

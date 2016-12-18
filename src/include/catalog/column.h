@@ -14,7 +14,7 @@
 
 #include "common/printable.h"
 #include "catalog/constraint.h"
-#include "common/type.h"
+#include "type/type.h"
 #include "common/macros.h"
 
 namespace peloton {

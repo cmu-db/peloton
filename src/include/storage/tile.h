@@ -15,9 +15,9 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/serializer.h"
-#include "common/serializeio.h"
-#include "common/varlen_pool.h"
+#include "type/serializer.h"
+#include "type/serializeio.h"
+#include "type/varlen_pool.h"
 #include "common/printable.h"
 
 #include <mutex>

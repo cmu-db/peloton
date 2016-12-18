@@ -19,9 +19,9 @@
 #include <cmath>
 #include <memory>
 
-#include "common/serializeio.h"
-#include "common/value_factory.h"
-#include "common/value_peeker.h"
+#include "type/serializeio.h"
+#include "type/value_factory.h"
+#include "type/value_peeker.h"
 #include "common/harness.h"
 
 

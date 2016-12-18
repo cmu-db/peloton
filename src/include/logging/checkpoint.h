@@ -17,8 +17,8 @@
 #include <memory>
 #include <sys/stat.h>
 
-#include "common/types.h"
-#include "common/varlen_pool.h"
+#include "type/types.h"
+#include "type/varlen_pool.h"
 
 namespace peloton {
 

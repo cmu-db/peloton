@@ -18,7 +18,7 @@
 #include <vector>
 #include <list>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "gc/gc_manager.h"
 

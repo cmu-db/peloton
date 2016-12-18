@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "planner/abstract_scan_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 #include "storage/tuple.h"
 #include "index/scan_optimizer.h"

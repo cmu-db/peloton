@@ -12,7 +12,7 @@
 
 
 #include "catalog/column.h"
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace catalog {

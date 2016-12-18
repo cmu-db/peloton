@@ -17,7 +17,7 @@
 #include "logging/records/tuple_record.h"
 #include "logging/log_file.h"
 #include "executor/executors.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 
 #include <dirent.h>
 #include <vector>

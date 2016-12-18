@@ -37,9 +37,9 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "common/serializer.h"
-#include "common/serializeio.h"
+#include "type/types.h"
+#include "type/serializer.h"
+#include "type/serializeio.h"
 
 namespace peloton {
 namespace logging {

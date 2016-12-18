@@ -15,12 +15,12 @@
 #include <iostream>
 #include <cstdint>
 #include <cmath>
-#include "common/boolean_type.h"
-#include "common/decimal_type.h"
-#include "common/numeric_type.h"
-#include "common/varlen_type.h"
+#include "type/boolean_type.h"
+#include "type/decimal_type.h"
+#include "type/numeric_type.h"
+#include "type/varlen_type.h"
 #include "common/harness.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

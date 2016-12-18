@@ -14,9 +14,9 @@
 
 #include "catalog/catalog_util.h"
 #include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value_factory.h"
-#include "common/varlen_pool.h"
+#include "type/types.h"
+#include "type/value_factory.h"
+#include "type/varlen_pool.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"

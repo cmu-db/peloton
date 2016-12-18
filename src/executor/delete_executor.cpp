@@ -14,7 +14,7 @@
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 
-#include "common/value.h"
+#include "type/value.h"
 #include "planner/delete_plan.h"
 #include "catalog/manager.h"
 #include "common/container_tuple.h"

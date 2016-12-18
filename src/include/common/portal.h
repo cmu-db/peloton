@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "common/value.h"
+#include "type/value.h"
 #include "statistics/query_metric.h"
 
 namespace peloton {

@@ -17,7 +17,7 @@
 #include <string>
 #include <thread>
 
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 
 #include "common/exception.h"

@@ -16,8 +16,8 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "common/type.h"
-#include "common/types.h"
+#include "type/type.h"
+#include "type/types.h"
 
 #include "configuration/configuration.h"
 

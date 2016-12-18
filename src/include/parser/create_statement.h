@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "optimizer/query_node_visitor.h"
 #include "parser/sql_statement.h"
 

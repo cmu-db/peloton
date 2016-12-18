@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/counter_metric.h"
 

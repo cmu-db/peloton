@@ -17,9 +17,9 @@
 
 #include "common/harness.h"
 
-#include "common/types.h"
-#include "common/value_peeker.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value_peeker.h"
+#include "type/value_factory.h"
 #include "common/container_tuple.h"
 #include "storage/tuple.h"
 

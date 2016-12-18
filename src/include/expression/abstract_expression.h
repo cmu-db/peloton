@@ -17,9 +17,9 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/printable.h"
-#include "common/serializeio.h"
-#include "common/types.h"
-#include "common/value_factory.h"
+#include "type/serializeio.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 

@@ -41,7 +41,7 @@
 #include "storage/data_table.h"
 
 #include "common/logger.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 
 #include <memory>
 #include <unordered_map>

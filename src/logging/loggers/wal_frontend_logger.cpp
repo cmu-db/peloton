@@ -20,7 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_manager.h"

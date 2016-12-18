@@ -16,7 +16,7 @@
 #include <memory>
 
 #include "common/macros.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 
 namespace peloton {

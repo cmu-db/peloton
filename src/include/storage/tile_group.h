@@ -19,10 +19,10 @@
 #include <mutex>
 #include <memory>
 
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "common/printable.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "planner/project_info.h"
 
 namespace peloton {

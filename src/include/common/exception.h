@@ -22,8 +22,8 @@
 #include <memory>
 #include <stdexcept>
 
-#include "common/type.h"
-#include "common/types.h"
+#include "type/type.h"
+#include "type/types.h"
 
 namespace peloton {
 

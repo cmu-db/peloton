@@ -12,7 +12,7 @@
 
 #include <limits.h>
 #include <pthread.h>
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "gtest/gtest.h"
 #include "common/harness.h"
 

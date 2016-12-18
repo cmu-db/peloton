@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "common/statement.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"

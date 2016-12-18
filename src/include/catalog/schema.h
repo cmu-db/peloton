@@ -15,7 +15,7 @@
 
 #include "common/printable.h"
 #include "catalog/column.h"
-#include "common/type.h"
+#include "type/type.h"
 #include <memory>
 
 namespace peloton {

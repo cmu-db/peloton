@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <vector>
-#include <common/value.h>
+#include <type/value.h>
 
 #include "executor/logical_tile.h"
 

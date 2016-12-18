@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "common/logger.h"
-#include "common/value.h"
+#include "type/value.h"
 #include "executor/logical_tile.h"
 #include "executor/hash_set_op_executor.h"
 

@@ -10,9 +10,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "expression/abstract_expression.h"
 #include "expression/aggregate_expression.h"
 #include "expression/operator_expression.h"

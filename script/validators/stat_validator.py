@@ -29,7 +29,7 @@ if sys.version_info[0] < 3:
     raise "Please use Python 3 to run this script"
 
 ####################################################
-# Postgres types copied from peloton/src/include/common/types.h
+# Postgres types copied from peloton/src/include/type/types.h
 ####################################################
 POSTGRES_VALUE_TYPE_INVALID = -1
 POSTGRES_VALUE_TYPE_BOOLEAN = 16
