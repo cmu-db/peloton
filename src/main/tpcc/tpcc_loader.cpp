@@ -1482,7 +1482,7 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
   // OL_DELIVERY_D
   int64_t ol_delivery_d = GetTimeStamp();
   if (new_order == true) {
-    ol_delivery_d = common::PELOTON_INT64_MIN;
+    ol_delivery_d = type::PELOTON_INT64_MIN;
   }
   order_line_tuple->SetValue(6, type::ValueFactory::GetTimestampValue(ol_delivery_d),
                              nullptr);
