@@ -302,7 +302,7 @@ TEST_F(VarlenPoolTests, RandomTest) {
 // Allocate and free N/2 blocks from each buffer list
 void *thread_all(void *arg) {
   std::srand(0);
-  type::VarlenPool *pool = (VarlenPool *) arg;
+  type::VarlenPool *pool = (type::VarlenPool *) arg;
   char *p[MAX_LIST_NUM][N/2];
   std::vector<std::vector<int>> ref_cnts(MAX_LIST_NUM, std::vector<int>(N, 1));
   char *test_str = new char[str_len];
