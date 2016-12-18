@@ -888,6 +888,15 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
+void DataTable::DropIndexes() {
+
+  // TODO: iterate over all indexes, and actually drop them
+
+  indexes_.Clear(nullptr);
+
+  indexes_columns_.clear();
+}
+
 std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
   PL_ASSERT(index_offset < indexes_.GetSize());
   auto ret_index = indexes_.Find(index_offset);
