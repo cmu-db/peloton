@@ -12,7 +12,7 @@
 
 #include "planner/update_plan.h"
 
-#include "common/types.h"
+#include "type/types.h"
 #include "parser/update_statement.h"
 #include "planner/project_info.h"
 

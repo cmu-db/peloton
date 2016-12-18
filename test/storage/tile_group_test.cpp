@@ -13,7 +13,7 @@
 
 #include "common/harness.h"
 
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/tile_group.h"

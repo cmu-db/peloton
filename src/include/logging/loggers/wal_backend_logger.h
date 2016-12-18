@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/backend_logger.h"
 
 namespace peloton {

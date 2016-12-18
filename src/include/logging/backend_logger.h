@@ -17,12 +17,12 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/logger.h"
 #include "logging/log_record.h"
 #include "logging/log_buffer.h"
 #include "common/platform.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "logging/circular_buffer_pool.h"
 
 namespace peloton {

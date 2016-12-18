@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 #include "executor/abstract_executor.h"
 #include "planner/aggregate_plan.h"
 #include "common/container_tuple.h"

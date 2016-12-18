@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/index_scan_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"

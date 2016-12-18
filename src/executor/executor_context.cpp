@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "common/value.h"
+#include "type/value.h"
 #include "executor/executor_context.h"
 #include "concurrency/transaction.h"
 

@@ -34,7 +34,7 @@
 #include "catalog/catalog.h"
 
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 
 #include "logging/log_record.h"
 #include "logging/log_manager.h"

@@ -18,8 +18,8 @@
 
 #include "common/harness.h"
 
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
 

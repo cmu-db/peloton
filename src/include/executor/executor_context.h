@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "common/varlen_pool.h"
-#include "common/value.h"
+#include "type/varlen_pool.h"
+#include "type/value.h"
 
 namespace peloton {
 

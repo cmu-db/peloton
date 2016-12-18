@@ -20,8 +20,8 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "common/exception.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"

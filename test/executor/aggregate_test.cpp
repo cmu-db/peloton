@@ -17,8 +17,8 @@
 
 #include "common/harness.h"
 
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/aggregate_executor.h"
 #include "executor/executor_context.h"

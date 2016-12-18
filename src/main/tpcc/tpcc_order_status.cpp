@@ -34,9 +34,9 @@
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "common/logger.h"
 #include "common/timer.h"
 #include "common/generator.h"

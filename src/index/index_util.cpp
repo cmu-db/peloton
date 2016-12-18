@@ -12,10 +12,10 @@
 
 #include <cassert>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 #include "index/index_util.h"
 #include "index/index.h"
@@ -68,7 +68,7 @@ inline bool DefinesUpperBound(ExpressionType e) {
  * stop optimizing the predicate at the beginning. So this check serves
  * as a fast path
  *
- * Please refer to src/include/common/types.h for a complete list of comparison
+ * Please refer to src/include/type/types.h for a complete list of comparison
  * operators
  */
 bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {

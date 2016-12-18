@@ -19,7 +19,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/value.h"
+#include "type/value.h"
 #include "storage/tuple.h"
 
 namespace peloton {

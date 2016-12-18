@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 #include "common/printable.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/exception.h"
 
 

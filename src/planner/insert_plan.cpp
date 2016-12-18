@@ -14,7 +14,7 @@
 #include "planner/insert_plan.h"
 #include "catalog/catalog.h"
 #include "catalog/column.h"
-#include "common/value.h"
+#include "type/value.h"
 #include "parser/insert_statement.h"
 #include "parser/select_statement.h"
 #include "planner/project_info.h"

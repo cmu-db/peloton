@@ -16,7 +16,7 @@
 #include "parser/abstract_parse.h"
 #include "parser/table_parse.h"
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 
 namespace peloton {

@@ -15,7 +15,7 @@
 
 #include "catalog/schema.h"
 #include "catalog/foreign_key.h"
-#include "common/value.h"
+#include "type/value.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"

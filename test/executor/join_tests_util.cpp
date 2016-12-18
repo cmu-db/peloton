@@ -13,7 +13,7 @@
 
 #include "executor/join_tests_util.h"
 
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"

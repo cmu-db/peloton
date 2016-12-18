@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "gmock/gmock.h"
 #include "planner/abstract_plan.h"
 

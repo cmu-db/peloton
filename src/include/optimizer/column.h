@@ -16,7 +16,7 @@
 #include "optimizer/operator_node.h"
 #include "optimizer/util.h"
 
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace optimizer {

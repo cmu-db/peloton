@@ -19,7 +19,7 @@
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/types.h"
+#include "type/types.h"
 
 #include "index/index_key.h"
 

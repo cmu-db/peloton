@@ -16,12 +16,12 @@
 
 #include "catalog/schema.h"
 #include "common/abstract_tuple.h"
-#include "common/serializeio.h"
-#include "common/serializer.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
-#include "common/value_peeker.h"
+#include "type/serializeio.h"
+#include "type/serializer.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
+#include "type/value_peeker.h"
 
 namespace peloton {
 namespace storage {

@@ -16,8 +16,8 @@
 #include <functional>
 #include <vector>
 
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "common/macros.h"
 #include "common/exception.h"
 #include "common/abstract_tuple.h"

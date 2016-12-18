@@ -17,8 +17,8 @@
 #include <vector>
 #include <numeric>
 
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/executor_context.h"

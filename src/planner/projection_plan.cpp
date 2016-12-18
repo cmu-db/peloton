@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
  
 #include "planner/projection_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "planner/project_info.h"
 #include "catalog/schema.h"
 

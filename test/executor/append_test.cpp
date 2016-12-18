@@ -17,7 +17,7 @@
 
 #include "planner/append_plan.h"
 
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/append_executor.h"

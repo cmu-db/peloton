@@ -19,7 +19,7 @@
 
 #include "catalog/manager.h"
 #include "common/platform.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "index/index.h"
 
 #include "stx/btree_multimap.h"

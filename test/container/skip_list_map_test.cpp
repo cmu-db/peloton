@@ -14,7 +14,7 @@
 
 #include "common/harness.h"
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "index/index_key.h"
 #include "storage/tuple.h"
 

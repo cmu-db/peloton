@@ -14,7 +14,7 @@
 #pragma once
 
 #include <map>
-#include "common/value.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace index {

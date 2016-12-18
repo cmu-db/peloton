@@ -12,13 +12,13 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "catalog/schema.h"
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
 #include "storage/table_factory.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "planner/insert_plan.h"

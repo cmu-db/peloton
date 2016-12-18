@@ -19,8 +19,8 @@
 
 #include "common/portal.h"
 #include "common/statement.h"
-#include "common/type.h"
-#include "common/types.h"
+#include "type/type.h"
+#include "type/types.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 

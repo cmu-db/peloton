@@ -21,10 +21,10 @@
 
 #include "catalog/schema.h"
 #include "common/printable.h"
-#include "common/serializeio.h"
-#include "common/serializer.h"
-#include "common/types.h"
-#include "common/value.h"
+#include "type/serializeio.h"
+#include "type/serializer.h"
+#include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 

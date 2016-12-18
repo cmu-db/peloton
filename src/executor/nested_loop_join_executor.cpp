@@ -13,7 +13,7 @@
 #include <vector>
 #include <unordered_set>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "executor/nested_loop_join_executor.h"
 #include "executor/executor_context.h"

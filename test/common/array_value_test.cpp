@@ -17,13 +17,13 @@
 #include <cstdint>
 #include <iostream>
 
-#include "common/array_type.h"
-#include "common/boolean_type.h"
-#include "common/decimal_type.h"
+#include "type/array_type.h"
+#include "type/boolean_type.h"
+#include "type/decimal_type.h"
 #include "common/harness.h"
-#include "common/numeric_type.h"
-#include "common/value_factory.h"
-#include "common/varlen_type.h"
+#include "type/numeric_type.h"
+#include "type/value_factory.h"
+#include "type/varlen_type.h"
 
 namespace peloton {
 namespace test {

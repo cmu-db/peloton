@@ -15,7 +15,7 @@
 #include <cstring>
 
 #include "catalog/catalog.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/logging_util.h"
 #include "storage/database.h"
 

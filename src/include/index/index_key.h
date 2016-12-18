@@ -15,7 +15,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "common/value_peeker.h"
+#include "type/value_peeker.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "storage/tuple.h"

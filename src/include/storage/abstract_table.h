@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/printable.h"
 
 #include <string>

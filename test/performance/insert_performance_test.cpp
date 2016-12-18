@@ -20,8 +20,8 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
-#include "common/value_factory.h"
-#include "common/varlen_pool.h"
+#include "type/value_factory.h"
+#include "type/varlen_pool.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 

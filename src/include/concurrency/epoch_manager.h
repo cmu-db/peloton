@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/platform.h"
 #include "common/init.h"
 #include "common/thread_pool.h"

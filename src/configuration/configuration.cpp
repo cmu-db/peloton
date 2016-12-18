@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "configuration/configuration.h"
 
 //===----------------------------------------------------------------------===//

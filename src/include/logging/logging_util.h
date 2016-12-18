@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/records/transaction_record.h"
 #include "logging/records/tuple_record.h"
 #include "storage/data_table.h"

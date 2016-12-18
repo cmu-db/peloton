@@ -20,10 +20,10 @@
 #include <atomic>
 
 #include "common/printable.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
-#include "common/varlen_pool.h"
-#include "common/value.h"
+#include "type/varlen_pool.h"
+#include "type/value.h"
 
 namespace peloton {
 

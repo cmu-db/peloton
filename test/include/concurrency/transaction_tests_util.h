@@ -66,7 +66,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_manager.h"
 #include "concurrency/transaction.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/comparison_expression.h"
 
 #pragma once

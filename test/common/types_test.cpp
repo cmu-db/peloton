@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/harness.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

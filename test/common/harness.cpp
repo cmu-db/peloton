@@ -13,7 +13,7 @@
 
 #include "common/harness.h"
 
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 
