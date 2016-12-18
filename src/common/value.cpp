@@ -394,6 +394,12 @@ void Value::SerializeTo(SerializeOutput &out) const {
   type_->SerializeTo(*this, out);
 }
 
+// Perform a shallow copy from a serialized varlen value to another serialized varlen value
+// Only support VARCHAR/VARBINARY
+void Value::ShallowCopyTo(char *dest, char *src, const Type::TypeId type_id, bool inlined, VarlenPool *src_pool) {
+  Type::GetInstance(type_id)->DoShallowCopy(dest, src, inlined, src_pool);
+}
+
 // Create a copy of this value
 Value Value::Copy() const { return type_->Copy(*this); }
 
@@ -403,6 +409,19 @@ Value Value::CastAs(const Type::TypeId type_id) const {
 
 // Access the raw variable length data
 const char *Value::GetData() const { return type_->GetData(*this); }
+
+// Access the raw variable length data from a pointer pointed to a tuple storage
+char *Value::GetDataFromStorage(Type::TypeId type_id, char *storage) {
+  switch (type_id) {
+    case Type::VARCHAR:
+    case Type::VARBINARY: {
+      return Type::GetInstance(type_id)->GetData(storage);
+    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for getting raw data pointer");
+  }
+}
 
 // Get the length of the variable length data
 uint32_t Value::GetLength() const { return type_->GetLength(*this); }

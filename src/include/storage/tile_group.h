@@ -18,14 +18,18 @@
 #include <vector>
 #include <mutex>
 #include <memory>
-#include <planner/project_info.h>
 
 #include "common/types.h"
 #include "common/value.h"
 #include "common/printable.h"
 #include "common/varlen_pool.h"
+#include "planner/project_info.h"
 
 namespace peloton {
+
+namespace gc {
+  class GCManager;
+}
 
 namespace catalog {
 class Manager;
@@ -63,6 +67,7 @@ typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 class TileGroup : public Printable {
   friend class Tile;
   friend class TileGroupFactory;
+  friend class gc::GCManager;
 
   TileGroup() = delete;
   TileGroup(TileGroup const &) = delete;
@@ -164,6 +169,11 @@ class TileGroup : public Printable {
   common::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(common::Value &value, oid_t tuple_id, oid_t column_id);
+
+  // Copy a column from this tile group to a destination tile group.
+  // Note that we do shallow copy for varlen field
+  void CopyColumnValueTo(TileGroup *dest_tg, oid_t src_tuple_id,
+                         oid_t dest_tuple_id, oid_t col_id);
 
   double GetSchemaDifference(const storage::column_map_type &new_column_map);
 

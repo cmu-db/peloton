@@ -62,8 +62,27 @@ void VarlenPool::Init() {
 // Allocate a contiguous block of memory of the given size. If the allocation
 // is successful a non-null pointer is returned. If the allocation fails, a
 // null pointer will be returned.
+// Memory allocated block layout:
+//  +------------------+---------+
+//  | 8 byte ref count | payload |
+//  +------------------+---------+
+//                     ^
+//                     Returned pointer pointed to the payload
 // TODO: Provide good error codes for failure cases.
 void *VarlenPool::Allocate(size_t size) {
+  void *addr = AllocateHelper(size + sizeof(std::atomic<int64_t>));
+
+  if (addr == nullptr) {
+    return nullptr;
+  }
+
+  // Init the reference count
+  new (addr) std::atomic<int64_t>(1);
+  return ((char *) addr) + sizeof(std::atomic<int64_t>);
+}
+
+// Internal memory allocation
+void *VarlenPool::AllocateHelper(size_t size){
   // Allocate a large block.
   if (size > BUFFER_SIZE) {
     // Lock the corresponding list
@@ -132,8 +151,31 @@ void *VarlenPool::Allocate(size_t size) {
   return nullptr;
 }
 
+// Add one to the reference count of a block of memory allocated by the pool
+void VarlenPool::AddRefCount(void *ptr){
+  GetRefCntPtr(ptr)->fetch_add(1);
+}
+
+// Get the reference count of a block of memory allocated by the pool
+int64_t VarlenPool::GetRefCount(void *ptr) {
+  return GetRefCntPtr(ptr)->load();
+}
+
 // Returns the provided chunk of memory back into the pool
 void VarlenPool::Free(void *ptr) {
+  if (ptr == nullptr) {
+    return;
+  }
+
+  int64_t ref_cnt = GetRefCntPtr(ptr)->fetch_sub(1);
+  PL_ASSERT(ref_cnt > 0);
+  if (ref_cnt == 1) {
+    FreeHelper(((char *) ptr) - sizeof(std::atomic<int64_t>));
+  }
+}
+
+// Internal memory deallocation
+void VarlenPool::FreeHelper(void *ptr){
   bool freed = 0;
   // Find the buffer where the ptr is allocated
   for (size_t i = 0; i < MAX_LIST_NUM; i++) {
@@ -179,6 +221,16 @@ uint64_t VarlenPool::GetTotalAllocatedSpace() {
 
 // Get the maximum size of this pool.
 uint64_t VarlenPool::GetMaximumPoolSize() const { return MAX_POOL_SIZE; }
+
+// Get the empty buffer count for a given empty buffer list id
+int VarlenPool::GetEmptyCountByListId(size_t list_id) const {
+  PL_ASSERT(list_id <= LARGE_LIST_ID);
+  if (list_id > LARGE_LIST_ID) {
+    return -1;
+  }
+
+  return static_cast<int>(empty_cnt_[list_id]);
+}
 
 }  // namespace common
 }  // namespace peloton

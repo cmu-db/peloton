@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/project_info.h"
+
+#include "common/container_tuple.h"
 #include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
@@ -80,32 +82,35 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
   return true;
 }
 
-bool ProjectInfo::Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
-                           const AbstractTuple *tuple2,
-                           executor::ExecutorContext *econtext) const {
+bool ProjectInfo::Evaluate(expression::ContainerTuple<storage::TileGroup> *dest,
+                           expression::ContainerTuple<storage::TileGroup> *src,
+                           executor::ExecutorContext *econtext, bool inplace) const {
   // (A) Execute target list
   for (auto target : target_list_) {
     auto col_id = target.first;
     auto expr = target.second;
-    auto value = expr->Evaluate(tuple1, tuple2, econtext);
+    auto value = expr->Evaluate(src, nullptr, econtext);
     dest->SetValue(col_id, value);
   }
 
   // (B) Execute direct map
-  for (auto dm : direct_map_list_) {
-    auto dest_col_id = dm.first;
-    // whether left tuple or right tuple ?
-    auto tuple_index = dm.second.first;
-    auto src_col_id = dm.second.second;
+  if (inplace == false) {
+    // For update that creates a new version, we copy all unmodified columns
+    // to the new version. Note that for varlen column, we perform shallow copy.
+    for (auto dm : direct_map_list_) {
+      // whether left tuple or right tuple ?
+      auto tuple_index = dm.second.first;
+      auto src_col_id = dm.second.second;
 
-    if (tuple_index == 0) {
-      common::Value val1 = (tuple1->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, val1);
-    } else {
-      common::Value val2 = (tuple2->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, val2);
+      PL_ASSERT(dm.first == dm.second.second);
+      PL_ASSERT(tuple_index == 0);
+      if (tuple_index == 0) {
+        src->CopyColumnTo(dest, src_col_id);
+      }
     }
   }
+  // For inplace update, we don't need to do anything for unmodified columns
+  // because they are already there
 
   return true;
 }

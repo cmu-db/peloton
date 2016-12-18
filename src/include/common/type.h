@@ -131,6 +131,11 @@ class Type {
   virtual Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const;
 
+  // Perform a shallow copy from a serialized varlen value to another serialized varlen value
+  // Only support VARCHAR/VARBINARY
+  virtual void DoShallowCopy(char *dest, char *src,
+                             bool inlined, VarlenPool *src_pool) const;
+
   // Create a copy of this value
   virtual Value Copy(const Value& val) const;
 
@@ -138,6 +143,9 @@ class Type {
 
   // Access the raw variable length data
   virtual const char *GetData(const Value& val) const;
+
+  // Access the raw varlen data stored from the tuple storage
+  virtual char *GetData(char *storage);
 
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
