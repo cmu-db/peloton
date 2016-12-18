@@ -63,7 +63,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   return;
 }
 
-void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
+void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Index Scans");
 
   // Destroy the values of the last plan and copy the original values over for
@@ -76,7 +76,7 @@ void IndexScanPlan::SetParameterValues(std::vector<common::Value> *values) {
   for (unsigned int i = 0; i < values_.size(); ++i) {
     auto value = values_[i];
     auto column_id = key_column_ids_[i];
-    if (value.GetTypeId() == common::Type::PARAMETER_OFFSET) {
+    if (value.GetTypeId() == type::Type::PARAMETER_OFFSET) {
       int offset = value.GetAs<int32_t>();
       values_[i] = (values->at(offset)).CastAs(
           GetTable()->GetSchema()->GetColumn(column_id).GetType());

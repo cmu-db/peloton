@@ -67,12 +67,12 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   bool hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteInsert(
-        txn, data_table.get(), common::ValueFactory::GetNullValue(),
-        common::ValueFactory::GetIntegerValue(
+        txn, data_table.get(), type::ValueFactory::GetNullValue(),
+        type::ValueFactory::GetIntegerValue(
             ConstraintsTestsUtil::PopulatedValue(15, 1)),
-        common::ValueFactory::GetIntegerValue(
+        type::ValueFactory::GetIntegerValue(
             ConstraintsTestsUtil::PopulatedValue(15, 2)),
-        common::ValueFactory::GetVarcharValue(
+        type::ValueFactory::GetVarcharValue(
             std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
 
   } catch (ConstraintException e) {
@@ -84,13 +84,13 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteInsert(
-        txn, data_table.get(), common::ValueFactory::GetIntegerValue(
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(
                                    ConstraintsTestsUtil::PopulatedValue(15, 0)),
-        common::ValueFactory::GetIntegerValue(
+        type::ValueFactory::GetIntegerValue(
             ConstraintsTestsUtil::PopulatedValue(15, 1)),
-        common::ValueFactory::GetIntegerValue(
+        type::ValueFactory::GetIntegerValue(
             ConstraintsTestsUtil::PopulatedValue(15, 2)),
-        common::ValueFactory::GetVarcharValue(
+        type::ValueFactory::GetVarcharValue(
             std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
   } catch (ConstraintException e) {
     hasException = true;

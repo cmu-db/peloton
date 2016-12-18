@@ -217,12 +217,12 @@ TEST_F(ProjectionTests, BasicTargetTest) {
 
   // target list
   auto const_val = new expression::ConstantValueExpression(
-      common::ValueFactory::GetIntegerValue(20));
+      type::ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
-                                                  common::Type::INTEGER,
+                                                  type::Type::INTEGER,
                                                   tuple_value_expr, const_val);
 
   Target target = std::make_pair(1, expr);

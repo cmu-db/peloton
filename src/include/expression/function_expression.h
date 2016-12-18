@@ -21,8 +21,6 @@ namespace expression {
 // OperatorExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class FunctionExpression: public AbstractExpression {
 public:
   FunctionExpression(const char * func_name, const std::vector<AbstractExpression*>& children) :
@@ -32,7 +30,7 @@ public:
     }
   }
 
-  FunctionExpression(Value (*func_ptr)(const std::vector<Value>&), Type::TypeId return_type,
+  FunctionExpression(type::Value (*func_ptr)(const std::vector<type::Value>&), type::Type::TypeId return_type,
       size_t num_args, const std::vector<AbstractExpression*>& children) :
       AbstractExpression(EXPRESSION_TYPE_FUNCTION, return_type), func_ptr_(
           func_ptr), num_args_(num_args) {
@@ -44,8 +42,8 @@ public:
     }
   }
 
-  void SetFunctionExpressionParameters(Value (*func_ptr)(const std::vector<Value>&),
-      Type::TypeId val_type, size_t num_args) {
+  void SetFunctionExpressionParameters(type::Value (*func_ptr)(const std::vector<type::Value>&),
+                                       type::Type::TypeId val_type, size_t num_args) {
     func_ptr_ = func_ptr;
     return_value_type_ = val_type;
     if (num_args != children_.size()){
@@ -55,18 +53,18 @@ public:
     num_args_ = num_args;
   }
 
-  Value Evaluate(const AbstractTuple *tuple1,
+  type::Value Evaluate(const AbstractTuple *tuple1,
   const AbstractTuple *tuple2,
   UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     // for now support only one child
-    std::vector<Value> child_values;
+    std::vector<type::Value> child_values;
     PL_ASSERT(func_ptr_ != nullptr);
     for (auto &child: children_){
       child_values.push_back(child->Evaluate(tuple1, tuple2, context));
     }
     // this should always be true because we check
     PL_ASSERT(num_args_ == child_values.size());
-    Value ret = func_ptr_(child_values);
+    type::Value ret = func_ptr_(child_values);
     // if this is false we should throw an exception
     if (ret.GetElementType() != return_value_type_){
       throw Exception("function "+func_name_+" returned an unexpected type.");
@@ -85,7 +83,7 @@ protected:
       AbstractExpression(other), func_name_(other.func_name_), func_ptr_(other.func_ptr_), num_args_(other.num_args_) {
   }
 private:
-  Value (*func_ptr_)(const std::vector<Value>&) = nullptr;
+  type::Value (*func_ptr_)(const std::vector<type::Value>&) = nullptr;
   size_t num_args_ = 0;
 
 

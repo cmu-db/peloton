@@ -93,7 +93,7 @@ class BackendLogger : public Logger {
   void SetShutdown(bool);
 
   // gets the Varlenpool used for log serialization
-  common::VarlenPool *GetVarlenPool() { return backend_pool.get(); }
+  type::VarlenPool *GetVarlenPool() { return backend_pool.get(); }
 
  protected:
   // the lock for the buffer being used currently
@@ -127,7 +127,7 @@ class BackendLogger : public Logger {
   std::unique_ptr<BufferPool> persist_buffer_pool_;
 
   // varlen pool for serialization
-  std::unique_ptr<common::VarlenPool> backend_pool;
+  std::unique_ptr<type::VarlenPool> backend_pool;
 
   // shutdown flag
   bool shutdown = false;

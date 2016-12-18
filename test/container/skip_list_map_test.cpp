@@ -39,20 +39,20 @@ TEST_F(SkipListMapTest, BasicTest) {
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "A", true);
   columns.push_back(column1);
   catalog::Schema *schema(new catalog::Schema(columns));
   std::vector<storage::Tuple *> tuples;
 
   storage::Tuple *tuple1(new storage::Tuple(schema, true));
-  tuple1->SetValue(0, common::ValueFactory::GetIntegerValue(1), nullptr);
+  tuple1->SetValue(0, type::ValueFactory::GetIntegerValue(1), nullptr);
   tuples.push_back(tuple1);
   storage::Tuple *tuple2(new storage::Tuple(schema, true));
-  tuple2->SetValue(0, common::ValueFactory::GetIntegerValue(2), nullptr);
+  tuple2->SetValue(0, type::ValueFactory::GetIntegerValue(2), nullptr);
   tuples.push_back(tuple2);
   storage::Tuple *tuple3(new storage::Tuple(schema, true));
-  tuple3->SetValue(0, common::ValueFactory::GetIntegerValue(3), nullptr);
+  tuple3->SetValue(0, type::ValueFactory::GetIntegerValue(3), nullptr);
   tuples.push_back(tuple3);
 
   LOG_INFO("%s", tuple1->GetInfo().c_str());
@@ -107,7 +107,7 @@ void InsertTest(size_t scale_factor, catalog::Schema *schema,
     uint32_t tuple_offset = base + tuple_itr;
 
     storage::Tuple *tuple(new storage::Tuple(schema, true));
-    tuple->SetValue(0, common::ValueFactory::GetIntegerValue(tuple_offset), nullptr);
+    tuple->SetValue(0, type::ValueFactory::GetIntegerValue(tuple_offset), nullptr);
 
     key_type key;
     key.SetFromKey(tuple);
@@ -126,7 +126,7 @@ TEST_F(SkipListMapTest, MultithreadedTest) {
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "A", true);
   columns.push_back(column1);
   catalog::Schema *schema(new catalog::Schema(columns));

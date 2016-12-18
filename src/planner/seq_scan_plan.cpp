@@ -252,7 +252,7 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   return index;
 }
 
-void SeqScanPlan::SetParameterValues(std::vector<common::Value> *values) {
+void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
 
   for (auto &child_plan : GetChildren()) {

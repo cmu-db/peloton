@@ -56,7 +56,7 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
-  void SetParameterValues(std::vector<common::Value> *values) override;
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
   bool GetTruncate() const { return truncate; }
 

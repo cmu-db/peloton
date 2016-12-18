@@ -17,7 +17,7 @@
 #include "common/exception.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // A boolean value isn't a real SQL type, but we treat it as one to keep
 // consistent in the expression subsystem.
@@ -60,5 +60,5 @@ class BooleanType : public Type {
   Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 };
 
+}  // namespace type
 }  // namespace peloton
-}  // namespace common

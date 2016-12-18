@@ -524,24 +524,24 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "table_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto name_column =
-      catalog::Column(common::Type::VARCHAR, max_name_size, "table_name", true);
+      catalog::Column(type::Type::VARCHAR, max_name_size, "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto database_id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(
-      common::Type::VARCHAR, max_name_size, "database_name", true);
+      type::Type::VARCHAR, max_name_size, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -556,11 +556,11 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
-  auto name_column = catalog::Column(common::Type::VARCHAR, max_name_size,
+  auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
                                      "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
@@ -575,8 +575,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
 
   auto id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
@@ -602,8 +602,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
 
   auto database_id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
@@ -641,8 +641,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
 
   auto database_id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
@@ -679,15 +679,15 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
   oid_t varbinary_type_size =
-      common::Type::GetTypeSize(common::Type::VARBINARY);
+      type::Type::GetTypeSize(type::Type::VARBINARY);
 
-  common::Type::TypeId integer_type = common::Type::INTEGER;
-  common::Type::TypeId varbinary_type = common::Type::VARBINARY;
+  type::Type::TypeId integer_type = type::Type::INTEGER;
+  type::Type::TypeId varbinary_type = type::Type::VARBINARY;
 
   auto name_column = catalog::Column(
-      common::Type::VARCHAR, common::Type::GetTypeSize(common::Type::VARCHAR),
+      type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::VARCHAR),
       "query_name", false);
   name_column.AddConstraint(not_null_constraint);
   auto database_id_column =
@@ -753,8 +753,8 @@ Catalog::~Catalog() {
 // add amd get methods for UDFs
 void Catalog::AddFunction(
     const std::string &name, const size_t num_arguments,
-    const common::Type::TypeId return_type,
-    common::Value (*func_ptr)(const std::vector<common::Value> &)) {
+    const type::Type::TypeId return_type,
+    type::Value (*func_ptr)(const std::vector<type::Value> &)) {
   PL_ASSERT(functions_.count(name) == 0);
   functions_[name] = FunctionData{name, num_arguments, return_type, func_ptr};
 }
@@ -774,27 +774,27 @@ void Catalog::InitializeFunctions() {
   /**
    * string functions
    */
-  AddFunction("ascii", 1, common::Type::INTEGER,
+  AddFunction("ascii", 1, type::Type::INTEGER,
               expression::StringFunctions::Ascii);
-  AddFunction("chr", 1, common::Type::VARCHAR,
+  AddFunction("chr", 1, type::Type::VARCHAR,
               expression::StringFunctions::Chr);
-  AddFunction("substr", 3, common::Type::VARCHAR,
+  AddFunction("substr", 3, type::Type::VARCHAR,
               expression::StringFunctions::Substr);
-  AddFunction("concat", 2, common::Type::VARCHAR,
+  AddFunction("concat", 2, type::Type::VARCHAR,
               expression::StringFunctions::Concat);
-  AddFunction("char_length", 1, common::Type::INTEGER,
+  AddFunction("char_length", 1, type::Type::INTEGER,
               expression::StringFunctions::CharLength);
-  AddFunction("octet_length", 1, common::Type::INTEGER,
+  AddFunction("octet_length", 1, type::Type::INTEGER,
               expression::StringFunctions::OctetLength);
-  AddFunction("repeat", 2, common::Type::VARCHAR,
+  AddFunction("repeat", 2, type::Type::VARCHAR,
               expression::StringFunctions::Repeat);
-  AddFunction("replace", 3, common::Type::VARCHAR,
+  AddFunction("replace", 3, type::Type::VARCHAR,
               expression::StringFunctions::Replace);
-  AddFunction("ltrim", 2, common::Type::VARCHAR,
+  AddFunction("ltrim", 2, type::Type::VARCHAR,
               expression::StringFunctions::LTrim);
-  AddFunction("rtrim", 2, common::Type::VARCHAR,
+  AddFunction("rtrim", 2, type::Type::VARCHAR,
               expression::StringFunctions::RTrim);
-  AddFunction("btrim", 2, common::Type::VARCHAR,
+  AddFunction("btrim", 2, type::Type::VARCHAR,
               expression::StringFunctions::BTrim);
 }
 }

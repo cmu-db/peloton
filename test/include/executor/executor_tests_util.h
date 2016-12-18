@@ -107,9 +107,9 @@ class ExecutorTestsUtil {
 
   static std::unique_ptr<storage::Tuple> GetTuple(storage::DataTable *table,
                                                   oid_t tuple_id,
-                                                  common::VarlenPool *pool);
+                                                  type::VarlenPool *pool);
   static std::unique_ptr<storage::Tuple> GetNullTuple(storage::DataTable *table,
-                                                      common::VarlenPool *pool);
+                                                      type::VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(

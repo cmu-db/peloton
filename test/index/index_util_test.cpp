@@ -56,20 +56,20 @@ static index::Index *BuildIndex() {
   // The size of the key is:
   //   integer 4 * 3 = total 12
 
-  catalog::Column column0(common::Type::INTEGER,
-                          common::Type::GetTypeSize(common::Type::INTEGER), "A",
+  catalog::Column column0(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
                           true);
 
-  catalog::Column column1(common::Type::VARCHAR, 1024, "B", false);
+  catalog::Column column1(type::Type::VARCHAR, 1024, "B", false);
 
   // The following twoc constitutes tuple schema but does not appear in index
 
-  catalog::Column column2(common::Type::DECIMAL,
-                          common::Type::GetTypeSize(common::Type::DECIMAL), "C",
+  catalog::Column column2(type::Type::DECIMAL,
+                          type::Type::GetTypeSize(type::Type::DECIMAL), "C",
                           true);
 
-  catalog::Column column3(common::Type::INTEGER,
-                          common::Type::GetTypeSize(common::Type::INTEGER), "D",
+  catalog::Column column3(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "D",
                           true);
 
   // Use all four columns to build tuple schema
@@ -246,14 +246,14 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
 
-  std::vector<common::Value> value_list{};
+  std::vector<type::Value> value_list{};
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
   value_list = {
-      common::ValueFactory::GetIntegerValue(100).Copy(),
-      common::ValueFactory::GetIntegerValue(200).Copy(),
-      common::ValueFactory::GetIntegerValue(50).Copy(),
+      type::ValueFactory::GetIntegerValue(100).Copy(),
+      type::ValueFactory::GetIntegerValue(200).Copy(),
+      type::ValueFactory::GetIntegerValue(50).Copy(),
   };
 
   tuple_column_id_list = {3, 3, 0};
@@ -296,7 +296,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   ///////////////////////////////////////////////////////////////////
 
   value_list = {
-      common::ValueFactory::GetIntegerValue(100).Copy(),
+      type::ValueFactory::GetIntegerValue(100).Copy(),
   };
 
   tuple_column_id_list = {
@@ -327,9 +327,9 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   IndexScanPredicate isp2{};
 
   value_list = {
-      common::ValueFactory::GetIntegerValue(100).Copy(),
-      common::ValueFactory::GetVarcharValue("Peloton!").Copy(),
-      common::ValueFactory::GetIntegerValue(50).Copy(),
+      type::ValueFactory::GetIntegerValue(100).Copy(),
+      type::ValueFactory::GetVarcharValue("Peloton!").Copy(),
+      type::ValueFactory::GetIntegerValue(50).Copy(),
   };
 
   tuple_column_id_list = {3, 1, 0};
@@ -370,14 +370,14 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
 
-  std::vector<common::Value> value_list{};
+  std::vector<type::Value> value_list{};
   std::vector<oid_t> tuple_column_id_list{};
   std::vector<ExpressionType> expr_list{};
 
   value_list = {
-      common::ValueFactory::GetParameterOffsetValue(2).Copy(),
-      common::ValueFactory::GetParameterOffsetValue(0).Copy(),
-      common::ValueFactory::GetParameterOffsetValue(1).Copy(),
+      type::ValueFactory::GetParameterOffsetValue(2).Copy(),
+      type::ValueFactory::GetParameterOffsetValue(0).Copy(),
+      type::ValueFactory::GetParameterOffsetValue(1).Copy(),
   };
 
   tuple_column_id_list = {3, 3, 0};
@@ -413,12 +413,12 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   LOG_INFO("High key (NOT BINDED) = %s", cl[0].GetHighKey()->GetInfo().c_str());
 
   // Bind real value
-  common::Value val1 = (
-      common::ValueFactory::GetIntegerValue(100).Copy());
-  common::Value val2 = (
-      common::ValueFactory::GetIntegerValue(200).Copy());
-  common::Value val3 = (
-      common::ValueFactory::GetIntegerValue(300).Copy());
+  type::Value val1 = (
+      type::ValueFactory::GetIntegerValue(100).Copy());
+  type::Value val2 = (
+      type::ValueFactory::GetIntegerValue(200).Copy());
+  type::Value val3 = (
+      type::ValueFactory::GetIntegerValue(300).Copy());
   isp.LateBindValues(index_p, {val1, val2, val3});
 
   // This is important - Since binding does not change the number of

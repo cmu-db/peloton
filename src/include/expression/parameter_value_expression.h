@@ -23,17 +23,15 @@ namespace expression {
 // ParameterValueExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class ParameterValueExpression : public AbstractExpression {
  public:
   ParameterValueExpression(int value_idx)
-    : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER, Type::PARAMETER_OFFSET),
+    : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER, type::Type::PARAMETER_OFFSET),
       value_idx_(value_idx){}
 
   int GetValueIdx() const { return value_idx_; }
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       executor::ExecutorContext *context) const override {
     return context->GetParams().at(value_idx_);

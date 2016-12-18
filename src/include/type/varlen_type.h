@@ -4,7 +4,7 @@
 //
 // varlen_value.h
 //
-// Identification: src/backend/common/varlen_value.h
+// Identification: src/backend/type/varlen_value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,7 +15,7 @@
 #include "type/value.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // A varlen value is an abstract class representing all objects that have
 // variable length.
@@ -65,5 +65,5 @@ class VarlenType : public Type {
   Value Copy(const Value& val) const override;
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

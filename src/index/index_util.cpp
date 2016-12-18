@@ -218,8 +218,8 @@ bool FindValueIndex(const IndexMetadata *metadata_p,
  * If values are equal then compare the second element which is an int
  * and return the result
  */
-bool ValuePairComparator(const std::pair<common::Value, int> &i,
-                         const std::pair<common::Value, int> &j) {
+bool ValuePairComparator(const std::pair<type::Value, int> &i,
+                         const std::pair<type::Value, int> &j) {
 
   // If first elements are equal then compare the second element
   if (i.first.CompareEquals(j.first).IsTrue()) {
@@ -231,15 +231,15 @@ bool ValuePairComparator(const std::pair<common::Value, int> &i,
 }
 
 void ConstructIntervals(oid_t leading_column_id,
-                        const std::vector<common::Value> &values,
+                        const std::vector<type::Value> &values,
                         const std::vector<oid_t> &key_column_ids,
                         const std::vector<ExpressionType> &expr_types,
-          std::vector<std::pair<common::Value, common::Value>> &intervals) {
+          std::vector<std::pair<type::Value, type::Value>> &intervals) {
   // Find all contrains of leading column.
   // Equal --> > < num
   // > >= --->  > num
   // < <= ----> < num
-  std::vector<std::pair<common::Value, int>> nums;
+  std::vector<std::pair<type::Value, int>> nums;
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     if (key_column_ids[i] != leading_column_id) {
       continue;
@@ -247,17 +247,17 @@ void ConstructIntervals(oid_t leading_column_id,
 
     // If leading column
     if (DefinesLowerBound(expr_types[i])) {
-      nums.push_back(std::pair<common::Value, int>(values[i], -1));
+      nums.push_back(std::pair<type::Value, int>(values[i], -1));
     } else if (DefinesUpperBound(expr_types[i])) {
-      nums.push_back(std::pair<common::Value, int>(values[i], 1));
+      nums.push_back(std::pair<type::Value, int>(values[i], 1));
     } else {
       // Currently if it is not >  < <= then it must be ==
       // *** I could not find BETWEEN expression in types.h so did not add it
       // into the list
       PL_ASSERT(expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL);
       
-      nums.push_back(std::pair<common::Value, int>(values[i], -1));
-      nums.push_back(std::pair<common::Value, int>(values[i], 1));
+      nums.push_back(std::pair<type::Value, int>(values[i], -1));
+      nums.push_back(std::pair<type::Value, int>(values[i], 1));
     }
   }
 
@@ -270,46 +270,46 @@ void ConstructIntervals(oid_t leading_column_id,
 
   // Build intervals.
   // get some dummy value
-  common::Value cur;
+  type::Value cur;
   size_t i = 0;
   if (nums[0].second < 0) {
     cur = nums[0].first;
     i++;
   } else {
-    cur = common::Type::GetMinValue(nums[0].first.GetTypeId());
+    cur = type::Type::GetMinValue(nums[0].first.GetTypeId());
   }
 
   while (i < nums.size()) {
     if (nums[i].second > 0) {
       if (i + 1 < nums.size() && nums[i + 1].second < 0) {
         // right value
-        intervals.push_back(std::pair<common::Value, common::Value>(
+        intervals.push_back(std::pair<type::Value, type::Value>(
           cur, nums[i].first));
         cur = nums[i + 1].first;
       } else if (i + 1 == nums.size()) {
         // Last value while right value
-        intervals.push_back(std::pair<common::Value, common::Value>(
+        intervals.push_back(std::pair<type::Value, type::Value>(
           cur, nums[i].first));
-        cur = common::ValueFactory::GetNullValueByType(nums[0].first.GetTypeId());
+        cur = type::ValueFactory::GetNullValueByType(nums[0].first.GetTypeId());
       }
     }
     i++;
   }
 
   if (cur.IsNull() == false) {
-    intervals.push_back(std::pair<common::Value, common::Value>(
-        cur, common::Type::GetMaxValue(nums[0].first.GetTypeId())));
+    intervals.push_back(std::pair<type::Value, type::Value>(
+        cur, type::Type::GetMaxValue(nums[0].first.GetTypeId())));
   }
 
   // Finish invtervals building.
 };
 
 void FindMaxMinInColumns(oid_t leading_column_id,
-                         const std::vector<common::Value> &values,
+                         const std::vector<type::Value> &values,
                          const std::vector<oid_t> &key_column_ids,
                          const std::vector<ExpressionType> &expr_types,
-                         std::map<oid_t, std::pair<common::Value,
-                             common::Value>> &non_leading_columns) {
+                         std::map<oid_t, std::pair<type::Value,
+                             type::Value>> &non_leading_columns) {
   // find extreme nums on each column.
   LOG_TRACE("FindMinMax leading column %d\n", leading_column_id);
   for (size_t i = 0; i < key_column_ids.size(); i++) {
@@ -325,10 +325,10 @@ void FindMaxMinInColumns(oid_t leading_column_id,
       //                                            Value::GetMinValue(type));
       // std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
       non_leading_columns.insert(std::pair<oid_t,
-        std::pair<common::Value, common::Value>>(
-          column_id, std::pair<common::Value, common::Value>(
-            common::ValueFactory::GetNullValueByType(type),
-            common::ValueFactory::GetNullValueByType(type))));
+        std::pair<type::Value, type::Value>>(
+          column_id, std::pair<type::Value, type::Value>(
+            type::ValueFactory::GetNullValueByType(type),
+            type::ValueFactory::GetNullValueByType(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
@@ -367,11 +367,11 @@ void FindMaxMinInColumns(oid_t leading_column_id,
   for (const auto &k_v : non_leading_columns) {
     if (k_v.second.first.IsNull()) {
       non_leading_columns[k_v.first].first =
-          common::Type::GetMinValue(k_v.second.first.GetTypeId());
+          type::Type::GetMinValue(k_v.second.first.GetTypeId());
     }
     if (k_v.second.second.IsNull()) {
       non_leading_columns[k_v.first].second =
-          common::Type::GetMinValue(k_v.second.second.GetTypeId());
+          type::Type::GetMinValue(k_v.second.second.GetTypeId());
     }
   }
 };

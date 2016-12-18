@@ -131,7 +131,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   cid_t max_cid = 0;
 
   // pool for allocating non-inlined values
-  common::VarlenPool *recovery_pool;
+  type::VarlenPool *recovery_pool;
 
   // abj1 adding code here!
   std::vector<LogFile *> log_files_;

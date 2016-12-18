@@ -17,7 +17,7 @@
 #include "type/value_factory.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 TimestampType::TimestampType()
   : Type(Type::TIMESTAMP) {
@@ -152,5 +152,5 @@ Value TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const 
       + Type::GetInstance(type_id)->ToString());
 }
 
-}  // namespace peloton
+}  // namespace type
 }  // namespace common

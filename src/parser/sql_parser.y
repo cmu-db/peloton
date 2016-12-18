@@ -744,7 +744,7 @@ scalar_expr:
 
 unary_expr:
 		'-' expr { $$ = new peloton::expression::OperatorUnaryMinusExpression($2); }
-	|	NOT expr { $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_NOT, peloton::common::Type::BOOLEAN, $2, nullptr); }
+	|	NOT expr { $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_NOT, peloton::type::Type::BOOLEAN, $2, nullptr); }
 	;
 
 binary_expr:
@@ -797,17 +797,17 @@ literal:
 	;
 
 string_literal:
-		STRING { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetVarcharValue($1)); free($1);}
+		STRING { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetVarcharValue($1)); free($1);}
 	;
 
 
 num_literal:
-		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetDoubleValue($1)); }
+		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetDoubleValue($1)); }
 	|	int_literal
 	;
 
 int_literal:
-		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::common::ValueFactory::GetIntegerValue($1)); $$->ival_ = $1; }
+		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue($1)); $$->ival_ = $1; }
 	;
 
 star_expr:

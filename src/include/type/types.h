@@ -966,8 +966,8 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(const std::string &str);
 
-std::string TypeIdToString(common::Type::TypeId type);
-common::Type::TypeId StringToTypeId(const std::string &str);
+std::string TypeIdToString(type::Type::TypeId type);
+type::Type::TypeId StringToTypeId(const std::string &str);
 
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
@@ -994,7 +994,7 @@ std::string LoggingStatusToString(LoggingStatus type);
 std::string LoggerTypeToString(LoggerType type);
 std::string LogRecordTypeToString(LogRecordType type);
 
-common::Type::TypeId PostgresValueTypeToPelotonValueType(
+type::Type::TypeId PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);

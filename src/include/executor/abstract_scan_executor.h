@@ -36,7 +36,7 @@ class AbstractScanExecutor : public AbstractExecutor {
 
   virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
                                    UNUSED_ATTRIBUTE,
-                               const std::vector<common::Value> &values
+                               const std::vector<type::Value> &values
                                    UNUSED_ATTRIBUTE) {}
 
   virtual void ResetState() {}

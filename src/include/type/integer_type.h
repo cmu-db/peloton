@@ -4,7 +4,7 @@
 //
 // integer_parent_type.h
 //
-// Identification: src/backend/common/numeric_value.h
+// Identification: src/backend/type/numeric_value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,14 +15,14 @@
 #include "type/integer_parent_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // An integer value of the common sizes.
 class IntegerType : public IntegerParentType {
  public:
   ~IntegerType() {}
 
-  IntegerType(TypeId type);
+  IntegerType(Type::TypeId type);
 
   // Other mathematical functions
   Value Add(const Value& left, const Value &right) const override;
@@ -70,5 +70,5 @@ class IntegerType : public IntegerParentType {
   bool IsZero(const Value& val) const override;
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

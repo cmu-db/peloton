@@ -17,7 +17,7 @@
 #include "type/value_factory.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // An integer value of the common sizes.
 class IntegerParentType : public NumericType {
@@ -195,5 +195,5 @@ Value IntegerParentType::ModuloValue(const Value& left, const Value &right) cons
   return Value(right.GetTypeId(), quot2);
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

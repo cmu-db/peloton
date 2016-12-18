@@ -20,7 +20,7 @@
 #include "type/value_factory.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 SmallintType::SmallintType() :
     IntegerParentType(Type::SMALLINT) {
@@ -513,5 +513,5 @@ Value SmallintType::CastAs(const Value& val,
           + Type::GetInstance(type_id)->ToString());
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

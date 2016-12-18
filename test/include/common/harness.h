@@ -64,7 +64,7 @@ class TestingHarness {
 
   txn_id_t GetNextTransactionId();
 
-  common::VarlenPool *GetTestingPool();
+  type::VarlenPool *GetTestingPool();
 
   oid_t GetNextTileGroupId();
 
@@ -81,7 +81,7 @@ class TestingHarness {
   std::atomic<oid_t> tile_group_id_counter;
 
   // Testing pool
-  std::unique_ptr<common::VarlenPool> pool_;
+  std::unique_ptr<type::VarlenPool> pool_;
 };
 
 template <typename... Args>

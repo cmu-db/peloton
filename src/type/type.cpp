@@ -27,7 +27,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 Type* Type::kTypes[] = {
     new Type(Type::INVALID),
@@ -363,5 +363,5 @@ Value Type::InList(const Value& list UNUSED_ATTRIBUTE,
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

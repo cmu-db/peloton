@@ -262,7 +262,7 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
 }
 
 storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
-                                                 common::VarlenPool *pool,
+                                                 type::VarlenPool *pool,
                                                  FileHandle &file_handle) {
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize(file_handle);

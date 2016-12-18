@@ -19,9 +19,9 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 NumericType::~NumericType() {}
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

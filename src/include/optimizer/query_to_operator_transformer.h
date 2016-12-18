@@ -54,7 +54,7 @@ class QueryToOperatorTransformer : public QueryNodeVisitor {
 
   std::shared_ptr<OperatorExpression> output_expr;
   // For expr nodes
-  common::Type::TypeId output_type;
+  type::Type::TypeId output_type;
   int output_size;
   bool output_inlined;
 };

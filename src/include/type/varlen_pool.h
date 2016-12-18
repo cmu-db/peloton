@@ -36,7 +36,7 @@ static const size_t LARGE_LIST_ID = MAX_LIST_NUM - 1;
 static const size_t MAX_EMPTY_NUM = 4;
 
 namespace peloton {
-namespace common {
+namespace type {
 
 class Buffer {
  public:
@@ -101,5 +101,5 @@ class VarlenPool {
   Spinlock list_lock_[MAX_LIST_NUM];
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

@@ -43,13 +43,13 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
 
-  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
+  catalog::Column column3(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
                           "C", true);
-  catalog::Column column4(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column4(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "D", true);
 
   columns.push_back(column1);
@@ -105,11 +105,11 @@ static void InsertTest1(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, common::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, common::ValueFactory::GetIntegerValue(12345), nullptr);
+  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   for (size_t i = start_key;i < end_key;i++) {
-    auto key_value =  common::ValueFactory::GetIntegerValue(i);
+    auto key_value =  type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -147,11 +147,11 @@ static void DeleteTest1(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, common::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, common::ValueFactory::GetIntegerValue(12345), nullptr);
+  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   for (size_t i = start_key;i < end_key;i++) {
-    auto key_value =  common::ValueFactory::GetIntegerValue(i);
+    auto key_value =  type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -186,12 +186,12 @@ static void InsertTest2(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, common::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, common::ValueFactory::GetIntegerValue(12345), nullptr);
+  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
   for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
-    auto key_value =  common::ValueFactory::GetIntegerValue(i);
+    auto key_value =  type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -226,12 +226,12 @@ static void DeleteTest2(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, common::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, common::ValueFactory::GetIntegerValue(12345), nullptr);
+  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
   for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
-    auto key_value =  common::ValueFactory::GetIntegerValue(i);
+    auto key_value =  type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);

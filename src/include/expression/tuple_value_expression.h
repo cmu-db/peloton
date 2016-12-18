@@ -22,26 +22,24 @@ namespace expression {
 // TupleValueExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class TupleValueExpression : public AbstractExpression {
  public:
   TupleValueExpression(std::string &&col_name)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, Type::INVALID),
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
         tuple_idx_(-1) {
     col_name_ = col_name;
   }
 
   TupleValueExpression(std::string &&col_name, std::string &&table_name)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, Type::INVALID),
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
         tuple_idx_(-1) {
     table_name_ = table_name;
     col_name_ = col_name;
   }
 
-  TupleValueExpression(Type::TypeId type_id, const int tuple_idx,
+  TupleValueExpression(type::Type::TypeId type_id, const int tuple_idx,
                        const int value_idx)
       : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type_id),
         value_idx_(value_idx),
@@ -49,7 +47,7 @@ class TupleValueExpression : public AbstractExpression {
 
   ~TupleValueExpression() {}
 
-  Value Evaluate(
+  type::Value Evaluate(
       const AbstractTuple *tuple1, const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (tuple_idx_ == 0) {
@@ -61,7 +59,7 @@ class TupleValueExpression : public AbstractExpression {
     }
   }
 
-  void SetTupleValueExpressionParams(Type::TypeId type_id, int value_idx,
+  void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
     return_value_type_ = type_id;
     value_idx_ = value_idx;

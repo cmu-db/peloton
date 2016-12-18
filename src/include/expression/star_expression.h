@@ -18,10 +18,8 @@ namespace peloton {
 namespace expression {
 
 //===----------------------------------------------------------------------===//
-// OperatorExpression
+// StarExpression
 //===----------------------------------------------------------------------===//
-
-using namespace peloton::common;
 
 class StarExpression: public AbstractExpression {
 public:
@@ -29,10 +27,10 @@ public:
       AbstractExpression(EXPRESSION_TYPE_STAR){
   }
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
   UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
   UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    return common::ValueFactory::GetBooleanValue(true);
+    return type::ValueFactory::GetBooleanValue(true);
   }
 
   AbstractExpression * Copy() const{

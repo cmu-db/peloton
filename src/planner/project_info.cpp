@@ -49,7 +49,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // Get varlen pool
-  common::VarlenPool *pool = nullptr;
+  type::VarlenPool *pool = nullptr;
   if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
 
   // (A) Execute target list
@@ -69,10 +69,10 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
     auto src_col_id = dm.second.second;
 
     if (tuple_index == 0) {
-      common::Value value = (tuple1->GetValue(src_col_id));
+      type::Value value = (tuple1->GetValue(src_col_id));
       dest->SetValue(dest_col_id, value, pool);
     } else {
-      common::Value value = (tuple2->GetValue(src_col_id));
+      type::Value value = (tuple2->GetValue(src_col_id));
       dest->SetValue(dest_col_id, value, pool);
     }
   }
@@ -99,10 +99,10 @@ bool ProjectInfo::Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
     auto src_col_id = dm.second.second;
 
     if (tuple_index == 0) {
-      common::Value val1 = (tuple1->GetValue(src_col_id));
+      type::Value val1 = (tuple1->GetValue(src_col_id));
       dest->SetValue(dest_col_id, val1);
     } else {
-      common::Value val2 = (tuple2->GetValue(src_col_id));
+      type::Value val2 = (tuple2->GetValue(src_col_id));
       dest->SetValue(dest_col_id, val2);
     }
   }

@@ -45,7 +45,7 @@ size_t get_align(size_t size) {
 
 // Allocate and free once
 TEST_F(VarlenPoolTests, AllocateOnceTest) {
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
+  type::VarlenPool *pool = new type::VarlenPool(peloton::BACKEND_TYPE_MM);
   void *p = nullptr;
   size_t size;
   size_t total_size = 0;
@@ -66,7 +66,7 @@ TEST_F(VarlenPoolTests, AllocateOnceTest) {
 // Allocate and free N blocks from each buffer list
 TEST_F(VarlenPoolTests, AllocateTest) {
   std::srand(std::time(0));
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
+  type::VarlenPool *pool = new type::VarlenPool(peloton::BACKEND_TYPE_MM);
   char *p[MAX_LIST_NUM][N];
   char *test_str = new char[str_len];
   size_t size, block_size;
@@ -146,7 +146,7 @@ TEST_F(VarlenPoolTests, AllocateTest) {
 // Random allocation and free
 TEST_F(VarlenPoolTests, RandomTest) {
   std::srand(std::time(0));
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
+  type::VarlenPool *pool = new type::VarlenPool(peloton::BACKEND_TYPE_MM);
   char *p[M] = {nullptr};
   char *test_str = new char[BUFFER_SIZE << 1];
   size_t size[M] = {};
@@ -218,7 +218,7 @@ TEST_F(VarlenPoolTests, RandomTest) {
 // Allocate and free N/2 blocks from each buffer list
 void *thread_all(void *arg) {
   std::srand(std::time(0));
-  VarlenPool *pool = (VarlenPool *) arg;
+  type::VarlenPool *pool = (type::VarlenPool *) arg;
   char *p[MAX_LIST_NUM][N/2];
   char *test_str = new char[str_len];
   size_t size, block_size;
@@ -285,7 +285,7 @@ void *thread_all(void *arg) {
 void *thread_random(void *arg) {
   std::srand(std::time(0));
   const size_t m = 1000;
-  VarlenPool *pool = (VarlenPool *) arg;
+  type::VarlenPool *pool = (type::VarlenPool *) arg;
   char *p[m] = {nullptr};
   char *test_str = new char[str_len];
   size_t size[m] = {};
@@ -340,7 +340,7 @@ void *thread_random(void *arg) {
 }
 
 TEST_F(VarlenPoolTests, MultithreadTest) {
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
+  type::VarlenPool *pool = new type::VarlenPool(peloton::BACKEND_TYPE_MM);
 
   pthread_t thread1, thread2;
   UNUSED_ATTRIBUTE int rc;
@@ -361,7 +361,7 @@ TEST_F(VarlenPoolTests, MultithreadTest) {
 }
 
 TEST_F(VarlenPoolTests, MultithreadRandomTest) {
-  VarlenPool *pool = new VarlenPool(peloton::BACKEND_TYPE_MM);
+  type::VarlenPool *pool = new type::VarlenPool(peloton::BACKEND_TYPE_MM);
 
   pthread_t thread1, thread2;
   UNUSED_ATTRIBUTE int rc;

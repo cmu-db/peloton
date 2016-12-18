@@ -75,7 +75,7 @@ DeletePlan::DeletePlan(storage::DataTable *table,
   }
 }
 
-void DeletePlan::SetParameterValues(std::vector<common::Value> *values) {
+void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Delete");
   auto &children = GetChildren();
   // One sequential scan

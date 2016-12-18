@@ -16,7 +16,7 @@
 #include "type/value.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // A numeric value is an abstract type representing a number. Numerics can be
 // either integral or non-integral (decimal), but must provide arithmetic
@@ -44,5 +44,5 @@ class NumericType : public Type {
   }
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

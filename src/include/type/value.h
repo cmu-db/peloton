@@ -26,7 +26,7 @@
 #include "type/serializeio.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 class Type;
 
@@ -303,5 +303,5 @@ Value::Value(Type::TypeId type, const std::vector<T> &vals,
   }
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

@@ -21,7 +21,6 @@ namespace expression {
 // OperatorExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
 // This expression should never be evaluated, it is only used for parrsing/planning/optimizing
 class AggregateExpression: public AbstractExpression {
 public:
@@ -60,11 +59,11 @@ public:
   }
 
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
   UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
   UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     // for now support only one child
-    return common::ValueFactory::GetBooleanValue(true);
+    return type::ValueFactory::GetBooleanValue(true);
   }
 
   AbstractExpression * Copy() const{
@@ -76,7 +75,7 @@ public:
     // if count return an integer
     case EXPRESSION_TYPE_AGGREGATE_COUNT:
     case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
-      return_value_type_ = Type::INTEGER;
+      return_value_type_ = type::Type::INTEGER;
       break;
     // return the type of the base
     case EXPRESSION_TYPE_AGGREGATE_MAX:
@@ -86,7 +85,7 @@ public:
       return_value_type_ = children_[0]->GetValueType();
       break;
     case EXPRESSION_TYPE_AGGREGATE_AVG:
-      return_value_type_ = Type::DECIMAL;
+      return_value_type_ = type::Type::DECIMAL;
       break;
     default:
       break;

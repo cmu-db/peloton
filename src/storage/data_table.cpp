@@ -1026,7 +1026,7 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 
     // Copy the column over to the new tile group
     for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
-      common::Value val =
+      type::Value val =
           (orig_tile->GetValue(tuple_itr, orig_tile_column_offset));
       new_tile->SetValue(val, tuple_itr, new_tile_column_offset);
     }

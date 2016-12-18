@@ -54,9 +54,9 @@ class JoinTests : public PelotonTest {};
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
   auto left = expression::ExpressionUtil::TupleValueFactory(
-      common::Type::INTEGER, 0, 1);
+      type::Type::INTEGER, 0, 1);
   auto right = expression::ExpressionUtil::TupleValueFactory(
-      common::Type::INTEGER, 1, 1);
+      type::Type::INTEGER, 1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
@@ -229,20 +229,20 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
     storage::Tuple tuple(schema, allocate);
 
     // First column is unique in this case
-    tuple.SetValue(0, common::ValueFactory::GetIntegerValue(50 * rowid).Copy(),
+    tuple.SetValue(0, type::ValueFactory::GetIntegerValue(50 * rowid).Copy(),
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(1,
-                   common::ValueFactory::GetIntegerValue(50 * rowid * 2).Copy(),
+                   type::ValueFactory::GetIntegerValue(50 * rowid * 2).Copy(),
                    testing_pool);
 
-    tuple.SetValue(2, common::ValueFactory::GetDoubleValue(1.5).Copy(),
+    tuple.SetValue(2, type::ValueFactory::GetDoubleValue(1.5).Copy(),
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
     auto string_value =
-        common::ValueFactory::GetVarcharValue(std::to_string(123));
+        type::ValueFactory::GetVarcharValue(std::to_string(123));
     tuple.SetValue(3, string_value, testing_pool);
 
     ItemPointer *index_entry_ptr = nullptr;
@@ -306,12 +306,12 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   auto index = left_table->GetIndex(0);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
@@ -332,12 +332,12 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   auto index_right = right_table->GetIndex(0);
   std::vector<oid_t> key_column_ids_right;
   std::vector<ExpressionType> expr_types_right;
-  std::vector<common::Value> values_right;
+  std::vector<type::Value> values_right;
   std::vector<expression::AbstractExpression *> runtime_keys_right;
 
   key_column_ids_right.push_back(0);
   expr_types_right.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values_right.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
+  values_right.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc_right(
@@ -369,9 +369,9 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
 
   // Construct predicate
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
 
   std::unique_ptr<const expression::AbstractExpression> predicate(
       new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
@@ -458,7 +458,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
     for (oid_t tuple_itr = 3; tuple_itr < source_tile_tuple_count;
          tuple_itr++) {
       for (oid_t col_itr = 0; col_itr < source_tile_column_count; col_itr++) {
-        common::Value val = (left_source_tile->GetValue(tuple_itr, col_itr));
+        type::Value val = (left_source_tile->GetValue(tuple_itr, col_itr));
         right_dest_tile->SetValue(val, tuple_itr, col_itr);
       }
     }
@@ -466,9 +466,9 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
     // RIGHT - 1 st tile --> RIGHT - 2 nd tile
     // RIGHT - 2 nd tile --> RIGHT - 2 nd tile
     for (oid_t col_itr = 0; col_itr < source_tile_column_count; col_itr++) {
-      common::Value val1 = (right_source_tile->GetValue(4, col_itr));
+      type::Value val1 = (right_source_tile->GetValue(4, col_itr));
       right_dest_tile->SetValue(val1, 0, col_itr);
-      common::Value val2 = (right_dest_tile->GetValue(3, col_itr));
+      type::Value val2 = (right_dest_tile->GetValue(3, col_itr));
       right_dest_tile->SetValue(val2, 2, col_itr);
     }
   }
@@ -646,7 +646,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
     case PLAN_NODE_TYPE_HASHJOIN: {
       // Create hash plan node
       expression::AbstractExpression *right_table_attr_1 =
-          new expression::TupleValueExpression(common::Type::INTEGER, 1, 1);
+          new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           hash_keys;
@@ -656,14 +656,14 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           left_hash_keys;
       left_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(common::Type::INTEGER, 0,
+              new expression::TupleValueExpression(type::Type::INTEGER, 0,
                                                    1)});
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           right_hash_keys;
       right_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(common::Type::INTEGER, 1,
+              new expression::TupleValueExpression(type::Type::INTEGER, 1,
                                                    1)});
 
       // Create hash plan node
@@ -868,7 +868,7 @@ oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
 
     // Go over all the fields and check for null values
     for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-      common::Value val = (join_tuple.GetValue(col_itr));
+      type::Value val = (join_tuple.GetValue(col_itr));
       if (val.IsNull()) {
         tuples_with_null++;
         break;
@@ -895,9 +895,9 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
         logical_tile, logical_tile_itr);
 
     // Check the join fields
-    common::Value left_tuple_join_attribute_val = (join_tuple.GetValue(0));
-    common::Value right_tuple_join_attribute_val = (join_tuple.GetValue(1));
-    common::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
+    type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(0));
+    type::Value right_tuple_join_attribute_val = (join_tuple.GetValue(1));
+    type::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
         right_tuple_join_attribute_val));
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }
@@ -919,9 +919,9 @@ void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
         logical_tile, logical_tile_itr);
 
     // Check the join fields
-    common::Value left_tuple_join_attribute_val = (join_tuple.GetValue(2));
-    common::Value right_tuple_join_attribute_val = (join_tuple.GetValue(3));
-    common::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
+    type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(2));
+    type::Value right_tuple_join_attribute_val = (join_tuple.GetValue(3));
+    type::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
         right_tuple_join_attribute_val));
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }

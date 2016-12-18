@@ -52,11 +52,11 @@ class ContainerTuple : public AbstractTuple {
   oid_t GetTupleId() const { return tuple_id_; }
 
   void SetValue(UNUSED_ATTRIBUTE oid_t column_id,
-                UNUSED_ATTRIBUTE const common::Value &value) {
+                UNUSED_ATTRIBUTE const type::Value &value) {
   }
 
   /** @brief Get the value at the given column id. */
-  common::Value GetValue(oid_t column_id) const override {
+  type::Value GetValue(oid_t column_id) const override {
     PL_ASSERT(container_ != nullptr);
 
     return container_->GetValue(tuple_id_, column_id);
@@ -76,13 +76,13 @@ class ContainerTuple : public AbstractTuple {
   size_t HashCode(size_t seed = 0) const {
     if (column_ids_) {
       for (auto &column_itr : *column_ids_) {
-        common::Value value = GetValue(column_itr);
+        type::Value value = GetValue(column_itr);
         value.HashCombine(seed);
       }
     } else {
       oid_t column_count = container_->GetColumnCount();
       for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
-        common::Value value = GetValue(column_itr);
+        type::Value value = GetValue(column_itr);
         value.HashCombine(seed);
       }
     }
@@ -95,9 +95,9 @@ class ContainerTuple : public AbstractTuple {
   bool EqualsNoSchemaCheck(const ContainerTuple<T> &other) const {
     if (column_ids_) {
       for (auto &column_itr : *column_ids_) {
-        common::Value lhs = (GetValue(column_itr));
-        common::Value rhs = (other.GetValue(column_itr));
-        common::Value cmp = (lhs.CompareNotEquals(rhs));
+        type::Value lhs = (GetValue(column_itr));
+        type::Value rhs = (other.GetValue(column_itr));
+        type::Value cmp = (lhs.CompareNotEquals(rhs));
         if (cmp.IsTrue()) {
           return false;
         }
@@ -105,9 +105,9 @@ class ContainerTuple : public AbstractTuple {
     } else {
       oid_t column_count = container_->GetColumnCount();
       for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
-        common::Value lhs = (GetValue(column_itr));
-        common::Value rhs = (other.GetValue(column_itr));
-        common::Value cmp = (lhs.CompareNotEquals(rhs));
+        type::Value lhs = (GetValue(column_itr));
+        type::Value rhs = (other.GetValue(column_itr));
+        type::Value cmp = (lhs.CompareNotEquals(rhs));
         if (cmp.IsTrue())
           return false;
       }
@@ -156,7 +156,7 @@ class ContainerTupleComparator {
 };
 
 //===--------------------------------------------------------------------===//
-// Specialization for std::vector<common::Value>
+// Specialization for std::vector<type::Value>
 //===--------------------------------------------------------------------===//
 /**
  * @brief A convenient wrapper to interpret a vector of values as an tuple.
@@ -164,17 +164,17 @@ class ContainerTupleComparator {
  * The caller should make sure there's no out-of-bound calls.
  */
 template <>
-class ContainerTuple<std::vector<common::Value>> : public AbstractTuple {
+class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
  public:
   ContainerTuple(const ContainerTuple &) = default;
   ContainerTuple &operator=(const ContainerTuple &) = default;
   ContainerTuple(ContainerTuple &&) = default;
   ContainerTuple &operator=(ContainerTuple &&) = default;
 
-  ContainerTuple(std::vector<common::Value> *container) : container_(container) {}
+  ContainerTuple(std::vector<type::Value> *container) : container_(container) {}
 
   /** @brief Get the value at the given column id. */
-  common::Value GetValue(oid_t column_id) const override {
+  type::Value GetValue(oid_t column_id) const override {
     PL_ASSERT(container_ != nullptr);
     PL_ASSERT(column_id < container_->size());
 
@@ -182,7 +182,7 @@ class ContainerTuple<std::vector<common::Value>> : public AbstractTuple {
   }
 
   void SetValue(UNUSED_ATTRIBUTE oid_t column_id,
-    UNUSED_ATTRIBUTE const common::Value &value) {}
+    UNUSED_ATTRIBUTE const type::Value &value) {}
 
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
@@ -195,7 +195,7 @@ class ContainerTuple<std::vector<common::Value>> : public AbstractTuple {
 
   size_t HashCode(size_t seed = 0) const {
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
-      const common::Value value = GetValue(column_itr);
+      const type::Value value = GetValue(column_itr);
       value.HashCombine(seed);
     }
     return seed;
@@ -205,13 +205,13 @@ class ContainerTuple<std::vector<common::Value>> : public AbstractTuple {
    * Assume the schema of other tuple.Is the same as this. No check.
    */
   bool EqualsNoSchemaCheck(
-      const ContainerTuple<std::vector<common::Value>> &other) const {
+      const ContainerTuple<std::vector<type::Value>> &other) const {
     PL_ASSERT(container_->size() == other.container_->size());
 
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
-      common::Value lhs = GetValue(column_itr);
-      common::Value rhs = other.GetValue(column_itr);
-      common::Value cmp = lhs.CompareNotEquals(rhs);
+      type::Value lhs = GetValue(column_itr);
+      type::Value rhs = other.GetValue(column_itr);
+      type::Value cmp = lhs.CompareNotEquals(rhs);
       if (cmp.IsTrue())
         return false;
     }
@@ -219,7 +219,7 @@ class ContainerTuple<std::vector<common::Value>> : public AbstractTuple {
   }
 
  private:
-  const std::vector<common::Value > *container_ = nullptr;
+  const std::vector<type::Value > *container_ = nullptr;
 };
 
 template<>
@@ -243,14 +243,14 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
   oid_t GetTupleId() const { return tuple_id_; }
 
   /** @brief Get the value at the given column id. */
-  common::Value GetValue(oid_t column_id) const override {
+  type::Value GetValue(oid_t column_id) const override {
     PL_ASSERT(container_ != nullptr);
 
     return container_->GetValue(tuple_id_, column_id);
   }
 
-  void SetValue(oid_t column_id, const common::Value &value) {
-    common::Value val = value.Copy();
+  void SetValue(oid_t column_id, const type::Value &value) {
+    type::Value val = value.Copy();
     container_->SetValue(val, tuple_id_, column_id);
   }
 

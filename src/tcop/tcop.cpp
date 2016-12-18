@@ -59,7 +59,7 @@ Result TrafficCop::ExecuteStatement(
   // Then, execute the statement
   bool unnamed = true;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   auto status =
       ExecuteStatement(statement, params, unnamed, nullptr, result_format,
                        result, rows_changed, error_message);
@@ -76,7 +76,7 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    const std::vector<common::Value> &params,
+    const std::vector<type::Value> &params,
     UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultType> &result,
@@ -204,16 +204,16 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
 }
 
 FieldInfoType TrafficCop::GetColumnFieldForValueType(
-    std::string column_name, common::Type::TypeId column_type) {
+    std::string column_name, type::Type::TypeId column_type) {
   switch (column_type) {
-    case common::Type::INTEGER:
+    case type::Type::INTEGER:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-    case common::Type::DECIMAL:
+    case type::Type::DECIMAL:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
-    case common::Type::VARCHAR:
-    case common::Type::VARBINARY:
+    case type::Type::VARCHAR:
+    case type::Type::VARBINARY:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
-    case common::Type::TIMESTAMP:
+    case type::Type::TIMESTAMP:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
     default:
       // Type not Identified

@@ -21,17 +21,15 @@ namespace expression {
 // OperatorExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class ConjunctionExpression : public AbstractExpression {
  public:
   ConjunctionExpression(ExpressionType type) : AbstractExpression(type) {}
 
   ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
-      : AbstractExpression(type, Type::BOOLEAN, left, right) {}
+      : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
 
-  Value Evaluate(
+  type::Value Evaluate(
       UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
@@ -41,17 +39,17 @@ class ConjunctionExpression : public AbstractExpression {
     switch (exp_type_) {
       case (EXPRESSION_TYPE_CONJUNCTION_AND): {
         if (vl.IsTrue() && vr.IsTrue())
-          return ValueFactory::GetBooleanValue(true);
+          return type::ValueFactory::GetBooleanValue(true);
         if (vl.IsFalse() || vr.IsFalse())
-          return ValueFactory::GetBooleanValue(false);
-        return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+          return type::ValueFactory::GetBooleanValue(false);
+        return type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL);
       }
       case (EXPRESSION_TYPE_CONJUNCTION_OR): {
         if (vl.IsFalse() && vr.IsFalse())
-          return ValueFactory::GetBooleanValue(false);
+          return type::ValueFactory::GetBooleanValue(false);
         if (vl.IsTrue() || vr.IsTrue())
-          return ValueFactory::GetBooleanValue(true);
-        return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+          return type::ValueFactory::GetBooleanValue(true);
+        return type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL);
       }
       default:
         throw Exception("Invalid conjunction expression type.");

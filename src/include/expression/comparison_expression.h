@@ -21,21 +21,19 @@ namespace expression {
 // ComparisonExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class ComparisonExpression : public AbstractExpression {
  public:
   // TODO: Should we delete left and right if they are not nullptr?
   ~ComparisonExpression() {}
 
   ComparisonExpression(ExpressionType type)
-      : AbstractExpression(type, Type::BOOLEAN) {}
+      : AbstractExpression(type, type::Type::BOOLEAN) {}
 
   ComparisonExpression(ExpressionType type, AbstractExpression *left,
                        AbstractExpression *right)
-      : AbstractExpression(type, Type::BOOLEAN, left, right) {}
+      : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
                  UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
                  UNUSED_ATTRIBUTE executor::ExecutorContext *context) const
       override {

@@ -13,7 +13,7 @@
 #include "type/varlen_pool.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 Buffer::Buffer(size_t buf_size, size_t blk_size) {
   buf_size_ = buf_size;
@@ -180,5 +180,5 @@ uint64_t VarlenPool::GetTotalAllocatedSpace() {
 // Get the maximum size of this pool.
 uint64_t VarlenPool::GetMaximumPoolSize() const { return MAX_POOL_SIZE; }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

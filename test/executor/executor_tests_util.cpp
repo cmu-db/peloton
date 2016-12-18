@@ -79,8 +79,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column =
-          catalog::Column(common::Type::INTEGER,
-                          common::Type::GetTypeSize(common::Type::INTEGER),
+          catalog::Column(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER),
                           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -90,8 +90,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column =
-          catalog::Column(common::Type::INTEGER,
-                          common::Type::GetTypeSize(common::Type::INTEGER),
+          catalog::Column(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER),
                           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -101,8 +101,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column =
-          catalog::Column(common::Type::DECIMAL,
-                          common::Type::GetTypeSize(common::Type::DECIMAL),
+          catalog::Column(type::Type::DECIMAL,
+                          type::Type::GetTypeSize(type::Type::DECIMAL),
                           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -112,7 +112,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
     case 3: {
       auto column =
-          catalog::Column(common::Type::VARCHAR, 25,  // Column length.
+          catalog::Column(type::Type::VARCHAR, 25,  // Column length.
                           "COL_D", !is_inlined);      // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -205,30 +205,30 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     if (group_by) {
       // First column has only two distinct values
-      tuple.SetValue(0, common::ValueFactory::GetIntegerValue(PopulatedValue(
+      tuple.SetValue(0, type::ValueFactory::GetIntegerValue(PopulatedValue(
                             int(populate_value / (num_rows / 2)), 0)),
                      testing_pool);
 
     } else {
       // First column is unique in this case
-      tuple.SetValue(0, common::ValueFactory::GetIntegerValue(
+      tuple.SetValue(0, type::ValueFactory::GetIntegerValue(
                             PopulatedValue(populate_value, 0)),
                      testing_pool);
     }
 
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(
-        1, common::ValueFactory::GetIntegerValue(PopulatedValue(
+        1, type::ValueFactory::GetIntegerValue(PopulatedValue(
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
-    tuple.SetValue(2, common::ValueFactory::GetDoubleValue(PopulatedValue(
+    tuple.SetValue(2, type::ValueFactory::GetDoubleValue(PopulatedValue(
                           random ? std::rand() : populate_value, 2)),
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
     auto string_value =
-        common::ValueFactory::GetVarcharValue(std::to_string(PopulatedValue(
+        type::ValueFactory::GetVarcharValue(std::to_string(PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
@@ -267,15 +267,15 @@ void ExecutorTestsUtil::PopulateTiles(
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
     tuple.SetValue(
-        0, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
+        0, type::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
         testing_pool);
     tuple.SetValue(
-        1, common::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
+        1, type::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
         testing_pool);
     tuple.SetValue(
-        2, common::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
+        2, type::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
         testing_pool);
-    auto string_value = common::ValueFactory::GetVarcharValue(
+    auto string_value = type::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
@@ -425,15 +425,15 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 }
 
 std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
-    storage::DataTable *table, oid_t tuple_id, common::VarlenPool *pool) {
+    storage::DataTable *table, oid_t tuple_id, type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
   auto val1 =
-      common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
+      type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
   auto val2 =
-      common::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
-  auto val3 = common::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
-  auto val4 = common::ValueFactory::GetVarcharValue("12345");
+      type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
+  auto val3 = type::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
+  auto val4 = type::ValueFactory::GetVarcharValue("12345");
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);
   tuple->SetValue(2, val3, pool);
@@ -443,13 +443,13 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
 }
 
 std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
-    storage::DataTable *table, common::VarlenPool *pool) {
+    storage::DataTable *table, type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
-  auto val1 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
-  auto val2 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
-  auto val3 = common::ValueFactory::GetNullValueByType(common::Type::INTEGER);
-  auto val4 = common::ValueFactory::GetNullValueByType(common::Type::VARCHAR);
+  auto val1 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+  auto val2 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+  auto val3 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+  auto val4 = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);
   tuple->SetValue(2, val3, pool);

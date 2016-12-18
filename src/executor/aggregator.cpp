@@ -64,17 +64,17 @@ Agg *GetAggInstance(ExpressionType agg_type) {
 Agg::~Agg() {
 }
 
-void Agg::Advance(const common::Value val) {
+void Agg::Advance(const type::Value val) {
   if (is_distinct_) {
     // Insert a deep copy
-    common::Value val_copy = (val.Copy());
+    type::Value val_copy = (val.Copy());
     distinct_set_.insert(val_copy);
   } else {
     DAdvance(val);
   }
 }
 
-common::Value Agg::Finalize() {
+type::Value Agg::Finalize() {
   if (is_distinct_) {
     for (auto val : distinct_set_) {
       DAdvance(val);
@@ -103,12 +103,12 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   /*
    * 1) Construct a vector of aggregated values
    */
-  std::vector<common::Value> aggregate_values;
+  std::vector<type::Value> aggregate_values;
   auto &aggregate_terms = node->GetUniqueAggTerms();
   for (oid_t column_itr = 0; column_itr < aggregate_terms.size();
        column_itr++) {
     if (aggregates[column_itr] != nullptr) {
-      common::Value final_val = aggregates[column_itr]->Finalize();
+      type::Value final_val = aggregates[column_itr]->Finalize();
       aggregate_values.push_back(final_val);
     }
   }
@@ -117,8 +117,8 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
    * 2) Evaluate filter predicate;
    * if fail, just return
    */
-  std::unique_ptr<expression::ContainerTuple<std::vector<common::Value>>> aggref_tuple(
-      new expression::ContainerTuple<std::vector<common::Value>>(&aggregate_values));
+  std::unique_ptr<expression::ContainerTuple<std::vector<type::Value>>> aggref_tuple(
+      new expression::ContainerTuple<std::vector<type::Value>>(&aggregate_values));
 
   auto predicate = node->GetPredicate();
   if (nullptr != predicate &&
@@ -157,7 +157,7 @@ HashAggregator::HashAggregator(const planner::AggregatePlan *node,
     : AbstractAggregator(node, output_table, econtext),
       num_input_columns(num_input_columns) {}
 //  group_by_key_values.resize(node->GetGroupbyColIds().size(),
-//      common::ValueFactory::GetNullValueByType(common::Type::INTEGER));
+//      type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
 //}
 
 HashAggregator::~HashAggregator() {
@@ -178,7 +178,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   group_by_key_values.clear();
   for (oid_t column_itr = 0; column_itr < node->GetGroupbyColIds().size();
        column_itr++) {
-    common::Value cur_tuple_val =
+    type::Value cur_tuple_val =
         cur_tuple->GetValue(node->GetGroupbyColIds()[column_itr]);
     group_by_key_values.push_back(cur_tuple_val);
   }
@@ -217,8 +217,8 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
   // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
-    common::Value value =
-        common::ValueFactory::GetIntegerValue(1).Copy();
+    type::Value value =
+        type::ValueFactory::GetIntegerValue(1).Copy();
     if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           cur_tuple, nullptr, this->executor_context);
@@ -233,7 +233,7 @@ bool HashAggregator::Advance(AbstractTuple *cur_tuple) {
 bool HashAggregator::Finalize() {
   for (auto entry : aggregates_map) {
     // Construct a container for the first tuple
-    expression::ContainerTuple<std::vector<common::Value >> first_tuple(
+    expression::ContainerTuple<std::vector<type::Value >> first_tuple(
         &entry.second->first_tuple_values);
     if (Helper(node, entry.second->aggregates, output_table, &first_tuple,
                this->executor_context) == false) {
@@ -281,11 +281,11 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     // Check whether crossed group boundary
     for (oid_t grpColOffset = 0; grpColOffset < node->GetGroupbyColIds().size();
          grpColOffset++) {
-      common::Value lval = (
+      type::Value lval = (
           next_tuple->GetValue(node->GetGroupbyColIds()[grpColOffset]));
-      common::Value rval = (
+      type::Value rval = (
           delegate_tuple_.GetValue(node->GetGroupbyColIds()[grpColOffset]));
-      common::Value cmp = (lval.CompareNotEquals(rval));
+      type::Value cmp = (lval.CompareNotEquals(rval));
       bool not_equal = cmp.IsTrue();
 
       if (not_equal) {
@@ -323,7 +323,7 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
 
     for (oid_t col_id = 0; col_id < num_input_columns_; col_id++) {
       // delegate_tuple_values_ has the ownership
-      common::Value val = next_tuple->GetValue(col_id);
+      type::Value val = next_tuple->GetValue(col_id);
       delegate_tuple_values_.push_back(val);
     }
   }
@@ -331,8 +331,8 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
   // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
-    common::Value value =
-        common::ValueFactory::GetIntegerValue(1);
+    type::Value value =
+        type::ValueFactory::GetIntegerValue(1);
     if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           next_tuple, nullptr, this->executor_context);
@@ -380,8 +380,8 @@ bool PlainAggregator::Advance(AbstractTuple *next_tuple) {
   // Update the aggregation calculation
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
     auto predicate = node->GetUniqueAggTerms()[aggno].expression;
-    common::Value value = (
-        common::ValueFactory::GetIntegerValue(1));
+    type::Value value = (
+        type::ValueFactory::GetIntegerValue(1));
     if (predicate) {
       value = node->GetUniqueAggTerms()[aggno].expression->Evaluate(
           next_tuple, nullptr, this->executor_context).Copy();

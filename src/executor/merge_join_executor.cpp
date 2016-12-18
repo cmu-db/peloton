@@ -150,9 +150,9 @@ bool MergeJoinExecutor::DExecute() {
           clause.right_->Evaluate(&left_tuple, &right_tuple, nullptr);
 
       // Compare the values
-      common::Value cmp_less = (
+      type::Value cmp_less = (
           left_value.CompareLessThan(right_value));
-      common::Value cmp_greater = (
+      type::Value cmp_greater = (
         left_value.CompareGreaterThan(right_value));
 
       // Left key < Right key, advance left
@@ -271,7 +271,7 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
       auto next_value =
           expr->Evaluate(&next_tuple, &next_tuple, executor_context_);
 
-      common::Value cmp = (
+      type::Value cmp = (
           this_value.CompareEquals(next_value));
       if (!cmp.IsTrue()) {
         diff = true;
