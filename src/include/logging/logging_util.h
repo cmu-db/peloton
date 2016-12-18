@@ -55,7 +55,7 @@ class LoggingUtil {
                                     FileHandle &file_handle);
 
   static storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema,
-                                             common::VarlenPool *pool,
+                                             type::VarlenPool *pool,
                                              FileHandle &file_handle);
 
   static void SkipTupleRecordBody(FileHandle &file_handle);

@@ -17,7 +17,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 BooleanType::BooleanType() : Type(Type::BOOLEAN) {}
 
@@ -112,5 +112,5 @@ Value BooleanType::CastAs(const Value& val, const Type::TypeId type_id) const {
                   Type::GetInstance(type_id)->ToString());
 }
 
+}  // namespace type
 }  // namespace peloton
-}  // namespace common

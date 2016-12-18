@@ -20,7 +20,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // Get the element at a given index in this array
 Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
@@ -594,5 +594,5 @@ Type::TypeId ArrayType::GetElementType(
   return val.value_.array.array_type;
 }
 
+}  // namespace type
 }  // namespace peloton
-}  // namespace common

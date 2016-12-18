@@ -13,7 +13,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 //===--------------------------------------------------------------------===//
 // Value Factory
@@ -496,5 +496,5 @@ class ValueFactory {
   }
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

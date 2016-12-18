@@ -40,20 +40,20 @@ class ExecutorContext {
   ExecutorContext(concurrency::Transaction *transaction);
 
   ExecutorContext(concurrency::Transaction *transaction,
-                  const std::vector<common::Value> &params);
+                  const std::vector<type::Value> &params);
 
   ~ExecutorContext();
 
   concurrency::Transaction *GetTransaction() const;
 
-  const std::vector<common::Value> &GetParams() const;
+  const std::vector<type::Value> &GetParams() const;
 
-  void SetParams(common::Value &value);
+  void SetParams(type::Value &value);
 
   void ClearParams();
 
   // Get a varlen pool (will construct the pool only if needed)
-  common::VarlenPool *GetExecutorContextPool();
+  type::VarlenPool *GetExecutorContextPool();
 
   // num of tuple processed
   uint32_t num_processed = 0;
@@ -67,10 +67,10 @@ class ExecutorContext {
   concurrency::Transaction *transaction_;
 
   // params
-  std::vector<common::Value> params_;
+  std::vector<type::Value> params_;
 
   // pool
-  std::unique_ptr<common::VarlenPool> pool_;
+  std::unique_ptr<type::VarlenPool> pool_;
 
 };
 

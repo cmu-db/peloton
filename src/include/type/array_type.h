@@ -4,7 +4,7 @@
 //
 // array_value.h
 //
-// Identification: src/backend/common/array_value.h
+// Identification: src/backend/type/array_value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace peloton {
-namespace common {
+namespace type {
 
 class ValueFactory;
 
@@ -66,4 +66,4 @@ class ArrayType : public Type {
 };
 
 }  // namespace peloton
-}  // namespace common
+}  // namespace type

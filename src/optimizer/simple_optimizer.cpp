@@ -195,7 +195,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               tl.push_back(Target(i, expr->Copy()));
               columns.push_back(catalog::Column(
                   expr->GetValueType(),
-                  common::Type::GetTypeSize(expr->GetValueType()),
+                  type::Type::GetTypeSize(expr->GetValueType()),
                   "expr" + std::to_string(i)));
             }
           }
@@ -355,8 +355,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                   EXPRESSION_TYPE_AGGREGATE_AVG) {
                 // COL_A should be used only when there is no AS
                 auto column = catalog::Column(
-                    common::Type::DECIMAL,
-                    common::Type::GetTypeSize(common::Type::DECIMAL),
+                    type::Type::DECIMAL,
+                    type::Type::GetTypeSize(type::Type::DECIMAL),
                     "COL_" + std::to_string(col_cntr_id++), true);
 
                 output_schema_columns.push_back(column);
@@ -371,7 +371,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
                 auto column = catalog::Column(
                     table_column.GetType(),
-                    common::Type::GetTypeSize(table_column.GetType()),
+                    type::Type::GetTypeSize(table_column.GetType()),
                     "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                              // used only when
                                                              // there is no AS
@@ -401,8 +401,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                         outer_pair.second.first, outer_pair.second.second);
 
               auto column = catalog::Column(
-                  common::Type::INTEGER,
-                  common::Type::GetTypeSize(common::Type::INTEGER),
+                  type::Type::INTEGER,
+                  type::Type::GetTypeSize(type::Type::INTEGER),
                   "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                            // used only when
                                                            // there is no AS
@@ -436,7 +436,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
             auto column = catalog::Column(
                 table_column.GetType(),
-                common::Type::GetTypeSize(table_column.GetType()),
+                type::Type::GetTypeSize(table_column.GetType()),
                 "COL_" + std::to_string(col_cntr_id++),  // COL_A should be used
                                                          // only when there is
                                                          // no AS
@@ -498,7 +498,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // column predicates passing to the index
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
-      std::vector<common::Value> values;
+      std::vector<type::Value> values;
       oid_t index_id;
 
       parser::DeleteStatement* deleteStmt =
@@ -558,7 +558,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // column predicates passing to the index
       std::vector<oid_t> key_column_ids;
       std::vector<ExpressionType> expr_types;
-      std::vector<common::Value> values;
+      std::vector<type::Value> values;
       oid_t index_id;
 
       parser::UpdateStatement* updateStmt =
@@ -668,7 +668,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
     storage::DataTable* target_table,
     expression::AbstractExpression* expression,
     std::vector<oid_t>& key_column_ids, std::vector<ExpressionType>& expr_types,
-    std::vector<common::Value>& values, oid_t& index_id) {
+    std::vector<type::Value>& values, oid_t& index_id) {
   bool index_searchable = false;
   index_id = 0;
 
@@ -676,7 +676,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
   // clause
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<common::Value> predicate_values;
+  std::vector<type::Value> predicate_values;
 
   if (expression != NULL) {
     index_searchable = true;
@@ -738,7 +738,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // column predicates passing to the index
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
 
   if (!CheckIndexSearchable(target_table, predicate, key_column_ids, expr_types,
                             values, index_id)) {
@@ -776,7 +776,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 void SimpleOptimizer::GetPredicateColumns(
     catalog::Schema* schema, expression::AbstractExpression* expression,
     std::vector<oid_t>& column_ids, std::vector<ExpressionType>& expr_types,
-    std::vector<common::Value>& values, bool& index_searchable) {
+    std::vector<type::Value>& values, bool& index_searchable) {
   // For now, all conjunctions should be AND when using index scan.
   if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_OR)
     index_searchable = false;
@@ -810,7 +810,7 @@ void SimpleOptimizer::GetPredicateColumns(
       // malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
       // peloton::do_allocation(unsigned long, bool) (allocator.cpp:27)
       // operator new(unsigned long) (allocator.cpp:40)
-      // peloton::common::IntegerValue::Copy() const (numeric_value.cpp:1288)
+      // peloton::type::IntegerValue::Copy() const (numeric_value.cpp:1288)
       // peloton::expression::ConstantValueExpression::GetValue() const
       // (constant_value_expression.h:40)
       if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
@@ -820,7 +820,7 @@ void SimpleOptimizer::GetPredicateColumns(
                   reinterpret_cast<expression::ConstantValueExpression*>(
                       expression->GetModifiableChild(1))->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetParameterOffsetValue(
+        values.push_back(type::ValueFactory::GetParameterOffsetValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
                 expression->GetModifiableChild(1))->GetValueIdx()).Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
@@ -845,7 +845,7 @@ void SimpleOptimizer::GetPredicateColumns(
                   reinterpret_cast<expression::ConstantValueExpression*>(
                       expression->GetModifiableChild(0))->GetValueType());
       } else
-        values.push_back(common::ValueFactory::GetParameterOffsetValue(
+        values.push_back(type::ValueFactory::GetParameterOffsetValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
                 expression->GetModifiableChild(0))->GetValueIdx()).Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
@@ -903,7 +903,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   bool index_searchable;
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<common::Value> predicate_values;
+  std::vector<type::Value> predicate_values;
   std::vector<oid_t> column_ids = {4};
   std::vector<expression::AbstractExpression*> runtime_keys;
 
@@ -935,7 +935,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 
   predicate_column_ids = {0};
   predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL};
-  predicate_values = {common::ValueFactory::GetParameterOffsetValue(4).Copy()};
+  predicate_values = {type::ValueFactory::GetParameterOffsetValue(4).Copy()};
   column_ids = {1};
 
   index = stock_table->GetIndex(0);
@@ -951,7 +951,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 
   // Create hash plan node
   expression::AbstractExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   hash_keys.emplace_back(right_table_attr_1);
@@ -963,9 +963,9 @@ SimpleOptimizer::CreateHackingJoinPlan() {
 
   // LEFT.4 == RIGHT.1
   expression::TupleValueExpression* left_table_attr_4 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   right_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
   std::unique_ptr<const expression::AbstractExpression> join_predicate(
       new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
                                            left_table_attr_4,
@@ -983,7 +983,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   hash_join_plan_node->AddChild(std::move(hash_plan_node));
 
   expression::TupleValueExpression* left_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
 
   planner::AggregatePlan::AggTerm agg_term(
       ParserExpressionNameToExpressionType("count"), left_table_attr_1, 1);
@@ -1007,7 +1007,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
 
   auto column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "COL_0",  // COL_A should be
                 // used only when
                 // there is no AS
@@ -1084,7 +1084,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   bool index_searchable;
   std::vector<oid_t> predicate_column_ids = {};
   std::vector<ExpressionType> predicate_expr_types;
-  std::vector<common::Value> predicate_values;
+  std::vector<type::Value> predicate_values;
   std::vector<oid_t> column_ids = {4};  // OL_I_ID
   std::vector<expression::AbstractExpression*> runtime_keys;
 
@@ -1118,8 +1118,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
                           EXPRESSION_TYPE_COMPARE_EQUAL};
 
   // Hardcode wid=0 and iid=90
-  predicate_values = {common::ValueFactory::GetIntegerValue(0).Copy(),
-                      common::ValueFactory::GetIntegerValue(90).Copy()};
+  predicate_values = {type::ValueFactory::GetIntegerValue(0).Copy(),
+                      type::ValueFactory::GetIntegerValue(90).Copy()};
 
   column_ids = {1};  // S_I_ID
 
@@ -1139,10 +1139,10 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
 
   // LEFT.4 == RIGHT.1
   expression::TupleValueExpression* left_table_attr_4 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
 
   expression::TupleValueExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 1, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
 
   std::unique_ptr<const expression::AbstractExpression> join_predicate(
       new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
@@ -1163,7 +1163,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   nested_join_plan_node->AddChild(std::move(stock_scan_node));
 
   expression::TupleValueExpression* left_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
 
   planner::AggregatePlan::AggTerm agg_term(
       ParserExpressionNameToExpressionType("count"), left_table_attr_1, 1);
@@ -1187,7 +1187,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   std::unique_ptr<const expression::AbstractExpression> predicate(having);
 
   auto column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "COL_0",  // COL_A should be
                 // used only when
                 // there is no AS
@@ -1231,7 +1231,7 @@ std::unique_ptr<const planner::ProjectInfo> CreateHackProjection() {
 
 std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
   auto column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "S_I_ID", 1);
 
   column.AddConstraint(

@@ -58,7 +58,7 @@ class ExpressionUtil {
    * a value from the value vector
    */
   static void ConvertParameterExpressions(
-      expression::AbstractExpression *expression, std::vector<Value> *values,
+      expression::AbstractExpression *expression, std::vector<type::Value> *values,
       catalog::Schema *schema) {
     LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
@@ -103,13 +103,13 @@ class ExpressionUtil {
     }
   }
 
-  static AbstractExpression *TupleValueFactory(common::Type::TypeId value_type,
+  static AbstractExpression *TupleValueFactory(type::Type::TypeId value_type,
                                                const int tuple_idx,
                                                const int value_idx) {
     return new TupleValueExpression(value_type, tuple_idx, value_idx);
   }
 
-  static AbstractExpression *ConstantValueFactory(const common::Value &value) {
+  static AbstractExpression *ConstantValueFactory(const type::Value &value) {
     return new ConstantValueExpression(value);
   }
 
@@ -126,14 +126,14 @@ class ExpressionUtil {
   }
 
   static AbstractExpression *OperatorFactory(ExpressionType type,
-                                             common::Type::TypeId value_type,
+                                             type::Type::TypeId value_type,
                                              AbstractExpression *left,
                                              AbstractExpression *right) {
     return new OperatorExpression(type, value_type, left, right);
   }
 
   static AbstractExpression *OperatorFactory(
-      ExpressionType type, common::Type::TypeId value_type,
+      ExpressionType type, type::Type::TypeId value_type,
       AbstractExpression *expr1, AbstractExpression *expr2,
       UNUSED_ATTRIBUTE AbstractExpression *expr3,
       UNUSED_ATTRIBUTE AbstractExpression *expr4) {
@@ -148,7 +148,7 @@ class ExpressionUtil {
       const std::list<expression::AbstractExpression *> &child_exprs) {
     if (child_exprs.empty())
       return new ConstantValueExpression(
-          common::ValueFactory::GetBooleanValue(true));
+          type::ValueFactory::GetBooleanValue(true));
     AbstractExpression *left = nullptr;
     AbstractExpression *right = nullptr;
     for (auto expr : child_exprs) {
@@ -210,7 +210,7 @@ class ExpressionUtil {
   static void GetInfo(const AbstractExpression *expr, std::ostringstream &os,
                       std::string spacer) {
     ExpressionType etype = expr->GetExpressionType();
-    Type::TypeId vtype = expr->GetValueType();
+    type::Type::TypeId vtype = expr->GetValueType();
 
     // Basic Information
     os << spacer << "+ " << ExpressionTypeToString(etype) << "::"
@@ -327,7 +327,7 @@ class ExpressionUtil {
     }
     // if this is a column, we need to find if it is exists in the schema
     if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE &&
-        expr->GetValueType() == Type::INVALID) {
+        expr->GetValueType() == type::Type::INVALID) {
       auto val_expr = (expression::TupleValueExpression *)expr;
       auto col_id = schema->GetColumnID(val_expr->GetColumnName());
       // exception if we can't find the requested column by name

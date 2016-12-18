@@ -80,35 +80,35 @@ BackendType StringToBackendType(std::string str) {
 // Value <--> String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string TypeIdToString(common::Type::TypeId type) {
+std::string TypeIdToString(type::Type::TypeId type) {
   switch (type) {
-    case common::Type::INVALID:
+    case type::Type::INVALID:
       return "INVALID";
-    case common::Type::PARAMETER_OFFSET:
+    case type::Type::PARAMETER_OFFSET:
       return "PARAMETER_OFFSET";
-    case common::Type::BOOLEAN:
+    case type::Type::BOOLEAN:
       return "BOOLEAN";
-    case common::Type::TINYINT:
+    case type::Type::TINYINT:
       return "TINYINT";
-    case common::Type::SMALLINT:
+    case type::Type::SMALLINT:
       return "SMALLINT";
-    case common::Type::INTEGER:
+    case type::Type::INTEGER:
       return "INTEGER";
-    case common::Type::BIGINT:
+    case type::Type::BIGINT:
       return "BIGINT";
-    case common::Type::DECIMAL:
+    case type::Type::DECIMAL:
       return "DECIMAL";
-    case common::Type::TIMESTAMP:
+    case type::Type::TIMESTAMP:
       return "TIMESTAMP";
-    case common::Type::DATE:
+    case type::Type::DATE:
       return "DATE";
-    case common::Type::VARCHAR:
+    case type::Type::VARCHAR:
       return "VARCHAR";
-    case common::Type::VARBINARY:
+    case type::Type::VARBINARY:
       return "VARBINARY";
-    case common::Type::ARRAY:
+    case type::Type::ARRAY:
       return "ARRAY";
-    case common::Type::UDT:
+    case type::Type::UDT:
       return "UDT";
     default: {
       throw ConversionException("No string conversion for TypeId");  // FIXME
@@ -117,39 +117,39 @@ std::string TypeIdToString(common::Type::TypeId type) {
   }
 }
 
-common::Type::TypeId StringToTypeId(const std::string& str) {
+type::Type::TypeId StringToTypeId(const std::string& str) {
   if (str == "INVALID") {
-    return common::Type::INVALID;
+    return type::Type::INVALID;
   } else if (str == "PARAMETER_OFFSET") {
-    return common::Type::PARAMETER_OFFSET;
+    return type::Type::PARAMETER_OFFSET;
   } else if (str == "BOOLEAN") {
-    return common::Type::BOOLEAN;
+    return type::Type::BOOLEAN;
   } else if (str == "TINYINT") {
-    return common::Type::TINYINT;
+    return type::Type::TINYINT;
   } else if (str == "SMALLINT") {
-    return common::Type::SMALLINT;
+    return type::Type::SMALLINT;
   } else if (str == "INTEGER") {
-    return common::Type::INTEGER;
+    return type::Type::INTEGER;
   } else if (str == "BIGINT") {
-    return common::Type::BIGINT;
+    return type::Type::BIGINT;
   } else if (str == "DECIMAL") {
-    return common::Type::DECIMAL;
+    return type::Type::DECIMAL;
   } else if (str == "TIMESTAMP") {
-    return common::Type::TIMESTAMP;
+    return type::Type::TIMESTAMP;
   } else if (str == "DATE") {
-    return common::Type::DATE;
+    return type::Type::DATE;
   } else if (str == "VARCHAR") {
-    return common::Type::VARCHAR;
+    return type::Type::VARCHAR;
   } else if (str == "VARBINARY") {
-    return common::Type::VARBINARY;
+    return type::Type::VARBINARY;
   } else if (str == "ARRAY") {
-    return common::Type::ARRAY;
+    return type::Type::ARRAY;
   } else if (str == "UDT") {
-    return common::Type::UDT;
+    return type::Type::UDT;
   } else {
     throw ConversionException("No conversion from string '" + str + "'");
   }
-  return common::Type::INVALID;
+  return type::Type::INVALID;
 }
 
 /** takes in 0-F, returns 0-15 */
@@ -1169,40 +1169,40 @@ std::string LogRecordTypeToString(LogRecordType type) {
   return "INVALID";
 }
 
-common::Type::TypeId PostgresValueTypeToPelotonValueType(
+type::Type::TypeId PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType) {
   switch (PostgresValType) {
     case POSTGRES_VALUE_TYPE_BOOLEAN:
-      return common::Type::BOOLEAN;
+      return type::Type::BOOLEAN;
 
     case POSTGRES_VALUE_TYPE_SMALLINT:
-      return common::Type::SMALLINT;
+      return type::Type::SMALLINT;
     case POSTGRES_VALUE_TYPE_INTEGER:
-      return common::Type::INTEGER;
+      return type::Type::INTEGER;
     case POSTGRES_VALUE_TYPE_BIGINT:
-      return common::Type::BIGINT;
+      return type::Type::BIGINT;
     case POSTGRES_VALUE_TYPE_REAL:
-      return common::Type::DECIMAL;
+      return type::Type::DECIMAL;
     case POSTGRES_VALUE_TYPE_DOUBLE:
-      return common::Type::DECIMAL;
+      return type::Type::DECIMAL;
 
     case POSTGRES_VALUE_TYPE_BPCHAR:
     case POSTGRES_VALUE_TYPE_BPCHAR2:
     case POSTGRES_VALUE_TYPE_VARCHAR:
     case POSTGRES_VALUE_TYPE_VARCHAR2:
     case POSTGRES_VALUE_TYPE_TEXT:
-      return common::Type::VARCHAR;
+      return type::Type::VARCHAR;
 
     case POSTGRES_VALUE_TYPE_DATE:
     case POSTGRES_VALUE_TYPE_TIMESTAMPS:
     case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
-      return common::Type::TIMESTAMP;
+      return type::Type::TIMESTAMP;
 
     case POSTGRES_VALUE_TYPE_DECIMAL:
-      return common::Type::DECIMAL;
+      return type::Type::DECIMAL;
     default:
       LOG_TRACE("INVALID VALUE TYPE : %d ", PostgresValType);
-      return common::Type::INVALID;
+      return type::Type::INVALID;
       break;
   }
 }

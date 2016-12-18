@@ -70,21 +70,21 @@ void CreateYCSBDatabase() {
   std::vector<catalog::Column> columns;
 
   auto column =
-      catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                       "YCSB_KEY", is_inlined);
   columns.push_back(column);
 
   if (state.string_mode == true) {
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         auto column =
-            catalog::Column(common::Type::VARCHAR, 100,
+            catalog::Column(type::Type::VARCHAR, 100,
                             "FIELD" + std::to_string(col_itr), is_inlined);
         columns.push_back(column);
     }
   } else {
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         auto column =
-            catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+            catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                             "FIELD" + std::to_string(col_itr), is_inlined);
         columns.push_back(column);
     }
@@ -134,7 +134,7 @@ void LoadYCSBDatabase() {
   // Load in the data
   /////////////////////////////////////////////////////////
 
-  std::unique_ptr<common::VarlenPool> pool(new common::VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -148,17 +148,17 @@ void LoadYCSBDatabase() {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
 
-    auto primary_key_value = common::ValueFactory::GetIntegerValue(rowid);
+    auto primary_key_value = type::ValueFactory::GetIntegerValue(rowid);
     tuple->SetValue(0, primary_key_value, nullptr);
 
 
     if (state.string_mode == true) {
-      auto key_value = common::ValueFactory::GetVarcharValue(std::string(100, 'z'));
+      auto key_value = type::ValueFactory::GetVarcharValue(std::string(100, 'z'));
       for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         tuple->SetValue(col_itr, key_value, pool.get());
       }
     } else {
-      auto key_value = common::ValueFactory::GetIntegerValue(rowid);
+      auto key_value = type::ValueFactory::GetIntegerValue(rowid);
       for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
         tuple->SetValue(col_itr, key_value, nullptr);
       }

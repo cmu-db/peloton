@@ -336,10 +336,10 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     std::string param_list = request->param_list();
     ReferenceSerializeInput param_input(param_list.c_str(),
                                         param_list.size());
-    std::vector<common::Value> params;
+    std::vector<type::Value> params;
     //for (int it = 0; it < param_num; it++) {
     //  // TODO: Make sure why varlen_pool is used as parameter
-    //  std::shared_ptr<common::VarlenPool> pool(new common::VarlenPool(BACKEND_TYPE_MM));
+    //  std::shared_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
     //  Value value_item;
     //  value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
     //  params.push_back(value_item);

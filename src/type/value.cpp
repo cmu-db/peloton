@@ -4,7 +4,7 @@
 //
 // value.h
 //
-// Identification: src/backend/common/value.cpp
+// Identification: src/backend/type/value.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 Value::Value(const Value &other) {
   type_ = other.type_;
@@ -441,4 +441,4 @@ Value Value::InList(const Value &object) const {
 }
 
 }  // namespace peloton
-}  // namespace common
+}  // namespace type

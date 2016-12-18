@@ -40,10 +40,10 @@ TEST_F(InsertTests, InsertRecord) {
   auto txn = txn_manager.BeginTransaction();
   // Insert a table first
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_id", true);
   auto name_column =
-      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -90,10 +90,10 @@ TEST_F(InsertTests, InsertRecord) {
   insert_node->insert_values->push_back(values_ptr);
 
   values_ptr->push_back(new expression::ConstantValueExpression(
-      common::ValueFactory::GetIntegerValue(70)));
+      type::ValueFactory::GetIntegerValue(70)));
 
   values_ptr->push_back(new expression::ConstantValueExpression(
-      common::ValueFactory::GetVarcharValue("Hello")));
+      type::ValueFactory::GetVarcharValue("Hello")));
 
   insert_node->select = new parser::SelectStatement();
 
@@ -107,7 +107,7 @@ TEST_F(InsertTests, InsertRecord) {
 
   delete values_ptr->at(0);
   values_ptr->at(0) = new expression::ConstantValueExpression(
-      common::ValueFactory::GetIntegerValue(80));
+      type::ValueFactory::GetIntegerValue(80));
   planner::InsertPlan node2(table, insert_node->columns,
                             insert_node->insert_values);
   executor::InsertExecutor executor2(&node2, context.get());
@@ -120,14 +120,14 @@ TEST_F(InsertTests, InsertRecord) {
   insert_node->insert_values->push_back(values_ptr2);
 
   values_ptr2->push_back(new expression::ConstantValueExpression(
-      common::ValueFactory::GetIntegerValue(100)));
+      type::ValueFactory::GetIntegerValue(100)));
 
   values_ptr2->push_back(new expression::ConstantValueExpression(
-      common::ValueFactory::GetVarcharValue("Hello")));
+      type::ValueFactory::GetVarcharValue("Hello")));
 
   delete values_ptr->at(0);
   values_ptr->at(0) = new expression::ConstantValueExpression(
-      common::ValueFactory::GetIntegerValue(90));
+      type::ValueFactory::GetIntegerValue(90));
   planner::InsertPlan node3(table, insert_node->columns,
                             insert_node->insert_values);
   executor::InsertExecutor executor3(&node3, context.get());

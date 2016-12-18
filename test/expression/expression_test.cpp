@@ -38,9 +38,9 @@ class ExpressionTest : public PelotonTest {};
 //A simple test to make sure function expressions are filled in correctly
 TEST_F(ExpressionTest, FunctionExpressionTest) {
   // these will be gc'd by substr
-  auto str = expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetVarcharValue("test123"));
-  auto from = expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetIntegerValue(2));
-  auto to = expression::ExpressionUtil::ConstantValueFactory(common::ValueFactory::GetIntegerValue(3));
+  auto str = expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetVarcharValue("test123"));
+  auto from = expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(2));
+  auto to = expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(3));
   // these need unique ptrs to clean them
   auto substr = ExpPtr(new expression::FunctionExpression("substr", {str, from ,to}));
   auto not_found = ExpPtr(new expression::FunctionExpression("", {}));
@@ -48,7 +48,7 @@ TEST_F(ExpressionTest, FunctionExpressionTest) {
   EXPECT_THROW(expression::ExpressionUtil::TransformExpression(nullptr, not_found.get()), peloton::Exception);
   expression::ExpressionUtil::TransformExpression(nullptr, substr.get());
   // do a lookup (we pass null schema because there are no tuple value expressions
-  EXPECT_TRUE(substr->Evaluate(nullptr, nullptr, nullptr).CompareEquals(common::ValueFactory::GetVarcharValue("est")).IsTrue());
+  EXPECT_TRUE(substr->Evaluate(nullptr, nullptr, nullptr).CompareEquals(type::ValueFactory::GetVarcharValue("est")).IsTrue());
 }
 
 }  // namespace test

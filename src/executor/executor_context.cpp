@@ -22,7 +22,7 @@ ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
     : transaction_(transaction) {}
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
-                                 const std::vector<common::Value> &params)
+                                 const std::vector<type::Value> &params)
     : transaction_(transaction),
       params_(params) {}
 
@@ -34,11 +34,11 @@ concurrency::Transaction *ExecutorContext::GetTransaction() const {
   return transaction_;
 }
 
-const std::vector<common::Value> &ExecutorContext::GetParams() const {
+const std::vector<type::Value> &ExecutorContext::GetParams() const {
   return params_;
 }
 
-void ExecutorContext::SetParams(common::Value &value) {
+void ExecutorContext::SetParams(type::Value &value) {
   params_.push_back(value);
 }
 
@@ -46,9 +46,9 @@ void ExecutorContext::ClearParams() {
   params_.clear();
 }
 
-common::VarlenPool *ExecutorContext::GetExecutorContextPool() {
+type::VarlenPool *ExecutorContext::GetExecutorContextPool() {
   // construct pool if needed
-  if (pool_.get() == nullptr) pool_.reset(new common::VarlenPool(BACKEND_TYPE_MM));
+  if (pool_.get() == nullptr) pool_.reset(new type::VarlenPool(BACKEND_TYPE_MM));
 
   // return pool
   return pool_.get();

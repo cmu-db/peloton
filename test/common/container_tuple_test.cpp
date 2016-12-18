@@ -29,14 +29,14 @@ namespace test {
 class ContainerTupleTest : public PelotonTest {};
 /*
 TEST_F(ContainerTupleTest, VectorValue) {
-  std::vector<common::Value &> values;
-  values.push_back(common::ValueFactory::GetIntegerValue(11));
-  values.push_back(common::ValueFactory::GetIntegerValue(22));
-  values.push_back(common::ValueFactory::GetDoubleValue(3.14));
+  std::vector<type::Value &> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(11));
+  values.push_back(type::ValueFactory::GetIntegerValue(22));
+  values.push_back(type::ValueFactory::GetDoubleValue(3.14));
   values.push_back(
-      common::ValueFactory::GetVarcharValue("Hello from ContainerTupleTest"));
+      type::ValueFactory::GetVarcharValue("Hello from ContainerTupleTest"));
 
-  expression::ContainerTuple<std::vector<common::Value *>> ctuple(&values);
+  expression::ContainerTuple<std::vector<type::Value *>> ctuple(&values);
 
   for (size_t i = 0; i < values.size(); i++) {
     LOG_INFO("%s", ctuple.GetValue(i)->GetInfo().c_str());

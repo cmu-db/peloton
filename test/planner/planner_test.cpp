@@ -39,9 +39,9 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "id", true);
-  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
+  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -53,7 +53,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   // id = $0
   auto parameter_expr = new expression::ParameterValueExpression(0);
   auto tuple_expr =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, tuple_expr, parameter_expr);
 
@@ -80,11 +80,11 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   LOG_INFO("Plan created");
   bridge::PlanExecutor::PrintPlan(delete_plan, "Delete Plan");
 
-  auto values = new std::vector<common::Value>();
+  auto values = new std::vector<type::Value>();
 
   // id = 15
   LOG_INFO("Binding values");
-  values->push_back(common::ValueFactory::GetIntegerValue(15).Copy());
+  values->push_back(type::ValueFactory::GetIntegerValue(15).Copy());
 
   // bind values to parameters in plan
   delete_plan->SetParameterValues(values);
@@ -106,9 +106,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "id", true);
-  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
+  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -127,7 +127,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   table_ref->table_info_ = table_info;
   update_statement->table = table_ref;
   // Value val =
-  //    common::ValueFactory::GetNullValue();  // The value is not important
+  //    type::ValueFactory::GetNullValue();  // The value is not important
   // at this point
 
   // name = $0
@@ -144,7 +144,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // id = $1
   parameter_expr = new expression::ParameterValueExpression(1);
   auto tuple_expr =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, tuple_expr, parameter_expr);
 
@@ -154,12 +154,12 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   LOG_INFO("Plan created");
   bridge::PlanExecutor::PrintPlan(update_plan, "Update Plan");
 
-  auto values = new std::vector<common::Value>();
+  auto values = new std::vector<type::Value>();
 
   // name = CS, id = 1
   LOG_INFO("Binding values");
-  values->push_back(common::ValueFactory::GetVarcharValue("CS").Copy());
-  values->push_back(common::ValueFactory::GetIntegerValue(1).Copy());
+  values->push_back(type::ValueFactory::GetVarcharValue("CS").Copy());
+  values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
 
   // bind values to parameters in plan
   update_plan->SetParameterValues(values);
@@ -181,9 +181,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "id", true);
-  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
+  auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -203,7 +203,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   insert_statement->columns = columns;
 
   // Value val =
-  //    common::ValueFactory::GetNullValue();  // The value is not important
+  //    type::ValueFactory::GetNullValue();  // The value is not important
   // at  this point
   auto parameter_expr_1 = new expression::ParameterValueExpression(0);
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
@@ -224,9 +224,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
-  auto values = new std::vector<common::Value>();
-  values->push_back(common::ValueFactory::GetIntegerValue(1).Copy());
-  values->push_back(common::ValueFactory::GetVarcharValue(
+  auto values = new std::vector<type::Value>();
+  values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
+  values->push_back(type::ValueFactory::GetVarcharValue(
       "CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
   LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
   LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());

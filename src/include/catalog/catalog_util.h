@@ -45,11 +45,11 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
 
 std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
     catalog::Schema *schema, oid_t database_id, std::string database_name,
-    common::VarlenPool *pool);
+    type::VarlenPool *pool);
 
 std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
     catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name, common::VarlenPool *pool);
+    oid_t database_id, std::string database_name, type::VarlenPool *pool);
 
 std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
     catalog::Schema *schema, oid_t database_id, int64_t commit, int64_t abort,
@@ -69,6 +69,6 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     stats::QueryMetric::QueryParamBuf format_buf,
     stats::QueryMetric::QueryParamBuf val_buf, int64_t reads, int64_t updates,
     int64_t deletes, int64_t inserts, int64_t latency, int64_t cpu_time,
-    int64_t time_stamp, common::VarlenPool *pool);
+    int64_t time_stamp, type::VarlenPool *pool);
 }
 }

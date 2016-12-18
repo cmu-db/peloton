@@ -62,13 +62,13 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   auto index = data_table->GetIndex(0);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
   expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(common::ValueFactory::GetIntegerValue(110).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(110).Copy());
 
   // Create index scan desc
 
@@ -125,15 +125,15 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   auto index = data_table->GetIndex(1);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(1);
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  values.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
-  values.push_back(common::ValueFactory::GetIntegerValue(70).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(70).Copy());
 
   // Create index scan desc
 

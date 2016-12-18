@@ -15,7 +15,7 @@
 #include "type/numeric_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 class DecimalType : public NumericType {
  public:
@@ -73,4 +73,4 @@ class DecimalType : public NumericType {
 };
 
 }  // namespace peloton
-}  // namespace common
+}  // namespace type

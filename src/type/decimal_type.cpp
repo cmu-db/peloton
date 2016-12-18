@@ -19,7 +19,7 @@
 #include <cmath>
 
 namespace peloton {
-namespace common {
+namespace type {
 
 static inline double ValMod(double x, double y) {
   return x - trunc((double)x / (double)y) * y;
@@ -415,4 +415,4 @@ Value DecimalType::Copy(const Value& val) const {
 }
 
 }  // namespace peloton
-}  // namespace common
+}  // namespace type

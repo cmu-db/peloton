@@ -17,7 +17,7 @@
 #include "serializeio.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 class VarlenPool;
 class Value;
@@ -166,5 +166,5 @@ class Type {
   static Type* kTypes[14];
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

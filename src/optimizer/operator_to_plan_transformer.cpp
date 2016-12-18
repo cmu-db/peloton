@@ -95,7 +95,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
       tl.push_back(Target(project_idx, expr->Copy()));
     }
     columns.push_back(catalog::Column(
-        expr->GetValueType(), common::Type::GetTypeSize(expr->GetValueType()),
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
         column_name));
   }
   // build the projection plan node and insert aboce the scan

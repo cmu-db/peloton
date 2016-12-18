@@ -258,7 +258,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
         // construct a physical tuple from the logical tuple
         std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
         for (auto column_id : column_ids) {
-          common::Value val = cur_tuple.GetValue(column_id);
+          type::Value val = cur_tuple.GetValue(column_id);
           tuple->SetValue(column_id, val, this->pool.get());
         }
         ItemPointer location(tile_group_id, tuple_id);

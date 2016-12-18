@@ -15,7 +15,7 @@
 #include "type/value.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 class TimestampType : public Type {
  public:
@@ -57,4 +57,4 @@ class TimestampType : public Type {
 };
 
 }  // namespace peloton
-}  // namespace common
+}  // namespace type

@@ -20,7 +20,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 //===--------------------------------------------------------------------===//
 // Value Peeker
@@ -75,5 +75,5 @@ class ValuePeeker {
 };
 
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

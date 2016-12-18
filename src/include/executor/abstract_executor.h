@@ -62,7 +62,7 @@ class AbstractExecutor {
   const planner::AbstractPlan *GetRawNode() const { return node_; }
 
   // set the context
-  void SetContext(common::Value &value);
+  void SetContext(type::Value &value);
 
   // clear the context
   void ClearContext();
@@ -71,7 +71,7 @@ class AbstractExecutor {
   // some executor do not need this function, we set it to empty function.
   virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
                                    UNUSED_ATTRIBUTE,
-                               const std::vector<common::Value> &values
+                               const std::vector<type::Value> &values
                                    UNUSED_ATTRIBUTE) {}
 
   // Used to reset the state. For now it's overloaded by index scan executor

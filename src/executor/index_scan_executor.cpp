@@ -374,7 +374,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
         oid_t this_col_itr = 0;
         for (auto col : indexed_columns) {
-          common::Value val = (candidate_tuple.GetValue(col));
+          type::Value val = (candidate_tuple.GetValue(col));
           key_tuple.SetValue(this_col_itr, val, index_->GetPool());
           this_col_itr++;
         }
@@ -491,7 +491,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
 void IndexScanExecutor::UpdatePredicate(const std::vector<oid_t> &key_column_ids
                                             UNUSED_ATTRIBUTE,
-                                        const std::vector<common::Value> &values
+                                        const std::vector<type::Value> &values
                                             UNUSED_ATTRIBUTE) {
   // TODO: ADD ziqi's API
   // Update index predicate

@@ -4,7 +4,7 @@
 //
 // numeric_value.cpp
 //
-// Identification: src/backend/common/numeric_value.cpp
+// Identification: src/backend/type/numeric_value.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 IntegerParentType::IntegerParentType(TypeId type) : NumericType(type) {}
 
@@ -43,5 +43,5 @@ Value IntegerParentType::Max(const Value& left, const Value& right) const {
   return right.Copy();
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

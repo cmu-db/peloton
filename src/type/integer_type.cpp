@@ -19,7 +19,7 @@
 #include "type/varlen_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 IntegerType::IntegerType(TypeId type) :
     IntegerParentType(type) {
@@ -480,5 +480,5 @@ Value IntegerType::CastAs(const Value& val, const Type::TypeId type_id) const {
           + Type::GetInstance(type_id)->ToString());
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

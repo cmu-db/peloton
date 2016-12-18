@@ -139,7 +139,7 @@ class TileGroup : public Printable {
 
   oid_t GetTileId(const oid_t tile_id) const;
 
-  peloton::common::VarlenPool *GetTilePool(const oid_t tile_id) const;
+  peloton::type::VarlenPool *GetTilePool(const oid_t tile_id) const;
 
   const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
     return column_map;
@@ -166,9 +166,9 @@ class TileGroup : public Printable {
 
   oid_t GetTileColumnId(oid_t column_id);
 
-  common::Value GetValue(oid_t tuple_id, oid_t column_id);
+  type::Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  void SetValue(common::Value &value, oid_t tuple_id, oid_t column_id);
+  void SetValue(type::Value &value, oid_t tuple_id, oid_t column_id);
 
   // Copy a column from this tile group to a destination tile group.
   // Note that we do shallow copy for varlen field

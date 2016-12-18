@@ -55,7 +55,7 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
     std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   auto &peloton_parser = parser::Parser::GetInstance();
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt);

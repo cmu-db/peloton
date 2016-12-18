@@ -17,7 +17,7 @@
 #include "type/boolean_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 VarlenType::VarlenType(TypeId type) :
     Type(type) {
@@ -226,5 +226,5 @@ Value VarlenType::CastAs(const Value& val, const Type::TypeId type_id) const {
       "VARCHAR is not coercable to " + Type::GetInstance(type_id)->ToString());
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

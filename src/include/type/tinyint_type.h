@@ -15,7 +15,7 @@
 #include "type/integer_parent_type.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 // An integer value of the common sizes.
 class TinyintType : public IntegerParentType {
@@ -70,5 +70,5 @@ class TinyintType : public IntegerParentType {
   bool IsZero(const Value& val) const override;
 };
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton

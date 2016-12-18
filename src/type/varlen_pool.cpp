@@ -13,7 +13,7 @@
 #include "type/varlen_pool.h"
 
 namespace peloton {
-namespace common {
+namespace type {
 
 Buffer::Buffer(size_t buf_size, size_t blk_size) {
   buf_size_ = buf_size;
@@ -232,5 +232,5 @@ int VarlenPool::GetEmptyCountByListId(size_t list_id) const {
   return static_cast<int>(empty_cnt_[list_id]);
 }
 
-}  // namespace common
+}  // namespace type
 }  // namespace peloton
