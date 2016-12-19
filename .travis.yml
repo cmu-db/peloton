@@ -40,7 +40,7 @@ script:
     # run tests
     - make check -j4
     # build benchmarks
-    - make benchmarks -j4
+    - make benchmark -j4
     # install peloton
     - make install
     # run psql tests
