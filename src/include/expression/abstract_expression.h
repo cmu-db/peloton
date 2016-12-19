@@ -17,9 +17,9 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/printable.h"
-#include "common/serializeio.h"
-#include "common/types.h"
-#include "common/value_factory.h"
+#include "type/serializeio.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 
@@ -46,11 +46,9 @@ namespace expression {
 // remain constant and read-only during an execution.
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class AbstractExpression : public Printable {
  public:
-  virtual Value Evaluate(const AbstractTuple *tuple1,
+  virtual type::Value Evaluate(const AbstractTuple *tuple1,
                          const AbstractTuple *tuple2,
                          executor::ExecutorContext *context) const = 0;
 
@@ -91,7 +89,7 @@ class AbstractExpression : public Printable {
 
   ExpressionType GetExpressionType() const { return exp_type_; }
 
-  Type::TypeId GetValueType() const { return return_value_type_; }
+  type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   virtual void DeduceExpressionType() {}
 
@@ -100,7 +98,7 @@ class AbstractExpression : public Printable {
 
     os << "\tExpression :: "
        << " expression type = " << GetExpressionType() << ","
-       << " value type = " << Type::GetInstance(GetValueType())->ToString()
+       << " value type = " << type::Type::GetInstance(GetValueType())->ToString()
        << "," << std::endl;
 
     return os.str();
@@ -136,9 +134,9 @@ class AbstractExpression : public Printable {
 
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type, Type::TypeId return_value_type)
+  AbstractExpression(ExpressionType exp_type, type::Type::TypeId return_value_type)
       : exp_type_(exp_type), return_value_type_(return_value_type) {}
-  AbstractExpression(ExpressionType exp_type, Type::TypeId return_value_type,
+  AbstractExpression(ExpressionType exp_type, type::Type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right)
       : exp_type_(exp_type), return_value_type_(return_value_type) {
     // Order of these is important!
@@ -161,7 +159,7 @@ class AbstractExpression : public Printable {
   }
 
   ExpressionType exp_type_ = EXPRESSION_TYPE_INVALID;
-  Type::TypeId return_value_type_ = Type::INVALID;
+  type::Type::TypeId return_value_type_ = type::Type::INVALID;
 
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 

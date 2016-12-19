@@ -18,9 +18,9 @@
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
@@ -126,7 +126,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //      peloton_parser.BuildParseTree("SELECT * FROM test_table LIMIT 1;");
   //  statement->SetPlanTree(
   //      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
-  //  std::vector<common::Value> params;
+  //  std::vector<type::Value> params;
   //  std::vector<ResultType> result;
   //  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   //
@@ -153,15 +153,15 @@ TEST_F(UpdateTests, UpdatingOld) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_id", true);
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto manager_id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "manager_id", true);
   auto name_column =
-      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, manager_id_column, name_column}));
@@ -203,7 +203,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");

@@ -19,8 +19,8 @@
 #include "common/harness.h"
 
 #include "planner/order_by_plan.h"
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"
 #include "executor/order_by_executor.h"

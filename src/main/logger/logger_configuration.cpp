@@ -17,11 +17,13 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
+#include "storage/storage_manager.h"
+
 #include "benchmark/logger/logger_configuration.h"
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 
-extern CheckpointType peloton_checkpoint_mode;
+extern peloton::CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
 namespace benchmark {

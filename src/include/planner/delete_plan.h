@@ -13,7 +13,7 @@
 #pragma once
 
 #include "catalog/schema.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "parser/table_ref.h"
 #include "planner/abstract_plan.h"
 
@@ -56,7 +56,7 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
-  void SetParameterValues(std::vector<common::Value> *values) override;
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
   bool GetTruncate() const { return truncate; }
 

@@ -166,7 +166,7 @@ bool CopyExecutor::DExecute() {
     // vectors for prepared statement parameters
     int num_params = 0;
     std::vector<std::pair<int, std::string>> bind_parameters;
-    std::vector<common::Value> param_values;
+    std::vector<type::Value> param_values;
     std::vector<int16_t> formats;
     std::vector<int32_t> types;
 
@@ -194,7 +194,7 @@ bool CopyExecutor::DExecute() {
         } else if (origin_col_id == param_type_col_id) {
           // param_types column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    common::Type::VARBINARY);
+                    type::Type::VARBINARY);
 
           wire::InputPacket packet(len, val);
 
@@ -210,7 +210,7 @@ bool CopyExecutor::DExecute() {
         } else if (origin_col_id == param_format_col_id) {
           // param_formats column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    common::Type::VARBINARY);
+                    type::Type::VARBINARY);
 
           wire::InputPacket packet(len, val);
 
@@ -221,7 +221,7 @@ bool CopyExecutor::DExecute() {
         } else if (origin_col_id == param_val_col_id) {
           // param_values column
           PL_ASSERT(output_schema->GetColumn(col_index).GetType() ==
-                    common::Type::VARBINARY);
+                    type::Type::VARBINARY);
 
           wire::InputPacket packet(len, val);
           bind_parameters.resize(num_params);
@@ -235,10 +235,10 @@ bool CopyExecutor::DExecute() {
             auto param_value = param_values[i];
             LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
             // Avoid extra copy for varlen types
-            if (param_value.GetTypeId() == common::Type::VARBINARY) {
+            if (param_value.GetTypeId() == type::Type::VARBINARY) {
               const char *data = param_value.GetData();
               Copy(data, param_value.GetLength(), false);
-            } else if (param_value.GetTypeId() == common::Type::VARCHAR) {
+            } else if (param_value.GetTypeId() == type::Type::VARCHAR) {
               const char *data = param_value.GetData();
               // Don't write the NULL character for varchar
               Copy(data, param_value.GetLength() - 1, false);

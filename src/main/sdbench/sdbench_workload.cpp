@@ -32,9 +32,9 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 
@@ -165,11 +165,11 @@ static expression::AbstractExpression *CreateSimpleScanPredicate(
   // First, create tuple value expression.
   oid_t left_tuple_idx = 0;
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER,
                                                     left_tuple_idx, key_attr);
 
   // Second, create constant value expression.
-  Value constant_value_left = ValueFactory::GetIntegerValue(constant);
+  type::Value constant_value_left = type::ValueFactory::GetIntegerValue(constant);
 
   expression::AbstractExpression *constant_value_expr_left =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
@@ -228,7 +228,7 @@ static expression::AbstractExpression *CreateScanPredicate(
 static void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
                                      std::vector<oid_t> &key_column_ids,
                                      std::vector<ExpressionType> &expr_types,
-                                     std::vector<Value> &values) {
+                                     std::vector<type::Value> &values) {
   const int tuple_start_offset = GetLowerBound();
   const int tuple_end_offset = GetUpperBound();
 
@@ -237,11 +237,11 @@ static void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
     key_column_ids.push_back(key_attr);
     expr_types.push_back(
         ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-    values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
+    values.push_back(type::ValueFactory::GetIntegerValue(tuple_start_offset));
 
     key_column_ids.push_back(key_attr);
     expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-    values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
+    values.push_back(type::ValueFactory::GetIntegerValue(tuple_end_offset));
   }
 }
 
@@ -276,7 +276,7 @@ static std::shared_ptr<planner::HybridScanPlan> CreateHybridScanPlan(
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   // Create index scan predicate
@@ -356,7 +356,7 @@ static std::vector<double> GetColumnsAccessed(
   for (auto col : column_ids) columns_accessed_map[(int)col] = 1;
 
   for (oid_t column_itr = 0; column_itr < state.attribute_count + 1;
-       column_itr++) {
+      column_itr++) {
     auto location = columns_accessed_map.find(column_itr);
     auto end = columns_accessed_map.end();
     if (location != end)
@@ -496,7 +496,7 @@ static std::shared_ptr<index::Index> PickIndex(storage::DataTable *table,
 
     // Can only use full indexes ?
     if (state.index_usage_type == INDEX_USAGE_TYPE_FULL) {
-      auto indexed_tg_count = index->GetIndexedTileGroupOffset();
+      auto indexed_tg_count = index->GetIndexedTileGroupOff();
       auto table_tg_count = table->GetTileGroupCount();
 
       LOG_TRACE("Indexed TG Count : %lu", indexed_tg_count);
@@ -535,7 +535,8 @@ static void CopyColumn(oid_t col_itr) {
     // Prepare a tile for copying
     std::vector<catalog::Column> columns;
 
-    catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+    catalog::Column column1(type::Type::INTEGER,
+                            type::Type::GetTypeSize(type::Type::INTEGER),
                             "A", true);
     columns.push_back(column1);
 
@@ -549,11 +550,11 @@ static void CopyColumn(oid_t col_itr) {
 
     // TG Header
     storage::TileGroupHeader *header =
-      new storage::TileGroupHeader(BACKEND_TYPE_MM, state.tuples_per_tilegroup);
+        new storage::TileGroupHeader(BACKEND_TYPE_MM, state.tuples_per_tilegroup);
 
     storage::Tile *new_tile = storage::TileFactory::GetTile(
-      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-      header, *schema, nullptr, state.tuples_per_tilegroup);
+        BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+        header, *schema, nullptr, state.tuples_per_tilegroup);
 
     // Begin copy
     oid_t orig_tile_offset, orig_tile_column_offset;
@@ -631,7 +632,7 @@ static void RunComplexQuery() {
   std::vector<oid_t> tuple_key_attrs = predicate;
   std::vector<oid_t> index_key_attrs = {0, 1, 2};
   right_table_tuple_key_attrs = {predicate[0] + 10, predicate[1] + 10,
-                                 predicate[2] + 10};
+      predicate[2] + 10};
   right_table_index_key_attrs = {0, 1, 2};
 
   predicate = GetPredicate();
@@ -652,10 +653,10 @@ static void RunComplexQuery() {
 
   if (is_join_query == true) {
     LOG_INFO("Complex :: %s, %s, c1: %d, c2: %d", GetOidVectorString(left_table_tuple_key_attrs).c_str(),
-      GetOidVectorString(right_table_tuple_key_attrs).c_str(), (int)left_table_join_column, (int)right_table_join_column);
+             GetOidVectorString(right_table_tuple_key_attrs).c_str(), (int)left_table_join_column, (int)right_table_join_column);
   } else if (is_aggregate_query == true) {
     LOG_TRACE("Complex :: %s", GetOidVectorString(tuple_key_attrs)
-                                   .c_str());
+              .c_str());
   } else {
     LOG_ERROR("Invalid query \n");
     return;
@@ -727,15 +728,15 @@ static void JoinQueryHelper(
 
   // Create join predicate
   expression::TupleValueExpression *left_table_attr =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0,
+      new expression::TupleValueExpression(type::Type::INTEGER, 0,
                                            left_table_join_column);
   expression::TupleValueExpression *right_table_attr =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1,
+      new expression::TupleValueExpression(type::Type::INTEGER, 1,
                                            right_table_join_column);
 
-  std::unique_ptr<expression::ComparisonExpression<expression::CmpLt>>
-      join_predicate(new expression::ComparisonExpression<expression::CmpLt>(
-          EXPRESSION_TYPE_COMPARE_LESSTHAN, left_table_attr, right_table_attr));
+  std::unique_ptr<expression::ComparisonExpression>
+  join_predicate(new expression::ComparisonExpression(
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, left_table_attr, right_table_attr));
 
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   std::shared_ptr<const catalog::Schema> schema(nullptr);
@@ -762,7 +763,8 @@ static void JoinQueryHelper(
   oid_t join_column_count = column_count * 2;
   for (oid_t col_itr = 0; col_itr < join_column_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(type::Type::INTEGER,
+                        type::Type::GetTypeSize(type::Type::INTEGER),
                         "" + std::to_string(col_itr), is_inlined);
     output_columns.push_back(column);
 
@@ -808,7 +810,14 @@ static void JoinQueryHelper(
       {left_table_tuple_columns_accessed, right_table_tuple_columns_accessed},
       selectivity);
 
-  txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
+
+  if (result == Result::RESULT_SUCCESS) {
+    LOG_TRACE("commit successfully");
+  } else {
+    LOG_TRACE("commit failed");
+  }
+
 }
 
 static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
@@ -877,9 +886,10 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   for (col_itr = 0; col_itr < column_count; col_itr++) {
     planner::AggregatePlan::AggTerm max_column_agg(
         EXPRESSION_TYPE_AGGREGATE_MAX,
-        expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0,
+        expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER,
+                                                      0,
                                                       col_itr),
-        false);
+                                                      false);
     agg_terms.push_back(max_column_agg);
   }
 
@@ -918,7 +928,8 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   col_itr = 0;
   for (auto column_id : column_ids) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(type::Type::INTEGER,
+                        type::Type::GetTypeSize(type::Type::INTEGER),
                         std::to_string(column_id), is_inlined);
     output_columns.push_back(column);
 
@@ -959,7 +970,14 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   ExecuteTest(executors, brain::SAMPLE_TYPE_ACCESS, {index_columns_accessed},
               {tuple_columns_accessed}, selectivity);
 
-  txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
+
+  if (result == Result::RESULT_SUCCESS) {
+    LOG_TRACE("commit successfully");
+  } else {
+    LOG_TRACE("commit failed");
+  }
+
 }
 
 /**
@@ -1004,7 +1022,7 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
   // Update the value of each attribute in update_attrs to -v, where v is the
   // original value, and -v is minus original value.
 
-  std::vector<Value> values;
+  std::vector<type::Value> values;
   TargetList target_list;
   DirectMapList direct_map_list;
 
@@ -1014,7 +1032,7 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
   // Build target_list: -value for update_attrs
   for (oid_t update_attr : update_attrs) {
     auto tuple_value_expression = new expression::TupleValueExpression(
-        VALUE_TYPE_INTEGER, 0, update_attr);
+        type::Type::INTEGER, 0, update_attr);
     auto minus_value_expression =
         new expression::OperatorUnaryMinusExpression(tuple_value_expression);
     target_list.emplace_back(update_attr, minus_value_expression);
@@ -1063,7 +1081,14 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
   ExecuteTest(executors, brain::SAMPLE_TYPE_ACCESS, {index_columns_accessed},
               {tuple_columns_accessed}, selectivity);
 
-  txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
+
+  if (result == Result::RESULT_SUCCESS) {
+    LOG_TRACE("commit successfully");
+  } else {
+    LOG_TRACE("commit failed");
+  }
+
 }
 
 static void InsertHelper() {
@@ -1080,8 +1105,8 @@ static void InsertHelper() {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  std::vector<Value> values;
-  Value insert_val = ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
+  std::vector<type::Value> values;
+  type::Value insert_val = type::ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
   TargetList target_list;
   DirectMapList direct_map_list;
   std::vector<oid_t> column_ids;
@@ -1121,7 +1146,14 @@ static void InsertHelper() {
   ExecuteTest(executors, brain::SAMPLE_TYPE_UPDATE, {{}}, {},
               selectivity);
 
-  txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
+
+  if (result == Result::RESULT_SUCCESS) {
+    LOG_TRACE("commit successfully");
+  } else {
+    LOG_TRACE("commit failed");
+  }
+
 }
 
 /**
@@ -1264,7 +1296,7 @@ static bool HasIndexConfigurationConverged() {
       continue;
     }
 
-    auto indexed_tile_group_offset = index->GetIndexedTileGroupOffset();
+    auto indexed_tile_group_offset = index->GetIndexedTileGroupOff();
 
     // Get percentage completion
     double fraction = 0.0;

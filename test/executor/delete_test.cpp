@@ -44,7 +44,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::unique_ptr<Statement> statement;
   auto& peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   std::vector<ResultType> result;
   optimizer::SimpleOptimizer optimizer;
 
@@ -71,10 +71,10 @@ TEST_F(DeleteTests, VariousOperations) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_id", true);
   auto name_column =
-      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -115,7 +115,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "optimizer/query_node_visitor.h"
 #include "parser/sql_statement.h"
 
@@ -71,61 +71,61 @@ struct ColumnDefinition {
     delete table_info_;
   }
 
-  static common::Type::TypeId GetValueType(DataType type) {
+  static type::Type::TypeId GetValueType(DataType type) {
     switch (type) {
       case INT:
       case INTEGER:
-        return common::Type::INTEGER;
+        return type::Type::INTEGER;
         break;
 
       case TINYINT:
-        return common::Type::TINYINT;
+        return type::Type::TINYINT;
         break;
       case SMALLINT:
-        return common::Type::SMALLINT;
+        return type::Type::SMALLINT;
         break;
       case BIGINT:
-        return common::Type::BIGINT;
+        return type::Type::BIGINT;
         break;
 
       // case DOUBLE:
       // case FLOAT:
-      //  return common::Type::DOUBLE;
+      //  return type::Type::DOUBLE;
       //  break;
 
       case DECIMAL:
       case DOUBLE:
       case FLOAT:
-        return common::Type::DECIMAL;
+        return type::Type::DECIMAL;
         break;
 
       case BOOLEAN:
-        return common::Type::BOOLEAN;
+        return type::Type::BOOLEAN;
         break;
 
       // case ADDRESS:
-      //  return common::Type::ADDRESS;
+      //  return type::Type::ADDRESS;
       //  break;
 
       case TIMESTAMP:
-        return common::Type::TIMESTAMP;
+        return type::Type::TIMESTAMP;
         break;
 
       case CHAR:
       case TEXT:
       case VARCHAR:
-        return common::Type::VARCHAR;
+        return type::Type::VARCHAR;
         break;
 
       case VARBINARY:
-        return common::Type::VARBINARY;
+        return type::Type::VARBINARY;
         break;
 
       case INVALID:
       case PRIMARY:
       case FOREIGN:
       default:
-        return common::Type::INVALID;
+        return type::Type::INVALID;
         break;
     }
   }

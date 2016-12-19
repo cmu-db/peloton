@@ -14,9 +14,9 @@
 
 #include "catalog/catalog_util.h"
 #include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value_factory.h"
-#include "common/varlen_pool.h"
+#include "type/types.h"
+#include "type/value_factory.h"
+#include "type/varlen_pool.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
@@ -59,9 +59,9 @@ struct FunctionData {
   // number of arguments
   size_t num_arguments_;
   // funtion's return type
-  common::Type::TypeId return_type_;
+  type::Type::TypeId return_type_;
   // pointer to the funtion
-  common::Value (*func_ptr_)(const std::vector<common::Value> &);
+  type::Value (*func_ptr_)(const std::vector<type::Value> &);
 };
 
 class Catalog {
@@ -181,8 +181,8 @@ class Catalog {
   // add and get methods for functions
   void AddFunction(
       const std::string &name, const size_t num_arguments,
-      const common::Type::TypeId return_type,
-      common::Value (*func_ptr)(const std::vector<common::Value> &));
+      const type::Type::TypeId return_type,
+      type::Value (*func_ptr)(const std::vector<type::Value> &));
 
   FunctionData GetFunction(const std::string &name);
 
@@ -213,7 +213,7 @@ class Catalog {
 
  public:
   // The var len pool for new varlen tuple fields
-  common::VarlenPool *pool_ = new common::VarlenPool();
+  type::VarlenPool *pool_ = new type::VarlenPool();
 };
 }
 }

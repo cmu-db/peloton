@@ -15,7 +15,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "common/value_peeker.h"
+#include "type/value_peeker.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "storage/tuple.h"
@@ -25,8 +25,6 @@
 
 namespace peloton {
 namespace index {
-
-using namespace peloton::common;
 
 /*
  * Convert from a uint64_t that has had a signed number packed into it to
@@ -184,28 +182,28 @@ class IntsKey {
     const int GetColumnCount = key_schema->GetColumnCount();
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-        case Type::BIGINT: {
+        case type::Type::BIGINT: {
           const uint64_t key_value =
               ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
           buffer << ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
                         key_value) << ",";
           break;
         }
-        case Type::INTEGER: {
+        case type::Type::INTEGER: {
           const uint64_t key_value =
               ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
           buffer << ConvertUnsignedValueToSignedValue<int32_t, INT32_MAX>(
                         key_value) << ",";
           break;
         }
-        case Type::SMALLINT: {
+        case type::Type::SMALLINT: {
           const uint64_t key_value =
               ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
           buffer << ConvertUnsignedValueToSignedValue<int16_t, INT16_MAX>(
                         key_value) << ",";
           break;
         }
-        case Type::TINYINT: {
+        case type::Type::TINYINT: {
           const uint64_t key_value =
               ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
           buffer << static_cast<int64_t>(
@@ -232,36 +230,36 @@ class IntsKey {
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-        case Type::BIGINT: {
-          common::Value val = tuple->GetValue(ii);
-          const int64_t value = ValuePeeker::PeekBigInt(val);
+        case type::Type::BIGINT: {
+          type::Value val = tuple->GetValue(ii);
+          const int64_t value = type::ValuePeeker::PeekBigInt(val);
           const uint64_t key_value =
               ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
                   value);
           InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::INTEGER: {
-          common::Value val = tuple->GetValue(ii);
-          const int32_t value = ValuePeeker::PeekInteger(val);
+        case type::Type::INTEGER: {
+          type::Value val = tuple->GetValue(ii);
+          const int32_t value = type::ValuePeeker::PeekInteger(val);
           const uint32_t key_value =
               ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
                   value);
           InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::SMALLINT: {
-          common::Value val = tuple->GetValue(ii);
-          const int16_t value = ValuePeeker::PeekSmallInt(val);
+        case type::Type::SMALLINT: {
+          type::Value val = tuple->GetValue(ii);
+          const int16_t value = type::ValuePeeker::PeekSmallInt(val);
           const uint16_t key_value =
               ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
                   value);
           InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::TINYINT: {
-          common::Value val = tuple->GetValue(ii);
-          const int8_t value = ValuePeeker::PeekTinyInt(val);
+        case type::Type::TINYINT: {
+          type::Value val = tuple->GetValue(ii);
+          const int8_t value = type::ValuePeeker::PeekTinyInt(val);
           const uint8_t key_value =
               ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
                   value);
@@ -285,37 +283,37 @@ class IntsKey {
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-        case Type::BIGINT: {
-          common::Value val = tuple->GetValue(indices[ii]);
-          const int64_t value = ValuePeeker::PeekBigInt(val);
+        case type::Type::BIGINT: {
+          type::Value val = tuple->GetValue(indices[ii]);
+          const int64_t value = type::ValuePeeker::PeekBigInt(val);
           const uint64_t key_value =
               ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
                   value);
           InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::INTEGER: {
-          common::Value val = tuple->GetValue(indices[ii]);
+        case type::Type::INTEGER: {
+          type::Value val = tuple->GetValue(indices[ii]);
           const int32_t value =
-              ValuePeeker::PeekInteger(val);
+              type::ValuePeeker::PeekInteger(val);
           const uint32_t key_value =
               ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
                   value);
           InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::SMALLINT: {
-          common::Value val = tuple->GetValue(indices[ii]);
-          const int16_t value = ValuePeeker::PeekSmallInt(val);
+        case type::Type::SMALLINT: {
+          type::Value val = tuple->GetValue(indices[ii]);
+          const int16_t value = type::ValuePeeker::PeekSmallInt(val);
           const uint16_t key_value =
               ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
                   value);
           InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::TINYINT: {
-          common::Value val = tuple->GetValue(indices[ii]);
-          const int8_t value = ValuePeeker::PeekTinyInt(val);
+        case type::Type::TINYINT: {
+          type::Value val = tuple->GetValue(indices[ii]);
+          const int8_t value = type::ValuePeeker::PeekTinyInt(val);
           const uint8_t key_value =
               ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
                   value);
@@ -457,13 +455,13 @@ class GenericKey {
     return storage::Tuple(key_schema, data);
   }
 
-  inline const Value ToValueFast(const catalog::Schema *schema,
+  inline const type::Value ToValueFast(const catalog::Schema *schema,
                                  int column_id) const {
-    const Type::TypeId column_type = schema->GetType(column_id);
+    const type::Type::TypeId column_type = schema->GetType(column_id);
     const char *data_ptr = &data[schema->GetOffset(column_id)];
     const bool is_inlined = schema->IsInlined(column_id);
 
-    return Value::DeserializeFrom(data_ptr, column_type, is_inlined);
+    return type::Value::DeserializeFrom(data_ptr, column_type, is_inlined);
   }
 
   // actual location of data, extends past the end.
@@ -484,17 +482,17 @@ class GenericComparator {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      const common::Value lhs_value = (
+      const type::Value lhs_value = (
           lhs.ToValueFast(schema, column_itr));
-      const common::Value rhs_value = (
+      const type::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
       
-      common::Value res_lt = (
+      type::Value res_lt = (
           lhs_value.CompareLessThan(rhs_value));
       if (res_lt.IsTrue())
         return true;
 
-      common::Value res_gt = (
+      type::Value res_gt = (
           lhs_value.CompareGreaterThan(rhs_value));
       if (res_gt.IsTrue())
         return false;
@@ -519,17 +517,17 @@ class GenericComparatorRaw {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      const common::Value lhs_value = (
+      const type::Value lhs_value = (
           lhs.ToValueFast(schema, column_itr));
-      const common::Value rhs_value = (
+      const type::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
 
-      common::Value res_lt = (
+      type::Value res_lt = (
         lhs_value.CompareLessThan(rhs_value));
       if (res_lt.IsTrue())
         return VALUE_COMPARE_LESSTHAN;
 
-      common::Value res_gt = (
+      type::Value res_gt = (
         lhs_value.CompareGreaterThan(rhs_value));
       if (res_gt.IsTrue())
         return VALUE_COMPARE_GREATERTHAN;
@@ -686,17 +684,17 @@ class TupleKeyComparator {
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      common::Value lhValue = (
+      type::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      common::Value rhValue = (
+      type::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
-      common::Value res_lt = (
+      type::Value res_lt = (
           lhValue.CompareLessThan(rhValue));
       if (res_lt.IsTrue())
         return true;
 
-      common::Value res_gt = (
+      type::Value res_gt = (
           lhValue.CompareGreaterThan(rhValue));
       if (res_gt.IsTrue())
         return false;
@@ -721,17 +719,17 @@ class TupleKeyComparatorRaw {
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      common::Value lhValue = (
+      type::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      common::Value rhValue = (
+      type::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
-      common::Value res_lt = (
+      type::Value res_lt = (
           lhValue.CompareLessThan(rhValue));
       if (res_lt.IsTrue())
         return VALUE_COMPARE_LESSTHAN;
 
-      common::Value res_gt(
+      type::Value res_gt(
           lhValue.CompareGreaterThan(rhValue));
       if (res_gt.IsTrue())
         return VALUE_COMPARE_GREATERTHAN;
@@ -758,12 +756,12 @@ class TupleKeyEqualityChecker {
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
-      common::Value lhValue = (
+      type::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      common::Value rhValue = (
+      type::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
-      common::Value res = (lhValue.CompareNotEquals(rhValue));
+      type::Value res = (lhValue.CompareNotEquals(rhValue));
       if (res.IsTrue())
         return false;
     }

@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
+
+#include "configuration/configuration.h"
 #include "common/init.h"
-#include "common/config.h"
+#include "common/logger.h"
 #include "wire/libevent_server.h"
 
 // Peloton process begins execution here.
@@ -28,14 +30,24 @@ int main(int argc, char *argv[]) {
     ::google::HandleCommandLineHelpFlags();
   }
 
-  // Setup
-  peloton::PelotonInit::Initialize();
+  // Print configuration
+  if (FLAGS_display_configuration == true) {
+    peloton::configuration::PrintConfiguration();
+  }
 
-  // Launch server
-  peloton::wire::LibeventServer libeventserver;
+  try {
+    // Setup
+    peloton::PelotonInit::Initialize();
 
-  // Teardown
-  peloton::PelotonInit::Shutdown();
+    // Launch server
+    peloton::wire::LibeventServer libeventserver;
+
+    // Teardown
+    peloton::PelotonInit::Shutdown();
+  }
+  catch(peloton::ConnectionException exception){
+    // Nothing to do here!
+  }
 
   return 0;
 }

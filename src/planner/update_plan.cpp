@@ -12,7 +12,7 @@
 
 #include "planner/update_plan.h"
 
-#include "common/types.h"
+#include "type/types.h"
 #include "parser/update_statement.h"
 #include "planner/project_info.h"
 
@@ -124,7 +124,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
-                       std::vector<common::Value> &values, oid_t &index_id)
+                       std::vector<type::Value> &values, oid_t &index_id)
     : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
@@ -152,7 +152,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
   AddChild(std::move(index_scan_node));
 }
 
-void UpdatePlan::SetParameterValues(std::vector<common::Value> *values) {
+void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Update");
 
   auto &children = GetChildren();

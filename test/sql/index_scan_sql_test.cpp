@@ -32,13 +32,13 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_id", true);
   // Set dept_id as the primary key (only that we can have a primary key index)
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto name_column =
-      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
+      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));

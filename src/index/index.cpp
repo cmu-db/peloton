@@ -15,7 +15,7 @@
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/logger.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "storage/tuple.h"
 
 #include "index/scan_optimizer.h"
@@ -125,7 +125,7 @@ Index::Index(IndexMetadata *metadata)
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 
   // initialize pool
-  pool = new common::VarlenPool(BACKEND_TYPE_MM);
+  pool = new type::VarlenPool(BACKEND_TYPE_MM);
 
   return;
 }
@@ -145,7 +145,7 @@ Index::~Index() {
   return;
 }
 
-void Index::ScanTest(const std::vector<common::Value> &value_list,
+void Index::ScanTest(const std::vector<type::Value> &value_list,
                      const std::vector<oid_t> &tuple_column_id_list,
                      const std::vector<ExpressionType> &expr_list,
                      const ScanDirectionType &scan_direction,
@@ -169,7 +169,7 @@ void Index::ScanTest(const std::vector<common::Value> &value_list,
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
-                    const std::vector<common::Value> &value_list) {
+                    const std::vector<type::Value> &value_list) {
   // int diff;
 
   // The size of these three arrays must be the same
@@ -200,11 +200,11 @@ bool Index::Compare(const AbstractTuple &index_key,
     oid_t index_key_column_id = tuple_to_index_map[tuple_key_column_id];
 
     // This the comparison right hand side operand
-    const common::Value &rhs = value_list[i];
+    const type::Value &rhs = value_list[i];
 
     // Also retrieve left hand side operand using index key column ID
-    common::Value val = (index_key.GetValue(index_key_column_id));
-    const common::Value &lhs = val;
+    type::Value val = (index_key.GetValue(index_key_column_id));
+    const type::Value &lhs = val;
 
     // Expression type. We use this to interpret comparison result
     //
@@ -230,7 +230,7 @@ bool Index::Compare(const AbstractTuple &index_key,
     }
 
     LOG_TRACE("Difference : %d ", diff);*/
-    common::Value cmp_eq = (lhs.CompareEquals(rhs));
+    type::Value cmp_eq = (lhs.CompareEquals(rhs));
     if (cmp_eq.IsTrue()) {
       switch (expr_type) {
         case EXPRESSION_TYPE_COMPARE_EQUAL:
@@ -249,7 +249,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                std::to_string(expr_type));
       }
     } else {
-      common::Value cmp_lt = (lhs.CompareLessThan(rhs));
+      type::Value cmp_lt = (lhs.CompareLessThan(rhs));
       if (cmp_lt.IsTrue()) {
         switch (expr_type) {
           case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -268,7 +268,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                  std::to_string(expr_type));
         }
       } else {
-        common::Value cmp_gt(lhs.CompareGreaterThan(rhs));
+        type::Value cmp_gt(lhs.CompareGreaterThan(rhs));
         if (cmp_gt.IsTrue()) {
           switch (expr_type) {
             case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -312,7 +312,7 @@ bool Index::Compare(const AbstractTuple &index_key,
  * index_util impossible.
  */
 bool Index::ConstructLowerBoundTuple(
-    storage::Tuple *index_key, const std::vector<common::Value> &values,
+    storage::Tuple *index_key, const std::vector<type::Value> &values,
     const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types) {
   auto schema = index_key->GetSchema();
@@ -328,7 +328,7 @@ bool Index::ConstructLowerBoundTuple(
         std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
 
     bool placeholder = false;
-    common::Value value = common::ValueFactory::GetBooleanValue(false);
+    type::Value value = type::ValueFactory::GetBooleanValue(false);
 
     // This column is part of the key column ids
     if (key_column_itr != key_column_ids.end()) {
@@ -360,7 +360,7 @@ bool Index::ConstructLowerBoundTuple(
     } else {
       auto value_type = schema->GetType(column_itr);
 
-      index_key->SetValue(column_itr, common::Type::GetMinValue(value_type),
+      index_key->SetValue(column_itr, type::Type::GetMinValue(value_type),
                           GetPool());
     }
   }  // for all columns in index key

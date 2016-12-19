@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "expression/abstract_expression.h"

@@ -29,9 +29,10 @@
 
 #include <sys/file.h>
 #include <fstream>
-#include "common/config.h"
+
 #include "common/exception.h"
 #include "common/logger.h"
+#include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "wire/libevent_thread.h"
 #include "wire/wire.h"

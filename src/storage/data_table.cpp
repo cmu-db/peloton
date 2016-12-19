@@ -888,6 +888,15 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
+void DataTable::DropIndexes() {
+
+  // TODO: iterate over all indexes, and actually drop them
+
+  indexes_.Clear(nullptr);
+
+  indexes_columns_.clear();
+}
+
 std::shared_ptr<index::Index> DataTable::GetIndex(const oid_t &index_offset) {
   PL_ASSERT(index_offset < indexes_.GetSize());
   auto ret_index = indexes_.Find(index_offset);
@@ -1026,7 +1035,7 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 
     // Copy the column over to the new tile group
     for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
-      common::Value val =
+      type::Value val =
           (orig_tile->GetValue(tuple_itr, orig_tile_column_offset));
       new_tile->SetValue(val, tuple_itr, new_tile_column_offset);
     }

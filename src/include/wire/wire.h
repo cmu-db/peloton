@@ -142,7 +142,7 @@ class PacketManager {
   static size_t ReadParamValue(
       InputPacket* pkt, int num_params, std::vector<int32_t>& param_types,
       std::vector<std::pair<int, std::string>>& bind_parameters,
-      std::vector<common::Value>& param_values, std::vector<int16_t>& formats);
+      std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
   PacketManager();
 

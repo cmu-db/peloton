@@ -13,7 +13,7 @@
 #pragma once
 
 #include "planner/abstract_scan_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/abstract_executor.h"
 
 namespace peloton {
@@ -36,7 +36,7 @@ class AbstractScanExecutor : public AbstractExecutor {
 
   virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
                                    UNUSED_ATTRIBUTE,
-                               const std::vector<common::Value> &values
+                               const std::vector<type::Value> &values
                                    UNUSED_ATTRIBUTE) {}
 
   virtual void ResetState() {}

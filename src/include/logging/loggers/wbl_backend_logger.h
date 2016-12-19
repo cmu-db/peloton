@@ -15,7 +15,7 @@
 
 #include <unordered_set>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/backend_logger.h"
 #include "concurrency/transaction_manager_factory.h"
 

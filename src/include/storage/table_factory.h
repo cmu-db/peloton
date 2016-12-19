@@ -14,7 +14,7 @@
 #pragma once
 
 #include "catalog/manager.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "storage/data_table.h"
 
 #include <iostream>

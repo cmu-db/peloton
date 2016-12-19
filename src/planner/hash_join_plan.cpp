@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 #include "planner/project_info.h"
 

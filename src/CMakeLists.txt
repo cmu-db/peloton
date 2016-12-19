@@ -1,4 +1,9 @@
+##################################################################################
+# SRC CMAKELISTS
+##################################################################################
+
 # --[ Proto library
+
 file(GLOB proto_files proto/*.proto)
 peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
 
@@ -7,29 +12,44 @@ add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
 set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-proto)
 
-# --[ BISON FLEX
+##################################################################################
+
+# --[ Parser library
+
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-set(SQLParser_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
-set(SQLScanner_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
+set(SQLParser_BISON "${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y")
+set(SQLScanner_FLEX "${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l")
+set(SQLParser_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
+set(SQLScanner_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
 
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
-    message("Building parser for the first time.")	
-	BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${SQLParser_LOCATION})
-	FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${SQLScanner_LOCATION})
+# Skip rebuilding parser if it is already built
+if(EXISTS ${SQLParser_SOURCE})
+	message("-- Found peloton parser")
+else()
+  	message("-- Building peloton parser")
+	BISON_TARGET(SQLParser ${SQLParser_BISON} ${SQLParser_SOURCE})
+	FLEX_TARGET(SQLScanner ${SQLScanner_FLEX} ${SQLScanner_SOURCE})
 	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
 endif()
 
-add_library(peloton-parser STATIC ${SQLParser_LOCATION} ${SQLScanner_LOCATION})
+# Check if the parser is built
+add_custom_target(peloton-parser-check
+	COMMAND sed -i -e 's/Parser/Parser/g' ${PROJECT_SOURCE_DIR}/src/CMakeLists.txt
+)
+
+set(PARSER_FLAGS "-w -Wno-error -fpermissive -Wno-sign-compare")
+set_source_files_properties(${SQLParser_SOURCE} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
+set_source_files_properties(${SQLScanner_SOURCE} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
+
+add_library(peloton-parser STATIC ${SQLParser_SOURCE} ${SQLScanner_SOURCE})
+add_dependencies(peloton-parser peloton-parser-check)
+
 set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-parser)
 
-# --[ Parser Flags
-
-set(PARSER_FLAGS "-w -Wno-error -fpermissive -Wno-sign-compare")
-set_source_files_properties(${SQLParser_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
-set_source_files_properties(${SQLScanner_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
+##################################################################################
 
 # --[ Peloton library
 
@@ -44,13 +64,18 @@ peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
     VERSION   ${PELOTON_TARGET_VERSION}
     SOVERSION ${PELOTON_TARGET_SOVERSION}
-    )
+)
+
+##################################################################################
 
 # --[ Peloton
+
 set(peloton_main ${PROJECT_SOURCE_DIR}/src/main/peloton/peloton.cpp)
 add_executable(peloton-bin ${peloton_main})
 target_link_libraries(peloton-bin peloton)
 set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
+
+##################################################################################
 
 # --[ Benchmarks
 
@@ -92,7 +117,6 @@ endforeach()
 # --[ benchmark
 
 add_custom_target(benchmark)
-
 add_dependencies(benchmark tpcc ycsb sdbench logger)
 
 

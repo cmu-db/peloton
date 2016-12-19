@@ -13,7 +13,7 @@
 
 #include "executor/join_tests_util.h"
 
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
@@ -32,9 +32,9 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 1, 1);
+      new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
 
   predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
@@ -74,9 +74,9 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 0, 1);
+      new expression::TupleValueExpression(type::Type::INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(common::Type::INTEGER, 1, 1);
+      new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
 
   expression::ComparisonExpression *comp_a =
       new expression::ComparisonExpression(
@@ -85,10 +85,10 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
   // LEFT.3 > 50.0
 
   expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(common::Type::DECIMAL, 0, 1);
+      new expression::TupleValueExpression(type::Type::DECIMAL, 0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
-          common::ValueFactory::GetDoubleValue(50.0));
+          type::ValueFactory::GetDoubleValue(50.0));
   expression::ComparisonExpression *comp_b =
       new expression::ComparisonExpression(
           EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);

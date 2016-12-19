@@ -75,7 +75,7 @@ TEST_F(CopyTests, Copying) {
 
     // Execute insert
     auto statement = StatsTestsUtil::GetInsertStmt(12345, insert_str);
-    std::vector<common::Value> params;
+    std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<ResultType> result;
     bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(

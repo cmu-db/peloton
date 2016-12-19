@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 

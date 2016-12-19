@@ -13,7 +13,7 @@
 #include <algorithm>
 
 #include "common/logger.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/order_by_executor.h"
@@ -73,7 +73,7 @@ bool OrderByExecutor::DExecute() {
         sort_buffer_[num_tuples_returned_ + id].item_pointer.offset;
     // Insert a physical tuple into physical tile
     for (oid_t col = 0; col < input_schema_->GetColumnCount(); col++) {
-      common::Value val = (
+      type::Value val = (
           input_tiles_[source_tile_id]->GetValue(source_tuple_id, col));
       ptile.get()->SetValue(val, id, col);
     }
@@ -133,7 +133,7 @@ bool OrderByExecutor::DoSort() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(sort_key_tuple_schema_.get(), true));
       for (oid_t id = 0; id < node.GetSortKeys().size(); id++) {
-        common::Value val = (
+        type::Value val = (
             input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]));
         tuple->SetValue(id, val, executor_pool);
       }
@@ -153,24 +153,24 @@ bool OrderByExecutor::DoSort() {
 
     bool operator()(const storage::Tuple *ta, const storage::Tuple *tb) {
       for (oid_t id = 0; id < descend_flags.size(); id++) {
-        common::Value va =(ta->GetValue(id));
-        common::Value vb = (tb->GetValue(id));
+        type::Value va =(ta->GetValue(id));
+        type::Value vb = (tb->GetValue(id));
         if (!descend_flags[id]) {
-          common::Value cmp_lt = (va.CompareLessThan(vb));
+          type::Value cmp_lt = (va.CompareLessThan(vb));
           if (cmp_lt.IsTrue())
             return true;
           else {
-            common::Value cmp_gt = (va.CompareGreaterThan(vb));
+            type::Value cmp_gt = (va.CompareGreaterThan(vb));
             if (cmp_gt.IsTrue())
               return false;
           }
         }
         else {
-          common::Value cmp_lt = (vb.CompareLessThan(va));
+          type::Value cmp_lt = (vb.CompareLessThan(va));
           if (cmp_lt.IsTrue())
             return true;
           else {
-            common::Value cmp_gt = (vb.CompareGreaterThan(va));
+            type::Value cmp_gt = (vb.CompareGreaterThan(va));
             if (cmp_gt.IsTrue())
             return false;
           }

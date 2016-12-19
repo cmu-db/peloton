@@ -16,7 +16,7 @@
 #include <memory>
 #include <utility>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"

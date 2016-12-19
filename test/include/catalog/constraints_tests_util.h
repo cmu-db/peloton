@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 
@@ -63,9 +63,9 @@ class ConstraintsTestsUtil {
 
   /** @brief Insert a tupl with 4 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
-                            storage::DataTable *table, const common::Value &col1,
-                            const common::Value &col2, const common::Value &col3,
-                            const common::Value &col4);
+                            storage::DataTable *table, const type::Value &col1,
+                            const type::Value &col2, const type::Value &col3,
+                            const type::Value &col4);
 
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();

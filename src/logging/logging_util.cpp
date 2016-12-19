@@ -15,7 +15,7 @@
 #include <cstring>
 
 #include "catalog/catalog.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/logging_util.h"
 #include "storage/database.h"
 
@@ -262,7 +262,7 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
 }
 
 storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
-                                                 common::VarlenPool *pool,
+                                                 type::VarlenPool *pool,
                                                  FileHandle &file_handle) {
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize(file_handle);

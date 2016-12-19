@@ -20,7 +20,7 @@
 #include <cstring>
 
 #include "common/printable.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/macros.h"
 #include "common/platform.h"
 

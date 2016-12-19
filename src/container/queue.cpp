@@ -12,7 +12,7 @@
 
 
 #include "container/queue.h"
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 

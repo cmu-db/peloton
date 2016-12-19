@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/boolean_type.h"
+#include "type/boolean_type.h"
 #include "common/harness.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {
@@ -24,10 +24,10 @@ namespace test {
 class BooleanValueTests : public PelotonTest {};
 
 TEST_F(BooleanValueTests, BasicTest) {
-  auto valTrue = common::ValueFactory::GetBooleanValue(true);
-  auto valFalse = common::ValueFactory::GetBooleanValue(false);
+  auto valTrue = type::ValueFactory::GetBooleanValue(true);
+  auto valFalse = type::ValueFactory::GetBooleanValue(false);
   auto valNull =
-      common::ValueFactory::GetNullValueByType(common::Type::BOOLEAN);
+      type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
 
   EXPECT_TRUE(valTrue.IsTrue());
   EXPECT_FALSE(valTrue.IsFalse());
@@ -51,32 +51,32 @@ TEST_F(BooleanValueTests, ComparisonTest) {
       EXPRESSION_TYPE_COMPARE_GREATERTHAN,
       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO};
 
-  int values[] = {true, false, common::PELOTON_BOOLEAN_NULL};
+  int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
-  common::Value result;
-  common::Value val0;
-  common::Value val1;
+  type::Value result;
+  type::Value val0;
+  type::Value val1;
 
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       bool expected_null = false;
 
       // VALUE #0
-      if (values[i] == common::PELOTON_BOOLEAN_NULL) {
-        val0 = common::ValueFactory::GetNullValueByType(common::Type::BOOLEAN);
+      if (values[i] == type::PELOTON_BOOLEAN_NULL) {
+        val0 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
         expected_null = true;
       } else {
         val0 =
-            common::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
+            type::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
       }
 
       // VALUE #1
-      if (values[j] == common::PELOTON_BOOLEAN_NULL) {
-        val1 = common::ValueFactory::GetNullValueByType(common::Type::BOOLEAN);
+      if (values[j] == type::PELOTON_BOOLEAN_NULL) {
+        val1 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
         expected_null = true;
       } else {
         val1 =
-            common::ValueFactory::GetBooleanValue(static_cast<bool>(values[j]));
+            type::ValueFactory::GetBooleanValue(static_cast<bool>(values[j]));
       }
 
       for (auto etype : compares) {
@@ -125,44 +125,44 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 }
 
 TEST_F(BooleanValueTests, ToStringTest) {
-  common::Value val;
-  common::Value result;
+  type::Value val;
+  type::Value result;
   std::string str;
-  common::Value valStr;
+  type::Value valStr;
 
-  val = common::ValueFactory::GetBooleanValue(true);
+  val = type::ValueFactory::GetBooleanValue(true);
   str = val.ToString();
-  valStr = common::ValueFactory::GetVarcharValue(str);
-  result = common::ValueFactory::CastAsBoolean(valStr);
+  valStr = type::ValueFactory::GetVarcharValue(str);
+  result = type::ValueFactory::CastAsBoolean(valStr);
   EXPECT_TRUE(result.IsTrue());
 
-  val = common::ValueFactory::GetBooleanValue(false);
+  val = type::ValueFactory::GetBooleanValue(false);
   str = val.ToString();
-  valStr = common::ValueFactory::GetVarcharValue(str);
-  result = common::ValueFactory::CastAsBoolean(valStr);
+  valStr = type::ValueFactory::GetVarcharValue(str);
+  result = type::ValueFactory::CastAsBoolean(valStr);
   EXPECT_TRUE(result.IsFalse());
 }
 
 TEST_F(BooleanValueTests, HashTest) {
-  int values[] = {true, false, common::PELOTON_BOOLEAN_NULL};
+  int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
-  common::Value result;
-  common::Value val0;
-  common::Value val1;
+  type::Value result;
+  type::Value val0;
+  type::Value val1;
 
   for (int i = 0; i < 2; i++) {
-    if (values[i] == common::PELOTON_BOOLEAN_NULL) {
-      val0 = common::ValueFactory::GetNullValueByType(common::Type::BOOLEAN);
+    if (values[i] == type::PELOTON_BOOLEAN_NULL) {
+      val0 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
     } else {
       val0 =
-          common::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
+          type::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
-      if (values[j] == common::PELOTON_BOOLEAN_NULL) {
-        val1 = common::ValueFactory::GetNullValueByType(common::Type::BOOLEAN);
+      if (values[j] == type::PELOTON_BOOLEAN_NULL) {
+        val1 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
       } else {
         val1 =
-            common::ValueFactory::GetBooleanValue(static_cast<bool>(values[j]));
+            type::ValueFactory::GetBooleanValue(static_cast<bool>(values[j]));
       }
 
       result = val0.CompareEquals(val1);
@@ -179,30 +179,30 @@ TEST_F(BooleanValueTests, HashTest) {
 }
 
 TEST_F(BooleanValueTests, CastTest) {
-  common::Value result;
+  type::Value result;
 
-  auto valTrue0 = common::ValueFactory::GetVarcharValue("TrUe");
-  result = common::ValueFactory::CastAsBoolean(valTrue0);
+  auto valTrue0 = type::ValueFactory::GetVarcharValue("TrUe");
+  result = type::ValueFactory::CastAsBoolean(valTrue0);
   EXPECT_TRUE(result.IsTrue());
-  result = valTrue0.CastAs(common::Type::BOOLEAN);
-  EXPECT_TRUE(result.IsTrue());
-
-  auto valTrue1 = common::ValueFactory::GetVarcharValue("1");
-  result = common::ValueFactory::CastAsBoolean(valTrue1);
+  result = valTrue0.CastAs(type::Type::BOOLEAN);
   EXPECT_TRUE(result.IsTrue());
 
-  auto valFalse0 = common::ValueFactory::GetVarcharValue("FaLsE");
-  result = common::ValueFactory::CastAsBoolean(valFalse0);
+  auto valTrue1 = type::ValueFactory::GetVarcharValue("1");
+  result = type::ValueFactory::CastAsBoolean(valTrue1);
+  EXPECT_TRUE(result.IsTrue());
+
+  auto valFalse0 = type::ValueFactory::GetVarcharValue("FaLsE");
+  result = type::ValueFactory::CastAsBoolean(valFalse0);
   EXPECT_TRUE(result.IsFalse());
-  result = valFalse0.CastAs(common::Type::BOOLEAN);
+  result = valFalse0.CastAs(type::Type::BOOLEAN);
   EXPECT_TRUE(result.IsFalse());
 
-  auto valFalse1 = common::ValueFactory::GetVarcharValue("0");
-  result = common::ValueFactory::CastAsBoolean(valFalse1);
+  auto valFalse1 = type::ValueFactory::GetVarcharValue("0");
+  result = type::ValueFactory::CastAsBoolean(valFalse1);
   EXPECT_TRUE(result.IsFalse());
 
-  auto valBustedLike = common::ValueFactory::GetVarcharValue("YourMom");
-  EXPECT_THROW(common::ValueFactory::CastAsBoolean(valBustedLike),
+  auto valBustedLike = type::ValueFactory::GetVarcharValue("YourMom");
+  EXPECT_THROW(type::ValueFactory::CastAsBoolean(valBustedLike),
                peloton::Exception);
 }
 

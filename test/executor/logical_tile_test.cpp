@@ -18,8 +18,8 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
@@ -55,15 +55,15 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   storage::Tuple tuple2(schema.get(), allocate);
   auto pool = tile_group->GetTilePool(1);
 
-  tuple1.SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
-  tuple1.SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
-  tuple1.SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
-  tuple1.SetValue(3, common::ValueFactory::GetVarcharValue("tuple 1"), pool);
+  tuple1.SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(1, type::ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(2, type::ValueFactory::GetTinyIntValue(1), pool);
+  tuple1.SetValue(3, type::ValueFactory::GetVarcharValue("tuple 1"), pool);
 
-  tuple2.SetValue(0, common::ValueFactory::GetIntegerValue(2), pool);
-  tuple2.SetValue(1, common::ValueFactory::GetIntegerValue(2), pool);
-  tuple2.SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
-  tuple2.SetValue(3, common::ValueFactory::GetVarcharValue("tuple 2"), pool);
+  tuple2.SetValue(0, type::ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(1, type::ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(2, type::ValueFactory::GetTinyIntValue(2), pool);
+  tuple2.SetValue(3, type::ValueFactory::GetVarcharValue("tuple 2"), pool);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

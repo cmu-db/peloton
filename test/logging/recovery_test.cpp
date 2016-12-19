@@ -73,23 +73,23 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
 
     // First column is unique in this case
     tuple->SetValue(0,
-                    common::ValueFactory::GetIntegerValue(
+                    type::ValueFactory::GetIntegerValue(
                         ExecutorTestsUtil::PopulatedValue(populate_value, 0)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
     tuple->SetValue(
-        1, common::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
+        1, type::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
     tuple->SetValue(
-        2, common::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
+        2, type::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
                random ? std::rand() : populate_value, 2)),
         testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    auto string_value = common::ValueFactory::GetVarcharValue(
+    auto string_value = type::ValueFactory::GetVarcharValue(
         std::to_string(ExecutorTestsUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);
@@ -292,10 +292,10 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
   cid_t test_commit_id = 10;
 
-  common::Value val0 = (tuples[0]->GetValue(0));
-  common::Value val1 = (tuples[0]->GetValue(1));
-  common::Value val2 = (tuples[0]->GetValue(2));
-  common::Value val3 = (tuples[0]->GetValue(3));
+  type::Value val0 = (tuples[0]->GetValue(0));
+  type::Value val1 = (tuples[0]->GetValue(1));
+  type::Value val2 = (tuples[0]->GetValue(2));
+  type::Value val3 = (tuples[0]->GetValue(3));
   auto curr_rec = new logging::TupleRecord(
       LOGRECORD_TYPE_TUPLE_INSERT, test_commit_id, recovery_table->GetOid(),
       ItemPointer(100, 5), INVALID_ITEMPOINTER, tuples[0], DEFAULT_DB_ID);
@@ -307,17 +307,17 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   EXPECT_TRUE(tg_header->GetBeginCommitId(5) <= test_commit_id);
   EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
 
-  common::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
-  common::Value cmp0 = (val0.CompareEquals(rval0));
+  type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
+  type::Value cmp0 = (val0.CompareEquals(rval0));
   EXPECT_TRUE(cmp0.IsTrue());
-  common::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
-  common::Value cmp1 = (val1.CompareEquals(rval1));
+  type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
+  type::Value cmp1 = (val1.CompareEquals(rval1));
   EXPECT_TRUE(cmp1.IsTrue());
-  common::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
-  common::Value cmp2 = (val2.CompareEquals(rval2));
+  type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
+  type::Value cmp2 = (val2.CompareEquals(rval2));
   EXPECT_TRUE(cmp2.IsTrue());
-  common::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
-  common::Value cmp3 = (val3.CompareEquals(rval3));
+  type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
+  type::Value cmp3 = (val3.CompareEquals(rval3));
   EXPECT_TRUE(cmp3.IsTrue());
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 1);
@@ -341,10 +341,10 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
   cid_t test_commit_id = 10;
 
-  common::Value val0 = (tuples[0]->GetValue(0));
-  common::Value val1 = (tuples[0]->GetValue(1));
-  common::Value val2 = (tuples[0]->GetValue(2));
-  common::Value val3 = (tuples[0]->GetValue(3));
+  type::Value val0 = (tuples[0]->GetValue(0));
+  type::Value val1 = (tuples[0]->GetValue(1));
+  type::Value val2 = (tuples[0]->GetValue(2));
+  type::Value val3 = (tuples[0]->GetValue(3));
 
   auto curr_rec = new logging::TupleRecord(
       LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id, recovery_table->GetOid(),
@@ -358,17 +358,17 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
   EXPECT_EQ(tg_header->GetEndCommitId(4), test_commit_id);
 
-  common::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
-  common::Value cmp0 = (val0.CompareEquals(rval0));
+  type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
+  type::Value cmp0 = (val0.CompareEquals(rval0));
   EXPECT_TRUE(cmp0.IsTrue());
-  common::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
-  common::Value cmp1 = (val1.CompareEquals(rval1));
+  type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
+  type::Value cmp1 = (val1.CompareEquals(rval1));
   EXPECT_TRUE(cmp1.IsTrue());
-  common::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
-  common::Value cmp2 = (val2.CompareEquals(rval2));
+  type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
+  type::Value cmp2 = (val2.CompareEquals(rval2));
   EXPECT_TRUE(cmp2.IsTrue());
-  common::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
-  common::Value cmp3 = (val3.CompareEquals(rval3));
+  type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
+  type::Value cmp3 = (val3.CompareEquals(rval3));
   EXPECT_TRUE(cmp3.IsTrue());
 
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);

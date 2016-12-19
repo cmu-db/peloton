@@ -13,7 +13,7 @@
 
 #include <vector>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/hash_join_executor.h"

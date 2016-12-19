@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/harness.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {
@@ -24,14 +24,14 @@ namespace test {
 class TypesTests : public PelotonTest {};
 
 TEST_F(TypesTests, TypeIdTest) {
-  std::vector<common::Type::TypeId> list = {
-      common::Type::INVALID,   common::Type::PARAMETER_OFFSET,
-      common::Type::BOOLEAN,   common::Type::TINYINT,
-      common::Type::SMALLINT,  common::Type::INTEGER,
-      common::Type::BIGINT,    common::Type::DECIMAL,
-      common::Type::TIMESTAMP, common::Type::DATE,
-      common::Type::VARCHAR,   common::Type::VARBINARY,
-      common::Type::ARRAY,     common::Type::UDT};
+  std::vector<type::Type::TypeId> list = {
+      type::Type::INVALID,   type::Type::PARAMETER_OFFSET,
+      type::Type::BOOLEAN,   type::Type::TINYINT,
+      type::Type::SMALLINT,  type::Type::INTEGER,
+      type::Type::BIGINT,    type::Type::DECIMAL,
+      type::Type::TIMESTAMP, type::Type::DATE,
+      type::Type::VARCHAR,   type::Type::VARBINARY,
+      type::Type::ARRAY,     type::Type::UDT};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

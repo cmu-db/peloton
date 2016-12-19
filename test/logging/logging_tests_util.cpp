@@ -101,22 +101,22 @@ std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
     std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema, allocate));
 
     // First column is unique in this case
-    tuple->SetValue(0, common::ValueFactory::GetIntegerValue(
+    tuple->SetValue(0, type::ValueFactory::GetIntegerValue(
                            ExecutorTestsUtil::PopulatedValue(populate_value, 0)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    tuple->SetValue(1, common::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
+    tuple->SetValue(1, type::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
                            random ? std::rand() % (num_rows / 3) : populate_value, 1)),
                     testing_pool);
 
-    tuple->SetValue(2, common::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
+    tuple->SetValue(2, type::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
                            random ? std::rand() : populate_value, 2)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
     auto string_value =
-        common::ValueFactory::GetVarcharValue(std::to_string(ExecutorTestsUtil::PopulatedValue(
+        type::ValueFactory::GetVarcharValue(std::to_string(ExecutorTestsUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);
     PL_ASSERT(tuple->GetSchema());

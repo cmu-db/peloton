@@ -17,7 +17,7 @@
 #include <string>
 #include <thread>
 
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 
 #include "common/exception.h"
@@ -38,6 +38,7 @@
 
 #include "logging/checkpoint_manager.h"
 #include "logging/loggers/wbl_frontend_logger.h"
+#include "logging/logging_util.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -250,7 +251,7 @@ bool PrepareLogFile() {
   auto& log_manager = logging::LogManager::GetInstance();
   log_manager.SetLogDirectoryName(state.log_file_dir);
 
-  if (LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
+  if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
     log_manager.SetLogFileName(
         state.log_file_dir + "/" +
         logging::WriteAheadFrontendLogger::wal_directory_path);

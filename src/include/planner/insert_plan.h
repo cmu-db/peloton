@@ -59,11 +59,11 @@ class InsertPlan : public AbstractPlan {
           insert_values);
 
   // Get a varlen pool (will construct the pool only if needed)
-  common::VarlenPool *GetPlanPool();
+  type::VarlenPool *GetPlanPool();
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
-  void SetParameterValues(std::vector<common::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values);
 
   storage::DataTable *GetTable() const { return target_table_; }
 
@@ -103,13 +103,13 @@ class InsertPlan : public AbstractPlan {
       parameter_vector_;
 
   // Parameter values
-  std::unique_ptr<std::vector<common::Type::TypeId>> params_value_type_;
+  std::unique_ptr<std::vector<type::Type::TypeId>> params_value_type_;
 
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;
 
   // pool for variable length types
-  std::unique_ptr<common::VarlenPool> pool_;
+  std::unique_ptr<type::VarlenPool> pool_;
 };
 
 }  // namespace planner

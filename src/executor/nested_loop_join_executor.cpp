@@ -13,7 +13,7 @@
 #include <vector>
 #include <unordered_set>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "executor/nested_loop_join_executor.h"
 #include "executor/executor_context.h"
@@ -152,9 +152,9 @@ bool NestedLoopJoinExecutor::DExecute() {
           left_tile, left_tile_row_itr);
 
       // Grab the values
-      std::vector<common::Value> join_values;
+      std::vector<type::Value> join_values;
       for (auto column_id : join_column_ids_left) {
-        common::Value predicate_value = left_tuple.GetValue(column_id);
+        type::Value predicate_value = left_tuple.GetValue(column_id);
         join_values.push_back(predicate_value);
       }
 

@@ -37,7 +37,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   void UpdatePredicate(const std::vector<oid_t> &key_column_ids
                            UNUSED_ATTRIBUTE,
-                       const std::vector<common::Value> &values
+                       const std::vector<type::Value> &values
                            UNUSED_ATTRIBUTE);
 
   void ResetState() {
@@ -95,7 +95,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<ExpressionType> expr_types_;
 
   // values for evaluation.
-  std::vector<common::Value> values_;
+  std::vector<type::Value> values_;
 
   std::vector<expression::AbstractExpression *> runtime_keys_;
 

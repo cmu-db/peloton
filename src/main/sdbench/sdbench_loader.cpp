@@ -52,7 +52,7 @@ void CreateTable() {
 
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                         "" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
@@ -86,7 +86,7 @@ void LoadTable() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
@@ -95,7 +95,7 @@ void LoadTable() {
     storage::Tuple tuple(table_schema, allocate);
 
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-      auto value = ValueFactory::GetIntegerValue(populate_value);
+      auto value = type::ValueFactory::GetIntegerValue(populate_value);
       tuple.SetValue(col_itr, value, pool.get());
     }
 
@@ -105,7 +105,14 @@ void LoadTable() {
     txn->RecordInsert(tuple_slot_id);
   }
 
-  txn_manager.CommitTransaction();
+  auto result = txn_manager.CommitTransaction(txn);
+
+  if (result == Result::RESULT_SUCCESS) {
+    LOG_TRACE("commit successfully");
+  } else {
+    LOG_TRACE("commit failed");
+  }
+
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {
@@ -119,7 +126,7 @@ void CreateAndLoadTable(LayoutType layout_type) {
 
 void DropIndexes() {
   // Drop index
-  sdbench_table->DropIndexes();
+  sdbench_table->DropIndexWithOid(0);
 }
 
 }  // namespace sdbench

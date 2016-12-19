@@ -18,9 +18,9 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
@@ -130,7 +130,7 @@ expression::AbstractExpression *CreatePredicate(
 
   expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ConstantValueFactory(
-          common::ValueFactory::GetBooleanValue(false));
+          type::ValueFactory::GetBooleanValue(false));
 
   bool even = false;
   for (oid_t tuple_id : tuple_ids) {
@@ -141,19 +141,19 @@ expression::AbstractExpression *CreatePredicate(
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
     tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(
-                                  common::Type::INTEGER, 0, 0)
+                                  type::Type::INTEGER, 0, 0)
                             : expression::ExpressionUtil::TupleValueFactory(
-                                  common::Type::VARCHAR, 0, 3);
+                                  type::Type::VARCHAR, 0, 3);
 
     // Second, create constant value expression.
     expression::AbstractExpression *constant_value_expr;
     if (even) {
-      auto constant_value = common::ValueFactory::GetIntegerValue(
+      auto constant_value = type::ValueFactory::GetIntegerValue(
           ExecutorTestsUtil::PopulatedValue(tuple_id, 0));
       constant_value_expr =
           expression::ExpressionUtil::ConstantValueFactory(constant_value);
     } else {
-      auto constant_value = common::ValueFactory::GetVarcharValue(
+      auto constant_value = type::ValueFactory::GetVarcharValue(
           std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
       constant_value_expr =
           expression::ExpressionUtil::ConstantValueFactory(constant_value);
@@ -219,13 +219,13 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
       // We divide by 10 because we know how PopulatedValue() computes.
       // Bad style. Being a bit lazy here...
 
-      common::Value value1 = (result_tiles[i]->GetValue(new_tuple_id, 0));
+      type::Value value1 = (result_tiles[i]->GetValue(new_tuple_id, 0));
       int old_tuple_id = value1.GetAs<int32_t>() / 10;
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
       int val1 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1);
-      common::Value value2 = (result_tiles[i]->GetValue(new_tuple_id, 1));
+      type::Value value2 = (result_tiles[i]->GetValue(new_tuple_id, 1));
       EXPECT_EQ(val1, value2.GetAs<int32_t>());
       int val2 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3);
 
@@ -234,11 +234,11 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
       // For the tile group test case, it'll be 2 (one column is removed
       // during the scan as part of the test case).
       // For the logical tile test case, it'll be 3.
-      common::Value string_value =
-          (common::ValueFactory::GetVarcharValue(std::to_string(val2)));
-      common::Value val =
+      type::Value string_value =
+          (type::ValueFactory::GetVarcharValue(std::to_string(val2)));
+      type::Value val =
           (result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
-      common::Value cmp = (val.CompareEquals(string_value));
+      type::Value cmp = (val.CompareEquals(string_value));
       EXPECT_TRUE(cmp.IsTrue());
     }
     EXPECT_EQ(0, expected_tuples_left.size());

@@ -14,7 +14,7 @@
 
 #include "catalog/manager.h"
 #include "common/logger.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/executor_context.h"
@@ -101,7 +101,7 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-        common::Value val = (cur_tuple.GetValue(column_itr));
+        type::Value val = (cur_tuple.GetValue(column_itr));
         tuple->SetValue(column_itr, val, executor_pool);
       }
 
@@ -169,7 +169,7 @@ bool InsertExecutor::DExecute() {
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
       if (tuple->GetColumnCount() > 2) {
-        common::Value val = (tuple->GetValue(2));
+        type::Value val = (tuple->GetValue(2));
         LOG_TRACE("value: %s", val.GetInfo().c_str());
       }
 

@@ -18,6 +18,8 @@
 #include <execinfo.h>
 #include <unistd.h>
 
+#include "common/stack_trace.h"
+
 // We will use jemalloc at link time. jemalloc library has already mangled the symbols
 // to be malloc, calloc, etc.
 

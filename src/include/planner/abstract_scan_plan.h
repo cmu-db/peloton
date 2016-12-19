@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "abstract_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 
 namespace peloton {

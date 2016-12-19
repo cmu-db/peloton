@@ -12,7 +12,7 @@
 
 
 #include "catalog/column.h"
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace catalog {
@@ -30,8 +30,8 @@ void Column::SetLength(oid_t column_length) {
 
 void Column::SetInlined() {
   switch (column_type) {
-    case common::Type::VARCHAR:
-    case common::Type::VARBINARY:
+    case type::Type::VARCHAR:
+    case type::Type::VARBINARY:
       break;  // No change of inlined setting
 
     default:

@@ -160,6 +160,8 @@ class DataTable : public AbstractTable {
 
   void DropIndexWithOid(const oid_t &index_oid);
 
+  void DropIndexes();
+
   std::shared_ptr<index::Index> GetIndex(const oid_t &index_offset);
 
   std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;

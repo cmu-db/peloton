@@ -16,12 +16,12 @@
 
 #include "catalog/schema.h"
 #include "common/abstract_tuple.h"
-#include "common/serializeio.h"
-#include "common/serializer.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
-#include "common/value_peeker.h"
+#include "type/serializeio.h"
+#include "type/serializer.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
+#include "type/value_peeker.h"
 
 namespace peloton {
 namespace storage {
@@ -80,7 +80,7 @@ class Tuple : public AbstractTuple {
   // Assignment operator
   Tuple &operator=(const Tuple &rhs);
 
-  void Copy(const void *source, common::VarlenPool *pool = NULL);
+  void Copy(const void *source, type::VarlenPool *pool = NULL);
 
   /**
    * Set the tuple to point toward a given address in a table's
@@ -103,7 +103,7 @@ class Tuple : public AbstractTuple {
 
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
-  common::Value GetValue(oid_t column_id) const;
+  type::Value GetValue(oid_t column_id) const;
 
   /**
    * Allocate space to copy strings that can't be inlined rather
@@ -114,17 +114,17 @@ class Tuple : public AbstractTuple {
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
-  void SetValue(const oid_t column_id, const common::Value &value,
-                common::VarlenPool *dataPool);
+  void SetValue(const oid_t column_id, const type::Value &value,
+                type::VarlenPool *dataPool);
 
   // set value without data pool.
-  void SetValue(oid_t column_id, const common::Value &value);
+  void SetValue(oid_t column_id, const type::Value &value);
 
   inline int GetLength() const { return tuple_schema->GetLength(); }
 
   // Is the column value null ?
   inline bool IsNull(const uint64_t column_id) const {
-    common::Value value = (GetValue(column_id));
+    type::Value value = (GetValue(column_id));
     return value.IsNull();
   }
 
@@ -132,7 +132,7 @@ class Tuple : public AbstractTuple {
   inline bool IsNull() const { return tuple_data == NULL; }
 
   // Get the type of a particular column in the tuple
-  inline common::Type::TypeId GetType(int column_id) const {
+  inline type::Type::TypeId GetType(int column_id) const {
     return tuple_schema->GetType(column_id);
   }
 
@@ -170,7 +170,7 @@ class Tuple : public AbstractTuple {
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const AbstractTuple *tuple,
                     const std::vector<oid_t> &columns,
-                    common::VarlenPool *pool);
+                    type::VarlenPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);
@@ -184,7 +184,7 @@ class Tuple : public AbstractTuple {
                          uint8_t *null_array);
   void SerializeWithHeaderTo(SerializeOutput &output);
 
-  void DeserializeFrom(SerializeInput &input, common::VarlenPool *pool);
+  void DeserializeFrom(SerializeInput &input, type::VarlenPool *pool);
   void DeserializeWithHeaderFrom(SerializeInput &input);
 
   size_t HashCode(size_t seed) const;

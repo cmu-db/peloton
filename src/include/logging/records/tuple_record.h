@@ -15,9 +15,9 @@
 
 #include "logging/log_record.h"
 #include "storage/tuple.h"
-#include "common/serializer.h"
+#include "type/serializer.h"
 #include "common/printable.h"
-#include "common/serializeio.h"
+#include "type/serializeio.h"
 
 namespace peloton {
 namespace logging {

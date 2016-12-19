@@ -78,7 +78,7 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     auto column = catalog::Column(
-        common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+        type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
         std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
@@ -137,7 +137,7 @@ void LoadTable(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   for (size_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
     storage::Tuple tuple(table_schema, allocate);
     for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-      auto value = common::ValueFactory::GetIntegerValue(tuple_itr);
+      auto value = type::ValueFactory::GetIntegerValue(tuple_itr);
       tuple.SetValue(col_itr, value, nullptr);
     }
 
@@ -158,12 +158,12 @@ expression::AbstractExpression *GetPredicate() {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     0);
 
   // Second, create constant value expression.
   auto constant_value_left =
-      common::ValueFactory::GetIntegerValue(tuple_start_offset);
+      type::ValueFactory::GetIntegerValue(tuple_start_offset);
 
   expression::AbstractExpression *constant_value_expr_left =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
@@ -175,11 +175,11 @@ expression::AbstractExpression *GetPredicate() {
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     0);
 
   auto constant_value_right =
-      common::ValueFactory::GetIntegerValue(tuple_end_offset);
+      type::ValueFactory::GetIntegerValue(tuple_end_offset);
 
   expression::AbstractExpression *constant_value_expr_right =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_right);
@@ -198,17 +198,17 @@ expression::AbstractExpression *GetPredicate() {
 
 void CreateIndexScanPredicate(std::vector<oid_t> &key_column_ids,
                               std::vector<ExpressionType> &expr_types,
-                              std::vector<common::Value> &values) {
+                              std::vector<type::Value> &values) {
   key_column_ids.push_back(0);
   expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
   values.push_back(
-      common::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
+      type::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
 
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
   values.push_back(
-      common::ValueFactory::GetIntegerValue(tuple_end_offset).Copy());
+      type::ValueFactory::GetIntegerValue(tuple_end_offset).Copy());
 }
 
 void GenerateSequence(std::vector<oid_t> &hyadapt_column_ids,
@@ -299,7 +299,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
@@ -345,7 +345,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   CreateIndexScanPredicate(key_column_ids, expr_types, values);

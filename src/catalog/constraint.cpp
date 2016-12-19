@@ -12,7 +12,7 @@
 
 
 #include "catalog/constraint.h"
-#include "common/types.h"
+#include "type/types.h"
 
 #include <sstream>
 

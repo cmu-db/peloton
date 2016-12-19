@@ -19,8 +19,8 @@
 
 #include "common/portal.h"
 #include "common/statement.h"
-#include "common/type.h"
-#include "common/types.h"
+#include "type/type.h"
+#include "type/types.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 
@@ -47,7 +47,7 @@ class TrafficCop {
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
   Result ExecuteStatement(
       const std::shared_ptr<Statement> &statement,
-      const std::vector<common::Value> &params, const bool unnamed,
+      const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultType> &result,
       int &rows_change, std::string &error_message);
@@ -61,7 +61,7 @@ class TrafficCop {
       parser::SQLStatement *select_stmt);
 
   FieldInfoType GetColumnFieldForValueType(std::string column_name,
-                                           common::Type::TypeId column_type);
+                                           type::Type::TypeId column_type);
 
   FieldInfoType GetColumnFieldForAggregates(std::string name,
                                             ExpressionType expr_type);

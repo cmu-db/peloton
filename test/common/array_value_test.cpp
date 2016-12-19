@@ -17,13 +17,13 @@
 #include <cstdint>
 #include <iostream>
 
-#include "common/array_type.h"
-#include "common/boolean_type.h"
-#include "common/decimal_type.h"
+#include "type/array_type.h"
+#include "type/boolean_type.h"
+#include "type/decimal_type.h"
 #include "common/harness.h"
-#include "common/numeric_type.h"
-#include "common/value_factory.h"
-#include "common/varlen_type.h"
+#include "type/numeric_type.h"
+#include "type/value_factory.h"
+#include "type/varlen_type.h"
 
 namespace peloton {
 namespace test {
@@ -42,14 +42,14 @@ int16_t RANDOM16() { return ((rand() % (SHRT_MAX * 2 - 1)) - (SHRT_MAX - 1)); }
 
 int32_t RANDOM32() {
   int32_t ret = (((size_t)(rand()) << 1) | ((size_t)(rand()) & 0x1));
-  if (ret != PELOTON_INT32_NULL) return ret;
+  if (ret != type::PELOTON_INT32_NULL) return ret;
   return 1;
 }
 
 int64_t RANDOM64() {
   int64_t ret = (((size_t)(rand()) << 33) | ((size_t)(rand()) << 2) |
                  ((size_t)(rand()) & 0x3));
-  if (ret != PELOTON_INT64_NULL) return ret;
+  if (ret != type::PELOTON_INT64_NULL) return ret;
   return 1;
 }
 
@@ -70,9 +70,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bool.push_back(RANDOM(2));
   }
-  Value array_bool = Value(Type::ARRAY, vec_bool, Type::BOOLEAN);
+  type::Value array_bool = type::Value(type::Type::ARRAY, vec_bool, type::Type::BOOLEAN);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_bool.GetElementAt(i);
+    type::Value ele = array_bool.GetElementAt(i);
     EXPECT_EQ(bool(ele.GetAs<int8_t>()), vec_bool[i]);
   }
 
@@ -80,9 +80,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_tinyint.push_back(RANDOM8());
   }
-  Value array_tinyint = Value(Type::ARRAY, vec_tinyint, Type::TINYINT);
+  type::Value array_tinyint = type::Value(type::Type::ARRAY, vec_tinyint, type::Type::TINYINT);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_tinyint.GetElementAt(i);
+    type::Value ele = array_tinyint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int8_t>(), vec_tinyint[i]);
   }
 
@@ -90,9 +90,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_smallint.push_back(RANDOM16());
   }
-  Value array_smallint = Value(Type::ARRAY, vec_smallint, Type::SMALLINT);
+  type::Value array_smallint = type::Value(type::Type::ARRAY, vec_smallint, type::Type::SMALLINT);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_smallint.GetElementAt(i);
+    type::Value ele = array_smallint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int16_t>(), vec_smallint[i]);
   }
 
@@ -100,9 +100,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  Value array_integer = Value(Type::ARRAY, vec_integer, Type::INTEGER);
+  type::Value array_integer = type::Value(type::Type::ARRAY, vec_integer, type::Type::INTEGER);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_integer.GetElementAt(i);
+    type::Value ele = array_integer.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int32_t>(), vec_integer[i]);
   }
 
@@ -110,9 +110,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bigint.push_back(RANDOM64());
   }
-  Value array_bigint = Value(Type::ARRAY, vec_bigint, Type::BIGINT);
+  type::Value array_bigint = type::Value(type::Type::ARRAY, vec_bigint, type::Type::BIGINT);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_bigint.GetElementAt(i);
+    type::Value ele = array_bigint.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int64_t>(), vec_bigint[i]);
   }
 
@@ -120,9 +120,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM_DECIMAL());
   }
-  Value array_decimal = Value(Type::ARRAY, vec_decimal, Type::DECIMAL);
+  type::Value array_decimal = type::Value(type::Type::ARRAY, vec_decimal, type::Type::DECIMAL);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_decimal.GetElementAt(i);
+    type::Value ele = array_decimal.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<double>(), vec_decimal[i]);
   }
 
@@ -130,9 +130,9 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_varchar.push_back(RANDOM_STRING(RANDOM(100) + 1));
   }
-  Value array_varchar = Value(Type::ARRAY, vec_varchar, Type::VARCHAR);
+  type::Value array_varchar = type::Value(type::Type::ARRAY, vec_varchar, type::Type::VARCHAR);
   for (size_t i = 0; i < n; i++) {
-    Value ele = array_varchar.GetElementAt(i);
+    type::Value ele = array_varchar.GetElementAt(i);
     EXPECT_EQ((ele).GetData(), vec_varchar[i]);
   }
 }
@@ -145,17 +145,17 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bool.push_back(RANDOM(2));
   }
-  Value array_bool = Value(Type::ARRAY, vec_bool, Type::BOOLEAN);
+  type::Value array_bool = type::Value(type::Type::ARRAY, vec_bool, type::Type::BOOLEAN);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_bool.InList(ValueFactory::GetBooleanValue(vec_bool[i]));
+    type::Value in_list =
+        array_bool.InList(type::ValueFactory::GetBooleanValue(vec_bool[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
-  EXPECT_THROW(array_bool.InList(ValueFactory::GetIntegerValue(0)),
+  EXPECT_THROW(array_bool.InList(type::ValueFactory::GetIntegerValue(0)),
                peloton::Exception);
-  EXPECT_THROW(array_bool.InList(ValueFactory::GetDoubleValue(0.0)),
+  EXPECT_THROW(array_bool.InList(type::ValueFactory::GetDoubleValue(0.0)),
                peloton::Exception);
-  EXPECT_THROW(array_bool.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
+  EXPECT_THROW(array_bool.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
   EXPECT_THROW(array_bool.InList(array_bool), peloton::Exception);
 
@@ -163,10 +163,10 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_tinyint.push_back(RANDOM8());
   }
-  Value array_tinyint = Value(Type::ARRAY, vec_tinyint, Type::TINYINT);
+  type::Value array_tinyint = type::Value(type::Type::ARRAY, vec_tinyint, type::Type::TINYINT);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_tinyint.InList(ValueFactory::GetTinyIntValue(vec_tinyint[i]));
+    type::Value in_list =
+        array_tinyint.InList(type::ValueFactory::GetTinyIntValue(vec_tinyint[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -174,13 +174,13 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int8_t>::iterator it =
         find(vec_tinyint.begin(), vec_tinyint.end(), val);
     if (it == vec_tinyint.end()) {
-      Value in_list = array_tinyint.InList(ValueFactory::GetTinyIntValue(val));
+      type::Value in_list = array_tinyint.InList(type::ValueFactory::GetTinyIntValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_tinyint.InList(ValueFactory::GetBooleanValue(false)),
+  EXPECT_THROW(array_tinyint.InList(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(array_tinyint.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
+  EXPECT_THROW(array_tinyint.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
   EXPECT_THROW(array_tinyint.InList(array_tinyint), peloton::Exception);
 
@@ -188,10 +188,10 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_smallint.push_back(RANDOM16());
   }
-  Value array_smallint = Value(Type::ARRAY, vec_smallint, Type::SMALLINT);
+  type::Value array_smallint = type::Value(type::Type::ARRAY, vec_smallint, type::Type::SMALLINT);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_smallint.InList(ValueFactory::GetSmallIntValue(vec_smallint[i]));
+    type::Value in_list =
+        array_smallint.InList(type::ValueFactory::GetSmallIntValue(vec_smallint[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -199,14 +199,14 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int16_t>::iterator it =
         find(vec_smallint.begin(), vec_smallint.end(), val);
     if (it == vec_smallint.end()) {
-      Value in_list =
-          array_smallint.InList(ValueFactory::GetSmallIntValue(val));
+      type::Value in_list =
+          array_smallint.InList(type::ValueFactory::GetSmallIntValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_smallint.InList(ValueFactory::GetBooleanValue(false)),
+  EXPECT_THROW(array_smallint.InList(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(array_smallint.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
+  EXPECT_THROW(array_smallint.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
   EXPECT_THROW(array_smallint.InList(array_smallint), peloton::Exception);
 
@@ -214,10 +214,10 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  Value array_integer = Value(Type::ARRAY, vec_integer, Type::INTEGER);
+  type::Value array_integer = type::Value(type::Type::ARRAY, vec_integer, type::Type::INTEGER);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_integer.InList(ValueFactory::GetIntegerValue(vec_integer[i]));
+    type::Value in_list =
+        array_integer.InList(type::ValueFactory::GetIntegerValue(vec_integer[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -225,13 +225,13 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int32_t>::iterator it =
         find(vec_integer.begin(), vec_integer.end(), val);
     if (it == vec_integer.end()) {
-      Value in_list = array_integer.InList(ValueFactory::GetIntegerValue(val));
+      type::Value in_list = array_integer.InList(type::ValueFactory::GetIntegerValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_integer.InList(ValueFactory::GetBooleanValue(false)),
+  EXPECT_THROW(array_integer.InList(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(array_integer.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
+  EXPECT_THROW(array_integer.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
   EXPECT_THROW(array_integer.InList(array_integer), peloton::Exception);
 
@@ -239,10 +239,10 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_bigint.push_back(RANDOM64());
   }
-  Value array_bigint = Value(Type::ARRAY, vec_bigint, Type::BIGINT);
+  type::Value array_bigint = type::Value(type::Type::ARRAY, vec_bigint, type::Type::BIGINT);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_bigint.InList(ValueFactory::GetBigIntValue(vec_bigint[i]));
+    type::Value in_list =
+        array_bigint.InList(type::ValueFactory::GetBigIntValue(vec_bigint[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -250,13 +250,13 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<int64_t>::iterator it =
         find(vec_bigint.begin(), vec_bigint.end(), val);
     if (it == vec_bigint.end()) {
-      Value in_list = array_bigint.InList(ValueFactory::GetBigIntValue(val));
+      type::Value in_list = array_bigint.InList(type::ValueFactory::GetBigIntValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_bigint.InList(ValueFactory::GetBooleanValue(false)),
+  EXPECT_THROW(array_bigint.InList(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(array_bigint.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
+  EXPECT_THROW(array_bigint.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
   EXPECT_THROW(array_bigint.InList(array_bigint), peloton::Exception);
 
@@ -264,10 +264,10 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM64());
   }
-  Value array_decimal = Value(Type::ARRAY, vec_decimal, Type::DECIMAL);
+  type::Value array_decimal = type::Value(type::Type::ARRAY, vec_decimal, type::Type::DECIMAL);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_decimal.InList(ValueFactory::GetDoubleValue(vec_decimal[i]));
+    type::Value in_list =
+        array_decimal.InList(type::ValueFactory::GetDoubleValue(vec_decimal[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -275,13 +275,13 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<double>::iterator it =
         find(vec_decimal.begin(), vec_decimal.end(), val);
     if (it == vec_decimal.end()) {
-      Value in_list = array_decimal.InList(ValueFactory::GetDoubleValue(val));
+      type::Value in_list = array_decimal.InList(type::ValueFactory::GetDoubleValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_decimal.InList(ValueFactory::GetBooleanValue(false)),
+  EXPECT_THROW(array_decimal.InList(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(array_decimal.InList(ValueFactory::GetVarcharValue(nullptr, 0)),
+  EXPECT_THROW(array_decimal.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
                peloton::Exception);
   EXPECT_THROW(array_decimal.InList(array_decimal), peloton::Exception);
 
@@ -289,10 +289,10 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_varchar.push_back(RANDOM_STRING(RANDOM(100) + 1));
   }
-  Value array_varchar = Value(Type::ARRAY, vec_varchar, Type::VARCHAR);
+  type::Value array_varchar = type::Value(type::Type::ARRAY, vec_varchar, type::Type::VARCHAR);
   for (size_t i = 0; i < n; i++) {
-    Value in_list =
-        array_varchar.InList(ValueFactory::GetVarcharValue(vec_varchar[i]));
+    type::Value in_list =
+        array_varchar.InList(type::ValueFactory::GetVarcharValue(vec_varchar[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -300,21 +300,21 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<std::string>::iterator it =
         find(vec_varchar.begin(), vec_varchar.end(), val);
     if (it == vec_varchar.end()) {
-      Value in_list = array_varchar.InList(ValueFactory::GetVarcharValue(val));
+      type::Value in_list = array_varchar.InList(type::ValueFactory::GetVarcharValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_varchar.InList(ValueFactory::GetBooleanValue(false)),
+  EXPECT_THROW(array_varchar.InList(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(array_varchar.InList(ValueFactory::GetIntegerValue(0)),
+  EXPECT_THROW(array_varchar.InList(type::ValueFactory::GetIntegerValue(0)),
                peloton::Exception);
-  EXPECT_THROW(array_varchar.InList(ValueFactory::GetDoubleValue(0.0)),
+  EXPECT_THROW(array_varchar.InList(type::ValueFactory::GetDoubleValue(0.0)),
                peloton::Exception);
   EXPECT_THROW(array_varchar.InList(array_varchar), peloton::Exception);
 }
 
-void CheckEqual(Value v1, Value v2) {
-  Value result[6];
+void CheckEqual(type::Value v1, type::Value v2) {
+  type::Value result[6];
   result[0] = v1.CompareEquals(v2);
   EXPECT_TRUE(result[0].IsTrue());
   result[1] = v1.CompareNotEquals(v2);
@@ -329,8 +329,8 @@ void CheckEqual(Value v1, Value v2) {
   EXPECT_TRUE(result[5].IsTrue());
 }
 
-void CheckLessThan(Value v1, Value v2) {
-  Value result[6];
+void CheckLessThan(type::Value v1, type::Value v2) {
+  type::Value result[6];
   result[0] = v1.CompareEquals(v2);
   EXPECT_TRUE(result[0].IsFalse());
   result[1] = v1.CompareNotEquals(v2);
@@ -345,8 +345,8 @@ void CheckLessThan(Value v1, Value v2) {
   EXPECT_TRUE(result[5].IsFalse());
 }
 
-void CheckGreaterThan(Value v1, Value v2) {
-  Value result[6];
+void CheckGreaterThan(type::Value v1, type::Value v2) {
+  type::Value result[6];
   result[0] = v1.CompareEquals(v2);
   EXPECT_TRUE(result[0].IsFalse());
   result[1] = v1.CompareNotEquals(v2);
@@ -366,8 +366,8 @@ TEST_F(ArrayValueTests, CompareTest) {
     size_t len = 10;
     std::string str1 = RANDOM_STRING(len);
     std::string str2 = RANDOM_STRING(len);
-    Value v1 = ValueFactory::GetVarcharValue(str1);
-    Value v2 = ValueFactory::GetVarcharValue(str2);
+    type::Value v1 = type::ValueFactory::GetVarcharValue(str1);
+    type::Value v2 = type::ValueFactory::GetVarcharValue(str2);
     EXPECT_EQ(len, (v1).GetLength());
     EXPECT_EQ(len, (v2).GetLength());
     if (str1 == str2)
@@ -379,16 +379,16 @@ TEST_F(ArrayValueTests, CompareTest) {
   }
 
   // Test type mismatch
-  Value v = ValueFactory::GetVarcharValue("");
-  EXPECT_THROW(v.CompareEquals(ValueFactory::GetBooleanValue(false)),
+  type::Value v = type::ValueFactory::GetVarcharValue("");
+  EXPECT_THROW(v.CompareEquals(type::ValueFactory::GetBooleanValue(false)),
                peloton::Exception);
-  EXPECT_THROW(v.CompareEquals(ValueFactory::GetIntegerValue(0)),
+  EXPECT_THROW(v.CompareEquals(type::ValueFactory::GetIntegerValue(0)),
                peloton::Exception);
-  EXPECT_THROW(v.CompareEquals(ValueFactory::GetDoubleValue(0.0)),
+  EXPECT_THROW(v.CompareEquals(type::ValueFactory::GetDoubleValue(0.0)),
                peloton::Exception);
 
   // Test null varchar
-  Value cmp = (v.CompareEquals(ValueFactory::GetVarcharValue(nullptr, 0)));
+  type::Value cmp = (v.CompareEquals(type::ValueFactory::GetVarcharValue(nullptr, 0)));
   EXPECT_TRUE(cmp.IsNull());
 }
 }

@@ -14,7 +14,7 @@
 #include "planner/insert_plan.h"
 #include "catalog/catalog.h"
 #include "catalog/column.h"
-#include "common/value.h"
+#include "type/value.h"
 #include "parser/insert_statement.h"
 #include "parser/select_statement.h"
 #include "planner/project_info.h"
@@ -51,7 +51,7 @@ InsertPlan::InsertPlan(
     : bulk_insert_count(insert_values->size()) {
 
   parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
-  params_value_type_.reset(new std::vector<common::Type::TypeId>);
+  params_value_type_.reset(new std::vector<type::Type::TypeId>);
 
   target_table_ = table;
 
@@ -77,10 +77,10 @@ InsertPlan::InsertPlan(
           } else {
             expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<expression::ConstantValueExpression *>(elem);
-            common::Value const_expr_elem_val = (const_expr_elem->GetValue());
+            type::Value const_expr_elem_val = (const_expr_elem->GetValue());
             switch (const_expr_elem->GetValueType()) {
-              case common::Type::VARCHAR:
-              case common::Type::VARBINARY:
+              case type::Type::VARCHAR:
+              case type::Type::VARBINARY:
                 tuple->SetValue(col_cntr, const_expr_elem_val, GetPlanPool());
                 break;
               default: {
@@ -112,7 +112,7 @@ InsertPlan::InsertPlan(
 
           // If the column does not exist, insert a null value
           if (pos >= query_columns->size()) {
-            tuple->SetValue(col_cntr, common::ValueFactory::GetNullValueByType(
+            tuple->SetValue(col_cntr, type::ValueFactory::GetNullValueByType(
                                           elem.GetType()),
                             nullptr);
           } else {
@@ -120,8 +120,8 @@ InsertPlan::InsertPlan(
             // allocate
             // inline
             auto data_pool = GetPlanPool();
-            if (elem.GetType() != common::Type::VARCHAR &&
-                elem.GetType() != common::Type::VARBINARY)
+            if (elem.GetType() != type::Type::VARCHAR &&
+                elem.GetType() != type::Type::VARBINARY)
               data_pool = nullptr;
 
             LOG_TRACE(
@@ -140,7 +140,7 @@ InsertPlan::InsertPlan(
               expression::ConstantValueExpression *const_expr_elem =
                   dynamic_cast<expression::ConstantValueExpression *>(
                       values->at(pos));
-              common::Value val = (const_expr_elem->GetValue());
+              type::Value val = (const_expr_elem->GetValue());
               tuple->SetValue(col_cntr, val, data_pool);
             }
           }
@@ -156,15 +156,15 @@ InsertPlan::InsertPlan(
   }
 }
 
-common::VarlenPool *InsertPlan::GetPlanPool() {
+type::VarlenPool *InsertPlan::GetPlanPool() {
   // construct pool if needed
   if (pool_.get() == nullptr)
-    pool_.reset(new common::VarlenPool(BACKEND_TYPE_MM));
+    pool_.reset(new type::VarlenPool(BACKEND_TYPE_MM));
   // return pool
   return pool_.get();
 }
 
-void InsertPlan::SetParameterValues(std::vector<common::Value> *values) {
+void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   PL_ASSERT(values->size() == parameter_vector_->size());
   LOG_TRACE("Set Parameter Values in Insert");
   for (unsigned int i = 0; i < values->size(); ++i) {
@@ -175,15 +175,15 @@ void InsertPlan::SetParameterValues(std::vector<common::Value> *values) {
     // ValueTypeToString(param_type).c_str());
 
     switch (param_type) {
-      case common::Type::VARBINARY:
-      case common::Type::VARCHAR: {
-        common::Value val = (value.CastAs(param_type));
+      case type::Type::VARBINARY:
+      case type::Type::VARCHAR: {
+        type::Value val = (value.CastAs(param_type));
         tuples_[std::get<0>(put_loc)]
             ->SetValue(std::get<1>(put_loc), val, GetPlanPool());
         break;
       }
       default: {
-        common::Value val = (value.CastAs(param_type));
+        type::Value val = (value.CastAs(param_type));
         tuples_[std::get<0>(put_loc)]
             ->SetValue(std::get<1>(put_loc), val, nullptr);
       }

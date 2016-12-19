@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/timestamp_type.h"
+#include "type/timestamp_type.h"
 #include "common/harness.h"
-#include "common/value_factory.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {
@@ -32,32 +32,32 @@ TEST_F(TimestampValueTests, ComparisonTest) {
       EXPRESSION_TYPE_COMPARE_GREATERTHAN,
       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO};
 
-  uint64_t values[] = {1000000000, 2000000000, common::PELOTON_TIMESTAMP_NULL};
+  uint64_t values[] = {1000000000, 2000000000, type::PELOTON_TIMESTAMP_NULL};
 
-  common::Value result;
-  common::Value val0;
-  common::Value val1;
+  type::Value result;
+  type::Value val0;
+  type::Value val1;
 
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
       bool expected_null = false;
 
       // VALUE #0
-      if (values[i] == common::PELOTON_TIMESTAMP_NULL) {
-        val0 = common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
+      if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
+        val0 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
         expected_null = true;
       } else {
         val0 =
-            common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[i]));
+            type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[i]));
       }
 
       // VALUE #1
-      if (values[j] == common::PELOTON_TIMESTAMP_NULL) {
-        val1 = common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
+      if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
+        val1 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
         expected_null = true;
       } else {
         val1 =
-            common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
+            type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
       }
       bool temp = expected_null;
 
@@ -113,31 +113,31 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 
 TEST_F(TimestampValueTests, NullToStringTest) {
   auto valNull =
-      common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
+      type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
 
   EXPECT_EQ(valNull.ToString(), "timestamp_null");
 }
 
 TEST_F(TimestampValueTests, HashTest) {
-  uint64_t values[] = {1000000000, 2000000000, common::PELOTON_TIMESTAMP_NULL};
+  uint64_t values[] = {1000000000, 2000000000, type::PELOTON_TIMESTAMP_NULL};
 
-  common::Value result;
-  common::Value val0;
-  common::Value val1;
+  type::Value result;
+  type::Value val0;
+  type::Value val1;
 
   for (int i = 0; i < 2; i++) {
-    if (values[i] == common::PELOTON_TIMESTAMP_NULL) {
-      val0 = common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
+    if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
+      val0 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
     } else {
       val0 =
-        common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[i]));
+        type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
-      if (values[j] == common::PELOTON_TIMESTAMP_NULL) {
-        val1 = common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
+      if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
+        val1 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
       } else {
         val1 =
-          common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
+          type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
       }
 
       result = val0.CompareEquals(val1);
@@ -154,37 +154,37 @@ TEST_F(TimestampValueTests, HashTest) {
 }
 
 TEST_F(TimestampValueTests, CopyTest) {
-  common::Value result;
-  common::Value val0 =
-    common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
-  common::Value val1 = val0.Copy();
+  type::Value result;
+  type::Value val0 =
+    type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
+  type::Value val1 = val0.Copy();
   EXPECT_EQ(val0.CompareEquals(val1).IsTrue(), true);
 }
 
 TEST_F(TimestampValueTests, CastTest) {
-  common::Value result;
+  type::Value result;
 
   auto strNull =
-    common::ValueFactory::GetNullValueByType(common::Type::VARCHAR);
+    type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
   auto valNull =
-    common::ValueFactory::GetNullValueByType(common::Type::TIMESTAMP);
+    type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
 
-  result = valNull.CastAs(common::Type::TIMESTAMP);
+  result = valNull.CastAs(type::Type::TIMESTAMP);
   EXPECT_TRUE(result.IsNull());
   EXPECT_EQ(result.CompareEquals(valNull).IsNull(), true);
   EXPECT_EQ(result.GetTypeId(), valNull.GetTypeId());
 
-  result = valNull.CastAs(common::Type::VARCHAR);
+  result = valNull.CastAs(type::Type::VARCHAR);
   EXPECT_TRUE(result.IsNull());
   EXPECT_EQ(result.CompareEquals(strNull).IsNull(), true);
   EXPECT_EQ(result.GetTypeId(), strNull.GetTypeId());
 
-  EXPECT_THROW(valNull.CastAs(common::Type::BOOLEAN),
+  EXPECT_THROW(valNull.CastAs(type::Type::BOOLEAN),
                peloton::Exception);
 
   auto valValid =
-    common::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1481746648));
-  result = valValid.CastAs(common::Type::VARCHAR);
+    type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1481746648));
+  result = valValid.CastAs(type::Type::VARCHAR);
   EXPECT_FALSE(result.IsNull());
 }
 

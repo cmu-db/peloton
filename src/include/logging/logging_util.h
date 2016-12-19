@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/records/transaction_record.h"
 #include "logging/records/tuple_record.h"
 #include "storage/data_table.h"
@@ -55,7 +55,7 @@ class LoggingUtil {
                                     FileHandle &file_handle);
 
   static storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema,
-                                             common::VarlenPool *pool,
+                                             type::VarlenPool *pool,
                                              FileHandle &file_handle);
 
   static void SkipTupleRecordBody(FileHandle &file_handle);

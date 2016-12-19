@@ -42,7 +42,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::CREATE_TYPE_TABLE;
     for (auto col : *parse_tree->columns) {
-      common::Type::TypeId val = col->GetValueType(col->type);
+      type::Type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);
 
@@ -58,7 +58,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         column_contraints.push_back(constraint);
       }
 
-      auto column = catalog::Column(val, common::Type::GetTypeSize(val),
+      auto column = catalog::Column(val, type::Type::GetTypeSize(val),
           std::string(col->name), false);
       for (auto con : column_contraints) {
         column.AddConstraint(con);

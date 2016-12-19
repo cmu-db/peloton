@@ -18,8 +18,8 @@
 #include "common/harness.h"
 #include "common/logger.h"
 
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 
@@ -38,16 +38,16 @@ std::string CONSTANT_VALUE_STRING2 = "XYZ";
 
 expression::AbstractExpression* createExpTree() {
   auto exp1 = expression::ExpressionUtil::ConstantValueFactory(
-      common::ValueFactory::GetIntegerValue(1));
+      type::ValueFactory::GetIntegerValue(1));
   auto exp2 = expression::ExpressionUtil::ConstantValueFactory(
-      common::ValueFactory::GetIntegerValue(1));
+      type::ValueFactory::GetIntegerValue(1));
   auto exp3 = expression::ExpressionUtil::ComparisonFactory(
       EXPRESSION_TYPE_COMPARE_EQUAL, exp1, exp2);
 
   auto exp4 = expression::ExpressionUtil::ConstantValueFactory(
-	  common::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING1));
+	  type::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING1));
   auto exp5 = expression::ExpressionUtil::ConstantValueFactory(
-  	  common::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING2));
+  	  type::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING2));
   auto exp6 = expression::ExpressionUtil::ComparisonFactory(
       EXPRESSION_TYPE_COMPARE_NOTEQUAL, exp4, exp5);
 

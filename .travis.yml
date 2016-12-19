@@ -39,9 +39,8 @@ script:
     - make -j4
     # run tests
     - make check -j4
-    # make micro benchmarks
-    - make -j4 ycsb
-    - make -j4 tpcc
+    # build benchmarks
+    - make benchmark -j4
     # install peloton
     - make install
     # run psql tests

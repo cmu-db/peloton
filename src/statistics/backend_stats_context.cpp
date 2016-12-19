@@ -12,7 +12,7 @@
 
 #include <map>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/statement.h"
 #include "catalog/catalog.h"
 #include "index/index.h"

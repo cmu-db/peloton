@@ -15,6 +15,16 @@
         fun:_ZNSsC1EPKcRKSaIcE
         fun:_GLOBAL__sub_I_config.cpp
         ...
-} 
+}
 
+{
+    Handle init leak (32 bytes)
+        Memcheck:Leak
+        ...
+        fun:_GLOBAL__sub_I_configuration.cpp
+        fun:call_init.part.0
+        fun:call_init
+        fun:_dl_init
+        ...
+}
 

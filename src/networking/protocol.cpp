@@ -16,9 +16,9 @@
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "optimizer/simple_optimizer.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
@@ -430,7 +430,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
 
   // Group the parameter types and the parameters in this vector
   std::vector<std::pair<int, std::string>> bind_parameters(num_params);
-  std::vector<common::Value> param_values(num_params);
+  std::vector<type::Value> param_values(num_params);
 
   auto param_types = statement->GetParamTypes();
 
@@ -532,7 +532,7 @@ size_t PacketManager::ReadParamFormat(InputPacket *pkt, int num_params_format,
 size_t PacketManager::ReadParamValue(
     InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
     std::vector<std::pair<int, std::string>> &bind_parameters,
-    std::vector<common::Value> &param_values, std::vector<int16_t> &formats) {
+    std::vector<type::Value> &param_values, std::vector<int16_t> &formats) {
   auto begin = pkt->ptr;
   ByteBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
@@ -545,7 +545,7 @@ size_t PacketManager::ReadParamValue(
       bind_parameters[param_idx] =
           std::make_pair(peloton_type, std::string(""));
       param_values[param_idx] =
-          common::ValueFactory::GetNullValueByType(peloton_type);
+          type::ValueFactory::GetNullValueByType(peloton_type);
     } else {
       PacketGetBytes(pkt, param_len, param);
 
@@ -553,19 +553,19 @@ size_t PacketManager::ReadParamValue(
         // TEXT mode
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters[param_idx] =
-            std::make_pair(common::Type::VARCHAR, param_str);
+            std::make_pair(type::Type::VARCHAR, param_str);
         if (PostgresValueTypeToPelotonValueType(
                 (PostgresValueType)param_types[param_idx]) ==
-            common::Type::VARCHAR) {
+            type::Type::VARCHAR) {
           param_values[param_idx] =
-              common::ValueFactory::GetVarcharValue(param_str);
+              type::ValueFactory::GetVarcharValue(param_str);
         } else {
           param_values[param_idx] =
-              (common::ValueFactory::GetVarcharValue(param_str))
+              (type::ValueFactory::GetVarcharValue(param_str))
                   .CastAs(PostgresValueTypeToPelotonValueType(
                       (PostgresValueType)param_types[param_idx]));
         }
-        PL_ASSERT(param_values[param_idx].GetTypeId() != common::Type::INVALID);
+        PL_ASSERT(param_values[param_idx].GetTypeId() != type::Type::INVALID);
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -575,9 +575,9 @@ size_t PacketManager::ReadParamValue(
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
-                std::make_pair(common::Type::INTEGER, std::to_string(int_val));
+                std::make_pair(type::Type::INTEGER, std::to_string(int_val));
             param_values[param_idx] =
-                common::ValueFactory::GetIntegerValue(int_val).Copy();
+                type::ValueFactory::GetIntegerValue(int_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_BIGINT: {
             int64_t int_val = 0;
@@ -585,9 +585,9 @@ size_t PacketManager::ReadParamValue(
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
-                std::make_pair(common::Type::BIGINT, std::to_string(int_val));
+                std::make_pair(type::Type::BIGINT, std::to_string(int_val));
             param_values[param_idx] =
-                common::ValueFactory::GetBigIntValue(int_val).Copy();
+                type::ValueFactory::GetBigIntValue(int_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -597,23 +597,23 @@ size_t PacketManager::ReadParamValue(
             }
             PL_MEMCPY(&float_val, &buf, sizeof(double));
             bind_parameters[param_idx] = std::make_pair(
-                common::Type::DECIMAL, std::to_string(float_val));
+                type::Type::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
-                common::ValueFactory::GetDoubleValue(float_val).Copy();
+                type::ValueFactory::GetDoubleValue(float_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_VARBINARY: {
             bind_parameters[param_idx] = std::make_pair(
-                common::Type::VARBINARY,
+                type::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
             param_values[param_idx] =
-                common::ValueFactory::GetVarbinaryValue(&param[0], param_len)
+                type::ValueFactory::GetVarbinaryValue(&param[0], param_len)
                     .Copy();
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
           } break;
         }
-        PL_ASSERT(param_values[param_idx].GetTypeId() != common::Type::INVALID);
+        PL_ASSERT(param_values[param_idx].GetTypeId() != type::Type::INVALID);
       }
     }
   }

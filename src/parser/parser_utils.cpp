@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "parser/parser_utils.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "common/macros.h"
 

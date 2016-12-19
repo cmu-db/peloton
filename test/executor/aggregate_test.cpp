@@ -17,8 +17,8 @@
 
 #include "common/harness.h"
 
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/aggregate_executor.h"
 #include "executor/executor_context.h"
@@ -121,18 +121,18 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
 
-  common::Value val = (result_tile->GetValue(0, 2));
-  common::Value cmp =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(1)));
+  type::Value val = (result_tile->GetValue(0, 2));
+  type::Value cmp =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 3));
-  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(2)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(2)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(5, 2));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(51)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(51)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(5, 3));
-  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(52)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(52)));
   EXPECT_TRUE(cmp.IsTrue());
 }
 
@@ -171,7 +171,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(
       EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1));
   agg_terms.push_back(sumb);
 
@@ -222,18 +222,18 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  common::Value val = (result_tile->GetValue(0, 0));
-  common::Value cmp =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(0)));
+  type::Value val = (result_tile->GetValue(0, 0));
+  type::Value cmp =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 1));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(105)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(1, 0));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(1, 1));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(355)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(355)));
   EXPECT_TRUE(cmp.IsTrue());
 }
 
@@ -272,11 +272,11 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(
       EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1));
   planner::AggregatePlan::AggTerm maxc(
       EXPRESSION_TYPE_AGGREGATE_MAX,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2));
   agg_terms.push_back(sumb);
   agg_terms.push_back(maxc);
@@ -328,18 +328,18 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  common::Value val = (result_tile->GetValue(0, 0));
-  common::Value cmp =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(0)));
+  type::Value val = (result_tile->GetValue(0, 0));
+  type::Value cmp =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 1));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(105)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 2));
-  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(42)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(42)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(1, 0));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
   EXPECT_TRUE(cmp.IsTrue());
 }
 
@@ -379,22 +379,22 @@ TEST_F(AggregateTests, MinMaxTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm minB(
       EXPRESSION_TYPE_AGGREGATE_MIN,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);
   planner::AggregatePlan::AggTerm maxB(
       EXPRESSION_TYPE_AGGREGATE_MAX,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);
   planner::AggregatePlan::AggTerm minC(
       EXPRESSION_TYPE_AGGREGATE_MIN,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2),
       false);
   planner::AggregatePlan::AggTerm maxC(
       EXPRESSION_TYPE_AGGREGATE_MAX,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2),
       false);
   agg_terms.push_back(minB);
@@ -449,18 +449,18 @@ TEST_F(AggregateTests, MinMaxTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  common::Value val = (result_tile->GetValue(0, 0));
-  common::Value cmp =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(1)));
+  type::Value val = (result_tile->GetValue(0, 0));
+  type::Value cmp =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 1));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(91)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(91)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 2));
-  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(2)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(2)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 3));
-  cmp = (val.CompareEquals(common::ValueFactory::GetDoubleValue(92)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(92)));
   EXPECT_TRUE(cmp.IsTrue());
 }
 
@@ -548,7 +548,7 @@ TEST_F(AggregateTests, HashDistinctTest) {
 
   // for (auto tuple_id : *result_tile) {
   //  int colA =
-  //  common::ValuePeeker::PeekInteger(result_tile->GetValue(tuple_id, 1));
+  //  type::ValuePeeker::PeekInteger(result_tile->GetValue(tuple_id, 1));
   //  (void)colA;
   //}
 }
@@ -587,7 +587,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumC(
       EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::DECIMAL, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2));
   agg_terms.push_back(sumC);
 
@@ -676,12 +676,12 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm countB(
       EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
       EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       true);  // Flag distinct
   agg_terms.push_back(countB);
@@ -734,19 +734,19 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  common::Value val = (result_tile->GetValue(0, 0));
-  common::Value cmp =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(0)));
-  common::Value cmp1 =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  type::Value val = (result_tile->GetValue(0, 0));
+  type::Value cmp =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
+  type::Value cmp1 =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
   EXPECT_TRUE(cmp.IsTrue() || cmp1.IsTrue());
 
   val = (result_tile->GetValue(0, 1));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(5)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(5)));
   EXPECT_TRUE(cmp.IsTrue());
 
   val = (result_tile->GetValue(0, 2));
-  cmp = (val.CompareLessThanEquals(common::ValueFactory::GetIntegerValue(3)));
+  cmp = (val.CompareLessThanEquals(type::ValueFactory::GetIntegerValue(3)));
   EXPECT_TRUE(cmp.IsTrue());
 }
 
@@ -785,17 +785,17 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumA(
       EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     0),
       false);
   planner::AggregatePlan::AggTerm countB(
       EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
       EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0,
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       true);  // Flag distinct
   agg_terms.push_back(sumA);
@@ -849,15 +849,15 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
-  common::Value val = (result_tile->GetValue(0, 0));
-  common::Value cmp =
-      (val.CompareEquals(common::ValueFactory::GetIntegerValue(50)));
+  type::Value val = (result_tile->GetValue(0, 0));
+  type::Value cmp =
+      (val.CompareEquals(type::ValueFactory::GetIntegerValue(50)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 1));
-  cmp = (val.CompareEquals(common::ValueFactory::GetIntegerValue(10)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
   EXPECT_TRUE(cmp.IsTrue());
   val = (result_tile->GetValue(0, 2));
-  cmp = (val.CompareLessThanEquals(common::ValueFactory::GetIntegerValue(3)));
+  cmp = (val.CompareLessThanEquals(type::ValueFactory::GetIntegerValue(3)));
   EXPECT_TRUE(cmp.IsTrue());
 }
 

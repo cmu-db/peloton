@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#include "common/config.h"
+#include "configuration/configuration.h"
 #include "common/harness.h"
 
 #include <sys/resource.h>
@@ -122,12 +122,12 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_id", true);
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto name_column = catalog::Column(
-      common::Type::VARCHAR, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
@@ -382,7 +382,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   backend_context->InitQueryMetric(statement, query_params);
 
   // Execute insert
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   std::vector<ResultType> result;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
