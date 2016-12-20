@@ -48,15 +48,17 @@ TEST_F(IndexTunerTests, BasicTest) {
                                    true, txn);
   txn_manager.CommitTransaction(txn);
 
+  // Check column count
   oid_t column_count = data_table->GetSchema()->GetColumnCount();
   EXPECT_EQ(column_count, 4);
 
   // Index tuner
   brain::IndexTuner &index_tuner = brain::IndexTuner::GetInstance();
 
-  // Run index tuner
+  // Attach table to index tuner
   index_tuner.AddTable(data_table.get());
 
+  // Check old index count
   auto old_index_count = data_table->GetIndexCount();
   EXPECT_TRUE(old_index_count == 0);
   LOG_INFO("Index Count: %u", old_index_count);
@@ -68,9 +70,7 @@ TEST_F(IndexTunerTests, BasicTest) {
   double sample_weight;
   double selectivity = 0.1;
 
-  // initialize a uniform distribution between 0 and 1
   UniformGenerator generator;
-
   for (int sample_itr = 0; sample_itr < 10000; sample_itr++) {
     auto rng_val = generator.GetSample();
 
@@ -85,11 +85,19 @@ TEST_F(IndexTunerTests, BasicTest) {
       sample_weight = 10;
     }
 
-    brain::Sample sample(columns_accessed, sample_weight,
-                         brain::SAMPLE_TYPE_ACCESS, selectivity);
+    // Create a table access sample
+    // Indicates the columns present in predicate, query weight, and selectivity
+    brain::Sample sample(columns_accessed,
+                         sample_weight,
+                         brain::SAMPLE_TYPE_ACCESS,
+                         selectivity);
+
+    // Collect index sample in table
     data_table->RecordIndexSample(sample);
 
-    // Sleep a bit
+    // Periodically sleep a bit
+    // Index tuner thread will process the index samples periodically,
+    // and materialize the appropriate ad-hoc indexes
     if(sample_itr % 100 == 0 ){
       std::this_thread::sleep_for(std::chrono::microseconds(10000));
     }
@@ -98,15 +106,18 @@ TEST_F(IndexTunerTests, BasicTest) {
   // Stop index tuner
   index_tuner.Stop();
 
+  // Detach all tables from index tuner
   index_tuner.ClearTables();
 
+  // Check new index count
   auto new_index_count = data_table->GetIndexCount();
   LOG_INFO("Index Count: %u", new_index_count);
 
   EXPECT_TRUE(new_index_count != old_index_count);
   EXPECT_TRUE(new_index_count == 3);
 
-  // Check candidate indices
+  // Check candidate indices to ensure that
+  // all the ad-hoc indexes are materialized
   std::vector<std::set<oid_t>> candidate_indices;
   candidate_indices.push_back({0, 1, 2});
   candidate_indices.push_back({0, 2, 3});
