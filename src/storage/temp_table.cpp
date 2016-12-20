@@ -34,12 +34,10 @@ TempTable::~TempTable() {
   // Nothing to see, nothing to do
 }
 
-ItemPointer TempTable::InsertTuple(const Tuple *tuple,
-                                   concurrency::Transaction *transaction,
-                                   ItemPointer **index_entry_ptr) {
+ItemPointer TempTable::InsertTuple(
+    const Tuple *tuple, UNUSED_ATTRIBUTE concurrency::Transaction *transaction,
+    UNUSED_ATTRIBUTE ItemPointer **index_entry_ptr) {
   PL_ASSERT(tuple != nullptr);
-  PL_ASSERT(transaction == nullptr);
-  PL_ASSERT(index_entry_ptr == nullptr);
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
