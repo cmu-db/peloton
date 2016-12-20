@@ -84,6 +84,11 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
     brain::Sample sample(columns_accessed, sample_weight);
     data_table->RecordLayoutSample(sample);
+
+    // Sleep a bit
+    if(sample_itr % 100 == 0 ){
+      std::this_thread::sleep_for(std::chrono::microseconds(10000));
+    }
   }
 
   // Stop layout tuner
