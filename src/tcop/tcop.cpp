@@ -54,9 +54,12 @@ concurrency::Transaction* TrafficCop::GetCurrentTransaction() {
 Result TrafficCop::BeginTransactionHelper() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  // this shouldn' happen
-  if (txn == nullptr)
+
+  // this shouldn't happen
+  if (txn == nullptr){
+    LOG_DEBUG("Begin txn failed");
     return Result::RESULT_FAILURE;
+  }
   txn_ptrs.push(txn);
   return Result::RESULT_SUCCESS;
 }
@@ -67,10 +70,19 @@ Result TrafficCop::CommitTransactionHelper() {
     return Result::RESULT_NOOP;
   auto txn = txn_ptrs.top();
   txn_ptrs.pop();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto result = txn_manager.CommitTransaction(txn);
-  txn = nullptr;
-  return result;
+  // commit the txn only if all queries executed successfully
+  if (txn->GetResult() == Result::RESULT_SUCCESS) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto tmp = txn->GetResult();
+    LOG_DEBUG("Txn Result:%d", tmp);
+    auto result = txn_manager.CommitTransaction(txn);
+    txn = nullptr;
+    return result;
+  } else {
+    txn = nullptr;
+    // otherwise, the txn has already been aborted
+    return Result::RESULT_ABORTED;
+  }
 }
 
 Result TrafficCop::AbortTransactionHelper() {
@@ -79,10 +91,18 @@ Result TrafficCop::AbortTransactionHelper() {
     return Result::RESULT_NOOP;
   auto txn = txn_ptrs.top();
   txn_ptrs.pop();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto result = txn_manager.AbortTransaction(txn);
-  txn = nullptr;
-  return result;
+  // explicitly abort the txn only if it is not already aborted
+  if (txn->GetResult() != Result::RESULT_ABORTED) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto result = txn_manager.AbortTransaction(txn);
+    LOG_TRACE("Txn Result:%d", txn->GetResult());
+    txn = nullptr;
+    return result;
+  } else {
+    txn = nullptr;
+    // otherwise, the txn has already been aborted
+    return Result::RESULT_ABORTED;
+  }
 }
 
 Result TrafficCop::ExecuteStatement(
