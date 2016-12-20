@@ -386,7 +386,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   std::vector<ResultType> result;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree().get(), nullptr, params, result,
+      result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   LOG_TRACE("Tuple inserted!");
 
@@ -401,7 +402,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+                                             nullptr, params, result,
+                                             result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   LOG_TRACE("Tuple updated!");
 
@@ -416,7 +418,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+                                             nullptr, params, result,
+                                             result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   LOG_TRACE("Tuple deleted!");
 

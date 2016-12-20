@@ -26,7 +26,7 @@
 #include "planner/update_plan.h"
 #include "tcop/tcop.h"
 #include "wire/marshal.h"
-#include "wire/wire.h"
+#include "wire/packet_manager.h"
 
 #include <boost/algorithm/string.hpp>
 #include "wire/packet_manager.h"
@@ -819,7 +819,6 @@ void PacketManager::Reset() {
   skipped_stmt_ = false;
   skipped_query_string_.clear();
   skipped_query_type_.clear();
-  tcop_.Reset();
 
   statement_cache_.clear();
   portals_.clear();

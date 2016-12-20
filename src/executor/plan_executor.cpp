@@ -44,7 +44,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 peloton_status PlanExecutor::ExecutePlan(
     const planner::AbstractPlan *plan, concurrency::Transaction *txn,
-    const std::vector<common::Value> &params, std::vector<ResultType> &result,
+    const std::vector<type::Value> &params, std::vector<ResultType> &result,
     const std::vector<int> &result_format) {
   peloton_status p_status;
   if (plan == nullptr) return p_status;
@@ -69,7 +69,7 @@ peloton_status PlanExecutor::ExecutePlan(
     LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
     LOG_TRACE("Building the executor tree");
 
-    // Use const std::vector<common::Value> &params to make it more elegant for
+    // Use const std::vector<type::Value> &params to make it more elegant for
     // network
     std::unique_ptr<executor::ExecutorContext> executor_context(
         BuildExecutorContext(params, txn));

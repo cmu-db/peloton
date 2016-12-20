@@ -43,8 +43,8 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
-                                    result, result_format);
+  bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), nullptr,
+                                    params, result, result_format);
 }
 
 storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,

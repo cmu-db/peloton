@@ -82,7 +82,7 @@ class PlanExecutor {
    */
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                     concurrency::Transaction* txn,
-                                    const std::vector<common::Value> &params,
+                                    const std::vector<type::Value> &params,
                                     std::vector<ResultType> &result,
                                     const std::vector<int> &result_format);
 

@@ -79,7 +79,8 @@ TEST_F(CopyTests, Copying) {
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<ResultType> result;
     bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-        statement->GetPlanTree().get(), params, result, result_format);
+        statement->GetPlanTree().get(), nullptr, params, result,
+        result_format);
     EXPECT_EQ(status.m_result, peloton::RESULT_SUCCESS);
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
   }

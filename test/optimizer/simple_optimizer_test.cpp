@@ -67,7 +67,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), params, result, result_format);
+      statement->GetPlanTree().get(), nullptr, params, result,
+      result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Table Created");
   txn_manager.CommitTransaction(txn);
@@ -97,7 +98,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+                                             nullptr, params, result,
+                                             result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
@@ -117,7 +119,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+                                             nullptr, params, result,
+                                             result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);
