@@ -93,6 +93,10 @@ TEST_F(LogicalTileTests, TempTableTest) {
     LOG_INFO("%s", logical_tile->GetInfo().c_str());
   }
   EXPECT_FALSE(logicalTiles.empty());
+
+  for (executor::LogicalTile *lt : logicalTiles) {
+    delete lt;
+  }
 }
 
 TEST_F(LogicalTileTests, TileMaterializationTest) {
