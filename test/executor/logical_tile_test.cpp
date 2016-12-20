@@ -65,6 +65,8 @@ TEST_F(LogicalTileTests, TempTableTest) {
     tuple->SetValue(1, val2, pool);
     tuple->SetValue(2, val3, pool);
     table.InsertTuple(tuple);
+
+    delete tuple;
   }
   LOG_INFO("%s", table.GetInfo().c_str());
   LOG_INFO("%s", GETINFO_SINGLE_LINE.c_str());

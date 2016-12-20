@@ -65,6 +65,8 @@ TEST_F(TempTableTests, InsertTest) {
     // Copy the first value so that we can just check that we are able to
     // correctly get the values back.
     values.push_back(val1);
+
+    delete tuple;
   }
 
   // Make sure that we have the correct count
