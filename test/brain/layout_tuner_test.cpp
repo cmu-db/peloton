@@ -47,15 +47,17 @@ TEST_F(LayoutTunerTests, BasicTest) {
                                    true, txn);
   txn_manager.CommitTransaction(txn);
 
+  // Check column count
   oid_t column_count = data_table->GetSchema()->GetColumnCount();
   EXPECT_EQ(column_count, 4);
 
   // Layout tuner
   brain::LayoutTuner &layout_tuner = brain::LayoutTuner::GetInstance();
 
-  // Run layout tuner
+  // Attach table to index tuner
   layout_tuner.AddTable(data_table.get());
 
+  // Check old default tile group layout
   auto old_default_layout = data_table->GetDefaultLayout();
   LOG_INFO("Layout: %s", layout_tuner.GetColumnMapInfo(old_default_layout).c_str());
 
@@ -67,25 +69,29 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
   // initialize a uniform distribution between 0 and 1
   UniformGenerator generator;
-
   for (int sample_itr = 0; sample_itr < 10000; sample_itr++) {
     auto rng_val = generator.GetSample();
 
-    if (rng_val < 0.6) {
-      columns_accessed = {1, 1, 0, 0};
+    if (rng_val < 0.9) {
+      columns_accessed = {1, 1, 1, 0};
       sample_weight = 100;
-    } else if (rng_val < 0.9) {
-      columns_accessed = {0, 0, 1, 1};
-      sample_weight = 10;
-    } else {
+    }
+    else {
       columns_accessed = {0, 0, 0, 1};
       sample_weight = 10;
     }
 
+    // Create a table access sample
+    // Indicates the columns accessed (bitmap), and query weight
     brain::Sample sample(columns_accessed, sample_weight);
+
+    // Collect layout sample in table
     data_table->RecordLayoutSample(sample);
 
-    // Sleep a bit
+    // Periodically sleep a bit
+    // Layout tuner thread will process the layout samples periodically,
+    // derive the new table layout, and
+    // transform the layout of existing tile groups in the table
     if(sample_itr % 100 == 0 ){
       std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
@@ -94,12 +100,28 @@ TEST_F(LayoutTunerTests, BasicTest) {
   // Stop layout tuner
   layout_tuner.Stop();
 
+  // Detach all tables from layout tuner
   layout_tuner.ClearTables();
 
+  // Check new default tile group layout
   auto new_default_layout = data_table->GetDefaultLayout();
   LOG_INFO("Layout: %s", layout_tuner.GetColumnMapInfo(new_default_layout).c_str());
 
-  EXPECT_TRUE(new_default_layout != old_default_layout);
+  // Ensure that the layout has been changed
+  EXPECT_NE(new_default_layout, old_default_layout);
+
+  // Check the new default table layout
+  column_count = new_default_layout.size();
+  EXPECT_EQ(column_count, 4);
+  auto first_column_tile = new_default_layout[0].first;
+  auto second_column_tile = new_default_layout[1].first;
+  auto third_column_tile = new_default_layout[2].first;
+  auto fourth_column_tile = new_default_layout[3].first;
+  EXPECT_EQ(first_column_tile, 0);
+  EXPECT_EQ(second_column_tile, 0);
+  EXPECT_EQ(third_column_tile, 0);
+  EXPECT_EQ(fourth_column_tile, 1);
+
 
 }
 
