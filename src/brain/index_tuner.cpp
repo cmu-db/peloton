@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
+#include "common/container_tuple.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
@@ -84,7 +85,7 @@ static void AddIndex(storage::DataTable* table,
   // Add index
   table->AddIndex(adhoc_index);
 
-  LOG_TRACE("Creating index : %s", index_metadata->GetInfo().c_str());
+  LOG_INFO("Creating index : %s", index_metadata->GetInfo().c_str());
 }
 
 void IndexTuner::BuildIndex(storage::DataTable* table,
@@ -108,14 +109,15 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-      // Copy over the tuple
-      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
+      // Setup container tuple
+      expression::ContainerTuple<storage::TileGroup> container_tuple(
+          tile_group.get(), tuple_id);
 
       // Set the location
       ItemPointer location(tile_group_id, tuple_id);
 
       // Set the key
-      key->SetFromTuple(tuple_ptr.get(), indexed_columns, index->GetPool());
+      key->SetFromTuple(&container_tuple, indexed_columns, index->GetPool());
 
       // Insert in specific index
       // TODO: Allocate itempointer ?
@@ -213,7 +215,7 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
     }
   }
 
-  LOG_TRACE("Sample frequency map size : %lu", sample_frequency_map.size());
+  PL_ASSERT(total_metric > 0);
 
   // Normalize
   std::unordered_map<brain::Sample, double>::iterator sample_frequency_map_itr;
@@ -237,6 +239,14 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
             sample_frequency_entry_list.end(),
             SampleFrequencyMapEntryComparator);
 
+
+  // Print sample frequency map
+  for (auto sample_frequency_map_entry : sample_frequency_map) {
+    LOG_TRACE("Sample: %s Utility %.1lf",
+              sample_frequency_map_entry.first.GetInfo().c_str(),
+              sample_frequency_map_entry.second);
+  }
+
   return sample_frequency_entry_list;
 }
 
@@ -255,7 +265,6 @@ std::vector<std::vector<double>> GetSuggestedIndices(
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
     LOG_TRACE("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
-
     suggested_indices.push_back(sample.columns_accessed_);
   }
 
@@ -296,15 +305,12 @@ void IndexTuner::DropIndexes(storage::DataTable* table) {
       continue;
     }
 
-#ifdef LOG_TRACE_ENABLED
-    auto index_metadata = index->GetMetadata();
-#endif
     // auto average_index_utility = index_metadata->GetUtility();
     auto index_oid = index->GetOid();
 
     // Check if index utility below threshold and drop if needed
     // if (average_index_utility < index_utility_threshold) {
-    LOG_TRACE("Dropping index : %s", index_metadata->GetInfo().c_str());
+    LOG_INFO("Dropping index : %s", index->GetMetadata()->GetInfo().c_str());
 
     table->DropIndexWithOid(index_oid);
 
@@ -321,7 +327,6 @@ void IndexTuner::AddIndexes(
     storage::DataTable* table,
     const std::vector<std::vector<double>>& suggested_indices) {
   oid_t valid_index_count = table->GetValidIndexCount();
-  oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
 
   // Check if we have constructed too many indexess
@@ -338,6 +343,7 @@ void IndexTuner::AddIndexes(
 
     // Go over all indices
     bool suggested_index_found = false;
+    oid_t index_count = table->GetIndexCount();
     oid_t index_itr;
     for (index_itr = 0; index_itr < index_count; index_itr++) {
       // Check attributes
