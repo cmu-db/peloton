@@ -123,20 +123,6 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   }
 }
 
-// This is commented out before merge
-void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
-  auto schema = table->GetSchema();
-
-  PL_ASSERT(tuple->GetColumnCount() == schema->GetColumnCount());
-
-  for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
-    type::Value val = (GetValue(tuple_slot_id, col_id));
-    tuple->SetValue(col_id, val, nullptr);
-  }
-}
-
 /**
  * Grab next slot (thread-safe) and fill in the tuple if tuple != nullptr
  *

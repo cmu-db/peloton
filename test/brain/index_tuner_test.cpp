@@ -78,10 +78,10 @@ TEST_F(IndexTunerTests, BasicTest) {
       columns_accessed = {0, 1, 2};
       sample_weight = 100;
     } else if (rng_val < 0.9) {
-      columns_accessed = {0, 2, 3};
+      columns_accessed = {0, 2};
       sample_weight = 10;
     } else {
-      columns_accessed = {0, 3};
+      columns_accessed = {0, 1};
       sample_weight = 10;
     }
 
@@ -120,8 +120,8 @@ TEST_F(IndexTunerTests, BasicTest) {
   // all the ad-hoc indexes are materialized
   std::vector<std::set<oid_t>> candidate_indices;
   candidate_indices.push_back({0, 1, 2});
-  candidate_indices.push_back({0, 2, 3});
-  candidate_indices.push_back({0, 3});
+  candidate_indices.push_back({0, 2});
+  candidate_indices.push_back({0, 1});
 
   for (auto candidate_index : candidate_indices) {
     bool candidate_index_found = false;

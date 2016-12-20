@@ -374,6 +374,19 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   txn_manager.CommitTransaction(txn);
 }
 
+void CopyTuple(const oid_t &tuple_slot_id,
+               storage::Tuple *tuple,
+               storage::TileGroup* tile_group,
+               const size_t column_count) {
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
+  PL_ASSERT(tuple->GetColumnCount() == column_count);
+  for (oid_t col_id = 0; col_id < column_count; ++col_id) {
+    type::Value val = tile_group->GetValue(tuple_slot_id, col_id);
+    tuple->SetValue(col_id, val, nullptr);
+  }
+}
+
 void BuildIndex(std::shared_ptr<index::Index> index,
                 storage::DataTable *table) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -384,12 +397,13 @@ void BuildIndex(std::shared_ptr<index::Index> index,
 
   while (start_tile_group_count < table_tile_group_count) {
     auto tile_group = table->GetTileGroup(start_tile_group_count++);
+    auto column_count = table->GetSchema()->GetColumnCount();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       std::unique_ptr<storage::Tuple> tuple_ptr(
           new storage::Tuple(table->GetSchema(), true));
-      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
+      CopyTuple(tuple_id, tuple_ptr.get(), tile_group.get(), column_count);
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
       ItemPointer *index_entry_ptr = nullptr;

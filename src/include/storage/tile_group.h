@@ -87,8 +87,6 @@ class TileGroup : public Printable {
   // copy tuple in place.
   void CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id);
 
-  void CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple);
-
   // insert tuple at next available slot in tile if a slot exists
   oid_t InsertTuple(const Tuple *tuple);
 

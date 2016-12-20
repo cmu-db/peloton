@@ -28,19 +28,3 @@
         ...
 }
 
-{
-   Handle varlen leak (100 bytes)
-   		Memcheck:Leak
-   		...
-	    fun:malloc
-	    fun:_ZN7peloton13do_allocationEmb
-   		fun:_Znam
-   		fun:_ZNK7peloton4type10VarlenType11SerializeToERKNS0_5ValueEPcbPNS0_10VarlenPoolE
-   		fun:_ZNK7peloton4type5Value11SerializeToEPcbPNS0_10VarlenPoolE
-   		fun:_ZN7peloton7storage5Tuple8SetValueEjRKNS_4type5ValueEPNS2_10VarlenPoolE
-   		fun:_ZN7peloton7storage9TileGroup9CopyTupleERKjPNS0_5TupleE
-   		fun:_ZN7peloton5brain10IndexTuner10BuildIndexEPNS_7storage9DataTableESt10shared_ptrINS_5index5IndexEE
-		...
-}
-
-

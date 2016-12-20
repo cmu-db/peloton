@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
+#include "common/container_tuple.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
@@ -108,14 +109,15 @@ void IndexTuner::BuildIndex(storage::DataTable* table,
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-      // Copy over the tuple
-      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
+      // Setup container tuple
+      expression::ContainerTuple<storage::TileGroup> container_tuple(
+          tile_group.get(), tuple_id);
 
       // Set the location
       ItemPointer location(tile_group_id, tuple_id);
 
       // Set the key
-      key->SetFromTuple(tuple_ptr.get(), indexed_columns, index->GetPool());
+      key->SetFromTuple(&container_tuple, indexed_columns, index->GetPool());
 
       // Insert in specific index
       // TODO: Allocate itempointer ?
