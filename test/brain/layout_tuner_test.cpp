@@ -87,7 +87,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
     // Sleep a bit
     if(sample_itr % 100 == 0 ){
-      std::this_thread::sleep_for(std::chrono::microseconds(10000));
+      std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
   }
 

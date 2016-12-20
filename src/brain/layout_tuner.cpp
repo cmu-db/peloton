@@ -119,6 +119,7 @@ void LayoutTuner::Tune() {
       auto tile_group_count = table->GetTileGroupCount();
       auto tile_group_offset = rand() % tile_group_count;
 
+      LOG_TRACE("Transforming tile group at offset: %lu", tile_group_offset);
       table->TransformTileGroup(tile_group_offset, theta);
 
       // Update partitioning periodically
