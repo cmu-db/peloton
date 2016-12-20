@@ -1152,5 +1152,10 @@ void DataTable::SetDefaultLayout(const column_map_type &layout) {
   default_partition_ = layout;
 }
 
+column_map_type DataTable::GetDefaultLayout() const{
+  return default_partition_;
+}
+
+
 }  // End storage namespace
 }  // End peloton namespace

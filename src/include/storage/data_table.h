@@ -221,6 +221,8 @@ class DataTable : public AbstractTable {
 
   void SetDefaultLayout(const column_map_type &layout);
 
+  column_map_type GetDefaultLayout() const;
+
   //===--------------------------------------------------------------------===//
   // INDEX TUNER
   //===--------------------------------------------------------------------===//

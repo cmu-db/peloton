@@ -62,13 +62,11 @@ class LayoutTuner {
   // Clear list
   void ClearTables();
 
+  std::string GetColumnMapInfo(const column_map_type &column_map);
+
  protected:
   // Update layout of table
   void UpdateDefaultPartition(storage::DataTable *table);
-
-  std::string GetColumnMapInfo(const column_map_type &column_map);
-
-  void CalculateStatistics(const std::vector<double> data, double &mean, double &sum);
 
  private:
   // Tables whose layout must be tuned
@@ -88,9 +86,10 @@ class LayoutTuner {
 
   // Layout similarity threshold
   // NOTE:
-  // This could be very sensitive, the measurement of schema difference in
-  // datatable is divided by column_count, so could be very small. Theta should
-  // also not be set to zero, otherwise it will always trigger
+  // This is a critical parameter. It measures the difference between the schema
+  // of a existing tilegroup and the desired schema, and normalizes this difference
+  // with respect to the column count, so that it falls within [0, 1]
+  // Theta should not be set to zero, otherwise it will always trigger
   // DataTable::TransformTileGroup, even if the schema is the same.
   double theta = 0.0001;
 
@@ -104,14 +103,8 @@ class LayoutTuner {
   double new_sample_weight = 0.01;
 
   // Desired layout tile count
-  // FIXME: for join query, only two tiles in the tile group is not enough,
-  // should be 3 = 2 for projected columns from two tables + 1 (other columns)
   oid_t tile_count = 2;
 
-  // Profile times
-  std::vector<double> update_default_partition_times_;
-  std::vector<double> transform_tg_times_;
-  oid_t tile_groups_transformed_;
 };
 
 }  // End brain namespace
