@@ -17,6 +17,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 
 namespace peloton {
@@ -69,6 +70,12 @@ ItemPointer TempTable::InsertTuple(const Tuple *tuple,
   ItemPointer location(tile_group_id, tuple_slot);
   IncreaseTupleCount(1);
 
+  // Make sure that we mark the tuple as active in the TileGroupHeader too
+  // If you don't do this, then anybody that tries to use a LogicalTile wrapper
+  // on this TempTable will not have any active tuples.
+  auto tile_group_header = tile_group->GetHeader();
+  tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
+
   return (location);
 }
 ItemPointer TempTable::InsertTuple(const Tuple *tuple) {
@@ -105,11 +112,13 @@ oid_t TempTable::AddDefaultTileGroup() {
       TEMPTABLE_TILEGROUP_ID + static_cast<int>(tile_groups_.size());
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
+  column_map =
+      AbstractTable::GetTileGroupLayout((LayoutType)peloton_layout_mode);
 
   // Create a tile group with that partitioning
-  std::shared_ptr<storage::TileGroup> tile_group(GetTileGroupWithLayout(
-      INVALID_OID, tile_group_id, column_map, TEMPTABLE_DEFAULT_SIZE));
+  std::shared_ptr<storage::TileGroup> tile_group(
+      AbstractTable::GetTileGroupWithLayout(
+          INVALID_OID, tile_group_id, column_map, TEMPTABLE_DEFAULT_SIZE));
   PL_ASSERT(tile_group.get());
 
   tile_groups_.push_back(tile_group);

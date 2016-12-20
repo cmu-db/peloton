@@ -12,27 +12,21 @@
 
 #pragma once
 
-<<<<<<< HEAD
-#include "type/types.h"
 #include "catalog/schema.h"
-#include "storage/database.h"
-#include "storage/data_table.h"
-#include "storage/tuple.h"
-#include "storage/table_factory.h"
-#include "type/value_factory.h"
-=======
-#include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value_factory.h"
->>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/insert_executor.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
+#include "storage/table_factory.h"
 #include "storage/tuple.h"
+#include "storage/tuple.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 
 #include "executor/delete_executor.h"
 #include "executor/seq_scan_executor.h"
@@ -54,21 +48,12 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
                  concurrency::Transaction *txn);
 
 std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
-<<<<<<< HEAD
-    catalog::Schema *schema, oid_t database_id, std::string database_name,
+    const catalog::Schema *schema, oid_t database_id, std::string database_name,
     type::VarlenPool *pool);
 
 std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
-    catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name, type::VarlenPool *pool);
-=======
-    const catalog::Schema *schema, oid_t database_id, std::string database_name,
-    common::VarlenPool *pool);
-
-std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
     const catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name, common::VarlenPool *pool);
->>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
+    oid_t database_id, std::string database_name, type::VarlenPool *pool);
 
 std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
     const catalog::Schema *schema, oid_t database_id, int64_t commit,

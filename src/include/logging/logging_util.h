@@ -13,10 +13,10 @@
 #pragma once
 
 #include "common/logger.h"
-#include "type/types.h"
 #include "logging/records/transaction_record.h"
 #include "logging/records/tuple_record.h"
 #include "storage/data_table.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace logging {
@@ -54,13 +54,8 @@ class LoggingUtil {
   static bool ReadTupleRecordHeader(TupleRecord &tuple_record,
                                     FileHandle &file_handle);
 
-<<<<<<< HEAD
-  static storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema,
-                                             type::VarlenPool *pool,
-=======
   static storage::Tuple *ReadTupleRecordBody(const catalog::Schema *schema,
-                                             common::VarlenPool *pool,
->>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
+                                             type::VarlenPool *pool,
                                              FileHandle &file_handle);
 
   static void SkipTupleRecordBody(FileHandle &file_handle);

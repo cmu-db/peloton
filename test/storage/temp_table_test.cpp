@@ -12,13 +12,13 @@
 
 #include "common/harness.h"
 
-#include "common/value.h"
 #include "executor/executor_tests_util.h"
 #include "storage/temp_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 #include "storage/tuple_iterator.h"
+#include "type/value.h"
 
 #include <vector>
 
@@ -44,18 +44,18 @@ TEST_F(TempTableTests, InsertTest) {
   storage::TempTable table(INVALID_OID, schema, true);
   EXPECT_EQ(0, table.GetTupleCount());
 
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
 
   // Then shove some tuples in it
   for (int i = 0; i < tuple_count; i++) {
     storage::Tuple *tuple = new storage::Tuple(table.GetSchema(), true);
-    auto val1 = common::ValueFactory::GetIntegerValue(
+    auto val1 = type::ValueFactory::GetIntegerValue(
         ExecutorTestsUtil::PopulatedValue(i, 0));
-    auto val2 = common::ValueFactory::GetIntegerValue(
+    auto val2 = type::ValueFactory::GetIntegerValue(
         ExecutorTestsUtil::PopulatedValue(i, 1));
-    auto val3 = common::ValueFactory::GetDoubleValue(
+    auto val3 = type::ValueFactory::GetDoubleValue(
         ExecutorTestsUtil::PopulatedValue(i, 2));
-    auto val4 = common::ValueFactory::GetVarcharValue("12345");
+    auto val4 = type::ValueFactory::GetVarcharValue("12345");
     tuple->SetValue(0, val1, pool);
     tuple->SetValue(1, val2, pool);
     tuple->SetValue(2, val3, pool);
@@ -86,7 +86,7 @@ TEST_F(TempTableTests, InsertTest) {
         auto tupleVal = tuple.GetValue(0);
         EXPECT_FALSE(tupleVal.IsNull());
 
-        // I have to do this because we can't put common::Value into a std::set
+        // I have to do this because we can't put type::Value into a std::set
         bool found = false;
         for (auto val : values) {
           found = val.CompareEquals(tupleVal).IsTrue();

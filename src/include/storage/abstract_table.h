@@ -12,12 +12,8 @@
 
 #pragma once
 
-<<<<<<< HEAD
-#include "type/types.h"
-=======
->>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
 #include "common/printable.h"
-#include "common/types.h"
+#include "type/types.h"
 
 #include <map>
 #include <memory>

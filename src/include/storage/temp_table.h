@@ -27,6 +27,7 @@ namespace storage {
 
 class Tuple;
 class TileGroup;
+class TileGroupHeader;
 
 // FIXME
 const size_t TEMPTABLE_DEFAULT_SIZE = 100;  // # of tuples

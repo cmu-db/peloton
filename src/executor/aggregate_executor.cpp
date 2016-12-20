@@ -196,17 +196,16 @@ bool AggregateExecutor::DExecute() {
        tile_group_itr++) {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
     PL_ASSERT(tile_group != nullptr);
-    LOG_INFO("%s", tile_group->GetInfo().c_str());
+    LOG_TRACE("\n%s", tile_group->GetInfo().c_str());
 
     // Get the logical tiles corresponding to the given tile group
     auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group);
 
     result.push_back(logical_tile);
   }
-  LOG_INFO("%s", result[result_itr]->GetInfo().c_str());
+  LOG_TRACE("%s", result[result_itr]->GetInfo().c_str());
 
   done = true;
-  LOG_INFO("Result tiles : %lu ", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;

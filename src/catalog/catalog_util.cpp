@@ -95,13 +95,8 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
-<<<<<<< HEAD
-    catalog::Schema *schema, oid_t database_id, std::string database_name,
-    type::VarlenPool *pool) {
-=======
     const catalog::Schema *schema, oid_t database_id, std::string database_name,
-    common::VarlenPool *pool) {
->>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
+    type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(database_id);
   auto val2 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
@@ -259,13 +254,8 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
-<<<<<<< HEAD
-    catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name, type::VarlenPool *pool) {
-=======
     const catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name, common::VarlenPool *pool) {
->>>>>>> ce96f57... Checkpoint for the new TempTable class. This doesn't compile. Still working on refactoring the code to make it cleaner. #183
+    oid_t database_id, std::string database_name, type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(table_id);
   auto val2 = type::ValueFactory::GetVarcharValue(table_name, nullptr);

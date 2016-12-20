@@ -135,26 +135,15 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   LOG_TRACE("Tuple to Output :");
   LOG_TRACE("GROUP TUPLE :: %s", tuple->GetInfo().c_str());
 
+  // IMPORTANT: The output table *has* to set the tuple as active.
+  // Otherwise the LogicalTileWrapper will think that it has no tuples.
+  // Note that only TempTable does this. DataTable does not.
   auto location = output_table->InsertTuple(tuple.get());
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple ");
     return false;
   }
 
-  // PAVLO: 2016-12-14
-  // Ok so here I am trying to replace DataTable with the new TempTable
-  // in the aggregation code. Then I come across this is little bit here
-  // where we are trying to set the TxnId flag in the header of the output
-  // table.
-  // I don't know why this is even necessary given that the output of
-  // an aggregation is supposed to be ephemeral.
-  // So I am just going to comment it out to see whether it makes a difference.
-  //  else {
-  //    auto &manager = catalog::Manager::GetInstance();
-  //    auto tile_group_header =
-  //    manager.GetTileGroup(location.block)->GetHeader();
-  //    tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
-  //  }
   return true;
 }
 

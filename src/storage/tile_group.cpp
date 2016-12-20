@@ -415,7 +415,6 @@ const std::string TileGroup::GetInfo() const {
   os << "** TILE GROUP[#" << tile_group_id << "] **" << std::endl;
   os << "Database[" << database_id << "] // ";
   os << "Table[" << table_id << "] " << std::endl;
-  os << "TILE GROUP HEADER :: " << tile_group_header << std::endl;
   os << (*tile_group_header) << std::endl;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
