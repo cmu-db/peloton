@@ -152,8 +152,7 @@ bool AggregateExecutor::DExecute() {
     }
 
     // If there's no tuples in the table and only if no group-by in the
-    // query,
-    // we should return a NULL tuple
+    // query, we should return a NULL tuple
     // this is required by SQL
     if (!aggregator.get() && node.GetGroupbyColIds().empty()) {
       LOG_TRACE(
@@ -166,6 +165,8 @@ bool AggregateExecutor::DExecute() {
       } else {
         tuple->SetAllNulls();
       }
+      auto location = output_table->InsertTuple(tuple.get());
+      PL_ASSERT(location.block != INVALID_OID);
     } else {
       done = true;
       return false;

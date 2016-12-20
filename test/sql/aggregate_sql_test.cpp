@@ -25,12 +25,57 @@ namespace test {
 
 class AggregateSQLTests : public PelotonTest {};
 
+TEST_F(AggregateSQLTests, EmptyTableTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  // Create a table first
+  SQLTestsUtil::ExecuteSQLQuery("CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+  optimizer::SimpleOptimizer optimizer;
+
+  // All of these aggregates should return null
+  std::vector<std::string> nullAggregates = {"MIN", "MAX", "AVG", "SUM"};
+  std::vector<type::Type::TypeId> expectedTypes = {
+      type::Type::INTEGER, type::Type::INTEGER, type::Type::DECIMAL,
+      type::Type::INTEGER};
+  for (int i = 0; i < (int)nullAggregates.size(); i++) {
+    std::string expected =
+        type::ValueFactory::GetNullValueByType(expectedTypes[i]).ToString();
+
+    std::ostringstream os;
+    os << "SELECT " << nullAggregates[i] << "(b) FROM xxx";
+    SQLTestsUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+    std::string resultStr(result[0].second.begin(), result[0].second.end());
+
+    EXPECT_EQ(expected, resultStr);
+  }
+
+  // These aggregates should return zero
+  std::vector<std::string> zeroAggregates = {"COUNT"};
+  for (int i = 0; i < (int)zeroAggregates.size(); i++) {
+    std::string expected = type::ValueFactory::GetIntegerValue(0).ToString();
+
+    std::ostringstream os;
+    os << "SELECT " << zeroAggregates[i] << "(b) FROM xxx";
+    SQLTestsUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+    std::string resultStr(result[0].second.begin(), result[0].second.end());
+
+    EXPECT_EQ(expected, resultStr);
+  }
+}
+
 TEST_F(AggregateSQLTests, MinMaxTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
-  // TODO: LM: I didn't test boolean here because we can't insert booleans into
-  // the table
+  // TODO: LM: I didn't test boolean here because we can't insert booleans
+  // into the table
   SQLTestsUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b SMALLINT, c "
       "INT, d BIGINT, e DECIMAL, f DOUBLE, g VARCHAR, h TIMESTAMP);");
