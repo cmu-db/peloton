@@ -994,6 +994,9 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 // Transformers
 //===--------------------------------------------------------------------===//
 
+std::string DatePartToString(DatePart part);
+DatePart StringToDatePart(const std::string &str);
+
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(const std::string &str);
 

@@ -37,6 +37,106 @@ size_t QUERY_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
+//===--------------------------------------------------------------------===//
+// DatePart <--> String Utilities
+//===--------------------------------------------------------------------===//
+std::string DatePartToString(DatePart part){
+  switch(part){
+  case EXPRESSION_DATE_PART_CENTURY:
+    return "CENTURY";
+  case EXPRESSION_DATE_PART_DAY:
+    return "DAY";
+  case EXPRESSION_DATE_PART_DECADE:
+    return "DECADE";
+  case EXPRESSION_DATE_PART_DOW:
+    return "DOW";
+  case EXPRESSION_DATE_PART_DOY:
+    return "DOY";
+  case EXPRESSION_DATE_PART_EPOCH:
+    return "EPOCH";
+  case EXPRESSION_DATE_PART_HOUR:
+    return "HOUR";
+  case EXPRESSION_DATE_PART_ISODOW:
+    return "ISODOW";
+  case EXPRESSION_DATE_PART_ISOYEAR:
+    return "ISOYEAR";
+  case EXPRESSION_DATE_PART_MICROSECONDS:
+    return "MICROSECONDS";
+  case EXPRESSION_DATE_PART_MILLENNIUM:
+    return "MILLENNIUM";
+  case EXPRESSION_DATE_PART_MILLISECONDS:
+    return "MILLISECONDS";
+  case EXPRESSION_DATE_PART_MINUTE:
+    return "MINUTE";
+  case EXPRESSION_DATE_PART_MONTH:
+    return "MONTH";
+  case EXPRESSION_DATE_PART_QUARTER:
+    return "QUARTER";
+  case EXPRESSION_DATE_PART_SECOND:
+    return "SECOND";
+  case EXPRESSION_DATE_PART_TIMEZONE:
+    return "TIMEZONE";
+  case EXPRESSION_DATE_PART_TIMEZONE_HOUR:
+    return "TIMEZONE_HOUR";
+  case EXPRESSION_DATE_PART_TIMEZONE_MINUTE:
+    return "TIMEZONE_MINUTE";
+  case EXPRESSION_DATE_PART_WEEK:
+    return "WEEK";
+  case EXPRESSION_DATE_PART_YEAR:
+    return "YEAR";
+  default:
+    throw Exception("Invalid date part.");
+  }
+}
+
+DatePart StringToDatePart(const std::string &str){
+  if (str == "CENTURY"){
+    return EXPRESSION_DATE_PART_CENTURY;
+  }else if(str == "DAY"){
+    return EXPRESSION_DATE_PART_DAY;
+  }else if (str == "DECADE"){
+    return EXPRESSION_DATE_PART_DECADE;
+  }else if (str == "DOW"){
+    return EXPRESSION_DATE_PART_DOW;
+  }else if (str == "DOY"){
+    return EXPRESSION_DATE_PART_DOY;
+  }else if (str == "EPOCH"){
+    return EXPRESSION_DATE_PART_EPOCH;
+  }else if (str == "HOUR"){
+    return EXPRESSION_DATE_PART_HOUR;
+  }else if (str == "ISODOW"){
+    return EXPRESSION_DATE_PART_ISODOW;
+  }else if (str == "ISOYEAR"){
+    return EXPRESSION_DATE_PART_ISOYEAR;
+  }else if (str == "MICROSECONDS"){
+    return EXPRESSION_DATE_PART_MICROSECONDS;
+  }else if (str == "MILLENNIUM"){
+    return EXPRESSION_DATE_PART_MILLENNIUM;
+  }else if (str == "MILLISECONDS"){
+    return EXPRESSION_DATE_PART_MILLISECONDS;
+  }else if (str == "MINUTE"){
+    return EXPRESSION_DATE_PART_MINUTE;
+  }else if (str == "MONTH"){
+    return EXPRESSION_DATE_PART_MONTH;
+  }else if (str == "QUARTER"){
+    return EXPRESSION_DATE_PART_QUARTER;
+  }else if (str == "SECOND"){
+    return EXPRESSION_DATE_PART_SECOND;
+  }else if (str == "TIMEZONE"){
+    return EXPRESSION_DATE_PART_TIMEZONE;
+  }else if (str == "TIMEZONE_HOUR"){
+    return EXPRESSION_DATE_PART_TIMEZONE_HOUR;
+  }else if (str == "TIMEZONE_MINUTE"){
+    return EXPRESSION_DATE_PART_TIMEZONE_MINUTE;
+  }else if (str == "WEEK"){
+    return EXPRESSION_DATE_PART_WEEK;
+  }else if (str == "YEAR"){
+    return EXPRESSION_DATE_PART_YEAR;
+  }else{
+    throw Exception("Date Part " + str + " not found.");
+  }
+
+}
 
 //===--------------------------------------------------------------------===//
 // BackendType <--> String Utilities

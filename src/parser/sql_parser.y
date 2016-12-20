@@ -189,20 +189,19 @@ struct PARSER_CUST_LTYPE {
 %token <uval> NOTEQUALS LESSEQ GREATEREQ
 
 /* SQL Keywords */
-%token MICROSECONDS MILLISECONDS
 %token TRANSACTION
-%token MILLENNIUM REFERENCES DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP ISOYEAR QUARTER
-%token VARBINARY ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN BOOLEAN ADDRESS 
+%token REFERENCES DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
+%token VARBINARY ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN BOOLEAN ADDRESS
 %token DATABASE SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN EXTRACT
-%token INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL CENTURY DECADE ISODOW MINUTE SECOND
+%token INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
-%token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS MONTH EPOCH
+%token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
 %token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER COUNT
-%token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC HOUR WEEK YEAR
+%token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE BTREE BWTREE SKIPLIST
-%token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL DAY DOW DOY
+%token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
 %token AND ASC CSV FOR INT KEY NOT OFF SET TOP SUM MIN MAX AVG AS BY IF
 %token IN IS OF ON OR TO
 %token COPY DELIMITER
@@ -229,7 +228,7 @@ struct PARSER_CUST_LTYPE {
 %type <table>		join_clause join_table table_ref_name_no_alias
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias parameter_expr opt_default
 %type <expr> 		column_name literal int_literal num_literal string_literal aggregate_expr
-%type <expr> 		comp_expr opt_where join_condition opt_having placeholder_expr date_section_expr
+%type <expr> 		comp_expr opt_where join_condition opt_having placeholder_expr
 %type <table_info>	table_name
 %type <order>		opt_order
 %type <limit>		opt_limit
@@ -772,31 +771,11 @@ comp_expr:
 
 function_expr:
 		IDENTIFIER '(' expr_list ')' { $$ = new peloton::expression::FunctionExpression($1, *$3); delete $3; }
-// data functions
-	|	EXTRACT '(' date_section_expr FROM expr ')' { $$ = new peloton::expression::FunctionExpression("extract", std::vector<peloton::expression::AbstractExpression*>{$3, $5}); }
+// date functions
+	|	EXTRACT '(' IDENTIFIER FROM expr ')' { $$ = new peloton::expression::FunctionExpression("extract",
+					std::vector<peloton::expression::AbstractExpression*>{new peloton::expression::ConstantValueExpression(
+					peloton::type::ValueFactory::GetIntegerValue(peloton::StringToDatePart(CharsToStringDestructive($3)))), $5}); }
 	;
-	
-date_section_expr:
-		CENTURY { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_CENTURY)); }
-	|	DAY { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_DAY)); }
-	|	DECADE { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_DECADE)); }
-	|	DOW { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_DOW)); }
-	|	DOY { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_DOY)); }
-	|	EPOCH { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_EPOCH)); }
-	|	HOUR { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_HOUR)); }
-	|	ISODOW { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_ISODOW)); }
-	|	ISOYEAR { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_ISOYEAR)); }
-	|	MICROSECONDS { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_MICROSECONDS)); }
-	|	MILLENNIUM { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_MILLENNIUM)); }
-	|	MILLISECONDS { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_MILLISECONDS)); }
-	|	MINUTE { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_MINUTE)); }
-	|	MONTH { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_MONTH)); }
-	|	QUARTER { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_QUARTER)); }
-	|	SECOND { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_SECOND)); }
-	|	WEEK { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_WEEK)); }
-	|	YEAR { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetIntegerValue(peloton::EXPRESSION_DATE_PART_YEAR)); }
-;
-
 
 aggregate_expr:
 		SUM '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_SUM, $3, $4); }
