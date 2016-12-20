@@ -173,14 +173,6 @@ bool AggregateExecutor::DExecute() {
       } else {
         tuple->SetAllNulls();
       }
-      auto location = output_table->InsertTuple(tuple.get());
-      PL_ASSERT(location.block != INVALID_OID);
-
-      auto &manager = catalog::Manager::GetInstance();
-      auto tile_group_header =
-          manager.GetTileGroup(location.block)->GetHeader();
-      tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
-
     } else {
       done = true;
       return false;
