@@ -14,12 +14,12 @@
 #include <utility>
 #include <vector>
 
+#include "common/container_tuple.h"
 #include "common/logger.h"
 #include "executor/aggregate_executor.h"
 #include "executor/aggregator.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile_factory.h"
-#include "common/container_tuple.h"
 #include "planner/aggregate_plan.h"
 #include "storage/table_factory.h"
 
@@ -67,11 +67,8 @@ bool AggregateExecutor::DInit() {
   // clean up temporary aggregation table
   delete output_table;
 
-  bool own_schema = false;
-  bool adapt_table = false;
-  output_table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, output_table_schema, "aggregate_temp_table",
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+  output_table =
+      storage::TableFactory::GetTempTable(output_table_schema, false);
 
   return true;
 }
@@ -155,8 +152,7 @@ bool AggregateExecutor::DExecute() {
     }
 
     // If there's no tuples in the table and only if no group-by in the
-    // query,
-    // we should return a NULL tuple
+    // query, we should return a NULL tuple
     // this is required by SQL
     if (!aggregator.get() && node.GetGroupbyColIds().empty()) {
       LOG_TRACE(
@@ -171,12 +167,6 @@ bool AggregateExecutor::DExecute() {
       }
       auto location = output_table->InsertTuple(tuple.get());
       PL_ASSERT(location.block != INVALID_OID);
-
-      auto &manager = catalog::Manager::GetInstance();
-      auto tile_group_header =
-          manager.GetTileGroup(location.block)->GetHeader();
-      tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
-
     } else {
       done = true;
       return false;
@@ -184,22 +174,24 @@ bool AggregateExecutor::DExecute() {
   }
 
   // Transform output table into result
+  LOG_TRACE("%s", output_table->GetInfo().c_str());
   auto tile_group_count = output_table->GetTileGroupCount();
-
   if (tile_group_count == 0) return false;
 
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
+    PL_ASSERT(tile_group != nullptr);
+    LOG_TRACE("\n%s", tile_group->GetInfo().c_str());
 
     // Get the logical tiles corresponding to the given tile group
     auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group);
 
     result.push_back(logical_tile);
   }
+  LOG_TRACE("%s", result[result_itr]->GetInfo().c_str());
 
   done = true;
-  LOG_TRACE("Result tiles : %lu ", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;

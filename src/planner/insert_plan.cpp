@@ -56,7 +56,7 @@ InsertPlan::InsertPlan(
   target_table_ = table;
 
   if (target_table_) {
-    catalog::Schema *table_schema = target_table_->GetSchema();
+    const catalog::Schema *table_schema = target_table_->GetSchema();
     // INSERT INTO table_name VALUES (val2, val2, ...)
     if (columns == NULL) {
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();

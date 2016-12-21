@@ -278,7 +278,7 @@ class ExpressionUtil {
    * Walks an expression tree and fills in information about
    * columns and functions in their respective objects
    */
-  static void TransformExpression(catalog::Schema *schema,
+  static void TransformExpression(const catalog::Schema *schema,
                                   AbstractExpression *expr) {
     bool dummy;
     TransformExpression(nullptr, nullptr, expr, schema, dummy, false);

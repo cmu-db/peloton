@@ -177,7 +177,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           DirectMapList dml = DirectMapList();
           // schema of the projections output
           std::vector<catalog::Column> columns;
-          catalog::Schema* table_schema = target_table->GetSchema();
+          const catalog::Schema* table_schema = target_table->GetSchema();
           for (int i = 0; i < (int)select_list.size(); i++) {
             auto expr = select_list[i];
             // if the root of the expression is a column value we can
@@ -774,7 +774,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
  * expressions
  */
 void SimpleOptimizer::GetPredicateColumns(
-    catalog::Schema* schema, expression::AbstractExpression* expression,
+    const catalog::Schema* schema, expression::AbstractExpression* expression,
     std::vector<oid_t>& column_ids, std::vector<ExpressionType>& expr_types,
     std::vector<type::Value>& values, bool& index_searchable) {
   // For now, all conjunctions should be AND when using index scan.

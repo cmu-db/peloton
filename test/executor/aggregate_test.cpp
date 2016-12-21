@@ -120,6 +120,8 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   // Verify result
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
+  LOG_TRACE("%s", result_tile->GetInfo().c_str());
+  ASSERT_TRUE(result_tile->GetTupleCount() > 0);
 
   type::Value val = (result_tile->GetValue(0, 2));
   type::Value cmp =

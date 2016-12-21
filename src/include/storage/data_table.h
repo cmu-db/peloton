@@ -25,20 +25,12 @@
 #include "storage/indirection_array.h"
 
 //===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-extern peloton::LayoutType peloton_layout_mode;
-
-//===--------------------------------------------------------------------===//
 // Configuration Variables
 //===--------------------------------------------------------------------===//
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
-
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 namespace brain {
 class Sample;
@@ -111,6 +103,7 @@ class DataTable : public AbstractTable {
   // and then install the version
   // into all the corresponding indexes.
   ItemPointer AcquireVersion();
+
   // install an version in table. designed for update operation.
   // as we implement logical-pointer indexing mechanism, targets_ptr is
   // required.
@@ -237,16 +230,17 @@ class DataTable : public AbstractTable {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  bool HasPrimaryKey() { return has_primary_key_; }
+  inline std::string GetName() const { return (table_name); }
 
-  bool HasUniqueConstraints() { return (unique_constraint_count_ > 0); }
+  inline oid_t GetDatabaseOid() const { return (database_oid); }
 
-  bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
+  bool HasPrimaryKey() const { return (has_primary_key_); }
+
+  bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
+
+  bool HasForeignKeys() const { return (GetForeignKeyCount() > 0); }
 
   std::map<oid_t, oid_t> GetColumnMapStats();
-
-  // Get a string representation for debugging
-  const std::string GetInfo() const;
 
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new
@@ -284,9 +278,6 @@ class DataTable : public AbstractTable {
 
   oid_t AddDefaultIndirectionArray(const size_t &active_indirection_array_id);
 
-  // get a partitioning with given layout type
-  column_map_type GetTileGroupLayout(LayoutType layout_type);
-
   // Drop all tile groups of the table. Used by recovery
   void DropTileGroups();
 
@@ -311,6 +302,9 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
+
+  oid_t database_oid;
+  std::string table_name;
 
   // number of tuples allocated per tilegroup
   size_t tuples_per_tilegroup_;

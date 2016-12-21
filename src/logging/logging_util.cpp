@@ -9,15 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "logging/logging_util.h"
 
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstring>
 
 #include "catalog/catalog.h"
-#include "type/types.h"
-#include "logging/logging_util.h"
 #include "storage/database.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace logging {
@@ -261,7 +261,7 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
   return true;
 }
 
-storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
+storage::Tuple *LoggingUtil::ReadTupleRecordBody(const catalog::Schema *schema,
                                                  type::VarlenPool *pool,
                                                  FileHandle &file_handle) {
   // Check if the frame is broken

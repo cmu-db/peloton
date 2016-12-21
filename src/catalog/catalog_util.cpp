@@ -95,7 +95,7 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
-    catalog::Schema *schema, oid_t database_id, std::string database_name,
+    const catalog::Schema *schema, oid_t database_id, std::string database_name,
     type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(database_id);
@@ -112,8 +112,8 @@ std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
-    catalog::Schema *schema, oid_t database_id, int64_t commit, int64_t abort,
-    int64_t time_stamp) {
+    const catalog::Schema *schema, oid_t database_id, int64_t commit,
+    int64_t abort, int64_t time_stamp) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(database_id);
   auto val2 = type::ValueFactory::GetIntegerValue(commit);
@@ -134,8 +134,9 @@ std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetTableMetricsCatalogTuple(
-    catalog::Schema *schema, oid_t database_id, oid_t table_id, int64_t reads,
-    int64_t updates, int64_t deletes, int64_t inserts, int64_t time_stamp) {
+    const catalog::Schema *schema, oid_t database_id, oid_t table_id,
+    int64_t reads, int64_t updates, int64_t deletes, int64_t inserts,
+    int64_t time_stamp) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(database_id);
   auto val2 = type::ValueFactory::GetIntegerValue(table_id);
@@ -162,8 +163,9 @@ std::unique_ptr<storage::Tuple> GetTableMetricsCatalogTuple(
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
-    catalog::Schema *schema, oid_t database_id, oid_t table_id, oid_t index_id,
-    int64_t reads, int64_t deletes, int64_t inserts, int64_t time_stamp) {
+    const catalog::Schema *schema, oid_t database_id, oid_t table_id,
+    oid_t index_id, int64_t reads, int64_t deletes, int64_t inserts,
+    int64_t time_stamp) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(database_id);
   auto val2 = type::ValueFactory::GetIntegerValue(table_id);
@@ -190,7 +192,7 @@ std::unique_ptr<storage::Tuple> GetIndexMetricsCatalogTuple(
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
-    catalog::Schema *schema, std::string query_name, oid_t database_id,
+    const catalog::Schema *schema, std::string query_name, oid_t database_id,
     int64_t num_params, stats::QueryMetric::QueryParamBuf type_buf,
     stats::QueryMetric::QueryParamBuf format_buf,
     stats::QueryMetric::QueryParamBuf val_buf, int64_t reads, int64_t updates,
@@ -252,7 +254,7 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
  * Returns: The generated tuple
  */
 std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
-    catalog::Schema *schema, oid_t table_id, std::string table_name,
+    const catalog::Schema *schema, oid_t table_id, std::string table_name,
     oid_t database_id, std::string database_name, type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(table_id);

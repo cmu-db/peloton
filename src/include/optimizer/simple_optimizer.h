@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "type/types.h"
-#include "type/value.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/statements.h"
+#include "type/types.h"
+#include "type/value.h"
 
 #include <memory>
 #include <vector>
@@ -69,7 +69,7 @@ class SimpleOptimizer : public AbstractOptimizer {
   //===--------------------------------------------------------------------===//
 
   // get the column IDs evaluated in a predicate
-  static void GetPredicateColumns(catalog::Schema *schema,
+  static void GetPredicateColumns(const catalog::Schema *schema,
                                   expression::AbstractExpression *expression,
                                   std::vector<oid_t> &column_ids,
                                   std::vector<ExpressionType> &expr_types,

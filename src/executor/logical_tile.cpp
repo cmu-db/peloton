@@ -15,12 +15,12 @@
 
 #include "catalog/schema.h"
 #include "common/macros.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -483,18 +483,11 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
 
 const std::string LogicalTile::GetInfo() const {
   std::ostringstream os;
-  os << "\t-----------------------------------------------------------\n";
-
-  os << "\tLOGICAL TILE\n";
-
-  os << "\t-----------------------------------------------------------\n";
-  os << "\t VALUES : \n";
+  os << "LOGICAL TILE [TotalTuples=" << total_tuples_ << "]" << std::endl;
 
   // for each row in the logical tile
   for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
     if (visible_rows_[tuple_itr] == false) continue;
-
-    os << "\t";
 
     for (oid_t column_itr = 0; column_itr < schema_.size(); column_itr++) {
       const LogicalTile::ColumnInfo &cp = schema_[column_itr];
@@ -502,21 +495,17 @@ const std::string LogicalTile::GetInfo() const {
       oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
       // get the value from the base physical tile
       if (base_tuple_id == NULL_OID) {
-        type::Value value =
-            type::ValueFactory::GetNullValueByType(
-                cp.base_tile->GetSchema()->GetType(cp.origin_column_id));
+        type::Value value = type::ValueFactory::GetNullValueByType(
+            cp.base_tile->GetSchema()->GetType(cp.origin_column_id));
         os << value.GetInfo() << " ";
       } else {
-        type::Value value = (
-            cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
+        type::Value value =
+            (cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id));
         os << value.GetInfo() << " ";
       }
     }
-
-    os << "\n";
+    os << std::endl;
   }
-
-  os << "\t-----------------------------------------------------------\n";
 
   return os.str();
 }

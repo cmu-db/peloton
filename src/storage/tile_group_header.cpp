@@ -73,43 +73,87 @@ TileGroupHeader::~TileGroupHeader() {
 const std::string TileGroupHeader::GetInfo() const {
   std::ostringstream os;
 
-  oid_t active_tuple_slots = GetCurrentNextTupleSlot();
+  os << "TILE GROUP HEADER (";
+  os << "Address:" << this << ", ";
+  os << "NumActiveTuples:";
+  os << GetActiveTupleCount();
+  os << ")";
+  os << std::endl;
 
   std::string spacer = StringUtil::Repeat(" ", TUPLE_ID_WIDTH + 2);
+
+  oid_t active_tuple_slots = GetCurrentNextTupleSlot();
   for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
     txn_id_t txn_id = GetTransactionId(header_itr);
     cid_t beg_commit_id = GetBeginCommitId(header_itr);
     cid_t end_commit_id = GetEndCommitId(header_itr);
 
     if (header_itr > 0) os << std::endl;
-    os << std::setfill('0') << std::setw(TUPLE_ID_WIDTH) << header_itr << ": ";
+    os << std::right << std::setfill('0') << std::setw(TUPLE_ID_WIDTH)
+       << header_itr << ": ";
 
+    // TRANSACTION ID
     os << "TxnId:";
     if (txn_id == MAX_TXN_ID)
-      os << std::setw(TXN_ID_WIDTH) << "MAX_TXN_ID";
+      os << std::left << std::setfill(' ') << std::setw(TXN_ID_WIDTH)
+         << "MAX_TXN_ID";
     else
-      os << std::setw(TXN_ID_WIDTH) << txn_id;
+      os << std::right << std::setfill('0') << std::setw(TXN_ID_WIDTH)
+         << txn_id;
     os << " ";
 
+    // BEGIN COMMIT ID
     os << "BeginCommitId:";
     if (beg_commit_id == MAX_CID)
-      os << std::setw(TXN_ID_WIDTH) << "MAX_CID";
+      os << std::left << std::setfill(' ') << std::setw(TXN_ID_WIDTH)
+         << "MAX_CID";
     else
-      os << std::setw(TXN_ID_WIDTH) << beg_commit_id;
+      os << std::right << std::setfill('0') << std::setw(TXN_ID_WIDTH)
+         << beg_commit_id;
     os << " ";
 
-    os << "EndCId: ";
+    // END COMMIT ID
+    os << "EndCId:";
     if (end_commit_id == MAX_CID)
-      os << std::setw(TXN_ID_WIDTH) << "MAX_CID";
+      os << std::left << std::setfill(' ') << std::setw(TXN_ID_WIDTH)
+         << "MAX_CID";
     else
-      os << std::setw(TXN_ID_WIDTH) << end_commit_id;
+      os << std::right << std::setfill('0') << std::setw(TXN_ID_WIDTH)
+         << end_commit_id;
     os << std::endl;
-
-    peloton::ItemPointer location = GetNextItemPointer(header_itr);
-    peloton::ItemPointer location2 = GetPrevItemPointer(header_itr);
     os << spacer;
-    os << "Next:[" << location.block << ", " << location.offset << "] ";
-    os << "Prev:[" << location2.block << ", " << location2.offset << "]";
+
+    // NEXT RANGE
+    peloton::ItemPointer nextPointer = GetNextItemPointer(header_itr);
+    os << "Next:[";
+    if (nextPointer.block == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << nextPointer.block;
+    }
+    os << ", ";
+    if (nextPointer.offset == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << nextPointer.offset;
+    }
+    os << "] ";
+
+    // PREVIOUS RANGE
+    peloton::ItemPointer prevPointer = GetPrevItemPointer(header_itr);
+    os << "Prev:[";
+    if (prevPointer.block == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << prevPointer.block;
+    }
+    os << ", ";
+    if (prevPointer.offset == INVALID_OID) {
+      os << "INVALID_OID";
+    } else {
+      os << prevPointer.offset;
+    }
+    os << "]";
   }
 
   return os.str();
@@ -181,7 +225,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
 // this function is called only when building tile groups for aggregation
 // operations.
-oid_t TileGroupHeader::GetActiveTupleCount() {
+oid_t TileGroupHeader::GetActiveTupleCount() const {
   oid_t active_tuple_slots = 0;
 
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
