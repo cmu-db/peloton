@@ -22,6 +22,7 @@
 #include "parser/parser.h"
 #include "planner/seq_scan_plan.h"
 #include "statistics/stats_tests_util.h"
+#include "tcop/tcop.h"
 
 #include "gtest/gtest.h"
 
@@ -40,6 +41,7 @@ TEST_F(CopyTests, Copying) {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   optimizer::SimpleOptimizer optimizer;
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table without primary key
   StatsTestsUtil::CreateTable(false);
@@ -78,9 +80,8 @@ TEST_F(CopyTests, Copying) {
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<ResultType> result;
-    bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-        statement->GetPlanTree().get(), nullptr, params, result,
-        result_format);
+    bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+        statement->GetPlanTree().get(), params, result, result_format);
     EXPECT_EQ(status.m_result, peloton::RESULT_SUCCESS);
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
   }

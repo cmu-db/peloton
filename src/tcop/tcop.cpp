@@ -49,6 +49,15 @@ TrafficCop::~TrafficCop() {
   }
 }
 
+/* Singleton accessor
+ * NOTE: Used by in unit tests ONLY
+ */
+TrafficCop& TrafficCop::GetInstance() {
+  static TrafficCop tcop;
+  tcop.Reset();
+  return tcop;
+}
+
 TrafficCop::TcopTxnState& TrafficCop::GetDefaultTxnState() {
   static TcopTxnState default_state;
   default_state = std::make_pair(nullptr, Result::RESULT_INVALID);
@@ -172,70 +181,79 @@ Result TrafficCop::ExecuteStatement(
     else if (query_str == "ABORT")
       return AbortQueryHelper();
     else {
-      concurrency::Transaction *txn;
-      bool single_statement_txn = false, init_failure = false;
-
-      auto &curr_state = GetCurrentTxnState();
-      if (tcop_txn_state_.empty()) {
-        // no active txn, single-statement txn
-        auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-        // new txn, reset result status
-        curr_state.second = Result::RESULT_SUCCESS;
-        txn = txn_manager.BeginTransaction();
-        single_statement_txn = true;
-      } else {
-        // get ptr to current active txn
-        txn = curr_state.first;
-      }
-
-      // skip if already aborted
-      if (curr_state.second != Result::RESULT_ABORTED) {
-        PL_ASSERT(txn);
-        bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-            statement->GetPlanTree().get(), txn, params,
-            result, result_format);
-
-        if (status.m_result == Result::RESULT_FAILURE) {
-          // only possible if init failed
-          init_failure = true;
-        }
-
-        auto txn_result = txn->GetResult();
-        if (single_statement_txn == true || init_failure == true ||
-            txn_result == Result::RESULT_FAILURE) {
-          auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-          LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
-                    single_statement_txn, init_failure, txn_result);
-          switch (txn_result) {
-            case Result::RESULT_SUCCESS:
-              // Commit
-              LOG_TRACE("Commit Transaction");
-              status.m_result = txn_manager.CommitTransaction(txn);
-              break;
-
-            case Result::RESULT_FAILURE:
-            default:
-              // Abort
-              LOG_TRACE("Abort Transaction");
-              status.m_result = txn_manager.AbortTransaction(txn);
-              curr_state.second = Result::RESULT_ABORTED;
-          }
-        }
-
-        LOG_TRACE("Statement executed. Result: %d", status.m_result);
-        rows_changed = status.m_processed;
-        return status.m_result;
-      } else {
-        // otherwise, we have already aborted
-        return Result::RESULT_ABORTED;
-      }
+      auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
+                              result, result_format);
+      LOG_TRACE("Statement executed. Result: %d", status.m_result);
+      rows_changed = status.m_processed;
+      return status.m_result;
     }
   }
   catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
+}
+
+bridge::peloton_status
+  TrafficCop::ExecuteStatementPlan(const planner::AbstractPlan *plan,
+                               const std::vector<type::Value> &params,
+                               std::vector<ResultType> &result,
+                               const std::vector<int> &result_format) {
+  concurrency::Transaction *txn;
+  bool single_statement_txn = false, init_failure = false;
+  bridge::peloton_status p_status;
+
+  auto &curr_state = GetCurrentTxnState();
+  if (tcop_txn_state_.empty()) {
+    // no active txn, single-statement txn
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    // new txn, reset result status
+    curr_state.second = Result::RESULT_SUCCESS;
+    txn = txn_manager.BeginTransaction();
+    single_statement_txn = true;
+  } else {
+    // get ptr to current active txn
+    txn = curr_state.first;
+  }
+
+  // skip if already aborted
+  if (curr_state.second != Result::RESULT_ABORTED) {
+    PL_ASSERT(txn);
+    p_status = bridge::PlanExecutor::ExecutePlan(plan, txn, params, result,
+                                                 result_format);
+
+    if (p_status.m_result == Result::RESULT_FAILURE) {
+      // only possible if init failed
+      init_failure = true;
+    }
+
+    auto txn_result = txn->GetResult();
+    if (single_statement_txn == true || init_failure == true ||
+        txn_result == Result::RESULT_FAILURE) {
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+      LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
+                single_statement_txn, init_failure, txn_result);
+      switch (txn_result) {
+        case Result::RESULT_SUCCESS:
+          // Commit
+          LOG_TRACE("Commit Transaction");
+          p_status.m_result = txn_manager.CommitTransaction(txn);
+          break;
+
+        case Result::RESULT_FAILURE:
+        default:
+          // Abort
+          LOG_TRACE("Abort Transaction");
+          p_status.m_result = txn_manager.AbortTransaction(txn);
+          curr_state.second = Result::RESULT_ABORTED;
+      }
+    }
+  } else {
+    // otherwise, we have already aborted
+    p_status.m_result = Result::RESULT_ABORTED;
+  }
+  return p_status;
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(

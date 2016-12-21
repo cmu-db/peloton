@@ -20,12 +20,12 @@
 
 #include "common/portal.h"
 #include "common/statement.h"
-#include "type/type.h"
-#include "type/types.h"
+#include "concurrency/transaction.h"
+#include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
-
-#include "concurrency/transaction.h"
+#include "type/type.h"
+#include "type/types.h"
 
 namespace peloton {
 
@@ -40,6 +40,9 @@ class TrafficCop {
  public:
   TrafficCop();
   ~TrafficCop();
+
+  // static singleton method used by tests
+  static TrafficCop& GetInstance();
 
   // reset this object
   void Reset();
@@ -57,6 +60,11 @@ class TrafficCop {
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultType> &result,
       int &rows_change, std::string &error_message);
+
+  // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a statement
+  bridge::peloton_status ExecuteStatementPlan(
+      const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+      std::vector<ResultType> &result, const std::vector<int> &result_format);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,

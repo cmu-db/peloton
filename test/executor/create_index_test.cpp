@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
+#include <include/tcop/tcop.h>
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
@@ -28,6 +29,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
+#include "tcop/tcop.h"
 
 #include "gtest/gtest.h"
 
@@ -46,6 +48,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -80,9 +83,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-      statement->GetPlanTree().get(), nullptr, params, result,
-      result_format);
+  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
+      statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Table Created");
   txn_manager.CommitTransaction(txn);
@@ -117,9 +119,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Executing plan...");
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             nullptr, params, result,
-                                             result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
@@ -144,9 +145,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Executing plan...");
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             nullptr, params, result,
-                                             result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                             params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);
