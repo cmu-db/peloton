@@ -101,6 +101,55 @@ class ExpressionUtil {
     }
   }
 
+  /*
+   * Generate a predicate that removes all the terms with indexed columns.
+   *
+   * NOTE: This should only be called after we check that the predicate is index
+   * searchable. That means there are only "and" conjunctions.
+   */
+  static AbstractExpression *RemoveTermsWithIndexedColumns(
+      expression::AbstractExpression *expression, index::Index *index) {
+    size_t children_size = expression->GetChildrenSize();
+    // We shouldn't have a expression that has more than two children
+    PL_ASSERT(children_size <= 2);
+
+    // Return an empty expresssion if this is an indexed TupleValueExpression.
+    if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+      auto tuple_expr = (expression::TupleValueExpression *)expression;
+      std::string col_name(tuple_expr->GetColumnName());
+
+      for (auto &indexed_column : index->GetKeySchema()->GetColumns()) {
+        if (indexed_column.GetName() == col_name) return nullptr;
+      }
+    }
+
+    bool fully_removable = true;
+    bool partial_removable = false;
+
+    std::vector<AbstractExpression *> new_children;
+    for (size_t i = 0; i < children_size; ++i) {
+      auto child_expr = expression->GetModifiableChild(i);
+      auto new_child = RemoveTermsWithIndexedColumns(child_expr, index);
+      new_children.push_back(new_child);
+
+      if (new_child != nullptr)
+        fully_removable = false;
+      else
+        partial_removable = true;
+    }
+
+    if (fully_removable) return nullptr;
+
+    // Only 'and' expression can do partial removal.
+    if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND &&
+        partial_removable) {
+      for (auto child : new_children)
+        if (child != nullptr) return child;
+    }
+
+    return expression;
+  }
+
   static AbstractExpression *TupleValueFactory(type::Type::TypeId value_type,
                                                const int tuple_idx,
                                                const int value_idx) {
@@ -297,12 +346,14 @@ class ExpressionUtil {
 
   /**
    * This function walks an expression tree and fills in information about
-   * columns and functions. Also generates a list of column ids we need to fetch
+   * columns and functions. Also generates a list of column ids we need to
+   * fetch
    * from the base tile groups. Simultaneously generates a mapping of the
    * original column
    * id to the id in the logical tiles returned by the base tile groups
    *
-   * This function is useful in determining information used by projection plans
+   * This function is useful in determining information used by projection
+   * plans
    */
   static void TransformExpression(std::vector<oid_t> &column_ids,
                                   AbstractExpression *expr,
@@ -320,7 +371,8 @@ class ExpressionUtil {
    * this is a private function for transforming expressions as described
    * above
    *
-   * find columns determines if we are building a column_mapping and column_ids
+   * find columns determines if we are building a column_mapping and
+   * column_ids
    * or we are just transforming
    * the expressions
    */
