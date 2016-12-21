@@ -63,9 +63,9 @@ class ValueFactory {
   }
 
   static inline Value GetVarcharValue(
-      const char *value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+      const char *value, bool manage_data, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
     return Value(Type::VARCHAR, value,
-                 value == nullptr ? 0 : strlen(value) + 1);
+                 value == nullptr ? 0 : strlen(value) + 1 , manage_data);
   }
 
   static inline Value GetVarcharValue(
@@ -79,9 +79,9 @@ class ValueFactory {
   }
 
   static inline Value GetVarbinaryValue(
-      const unsigned char *rawBuf, int32_t rawLength,
+      const unsigned char *rawBuf, int32_t rawLength, bool manage_data,
       UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return Value(Type::VARBINARY, (const char *)rawBuf, rawLength);
+    return Value(Type::VARBINARY, (const char *)rawBuf, rawLength, manage_data);
   }
 
   static inline Value GetNullValueByType(Type::TypeId type_id) {
@@ -109,10 +109,10 @@ class ValueFactory {
         ret_value = GetTimestampValue(PELOTON_TIMESTAMP_NULL);
         break;
       case Type::VARCHAR:
-        ret_value = GetVarcharValue(nullptr, 0);
+        ret_value = GetVarcharValue(nullptr, false, nullptr);
         break;
       case Type::VARBINARY:
-        ret_value = GetVarbinaryValue(nullptr, 0);
+        ret_value = GetVarbinaryValue(nullptr, 0, false, nullptr);
         break;
       default:
         throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");

@@ -225,8 +225,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto values = new std::vector<type::Value>();
   values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
   values->push_back(type::ValueFactory::GetVarcharValue(
-                        "CS", TestingHarness::GetInstance().GetTestingPool())
-                        .Copy());
+      (std::string)"CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
   LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
   LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
   // bind values to parameters in plan

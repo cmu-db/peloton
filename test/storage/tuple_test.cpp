@@ -99,7 +99,7 @@ TEST_F(TupleTests, VarcharTest) {
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(45), pool);
   tuple->SetValue(2, type::ValueFactory::GetTinyIntValue(1), pool);
 
-  type::Value val = type::ValueFactory::GetVarcharValue("hello hello world", pool);
+  type::Value val = type::ValueFactory::GetVarcharValue((std::string)"hello hello world", pool);
   tuple->SetValue(3, val, pool);
   type::Value value3 = (tuple->GetValue(3));
   type::Value cmp = (value3.CompareEquals(val));
@@ -107,7 +107,7 @@ TEST_F(TupleTests, VarcharTest) {
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
 
-  auto val2 = type::ValueFactory::GetVarcharValue("hi joy !", pool);
+  auto val2 = type::ValueFactory::GetVarcharValue((std::string)"hi joy !", pool);
   tuple->SetValue(3, val2, pool);
   value3 = (tuple->GetValue(3));
   cmp = (value3.CompareNotEquals(val));

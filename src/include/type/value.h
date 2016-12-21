@@ -74,7 +74,7 @@ class Value : public Printable {
  private:
 #endif
 
-  Value(const Type::TypeId type) : type_(Type::GetInstance(type)) {}
+  Value(const Type::TypeId type) : type_(Type::GetInstance(type)), manage_data_(false) {}
 
   // ARRAY values
   template <class T>
@@ -99,7 +99,7 @@ class Value : public Printable {
   Value(Type::TypeId type, uint64_t i);
 
   // VARCHAR and VARBINARY
-  Value(Type::TypeId type, const char *data, uint32_t len);
+  Value(Type::TypeId type, const char *data, uint32_t len, bool manage_data);
   Value(Type::TypeId type, const std::string &data);
 
  public:
@@ -113,6 +113,7 @@ class Value : public Printable {
     std::swap(first.type_, second.type_);
     std::swap(first.value_, second.value_);
     std::swap(first.size_, second.size_);
+    std::swap(first.manage_data_, second.manage_data_);
   }
 
   Value &operator=(Value other);
@@ -364,6 +365,7 @@ class Value : public Printable {
     double decimal;
     uint64_t timestamp;
     char * varlen;
+    const char * const_varlen;
     char * array;
   } value_;
 
@@ -372,7 +374,7 @@ class Value : public Printable {
    Type::TypeId elem_type_id;
   } size_;
 
-  bool allocated_;
+  bool manage_data_;
 };
 
 // ARRAY here to ease creation of templates

@@ -25,20 +25,26 @@ namespace type {
 Value::Value(const Value &other) {
   type_ = other.type_;
   size_ = other.size_;
+  manage_data_ = other.manage_data_;
   switch (type_->GetTypeId()) {
     case Type::VARCHAR:
     case Type::VARBINARY:
       if (size_.len == PELOTON_VALUE_NULL) {
         value_.varlen = nullptr;
       } else {
-        value_.varlen = new char[size_.len];
-        PL_MEMCPY(value_.varlen, other.value_.varlen,
-                  size_.len);
+        if (manage_data_){
+          value_.varlen = new char[size_.len];
+          PL_MEMCPY(value_.varlen, other.value_.varlen,
+                    size_.len);
+        }else{
+          value_ = other.value_;
+        }
       }
       break;
     default:
       value_ = other.value_;
   }
+
 }
 
 Value::Value(Value &&other) : Value() { swap(*this, other); }
@@ -217,7 +223,7 @@ Value::Value(Type::TypeId type, float f) : Value(type) {
 }
 
 // VARCHAR and VARBINARY
-Value::Value(Type::TypeId type, const char *data, uint32_t len) : Value(type) {
+Value::Value(Type::TypeId type, const char *data, uint32_t len, bool manage_data) : Value(type) {
   switch (type) {
     case Type::VARCHAR:
     case Type::VARBINARY:
@@ -225,11 +231,18 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len) : Value(type) {
         value_.varlen = nullptr;
         size_.len = PELOTON_VALUE_NULL;
       } else {
-        PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
-        value_.varlen = new char[len];
-        PL_ASSERT(value_.varlen != nullptr);
-        size_.len = len;
-        PL_MEMCPY(value_.varlen, data, len);
+        manage_data_ = manage_data;
+        if(manage_data_){
+          PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
+          value_.varlen = new char[len];
+          PL_ASSERT(value_.varlen != nullptr);
+          size_.len = len;
+          PL_MEMCPY(value_.varlen, data, len);
+        }else{
+          // FUCK YOU GCC I do what I want.
+          value_.const_varlen = data;
+          size_.len = len;
+        }
       }
       break;
     default:
@@ -242,6 +255,7 @@ Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
   switch (type) {
     case Type::VARCHAR:
     case Type::VARBINARY: {
+      manage_data_ = true;
       // TODO: How to represent a null string here?
       uint32_t len = data.length() + (type == Type::VARCHAR);
       value_.varlen = new char[len];
@@ -262,7 +276,9 @@ Value::~Value() {
   switch (type_->GetTypeId()) {
     case Type::VARBINARY:
     case Type::VARCHAR:
-      delete[] value_.varlen;
+      if (manage_data_){
+        delete[] value_.varlen;
+      }
       break;
     default:
       break;

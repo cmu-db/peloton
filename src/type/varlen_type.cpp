@@ -187,19 +187,19 @@ Value VarlenType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   const char *ptr = *reinterpret_cast<const char * const *>(storage);
   if (ptr == nullptr) {
-    return Value(type_id_, nullptr, 0);
+    return Value(type_id_, nullptr, 0, false);
   }
   uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-  return Value(type_id_, ptr + sizeof(uint32_t), len);
+  return Value(type_id_, ptr + sizeof(uint32_t), len, false);
 }
 Value VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
   uint32_t len = in.ReadInt();
   if (len == PELOTON_VALUE_NULL) {
-    return Value(type_id_, nullptr, 0);
+    return Value(type_id_, nullptr, 0, false);
   } else {
     const char *data = (char *) in.getRawPointer(len);
-    return Value(type_id_, data, len);
+    return Value(type_id_, data, len, false);
   }
 }
 
@@ -217,8 +217,7 @@ void VarlenType::DoShallowCopy(char *dest, char *src, bool inlined UNUSED_ATTRIB
 }
 
 Value VarlenType::Copy(const Value& val) const {
-  uint32_t len = GetLength(val);
-  return Value(val.GetTypeId(), val.GetData(), len);
+  return Value(val);
 }
 
 Value VarlenType::CastAs(const Value& val, const Type::TypeId type_id) const {

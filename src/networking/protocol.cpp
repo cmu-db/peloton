@@ -607,8 +607,8 @@ size_t PacketManager::ReadParamValue(
                 type::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
             param_values[param_idx] =
-                type::ValueFactory::GetVarbinaryValue(&param[0], param_len)
-                    .Copy();
+                type::ValueFactory::GetVarbinaryValue(&param[0], param_len, true);
+
           } break;
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
