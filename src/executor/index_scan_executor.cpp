@@ -13,25 +13,25 @@
 #include "executor/index_scan_executor.h"
 
 #include <memory>
+#include <numeric>
 #include <utility>
 #include <vector>
-#include <numeric>
 
-#include "type/types.h"
-#include "type/value.h"
+#include "catalog/manager.h"
+#include "common/container_tuple.h"
+#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
-#include "common/container_tuple.h"
+#include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "common/logger.h"
-#include "catalog/manager.h"
-#include "gc/gc_manager_factory.h"
+#include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace executor {
@@ -167,19 +167,23 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto current_txn = executor_context_->GetTransaction();
-
+  auto &manager = catalog::Manager::GetInstance();
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
+
+#ifdef LOG_DEBUG_ENABLED
+  int num_tuples_examined = 0;
+#endif
 
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-
     ItemPointer tuple_location = *tuple_location_ptr;
-
-    auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
-
     size_t chain_length = 0;
+
+#ifdef LOG_DEBUG_ENABLED
+    num_tuples_examined++;
+#endif
 
     // the following code traverses the version chain until a certain visible
     // version is found.
@@ -276,6 +280,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
+#ifdef LOG_DEBUG_ENABLED
+  LOG_DEBUG("Examined %d tuples from index %s", num_tuples_examined,
+            index_->GetName().c_str());
+#endif
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
@@ -331,23 +339,40 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   auto current_txn = executor_context_->GetTransaction();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  auto &manager = catalog::Manager::GetInstance();
+
+  // Quickie Hack
+  // Sometimes we can get the tuples we need in the same block if they
+  // were inserted at the same time. So we'll record the last block that
+  // we got for each tuple and check whether its the same to avoid having
+  // to go back to the catalog each time.
+  oid_t last_block = INVALID_OID;
+  std::shared_ptr<storage::TileGroup> tile_group;
+  storage::TileGroupHeader *tile_group_header;
+
+#ifdef LOG_DEBUG_ENABLED
+  int num_tuples_examined = 0;
+  int num_blocks_reused = 0;
+#endif
 
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-
     ItemPointer tuple_location = *tuple_location_ptr;
-
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tuple_location.block);
-    auto tile_group_header = tile_group.get()->GetHeader();
-
-    size_t chain_length = 0;
+    if (tuple_location.block != last_block) {
+      tile_group = manager.GetTileGroup(tuple_location.block);
+      tile_group_header = tile_group.get()->GetHeader();
+    }
+#ifdef LOG_DEBUG_ENABLED
+    else
+      num_blocks_reused++;
+    num_tuples_examined++;
+#endif
 
     // the following code traverses the version chain until a certain visible
     // version is found.
     // we should always find a visible version from a version chain.
     // different from primary key index lookup, we have to compare the secondary
-    // key to
-    // guarantee the correctness of the result.
+    // key to guarantee the correctness of the result.
+    size_t chain_length = 0;
     while (true) {
       ++chain_length;
 
@@ -465,6 +490,10 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
+#ifdef LOG_DEBUG_ENABLED
+  LOG_DEBUG("Examined %d tuples from index %s [num_blocks_reused=%d]",
+            num_tuples_examined, index_->GetName().c_str(), num_blocks_reused);
+#endif
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
@@ -489,10 +518,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   return true;
 }
 
-void IndexScanExecutor::UpdatePredicate(const std::vector<oid_t> &key_column_ids
-                                            UNUSED_ATTRIBUTE,
-                                        const std::vector<type::Value> &values
-                                            UNUSED_ATTRIBUTE) {
+void IndexScanExecutor::UpdatePredicate(
+    const std::vector<oid_t> &key_column_ids UNUSED_ATTRIBUTE,
+    const std::vector<type::Value> &values UNUSED_ATTRIBUTE) {
   // TODO: ADD ziqi's API
   // Update index predicate
 

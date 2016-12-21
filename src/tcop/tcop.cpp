@@ -86,7 +86,7 @@ Result TrafficCop::ExecuteStatement(
             statement->GetStatementName().c_str());
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetStatementName().c_str());
-  LOG_DEBUG("Execute Statement Plan:\n%s",
+  LOG_TRACE("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   try {
@@ -125,9 +125,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       }
       break;
     }
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
-      LOG_DEBUG("Statement Prepared\n%s",
+      LOG_TRACE("Statement Prepared\n%s",
                 statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
