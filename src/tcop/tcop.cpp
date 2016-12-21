@@ -173,12 +173,11 @@ Result TrafficCop::ExecuteStatement(
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   try {
-    auto query_str = boost::to_upper_copy<std::string>(statement->GetQueryString());
-    if (query_str == "BEGIN")
+    if (statement->GetQueryType() == "BEGIN")
       return BeginQueryHelper();
-    else if (query_str == "COMMIT")
+    else if (statement->GetQueryType() == "COMMIT")
       return CommitQueryHelper();
-    else if (query_str == "ABORT")
+    else if (statement->GetQueryType() == "ROLLBACK")
       return AbortQueryHelper();
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
