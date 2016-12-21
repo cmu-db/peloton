@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "executor/abstract_join_executor.h"
@@ -30,7 +29,6 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
 
  protected:
   bool DInit();
-
   bool DExecute();
 
  private:

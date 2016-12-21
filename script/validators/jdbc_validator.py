@@ -26,41 +26,47 @@ PELOTON_BIN = os.path.join(PELOTON_DIR, "build/bin/peloton")
 # Path to JDBC test script
 PELOTON_JDBC_SCRIPT_DIR = os.path.join(PELOTON_DIR, "script/testing/jdbc")
 
+PELOTON_PORT = 54321
+
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
+def runTest(script, enableStats=False):
+    # Launch Peloton
+    args = "-port " + str(PELOTON_PORT)
+    if enableStats:
+        args += " -stats_mode 1"
+    cmd = ['exec ' + PELOTON_BIN + ' ' + args]
+    peloton = subprocess.Popen(cmd, shell=True)
+    time.sleep(3) # HACK
+
+    # start jdbc test
+    os.chdir(PELOTON_JDBC_SCRIPT_DIR)
+    jdbc = subprocess.Popen(['/bin/bash ' + script + ' basic'], shell=True, stdout=subprocess.PIPE, 
+        stderr=subprocess.STDOUT)
+    jdbc_out = ''.join(jdbc.stdout.readlines())
+    print jdbc_out
+
+    # kill peloton
+    peloton.kill()
+
+    # any mention of the word 'exception'? Fail validator
+    if re.search('exception', jdbc_out, re.IGNORECASE):
+        sys.exit(EXIT_FAILURE)
+## DEF
+    
+
 if __name__ == '__main__':
-	# Launch Peloton
-	peloton = subprocess.Popen(['exec ' + PELOTON_BIN + ' -port 54321'], shell=True)
+    
+    if not os.path.exists(PELOTON_BIN):
+        raise Exception("Unable to find Peloton binary '%s'" % PELOTON_BIN)
+    if not os.path.exists(PELOTON_JDBC_SCRIPT_DIR):
+        raise Exception("Unable to find JDBC script dir '%s'" % PELOTON_JDBC_SCRIPT_DIR)
+    
+    ## Basic
+    runTest("test_jdbc.sh")
+    
+    ## Stats
+    runTest("test_jdbc.sh", enableStats=True)
 
-	# start jdbc test
-	os.chdir(PELOTON_JDBC_SCRIPT_DIR)
-	jdbc = subprocess.Popen(['/bin/bash test_jdbc.sh basic'], shell=True, stdout=subprocess.PIPE, 
-		stderr=subprocess.STDOUT)
-	jdbc_out = ''.join(jdbc.stdout.readlines())
-	print jdbc_out
-
-	# kill peloton
-	peloton.kill()
-
-	# any mention of the word 'exception'? Fail validator
-	if re.search('exception', jdbc_out, re.IGNORECASE):
-		sys.exit(EXIT_FAILURE)
-
-        # Launch Peloton with Stat Option
-        peloton = subprocess.Popen(['exec ' + PELOTON_BIN + ' -port 54321 -stats_mode 1'], shell=True)
-
-        # start jdbc test
-        os.chdir(PELOTON_JDBC_SCRIPT_DIR)
-        jdbc = subprocess.Popen(['/bin/bash test_jdbc.sh stats'], shell=True, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT)
-        jdbc_out = ''.join(jdbc.stdout.readlines())
-        print jdbc_out
-
-        # kill peloton
-        peloton.kill()
-
-	# any mention of the word 'exception'? Fail validator
-	if re.search('exception', jdbc_out, re.IGNORECASE):
-		sys.exit(EXIT_FAILURE)
-	sys.exit(EXIT_SUCCESS)
+## MAIN

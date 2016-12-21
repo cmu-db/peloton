@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -22,33 +21,32 @@ namespace expression {
 // OperatorExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class OperatorExpression : public AbstractExpression {
  public:
-  OperatorExpression(ExpressionType type, Type::TypeId type_id)
-    : AbstractExpression(type, type_id) {}
+  OperatorExpression(ExpressionType type, type::Type::TypeId type_id)
+      : AbstractExpression(type, type_id) {}
 
-  OperatorExpression(ExpressionType type,
-                     Type::TypeId type_id,
-                     AbstractExpression *left,
-                     AbstractExpression *right)
-    : AbstractExpression(type, type_id, left, right) {}
+  OperatorExpression(ExpressionType type, type::Type::TypeId type_id,
+                     AbstractExpression *left, AbstractExpression *right)
+      : AbstractExpression(type, type_id, left, right) {}
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (exp_type_ == EXPRESSION_TYPE_OPERATOR_NOT) {
-      Value vl = left_->Evaluate(tuple1, tuple2, context);
+      PL_ASSERT(children_.size() == 1);
+      type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (vl.IsTrue())
-        return (ValueFactory::GetBooleanValue(0));
+        return (type::ValueFactory::GetBooleanValue(false));
       else if (vl.IsFalse())
-        return (ValueFactory::GetBooleanValue(1));
+        return (type::ValueFactory::GetBooleanValue(true));
       else
-        return (ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL));
+        return (type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL));
     }
-    Value vl = left_->Evaluate(tuple1, tuple2, context);
-    Value vr = right_->Evaluate(tuple1, tuple2, context);
+    PL_ASSERT(children_.size() == 2);
+    type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    type::Value vr = children_[1]->Evaluate(tuple1, tuple2, context);
 
     switch (exp_type_) {
       case (EXPRESSION_TYPE_OPERATOR_PLUS):
@@ -66,11 +64,23 @@ class OperatorExpression : public AbstractExpression {
     }
   }
 
-  AbstractExpression *Copy() const override {
-    return new OperatorExpression(exp_type_, value_type_,
-                                  left_ ? left_->Copy() : nullptr,
-                                  right_ ? right_->Copy() :nullptr);
+  void DeduceExpressionType() {
+    // if we are a decimal or int we should take the highest type id of both
+    // children
+    // This relies on a particular order in types.h
+    auto type =
+        std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
+    PL_ASSERT(type <= type::Type::DECIMAL);
+    return_value_type_ = type;
   }
+
+  AbstractExpression *Copy() const override {
+    return new OperatorExpression(*this);
+  }
+
+ protected:
+  OperatorExpression(const OperatorExpression &other)
+      : AbstractExpression(other) {}
 };
 
 class OperatorUnaryMinusExpression : public AbstractExpression {
@@ -79,17 +89,21 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS,
                            left->GetValueType(), left, nullptr) {}
 
-  Value Evaluate(const AbstractTuple *tuple1,
-                                  const AbstractTuple *tuple2,
+  type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    Value zero(ValueFactory::GetIntegerValue(0));
+    PL_ASSERT(children_.size() == 1);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    type::Value zero(type::ValueFactory::GetIntegerValue(0));
     return zero.Subtract(vl);
   }
 
   AbstractExpression *Copy() const override {
-    return new OperatorUnaryMinusExpression(left_->Copy());
+    return new OperatorUnaryMinusExpression(*this);
   }
+
+ protected:
+  OperatorUnaryMinusExpression(const OperatorUnaryMinusExpression &other)
+      : AbstractExpression(other) {}
 };
 
 }  // End expression namespace

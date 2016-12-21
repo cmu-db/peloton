@@ -10,12 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "executor/abstract_executor.h"
 #include "storage/data_table.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 
 #include <vector>
 
@@ -65,7 +64,7 @@ class AggregateExecutor : public AbstractExecutor {
   bool done = false;
 
   /** @brief Output table. */
-  storage::DataTable *output_table = nullptr;
+  storage::AbstractTable *output_table = nullptr;
 };
 
 }  // namespace executor

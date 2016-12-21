@@ -10,11 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_scan_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/abstract_executor.h"
 
 namespace peloton {
@@ -34,6 +33,13 @@ class AbstractScanExecutor : public AbstractExecutor {
 
   explicit AbstractScanExecutor(const planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
+
+  virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
+                                   UNUSED_ATTRIBUTE,
+                               const std::vector<type::Value> &values
+                                   UNUSED_ATTRIBUTE) {}
+
+  virtual void ResetState() {}
 
  protected:
   bool DInit();

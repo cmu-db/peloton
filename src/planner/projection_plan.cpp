@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
  
 #include "planner/projection_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "planner/project_info.h"
 #include "catalog/schema.h"
 
@@ -20,7 +20,7 @@ namespace peloton{
 namespace planner{
 
 ProjectionPlan::ProjectionPlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                 std::shared_ptr<const catalog::Schema> &schema)
+                 const std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 }
 }

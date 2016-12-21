@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -19,15 +18,16 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+#include "storage/temp_table.h"
+#include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
-#include "storage/tile.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 
 #include "executor/executor_tests_util.h"
 
@@ -39,6 +39,65 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class LogicalTileTests : public PelotonTest {};
+
+TEST_F(LogicalTileTests, TempTableTest) {
+  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+
+  catalog::Schema *schema = new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(2)});
+
+  // Create our TempTable
+  storage::TempTable table(INVALID_OID, schema, true);
+  EXPECT_EQ(0, table.GetTupleCount());
+
+  // Then shove some tuples in it
+  for (int i = 0; i < tuple_count; i++) {
+    storage::Tuple *tuple = new storage::Tuple(table.GetSchema(), true);
+    auto val1 = type::ValueFactory::GetIntegerValue(
+        ExecutorTestsUtil::PopulatedValue(i, 0));
+    auto val2 = type::ValueFactory::GetIntegerValue(
+        ExecutorTestsUtil::PopulatedValue(i, 1));
+    auto val3 = type::ValueFactory::GetDoubleValue(
+        ExecutorTestsUtil::PopulatedValue(i, 2));
+    tuple->SetValue(0, val1, pool);
+    tuple->SetValue(1, val2, pool);
+    tuple->SetValue(2, val3, pool);
+    table.InsertTuple(tuple);
+
+    delete tuple;
+  }
+  LOG_INFO("%s", table.GetInfo().c_str());
+  LOG_INFO("%s", GETINFO_SINGLE_LINE.c_str());
+
+  // Check to see whether we can wrap a LogicalTile around it
+  auto tile_group_count = table.GetTileGroupCount();
+  std::vector<executor::LogicalTile *> logicalTiles;
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
+    auto tile_group = table.GetTileGroup(tile_group_itr);
+    EXPECT_NE(nullptr, tile_group);
+    auto logical_tile = executor::LogicalTileFactory::WrapTileGroup(tile_group);
+    EXPECT_NE(nullptr, logical_tile);
+    logicalTiles.push_back(logical_tile);
+
+    // Make sure that we can iterate over the LogicalTile and get
+    // at our TempTable tuples
+    EXPECT_NE(0, logical_tile->GetTupleCount());
+
+    LOG_INFO("GetActiveTupleCount() = %d",
+             (int)tile_group->GetActiveTupleCount());
+    LOG_INFO("%s", tile_group->GetInfo().c_str());
+    LOG_INFO("*****************************************");
+    LOG_INFO("%s", logical_tile->GetInfo().c_str());
+  }
+  EXPECT_FALSE(logicalTiles.empty());
+
+  for (executor::LogicalTile *lt : logicalTiles) {
+    delete lt;
+  }
+}
 
 TEST_F(LogicalTileTests, TileMaterializationTest) {
   const int tuple_count = 4;
@@ -56,15 +115,15 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   storage::Tuple tuple2(schema.get(), allocate);
   auto pool = tile_group->GetTilePool(1);
 
-  tuple1.SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
-  tuple1.SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
-  tuple1.SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
-  tuple1.SetValue(3, common::ValueFactory::GetVarcharValue("tuple 1"), pool);
+  tuple1.SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(1, type::ValueFactory::GetIntegerValue(1), pool);
+  tuple1.SetValue(2, type::ValueFactory::GetTinyIntValue(1), pool);
+  tuple1.SetValue(3, type::ValueFactory::GetVarcharValue("tuple 1"), pool);
 
-  tuple2.SetValue(0, common::ValueFactory::GetIntegerValue(2), pool);
-  tuple2.SetValue(1, common::ValueFactory::GetIntegerValue(2), pool);
-  tuple2.SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
-  tuple2.SetValue(3, common::ValueFactory::GetVarcharValue("tuple 2"), pool);
+  tuple2.SetValue(0, type::ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(1, type::ValueFactory::GetIntegerValue(2), pool);
+  tuple2.SetValue(2, type::ValueFactory::GetTinyIntValue(2), pool);
+  tuple2.SetValue(3, type::ValueFactory::GetVarcharValue("tuple 2"), pool);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -75,12 +134,15 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   auto tuple_id3 = tile_group->InsertTuple(&tuple1);
 
   ItemPointer *index_entry_ptr = nullptr;
-  txn_manager.PerformInsert(txn,
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id1), index_entry_ptr);
-  txn_manager.PerformInsert(txn,
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id2), index_entry_ptr);
-  txn_manager.PerformInsert(txn,
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id3), index_entry_ptr);
+  txn_manager.PerformInsert(
+      txn, ItemPointer(tile_group->GetTileGroupId(), tuple_id1),
+      index_entry_ptr);
+  txn_manager.PerformInsert(
+      txn, ItemPointer(tile_group->GetTileGroupId(), tuple_id2),
+      index_entry_ptr);
+  txn_manager.PerformInsert(
+      txn, ItemPointer(tile_group->GetTileGroupId(), tuple_id3),
+      index_entry_ptr);
 
   txn_manager.CommitTransaction(txn);
 
@@ -108,7 +170,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
     logical_tile->AddColumn(base_tile_ref, column_itr, column_itr);
   }
 
-  LOG_INFO("%s", logical_tile->GetInfo().c_str());
+  LOG_TRACE("%s", logical_tile->GetInfo().c_str());
 
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (2 BASE TILE)
@@ -140,7 +202,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
                             column_count1 + column_itr);
   }
 
-  LOG_INFO("%s", logical_tile->GetInfo().c_str());
+  LOG_TRACE("%s", logical_tile->GetInfo().c_str());
 }
 
 }  // End test namespace

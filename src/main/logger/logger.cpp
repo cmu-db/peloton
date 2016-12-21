@@ -10,21 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <thread>
 
-#include "common/logger.h"
 #include "benchmark/logger/logger_configuration.h"
 #include "benchmark/logger/logger_workload.h"
-#include "benchmark/ycsb/ycsb_configuration.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+
+#include "common/logger.h"
+#include "logging/logging_util.h"
 
 // Logging mode
-extern LoggingType peloton_logging_mode;
+extern peloton::LoggingType peloton_logging_mode;
 
-extern CheckpointType peloton_checkpoint_mode;
+extern peloton::CheckpointType peloton_checkpoint_mode;
 
 extern size_t peloton_data_file_size;
 
@@ -66,7 +67,7 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   // WAL
   //===--------------------------------------------------------------------===//
-  if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
+  if (logging::LoggingUtil::IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
     // Prepare a simple log file
     PrepareLogFile();
 
@@ -76,7 +77,7 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   // WBL
   //===--------------------------------------------------------------------===//
-  else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
+  else if (logging::LoggingUtil::IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
     LOG_ERROR("currently, we do not support write behind logging.");
     PL_ASSERT(false);
     // Test a simple log process

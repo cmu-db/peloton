@@ -9,20 +9,41 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include <fstream>
 
 #include "wire/libevent_server.h"
-#include "common/logger.h"
-#include "common/macros.h"
-#include "common/init.h"
-#include "common/thread_pool.h"
+
 #include <fcntl.h>
+#include <inttypes.h>
+#include <sys/socket.h>
+#include <fstream>
+
+#include "common/init.h"
+#include "common/macros.h"
+#include "common/thread_pool.h"
 
 namespace peloton {
 namespace wire {
 
-std::vector<SocketManager<PktBuf> *> Server::socket_manager_vector_ = {};
-unsigned int Server::socket_manager_id = 0;
+std::vector<std::unique_ptr<LibeventSocket>>
+    &LibeventServer::GetGlobalSocketList() {
+  static std::vector<std::unique_ptr<LibeventSocket>>
+      // 2 fd's per thread for pipe and 1 listening socket
+      global_socket_list(FLAGS_max_connections + QUERY_THREAD_COUNT * 2 + 1);
+  return global_socket_list;
+}
+
+LibeventSocket *LibeventServer::GetConn(const int &connfd) {
+  auto &global_socket_list = GetGlobalSocketList();
+  return global_socket_list[connfd].get();
+}
+
+void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
+                                   LibeventThread *thread,
+                                   ConnState init_state) {
+  auto &global_socket_list = GetGlobalSocketList();
+  global_socket_list[connfd].reset(
+      new LibeventSocket(connfd, ev_flags, thread, init_state));
+}
 
 /**
  * Stop signal handling
@@ -34,88 +55,23 @@ void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
   event_base_loopexit(base, NULL);
 }
 
-void SetTCPNoDelay(evutil_socket_t fd) {
-  int one = 1;
-  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
-}
-
-void SetNonBlocking(evutil_socket_t fd) {
-  auto flags = fcntl(fd, F_GETFL);
-  flags |= O_NONBLOCK;
-  if (fcntl(fd, F_SETFL, flags) < 0) {
-    LOG_ERROR("Failed to set non-blocking socket");
-  }
-}
-
-/**
- * Process refill the buffer and process all packets that can be processed
- */
-void ManageRead(SocketManager<PktBuf> **socket_manager) {
-#ifdef LOG_INFO_ENABLED
-  std::ostringstream ss;
-  ss << std::this_thread::get_id();
-  std::string id_str = ss.str();
-#endif
-  LOG_INFO("New thread %s started execution for socket manager %u",
-           id_str.c_str(), (*socket_manager)->id);
-  // Startup packet
-  if (!(*socket_manager)->socket_pkt_manager->ManageStartupPacket()) {
-	  LOG_INFO(
-	  "Thread %s Executing for socket manager %u failed to manage packet",
-	  id_str.c_str(), (*socket_manager)->id);
-      close((*socket_manager)->GetSocketFD());
-    return;
-  }
-
-  // Regular packet
-  if (!(*socket_manager)->socket_pkt_manager->ManagePacket() ||
-      (*socket_manager)->disconnected == true) {
-    LOG_INFO(
-        "Thread %s Executing for socket manager %u failed to manage packet",
-        id_str.c_str(), (*socket_manager)->id);
-    close((*socket_manager)->GetSocketFD());
-    return;
-  }
-}
-
-
-/**
- * This function will be called by libevent when there is a connection
- * ready to be accepted.
- */
-void AcceptCallback(UNUSED_ATTRIBUTE struct evconnlistener *listener,
-                    evutil_socket_t client_fd,
-                    UNUSED_ATTRIBUTE struct sockaddr *address,
-                    UNUSED_ATTRIBUTE int socklen, UNUSED_ATTRIBUTE void *ctx) {
-
-  LOG_INFO("New connection on fd %d", int(client_fd));
-
-  // No delay for TCP
-  SetTCPNoDelay(client_fd);
-
-  // Set non blocking
-  SetNonBlocking(client_fd);
-
-  /* We've accepted a new client, allocate a socket manager to
-     maintain the state of this client. */
-  SocketManager<PktBuf> *socket_manager =
-      new SocketManager<PktBuf>(client_fd, ++Server::socket_manager_id);
-  socket_manager->socket_pkt_manager.reset(new PacketManager(socket_manager));
-
-  Server::AddSocketManager(socket_manager);
-
-  socket_manager->self = socket_manager;
-
-  // New thread for this socket manager
-  thread_pool.SubmitTask(ManageRead, &socket_manager->self);
-
-}
-
-Server::Server() {
-  struct event_base *base;
-  struct evconnlistener *listener;
+LibeventServer::LibeventServer() {
+  struct event_base *base = event_base_new();
   struct event *evstop;
-  socket_manager_id = 0;
+
+  // Create our event base
+  if (!base) {
+    throw ConnectionException("Couldn't open event base");
+  }
+
+  // Add hang up signal event
+  evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
+  evsignal_add(evstop, NULL);
+
+  // TODO: Make pool size a global
+  std::shared_ptr<LibeventThread> master_thread(
+      new LibeventMasterThread(QUERY_THREAD_COUNT, base));
+
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;
 
@@ -128,19 +84,8 @@ Server::Server() {
   //  event_enable_debug_logging(EVENT_DBG_ALL);
 
   // Ignore the broken pipe signal
-  // We don't want to exit on write
-  // when the client disconnects
+  // We don't want to exit on write when the client disconnects
   signal(SIGPIPE, SIG_IGN);
-
-  // Create our event base
-  base = event_base_new();
-  if (!base) {
-    LOG_INFO("Couldn't open event base");
-    exit(EXIT_FAILURE);
-  }
-  // Add hang up signal event
-  evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
-  evsignal_add(evstop, NULL);
 
   if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in sin;
@@ -148,73 +93,40 @@ Server::Server() {
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons(port_);
-    listener = evconnlistener_new_bind(
-        base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
-        -1, (struct sockaddr *)&sin, sizeof(sin));
-    if (!listener) {
-      LOG_INFO("Couldn't create listener");
-      exit(EXIT_FAILURE);
+
+    int listen_fd;
+
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (listen_fd < 0) {
+      throw ConnectionException("Failed to create listen socket");
     }
 
-    event_base_dispatch(base);
+    int reuse = 1;
+    setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
-    evconnlistener_free(listener);
+    if (bind(listen_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+      throw ConnectionException("Failed to bind socket to port: " + std::to_string(port_));
+    }
+
+    int conn_backlog = 12;
+    if (listen(listen_fd, conn_backlog) < 0) {
+      throw ConnectionException("Failed to listen to socket");
+    }
+
+    LibeventServer::CreateNewConn(listen_fd, EV_READ | EV_PERSIST,
+                                  master_thread.get(), CONN_LISTENING);
+
+    LOG_INFO("Listening on port %" PRIu64, port_);
+    event_base_dispatch(base);
     event_free(evstop);
     event_base_free(base);
   }
+
   // This socket family code is not implemented yet
-  else if (FLAGS_socket_family == "AF_UNIX") {
-    struct sockaddr_un serv_addr;
-    int len;
-
-    std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(port_);
-    PL_MEMSET(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sun_family = AF_UNIX;
-    strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
-            sizeof(serv_addr.sun_path) - 1);
-    unlink(serv_addr.sun_path);
-    len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
-
-    listener = evconnlistener_new_bind(
-        base, AcceptCallback, NULL, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
-        -1, (struct sockaddr *)&serv_addr, len);
-    if (!listener) {
-      LOG_INFO("Couldn't create listener");
-      exit(EXIT_FAILURE);
-    }
-
-    event_base_dispatch(base);
-
-    evconnlistener_free(listener);
-    event_free(evstop);
-    event_base_free(base);
-
-  } else {
-    LOG_ERROR("Socket family %s not supported", FLAGS_socket_family.c_str());
-    exit(EXIT_FAILURE);
+  else {
+    throw ConnectionException("Unsupported socket family");
   }
-}
-
-void Server::LogCallback(int severity, UNUSED_ATTRIBUTE const char *msg) {
-  UNUSED_ATTRIBUTE const char *s;
-  switch (severity) {
-    case _EVENT_LOG_DEBUG:
-      s = "debug";
-      break;
-    case _EVENT_LOG_MSG:
-      s = "msg";
-      break;
-    case _EVENT_LOG_WARN:
-      s = "warn";
-      break;
-    case _EVENT_LOG_ERR:
-      s = "error";
-      break;
-    default:
-      s = "?";
-      break; /* Should not get this far */
-  }
-  LOG_INFO("[%s] %s\n", s, msg);
 }
 }
 }

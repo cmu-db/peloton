@@ -15,7 +15,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "common/value_peeker.h"
+#include "type/value_peeker.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "storage/tuple.h"
@@ -34,5 +34,6 @@ using namespace peloton::common;
 #include "ints_key.h"
 #include "generic_key.h" 
 #include "tuple_key.h" 
+
 
 

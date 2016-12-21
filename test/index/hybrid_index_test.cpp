@@ -10,43 +10,43 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "common/harness.h"
+#include "gtest/gtest.h"
 
+#include <cassert>
+#include <chrono>
+#include <ctime>
+#include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
-#include <chrono>
-#include <iostream>
-#include <ctime>
-#include <cassert>
-#include <thread>
 
-#include "planner/hybrid_scan_plan.h"
-#include "executor/hybrid_scan_executor.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
+#include "common/timer.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "common/timer.h"
 #include "executor/abstract_executor.h"
-#include "executor/insert_executor.h"
 #include "executor/executor_context.h"
-#include "index/index_factory.h"
-#include "planner/insert_plan.h"
-#include "storage/tile.h"
-#include "storage/tile_group.h"
-#include "storage/data_table.h"
-#include "storage/table_factory.h"
-#include "expression/expression_util.h"
+#include "executor/hybrid_scan_executor.h"
+#include "executor/insert_executor.h"
 #include "expression/abstract_expression.h"
-#include "expression/constant_value_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
-#include "planner/index_scan_plan.h"
+#include "expression/constant_value_expression.h"
+#include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
 #include "index/index_factory.h"
+#include "index/index_factory.h"
+#include "planner/hybrid_scan_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/insert_plan.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace test {
@@ -71,17 +71,15 @@ static size_t query_count = 10;
 
 void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
                  bool build_indexes) {
-
   const bool is_inlined = true;
 
   // Create schema first
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    auto column = catalog::Column(common::Type::INTEGER,
-                                  common::Type::GetTypeSize(common::Type::INTEGER),
-                                  std::to_string(col_itr),
-                                  is_inlined);
+    auto column = catalog::Column(
+        type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+        std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
 
@@ -125,7 +123,6 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
 }
 
 void LoadTable(std::unique_ptr<storage::DataTable> &hyadapt_table) {
-
   auto table_schema = hyadapt_table->GetSchema();
 
   /////////////////////////////////////////////////////////
@@ -138,10 +135,9 @@ void LoadTable(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   auto txn = txn_manager.BeginTransaction();
 
   for (size_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
-
     storage::Tuple tuple(table_schema, allocate);
     for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-      auto value = common::ValueFactory::GetIntegerValue(tuple_itr);
+      auto value = type::ValueFactory::GetIntegerValue(tuple_itr);
       tuple.SetValue(col_itr, value, nullptr);
     }
 
@@ -162,10 +158,12 @@ expression::AbstractExpression *GetPredicate() {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+                                                    0);
 
   // Second, create constant value expression.
-  auto constant_value_left = common::ValueFactory::GetIntegerValue(tuple_start_offset);
+  auto constant_value_left =
+      type::ValueFactory::GetIntegerValue(tuple_start_offset);
 
   expression::AbstractExpression *constant_value_expr_left =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
@@ -177,9 +175,11 @@ expression::AbstractExpression *GetPredicate() {
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(common::Type::INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
+                                                    0);
 
-  auto constant_value_right = common::ValueFactory::GetIntegerValue(tuple_end_offset);
+  auto constant_value_right =
+      type::ValueFactory::GetIntegerValue(tuple_end_offset);
 
   expression::AbstractExpression *constant_value_expr_right =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_right);
@@ -196,16 +196,19 @@ expression::AbstractExpression *GetPredicate() {
   return predicate;
 }
 
-void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
-                              std::vector<ExpressionType>& expr_types,
-                              std::vector<common::Value>& values) {
+void CreateIndexScanPredicate(std::vector<oid_t> &key_column_ids,
+                              std::vector<ExpressionType> &expr_types,
+                              std::vector<type::Value> &values) {
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-  values.push_back(common::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+  values.push_back(
+      type::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
 
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  values.push_back(common::ValueFactory::GetIntegerValue(tuple_end_offset).Copy());
+  values.push_back(
+      type::ValueFactory::GetIntegerValue(tuple_end_offset).Copy());
 }
 
 void GenerateSequence(std::vector<oid_t> &hyadapt_column_ids,
@@ -239,7 +242,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
 
   timer.Stop();
   UNUSED_ATTRIBUTE double time_per_transaction = timer.GetDuration();
-  LOG_INFO("%f", time_per_transaction);
+  LOG_TRACE("%f", time_per_transaction);
 
   LOG_TRACE("Lower bound        : %.0lf", tuple_start_offset);
   LOG_TRACE("Upper bound        : %.0lf", tuple_end_offset);
@@ -248,7 +251,6 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -297,7 +299,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
@@ -343,7 +345,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
@@ -372,9 +374,21 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   txn_manager.CommitTransaction(txn);
 }
 
+void CopyTuple(const oid_t &tuple_slot_id,
+               storage::Tuple *tuple,
+               storage::TileGroup* tile_group,
+               const size_t column_count) {
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
+  PL_ASSERT(tuple->GetColumnCount() == column_count);
+  for (oid_t col_id = 0; col_id < column_count; ++col_id) {
+    type::Value val = tile_group->GetValue(tuple_slot_id, col_id);
+    tuple->SetValue(col_id, val, nullptr);
+  }
+}
+
 void BuildIndex(std::shared_ptr<index::Index> index,
                 storage::DataTable *table) {
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -383,12 +397,13 @@ void BuildIndex(std::shared_ptr<index::Index> index,
 
   while (start_tile_group_count < table_tile_group_count) {
     auto tile_group = table->GetTileGroup(start_tile_group_count++);
+    auto column_count = table->GetSchema()->GetColumnCount();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       std::unique_ptr<storage::Tuple> tuple_ptr(
           new storage::Tuple(table->GetSchema(), true));
-      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
+      CopyTuple(tuple_id, tuple_ptr.get(), tile_group.get(), column_count);
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
       ItemPointer *index_entry_ptr = nullptr;

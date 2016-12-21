@@ -11,20 +11,28 @@
 
 * Peloton is a self-driving in-memory relational DBMS for real-time analytics. 
 * It contains domain-specific AI for automatically adapting to evolving real-world workloads. 
-* It is designed from the ground up to leverage the characteristics of <a href="https://www.engadget.com/2015/07/28/intel-3d-memory-1000-times-faster/">fast non-volatile memory technologies</a>.
+* It is designed from the ground up to leverage the characteristics of non-volatile memory.
 * It can handle both fast ACID transactions and complex analytical queries on the same database. 
 
 ## What Problem Does Peloton Solve?
 
-The current trend is to manually tune the DBMS configuration for evolving real-world workloads. This approach requires the database administrator to constantly adapt the DBMS based on the current query workload. The adminstrator needs to understand the subtle interactions between the different knobs exposed by the system to do this kind of black-box tuning. Further, it is often the case that several critical parameters used within the DBMS are not exposed as knobs to the administrator.
+In the last two decades, both researchers and vendors have built advisory tools to assist database administrators in various aspects of system tuning and physical design. Most of this previous work, however, is incomplete because they still require humans to make the final decisions about any changes to the database and are reactionary measures that fix problems after they occur.
 
-Peloton is designed to automate some of the critical tasks performed by the database administrator. Using novel physical design algorithms and domain-specific AI, it can automatically and incrementally adapt the storage layout, access methods, and data placement policy employed inside the DBMS in tandem with workload shifts. 
+What is needed for a truly “self-driving” database management system (DBMS) is a new architecture that is designed for autonomous operation. This is different than earlier attempts because all aspects of the system are controlled by an integrated planning component that not only optimizes the system for the current workload, but also predicts future workload trends so that the system can prepare itself accordingly. With this, the DBMS can support all of the previous tuning techniques without requiring a human to determine the right way and proper time to deploy them. It also enables new optimizations that are important for modern high-performance DBMSs, but which are not possible today because the complexity of managing these systems has surpassed the abilities of human experts.
 
-For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
+Peloton is a relational database management system designed for fully autonomous optimization of hybrid workloads. See the [peloton wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") for more information.
 
 ## Installation
 
 Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki/Installation).
+
+## Supported Platforms
+
+Peloton is known to work on the following platforms. Please note that it will not compile on 32-bit systems.
+
+* Ubuntu Linux 14.04+ (64-bit)
+* Fedora Linux 24+ (64-bit)
+* <s>Mac OS X 10.9+ (64-bit)</s>
 
 ## Development / Contributing
 
@@ -40,9 +48,9 @@ _Technology preview_: currently unsupported, may be functionally incomplete or u
 
 ## Contributors
 
-See the [contributors page](https://github.com/cmu-db/peloton/graphs/contributors).
+See the [people page](https://github.com/cmu-db/peloton/graphs/contributors) for the full listing of contributors.
 
 ## License
 
-Copyright (c) 2015-16 [CMU Database Group](http://db.cs.cmu.edu/)  
+Copyright (c) 2014-16 [CMU Database Group](http://db.cs.cmu.edu/)  
 Licensed under the [Apache License](LICENSE).

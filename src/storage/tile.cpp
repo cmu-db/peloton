@@ -10,22 +10,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 #include <sstream>
 
 #include "catalog/schema.h"
 #include "common/exception.h"
-#include "common/varlen_pool.h"
-#include "common/serializer.h"
-#include "common/types.h"
 #include "common/macros.h"
-#include "storage/tuple_iterator.h"
-#include "storage/tuple.h"
+#include "type/serializer.h"
+#include "type/types.h"
+#include "type/varlen_pool.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "storage/tuple.h"
+#include "storage/tuple_iterator.h"
 
 namespace peloton {
 namespace storage {
@@ -63,8 +62,8 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   PL_MEMSET(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  //if (schema.IsInlined() == false) {
-    pool = new common::VarlenPool(backend_type);
+  // if (schema.IsInlined() == false) {
+  pool = new type::VarlenPool(backend_type);
   //}
 }
 
@@ -75,8 +74,8 @@ Tile::~Tile() {
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
-  //if (schema.IsInlined() == false) {
-    delete pool;
+  // if (schema.IsInlined() == false) {
+  delete pool;
   //}
   pool = NULL;
 
@@ -107,17 +106,18 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
  * Returns value present at slot
  */
 // column id is a 0-based column number
-common::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
+type::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_id < schema.GetColumnCount());
 
-  const common::Type::TypeId column_type = schema.GetType(column_id);
+  const type::Type::TypeId column_type = schema.GetType(column_id);
 
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
 
-  return common::Value::DeserializeFrom(field_location, column_type, is_inlined);
+  return type::Value::DeserializeFrom(field_location, column_type,
+                                        is_inlined);
 }
 
 /*
@@ -125,22 +125,25 @@ common::Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
  * By amortizing schema lookups
  */
 // column offset is the actual offset of the column within the tuple slot
-common::Value Tile::GetValueFast(const oid_t tuple_offset, const size_t column_offset,
-                         const common::Type::TypeId column_type, const bool is_inlined) {
+type::Value Tile::GetValueFast(const oid_t tuple_offset,
+                                 const size_t column_offset,
+                                 const type::Type::TypeId column_type,
+                                 const bool is_inlined) {
   PL_ASSERT(tuple_offset < GetAllocatedTupleCount());
   PL_ASSERT(column_offset < schema.GetLength());
 
   const char *tuple_location = GetTupleLocation(tuple_offset);
   const char *field_location = tuple_location + column_offset;
 
-  return common::Value::DeserializeFrom(field_location, column_type, is_inlined);
+  return type::Value::DeserializeFrom(field_location, column_type,
+                                        is_inlined);
 }
 
 /**
  * Sets value at tuple slot.
  */
 // column id is a 0-based column number
-void Tile::SetValue(const common::Value &value, const oid_t tuple_offset,
+void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
                     const oid_t column_id) {
   PL_ASSERT(tuple_offset < num_tuple_slots);
   PL_ASSERT(column_id < schema.GetColumnCount());
@@ -148,11 +151,50 @@ void Tile::SetValue(const common::Value &value, const oid_t tuple_offset,
   char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + schema.GetOffset(column_id);
   const bool is_inlined = schema.IsInlined(column_id);
-  //size_t column_length = schema.GetAppropriateLength(column_id);
+  // size_t column_length = schema.GetAppropriateLength(column_id);
 
-  //const bool is_in_bytes = false;
+  // const bool is_in_bytes = false;
   PL_ASSERT(pool != nullptr);
   value.SerializeTo(field_location, is_inlined, pool);
+}
+
+// Copy a column from this tile to a destination tile.
+// Note that we do shallow copy for varlen field
+void Tile::CopyColumnValueTo(Tile *dest_tile, oid_t dest_tuple_offset, oid_t dest_col_id, oid_t src_tuple_offset,
+                             oid_t src_col_id) {
+  PL_ASSERT(src_tuple_offset < this->num_tuple_slots);
+  PL_ASSERT(dest_tuple_offset < this->num_tuple_slots);
+
+  type::Type::TypeId src_type_id = this->schema.GetType(src_col_id);
+
+  PL_ASSERT(src_type_id == this->schema.GetType(dest_col_id));
+  switch (src_type_id) {
+    case type::Type::VARCHAR:
+    case type::Type::VARBINARY: {
+      // Shallow copy
+      char *src_tuple_location = this->GetTupleLocation(src_tuple_offset);
+      char *src_filed_location = src_tuple_location + this->schema.GetOffset(src_col_id);
+      char *dest_tuple_location = dest_tile->GetTupleLocation(dest_tuple_offset);
+      char *dest_field_location = dest_tuple_location + dest_tile->schema.GetOffset(dest_col_id);
+      bool is_inlined = this->schema.IsInlined();
+      PL_ASSERT(dest_tile->schema.IsInlined() == is_inlined);
+      type::Value::ShallowCopyTo(dest_field_location, src_filed_location, src_type_id, is_inlined, this->pool);
+      break;
+    }
+    case type::Type::BOOLEAN:
+    case type::Type::TINYINT:
+    case type::Type::SMALLINT:
+    case type::Type::INTEGER:
+    case type::Type::BIGINT:
+    case type::Type::DECIMAL:
+    case type::Type::TIMESTAMP: {
+      type::Value val = this->GetValue(src_tuple_offset, src_col_id);
+      dest_tile->SetValue(val, dest_tuple_offset, dest_col_id);
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 /*
@@ -160,7 +202,7 @@ void Tile::SetValue(const common::Value &value, const oid_t tuple_offset,
  * By amortizing schema lookups
  */
 // column offset is the actual offset of the column within the tuple slot
-void Tile::SetValueFast(const common::Value &value, const oid_t tuple_offset,
+void Tile::SetValueFast(const type::Value &value, const oid_t tuple_offset,
                         const size_t column_offset, const bool is_inlined,
                         UNUSED_ATTRIBUTE const size_t column_length) {
   PL_ASSERT(tuple_offset < num_tuple_slots);
@@ -169,7 +211,7 @@ void Tile::SetValueFast(const common::Value &value, const oid_t tuple_offset,
   char *tuple_location = GetTupleLocation(tuple_offset);
   char *field_location = tuple_location + column_offset;
 
-  //const bool is_in_bytes = false;
+  // const bool is_in_bytes = false;
   PL_ASSERT(pool != nullptr);
   value.SerializeTo(field_location, is_inlined, pool);
 }
@@ -200,8 +242,8 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       // Copy the column over to the new tile group
       for (oid_t tuple_itr = 0; tuple_itr < allocated_tuple_count;
            tuple_itr++) {
-        common::Value val = (
-            new_tile->GetValue(tuple_itr, uninlined_col_offset));
+        type::Value val =
+            (new_tile->GetValue(tuple_itr, uninlined_col_offset));
         new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
       }
     }
@@ -217,28 +259,23 @@ Tile *Tile::CopyTile(BackendType backend_type) {
 const std::string Tile::GetInfo() const {
   std::ostringstream os;
 
-  os << "\t-----------------------------------------------------------\n";
-
-  os << "\tTILE\n";
-  os << "\tCatalog ::"
-     << " DB: " << database_id << " Table: " << table_id
-     << " Tile Group:  " << tile_group_id << " Tile:  " << tile_id << "\n";
+  os << "TILE[#" << tile_id << "]" << std::endl;
+  os << "Database[" << database_id << "] // ";
+  os << "Table[" << table_id << "] // ";
+  os << "TileGroup[" << tile_group_id << "]" << std::endl;
 
   // Tuples
-  os << "\t-----------------------------------------------------------\n";
-  os << "\tDATA\n";
+  os << GETINFO_SINGLE_LINE << std::endl;
 
   TupleIterator tile_itr(this);
   Tuple tuple(&schema);
 
-  std::string last_tuple = "";
-
+  int tupleCtr = 0;
   while (tile_itr.Next(tuple)) {
-    os << "\t" << tuple;
+    if (tupleCtr > 0) os << std::endl;
+    os << std::setfill('0') << std::setw(TUPLE_ID_WIDTH) << tupleCtr++ << ": ";
+    os << tuple;
   }
-
-  os << "\t-----------------------------------------------------------\n";
-
   tuple.SetNull();
 
   return os.str();
@@ -313,7 +350,7 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Write an array of column types as bytes
   for (oid_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    common::Type::TypeId type = schema.GetType(column_itr);
+    type::Type::TypeId type = schema.GetType(column_itr);
     output.WriteByte(static_cast<int8_t>(type));
   }
 
@@ -377,7 +414,8 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
  * Used for initial data loading.
  * @param allow_export if false, export enabled is overriden for this load.
  */
-void Tile::DeserializeTuplesFrom(SerializeInput &input, common::VarlenPool *pool) {
+void Tile::DeserializeTuplesFrom(SerializeInput &input,
+                                 type::VarlenPool *pool) {
   /*
    * Directly receives a Tile buffer.
    * [00 01]   [02 03]   [04 .. 0x]
@@ -401,12 +439,12 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, common::VarlenPool *pool
 
   // Store the following information so that we can provide them to the user on
   // failure
-  common::Type::TypeId types[column_count];
+  type::Type::TypeId types[column_count];
   std::vector<std::string> names;
 
   // Skip the column types
   for (oid_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    types[column_itr] = (common::Type::TypeId)input.ReadEnumInSingleByte();
+    types[column_itr] = (type::Type::TypeId)input.ReadEnumInSingleByte();
   }
 
   // Skip the column names
@@ -426,8 +464,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, common::VarlenPool *pool
 
     for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       message << "column " << column_itr << ": " << names[column_itr]
-              << ", type = " << types[column_itr]
-              << std::endl;
+              << ", type = " << types[column_itr] << std::endl;
     }
 
     throw SerializationException(message.str());
@@ -443,7 +480,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, common::VarlenPool *pool
  * @param allow_export if false, export enabled is overriden for this load.
  */
 void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                              common::VarlenPool *pool) {
+                                              type::VarlenPool *pool) {
   oid_t tuple_count = input.ReadInt();
   PL_ASSERT(tuple_count > 0);
 

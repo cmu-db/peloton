@@ -13,8 +13,8 @@
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-
 #include "wire/marshal.h"
+#include "common/macros.h"
 
 #include <netinet/in.h>
 
@@ -22,39 +22,29 @@ namespace peloton {
 namespace wire {
 
 // checks for parsing overflows
-void CheckOverflow(Packet *pkt, size_t size) {
-  if (pkt->ptr + size - 1 >= pkt->len) {
-    // overflow case, throw error
-    LOG_WARN(
-        "Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
-        (int)pkt->ptr, (int)size, (int)pkt->len);
-  }
+inline void CheckOverflow(UNUSED_ATTRIBUTE InputPacket *rpkt,
+                          UNUSED_ATTRIBUTE size_t size) {
+  PL_ASSERT(rpkt->ptr + size - 1 < rpkt->len);
 }
 
-PktBuf::iterator GetEndItr(Packet *pkt, int len) {
-  if (len == 0) return std::end(pkt->buf);
-  return std::begin(pkt->buf) + pkt->ptr + len;
-}
-
-int PacketGetInt(Packet *pkt, uchar base) {
+int PacketGetInt(InputPacket *rpkt, uchar base) {
   int value = 0;
-  CheckOverflow(pkt, base);
+  auto begin = rpkt->Begin() + rpkt->ptr;
+  auto end = rpkt->Begin() + rpkt->ptr + base;
+  CheckOverflow(rpkt, base);
 
   switch (base) {
     case 1:  // 8-bit int
-      std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
-                reinterpret_cast<uchar *>(&value));
+      std::copy(begin, end, reinterpret_cast<uchar *>(&value));
       break;
 
     case 2:  // 16-bit int
-      std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
-                reinterpret_cast<uchar *>(&value));
+      std::copy(begin, end, reinterpret_cast<uchar *>(&value));
       value = ntohs(value);
       break;
 
     case 4:  // 32-bit int
-      std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
-                reinterpret_cast<uchar *>(&value));
+      std::copy(begin, end, reinterpret_cast<uchar *>(&value));
       value = ntohl(value);
       break;
 
@@ -64,62 +54,72 @@ int PacketGetInt(Packet *pkt, uchar base) {
   }
 
   // move the pointer
-  pkt->ptr += base;
+  rpkt->ptr += base;
   return value;
 }
 
-void PacketGetBytes(Packet *pkt, size_t len, PktBuf &result) {
+void PacketGetBytes(InputPacket *rpkt, size_t len, ByteBuf &result) {
   result.clear();
-  CheckOverflow(pkt, len);
+  CheckOverflow(rpkt, len);
 
   // return empty vector
   if (len == 0) return;
 
-  result.insert(std::end(result), std::begin(pkt->buf) + pkt->ptr,
-                GetEndItr(pkt, len));
+  result.insert(std::end(result), rpkt->Begin() + rpkt->ptr,
+                rpkt->Begin() + rpkt->ptr + len);
 
   // move the pointer
-  pkt->ptr += len;
+  rpkt->ptr += len;
 }
 
-void PacketGetString(Packet *pkt, size_t len, std::string &result) {
+void PacketGetString(InputPacket *rpkt, size_t len, std::string &result) {
+  // return empty string
+  if (len == 0) return;
+
   // exclude null char for std string
-  result =
-      std::string(std::begin(pkt->buf) + pkt->ptr, GetEndItr(pkt, len - 1));
+  result = std::string(rpkt->Begin() + rpkt->ptr,
+                       rpkt->Begin() + rpkt->ptr + len - 1);
+  rpkt->ptr += len;
 }
 
-void GetStringToken(Packet *pkt, std::string &result) {
+void GetStringToken(InputPacket *rpkt, std::string &result) {
   // save start itr position of string
-  auto start = std::begin(pkt->buf) + pkt->ptr;
+  auto start = rpkt->Begin() + rpkt->ptr;
 
-  auto find_itr = std::find(start, std::end(pkt->buf), 0);
+  auto find_itr = std::find(start, rpkt->End(), 0);
 
-  if (find_itr == std::end(pkt->buf)) {
+  if (find_itr == rpkt->End()) {
     // no match? consider the remaining vector
     // as a single string and continue
-    pkt->ptr = pkt->len;
-    result = std::string(std::begin(pkt->buf) + pkt->ptr, std::end(pkt->buf));
+    result = std::string(rpkt->Begin() + rpkt->ptr, rpkt->End());
+    rpkt->ptr = rpkt->len;
     return;
+  } else {
+    // update ptr position
+    rpkt->ptr = find_itr - rpkt->Begin() + 1;
+
+    // edge case
+    if (start == find_itr) {
+      result = std::string("");
+      return;
+    }
+
+    result = std::string(start, find_itr);
   }
-
-  // update ptr position
-  pkt->ptr = find_itr - std::begin(pkt->buf) + 1;
-
-  // edge case
-  if (start == find_itr) {
-    result = std::string("");
-    return;
-  }
-
-  result = std::string(start, find_itr);
 }
 
-void PacketPutByte(std::unique_ptr<Packet> &pkt, const uchar c) {
+uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len) {
+  uchar *result = new uchar[len];
+  PL_MEMCPY(result, &(*begin), len);
+  return result;
+}
+
+void PacketPutByte(OutputPacket *pkt, const uchar c) {
   pkt->buf.push_back(c);
   pkt->len++;
 }
 
-void PacketPutString(std::unique_ptr<Packet> &pkt, const std::string &str) {
+void PacketPutString(OutputPacket *pkt, const std::string &str) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(str), std::end(str));
   // add null character
   pkt->buf.push_back(0);
@@ -127,13 +127,12 @@ void PacketPutString(std::unique_ptr<Packet> &pkt, const std::string &str) {
   pkt->len += str.size() + 1;
 }
 
-void PacketPutBytes(std::unique_ptr<Packet> &pkt,
-                    const std::vector<uchar> &data) {
+void PacketPutBytes(OutputPacket *pkt, const std::vector<uchar> &data) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(data), std::end(data));
   pkt->len += data.size();
 }
 
-void PacketPutInt(std::unique_ptr<Packet> &pkt, int n, int base) {
+void PacketPutInt(OutputPacket *pkt, int n, int base) {
   switch (base) {
     case 2:
       n = htons(n);
@@ -151,79 +150,9 @@ void PacketPutInt(std::unique_ptr<Packet> &pkt, int n, int base) {
   PacketPutCbytes(pkt, reinterpret_cast<uchar *>(&n), base);
 }
 
-void PacketPutCbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
+void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len) {
   pkt->buf.insert(std::end(pkt->buf), b, b + len);
   pkt->len += len;
-}
-
-/*
- * read_packet - Tries to read a single packet, returns true on success,
- * 		false on failure. Accepts pointer to an empty packet, and if the
- * 		expected packet contains a type field. The function does a preliminary
- * 		read to fetch the size value and then reads the rest of the packet.
- *
- * 		Assume: Packet length field is always 32-bit int
- */
-
-bool ReadPacket(Packet *pkt, bool has_type_field, Client *client) {
-  uint32_t pkt_size = 0, initial_read_size = sizeof(int32_t);
-
-  if (has_type_field)
-    // need to read type character as well
-    initial_read_size++;
-
-  // reads the type and size of packet
-  PktBuf init_pkt;
-
-  // read first size_field_end bytes
-  if (!client->sock->ReadBytes(init_pkt,
-                               static_cast<size_t>(initial_read_size))) {
-    // nothing more to read
-    return false;
-  }
-
-  if (has_type_field) {
-    // packet includes type byte as well
-    pkt->msg_type = init_pkt[0];
-
-    // extract packet size
-    std::copy(init_pkt.begin() + 1, init_pkt.end(),
-              reinterpret_cast<uchar *>(&pkt_size));
-  } else {
-    // directly extract packet size
-    std::copy(init_pkt.begin(), init_pkt.end(),
-              reinterpret_cast<uchar *>(&pkt_size));
-  }
-
-  // packet size includes initial bytes read as well
-  pkt_size = ntohl(pkt_size) - sizeof(int32_t);
-
-  if (!client->sock->ReadBytes(pkt->buf, static_cast<size_t>(pkt_size))) {
-    // nothing more to read
-    return false;
-  }
-
-  pkt->len = pkt_size;
-
-  return true;
-}
-
-bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets, Client *client,
-                  const bool &force_flush) {
-  // iterate through all the packets
-  for (size_t i = 0; i < packets.size(); i++) {
-    auto pkt = packets[i].get();
-    if (!client->sock->BufferWriteBytes(pkt->buf, pkt->len, pkt->msg_type)) {
-      packets.clear();
-      return false;
-    }
-  }
-  // clear packets
-  packets.clear();
-  if (force_flush) {
-    return client->sock->FlushWriteBuffer();
-  }
-  return true;
 }
 
 }  // end wire

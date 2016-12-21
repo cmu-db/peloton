@@ -19,7 +19,7 @@
 #include "common/printable.h"
 #include "brain/sample.h"
 #include "common/printable.h"
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace brain {

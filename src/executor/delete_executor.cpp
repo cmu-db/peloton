@@ -14,10 +14,10 @@
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
 
-#include "common/value.h"
+#include "type/value.h"
 #include "planner/delete_plan.h"
 #include "catalog/manager.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "common/logger.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"

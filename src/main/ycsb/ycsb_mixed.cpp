@@ -33,9 +33,9 @@
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "common/logger.h"
 #include "common/timer.h"
 #include "common/generator.h"
@@ -57,7 +57,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/expression_util.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 #include "index/index_factory.h"
 
@@ -114,11 +114,11 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<common::Value > values;
+      std::vector<type::Value > values;
 
       auto lookup_key = zipf.GetNextNumber();
 
-      values.push_back(common::ValueFactory::GetIntegerValue(lookup_key).Copy());
+      values.push_back(type::ValueFactory::GetIntegerValue(lookup_key).Copy());
 
       auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
     
@@ -144,14 +144,14 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
           if (state.string_mode == true) {
 
             std::string update_raw_value(100, 'a');
-            common::Value update_val = common::ValueFactory::GetVarcharValue(update_raw_value).Copy();
+            type::Value update_val = type::ValueFactory::GetVarcharValue(update_raw_value).Copy();
             target_list.emplace_back(
                   col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));             
 
           } else {
 
             int update_raw_value = 1;
-            common::Value update_val = common::ValueFactory::GetIntegerValue(update_raw_value).Copy();
+            type::Value update_val = type::ValueFactory::GetIntegerValue(update_raw_value).Copy();
             target_list.emplace_back(
                   col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val)); 
           }
@@ -184,11 +184,11 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       /////////////////////////////////////////////////////////
 
       // set up parameter values
-      std::vector<common::Value > values;
+      std::vector<type::Value > values;
 
       auto lookup_key = zipf.GetNextNumber();
 
-      values.push_back(common::ValueFactory::GetIntegerValue(lookup_key).Copy());
+      values.push_back(type::ValueFactory::GetIntegerValue(lookup_key).Copy());
 
       auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
     

@@ -15,7 +15,7 @@
 
 #include "parser/abstract_parse.h"
 
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace parser {

@@ -1,59 +1,59 @@
 -- WARNING: DO NOT MODIFY THIS FILE
--- psql tests use the exact output from this file for CI
+-- psql tests use the exact output FROM this file for CI
 
 -- create the table
 -- 2 columns, 1 primary key
 
-drop table if exists foo;
-create table foo(id integer PRIMARY KEY, year integer);
+DROP TABLE IF EXISTS foo;
+CREATE TABLE foo(id integer PRIMARY KEY, year integer);
 -- create index on foo (id); -- failed, why?
 
 -- load in the data
 
-insert into foo values(1, 100);
-insert into foo values(1, 200); -- should fail
-insert into foo values(2, 200);
-insert into foo values(3, 300);
-insert into foo values(4, 400);
-insert into foo values(5, 400);
-insert into foo values(5, 500); -- should fail
+INSERT INTO foo VALUES(1, 100);
+INSERT INTO foo VALUES(1, 200); -- should fail
+INSERT INTO foo VALUES(2, 200);
+INSERT INTO foo VALUES(3, 300);
+INSERT INTO foo VALUES(4, 400);
+INSERT INTO foo VALUES(5, 400);
+INSERT INTO foo VALUES(5, 500); -- should fail
 
-select * from foo;
+SELECT id, year FROM foo ORDER BY id;
 
--- select
+-- SELECT
 
-select * from foo where id < 3;
+SELECT id, year FROM foo WHERE id < 3 ORDER BY id;
 
-select * from foo where year > 200;
+SELECT id, year FROM foo WHERE year > 200 ORDER BY id;
 
--- delete
+-- DELETE
 
-delete from foo where year = 200;
-select * from foo;
+DELETE FROM foo WHERE year = 200;
+SELECT id, year FROM foo ORDER BY id;
 
 
--- -- update
+-- -- UPDATE
 
-update foo set year = 3000 where id = 3;
-select * from foo;
+UPDATE foo SET year = 3000 WHERE id = 3;
+SELECT id, year FROM foo ORDER BY id;
 
-update foo set year = 1000 where year = 100; 
-select * from foo;
+UPDATE foo SET year = 1000 WHERE year = 100; 
+SELECT id, year FROM foo ORDER BY id;
 
-update foo set id = 3 where year = 1000; -- should fail
-select * from foo;
+UPDATE foo SET id = 3 WHERE year = 1000; -- should fail
+SELECT id, year FROM foo ORDER BY id;
 
-update foo set id= 10 where year = 1000;
-select * from foo;
+UPDATE foo SET id= 10 WHERE year = 1000;
+SELECT id, year FROM foo ORDER BY id;
 
 -- insert again
 
-insert into foo values (2, 2000);
-select * from foo;
+INSERT INTO foo VALUES (2, 2000);
+SELECT id, year FROM foo ORDER BY id;
 
-insert into foo values (4, 4000); -- should fail
-select * from foo;
+INSERT INTO foo VALUES (4, 4000); -- should fail
+SELECT id, year FROM foo ORDER BY id;
 
-insert into foo values (1, 1000);
-select * from foo;
+INSERT INTO foo VALUES (1, 1000);
+SELECT id, year FROM foo ORDER BY id;
 

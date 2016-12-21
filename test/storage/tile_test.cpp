@@ -30,14 +30,14 @@ TEST_F(TileTests, BasicTest) {
   // Columns
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "A", true);
-  catalog::Column column2(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "B", true);
-  catalog::Column column3(common::Type::TINYINT, common::Type::GetTypeSize(common::Type::TINYINT),
+  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
                           "C", true);
-  catalog::Column column4(common::Type::VARCHAR, 25, "D", false);
-  catalog::Column column5(common::Type::VARCHAR, 25, "E", false);
+  catalog::Column column4(type::Type::VARCHAR, 25, "D", false);
+  catalog::Column column5(type::Type::VARCHAR, 25, "E", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -72,24 +72,24 @@ TEST_F(TileTests, BasicTest) {
   storage::Tuple *tuple3 = new storage::Tuple(schema, true);
   auto pool = tile->GetPool();
 
-  tuple1->SetValue(0, common::ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValue(1, common::ValueFactory::GetIntegerValue(1), pool);
-  tuple1->SetValue(2, common::ValueFactory::GetTinyIntValue(1), pool);
-  tuple1->SetValue(3, common::ValueFactory::GetVarcharValue("vivek sengupta"), pool);
-  tuple1->SetValue(4, common::ValueFactory::GetVarcharValue("vivek sengupta again"),
+  tuple1->SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(1, type::ValueFactory::GetIntegerValue(1), pool);
+  tuple1->SetValue(2, type::ValueFactory::GetTinyIntValue(1), pool);
+  tuple1->SetValue(3, type::ValueFactory::GetVarcharValue("vivek sengupta"), pool);
+  tuple1->SetValue(4, type::ValueFactory::GetVarcharValue("vivek sengupta again"),
                    pool);
 
-  tuple2->SetValue(0, common::ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValue(1, common::ValueFactory::GetIntegerValue(2), pool);
-  tuple2->SetValue(2, common::ValueFactory::GetTinyIntValue(2), pool);
-  tuple2->SetValue(3, common::ValueFactory::GetVarcharValue("ming fang"), pool);
-  tuple2->SetValue(4, common::ValueFactory::GetVarcharValue("ming fang again"), pool);
+  tuple2->SetValue(0, type::ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(1, type::ValueFactory::GetIntegerValue(2), pool);
+  tuple2->SetValue(2, type::ValueFactory::GetTinyIntValue(2), pool);
+  tuple2->SetValue(3, type::ValueFactory::GetVarcharValue("ming fang"), pool);
+  tuple2->SetValue(4, type::ValueFactory::GetVarcharValue("ming fang again"), pool);
 
-  tuple3->SetValue(0, common::ValueFactory::GetIntegerValue(3), pool);
-  tuple3->SetValue(1, common::ValueFactory::GetIntegerValue(3), pool);
-  tuple3->SetValue(2, common::ValueFactory::GetTinyIntValue(3), pool);
-  tuple3->SetValue(3, common::ValueFactory::GetVarcharValue("jinwoong kim"), pool);
-  tuple3->SetValue(4, common::ValueFactory::GetVarcharValue("jinwoong kim again"), pool);
+  tuple3->SetValue(0, type::ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(1, type::ValueFactory::GetIntegerValue(3), pool);
+  tuple3->SetValue(2, type::ValueFactory::GetTinyIntValue(3), pool);
+  tuple3->SetValue(3, type::ValueFactory::GetVarcharValue("jinwoong kim"), pool);
+  tuple3->SetValue(4, type::ValueFactory::GetVarcharValue("jinwoong kim again"), pool);
 
   tile->InsertTuple(0, tuple1);
   tile->InsertTuple(1, tuple2);

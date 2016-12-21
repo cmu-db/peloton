@@ -18,7 +18,7 @@
 
 #include "catalog/manager.h"
 #include "common/platform.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "index/index.h"
 
 #include "index/bwtree.h"
@@ -95,7 +95,7 @@ class BWTreeIndex : public Index {
                        ItemPointer *value,
                        std::function<bool(const void *)> predicate);
 
-  void Scan(const std::vector<common::Value> &values,
+  void Scan(const std::vector<type::Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
             const ScanDirectionType &scan_direction,

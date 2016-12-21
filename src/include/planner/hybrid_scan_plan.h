@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 #include "index/index.h"
 #include "planner/abstract_scan_plan.h"
@@ -66,7 +66,7 @@ class HybridScanPlan : public AbstractScan {
     return index_predicate_;
   }
 
-  const std::vector<common::Value> &GetValues() const { return values_; }
+  const std::vector<type::Value> &GetValues() const { return values_; }
 
   const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const {
     return runtime_keys_;
@@ -83,7 +83,7 @@ class HybridScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> expr_types_;
 
-  const std::vector<common::Value> values_;
+  const std::vector<type::Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 

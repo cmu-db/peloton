@@ -10,17 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 #include <unordered_set>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "executor/nested_loop_join_executor.h"
 #include "executor/executor_context.h"
+#include "executor/index_scan_executor.h"
 #include "planner/nested_loop_join_plan.h"
+#include "planner/index_scan_plan.h"
 #include "expression/abstract_expression.h"
-#include "expression/container_tuple.h"
+#include "expression/tuple_value_expression.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace executor {
@@ -74,25 +76,22 @@ bool NestedLoopJoinExecutor::DInit() {
  * to join the left and right result.
  *
  */
+
+// For this version, the work flow is that we first lookup the left table, and
+// use the result to lookup right table. If left table is done that means right
+// table is also done. So we only keep the left_child_done_ as the sign.
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
             GetJoinTypeString());
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
-    // Build outer join output when done
-    if (left_child_done_ && right_child_done_) {
-      return BuildOuterJoinOutput();
-    }
-
     //===------------------------------------------------------------------===//
     // Pick left and right tiles
     //===------------------------------------------------------------------===//
 
     LogicalTile *left_tile = nullptr;
     LogicalTile *right_tile = nullptr;
-
-    bool advance_right_child = false;
 
     // If we have already retrieved all left child's results in buffer
     if (left_child_done_ == true) {
@@ -102,10 +101,8 @@ bool NestedLoopJoinExecutor::DExecute() {
       left_result_itr_++;
 
       if (left_result_itr_ >= left_result_tiles_.size()) {
-        advance_right_child = true;
         left_result_itr_ = 0;
       }
-
     }
     // Otherwise, we must attempt to execute the left child
     else {
@@ -115,7 +112,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 
         left_child_done_ = true;
         left_result_itr_ = 0;
-        advance_right_child = true;
       }
       // Buffer the left child's result
       else {
@@ -125,41 +121,90 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
     }
 
-    if (advance_right_child == true || right_result_tiles_.empty()) {
+    if (left_result_tiles_.empty() && !left_child_done_) {
+      // If there is no result for left lookup, continue the next tile
+      LOG_TRACE("Left is empty continue the left.");
+      continue;
+    } else if (left_child_done_) {
+      LOG_TRACE("Left_child_done, and return the result.");
+      return BuildOuterJoinOutput();
+    }
+
+    // We already checked whether results are empty
+    left_tile = left_result_tiles_[left_result_itr_].get();
+
+    //===------------------------------------------------------------------===//
+    // Look up the right table using the left result
+    //===------------------------------------------------------------------===//
+
+    // Grab info from plan node and check it
+    const planner::NestedLoopJoinPlan &node =
+        GetPlanNode<planner::NestedLoopJoinPlan>();
+
+    // Pick out the left and right columns
+    const std::vector<oid_t> &join_column_ids_left = node.GetJoinColumnsLeft();
+    const std::vector<oid_t> &join_column_ids_right =
+        node.GetJoinColumnsRight();
+
+    for (auto left_tile_row_itr : *left_tile) {
+      // Tuple result
+      expression::ContainerTuple<executor::LogicalTile> left_tuple(
+          left_tile, left_tile_row_itr);
+
+      // Grab the values
+      std::vector<type::Value> join_values;
+      for (auto column_id : join_column_ids_left) {
+        type::Value predicate_value = left_tuple.GetValue(column_id);
+        join_values.push_back(predicate_value);
+      }
+
+      // Pass the columns and values to right executor
+      children_[1]->UpdatePredicate(join_column_ids_right, join_values);
+
       // return if right tile is empty
       if (right_child_done_ && right_result_tiles_.empty()) {
         return BuildOuterJoinOutput();
       }
 
-      PL_ASSERT(left_result_itr_ == 0);
-
       // Right child is finished, no more tiles
-      if (children_[1]->Execute() == false) {
-        LOG_TRACE("Right child is exhausted. Returning false.");
+      for (;;) {
+        if (children_[1]->Execute() == true) {
+          LOG_TRACE("Advance the Right child.");
+          BufferRightTile(children_[1]->GetOutput());
 
-        // Right child exhausted.
-        // Release cur Right tile. Clear right child's result buffer and return.
-        right_child_done_ = true;
-
-        return BuildOuterJoinOutput();
-      }
-      // Buffer the Right child's result
-      else {
-        LOG_TRACE("Advance the Right child.");
-        BufferRightTile(children_[1]->GetOutput());
-        // return if left tile is empty
-        if (left_child_done_ && left_result_tiles_.empty()) {
-          return BuildOuterJoinOutput();
+          // return if left tile is empty
+          if (left_child_done_ && left_result_tiles_.empty()) {
+            return BuildOuterJoinOutput();
+          }
         }
-      }
+        // Right is finished
+        else {
+          if (!left_child_done_) {
+            children_[1]->ResetState();
+          } else {
+            right_child_done_ = true;
+          }
+          break;
+        }
+      }  // End for
+    }    // Buffered all results
+
+    // Return result
+    if (left_child_done_ && right_result_tiles_.empty()) {
+      LOG_TRACE("All done, and return the result.");
+      return BuildOuterJoinOutput();
+    } else if (right_result_tiles_.empty()) {
+      LOG_TRACE("Right is empty, continue the left.");
+      continue;
     }
 
+    // We already checked whether results are empty
     right_tile = right_result_tiles_.back().get();
-    left_tile = left_result_tiles_[left_result_itr_].get();
 
     //===------------------------------------------------------------------===//
     // Build Join Tile
     //===------------------------------------------------------------------===//
+    LOG_TRACE("Build output logical tile.");
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
@@ -180,8 +225,8 @@ bool NestedLoopJoinExecutor::DExecute() {
               right_tile, right_tile_row_itr);
 
           // Join predicate is false. Skip pair and continue.
-          auto eval = predicate_->Evaluate(&left_tuple,
-                                          &right_tuple, executor_context_);
+          auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,
+                                           executor_context_);
           if (eval.IsFalse()) {
             continue;
           }

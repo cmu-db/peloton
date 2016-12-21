@@ -11,10 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/project_info.h"
+
+#include "common/container_tuple.h"
 #include "executor/executor_context.h"
+#include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "expression/parameter_value_expression.h"
-#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -45,12 +47,11 @@ ProjectInfo::~ProjectInfo() {
  * @param tuple2  Source tuple 2.
  * @param econtext  ExecutorContext for expression evaluation.
  */
-bool ProjectInfo::Evaluate(storage::Tuple *dest, 
-                           const AbstractTuple *tuple1,
+bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // Get varlen pool
-  common::VarlenPool *pool = nullptr;
+  type::VarlenPool *pool = nullptr;
   if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
 
   // (A) Execute target list
@@ -70,11 +71,10 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
     auto src_col_id = dm.second.second;
 
     if (tuple_index == 0) {
-      common::Value value = (tuple1->GetValue(src_col_id));
+      type::Value value = (tuple1->GetValue(src_col_id));
       dest->SetValue(dest_col_id, value, pool);
-    }
-    else {
-      common::Value value = (tuple2->GetValue(src_col_id));
+    } else {
+      type::Value value = (tuple2->GetValue(src_col_id));
       dest->SetValue(dest_col_id, value, pool);
     }
   }
@@ -82,35 +82,35 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest,
   return true;
 }
 
-
-bool ProjectInfo::Evaluate(AbstractTuple *dest, 
-                           const AbstractTuple *tuple1,
-                           const AbstractTuple *tuple2,
-                           executor::ExecutorContext *econtext) const {
+bool ProjectInfo::Evaluate(expression::ContainerTuple<storage::TileGroup> *dest,
+                           expression::ContainerTuple<storage::TileGroup> *src,
+                           executor::ExecutorContext *econtext, bool inplace) const {
   // (A) Execute target list
   for (auto target : target_list_) {
     auto col_id = target.first;
     auto expr = target.second;
-    auto value = expr->Evaluate(tuple1, tuple2, econtext);
+    auto value = expr->Evaluate(src, nullptr, econtext);
     dest->SetValue(col_id, value);
   }
 
   // (B) Execute direct map
-  for (auto dm : direct_map_list_) {
-    auto dest_col_id = dm.first;
-    // whether left tuple or right tuple ?
-    auto tuple_index = dm.second.first;
-    auto src_col_id = dm.second.second;
+  if (inplace == false) {
+    // For update that creates a new version, we copy all unmodified columns
+    // to the new version. Note that for varlen column, we perform shallow copy.
+    for (auto dm : direct_map_list_) {
+      // whether left tuple or right tuple ?
+      auto tuple_index = dm.second.first;
+      auto src_col_id = dm.second.second;
 
-    if (tuple_index == 0) {
-      common::Value val1 = (tuple1->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, val1);
-    }
-    else {
-      common::Value val2 = (tuple2->GetValue(src_col_id));
-      dest->SetValue(dest_col_id, val2);
+      PL_ASSERT(dm.first == dm.second.second);
+      PL_ASSERT(tuple_index == 0);
+      if (tuple_index == 0) {
+        src->CopyColumnTo(dest, src_col_id);
+      }
     }
   }
+  // For inplace update, we don't need to do anything for unmodified columns
+  // because they are already there
 
   return true;
 }
@@ -130,36 +130,6 @@ std::string ProjectInfo::Debug() const {
   }
 
   return (buffer.str());
-}
-
-void ProjectInfo::transformParameterToConstantValueExpression(
-    std::vector<common::Value> *values, catalog::Schema *schema) {
-  LOG_TRACE("Setting parameter values in Projection");
-  for (unsigned int i = 0; i < target_list_.size(); ++i) {
-    // The assignment parameter is an expression with left and right
-    if (target_list_[i].second->GetLeft() &&
-        target_list_[i].second->GetRight()) {
-      auto expr = target_list_[i].second->Copy();
-      delete target_list_[i].second;
-      expression::ExpressionUtil::ConvertParameterExpressions(expr, values,
-                                                              schema);
-      target_list_[i].second = expr;
-    }
-    // The assignment parameter is a single value
-    else {
-      if (target_list_[i].second->GetExpressionType() ==
-          EXPRESSION_TYPE_VALUE_PARAMETER) {
-        auto param_expr =
-            (expression::ParameterValueExpression *)target_list_[i].second;
-        LOG_TRACE("Setting parameter %u to value %s", param_expr->GetValueIdx(),
-                  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
-        auto value = new expression::ConstantValueExpression(
-            values->at(param_expr->GetValueIdx()));
-        delete param_expr;
-        target_list_[i].second = value;
-      }
-    }
-  }
 }
 
 } /* namespace planner */

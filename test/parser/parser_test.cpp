@@ -72,8 +72,14 @@ TEST_F(ParserTest, BasicTest) {
 
   // INSERT
   queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test');");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test'), (2, 3, 'test2');");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test'), (2, 3, 'test2'), (3, 4, 'test3');");
   queries.push_back(
       "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test');");
+  queries.push_back(
+        "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test'), (2, 3, 'test2');");
+  queries.push_back(
+          "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test'), (2, 3, 'test2'), (3, 4, 'test3');");
   queries.push_back("INSERT INTO test_table SELECT * FROM students;");
 
   // DELETE
@@ -97,12 +103,20 @@ TEST_F(ParserTest, BasicTest) {
   queries.push_back("EXECUTE prep_inst(1, 2, 3);");
   queries.push_back("EXECUTE prep;");
 
+  queries.push_back(
+      "COPY catalog_db.query_metric TO '/home/user/output.csv' DELIMITER ',';");
+
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     parser::SQLStatementList* stmt_list =
         parser::Parser::ParseSQLString(query.c_str());
-    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+    LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }
 }
@@ -163,9 +177,9 @@ TEST_F(ParserTest, SelectParserTest) {
   // Select List
   EXPECT_EQ(stmt->select_list->size(), 2);
   EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(),
-            EXPRESSION_TYPE_COLUMN_REF);
+            EXPRESSION_TYPE_VALUE_TUPLE);
   EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(),
-            EXPRESSION_TYPE_FUNCTION_REF);
+            EXPRESSION_TYPE_AGGREGATE_SUM);
 
   // Join Table
   parser::JoinDefinition* join = stmt->from_table->join;
@@ -181,7 +195,7 @@ TEST_F(ParserTest, SelectParserTest) {
   // Order By
   EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
   EXPECT_EQ(stmt->order->expr->GetExpressionType(),
-            EXPRESSION_TYPE_FUNCTION_REF);
+            EXPRESSION_TYPE_AGGREGATE_SUM);
 
   // Limit
   EXPECT_EQ(stmt->limit->limit, 5);
@@ -205,7 +219,7 @@ TEST_F(ParserTest, TransactionTest) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    LOG_INFO("%s", result->GetInfo().c_str());
+    LOG_TRACE("%s", result->GetInfo().c_str());
     delete result;
   }
 
@@ -267,7 +281,7 @@ TEST_F(ParserTest, CreateTest) {
     EXPECT_EQ(result->is_valid, true);
 
     if (result) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }
@@ -324,14 +338,13 @@ TEST_F(ParserTest, TM1Test) {
     EXPECT_EQ(result->is_valid, true);
 
     if (result) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }
 }
 
 TEST_F(ParserTest, IndexTest) {
-
   std::vector<std::string> queries;
 
   queries.push_back(
@@ -357,7 +370,38 @@ TEST_F(ParserTest, IndexTest) {
     EXPECT_EQ(result->is_valid, true);
 
     if (result) {
-      LOG_INFO("%d : %s", ++ii, result->GetInfo().c_str());
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+      delete result;
+    }
+  }
+}
+
+TEST_F(ParserTest, CopyTest) {
+  std::vector<std::string> queries;
+  std::string file_path = "/home/user/output.csv";
+  queries.push_back("COPY catalog_db.query_metric TO '" + file_path +
+                    "' DELIMITER ',';");
+
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    parser::SQLStatementList* result =
+        parser::Parser::ParseSQLString(query.c_str());
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    parser::CopyStatement* copy_stmt =
+        static_cast<parser::CopyStatement*>(result->GetStatement(0));
+
+    EXPECT_EQ(copy_stmt->delimiter, ',');
+    EXPECT_STREQ(copy_stmt->file_path, "/home/user/output.csv");
+
+    if (result != nullptr) {
+      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
       delete result;
     }
   }

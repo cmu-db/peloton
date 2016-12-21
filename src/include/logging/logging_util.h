@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "common/types.h"
 #include "common/logger.h"
 #include "logging/records/transaction_record.h"
 #include "logging/records/tuple_record.h"
 #include "storage/data_table.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace logging {
@@ -28,6 +27,12 @@ namespace logging {
 
 class LoggingUtil {
  public:
+  static BackendType GetBackendType(const LoggingType &logging_type);
+
+  static bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
+
+  static bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
+
   static void FFlushFsync(FileHandle &file_handle);
 
   static bool InitFileHandle(const char *name, FileHandle &file_handle,
@@ -49,8 +54,8 @@ class LoggingUtil {
   static bool ReadTupleRecordHeader(TupleRecord &tuple_record,
                                     FileHandle &file_handle);
 
-  static storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema,
-                                             common::VarlenPool *pool,
+  static storage::Tuple *ReadTupleRecordBody(const catalog::Schema *schema,
+                                             type::VarlenPool *pool,
                                              FileHandle &file_handle);
 
   static void SkipTupleRecordBody(FileHandle &file_handle);

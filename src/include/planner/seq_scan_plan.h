@@ -17,10 +17,10 @@
 #include <vector>
 
 #include "abstract_scan_plan.h"
-#include "common/types.h"
-#include "common/serializer.h"
-#include "expression/abstract_expression.h"
 #include "common/logger.h"
+#include "type/serializer.h"
+#include "type/types.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 
@@ -44,18 +44,10 @@ class SeqScanPlan : public AbstractScan {
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids, bool is_for_update = false)
       : AbstractScan(table, predicate, column_ids) {
-    LOG_DEBUG("Creating a Sequential Scan Plan");
-
-    // Store a copy of the original expression for binding multiple queries.
-    if (predicate != nullptr) {
-      predicate_with_params_ =
-          std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
-    }
+    LOG_TRACE("Creating a Sequential Scan Plan");
 
     SetForUpdateFlag(is_for_update);
   }
-
-  SeqScanPlan(parser::SelectStatement *select_node);
 
   SeqScanPlan() : AbstractScan() {}
 
@@ -63,7 +55,7 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-  void SetParameterValues(std::vector<common::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values);
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization

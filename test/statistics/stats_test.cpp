@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#include "common/config.h"
+#include "configuration/configuration.h"
 #include "common/harness.h"
 
 #include <sys/resource.h>
@@ -68,9 +68,10 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto index_metadata = table->GetIndex(0)->GetMetadata();
   auto db_oid = database->GetOid();
   auto context = stats::BackendStatsContext::GetInstance();
+  auto stmt = StatsTestsUtil::GetInsertStmt();
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
-    context->InitQueryMetric("query_string", db_oid);
+    context->InitQueryMetric(stmt, nullptr);
 
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
@@ -121,22 +122,24 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-      "id", true);
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "dept_id", true);
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
-  auto name_column = catalog::Column(common::Type::VARCHAR, 32, "name", true);
+  auto name_column = catalog::Column(
+      type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::INTEGER),
+      "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog->CreateDatabase("EMP_DB", txn);
-  catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "emp_table",
+  catalog->CreateDatabase("emp_db", txn);
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", "department_table",
                                                std::move(table_schema), txn);
   txn_manager.CommitTransaction(txn);
 
   // Create multiple stat worker threads
   int num_threads = 8;
-  storage::Database *database = catalog->GetDatabaseWithName("EMP_DB");
-  storage::DataTable *table = database->GetTableWithName("emp_table");
+  storage::Database *database = catalog->GetDatabaseWithName("emp_db");
+  storage::DataTable *table = database->GetTableWithName("department_table");
   LaunchParallelTest(num_threads, TransactionTest, database, table);
 
   // Wait for aggregation to finish
@@ -184,7 +187,8 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
             num_threads * NUM_ITERATION * NUM_INDEX_INSERT);
 
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName("EMP_DB", txn);
+  //  catalog->DropTable("emp_db", "department_table", txn);
+  catalog->DropDatabaseWithName("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -322,7 +326,7 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   txn = txn_manager.BeginTransaction();
   TransactionTestsUtil::ExecuteDelete(txn, data_table.get(),
                                       ExecutorTestsUtil::PopulatedValue(5, 0));
-  LOG_INFO("before read");
+  LOG_TRACE("before read");
   TransactionTestsUtil::ExecuteRead(
       txn, data_table.get(), ExecutorTestsUtil::PopulatedValue(1, 0), result);
   txn_manager.CommitTransaction(txn);
@@ -362,28 +366,34 @@ TEST_F(StatsTest, PerQueryStatsTest) {
                 ->GetDatabaseWithName(CATALOG_DATABASE_NAME)
                 ->GetTableCount(),
             6);
-  LOG_INFO("Table created!");
+  LOG_TRACE("Table created!");
 
   auto backend_context = stats::BackendStatsContext::GetInstance();
+  // Get a query param object
+  std::shared_ptr<uchar> type_buf;
+  std::shared_ptr<uchar> format_buf;
+  std::shared_ptr<uchar> val_buf;
+  auto query_params =
+      StatsTestsUtil::GetQueryParams(type_buf, format_buf, val_buf);
 
   // Inserting a tuple end-to-end
   auto statement = StatsTestsUtil::GetInsertStmt();
-  // Initialize the query metric
-  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+  // Initialize the query metric, with prep stmt parameters
+  backend_context->InitQueryMetric(statement, query_params);
 
   // Execute insert
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   std::vector<ResultType> result;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple inserted!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple inserted!");
 
   // Now Updating end-to-end
-  statement = std::move(StatsTestsUtil::GetUpdateStmt());
+  statement = StatsTestsUtil::GetUpdateStmt();
   // Initialize the query metric
-  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+  backend_context->InitQueryMetric(statement, nullptr);
 
   // Execute update
   params.clear();
@@ -392,13 +402,13 @@ TEST_F(StatsTest, PerQueryStatsTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
-  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple updated!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple updated!");
 
   // Deleting end-to-end
   statement = std::move(StatsTestsUtil::GetDeleteStmt());
   // Initialize the query metric
-  backend_context->InitQueryMetric(statement->GetQueryString(), DEFAULT_DB_ID);
+  backend_context->InitQueryMetric(statement, nullptr);
 
   // Execute delete
   params.clear();
@@ -407,8 +417,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
-  LOG_DEBUG("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple deleted!");
 
   // Wait for aggregation to finish
   std::chrono::microseconds sleep_time(aggregate_interval * 2 * 1000);

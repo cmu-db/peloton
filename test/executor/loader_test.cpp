@@ -20,8 +20,8 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
-#include "common/value_factory.h"
-#include "common/varlen_pool.h"
+#include "type/value_factory.h"
+#include "type/varlen_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_context.h"
@@ -68,7 +68,7 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    common::Value value = (
+    type::Value value = (
         tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
@@ -78,7 +78,7 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       std::move(target_list), std::move(direct_map_list)));
 }
 
-void InsertTuple(storage::DataTable *table, common::VarlenPool *pool,
+void InsertTuple(storage::DataTable *table, type::VarlenPool *pool,
                  oid_t tilegroup_count_per_loader,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -155,9 +155,9 @@ TEST_F(LoaderTests, LoadingTest) {
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 
-  LOG_INFO("Dataset size : %u MB \n",
-           (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
-               bytes_to_megabytes_converter);
+  LOG_TRACE("Dataset size : %u MB \n",
+            (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
+                bytes_to_megabytes_converter);
 }
 
 }  // namespace test

@@ -66,7 +66,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_manager.h"
 #include "concurrency/transaction.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/comparison_expression.h"
 
 #pragma once
@@ -173,10 +173,12 @@ struct TransactionSchedule {
   std::vector<int> results;
   int stored_value;
   int schedule_id;
-  TransactionSchedule(int schedule_id_)
+  bool declared_ro;
+  TransactionSchedule(int schedule_id_, bool ro = false)
       : txn_result(RESULT_FAILURE),
         stored_value(0),
-        schedule_id(schedule_id_) {}
+        schedule_id(schedule_id_),
+        declared_ro(ro) {}
 };
 
 // A thread wrapper that runs a transaction
@@ -233,7 +235,14 @@ class TransactionThread {
     if (id == TXN_STORED_VALUE) id = schedule->stored_value;
     if (value == TXN_STORED_VALUE) value = schedule->stored_value;
 
-    if (cur_seq == 0) txn = txn_manager->BeginTransaction();
+    if (cur_seq == 0) {
+      if (schedule->declared_ro == true) {
+        txn = txn_manager->BeginReadonlyTransaction();
+      } else {
+        txn = txn_manager->BeginTransaction();
+      }
+    }
+
     if (schedule->txn_result == RESULT_ABORTED) {
       cur_seq++;
       return;
@@ -332,13 +341,18 @@ class TransactionThread {
 class TransactionScheduler {
  public:
   TransactionScheduler(size_t num_txn, storage::DataTable *datatable_,
-                       concurrency::TransactionManager *txn_manager_)
+                       concurrency::TransactionManager *txn_manager_,
+                       bool first_as_ro = false)
       : txn_manager(txn_manager_),
         table(datatable_),
         time(0),
         concurrent(false) {
     for (size_t i = 0; i < num_txn; i++) {
-      schedules.emplace_back(i);
+      if (first_as_ro && i == 0) {
+        schedules.emplace_back(i, true);
+      } else {
+        schedules.emplace_back(i, false);
+      }
     }
   }
 

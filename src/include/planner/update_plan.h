@@ -12,15 +12,14 @@
 
 #pragma once
 
+#include "../parser/update_statement.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "parser/table_ref.h"
-#include "parser/statement_update.h"
 #include "catalog/schema.h"
 
 namespace peloton {
-
 
 namespace expression {
 class Expression;
@@ -48,16 +47,15 @@ class UpdatePlan : public AbstractPlan {
   explicit UpdatePlan(parser::UpdateStatement *parse_tree,
                       std::vector<oid_t> &key_column_ids,
                       std::vector<ExpressionType> &expr_types,
-                      std::vector<common::Value> &values,
-                      oid_t &index_id);
+                      std::vector<type::Value> &values, oid_t &index_id);
 
   inline ~UpdatePlan() {
     if (where_ != nullptr) {
-      delete(where_);
+      delete (where_);
     }
 
-    for(size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
-    	delete(updates_[update_itr]);
+    for (size_t update_itr = 0; update_itr < updates_.size(); ++update_itr) {
+      delete (updates_[update_itr]);
     }
   }
 
@@ -71,7 +69,9 @@ class UpdatePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "UpdatePlan"; }
 
-  void SetParameterValues(std::vector<common::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values);
+
+  bool GetUpdatePrimaryKey() const { return update_primary_key_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
@@ -79,9 +79,9 @@ class UpdatePlan : public AbstractPlan {
   }
 
  private:
-
   // Initialize private members and construct colum_ids given a UpdateStatement.
-  void BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree, std::vector<oid_t>& columns);
+  void BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
+                              std::vector<oid_t> &columns);
 
   /** @brief Target table. */
   storage::DataTable *target_table_;
@@ -96,6 +96,9 @@ class UpdatePlan : public AbstractPlan {
 
   // The where condition
   expression::AbstractExpression *where_;
+
+  // Whether update primary key
+  bool update_primary_key_;
 };
 
 }  // namespace planner

@@ -12,16 +12,18 @@
 
 #pragma once
 
-#include <vector>
-#include <mutex>
 #include <atomic>
+#include <mutex>
 #include <thread>
+#include <vector>
 
-#include "common/types.h"
+#include "brain/clusterer.h"
+#include "type/types.h"
+#include "common/timer.h"
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 
@@ -32,9 +34,7 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 
 class LayoutTuner {
-
  public:
-
   LayoutTuner(const LayoutTuner &) = delete;
   LayoutTuner &operator=(const LayoutTuner &) = delete;
   LayoutTuner(LayoutTuner &&) = delete;
@@ -57,20 +57,20 @@ class LayoutTuner {
   void Stop();
 
   // Add table to list of tables whose layout must be tuned
-  void AddTable(storage::DataTable* table);
+  void AddTable(storage::DataTable *table);
 
   // Clear list
   void ClearTables();
 
- protected:
+  std::string GetColumnMapInfo(const column_map_type &column_map);
 
+ protected:
   // Update layout of table
-  void UpdateDefaultPartition(storage::DataTable* table);
+  void UpdateDefaultPartition(storage::DataTable *table);
 
  private:
-
   // Tables whose layout must be tuned
-  std::vector<storage::DataTable*> tables;
+  std::vector<storage::DataTable *> tables;
 
   std::mutex layout_tuner_mutex;
 
@@ -85,7 +85,13 @@ class LayoutTuner {
   //===--------------------------------------------------------------------===//
 
   // Layout similarity threshold
-  double theta = 0.0;
+  // NOTE:
+  // This is a critical parameter. It measures the difference between the schema
+  // of a existing tilegroup and the desired schema, and normalizes this difference
+  // with respect to the column count, so that it falls within [0, 1]
+  // Theta should not be set to zero, otherwise it will always trigger
+  // DataTable::TransformTileGroup, even if the schema is the same.
+  double theta = 0.0001;
 
   // Sleeping period (in us)
   oid_t sleep_duration = 100;
@@ -100,7 +106,6 @@ class LayoutTuner {
   oid_t tile_count = 2;
 
 };
-
 
 }  // End brain namespace
 }  // End peloton namespace

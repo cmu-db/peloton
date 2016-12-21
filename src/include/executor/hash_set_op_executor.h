@@ -15,10 +15,10 @@
 
 #include <unordered_map>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace executor {

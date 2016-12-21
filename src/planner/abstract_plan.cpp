@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
@@ -62,7 +62,7 @@ const std::string AbstractPlan::GetInfo() const {
   return os.str();
 }
 
-void AbstractPlan::SetParameterValues(std::vector<common::Value> *values) {
+void AbstractPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in all child plans of %s",
             GetInfo().c_str());
   for (auto &child_plan : GetChildren()) {

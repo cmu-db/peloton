@@ -10,15 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <unistd.h>
 #include <iostream>
 
-#include "common/stack_trace.h"
+#include "configuration/configuration.h"
 #include "common/init.h"
-#include "common/config.h"
-#include "common/macros.h"
+#include "common/logger.h"
 #include "wire/libevent_server.h"
-#include "wire/socket_base.h"
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
@@ -33,14 +30,24 @@ int main(int argc, char *argv[]) {
     ::google::HandleCommandLineHelpFlags();
   }
 
-  // Setup
-  peloton::PelotonInit::Initialize();
+  // Print configuration
+  if (FLAGS_display_configuration == true) {
+    peloton::configuration::PrintConfiguration();
+  }
 
-  // Launch server
-  peloton::wire::Server server;
+  try {
+    // Setup
+    peloton::PelotonInit::Initialize();
 
-  // Teardown
-  peloton::PelotonInit::Shutdown();
+    // Launch server
+    peloton::wire::LibeventServer libeventserver;
+
+    // Teardown
+    peloton::PelotonInit::Shutdown();
+  }
+  catch(peloton::ConnectionException exception){
+    // Nothing to do here!
+  }
 
   return 0;
 }

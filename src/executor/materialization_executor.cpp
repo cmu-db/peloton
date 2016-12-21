@@ -140,7 +140,7 @@ void MaterializeRowAtAtATime(
     // Get old column information
     std::vector<oid_t> old_column_position_idxs;
     std::vector<size_t> old_column_offsets;
-    std::vector<common::Type::TypeId> old_column_types;
+    std::vector<type::Type::TypeId> old_column_types;
     std::vector<bool> old_is_inlineds;
     std::vector<storage::Tile *> old_tiles;
 
@@ -163,7 +163,7 @@ void MaterializeRowAtAtATime(
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
       old_column_offsets.push_back(old_column_offset);
-      const common::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
+      const type::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
       old_column_types.push_back(old_column_type);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
       old_is_inlineds.push_back(old_is_inlined);
@@ -203,7 +203,7 @@ void MaterializeRowAtAtATime(
 
         oid_t base_tuple_id = column_position_list[old_tuple_id];
 
-        common::Value value = (old_tiles[col_itr]->GetValueFast(
+        type::Value value = (old_tiles[col_itr]->GetValueFast(
             base_tuple_id, old_column_offsets[col_itr],
             old_column_types[col_itr], old_is_inlineds[col_itr]));
 
@@ -251,7 +251,7 @@ void MaterializeColumnAtATime(
       // Get old column information
       oid_t old_column_id = column_info.origin_column_id;
       const size_t old_column_offset = old_schema->GetOffset(old_column_id);
-      const common::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
+      const type::Type::TypeId old_column_type = old_schema->GetType(old_column_id);
       const bool old_is_inlined = old_schema->IsInlined(old_column_id);
 
       // Old to new column mapping
@@ -278,7 +278,7 @@ void MaterializeColumnAtATime(
       ///////////////////////////
       for (oid_t old_tuple_id : *source_tile) {
         oid_t base_tuple_id = column_position_list[old_tuple_id];
-        common::Value value = (
+        type::Value value = (
           old_tile->GetValueFast(base_tuple_id, old_column_offset,
             old_column_type, old_is_inlined));
 

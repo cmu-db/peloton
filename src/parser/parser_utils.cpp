@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "parser/parser_utils.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "common/logger.h"
 #include "common/macros.h"
 
@@ -92,9 +92,9 @@ void PrintOperatorExpression(const expression::AbstractExpression* expr,
     return;
   }
 
-  GetExpressionInfo(expr->GetLeft(), num_indent + 1);
-  if (expr->GetRight() != NULL)
-    GetExpressionInfo(expr->GetRight(), num_indent + 1);
+  GetExpressionInfo(expr->GetChild(0), num_indent + 1);
+  if (expr->GetChild(1) != NULL)
+    GetExpressionInfo(expr->GetChild(1), num_indent + 1);
 }
 
 void GetExpressionInfo(const expression::AbstractExpression* expr,
@@ -112,7 +112,7 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
       break;
     case EXPRESSION_TYPE_COLUMN_REF:
       // TODO: Fix this
-      inprint((expr)->GetName(), num_indent);
+      inprint((expr)->GetExpressionName(), num_indent);
       //if (expr->GetColumn() != NULL) inprint((expr)->GetColumn(), num_indent);
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
@@ -223,8 +223,11 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   switch (stmt->type) {
     case INSERT_TYPE_VALUES:
       inprint("-> Values", num_indent + 1);
-      for (expression::AbstractExpression* expr : *stmt->values) {
-        GetExpressionInfo(expr, num_indent + 2);
+      for (auto value_item : *stmt->insert_values){
+        // TODO this is a debugging method which is currently unused.
+        for (expression::AbstractExpression* expr : *value_item) {
+          GetExpressionInfo(expr, num_indent + 2);
+        }
       }
       break;
     case INSERT_TYPE_SELECT:
@@ -232,6 +235,18 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
       break;
     default:
       break;
+  }
+}
+
+std::string CharsToStringDestructive(char * str) {
+  // this should not make an extra copy because of the return value optimization
+  // ..hopefully
+  if (str == nullptr){
+    return "";
+  }else{
+    std::string ret_string(str);
+    delete str;
+    return ret_string;
   }
 }
 

@@ -24,7 +24,7 @@ matrix:
 
 before_script:
     # setup environment
-    - sudo -H sh ./script/installation/packages.sh
+    - sudo ./script/installation/packages.sh
     - pip install --user cpp-coveralls
 
 script:
@@ -36,13 +36,16 @@ script:
     # run cmake
     - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
     # build
-    - make -j2
+    - make -j4
     # run tests
-    - make check -j2
+    - make check -j4
+    # build benchmarks
+    - make benchmark -j4
     # install peloton
     - make install
     # run psql tests
-    - bash ../script/testing/psql/psql_test.sh
+    # FIXME: Need to fix this for jenkins
+    # - bash ../script/testing/psql/psql_test.sh
     # run jdbc tests
     - python ../script/validators/jdbc_validator.py
     # upload coverage info

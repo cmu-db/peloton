@@ -14,7 +14,6 @@
 #include "index/index_key.h"
 #include "index/index_util.h"
 #include "common/logger.h"
-#include "common/config.h"
 #include "storage/tuple.h"
 #include "statistics/stats_aggregator.h"
 
@@ -142,7 +141,7 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
 /////////////////////////////////////////////////////////////////////
 
 BTREE_TEMPLATE_ARGUMENT
-void BTREE_TEMPLATE_TYPE::Scan(const std::vector<common::Value> &value_list,
+void BTREE_TEMPLATE_TYPE::Scan(const std::vector<type::Value> &value_list,
                                const std::vector<oid_t> &tuple_column_id_list,
                                const std::vector<ExpressionType> &expr_list,
                                const ScanDirectionType &scan_direction,

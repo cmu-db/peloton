@@ -15,14 +15,19 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "common/serializer.h"
-#include "common/serializeio.h"
-#include "common/varlen_pool.h"
+#include "type/serializer.h"
+#include "type/serializeio.h"
+#include "type/varlen_pool.h"
 #include "common/printable.h"
 
 #include <mutex>
 
 namespace peloton {
+
+namespace gc {
+  class GCManager;
+}
+
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -45,6 +50,7 @@ class Tile : public Printable {
   friend class TileFactory;
   friend class TupleIterator;
   friend class TileGroupHeader;
+  friend class gc::GCManager;
 
   Tile() = delete;
   Tile(Tile const &) = delete;
@@ -80,27 +86,32 @@ class Tile : public Printable {
   /**
    * Returns value present at slot
    */
-  common::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
+  type::Value GetValue(const oid_t tuple_offset, const oid_t column_id);
 
   /*
    * Faster way to get value
    * By amortizing schema lookups
    */
-  common::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
-                     const common::Type::TypeId column_type,
+  type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
+                     const type::Type::TypeId column_type,
                      const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
    */
-  void SetValue(const common::Value &value, const oid_t tuple_offset,
+  void SetValue(const type::Value &value, const oid_t tuple_offset,
                 const oid_t column_id);
+
+  // Copy a column from this tile to a destination tile.
+  // Note that we do shallow copy for varlen field
+  void CopyColumnValueTo(Tile *dest_tile, oid_t dest_tuple_offset, oid_t dest_col_id,
+                         oid_t src_tuple_offset, oid_t src_col_id);
 
   /*
    * Faster way to set value
    * By amortizing schema lookups
    */
-  void SetValueFast(const common::Value &value, const oid_t tuple_offset,
+  void SetValueFast(const type::Value &value, const oid_t tuple_offset,
                     const size_t column_offset, const bool is_inlined,
                     const size_t column_length);
 
@@ -160,11 +171,11 @@ class Tile : public Printable {
                          int num_tuples);
 
   void DeserializeTuplesFrom(SerializeInput &serialize_in,
-                             common::VarlenPool *pool = nullptr);
+                             type::VarlenPool *pool = nullptr);
   void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                          common::VarlenPool *pool = nullptr);
+                                          type::VarlenPool *pool = nullptr);
 
-  common::VarlenPool *GetPool() { return (pool); }
+  type::VarlenPool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_offset) const;
 
@@ -195,7 +206,7 @@ class Tile : public Printable {
   TileGroup *tile_group;
 
   // storage pool for uninlined data
-  common::VarlenPool *pool;
+  type::VarlenPool *pool;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;

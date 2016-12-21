@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -35,6 +34,19 @@ class IndexScanExecutor : public AbstractScanExecutor {
                              ExecutorContext *executor_context);
 
   ~IndexScanExecutor();
+
+  void UpdatePredicate(const std::vector<oid_t> &key_column_ids
+                           UNUSED_ATTRIBUTE,
+                       const std::vector<type::Value> &values
+                           UNUSED_ATTRIBUTE);
+
+  void ResetState() {
+    result_.clear();
+
+    result_itr_ = START_OID;
+
+    done_ = false;
+  }
 
  protected:
   bool DInit();
@@ -83,7 +95,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<ExpressionType> expr_types_;
 
   // values for evaluation.
-  std::vector<common::Value> values_;
+  std::vector<type::Value> values_;
 
   std::vector<expression::AbstractExpression *> runtime_keys_;
 

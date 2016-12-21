@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <thread>
 
 #include "common/logger.h"
-#include "logging/log_manager.h"
+#include "logging/checkpoint.h"
 #include "logging/checkpoint_manager.h"
 #include "logging/frontend_logger.h"
-#include "logging/checkpoint.h"
+#include "logging/log_manager.h"
 #include "logging/loggers/wal_frontend_logger.h"
 #include "logging/loggers/wbl_frontend_logger.h"
+#include "logging/logging_util.h"
 
 // TODO peloton_wait_timeout is always 0
 // configuration for testing
@@ -29,7 +29,6 @@ namespace peloton {
 namespace logging {
 
 FrontendLogger::FrontendLogger() {
-
   logger_type = LOGGER_TYPE_FRONTEND;
 
   // Set wait timeout
@@ -54,9 +53,9 @@ FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
   FrontendLogger *frontend_logger = nullptr;
 
   LOG_TRACE("Logging_type is %d", (int)logging_type);
-  if (IsBasedOnWriteAheadLogging(logging_type) == true) {
+  if (LoggingUtil::IsBasedOnWriteAheadLogging(logging_type) == true) {
     frontend_logger = new WriteAheadFrontendLogger(test_mode);
-  } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
+  } else if (LoggingUtil::IsBasedOnWriteBehindLogging(logging_type) == true) {
     frontend_logger = new WriteBehindFrontendLogger();
   } else {
     LOG_ERROR("Unsupported logging type");

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -22,39 +21,35 @@ namespace expression {
 // OperatorExpression
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class ConjunctionExpression : public AbstractExpression {
  public:
-  ConjunctionExpression(ExpressionType type)
-    : AbstractExpression(type) {}
+  ConjunctionExpression(ExpressionType type) : AbstractExpression(type) {}
 
-  ConjunctionExpression(ExpressionType type,
-                        AbstractExpression *left,
+  ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
-    : AbstractExpression(type, Type::BOOLEAN, left, right) {}
+      : AbstractExpression(type, type::Type::BOOLEAN, left, right) {}
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    auto vl = left_->Evaluate(tuple1, tuple2, context);
-    auto vr = right_->Evaluate(tuple1, tuple2, context);
+    PL_ASSERT(children_.size() == 2);
+    auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
+    auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {
       case (EXPRESSION_TYPE_CONJUNCTION_AND): {
         if (vl.IsTrue() && vr.IsTrue())
-          return ValueFactory::GetBooleanValue(1);
+          return type::ValueFactory::GetBooleanValue(true);
         if (vl.IsFalse() || vr.IsFalse())
-          return ValueFactory::GetBooleanValue(0);
-        return ValueFactory::GetBooleanValue(
-            PELOTON_BOOLEAN_NULL);
+          return type::ValueFactory::GetBooleanValue(false);
+        return type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL);
       }
       case (EXPRESSION_TYPE_CONJUNCTION_OR): {
         if (vl.IsFalse() && vr.IsFalse())
-          return ValueFactory::GetBooleanValue(0);
+          return type::ValueFactory::GetBooleanValue(false);
         if (vl.IsTrue() || vr.IsTrue())
-          return ValueFactory::GetBooleanValue(1);
-        return ValueFactory::GetBooleanValue(
-            PELOTON_BOOLEAN_NULL);
+          return type::ValueFactory::GetBooleanValue(true);
+        return type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL);
       }
       default:
         throw Exception("Invalid conjunction expression type.");
@@ -62,10 +57,12 @@ class ConjunctionExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new ConjunctionExpression(exp_type_,
-                                     left_ ? left_->Copy() : nullptr,
-                                     right_ ? right_->Copy() : nullptr);
+    return new ConjunctionExpression(*this);
   }
+
+ protected:
+  ConjunctionExpression(const ConjunctionExpression &other)
+      : AbstractExpression(other) {}
 };
 
 }  // End expression namespace

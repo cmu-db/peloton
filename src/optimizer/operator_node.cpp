@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/operator_node.h"
 
 namespace peloton {
@@ -23,7 +22,7 @@ Operator::Operator() : node(nullptr) {}
 
 Operator::Operator(BaseOperatorNode *node) : node(node) {}
 
-void Operator::accept(OperatorVisitor *v) const { node->accept(v); }
+void Operator::Accept(OperatorVisitor *v) const { node->Accept(v); }
 
 std::string Operator::name() const {
   if (defined()) {
@@ -51,20 +50,6 @@ bool Operator::IsPhysical() const {
     return node->IsPhysical();
   }
   return false;
-}
-
-std::vector<PropertySet> Operator::RequiredInputProperties() const {
-  if (defined()) {
-    return node->RequiredInputProperties();
-  }
-  return {};
-}
-
-PropertySet Operator::ProvidedOutputProperties() const {
-  if (defined()) {
-    return node->ProvidedOutputProperties();
-  }
-  return PropertySet();
 }
 
 hash_t Operator::Hash() const {

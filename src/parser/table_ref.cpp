@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "parser/statement_select.h"
 #include "parser/table_ref.h"
+#include "../include/parser/select_statement.h"
 
 namespace peloton {
 namespace parser {
 
 TableRef::~TableRef() {
-  delete table_name;
+  delete table_info_;
   free(alias);
   free(schema);
 

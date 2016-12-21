@@ -10,12 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
 #include <vector>
-#include <common/value.h>
+#include <type/value.h>
 
 #include "executor/logical_tile.h"
 
@@ -63,10 +62,20 @@ class AbstractExecutor {
   const planner::AbstractPlan *GetRawNode() const { return node_; }
 
   // set the context
-  void SetContext(common::Value &value);
+  void SetContext(type::Value &value);
 
   // clear the context
   void ClearContext();
+
+  // Update the predicate in runtime. This is used in Nested Loop Join. Since
+  // some executor do not need this function, we set it to empty function.
+  virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
+                                   UNUSED_ATTRIBUTE,
+                               const std::vector<type::Value> &values
+                                   UNUSED_ATTRIBUTE) {}
+
+  // Used to reset the state. For now it's overloaded by index scan executor
+  virtual void ResetState() {}
 
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor

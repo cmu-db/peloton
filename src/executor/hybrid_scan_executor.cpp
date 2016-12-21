@@ -24,12 +24,12 @@
 #include <numeric>
 
 #include "common/timer.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "planner/hybrid_scan_plan.h"
 #include "executor/hybrid_scan_executor.h"
 #include "storage/data_table.h"

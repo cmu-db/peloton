@@ -14,11 +14,11 @@
 
 #include "catalog/manager.h"
 #include "common/logger.h"
-#include "common/varlen_pool.h"
+#include "type/varlen_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/executor_context.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 #include "storage/tuple_iterator.h"
@@ -65,9 +65,10 @@ bool InsertExecutor::DExecute() {
 
   auto current_txn = executor_context_->GetTransaction();
 
-  if(!target_table) {
-	  transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
-	         return false;
+  if (!target_table) {
+    transaction_manager.SetTransactionResult(current_txn,
+                                             peloton::Result::RESULT_FAILURE);
+    return false;
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
@@ -83,7 +84,10 @@ bool InsertExecutor::DExecute() {
     }
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
+
+    // FIXME: Wrong? What if the result of select is nothing? Michael
     PL_ASSERT(logical_tile.get() != nullptr);
+
     auto target_table_schema = target_table->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
 
@@ -97,18 +101,21 @@ bool InsertExecutor::DExecute() {
 
       // Materialize the logical tile tuple
       for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-        common::Value val = (cur_tuple.GetValue(column_itr));
+        type::Value val = (cur_tuple.GetValue(column_itr));
         tuple->SetValue(column_itr, val, executor_pool);
       }
 
       // insert tuple into the table.
       ItemPointer *index_entry_ptr = nullptr;
-      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), current_txn, &index_entry_ptr);
+      peloton::ItemPointer location =
+          target_table->InsertTuple(tuple.get(), current_txn, &index_entry_ptr);
 
-      // it is possible that some concurrent transactions have inserted the same tuple.
+      // it is possible that some concurrent transactions have inserted the same
+      // tuple.
       // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
-        transaction_manager.SetTransactionResult(current_txn, peloton::Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(
+            current_txn, peloton::Result::RESULT_FAILURE);
         return false;
       }
 
@@ -127,7 +134,7 @@ bool InsertExecutor::DExecute() {
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
     auto project_info = node.GetProjectInfo();
-    auto tuple = node.GetTuple();
+    auto tuple = node.GetTuple(0);
     std::unique_ptr<storage::Tuple> project_tuple;
 
     // Check if this is not a raw tuple
@@ -151,25 +158,30 @@ bool InsertExecutor::DExecute() {
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
-
+      // if we are doing a bulk insert from values not project_info
+      if (!project_info) {
+        tuple = node.GetTuple(insert_itr);
+      }
       // Carry out insertion
       ItemPointer *index_entry_ptr = nullptr;
-      ItemPointer location = target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
+      ItemPointer location =
+          target_table->InsertTuple(tuple, current_txn, &index_entry_ptr);
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
       if (tuple->GetColumnCount() > 2) {
-        common::Value val = (tuple->GetValue(2));
+        type::Value val = (tuple->GetValue(2));
         LOG_TRACE("value: %s", val.GetInfo().c_str());
       }
 
       if (location.block == INVALID_OID) {
         LOG_TRACE("Failed to Insert. Set txn failure.");
-        transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn,
+                                                 Result::RESULT_FAILURE);
         return false;
       }
 
       transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
-      
+
       LOG_TRACE("Number of tuples in table after insert: %lu",
                 target_table->GetTupleCount());
 

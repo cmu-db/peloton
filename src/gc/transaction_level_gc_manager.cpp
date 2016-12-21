@@ -16,7 +16,7 @@
 #include "storage/tile_group.h"
 #include "catalog/manager.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 
 namespace peloton {
 namespace gc {
@@ -36,7 +36,7 @@ void TransactionLevelGCManager::StopGC(int thread_id) {
 
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group = manager.GetTileGroup(location.block).get();
 
   auto tile_group_header = tile_group->GetHeader();
 
@@ -46,6 +46,10 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   tile_group_header->SetEndCommitId(location.offset, MAX_CID);
   tile_group_header->SetPrevItemPointer(location.offset, INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(location.offset, INVALID_ITEMPOINTER);
+
+  // Reclaim the varlen pool
+  CheckAndReclaimVarlenColumns(tile_group, location.offset);
+
   PL_MEMSET(
     tile_group_header->GetReservedFieldRef(location.offset), 0,
     storage::TileGroupHeader::GetReservedSize());

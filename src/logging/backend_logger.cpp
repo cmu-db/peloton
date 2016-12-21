@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "common/logger.h"
 #include "logging/backend_logger.h"
+#include "common/logger.h"
+#include "logging/log_manager.h"
+#include "logging/log_record.h"
 #include "logging/loggers/wal_backend_logger.h"
 #include "logging/loggers/wbl_backend_logger.h"
-#include "logging/log_record.h"
-#include "logging/log_manager.h"
+#include "logging/logging_util.h"
 
 namespace peloton {
 namespace logging {
@@ -29,7 +29,7 @@ BackendLogger::BackendLogger()
       persist_buffer_pool_(
           std::unique_ptr<BufferPool>(new CircularBufferPool())) {
   logger_type = LOGGER_TYPE_BACKEND;
-  backend_pool.reset(new common::VarlenPool(BACKEND_TYPE_MM));
+  backend_pool.reset(new type::VarlenPool(BACKEND_TYPE_MM));
   frontend_logger_id = -1;
 }
 
@@ -50,9 +50,9 @@ BackendLogger::~BackendLogger() {
 BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
   BackendLogger *backend_logger = nullptr;
 
-  if (IsBasedOnWriteAheadLogging(logging_type) == true) {
+  if (LoggingUtil::IsBasedOnWriteAheadLogging(logging_type) == true) {
     backend_logger = new WriteAheadBackendLogger();
-  } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
+  } else if (LoggingUtil::IsBasedOnWriteBehindLogging(logging_type) == true) {
     backend_logger = new WriteBehindBackendLogger();
   } else {
     LOG_ERROR("Unsupported logging type");

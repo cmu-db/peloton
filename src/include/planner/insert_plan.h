@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
@@ -23,8 +22,8 @@ class DataTable;
 class Tuple;
 }
 
-namespace parser{
-  class InsertStatement;
+namespace parser {
+class InsertStatement;
 }
 
 namespace planner {
@@ -51,18 +50,20 @@ class InsertPlan : public AbstractPlan {
                       oid_t bulk_insert_count = 1);
   // This constructor takes in a table name and a tuple
   explicit InsertPlan(std::string table_name,
-                        std::unique_ptr<storage::Tuple> &&tuple,
-                        oid_t bulk_insert_count = 1);
+                      std::unique_ptr<storage::Tuple> &&tuple,
+                      oid_t bulk_insert_count = 1);
 
-  explicit InsertPlan(parser::InsertStatement* parse_tree, oid_t bulk_insert_count = 1);
-
+  explicit InsertPlan(
+      storage::DataTable *table, std::vector<char *> *columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+          insert_values);
 
   // Get a varlen pool (will construct the pool only if needed)
-  common::VarlenPool *GetPlanPool();
+  type::VarlenPool *GetPlanPool();
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
-  void SetParameterValues(std::vector<common::Value>* values);
+  void SetParameterValues(std::vector<type::Value> *values);
 
   storage::DataTable *GetTable() const { return target_table_; }
 
@@ -72,7 +73,12 @@ class InsertPlan : public AbstractPlan {
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
-  const storage::Tuple *GetTuple() const { return tuple_.get(); }
+  const storage::Tuple *GetTuple(int tuple_idx) const {
+    if (tuple_idx >= (int)tuples_.size()) {
+      return nullptr;
+    }
+    return tuples_[tuple_idx].get();
+  }
 
   const std::string GetInfo() const { return "InsertPlan"; }
 
@@ -82,7 +88,6 @@ class InsertPlan : public AbstractPlan {
     return dummy;
   }
 
-
  private:
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
@@ -91,19 +96,20 @@ class InsertPlan : public AbstractPlan {
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   /** @brief Tuple */
-  std::unique_ptr<storage::Tuple> tuple_;
+  std::vector<std::unique_ptr<storage::Tuple>> tuples_;
 
-  // <tuple_column_index, parameter_index>
-  std::unique_ptr<std::vector<std::pair<oid_t, oid_t>>> parameter_vector_;
+  // <tuple_index, tuple_column_index, parameter_index>
+  std::unique_ptr<std::vector<std::tuple<oid_t, oid_t, oid_t>>>
+      parameter_vector_;
 
   // Parameter values
-  std::unique_ptr<std::vector<common::Type::TypeId>> params_value_type_;
+  std::unique_ptr<std::vector<type::Type::TypeId>> params_value_type_;
 
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;
 
   // pool for variable length types
-  std::unique_ptr<common::VarlenPool> pool_;
+  std::unique_ptr<type::VarlenPool> pool_;
 };
 
 }  // namespace planner

@@ -1,6 +1,10 @@
-# --[ Gmock library
+##################################################################################
+# TEST CMAKELISTS
+##################################################################################
 
-# --[ Tests 
+##################################################################################
+
+# --[ Tests lists
 
 # creates 'tests' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
@@ -23,9 +27,17 @@ foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
 endforeach(perf_src ${perf_srcs})
 
+##################################################################################
+
+# --[ Gmock
+
 set(GMOCK_DIR  "${PROJECT_SOURCE_DIR}/third_party/gmock")
 file(GLOB gmock_srcs  ${GMOCK_DIR}/*.cc)
 include_directories(SYSTEM ${GMOCK_DIR})
+
+##################################################################################
+
+# --[ Tests Common library
 
 set(HARNESS ${PROJECT_SOURCE_DIR}/test/common/harness.cpp)
 set(EXECUTOR_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/executor/executor_tests_util.cpp)
@@ -33,21 +45,29 @@ set(LOGGING_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/logging/logging_tests_util.cpp
 set(JOIN_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/executor/join_tests_util.cpp)
 set(TXN_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/concurrency/transaction_tests_util.cpp)
 set(STATS_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/statistics/stats_tests_util.cpp)
+set(SQL_TESTS_UTIL ${PROJECT_SOURCE_DIR}/test/sql/sql_tests_util.cpp)
 
 add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} 
             ${HARNESS} ${EXECUTOR_TESTS_UTIL} ${LOGGING_TESTS_UTIL} ${JOIN_TESTS_UTIL}
-            ${TXN_TESTS_UTIL} ${STATS_TESTS_UTIL})
+            ${TXN_TESTS_UTIL} ${STATS_TESTS_UTIL} ${SQL_TESTS_UTIL})
 
 # --[ Add "make check" target
 
 set(CTEST_FLAGS "")
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
 
-# Set memcheck parameters
+##################################################################################
+
+# --[ Memcheck
+
 find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
 set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes
     --soname-synonyms=somalloc=*jemalloc* --error-exitcode=1)
 set(MEMORYCHECK_SUPPRESSIONS_FILE ${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp)
+
+##################################################################################
+
+# --[ Functionality Tests
 
 foreach(test_src ${test_srcs} )
     #message("test_src = " ${test_src})
@@ -80,7 +100,12 @@ foreach(test_src ${test_srcs} )
 	
 endforeach(test_src ${test_srcs})
 
+##################################################################################
+
+# --[ Performance Tests
+
 # Compile and run performance tests separately
+
 foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
     

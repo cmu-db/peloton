@@ -44,6 +44,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
 
+  optimizer::SimpleOptimizer optimizer;
+
   // Create a table first
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -67,11 +69,10 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(create_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
   LOG_INFO("Building plan tree completed!");
 
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
@@ -107,8 +108,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 
@@ -134,8 +134,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
 

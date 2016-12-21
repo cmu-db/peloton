@@ -17,6 +17,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "common/platform.h"
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
@@ -26,6 +27,10 @@
 #include "container/lock_free_queue.h"
 
 #define QUERY_METRIC_QUEUE_SIZE 100000
+
+namespace peloton {
+class Statement;
+}
 
 namespace peloton {
 
@@ -107,7 +112,8 @@ class BackendStatsContext {
   void IncrementTxnAborted(oid_t database_id);
 
   // Initialize the query stat
-  void InitQueryMetric(std::string query_string, oid_t database_oid);
+  void InitQueryMetric(const std::shared_ptr<Statement> statement,
+                       const std::shared_ptr<QueryMetric::QueryParams> params);
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
@@ -146,6 +152,9 @@ class BackendStatsContext {
 
   // Index oids
   std::unordered_set<oid_t> index_ids_;
+
+  // Index oid spin lock
+  Spinlock index_id_lock;
 
   // Metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> completed_query_metrics_{

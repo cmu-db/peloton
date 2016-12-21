@@ -10,10 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <sstream>
+#include <string>
+
+#include "util/string_util.h"
 
 namespace peloton {
 

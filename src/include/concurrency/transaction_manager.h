@@ -20,8 +20,7 @@
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction.h"
-#include "concurrency/epoch_manager.h"
-#include "gc/gc_manager.h"
+#include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
 
 namespace peloton {
@@ -139,7 +138,11 @@ class TransactionManager {
 
   virtual Transaction *BeginTransaction() = 0;
 
+  virtual Transaction *BeginReadonlyTransaction() = 0;
+
   virtual void EndTransaction(Transaction *current_txn) = 0;
+
+  virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
 
   virtual Result CommitTransaction(Transaction *const current_txn) = 0;
 

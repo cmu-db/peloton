@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "abstract_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "storage/tuple.h"
 
 namespace peloton {

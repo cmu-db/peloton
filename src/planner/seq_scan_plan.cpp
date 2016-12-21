@@ -11,16 +11,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/seq_scan_plan.h"
-#include "storage/data_table.h"
-#include "catalog/manager.h"
-#include "common/types.h"
-#include "common/macros.h"
-#include "common/logger.h"
-#include "expression/expression_util.h"
-#include "catalog/schema.h"
-#include "catalog/catalog.h"
 
-#include "parser/statement_select.h"
+#include "../include/parser/select_statement.h"
+#include "catalog/catalog.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "type/types.h"
+#include "expression/expression_util.h"
+#include "storage/data_table.h"
+
 
 namespace peloton {
 namespace planner {
@@ -48,64 +49,6 @@ namespace planner {
  *
  * TODO: parent_ seems never be set or used
  */
-
-SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
-  LOG_DEBUG("Creating a Sequential Scan Plan");
-  auto target_table = static_cast<storage::DataTable *>(
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          select_node->from_table->GetDatabaseName(),
-          select_node->from_table->GetTableName()));
-  SetTargetTable(target_table);
-  ColumnIds().clear();
-  // Check if there is an aggregate function in query
-  bool function_found = false;
-  for (auto elem : *select_node->select_list) {
-    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
-      function_found = true;
-      break;
-    }
-  }
-  // Pass all columns
-  // TODO: This isn't efficient. Needs to be fixed
-  if (function_found) {
-    auto &schema_columns = GetTable()->GetSchema()->GetColumns();
-    for (auto column : schema_columns) {
-      oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
-      SetColumnId(col_id);
-    }
-  }
-  // Pass columns in select_list
-  else {
-    if (select_node->select_list->at(0)->GetExpressionType() !=
-        EXPRESSION_TYPE_STAR) {
-      for (auto col : *select_node->select_list) {
-        LOG_TRACE("ExpressionType: %s",
-                  ExpressionTypeToString(col->GetExpressionType()).c_str());
-        auto col_name = col->GetName();
-        oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
-        SetColumnId(col_id);
-      }
-    } else {
-      auto allColumns = GetTable()->GetSchema()->GetColumns();
-      for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
-    }
-  }
-
-  // Check for "For Update" flag
-  if(select_node->is_for_update == true){
-    SetForUpdateFlag(true);
-  }
-
-  // Keep a copy of the where clause to be binded to values
-  if (select_node->where_clause != NULL) {
-    auto predicate = select_node->where_clause->Copy();
-    // Replace COLUMN_REF expressions with TupleValue expressions
-    expression::ExpressionUtil::ReplaceColumnExpressions(GetTable()->GetSchema(), predicate);
-    predicate_with_params_ =
-        std::unique_ptr<expression::AbstractExpression>(predicate->Copy());
-    SetPredicate(predicate);
-  }
-}
 
 bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
   // A placeholder for the total size written at the end
@@ -145,9 +88,6 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
     // Write the expression type
     ExpressionType expr_type = GetPredicate()->GetExpressionType();
     output.WriteByte(static_cast<int8_t>(expr_type));
-
-    // Write predicate
-    //GetPredicate()->SerializeTo(output);
   }
 
   // Write parent, but parent seems never be set or used right now
@@ -201,7 +141,8 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
 
   // Get table and set it to the member
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
-      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid, table_oid));
+      catalog::Catalog::GetInstance()->GetTableWithOid(database_oid,
+                                                       table_oid));
   SetTargetTable(target_table);
 
   // Read the number of column_id and set them to column_ids_
@@ -311,12 +252,8 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   return index;
 }
 
-void SeqScanPlan::SetParameterValues(std::vector<common::Value> *values) {
+void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Sequential Scan");
-  auto predicate = predicate_with_params_->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(
-      predicate, values, GetTable()->GetSchema());
-  SetPredicate(predicate);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);

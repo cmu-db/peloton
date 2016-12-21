@@ -13,8 +13,9 @@
 #pragma once
 
 #include "optimizer/abstract_optimizer.h"
-#include "common/types.h"
-#include "common/value.h"
+#include "parser/statements.h"
+#include "type/types.h"
+#include "type/value.h"
 
 #include <memory>
 #include <vector>
@@ -24,6 +25,7 @@ namespace parser {
 class SQLStatement;
 class SQLStatementList;
 class SelectStatement;
+class CopyStatement;
 }
 
 namespace storage {
@@ -58,8 +60,8 @@ class SimpleOptimizer : public AbstractOptimizer {
   SimpleOptimizer();
   virtual ~SimpleOptimizer();
 
-  static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree);
+  std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -67,25 +69,32 @@ class SimpleOptimizer : public AbstractOptimizer {
   //===--------------------------------------------------------------------===//
 
   // get the column IDs evaluated in a predicate
-  static void GetPredicateColumns(catalog::Schema *schema,
+  static void GetPredicateColumns(const catalog::Schema *schema,
                                   expression::AbstractExpression *expression,
                                   std::vector<oid_t> &column_ids,
                                   std::vector<ExpressionType> &expr_types,
-                                  std::vector<common::Value> &values,
+                                  std::vector<type::Value> &values,
                                   bool &index_searchable);
-  
-  static bool CheckIndexSearchable(storage::DataTable* target_table, 
-                                    expression::AbstractExpression *expression,
-                                    std::vector<oid_t> &key_column_ids,
-                                    std::vector<ExpressionType> &expr_types,
-                                    std::vector<common::Value> &values,
-                                    oid_t &index_id); 
+
+  static bool CheckIndexSearchable(storage::DataTable *target_table,
+                                   expression::AbstractExpression *expression,
+                                   std::vector<oid_t> &key_column_ids,
+                                   std::vector<ExpressionType> &expr_types,
+                                   std::vector<type::Value> &values,
+                                   oid_t &index_id);
 
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
-      storage::DataTable *target_table, parser::SelectStatement *select_stmt);
+      storage::DataTable *target_table, std::vector<oid_t> &column_ids,
+      expression::AbstractExpression *predicate, bool for_update);
+
+  // create a copy plan for a copy statement
+  static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
+      parser::CopyStatement *copy_stmt);
 
   static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
+  static std::unique_ptr<planner::AbstractPlan> CreateHackingNestedLoopJoinPlan(
+      const parser::SelectStatement *statement);
 };
 }  // namespace optimizer
 }  // namespace peloton

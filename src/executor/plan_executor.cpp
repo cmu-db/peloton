@@ -27,7 +27,7 @@ namespace bridge {
  * Added for network invoking efficiently
  */
 executor::ExecutorContext *BuildExecutorContext(
-    const std::vector<common::Value> &params, concurrency::Transaction *txn);
+    const std::vector<type::Value> &params, concurrency::Transaction *txn);
 
 executor::AbstractExecutor *BuildExecutorTree(
     executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
@@ -37,16 +37,15 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
 
 /**
  * @brief Build a executor tree and execute it.
- * Use std::vector<common::Value> as params to make it more elegant for
+ * Use std::vector<type::Value> as params to make it more elegant for
  * networking
  * Before ExecutePlan, a node first receives value list, so we should pass
  * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan,
-    const std::vector<common::Value> &params, std::vector<ResultType> &result,
-    const std::vector<int> &result_format) {
+    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+    std::vector<ResultType> &result, const std::vector<int> &result_format) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -69,7 +68,7 @@ peloton_status PlanExecutor::ExecutePlan(
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  // Use const std::vector<common::Value> &params to make it more elegant for
+  // Use const std::vector<type::Value> &params to make it more elegant for
   // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
@@ -110,7 +109,7 @@ peloton_status PlanExecutor::ExecutePlan(
           std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
       // Construct the returned results
-      for (auto tuple : answer_tuples) {
+      for (auto &tuple : answer_tuples) {
         unsigned int col_index = 0;
         auto &schema_columns = output_schema->GetColumns();
         for (auto &column : schema_columns) {
@@ -164,15 +163,14 @@ cleanup:
 
 /**
  * @brief Build a executor tree and execute it.
- * Use std::vector<common::Value> as params to make it more elegant for
+ * Use std::vector<type::Value> as params to make it more elegant for
  * networking
  * Before ExecutePlan, a node first receives value list, so we should pass
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan,
-    const std::vector<common::Value> &params,
+    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   if (plan == nullptr) return -1;
 
@@ -195,7 +193,7 @@ int PlanExecutor::ExecutePlan(
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  // Use const std::vector<common::Value> &params to make it more elegant for
+  // Use const std::vector<type::Value> &params to make it more elegant for
   // network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
@@ -296,7 +294,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
  * @brief Build Executor Context
  */
 executor::ExecutorContext *BuildExecutorContext(
-    const std::vector<common::Value> &params, concurrency::Transaction *txn) {
+    const std::vector<type::Value> &params, concurrency::Transaction *txn) {
   return new executor::ExecutorContext(txn, params);
 }
 
@@ -401,6 +399,10 @@ executor::AbstractExecutor *BuildExecutorTree(
     case PLAN_NODE_TYPE_CREATE:
       LOG_TRACE("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
+      break;
+    case PLAN_NODE_TYPE_COPY:
+      LOG_TRACE("Adding Copy Executer");
+      child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
 
     default:

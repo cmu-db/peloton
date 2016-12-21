@@ -37,9 +37,23 @@ TEST_F(PriorityQueueTest, BasicTest) {
   priority_queue.Push(4);
 
   EXPECT_EQ(priority_queue.GetSize(), 4);
+  EXPECT_EQ(priority_queue.IsFull(), false);
 
   priority_queue.Pop(value);
   EXPECT_EQ(value, 4);
+  priority_queue.Clear();
+  EXPECT_EQ(priority_queue.GetSize(), 0);
+  EXPECT_EQ(priority_queue.IsEmpty(), true);
+  for (uint32_t i = 0; i < (uint32_t)priority_queue.GetCapacity() - 1; ++i) {
+    priority_queue.Push(i);
+    EXPECT_EQ(priority_queue.GetSize(), i + 1);
+    EXPECT_EQ(priority_queue.IsEmpty(), false);
+    EXPECT_EQ(priority_queue.IsFull(), false);
+  }
+  priority_queue.Push(priority_queue.GetCapacity() - 1);
+  EXPECT_EQ(priority_queue.GetSize(), priority_queue.GetCapacity());
+  EXPECT_EQ(priority_queue.IsEmpty(), false);
+  EXPECT_EQ(priority_queue.IsFull(), true);
 
 }
 

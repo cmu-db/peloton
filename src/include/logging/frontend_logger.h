@@ -22,7 +22,7 @@
 #include <thread>
 #include <algorithm>
 
-#include "common/types.h"
+#include "type/types.h"
 #include "logging/logger.h"
 #include "logging/log_buffer.h"
 #include "logging/buffer_pool.h"

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "common/value.h"
+#include "type/value.h"
 #include "common/logger.h"
 #include "executor/abstract_executor.h"
 #include "executor/executor_context.h"
@@ -96,7 +96,7 @@ bool AbstractExecutor::Execute() {
   return status;
 }
 
-void AbstractExecutor::SetContext(common::Value &value) {
+void AbstractExecutor::SetContext(type::Value &value) {
   executor_context_->SetParams(value);
 }
 

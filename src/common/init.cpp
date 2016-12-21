@@ -9,11 +9,14 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "catalog/catalog.h"
 
 #include "common/init.h"
 #include "common/thread_pool.h"
-#include "common/config.h"
 
+#include "configuration/configuration.h"
+
+#include "concurrency/epoch_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "storage/data_table.h"
 
@@ -28,31 +31,35 @@ namespace peloton {
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
-
   // Initialize CDS library
   cds::Initialize();
 
+  QUERY_THREAD_COUNT = std::thread::hardware_concurrency();
+  LOGGING_THREAD_COUNT = 1;
+  GC_THREAD_COUNT = 1;
+  EPOCH_THREAD_COUNT = 1;
 
-  // FIXME: A number for the available threads other than
-  // std::thread::hardware_concurrency() should be
-  // chosen. Assigning new task after reaching maximum will
-  // block.
-  thread_pool.Initialize(std::thread::hardware_concurrency(), 0);
+  // set max thread number.
+  thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
 
   int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
-  
-  // the garbage collector is assigned to dedicated threads.
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  gc_manager.StartGC();
+
+  // start epoch.
+  concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+  // start GC.
+  gc::GCManagerFactory::GetInstance().StartGC();
+  // initialize the catalog and add the default database, so we don't do this on
+  // the first query
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 void PelotonInit::Shutdown() {
-
   // shut down GC.
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  gc_manager.StopGC();
+  gc::GCManagerFactory::GetInstance().StopGC();
+  // shut down epoch.
+  concurrency::EpochManagerFactory::GetInstance().StopEpoch();
 
   thread_pool.Shutdown();
 
@@ -67,13 +74,11 @@ void PelotonInit::Shutdown() {
 }
 
 void PelotonInit::SetUpThread() {
-
   // Attach thread to cds
   cds::threading::Manager::attachThread();
 }
 
 void PelotonInit::TearDownThread() {
-
   // Detach thread from cds
   cds::threading::Manager::detachThread();
 }

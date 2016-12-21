@@ -16,9 +16,9 @@
 #include <vector>
 
 #include "expression/abstract_expression.h"
-#include "expression/parser_expression.h"
+#include "parser/sql_statement.h"
 
-#include "common/types.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace parser {
@@ -32,7 +32,7 @@ struct TableRef {
   TableRef(TableReferenceType type)
       : type(type),
         schema(NULL),
-        table_name(NULL),
+        table_info_(NULL),
         alias(NULL),
         select(NULL),
         list(NULL),
@@ -45,7 +45,7 @@ struct TableRef {
   char* schema;
 
   // Expression of database name and table name
-  expression::ParserExpression* table_name;
+  TableInfo *table_info_ = nullptr;
 
   char* alias;
 
@@ -58,10 +58,10 @@ struct TableRef {
 
   // Get the name of the database of this table
   inline const char* GetDatabaseName() {
-    if (table_name == nullptr || table_name->database == nullptr) {
+    if (table_info_ == nullptr || table_info_->database_name == nullptr) {
       return DEFAULT_DB_NAME;
     }
-    return table_name->database;
+    return table_info_->database_name;
   }
 
   // Get the name of the table
@@ -69,7 +69,7 @@ struct TableRef {
     if (alias != NULL)
       return alias;
     else
-      return table_name->name;
+      return table_info_->table_name;
   }
 };
 

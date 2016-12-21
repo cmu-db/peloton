@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "common/statement.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
@@ -51,13 +51,18 @@ class StatsTestsUtil {
                                       int first_col_val, int second_col_val,
                                       int third_col_val, int fourth_col_val);
 
-  static void CreateTable();
+  static void CreateTable(bool has_primary_key = true);
 
-  static std::unique_ptr<Statement> GetInsertStmt();
+  static std::shared_ptr<stats::QueryMetric::QueryParams> GetQueryParams(
+      std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
+      std::shared_ptr<uchar> &val_buf);
 
-  static std::unique_ptr<Statement> GetDeleteStmt();
+  static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
+                                                  std::string val = "hello");
 
-  static std::unique_ptr<Statement> GetUpdateStmt();
+  static std::shared_ptr<Statement> GetDeleteStmt();
+
+  static std::shared_ptr<Statement> GetUpdateStmt();
 
   static void ParseAndPlan(Statement *statement, std::string sql);
 };

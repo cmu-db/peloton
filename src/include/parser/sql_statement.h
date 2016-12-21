@@ -17,14 +17,30 @@
 
 #pragma once
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
-#include "common/types.h"
+#include "common/macros.h"
 #include "common/printable.h"
+#include "type/types.h"
 
 namespace peloton {
+
+namespace optimizer {
+class QueryNodeVisitor;
+}
+
 namespace parser {
+
+struct TableInfo{
+
+  ~TableInfo(){
+    delete[] table_name;
+    delete[] database_name;
+  }
+  char * table_name = nullptr;;
+  char * database_name = nullptr;
+};
 
 // Base class for every SQLStatement
 class SQLStatement {
@@ -38,8 +54,35 @@ class SQLStatement {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // Visitor Pattern used for the optimizer to access statements
+  // This allows a facility outside the object itself to determine the type of
+  // class using the built-in type system.
+  virtual void Accept(optimizer::QueryNodeVisitor* v) const = 0;
+
  private:
   StatementType stmt_type;
+};
+
+class TableRefStatement : public SQLStatement{
+public:
+
+  TableRefStatement(StatementType type) : SQLStatement(type){}
+
+  virtual ~TableRefStatement(){
+    delete table_info_;
+  }
+
+  virtual inline std::string GetTableName() { return table_info_->table_name; }
+
+  // Get the name of the database of this table
+  virtual inline std::string GetDatabaseName() {
+    if (table_info_->database_name == nullptr) {
+      return DEFAULT_DB_NAME;
+    }
+    return table_info_->database_name;
+  }
+
+  TableInfo *table_info_ = nullptr;
 };
 
 // Represents the result of the SQLParser.
@@ -58,7 +101,6 @@ class SQLStatementList {
     for (auto stmt : statements) delete stmt;
 
     free((char*)parser_msg);
-
   }
 
   void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }

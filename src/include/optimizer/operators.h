@@ -11,18 +11,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "optimizer/operator_node.h"
-#include "optimizer/query_operators.h"
-#include "optimizer/group.h"
 #include "optimizer/column.h"
+#include "optimizer/group.h"
+#include "optimizer/operator_node.h"
 #include "optimizer/util.h"
 
 #include <vector>
 
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}
+
+namespace storage {
+class DataTable;
+}
+
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -40,28 +47,19 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table, std::vector<Column *> cols);
+  static Operator make(storage::DataTable *table);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
   storage::DataTable *table;
-  std::vector<Column *> columns;
-};
-
-//===--------------------------------------------------------------------===//
-// Project
-//===--------------------------------------------------------------------===//
-class LogicalProject : public OperatorNode<LogicalProject> {
- public:
-  static Operator make();
 };
 
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-class LogicalSelect : public OperatorNode<LogicalSelect> {
+class LogicalFilter : public OperatorNode<LogicalFilter> {
  public:
   static Operator make();
 };
@@ -119,20 +117,19 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 class PhysicalScan : public OperatorNode<PhysicalScan> {
  public:
-  static Operator make(storage::DataTable *table, std::vector<Column *> cols);
+  static Operator make(storage::DataTable *table);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  storage::DataTable *table;
-  std::vector<Column *> columns;
+  storage::DataTable *table_;
 };
 
 //===--------------------------------------------------------------------===//
-// ComputeExprs
+// PhysicalProject
 //===--------------------------------------------------------------------===//
-class PhysicalComputeExprs : public OperatorNode<PhysicalComputeExprs> {
+class PhysicalProject : public OperatorNode<PhysicalProject> {
  public:
   static Operator make();
 };
@@ -207,109 +204,6 @@ class PhysicalRightHashJoin : public OperatorNode<PhysicalRightHashJoin> {
 class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
  public:
   static Operator make();
-};
-
-//===--------------------------------------------------------------------===//
-// Variable
-//===--------------------------------------------------------------------===//
-class ExprVariable : public OperatorNode<ExprVariable> {
- public:
-  static Operator make(Column *column);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  Column *column;
-};
-
-//===--------------------------------------------------------------------===//
-// Constant
-//===--------------------------------------------------------------------===//
-class ExprConstant : public OperatorNode<ExprConstant> {
-  ~ExprConstant() {
-
-  }
-  
- public:
-  static Operator make(const common::Value value);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  common::Value value;
-};
-
-//===--------------------------------------------------------------------===//
-// Compare
-//===--------------------------------------------------------------------===//
-class ExprCompare : public OperatorNode<ExprCompare> {
- public:
-  static Operator make(ExpressionType type);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  ExpressionType expr_type;
-};
-
-//===--------------------------------------------------------------------===//
-// Boolean Operation
-//===--------------------------------------------------------------------===//
-enum class BoolOpType {
-  Not,
-  And,
-  Or,
-};
-
-class ExprBoolOp : public OperatorNode<ExprBoolOp> {
- public:
-  static Operator make(BoolOpType type);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  BoolOpType bool_type;
-};
-
-//===--------------------------------------------------------------------===//
-// Operation (e.g. +, -, string functions)
-//===--------------------------------------------------------------------===//
-class ExprOp : public OperatorNode<ExprOp> {
- public:
-  static Operator make(ExpressionType type, common::Type::TypeId return_type);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  ExpressionType expr_type;
-  common::Type::TypeId return_type;
-};
-
-//===--------------------------------------------------------------------===//
-// ProjectList
-//===--------------------------------------------------------------------===//
-class ExprProjectList : public OperatorNode<ExprProjectList> {
- public:
-  static Operator make();
-};
-
-//===--------------------------------------------------------------------===//
-// ProjectColumn
-//===--------------------------------------------------------------------===//
-class ExprProjectColumn : public OperatorNode<ExprProjectColumn> {
- public:
-  static Operator make(Column *column);
-
-  bool operator==(const BaseOperatorNode &r) override;
-
-  hash_t Hash() const override;
-
-  Column *column;
 };
 
 } /* namespace optimizer */

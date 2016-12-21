@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
+
+#include <map>
 
 #include "optimizer/column.h"
 
@@ -27,14 +28,14 @@ class ColumnManager {
 
   Column *LookupColumnByID(ColumnID id);
 
-  Column *AddBaseColumn(common::Type::TypeId type, int size, std::string name,
+  Column *AddBaseColumn(type::Type::TypeId type, int size, std::string name,
                         bool inlined, oid_t base_table, oid_t column_index);
 
-  Column *AddExprColumn(common::Type::TypeId type, int size, std::string name,
+  Column *AddExprColumn(type::Type::TypeId type, int size, std::string name,
                         bool inlined);
 
  private:
-  ColumnID next_column_id;
+  ColumnID next_column_id = 0;
 
   std::vector<Column *> columns;
   std::map<std::tuple<oid_t, oid_t>, Column *> table_col_index_to_column;

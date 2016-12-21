@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/operators.h"
@@ -26,34 +25,17 @@ class OperatorVisitor {
  public:
   virtual ~OperatorVisitor(){};
 
-  virtual void visit(const LeafOperator *);
-  virtual void visit(const LogicalGet *);
-  virtual void visit(const LogicalProject *);
-  virtual void visit(const LogicalSelect *);
-  virtual void visit(const LogicalInnerJoin *);
-  virtual void visit(const LogicalLeftJoin *);
-  virtual void visit(const LogicalRightJoin *);
-  virtual void visit(const LogicalOuterJoin *);
-  virtual void visit(const LogicalAggregate *);
-  virtual void visit(const LogicalLimit *);
-  virtual void visit(const PhysicalScan *);
-  virtual void visit(const PhysicalComputeExprs *);
-  virtual void visit(const PhysicalFilter *);
-  virtual void visit(const PhysicalInnerNLJoin *);
-  virtual void visit(const PhysicalLeftNLJoin *);
-  virtual void visit(const PhysicalRightNLJoin *);
-  virtual void visit(const PhysicalOuterNLJoin *);
-  virtual void visit(const PhysicalInnerHashJoin *);
-  virtual void visit(const PhysicalLeftHashJoin *);
-  virtual void visit(const PhysicalRightHashJoin *);
-  virtual void visit(const PhysicalOuterHashJoin *);
-  virtual void visit(const ExprVariable *);
-  virtual void visit(const ExprConstant *);
-  virtual void visit(const ExprCompare *);
-  virtual void visit(const ExprBoolOp *);
-  virtual void visit(const ExprOp *);
-  virtual void visit(const ExprProjectList *);
-  virtual void visit(const ExprProjectColumn *);
+  virtual void Visit(const PhysicalScan *) = 0;
+  virtual void Visit(const PhysicalProject *) = 0;
+  virtual void Visit(const PhysicalFilter *) = 0;
+  virtual void Visit(const PhysicalInnerNLJoin *) = 0;
+  virtual void Visit(const PhysicalLeftNLJoin *) = 0;
+  virtual void Visit(const PhysicalRightNLJoin *) = 0;
+  virtual void Visit(const PhysicalOuterNLJoin *) = 0;
+  virtual void Visit(const PhysicalInnerHashJoin *) = 0;
+  virtual void Visit(const PhysicalLeftHashJoin *) = 0;
+  virtual void Visit(const PhysicalRightHashJoin *) = 0;
+  virtual void Visit(const PhysicalOuterHashJoin *) = 0;
 };
 
 } /* namespace optimizer */

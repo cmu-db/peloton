@@ -40,7 +40,7 @@ Column *ColumnManager::LookupColumnByID(ColumnID id) {
   return id_to_column.at(id);
 }
 
-Column *ColumnManager::AddBaseColumn(common::Type::TypeId type, int size, std::string name,
+Column *ColumnManager::AddBaseColumn(type::Type::TypeId type, int size, std::string name,
                                      bool inlined, oid_t base_table,
                                      oid_t column_index) {
   LOG_TRACE(
@@ -59,7 +59,7 @@ Column *ColumnManager::AddBaseColumn(common::Type::TypeId type, int size, std::s
   return col;
 }
 
-Column *ColumnManager::AddExprColumn(common::Type::TypeId type, int size, std::string name,
+Column *ColumnManager::AddExprColumn(type::Type::TypeId type, int size, std::string name,
                                      bool inlined) {
   LOG_TRACE("Adding expr column: %s, type %d, size %d, inlined %s",
             name.c_str(), type, size,

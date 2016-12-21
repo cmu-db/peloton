@@ -15,10 +15,10 @@
 
 #include "planner/projection_plan.h"
 #include "common/logger.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "expression/container_tuple.h"
+#include "common/container_tuple.h"
 #include "storage/tile.h"
 #include "storage/data_table.h"
 

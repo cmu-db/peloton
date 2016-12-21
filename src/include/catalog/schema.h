@@ -15,7 +15,7 @@
 
 #include "common/printable.h"
 #include "catalog/column.h"
-#include "common/type.h"
+#include "type/type.h"
 #include <memory>
 
 namespace peloton {
@@ -32,7 +32,7 @@ class Schema : public Printable {
   //===--------------------------------------------------------------------===//
 
   // Construct schema
-  void CreateTupleSchema(const std::vector<common::Type::TypeId> &column_types,
+  void CreateTupleSchema(const std::vector<type::Type::TypeId> &column_types,
                          const std::vector<oid_t> &column_lengths,
                          const std::vector<std::string> &column_names,
                          const std::vector<bool> &is_inlined);
@@ -90,7 +90,7 @@ class Schema : public Printable {
     return columns[column_id].column_offset;
   }
 
-  inline common::Type::TypeId GetType(const oid_t column_id) const {
+  inline type::Type::TypeId GetType(const oid_t column_id) const {
     return columns[column_id].column_type;
   }
 
@@ -125,7 +125,7 @@ class Schema : public Printable {
     return columns[column_id];
   }
 
-  inline oid_t GetColumnID(std::string col_name) {
+  inline oid_t GetColumnID(std::string col_name) const{
     oid_t index = -1;
     for (oid_t i = 0; i < columns.size(); ++i) {
       if (columns[i].column_name == col_name) {

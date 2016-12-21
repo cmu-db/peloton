@@ -12,7 +12,8 @@
 
 #include <map>
 
-#include "common/types.h"
+#include "type/types.h"
+#include "common/statement.h"
 #include "catalog/catalog.h"
 #include "index/index.h"
 #include "statistics/backend_stats_context.h"
@@ -88,12 +89,17 @@ IndexMetric* BackendStatsContext::GetIndexMetric(oid_t database_id,
                                                  oid_t table_id,
                                                  oid_t index_id) {
   std::shared_ptr<IndexMetric> index_metric;
-  if (index_metrics_.Find(index_id, index_metric) == false) {
+  // Index metric doesn't exist yet
+  if (index_metrics_.Contains(index_id) == false) {
     index_metric.reset(
         new IndexMetric{INDEX_METRIC, database_id, table_id, index_id});
     index_metrics_.Insert(index_id, index_metric);
+    index_id_lock.Lock();
     index_ids_.insert(index_id);
+    index_id_lock.Unlock();
   }
+  // Get index metric from map
+  index_metrics_.Find(index_id, index_metric);
   return index_metric.get();
 }
 
@@ -211,10 +217,12 @@ void BackendStatsContext::IncrementTxnAborted(oid_t database_id) {
   CompleteQueryMetric();
 }
 
-void BackendStatsContext::InitQueryMetric(std::string query_string,
-                                          oid_t database_oid) {
-  ongoing_query_metric_.reset(
-      new QueryMetric(QUERY_METRIC, query_string, database_oid));
+void BackendStatsContext::InitQueryMetric(
+    const std::shared_ptr<Statement> statement,
+    const std::shared_ptr<QueryMetric::QueryParams> params) {
+  // TODO currently all queries belong to DEFAULT_DB
+  ongoing_query_metric_.reset(new QueryMetric(
+      QUERY_METRIC, statement->GetQueryString(), params, DEFAULT_DB_ID));
 }
 
 //===--------------------------------------------------------------------===//

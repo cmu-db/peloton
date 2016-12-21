@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/property_set.h"
 #include "optimizer/util.h"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace peloton {
 namespace optimizer {
@@ -26,19 +25,21 @@ enum class OpType {
   Undefined,
   // Special match operators
   Leaf,
-  Tree,
   // Logical ops
   Get,
-  Project,
-  Select,
+  LogicalProject,
+  LogicalFilter,
   InnerJoin,
   LeftJoin,
   RightJoin,
   OuterJoin,
   Aggregate,
   Limit,
+  // Separate between logical and physical ops
+  LogicalPhysicalDelimiter,
   // Physical ops
   Scan,
+  Project,
   ComputeExprs,
   Filter,
   InnerNLJoin,
@@ -49,14 +50,6 @@ enum class OpType {
   LeftHashJoin,
   RightHashJoin,
   OuterHashJoin,
-  // Exprs
-  Variable,
-  Constant,
-  Compare,
-  BoolOp,
-  Op,
-  ProjectList,
-  ProjectColumn,
 };
 
 //===--------------------------------------------------------------------===//
@@ -69,7 +62,7 @@ struct BaseOperatorNode {
 
   virtual ~BaseOperatorNode() {}
 
-  virtual void accept(OperatorVisitor *v) const = 0;
+  virtual void Accept(OperatorVisitor *v) const = 0;
 
   virtual std::string name() const = 0;
 
@@ -82,8 +75,6 @@ struct BaseOperatorNode {
   virtual std::vector<PropertySet> RequiredInputProperties() const {
     return {};
   }
-
-  virtual PropertySet ProvidedOutputProperties() const { return PropertySet(); }
 
   virtual hash_t Hash() const {
     OpType t = type();
@@ -98,19 +89,21 @@ struct BaseOperatorNode {
 // Curiously recurring template pattern
 template <typename T>
 struct OperatorNode : public BaseOperatorNode {
-  void accept(OperatorVisitor *v) const;
+  // Right now only accept physical operators, Accept() of logical operators
+  // will be specialized to empty function.
+  void Accept(OperatorVisitor *v) const;
 
-  std::string name() const { return _name; }
+  std::string name() const { return name_; }
 
-  OpType type() const { return _type; }
+  OpType type() const { return type_; }
 
   bool IsLogical() const;
 
   bool IsPhysical() const;
 
-  static std::string _name;
+  static std::string name_;
 
-  static OpType _type;
+  static OpType type_;
 };
 
 class Operator {
@@ -119,7 +112,7 @@ class Operator {
 
   Operator(BaseOperatorNode *node);
 
-  void accept(OperatorVisitor *v) const;
+  void Accept(OperatorVisitor *v) const;
 
   std::string name() const;
 
@@ -129,10 +122,6 @@ class Operator {
 
   bool IsPhysical() const;
 
-  std::vector<PropertySet> RequiredInputProperties() const;
-
-  PropertySet ProvidedOutputProperties() const;
-
   hash_t Hash() const;
 
   bool operator==(const Operator &r);
@@ -140,7 +129,7 @@ class Operator {
   bool defined() const;
 
   template <typename T>
-  const T *as() const {
+  const T *As() const {
     if (node && typeid(*node) == typeid(T)) {
       return (const T *)node.get();
     }

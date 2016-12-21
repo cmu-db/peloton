@@ -10,19 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
+#include <cstring>
 #include <iostream>
 #include <queue>
 #include <vector>
-#include <cstring>
 
-#include "common/printable.h"
-#include "common/types.h"
 #include "common/macros.h"
 #include "common/platform.h"
+#include "common/printable.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace storage {
@@ -39,21 +38,24 @@ class TileGroup;
  * It is shared by all tiles in a tile group.
  *
  *  Layout :
- *  
+ *
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
  *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
  *  | Indirection (8 bytes) | ReservedField (24 bytes)
  *  -----------------------------------------------------------------------------
  *
- *  FIELD DESCRIPTIONS: 
+ *  FIELD DESCRIPTIONS:
  *  ===================
  *  TxnID: serve as a write lock on the tuple version.
  *  BeginTimeStamp: the lower bound of the version visibility range.
  *  EndTimeStamp: the upper bound of the version visibility range.
- *  NextItemPointer: the pointer pointing to the next (older) version in the version chain. 
- *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
- *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
+ *  NextItemPointer: the pointer pointing to the next (older) version in the
+ * version chain.
+ *  PrevItemPointer: the pointer pointing to the prev (newer) version in the
+ * version chain.
+ *  Indirection: the pointer pointing to the index entry that holds the address
+ * of the version chain header.
  *  ReservedField: unused space for future usage.
  *
  */
@@ -89,7 +91,7 @@ class TileGroupHeader : public Printable {
     if (next_tuple_slot >= num_tuple_slots) {
       return INVALID_OID;
     }
-    
+
     oid_t tuple_slot_id =
         next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
 
@@ -128,7 +130,7 @@ class TileGroupHeader : public Printable {
     }
   }
 
-  oid_t GetActiveTupleCount();
+  oid_t GetActiveTupleCount() const;
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities
@@ -163,7 +165,7 @@ class TileGroupHeader : public Printable {
     return *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset));
   }
 
-  inline ItemPointer * GetIndirection(const oid_t &tuple_slot_id) const {
+  inline ItemPointer *GetIndirection(const oid_t &tuple_slot_id) const {
     return *(ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset);
   }
 
@@ -204,7 +206,8 @@ class TileGroupHeader : public Printable {
 
   inline void SetIndirection(const oid_t &tuple_slot_id,
                              const ItemPointer *indirection) const {
-    *((const ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset)) = indirection;
+    *((const ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset)) =
+        indirection;
   }
 
   inline txn_id_t SetAtomicTransactionId(const oid_t &tuple_slot_id,
@@ -242,14 +245,18 @@ class TileGroupHeader : public Printable {
   // header entry size is the size of the layout described above
   static const size_t reserved_size = 24;
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          2 * sizeof(ItemPointer) + sizeof(ItemPointer*) + reserved_size;
+                                          2 * sizeof(ItemPointer) +
+                                          sizeof(ItemPointer *) + reserved_size;
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = txn_id_offset + sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
   static const size_t next_pointer_offset = end_cid_offset + sizeof(cid_t);
-  static const size_t prev_pointer_offset = next_pointer_offset + sizeof(ItemPointer);
-  static const size_t indirection_offset = prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t reserved_field_offset = indirection_offset + sizeof(ItemPointer);
+  static const size_t prev_pointer_offset =
+      next_pointer_offset + sizeof(ItemPointer);
+  static const size_t indirection_offset =
+      prev_pointer_offset + sizeof(ItemPointer);
+  static const size_t reserved_field_offset =
+      indirection_offset + sizeof(ItemPointer);
 
  private:
   //===--------------------------------------------------------------------===//

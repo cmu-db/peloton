@@ -23,30 +23,30 @@ namespace expression {
 // Represents a constant value like int and string.
 //===----------------------------------------------------------------------===//
 
-using namespace peloton::common;
-
 class ConstantValueExpression : public AbstractExpression {
  public:
-  ConstantValueExpression(const Value &value)
+  ConstantValueExpression(const type::Value &value)
     : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT,
                          value.GetTypeId()), value_(value.Copy()) {}
   
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     return value_;
   }
 
-  Value GetValue() const { return value_;}
+  type::Value GetValue() const { return value_;}
 
   bool HasParameter() const override { return false; }
 
   AbstractExpression *Copy() const override {
-    return new ConstantValueExpression(value_);
+    return new ConstantValueExpression(*this);
   }
 
  protected:
-  Value value_;
+  ConstantValueExpression(const ConstantValueExpression& other) : AbstractExpression(other), value_(other.value_){}
+
+  type::Value value_;
 };
 
 }  // End expression namespace

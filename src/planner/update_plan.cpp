@@ -12,12 +12,12 @@
 
 #include "planner/update_plan.h"
 
-#include "common/types.h"
+#include "type/types.h"
+#include "parser/update_statement.h"
 #include "planner/project_info.h"
 
 #include "catalog/catalog.h"
 #include "expression/expression_util.h"
-#include "parser/statement_update.h"
 #include "parser/table_ref.h"
 #include "storage/data_table.h"
 
@@ -33,8 +33,17 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
                        std::unique_ptr<const planner::ProjectInfo> project_info)
     : target_table_(table),
       project_info_(std::move(project_info)),
-      where_(NULL) {
+      where_(NULL),
+      update_primary_key_(false) {
   LOG_TRACE("Creating an Update Plan");
+
+  if (project_info_ != nullptr) {
+    for (auto target : project_info_->GetTargetList()) {
+      auto col_id = target.first;
+      update_primary_key_ =
+          target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+    }
+  }
 }
 
 //  Initializes the update plan without adding any child nodes and
@@ -63,8 +72,8 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
     col_id = schema->GetColumnID(std::string(update->column));
     column_ids.push_back(col_id);
     auto update_expr = update->value->Copy();
-    expression::ExpressionUtil::ReplaceColumnExpressions(
-        target_table_->GetSchema(), update_expr);
+    expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                    update_expr);
     tlist.emplace_back(col_id, update_expr);
   }
 
@@ -72,9 +81,10 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   for (uint i = 0; i < schema_columns.size(); i++) {
     bool is_in_target_list = false;
     for (auto col_id : column_ids) {
-      if (schema_columns[i].column_name == schema_columns[col_id].column_name)
+      if (schema_columns[i].column_name == schema_columns[col_id].column_name) {
         is_in_target_list = true;
-      break;
+        break;
+      }
     }
     if (is_in_target_list == false)
       dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
@@ -85,14 +95,25 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
   project_info_ = std::move(project_info);
 
   where_ = parse_tree->where->Copy();
-  expression::ExpressionUtil::ReplaceColumnExpressions(
-      target_table_->GetSchema(), where_);
+  expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
+                                                  where_);
 }
 
 // Creates the update plan with sequential scan.
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
+UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
+    : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
+
+  // Set primary key update flag
+  for (auto update_clause : updates_) {
+    std::string column_name = update_clause->column;
+
+    oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
+    update_primary_key_ =
+        target_table_->GetSchema()->GetColumn(column_id).IsPrimary();
+  }
+
   LOG_TRACE("Creating a sequential scan plan");
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(target_table_, where_->Copy(), column_ids));
@@ -103,9 +124,20 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
-                       std::vector<common::Value> &values, oid_t &index_id) {
+                       std::vector<type::Value> &values, oid_t &index_id)
+    : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
+
+  // Set primary key update flag
+  for (auto update_clause : updates_) {
+    std::string column_name = update_clause->column;
+
+    oid_t column_id = target_table_->GetSchema()->GetColumnID(column_name);
+    update_primary_key_ =
+        target_table_->GetSchema()->GetColumn(column_id).IsPrimary();
+  }
+
   // Create index scan desc
   std::vector<expression::AbstractExpression *> runtime_keys;
   auto index = target_table_->GetIndex(index_id);
@@ -120,44 +152,9 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
   AddChild(std::move(index_scan_node));
 }
 
-void UpdatePlan::SetParameterValues(std::vector<common::Value> *values) {
+void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Update");
-  // First update project_info_ target list
-  // Create new project_info_
-  TargetList tlist;
-  DirectMapList dmlist;
-  oid_t col_id;
-  auto schema = target_table_->GetSchema();
 
-  std::vector<oid_t> columns;
-  for (auto update : updates_) {
-    // get oid_t of the column and push it to the vector;
-    col_id = schema->GetColumnID(std::string(update->column));
-    columns.push_back(col_id);
-    auto update_expr = update->value->Copy();
-    expression::ExpressionUtil::ReplaceColumnExpressions(
-        target_table_->GetSchema(), update_expr);
-    tlist.emplace_back(col_id, update_expr);
-  }
-  auto &schema_columns = schema->GetColumns();
-  for (uint i = 0; i < schema_columns.size(); i++) {
-    bool is_in_target_list = false;
-    for (auto col_id : columns) {
-      if (schema_columns[i].column_name == schema_columns[col_id].column_name)
-        is_in_target_list = true;
-      break;
-    }
-    if (is_in_target_list == false)
-      dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
-  }
-
-  auto new_proj_info =
-      new planner::ProjectInfo(std::move(tlist), std::move(dmlist));
-  new_proj_info->transformParameterToConstantValueExpression(
-      values, target_table_->GetSchema());
-  project_info_.reset(new_proj_info);
-
-  LOG_TRACE("Setting values for parameters in where");
   auto &children = GetChildren();
   // One sequential scan
   children[0]->SetParameterValues(values);

@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "planner/abstract_scan_plan.h"
-#include "common/types.h"
+#include "type/types.h"
 #include "expression/abstract_expression.h"
 #include "storage/tuple.h"
 #include "index/scan_optimizer.h"
@@ -60,7 +60,7 @@ class IndexScanPlan : public AbstractScan {
         std::shared_ptr<index::Index> p_index_obj,
         const std::vector<oid_t> &p_tuple_column_id_list,
         const std::vector<ExpressionType> &expr_list_p,
-        const std::vector<common::Value> &p_value_list,
+        const std::vector<type::Value> &p_value_list,
         const std::vector<expression::AbstractExpression *> &p_runtime_key_list)
         : index_obj(p_index_obj),
           tuple_column_id_list(p_tuple_column_id_list),
@@ -69,7 +69,7 @@ class IndexScanPlan : public AbstractScan {
           runtime_key_list(p_runtime_key_list) {}
 
     ~IndexScanDesc() {
-      //for (auto val : value_list)
+      // for (auto val : value_list)
       //  delete val;
     }
 
@@ -91,7 +91,7 @@ class IndexScanPlan : public AbstractScan {
     std::vector<ExpressionType> expr_list;
 
     // A list of values either bounded or unbounded
-    std::vector<common::Value> value_list;
+    std::vector<type::Value> value_list;
 
     // ???
     std::vector<expression::AbstractExpression *> runtime_key_list;
@@ -109,7 +109,8 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                const IndexScanDesc &index_scan_desc, bool for_update_flag = false);
+                const IndexScanDesc &index_scan_desc,
+                bool for_update_flag = false);
 
   ~IndexScanPlan() {
     for (auto expr : runtime_keys_) {
@@ -132,7 +133,7 @@ class IndexScanPlan : public AbstractScan {
     return index_predicate_;
   }
 
-  const std::vector<common::Value> &GetValues() const { return values_; }
+  const std::vector<type::Value> &GetValues() const { return values_; }
 
   const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const {
     return runtime_keys_;
@@ -144,7 +145,7 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
-  void SetParameterValues(std::vector<common::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
@@ -155,7 +156,7 @@ class IndexScanPlan : public AbstractScan {
     IndexScanDesc desc(index_, key_column_ids_, expr_types_, values_,
                        new_runtime_keys);
     IndexScanPlan *new_plan = new IndexScanPlan(
-        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc , false);
+        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc, false);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
@@ -183,9 +184,9 @@ class IndexScanPlan : public AbstractScan {
   // Note that when binding values to the scan plan we copy those values
   // into this array, which means the lifetime of values being bound is
   // also the lifetime of the IndexScanPlan object
-  std::vector<common::Value> values_;
+  std::vector<type::Value> values_;
   // the original copy of values with all the value parameters (bind them later)
-  std::vector<common::Value> values_with_params_;
+  std::vector<type::Value> values_with_params_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 

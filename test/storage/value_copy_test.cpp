@@ -29,7 +29,7 @@ class ValueCopyTests : public PelotonTest {};
 TEST_F(ValueCopyTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(common::Type::VARCHAR, 25, "D", false);
+  catalog::Column column1(type::Type::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
   columns.push_back(column1);
@@ -40,15 +40,15 @@ TEST_F(ValueCopyTests, VarcharTest) {
 
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  common::Value val1 = (
-      common::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
-  common::Value val2 = (
-      common::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
+  type::Value val1 = (
+      type::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
+  type::Value val2 = (
+      type::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
 
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);
 
-  common::Value val3 = (tuple->GetValue(0));
+  type::Value val3 = (tuple->GetValue(0));
 
   LOG_INFO("%s", val3.GetInfo().c_str());
 

@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/logger.h"
-#include "common/config.h"
 #include "index/bwtree_index.h"
 #include "index/index_key.h"
 #include "storage/tuple.h"
@@ -120,7 +119,7 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-void BWTREE_INDEX_TYPE::Scan(const std::vector<common::Value> &value_list,
+void BWTREE_INDEX_TYPE::Scan(const std::vector<type::Value> &value_list,
                              const std::vector<oid_t> &tuple_column_id_list,
                              const std::vector<ExpressionType> &expr_list,
                              const ScanDirectionType &scan_direction,

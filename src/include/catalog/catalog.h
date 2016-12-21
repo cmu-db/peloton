@@ -12,23 +12,29 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "catalog/schema.h"
-#include "storage/database.h"
-#include "storage/data_table.h"
-#include "storage/tuple.h"
-#include "storage/table_factory.h"
-#include "common/value_factory.h"
 #include "catalog/catalog_util.h"
-#include "common/varlen_pool.h"
+#include "catalog/schema.h"
+#include "type/types.h"
+#include "type/value_factory.h"
+#include "type/varlen_pool.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
+#include "storage/table_factory.h"
+#include "storage/tuple.h"
 
 #define CATALOG_DATABASE_NAME "catalog_db"
 #define DATABASE_CATALOG_NAME "database_catalog"
 #define TABLE_CATALOG_NAME "table_catalog"
+
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"
 #define INDEX_METRIC_NAME "index_metric"
 #define QUERY_METRIC_NAME "query_metric"
+
+#define QUERY_NUM_PARAM_COL_NAME "num_params"
+#define QUERY_PARAM_TYPE_COL_NAME "param_types"
+#define QUERY_PARAM_FORMAT_COL_NAME "param_formats"
+#define QUERY_PARAM_VAL_COL_NAME "param_values"
 
 namespace peloton {
 
@@ -46,8 +52,19 @@ namespace catalog {
 // Catalog
 //===--------------------------------------------------------------------===//
 
-class Catalog {
+// information about functions (for FunctionExpression)
+struct FunctionData {
+  // name of the function
+  std::string func_name_;
+  // number of arguments
+  size_t num_arguments_;
+  // funtion's return type
+  type::Type::TypeId return_type_;
+  // pointer to the funtion
+  type::Value (*func_ptr_)(const std::vector<type::Value> &);
+};
 
+class Catalog {
  public:
   // Global Singleton
   static Catalog *GetInstance(void);
@@ -94,6 +111,9 @@ class Catalog {
   // Drop a table
   Result DropTable(std::string database_name, std::string table_name,
                    concurrency::Transaction *txn);
+
+  // Returns true if the catalog contains the given database with the id
+  bool HasDatabase(const oid_t db_oid) const;
 
   // Find a database using its id
   // Throw CatalogException if not found
@@ -152,6 +172,22 @@ class Catalog {
   // Get a new id for database, table, etc.
   oid_t GetNextOid();
 
+  void InitializeFunctions();
+
+  //===--------------------------------------------------------------------===//
+  // FUNCTION ACCESS
+  //===--------------------------------------------------------------------===//
+
+  // add and get methods for functions
+  void AddFunction(
+      const std::string &name, const size_t num_arguments,
+      const type::Type::TypeId return_type,
+      type::Value (*func_ptr)(const std::vector<type::Value> &));
+
+  FunctionData GetFunction(const std::string &name);
+
+  void RemoveFunction(const std::string &name);
+
   // Deconstruct the catalog database when destroy the catalog.
   ~Catalog();
 
@@ -171,9 +207,13 @@ class Catalog {
   // Maximum Column Size for Catalog Schemas
   const size_t max_name_size = 32;
 
+  // map of function names to data about functions (number of arguments,
+  // function ptr, return type)
+  std::unordered_map<std::string, FunctionData> functions_;
+
  public:
   // The var len pool for new varlen tuple fields
-  common::VarlenPool *pool_ = new common::VarlenPool();
+  type::VarlenPool *pool_ = new type::VarlenPool();
 };
 }
 }

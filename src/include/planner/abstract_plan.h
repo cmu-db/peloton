@@ -21,10 +21,10 @@
 
 #include "catalog/schema.h"
 #include "common/printable.h"
-#include "common/serializeio.h"
-#include "common/serializer.h"
-#include "common/types.h"
-#include "common/value.h"
+#include "type/serializeio.h"
+#include "type/serializer.h"
+#include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 
@@ -77,7 +77,7 @@ class AbstractPlan : public Printable {
   virtual PlanNodeType GetPlanNodeType() const = 0;
 
   // Setting values of the parameters in the prepare statement
-  virtual void SetParameterValues(std::vector<common::Value> *values);
+  virtual void SetParameterValues(std::vector<type::Value> *values);
 
   //===--------------------------------------------------------------------===//
   // Utilities

@@ -145,6 +145,7 @@ public class PelotonTest {
   }
 
   public void Close() throws SQLException {
+    System.out.println("Close called");
     conn.close();
   }
 
@@ -154,6 +155,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Init() throws SQLException {
+    System.out.println("Init");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DROP);
@@ -186,10 +188,10 @@ public class PelotonTest {
       System.out.println(r.getInt(2));
       System.out.println(r.getBigDecimal(3));
    }
-   r.close();
+   r.close(); 
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
-    pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
+    PreparedStatement pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
     java.sql.Timestamp sysdate = new java.sql.Timestamp(
       System.currentTimeMillis());
     java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
@@ -198,12 +200,13 @@ public class PelotonTest {
     pstmt.setTimestamp(1, timestamp, null);
     //pstmt.setTimestamp(1, sysdate);
     //pstmt.setTimestamp(1, datetime, null);
-    pstmt.execute();
+    pstmt.execute();*/
     System.out.println("Test db created.");
-    //System.exit(0);*/
+    //System.exit(0);
   }
 
   public void ShowTable() throws SQLException {
+    System.out.println("Show table");
     int numRows;
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
@@ -239,6 +242,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Scan_Test() throws SQLException {
+    System.out.println("Scan Test");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(INSERT_A_1);
@@ -279,6 +283,7 @@ public class PelotonTest {
    * @throws SQLException
    */
   public void Stat_Test() throws Exception {
+    System.out.println("Stat Test");
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
     int txn_committed = 0;
@@ -302,13 +307,13 @@ public class PelotonTest {
     rs.last();
     int nums[] = new int[4];
     // Read
-    nums[0] = rs.getInt(3);
+    nums[0] = rs.getInt(7);
     // Update
-    nums[1] = rs.getInt(4);
+    nums[1] = rs.getInt(8);
     // Delete
-    nums[2] = rs.getInt(5);
+    nums[2] = rs.getInt(9);
     // Insert
-    nums[3] = rs.getInt(6);
+    nums[3] = rs.getInt(10);
     // Query
     String query = rs.getString(1);
     String row1 = query + "\tread:" + nums[0] + "\tupdate:" + nums[1]
@@ -613,6 +618,41 @@ public class PelotonTest {
     conn.commit();
   }
 
+  public void Copy_Test(String filePath) throws Exception{
+    // Execute some queries
+    PreparedStatement stmt = conn.prepareStatement(TEMPLATE_FOR_BATCH_INSERT);
+    conn.setAutoCommit(true);
+    for(int i=1; i <= 5 ;i++){
+      stmt.setInt(1,i);
+      stmt.setString(2,"Yo\nYo,Yo");
+      stmt.addBatch();
+    }
+
+    int[] res;
+    try{
+       res = stmt.executeBatch();
+    }catch(SQLException e){
+      e.printStackTrace();
+      throw e.getNextException();
+    }
+    
+    // Wait for the query stat is flushed
+    Thread.sleep(STAT_INTERVAL_MS * 2);
+    
+    // Perform Copy
+    Statement copy_stmt = conn.createStatement();
+    try {
+    	copy_stmt.execute("COPY catalog_db.query_metric TO '" + filePath + "' DELIMITER ','");
+ 	    ResultSet rs = copy_stmt.getResultSet();
+    } catch (SQLException e) {
+    	e.printStackTrace();
+    }
+    System.out.println("Copy finished");
+  }
+
+
+
+
   public void Invalid_SQL() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
@@ -690,6 +730,7 @@ public class PelotonTest {
   
   //tests inserting and reading back large binary values
   public void BlobTest() throws SQLException {
+    System.out.println("Blob Test");
     Random rand = new Random(12345L);
     for (int i = 1; i < 20; i++) {
       Statement initstmt = conn.createStatement();
@@ -726,11 +767,20 @@ public class PelotonTest {
   }
 
   static public void main(String[] args) throws Exception {
-      if (args.length == 0 || args[0].equals("basic")) {
+      if (args.length < 1) {
+        System.err.println("Please specify jdbc test target: [basic|stats|copy]");
+      }
+      if (args[0].equals("basic")) {
         BasicTest();
       } else if (args[0].equals("stats")) {
         StatsTest();
-      } 
+      } else if (args[0].equals("copy")) {
+      	if (args.length < 2) {
+	        System.err.println("Copy test usage: ./test_jdbc.sh copy [file_path]");
+	    } else {
+        	CopyTest(args[1]);
+        }
+      }
   }
 
   static public void BasicTest() throws Exception {
@@ -754,6 +804,13 @@ public class PelotonTest {
     PelotonTest pt = new PelotonTest();
     pt.Init();
     pt.Stat_Test();
+    pt.Close();
+  }
+ 
+  static public void CopyTest(String filePath) throws Exception {
+    PelotonTest pt = new PelotonTest();
+    pt.Init();
+    pt.Copy_Test(filePath);
     pt.Close();
   }
 }

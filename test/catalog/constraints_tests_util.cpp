@@ -20,8 +20,8 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
-#include "common/value.h"
-#include "common/value_factory.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "common/exception.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -61,7 +61,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
   switch (index) {
     case 0: {
       auto column =
-          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+          catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -71,7 +71,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
     case 1: {
       auto column =
-          catalog::Column(common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+          catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -81,7 +81,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
     case 2: {
       auto column =
-          catalog::Column(common::Type::DECIMAL, common::Type::GetTypeSize(common::Type::DECIMAL),
+          catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
                           "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -90,7 +90,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(common::Type::VARCHAR,
+      auto column = catalog::Column(type::Type::VARCHAR,
                                     25,  // Column length.
                                     "COL_D",
                                     !is_inlined);  // inlined.
@@ -127,15 +127,15 @@ void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     int populate_value = rowid;
 
     // First column is unique in this case
-    auto col1 = common::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
+    auto col1 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
 
     // In case of random, make sure this column has duplicated values
-    auto col2 = common::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
+    auto col2 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    auto col3 = common::ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
+    auto col3 = type::ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
-    auto col4 = common::ValueFactory::GetVarcharValue(
+    auto col4 = type::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(populate_value, 3)));
 
     ConstraintsTestsUtil::ExecuteInsert(transaction, table, col1, col2, col3,
@@ -149,7 +149,7 @@ std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
   DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    std::unique_ptr<common::Value> value(tuple->GetValue(col_id));
+    std::unique_ptr<type::Value> value(tuple->GetValue(col_id));
     auto expression = expression::ExpressionUtil::ConstantValueFactory(*value);
     target_list.emplace_back(col_id, expression);
   }

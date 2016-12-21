@@ -16,8 +16,8 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "common/types.h"
-#include "common/value_factory.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/delete_executor.h"
@@ -62,13 +62,13 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
   auto index = data_table->GetIndex(0);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
   expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(common::ValueFactory::GetIntegerValue(110).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(110).Copy());
 
   // Create index scan desc
 
@@ -125,15 +125,15 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   auto index = data_table->GetIndex(1);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
-  std::vector<common::Value> values;
+  std::vector<type::Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(1);
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  values.push_back(common::ValueFactory::GetIntegerValue(50).Copy());
-  values.push_back(common::ValueFactory::GetIntegerValue(70).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(70).Copy());
 
   // Create index scan desc
 
@@ -170,133 +170,6 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
   EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 2);
 
-  txn_manager.CommitTransaction(txn);
-}
-
-void ShowTable(std::string database_name, std::string table_name) {
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
-                                                                 table_name);
-  std::unique_ptr<Statement> statement;
-  auto &peloton_parser = parser::Parser::GetInstance();
-  bridge::peloton_status status;
-  std::vector<common::Value> params;
-  std::vector<ResultType> result;
-  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
-  auto select_stmt =
-      peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  std::vector<int> result_format;
-  auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
-          statement->GetQueryString());
-  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
-}
-
-void ExecuteSQLQuery(const std::string statement_name,
-                     const std::string query_string) {
-  LOG_INFO("Query: %s", query_string.c_str());
-  static std::unique_ptr<Statement> statement;
-  statement.reset(new Statement(statement_name, query_string));
-  auto &peloton_parser = parser::Parser::GetInstance();
-  LOG_INFO("Building parse tree...");
-  auto insert_stmt = peloton_parser.BuildParseTree(query_string);
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(
-      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
-  LOG_INFO("Building plan tree completed!");
-  std::vector<common::Value> params;
-  std::vector<ResultType> result;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
-  std::vector<int> result_format;
-  auto tuple_descriptor =
-      tcop::TrafficCop::GetInstance().GenerateTupleDescriptor(
-          statement->GetQueryString());
-  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  UNUSED_ATTRIBUTE bridge::peloton_status status =
-      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
-                                        result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  ShowTable(DEFAULT_DB_NAME, "department_table");
-}
-
-TEST_F(IndexScanTests, SQLTest) {
-  LOG_INFO("Bootstrapping...");
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-  LOG_INFO("Bootstrapping completed!");
-
-  // Create a table first
-  LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
-      "dept_id", true);
-  // Set dept_id as the primary key (only that we can have a primary key index)
-  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
-  id_column.AddConstraint(constraint);
-  auto name_column =
-      catalog::Column(common::Type::VARCHAR, 32, "dept_name", false);
-
-  std::unique_ptr<catalog::Schema> table_schema(
-      new catalog::Schema({id_column, name_column}));
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema),
-                           CreateType::CREATE_TYPE_TABLE);
-  executor::CreateExecutor create_executor(&node, context.get());
-  create_executor.Init();
-  create_executor.Execute();
-  txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            1);
-  LOG_INFO("Table created!");
-
-  // Inserting a tuple end-to-end
-  LOG_INFO("Inserting a tuple...");
-  ExecuteSQLQuery(
-      "INSERT",
-      "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
-  LOG_INFO("Tuple inserted!");
-
-  LOG_INFO("Inserting a tuple...");
-  ExecuteSQLQuery(
-      "INSERT",
-      "INSERT INTO department_table(dept_id,dept_name) VALUES (2, 'hello_2');");
-  LOG_INFO("Tuple inserted!");
-
-  LOG_INFO("Inserting a tuple...");
-  ExecuteSQLQuery(
-      "INSERT",
-      "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
-  LOG_INFO("Tuple inserted!");
-
-  LOG_INFO("Select a tuple...");
-  ExecuteSQLQuery("SELECT STAR",
-                  "SELECT * FROM department_table WHERE dept_id = 1;");
-  LOG_INFO("Tuple selected");
-
-  LOG_INFO("Select a column...");
-  ExecuteSQLQuery("SELECT COLUMN",
-                  "SELECT dept_name FROM department_table WHERE dept_id = 2;");
-  LOG_INFO("Column selected");
-
-  LOG_INFO("Select COUNT(*)...");
-  ExecuteSQLQuery("SELECT AGGREGATE",
-                  "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;");
-  LOG_INFO("Aggregation selected");
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 

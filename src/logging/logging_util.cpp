@@ -9,14 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "logging/logging_util.h"
 
-#include <sys/stat.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <cstring>
 
 #include "catalog/catalog.h"
-#include "logging/logging_util.h"
 #include "storage/database.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace logging {
@@ -24,18 +25,86 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 // LoggingUtil
 //===--------------------------------------------------------------------===//
+
+BackendType LoggingUtil::GetBackendType(const LoggingType &logging_type) {
+  // Default backend type
+  BackendType backend_type = BACKEND_TYPE_MM;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WBL:
+      backend_type = BACKEND_TYPE_NVM;
+      break;
+
+    case LOGGING_TYPE_SSD_WBL:
+      backend_type = BACKEND_TYPE_SSD;
+      break;
+
+    case LOGGING_TYPE_HDD_WBL:
+      backend_type = BACKEND_TYPE_HDD;
+      break;
+
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_HDD_WAL:
+      backend_type = BACKEND_TYPE_MM;
+      break;
+
+    default:
+      break;
+  }
+
+  return backend_type;
+}
+
+bool LoggingUtil::IsBasedOnWriteAheadLogging(
+    const peloton::LoggingType &logging_type) {
+  bool status = false;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_HDD_WAL:
+      status = true;
+      break;
+
+    default:
+      status = false;
+      break;
+  }
+
+  return status;
+}
+
+bool LoggingUtil::IsBasedOnWriteBehindLogging(const LoggingType &logging_type) {
+  bool status = true;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_WBL:
+    case LOGGING_TYPE_SSD_WBL:
+    case LOGGING_TYPE_HDD_WBL:
+      status = true;
+      break;
+
+    default:
+      status = false;
+      break;
+  }
+
+  return status;
+}
+
 void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   // First, flush
   PL_ASSERT(file_handle.fd != -1);
   if (file_handle.fd == -1) return;
   int ret = fflush(file_handle.file);
   if (ret != 0) {
-    LOG_ERROR("Error occured in fflush(%d)", ret);
+    LOG_ERROR("Error occured in fflush(%s)", strerror(errno));
   }
   // Finally, sync
   ret = fsync(file_handle.fd);
   if (ret != 0) {
-    LOG_ERROR("Error occured in fsync(%d)", ret);
+    LOG_ERROR("Error occured in fsync(%s)", strerror(errno));
   }
 }
 
@@ -192,8 +261,8 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
   return true;
 }
 
-storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
-                                                 common::VarlenPool *pool,
+storage::Tuple *LoggingUtil::ReadTupleRecordBody(const catalog::Schema *schema,
+                                                 type::VarlenPool *pool,
                                                  FileHandle &file_handle) {
   // Check if the frame is broken
   size_t body_size = GetNextFrameSize(file_handle);

@@ -16,6 +16,7 @@
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/macros.h"
+#include "expression/string_functions.h"
 #include "index/index_factory.h"
 
 namespace peloton {
@@ -32,6 +33,8 @@ Catalog::Catalog() {
 
   // Create metrics table in default database
   CreateMetricsCatalog();
+
+  InitializeFunctions();
 }
 
 void Catalog::CreateMetricsCatalog() {
@@ -57,7 +60,7 @@ void Catalog::CreateMetricsCatalog() {
   auto query_metrics_catalog =
       CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
   default_db->AddTable(query_metrics_catalog.release());
-  LOG_DEBUG("Metrics tables created");
+  LOG_TRACE("Metrics tables created");
 }
 
 // Creates the catalog database
@@ -72,7 +75,7 @@ void Catalog::CreateCatalogDatabase() {
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table);
   databases_.push_back(database);
-  LOG_DEBUG("Catalog database created");
+  LOG_TRACE("Catalog database created");
 }
 
 // Create a database
@@ -163,8 +166,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
           std::move(tuple), txn);
       return Result::RESULT_SUCCESS;
     }
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_ERROR("Could not find a database with name %s", database_name.c_str());
     return Result::RESULT_FAILURE;
   }
@@ -327,8 +329,7 @@ Result Catalog::DropDatabaseWithName(std::string database_name,
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
     databases_.erase(databases_.begin() + database_offset);
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
     return Result::RESULT_FAILURE;
   }
@@ -358,8 +359,7 @@ void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
     // Drop the database
     LOG_TRACE("Deleting database from database vector");
     databases_.erase(databases_.begin() + database_offset);
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
   }
 }
@@ -388,11 +388,16 @@ Result Catalog::DropTable(std::string database_name, std::string table_name,
       LOG_TRACE("Could not find table");
       return Result::RESULT_FAILURE;
     }
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
     LOG_TRACE("Could not find database");
     return Result::RESULT_FAILURE;
   }
+}
+
+bool Catalog::HasDatabase(const oid_t db_oid) const {
+  for (auto database : databases_)
+    if (database->GetOid() == db_oid) return (true);
+  return (false);
 }
 
 // Find a database using its id
@@ -405,8 +410,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 }
 
 // Find a database using its name
-storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
-    const {
+storage::Database *Catalog::GetDatabaseWithName(
+    const std::string database_name) const {
   for (auto database : databases_) {
     if (database != nullptr && database->GetDBName() == database_name)
       return database;
@@ -415,8 +420,8 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
   return nullptr;
 }
 
-storage::Database *Catalog::GetDatabaseWithOffset(const oid_t database_offset)
-    const {
+storage::Database *Catalog::GetDatabaseWithOffset(
+    const oid_t database_offset) const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
@@ -519,24 +524,24 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "table_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto name_column =
-      catalog::Column(common::Type::VARCHAR, max_name_size, "table_name", true);
+      catalog::Column(type::Type::VARCHAR, max_name_size, "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto database_id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(
-      common::Type::VARCHAR, max_name_size, "database_name", true);
+      type::Type::VARCHAR, max_name_size, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -551,11 +556,11 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(
-      common::Type::INTEGER, common::Type::GetTypeSize(common::Type::INTEGER),
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
-  auto name_column = catalog::Column(common::Type::VARCHAR, max_name_size,
+  auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
                                      "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
@@ -570,8 +575,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
 
   auto id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
@@ -597,8 +602,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
 
   auto database_id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
@@ -636,8 +641,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
 
   auto database_id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
@@ -674,17 +679,34 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
                                           not_null_constraint_name);
-  oid_t integer_type_size = common::Type::GetTypeSize(common::Type::INTEGER);
-  common::Type::TypeId integer_type = common::Type::INTEGER;
+  oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
+  oid_t varbinary_type_size =
+      type::Type::GetTypeSize(type::Type::VARBINARY);
 
-  // XXX maximum length of the query is set to 32.
-  auto name_column =
-      catalog::Column(common::Type::VARCHAR, max_name_size, "query_name", true);
+  type::Type::TypeId integer_type = type::Type::INTEGER;
+  type::Type::TypeId varbinary_type = type::Type::VARBINARY;
+
+  auto name_column = catalog::Column(
+      type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::VARCHAR),
+      "query_name", false);
   name_column.AddConstraint(not_null_constraint);
   auto database_id_column =
       catalog::Column(integer_type, integer_type_size, "database_id", true);
   database_id_column.AddConstraint(not_null_constraint);
 
+  // Parameters
+  auto num_param_column = catalog::Column(integer_type, integer_type_size,
+                                          QUERY_NUM_PARAM_COL_NAME, true);
+  num_param_column.AddConstraint(not_null_constraint);
+  // For varbinary types, we don't want to inline it since it could be large
+  auto param_type_column = catalog::Column(varbinary_type, varbinary_type_size,
+                                           QUERY_PARAM_TYPE_COL_NAME, false);
+  auto param_format_column = catalog::Column(
+      varbinary_type, varbinary_type_size, QUERY_PARAM_FORMAT_COL_NAME, false);
+  auto param_val_column = catalog::Column(varbinary_type, varbinary_type_size,
+                                          QUERY_PARAM_VAL_COL_NAME, false);
+
+  // Physical statistics
   auto reads_column =
       catalog::Column(integer_type, integer_type_size, "reads", true);
   reads_column.AddConstraint(not_null_constraint);
@@ -708,10 +730,11 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
       catalog::Column(integer_type, integer_type_size, "time_stamp", true);
   timestamp_column.AddConstraint(not_null_constraint);
 
-  std::unique_ptr<catalog::Schema> database_schema(
-      new catalog::Schema({name_column, database_id_column, reads_column,
-                           updates_column, deletes_column, inserts_column,
-                           latency_column, cpu_time_column, timestamp_column}));
+  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema(
+      {name_column, database_id_column, num_param_column, param_type_column,
+       param_format_column, param_val_column, reads_column, updates_column,
+       deletes_column, inserts_column, latency_column, cpu_time_column,
+       timestamp_column}));
   return database_schema;
 }
 
@@ -725,6 +748,54 @@ Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
   delete pool_;
+}
+
+// add amd get methods for UDFs
+void Catalog::AddFunction(
+    const std::string &name, const size_t num_arguments,
+    const type::Type::TypeId return_type,
+    type::Value (*func_ptr)(const std::vector<type::Value> &)) {
+  PL_ASSERT(functions_.count(name) == 0);
+  functions_[name] = FunctionData{name, num_arguments, return_type, func_ptr};
+}
+
+FunctionData Catalog::GetFunction(const std::string &name) {
+  if (functions_.count(name) == 0) {
+    throw Exception("function " + name + " not found.");
+  }
+  return functions_[name];
+}
+
+void Catalog::RemoveFunction(const std::string &name) {
+  functions_.erase(name);
+}
+
+void Catalog::InitializeFunctions() {
+  /**
+   * string functions
+   */
+  AddFunction("ascii", 1, type::Type::INTEGER,
+              expression::StringFunctions::Ascii);
+  AddFunction("chr", 1, type::Type::VARCHAR,
+              expression::StringFunctions::Chr);
+  AddFunction("substr", 3, type::Type::VARCHAR,
+              expression::StringFunctions::Substr);
+  AddFunction("concat", 2, type::Type::VARCHAR,
+              expression::StringFunctions::Concat);
+  AddFunction("char_length", 1, type::Type::INTEGER,
+              expression::StringFunctions::CharLength);
+  AddFunction("octet_length", 1, type::Type::INTEGER,
+              expression::StringFunctions::OctetLength);
+  AddFunction("repeat", 2, type::Type::VARCHAR,
+              expression::StringFunctions::Repeat);
+  AddFunction("replace", 3, type::Type::VARCHAR,
+              expression::StringFunctions::Replace);
+  AddFunction("ltrim", 2, type::Type::VARCHAR,
+              expression::StringFunctions::LTrim);
+  AddFunction("rtrim", 2, type::Type::VARCHAR,
+              expression::StringFunctions::RTrim);
+  AddFunction("btrim", 2, type::Type::VARCHAR,
+              expression::StringFunctions::BTrim);
 }
 }
 }

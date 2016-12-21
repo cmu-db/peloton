@@ -26,6 +26,9 @@
 
 namespace peloton {
 
+// Note that __PELOTONFILE__ is a special pre-processor macro that we
+// generate for shorter path names using CMake.
+
 // Log levels.
 #define LOG_LEVEL_OFF 1000
 #define LOG_LEVEL_ERROR 500
@@ -48,7 +51,7 @@ namespace peloton {
 #define LOG_LEVEL LOG_LEVEL_DEBUG
 #else
 //#pragma message("LOG_LEVEL_WARN is used instead as DEBUG option is off.")
-#define LOG_LEVEL LOG_LEVEL_WARN
+#define LOG_LEVEL LOG_LEVEL_INFO
 #endif
 //#pragma message("Give LOG_LEVEL compile option to overwrite the default
 // level.")
@@ -71,10 +74,10 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 #if LOG_LEVEL <= LOG_LEVEL_ERROR
 #define LOG_ERROR_ENABLED
 //#pragma message("LOG_ERROR was enabled.")
-#define LOG_ERROR(...)                                                 \
-  outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_ERROR); \
-  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                           \
-  fprintf(LOG_OUTPUT_STREAM, "\n");                                    \
+#define LOG_ERROR(...)                                                        \
+  outputLogHeader_(__PELOTONFILE__, __LINE__, __FUNCTION__, LOG_LEVEL_ERROR); \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                                  \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                           \
   ::fflush(stdout)
 #else
 #define LOG_ERROR(...) ((void)0)
@@ -86,10 +89,10 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 #if LOG_LEVEL <= LOG_LEVEL_WARN
 #define LOG_WARN_ENABLED
 //#pragma message("LOG_WARN was enabled.")
-#define LOG_WARN(...)                                                 \
-  outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_WARN); \
-  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                          \
-  fprintf(LOG_OUTPUT_STREAM, "\n");                                   \
+#define LOG_WARN(...)                                                        \
+  outputLogHeader_(__PELOTONFILE__, __LINE__, __FUNCTION__, LOG_LEVEL_WARN); \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                                 \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                          \
   ::fflush(stdout)
 #else
 #define LOG_WARN(...) ((void)0)
@@ -101,10 +104,10 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 #if LOG_LEVEL <= LOG_LEVEL_INFO
 #define LOG_INFO_ENABLED
 //#pragma message("LOG_INFO was enabled.")
-#define LOG_INFO(...)                                                 \
-  outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_INFO); \
-  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                          \
-  fprintf(LOG_OUTPUT_STREAM, "\n");                                   \
+#define LOG_INFO(...)                                                        \
+  outputLogHeader_(__PELOTONFILE__, __LINE__, __FUNCTION__, LOG_LEVEL_INFO); \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                                 \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                          \
   ::fflush(stdout)
 #else
 #define LOG_INFO(...) ((void)0)
@@ -116,10 +119,10 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 #if LOG_LEVEL <= LOG_LEVEL_DEBUG
 #define LOG_DEBUG_ENABLED
 //#pragma message("LOG_DEBUG was enabled.")
-#define LOG_DEBUG(...)                                                 \
-  outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_DEBUG); \
-  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                           \
-  fprintf(LOG_OUTPUT_STREAM, "\n");                                    \
+#define LOG_DEBUG(...)                                                        \
+  outputLogHeader_(__PELOTONFILE__, __LINE__, __FUNCTION__, LOG_LEVEL_DEBUG); \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                                  \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                           \
   ::fflush(stdout)
 #else
 #define LOG_DEBUG(...) ((void)0)
@@ -131,10 +134,10 @@ void outputLogHeader_(const char *file, int line, const char *func, int level);
 #if LOG_LEVEL <= LOG_LEVEL_TRACE
 #define LOG_TRACE_ENABLED
 //#pragma message("LOG_TRACE was enabled.")
-#define LOG_TRACE(...)                                                 \
-  outputLogHeader_(__FILE__, __LINE__, __FUNCTION__, LOG_LEVEL_TRACE); \
-  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                           \
-  fprintf(LOG_OUTPUT_STREAM, "\n");                                    \
+#define LOG_TRACE(...)                                                        \
+  outputLogHeader_(__PELOTONFILE__, __LINE__, __FUNCTION__, LOG_LEVEL_TRACE); \
+  ::fprintf(LOG_OUTPUT_STREAM, __VA_ARGS__);                                  \
+  fprintf(LOG_OUTPUT_STREAM, "\n");                                           \
   ::fflush(stdout)
 #else
 #define LOG_TRACE(...) ((void)0)

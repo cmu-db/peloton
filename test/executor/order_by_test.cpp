@@ -19,8 +19,8 @@
 #include "common/harness.h"
 
 #include "planner/order_by_plan.h"
-#include "common/types.h"
-#include "common/value.h"
+#include "type/types.h"
+#include "type/value.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"
 #include "executor/order_by_executor.h"
@@ -64,7 +64,7 @@ void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
 
   // TODO: Verify
   for (UNUSED_ATTRIBUTE auto &tile : result_tiles) {
-    LOG_INFO("%s", tile->GetInfo().c_str());
+    LOG_TRACE("%s", tile->GetInfo().c_str());
   }
 }
 
