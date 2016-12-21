@@ -190,28 +190,28 @@ class IntsKey {
     const int GetColumnCount = key_schema->GetColumnCount();
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-        case Type::BIGINT: {
+        case type::Type::BIGINT: {
           const uint64_t key_value =
               ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
           buffer << ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
                         key_value) << ",";
           break;
         }
-        case Type::INTEGER: {
+        case type::Type::INTEGER: {
           const uint64_t key_value =
               ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
           buffer << ConvertUnsignedValueToSignedValue<int32_t, INT32_MAX>(
                         key_value) << ",";
           break;
         }
-        case Type::SMALLINT: {
+        case type::Type::SMALLINT: {
           const uint64_t key_value =
               ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
           buffer << ConvertUnsignedValueToSignedValue<int16_t, INT16_MAX>(
                         key_value) << ",";
           break;
         }
-        case Type::TINYINT: {
+        case type::Type::TINYINT: {
           const uint64_t key_value =
               ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
           buffer << static_cast<int64_t>(
@@ -259,36 +259,36 @@ class IntsKey {
     // Loop from most significant column to least significant column
     for (int ii = 0; ii < column_count; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-        case Type::BIGINT: {
-          common::Value val = tuple->GetValue(ii);
-          const int64_t value = ValuePeeker::PeekBigInt(val);
+        case type::Type::BIGINT: {
+          type::Value val = tuple->GetValue(ii);
+          const int64_t value = type::ValuePeeker::PeekBigInt(val);
           const uint64_t key_value =
               ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
                   value);
           InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::INTEGER: {
-          common::Value val = tuple->GetValue(ii);
-          const int32_t value = ValuePeeker::PeekInteger(val);
+        case type::Type::INTEGER: {
+          type::Value val = tuple->GetValue(ii);
+          const int32_t value = type::ValuePeeker::PeekInteger(val);
           const uint32_t key_value =
               ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
                   value);
           InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::SMALLINT: {
-          common::Value val = tuple->GetValue(ii);
-          const int16_t value = ValuePeeker::PeekSmallInt(val);
+        case type::Type::SMALLINT: {
+          type::Value val = tuple->GetValue(ii);
+          const int16_t value = type::ValuePeeker::PeekSmallInt(val);
           const uint16_t key_value =
               ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
                   value);
           InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::TINYINT: {
-          common::Value val = tuple->GetValue(ii);
-          const int8_t value = ValuePeeker::PeekTinyInt(val);
+        case type::Type::TINYINT: {
+          type::Value val = tuple->GetValue(ii);
+          const int8_t value = type::ValuePeeker::PeekTinyInt(val);
           const uint8_t key_value =
               ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
                   value);
@@ -312,37 +312,37 @@ class IntsKey {
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-        case Type::BIGINT: {
-          common::Value val = tuple->GetValue(indices[ii]);
-          const int64_t value = ValuePeeker::PeekBigInt(val);
+        case type::Type::BIGINT: {
+          type::Value val = tuple->GetValue(indices[ii]);
+          const int64_t value = type::ValuePeeker::PeekBigInt(val);
           const uint64_t key_value =
               ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
                   value);
           InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::INTEGER: {
-          common::Value val = tuple->GetValue(indices[ii]);
+        case type::Type::INTEGER: {
+          type::Value val = tuple->GetValue(indices[ii]);
           const int32_t value =
-              ValuePeeker::PeekInteger(val);
+              type::ValuePeeker::PeekInteger(val);
           const uint32_t key_value =
               ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
                   value);
           InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::SMALLINT: {
-          common::Value val = tuple->GetValue(indices[ii]);
-          const int16_t value = ValuePeeker::PeekSmallInt(val);
+        case type::Type::SMALLINT: {
+          type::Value val = tuple->GetValue(indices[ii]);
+          const int16_t value = type::ValuePeeker::PeekSmallInt(val);
           const uint16_t key_value =
               ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
                   value);
           InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
           break;
         }
-        case Type::TINYINT: {
-          common::Value val = tuple->GetValue(indices[ii]);
-          const int8_t value = ValuePeeker::PeekTinyInt(val);
+        case type::Type::TINYINT: {
+          type::Value val = tuple->GetValue(indices[ii]);
+          const int8_t value = type::ValuePeeker::PeekTinyInt(val);
           const uint8_t key_value =
               ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
                   value);

@@ -172,20 +172,20 @@ class TupleKeyComparator {
     for (unsigned int col_itr = 0; 
          col_itr < columt_count;
          ++col_itr) {
-      common::Value lhValue = \
+      type::Value lhValue = \
         lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
-      common::Value rhValue = \
+      type::Value rhValue = \
         rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
       // If there is a field in LHS < RHS then return true;
-      common::Value res_lt = \
+      type::Value res_lt = \
           lhValue.CompareLessThan(rhValue);
       if (res_lt.IsTrue()) {
         return true;
       }
       
       // If there is a field in LHS > RHS then return false
-      common::Value res_gt = \
+      type::Value res_gt = \
           lhValue.CompareGreaterThan(rhValue);
           
       if (res_gt.IsTrue()) {
@@ -235,18 +235,18 @@ class TupleKeyComparatorRaw {
     for (unsigned int col_itr = 0; 
          col_itr < columt_count;
          ++col_itr) {
-      common::Value lhValue = \
+      type::Value lhValue = \
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
-      common::Value rhValue = \
+      type::Value rhValue = \
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
-      common::Value res_lt = \
+      type::Value res_lt = \
           lhValue.CompareLessThan(rhValue);
       if (res_lt.IsTrue()) {
         return VALUE_COMPARE_LESSTHAN;
       }
 
-      common::Value res_gt = \
+      type::Value res_gt = \
           lhValue.CompareGreaterThan(rhValue);
       if (res_gt.IsTrue()) {
         return VALUE_COMPARE_GREATERTHAN;
@@ -295,14 +295,14 @@ class TupleKeyEqualityChecker {
     for (unsigned int col_itr = 0; 
          col_itr < columt_count;
          ++col_itr) {
-      common::Value lhValue = (
+      type::Value lhValue = (
           lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr)));
-      common::Value rhValue = (
+      type::Value rhValue = (
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr)));
 
       // If any of these two columns differ then just return false
       // because we know they could not be equal 
-      common::Value res = (lhValue.CompareNotEquals(rhValue));
+      type::Value res = (lhValue.CompareNotEquals(rhValue));
       if (res.IsTrue()) {
         return false;
       }

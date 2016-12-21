@@ -26,8 +26,6 @@
 namespace peloton {
 namespace index {
 
-using namespace peloton::common;
-
 }  // End index namespace
 }  // End peloton namespace
 

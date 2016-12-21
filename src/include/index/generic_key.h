@@ -36,13 +36,13 @@ class GenericKey {
     return storage::Tuple(key_schema, data);
   }
 
-  inline const Value ToValueFast(const catalog::Schema *schema,
-                                 int column_id) const {
-    const Type::TypeId column_type = schema->GetType(column_id);
+  inline const type::Value ToValueFast(const catalog::Schema *schema,
+                                       int column_id) const {
+    const type::Type::TypeId column_type = schema->GetType(column_id);
     const char *data_ptr = &data[schema->GetOffset(column_id)];
     const bool is_inlined = schema->IsInlined(column_id);
 
-    return Value::DeserializeFrom(data_ptr, column_type, is_inlined);
+    return type::Value::DeserializeFrom(data_ptr, column_type, is_inlined);
   }
 
   // actual location of data, extends past the end.
@@ -63,17 +63,17 @@ class GenericComparator {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      const common::Value lhs_value = (
+      const type::Value lhs_value = (
           lhs.ToValueFast(schema, column_itr));
-      const common::Value rhs_value = (
+      const type::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
       
-      common::Value res_lt = (
+      type::Value res_lt = (
           lhs_value.CompareLessThan(rhs_value));
       if (res_lt.IsTrue())
         return true;
 
-      common::Value res_gt = (
+      type::Value res_gt = (
           lhs_value.CompareGreaterThan(rhs_value));
       if (res_gt.IsTrue())
         return false;
@@ -98,17 +98,17 @@ class GenericComparatorRaw {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      const common::Value lhs_value = (
+      const type::Value lhs_value = (
           lhs.ToValueFast(schema, column_itr));
-      const common::Value rhs_value = (
+      const type::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
 
-      common::Value res_lt = (
+      type::Value res_lt = (
         lhs_value.CompareLessThan(rhs_value));
       if (res_lt.IsTrue())
         return VALUE_COMPARE_LESSTHAN;
 
-      common::Value res_gt = (
+      type::Value res_gt = (
         lhs_value.CompareGreaterThan(rhs_value));
       if (res_gt.IsTrue())
         return VALUE_COMPARE_GREATERTHAN;
