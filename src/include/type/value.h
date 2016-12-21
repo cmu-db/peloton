@@ -139,31 +139,65 @@ class Value : public Printable {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  Value CompareEquals(const Value &o) const;
-  Value CompareNotEquals(const Value &o) const;
-  Value CompareLessThan(const Value &o) const;
-  Value CompareLessThanEquals(const Value &o) const;
-  Value CompareGreaterThan(const Value &o) const;
-  Value CompareGreaterThanEquals(const Value &o) const;
+  inline Value CompareEquals(const Value &o) const {
+    return type_->CompareEquals(*this, o);
+  }
+  inline Value CompareNotEquals(const Value &o) const {
+    return type_->CompareNotEquals(*this, o);
+  }
+  inline Value CompareLessThan(const Value &o) const {
+    return type_->CompareLessThan(*this, o);
+  }
+  inline Value CompareLessThanEquals(const Value &o) const {
+    return type_->CompareLessThanEquals(*this, o);
+  }
+  inline Value CompareGreaterThan(const Value &o) const {
+    return type_->CompareGreaterThan(*this, o);
+  }
+  inline Value CompareGreaterThanEquals(const Value &o) const {
+    return type_->CompareGreaterThanEquals(*this, o);
+  }
 
   // Other mathematical functions
-  Value Add(const Value &o) const;
-  Value Subtract(const Value &o) const;
-  Value Multiply(const Value &o) const;
-  Value Divide(const Value &o) const;
-  Value Modulo(const Value &o) const;
-  Value Min(const Value &o) const;
-  Value Max(const Value &o) const;
-  Value Sqrt() const;
-  Value OperateNull(const Value &o) const;
-  bool IsZero() const;
+  inline Value Add(const Value &o) const {
+    return type_->Add(*this, o);
+  }
+  inline Value Subtract(const Value &o) const {
+    return type_->Subtract(*this, o);
+  }
+  inline Value Multiply(const Value &o) const {
+    return type_->Multiply(*this, o);
+  }
+  inline Value Divide(const Value &o) const {
+    return type_->Divide(*this, o);
+  }
+  inline Value Modulo(const Value &o) const {
+    return type_->Modulo(*this, o);
+  }
+  inline Value Min(const Value &o) const {
+    return type_->Min(*this, o);
+  }
+  inline Value Max(const Value &o) const {
+    return type_->Max(*this, o);
+  }
+  inline Value Sqrt() const {
+    return type_->Sqrt(*this);
+  }
+  inline Value OperateNull(const Value &o) const {
+    return type_->OperateNull(*this, o);
+  }
+  inline bool IsZero() const {
+    return type_->IsZero(*this);
+  }
 
   // Is the data inlined into this classes storage space, or must it be accessed
   // through an indirection/pointer?
-  bool IsInlined() const;
+  inline bool IsInlined() const;
 
   // Is a value null?
-  bool IsNull() const;
+  inline bool IsNull() const {
+    return size_.len == PELOTON_VALUE_NULL;
+  }
 
   // Examine the type of this object.
   bool CheckInteger() const;
@@ -171,67 +205,111 @@ class Value : public Printable {
   // Can two types of value be compared?
   bool CheckComparable(const Value &o) const;
 
-  bool IsTrue() const {
+  inline bool IsTrue() const {
     PL_ASSERT(GetTypeId() == Type::BOOLEAN);
     return (value_.boolean == 1);
   }
 
-  bool IsFalse() const {
+  inline bool IsFalse() const {
     PL_ASSERT(GetTypeId() == Type::BOOLEAN);
     return (value_.boolean == 0);
   }
 
   // Return a stringified version of this value
-  std::string ToString() const;
+  inline std::string ToString() const {
+    return type_->ToString(*this);
+  }
 
   // Compute a hash value
-  size_t Hash() const;
-  void HashCombine(size_t &seed) const;
+  inline size_t Hash() const {
+    return type_->Hash(*this);
+  }
+
+  inline void HashCombine(size_t &seed) const {
+    return type_->HashCombine(*this, seed);
+  }
 
   // Serialize this value into the given storage space. The inlined parameter
   // indicates whether we are allowed to inline this value into the storage
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  void SerializeTo(char *storage, bool inlined, VarlenPool *pool) const;
-  void SerializeTo(SerializeOutput &out) const;
+  inline void SerializeTo(char *storage, bool inlined, VarlenPool *pool) const {
+    type_->SerializeTo(*this, storage, inlined, pool);
+  }
+
+  inline void SerializeTo(SerializeOutput &out) const {
+    type_->SerializeTo(*this, out);
+  }
 
   // Deserialize a value of the given type from the given storage space.
-  static Value DeserializeFrom(const char *storage, const Type::TypeId type_id,
-                               const bool inlined, VarlenPool *pool = nullptr);
-  static Value DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
-                               VarlenPool *pool = nullptr);
+  inline static Value DeserializeFrom(const char *storage, const Type::TypeId type_id,
+                               const bool inlined, VarlenPool *pool = nullptr) {
+    return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
+  }
+
+  inline static Value DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
+                               VarlenPool *pool = nullptr) {
+    return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
+  }
 
   // Perform a shallow copy from a serialized varlen value to another serialized varlen value
   // Only support VARCHAR/VARBINARY
-  static void ShallowCopyTo(char *dest, char *src, const Type::TypeId type_id, bool inlined, VarlenPool *src_pool);
+  inline static void ShallowCopyTo(char *dest, char *src,
+                                   const Type::TypeId type_id, bool inlined, VarlenPool *src_pool) {
+    Type::GetInstance(type_id)->DoShallowCopy(dest, src, inlined, src_pool);
+  }
 
   // Access the raw variable length data
-  const char *GetData() const;
+  inline const char *GetData() const {
+    return type_->GetData(*this);
+  }
 
   // Access the raw variable length data from a pointer pointed to a tuple storage
-  static char *GetDataFromStorage(Type::TypeId type_id, char *storage);
+  inline static char *GetDataFromStorage(Type::TypeId type_id, char *storage) {
+    switch (type_id) {
+      case Type::VARCHAR:
+      case Type::VARBINARY: {
+        return Type::GetInstance(type_id)->GetData(storage);
+      }
+      default:
+        throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                        "Invalid Type for getting raw data pointer");
+    }
+  }
 
   // Get the length of the variable length data
-  uint32_t GetLength() const;
+  inline uint32_t GetLength() const {
+    return type_->GetLength(*this);
+  }
 
   template <class T>
-  T GetAs() const {
+  inline T GetAs() const {
     return *reinterpret_cast<const T *>(&value_);
   }
 
   // Create a copy of this value
-  Value Copy() const;
+  inline Value Copy() const {
+    return type_->Copy(*this);
+  }
 
-  Value CastAs(const Type::TypeId type_id) const;
+  inline Value CastAs(const Type::TypeId type_id) const {
+    return type_->CastAs(*this, type_id);
+  }
 
   // Get the element at a given index in this array
-  Value GetElementAt(uint64_t idx) const;
+  inline Value GetElementAt(uint64_t idx) const {
+    return type_->GetElementAt(*this, idx);
+  }
 
-  Type::TypeId GetElementType() const;
+  inline Type::TypeId GetElementType() const {
+    return type_->GetElementType(*this);
+  }
 
   // Does this value exist in this array?
-  Value InList(const Value &object) const;
+  inline Value InList(const Value &object) const {
+    return type_->InList(*this, object);
+  }
 
   // For unordered_map
   struct equal_to {

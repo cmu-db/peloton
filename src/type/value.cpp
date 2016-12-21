@@ -276,10 +276,6 @@ const std::string Value::GetInfo() const {
   return os.str();
 }
 
-bool Value::IsNull() const {
-  return size_.len == PELOTON_VALUE_NULL;
-}
-
 bool Value::CheckComparable(const Value &o) const {
   switch (GetTypeId()) {
     case Type::BOOLEAN:
@@ -331,124 +327,9 @@ bool Value::CheckInteger() const {
   return false;
 }
 
-Value Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,
-                             UNUSED_ATTRIBUTE const bool inlined,
-                             UNUSED_ATTRIBUTE VarlenPool *pool) {
-  return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
-}
-
-Value Value::DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
-                             VarlenPool *pool UNUSED_ATTRIBUTE) {
-  return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
-}
-
-Value Value::CompareEquals(const Value &o) const {
-  return type_->CompareEquals(*this, o);
-}
-Value Value::CompareNotEquals(const Value &o) const {
-  return type_->CompareNotEquals(*this, o);
-}
-Value Value::Value::CompareLessThan(const Value &o) const {
-  return type_->CompareLessThan(*this, o);
-}
-Value Value::CompareLessThanEquals(const Value &o) const {
-  return type_->CompareLessThanEquals(*this, o);
-}
-Value Value::CompareGreaterThan(const Value &o) const {
-  return type_->CompareGreaterThan(*this, o);
-}
-Value Value::CompareGreaterThanEquals(const Value &o) const {
-  return type_->CompareGreaterThanEquals(*this, o);
-}
-
-// Other mathematical functions
-Value Value::Add(const Value &o) const { return type_->Add(*this, o); }
-Value Value::Subtract(const Value &o) const {
-  return type_->Subtract(*this, o);
-}
-Value Value::Multiply(const Value &o) const {
-  return type_->Multiply(*this, o);
-}
-Value Value::Divide(const Value &o) const { return type_->Divide(*this, o); }
-Value Value::Modulo(const Value &o) const { return type_->Modulo(*this, o); }
-Value Value::Min(const Value &o) const { return type_->Min(*this, o); }
-Value Value::Max(const Value &o) const { return type_->Max(*this, o); }
-Value Value::Sqrt() const { return type_->Sqrt(*this); }
-Value Value::OperateNull(const Value &o) const {
-  return type_->OperateNull(*this, o);
-}
-bool Value::IsZero() const { return type_->IsZero(*this); }
-
 // Is the data inlined into this classes storage space, or must it be accessed
 // through an indirection/pointer?
 bool Value::IsInlined() const { return type_->IsInlined(*this); }
-
-// Return a stringified version of this value
-std::string Value::ToString() const { return type_->ToString(*this); }
-
-// Compute a hash value
-size_t Value::Hash() const { return type_->Hash(*this); }
-void Value::HashCombine(size_t &seed) const {
-  return type_->HashCombine(*this, seed);
-}
-
-// Serialize this value into the given storage space. The inlined parameter
-// indicates whether we are allowed to inline this value into the storage
-// space, or whether we must store only a reference to this value. If inlined
-// is false, we may use the provided data pool to allocate space for this
-// value, storing a reference into the allocated pool space in the storage.
-void Value::SerializeTo(char *storage, bool inlined, VarlenPool *pool) const {
-  type_->SerializeTo(*this, storage, inlined, pool);
-}
-void Value::SerializeTo(SerializeOutput &out) const {
-  type_->SerializeTo(*this, out);
-}
-
-// Perform a shallow copy from a serialized varlen value to another serialized varlen value
-// Only support VARCHAR/VARBINARY
-void Value::ShallowCopyTo(char *dest, char *src, const Type::TypeId type_id, bool inlined, VarlenPool *src_pool) {
-  Type::GetInstance(type_id)->DoShallowCopy(dest, src, inlined, src_pool);
-}
-
-// Create a copy of this value
-Value Value::Copy() const { return type_->Copy(*this); }
-
-Value Value::CastAs(const Type::TypeId type_id) const {
-  return type_->CastAs(*this, type_id);
-}
-
-// Access the raw variable length data
-const char *Value::GetData() const { return type_->GetData(*this); }
-
-// Access the raw variable length data from a pointer pointed to a tuple storage
-char *Value::GetDataFromStorage(Type::TypeId type_id, char *storage) {
-  switch (type_id) {
-    case Type::VARCHAR:
-    case Type::VARBINARY: {
-      return Type::GetInstance(type_id)->GetData(storage);
-    }
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for getting raw data pointer");
-  }
-}
-
-// Get the length of the variable length data
-uint32_t Value::GetLength() const { return type_->GetLength(*this); }
-
-// Get the element at a given index in this array
-Value Value::GetElementAt(uint64_t idx) const {
-  return type_->GetElementAt(*this, idx);
-}
-
-Type::TypeId Value::GetElementType() const {
-  return type_->GetElementType(*this);
-}
-
-// Does this value exist in this array?
-Value Value::InList(const Value &object) const {
-  return type_->InList(*this, object);
-}
 
 }  // namespace peloton
 }  // namespace type
