@@ -66,6 +66,8 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   PL_ASSERT(index_ != nullptr);
 
+  // index_predicate_ = node.GetIndexPredicate();
+
   result_itr_ = START_OID;
   result_.clear();
   done_ = false;
@@ -693,10 +695,14 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
 }
 
 void IndexScanExecutor::UpdatePredicate(
-    const std::vector<oid_t> &key_column_ids UNUSED_ATTRIBUTE,
-    const std::vector<type::Value> &values UNUSED_ATTRIBUTE) {
+    const std::vector<oid_t> &key_column_ids,
+    const std::vector<type::Value> &values) {
   // TODO: ADD ziqi's API
   // Update index predicate
+  // Grab data from plan node.
+  //  const planner::IndexScanPlan &node =
+  // GetPlanNode<planner::IndexScanPlan>();
+  //  node.UpdatePredicate(values);
 
   // Update values in index plan node
   PL_ASSERT(key_column_ids.size() == values.size());
