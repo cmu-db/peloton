@@ -50,6 +50,7 @@ static const double PELOTON_DECIMAL_MAX = DBL_MAX;
 static const uint64_t PELOTON_TIMESTAMP_MAX = 11231999986399999999U;
 static const int8_t PELOTON_BOOLEAN_MAX = 1;
 
+static const uint32_t PELOTON_VALUE_NULL = UINT_MAX;
 static const int8_t PELOTON_INT8_NULL = SCHAR_MIN;
 static const int16_t PELOTON_INT16_NULL = SHRT_MIN;
 static const int32_t PELOTON_INT32_NULL = INT_MIN;
@@ -111,6 +112,7 @@ class Value : public Printable {
   {
     std::swap(first.type_, second.type_);
     std::swap(first.value_, second.value_);
+    std::swap(first.size_, second.size_);
   }
 
   Value &operator=(Value other);
@@ -270,6 +272,7 @@ class Value : public Printable {
   friend class ValueFactory;
 
  protected:
+  // TODO: Pack allocated flag with the type id
   // The data type
   Type *type_;
 
@@ -282,27 +285,28 @@ class Value : public Printable {
     int64_t bigint;
     double decimal;
     uint64_t timestamp;
-    //    char *ptr;
-    struct {
-      uint32_t len;
-      char *data;
-    } varlen;
-    struct {
-      Type::TypeId array_type;
-      char *data;
-    } array;
+    char * varlen;
+    char * array;
   } value_;
+
+  union{
+   uint32_t len;
+   Type::TypeId elem_type_id;
+  } size_;
+
+  bool allocated_;
 };
 
 // ARRAY here to ease creation of templates
+// TODO: Fix the representation for a null array
 template <class T>
 Value::Value(Type::TypeId type, const std::vector<T> &vals,
              Type::TypeId element_type)
     : Value(Type::ARRAY) {
   switch (type) {
     case Type::ARRAY:
-      value_.array.data = (char *)&vals;
-      value_.array.array_type = element_type;
+      value_.array = (char *)&vals;
+      size_.elem_type_id = element_type;
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,

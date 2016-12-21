@@ -27,7 +27,7 @@ class ValueFactory;
 class Type {
  public:
   enum TypeId {
-    INVALID,
+    INVALID = 0,
     PARAMETER_OFFSET,
     BOOLEAN,
     TINYINT,

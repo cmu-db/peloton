@@ -134,13 +134,13 @@ Value TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 
 // Create a copy of this value
 Value TimestampType::Copy(const Value& val) const {
-  return ValueFactory::GetTimestampValue(val.value_.timestamp);
+  return Value(val);
 }
 
 Value TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const {
   switch (type_id) {
     case Type::TIMESTAMP:
-      return val.Copy();
+      return Copy(val);
     case Type::VARCHAR:
       if (val.IsNull())
         return ValueFactory::GetVarcharValue(nullptr, 0);

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/type/value.h>
 #include "type/value.h"
 
 #include "type/boolean_type.h"
@@ -23,13 +24,17 @@ namespace type {
 
 Value::Value(const Value &other) {
   type_ = other.type_;
+  size_ = other.size_;
   switch (type_->GetTypeId()) {
     case Type::VARCHAR:
     case Type::VARBINARY:
-      value_.varlen.len = other.value_.varlen.len;
-      value_.varlen.data = new char[value_.varlen.len];
-      PL_MEMCPY(value_.varlen.data, other.value_.varlen.data,
-                value_.varlen.len);
+      if (size_.len == PELOTON_VALUE_NULL) {
+        value_.varlen = nullptr;
+      } else {
+        value_.varlen = new char[size_.len];
+        PL_MEMCPY(value_.varlen, other.value_.varlen,
+                  size_.len);
+      }
       break;
     default:
       value_ = other.value_;
@@ -50,19 +55,24 @@ Value::Value(Type::TypeId type, int8_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -75,19 +85,24 @@ Value::Value(Type::TypeId type, int16_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -100,19 +115,24 @@ Value::Value(Type::TypeId type, int32_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -125,22 +145,28 @@ Value::Value(Type::TypeId type, int64_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TIMESTAMP:
       value_.timestamp = i;
+      size_.len = (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -153,9 +179,11 @@ Value::Value(Type::TypeId type, uint64_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TIMESTAMP:
       value_.timestamp = i;
+      size_.len = (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -168,6 +196,7 @@ Value::Value(Type::TypeId type, double d) : Value(type) {
   switch (type) {
     case Type::DECIMAL:
       value_.decimal = d;
+      size_.len = (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -179,6 +208,7 @@ Value::Value(Type::TypeId type, float f) : Value(type) {
   switch (type) {
     case Type::DECIMAL:
       value_.decimal = f;
+      size_.len = (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -191,11 +221,16 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len) : Value(type) {
   switch (type) {
     case Type::VARCHAR:
     case Type::VARBINARY:
-      PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
-      value_.varlen.data = new char[len];
-      PL_ASSERT(value_.varlen.data != nullptr);
-      value_.varlen.len = len;
-      PL_MEMCPY(value_.varlen.data, data, len);
+      if (data == nullptr) {
+        value_.varlen = nullptr;
+        size_.len = PELOTON_VALUE_NULL;
+      } else {
+        PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
+        value_.varlen = new char[len];
+        PL_ASSERT(value_.varlen != nullptr);
+        size_.len = len;
+        PL_MEMCPY(value_.varlen, data, len);
+      }
       break;
     default:
       throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
@@ -207,11 +242,12 @@ Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
   switch (type) {
     case Type::VARCHAR:
     case Type::VARBINARY: {
+      // TODO: How to represent a null string here?
       uint32_t len = data.length() + (type == Type::VARCHAR);
-      value_.varlen.data = new char[len];
-      PL_ASSERT(value_.varlen.data != nullptr);
-      value_.varlen.len = len;
-      PL_MEMCPY(value_.varlen.data, data.c_str(), len);
+      value_.varlen = new char[len];
+      PL_ASSERT(value_.varlen != nullptr);
+      size_.len = len;
+      PL_MEMCPY(value_.varlen, data.c_str(), len);
       break;
     }
     default:
@@ -226,7 +262,7 @@ Value::~Value() {
   switch (type_->GetTypeId()) {
     case Type::VARBINARY:
     case Type::VARCHAR:
-      delete[] value_.varlen.data;
+      delete[] value_.varlen;
       break;
     default:
       break;
@@ -241,29 +277,7 @@ const std::string Value::GetInfo() const {
 }
 
 bool Value::IsNull() const {
-  switch (GetTypeId()) {
-    case Type::BOOLEAN:
-      return (value_.boolean == PELOTON_BOOLEAN_NULL);
-    case Type::TINYINT:
-      return (value_.tinyint == PELOTON_INT8_NULL);
-    case Type::SMALLINT:
-      return (value_.smallint == PELOTON_INT16_NULL);
-    case Type::INTEGER:
-    case Type::PARAMETER_OFFSET:
-      return (value_.integer == PELOTON_INT32_NULL);
-    case Type::BIGINT:
-      return (value_.bigint == PELOTON_INT64_NULL);
-    case Type::DECIMAL:
-      return (value_.decimal == PELOTON_DECIMAL_NULL);
-    case Type::TIMESTAMP:
-      return (value_.timestamp == PELOTON_TIMESTAMP_NULL);
-    case Type::VARCHAR:
-    case Type::VARBINARY:
-      return value_.varlen.len == 0;
-    default:
-      break;
-  }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+  return size_.len == PELOTON_VALUE_NULL;
 }
 
 bool Value::CheckComparable(const Value &o) const {
