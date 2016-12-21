@@ -36,23 +36,33 @@ namespace tcop {
 TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
 
 void TrafficCop::Reset() {
-  std::stack<concurrency::Transaction*> new_txn_ptrs;
+  std::stack<TcopTxnState> new_tcop_txn_state;
   // clear out the stack
-  swap(txn_ptrs, new_txn_ptrs);
+  swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
 }
 
 TrafficCop::~TrafficCop() {
-  // Nothing to do here !
+  // Abort all running transactions
+  while (tcop_txn_state_.empty() == false) {
+    AbortQueryHelper();
+  }
 }
 
-concurrency::Transaction* TrafficCop::GetCurrentTransaction() {
-  if (txn_ptrs.empty())
-    return nullptr;
-  return txn_ptrs.top();
+TrafficCop::TcopTxnState& TrafficCop::GetDefaultTxnState() {
+  static TcopTxnState default_state;
+  default_state = std::make_pair(nullptr, Result::RESULT_INVALID);
+  return default_state;
 }
 
-Result TrafficCop::BeginTransactionHelper() {
+TrafficCop::TcopTxnState& TrafficCop::GetCurrentTxnState() {
+  if (tcop_txn_state_.empty()) {
+    return GetDefaultTxnState();
+  }
+  return tcop_txn_state_.top();
+}
+
+Result TrafficCop::BeginQueryHelper() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -61,46 +71,43 @@ Result TrafficCop::BeginTransactionHelper() {
     LOG_DEBUG("Begin txn failed");
     return Result::RESULT_FAILURE;
   }
-  txn_ptrs.push(txn);
+
+  // initialize the current result as success
+  tcop_txn_state_.emplace(txn, Result::RESULT_SUCCESS);
   return Result::RESULT_SUCCESS;
 }
 
-Result TrafficCop::CommitTransactionHelper() {
+Result TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
-  if (txn_ptrs.empty())
+  if (tcop_txn_state_.empty())
     return Result::RESULT_NOOP;
-  auto txn = txn_ptrs.top();
-  txn_ptrs.pop();
-  // commit the txn only if all queries executed successfully
-  if (txn->GetResult() == Result::RESULT_SUCCESS) {
+  auto &curr_state = tcop_txn_state_.top();
+  tcop_txn_state_.pop();
+  // commit the txn only if it has not aborted already
+  if (curr_state.second != Result::RESULT_ABORTED) {
+    auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto tmp = txn->GetResult();
-    LOG_DEBUG("Txn Result:%d", tmp);
     auto result = txn_manager.CommitTransaction(txn);
-    txn = nullptr;
     return result;
   } else {
-    txn = nullptr;
     // otherwise, the txn has already been aborted
     return Result::RESULT_ABORTED;
   }
 }
 
-Result TrafficCop::AbortTransactionHelper() {
+Result TrafficCop::AbortQueryHelper() {
   // do nothing if we have no active txns
-  if (txn_ptrs.empty())
+  if (tcop_txn_state_.empty())
     return Result::RESULT_NOOP;
-  auto txn = txn_ptrs.top();
-  txn_ptrs.pop();
-  // explicitly abort the txn only if it is not already aborted
-  if (txn->GetResult() != Result::RESULT_ABORTED) {
+  auto &curr_state = tcop_txn_state_.top();
+  tcop_txn_state_.pop();
+  // explicitly abort the txn only if it has not aborted already
+  if (curr_state.second != Result::RESULT_ABORTED) {
+    auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
-    LOG_TRACE("Txn Result:%d", txn->GetResult());
-    txn = nullptr;
     return result;
   } else {
-    txn = nullptr;
     // otherwise, the txn has already been aborted
     return Result::RESULT_ABORTED;
   }
@@ -158,20 +165,71 @@ Result TrafficCop::ExecuteStatement(
 
   try {
     auto query_str = boost::to_upper_copy<std::string>(statement->GetQueryString());
-
     if (query_str == "BEGIN")
-      return BeginTransactionHelper();
+      return BeginQueryHelper();
     else if (query_str == "COMMIT")
-      return CommitTransactionHelper();
+      return CommitQueryHelper();
     else if (query_str == "ABORT")
-      return AbortTransactionHelper();
+      return AbortQueryHelper();
     else {
-      bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-          statement->GetPlanTree().get(), GetCurrentTransaction(), params,
-          result, result_format);
-      LOG_TRACE("Statement executed. Result: %d", status.m_result);
-      rows_changed = status.m_processed;
-      return status.m_result;
+      concurrency::Transaction *txn;
+      bool single_statement_txn = false, init_failure = false;
+
+      auto &curr_state = GetCurrentTxnState();
+      if (tcop_txn_state_.empty()) {
+        // no active txn, single-statement txn
+        auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+        // new txn, reset result status
+        curr_state.second = Result::RESULT_SUCCESS;
+        txn = txn_manager.BeginTransaction();
+        single_statement_txn = true;
+      } else {
+        // get ptr to current active txn
+        txn = curr_state.first;
+      }
+
+      // skip if already aborted
+      if (curr_state.second != Result::RESULT_ABORTED) {
+        PL_ASSERT(txn);
+        bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+            statement->GetPlanTree().get(), txn, params,
+            result, result_format);
+
+        if (status.m_result == Result::RESULT_FAILURE) {
+          // only possible if init failed
+          init_failure = true;
+        }
+
+        auto txn_result = txn->GetResult();
+        if (single_statement_txn == true || init_failure == true ||
+            txn_result == Result::RESULT_FAILURE) {
+          auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+          LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
+                    single_statement_txn, init_failure, txn_result);
+          switch (txn_result) {
+            case Result::RESULT_SUCCESS:
+              // Commit
+              LOG_TRACE("Commit Transaction");
+              status.m_result = txn_manager.CommitTransaction(txn);
+              break;
+
+            case Result::RESULT_FAILURE:
+            default:
+              // Abort
+              LOG_TRACE("Abort Transaction");
+              status.m_result = txn_manager.AbortTransaction(txn);
+              curr_state.second = Result::RESULT_ABORTED;
+          }
+        }
+
+        LOG_TRACE("Statement executed. Result: %d", status.m_result);
+        rows_changed = status.m_processed;
+        return status.m_result;
+      } else {
+        // otherwise, we have already aborted
+        return Result::RESULT_ABORTED;
+      }
     }
   }
   catch (Exception &e) {

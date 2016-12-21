@@ -79,17 +79,21 @@ class TrafficCop {
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
-  // to support nested-txns use a stack
-  std::stack<concurrency::Transaction*> txn_ptrs;
+  // pair of txn ptr and the result so-far for that txn
+  // use a stack to support nested-txns
+  typedef std::pair<concurrency::Transaction*, Result> TcopTxnState;
+  std::stack<TcopTxnState> tcop_txn_state_;
 
  private:
-  concurrency::Transaction* GetCurrentTransaction();
+  static TcopTxnState& GetDefaultTxnState();
 
-  Result BeginTransactionHelper();
+  TcopTxnState& GetCurrentTxnState();
 
-  Result CommitTransactionHelper();
+  Result BeginQueryHelper();
 
-  Result AbortTransactionHelper();
+  Result CommitQueryHelper();
+
+  Result AbortQueryHelper();
 };
 
 }  // End tcop namespace
