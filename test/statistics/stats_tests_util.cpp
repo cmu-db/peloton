@@ -22,6 +22,7 @@
 #include "expression/expression_util.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/plan_util.h"
 #include "storage/tile.h"
 
 namespace peloton {
@@ -39,7 +40,8 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
       optimizer::SimpleOptimizer().BuildPelotonPlanTree(select_stmt));
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_DEBUG("%s",
+            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params,
                                     result, result_format);
@@ -97,9 +99,9 @@ std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
 void StatsTestsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   if (has_primary_key) {
     catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
     id_column.AddConstraint(constraint);
@@ -160,7 +162,7 @@ void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   statement->SetPlanTree(
       optimizer::SimpleOptimizer().BuildPelotonPlanTree(update_stmt));
   LOG_TRACE("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
 }
 
 }  // namespace test

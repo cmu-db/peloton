@@ -14,11 +14,12 @@
 
 #include "gtest/gtest.h"
 
-#include "../../src/include/executor/drop_executor.h"
+#include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/catalog.h"
+#include "executor/drop_executor.h"
 #include "planner/drop_plan.h"
+#include "planner/plan_util.h"
 
 namespace peloton {
 namespace test {
@@ -30,14 +31,14 @@ namespace test {
 class DropTests : public PelotonTest {};
 
 TEST_F(DropTests, DroppingTable) {
-
   auto catalog = catalog::Catalog::GetInstance();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert a table first
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   auto name_column =
       catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 

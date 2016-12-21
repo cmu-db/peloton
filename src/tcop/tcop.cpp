@@ -12,24 +12,21 @@
 
 #include "tcop/tcop.h"
 
+#include "catalog/catalog.h"
 #include "common/abstract_tuple.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "type/type.h"
-#include "type/types.h"
-
 #include "configuration/configuration.h"
-
+#include "executor/plan_executor.h"
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
-
+#include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
 #include "parser/select_statement.h"
-
-#include "catalog/catalog.h"
-#include "executor/plan_executor.h"
-#include "optimizer/simple_optimizer.h"
+#include "planner/plan_util.h"
+#include "type/type.h"
+#include "type/types.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -76,8 +73,7 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params,
-    UNUSED_ATTRIBUTE const bool unnamed,
+    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
@@ -90,8 +86,10 @@ Result TrafficCop::ExecuteStatement(
             statement->GetStatementName().c_str());
   LOG_TRACE("Execute Statement of query: %s",
             statement->GetStatementName().c_str());
+  LOG_DEBUG("Execute Statement Plan:\n%s",
+            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+
   try {
-    bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
     bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
         statement->GetPlanTree().get(), params, result, result_format);
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
@@ -127,9 +125,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       }
       break;
     }
-
-    bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-    LOG_DEBUG("Statement Prepared!");
+#ifdef LOG_DEBUG_ENABLED
+    if (statement->GetPlanTree().get() != nullptr) {
+      LOG_DEBUG("Statement Prepared\n%s",
+                statement->GetPlanTree().get()->GetInfo().c_str());
+    }
+#endif
     return std::move(statement);
   } catch (Exception &e) {
     error_message = e.what();

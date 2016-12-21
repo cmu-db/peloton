@@ -18,8 +18,8 @@
 #include <utility>
 
 #include "common/logger.h"
-#include "type/types.h"
 #include "expression/expression_util.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace planner {
@@ -48,17 +48,8 @@ std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {
 
 const std::string AbstractPlan::GetInfo() const {
   std::ostringstream os;
-
-  os << GetInfo();
-
-  // Traverse the tree
-  std::string child_spacer = "  ";
-  for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
-       ctr++) {
-    os << child_spacer << children_[ctr].get()->GetPlanNodeType() << "\n";
-    os << children_[ctr].get()->GetInfo();
-  }
-
+  os << PlanNodeTypeToString(GetPlanNodeType())
+     << " [NumChildren=" << children_.size() << "]";
   return os.str();
 }
 
