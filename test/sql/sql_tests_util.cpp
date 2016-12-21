@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "sql/sql_tests_util.h"
 
 #include "catalog/catalog.h"
 #include "common/logger.h"
@@ -16,9 +17,8 @@
 #include "optimizer/rule.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
+#include "planner/plan_util.h"
 #include "tcop/tcop.h"
-
-#include "sql/sql_tests_util.h"
 
 namespace peloton {
 
@@ -64,7 +64,7 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
   auto result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
 
   try {
-    bridge::PlanExecutor::PrintPlan(plan.get(), "Plan");
+    LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
     auto status = bridge::PlanExecutor::ExecutePlan(plan.get(), params, result,
                                                     result_format);
     rows_changed = status.m_processed;

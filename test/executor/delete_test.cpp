@@ -25,6 +25,7 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/plan_util.h"
 #include "tcop/tcop.h"
 
 #include "gtest/gtest.h"
@@ -52,7 +53,8 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto select_stmt =
       peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_TRACE("Query Plan\n%s",
+            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
@@ -70,9 +72,9 @@ TEST_F(DeleteTests, VariousOperations) {
 
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   auto name_column =
       catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
@@ -117,8 +119,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultType> result;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format = std::move(std::vector<int>(0, 0));
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
@@ -140,8 +142,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
@@ -163,8 +165,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
@@ -186,8 +188,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   auto tuple_descriptor =
       tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
@@ -208,8 +210,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt_2));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
@@ -230,8 +232,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),

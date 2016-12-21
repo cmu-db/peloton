@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "executor/plan_executor.h"
 
 #include <vector>
 
@@ -16,7 +17,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/executors.h"
-#include "executor/plan_executor.h"
 #include "optimizer/util.h"
 #include "storage/tuple_iterator.h"
 
@@ -262,32 +262,6 @@ cleanup:
     }
   }
   return executor_context->num_processed;
-}
-
-/**
- * @brief Pretty print the plan tree.
- * @param The plan tree
- * @return none.
- */
-void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
-                             std::string prefix) {
-  if (plan == nullptr) {
-    LOG_TRACE("Plan is null");
-    return;
-  }
-
-  prefix += "  ";
-  LOG_TRACE("Plan Type: %s",
-            PlanNodeTypeToString(plan->GetPlanNodeType()).c_str());
-  LOG_TRACE("%s->Plan Info :: %s ", prefix.c_str(), plan->GetInfo().c_str());
-
-  auto &children = plan->GetChildren();
-
-  LOG_TRACE("Number of children in plan: %d ", (int)children.size());
-
-  for (auto &child : children) {
-    PrintPlan(child.get(), prefix);
-  }
 }
 
 /**

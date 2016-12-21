@@ -18,9 +18,6 @@
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "type/types.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
@@ -40,11 +37,15 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/plan_util.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "tcop/tcop.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 #include "common/harness.h"
 #include "executor/executor_tests_util.h"
@@ -152,9 +153,9 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto manager_id_column = catalog::Column(
@@ -205,8 +206,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultType> result;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
@@ -233,8 +235,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
@@ -261,8 +263,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
@@ -285,8 +287,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
   LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
@@ -310,8 +312,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(delete_stmt));
   LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),

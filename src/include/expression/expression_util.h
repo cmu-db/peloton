@@ -20,13 +20,11 @@
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
-#include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
+#include "expression/string_functions.h"
 #include "expression/tuple_value_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "string_functions.h"
 
 namespace peloton {
 namespace expression {
@@ -58,8 +56,8 @@ class ExpressionUtil {
    * a value from the value vector
    */
   static void ConvertParameterExpressions(
-      expression::AbstractExpression *expression, std::vector<type::Value> *values,
-      catalog::Schema *schema) {
+      expression::AbstractExpression *expression,
+      std::vector<type::Value> *values, catalog::Schema *schema) {
     LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
     if (expression->GetChild(0)) {

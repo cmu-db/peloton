@@ -13,8 +13,8 @@
 #pragma once
 
 #include "common/statement.h"
-#include "type/types.h"
 #include "executor/abstract_executor.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace bridge {
@@ -53,9 +53,6 @@ class PlanExecutor {
 
   PlanExecutor(){};
 
-  static void PrintPlan(const planner::AbstractPlan *plan,
-                        std::string prefix = "");
-
   // Copy From
   static inline void copyFromTo(const std::string &src,
                                 std::vector<unsigned char> &dst) {
@@ -93,8 +90,7 @@ class PlanExecutor {
    * @return the number of tuple it executes and logical_tile_list
    */
   static int ExecutePlan(
-      const planner::AbstractPlan *plan,
-      const std::vector<type::Value> &params,
+      const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 

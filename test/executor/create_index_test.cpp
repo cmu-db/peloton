@@ -26,6 +26,7 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/plan_util.h"
 #include "planner/update_plan.h"
 
 #include "gtest/gtest.h"
@@ -74,8 +75,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   std::vector<type::Value> params;
   std::vector<ResultType> result;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
+  LOG_INFO("Executing plan...\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
@@ -109,8 +110,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
   result_format =
@@ -135,8 +136,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
 
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Building plan tree completed!\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
   result_format =

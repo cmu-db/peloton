@@ -10,16 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
 #include "catalog/catalog.h"
+#include "common/harness.h"
+#include "executor/plan_executor.h"
 #include "expression/abstract_expression.h"
-#include "expression/operator_expression.h"
 #include "expression/comparison_expression.h"
+#include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "parser/statements.h"
 #include "planner/delete_plan.h"
+#include "planner/plan_util.h"
 #include "planner/update_plan.h"
-#include "executor/plan_executor.h"
 
 namespace peloton {
 namespace test {
@@ -31,16 +32,15 @@ namespace test {
 class PlannerTests : public PelotonTest {};
 
 TEST_F(PlannerTests, DeletePlanTestParameter) {
-
   // Bootstrapping peloton
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "id", true);
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -77,8 +77,8 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   // Add seq scan plan
   delete_plan->AddChild(std::move(seq_scan_node));
 
-  LOG_INFO("Plan created");
-  bridge::PlanExecutor::PrintPlan(delete_plan, "Delete Plan");
+  LOG_INFO("Plan created:\n%s",
+           planner::PlanUtil::GetInfo(delete_plan).c_str());
 
   auto values = new std::vector<type::Value>();
 
@@ -105,9 +105,9 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "id", true);
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -151,8 +151,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   update_statement->where = cmp_expr;
 
   auto update_plan = new planner::UpdatePlan(update_statement);
-  LOG_INFO("Plan created");
-  bridge::PlanExecutor::PrintPlan(update_plan, "Update Plan");
+  LOG_INFO("Plan created:\n%s", update_plan->GetInfo().c_str());
 
   auto values = new std::vector<type::Value>();
 
@@ -180,9 +179,9 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   // Create table
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "id", true);
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -219,15 +218,15 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   planner::InsertPlan *insert_plan = new planner::InsertPlan(
       target_table, insert_statement->columns, insert_statement->insert_values);
-  LOG_INFO("Plan created");
-  bridge::PlanExecutor::PrintPlan(insert_plan, "Insert Plan");
+  LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
   auto values = new std::vector<type::Value>();
   values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
   values->push_back(type::ValueFactory::GetVarcharValue(
-      "CS", TestingHarness::GetInstance().GetTestingPool()).Copy());
+                        "CS", TestingHarness::GetInstance().GetTestingPool())
+                        .Copy());
   LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
   LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
   // bind values to parameters in plan

@@ -14,6 +14,7 @@
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/plan_util.h"
 #include "planner/update_plan.h"
 
 namespace peloton {
@@ -25,11 +26,11 @@ namespace test {
 
 using namespace optimizer;
 
-class OptimizerTests : public PelotonTest {};
+class SimpleOptimizerTests : public PelotonTest {};
 
 // Test whether update stament will use index scan plan
 // TODO: Split the tests into separate test cases.
-TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
+TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_INFO("Bootstrapping...");
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
   LOG_INFO("Bootstrapping completed!");
@@ -60,7 +61,8 @@ TEST_F(OptimizerTests, UpdateDelWithIndexScanTest) {
 
   std::vector<type::Value> params;
   std::vector<ResultType> result;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Query Plan:\n%s",
+           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
