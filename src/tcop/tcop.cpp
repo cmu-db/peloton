@@ -14,18 +14,19 @@
 
 #include "catalog/catalog.h"
 #include "common/abstract_tuple.h"
-#include "common/config.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "common/type.h"
-#include "common/types.h"
+#include "type/type.h"
+#include "type/types.h"
+
+#include "configuration/configuration.h"
 
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
-#include "parser/statement_select.h"
+#include "parser/select_statement.h"
 
 #include "catalog/catalog.h"
 #include "executor/plan_executor.h"
@@ -36,16 +37,7 @@
 namespace peloton {
 namespace tcop {
 
-// global singleton
-TrafficCop &TrafficCop::GetInstance(void) {
-  static TrafficCop traffic_cop;
-  return traffic_cop;
-}
-
-TrafficCop::TrafficCop() {
-  // Nothing to do here !
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-}
+TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
 
 void TrafficCop::Reset() {
   std::stack<TcopTxnState> new_tcop_txn_state;
@@ -151,7 +143,7 @@ Result TrafficCop::ExecuteStatement(
   // Then, execute the statement
   bool unnamed = true;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  std::vector<common::Value> params;
+  std::vector<type::Value> params;
   auto status =
       ExecuteStatement(statement, params, unnamed, nullptr, result_format,
                        result, rows_changed, error_message);
@@ -168,12 +160,10 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    const std::vector<common::Value> &params,
-    UNUSED_ATTRIBUTE const bool unnamed,
+    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
-
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
@@ -191,8 +181,7 @@ Result TrafficCop::ExecuteStatement(
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
     rows_changed = status.m_processed;
     return status.m_result;
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
@@ -275,8 +264,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    statement->SetPlanTree(
-        optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
+    statement->SetPlanTree(optimizer_->BuildPelotonPlanTree(sql_stmt));
 
     for (auto stmt : sql_stmt->GetStatements()) {
       if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
@@ -292,18 +280,17 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
 #endif
     return std::move(statement);
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }
 }
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
-    parser::SQLStatement* stmt) {
+    parser::SQLStatement *stmt) {
   std::vector<FieldInfoType> tuple_descriptor;
   if (stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
-  auto select_stmt = (parser::SelectStatement*) stmt;
+  auto select_stmt = (parser::SelectStatement *)stmt;
 
   // TODO: this is a hack which I don't have time to fix now
   // but it replaces a worse hack that was here before
@@ -319,28 +306,28 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   // Check if query only has one Table
   // Example : SELECT * FROM A;
   if (select_stmt->from_table->list == NULL) {
-	if (select_stmt->from_table->join == NULL) {
-		auto *target_table = static_cast<storage::DataTable *>(
-			catalog::Catalog::GetInstance()->GetTableWithName(
-				select_stmt->from_table->GetDatabaseName(),
-				select_stmt->from_table->GetTableName()));
-		target_tables.push_back(target_table);
-	}
-	// TODO: Only consider the simplest case by joining a regular table
-	// to the other regular table.
-	// Example: SELECT * FROM A JOIN B ON A.id=B.id
-	else {
-		auto *left_table = static_cast<storage::DataTable *>(
-			catalog::Catalog::GetInstance()->GetTableWithName(
-				select_stmt->from_table->join->left->GetDatabaseName(),
-				select_stmt->from_table->join->left->GetTableName()));
-		target_tables.push_back(left_table);
-		auto *right_table = static_cast<storage::DataTable *>(
-			catalog::Catalog::GetInstance()->GetTableWithName(
-				select_stmt->from_table->join->right->GetDatabaseName(),
-				select_stmt->from_table->join->right->GetTableName()));
-		target_tables.push_back(right_table);
-	}
+    if (select_stmt->from_table->join == NULL) {
+      auto *target_table = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              select_stmt->from_table->GetDatabaseName(),
+              select_stmt->from_table->GetTableName()));
+      target_tables.push_back(target_table);
+    }
+    // TODO: Only consider the simplest case by joining a regular table
+    // to the other regular table.
+    // Example: SELECT * FROM A JOIN B ON A.id=B.id
+    else {
+      auto *left_table = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              select_stmt->from_table->join->left->GetDatabaseName(),
+              select_stmt->from_table->join->left->GetTableName()));
+      target_tables.push_back(left_table);
+      auto *right_table = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              select_stmt->from_table->join->right->GetDatabaseName(),
+              select_stmt->from_table->join->right->GetTableName()));
+      target_tables.push_back(right_table);
+    }
   }
 
   // Query has multiple tables
@@ -357,55 +344,55 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     }
   }
 
-
-
-
   int count = 0;
   for (auto expr : *select_stmt->select_list) {
     count++;
     if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
-	  for (auto target_table : target_tables) {
-		  // Get the columns of the table
-		  auto &table_columns = target_table->GetSchema()->GetColumns();
-		  for (auto column : table_columns) {
-			LOG_DEBUG("Column name: %s", column.column_name.c_str());
-			tuple_descriptor.push_back(
-				GetColumnFieldForValueType(column.column_name, column.column_type));
-		  }
-	  }
-    }else{
+      for (auto target_table : target_tables) {
+        // Get the columns of the table
+        auto &table_columns = target_table->GetSchema()->GetColumns();
+        for (auto column : table_columns) {
+          LOG_DEBUG("Column name: %s", column.column_name.c_str());
+          tuple_descriptor.push_back(GetColumnFieldForValueType(
+              column.column_name, column.column_type));
+        }
+      }
+    } else {
       std::string col_name;
-      if (expr->alias.empty()){
-        col_name = expr->expr_name_.empty() ? std::string("expr")+ std::to_string(count) : expr->expr_name_;
-      }else{
+      if (expr->alias.empty()) {
+        col_name = expr->expr_name_.empty()
+                       ? std::string("expr") + std::to_string(count)
+                       : expr->expr_name_;
+      } else {
         col_name = expr->alias;
       }
       tuple_descriptor.push_back(
-                  GetColumnFieldForValueType(col_name, expr->GetValueType()));
+          GetColumnFieldForValueType(col_name, expr->GetValueType()));
     }
   }
   return tuple_descriptor;
 }
 
 FieldInfoType TrafficCop::GetColumnFieldForValueType(
-    std::string column_name, common::Type::TypeId column_type) {
-    LOG_DEBUG("Column type: %d", column_type);
+    std::string column_name, type::Type::TypeId column_type) {
   switch (column_type) {
-    case common::Type::INTEGER:
+    case type::Type::INTEGER:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-    case common::Type::DECIMAL:
+    case type::Type::DECIMAL:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
-    case common::Type::VARCHAR:
-    case common::Type::VARBINARY:
+    case type::Type::VARCHAR:
+    case type::Type::VARBINARY:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
-    case common::Type::TIMESTAMP:
+    case type::Type::TIMESTAMP:
       return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
     default:
       // Type not Identified
-      LOG_ERROR("Unrecognized column type: %d", column_type);
-      // return String
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
+      LOG_ERROR("Unrecognized column type '%s' [%d] for column '%s'",
+                TypeIdToString(column_type).c_str(), column_type,
+                column_name.c_str());
   }
+  // return String
+  return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
 
 FieldInfoType TrafficCop::GetColumnFieldForAggregates(
@@ -431,5 +418,8 @@ FieldInfoType TrafficCop::GetColumnFieldForAggregates(
 
   return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
+
+void TrafficCop::Reset() { optimizer_->Reset(); }
+
 }  // End tcop namespace
 }  // End peloton namespace

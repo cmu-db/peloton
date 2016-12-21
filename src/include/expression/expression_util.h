@@ -274,12 +274,25 @@ class ExpressionUtil {
  public:
   /**
    * Walks an expression tree and fills in information about
-   * columns and functions in their respective objects
+   * columns and functions in their respective objects given a
+   * set of schemas. This function
+   */
+  static void TransformExpression(std::vector<const catalog::Schema *> &schemas,
+                                  AbstractExpression *expr) {
+    bool dummy;
+    TransformExpression(nullptr, nullptr, expr, schemas, dummy, false);
+  }
+
+  /**
+   * Walks an expression tree and fills in information about
+   * columns and functions in their respective objects given a
+   * schema
    */
   static void TransformExpression(const catalog::Schema *schema,
                                   AbstractExpression *expr) {
     bool dummy;
-    TransformExpression(nullptr, nullptr, expr, schema, dummy, false);
+    std::vector<const catalog::Schema *> schemas = {schema};
+    TransformExpression(nullptr, nullptr, expr, schemas, dummy, false);
   }
 
   /**
@@ -291,11 +304,14 @@ class ExpressionUtil {
    *
    * This function is useful in determining information used by projection plans
    */
-  static void TransformExpression(
-      std::unordered_map<oid_t, oid_t> &column_mapping,
-      std::vector<oid_t> &column_ids, AbstractExpression *expr,
-      const catalog::Schema &schema, bool &needs_projection) {
-    TransformExpression(&column_mapping, &column_ids, expr, &schema,
+  static void TransformExpression(std::vector<oid_t> &column_ids,
+                                  AbstractExpression *expr,
+                                  const catalog::Schema &schema,
+                                  bool &needs_projection) {
+    std::vector<std::unordered_map<oid_t, oid_t>> column_mapping = {
+        std::unordered_map<oid_t, oid_t>()};
+    std::vector<const catalog::Schema *> schemas = {&schema};
+    TransformExpression(&column_mapping, &column_ids, expr, schemas,
                         needs_projection, true);
   }
 
@@ -309,9 +325,9 @@ class ExpressionUtil {
    * the expressions
    */
   static void TransformExpression(
-      std::unordered_map<oid_t, oid_t> *column_mapping,
+      std::vector<std::unordered_map<oid_t, oid_t>> *column_mapping,
       std::vector<oid_t> *column_ids, AbstractExpression *expr,
-      const catalog::Schema *schema, bool &needs_projection,
+      std::vector<const catalog::Schema *> &schemas, bool &needs_projection,
       bool find_columns) {
     if (expr == nullptr) {
       return;
@@ -320,29 +336,39 @@ class ExpressionUtil {
     // do dfs to transform all children
     for (size_t child = 0; child < num_children; child++) {
       TransformExpression(column_mapping, column_ids,
-                          expr->GetModifiableChild(child), schema,
+                          expr->GetModifiableChild(child), schemas,
                           needs_projection, find_columns);
     }
     // if this is a column, we need to find if it is exists in the schema
     if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE &&
         expr->GetValueType() == type::Type::INVALID) {
       auto val_expr = (expression::TupleValueExpression *)expr;
-      auto col_id = schema->GetColumnID(val_expr->GetColumnName());
+      oid_t col_id = -1;
+      oid_t index = -1;
+      catalog::Column column;
+      for (int i = 0; i < (int)schemas.size(); i++) {
+        auto &schema = schemas[i];
+        col_id = schema->GetColumnID(val_expr->GetColumnName());
+        if (col_id != (oid_t)-1) {
+          index = i;
+          column = schema->GetColumn(col_id);
+          break;
+        }
+      }
       // exception if we can't find the requested column by name
       if (col_id == (oid_t)-1) {
         throw Exception("Column " + val_expr->GetColumnName() + " not found");
       }
-      auto column = schema->GetColumn(col_id);
       // make sure the column we need is returned from the scan
       // and we know where it is (for projection)
       size_t mapped_position;
       if (find_columns) {
-        if (column_mapping->count(col_id) == 0) {
+        if ((*column_mapping)[index].count(col_id) == 0) {
           mapped_position = column_ids->size();
           column_ids->push_back(col_id);
-          (*column_mapping)[col_id] = mapped_position;
+          (*column_mapping)[index][col_id] = mapped_position;
         } else {
-          mapped_position = (*column_mapping)[col_id];
+          mapped_position = (*column_mapping)[index][col_id];
         }
       } else {
         mapped_position = col_id;
