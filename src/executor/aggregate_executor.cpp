@@ -165,7 +165,7 @@ bool AggregateExecutor::DExecute() {
       } else {
         tuple->SetAllNulls();
       }
-      auto location = output_table->InsertTuple(tuple.get());
+      UNUSED_ATTRIBUTE auto location = output_table->InsertTuple(tuple.get());
       PL_ASSERT(location.block != INVALID_OID);
     } else {
       done = true;
