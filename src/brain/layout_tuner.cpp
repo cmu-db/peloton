@@ -83,7 +83,7 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
 
   // Process all samples in table
-  auto& samples = table->GetLayoutSamples();
+  auto samples = table->GetLayoutSamples();
 
   // Check if we have any samples
   if (samples.empty()) {
