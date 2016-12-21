@@ -266,10 +266,10 @@ bool Value::IsNull() const {
   throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
 }
 
-void Value::CheckComparable(const Value &o) const {
+bool Value::CheckComparable(const Value &o) const {
   switch (GetTypeId()) {
     case Type::BOOLEAN:
-      if (o.GetTypeId() == Type::BOOLEAN) return;
+      if (o.GetTypeId() == Type::BOOLEAN) return true;
       break;
     case Type::TINYINT:
     case Type::SMALLINT:
@@ -282,43 +282,39 @@ void Value::CheckComparable(const Value &o) const {
         case Type::INTEGER:
         case Type::BIGINT:
         case Type::DECIMAL:
-          return;
+          return true;
         default:
           break;
       }
       break;
     case Type::VARCHAR:
-      if (o.GetTypeId() == Type::VARCHAR) return;
+      if (o.GetTypeId() == Type::VARCHAR) return true;
       break;
     case Type::VARBINARY:
-      if (o.GetTypeId() == Type::VARBINARY) return;
+      if (o.GetTypeId() == Type::VARBINARY) return true;
       break;
     case Type::TIMESTAMP:
-      if (o.GetTypeId() == Type::TIMESTAMP) return;
+      if (o.GetTypeId() == Type::TIMESTAMP) return true;
       break;
     default:
       break;
   }
-  std::string msg =
-      "Operation between " + Type::GetInstance(GetTypeId())->ToString() +
-      " and " + Type::GetInstance(o.GetTypeId())->ToString() + " is invalid.";
-  throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+  return false;
 }
 
-void Value::CheckInteger() const {
+bool Value::CheckInteger() const {
   switch (GetTypeId()) {
     case Type::TINYINT:
     case Type::SMALLINT:
     case Type::INTEGER:
     case Type::BIGINT:
     case Type::PARAMETER_OFFSET:
-      return;
+      return true;
     default:
       break;
   }
-  std::string msg = "Type " + Type::GetInstance(GetTypeId())->ToString() +
-                    " is not an integer type.";
-  throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+
+  return false;
 }
 
 Value Value::DeserializeFrom(const char *storage, const Type::TypeId type_id,

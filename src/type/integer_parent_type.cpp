@@ -24,8 +24,8 @@ namespace type {
 IntegerParentType::IntegerParentType(TypeId type) : NumericType(type) {}
 
 Value IntegerParentType::Min(const Value& left, const Value& right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
 
   Value cmp = (left.CompareLessThan(right));
@@ -34,8 +34,8 @@ Value IntegerParentType::Min(const Value& left, const Value& right) const {
 }
 
 Value IntegerParentType::Max(const Value& left, const Value& right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
 
   Value cmp = (left.CompareGreaterThanEquals(right));

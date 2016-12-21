@@ -164,10 +164,10 @@ class Value : public Printable {
   bool IsNull() const;
 
   // Examine the type of this object.
-  void CheckInteger() const;
+  bool CheckInteger() const;
 
   // Can two types of value be compared?
-  void CheckComparable(const Value &o) const;
+  bool CheckComparable(const Value &o) const;
 
   bool IsTrue() const {
     PL_ASSERT(GetTypeId() == Type::BOOLEAN);

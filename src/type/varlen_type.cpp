@@ -52,7 +52,7 @@ uint32_t VarlenType::GetLength(const Value& val) const {
 }
 
 Value VarlenType::CompareEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
@@ -66,7 +66,7 @@ Value VarlenType::CompareEquals(const Value& left, const Value &right) const {
 }
 
 Value VarlenType::CompareNotEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
@@ -80,7 +80,7 @@ Value VarlenType::CompareNotEquals(const Value& left, const Value &right) const 
 }
 
 Value VarlenType::CompareLessThan(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
@@ -94,7 +94,7 @@ Value VarlenType::CompareLessThan(const Value& left, const Value &right) const {
 }
 
 Value VarlenType::CompareLessThanEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
@@ -108,7 +108,7 @@ Value VarlenType::CompareLessThanEquals(const Value& left, const Value &right) c
 }
 
 Value VarlenType::CompareGreaterThan(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
@@ -122,7 +122,7 @@ Value VarlenType::CompareGreaterThan(const Value& left, const Value &right) cons
 }
 
 Value VarlenType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN

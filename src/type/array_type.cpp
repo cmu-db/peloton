@@ -71,7 +71,7 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
 // Does this value exist in this array?
 Value ArrayType::InList(const Value &list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
-  ele.CheckComparable(object);
+  PL_ASSERT(ele.CheckComparable(object));
   if (object.IsNull()) return ValueFactory::GetNullValueByType(Type::BOOLEAN);
   switch (list.GetElementType()) {
     case Type::BOOLEAN: {
@@ -161,7 +161,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
 
 Value ArrayType::CompareEquals(const Value &left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::ARRAY);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -231,7 +231,7 @@ Value ArrayType::CompareEquals(const Value &left, const Value &right) const {
 
 Value ArrayType::CompareNotEquals(const Value &left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::ARRAY);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -301,7 +301,7 @@ Value ArrayType::CompareNotEquals(const Value &left, const Value &right) const {
 
 Value ArrayType::CompareLessThan(const Value &left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::ARRAY);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -372,7 +372,7 @@ Value ArrayType::CompareLessThan(const Value &left, const Value &right) const {
 Value ArrayType::CompareLessThanEquals(const Value &left,
                                        const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::ARRAY);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -443,7 +443,7 @@ Value ArrayType::CompareLessThanEquals(const Value &left,
 Value ArrayType::CompareGreaterThan(const Value &left,
                                     const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::ARRAY);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -514,7 +514,7 @@ Value ArrayType::CompareGreaterThan(const Value &left,
 Value ArrayType::CompareGreaterThanEquals(const Value &left,
                                           const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::ARRAY);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +

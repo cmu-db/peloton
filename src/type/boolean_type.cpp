@@ -23,7 +23,7 @@ BooleanType::BooleanType() : Type(Type::BOOLEAN) {}
 
 Value BooleanType::CompareEquals(const Value& left, const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   return ValueFactory::GetBooleanValue(left.value_.boolean ==
@@ -33,7 +33,7 @@ Value BooleanType::CompareEquals(const Value& left, const Value& right) const {
 Value BooleanType::CompareNotEquals(const Value& left,
                                     const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   return ValueFactory::GetBooleanValue(left.value_.boolean !=
@@ -43,7 +43,7 @@ Value BooleanType::CompareNotEquals(const Value& left,
 Value BooleanType::CompareLessThan(const Value& left,
                                    const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   return ValueFactory::GetBooleanValue(left.value_.boolean <
@@ -53,7 +53,7 @@ Value BooleanType::CompareLessThan(const Value& left,
 Value BooleanType::CompareLessThanEquals(const Value& left,
                                          const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   return ValueFactory::GetBooleanValue(left.value_.boolean <=
@@ -63,7 +63,7 @@ Value BooleanType::CompareLessThanEquals(const Value& left,
 Value BooleanType::CompareGreaterThan(const Value& left,
                                       const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   return ValueFactory::GetBooleanValue(left.value_.boolean >
@@ -73,7 +73,7 @@ Value BooleanType::CompareGreaterThan(const Value& left,
 Value BooleanType::CompareGreaterThanEquals(const Value& left,
                                             const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
   return ValueFactory::GetBooleanValue(left.value_.boolean >=
