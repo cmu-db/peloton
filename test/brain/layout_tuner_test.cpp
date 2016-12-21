@@ -33,7 +33,7 @@ namespace test {
 
 class LayoutTunerTests : public PelotonTest {};
 
-// TEST_F(LayoutTunerTests, BasicTest) {
+TEST_F(LayoutTunerTests, BasicTest) {
 //
 //  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
 //
@@ -125,7 +125,7 @@ class LayoutTunerTests : public PelotonTest {};
 //  EXPECT_EQ(fourth_column_tile, 1);
 //
 //
-//}
+}
 
 }  // End test namespace
 }  // End peloton namespace
