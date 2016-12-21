@@ -437,7 +437,7 @@ void PrintIndexInformation(storage::DataTable* table) {
 
 void IndexTuner::Analyze(storage::DataTable* table) {
   // Process all samples in table
-  auto& samples = table->GetIndexSamples();
+  auto samples = table->GetIndexSamples();
 
   // Check write ratio
   auto average_write_ratio = ComputeWorkloadWriteRatio(samples);
@@ -477,7 +477,7 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
 void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
   // Process all samples in table
-  auto& samples = table->GetIndexSamples();
+  auto samples = table->GetIndexSamples();
   auto sample_count = samples.size();
 
   // Check if we have sufficient number of samples for build

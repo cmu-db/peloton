@@ -208,7 +208,7 @@ class DataTable : public AbstractTable {
 
   void RecordLayoutSample(const brain::Sample &sample);
 
-  const std::vector<brain::Sample> &GetLayoutSamples() const;
+  std::vector<brain::Sample> GetLayoutSamples();
 
   void ClearLayoutSamples();
 
@@ -222,7 +222,7 @@ class DataTable : public AbstractTable {
 
   void RecordIndexSample(const brain::Sample &sample);
 
-  const std::vector<brain::Sample> &GetIndexSamples() const;
+  std::vector<brain::Sample> GetIndexSamples();
 
   void ClearIndexSamples();
 

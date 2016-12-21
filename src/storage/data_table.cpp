@@ -1020,8 +1020,11 @@ void DataTable::RecordLayoutSample(const brain::Sample &sample) {
   }
 }
 
-const std::vector<brain::Sample> &DataTable::GetLayoutSamples() const {
-  return layout_samples_;
+std::vector<brain::Sample> DataTable::GetLayoutSamples() {
+  {
+    std::lock_guard<std::mutex> lock(layout_samples_mutex_);
+    return layout_samples_;
+  }
 }
 
 void DataTable::ClearLayoutSamples() {
@@ -1040,8 +1043,11 @@ void DataTable::RecordIndexSample(const brain::Sample &sample) {
   }
 }
 
-const std::vector<brain::Sample> &DataTable::GetIndexSamples() const {
-  return index_samples_;
+std::vector<brain::Sample> DataTable::GetIndexSamples() {
+  {
+    std::lock_guard<std::mutex> lock(index_samples_mutex_);
+    return index_samples_;
+  }
 }
 
 void DataTable::ClearIndexSamples() {
