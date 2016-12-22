@@ -65,5 +65,7 @@ TEST_F(RuleTests, SimpleRuleApplyTest) {
   EXPECT_EQ(outputs.size(), 1);
 }
 
+
+
 } /* namespace test */
 } /* namespace peloton */

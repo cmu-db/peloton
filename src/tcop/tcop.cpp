@@ -17,16 +17,20 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/portal.h"
+#include "type/type.h"
+#include "type/types.h"
+
 #include "configuration/configuration.h"
-#include "executor/plan_executor.h"
+
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
 #include "parser/select_statement.h"
-#include "planner/plan_util.h"
-#include "type/type.h"
-#include "type/types.h"
+
+#include "catalog/catalog.h"
+#include "executor/plan_executor.h"
+#include "optimizer/simple_optimizer.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -52,19 +56,19 @@ TrafficCop::~TrafficCop() {
 /* Singleton accessor
  * NOTE: Used by in unit tests ONLY
  */
-TrafficCop& TrafficCop::GetInstance() {
+TrafficCop &TrafficCop::GetInstance() {
   static TrafficCop tcop;
   tcop.Reset();
   return tcop;
 }
 
-TrafficCop::TcopTxnState& TrafficCop::GetDefaultTxnState() {
+TrafficCop::TcopTxnState &TrafficCop::GetDefaultTxnState() {
   static TcopTxnState default_state;
   default_state = std::make_pair(nullptr, Result::RESULT_INVALID);
   return default_state;
 }
 
-TrafficCop::TcopTxnState& TrafficCop::GetCurrentTxnState() {
+TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   if (tcop_txn_state_.empty()) {
     return GetDefaultTxnState();
   }
@@ -76,7 +80,7 @@ Result TrafficCop::BeginQueryHelper() {
   auto txn = txn_manager.BeginTransaction();
 
   // this shouldn't happen
-  if (txn == nullptr){
+  if (txn == nullptr) {
     LOG_DEBUG("Begin txn failed");
     return Result::RESULT_FAILURE;
   }
@@ -88,8 +92,7 @@ Result TrafficCop::BeginQueryHelper() {
 
 Result TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty())
-    return Result::RESULT_NOOP;
+  if (tcop_txn_state_.empty()) return Result::RESULT_NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   // commit the txn only if it has not aborted already
@@ -106,8 +109,7 @@ Result TrafficCop::CommitQueryHelper() {
 
 Result TrafficCop::AbortQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty())
-    return Result::RESULT_NOOP;
+  if (tcop_txn_state_.empty()) return Result::RESULT_NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   // explicitly abort the txn only if it has not aborted already
@@ -160,7 +162,6 @@ Result TrafficCop::ExecuteStatement(
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultType> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
-
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
@@ -181,23 +182,20 @@ Result TrafficCop::ExecuteStatement(
       return AbortQueryHelper();
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                              result, result_format);
+                                         result, result_format);
       LOG_TRACE("Statement executed. Result: %d", status.m_result);
       rows_changed = status.m_processed;
       return status.m_result;
     }
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
 }
 
-bridge::peloton_status
-  TrafficCop::ExecuteStatementPlan(const planner::AbstractPlan *plan,
-                               const std::vector<type::Value> &params,
-                               std::vector<ResultType> &result,
-                               const std::vector<int> &result_format) {
+bridge::peloton_status TrafficCop::ExecuteStatementPlan(
+    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+    std::vector<ResultType> &result, const std::vector<int> &result_format) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
   bridge::peloton_status p_status;
@@ -231,8 +229,9 @@ bridge::peloton_status
         txn_result == Result::RESULT_FAILURE) {
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-      LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
-                single_statement_txn, init_failure, txn_result);
+      LOG_TRACE(
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
+          single_statement_txn, init_failure, txn_result);
       switch (txn_result) {
         case Result::RESULT_SUCCESS:
           // Commit
@@ -307,15 +306,33 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   // Get the columns information and set up
   // the columns description for the returned results
   // Set up the table
-  storage::DataTable *target_table = nullptr;
+  std::vector<storage::DataTable *> target_tables;
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
   if (select_stmt->from_table->list == NULL) {
-    target_table = static_cast<storage::DataTable *>(
-        catalog::Catalog::GetInstance()->GetTableWithName(
-            select_stmt->from_table->GetDatabaseName(),
-            select_stmt->from_table->GetTableName()));
+    if (select_stmt->from_table->join == NULL) {
+      auto *target_table = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              select_stmt->from_table->GetDatabaseName(),
+              select_stmt->from_table->GetTableName()));
+      target_tables.push_back(target_table);
+    }
+    // TODO: Only consider the simplest case by joining a regular table
+    // to the other regular table.
+    // Example: SELECT * FROM A JOIN B ON A.id=B.id
+    else {
+      auto *left_table = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              select_stmt->from_table->join->left->GetDatabaseName(),
+              select_stmt->from_table->join->left->GetTableName()));
+      target_tables.push_back(left_table);
+      auto *right_table = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              select_stmt->from_table->join->right->GetDatabaseName(),
+              select_stmt->from_table->join->right->GetTableName()));
+      target_tables.push_back(right_table);
+    }
   }
 
   // Query has multiple tables
@@ -324,23 +341,26 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   // FIX: Better handle for queries with multiple tables
   else {
     for (auto table : *select_stmt->from_table->list) {
-      target_table = static_cast<storage::DataTable *>(
+      auto *target_table = static_cast<storage::DataTable *>(
           catalog::Catalog::GetInstance()->GetTableWithName(
               table->GetDatabaseName(), table->GetTableName()));
+      target_tables.push_back(target_table);
       break;
     }
   }
-
-  // Get the columns of the table
-  auto &table_columns = target_table->GetSchema()->GetColumns();
 
   int count = 0;
   for (auto expr : *select_stmt->select_list) {
     count++;
     if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
-      for (auto column : table_columns) {
-        tuple_descriptor.push_back(
-            GetColumnFieldForValueType(column.column_name, column.column_type));
+      for (auto target_table : target_tables) {
+        // Get the columns of the table
+        auto &table_columns = target_table->GetSchema()->GetColumns();
+        for (auto column : table_columns) {
+          LOG_DEBUG("Column name: %s", column.column_name.c_str());
+          tuple_descriptor.push_back(GetColumnFieldForValueType(
+              column.column_name, column.column_type));
+        }
       }
     } else {
       std::string col_name;
@@ -403,5 +423,6 @@ FieldInfoType TrafficCop::GetColumnFieldForAggregates(
 
   return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
+
 }  // End tcop namespace
 }  // End peloton namespace
