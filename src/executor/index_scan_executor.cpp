@@ -348,7 +348,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   // to go back to the catalog each time.
   oid_t last_block = INVALID_OID;
   std::shared_ptr<storage::TileGroup> tile_group;
-  storage::TileGroupHeader *tile_group_header;
+  storage::TileGroupHeader *tile_group_header = nullptr;
 
 #ifdef LOG_DEBUG_ENABLED
   int num_tuples_examined = 0;
