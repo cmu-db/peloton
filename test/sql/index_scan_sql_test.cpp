@@ -60,16 +60,20 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   LOG_INFO("Select a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT * FROM department_table WHERE dept_id = 1;", result);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("hello_1", SQLTestsUtil::GetResultValueAsString(result, 1));
   LOG_INFO("Tuple selected");
 
   LOG_INFO("Select a column...");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT dept_name FROM department_table WHERE dept_id = 2;", result);
+  EXPECT_EQ("hello_2", SQLTestsUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Column selected");
 
   LOG_INFO("Select COUNT(*)...");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;", result);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Aggregation selected");
 
   LOG_INFO("Select COUNT(*)... with removable predicate");
@@ -77,6 +81,7 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name "
       "= 'hello_2';",
       result);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Removable preciate selected");
 
   LOG_INFO("Select COUNT(*)... with complex removable predicate");
@@ -84,7 +89,24 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name = "
       "'hello_2' and dept_name = 'hello_2';",
       result);
-  LOG_INFO("Removable preciate selected");
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  LOG_INFO("Complex removable preciate selected");
+
+  LOG_INFO("Select COUNT(*)... with complex removable predicate");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id = 1 and dept_name = "
+      "'hello_2' and dept_name = 'hello_2';",
+      result);
+  EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
+  LOG_INFO("Complex removable preciate selected");
+
+  LOG_INFO("Select COUNT(*)... with complex removable predicate");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name = "
+      "'hello_1' and dept_name = 'hello_2';",
+      result);
+  EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
+  LOG_INFO("Complex removable preciate selected");
 
   SQLTestsUtil::ExecuteSQLQuery(
       "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2 and "

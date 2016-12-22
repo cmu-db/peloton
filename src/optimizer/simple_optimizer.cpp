@@ -769,14 +769,14 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     return std::move(child_SelectPlan);
   }
 
-  LOG_ERROR("predicate before remove: %s", predicate->GetInfo().c_str());
+  LOG_TRACE("predicate before remove: %s", predicate->GetInfo().c_str());
   // Remove redundant predicate that index can search
   predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
       predicate, target_table->GetIndex(index_id));
   if (predicate != nullptr) {
-    LOG_ERROR("predicate after remove: %s", predicate->GetInfo().c_str());
-    expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-        predicate, target_table->GetIndex(index_id));
+    LOG_TRACE("predicate after remove: %s", predicate->GetInfo().c_str());
+  } else {
+    LOG_TRACE("predicate after remove: null");
   }
 
   // Create index scan plan
