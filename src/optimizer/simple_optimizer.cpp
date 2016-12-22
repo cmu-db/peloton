@@ -509,6 +509,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           deleteStmt->GetDatabaseName(), deleteStmt->GetTableName());
       if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
                                expr_types, values, index_id)) {
+        // Remove redundant predicate that index can search
+        expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+            deleteStmt->expr, target_table->GetIndex(index_id));
+
         // Create delete plan
         std::unique_ptr<planner::DeletePlan> child_DeletePlan(
             new planner::DeletePlan(target_table, deleteStmt->expr));
@@ -571,6 +575,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
       if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
                                expr_types, values, index_id)) {
+        // Remove redundant predicate that index can search
+        expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+            updateStmt->where, target_table->GetIndex(index_id));
+
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
             new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
@@ -742,6 +750,10 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   if (!CheckIndexSearchable(target_table, predicate, key_column_ids, expr_types,
                             values, index_id)) {
+    // Remove redundant predicate that index can search
+    expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+        predicate, target_table->GetIndex(index_id));
+
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
     auto predicate_cpy = predicate == nullptr ? nullptr : predicate->Copy();

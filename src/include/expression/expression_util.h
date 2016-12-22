@@ -102,13 +102,14 @@ class ExpressionUtil {
   }
 
   /*
-   * Generate a predicate that removes all the terms with indexed columns.
+   * This function removes all the terms related to indexed columns within an
+   * expression.
    *
    * NOTE: This should only be called after we check that the predicate is index
    * searchable. That means there are only "and" conjunctions.
    */
   static AbstractExpression *RemoveTermsWithIndexedColumns(
-      expression::AbstractExpression *expression, index::Index *index) {
+      AbstractExpression *expression, std::shared_ptr<index::Index> index) {
     size_t children_size = expression->GetChildrenSize();
     // We shouldn't have a expression that has more than two children
     PL_ASSERT(children_size <= 2);
