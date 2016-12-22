@@ -156,10 +156,17 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
     pkt->msg_type = DATA_ROW;
     PacketPutInt(pkt.get(), colcount, 2);
     for (int j = 0; j < colcount; j++) {
-      // length of the row attribute
-      PacketPutInt(pkt.get(), results[i * colcount + j].second.size(), 4);
-      // contents of the row attribute
-      PacketPutBytes(pkt.get(), results[i * colcount + j].second);
+      auto content = results[i * colcount + j].second;
+      if (content.size() == 0) {
+        // content is NULL
+        PacketPutInt(pkt.get(), NULL_CONTENT_SIZE, 4);
+        // no value bytes follow
+      } else {
+        // length of the row attribute
+        PacketPutInt(pkt.get(), content.size(), 4);
+        // contents of the row attribute
+        PacketPutBytes(pkt.get(), content);
+      }
     }
     responses.push_back(std::move(pkt));
   }
