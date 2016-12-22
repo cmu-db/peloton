@@ -32,6 +32,8 @@
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
 
+#include "planner/plan_util.h"
+
 #include <boost/algorithm/string.hpp>
 
 namespace peloton {
