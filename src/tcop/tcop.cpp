@@ -56,19 +56,19 @@ TrafficCop::~TrafficCop() {
 /* Singleton accessor
  * NOTE: Used by in unit tests ONLY
  */
-TrafficCop& TrafficCop::GetInstance() {
+TrafficCop &TrafficCop::GetInstance() {
   static TrafficCop tcop;
   tcop.Reset();
   return tcop;
 }
 
-TrafficCop::TcopTxnState& TrafficCop::GetDefaultTxnState() {
+TrafficCop::TcopTxnState &TrafficCop::GetDefaultTxnState() {
   static TcopTxnState default_state;
   default_state = std::make_pair(nullptr, Result::RESULT_INVALID);
   return default_state;
 }
 
-TrafficCop::TcopTxnState& TrafficCop::GetCurrentTxnState() {
+TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   if (tcop_txn_state_.empty()) {
     return GetDefaultTxnState();
   }
@@ -80,7 +80,7 @@ Result TrafficCop::BeginQueryHelper() {
   auto txn = txn_manager.BeginTransaction();
 
   // this shouldn't happen
-  if (txn == nullptr){
+  if (txn == nullptr) {
     LOG_DEBUG("Begin txn failed");
     return Result::RESULT_FAILURE;
   }
@@ -92,8 +92,7 @@ Result TrafficCop::BeginQueryHelper() {
 
 Result TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty())
-    return Result::RESULT_NOOP;
+  if (tcop_txn_state_.empty()) return Result::RESULT_NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   // commit the txn only if it has not aborted already
@@ -110,8 +109,7 @@ Result TrafficCop::CommitQueryHelper() {
 
 Result TrafficCop::AbortQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty())
-    return Result::RESULT_NOOP;
+  if (tcop_txn_state_.empty()) return Result::RESULT_NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   // explicitly abort the txn only if it has not aborted already
@@ -176,22 +174,28 @@ Result TrafficCop::ExecuteStatement(
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   try {
-    bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
-        statement->GetPlanTree().get(), params, result, result_format);
-    LOG_TRACE("Statement executed. Result: %d", status.m_result);
-    rows_changed = status.m_processed;
-    return status.m_result;
+    if (statement->GetQueryType() == "BEGIN")
+      return BeginQueryHelper();
+    else if (statement->GetQueryType() == "COMMIT")
+      return CommitQueryHelper();
+    else if (statement->GetQueryType() == "ROLLBACK")
+      return AbortQueryHelper();
+    else {
+      auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
+                                         result, result_format);
+      LOG_TRACE("Statement executed. Result: %d", status.m_result);
+      rows_changed = status.m_processed;
+      return status.m_result;
+    }
   } catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
 }
 
-bridge::peloton_status
-  TrafficCop::ExecuteStatementPlan(const planner::AbstractPlan *plan,
-                               const std::vector<type::Value> &params,
-                               std::vector<ResultType> &result,
-                               const std::vector<int> &result_format) {
+bridge::peloton_status TrafficCop::ExecuteStatementPlan(
+    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+    std::vector<ResultType> &result, const std::vector<int> &result_format) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
   bridge::peloton_status p_status;
@@ -225,8 +229,9 @@ bridge::peloton_status
         txn_result == Result::RESULT_FAILURE) {
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-      LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
-                single_statement_txn, init_failure, txn_result);
+      LOG_TRACE(
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
+          single_statement_txn, init_failure, txn_result);
       switch (txn_result) {
         case Result::RESULT_SUCCESS:
           // Commit
@@ -418,8 +423,6 @@ FieldInfoType TrafficCop::GetColumnFieldForAggregates(
 
   return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
 }
-
-void TrafficCop::Reset() { optimizer_->Reset(); }
 
 }  // End tcop namespace
 }  // End peloton namespace
