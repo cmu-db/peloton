@@ -65,8 +65,8 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    auto status = bridge::PlanExecutor::ExecutePlan(plan.get(), params, result,
-                                                    result_format);
+    auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params,
+                                                    result, result_format);
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %d", status.m_result);
     return status.m_result;

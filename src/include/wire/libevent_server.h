@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// wire.h
+// libevent_server.h
 //
-// Identification: src/include/wire/libevent_thread.h
+// Identification: src/include/wire/libevent_server.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -35,7 +35,7 @@
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "wire/libevent_thread.h"
-#include "wire/wire.h"
+#include "wire/packet_manager.h"
 
 #define QUEUE_SIZE 100
 #define MASTER_THREAD_ID -1

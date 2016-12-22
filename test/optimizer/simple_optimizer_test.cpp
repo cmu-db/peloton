@@ -16,6 +16,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
+#include "tcop/tcop.h"
 
 namespace peloton {
 namespace test {
@@ -36,6 +37,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -66,7 +68,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Table Created");
@@ -96,8 +98,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
@@ -116,8 +118,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);

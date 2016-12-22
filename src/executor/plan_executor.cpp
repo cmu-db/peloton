@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "common/logger.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/executors.h"
 #include "optimizer/util.h"
@@ -44,25 +43,16 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<ResultType> &result, const std::vector<int> &result_format) {
+    const planner::AbstractPlan *plan, concurrency::Transaction *txn,
+    const std::vector<type::Value> &params, std::vector<ResultType> &result,
+    const std::vector<int> &result_format) {
   peloton_status p_status;
-
   if (plan == nullptr) return p_status;
 
   LOG_TRACE("PlanExecutor Start ");
 
   bool status;
-  bool init_failure = false;
-  bool single_statement_txn = false;
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // auto txn = peloton::concurrency::current_txn;
-  // This happens for single statement queries in PG
-  // if (txn == nullptr) {
-  single_statement_txn = true;
-  auto txn = txn_manager.BeginTransaction();
-  // }
   PL_ASSERT(txn);
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
@@ -82,78 +72,54 @@ peloton_status PlanExecutor::ExecutePlan(
   // Initialize the executor tree
   status = executor_tree->Init();
 
-  // Abort and cleanup
-  if (status == false) {
-    init_failure = true;
-    txn->SetResult(Result::RESULT_FAILURE);
-    goto cleanup;
-  }
+  if (status == true) {
+    LOG_TRACE("Running the executor tree");
+    result.clear();
 
-  LOG_TRACE("Running the executor tree");
-  result.clear();
+    // Execute the tree until we get result tiles from root node
+    while (status == true) {
+      status = executor_tree->Execute();
 
-  // Execute the tree until we get result tiles from root node
-  while (status == true) {
-    status = executor_tree->Execute();
+      std::unique_ptr<executor::LogicalTile> logical_tile(
+          executor_tree->GetOutput());
+      // Some executors don't return logical tiles (e.g., Update).
+      if (logical_tile.get() != nullptr) {
+        LOG_TRACE("Final Answer: %s",
+                  logical_tile->GetInfo().c_str());  // Printing the answers
+        std::unique_ptr<catalog::Schema> output_schema(
+            logical_tile->GetPhysicalSchema());  // Physical schema of the tile
+        std::vector<std::vector<std::string>> answer_tuples;
+        answer_tuples =
+            std::move(logical_tile->GetAllValuesAsStrings(result_format));
 
-    std::unique_ptr<executor::LogicalTile> logical_tile(
-        executor_tree->GetOutput());
-    // Some executors don't return logical tiles (e.g., Update).
-    if (logical_tile.get() != nullptr) {
-      LOG_TRACE("Final Answer: %s",
-                logical_tile->GetInfo().c_str());  // Printing the answers
-      std::unique_ptr<catalog::Schema> output_schema(
-          logical_tile->GetPhysicalSchema());  // Physical schema of the tile
-      std::vector<std::vector<std::string>> answer_tuples;
-      answer_tuples =
-          std::move(logical_tile->GetAllValuesAsStrings(result_format));
-
-      // Construct the returned results
-      for (auto &tuple : answer_tuples) {
-        unsigned int col_index = 0;
-        auto &schema_columns = output_schema->GetColumns();
-        for (auto &column : schema_columns) {
-          auto column_name = column.GetName();
-          auto res = ResultType();
-          PlanExecutor::copyFromTo(column_name, res.first);
-          LOG_TRACE("column name: %s", column_name.c_str());
-          PlanExecutor::copyFromTo(tuple[col_index++], res.second);
-          if (tuple[col_index - 1].c_str() != nullptr) {
-            LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
+        // Construct the returned results
+        for (auto &tuple : answer_tuples) {
+          unsigned int col_index = 0;
+          auto &schema_columns = output_schema->GetColumns();
+          for (auto &column : schema_columns) {
+            auto column_name = column.GetName();
+            auto res = ResultType();
+            PlanExecutor::copyFromTo(column_name, res.first);
+            LOG_TRACE("column name: %s", column_name.c_str());
+            PlanExecutor::copyFromTo(tuple[col_index++], res.second);
+            if (tuple[col_index - 1].c_str() != nullptr) {
+              LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
+            }
+            result.push_back(res);
           }
-          result.push_back(res);
         }
       }
     }
+
+    // Set the result
+    p_status.m_processed = executor_context->num_processed;
+    // success so far
+    p_status.m_result = Result::RESULT_SUCCESS;
+  } else {
+    p_status.m_result = Result::RESULT_FAILURE;
   }
 
-  // Set the result
-  p_status.m_processed = executor_context->num_processed;
   p_status.m_result_slots = nullptr;
-
-// final cleanup
-cleanup:
-
-  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
-            single_statement_txn, init_failure, txn->GetResult());
-
-  // should we commit or abort ?
-  if (single_statement_txn == true || init_failure == true) {
-    auto status = txn->GetResult();
-    switch (status) {
-      case Result::RESULT_SUCCESS:
-        // Commit
-        LOG_TRACE("Commit Transaction");
-        p_status.m_result = txn_manager.CommitTransaction(txn);
-        break;
-
-      case Result::RESULT_FAILURE:
-      default:
-        // Abort
-        LOG_TRACE("Abort Transaction");
-        p_status.m_result = txn_manager.AbortTransaction(txn);
-    }
-  }
 
   // clean up executor tree
   CleanExecutorTree(executor_tree.get());

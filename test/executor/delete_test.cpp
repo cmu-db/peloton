@@ -48,6 +48,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   std::vector<type::Value> params;
   std::vector<ResultType> result;
   optimizer::SimpleOptimizer optimizer;
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
@@ -59,7 +60,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                              params, result, result_format);
 }
 
@@ -69,6 +70,7 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   LOG_INFO("Creating a table...");
@@ -123,7 +125,7 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format = std::move(std::vector<int>(0, 0));
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
@@ -146,8 +148,8 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -169,8 +171,8 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -194,8 +196,8 @@ TEST_F(DeleteTests, VariousOperations) {
   auto tuple_descriptor =
       tcop::TrafficCop().GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Counted Tuples!");
 
@@ -214,8 +216,8 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -236,8 +238,8 @@ TEST_F(DeleteTests, VariousOperations) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   LOG_INFO("Executing plan...");
   result_format = std::move(std::vector<int>(0, 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");

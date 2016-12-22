@@ -17,6 +17,7 @@
 
 #include <sys/resource.h>
 #include <time.h>
+#include <include/tcop/tcop.h>
 
 #include "executor/executor_context.h"
 #include "executor/executor_tests_util.h"
@@ -24,6 +25,7 @@
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
 #include "statistics/stats_tests_util.h"
+#include "tcop/tcop.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
@@ -355,6 +357,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   int64_t aggregate_interval = 1000;
   LaunchAggregator(aggregate_interval);
   auto &aggregator = stats::StatsAggregator::GetInstance();
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   auto catalog = catalog::Catalog::GetInstance();
@@ -385,7 +388,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   std::vector<type::Value> params;
   std::vector<ResultType> result;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+  bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   LOG_TRACE("Tuple inserted!");
@@ -400,8 +403,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   result.clear();
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   LOG_TRACE("Tuple updated!");
 
@@ -415,8 +418,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   result.clear();
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
+  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+                                            params, result, result_format);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   LOG_TRACE("Tuple deleted!");
 

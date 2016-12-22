@@ -15,7 +15,7 @@
 #include "executor/abstract_executor.h"
 
 #include <vector>
-#include "wire/wire.h"
+#include "wire/packet_manager.h"
 
 #define COPY_BUFFER_SIZE 65536
 #define INVALID_COL_ID -1

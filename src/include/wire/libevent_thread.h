@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// wire.h
+// libevent_thread.h
 //
 // Identification: src/include/wire/libevent_thread.h
 //
@@ -35,7 +35,7 @@
 #include "configuration/configuration.h"
 #include "container/lock_free_queue.h"
 #include "wire/libevent_server.h"
-#include "wire/wire.h"
+#include "wire/packet_manager.h"
 
 namespace peloton {
 namespace wire {
