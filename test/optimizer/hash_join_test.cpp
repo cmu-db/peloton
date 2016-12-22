@@ -55,7 +55,6 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   std::vector<type::Value> params;
   std::vector<ResultType> result;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
@@ -81,7 +80,6 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
 
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
