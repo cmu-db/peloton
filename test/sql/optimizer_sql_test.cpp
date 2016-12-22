@@ -57,8 +57,8 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Check the return value
   // Should be: 1, 22, 333
   EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ('1', result[0].second[0]);
-  EXPECT_EQ('2', result[1].second[1]);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", SQLTestsUtil::GetResultValueAsString(result, 1));
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
@@ -67,8 +67,8 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Check the return value
   // Should be: 22, 1, 333
   EXPECT_EQ(0, rows_changed);
-  EXPECT_EQ('2', result[0].second[1]);
-  EXPECT_EQ('1', result[1].second[0]);
+  EXPECT_EQ("22", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 1));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -102,9 +102,8 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   // Check the return value
   // Should be: 27, 332
-  EXPECT_EQ('2', result[0].second[0]);
-  EXPECT_EQ('7', result[0].second[1]);
-  EXPECT_EQ('2', result[1].second[2]);
+  EXPECT_EQ("27", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("332", SQLTestsUtil::GetResultValueAsString(result, 1));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

@@ -70,9 +70,9 @@ class SQLTestsUtil {
   // NOTE: Result columns across different rows are unfolded into a single
   // vector (vector<ResultType>).
   static std::string GetResultValueAsString(
-      const std::vector<ResultType> &result, size_t idx) {
+      const std::vector<ResultType> &result, size_t index) {
     std::string value;
-    for (auto character : result[idx].second) {
+    for (auto character : result[index].second) {
       value += character;
     }
 
