@@ -71,10 +71,7 @@ class SQLTestsUtil {
   // vector (vector<ResultType>).
   static std::string GetResultValueAsString(
       const std::vector<ResultType> &result, size_t index) {
-    std::string value;
-    for (auto character : result[index].second) {
-      value += character;
-    }
+    std::string value(result[index].second.begin(), result[index].second.end());
 
     return std::move(value);
   }

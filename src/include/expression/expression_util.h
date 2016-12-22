@@ -105,8 +105,12 @@ class ExpressionUtil {
    * This function removes all the terms related to indexed columns within an
    * expression.
    *
-   * NOTE: This should only be called after we check that the predicate is index
+   * NOTE:
+   * 1. This should only be called after we check that the predicate is index
    * searchable. That means there are only "and" conjunctions.
+   * 2. This will remove constant expression as well (something like 2+3=7). But
+   * that shouldn't be included in the scan predicate anyway. We should handle
+   * that special case.
    */
   static AbstractExpression *RemoveTermsWithIndexedColumns(
       AbstractExpression *expression, std::shared_ptr<index::Index> index) {
@@ -114,8 +118,6 @@ class ExpressionUtil {
               ExpressionTypeToString(expression->GetExpressionType()).c_str());
 
     size_t children_size = expression->GetChildrenSize();
-    // We shouldn't have a expression that has more than two children
-    PL_ASSERT(children_size <= 2);
 
     // Return itself if the TupleValueExpression is not indexed.
     if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
@@ -137,9 +139,16 @@ class ExpressionUtil {
       if (!indexed) return expression;
     }
 
-    // If it's an indexed TupleValueExpression or other ConstantValueExpression,
-    // then it's removable.
-    if (children_size == 0) return nullptr;
+    // LM: If it's an indexed TupleValueExpression or other
+    // ConstantValueExpression/ParameterValueExpression, then it's removable.
+    // Right now I couldn't think of other cases, so otherwise it's not handled.
+    if (children_size == 0) {
+      PL_ASSERT(
+          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE ||
+          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT ||
+          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER);
+      return nullptr;
+    }
 
     // Otherwise it's an operator expression. We have to check the children.
     bool fully_removable = true;

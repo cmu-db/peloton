@@ -108,6 +108,8 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Complex removable preciate selected");
 
+  // Those are checking update with removable predicates. Should move to other
+  // place later.
   SQLTestsUtil::ExecuteSQLQuery(
       "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2 and "
       "dept_name = "
