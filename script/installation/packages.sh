@@ -21,7 +21,7 @@ DISTRO=${DISTRO^^}
 ## UBUNTU
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
-    apt-get --ignore-missing -y install \
+    sudo apt-get --ignore-missing -y install \
         git \
         g++ \
         cmake \
@@ -42,7 +42,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## FEDORA/REDHAT
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    dnf install -y git \
+    sudo dnf install -y git \
         gcc-c++ \
         cmake \
         gflags-devel \
