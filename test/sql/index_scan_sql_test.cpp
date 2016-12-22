@@ -64,15 +64,27 @@ TEST_F(IndexScanSQLTests, SQLTest) {
 
   LOG_INFO("Select a column...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "SELECT dept_name FROM department_table WHERE dept_id = 2 and dept_name "
-      "= 'hello_2';",
-      result);
+      "SELECT dept_name FROM department_table WHERE dept_id = 2;", result);
   LOG_INFO("Column selected");
 
   LOG_INFO("Select COUNT(*)...");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;", result);
   LOG_INFO("Aggregation selected");
+
+  LOG_INFO("Select COUNT(*)... with removable predicate");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name "
+      "= 'hello_2';",
+      result);
+  LOG_INFO("Removable preciate selected");
+
+  LOG_INFO("Select COUNT(*)... with complex removable predicate");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name = "
+      "'hello_2' and dept_name = 'hello_2';",
+      result);
+  LOG_INFO("Removable preciate selected");
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

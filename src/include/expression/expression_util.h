@@ -173,7 +173,7 @@ class ExpressionUtil {
         for (size_t i = 0; i < children_size; ++i) {
           if (expression->GetModifiableChild(i) != new_children[i]) {
             LOG_TRACE("Setting new child at idx: %ld", i);
-            expression->SetChild(i, new_children[i]);
+            expression->SetChild(i, new_children[i]->Copy());
           }
         }
       }
