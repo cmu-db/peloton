@@ -23,10 +23,10 @@ namespace peloton {
 namespace type {
 
 Value::Value(const Value &other) {
-  type_ = other.type_;
+  type_id_ = other.type_id_;
   size_ = other.size_;
   manage_data_ = other.manage_data_;
-  switch (type_->GetTypeId()) {
+  switch (type_id_) {
     case Type::VARCHAR:
     case Type::VARBINARY:
       if (size_.len == PELOTON_VALUE_NULL) {
@@ -273,7 +273,7 @@ Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
 Value::Value() : Value(Type::INVALID) {}
 
 Value::~Value() {
-  switch (type_->GetTypeId()) {
+  switch (type_id_) {
     case Type::VARBINARY:
     case Type::VARCHAR:
       if (manage_data_){
@@ -342,10 +342,6 @@ bool Value::CheckInteger() const {
 
   return false;
 }
-
-// Is the data inlined into this classes storage space, or must it be accessed
-// through an indirection/pointer?
-bool Value::IsInlined() const { return type_->IsInlined(*this); }
 
 }  // namespace peloton
 }  // namespace type

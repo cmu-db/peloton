@@ -41,9 +41,9 @@ TEST_F(ValueCopyTests, VarcharTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   type::Value val1 = (
-      type::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
+      type::ValueFactory::GetVarcharValue(std::string("hello hello world"), nullptr).Copy());
   type::Value val2 = (
-      type::ValueFactory::GetVarcharValue("hello hello world", nullptr).Copy());
+      type::ValueFactory::GetVarcharValue(std::string("hello hello world"), nullptr).Copy());
 
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);

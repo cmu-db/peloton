@@ -210,10 +210,6 @@ Value Type::GetMaxValue(TypeId type_id) {
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get maximal value.");
 }
 
-Type* Type::GetInstance(TypeId type_id) { return kTypes[type_id]; }
-
-Type::TypeId Type::GetTypeId() const { return type_id_; }
-
 Value Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
                           const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");

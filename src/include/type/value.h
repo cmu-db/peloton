@@ -74,7 +74,7 @@ class Value : public Printable {
  private:
 #endif
 
-  Value(const Type::TypeId type) : type_(Type::GetInstance(type)), manage_data_(false) {}
+  Value(const Type::TypeId type) : manage_data_(false), type_id_(type) {}
 
   // ARRAY values
   template <class T>
@@ -110,16 +110,16 @@ class Value : public Printable {
 
   friend void swap(Value &first, Value &second)  // nothrow
   {
-    std::swap(first.type_, second.type_);
     std::swap(first.value_, second.value_);
     std::swap(first.size_, second.size_);
     std::swap(first.manage_data_, second.manage_data_);
+    std::swap(first.type_id_, second.type_id_);
   }
 
   Value &operator=(Value other);
 
   // Get the type of this value
-  Type::TypeId GetTypeId() const { return type_->GetTypeId(); }
+  inline Type::TypeId GetTypeId() const { return type_id_; }
   const std::string GetInfo() const override;
 
   // Comparison functions
@@ -141,59 +141,61 @@ class Value : public Printable {
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
   inline Value CompareEquals(const Value &o) const {
-    return type_->CompareEquals(*this, o);
+    return Type::GetInstance(type_id_)->CompareEquals(*this, o);
   }
   inline Value CompareNotEquals(const Value &o) const {
-    return type_->CompareNotEquals(*this, o);
+    return Type::GetInstance(type_id_)->CompareNotEquals(*this, o);
   }
   inline Value CompareLessThan(const Value &o) const {
-    return type_->CompareLessThan(*this, o);
+    return Type::GetInstance(type_id_)->CompareLessThan(*this, o);
   }
   inline Value CompareLessThanEquals(const Value &o) const {
-    return type_->CompareLessThanEquals(*this, o);
+    return Type::GetInstance(type_id_)->CompareLessThanEquals(*this, o);
   }
   inline Value CompareGreaterThan(const Value &o) const {
-    return type_->CompareGreaterThan(*this, o);
+    return Type::GetInstance(type_id_)->CompareGreaterThan(*this, o);
   }
   inline Value CompareGreaterThanEquals(const Value &o) const {
-    return type_->CompareGreaterThanEquals(*this, o);
+    return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, o);
   }
 
   // Other mathematical functions
   inline Value Add(const Value &o) const {
-    return type_->Add(*this, o);
+    return Type::GetInstance(type_id_)->Add(*this, o);
   }
   inline Value Subtract(const Value &o) const {
-    return type_->Subtract(*this, o);
+    return Type::GetInstance(type_id_)->Subtract(*this, o);
   }
   inline Value Multiply(const Value &o) const {
-    return type_->Multiply(*this, o);
+    return Type::GetInstance(type_id_)->Multiply(*this, o);
   }
   inline Value Divide(const Value &o) const {
-    return type_->Divide(*this, o);
+    return Type::GetInstance(type_id_)->Divide(*this, o);
   }
   inline Value Modulo(const Value &o) const {
-    return type_->Modulo(*this, o);
+    return Type::GetInstance(type_id_)->Modulo(*this, o);
   }
   inline Value Min(const Value &o) const {
-    return type_->Min(*this, o);
+    return Type::GetInstance(type_id_)->Min(*this, o);
   }
   inline Value Max(const Value &o) const {
-    return type_->Max(*this, o);
+    return Type::GetInstance(type_id_)->Max(*this, o);
   }
   inline Value Sqrt() const {
-    return type_->Sqrt(*this);
+    return Type::GetInstance(type_id_)->Sqrt(*this);
   }
   inline Value OperateNull(const Value &o) const {
-    return type_->OperateNull(*this, o);
+    return Type::GetInstance(type_id_)->OperateNull(*this, o);
   }
   inline bool IsZero() const {
-    return type_->IsZero(*this);
+    return Type::GetInstance(type_id_)->IsZero(*this);
   }
 
   // Is the data inlined into this classes storage space, or must it be accessed
   // through an indirection/pointer?
-  inline bool IsInlined() const;
+  inline bool IsInlined() const {
+    return Type::GetInstance(type_id_)->IsInlined(*this);
+  }
 
   // Is a value null?
   inline bool IsNull() const {
@@ -218,16 +220,16 @@ class Value : public Printable {
 
   // Return a stringified version of this value
   inline std::string ToString() const {
-    return type_->ToString(*this);
+    return Type::GetInstance(type_id_)->ToString(*this);
   }
 
   // Compute a hash value
   inline size_t Hash() const {
-    return type_->Hash(*this);
+    return Type::GetInstance(type_id_)->Hash(*this);
   }
 
   inline void HashCombine(size_t &seed) const {
-    return type_->HashCombine(*this, seed);
+    return Type::GetInstance(type_id_)->HashCombine(*this, seed);
   }
 
   // Serialize this value into the given storage space. The inlined parameter
@@ -236,11 +238,11 @@ class Value : public Printable {
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
   inline void SerializeTo(char *storage, bool inlined, VarlenPool *pool) const {
-    type_->SerializeTo(*this, storage, inlined, pool);
+    Type::GetInstance(type_id_)->SerializeTo(*this, storage, inlined, pool);
   }
 
   inline void SerializeTo(SerializeOutput &out) const {
-    type_->SerializeTo(*this, out);
+    Type::GetInstance(type_id_)->SerializeTo(*this, out);
   }
 
   // Deserialize a value of the given type from the given storage space.
@@ -263,7 +265,7 @@ class Value : public Printable {
 
   // Access the raw variable length data
   inline const char *GetData() const {
-    return type_->GetData(*this);
+    return Type::GetInstance(type_id_)->GetData(*this);
   }
 
   // Access the raw variable length data from a pointer pointed to a tuple storage
@@ -281,7 +283,7 @@ class Value : public Printable {
 
   // Get the length of the variable length data
   inline uint32_t GetLength() const {
-    return type_->GetLength(*this);
+    return Type::GetInstance(type_id_)->GetLength(*this);
   }
 
   template <class T>
@@ -291,31 +293,31 @@ class Value : public Printable {
 
   // Create a copy of this value
   inline Value Copy() const {
-    return type_->Copy(*this);
+    return Type::GetInstance(type_id_)->Copy(*this);
   }
 
   inline Value CastAs(const Type::TypeId type_id) const {
-    return type_->CastAs(*this, type_id);
+    return Type::GetInstance(type_id_)->CastAs(*this, type_id);
   }
 
   // Get the element at a given index in this array
   inline Value GetElementAt(uint64_t idx) const {
-    return type_->GetElementAt(*this, idx);
+    return Type::GetInstance(type_id_)->GetElementAt(*this, idx);
   }
 
   inline Type::TypeId GetElementType() const {
-    return type_->GetElementType(*this);
+    return Type::GetInstance(type_id_)->GetElementType(*this);
   }
 
   // Does this value exist in this array?
   inline Value InList(const Value &object) const {
-    return type_->InList(*this, object);
+    return Type::GetInstance(type_id_)->InList(*this, object);
   }
 
   // For unordered_map
   struct equal_to {
     bool operator()(const Value &x, const Value &y) const {
-      Value cmp(x.type_->CompareEquals(x, y));
+      Value cmp(Type::GetInstance(x.type_id_)->CompareEquals(x, y));
       return cmp.IsTrue();
     }
   };
@@ -327,7 +329,7 @@ class Value : public Printable {
   }
 
   struct hash {
-    size_t operator()(const Value &x) const { return x.type_->Hash(x); }
+    size_t operator()(const Value &x) const { return Type::GetInstance(x.type_id_)->Hash(x); }
   };
 
   friend struct equal_to;
@@ -351,10 +353,6 @@ class Value : public Printable {
   friend class ValueFactory;
 
  protected:
-  // TODO: Pack allocated flag with the type id
-  // The data type
-  Type *type_;
-
   // The actual value item
   union Val {
     int8_t boolean;
@@ -375,6 +373,9 @@ class Value : public Printable {
   } size_;
 
   bool manage_data_;
+  // TODO: Pack allocated flag with the type id
+  // The data type
+  Type::TypeId type_id_;
 };
 
 // ARRAY here to ease creation of templates
