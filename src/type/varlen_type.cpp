@@ -37,7 +37,7 @@ inline static int CompareStrings(const char *str1, int len1, const char *str2, i
 
 // Access the raw variable length data
 const char *VarlenType::GetData(const Value& val) const {
-  return val.value_.varlen.data;
+  return val.value_.varlen;
 }
 
 // Access the raw varlen data stored from the tuple storage
@@ -48,101 +48,106 @@ char *VarlenType::GetData(char *storage) {
 
 // Get the length of the variable length data
 uint32_t VarlenType::GetLength(const Value& val) const {
-  return val.value_.varlen.len;
+  return val.size_.len;
 }
 
 Value VarlenType::CompareEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
-      || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
-    return ValueFactory::GetBooleanValue(left.GetLength() == right.GetLength());
+  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN
+      || GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+    return ValueFactory::GetBooleanValue(GetLength(left) == GetLength(right));
   }
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) == 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, GetLength(left), str2, GetLength(right)) == 0);
 }
 
 Value VarlenType::CompareNotEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
-      || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
-    return ValueFactory::GetBooleanValue(left.GetLength() != right.GetLength());
+  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN
+      || GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+    return ValueFactory::GetBooleanValue(GetLength(left) != GetLength(right));
   }
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) != 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, GetLength(left), str2, GetLength(right)) != 0);
 }
 
 Value VarlenType::CompareLessThan(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
-      || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
-    return ValueFactory::GetBooleanValue(left.GetLength() < right.GetLength());
+  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN
+      || GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+    return ValueFactory::GetBooleanValue(GetLength(left) < GetLength(right));
   }
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) < 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, GetLength(left), str2, GetLength(right)) < 0);
 }
 
 Value VarlenType::CompareLessThanEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
-      || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
-    return ValueFactory::GetBooleanValue(left.GetLength() <= right.GetLength());
+  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN
+      || GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+    return ValueFactory::GetBooleanValue(GetLength(left) <= GetLength(right));
   }
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) <= 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, GetLength(left), str2, GetLength(right)) <= 0);
 }
 
 Value VarlenType::CompareGreaterThan(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
-      || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
-    return ValueFactory::GetBooleanValue(left.GetLength() > right.GetLength());
+  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN
+      || GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+    return ValueFactory::GetBooleanValue(GetLength(left) > GetLength(right));
   }
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) > 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, GetLength(left), str2, GetLength(right)) > 0);
 }
 
 Value VarlenType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  if (left.GetLength() == PELOTON_VARCHAR_MAX_LEN
-      || right.GetLength() == PELOTON_VARCHAR_MAX_LEN) {
-    return ValueFactory::GetBooleanValue(left.GetLength() >= right.GetLength());
+  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN
+      || GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+    return ValueFactory::GetBooleanValue(GetLength(left) >= GetLength(right));
   }
   const char *str1 = left.GetData();
   const char *str2 = right.GetData();
   // TODO strcmp does not work on binary values
-  return ValueFactory::GetBooleanValue(CompareStrings(str1, left.GetLength(), str2, right.GetLength()) >= 0);
+  return ValueFactory::GetBooleanValue(CompareStrings(str1, GetLength(left), str2, GetLength(right)) >= 0);
 }
 
 std::string VarlenType::ToString(const Value& val) const {
+  uint32_t len = GetLength(val);
+
   if (val.IsNull())
     return "varlen_null";
-  if (val.GetLength() == PELOTON_VARCHAR_MAX_LEN)
+  if (len == PELOTON_VARCHAR_MAX_LEN)
     return "varlen_max";
+  if (len == 0) {
+    return "";
+  }
   if (GetTypeId() == Type::VARBINARY)
-    return std::string(val.GetData(), val.GetLength());
-  return std::string(val.GetData(), val.GetLength() - 1);
+    return std::string(GetData(val), len);
+  return std::string(GetData(val), len - 1);
 }
 
 size_t VarlenType::Hash(const Value& val) const {
@@ -155,35 +160,47 @@ void VarlenType::HashCombine(const Value& val, size_t &seed) const {
 }
 
 void VarlenType::SerializeTo(const Value& val, SerializeOutput &out) const {
-  out.WriteInt(val.GetLength());
-  if (val.GetLength() > 0) {
-    out.WriteBytes(val.GetData(), val.GetLength());
+  uint32_t len = GetLength(val);
+  out.WriteInt(len);
+  if (len > 0 && len < PELOTON_VALUE_NULL) {
+    out.WriteBytes(val.GetData(), len);
   }
 }
 
 void VarlenType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
     VarlenPool *pool) const {
-  uint32_t size = val.GetLength() + sizeof(uint32_t);
-  char *data = (pool == nullptr ) ? new char[size] : (char *) pool->Allocate(size);
+  uint32_t len = GetLength(val);
+  char *data;
+  if (len == PELOTON_VALUE_NULL) {
+    data = nullptr;
+  } else {
+    uint32_t size = len + sizeof(uint32_t);
+    data = (pool == nullptr) ? new char[size] :(char *) pool->Allocate(size);
+    PL_MEMCPY(data, &len, sizeof(uint32_t));
+    PL_MEMCPY(data + sizeof(uint32_t), val.value_.varlen, size-sizeof(uint32_t));
+  }
   *reinterpret_cast<const char **>(storage) = data;
-  PL_MEMCPY(data, &val.value_.varlen.len, sizeof(uint32_t));
-  PL_MEMCPY(data + sizeof(uint32_t), val.value_.varlen.data, size-sizeof(uint32_t));
 }
 
 // Deserialize a value of the given type from the given storage space.
 Value VarlenType::DeserializeFrom(const char *storage ,
                               const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
   const char *ptr = *reinterpret_cast<const char * const *>(storage);
-  if (ptr == nullptr)
-  return Value(type_id_, nullptr, 0);
+  if (ptr == nullptr) {
+    return Value(type_id_, nullptr, 0, false);
+  }
   uint32_t len = *reinterpret_cast<const uint32_t *>(ptr);
-  return Value(type_id_, ptr + sizeof(uint32_t), len);
+  return Value(type_id_, ptr + sizeof(uint32_t), len, false);
 }
 Value VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
                               VarlenPool *pool UNUSED_ATTRIBUTE) const{
   uint32_t len = in.ReadInt();
-  const char *data = (char *) in.getRawPointer(len);
-  return Value(type_id_, data, len);
+  if (len == PELOTON_VALUE_NULL) {
+    return Value(type_id_, nullptr, 0, false);
+  } else {
+    const char *data = (char *) in.getRawPointer(len);
+    return Value(type_id_, data, len, false);
+  }
 }
 
 // Perform a shallow copy from a serialized varlen value to another serialized varlen value
@@ -200,8 +217,7 @@ void VarlenType::DoShallowCopy(char *dest, char *src, bool inlined UNUSED_ATTRIB
 }
 
 Value VarlenType::Copy(const Value& val) const {
-  uint32_t len = val.GetLength();
-  return Value(val.GetTypeId(), val.GetData(), len);
+  return Value(val);
 }
 
 Value VarlenType::CastAs(const Value& val, const Type::TypeId type_id) const {

@@ -36,7 +36,7 @@ bool DecimalType::IsZero(const Value& val) const {
 
 Value DecimalType::Add(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -58,7 +58,7 @@ Value DecimalType::Add(const Value& left, const Value &right) const {
 
 Value DecimalType::Subtract(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
   
@@ -80,7 +80,7 @@ Value DecimalType::Subtract(const Value& left, const Value &right) const {
 
 Value DecimalType::Multiply(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -102,7 +102,7 @@ Value DecimalType::Multiply(const Value& left, const Value &right) const {
 
 Value DecimalType::Divide(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -128,7 +128,7 @@ Value DecimalType::Divide(const Value& left, const Value &right) const {
 
 Value DecimalType::Modulo(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
   
@@ -154,7 +154,7 @@ Value DecimalType::Modulo(const Value& left, const Value &right) const {
 
 Value DecimalType::Min(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -166,7 +166,7 @@ Value DecimalType::Min(const Value& left, const Value &right) const {
 
 Value DecimalType::Max(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -193,7 +193,7 @@ Value DecimalType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &
 
 Value DecimalType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
     
@@ -215,7 +215,7 @@ Value DecimalType::CompareEquals(const Value& left, const Value &right) const {
 
 Value DecimalType::CompareNotEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -237,7 +237,7 @@ Value DecimalType::CompareNotEquals(const Value& left, const Value &right) const
 
 Value DecimalType::CompareLessThan(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -259,7 +259,7 @@ Value DecimalType::CompareLessThan(const Value& left, const Value &right) const 
 
 Value DecimalType::CompareLessThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -281,7 +281,7 @@ Value DecimalType::CompareLessThanEquals(const Value& left, const Value &right) 
 
 Value DecimalType::CompareGreaterThan(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -303,7 +303,7 @@ Value DecimalType::CompareGreaterThan(const Value& left, const Value &right) con
 
 Value DecimalType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
     

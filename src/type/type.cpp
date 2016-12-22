@@ -175,9 +175,9 @@ Value Type::GetMinValue(TypeId type_id) {
     case TIMESTAMP:
       return Value(type_id, 0);
     case VARCHAR:
-      return Value(type_id, "", false);
+      return Value(type_id, "");
     case VARBINARY:
-      return Value(type_id, "", true);
+      return Value(type_id, "");
     default:
       break;
   }
@@ -201,18 +201,14 @@ Value Type::GetMaxValue(TypeId type_id) {
     case TIMESTAMP:
       return Value(type_id, PELOTON_TIMESTAMP_MAX);
     case VARCHAR:
-      return Value(type_id, nullptr, 0);
+      return Value(type_id, nullptr, 0, false);
     case VARBINARY:
-      return Value(type_id, nullptr, 0);
+      return Value(type_id, nullptr, 0, false);
     default:
       break;
   }
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get maximal value.");
 }
-
-Type* Type::GetInstance(TypeId type_id) { return kTypes[type_id]; }
-
-Type::TypeId Type::GetTypeId() const { return type_id_; }
 
 Value Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
                           const Value& right UNUSED_ATTRIBUTE) const {

@@ -27,7 +27,7 @@ class ValueFactory;
 class Type {
  public:
   enum TypeId {
-    INVALID,
+    INVALID = 0,
     PARAMETER_OFFSET,
     BOOLEAN,
     TINYINT,
@@ -65,8 +65,13 @@ class Type {
   static Value GetMinValue(TypeId type_id);
   static Value GetMaxValue(TypeId type_id);
 
-  static Type * GetInstance(TypeId type_id);
-  TypeId GetTypeId() const;
+  inline static Type * GetInstance(TypeId type_id) {
+    return kTypes[type_id];
+  }
+
+  inline TypeId GetTypeId() const {
+    return type_id_;
+  }
 
   // Comparison functions
   //

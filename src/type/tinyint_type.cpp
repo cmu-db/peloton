@@ -30,8 +30,8 @@ bool TinyintType::IsZero(const Value& val) const {
 }
 
 Value TinyintType::Add(const Value& left, const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -54,8 +54,8 @@ Value TinyintType::Add(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Subtract(const Value& left, const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -79,8 +79,8 @@ Value TinyintType::Subtract(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Multiply(const Value& left, const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
   switch (right.GetTypeId()) {
@@ -103,8 +103,8 @@ Value TinyintType::Multiply(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Divide(const Value& left, const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -131,8 +131,8 @@ Value TinyintType::Divide(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Modulo(const Value& left, const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -161,7 +161,7 @@ Value TinyintType::Modulo(const Value& left, const Value &right) const {
 }
 
 Value TinyintType::Sqrt(const Value& val) const {
-  val.CheckInteger();
+  PL_ASSERT(val.CheckInteger());
   if (val.IsNull())
     return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
 
@@ -194,8 +194,8 @@ Value TinyintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &
 }
 
 Value TinyintType::CompareEquals(const Value& left, const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
@@ -225,8 +225,8 @@ Value TinyintType::CompareEquals(const Value& left, const Value &right) const {
 
 Value TinyintType::CompareNotEquals(const Value& left,
     const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -256,8 +256,8 @@ Value TinyintType::CompareNotEquals(const Value& left,
 
 Value TinyintType::CompareLessThan(const Value& left,
     const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -285,8 +285,8 @@ Value TinyintType::CompareLessThan(const Value& left,
 
 Value TinyintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -316,8 +316,8 @@ Value TinyintType::CompareLessThanEquals(const Value& left,
 
 Value TinyintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -344,8 +344,8 @@ Value TinyintType::CompareGreaterThan(const Value& left,
 
 Value TinyintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
-  left.CheckInteger();
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckInteger());
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
 
@@ -374,7 +374,7 @@ Value TinyintType::CompareGreaterThanEquals(const Value& left,
 }
 
 std::string TinyintType::ToString(const Value& val) const {
-  val.CheckInteger();
+  PL_ASSERT(val.CheckInteger());
   if (val.IsNull())
     return "tinyint_null";
   return std::to_string(val.value_.tinyint);
@@ -382,7 +382,7 @@ std::string TinyintType::ToString(const Value& val) const {
 }
 
 size_t TinyintType::Hash(const Value& val) const {
-  val.CheckInteger();
+  PL_ASSERT(val.CheckInteger());
   return std::hash<int8_t> { }(val.value_.tinyint);
 }
 
@@ -415,7 +415,7 @@ Value TinyintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 }
 
 Value TinyintType::Copy(const Value& val) const {
-  val.CheckInteger();
+  PL_ASSERT(val.CheckInteger());
   return ValueFactory::GetTinyIntValue(val.value_.tinyint);
 }
 

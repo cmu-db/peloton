@@ -151,13 +151,6 @@ TEST_F(ArrayValueTests, InListTest) {
         array_bool.InList(type::ValueFactory::GetBooleanValue(vec_bool[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
-  EXPECT_THROW(array_bool.InList(type::ValueFactory::GetIntegerValue(0)),
-               peloton::Exception);
-  EXPECT_THROW(array_bool.InList(type::ValueFactory::GetDoubleValue(0.0)),
-               peloton::Exception);
-  EXPECT_THROW(array_bool.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
-               peloton::Exception);
-  EXPECT_THROW(array_bool.InList(array_bool), peloton::Exception);
 
   std::vector<int8_t> vec_tinyint;
   for (size_t i = 0; i < n; i++) {
@@ -178,11 +171,6 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_tinyint.InList(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(array_tinyint.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
-               peloton::Exception);
-  EXPECT_THROW(array_tinyint.InList(array_tinyint), peloton::Exception);
 
   std::vector<int16_t> vec_smallint;
   for (size_t i = 0; i < n; i++) {
@@ -204,11 +192,6 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_smallint.InList(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(array_smallint.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
-               peloton::Exception);
-  EXPECT_THROW(array_smallint.InList(array_smallint), peloton::Exception);
 
   std::vector<int32_t> vec_integer;
   for (size_t i = 0; i < n; i++) {
@@ -229,11 +212,6 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_integer.InList(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(array_integer.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
-               peloton::Exception);
-  EXPECT_THROW(array_integer.InList(array_integer), peloton::Exception);
 
   std::vector<int64_t> vec_bigint;
   for (size_t i = 0; i < n; i++) {
@@ -254,11 +232,6 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_bigint.InList(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(array_bigint.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
-               peloton::Exception);
-  EXPECT_THROW(array_bigint.InList(array_bigint), peloton::Exception);
 
   std::vector<double> vec_decimal;
   for (size_t i = 0; i < n; i++) {
@@ -279,11 +252,6 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_decimal.InList(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(array_decimal.InList(type::ValueFactory::GetVarcharValue(nullptr, 0)),
-               peloton::Exception);
-  EXPECT_THROW(array_decimal.InList(array_decimal), peloton::Exception);
 
   std::vector<std::string> vec_varchar;
   for (size_t i = 0; i < n; i++) {
@@ -304,13 +272,6 @@ TEST_F(ArrayValueTests, InListTest) {
       EXPECT_TRUE((in_list).IsFalse());
     }
   }
-  EXPECT_THROW(array_varchar.InList(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(array_varchar.InList(type::ValueFactory::GetIntegerValue(0)),
-               peloton::Exception);
-  EXPECT_THROW(array_varchar.InList(type::ValueFactory::GetDoubleValue(0.0)),
-               peloton::Exception);
-  EXPECT_THROW(array_varchar.InList(array_varchar), peloton::Exception);
 }
 
 void CheckEqual(type::Value v1, type::Value v2) {
@@ -380,12 +341,6 @@ TEST_F(ArrayValueTests, CompareTest) {
 
   // Test type mismatch
   type::Value v = type::ValueFactory::GetVarcharValue("");
-  EXPECT_THROW(v.CompareEquals(type::ValueFactory::GetBooleanValue(false)),
-               peloton::Exception);
-  EXPECT_THROW(v.CompareEquals(type::ValueFactory::GetIntegerValue(0)),
-               peloton::Exception);
-  EXPECT_THROW(v.CompareEquals(type::ValueFactory::GetDoubleValue(0.0)),
-               peloton::Exception);
 
   // Test null varchar
   type::Value cmp = (v.CompareEquals(type::ValueFactory::GetVarcharValue(nullptr, 0)));

@@ -24,42 +24,42 @@ TimestampType::TimestampType()
 }
 
 Value TimestampType::CompareEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareLessThan(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
 Value TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
 Value TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
-  left.CheckComparable(right);
+  PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
   return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
@@ -134,13 +134,13 @@ Value TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 
 // Create a copy of this value
 Value TimestampType::Copy(const Value& val) const {
-  return ValueFactory::GetTimestampValue(val.value_.timestamp);
+  return Value(val);
 }
 
 Value TimestampType::CastAs(const Value& val, const Type::TypeId type_id) const {
   switch (type_id) {
     case Type::TIMESTAMP:
-      return val.Copy();
+      return Copy(val);
     case Type::VARCHAR:
       if (val.IsNull())
         return ValueFactory::GetVarcharValue(nullptr, 0);

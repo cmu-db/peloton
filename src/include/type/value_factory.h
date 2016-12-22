@@ -63,9 +63,9 @@ class ValueFactory {
   }
 
   static inline Value GetVarcharValue(
-      const char *value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+      const char *value, bool manage_data, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
     return Value(Type::VARCHAR, value,
-                 value == nullptr ? 0 : strlen(value) + 1);
+                 value == nullptr ? 0 : strlen(value) + 1 , manage_data);
   }
 
   static inline Value GetVarcharValue(
@@ -79,35 +79,46 @@ class ValueFactory {
   }
 
   static inline Value GetVarbinaryValue(
-      const unsigned char *rawBuf, int32_t rawLength,
+      const unsigned char *rawBuf, int32_t rawLength, bool manage_data,
       UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return Value(Type::VARBINARY, (const char *)rawBuf, rawLength);
+    return Value(Type::VARBINARY, (const char *)rawBuf, rawLength, manage_data);
   }
 
   static inline Value GetNullValueByType(Type::TypeId type_id) {
+    Value ret_value;
     switch (type_id) {
       case Type::BOOLEAN:
-        return GetBooleanValue(PELOTON_BOOLEAN_NULL);
-      case Type::TINYINT:
-        return GetTinyIntValue(PELOTON_INT8_NULL);
-      case Type::SMALLINT:
-        return GetSmallIntValue(PELOTON_INT16_NULL);
-      case Type::INTEGER:
-        return GetIntegerValue(PELOTON_INT32_NULL);
-      case Type::BIGINT:
-        return GetBigIntValue(PELOTON_INT64_NULL);
-      case Type::DECIMAL:
-        return GetDoubleValue(PELOTON_DECIMAL_NULL);
-      case Type::TIMESTAMP:
-        return GetTimestampValue(PELOTON_TIMESTAMP_NULL);
-      case Type::VARCHAR:
-        return GetVarcharValue(nullptr, 0);
-      case Type::VARBINARY:
-        return GetVarbinaryValue(nullptr, 0);
-      default:
+        ret_value = GetBooleanValue(PELOTON_BOOLEAN_NULL);
         break;
+      case Type::TINYINT:
+        ret_value = GetTinyIntValue(PELOTON_INT8_NULL);
+        break;
+      case Type::SMALLINT:
+        ret_value = GetSmallIntValue(PELOTON_INT16_NULL);
+        break;
+      case Type::INTEGER:
+        ret_value = GetIntegerValue(PELOTON_INT32_NULL);
+        break;
+      case Type::BIGINT:
+        ret_value = GetBigIntValue(PELOTON_INT64_NULL);
+        break;
+      case Type::DECIMAL:
+        ret_value = GetDoubleValue(PELOTON_DECIMAL_NULL);
+        break;
+      case Type::TIMESTAMP:
+        ret_value = GetTimestampValue(PELOTON_TIMESTAMP_NULL);
+        break;
+      case Type::VARCHAR:
+        ret_value = GetVarcharValue(nullptr, false, nullptr);
+        break;
+      case Type::VARBINARY:
+        ret_value = GetVarbinaryValue(nullptr, 0, false, nullptr);
+        break;
+      default:
+        throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
     }
-    throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+    ret_value.size_.len = PELOTON_VALUE_NULL;
+    return ret_value;
   }
 
   static inline Value GetZeroValueByType(Type::TypeId type_id) {
