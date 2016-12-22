@@ -92,7 +92,6 @@ class SimpleOptimizer : public AbstractOptimizer {
   static std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
       parser::CopyStatement *copy_stmt);
 
-  static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
   static std::unique_ptr<planner::AbstractPlan> CreateHackingNestedLoopJoinPlan(
       const parser::SelectStatement *statement);
   static std::unique_ptr<planner::AbstractPlan> CreateJoinPlan(
