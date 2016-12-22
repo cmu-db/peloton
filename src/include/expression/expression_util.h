@@ -101,6 +101,96 @@ class ExpressionUtil {
     }
   }
 
+  /*
+   * This function removes all the terms related to indexed columns within an
+   * expression.
+   *
+   * NOTE:
+   * 1. This should only be called after we check that the predicate is index
+   * searchable. That means there are only "and" conjunctions.
+   * 2. This will remove constant expression as well (something like 2+3=7). But
+   * that shouldn't be included in the scan predicate anyway. We should handle
+   * that special case.
+   */
+  static AbstractExpression *RemoveTermsWithIndexedColumns(
+      AbstractExpression *expression, std::shared_ptr<index::Index> index) {
+    LOG_TRACE("Expression Type --> %s",
+              ExpressionTypeToString(expression->GetExpressionType()).c_str());
+
+    size_t children_size = expression->GetChildrenSize();
+
+    // Return itself if the TupleValueExpression is not indexed.
+    if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+      auto tuple_expr = (expression::TupleValueExpression *)expression;
+      std::string col_name(tuple_expr->GetColumnName());
+
+      LOG_TRACE("Check for TupleValueExpression with column %s",
+                col_name.c_str());
+
+      bool indexed = false;
+      for (auto &indexed_column : index->GetKeySchema()->GetColumns()) {
+        if (indexed_column.GetName() == col_name) {
+          LOG_TRACE("Found indexed column");
+          indexed = true;
+          break;
+        }
+      }
+
+      if (!indexed) return expression;
+    }
+
+    // LM: If it's an indexed TupleValueExpression or other
+    // ConstantValueExpression/ParameterValueExpression, then it's removable.
+    // Right now I couldn't think of other cases, so otherwise it's not handled.
+    if (children_size == 0) {
+      PL_ASSERT(
+          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE ||
+          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT ||
+          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER);
+      return nullptr;
+    }
+
+    // Otherwise it's an operator expression. We have to check the children.
+    bool fully_removable = true;
+    bool partial_removable = false;
+
+    std::vector<AbstractExpression *> new_children;
+    for (size_t i = 0; i < children_size; ++i) {
+      auto child_expr = expression->GetModifiableChild(i);
+      auto new_child = RemoveTermsWithIndexedColumns(child_expr, index);
+      new_children.push_back(new_child);
+
+      if (new_child != nullptr)
+        fully_removable = false;
+      else
+        partial_removable = true;
+    }
+
+    LOG_TRACE("fully_removable: %d", fully_removable);
+    LOG_TRACE("partial_removable: %d", partial_removable);
+
+    if (fully_removable) return nullptr;
+
+    // Only in an 'and' expression, we may be able to remove one literal
+    if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND) {
+      // If one child is removable, return the other child
+      if (partial_removable) {
+        for (auto child : new_children)
+          if (child != nullptr) return child;
+      } else {
+        // Otherwise replace the child expressions with tailored ones
+        for (size_t i = 0; i < children_size; ++i) {
+          if (expression->GetModifiableChild(i) != new_children[i]) {
+            LOG_TRACE("Setting new child at idx: %ld", i);
+            expression->SetChild(i, new_children[i]->Copy());
+          }
+        }
+      }
+    }
+
+    return expression;
+  }
+
   static AbstractExpression *TupleValueFactory(type::Type::TypeId value_type,
                                                const int tuple_idx,
                                                const int value_idx) {
@@ -297,12 +387,14 @@ class ExpressionUtil {
 
   /**
    * This function walks an expression tree and fills in information about
-   * columns and functions. Also generates a list of column ids we need to fetch
+   * columns and functions. Also generates a list of column ids we need to
+   * fetch
    * from the base tile groups. Simultaneously generates a mapping of the
    * original column
    * id to the id in the logical tiles returned by the base tile groups
    *
-   * This function is useful in determining information used by projection plans
+   * This function is useful in determining information used by projection
+   * plans
    */
   static void TransformExpression(std::vector<oid_t> &column_ids,
                                   AbstractExpression *expr,
@@ -320,7 +412,8 @@ class ExpressionUtil {
    * this is a private function for transforming expressions as described
    * above
    *
-   * find columns determines if we are building a column_mapping and column_ids
+   * find columns determines if we are building a column_mapping and
+   * column_ids
    * or we are just transforming
    * the expressions
    */
