@@ -971,10 +971,15 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
       index, predicate_column_ids, predicate_expr_types, predicate_values,
       runtime_keys);
 
+  // Remove redundant predicate that index can search
+  auto tailored_predicate =
+      expression::ExpressionUtil::RemoveTermsWithIndexedColumns(predicate8,
+                                                                index);
+
   // Create the index scan plan for ORDER_LINE
   std::unique_ptr<planner::IndexScanPlan> orderline_scan_node(
-      new planner::IndexScanPlan(orderline_table, predicate8, column_ids,
-                                 index_scan_desc, false));
+      new planner::IndexScanPlan(orderline_table, tailored_predicate,
+                                 column_ids, index_scan_desc, false));
   LOG_DEBUG("Index scan for order_line plan created");
 
   // predicate for scanning stock table
