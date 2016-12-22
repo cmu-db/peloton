@@ -147,6 +147,12 @@ class ExpressionUtil {
         if (child != nullptr) return child;
     }
 
+    // Replace the child expressions with tailored ones
+    for (size_t i = 0; i < children_size; ++i) {
+      if (expression->GetModifiableChild(i) != new_children[i]) {
+        expression->SetChild(i, new_children[i]);
+      }
+    }
     return expression;
   }
 
