@@ -775,6 +775,8 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       predicate, target_table->GetIndex(index_id));
   if (predicate != nullptr) {
     LOG_ERROR("predicate after remove: %s", predicate->GetInfo().c_str());
+    expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+        predicate, target_table->GetIndex(index_id));
   }
 
   // Create index scan plan

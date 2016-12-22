@@ -12,9 +12,9 @@
 
 #include "planner/update_plan.h"
 
-#include "type/types.h"
 #include "parser/update_statement.h"
 #include "planner/project_info.h"
+#include "type/types.h"
 
 #include "catalog/catalog.h"
 #include "expression/expression_util.h"
@@ -101,7 +101,10 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
       new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
   project_info_ = std::move(project_info);
 
-  where_ = parse_tree->where->Copy();
+  if (parse_tree->where != nullptr)
+    where_ = parse_tree->where->Copy();
+  else
+    where_ = nullptr;
   expression::ExpressionUtil::TransformExpression(target_table_->GetSchema(),
                                                   where_);
 }

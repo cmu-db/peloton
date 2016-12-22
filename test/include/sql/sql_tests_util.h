@@ -66,6 +66,19 @@ class SQLTestsUtil {
   // A another simpler wrapper around ExecuteSQLQuery
   static Result ExecuteSQLQuery(const std::string query);
 
+  // Get the return value of one column as string at a given position
+  // NOTE: Result columns across different rows are unfolded into a single
+  // vector (vector<ResultType>).
+  static std::string GetResultValueAsString(
+      const std::vector<ResultType> &result, size_t idx) {
+    std::string value;
+    for (auto character : result[idx].second) {
+      value += character;
+    }
+
+    return std::move(value);
+  }
+
   static tcop::TrafficCop traffic_cop_;
 };
 }  // namespace test

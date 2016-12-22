@@ -86,6 +86,21 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       result);
   LOG_INFO("Removable preciate selected");
 
+  SQLTestsUtil::ExecuteSQLQuery(
+      "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2 and "
+      "dept_name = "
+      "'hello_2' and dept_name = 'hello_2';",
+      result);
+
+  SQLTestsUtil::ExecuteSQLQuery(
+      "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2 and "
+      " dept_name = 'hello_2';",
+      result);
+
+  SQLTestsUtil::ExecuteSQLQuery(
+      "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2;",
+      result);
+
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn =
