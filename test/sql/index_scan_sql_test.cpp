@@ -31,32 +31,10 @@ TEST_F(IndexScanSQLTests, SQLTest) {
 
   // Create a table first
   LOG_INFO("Creating a table...");
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "dept_id", true);
-  // Set dept_id as the primary key (only that we can have a primary key index)
-  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
-  id_column.AddConstraint(constraint);
-  auto name_column =
-      catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 
-  std::unique_ptr<catalog::Schema> table_schema(
-      new catalog::Schema({id_column, name_column}));
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
-                           std::move(table_schema),
-                           CreateType::CREATE_TYPE_TABLE);
-  executor::CreateExecutor create_executor(&node, context.get());
-  create_executor.Init();
-  create_executor.Execute();
-  txn_manager.CommitTransaction(txn);
-  EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME)
-                ->GetTableCount(),
-            1);
+  SQLTestsUtil::ExecuteSQLQuery(
+      "CREATE TABLE department_table(dept_id INT PRIMARY KEY, dept_name "
+      "VARCHAR);");
   LOG_INFO("Table created!");
 
   std::vector<ResultType> result;
@@ -86,7 +64,9 @@ TEST_F(IndexScanSQLTests, SQLTest) {
 
   LOG_INFO("Select a column...");
   SQLTestsUtil::ExecuteSQLQuery(
-      "SELECT dept_name FROM department_table WHERE dept_id = 2;", result);
+      "SELECT dept_name FROM department_table WHERE dept_id = 2 and dept_name "
+      "= 'hello_2';",
+      result);
   LOG_INFO("Column selected");
 
   LOG_INFO("Select COUNT(*)...");
@@ -95,7 +75,9 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   LOG_INFO("Aggregation selected");
 
   // free the database just created
-  txn = txn_manager.BeginTransaction();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn =
+      concurrency::TransactionManagerFactory::GetInstance().BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }

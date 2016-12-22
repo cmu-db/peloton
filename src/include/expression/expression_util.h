@@ -110,20 +110,38 @@ class ExpressionUtil {
    */
   static AbstractExpression *RemoveTermsWithIndexedColumns(
       AbstractExpression *expression, std::shared_ptr<index::Index> index) {
+    LOG_TRACE("Expression Type --> %s",
+              ExpressionTypeToString(expression->GetExpressionType()).c_str());
+
     size_t children_size = expression->GetChildrenSize();
     // We shouldn't have a expression that has more than two children
     PL_ASSERT(children_size <= 2);
 
-    // Return an empty expresssion if this is an indexed TupleValueExpression.
+    // Return itself if the TupleValueExpression is not indexed.
     if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
       auto tuple_expr = (expression::TupleValueExpression *)expression;
       std::string col_name(tuple_expr->GetColumnName());
 
+      LOG_TRACE("Check for TupleValueExpression with column %s",
+                col_name.c_str());
+
+      bool indexed = false;
       for (auto &indexed_column : index->GetKeySchema()->GetColumns()) {
-        if (indexed_column.GetName() == col_name) return nullptr;
+        if (indexed_column.GetName() == col_name) {
+          LOG_TRACE("Found indexed column");
+          indexed = true;
+          break;
+        }
       }
+
+      if (!indexed) return expression;
     }
 
+    // If it's an indexed TupleValueExpression or other ConstantValueExpression,
+    // then it's removable.
+    if (children_size == 0) return nullptr;
+
+    // Otherwise it's an operator expression. We have to check the children.
     bool fully_removable = true;
     bool partial_removable = false;
 
@@ -139,21 +157,28 @@ class ExpressionUtil {
         partial_removable = true;
     }
 
+    LOG_TRACE("fully_removable: %d", fully_removable);
+    LOG_TRACE("partial_removable: %d", partial_removable);
+
     if (fully_removable) return nullptr;
 
-    // Only 'and' expression can do partial removal.
-    if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND &&
-        partial_removable) {
-      for (auto child : new_children)
-        if (child != nullptr) return child;
-    }
-
-    // Replace the child expressions with tailored ones
-    for (size_t i = 0; i < children_size; ++i) {
-      if (expression->GetModifiableChild(i) != new_children[i]) {
-        expression->SetChild(i, new_children[i]);
+    // Only in an 'and' expression, we may be able to remove one literal
+    if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND) {
+      // If one child is removable, return the other child
+      if (partial_removable) {
+        for (auto child : new_children)
+          if (child != nullptr) return child;
+      } else {
+        // Otherwise replace the child expressions with tailored ones
+        for (size_t i = 0; i < children_size; ++i) {
+          if (expression->GetModifiableChild(i) != new_children[i]) {
+            LOG_TRACE("Setting new child at idx: %ld", i);
+            expression->SetChild(i, new_children[i]);
+          }
+        }
       }
     }
+
     return expression;
   }
 

@@ -11,10 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/index_scan_plan.h"
-#include "type/types.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace planner {
@@ -78,8 +78,9 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
     auto column_id = key_column_ids_[i];
     if (value.GetTypeId() == type::Type::PARAMETER_OFFSET) {
       int offset = value.GetAs<int32_t>();
-      values_[i] = (values->at(offset)).CastAs(
-          GetTable()->GetSchema()->GetColumn(column_id).GetType());
+      values_[i] =
+          (values->at(offset))
+              .CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 

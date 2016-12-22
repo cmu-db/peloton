@@ -510,12 +510,13 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (CheckIndexSearchable(target_table, deleteStmt->expr, key_column_ids,
                                expr_types, values, index_id)) {
         // Remove redundant predicate that index can search
-        expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-            deleteStmt->expr, target_table->GetIndex(index_id));
+        auto predicate =
+            expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+                deleteStmt->expr, target_table->GetIndex(index_id));
 
         // Create delete plan
         std::unique_ptr<planner::DeletePlan> child_DeletePlan(
-            new planner::DeletePlan(target_table, deleteStmt->expr));
+            new planner::DeletePlan(target_table, predicate));
 
         // Create index scan plan
         std::vector<oid_t> columns;
@@ -576,13 +577,21 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
                                expr_types, values, index_id)) {
         // Remove redundant predicate that index can search
-        expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-            updateStmt->where, target_table->GetIndex(index_id));
+        // TODO: This is a HACK... Because of the gross way the update plan
+        // constructor is written, I have to temporarily store the pointer of
+        // the where clause in the update statement and then copy is back. This
+        // will be gone after we refactor the UpdatePlan to the correct way.
+        auto old_predicate = updateStmt->where;
+        updateStmt->where =
+            expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+                updateStmt->where, target_table->GetIndex(index_id));
 
         // Create index scan plan
         std::unique_ptr<planner::AbstractPlan> child_UpdatePlan(
             new planner::UpdatePlan(updateStmt, key_column_ids, expr_types,
                                     values, index_id));
+        updateStmt->where = old_predicate;
+
         child_plan = std::move(child_UpdatePlan);
 
       } else {
@@ -750,10 +759,6 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   if (!CheckIndexSearchable(target_table, predicate, key_column_ids, expr_types,
                             values, index_id)) {
-    // Remove redundant predicate that index can search
-    expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
-        predicate, target_table->GetIndex(index_id));
-
     // Create sequential scan plan
     LOG_TRACE("Creating a sequential scan plan");
     auto predicate_cpy = predicate == nullptr ? nullptr : predicate->Copy();
@@ -762,6 +767,14 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
                                  for_update));
     LOG_TRACE("Sequential scan plan created");
     return std::move(child_SelectPlan);
+  }
+
+  LOG_ERROR("predicate before remove: %s", predicate->GetInfo().c_str());
+  // Remove redundant predicate that index can search
+  predicate = expression::ExpressionUtil::RemoveTermsWithIndexedColumns(
+      predicate, target_table->GetIndex(index_id));
+  if (predicate != nullptr) {
+    LOG_ERROR("predicate after remove: %s", predicate->GetInfo().c_str());
   }
 
   // Create index scan plan
