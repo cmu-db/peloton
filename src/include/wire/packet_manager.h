@@ -30,6 +30,9 @@
 #define TXN_BLOCK 'T'
 #define TXN_FAIL 'E'
 
+// Packet content macros
+#define NULL_CONTENT_SIZE -1
+
 namespace peloton {
 
 namespace wire {

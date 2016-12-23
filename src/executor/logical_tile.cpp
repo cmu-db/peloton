@@ -432,10 +432,11 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
 }
 
 std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
-    const std::vector<int> &result_format) {
+    const std::vector<int> &result_format, bool use_to_string_null) {
   std::vector<std::vector<std::string>> string_tile;
   for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
     std::vector<std::string> row;
+    std::string empty_string;
     if (visible_rows_[tuple_itr] == false) continue;
     for (oid_t column_itr = 0; column_itr < schema_.size(); column_itr++) {
       const LogicalTile::ColumnInfo &cp = schema_[column_itr];
@@ -454,7 +455,14 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
       if (result_format[column_itr] == 0 ||
           cp.base_tile->GetSchema()->GetType(cp.origin_column_id) ==
               type::Type::VARCHAR) {
-        row.push_back(val.ToString());
+        // don't let to_string function decide what NULL value is
+        if (use_to_string_null == false && val.IsNull() == true) {
+          // materialize Null values as 0B string
+          row.push_back(empty_string);
+        } else {
+          // otherwise, materialize using ToString
+          row.push_back(val.ToString());
+        }
       } else {
         auto data_length =
             cp.base_tile->GetSchema()->GetLength(cp.origin_column_id);
