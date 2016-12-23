@@ -274,6 +274,7 @@ enum NetworkMessageType {
   // Responses
   PARSE_COMPLETE = '1',
   BIND_COMPLETE = '2',
+  CLOSE_COMPLETE = '3',
   COMMAND_COMPLETE = 'C',
   PARAMETER_STATUS = 'S',
   AUTHENTICATION_REQUEST = 'R',
@@ -285,6 +286,7 @@ enum NetworkMessageType {
   DATA_ROW = 'D',
   // Errors
   HUMAN_READABLE_ERROR = 'M',
+  SQLSTATE_CODE_ERROR = 'C',
   // Commands
   EXECUTE_COMMAND = 'E',
   SYNC_COMMAND = 'S',
@@ -293,6 +295,11 @@ enum NetworkMessageType {
   BIND_COMMAND = 'B',
   PARSE_COMMAND = 'P',
   SIMPLE_QUERY_COMMAND = 'Q',
+  CLOSE_COMMAND = 'C',
+};
+
+enum SqlStateErrorCode {
+  SERIALIZATION_ERROR = '1',
 };
 
 //===--------------------------------------------------------------------===//
@@ -998,6 +1005,8 @@ type::Type::TypeId PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);
+
+std::string SqlStateErrorCodeToString(SqlStateErrorCode code);
 
 namespace expression {
 class AbstractExpression;

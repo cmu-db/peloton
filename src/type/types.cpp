@@ -1275,4 +1275,16 @@ QuantifierType StringToQuantifierType(std::string str) {
   return QUANTIFIER_TYPE_NONE;
 }
 
+//===--------------------------------------------------------------------===//
+// Network Message types
+//===--------------------------------------------------------------------===//
+std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
+  switch(code) {
+    case SERIALIZATION_ERROR:
+      return "40001";
+    default:
+      return "INVALID";
+  }
+}
+
 }  // End peloton namespace

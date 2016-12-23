@@ -88,6 +88,8 @@ class Cache {
 
   iterator insert(const Entry &kv);
 
+  void delete_key(const Key &key);
+
   size_type size(void) const;
 
   bool empty(void) const;

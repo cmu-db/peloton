@@ -72,6 +72,13 @@ void PacketGetBytes(InputPacket *rpkt, size_t len, ByteBuf &result) {
   rpkt->ptr += len;
 }
 
+void PacketGetByte(InputPacket *rpkt, uchar &result) {
+  // access the current byte
+  result = *(rpkt->Begin() + rpkt->ptr);
+  // move pointer
+  rpkt->ptr++;
+}
+
 void PacketGetString(InputPacket *rpkt, size_t len, std::string &result) {
   // return empty string
   if (len == 0) return;

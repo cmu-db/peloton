@@ -719,15 +719,58 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
       statement, param_values, unnamed, param_stat, result_format_, results,
       rows_affected, error_message);
 
-  if (status == Result::RESULT_FAILURE) {
-    LOG_ERROR("Failed to execute: %s", error_message.c_str());
-    SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
-    SendReadyForQuery(txn_state_);
+  switch(status) {
+    case Result::RESULT_FAILURE:
+      LOG_ERROR("Failed to execute: %s", error_message.c_str());
+      SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
+      return;
+    case Result::RESULT_ABORTED:
+      LOG_DEBUG("Failed to execute: Conflicting txn aborted");
+      SendErrorResponse({{SQLSTATE_CODE_ERROR,
+                             SqlStateErrorCodeToString(
+                                 SqlStateErrorCode::SERIALIZATION_ERROR)}});
+      return;
+    default: {
+      auto tuple_descriptor = statement->GetTupleDescriptor();
+      SendDataRows(results, tuple_descriptor.size(), rows_affected);
+      CompleteCommand(query_type, rows_affected);
+      return;
+    }
   }
-  // put_row_desc(portal->rowdesc);
-  auto tuple_descriptor = statement->GetTupleDescriptor();
-  SendDataRows(results, tuple_descriptor.size(), rows_affected);
-  CompleteCommand(query_type, rows_affected);
+}
+
+void PacketManager::ExecCloseMessage(InputPacket *pkt) {
+  uchar close_type = 0;
+  std::string name;
+  PacketGetByte(pkt, close_type);
+  PacketGetString(pkt, 0, name);
+  bool is_unnamed = (name.size() == 0) ? true : false;
+  switch(close_type) {
+    case 'S':
+      LOG_TRACE("Deleting statement %s from cache", name.c_str());
+      if (is_unnamed) {
+        unnamed_statement_.reset();
+      } else {
+        statement_cache_.delete_key(name);
+      }
+      break;
+    case 'P': {
+      LOG_TRACE("Deleting portal %s from cache", name.c_str());
+      auto portal_itr = portals_.find(name);
+      if (portal_itr != portals_.end()) {
+        // delete portal if it exists
+        portals_.erase(portal_itr);
+      }
+      break;
+    }
+    default:
+      // do nothing, simply send close complete
+      break;
+  }
+  // Send close complete response
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  response->msg_type = CLOSE_COMPLETE;
+  responses.push_back(std::move(response));
 }
 
 /*
@@ -765,6 +808,10 @@ bool PacketManager::ProcessPacket(InputPacket *pkt) {
       LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
       force_flush = true;
+    } break;
+    case CLOSE_COMMAND: {
+      LOG_TRACE("CLOSE_COMMAND");
+      ExecCloseMessage(pkt);
     } break;
     case TERMINATE_COMMAND: {
       LOG_TRACE("TERMINATE_COMMAND");
