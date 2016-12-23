@@ -165,6 +165,9 @@ extern void PacketGetString(InputPacket *pkt, size_t len, std::string &result);
 /* packet_get_bytes - Parse out "len" bytes of pkt as raw bytes */
 extern void PacketGetBytes(InputPacket *pkt, size_t len, ByteBuf &result);
 
+/* packet_get_byte - Parse out a single bytes from pkt */
+extern void PacketGetByte(InputPacket *rpkt, uchar &result);
+
 /*
 * get_string_token - used to extract a string token
 * 		from an unsigned char vector

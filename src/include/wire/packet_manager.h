@@ -132,6 +132,9 @@ class PacketManager {
   /* Process the EXECUTE message of the extended query protocol */
   void ExecExecuteMessage(InputPacket* pkt);
 
+  /* Process the optional CLOSE message of the extended query protocol */
+  void ExecCloseMessage(InputPacket *pkt);
+
  public:
   // Deserialize the parameter types from packet
   static size_t ReadParamType(InputPacket* pkt, int num_params,
