@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<parameters>
+
+    <!-- Connection details -->
+    <dbtype>peloton</dbtype>
+    <driver>org.postgresql.Driver</driver>
+	<DBUrl>jdbc:postgresql://$IP:$PORT/tpcc/</DBUrl>
+	<DBName>tpcc</DBName>
+    <username>postgres</username>
+    <password>postgres</password>
+
+    <!-- Scale factor is the number of warehouses in TPCC -->
+    <scalefactor>$SCALE_FACTOR</scalefactor>
+
+    <!-- The workload -->
+    <terminals>$THREAD_NUMBER</terminals>
+    <works>
+        <work>
+          <time>$TIME</time>
+          <rate>unlimited</rate>
+          <weights>$NEW_ORDER_RATIO,$PAYMENT_RATIO,$ORDER_STATUS_RATIO,$DELIVERY_RATIO,$STOCK_LEVEL_RATIO</weights>
+        </work>
+    </works>
+
+    <!-- TPCC specific -->
+    <transactiontypes>
+        <transactiontype>
+            <name>NewOrder</name>
+        </transactiontype>
+        <transactiontype>
+            <name>Payment</name>
+        </transactiontype>
+        <transactiontype>
+            <name>OrderStatus</name>
+        </transactiontype>
+        <transactiontype>
+            <name>Delivery</name>
+        </transactiontype>
+        <transactiontype>
+            <name>StockLevel</name>
+        </transactiontype>
+    </transactiontypes>
+</parameters>
