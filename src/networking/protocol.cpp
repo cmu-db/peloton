@@ -727,7 +727,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
     case Result::RESULT_ABORTED:
       LOG_DEBUG("Failed to execute: Conflicting txn aborted");
       SendErrorResponse({{SQLSTATE_CODE_ERROR,
-                             SqlStateErrorCodes::serialization_error}});
+                             SqlStateErrorCodeToString(
+                                 SqlStateErrorCode::SERIALIZATION_ERROR)}});
       return;
     default: {
       auto tuple_descriptor = statement->GetTupleDescriptor();

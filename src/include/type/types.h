@@ -298,8 +298,8 @@ enum NetworkMessageType {
   CLOSE_COMMAND = 'C',
 };
 
-struct SqlStateErrorCodes {
-  static const std::string serialization_error;
+enum SqlStateErrorCode {
+  SERIALIZATION_ERROR = '1',
 };
 
 //===--------------------------------------------------------------------===//
@@ -1005,6 +1005,8 @@ type::Type::TypeId PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);
+
+std::string SqlStateErrorCodeToString(SqlStateErrorCode code);
 
 namespace expression {
 class AbstractExpression;

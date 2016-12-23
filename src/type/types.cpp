@@ -1278,6 +1278,13 @@ QuantifierType StringToQuantifierType(std::string str) {
 //===--------------------------------------------------------------------===//
 // Network Message types
 //===--------------------------------------------------------------------===//
-const std::string SqlStateErrorCodes::serialization_error =  "40001";
+std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
+  switch(code) {
+    case SERIALIZATION_ERROR:
+      return "40001";
+    default:
+      return "INVALID";
+  }
+}
 
 }  // End peloton namespace
