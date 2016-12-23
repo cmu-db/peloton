@@ -23,12 +23,12 @@ class TimestampType : public Type {
   TimestampType();
   
   // Comparison functions
-  Value CompareEquals(const Value& left, const Value &right) const override;
-  Value CompareNotEquals(const Value& left, const Value &right) const override;
-  Value CompareLessThan(const Value& left, const Value &right) const override;
-  Value CompareLessThanEquals(const Value& left, const Value &right) const override;
-  Value CompareGreaterThan(const Value& left, const Value &right) const override;
-  Value CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareNotEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareLessThan(const Value& left, const Value &right) const override;
+  CmpBool CompareLessThanEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
+  CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
   bool IsInlined(const Value&) const override { return true; }
 

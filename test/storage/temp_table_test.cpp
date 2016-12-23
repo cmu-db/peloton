@@ -91,7 +91,7 @@ TEST_F(TempTableTests, InsertTest) {
         // I have to do this because we can't put type::Value into a std::set
         bool found = false;
         for (auto val : values) {
-          found = val.CompareEquals(tupleVal).IsTrue();
+          found = val.CompareEquals(tupleVal) == type::CMP_TRUE;
           if (found) break;
         }  // FOR
         EXPECT_TRUE(found);

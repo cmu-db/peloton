@@ -23,46 +23,46 @@ TimestampType::TimestampType()
   : Type(Type::TIMESTAMP) {
 }
 
-Value TimestampType::CompareEquals(const Value& left, const Value &right) const {
+CmpBool TimestampType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
+    return CMP_NULL;
+  return GetCmpBool(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
-Value TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
+CmpBool TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
+    return CMP_NULL;
+  return GetCmpBool(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
-Value TimestampType::CompareLessThan(const Value& left, const Value &right) const {
+CmpBool TimestampType::CompareLessThan(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
+    return CMP_NULL;
+  return GetCmpBool(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
-Value TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
+CmpBool TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
+    return CMP_NULL;
+  return GetCmpBool(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
-Value TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
+CmpBool TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  return ValueFactory::GetBooleanValue(left.GetAs<int64_t>() > right.GetAs<int64_t>());
+    return CMP_NULL;
+  return GetCmpBool(left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
-Value TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
+CmpBool TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
-  return ValueFactory::GetBooleanValue(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
+    return CMP_NULL;
+  return GetCmpBool(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
 }
 
 // Debug

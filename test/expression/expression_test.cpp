@@ -48,7 +48,7 @@ TEST_F(ExpressionTest, FunctionExpressionTest) {
   EXPECT_THROW(expression::ExpressionUtil::TransformExpression(nullptr, not_found.get()), peloton::Exception);
   expression::ExpressionUtil::TransformExpression(nullptr, substr.get());
   // do a lookup (we pass null schema because there are no tuple value expressions
-  EXPECT_TRUE(substr->Evaluate(nullptr, nullptr, nullptr).CompareEquals(type::ValueFactory::GetVarcharValue("est")).IsTrue());
+  EXPECT_TRUE(substr->Evaluate(nullptr, nullptr, nullptr).CompareEquals(type::ValueFactory::GetVarcharValue("est")) == type::CMP_TRUE);
 }
 
 }  // namespace test

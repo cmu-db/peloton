@@ -222,12 +222,12 @@ bool ValuePairComparator(const std::pair<type::Value, int> &i,
                          const std::pair<type::Value, int> &j) {
 
   // If first elements are equal then compare the second element
-  if (i.first.CompareEquals(j.first).IsTrue()) {
+  if (i.first.CompareEquals(j.first) == type::CMP_TRUE) {
     return i.second < j.second;
   }
   
   // Otherwise compare the first element for "<" or ">"
-  return i.first.CompareLessThan(j.first).IsTrue();
+  return i.first.CompareLessThan(j.first) == type::CMP_TRUE;
 }
 
 void ConstructIntervals(oid_t leading_column_id,
@@ -343,7 +343,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].first
-            .CompareGreaterThan(values[i]).IsTrue()) {
+            .CompareGreaterThan(values[i]) == type::CMP_TRUE) {
         LOG_TRACE("Update min\n");
         non_leading_columns[column_id].first = values[i].Copy();
       }
@@ -356,7 +356,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].second.
-            CompareLessThan(values[i]).IsTrue()) {
+            CompareLessThan(values[i]) == type::CMP_TRUE) {
         LOG_TRACE("Update max\n");
         non_leading_columns[column_id].second = values[i].Copy();
       }

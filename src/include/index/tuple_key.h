@@ -178,17 +178,12 @@ class TupleKeyComparator {
         rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
       // If there is a field in LHS < RHS then return true;
-      type::Value res_lt = \
-          lhValue.CompareLessThan(rhValue);
-      if (res_lt.IsTrue()) {
+      if (lhValue.CompareLessThan(rhValue) == type::CMP_TRUE) {
         return true;
       }
       
       // If there is a field in LHS > RHS then return false
-      type::Value res_gt = \
-          lhValue.CompareGreaterThan(rhValue);
-          
-      if (res_gt.IsTrue()) {
+      if (lhValue.CompareGreaterThan(rhValue) == type::CMP_TRUE) {
         return false;
       }
     }
@@ -240,15 +235,11 @@ class TupleKeyComparatorRaw {
       type::Value rhValue = \
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
-      type::Value res_lt = \
-          lhValue.CompareLessThan(rhValue);
-      if (res_lt.IsTrue()) {
+      if (lhValue.CompareLessThan(rhValue) == type::CMP_TRUE) {
         return VALUE_COMPARE_LESSTHAN;
       }
 
-      type::Value res_gt = \
-          lhValue.CompareGreaterThan(rhValue);
-      if (res_gt.IsTrue()) {
+      if (lhValue.CompareGreaterThan(rhValue) == type::CMP_TRUE) {
         return VALUE_COMPARE_GREATERTHAN;
       }
     }
@@ -302,8 +293,7 @@ class TupleKeyEqualityChecker {
 
       // If any of these two columns differ then just return false
       // because we know they could not be equal 
-      type::Value res = (lhValue.CompareNotEquals(rhValue));
-      if (res.IsTrue()) {
+      if (lhValue.CompareNotEquals(rhValue) == type::CMP_TRUE) {
         return false;
       }
     }

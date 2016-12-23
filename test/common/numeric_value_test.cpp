@@ -56,51 +56,51 @@ int64_t RANDOM64() {
 }
 
 void CheckEqual(type::Value &v1, type::Value &v2) {
-  type::Value result[6];
+  type::CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE((result[0]).IsTrue());
+  EXPECT_TRUE((result[0]) );
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE((result[1]).IsFalse());
+  EXPECT_TRUE((result[1]) == type::CMP_FALSE);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE((result[2]).IsFalse());
+  EXPECT_TRUE((result[2]) == type::CMP_FALSE);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE((result[3]).IsTrue());
+  EXPECT_TRUE((result[3]) == type::CMP_TRUE);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE((result[4]).IsFalse());
+  EXPECT_TRUE((result[4]) == type::CMP_FALSE);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE((result[5]).IsTrue());
+  EXPECT_TRUE((result[5]) == type::CMP_TRUE);
 }
 
 void CheckLessThan(type::Value &v1, type::Value &v2) {
-  type::Value result[6];
+  type::CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE((result[0]).IsFalse());
+  EXPECT_TRUE((result[0]) == type::CMP_FALSE);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE((result[1]).IsTrue());
+  EXPECT_TRUE((result[1]) == type::CMP_TRUE);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE((result[2]).IsTrue());
+  EXPECT_TRUE((result[2]) == type::CMP_TRUE);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE((result[3]).IsTrue());
+  EXPECT_TRUE((result[3]) == type::CMP_TRUE);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE((result[4]).IsFalse());
+  EXPECT_TRUE((result[4]) == type::CMP_FALSE);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE((result[5]).IsFalse());
+  EXPECT_TRUE((result[5]) == type::CMP_FALSE);
 }
 
 void CheckGreaterThan(type::Value &v1, type::Value &v2) {
-  type::Value result[6];
+  type::CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE((result[0]).IsFalse());
+  EXPECT_TRUE((result[0]) == type::CMP_FALSE);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE((result[1]).IsTrue());
+  EXPECT_TRUE((result[1]) == type::CMP_TRUE);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE((result[2]).IsFalse());
+  EXPECT_TRUE((result[2]) == type::CMP_FALSE);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE((result[3]).IsFalse());
+  EXPECT_TRUE((result[3]) == type::CMP_FALSE);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE((result[4]).IsTrue());
+  EXPECT_TRUE((result[4]) == type::CMP_TRUE);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE((result[5]).IsTrue());
+  EXPECT_TRUE((result[5]) == type::CMP_TRUE);
 }
 
 // Compare two integers
@@ -491,36 +491,39 @@ TEST_F(NumericValueTests, DivideByZeroTest) {
 
 TEST_F(NumericValueTests, NullValueTest) {
   std::srand(SEED);
-  type::Value result[5];
+  type::CmpBool bool_result[5];
 
   // Compare null
-  result[0] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
+  bool_result[0] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
     type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
-  result[1] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
+  bool_result[1] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
     type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
-  result[2] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
+  bool_result[2] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
     type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
-  result[3] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
+  bool_result[3] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
     type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
-  result[4] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
+  bool_result[4] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
     type::ValueFactory::GetDoubleValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
-    EXPECT_TRUE(result[i].IsNull());
+    EXPECT_TRUE(bool_result[i] == type::CMP_NULL);
   }
 
-  result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).CompareEquals(
+  bool_result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).CompareEquals(
     type::ValueFactory::GetIntegerValue(rand()));
-  result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).CompareEquals(
+  bool_result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).CompareEquals(
     type::ValueFactory::GetIntegerValue(rand()));
-  result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).CompareEquals(
+  bool_result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).CompareEquals(
     type::ValueFactory::GetIntegerValue(rand()));
-  result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).CompareEquals(
+  bool_result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).CompareEquals(
     type::ValueFactory::GetIntegerValue(rand()));
-  result[4] = type::ValueFactory::GetDoubleValue((double)type::PELOTON_DECIMAL_NULL).CompareEquals(
+  bool_result[4] = type::ValueFactory::GetDoubleValue((double)type::PELOTON_DECIMAL_NULL).CompareEquals(
     type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
-    EXPECT_TRUE(result[i].IsNull());
+    EXPECT_TRUE(bool_result[i] == type::CMP_NULL);
   }
+
+  type::Value result[5];
+
 
   // Operate null
   result[0] = type::ValueFactory::GetIntegerValue(rand()).Add(

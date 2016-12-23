@@ -37,12 +37,12 @@ class IntegerParentType : public NumericType {
   virtual Value Sqrt(const Value& val) const override = 0;
 
   // Comparison functions
-  virtual Value CompareEquals(const Value& left, const Value &right) const override = 0;
-  virtual Value CompareNotEquals(const Value& left, const Value &right) const override = 0;
-  virtual Value CompareLessThan(const Value& left, const Value &right) const override = 0;
-  virtual Value CompareLessThanEquals(const Value& left, const Value &right) const override = 0;
-  virtual Value CompareGreaterThan(const Value& left, const Value &right) const override = 0;
-  virtual Value CompareGreaterThanEquals(const Value& left, const Value &right) const override = 0;
+  virtual CmpBool CompareEquals(const Value& left, const Value &right) const override = 0;
+  virtual CmpBool CompareNotEquals(const Value& left, const Value &right) const override = 0;
+  virtual CmpBool CompareLessThan(const Value& left, const Value &right) const override = 0;
+  virtual CmpBool CompareLessThanEquals(const Value& left, const Value &right) const override = 0;
+  virtual CmpBool CompareGreaterThan(const Value& left, const Value &right) const override = 0;
+  virtual CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override = 0;
 
   virtual Value CastAs(const Value& val, const Type::TypeId type_id) const override = 0;
 

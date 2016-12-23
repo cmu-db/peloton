@@ -897,8 +897,8 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
     // Check the join fields
     type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(0));
     type::Value right_tuple_join_attribute_val = (join_tuple.GetValue(1));
-    type::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
-        right_tuple_join_attribute_val));
+    type::Value cmp = type::ValueFactory::GetBooleanValue((left_tuple_join_attribute_val.CompareEquals(
+        right_tuple_join_attribute_val)));
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }
 }
@@ -921,8 +921,8 @@ void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
     // Check the join fields
     type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(2));
     type::Value right_tuple_join_attribute_val = (join_tuple.GetValue(3));
-    type::Value cmp = (left_tuple_join_attribute_val.CompareEquals(
-        right_tuple_join_attribute_val));
+    type::Value cmp = type::ValueFactory::GetBooleanValue((left_tuple_join_attribute_val.CompareEquals(
+        right_tuple_join_attribute_val)));
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }
 }

@@ -54,18 +54,18 @@ TEST_F(TupleTests, BasicTest) {
   type::Value val1 = (tuple->GetValue(1));
   type::Value val2 = (tuple->GetValue(2));
 
-  type::Value cmp = (val0.CompareEquals(
-      type::ValueFactory::GetIntegerValue(23)));
+  type::Value cmp = type::ValueFactory::GetBooleanValue((val0.CompareEquals(
+      type::ValueFactory::GetIntegerValue(23))));
   EXPECT_TRUE(cmp.IsTrue());
-  cmp = (val1.CompareEquals(type::ValueFactory::GetIntegerValue(45)));
+  cmp = type::ValueFactory::GetBooleanValue((val1.CompareEquals(type::ValueFactory::GetIntegerValue(45))));
   EXPECT_TRUE(cmp.IsTrue());
-  cmp = (val2.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  cmp = type::ValueFactory::GetBooleanValue((val2.CompareEquals(type::ValueFactory::GetIntegerValue(1))));
   EXPECT_TRUE(cmp.IsTrue());
 
   tuple->SetValue(2, type::ValueFactory::GetTinyIntValue(2), pool);
 
   val2 = (tuple->GetValue(2));
-  cmp = (val2.CompareEquals(type::ValueFactory::GetIntegerValue(2)));
+  cmp = type::ValueFactory::GetBooleanValue((val2.CompareEquals(type::ValueFactory::GetIntegerValue(2))));
   EXPECT_TRUE(cmp.IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
@@ -102,7 +102,7 @@ TEST_F(TupleTests, VarcharTest) {
   type::Value val = type::ValueFactory::GetVarcharValue((std::string)"hello hello world", pool);
   tuple->SetValue(3, val, pool);
   type::Value value3 = (tuple->GetValue(3));
-  type::Value cmp = (value3.CompareEquals(val));
+  type::Value cmp = type::ValueFactory::GetBooleanValue((value3.CompareEquals(val)));
   EXPECT_TRUE(cmp.IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());
@@ -110,9 +110,9 @@ TEST_F(TupleTests, VarcharTest) {
   auto val2 = type::ValueFactory::GetVarcharValue((std::string)"hi joy !", pool);
   tuple->SetValue(3, val2, pool);
   value3 = (tuple->GetValue(3));
-  cmp = (value3.CompareNotEquals(val));
+  cmp = type::ValueFactory::GetBooleanValue((value3.CompareNotEquals(val)));
   EXPECT_TRUE(cmp.IsTrue());
-  cmp = (value3.CompareEquals(val2));
+  cmp = type::ValueFactory::GetBooleanValue((value3.CompareEquals(val2)));
   EXPECT_TRUE(cmp.IsTrue());
 
   LOG_INFO("%s", tuple->GetInfo().c_str());

@@ -230,8 +230,7 @@ bool Index::Compare(const AbstractTuple &index_key,
     }
 
     LOG_TRACE("Difference : %d ", diff);*/
-    type::Value cmp_eq = (lhs.CompareEquals(rhs));
-    if (cmp_eq.IsTrue()) {
+    if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
       switch (expr_type) {
         case EXPRESSION_TYPE_COMPARE_EQUAL:
         case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
@@ -249,8 +248,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                std::to_string(expr_type));
       }
     } else {
-      type::Value cmp_lt = (lhs.CompareLessThan(rhs));
-      if (cmp_lt.IsTrue()) {
+      if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
         switch (expr_type) {
           case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
           case EXPRESSION_TYPE_COMPARE_LESSTHAN:
@@ -268,8 +266,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                  std::to_string(expr_type));
         }
       } else {
-        type::Value cmp_gt(lhs.CompareGreaterThan(rhs));
-        if (cmp_gt.IsTrue()) {
+        if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
           switch (expr_type) {
             case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
             case EXPRESSION_TYPE_COMPARE_GREATERTHAN:

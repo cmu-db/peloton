@@ -23,6 +23,12 @@ class VarlenPool;
 class Value;
 class ValueFactory;
 
+enum CmpBool{
+  CMP_FALSE = 0,
+  CMP_TRUE = 1,
+  CMP_NULL = 2
+};
+
 
 class Type {
  public:
@@ -91,12 +97,12 @@ class Type {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  virtual Value CompareEquals(const Value& left, const Value &right) const;
-  virtual Value CompareNotEquals(const Value& left, const Value &right) const;
-  virtual Value CompareLessThan(const Value& left, const Value &right) const;
-  virtual Value CompareLessThanEquals(const Value& left, const Value &right) const;
-  virtual Value CompareGreaterThan(const Value& left, const Value &right) const;
-  virtual Value CompareGreaterThanEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareNotEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareLessThan(const Value& left, const Value &right) const;
+  virtual CmpBool CompareLessThanEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareGreaterThan(const Value& left, const Value &right) const;
+  virtual CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const;
 
   // Other mathematical functions
   virtual Value Add(const Value& left, const Value &right) const;

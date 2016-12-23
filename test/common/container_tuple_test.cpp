@@ -40,7 +40,7 @@ TEST_F(ContainerTupleTest, VectorValue) {
 
   for (size_t i = 0; i < values.size(); i++) {
     LOG_INFO("%s", ctuple.GetValue(i).GetInfo().c_str());
-    EXPECT_TRUE(values[i].CompareEquals(ctuple.GetValue(i)).IsTrue());
+    EXPECT_TRUE(values[i].CompareEquals(ctuple.GetValue(i)) == type::CMP_TRUE);
   }
 }
 

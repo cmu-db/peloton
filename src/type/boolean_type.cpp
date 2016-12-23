@@ -21,62 +21,62 @@ namespace type {
 
 BooleanType::BooleanType() : Type(Type::BOOLEAN) {}
 
-Value BooleanType::CompareEquals(const Value& left, const Value& right) const {
+CmpBool BooleanType::CompareEquals(const Value& left, const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
-  return ValueFactory::GetBooleanValue(left.value_.boolean ==
+    return CMP_NULL;
+  return GetCmpBool(left.value_.boolean ==
                                        right.GetAs<int8_t>());
 }
 
-Value BooleanType::CompareNotEquals(const Value& left,
+CmpBool BooleanType::CompareNotEquals(const Value& left,
                                     const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
-  return ValueFactory::GetBooleanValue(left.value_.boolean !=
+    return CMP_NULL;
+  return GetCmpBool(left.value_.boolean !=
                                        right.GetAs<int8_t>());
 }
 
-Value BooleanType::CompareLessThan(const Value& left,
+CmpBool BooleanType::CompareLessThan(const Value& left,
                                    const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
-  return ValueFactory::GetBooleanValue(left.value_.boolean <
+    return CMP_NULL;
+  return GetCmpBool(left.value_.boolean <
                                        right.GetAs<int8_t>());
 }
 
-Value BooleanType::CompareLessThanEquals(const Value& left,
+CmpBool BooleanType::CompareLessThanEquals(const Value& left,
                                          const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
-  return ValueFactory::GetBooleanValue(left.value_.boolean <=
+    return CMP_NULL;
+  return GetCmpBool(left.value_.boolean <=
                                        right.GetAs<int8_t>());
 }
 
-Value BooleanType::CompareGreaterThan(const Value& left,
+CmpBool BooleanType::CompareGreaterThan(const Value& left,
                                       const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
-  return ValueFactory::GetBooleanValue(left.value_.boolean >
+    return CMP_NULL;
+  return GetCmpBool(left.value_.boolean >
                                        right.GetAs<int8_t>());
 }
 
-Value BooleanType::CompareGreaterThanEquals(const Value& left,
+CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
                                             const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
-  return ValueFactory::GetBooleanValue(left.value_.boolean >=
+    return CMP_NULL;
+  return GetCmpBool(left.value_.boolean >=
                                        right.GetAs<int8_t>());
 }
 

@@ -28,8 +28,7 @@ Value IntegerParentType::Min(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
 
-  Value cmp = (left.CompareLessThan(right));
-  if (cmp.IsTrue()) return left.Copy();
+  if (left.CompareLessThan(right) == CMP_TRUE) return left.Copy();
   return right.Copy();
 }
 
@@ -38,8 +37,7 @@ Value IntegerParentType::Max(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
 
-  Value cmp = (left.CompareGreaterThanEquals(right));
-  if (cmp.IsTrue()) return left.Copy();
+  if (left.CompareGreaterThanEquals(right) == CMP_TRUE) return left.Copy();
   return right.Copy();
 }
 

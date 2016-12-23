@@ -64,6 +64,10 @@ static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 // Objects (i.e., VARCHAR) with length prefix of -1 are NULL
 #define OBJECTLENGTH_NULL -1
 
+inline CmpBool GetCmpBool(bool boolean){
+  return boolean ? CMP_TRUE : CMP_FALSE;
+}
+
 // A value is an abstract class that represents a view over SQL data stored in
 // some materialized state. All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.
@@ -140,22 +144,22 @@ class Value : public Printable {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  inline Value CompareEquals(const Value &o) const {
+  inline CmpBool CompareEquals(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareEquals(*this, o);
   }
-  inline Value CompareNotEquals(const Value &o) const {
+  inline CmpBool CompareNotEquals(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareNotEquals(*this, o);
   }
-  inline Value CompareLessThan(const Value &o) const {
+  inline CmpBool CompareLessThan(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareLessThan(*this, o);
   }
-  inline Value CompareLessThanEquals(const Value &o) const {
+  inline CmpBool CompareLessThanEquals(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareLessThanEquals(*this, o);
   }
-  inline Value CompareGreaterThan(const Value &o) const {
+  inline CmpBool CompareGreaterThan(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareGreaterThan(*this, o);
   }
-  inline Value CompareGreaterThanEquals(const Value &o) const {
+  inline CmpBool CompareGreaterThanEquals(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, o);
   }
 
@@ -316,9 +320,8 @@ class Value : public Printable {
 
   // For unordered_map
   struct equal_to {
-    bool operator()(const Value &x, const Value &y) const {
-      Value cmp(Type::GetInstance(x.type_id_)->CompareEquals(x, y));
-      return cmp.IsTrue();
+    inline bool operator()(const Value &x, const Value &y) const {
+      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CMP_TRUE;
     }
   };
 
