@@ -43,8 +43,7 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
       type::Type::INTEGER, type::Type::INTEGER, type::Type::DECIMAL,
       type::Type::INTEGER};
   for (int i = 0; i < (int)nullAggregates.size(); i++) {
-    std::string expected =
-        type::ValueFactory::GetNullValueByType(expectedTypes[i]).ToString();
+    std::string expected;
 
     std::ostringstream os;
     os << "SELECT " << nullAggregates[i] << "(b) FROM xxx";
