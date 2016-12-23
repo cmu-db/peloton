@@ -95,8 +95,7 @@ TEST_F(ValueFactoryTests, CastTest) {
   EXPECT_EQ(v3.GetTypeId(), type::Type::VARCHAR);
 
   type::Value v4(type::ValueFactory::Clone(v3));
-  type::Value cmp3(v3.CompareEquals(v4));
-  EXPECT_TRUE(cmp3.IsTrue());
+  EXPECT_TRUE(v3.CompareEquals(v4) == type::CMP_TRUE);
 
   type::Value v5(type::ValueFactory::CastAsVarchar(type::Value(type::Type::TINYINT, (int8_t)type::PELOTON_INT8_MAX)));
   EXPECT_EQ(v5.ToString(), "127");

@@ -512,8 +512,8 @@ TEST_F(TileGroupTests, TileCopyTest) {
           new_uninlined_col_object_len);
 
       // Compare original and copied tile details for current tuple
-      type::Value cmp = (uninlined_col_value.CompareNotEquals(
-          new_uninlined_col_value));
+      type::Value cmp = type::ValueFactory::GetBooleanValue((uninlined_col_value.CompareNotEquals(
+          new_uninlined_col_value)));
       int is_value_not_same = cmp.IsTrue();
       int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
       int is_pointer_same =

@@ -340,8 +340,7 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
     type::Value lhs = (GetValue(column_itr));
     type::Value rhs = (other.GetValue(column_itr));
-    type::Value res = (lhs.CompareNotEquals(rhs));
-    if (res.IsTrue()) {
+    if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE) {
       return false;
     }
   }
@@ -354,8 +353,7 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
   for (auto column_itr : columns) {
     type::Value lhs = (GetValue(column_itr));
     type::Value rhs = (other.GetValue(column_itr));
-    type::Value res = (lhs.CompareNotEquals(rhs));
-    if (res.IsTrue()) {
+    if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE) {
       return false;
     }
   }
@@ -393,12 +391,10 @@ int Tuple::Compare(const Tuple &other) const {
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
     type::Value lhs = (GetValue(column_itr));
     type::Value rhs = (other.GetValue(column_itr));
-    type::Value res_gt = (lhs.CompareGreaterThan(rhs));
-    if (res_gt.IsTrue()) {
+    if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
       return 1;
     }
-    type::Value res_lt = (lhs.CompareLessThan(rhs));
-    if (res_lt.IsTrue()) {
+    if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
       return -1;
     }
   }
@@ -411,12 +407,10 @@ int Tuple::Compare(const Tuple &other,
   for (auto column_itr : columns) {
     type::Value lhs = (GetValue(column_itr));
     type::Value rhs = (other.GetValue(column_itr));
-    type::Value res_gt = (lhs.CompareGreaterThan(rhs));
-    if (res_gt.IsTrue()) {
+    if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
       return 1;
     }
-    type::Value res_lt = (lhs.CompareLessThan(rhs));
-    if (res_lt.IsTrue()) {
+    if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
       return -1;
     }
   }

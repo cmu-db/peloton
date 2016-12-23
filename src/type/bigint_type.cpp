@@ -190,134 +190,134 @@ Value BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &r
   throw Exception("type error");
 }
 
-Value BigintType::CompareEquals(const Value& left, const Value &right) const {
+CmpBool BigintType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
+    return CMP_NULL;
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint == right.GetAs<int8_t>());
+    return GetCmpBool(left.value_.bigint == right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint == right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint == right.GetAs<int32_t>());
   case Type::BIGINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint == right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return ValueFactory::GetBooleanValue(left.value_.bigint == right.GetAs<double>());
+    return GetCmpBool(left.value_.bigint == right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value BigintType::CompareNotEquals(const Value& left,
+CmpBool BigintType::CompareNotEquals(const Value& left,
     const Value &right) const {
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
+    return CMP_NULL;
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint != right.GetAs<int8_t>());
+    return GetCmpBool(left.value_.bigint != right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint != right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint != right.GetAs<int32_t>());
   case Type::BIGINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint != right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return ValueFactory::GetBooleanValue(left.value_.bigint != right.GetAs<double>());
+    return GetCmpBool(left.value_.bigint != right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value BigintType::CompareLessThan(const Value& left,
+CmpBool BigintType::CompareLessThan(const Value& left,
     const Value &right) const {
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
+    return CMP_NULL;
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int8_t>());
+    return GetCmpBool(left.value_.bigint < right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int16_t>());
+    return GetCmpBool(left.value_.bigint < right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int32_t>());
+    return GetCmpBool(left.value_.bigint < right.GetAs<int32_t>());
   case Type::BIGINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<int64_t>());
+    return GetCmpBool(left.value_.bigint < right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return ValueFactory::GetBooleanValue(left.value_.bigint < right.GetAs<double>());
+    return GetCmpBool(left.value_.bigint < right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value BigintType::CompareLessThanEquals(const Value& left,
+CmpBool BigintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
+    return CMP_NULL;
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint <= right.GetAs<int8_t>());
+    return GetCmpBool(left.value_.bigint <= right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint <= right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint <= right.GetAs<int32_t>());
   case Type::BIGINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint <= right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return ValueFactory::GetBooleanValue(left.value_.bigint <= right.GetAs<double>());
+    return GetCmpBool(left.value_.bigint <= right.GetAs<double>());
   default:
     break;
   }
   throw Exception("type error");
 }
 
-Value BigintType::CompareGreaterThan(const Value& left,
+CmpBool BigintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
+    return CMP_NULL;
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int8_t>());
+    return GetCmpBool(left.value_.bigint > right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int16_t>());
+    return GetCmpBool(left.value_.bigint > right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int32_t>());
+    return GetCmpBool(left.value_.bigint > right.GetAs<int32_t>());
   case Type::BIGINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<int64_t>());
+    return GetCmpBool(left.value_.bigint > right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return ValueFactory::GetBooleanValue(left.value_.bigint > right.GetAs<double>());
+    return GetCmpBool(left.value_.bigint > right.GetAs<double>());
   default:
     break;
   }
@@ -325,28 +325,28 @@ Value BigintType::CompareGreaterThan(const Value& left,
   throw Exception("type error");
 }
 
-Value BigintType::CompareGreaterThanEquals(const Value& left,
+CmpBool BigintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return  ValueFactory::GetNullValueByType(Type::BOOLEAN);
+    return CMP_NULL;
 
   switch (right.GetTypeId()) {
   case Type::TINYINT:
-    return ValueFactory::GetBooleanValue(left.value_.bigint >= right.GetAs<int8_t>());
+    return GetCmpBool(left.value_.bigint >= right.GetAs<int8_t>());
   case Type::SMALLINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint >= right.GetAs<int16_t>());
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint >= right.GetAs<int32_t>());
   case Type::BIGINT:
-    return Value(Type::BOOLEAN,
+    return GetCmpBool(
         left.value_.bigint >= right.GetAs<int64_t>());
   case Type::DECIMAL:
-    return ValueFactory::GetBooleanValue(left.value_.bigint >= right.GetAs<double>());
+    return GetCmpBool(left.value_.bigint >= right.GetAs<double>());
   default:
     break;
   }

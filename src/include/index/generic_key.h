@@ -68,14 +68,10 @@ class GenericComparator {
       const type::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
       
-      type::Value res_lt = (
-          lhs_value.CompareLessThan(rhs_value));
-      if (res_lt.IsTrue())
+      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE)
         return true;
 
-      type::Value res_gt = (
-          lhs_value.CompareGreaterThan(rhs_value));
-      if (res_gt.IsTrue())
+      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
         return false;
     }
 
@@ -103,14 +99,10 @@ class GenericComparatorRaw {
       const type::Value rhs_value = (
           rhs.ToValueFast(schema, column_itr));
 
-      type::Value res_lt = (
-        lhs_value.CompareLessThan(rhs_value));
-      if (res_lt.IsTrue())
+      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE)
         return VALUE_COMPARE_LESSTHAN;
 
-      type::Value res_gt = (
-        lhs_value.CompareGreaterThan(rhs_value));
-      if (res_gt.IsTrue())
+      if (lhs_value.CompareGreaterThan(rhs_value)  == type::CMP_TRUE)
         return VALUE_COMPARE_GREATERTHAN;
     }
 

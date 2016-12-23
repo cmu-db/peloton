@@ -53,7 +53,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 
   int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
-  type::Value result;
+  type::CmpBool result;
   type::Value val0;
   type::Value val1;
 
@@ -116,9 +116,9 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 
         if (expected_null) expected = false;
 
-        EXPECT_EQ(expected, result.IsTrue());
-        EXPECT_EQ(!expected, result.IsFalse());
-        EXPECT_EQ(expected_null, result.IsNull());
+        EXPECT_EQ(expected, result == type::CMP_TRUE);
+        EXPECT_EQ(!expected, result == type::CMP_FALSE);
+        EXPECT_EQ(expected_null, result == type::CMP_NULL);
       }
     }
   }
@@ -146,7 +146,7 @@ TEST_F(BooleanValueTests, ToStringTest) {
 TEST_F(BooleanValueTests, HashTest) {
   int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
-  type::Value result;
+  type::CmpBool result;
   type::Value val0;
   type::Value val1;
 
@@ -169,7 +169,7 @@ TEST_F(BooleanValueTests, HashTest) {
       auto hash0 = val0.Hash();
       auto hash1 = val1.Hash();
 
-      if (result.IsTrue()) {
+      if (result == type::CMP_TRUE) {
         EXPECT_EQ(hash0, hash1);
       } else {
         EXPECT_NE(hash0, hash1);

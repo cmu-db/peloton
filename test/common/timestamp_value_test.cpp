@@ -34,7 +34,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 
   uint64_t values[] = {1000000000, 2000000000, type::PELOTON_TIMESTAMP_NULL};
 
-  type::Value result;
+  type::CmpBool result;
   type::Value val0;
   type::Value val1;
 
@@ -100,11 +100,11 @@ TEST_F(TimestampValueTests, ComparisonTest) {
                   val1.ToString().c_str(), expected, result.IsTrue());
 
         if (expected_null) {
-          EXPECT_EQ(expected_null, result.IsNull());
+          EXPECT_EQ(expected_null, result == type::CMP_NULL);
         }
         else {
-          EXPECT_EQ(expected, result.IsTrue());
-          EXPECT_EQ(!expected, result.IsFalse());
+          EXPECT_EQ(expected, result == type::CMP_TRUE);
+          EXPECT_EQ(!expected, result == type::CMP_FALSE);
         }
       }
     }
@@ -140,7 +140,7 @@ TEST_F(TimestampValueTests, HashTest) {
           type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
       }
 
-      result = val0.CompareEquals(val1);
+      result = type::ValueFactory::GetBooleanValue(val0.CompareEquals(val1));
       auto hash0 = val0.Hash();
       auto hash1 = val1.Hash();
 
@@ -154,11 +154,10 @@ TEST_F(TimestampValueTests, HashTest) {
 }
 
 TEST_F(TimestampValueTests, CopyTest) {
-  type::Value result;
   type::Value val0 =
     type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
   type::Value val1 = val0.Copy();
-  EXPECT_EQ(val0.CompareEquals(val1).IsTrue(), true);
+  EXPECT_EQ(val0.CompareEquals(val1) == type::CMP_TRUE, true);
 }
 
 TEST_F(TimestampValueTests, CastTest) {
@@ -171,12 +170,12 @@ TEST_F(TimestampValueTests, CastTest) {
 
   result = valNull.CastAs(type::Type::TIMESTAMP);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(valNull).IsNull(), true);
+  EXPECT_EQ(result.CompareEquals(valNull) == type::CMP_NULL, true);
   EXPECT_EQ(result.GetTypeId(), valNull.GetTypeId());
 
   result = valNull.CastAs(type::Type::VARCHAR);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(strNull).IsNull(), true);
+  EXPECT_EQ(result.CompareEquals(strNull) == type::CMP_NULL, true);
   EXPECT_EQ(result.GetTypeId(), strNull.GetTypeId());
 
   EXPECT_THROW(valNull.CastAs(type::Type::BOOLEAN),

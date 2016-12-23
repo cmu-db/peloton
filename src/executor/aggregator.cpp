@@ -283,9 +283,8 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
           (next_tuple->GetValue(node->GetGroupbyColIds()[grpColOffset]));
       type::Value rval =
           (delegate_tuple_.GetValue(node->GetGroupbyColIds()[grpColOffset]));
-      type::Value cmp = (lval.CompareNotEquals(rval));
 
-      if (cmp.IsTrue()) {
+      if (lval.CompareNotEquals(rval) == type::CMP_TRUE) {
         LOG_TRACE("Group-by columns changed.");
 
         // Call helper to output the current group result

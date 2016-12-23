@@ -210,27 +210,27 @@ Value Type::GetMaxValue(TypeId type_id) {
   throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get maximal value.");
 }
 
-Value Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
                           const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE,
                              const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE,
                             const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE,
                                   const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE,
                                const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-Value Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE,
                                      const Value& right
                                          UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");

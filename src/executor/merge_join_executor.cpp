@@ -149,14 +149,8 @@ bool MergeJoinExecutor::DExecute() {
       auto right_value =
           clause.right_->Evaluate(&left_tuple, &right_tuple, nullptr);
 
-      // Compare the values
-      type::Value cmp_less = (
-          left_value.CompareLessThan(right_value));
-      type::Value cmp_greater = (
-        left_value.CompareGreaterThan(right_value));
-
       // Left key < Right key, advance left
-      if (cmp_less.IsTrue()) {
+      if (left_value.CompareLessThan(right_value) == type::CMP_TRUE) {
         LOG_TRACE("left < right, advance left ");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
@@ -164,7 +158,7 @@ bool MergeJoinExecutor::DExecute() {
         break;
       }
       // Left key > Right key, advance right
-      else if (cmp_greater.IsTrue()) {
+      else if (left_value.CompareGreaterThan(right_value) == type::CMP_TRUE) {
         LOG_TRACE("left > right, advance right ");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile, right_start_row, false);
@@ -271,9 +265,7 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
       auto next_value =
           expr->Evaluate(&next_tuple, &next_tuple, executor_context_);
 
-      type::Value cmp = (
-          this_value.CompareEquals(next_value));
-      if (!cmp.IsTrue()) {
+      if (!(this_value.CompareEquals(next_value) == type::CMP_TRUE)) {
         diff = true;
         break;
       }

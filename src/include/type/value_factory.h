@@ -54,6 +54,10 @@ class ValueFactory {
     return Value(Type::DECIMAL, value);
   }
 
+  static inline Value GetBooleanValue(CmpBool value) {
+    return Value(Type::BOOLEAN, value == CMP_NULL ? PELOTON_BOOLEAN_NULL : (int8_t) value);
+  }
+
   static inline Value GetBooleanValue(bool value) {
     return Value(Type::BOOLEAN, value);
   }

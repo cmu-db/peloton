@@ -37,12 +37,12 @@ class ArrayType : public Type {
   // Does this value exist in this array?
   Value InList(const Value& list, const Value &object) const;
 
-  Value CompareEquals(const Value& left, const Value &right) const override;
-  Value CompareNotEquals(const Value& left, const Value &right) const override;
-  Value CompareLessThan(const Value& left, const Value &right) const override;
-  Value CompareLessThanEquals(const Value& left, const Value &right) const override;
-  Value CompareGreaterThan(const Value& left, const Value &right) const override;
-  Value CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareNotEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareLessThan(const Value& left, const Value &right) const override;
+  CmpBool CompareLessThanEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
+  CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
 
   Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 

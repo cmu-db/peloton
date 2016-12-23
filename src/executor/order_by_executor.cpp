@@ -156,22 +156,18 @@ bool OrderByExecutor::DoSort() {
         type::Value va =(ta->GetValue(id));
         type::Value vb = (tb->GetValue(id));
         if (!descend_flags[id]) {
-          type::Value cmp_lt = (va.CompareLessThan(vb));
-          if (cmp_lt.IsTrue())
+          if (va.CompareLessThan(vb) == type::CMP_TRUE)
             return true;
           else {
-            type::Value cmp_gt = (va.CompareGreaterThan(vb));
-            if (cmp_gt.IsTrue())
+            if (va.CompareGreaterThan(vb) == type::CMP_TRUE)
               return false;
           }
         }
         else {
-          type::Value cmp_lt = (vb.CompareLessThan(va));
-          if (cmp_lt.IsTrue())
+          if (vb.CompareLessThan(va) == type::CMP_TRUE)
             return true;
           else {
-            type::Value cmp_gt = (vb.CompareGreaterThan(va));
-            if (cmp_gt.IsTrue())
+            if (vb.CompareGreaterThan(va) == type::CMP_TRUE)
             return false;
           }
         }
