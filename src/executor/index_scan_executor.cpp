@@ -170,7 +170,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   auto &manager = catalog::Manager::GetInstance();
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
   int num_tuples_examined = 0;
 #endif
 
@@ -181,7 +181,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     auto tile_group_header = tile_group.get()->GetHeader();
     size_t chain_length = 0;
 
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
     num_tuples_examined++;
 #endif
 
@@ -280,8 +280,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
-#ifdef LOG_DEBUG_ENABLED
-  LOG_DEBUG("Examined %d tuples from index %s", num_tuples_examined,
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("Examined %d tuples from index %s", num_tuples_examined,
             index_->GetName().c_str());
 #endif
 
@@ -350,7 +350,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   std::shared_ptr<storage::TileGroup> tile_group;
   storage::TileGroupHeader *tile_group_header = nullptr;
 
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
   int num_tuples_examined = 0;
   int num_blocks_reused = 0;
 #endif
@@ -361,7 +361,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       tile_group = manager.GetTileGroup(tuple_location.block);
       tile_group_header = tile_group.get()->GetHeader();
     }
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
     else
       num_blocks_reused++;
     num_tuples_examined++;
@@ -490,8 +490,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     }
     LOG_TRACE("Traverse length: %d\n", (int)chain_length);
   }
-#ifdef LOG_DEBUG_ENABLED
-  LOG_DEBUG("Examined %d tuples from index %s [num_blocks_reused=%d]",
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("Examined %d tuples from index %s [num_blocks_reused=%d]",
             num_tuples_examined, index_->GetName().c_str(), num_blocks_reused);
 #endif
 
