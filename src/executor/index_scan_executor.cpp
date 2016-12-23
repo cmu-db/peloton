@@ -400,7 +400,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         oid_t this_col_itr = 0;
         for (auto col : indexed_columns) {
           type::Value val = (candidate_tuple.GetValue(col));
-          key_tuple.SetValue(this_col_itr, val, index_->GetPool());
+          key_tuple.SetValue(this_col_itr, val, executor_context_->GetExecutorContextPool());
           this_col_itr++;
         }
 
