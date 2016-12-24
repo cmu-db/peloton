@@ -264,9 +264,17 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
     throw IndexException("Unsupported index scheme.");
   }
 #ifdef LOG_DEBUG_ENABLED
-  LOG_DEBUG("%s Index: %s<%s>(%s)", metadata->GetName().c_str(),
-            IndexTypeToString(index_type).c_str(), comparatorType.c_str(),
-            metadata->key_schema->GetInfo().c_str());
+  std::ostringstream os;
+  os << "Index '" << metadata->GetName() << "' => "
+     << IndexTypeToString(index_type) << "::" << comparatorType << "(";
+  bool first = true;
+  for (auto column : metadata->key_schema->GetColumns()) {
+    if (first == false) os << ", ";
+    os << column.GetName();
+    first = false;
+  }
+  os << ")";
+  LOG_DEBUG("%s", os.str().c_str());
 #endif
 
   return (index);

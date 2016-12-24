@@ -310,6 +310,10 @@ template class BTreeIndex<GenericKey<12>, ItemPointer *, GenericComparator<12>,
                           GenericEqualityChecker<12>>;
 template class BTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
                           GenericEqualityChecker<16>>;
+template class BTreeIndex<GenericKey<24>, ItemPointer *, GenericComparator<24>,
+                          GenericEqualityChecker<24>>;
+template class BTreeIndex<GenericKey<32>, ItemPointer *, GenericComparator<32>,
+                          GenericEqualityChecker<32>>;
 template class BTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
                           GenericEqualityChecker<64>>;
 template class BTreeIndex<GenericKey<256>, ItemPointer *,
