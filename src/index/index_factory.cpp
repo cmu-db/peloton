@@ -24,7 +24,7 @@ namespace peloton {
 namespace index {
 
 Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
-  LOG_INFO("Creating index %s", metadata->GetName().c_str());
+  LOG_TRACE("Creating index %s", metadata->GetName().c_str());
 
   // The size of the key in bytes
   const auto key_size = metadata->key_schema->GetLength();
