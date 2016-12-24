@@ -38,25 +38,10 @@ public:
       const std::vector<AbstractExpression*>& children) :
       AbstractExpression(EXPRESSION_TYPE_FUNCTION, return_type), func_ptr_(
           func_ptr) {
-    if (arg_types.size() != children_.size()) {
-      throw Exception(
-          "Unexpected number of arguments to function: " + func_name_
-              + ". Expected: " + std::to_string(arg_types.size()) + " Actual: "
-              + std::to_string(children_.size()));
+    for (auto &child : children) {
+      children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
-    // check that the types are correct
-    for (size_t i = 0; i < arg_types.size(); i++) {
-      if (children[i]->GetValueType() != arg_types[i]) {
-        throw Exception(
-            "Incorrect argument type to fucntion: " + func_name_ + ". Argument "
-                + std::to_string(i) + " expected type "
-                + type::Type::GetInstance(arg_types[i])->ToString()
-                + " but found "
-                + type::Type::GetInstance(children_[i]->GetValueType())->ToString()
-                + ".");
-      }
-      children_.push_back(std::unique_ptr<AbstractExpression>(children[i]));
-    }
+    CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
   void SetFunctionExpressionParameters(
@@ -65,25 +50,7 @@ public:
       const std::vector<type::Type::TypeId>& arg_types) {
     func_ptr_ = func_ptr;
     return_value_type_ = val_type;
-    if (arg_types.size() != children_.size()) {
-      throw Exception(
-          "Unexpected number of arguments to function: " + func_name_
-              + ". Expected: " + std::to_string(arg_types.size()) + " Actual: "
-              + std::to_string(children_.size()));
-    }
-    // check that the types are correct
-    for (size_t i = 0; i < arg_types.size(); i++) {
-      if (children_[i]->GetValueType() != arg_types[i]) {
-        throw Exception(
-            "Incorrect argument type to fucntion: " + func_name_ + ". Argument "
-                + std::to_string(i) + " expected type "
-                + type::Type::GetInstance(arg_types[i])->ToString()
-                + " but found "
-                + type::Type::GetInstance(children_[i]->GetValueType())->ToString()
-                + ".");
-      }
-    }
-
+    CheckChildrenTypes(arg_types, children_, func_name_);
   }
 
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -96,8 +63,9 @@ public:
     }
     type::Value ret = func_ptr_(child_values);
     // if this is false we should throw an exception
+    // TODO: maybe checking this every time is not neccesary? but it prevents crashing
     if (ret.GetElementType() != return_value_type_) {
-      throw Exception(
+      throw Exception(EXCEPTION_TYPE_EXPRESSION,
           "function " + func_name_ + " returned an unexpected type.");
     }
     return ret;
@@ -116,6 +84,29 @@ protected:
   }
 private:
   type::Value (*func_ptr_)(const std::vector<type::Value>&) = nullptr;
+
+  // throws an exception if children return unexpected types
+  static void CheckChildrenTypes(const std::vector<type::Type::TypeId>& arg_types,
+      const std::vector<std::unique_ptr<AbstractExpression>>& children, const std::string& func_name){
+    if (arg_types.size() != children.size()) {
+      throw Exception(EXCEPTION_TYPE_EXPRESSION,
+          "Unexpected number of arguments to function: " + func_name
+              + ". Expected: " + std::to_string(arg_types.size()) + " Actual: "
+              + std::to_string(children.size()));
+    }
+    // check that the types are correct
+    for (size_t i = 0; i < arg_types.size(); i++) {
+      if (children[i]->GetValueType() != arg_types[i]) {
+        throw Exception(EXCEPTION_TYPE_EXPRESSION,
+            "Incorrect argument type to fucntion: " + func_name + ". Argument "
+                + std::to_string(i) + " expected type "
+                + type::Type::GetInstance(arg_types[i])->ToString()
+                + " but found "
+                + type::Type::GetInstance(children[i]->GetValueType())->ToString()
+                + ".");
+      }
+    }
+  }
 
 };
 
