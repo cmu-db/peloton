@@ -360,8 +360,8 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
         auto &table_columns = target_table->GetSchema()->GetColumns();
         for (auto column : table_columns) {
           LOG_DEBUG("Column name: %s", column.column_name.c_str());
-          tuple_descriptor.push_back(GetColumnFieldForValueType(
-              column.column_name, column.column_type));
+          tuple_descriptor.push_back(
+              GetColumnFieldForValueType(column.GetName(), column.GetType()));
         }
       }
     } else {
