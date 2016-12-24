@@ -30,9 +30,7 @@ class IndexIntsKeyTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
-std::shared_ptr<ItemPointer> item0(new ItemPointer(120, 5));
-std::shared_ptr<ItemPointer> item1(new ItemPointer(120, 7));
-std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
+const int NUM_TUPLES = 10;
 
 /*
  * BuildIndex()
@@ -85,35 +83,49 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
 
 void IndexIntsKeyHelper(IndexType index_type) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
+  std::vector<ItemPointer *> location_ptrs;
 
   // Scale up the number of integers that we have
   // in the index
   for (int num_cols = 1; num_cols <= 4; num_cols++) {
-    // INDEX
+    // CREATE
     std::unique_ptr<index::Index> index(
         BuildIndex(index_type, false, num_cols));
-    std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
-    for (int col_idx = 0; col_idx < num_cols; col_idx++) {
-      int val = (10 * num_cols) + col_idx;
-      key0->SetValue(0, type::ValueFactory::GetIntegerValue(val), pool);
-    }
 
-    // INSERT
-    index->InsertEntry(key0.get(), item0.get());
+    // POPULATE
+    std::vector<std::shared_ptr<storage::Tuple>> keys;
+    std::vector<std::shared_ptr<ItemPointer>> items;
+    for (int i = 0; i < NUM_TUPLES; i++) {
+      std::shared_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
+      std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
+
+      for (int col_idx = 0; col_idx < num_cols; col_idx++) {
+        int val = (10 * i) + col_idx;
+        key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val), pool);
+      }
+
+      // INSERT
+      index->InsertEntry(key.get(), item.get());
+
+      keys.push_back(key);
+      items.push_back(item);
+    }  // FOR
 
     // SCAN
-    std::vector<ItemPointer *> location_ptrs;
-    index->ScanKey(key0.get(), location_ptrs);
-    EXPECT_EQ(location_ptrs.size(), 1);
-    EXPECT_EQ(location_ptrs[0]->block, item0->block);
-    location_ptrs.clear();
+    for (int i = 0; i < NUM_TUPLES; i++) {
+      location_ptrs.clear();
+      index->ScanKey(keys[i].get(), location_ptrs);
+      EXPECT_EQ(location_ptrs.size(), 1);
+      EXPECT_EQ(location_ptrs[0]->block, items[i]->block);
+    }  // FOR
 
     // DELETE
-    index->DeleteEntry(key0.get(), item0.get());
-
-    index->ScanKey(key0.get(), location_ptrs);
-    EXPECT_EQ(location_ptrs.size(), 0);
-    location_ptrs.clear();
+    for (int i = 0; i < NUM_TUPLES; i++) {
+      index->DeleteEntry(keys[i].get(), items[i].get());
+      location_ptrs.clear();
+      index->ScanKey(keys[i].get(), location_ptrs);
+      EXPECT_EQ(location_ptrs.size(), 0);
+    }  // FOR
 
     delete tuple_schema;
   }  // FOR
