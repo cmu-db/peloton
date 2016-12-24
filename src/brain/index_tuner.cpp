@@ -80,7 +80,7 @@ static void AddIndex(storage::DataTable* table,
   index_metadata->SetUtility(intial_utility_ratio);
 
   std::shared_ptr<index::Index> adhoc_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   // Add index
   table->AddIndex(adhoc_index);

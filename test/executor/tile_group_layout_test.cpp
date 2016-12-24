@@ -112,7 +112,7 @@ void ExecuteTileGroupTest() {
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
     table->AddIndex(pkey_index);
   }
 

@@ -115,7 +115,7 @@ index::Index *BuildIndex(const bool unique_keys) {
   // and transforms into the correct index key format, so the caller
   // do not need to worry about the actual implementation of the index
   // key, and only passing tuple key suffices
-  index::Index *index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway
@@ -343,7 +343,7 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyDeleteTest) {
-  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  auto pool = TestingHarness::GetIndex().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -475,7 +475,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
-  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  auto pool = TestingHarness::GetIndex().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX

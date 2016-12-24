@@ -207,7 +207,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
         unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
     table->AddIndex(pkey_index);
 
     LOG_TRACE("Successfully add primary key index for table %s",
@@ -270,7 +270,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
 
     // Add index to table
     std::shared_ptr<index::Index> key_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
     table->AddIndex(key_index);
 
     LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());

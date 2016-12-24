@@ -23,7 +23,7 @@
 namespace peloton {
 namespace index {
 
-Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
+Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   LOG_INFO("Creating index %s", metadata->GetName().c_str());
 
   // The size of the key in bytes
