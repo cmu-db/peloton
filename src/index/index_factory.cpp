@@ -50,7 +50,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   Index *index = nullptr;
   LOG_TRACE("Index type : %d", index_type);
 
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
   std::string comparatorType;
 #endif
 
@@ -60,13 +60,13 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   if (index_type == INDEX_TYPE_BTREE) {
     if (key_size <= 4) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<1>";
 #endif
         index = new BTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
                                IntsEqualityChecker<1>>(metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<4>";
 #endif
         index =
@@ -75,13 +75,13 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       }
     } else if (key_size <= 8) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<2>";
 #endif
         index = new BTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
                                IntsEqualityChecker<2>>(metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<8>";
 #endif
         index =
@@ -90,13 +90,13 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       }
     } else if (key_size <= 12) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<3>";
 #endif
         index = new BTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
                                IntsEqualityChecker<3>>(metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<12>";
 #endif
         index =
@@ -105,13 +105,13 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       }
     } else if (key_size <= 16) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<4>";
 #endif
         index = new BTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
                                IntsEqualityChecker<4>>(metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<16>";
 #endif
         index =
@@ -119,35 +119,35 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                            GenericEqualityChecker<16>>(metadata);
       }
     } else if (key_size <= 24) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "GenericKey<24>";
 #endif
       index =
           new BTreeIndex<GenericKey<24>, ItemPointer *, GenericComparator<24>,
                          GenericEqualityChecker<24>>(metadata);
     } else if (key_size <= 32) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "GenericKey<32>";
 #endif
       index =
           new BTreeIndex<GenericKey<32>, ItemPointer *, GenericComparator<32>,
                          GenericEqualityChecker<32>>(metadata);
     } else if (key_size <= 64) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "GenericKey<64>";
 #endif
       index =
           new BTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
                          GenericEqualityChecker<64>>(metadata);
     } else if (key_size <= 256) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "GenericKey<256>";
 #endif
       index =
           new BTreeIndex<GenericKey<256>, ItemPointer *, GenericComparator<256>,
                          GenericEqualityChecker<256>>(metadata);
     } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "TupleKey";
 #endif
       index = new BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
@@ -160,7 +160,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   } else if (index_type == INDEX_TYPE_BWTREE) {
     if (key_size <= 4) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<1>";
 #endif
         index = new BWTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
@@ -168,7 +168,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                                 ItemPointerComparator, ItemPointerHashFunc>(
             metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<4>";
 #endif
         index =
@@ -179,7 +179,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       }
     } else if (key_size <= 8) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<2>";
 #endif
         index = new BWTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
@@ -187,7 +187,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                                 ItemPointerComparator, ItemPointerHashFunc>(
             metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<8>";
 #endif
         index =
@@ -198,7 +198,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       }
     } else if (key_size <= 12) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<3>";
 #endif
         index = new BWTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
@@ -206,7 +206,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                                 ItemPointerComparator, ItemPointerHashFunc>(
             metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<12>";
 #endif
         index =
@@ -217,7 +217,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       }
     } else if (key_size <= 16) {
       if (ints_only) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "IntsKey<4>";
 #endif
         index = new BWTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
@@ -225,7 +225,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                                 ItemPointerComparator, ItemPointerHashFunc>(
             metadata);
       } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
         comparatorType = "GenericKey<16>";
 #endif
         index =
@@ -235,7 +235,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                             ItemPointerHashFunc>(metadata);
       }
     } else if (key_size <= 64) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "GenericKey<64>";
 #endif
       index =
@@ -243,7 +243,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                           GenericEqualityChecker<64>, GenericHasher<64>,
                           ItemPointerComparator, ItemPointerHashFunc>(metadata);
     } else if (key_size <= 256) {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "GenericKey<256>";
 #endif
       index =
@@ -252,7 +252,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
                           GenericHasher<256>, ItemPointerComparator,
                           ItemPointerHashFunc>(metadata);
     } else {
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
       comparatorType = "TupleKey";
 #endif
       index =
@@ -263,7 +263,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   } else {
     throw IndexException("Unsupported index scheme.");
   }
-#ifdef LOG_DEBUG_ENABLED
+#ifdef LOG_TRACE_ENABLED
   std::ostringstream os;
   os << "Index '" << metadata->GetName() << "' => "
      << IndexTypeToString(index_type) << "::" << comparatorType << "(";
