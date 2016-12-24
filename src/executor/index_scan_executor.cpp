@@ -66,7 +66,7 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   PL_ASSERT(index_ != nullptr);
 
-  // index_predicate_ = node.GetIndexPredicate();
+  index_predicate_ = node.GetIndexPredicate();
 
   result_itr_ = START_OID;
   result_.clear();
@@ -150,7 +150,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+  // TODO: remove the unused code
+  // const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -160,7 +161,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
@@ -301,8 +302,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -335,7 +336,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+  // TODO: remove the unused code
+  // const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -345,7 +347,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
@@ -520,8 +522,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -694,29 +696,44 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
   return true;
 }
 
+// key_column_ids is the right predicate column id. For example,
+// i_id = s_id,
+// then s_id is key_column_ids
 void IndexScanExecutor::UpdatePredicate(
     const std::vector<oid_t> &key_column_ids,
     const std::vector<type::Value> &values) {
   // TODO: ADD ziqi's API
   // Update index predicate
-  // Grab data from plan node.
-  //  const planner::IndexScanPlan &node =
-  // GetPlanNode<planner::IndexScanPlan>();
-  //  node.UpdatePredicate(values);
+  // TODO: do we need to update values_? Add a similar SetParameter?
+
+  //  LOG_INFO("values_ size %lu", values_.size());
+  //  for (unsigned int j = 0; j < values_.size(); ++j) {
+  //    LOG_INFO("BEFORE values: %s", values_[j].GetInfo().c_str());
+  //  }
 
   // Update values in index plan node
   PL_ASSERT(key_column_ids.size() == values.size());
   PL_ASSERT(key_column_ids_.size() == values_.size());
-  PL_ASSERT(key_column_ids.size() < key_column_ids_.size());
+  PL_ASSERT(key_column_ids.size() <= key_column_ids_.size());
 
   // Find out the position (offset) where is key_column_id
   for (oid_t i = 0; i < key_column_ids.size(); i++) {
     for (unsigned int j = 0; j < values_.size(); ++j) {
       if (key_column_ids[i] == key_column_ids_[j]) {
+        LOG_INFO("Orignial is %s", values_[j].GetInfo().c_str());
+        LOG_INFO("Changed to %s", values[i].GetInfo().c_str());
         values_[j] = values[i];
       }
     }
   }
+
+  //  LOG_INFO("values_ size %lu", values_.size());
+  //  for (unsigned int j = 0; j < values_.size(); ++j) {
+  //    LOG_INFO("AFTER values: %s", values_[j].GetInfo().c_str());
+  //  }
+
+  // index_predicate_.LateBindValues(index_.get(), values_);
+  // index_predicate_.UpdatePredicate(key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {

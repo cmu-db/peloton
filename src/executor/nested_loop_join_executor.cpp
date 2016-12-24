@@ -224,12 +224,17 @@ bool NestedLoopJoinExecutor::DExecute() {
           expression::ContainerTuple<executor::LogicalTile> right_tuple(
               right_tile, right_tile_row_itr);
 
+          LOG_INFO("LEFT:%s\n", left_tuple.GetValue(0).GetInfo().c_str());
+          LOG_INFO("RIght:%s\n", right_tuple.GetValue(0).GetInfo().c_str());
+
           // Join predicate is false. Skip pair and continue.
           auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,
                                            executor_context_);
           if (eval.IsFalse()) {
+            LOG_INFO("Not math join predicate");
             continue;
           }
+          LOG_INFO("Find a tuple with join predicate");
         }
 
         RecordMatchedLeftRow(left_result_itr_, left_tile_row_itr);
