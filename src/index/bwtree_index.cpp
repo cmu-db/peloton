@@ -248,6 +248,8 @@ std::string BWTREE_INDEX_TYPE::GetTypeName() const { return "BWTree"; }
 // the following in order to instanciation the template before it is
 // linked in linking stage
 
+// IMPORTANT: Make sure you don't exceed INTSKEY_MAX_SLOTS
+
 template class BWTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
                            IntsEqualityChecker<1>, IntsHasher<1>,
                            ItemPointerComparator, ItemPointerHashFunc>;
@@ -267,9 +269,6 @@ template class BWTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
                            GenericEqualityChecker<8>, GenericHasher<8>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<12>, ItemPointer *, GenericComparator<12>,
-                           GenericEqualityChecker<12>, GenericHasher<12>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
                            GenericEqualityChecker<16>, GenericHasher<16>,

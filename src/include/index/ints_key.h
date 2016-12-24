@@ -15,6 +15,10 @@
 namespace peloton {
 namespace index {
 
+// This is the maximum number of 8-byte slots that we will pack into a single
+// IntsKey template. You should not instantiate anything with more than this
+#define INTSKEY_MAX_SLOTS 4
+
 /*
  * ConvertUnsignedValueToSignedValue() - As name suggests
  *

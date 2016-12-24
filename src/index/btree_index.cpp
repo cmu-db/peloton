@@ -293,6 +293,8 @@ std::string BTREE_TEMPLATE_TYPE::GetTypeName() const { return "Btree"; }
 
 // Explicit template instantiation
 
+// IMPORTANT: Make sure you don't exceed INTSKEY_MAX_SLOTS
+
 template class BTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
                           IntsEqualityChecker<1>>;
 template class BTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
@@ -306,12 +308,8 @@ template class BTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
                           GenericEqualityChecker<4>>;
 template class BTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
                           GenericEqualityChecker<8>>;
-template class BTreeIndex<GenericKey<12>, ItemPointer *, GenericComparator<12>,
-                          GenericEqualityChecker<12>>;
 template class BTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
                           GenericEqualityChecker<16>>;
-template class BTreeIndex<GenericKey<24>, ItemPointer *, GenericComparator<24>,
-                          GenericEqualityChecker<24>>;
 template class BTreeIndex<GenericKey<32>, ItemPointer *, GenericComparator<32>,
                           GenericEqualityChecker<32>>;
 template class BTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,

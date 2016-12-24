@@ -34,14 +34,11 @@ std::shared_ptr<ItemPointer> item0(new ItemPointer(120, 5));
 std::shared_ptr<ItemPointer> item1(new ItemPointer(120, 7));
 std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
 
-// Since we need index type to determine the result
-// of the test, this needs to be made as a global static
-static IndexType index_type = INDEX_TYPE_BWTREE;
-
 /*
  * BuildIndex()
  */
-index::Index *BuildIndex(const bool unique_keys, int num_cols) {
+index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
+                         int num_cols) {
   // Build tuple and key schema
   std::vector<catalog::Column> column_list;
   std::vector<oid_t> key_attrs;
@@ -86,14 +83,15 @@ index::Index *BuildIndex(const bool unique_keys, int num_cols) {
   return index;
 }
 
-TEST_F(IndexIntsKeyTests, BasicTest) {
+void IndexIntsKeyHelper(IndexType index_type) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Scale up the number of integers that we have
   // in the index
   for (int num_cols = 1; num_cols <= 4; num_cols++) {
     // INDEX
-    std::unique_ptr<index::Index> index(BuildIndex(false, num_cols));
+    std::unique_ptr<index::Index> index(
+        BuildIndex(index_type, false, num_cols));
     std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
     for (int col_idx = 0; col_idx < num_cols; col_idx++) {
       int val = (10 * num_cols) + col_idx;
@@ -120,6 +118,13 @@ TEST_F(IndexIntsKeyTests, BasicTest) {
     delete tuple_schema;
   }  // FOR
 }
+
+TEST_F(IndexIntsKeyTests, BwTreeTest) { IndexIntsKeyHelper(INDEX_TYPE_BWTREE); }
+
+// FIXME: The B-Tree core dumps. If we're not going to support then we should
+// probably drop it.
+// TEST_F(IndexIntsKeyTests, BTreeTest) { IndexIntsKeyHelper(INDEX_TYPE_BTREE);
+// }
 
 }  // End test namespace
 }  // End peloton namespace
