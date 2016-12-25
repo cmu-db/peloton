@@ -245,19 +245,25 @@ class ConjunctionScanPredicate {
       oid_t index_column = tuple_attrs[tuple_column]; 
       PL_ASSERT(index_column != INVALID_OID);
       
+      oid_t bind_ret;
+      
       // Always bind the value to low key
-      BindValueToIndexKey(index_p, 
-                          new_value_list[i], 
-                          low_key_p_, 
-                          index_column);
+      // It should return INVALID_OID since we do not have any
+      // late binding here
+      bind_ret = BindValueToIndexKey(index_p, 
+                                     new_value_list[i], 
+                                     low_key_p_, 
+                                     index_column);
+      PL_ASSERT(bind_ret == INVALID_OID);
       
       // is_point_query_ is only determined by expression type
       // Also if not point query then also bind to high key
       if(is_point_query_ == true) {
-        BindValueToIndexKey(index_p, 
-                            new_value_list[i], 
-                            high_key_p_, 
-                            index_column);  
+        bind_ret = BindValueToIndexKey(index_p, 
+                                     new_value_list[i], 
+                                     high_key_p_, 
+                                     index_column);
+        PL_ASSERT(bind_ret == INVALID_OID); 
       }
       
       i++;
