@@ -156,8 +156,18 @@ Index::~Index() {
  * would fail. In this case the caller does not have to check since assertion
  * fails inside this function
  */
-oid_t TupleColumnToKeyColumn(oid_t tuple_column_id) const {
+inline oid_t TupleColumnToKeyColumn(oid_t tuple_column_id) const {
+  // This stores the mapping
+  const std::vector<oid_t> &mapping = metadata->GetTupleToIndexMapping();
   
+  // First check whether the table column ID is valid
+  PL_ASSERT(tuple_column_id < mapping.size());
+  oid_t key_column_id = mapping[tuple_column_id];
+  
+  // Then check the table column actually have a index key column
+  PL_ASSERT(key_column_id != INVALID_OID); 
+  
+  return key_column_id;
 }
 
 void Index::ScanTest(const std::vector<type::Value> &value_list,
