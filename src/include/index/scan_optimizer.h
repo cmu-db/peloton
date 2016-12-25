@@ -223,7 +223,7 @@ class ConjunctionScanPredicate {
                            const std::vector<oid_t> &column_id_list, 
                            const std::vector<type::Value> &new_value_list) {
     // They are one to one
-    PA_ASSERT(new_value_list.size() == column_id_list.size());
+    PL_ASSERT(new_value_list.size() == column_id_list.size());
                              
     // We need this to translate tuple column ID to index column ID
     const IndexMetadata *metadata_p = index_p->GetMetadata();
@@ -233,7 +233,9 @@ class ConjunctionScanPredicate {
     // If j == INVALID_OID then we know column i on the table is not indexed
     const std::vector<oid_t> &tuple_attrs = \
       metadata_p->GetTupleToIndexMapping();
-      
+    
+    // This is used to address new_value_list
+    int i = 0;
     for(oid_t tuple_column : column_id_list) {
       // Could not have out of bound access
       PL_ASSERT(tuple_column < tuple_attrs.size());
@@ -243,8 +245,25 @@ class ConjunctionScanPredicate {
       oid_t index_column = tuple_attrs[tuple_column]; 
       PL_ASSERT(index_column != INVALID_OID);
       
+      // Always bind the value to low key
+      BindValueToIndexKey(index_p, 
+                          new_value_list[i], 
+                          low_key_p_, 
+                          index_column);
       
+      // is_point_query_ is only determined by expression type
+      // Also if not point query then also bind to high key
+      if(is_point_query_ == true) {
+        BindValueToIndexKey(index_p, 
+                            new_value_list[i], 
+                            high_key_p_, 
+                            index_column);  
+      }
+      
+      i++;
     }
+    
+    return;
   }
 
   /*
