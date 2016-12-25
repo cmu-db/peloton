@@ -170,6 +170,10 @@ inline oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
   return key_column_id;
 }
 
+/*
+ * ScanTest() - This is used inside the unit test to check correctness of
+ *              scan optimizer - do not change or remove this
+ */
 void Index::ScanTest(const std::vector<type::Value> &value_list,
                      const std::vector<oid_t> &tuple_column_id_list,
                      const std::vector<ExpressionType> &expr_list,
