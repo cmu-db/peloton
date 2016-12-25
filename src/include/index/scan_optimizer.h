@@ -495,6 +495,10 @@ class IndexScanPredicate {
  public:
   /*
    * Constructor - Initialize nothing
+   *
+   * Please note that we do not push any conjunction scan predicate into the
+   * list here because they are usually done in another stage after the 
+   * containing IndexScanPlan has been initialized
    */
   IndexScanPredicate() : conjunction_list_{}, full_index_scan_{false} {}
 
