@@ -190,6 +190,7 @@ class Index : public Printable {
    */
   oid_t GetOid() const { return index_oid; }
 
+  // Return the metadata object associated with the index
   IndexMetadata *GetMetadata() const { return metadata; }
   
   // Convert table column ID to index column ID

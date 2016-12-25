@@ -224,26 +224,13 @@ class ConjunctionScanPredicate {
                            const std::vector<type::Value> &new_value_list) {
     // They are one to one
     PL_ASSERT(new_value_list.size() == column_id_list.size());
-                             
-    // We need this to translate tuple column ID to index column ID
-    const IndexMetadata *metadata_p = index_p->GetMetadata();
-    // This is the tuple to index mapping
-    // Element j on index i means that the i-th column in the table is the j-th
-    // column in the index
-    // If j == INVALID_OID then we know column i on the table is not indexed
-    const std::vector<oid_t> &tuple_attrs = \
-      metadata_p->GetTupleToIndexMapping();
     
     // This is used to address new_value_list
     int i = 0;
     for(oid_t tuple_column : column_id_list) {
-      // Could not have out of bound access
-      PL_ASSERT(tuple_column < tuple_attrs.size());
-      
       // Translate tuple column to index column
-      // and make sure the tuple column is truly in the index
-      oid_t index_column = tuple_attrs[tuple_column]; 
-      PL_ASSERT(index_column != INVALID_OID);
+      // This function guarantees the return value must be valid one
+      oid_t index_column = index_p->Cleanup(tuple_column);
       
       oid_t bind_ret;
       
