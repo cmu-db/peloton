@@ -334,12 +334,6 @@ class Index : public Printable {
  protected:
   Index(IndexMetadata *schema);
 
-  // Set the lower bound tuple for index iteration
-  bool ConstructLowerBoundTuple(storage::Tuple *index_key,
-                                const std::vector<type::Value> &values,
-                                const std::vector<oid_t> &key_column_ids,
-                                const std::vector<ExpressionType> &expr_types);
-
   //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
