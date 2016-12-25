@@ -216,10 +216,13 @@ class ConjunctionScanPredicate {
    *   3. This function does not deal with range queries - it knows no semantics
    *      of range query and the expression type for each index key column
    *      so use this at your own risk
+   *   4. column_id is the column ID inside table rather than inside index key
+   *   5. The index must be the same as the index passed into the constructor
    */
-  void SetTupleColumnValue(const std::vector<oid_t> &column_id, 
+  void SetTupleColumnValue(Index *index_p,
+                           const std::vector<oid_t> &column_id, 
                            const std::vector<type::Value> &new_value) {
-    return; 
+    
   }
 
   /*
