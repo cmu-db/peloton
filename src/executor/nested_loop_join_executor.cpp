@@ -81,8 +81,8 @@ bool NestedLoopJoinExecutor::DInit() {
 // use the result to lookup right table. If left table is done that means right
 // table is also done. So we only keep the left_child_done_ as the sign.
 bool NestedLoopJoinExecutor::DExecute() {
-  LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
-            GetJoinTypeString());
+  LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
+           GetJoinTypeString());
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
@@ -95,7 +95,7 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     // If we have already retrieved all left child's results in buffer
     if (left_child_done_ == true) {
-      LOG_TRACE("Advance the left buffer iterator.");
+      LOG_INFO("Advance the left buffer iterator.");
 
       PL_ASSERT(!right_result_tiles_.empty());
       left_result_itr_++;
@@ -108,14 +108,14 @@ bool NestedLoopJoinExecutor::DExecute() {
     else {
       // Left child is finished, no more tiles
       if (children_[0]->Execute() == false) {
-        LOG_TRACE("Left child is exhausted.");
+        LOG_INFO("Left child is exhausted.");
 
         left_child_done_ = true;
         left_result_itr_ = 0;
       }
       // Buffer the left child's result
       else {
-        LOG_TRACE("Retrieve a new tile from left child");
+        LOG_INFO("Retrieve a new tile from left child");
         BufferLeftTile(children_[0]->GetOutput());
         left_result_itr_ = left_result_tiles_.size() - 1;
       }
@@ -123,10 +123,10 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     if (left_result_tiles_.empty() && !left_child_done_) {
       // If there is no result for left lookup, continue the next tile
-      LOG_TRACE("Left is empty continue the left.");
+      LOG_INFO("Left is empty continue the left.");
       continue;
     } else if (left_child_done_) {
-      LOG_TRACE("Left_child_done, and return the result.");
+      LOG_INFO("Left_child_done, and return the result.");
       return BuildOuterJoinOutput();
     }
 
@@ -169,7 +169,7 @@ bool NestedLoopJoinExecutor::DExecute() {
       // Right child is finished, no more tiles
       for (;;) {
         if (children_[1]->Execute() == true) {
-          LOG_TRACE("Advance the Right child.");
+          LOG_INFO("Advance the Right child.");
           BufferRightTile(children_[1]->GetOutput());
 
           // return if left tile is empty
@@ -191,10 +191,10 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     // Return result
     if (left_child_done_ && right_result_tiles_.empty()) {
-      LOG_TRACE("All done, and return the result.");
+      LOG_INFO("All done, and return the result.");
       return BuildOuterJoinOutput();
     } else if (right_result_tiles_.empty()) {
-      LOG_TRACE("Right is empty, continue the left.");
+      LOG_INFO("Right is empty, continue the left.");
       continue;
     }
 
@@ -204,7 +204,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     //===------------------------------------------------------------------===//
     // Build Join Tile
     //===------------------------------------------------------------------===//
-    LOG_TRACE("Build output logical tile.");
+    LOG_INFO("Build output logical tile.");
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
@@ -262,7 +262,7 @@ bool NestedLoopJoinExecutor::DExecute() {
       return true;
     }
 
-    LOG_TRACE("This pair produces empty join result. Continue the loop.");
+    LOG_INFO("This pair produces empty join result. Continue the loop.");
   }  // end the very beginning for loop
 }
 

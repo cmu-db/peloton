@@ -988,9 +988,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   //  predicate_values = {type::ValueFactory::GetIntegerValue(0).Copy(),
   //                      type::ValueFactory::GetIntegerValue(90).Copy()};
 
-  // s_w_id the 5th parameter
-  predicate_values = {type::ValueFactory::GetParameterOffsetValue(4).Copy(),
-                      type::ValueFactory::GetParameterOffsetValue(6).Copy()};
+  // s_w_id the 5th parameter. add s_i_id later
+  predicate_values = {type::ValueFactory::GetParameterOffsetValue(4).Copy()};
 
   column_ids = {1};  // S_I_ID
 

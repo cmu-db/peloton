@@ -714,16 +714,29 @@ void IndexScanExecutor::UpdatePredicate(
   // Update values in index plan node
   PL_ASSERT(key_column_ids.size() == values.size());
   PL_ASSERT(key_column_ids_.size() == values_.size());
-  PL_ASSERT(key_column_ids.size() <= key_column_ids_.size());
 
   // Find out the position (offset) where is key_column_id
-  for (oid_t i = 0; i < key_column_ids.size(); i++) {
-    for (unsigned int j = 0; j < values_.size(); ++j) {
-      if (key_column_ids[i] == key_column_ids_[j]) {
-        LOG_INFO("Orignial is %s", values_[j].GetInfo().c_str());
-        LOG_INFO("Changed to %s", values[i].GetInfo().c_str());
-        values_[j] = values[i];
+  for (oid_t new_idx = 0; new_idx < key_column_ids.size(); new_idx++) {
+    unsigned int current_idx = 0;
+    for (; current_idx < values_.size(); ++current_idx) {
+      if (key_column_ids[new_idx] == key_column_ids_[current_idx]) {
+        LOG_INFO("Orignial is %s", values_[current_idx].GetInfo().c_str());
+        LOG_INFO("Changed to %s", values[current_idx].GetInfo().c_str());
+        values_[current_idx] = values[new_idx];
       }
+    }
+
+    // If new value doesn't exist in current value list, add it.
+    if (current_idx == values_.size()) {
+      // Add value
+      values_.push_back(values[new_idx]);
+
+      // Add column id
+      key_column_ids_.push_back(key_column_ids[new_idx]);
+
+      // Add column type.
+      // TODO: We should add other types in the future
+      expr_types_.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     }
   }
 
