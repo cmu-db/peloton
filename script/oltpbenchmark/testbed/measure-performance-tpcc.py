@@ -27,7 +27,8 @@ test_time = 60
 
 # Requires that peloton-testbed is in the home directory
 config_filename = "tpcc_config.xml"
-start_benchmark_script = "%s/oltpbenchmark -b tpcc -c " % (OLTP_HOME) + cwd + "/" + config_filename + " --histograms  --create=true --load=true --execute=true -s 5 -o "
+start_benchmark_script = "%s/oltpbenchmark -b tpcc -c " % (OLTP_HOME) + \
+                         cwd + "/" + config_filename + " --histograms  --create=true --load=true --execute=true -s 5 -o "
 
 parameters={}
 
@@ -54,7 +55,10 @@ def prepare_parameters():
 
 def get_result_path():
   global cwd
-  return "%s/outputfile_%d_%d_%d_%d_%d_%d" % (cwd, new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor)
+  base_dir = "%s/results/" % cwd
+  if not os.path.exists(base_dir):
+      os.mkdir(base_dir)
+  return base_dir + "outputfile_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor)
 
 def start_bench():
     # go to oltpbench directory
@@ -62,6 +66,7 @@ def start_bench():
     # call("git pull origin master", shell=True)
     call("ant", shell=True)
     cmd = start_benchmark_script + get_result_path() + " 2>&1 | tee %s.log" % (get_result_path())
+    print cmd
     call(cmd, shell=True)
 
 def collect_data(result_dir_name):
@@ -78,11 +83,8 @@ if __name__ == "__main__":
     aparser.add_argument('db_port', help='DB Port')
     args = vars(aparser.parse_args())
     
-    
-    
     db_host = str(args['db_host'])
     db_port = str(args['db_port'])
-    
     
     # 45:43:4:4:4
     # thread_num = 20
