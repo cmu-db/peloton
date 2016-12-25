@@ -191,6 +191,9 @@ class Index : public Printable {
   oid_t GetOid() const { return index_oid; }
 
   IndexMetadata *GetMetadata() const { return metadata; }
+  
+  // Convert table column ID to index column ID
+  oid_t TupleColumnToKeyColumn(oid_t tuple_column_id) const;
 
   virtual ~Index();
 

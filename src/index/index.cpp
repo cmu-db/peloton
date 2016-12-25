@@ -145,6 +145,21 @@ Index::~Index() {
   return;
 }
 
+/*
+ * TupleColumnToKeyColumn() - Converts a column ID in the table to a column ID
+ *                            in the index key
+ *
+ * This function accepts an oid_t which must be in the range of table column
+ * ID, and returns a oid_t which is also inside the range of key columns.
+ * 
+ * If the table column does not have a corresponding key column then assertion
+ * would fail. In this case the caller does not have to check since assertion
+ * fails inside this function
+ */
+oid_t TupleColumnToKeyColumn(oid_t tuple_column_id) const {
+  
+}
+
 void Index::ScanTest(const std::vector<type::Value> &value_list,
                      const std::vector<oid_t> &tuple_column_id_list,
                      const std::vector<ExpressionType> &expr_list,
