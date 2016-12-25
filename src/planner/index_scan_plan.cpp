@@ -57,12 +57,22 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
 
   // Then add the only conjunction predicate into the index predicate list
   // (at least for now we only supports single conjunction)
+  //
+  // Values that are left blank will be recorded for future binding
+  // and their offset inside the value array will be remembered
   index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
                                                key_column_ids_, expr_types_);
 
   return;
 }
 
+/*
+ * SetParameterValues() - Late binding for arguments specified in the
+ *                        constructor
+ *
+ * 1. Do not use this function to change a field in the index key!!!!
+ * 2. Only fields specified by the constructor could be modofied
+ */
 void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Setting parameter values in Index Scans");
 

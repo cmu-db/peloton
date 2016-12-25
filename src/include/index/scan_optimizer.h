@@ -204,6 +204,23 @@ class ConjunctionScanPredicate {
 
     return;
   }
+  
+  /*
+   * SetTupleColumnValue() - Sets a value for a particular column inside 
+   *                         both low key and high key
+   *
+   * This function behaves in a way like this:
+   *   1. For non-point query the same key field in both low key and high key
+   *      is set
+   *   2. For point query the low key will be updated
+   *   3. This function does not deal with range queries - it knows no semantics
+   *      of range query and the expression type for each index key column
+   *      so use this at your own risk
+   */
+  void SetTupleColumnValue(const std::vector<oid_t> &column_id, 
+                           const std::vector<type::Value> &new_value) {
+    return; 
+  }
 
   /*
    * BindValueToIndexKey() - Bind the value to a column of a given tuple
