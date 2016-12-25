@@ -5,14 +5,15 @@ import sys
 import time
 import subprocess
 import re
+import argparse
 from subprocess import call
 
 
 cwd = os.getcwd()
 OLTP_HOME = "%s/oltpbench" % (cwd)
 
-db_host = 'dev1.db.pdl.cmu.local'
-db_port = '15721'
+db_host = None
+db_port = None
 
 thread_num = 1
 new_order_ratio = 100
@@ -72,6 +73,17 @@ def collect_data(result_dir_name):
     os.system("mv %s.* %s/" % (get_result_path(), result_dir_name))
 
 if __name__ == "__main__":
+    aparser = argparse.ArgumentParser(description='Timeseries')
+    aparser.add_argument('db_host', help='DB Hostname')
+    aparser.add_argument('db_port', help='DB Port')
+    args = vars(aparser.parse_args())
+    
+    
+    
+    db_host = str(args['db_host'])
+    db_port = str(args['db_port'])
+    
+    
     # 45:43:4:4:4
     # thread_num = 20
     new_order_ratio = 45
