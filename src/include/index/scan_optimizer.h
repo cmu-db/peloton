@@ -260,6 +260,19 @@ class ConjunctionScanPredicate {
   }
 
   /*
+   * SetTupleColumnValueForLowKey() - Similar to SetTupleColumnValue() but only
+   *                                  sets low key
+   *
+   * This function is designed to work for range query
+   */
+  void SetTupleColumnValueForLowKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list) {
+    
+  }
+
+  /*
    * BindValueToIndexKey() - Bind the value to a column of a given tuple
    *
    * This function binds the given value to the given column of a given key,
