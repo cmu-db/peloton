@@ -230,7 +230,7 @@ class ConjunctionScanPredicate {
     for(oid_t tuple_column : column_id_list) {
       // Translate tuple column to index column
       // This function guarantees the return value must be valid one
-      oid_t index_column = index_p->Cleanup(tuple_column);
+      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
       
       oid_t bind_ret;
       

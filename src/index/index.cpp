@@ -156,7 +156,7 @@ Index::~Index() {
  * would fail. In this case the caller does not have to check since assertion
  * fails inside this function
  */
-inline oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
+oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
   // This stores the mapping
   const std::vector<oid_t> &mapping = metadata->GetTupleToIndexMapping();
   
