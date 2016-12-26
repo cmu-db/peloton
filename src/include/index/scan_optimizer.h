@@ -270,6 +270,23 @@ class ConjunctionScanPredicate {
     const std::vector<oid_t> &column_id_list, 
     const std::vector<type::Value> &new_value_list) {
     
+    // Since we used low key and high key, this cannot be a point query
+    PL_ASSERT(is_point_query_ == false); 
+    PL_ASSERT(new_value_list.size() == column_id_list.size());
+    
+    int i = 0;
+    for(oid_t tuple_column : column_id_list) {
+      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
+      oid_t bind_ret = BindValueToIndexKey(index_p, 
+                                           new_value_list[i], 
+                                           low_key_p_, 
+                                           index_column);
+                                           
+      PL_ASSERT(bind_ret == INVALID_OID);
+      i++;
+    }
+    
+    return;
   }
 
   /*
