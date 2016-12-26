@@ -92,6 +92,44 @@ class ConjunctionScanPredicate {
   // at run time
   storage::Tuple *low_key_p_;
   storage::Tuple *high_key_p_;
+  
+ private:
+  
+  /*
+   * SetTupleColumnValueForKey() - Similar to SetTupleColumnValue() but only
+   *                               sets a given key
+   *
+   * This function is designed to work for range query. This function accepts 
+   * a key pointer, which must be either the low key or high key
+   */
+  void SetTupleColumnValueForKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list,
+    storage::Tuple *key_p) {
+    
+    // Since we used low key and high key, this cannot be a point query
+    PL_ASSERT(is_point_query_ == false); 
+    PL_ASSERT(new_value_list.size() == column_id_list.size());
+    
+    // We do not accept using other keys except 
+    // low key and high key of this instance
+    PA_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
+    
+    int i = 0;
+    for(oid_t tuple_column : column_id_list) {
+      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
+      oid_t bind_ret = BindValueToIndexKey(index_p, 
+                                           new_value_list[i], 
+                                           key_p, 
+                                           index_column);
+                                           
+      PL_ASSERT(bind_ret == INVALID_OID);
+      i++;
+    }
+    
+    return;
+  } 
 
  public:
   /*
@@ -218,6 +256,10 @@ class ConjunctionScanPredicate {
    *      so use this at your own risk
    *   4. column_id is the column ID inside table rather than inside index key
    *   5. The index must be the same as the index passed into the constructor
+   *
+   * Note that for this special case we do not call 
+   * SetTupleColumnValueForLowKey() because this function requires two traverses
+   * of the two lists in the argument which could be avoided
    */
   void SetTupleColumnValue(Index *index_p,
                            const std::vector<oid_t> &column_id_list, 
@@ -258,42 +300,6 @@ class ConjunctionScanPredicate {
     
     return;
   }
-
-  /*
-   * SetTupleColumnValueForKey() - Similar to SetTupleColumnValue() but only
-   *                               sets a given key
-   *
-   * This function is designed to work for range query. This function accepts 
-   * a key pointer, which must be either the low key or high key
-   */
-  void SetTupleColumnValueForKey(
-    Index *index_p,
-    const std::vector<oid_t> &column_id_list, 
-    const std::vector<type::Value> &new_value_list,
-    storage::Tuple *key_p) {
-    
-    // Since we used low key and high key, this cannot be a point query
-    PL_ASSERT(is_point_query_ == false); 
-    PL_ASSERT(new_value_list.size() == column_id_list.size());
-    
-    // We do not accept using other keys except 
-    // low key and high key of this instance
-    PA_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
-    
-    int i = 0;
-    for(oid_t tuple_column : column_id_list) {
-      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
-      oid_t bind_ret = BindValueToIndexKey(index_p, 
-                                           new_value_list[i], 
-                                           key_p, 
-                                           index_column);
-                                           
-      PL_ASSERT(bind_ret == INVALID_OID);
-      i++;
-    }
-    
-    return;
-  }
   
   /*
    * SetTupleColumnValueForLowKey() - Sets columns for low key
@@ -307,6 +313,22 @@ class ConjunctionScanPredicate {
                               column_id_list, 
                               new_value_list, 
                               low_key_p_);
+                              
+    return;
+  }
+  
+  /*
+   * SetTupleColumnValueForHighKey() - Sets columns for high key
+   */
+  inline void SetTupleColumnValueForHighKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list) {
+    
+    SetTupleColumnValueForKey(index_p, 
+                              column_id_list, 
+                              new_value_list, 
+                              high_key_p_);
                               
     return;
   }
