@@ -114,7 +114,7 @@ class ConjunctionScanPredicate {
     
     // We do not accept using other keys except 
     // low key and high key of this instance
-    PA_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
+    PL_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
     
     int i = 0;
     for(oid_t tuple_column : column_id_list) {
