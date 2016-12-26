@@ -260,12 +260,48 @@ class ConjunctionScanPredicate {
   }
 
   /*
+   * SetTupleColumnValueForKey() - Similar to SetTupleColumnValue() but only
+   *                               sets a given key
+   *
+   * This function is designed to work for range query. This function accepts 
+   * a key pointer, which must be either the low key or high key
+   */
+  void SetTupleColumnValueForKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list,
+    storage::Tuple *key_p) {
+    
+    // Since we used low key and high key, this cannot be a point query
+    PL_ASSERT(is_point_query_ == false); 
+    PL_ASSERT(new_value_list.size() == column_id_list.size());
+    
+    // We do not accept using other keys except 
+    // low key and high key of this instance
+    PA_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
+    
+    int i = 0;
+    for(oid_t tuple_column : column_id_list) {
+      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
+      oid_t bind_ret = BindValueToIndexKey(index_p, 
+                                           new_value_list[i], 
+                                           key_p, 
+                                           index_column);
+                                           
+      PL_ASSERT(bind_ret == INVALID_OID);
+      i++;
+    }
+    
+    return;
+  }
+  
+  /*
    * SetTupleColumnValueForLowKey() - Similar to SetTupleColumnValue() but only
    *                                  sets low key
    *
    * This function is designed to work for range query
    */
-  void SetTupleColumnValueForLowKey(
+  void SetTupleColumnValueForHighKey(
     Index *index_p,
     const std::vector<oid_t> &column_id_list, 
     const std::vector<type::Value> &new_value_list) {
