@@ -368,7 +368,7 @@ class IntsKey {
     const catalog::Schema *key_schema = tuple->GetSchema();
     
     // Need this to loop through columns
-    const int column_count = key_schema->GetColumnCount();
+    oid_t column_count = key_schema->GetColumnCount();
     
     // Use this to arrange bytes into the key
     int offset = 0;
@@ -383,51 +383,57 @@ class IntsKey {
     // **************************************************************
     
     // Loop from most significant column to least significant column
-    for (int ii = 0; ii < column_count; ii++) {
-      switch (key_schema->GetColumn(ii).column_type) {
+    for (oid_t column_id = 0; column_id < column_count; column_id++) {
+      // We act depending on the length of integer types
+      type::Type::TypeId column_type = key_schema->GetColumn(ii).column_type;
+      
+      switch (column_type) {
         case type::Type::BIGINT: {
-          type::Value val = tuple->GetValue(ii);
-          const int64_t value = type::ValuePeeker::PeekBigInt(val);
-          const uint64_t key_value =
-              ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
-                  value);
-          InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
+          int64_t data = tuple->GetInlinedDataOfType<int64_t>(column_id);
+          AddInteger<int64_t>(data, offset);
+          
+          // Advance offset to make the next offset correct
+          offset += sizeof(data);
+          
           break;
         }
         case type::Type::INTEGER: {
-          type::Value val = tuple->GetValue(ii);
-          const int32_t value = type::ValuePeeker::PeekInteger(val);
-          const uint32_t key_value =
-              ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
-                  value);
-          InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
+          int32_t data = tuple->GetInlinedDataOfType<int32_t>(column_id);
+          AddInteger<int32_t>(data, offset);
+          
+          // Advance offset to make the next offset correct
+          offset += sizeof(data);
+          
           break;
         }
         case type::Type::SMALLINT: {
-          type::Value val = tuple->GetValue(ii);
-          const int16_t value = type::ValuePeeker::PeekSmallInt(val);
-          const uint16_t key_value =
-              ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
-                  value);
-          InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
+          int16_t data = tuple->GetInlinedDataOfType<int16_t>(column_id);
+          AddInteger<int16_t>(data, offset);
+          
+          // Advance offset to make the next offset correct
+          offset += sizeof(data);
+          
           break;
         }
         case type::Type::TINYINT: {
-          type::Value val = tuple->GetValue(ii);
-          const int8_t value = type::ValuePeeker::PeekTinyInt(val);
-          const uint8_t key_value =
-              ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
-                  value);
-          InsertKeyValue<uint8_t>(key_offset, intra_key_offset, key_value);
+          int8_t data = tuple->GetInlinedDataOfType<int8_t>(column_id);
+          AddInteger<int8_t>(data, offset);
+          
+          // Advance offset to make the next offset correct
+          offset += sizeof(data);
+          
           break;
         }
-        default:
+        default: {
           throw IndexException(
               "We currently only support a specific set of "
               "column index sizes...");
           break;
-      }
-    }
+        } // default
+      } // switch
+    }// for all columns
+    
+    return;
   }
 
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
