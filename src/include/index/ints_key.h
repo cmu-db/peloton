@@ -513,23 +513,29 @@ class IntsEqualityChecker {
   IntsEqualityChecker() {};
 };
 
-/**
+/*
+ * class IntsHasher - Hash function for integer key
  *
+ * This function assumes the length of the integer key is always multiples
+ * of 64 bits (8 byte word).
  */
-template <std::size_t KeySize>
-struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
-  IntsHasher(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
-
+template <size_t KeySize>
+class IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
+ public:
+  static_assert(sizeof(IntsKey<KeySize>) % 8 == 0, 
+                "Please align the size of compact integer key");
+                 
   inline size_t operator()(IntsKey<KeySize> const &p) const {
-    size_t seed = 0;
-    for (size_t ii = 0; ii < KeySize; ii++) {
-      boost::hash_combine(seed, p.data[ii]);
+    size_t seed = 0UL;
+    size_t *ptr = p.GetRawData();
+    
+    // For every 8 byte word just combine it with the current seed
+    for (size_t i = 0; i < KeySize; i++) {
+      boost::hash_combine(seed, ptr[i]);
     }
+    
     return seed;
   }
-
-  const catalog::Schema *schema;
 
   IntsHasher(const IntsHasher &) {}
   IntsHasher() {};
