@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -134,6 +135,16 @@ class StringUtil {
     std::ostringstream os;
     os << SET_BOLD_TEXT << str << SET_PLAIN_TEXT;
     return (os.str());
+  }
+
+  /**
+   * Convert a string to its uppercase form
+   */
+  static std::string Upper(const std::string &str) {
+    std::string copy(str);
+    std::transform(copy.begin(), copy.end(), copy.begin(),
+                   [](unsigned char c) { return std::toupper(c); });
+    return (copy);
   }
 };
 

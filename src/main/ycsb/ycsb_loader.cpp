@@ -119,7 +119,7 @@ void CreateYCSBDatabase() {
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   user_table->AddIndex(pkey_index);
 }
 

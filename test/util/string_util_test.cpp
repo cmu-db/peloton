@@ -93,5 +93,12 @@ TEST_F(StringUtilTests, FormatSizeTest) {
   }
 }
 
+TEST_F(StringUtilTests, UpperTest) {
+  std::string input = "smoke crack rocks";
+  std::string expected = "SMOKE CRACK ROCKS";
+  std::string result = StringUtil::Upper(input);
+  EXPECT_EQ(expected, result);
+}
+
 }  // End test namespace
 }  // End peloton namespace

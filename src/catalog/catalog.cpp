@@ -9,16 +9,17 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "catalog/catalog.h"
 
 #include <iostream>
 
-#include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include "expression/string_functions.h"
 #include "expression/date_functions.h"
 #include "index/index_factory.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace catalog {
@@ -199,19 +200,22 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
 
+    std::string index_name = table->GetName() + "_PKEY";
+
     bool unique_keys = true;
 
-    index_metadata = new index::IndexMetadata("customer_pkey", GetNextOid(),
+    index_metadata = new index::IndexMetadata(
+        StringUtil::Upper(index_name), GetNextOid(),
         table->GetOid(), database->GetOid(), INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs,
         unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
     table->AddIndex(pkey_index);
 
-    LOG_TRACE("Successfully add primary key index for table %s",
-        table->GetName().c_str());
+    LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
+              pkey_index->GetName().c_str(), table->GetName().c_str());
     return Result::RESULT_SUCCESS;
   } else {
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
@@ -270,7 +274,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
 
     // Add index to table
     std::shared_ptr<index::Index> key_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
     table->AddIndex(key_index);
 
     LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
@@ -517,7 +521,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(type::Type::INTEGER,
-      type::Type::GetTypeSize(type::Type::INTEGER), "table_id", true);
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "table_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -547,7 +552,8 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(type::Type::INTEGER,
-      type::Type::GetTypeSize(type::Type::INTEGER), "database_id", true);
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "database_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,

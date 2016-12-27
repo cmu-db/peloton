@@ -116,7 +116,7 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     hyadapt_table->AddIndex(pkey_index);
   }
@@ -459,7 +459,7 @@ TEST_F(HybridIndexTests, HybridScanTest) {
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   hyadapt_table->AddIndex(pkey_index);
 

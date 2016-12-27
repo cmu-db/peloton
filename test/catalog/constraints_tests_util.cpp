@@ -217,7 +217,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
         key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(pkey_index);
 
@@ -232,7 +232,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
         INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(sec_index);
 
@@ -247,7 +247,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
         INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> unique_index(
-        index::IndexFactory::GetInstance(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(unique_index);
   }

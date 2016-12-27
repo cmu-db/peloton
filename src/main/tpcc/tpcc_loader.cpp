@@ -219,7 +219,7 @@ void CreateWarehouseTable() {
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   warehouse_table->AddIndex(pkey_index);
 }
@@ -306,7 +306,7 @@ void CreateDistrictTable() {
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   district_table->AddIndex(pkey_index);
 }
@@ -367,7 +367,7 @@ void CreateItemTable() {
       key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   item_table->AddIndex(pkey_index);
 }
 
@@ -504,7 +504,7 @@ void CreateCustomerTable() {
     tuple_schema, key_schema, key_attrs, true);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   customer_table->AddIndex(pkey_index);
 
   // Secondary index on C_W_ID, C_D_ID, C_LAST
@@ -518,7 +518,7 @@ void CreateCustomerTable() {
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   customer_table->AddIndex(skey_index);
 }
 
@@ -693,7 +693,7 @@ void CreateStockTable() {
       tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   stock_table->AddIndex(pkey_index);
 }
 
@@ -777,7 +777,7 @@ void CreateOrdersTable() {
 
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   orders_table->AddIndex(pkey_index);
 
   // Secondary index on O_C_ID, O_D_ID, O_W_ID
@@ -791,7 +791,7 @@ void CreateOrdersTable() {
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   orders_table->AddIndex(skey_index);
 }
 
@@ -847,7 +847,7 @@ void CreateNewOrderTable() {
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   new_order_table->AddIndex(pkey_index);
 }
 
@@ -943,7 +943,7 @@ void CreateOrderLineTable() {
 
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   order_line_table->AddIndex(pkey_index);
 
   // Secondary index on OL_O_ID, OL_D_ID, OL_W_ID
@@ -957,7 +957,7 @@ void CreateOrderLineTable() {
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
   order_line_table->AddIndex(skey_index);
 }
 

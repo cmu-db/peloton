@@ -111,7 +111,7 @@ static index::Index *BuildIndex() {
       true);  // unique_keys
 
   // Build index
-  index::Index *index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway

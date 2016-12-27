@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "common/printable.h"
 #include "catalog/constraint.h"
-#include "type/type.h"
 #include "common/macros.h"
+#include "common/printable.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace catalog {
@@ -28,12 +28,15 @@ class Column : public Printable {
   friend class Constraint;
 
  public:
-  Column() {};
+  Column() : column_type(type::Type::INVALID), fixed_length(INVALID_OID) {
+    // Nothing to see...
+  }
 
   Column(type::Type::TypeId value_type, oid_t column_length,
          std::string column_name, bool is_inlined = false,
          oid_t column_offset = INVALID_OID)
       : column_type(value_type),
+        fixed_length(INVALID_OID),
         column_name(column_name),
         is_inlined(is_inlined),
         column_offset(column_offset) {
@@ -72,11 +75,11 @@ class Column : public Printable {
 
   oid_t GetVariableLength() const { return variable_length; }
 
-  type::Type::TypeId GetType() const { return column_type; }
+  inline type::Type::TypeId GetType() const { return column_type; }
 
-  bool IsInlined() const { return is_inlined; }
+  inline bool IsInlined() const { return is_inlined; }
 
-  bool IsPrimary() const { return is_primary_; }
+  inline bool IsPrimary() const { return is_primary_; }
 
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
@@ -105,12 +108,16 @@ class Column : public Printable {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
+ private:
   // value type of column
-  type::Type::TypeId column_type = type::Type::INVALID;
+  type::Type::TypeId column_type;  //  = type::Type::INVALID;
 
   // if the column is not inlined, this is set to pointer size
   // else, it is set to length of the fixed length column
-  oid_t fixed_length = INVALID_OID;
+  oid_t fixed_length;  //  = INVALID_OID;
+
+ public:
+  // TODO: These should all be made private
 
   // if the column is inlined, this is set to 0
   // else, it is set to length of the variable length column

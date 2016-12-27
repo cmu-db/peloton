@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "common/printable.h"
-#include "catalog/column.h"
-#include "type/type.h"
 #include <memory>
+#include "catalog/column.h"
+#include "common/printable.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace catalog {
@@ -56,7 +55,7 @@ class Schema : public Printable {
   // Copy subset of columns in the given schema
   static Schema *CopySchema(const Schema *schema,
                             const std::vector<oid_t> &index_list);
-                            
+
   static Schema *FilterSchema(const Schema *schema,
                               const std::vector<oid_t> &set);
 
@@ -87,16 +86,16 @@ class Schema : public Printable {
   //===--------------------------------------------------------------------===//
 
   inline size_t GetOffset(const oid_t column_id) const {
-    return columns[column_id].column_offset;
+    return columns[column_id].GetOffset();
   }
 
   inline type::Type::TypeId GetType(const oid_t column_id) const {
-    return columns[column_id].column_type;
+    return columns[column_id].GetType();
   }
 
   // Return appropriate length based on whether column is inlined
   inline size_t GetAppropriateLength(const oid_t column_id) const {
-    auto is_inlined = columns[column_id].is_inlined;
+    auto is_inlined = columns[column_id].IsInlined();
     size_t column_length;
 
     if (is_inlined) {
@@ -110,25 +109,25 @@ class Schema : public Printable {
 
   // Returns fixed length
   inline size_t GetLength(const oid_t column_id) const {
-    return columns[column_id].fixed_length;
+    return columns[column_id].GetFixedLength();
   }
 
   inline size_t GetVariableLength(const oid_t column_id) const {
-    return columns[column_id].variable_length;
+    return columns[column_id].GetVariableLength();
   }
 
   inline bool IsInlined(const oid_t column_id) const {
-    return columns[column_id].is_inlined;
+    return columns[column_id].IsInlined();
   }
 
   inline const Column GetColumn(const oid_t column_id) const {
     return columns[column_id];
   }
 
-  inline oid_t GetColumnID(std::string col_name) const{
+  inline oid_t GetColumnID(std::string col_name) const {
     oid_t index = -1;
     for (oid_t i = 0; i < columns.size(); ++i) {
-      if (columns[i].column_name == col_name) {
+      if (columns[i].GetName() == col_name) {
         index = i;
         break;
       }
@@ -165,7 +164,7 @@ class Schema : public Printable {
 
   // Get the nullability of the column at a given index.
   inline bool AllowNull(const oid_t column_id) const {
-    for (auto constraint : columns[column_id].constraints) {
+    for (auto constraint : columns[column_id].GetConstraints()) {
       if (constraint.GetType() == CONSTRAINT_TYPE_NOTNULL) return false;
     }
     return true;
@@ -181,7 +180,7 @@ class Schema : public Printable {
   inline void AddConstraint(std::string column_name,
                             const catalog::Constraint &constraint) {
     for (size_t column_itr = 0; column_itr < columns.size(); column_itr++) {
-      if (columns[column_itr].column_name == column_name) {
+      if (columns[column_itr].GetName() == column_name) {
         columns[column_itr].AddConstraint(constraint);
       }
     }

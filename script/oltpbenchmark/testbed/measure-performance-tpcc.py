@@ -5,14 +5,15 @@ import sys
 import time
 import subprocess
 import re
+import argparse
 from subprocess import call
-
+from pprint import pprint
 
 cwd = os.getcwd()
 OLTP_HOME = "%s/oltpbench" % (cwd)
 
-db_host = 'dev1.db.pdl.cmu.local'
-db_port = '15721'
+db_host = None
+db_port = None
 
 thread_num = 1
 new_order_ratio = 100
@@ -21,12 +22,13 @@ order_status_ratio = 0
 delivery_ratio = 0
 stock_level_ratio = 0
 scale_factor = 1
-test_time = 60
-# test_time = 60
+TEST_TIME = 20
+# TEST_TIME = 60
 
 # Requires that peloton-testbed is in the home directory
 config_filename = "tpcc_config.xml"
-start_benchmark_script = "%s/oltpbenchmark -b tpcc -c " % (OLTP_HOME) + cwd + "/" + config_filename + " --histograms  --create=true --load=true --execute=true -s 5 -o "
+start_benchmark_script = "%s/oltpbenchmark -b tpcc -c " % (OLTP_HOME) + \
+                         cwd + "/" + config_filename + " --histograms  --create=true --load=true --execute=true -s 5 -o "
 
 parameters={}
 
@@ -41,7 +43,7 @@ def prepare_parameters():
     parameters["$SCALE_FACTOR"] = str(scale_factor)
     parameters["$IP"] = db_host
     parameters["$PORT"] = db_port
-    parameters["$TIME"] = str(test_time)
+    parameters["$TIME"] = str(TEST_TIME)
 
     template = ""
     with open("tpcc_template.xml") as in_file:
@@ -52,15 +54,26 @@ def prepare_parameters():
         out_file.write(template)
 
 def get_result_path():
-  global cwd
-  return "%s/outputfile_%d_%d_%d_%d_%d_%d" % (cwd, new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor)
+    global cwd
+    #base_dir = "%s/results/" % cwd
+    #if not os.path.exists(base_dir):
+        #os.mkdir(base_dir)
+    #return base_dir +
+    return "outputfile_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor)
 
 def start_bench():
+    global cwd
     # go to oltpbench directory
     os.chdir(os.path.expanduser(OLTP_HOME))
     # call("git pull origin master", shell=True)
+    
+    resultsDir = "results"
+    if not os.path.exists(resultsDir):
+        os.mkdir(resultsDir)
+    
     call("ant", shell=True)
-    cmd = start_benchmark_script + get_result_path() + " 2>&1 | tee %s.log" % (get_result_path())
+    cmd = start_benchmark_script + get_result_path() + " 2>&1 | tee results/%s.log" % (get_result_path())
+    print cmd
     call(cmd, shell=True)
 
 def collect_data(result_dir_name):
@@ -68,10 +81,38 @@ def collect_data(result_dir_name):
     os.system("rm -rf " + result_dir_name)
     os.system("mkdir " + result_dir_name)
     os.system("mv callgrind.out.* " + result_dir_name)
-    call("cat %s.log" % (get_result_path()), shell=True)
-    os.system("mv %s.* %s/" % (get_result_path(), result_dir_name))
+    call("cat %s/results/%s.log" % (OLTP_HOME, get_result_path()), shell=True)
+    os.system("mv %s/results/%s.* %s/" % (OLTP_HOME, get_result_path(), result_dir_name))
 
 if __name__ == "__main__":
+    aparser = argparse.ArgumentParser(description='Timeseries')
+    aparser.add_argument('db-host', help='DB Hostname')
+    aparser.add_argument('db-port', type=int, help='DB Port')
+    aparser.add_argument('--client-threads', type=int, metavar='N', \
+                         help='Number of client threads to use')
+    aparser.add_argument('--client-time', type=int, metavar='T', \
+                         help='How long to execute each benchmark trial')
+    args = vars(aparser.parse_args())
+    
+    ## ----------------------------------------------
+    ## ARGUMENT PROCESSING 
+    ## ----------------------------------------------
+    
+    db_host = str(args['db-host'])
+    db_port = str(args['db-port'])
+    
+    # If we are given a specific client thread count, then we will just test that
+    thread_counts = None
+    if "client_threads" in args and args["client_threads"]:
+        thread_counts = [ int(args["client_threads"]) ]
+    # Otherwise we will sweep across these numbers
+    else:
+        thread_counts = [1, 2, 4, 6, 8, 10, 16, 20, 24, 28, 32, 40, 48, 56, 64]
+    
+    if "client_time" in args and args["client_time"]:
+        TEST_TIME = int(args["client_time"])
+    
+    
     # 45:43:4:4:4
     # thread_num = 20
     new_order_ratio = 45
@@ -80,12 +121,13 @@ if __name__ == "__main__":
     delivery_ratio = 4
     stock_level_ratio = 4
 
-    # test_time = 1800
-    test_time = 60
-    for thread_num in [1, 2, 4, 6, 8, 10, 16, 20, 24, 28, 32, 40, 48, 56, 64]:
-    # for thread_num in [1]:
+    ## ----------------------------------------------
+    ## EXECUTE
+    ## ----------------------------------------------
+    for thread_num in thread_counts:
         prepare_parameters()
         scale_factor = thread_num
         start_bench()
         result_dir_name = "tpcc_collected_data_%d_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor, thread_num)
         collect_data(result_dir_name)
+## MAIN
