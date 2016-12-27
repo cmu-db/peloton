@@ -215,6 +215,13 @@ class IntsKey {
   }
   
   /*
+   * GetRawData() - Returns the raw data array
+   */
+  const char *GetRawData() const {
+    return key_data;
+  }
+  
+  /*
    * AddInteger() - Adds a new integer into the compact form
    *
    * Note that IntType must be of the following 8 types:
