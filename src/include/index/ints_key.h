@@ -346,6 +346,67 @@ class IntsKey {
     return;
   }
  
+ private:
+   
+  /*
+   * SetFromColumn() - Sets the value of a column into a given offset of
+   *                   this ints key
+   *
+   * This function returns a size_t which is the next starting offset
+   */
+  inline size_t SetFromColumn(oid_t column_id, 
+                              const catalog::Schema *key_schema, 
+                              oid_t offset) {
+    // We act depending on the length of integer types
+    type::Type::TypeId column_type = \
+      key_schema->GetColumn(column_id).column_type;
+    
+    switch (column_type) {
+      case type::Type::BIGINT: {
+        int64_t data = tuple->GetInlinedDataOfType<int64_t>(column_id);
+        AddInteger<int64_t>(data, offset);
+        
+        // Advance offset to make the next offset correct
+        offset += sizeof(data);
+        
+        break;
+      }
+      case type::Type::INTEGER: {
+        int32_t data = tuple->GetInlinedDataOfType<int32_t>(column_id);
+        AddInteger<int32_t>(data, offset);
+        
+        // Advance offset to make the next offset correct
+        offset += sizeof(data);
+        
+        break;
+      }
+      case type::Type::SMALLINT: {
+        int16_t data = tuple->GetInlinedDataOfType<int16_t>(column_id);
+        AddInteger<int16_t>(data, offset);
+        
+        // Advance offset to make the next offset correct
+        offset += sizeof(data);
+        
+        break;
+      }
+      case type::Type::TINYINT: {
+        int8_t data = tuple->GetInlinedDataOfType<int8_t>(column_id);
+        AddInteger<int8_t>(data, offset);
+        
+        // Advance offset to make the next offset correct
+        offset += sizeof(data);
+        
+        break;
+      }
+      default: {
+        throw IndexException(
+            "We currently only support a specific set of "
+            "column index sizes...");
+        break;
+      } // default
+    } // switch
+  }
+ 
  // The next are functions specific to Peloton
  public:
   
@@ -384,53 +445,7 @@ class IntsKey {
     
     // Loop from most significant column to least significant column
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
-      // We act depending on the length of integer types
-      type::Type::TypeId column_type = key_schema->GetColumn(ii).column_type;
       
-      switch (column_type) {
-        case type::Type::BIGINT: {
-          int64_t data = tuple->GetInlinedDataOfType<int64_t>(column_id);
-          AddInteger<int64_t>(data, offset);
-          
-          // Advance offset to make the next offset correct
-          offset += sizeof(data);
-          
-          break;
-        }
-        case type::Type::INTEGER: {
-          int32_t data = tuple->GetInlinedDataOfType<int32_t>(column_id);
-          AddInteger<int32_t>(data, offset);
-          
-          // Advance offset to make the next offset correct
-          offset += sizeof(data);
-          
-          break;
-        }
-        case type::Type::SMALLINT: {
-          int16_t data = tuple->GetInlinedDataOfType<int16_t>(column_id);
-          AddInteger<int16_t>(data, offset);
-          
-          // Advance offset to make the next offset correct
-          offset += sizeof(data);
-          
-          break;
-        }
-        case type::Type::TINYINT: {
-          int8_t data = tuple->GetInlinedDataOfType<int8_t>(column_id);
-          AddInteger<int8_t>(data, offset);
-          
-          // Advance offset to make the next offset correct
-          offset += sizeof(data);
-          
-          break;
-        }
-        default: {
-          throw IndexException(
-              "We currently only support a specific set of "
-              "column index sizes...");
-          break;
-        } // default
-      } // switch
     }// for all columns
     
     return;
