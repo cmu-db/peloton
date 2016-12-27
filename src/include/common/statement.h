@@ -42,6 +42,9 @@ class Statement {
 
   ~Statement();
 
+  static void ParseQueryType(const std::string &query_string,
+                             std::string& query_type);
+
   std::vector<FieldInfoType> GetTupleDescriptor() const;
 
   void SetStatementName(const std::string& statement_name);

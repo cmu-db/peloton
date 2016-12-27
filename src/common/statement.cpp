@@ -20,11 +20,16 @@ namespace peloton {
 Statement::Statement(const std::string& statement_name,
                      const std::string& query_string)
     : statement_name_(statement_name), query_string_(query_string) {
-  std::stringstream stream(query_string);
-  stream >> query_type_;
+  ParseQueryType(query_string_, query_type_);
 }
 
 Statement::~Statement() {}
+
+void Statement::ParseQueryType(const std::string &query_string,
+                               std::string &query_type) {
+  std::stringstream stream(query_string);
+  stream >> query_type;
+}
 
 std::vector<FieldInfoType> Statement::GetTupleDescriptor() const {
   return tuple_descriptor_;

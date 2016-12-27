@@ -173,14 +173,6 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
   rows_affected = numrows;
 }
 
-/* Gets the first token of a query */
-std::string get_query_type(std::string query) {
-  std::string query_type;
-  std::stringstream stream(query);
-  stream >> query_type;
-  return query_type;
-}
-
 void PacketManager::CompleteCommand(const std::string &query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
   pkt->msg_type = COMMAND_COMPLETE;
@@ -291,7 +283,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   // Read query string
   GetStringToken(pkt, query_string);
   skipped_stmt_ = false;
-  query_type = get_query_type(query_string);
+  Statement::ParseQueryType(query_string, query_type);
 
   // For an empty query or a query to be filtered, just send parse complete
   // response and don't execute
