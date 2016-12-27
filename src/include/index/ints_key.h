@@ -352,9 +352,14 @@ class IntsKey {
    * SetFromColumn() - Sets the value of a column into a given offset of
    *                   this ints key
    *
-   * This function returns a size_t which is the next starting offset
+   * This function returns a size_t which is the next starting offset.
+   *
+   * Note: Two column IDs are needed - one into the key schema which is used
+   * to determine the type of the column; another into the tuple to
+   * get data
    */
-  inline size_t SetFromColumn(oid_t column_id, 
+  inline size_t SetFromColumn(oid_t key_column_id, 
+                              oid_t tuple_column_id,
                               const catalog::Schema *key_schema, 
                               const storage::Tuple *tuple, 
                               size_t offset) {
@@ -444,7 +449,7 @@ class IntsKey {
     
     // Loop from most significant column to least significant column
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
-      offset = SetFromColumn(column_id, key_schema, tuple, offset);
+      offset = SetFromColumn(column_id, column_id, key_schema, tuple, offset);
       
       // We could either have it just after the array or inside the array
       PL_ASSERT(offset <= key_size_byte);
@@ -453,58 +458,42 @@ class IntsKey {
     return;
   }
 
-  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
+  /*
+   * SetFromTuple() - Sets an integer key from a tuple which contains a super
+   *                  set of columns
+   *
+   * We need an extra parameter telling us the subset of columns we would like
+   * include into the key.
+   *
+   * Argument "indices" maps the key column in the corresponding index to a
+   * column in the given tuple
+   */
+  inline void SetFromTuple(const storage::Tuple *tuple, 
+                           const int *indices,
                            const catalog::Schema *key_schema) {
-    PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
+    PL_ASSERT(tuple != nullptr);
+    PL_ASSERT(indices != nullptr);
+    PL_ASSERT(key_schema != nullptr);
+    
+    ZeroOut();
+    
     const int GetColumnCount = key_schema->GetColumnCount();
-    int key_offset = 0;
-    int intra_key_offset = sizeof(uint64_t) - 1;
-    for (int ii = 0; ii < GetColumnCount; ii++) {
-      switch (key_schema->GetColumn(ii).column_type) {
-        case type::Type::BIGINT: {
-          type::Value val = tuple->GetValue(indices[ii]);
-          const int64_t value = type::ValuePeeker::PeekBigInt(val);
-          const uint64_t key_value =
-              ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
-                  value);
-          InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
-          break;
-        }
-        case type::Type::INTEGER: {
-          type::Value val = tuple->GetValue(indices[ii]);
-          const int32_t value =
-              type::ValuePeeker::PeekInteger(val);
-          const uint32_t key_value =
-              ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
-                  value);
-          InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
-          break;
-        }
-        case type::Type::SMALLINT: {
-          type::Value val = tuple->GetValue(indices[ii]);
-          const int16_t value = type::ValuePeeker::PeekSmallInt(val);
-          const uint16_t key_value =
-              ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
-                  value);
-          InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
-          break;
-        }
-        case type::Type::TINYINT: {
-          type::Value val = tuple->GetValue(indices[ii]);
-          const int8_t value = type::ValuePeeker::PeekTinyInt(val);
-          const uint8_t key_value =
-              ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
-                  value);
-          InsertKeyValue<uint8_t>(key_offset, intra_key_offset, key_value);
-          break;
-        }
-        default:
-          throw IndexException(
-              "We currently only support a specific set of "
-              "column index sizes...");
-          break;
-      }
+    size_t offset = 0;
+    
+    for (oid_t key_column_id = 0; key_column_id < GetColumnCount; key_column_id++) {
+      // indices array maps key column to tuple column
+      // and it must have the same length as key schema
+      oid_t tuple_column_id = indices[key_column_id];
+      
+      offset = SetFromColumn(key_column_id, 
+                             tuple_column_id, 
+                             key_schema, 
+                             tuple, 
+                             offset); 
+      PL_ASSERT(offset <= key_size_byte);
     }
+    
+    return;
   }
 };
 
