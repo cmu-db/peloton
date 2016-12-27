@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -23,7 +22,6 @@
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
 
-
 using ::testing::NotNull;
 using ::testing::Return;
 
@@ -33,22 +31,51 @@ namespace test {
 
 typedef std::unique_ptr<expression::AbstractExpression> ExpPtr;
 
-class ExpressionTest : public PelotonTest {};
+class ExpressionTest: public PelotonTest {
+};
 
 //A simple test to make sure function expressions are filled in correctly
 TEST_F(ExpressionTest, FunctionExpressionTest) {
   // these will be gc'd by substr
-  auto str = expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetVarcharValue("test123"));
-  auto from = expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(2));
-  auto to = expression::ExpressionUtil::ConstantValueFactory(type::ValueFactory::GetIntegerValue(3));
+  auto str = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetVarcharValue("test123"));
+  auto from = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(2));
+  auto to = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(3));
   // these need unique ptrs to clean them
-  auto substr = ExpPtr(new expression::FunctionExpression("substr", {str, from ,to}));
-  auto not_found = ExpPtr(new expression::FunctionExpression("", {}));
+  auto substr = ExpPtr(new expression::FunctionExpression("substr", { str, from,
+      to }));
+  auto not_found = ExpPtr(new expression::FunctionExpression("", { }));
   // throw an exception when we cannot find a function
-  EXPECT_THROW(expression::ExpressionUtil::TransformExpression(nullptr, not_found.get()), peloton::Exception);
+  EXPECT_THROW(
+      expression::ExpressionUtil::TransformExpression(nullptr, not_found.get()),
+      peloton::Exception);
   expression::ExpressionUtil::TransformExpression(nullptr, substr.get());
   // do a lookup (we pass null schema because there are no tuple value expressions
   EXPECT_TRUE(substr->Evaluate(nullptr, nullptr, nullptr).CompareEquals(type::ValueFactory::GetVarcharValue("est")) == type::CMP_TRUE);
+
+}
+
+//A simple test to make sure function expressions are filled in correctly
+TEST_F(ExpressionTest, ExtractExpressionTest) {
+  // these will be cleaned up by extract_expr
+  auto part = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(EXPRESSION_DATE_PART_MILLISECONDS));
+  auto timestamp = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::CastAsTimestamp(
+          type::ValueFactory::GetVarcharValue(
+              "2013-02-16 20:38:40.000000+00")));
+
+  // these need unique ptrs to clean them
+  auto extract_expr = ExpPtr(new expression::FunctionExpression("extract", { part, timestamp }));
+
+  expression::ExpressionUtil::TransformExpression(nullptr, extract_expr.get());
+
+
+  // do a lookup (we pass null schema because there are no tuple value expressions
+  EXPECT_TRUE(
+      extract_expr->Evaluate(nullptr, nullptr, nullptr).IsNull());
 }
 
 }  // namespace test

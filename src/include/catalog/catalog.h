@@ -56,8 +56,8 @@ namespace catalog {
 struct FunctionData {
   // name of the function
   std::string func_name_;
-  // number of arguments
-  size_t num_arguments_;
+  // type of input arguments
+  std::vector<type::Type::TypeId> argument_types_;
   // funtion's return type
   type::Type::TypeId return_type_;
   // pointer to the funtion
@@ -180,11 +180,11 @@ class Catalog {
 
   // add and get methods for functions
   void AddFunction(
-      const std::string &name, const size_t num_arguments,
+      const std::string &name, const std::vector<type::Type::TypeId>& argument_types,
       const type::Type::TypeId return_type,
       type::Value (*func_ptr)(const std::vector<type::Value> &));
 
-  FunctionData GetFunction(const std::string &name);
+  const FunctionData GetFunction(const std::string &name);
 
   void RemoveFunction(const std::string &name);
 

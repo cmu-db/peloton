@@ -192,8 +192,8 @@ struct PARSER_CUST_LTYPE {
 %token TRANSACTION
 %token REFERENCES DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
 %token VARBINARY ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN BOOLEAN ADDRESS
-%token DATABASE SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
-%token INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL 
+%token DATABASE SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN EXTRACT
+%token INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
@@ -771,8 +771,11 @@ comp_expr:
 
 function_expr:
 		IDENTIFIER '(' expr_list ')' { $$ = new peloton::expression::FunctionExpression($1, *$3); delete $3; }
+// date functions
+	|	EXTRACT '(' IDENTIFIER FROM expr ')' { $$ = new peloton::expression::FunctionExpression("extract",
+					std::vector<peloton::expression::AbstractExpression*>{new peloton::expression::ConstantValueExpression(
+					peloton::type::ValueFactory::GetIntegerValue(peloton::StringToDatePart(CharsToStringDestructive($3)))), $5}); }
 	;
-
 
 aggregate_expr:
 		SUM '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_SUM, $3, $4); }
