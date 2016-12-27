@@ -554,7 +554,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   auto id_column = catalog::Column(type::Type::INTEGER,
                                    type::Type::GetTypeSize(type::Type::INTEGER),
                                    "database_id", true);
->>>>>>> 3eec96d... Fixed Catalog::CreatePrimaryIndex() so that we don't hardcode the name of every pkey index to be for the 'customer' table #431
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
