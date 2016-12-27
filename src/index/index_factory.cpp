@@ -35,7 +35,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   // Check whether the index key only has ints.
   // If so, then we can rock a specialized IntsKeyComparator
   // that is faster than the GenericComparator
-  bool ints_only = true;
+  bool ints_only = false; // FIXME: Re-enable this once the new IntsKey is working
   for (auto column : metadata->key_schema->GetColumns()) {
     auto col_type = column.GetType();
     if (col_type != type::Type::TINYINT && col_type != type::Type::SMALLINT &&
