@@ -356,7 +356,8 @@ class IntsKey {
    */
   inline size_t SetFromColumn(oid_t column_id, 
                               const catalog::Schema *key_schema, 
-                              oid_t offset) {
+                              const storage::Tuple *tuple, 
+                              size_t offset) {
     // We act depending on the length of integer types
     type::Type::TypeId column_type = \
       key_schema->GetColumn(column_id).column_type;
@@ -364,36 +365,32 @@ class IntsKey {
     switch (column_type) {
       case type::Type::BIGINT: {
         int64_t data = tuple->GetInlinedDataOfType<int64_t>(column_id);
-        AddInteger<int64_t>(data, offset);
         
-        // Advance offset to make the next offset correct
+        AddInteger<int64_t>(data, offset);
         offset += sizeof(data);
         
         break;
       }
       case type::Type::INTEGER: {
         int32_t data = tuple->GetInlinedDataOfType<int32_t>(column_id);
-        AddInteger<int32_t>(data, offset);
         
-        // Advance offset to make the next offset correct
+        AddInteger<int32_t>(data, offset);
         offset += sizeof(data);
         
         break;
       }
       case type::Type::SMALLINT: {
         int16_t data = tuple->GetInlinedDataOfType<int16_t>(column_id);
-        AddInteger<int16_t>(data, offset);
         
-        // Advance offset to make the next offset correct
+        AddInteger<int16_t>(data, offset);
         offset += sizeof(data);
         
         break;
       }
       case type::Type::TINYINT: {
         int8_t data = tuple->GetInlinedDataOfType<int8_t>(column_id);
-        AddInteger<int8_t>(data, offset);
         
-        // Advance offset to make the next offset correct
+        AddInteger<int8_t>(data, offset);
         offset += sizeof(data);
         
         break;
@@ -405,6 +402,8 @@ class IntsKey {
         break;
       } // default
     } // switch
+    
+    return;
   }
  
  // The next are functions specific to Peloton
@@ -432,7 +431,7 @@ class IntsKey {
     oid_t column_count = key_schema->GetColumnCount();
     
     // Use this to arrange bytes into the key
-    int offset = 0;
+    size_t offset = 0;
     
     // **************************************************************
     // NOTE: Avoid using tuple->GetValue() 
@@ -445,8 +444,11 @@ class IntsKey {
     
     // Loop from most significant column to least significant column
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
+      offset = SetFromColumn(column_id, key_schema, tuple, offset);
       
-    }// for all columns
+      // We could either have it just after the array or inside the array
+      PL_ASSERT(offset <= key_size_byte);
+    }
     
     return;
   }
