@@ -373,6 +373,15 @@ class IntsKey {
     // Use this to arrange bytes into the key
     int offset = 0;
     
+    // **************************************************************
+    // NOTE: Avoid using tuple->GetValue() 
+    // Because here what we need is: 
+    //   (1) Type of the column; 
+    //   (2) Integer value
+    // The former could be obtained in the schema, and the last is directly
+    // available from the inlined tuple data
+    // **************************************************************
+    
     // Loop from most significant column to least significant column
     for (int ii = 0; ii < column_count; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
