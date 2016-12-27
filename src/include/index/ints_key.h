@@ -497,23 +497,16 @@ class IntsKey {
   }
 };
 
-/**
- *
+/*
+ * class IntsEqualityChecker - Compares whether two integer keys are 
+ *                             equivalent
  */
 template <std::size_t KeySize>
 class IntsEqualityChecker {
  public:
   inline bool operator()(const IntsKey<KeySize> &lhs,
                          const IntsKey<KeySize> &rhs) const {
-    for (unsigned int ii = 0; ii < KeySize; ii++) {
-      const uint64_t *lvalue = &lhs.data[ii];
-      const uint64_t *rvalue = &rhs.data[ii];
-
-      if (*lvalue != *rvalue) {
-        return false;
-      }
-    }
-    return true;
+    return IntsKey<KeySize>::Equals(lhs, rhs);
   }
 
   IntsEqualityChecker(const IntsEqualityChecker &) {};
