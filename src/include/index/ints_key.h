@@ -365,11 +365,11 @@ class IntsKey {
                               size_t offset) {
     // We act depending on the length of integer types
     type::Type::TypeId column_type = \
-      key_schema->GetColumn(column_id).column_type;
+      key_schema->GetColumn(key_column_id).column_type;
     
     switch (column_type) {
       case type::Type::BIGINT: {
-        int64_t data = tuple->GetInlinedDataOfType<int64_t>(column_id);
+        int64_t data = tuple->GetInlinedDataOfType<int64_t>(tuple_column_id);
         
         AddInteger<int64_t>(data, offset);
         offset += sizeof(data);
@@ -377,7 +377,7 @@ class IntsKey {
         break;
       }
       case type::Type::INTEGER: {
-        int32_t data = tuple->GetInlinedDataOfType<int32_t>(column_id);
+        int32_t data = tuple->GetInlinedDataOfType<int32_t>(tuple_column_id);
         
         AddInteger<int32_t>(data, offset);
         offset += sizeof(data);
@@ -385,7 +385,7 @@ class IntsKey {
         break;
       }
       case type::Type::SMALLINT: {
-        int16_t data = tuple->GetInlinedDataOfType<int16_t>(column_id);
+        int16_t data = tuple->GetInlinedDataOfType<int16_t>(tuple_column_id);
         
         AddInteger<int16_t>(data, offset);
         offset += sizeof(data);
@@ -393,7 +393,7 @@ class IntsKey {
         break;
       }
       case type::Type::TINYINT: {
-        int8_t data = tuple->GetInlinedDataOfType<int8_t>(column_id);
+        int8_t data = tuple->GetInlinedDataOfType<int8_t>(tuple_column_id);
         
         AddInteger<int8_t>(data, offset);
         offset += sizeof(data);
