@@ -104,7 +104,7 @@ class Tuple : public AbstractTuple {
   // This is used to access the internal array to read simple data types 
   // such as integer type
   template <typename ColumnType>
-  inline ColumnType GetInlinedDataOfType(oid_t column_id);
+  inline ColumnType GetInlinedDataOfType(oid_t column_id) const;
 
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
