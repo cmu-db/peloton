@@ -329,7 +329,6 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
-  statement->SetQueryType(query_type);
   statement->SetParamTypes(param_types);
 
   // Stat
