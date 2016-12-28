@@ -525,54 +525,67 @@ class CompactIntegerKey {
     PL_ASSERT(key_schema != nullptr);
     
     size_t offset = 0;
+    // Yes the tuple has an allocated chunk of memory and is not just a wrapper
     storage::Tuple tuple(key_schema, true);
-    for (int i = 0, num_cols = key_schema->GetColumnCount(); i < num_cols;
-         i++) {
-      switch (key_schema->GetColumn(i).GetType()) {
+    oid_t column_count = key_schema->GetColumnCount();
+    
+    for (oid_t column_id = 0;
+         column_id < column_count;
+         column_id++) {
+      type::Type::TypeId column_type = \
+        key_schema->GetColumn(column_id).GetType();
+        
+      switch(column_type) {
         case type::Type::BIGINT: {
-          const uint64_t key_value =
-              ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
-          tuple.SetValue(
-              i, type::ValueFactory::GetBigIntValue(
-                     ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
-                         key_value)));
+          int64_t data = GetInteger<int64_t>(offset);
+          
+          tuple.SetValue(column_id, 
+                         type::ValueFactory::GetBigIntValue(data));
+          
+          offset += sizeof(data);
+          
           break;
         }
         case type::Type::INTEGER: {
-          const uint64_t key_value =
-              ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
-          tuple.SetValue(
-              i, type::ValueFactory::GetIntegerValue(
-                     ConvertUnsignedValueToSignedValue<int32_t, INT32_MAX>(
-                         key_value)));
+          int32_t data = GetInteger<int32_t>(offset);
+          
+          tuple.SetValue(column_id, 
+                         type::ValueFactory::GetIntegerValue(data));
+          
+          offset += sizeof(data);
+          
           break;
         }
         case type::Type::SMALLINT: {
-          const uint64_t key_value =
-              ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
-          tuple.SetValue(
-              i, type::ValueFactory::GetSmallIntValue(
-                     ConvertUnsignedValueToSignedValue<int16_t, INT16_MAX>(
-                         key_value)));
+          int16_t data = GetInteger<int16_t>(offset);
+          
+          tuple.SetValue(column_id, 
+                         type::ValueFactory::GetSmallIntValue(data));
+          
+          offset += sizeof(data);
+          
           break;
         }
         case type::Type::TINYINT: {
-          const uint64_t key_value =
-              ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
-          tuple.SetValue(
-              i, type::ValueFactory::GetTinyIntValue(
-                     ConvertUnsignedValueToSignedValue<int8_t, INT8_MAX>(
-                         key_value)));
+          int8_t data = GetInteger<int8_t>(offset);
+          
+          tuple.SetValue(column_id, 
+                         type::ValueFactory::GetTinyIntValue(data));
+          
+          offset += sizeof(data);
+          
           break;
         }
-        default:
+        default: {
           throw IndexException(
               "We currently only support a specific set of "
               "column index sizes...");
           break;
-      }  // SWITCH
-    }    // FOR
-    return (tuple);
+        }
+      } // switch
+    } // for
+    
+    return tuple;
   }
 };
 
