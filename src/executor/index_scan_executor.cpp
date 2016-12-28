@@ -548,7 +548,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 void IndexScanExecutor::CheckOpenRangeWithReturnedTuples(
     std::vector<ItemPointer> &tuple_locations) {
   while (left_open_) {
-    LOG_ERROR("Left open!");
+    LOG_TRACE("Range left open!");
     auto tuple_location_itr = tuple_locations.begin();
 
     if (tuple_location_itr == tuple_locations.end() ||
@@ -559,7 +559,7 @@ void IndexScanExecutor::CheckOpenRangeWithReturnedTuples(
   }
 
   while (right_open_) {
-    LOG_ERROR("Right open!");
+    LOG_TRACE("Range right open!");
     auto tuple_location_itr = tuple_locations.rbegin();
 
     if (tuple_location_itr == tuple_locations.rend() ||
@@ -575,7 +575,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
   PL_ASSERT(key_column_ids_.size() == expr_types_.size());
   PL_ASSERT(expr_types_.size() == values_.size());
 
-  LOG_ERROR("This is called!");
+  LOG_TRACE("Examining key conditions for the returned tuple.");
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -687,7 +687,8 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     }
   }
 
-  LOG_ERROR("Returning true!");
+  LOG_TRACE("Examination returning true.");
+
   return true;
 }
 
