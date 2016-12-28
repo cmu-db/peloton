@@ -71,7 +71,8 @@ SKIP_FILES_LIST = [
     "src/include/parser/prepare_statement.h",
     "src/include/parser/update_statement.h",
     "src/parser/table_ref.cpp",
-    "src/include/index/bloom_filter.h"
+    "src/include/index/bloom_filter.h",
+	"src/include/index/ints_key.h",
 ];
 
 ## ==============================================
