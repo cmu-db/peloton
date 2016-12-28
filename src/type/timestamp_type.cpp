@@ -117,18 +117,18 @@ void TimestampType::SerializeTo(const Value& val, SerializeOutput &out) const {
 }
 
 void TimestampType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
-                                 VarlenPool *pool UNUSED_ATTRIBUTE) const {
+                                 AbstractPool *pool UNUSED_ATTRIBUTE) const {
   *reinterpret_cast<uint64_t *>(storage) = val.value_.timestamp;
 }
 
 // Deserialize a value of the given type from the given storage space.
 Value TimestampType::DeserializeFrom(const char *storage ,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              const bool inlined UNUSED_ATTRIBUTE, AbstractPool *pool UNUSED_ATTRIBUTE) const{
   uint64_t val = *reinterpret_cast<const uint64_t *>(storage);
   return Value(type_id_, val);
 }
 Value TimestampType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              AbstractPool *pool UNUSED_ATTRIBUTE) const{
   return Value(type_id_, in.ReadLong());
 }
 

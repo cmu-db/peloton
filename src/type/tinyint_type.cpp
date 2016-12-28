@@ -396,7 +396,7 @@ void TinyintType::SerializeTo(const Value& val, SerializeOutput &out) const {
 }
 
 void TinyintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
-    VarlenPool *pool UNUSED_ATTRIBUTE) const {
+    AbstractPool *pool UNUSED_ATTRIBUTE) const {
 
   *reinterpret_cast<int8_t *>(storage) = val.value_.tinyint;
   return;
@@ -405,12 +405,12 @@ void TinyintType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
 
 // Deserialize a value of the given type from the given storage space.
 Value TinyintType::DeserializeFrom(const char *storage ,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              const bool inlined UNUSED_ATTRIBUTE, AbstractPool *pool UNUSED_ATTRIBUTE) const{
   int8_t val = *reinterpret_cast<const int8_t *>(storage);
   return Value(type_id_, val);
 }
 Value TinyintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              AbstractPool *pool UNUSED_ATTRIBUTE) const{
   return Value(type_id_, in.ReadByte());
 }
 

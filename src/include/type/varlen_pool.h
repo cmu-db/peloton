@@ -14,6 +14,7 @@
 
 #include "common/macros.h"
 #include "common/platform.h"
+#include "type/abstract_pool.h"
 #include "type/types.h"
 
 #include <stdint.h>
@@ -49,7 +50,7 @@ class Buffer {
 };
 
 // A memory pool that can quickly allocate chunks of memory to clients.
-class VarlenPool {
+class VarlenPool : public AbstractPool {
 public:
   // Create and return a new Varlen object of the given size. The caller may
   // optionally provide a pool from which memory can be requested to allocate

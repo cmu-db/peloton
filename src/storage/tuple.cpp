@@ -43,7 +43,7 @@ type::Value Tuple::GetValue(oid_t column_id) const {
 
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
-                     type::VarlenPool *data_pool) {
+                     type::AbstractPool *data_pool) {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
@@ -98,7 +98,7 @@ void Tuple::SetValue(oid_t column_offset, const type::Value &value) {
 
 void Tuple::SetFromTuple(const AbstractTuple *tuple,
                          const std::vector<oid_t> &columns,
-                         type::VarlenPool *pool) {
+                         type::AbstractPool *pool) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
@@ -111,7 +111,7 @@ void Tuple::SetFromTuple(const AbstractTuple *tuple,
 
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
-void Tuple::Copy(const void *source, type::VarlenPool *pool) {
+void Tuple::Copy(const void *source, type::AbstractPool *pool) {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
@@ -210,7 +210,7 @@ size_t Tuple::GetUninlinedMemorySize() const {
 }
 
 void Tuple::DeserializeFrom(UNUSED_ATTRIBUTE SerializeInput &input,
-                            UNUSED_ATTRIBUTE type::VarlenPool *dataPool) {
+                            UNUSED_ATTRIBUTE type::AbstractPool *dataPool) {
   /*PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 

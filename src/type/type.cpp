@@ -23,7 +23,7 @@
 #include "type/timestamp_type.h"
 #include "type/tinyint_type.h"
 #include "type/value.h"
-#include "type/varlen_pool.h"
+#include "type/abstract_pool.h"
 #include "type/varlen_type.h"
 
 namespace peloton {
@@ -304,7 +304,7 @@ void Type::HashCombine(const Value& val UNUSED_ATTRIBUTE,
 void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
                        char* storage UNUSED_ATTRIBUTE,
                        bool inlined UNUSED_ATTRIBUTE,
-                       VarlenPool* pool UNUSED_ATTRIBUTE) const {
+                       AbstractPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
@@ -315,11 +315,11 @@ void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
 // Deserialize a value of the given type from the given storage space.
 Value Type::DeserializeFrom(const char* storage UNUSED_ATTRIBUTE,
                             const bool inlined UNUSED_ATTRIBUTE,
-                            VarlenPool* pool UNUSED_ATTRIBUTE) const {
+                            AbstractPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 Value Type::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
-                            VarlenPool* pool UNUSED_ATTRIBUTE) const {
+                            AbstractPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 

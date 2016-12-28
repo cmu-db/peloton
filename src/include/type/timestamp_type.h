@@ -42,13 +42,13 @@ class TimestampType : public Type {
   // Serialize this value into the given storage space
   void SerializeTo(const Value& val, SerializeOutput &out) const override;
   void SerializeTo(const Value& val, char *storage, bool inlined,
-                   VarlenPool *pool) const override;
+                   AbstractPool *pool) const override;
 
   // Deserialize a value of the given type from the given storage space.
   Value DeserializeFrom(const char *storage,
-                                const bool inlined, VarlenPool *pool = nullptr) const override;
+                                const bool inlined, AbstractPool *pool = nullptr) const override;
   Value DeserializeFrom(SerializeInput &in,
-                                VarlenPool *pool = nullptr) const override;
+                                AbstractPool *pool = nullptr) const override;
 
   // Create a copy of this value
   Value Copy(const Value& val) const override;
