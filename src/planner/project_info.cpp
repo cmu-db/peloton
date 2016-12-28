@@ -50,8 +50,8 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // Get varlen pool
-  type::VarlenPool *pool = nullptr;
-  if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
+  type::AbstractPool *pool = nullptr;
+  if (econtext != nullptr) pool = econtext->GetPool();
 
   // (A) Execute target list
   for (auto target : target_list_) {

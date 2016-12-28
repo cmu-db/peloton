@@ -633,7 +633,7 @@ bool RunPayment(const size_t &thread_id){
   history_tuple->SetValue(6, type::ValueFactory::GetDoubleValue(h_amount), nullptr);
   // H_DATA
   // Note: workaround
-  history_tuple->SetValue(7, type::ValueFactory::GetVarcharValue(data_constant), context.get()->GetExecutorContextPool());
+  history_tuple->SetValue(7, type::ValueFactory::GetVarcharValue(data_constant), context.get()->GetPool());
 
   planner::InsertPlan history_insert_node(history_table, std::move(history_tuple));
   executor::InsertExecutor history_insert_executor(&history_insert_node, context.get());

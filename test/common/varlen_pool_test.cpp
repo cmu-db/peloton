@@ -28,8 +28,6 @@ class VarlenPoolTests : public PelotonTest {};
 
 const size_t str_len = 1000; // test string length
 
-using namespace peloton::common;
-
 // Round up to block size
 size_t get_align(size_t size) {
   if (size <= 16)

@@ -80,7 +80,7 @@ class Tuple : public AbstractTuple {
   // Assignment operator
   Tuple &operator=(const Tuple &rhs);
 
-  void Copy(const void *source, type::VarlenPool *pool = NULL);
+  void Copy(const void *source, type::AbstractPool *pool = NULL);
 
   /**
    * Set the tuple to point toward a given address in a table's
@@ -120,7 +120,7 @@ class Tuple : public AbstractTuple {
    * the strings will be allocated on the heap.
    */
   void SetValue(const oid_t column_id, const type::Value &value,
-                type::VarlenPool *dataPool);
+                type::AbstractPool *dataPool);
 
   // set value without data pool.
   void SetValue(oid_t column_id, const type::Value &value);
@@ -175,7 +175,7 @@ class Tuple : public AbstractTuple {
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const AbstractTuple *tuple,
                     const std::vector<oid_t> &columns,
-                    type::VarlenPool *pool);
+                    type::AbstractPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);
@@ -189,7 +189,7 @@ class Tuple : public AbstractTuple {
                          uint8_t *null_array);
   void SerializeWithHeaderTo(SerializeOutput &output);
 
-  void DeserializeFrom(SerializeInput &input, type::VarlenPool *pool);
+  void DeserializeFrom(SerializeInput &input, type::AbstractPool *pool);
   void DeserializeWithHeaderFrom(SerializeInput &input);
 
   size_t HashCode(size_t seed) const;
