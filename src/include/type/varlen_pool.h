@@ -71,23 +71,10 @@ public:
   // Allocate a contiguous block of memory of the given size. If the allocation
   // is successful a non-null pointer is returned. If the allocation fails, a
   // null pointer will be returned.
-  // Memory allocated block layout:
-  //  +------------------+---------+
-  //  | 8 byte ref count | payload |
-  //  +------------------+---------+
-  //                     ^
-  //                     Returned pointer pointed to the payload
   // TODO: Provide good error codes for failure cases.
   void *Allocate(size_t size);
 
-  // Add one to the reference count of a block of memory allocated by the pool
-  void AddRefCount(void *ptr);
-
-  // Get the reference count of a block of memory allocated by the pool
-  int64_t GetRefCount(void *ptr);
-
-  // Minus one to the reference count of a block of memory allocated by the pool
-  // Returns the provided chunk of memory back into the pool if the reference count becomes 0
+  // Returns the provided chunk of memory back into the pool
   void Free(void *ptr);
 
   // Get the total number of bytes that have been allocated by this pool.
@@ -96,30 +83,10 @@ public:
   // Get the maximum size of this pool.
   uint64_t GetMaximumPoolSize() const;
 
-  // Get the empty buffer count for a given empty buffer list id
-  // Return -1 if list_id is out of bound
-  int GetEmptyCountByListId(size_t list_id) const;
-
-  static size_t GetRefCountSize() {
-    return sizeof(std::atomic<int64_t>);
-  }
-
-private:
-  inline std::atomic<int64_t> *GetRefCntPtr(void *addr) {
-    char *ref_cnt_addr = ((char *) addr) - sizeof(std::atomic<int64_t>);
-    return reinterpret_cast<std::atomic<int64_t> *>(ref_cnt_addr);
-  }
-
-private:
+public:
   // All these fields are implementation specific.
   // This class must be thread-safe, very very fast and provide some form of
   // compaction or garbage-collection.
-
-  // Internal memory allocation
-  void *AllocateHelper(size_t size);
-
-  // Internal memory deallocation
-  void FreeHelper(void *ptr);
 
   // Buffer lists
   std::list<Buffer> buf_list_[MAX_LIST_NUM];
