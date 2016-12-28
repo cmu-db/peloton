@@ -354,12 +354,6 @@ void TileGroup::CopyColumnValueTo(TileGroup *dest_tg, oid_t dest_tuple_id, oid_t
     dest_tg->GetTile(dest_tile_offset), dest_tuple_id, dest_tile_col_id, src_tuple_id, src_tile_col_id);
 }
 
-Tile *TileGroup::GetTile(const oid_t tile_offset) const {
-  PL_ASSERT(tile_offset < tile_count);
-  Tile *tile = tiles[tile_offset].get();
-  return tile;
-}
-
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
   PL_ASSERT(tile_offset < tile_count);
