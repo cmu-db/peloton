@@ -66,8 +66,6 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   PL_ASSERT(index_ != nullptr);
 
-  index_predicate_ = node.GetIndexPredicate();
-
   result_itr_ = START_OID;
   result_.clear();
   done_ = false;
@@ -150,8 +148,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  // TODO: remove the unused code
-  // const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -161,7 +158,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &index_predicate_.GetConjunctionList()[0]);
+                 &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
@@ -336,8 +333,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  // TODO: remove the unused code
-  // const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -347,7 +343,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &index_predicate_.GetConjunctionList()[0]);
+                 &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
