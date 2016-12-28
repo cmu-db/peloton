@@ -716,10 +716,13 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
     case Result::RESULT_ABORTED:
-      LOG_DEBUG("Failed to execute: Conflicting txn aborted");
-      SendErrorResponse({{SQLSTATE_CODE_ERROR,
-                             SqlStateErrorCodeToString(
-                                 SqlStateErrorCode::SERIALIZATION_ERROR)}});
+      if (query_type != "ROLLBACK") {
+        LOG_DEBUG("Failed to execute: Conflicting txn aborted");
+        // Send an error response if the abort is not due to ROLLBACK query
+        SendErrorResponse({{SQLSTATE_CODE_ERROR,
+                               SqlStateErrorCodeToString(
+                                   SqlStateErrorCode::SERIALIZATION_ERROR)}});
+      }
       return;
     default: {
       auto tuple_descriptor = statement->GetTupleDescriptor();
