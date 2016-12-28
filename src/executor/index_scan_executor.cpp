@@ -76,6 +76,8 @@ bool IndexScanExecutor::DInit() {
   values_ = node.GetValues();
   runtime_keys_ = node.GetRunTimeKeys();
   predicate_ = node.GetPredicate();
+  left_open_ = node.GetLeftOpen();
+  right_open_ = node.GetRightOpen();
 
   if (runtime_keys_.size() != 0) {
     PL_ASSERT(runtime_keys_.size() == values_.size());
@@ -168,6 +170,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   auto current_txn = executor_context_->GetTransaction();
   auto &manager = catalog::Manager::GetInstance();
+  std::vector<ItemPointer> visible_tuple_locations;
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
 #ifdef LOG_TRACE_ENABLED
@@ -223,7 +226,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
-          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+          visible_tuple_locations.push_back(tuple_location);
         }
 
         break;
@@ -285,6 +288,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             index_->GetName().c_str());
 #endif
 
+  // Check whether the boundaries satisfy the required condition
+  CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
+
+  for (auto &visible_tuple_location : visible_tuple_locations) {
+    visible_tuples[visible_tuple_location.block].push_back(
+        visible_tuple_location.offset);
+  }
+
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
     auto &manager = catalog::Manager::GetInstance();
@@ -338,6 +349,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   auto current_txn = executor_context_->GetTransaction();
 
+  std::vector<ItemPointer> visible_tuple_locations;
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   auto &manager = catalog::Manager::GetInstance();
 
@@ -430,7 +442,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
-          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+          visible_tuple_locations.push_back(tuple_location);
         }
 
         break;
@@ -495,6 +507,14 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
             num_tuples_examined, index_->GetName().c_str(), num_blocks_reused);
 #endif
 
+  // Check whether the boundaries satisfy the required condition
+  CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
+
+  for (auto &visible_tuple_location : visible_tuple_locations) {
+    visible_tuples[visible_tuple_location.block].push_back(
+        visible_tuple_location.offset);
+  }
+
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
     auto &manager = catalog::Manager::GetInstance();
@@ -514,6 +534,151 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   done_ = true;
 
   LOG_TRACE("Result tiles : %lu", result_.size());
+
+  return true;
+}
+
+void IndexScanExecutor::CheckOpenRangeWithReturnedTuples(
+    std::vector<ItemPointer> &tuple_locations) {
+  // This is guaranteed by the index scan execution logic when we need to call
+  // this function.
+  PL_ASSERT(tuple_locations.size() > 0);
+
+  while (left_open_) {
+    auto tuple_location_itr = tuple_locations.begin();
+
+    if (CheckKeyConditions(*tuple_location_itr) == true)
+      left_open_ = false;
+    else
+      tuple_locations.erase(tuple_location_itr);
+  }
+
+  while (right_open_) {
+    auto tuple_location_itr = tuple_locations.rbegin();
+
+    if (CheckKeyConditions(*tuple_location_itr) == true)
+      right_open_ = false;
+    else
+      tuple_locations.pop_back();
+  }
+}
+
+bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
+  // The size of these three arrays must be the same
+  PL_ASSERT(key_column_ids_.size() == expr_types_.size());
+  PL_ASSERT(expr_types_.size() == values_.size());
+
+  LOG_ERROR("This is called!");
+
+  auto &manager = catalog::Manager::GetInstance();
+
+  auto tile_group = manager.GetTileGroup(tuple_location.block);
+  expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                       tuple_location.offset);
+
+  // This is the end of loop
+  oid_t cond_num = key_column_ids_.size();
+
+  // Go over each attribute in the list of comparison columns
+  // The key_columns_ids, as the name shows, saves the key column ids that
+  // have values and expression needs to be compared.
+
+  for (oid_t i = 0; i < cond_num; i++) {
+    // First retrieve the tuple column ID from the map, and then map
+    // it to the column ID of index key
+    oid_t tuple_key_column_id = key_column_ids_[i];
+
+    // This the comparison right hand side operand
+    const type::Value &rhs = values_[i];
+
+    // Also retrieve left hand side operand using index key column ID
+    type::Value val = (tuple.GetValue(tuple_key_column_id));
+    const type::Value &lhs = val;
+
+    // Expression type. We use this to interpret comparison result
+    //
+    // Possible results of comparison are: EQ, >, <
+    const ExpressionType expr_type = expr_types_[i];
+
+    // If the operation is IN, then use the boolean values comparator
+    // that determines whether a value is in a list
+    //
+    // To make the procedure more uniform, we interpret IN as EQUAL
+    // and NOT IN as NOT EQUAL, and react based on expression type below
+    // accordingly
+    /*if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
+      bool bret = lhs.InList(rhs);
+
+      if (bret == true) {
+        diff = VALUE_COMPARE_EQUAL;
+      } else {
+        diff = VALUE_COMPARE_NO_EQUAL;
+      }
+    } else {
+      diff = lhs.Compare(rhs);
+    }
+
+    LOG_TRACE("Difference : %d ", diff);*/
+    if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
+      switch (expr_type) {
+        case EXPRESSION_TYPE_COMPARE_EQUAL:
+        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+        case EXPRESSION_TYPE_COMPARE_IN:
+          continue;
+
+        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+          return false;
+
+        default:
+          throw IndexException("Unsupported expression type : " +
+                               std::to_string(expr_type));
+      }
+    } else {
+      if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
+        switch (expr_type) {
+          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+            continue;
+
+          case EXPRESSION_TYPE_COMPARE_EQUAL:
+          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+          case EXPRESSION_TYPE_COMPARE_IN:
+            return false;
+
+          default:
+            throw IndexException("Unsupported expression type : " +
+                                 std::to_string(expr_type));
+        }
+      } else {
+        if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
+          switch (expr_type) {
+            case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+            case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+            case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+              continue;
+
+            case EXPRESSION_TYPE_COMPARE_EQUAL:
+            case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+            case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+            case EXPRESSION_TYPE_COMPARE_IN:
+              return false;
+
+            default:
+              throw IndexException("Unsupported expression type : " +
+                                   std::to_string(expr_type));
+          }
+        } else {
+          // Since it is an AND predicate, we could directly return false
+          return false;
+        }
+      }
+    }
+  }
 
   return true;
 }

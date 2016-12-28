@@ -37,8 +37,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   void UpdatePredicate(const std::vector<oid_t> &key_column_ids
                            UNUSED_ATTRIBUTE,
-                       const std::vector<type::Value> &values
-                           UNUSED_ATTRIBUTE);
+                       const std::vector<type::Value> &values UNUSED_ATTRIBUTE);
 
   void ResetState() {
     result_.clear();
@@ -46,6 +45,12 @@ class IndexScanExecutor : public AbstractScanExecutor {
     result_itr_ = START_OID;
 
     done_ = false;
+
+    const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+
+    left_open_ = node.GetLeftOpen();
+
+    right_open_ = node.GetRightOpen();
   }
 
  protected:
@@ -59,6 +64,17 @@ class IndexScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
   bool ExecPrimaryIndexLookup();
   bool ExecSecondaryIndexLookup();
+
+  // When the required scan range has open boundaries, the tuples found by the
+  // index might not be exact since the index can only give back tuples in a
+  // close range. This function prune the head and the tail of the returned
+  // tuple list to get the correct result.
+  void CheckOpenRangeWithReturnedTuples(
+      std::vector<ItemPointer> &tuple_locations);
+
+  // Check whether the tuple at a given location satisfies the required
+  // conditions on key columns
+  bool CheckKeyConditions(const ItemPointer &tuple_location);
 
   //===--------------------------------------------------------------------===//
   // Executor State
@@ -100,6 +116,12 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<expression::AbstractExpression *> runtime_keys_;
 
   bool key_ready_ = false;
+
+  // whether the index scan range is left open
+  bool left_open_ = false;
+
+  // whether the index scan range is right open
+  bool right_open_ = false;
 };
 
 }  // namespace executor
