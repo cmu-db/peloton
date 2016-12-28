@@ -494,10 +494,12 @@ class CompactIntegerKey {
     
     ZeroOut();
     
-    const int GetColumnCount = key_schema->GetColumnCount();
+    oid_t column_count = key_schema->GetColumnCount();
     size_t offset = 0;
     
-    for (oid_t key_column_id = 0; key_column_id < GetColumnCount; key_column_id++) {
+    for (oid_t key_column_id = 0; 
+         key_column_id < column_count; 
+         key_column_id++) {
       // indices array maps key column to tuple column
       // and it must have the same length as key schema
       oid_t tuple_column_id = indices[key_column_id];
@@ -511,6 +513,66 @@ class CompactIntegerKey {
     }
     
     return;
+  }
+  
+  /*
+   * GetTupleForComparison() - Returns a tuple object for comparing function
+   *
+   * Given a schema we extract all fields from the compact integer key
+   */
+  const storage::Tuple 
+  GetTupleForComparison(const catalog::Schema *key_schema) const {
+    PL_ASSERT(key_schema != nullptr);
+    
+    size_t offset = 0;
+    storage::Tuple tuple(key_schema, true);
+    for (int i = 0, num_cols = key_schema->GetColumnCount(); i < num_cols;
+         i++) {
+      switch (key_schema->GetColumn(i).GetType()) {
+        case type::Type::BIGINT: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
+          tuple.SetValue(
+              i, type::ValueFactory::GetBigIntValue(
+                     ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
+                         key_value)));
+          break;
+        }
+        case type::Type::INTEGER: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
+          tuple.SetValue(
+              i, type::ValueFactory::GetIntegerValue(
+                     ConvertUnsignedValueToSignedValue<int32_t, INT32_MAX>(
+                         key_value)));
+          break;
+        }
+        case type::Type::SMALLINT: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
+          tuple.SetValue(
+              i, type::ValueFactory::GetSmallIntValue(
+                     ConvertUnsignedValueToSignedValue<int16_t, INT16_MAX>(
+                         key_value)));
+          break;
+        }
+        case type::Type::TINYINT: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
+          tuple.SetValue(
+              i, type::ValueFactory::GetTinyIntValue(
+                     ConvertUnsignedValueToSignedValue<int8_t, INT8_MAX>(
+                         key_value)));
+          break;
+        }
+        default:
+          throw IndexException(
+              "We currently only support a specific set of "
+              "column index sizes...");
+          break;
+      }  // SWITCH
+    }    // FOR
+    return (tuple);
   }
 };
 
