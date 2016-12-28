@@ -40,10 +40,11 @@ namespace index {
  */
 template <size_t KeySize>
 class CompactIntegerKey {
- private:
+ public:
   // This is the actual byte size of the key
   static constexpr size_t key_size_byte = KeySize * 8UL;
   
+ private:
   // This is the array we use for storing integers
   unsigned char key_data[key_size_byte];
  
@@ -221,7 +222,7 @@ class CompactIntegerKey {
   /*
    * GetRawData() - Returns the raw data array
    */
-  const char *GetRawData() const {
+  const unsigned char *GetRawData() const {
     return key_data;
   }
   
@@ -381,7 +382,7 @@ class CompactIntegerKey {
                               size_t offset) {
     // We act depending on the length of integer types
     type::Type::TypeId column_type = \
-      key_schema->GetColumn(key_column_id).column_type;
+      key_schema->GetColumn(key_column_id).GetType();
     
     switch (column_type) {
       case type::Type::BIGINT: {
@@ -424,7 +425,7 @@ class CompactIntegerKey {
       } // default
     } // switch
     
-    return;
+    return offset;
   }
  
  // The next are functions specific to Peloton
@@ -518,6 +519,7 @@ class CompactIntegerKey {
  */
 template <size_t KeySize>
 class IntsComparator {
+ public: 
   IntsComparator() {}
   IntsComparator(const IntsComparator &) {}
   
@@ -576,7 +578,7 @@ class IntsHasher {
    */
   inline size_t operator()(CompactIntegerKey<KeySize> const &p) const {
     size_t seed = 0UL;
-    size_t *ptr = p.GetRawData();
+    const size_t *ptr = reinterpret_cast<const size_t *>(p.GetRawData());
     
     // For every 8 byte word just combine it with the current seed
     for (size_t i = 0; 
