@@ -100,28 +100,36 @@ Index *IndexFactory::GetBTreeIntsKeyIndex(IndexMetadata *metadata) {
 
   if (key_size <= sizeof(uint64_t)) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<1>";
+    comparatorType = "CompactIntegerKey<1>";
 #endif
-    index = new BTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
-                           IntsEqualityChecker<1>>(metadata);
+    index = new BTreeIndex<CompactIntegerKey<1>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<1>,
+                           CompactIntsEqualityChecker<1>>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 2) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<2>";
+    comparatorType = "CompactIntegerKey<2>";
 #endif
-    index = new BTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
-                           IntsEqualityChecker<2>>(metadata);
+    index = new BTreeIndex<CompactIntegerKey<2>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<2>,
+                           CompactIntsEqualityChecker<2>>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 3) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<3>";
+    comparatorType = "CompactIntegerKey<3>";
 #endif
-    index = new BTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
-                           IntsEqualityChecker<3>>(metadata);
+    index = new BTreeIndex<CompactIntegerKey<3>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<3>,
+                           CompactIntsEqualityChecker<3>>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 4) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<4>";
+    comparatorType = "CompactIntegerKey<4>";
 #endif
-    index = new BTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
-                           IntsEqualityChecker<4>>(metadata);
+    index = new BTreeIndex<CompactIntegerKey<4>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<4>,
+                           CompactIntsEqualityChecker<4>>(metadata);
   } else {
     throw IndexException("Unsupported IntsKey scheme");
   }
@@ -203,36 +211,52 @@ Index *IndexFactory::GetBwTreeIntsKeyIndex(IndexMetadata *metadata) {
 
   if (key_size <= sizeof(uint64_t)) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<1>";
+    comparatorType = "CompactIntegerKey<1>";
 #endif
-    index =
-        new BWTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
-                        IntsEqualityChecker<1>, IntsHasher<1>,
-                        ItemPointerComparator, ItemPointerHashFunc>(metadata);
+    index = \
+        new BWTreeIndex<CompactIntegerKey<1>, 
+                        ItemPointer *, 
+                        CompactIntsComparator<1>,
+                        CompactIntsEqualityChecker<1>, 
+                        CompactIntsHasher<1>,
+                        ItemPointerComparator, 
+                        ItemPointerHashFunc>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 2) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<2>";
+    comparatorType = "CompactIntegerKey<2>";
 #endif
-    index =
-        new BWTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
-                        IntsEqualityChecker<2>, IntsHasher<2>,
-                        ItemPointerComparator, ItemPointerHashFunc>(metadata);
+    index = \
+        new BWTreeIndex<CompactIntegerKey<2>, 
+                        ItemPointer *, 
+                        CompactIntsComparator<2>,
+                        CompactIntsEqualityChecker<2>, 
+                        CompactIntsHasher<2>,
+                        ItemPointerComparator, 
+                        ItemPointerHashFunc>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 3) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<3>";
+    comparatorType = "CompactIntegerKey<3>";
 #endif
-    index =
-        new BWTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
-                        IntsEqualityChecker<3>, IntsHasher<3>,
-                        ItemPointerComparator, ItemPointerHashFunc>(metadata);
+    index = \
+        new BWTreeIndex<CompactIntegerKey<3>, 
+                        ItemPointer *, 
+                        CompactIntsComparator<3>,
+                        CompactIntsEqualityChecker<3>, 
+                        CompactIntsHasher<3>,
+                        ItemPointerComparator, 
+                        ItemPointerHashFunc>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 4) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "IntsKey<4>";
+    comparatorType = "CompactIntegerKey<4>";
 #endif
-    index =
-        new BWTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
-                        IntsEqualityChecker<4>, IntsHasher<4>,
-                        ItemPointerComparator, ItemPointerHashFunc>(metadata);
+    index = \
+        new BWTreeIndex<CompactIntegerKey<4>, 
+                        ItemPointer *, 
+                        CompactIntsComparator<4>,
+                        CompactIntsEqualityChecker<4>, 
+                        CompactIntsHasher<4>,
+                        ItemPointerComparator, 
+                        ItemPointerHashFunc>(metadata);
   } else {
     throw IndexException("Unsupported IntsKey scheme");
   }
@@ -323,7 +347,7 @@ std::string IndexFactory::GetInfo(IndexMetadata *metadata,
     os << column.GetName();
     first = false;
   }
-  os << ")";
+  os << ")"; 
   return (os.str());
 }
 

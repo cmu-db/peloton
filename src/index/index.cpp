@@ -145,6 +145,35 @@ Index::~Index() {
   return;
 }
 
+/*
+ * TupleColumnToKeyColumn() - Converts a column ID in the table to a column ID
+ *                            in the index key
+ *
+ * This function accepts an oid_t which must be in the range of table column
+ * ID, and returns a oid_t which is also inside the range of key columns.
+ * 
+ * If the table column does not have a corresponding key column then assertion
+ * would fail. In this case the caller does not have to check since assertion
+ * fails inside this function
+ */
+oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
+  // This stores the mapping
+  const std::vector<oid_t> &mapping = metadata->GetTupleToIndexMapping();
+  
+  // First check whether the table column ID is valid
+  PL_ASSERT(tuple_column_id < mapping.size());
+  oid_t key_column_id = mapping[tuple_column_id];
+  
+  // Then check the table column actually have a index key column
+  PL_ASSERT(key_column_id != INVALID_OID); 
+  
+  return key_column_id;
+}
+
+/*
+ * ScanTest() - This is used inside the unit test to check correctness of
+ *              scan optimizer - do not change or remove this
+ */
 void Index::ScanTest(const std::vector<type::Value> &value_list,
                      const std::vector<oid_t> &tuple_column_id_list,
                      const std::vector<ExpressionType> &expr_list,
@@ -292,84 +321,6 @@ bool Index::Compare(const AbstractTuple &index_key,
   }
 
   return true;
-}
-
-/*
- * ConstructLowerBoundTuple() - Constructs a lower bound of index key that
- *                              satisfies a given tuple
- *
- * The predicate has the same specification as those in Scan()
- * This function works even if there are multiple predicates on a single
- * column, e.g. both "<" and ">" could be applied to the same column. Even
- * in this case this function correctly identifies the lower bound, though not
- * necessarily be a tight lower bound.
- *
- * Note that this function logically is more proper to be in index_util than
- * in here. But it must call the varlen pool which makes moving out to
- * index_util impossible.
- */
-bool Index::ConstructLowerBoundTuple(
-    storage::Tuple *index_key, const std::vector<type::Value> &values,
-    const std::vector<oid_t> &key_column_ids,
-    const std::vector<ExpressionType> &expr_types) {
-  auto schema = index_key->GetSchema();
-  auto col_count = schema->GetColumnCount();
-  bool all_constraints_equal = true;
-
-  // Go over each column in the key tuple
-  // Setting either the placeholder or the min value
-  for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
-    // If the current column of the key has a predicate item
-    // specified in the key column list
-    auto key_column_itr =
-        std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
-
-    bool placeholder = false;
-    type::Value value = type::ValueFactory::GetBooleanValue(false);
-
-    // This column is part of the key column ids
-    if (key_column_itr != key_column_ids.end()) {
-      // This is the index into value list and expression type list
-      auto offset = std::distance(key_column_ids.begin(), key_column_itr);
-
-      // If there is an "==" for the current column then we could fix the value
-      // for index key
-      // otherwise we know not all predicate items are "==", i.e. this is not
-      // a point query and potentially requires an index scan
-      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-        placeholder = true;
-
-        // This is the value object that will be filled into the index key
-        value = values[offset];
-      } else {
-        all_constraints_equal = false;
-      }
-    }
-
-    LOG_TRACE("Column itr : %u  Placeholder : %d ", column_itr, placeholder);
-
-    // If the value is available then just fill in the value for the
-    // current "==" relation
-    // Otherwise if there is not a value then we could only fill the
-    // min possible value of the current column's type
-    if (placeholder == true) {
-      index_key->SetValue(column_itr, value, GetPool());
-    } else {
-      auto value_type = schema->GetType(column_itr);
-
-      index_key->SetValue(column_itr, type::Type::GetMinValue(value_type),
-                          GetPool());
-    }
-  }  // for all columns in index key
-
-  LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
-
-  // Corner case: If not all columns have a "==" relation then still
-  // this is not a point query though all existing predicate items
-  // are "=="
-  if (col_count > values.size()) all_constraints_equal = false;
-
-  return all_constraints_equal;
 }
 
 const std::string Index::GetInfo() const {

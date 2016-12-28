@@ -248,20 +248,36 @@ std::string BWTREE_INDEX_TYPE::GetTypeName() const { return "BWTree"; }
 // the following in order to instanciation the template before it is
 // linked in linking stage
 
-// IMPORTANT: Make sure you don't exceed INTSKEY_MAX_SLOTS
+// IMPORTANT: Make sure you don't exceed CompactIntegerKey_MAX_SLOTS
 
-template class BWTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
-                           IntsEqualityChecker<1>, IntsHasher<1>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
-                           IntsEqualityChecker<2>, IntsHasher<2>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
-                           IntsEqualityChecker<3>, IntsHasher<3>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
-                           IntsEqualityChecker<4>, IntsHasher<4>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntegerKey<1>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<1>,
+                           CompactIntsEqualityChecker<1>, 
+                           CompactIntsHasher<1>,
+                           ItemPointerComparator, 
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntegerKey<2>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<2>,
+                           CompactIntsEqualityChecker<2>, 
+                           CompactIntsHasher<2>,
+                           ItemPointerComparator, 
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntegerKey<3>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<3>,
+                           CompactIntsEqualityChecker<3>, 
+                           CompactIntsHasher<3>,
+                           ItemPointerComparator, 
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntegerKey<4>, 
+                           ItemPointer *, 
+                           CompactIntsComparator<4>,
+                           CompactIntsEqualityChecker<4>, 
+                           CompactIntsHasher<4>,
+                           ItemPointerComparator, 
+                           ItemPointerHashFunc>;
 
 // Generic key
 template class BWTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,

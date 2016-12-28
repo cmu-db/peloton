@@ -92,6 +92,44 @@ class ConjunctionScanPredicate {
   // at run time
   storage::Tuple *low_key_p_;
   storage::Tuple *high_key_p_;
+  
+ private:
+  
+  /*
+   * SetTupleColumnValueForKey() - Similar to SetTupleColumnValue() but only
+   *                               sets a given key
+   *
+   * This function is designed to work for range query. This function accepts 
+   * a key pointer, which must be either the low key or high key
+   */
+  void SetTupleColumnValueForKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list,
+    storage::Tuple *key_p) {
+    
+    // Since we used low key and high key, this cannot be a point query
+    PL_ASSERT(is_point_query_ == false); 
+    PL_ASSERT(new_value_list.size() == column_id_list.size());
+    
+    // We do not accept using other keys except 
+    // low key and high key of this instance
+    PL_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
+    
+    int i = 0;
+    for(oid_t tuple_column : column_id_list) {
+      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
+      oid_t bind_ret = BindValueToIndexKey(index_p, 
+                                           new_value_list[i], 
+                                           key_p, 
+                                           index_column);
+                                           
+      PL_ASSERT(bind_ret == INVALID_OID);
+      i++;
+    }
+    
+    return;
+  } 
 
  public:
   /*
@@ -202,6 +240,96 @@ class ConjunctionScanPredicate {
       delete high_key_p_;
     }
 
+    return;
+  }
+  
+  /*
+   * SetTupleColumnValue() - Sets a value for a particular column inside 
+   *                         both low key and high key
+   *
+   * This function behaves in a way like this:
+   *   1. For non-point query the same key field in both low key and high key
+   *      is set
+   *   2. For point query the low key will be updated
+   *   3. This function does not deal with range queries - it knows no semantics
+   *      of range query and the expression type for each index key column
+   *      so use this at your own risk
+   *   4. column_id is the column ID inside table rather than inside index key
+   *   5. The index must be the same as the index passed into the constructor
+   *
+   * Note that for this special case we do not call 
+   * SetTupleColumnValueForLowKey() because this function requires two traverses
+   * of the two lists in the argument which could be avoided
+   */
+  void SetTupleColumnValue(Index *index_p,
+                           const std::vector<oid_t> &column_id_list, 
+                           const std::vector<type::Value> &new_value_list) {
+    // They are one to one
+    PL_ASSERT(new_value_list.size() == column_id_list.size());
+    
+    // This is used to address new_value_list
+    int i = 0;
+    for(oid_t tuple_column : column_id_list) {
+      // Translate tuple column to index column
+      // This function guarantees the return value must be valid one
+      oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
+      
+      oid_t bind_ret;
+      
+      // Always bind the value to low key
+      // It should return INVALID_OID since we do not have any
+      // late binding here
+      bind_ret = BindValueToIndexKey(index_p, 
+                                     new_value_list[i], 
+                                     low_key_p_, 
+                                     index_column);
+      PL_ASSERT(bind_ret == INVALID_OID);
+      
+      // is_point_query_ is only determined by expression type
+      // Also if not point query then also bind to high key
+      if(is_point_query_ == true) {
+        bind_ret = BindValueToIndexKey(index_p, 
+                                     new_value_list[i], 
+                                     high_key_p_, 
+                                     index_column);
+        PL_ASSERT(bind_ret == INVALID_OID); 
+      }
+      
+      i++;
+    }
+    
+    return;
+  }
+  
+  /*
+   * SetTupleColumnValueForLowKey() - Sets columns for low key
+   */
+  inline void SetTupleColumnValueForLowKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list) {
+    
+    SetTupleColumnValueForKey(index_p, 
+                              column_id_list, 
+                              new_value_list, 
+                              low_key_p_);
+                              
+    return;
+  }
+  
+  /*
+   * SetTupleColumnValueForHighKey() - Sets columns for high key
+   */
+  inline void SetTupleColumnValueForHighKey(
+    Index *index_p,
+    const std::vector<oid_t> &column_id_list, 
+    const std::vector<type::Value> &new_value_list) {
+    
+    SetTupleColumnValueForKey(index_p, 
+                              column_id_list, 
+                              new_value_list, 
+                              high_key_p_);
+                              
     return;
   }
 
@@ -495,6 +623,10 @@ class IndexScanPredicate {
  public:
   /*
    * Constructor - Initialize nothing
+   *
+   * Please note that we do not push any conjunction scan predicate into the
+   * list here because they are usually done in another stage after the 
+   * containing IndexScanPlan has been initialized
    */
   IndexScanPredicate() : conjunction_list_{}, full_index_scan_{false} {}
 

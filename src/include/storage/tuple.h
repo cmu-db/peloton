@@ -101,6 +101,11 @@ class Tuple : public AbstractTuple {
   // Getters and Setters
   //===--------------------------------------------------------------------===//
 
+  // This is used to access the internal array to read simple data types 
+  // such as integer type
+  template <typename ColumnType>
+  inline ColumnType GetInlinedDataOfType(oid_t column_id) const;
+
   // Get the value of a specified column (const)
   // (expensive) checks the schema to see how to return the Value.
   type::Value GetValue(oid_t column_id) const;
@@ -218,6 +223,30 @@ class Tuple : public AbstractTuple {
 //===--------------------------------------------------------------------===//
 // Implementation
 //===--------------------------------------------------------------------===//
+
+/*
+ * GetInlineDataOfType() - This functions returns a reinterpreted object of
+ *                         a type given by the caller
+ *
+ * Please note this function simply translates column ID into offsets into
+ * the data array. Non-inlined objects and objects that need special treatment
+ * could not be copied like this, and they must use a Value object 
+ *
+ * NOTE: It assumes all fileds are inlined. This should be checked elsewhere
+ */
+template <typename ColumnType>
+inline ColumnType Tuple::GetInlinedDataOfType(oid_t column_id) const {
+  // The requested field must be inlined
+  PL_ASSERT(tuple_schema->IsInlined(column_id) == true);
+  PL_ASSERT(column_id < GetColumnCount());
+  
+  // Translates column ID into a pointer and converts it to the 
+  // requested type
+  const ColumnType *ptr = \
+    reinterpret_cast<const ColumnType *>(GetDataPtr(column_id));
+  
+  return *ptr;
+}
 
 // Setup the tuple given the specified data location and schema
 inline Tuple::Tuple(char *data, catalog::Schema *schema) {
