@@ -15,9 +15,12 @@
 #include <vector>
 
 #include "executor/abstract_scan_executor.h"
-#include "planner/index_scan_plan.h"
 
 namespace peloton {
+
+namespace index {
+class Index;
+}
 
 namespace storage {
 class AbstractTable;
@@ -39,19 +42,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
                            UNUSED_ATTRIBUTE,
                        const std::vector<type::Value> &values UNUSED_ATTRIBUTE);
 
-  void ResetState() {
-    result_.clear();
-
-    result_itr_ = START_OID;
-
-    done_ = false;
-
-    const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
-
-    left_open_ = node.GetLeftOpen();
-
-    right_open_ = node.GetRightOpen();
-  }
+  void ResetState();
 
  protected:
   bool DInit();

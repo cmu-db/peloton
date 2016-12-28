@@ -27,6 +27,7 @@
 #include "expression/abstract_expression.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
+#include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
@@ -702,6 +703,20 @@ void IndexScanExecutor::UpdatePredicate(
       }
     }
   }
+}
+
+void IndexScanExecutor::ResetState() {
+  result_.clear();
+
+  result_itr_ = START_OID;
+
+  done_ = false;
+
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+
+  left_open_ = node.GetLeftOpen();
+
+  right_open_ = node.GetRightOpen();
 }
 
 }  // namespace executor
