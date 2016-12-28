@@ -42,6 +42,9 @@ class Statement {
 
   ~Statement();
 
+  static void ParseQueryType(const std::string &query_string,
+                             std::string& query_type);
+
   std::vector<FieldInfoType> GetTupleDescriptor() const;
 
   void SetStatementName(const std::string& statement_name);
@@ -51,8 +54,6 @@ class Statement {
   void SetQueryString(const std::string& query_string);
 
   std::string GetQueryString() const;
-
-  void SetQueryType(const std::string& query_type);
 
   std::string GetQueryType() const;
 
@@ -68,22 +69,22 @@ class Statement {
 
  private:
   // logical name of statement
-  std::string statement_name;
+  std::string statement_name_;
 
   // query string
-  std::string query_string;
+  std::string query_string_;
 
   // first token in query
-  std::string query_type;
+  std::string query_type_;
 
   // format codes of the parameters
-  std::vector<int32_t> param_types;
+  std::vector<int32_t> param_types_;
 
   // schema of result tuple
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<FieldInfoType> tuple_descriptor_;
 
   // cached plan tree
-  std::shared_ptr<planner::AbstractPlan> plan_tree;
+  std::shared_ptr<planner::AbstractPlan> plan_tree_;
 };
 
 }  // namespace peloton
