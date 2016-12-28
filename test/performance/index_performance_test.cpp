@@ -73,7 +73,7 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
       unique_keys);
 
   // Build index
-  index::Index *index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
   EXPECT_TRUE(index != NULL);
 
   return index;

@@ -15,6 +15,10 @@
 namespace peloton {
 namespace index {
 
+// This is the maximum number of 8-byte slots that we will pack into a single
+// IntsKey template. You should not instantiate anything with more than this
+#define INTSKEY_MAX_SLOTS 4
+
 /*
  * class CompactIntegerKey - Compact representation of multifield integers
  * 
@@ -443,7 +447,7 @@ class CompactIntegerKey {
     // This returns schema of the tuple
     // Note that the schema must contain only integral type
     const catalog::Schema *key_schema = tuple->GetSchema();
-    
+
     // Need this to loop through columns
     oid_t column_count = key_schema->GetColumnCount();
     

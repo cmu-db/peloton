@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "common/harness.h"
+#include "gtest/gtest.h"
 
 #include "common/logger.h"
 #include "common/platform.h"
@@ -38,9 +38,6 @@ std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
 // of the test, this needs to be made as a global static
 static IndexType index_type = INDEX_TYPE_BWTREE;
 
-// Uncomment this to enable BwTree as index being tested
-// static IndexType index_type = INDEX_TYPE_BWTREE;
-
 /*
  * BuildIndex() - Builds an index with 4 columns, the first 2 being indexed
  */
@@ -62,18 +59,21 @@ index::Index *BuildIndex(const bool unique_keys) {
   // The size of the key is:
   //   integer 4 + varchar 8 = total 12
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "A", true);
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+                          true);
 
   catalog::Column column2(type::Type::VARCHAR, 1024, "B", false);
 
   // The following twoc constitutes tuple schema but does not appear in index
 
-  catalog::Column column3(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
-                          "C", true);
+  catalog::Column column3(type::Type::DECIMAL,
+                          type::Type::GetTypeSize(type::Type::DECIMAL), "C",
+                          true);
 
-  catalog::Column column4(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "D", true);
+  catalog::Column column4(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "D",
+                          true);
 
   // Use the first two columns to build key schema
 
@@ -115,7 +115,7 @@ index::Index *BuildIndex(const bool unique_keys) {
   // and transforms into the correct index key format, so the caller
   // do not need to worry about the actual implementation of the index
   // key, and only passing tuple key suffices
-  index::Index *index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway
@@ -158,8 +158,8 @@ TEST_F(IndexTests, BasicTest) {
 }
 
 // INSERT HELPER FUNCTION
-void InsertTest(index::Index *index, type::VarlenPool *pool, size_t scale_factor,
-                UNUSED_ATTRIBUTE uint64_t thread_itr) {
+void InsertTest(index::Index *index, type::VarlenPool *pool,
+                size_t scale_factor, UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
     // Insert a bunch of keys based on scale itr
@@ -171,15 +171,20 @@ void InsertTest(index::Index *index, type::VarlenPool *pool, size_t scale_factor
     std::unique_ptr<storage::Tuple> keynonce(
         new storage::Tuple(key_schema, true));
 
-    key0->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key0->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
     key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
-    key1->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key1->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
     key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
-    key2->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key2->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
     key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
-    key3->SetValue(0, type::ValueFactory::GetIntegerValue(400 * scale_itr), pool);
+    key3->SetValue(0, type::ValueFactory::GetIntegerValue(400 * scale_itr),
+                   pool);
     key3->SetValue(1, type::ValueFactory::GetVarcharValue("d"), pool);
-    key4->SetValue(0, type::ValueFactory::GetIntegerValue(500 * scale_itr), pool);
+    key4->SetValue(0, type::ValueFactory::GetIntegerValue(500 * scale_itr),
+                   pool);
     key4->SetValue(1, type::ValueFactory::GetVarcharValue(
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -231,8 +236,8 @@ void InsertTest(index::Index *index, type::VarlenPool *pool, size_t scale_factor
 }
 
 // DELETE HELPER FUNCTION
-void DeleteTest(index::Index *index, type::VarlenPool *pool, size_t scale_factor,
-                UNUSED_ATTRIBUTE uint64_t thread_itr) {
+void DeleteTest(index::Index *index, type::VarlenPool *pool,
+                size_t scale_factor, UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
     // Delete a bunch of keys based on scale itr
@@ -242,15 +247,20 @@ void DeleteTest(index::Index *index, type::VarlenPool *pool, size_t scale_factor
     std::unique_ptr<storage::Tuple> key3(new storage::Tuple(key_schema, true));
     std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema, true));
 
-    key0->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key0->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
     key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
-    key1->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key1->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
     key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
-    key2->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr), pool);
+    key2->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
     key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
-    key3->SetValue(0, type::ValueFactory::GetIntegerValue(400 * scale_itr), pool);
+    key3->SetValue(0, type::ValueFactory::GetIntegerValue(400 * scale_itr),
+                   pool);
     key3->SetValue(1, type::ValueFactory::GetVarcharValue("d"), pool);
-    key4->SetValue(0, type::ValueFactory::GetIntegerValue(500 * scale_itr), pool);
+    key4->SetValue(0, type::ValueFactory::GetIntegerValue(500 * scale_itr),
+                   pool);
     key4->SetValue(1, type::ValueFactory::GetVarcharValue(
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
                           "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
@@ -343,7 +353,7 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyDeleteTest) {
-  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  auto pool = TestingHarness::GetIndex().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -475,7 +485,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
-  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  auto pool = TestingHarness::GetIndex().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -722,9 +732,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key0_val0, key0_val1,
-       key2_val0, key2_val1},
-      {0, 1, 0, 1},
+      {key0_val0, key0_val1, key2_val0, key2_val1}, {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
@@ -737,12 +745,11 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   location_ptrs.clear();
 
-  index->ScanTest({key0_val0, key0_val1,
-                   key4_val0, key4_val1},
-                  {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
-                                 EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-                                 EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-                                 EXPRESSION_TYPE_COMPARE_LESSTHAN},
+  index->ScanTest({key0_val0, key0_val1, key4_val0, key4_val1}, {0, 1, 0, 1},
+                  {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+                   EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+                   EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+                   EXPRESSION_TYPE_COMPARE_LESSTHAN},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
@@ -814,9 +821,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   index->ScanTest(
-      {key0_val0, key0_val1,
-       key2_val0, key2_val1},
-      {0, 1, 0, 1},
+      {key0_val0, key0_val1, key2_val0, key2_val1}, {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
@@ -829,12 +834,11 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   location_ptrs.clear();
 
-  index->ScanTest({key0_val0, key0_val1,
-                   key4_val0, key4_val1},
-                  {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
-                                 EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-                                 EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-                                 EXPRESSION_TYPE_COMPARE_LESSTHAN},
+  index->ScanTest({key0_val0, key0_val1, key4_val0, key4_val1}, {0, 1, 0, 1},
+                  {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+                   EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+                   EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+                   EXPRESSION_TYPE_COMPARE_LESSTHAN},
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {

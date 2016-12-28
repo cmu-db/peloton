@@ -9,23 +9,23 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#include "catalog/schema.h"
 
 #include <algorithm>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
-#include "catalog/schema.h"
 #include "common/macros.h"
 
 namespace peloton {
 namespace catalog {
 
 // Helper function for creating TupleSchema
-void Schema::CreateTupleSchema(const std::vector<type::Type::TypeId> &column_types,
-                               const std::vector<oid_t> &column_lengths,
-                               const std::vector<std::string> &column_names,
-                               const std::vector<bool> &is_inlined) {
+void Schema::CreateTupleSchema(
+    const std::vector<type::Type::TypeId> &column_types,
+    const std::vector<oid_t> &column_lengths,
+    const std::vector<std::string> &column_names,
+    const std::vector<bool> &is_inlined) {
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;
@@ -35,7 +35,7 @@ void Schema::CreateTupleSchema(const std::vector<type::Type::TypeId> &column_typ
                   column_names[column_itr], is_inlined[column_itr],
                   column_offset);
 
-    column_offset += column.fixed_length;
+    column_offset += column.GetFixedLength();
 
     columns.push_back(std::move(column));
 
@@ -63,22 +63,22 @@ Schema::Schema(const std::vector<Column> &columns)
   std::vector<bool> is_inlined;
 
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    column_types.push_back(columns[column_itr].column_type);
+    column_types.push_back(columns[column_itr].GetType());
 
     if (columns[column_itr].is_inlined)
-      column_lengths.push_back(columns[column_itr].fixed_length);
+      column_lengths.push_back(columns[column_itr].GetFixedLength());
     else
-      column_lengths.push_back(columns[column_itr].variable_length);
+      column_lengths.push_back(columns[column_itr].GetVariableLength());
 
     column_names.push_back(columns[column_itr].column_name);
-    is_inlined.push_back(columns[column_itr].is_inlined);
+    is_inlined.push_back(columns[column_itr].IsInlined());
   }
 
   CreateTupleSchema(column_types, column_lengths, column_names, is_inlined);
 
   // Add constraints
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    for (auto constraint : columns[column_itr].constraints)
+    for (auto constraint : columns[column_itr].GetConstraints())
       AddConstraint(column_itr, constraint);
   }
 }
@@ -112,7 +112,6 @@ std::shared_ptr<const Schema> Schema::CopySchema(
   return std::shared_ptr<Schema>(new Schema(columns));
 }
 
-
 // Backward compatible for raw pointers
 // Copy schema
 Schema *Schema::CopySchema(const Schema *schema) {
@@ -145,17 +144,17 @@ Schema *Schema::CopySchema(const Schema *schema) {
 Schema *Schema::CopySchema(const Schema *schema,
                            const std::vector<oid_t> &index_list) {
   std::vector<Column> column_list{};
-  
+
   // Reserve some space to avoid multiple ma110c() calls
   // But for future push_back() this is not optimized since the
   // memory chunk may not be properly sized and aligned
   column_list.reserve(index_list.size());
 
   // For each column index, push the column
-  for(oid_t column_index : index_list) {
+  for (oid_t column_index : index_list) {
     // Make sure the index does not refer to invalid element
     PL_ASSERT(column_index < schema->columns.size());
-    
+
     column_list.push_back(schema->columns[column_index]);
   }
 
@@ -201,7 +200,7 @@ Schema *Schema::FilterSchema(const Schema *schema,
   }
 
   Schema *ret_schema = new Schema(columns);
-  
+
   return ret_schema;
 }
 
@@ -273,7 +272,7 @@ Schema *Schema::AppendSchemaPtrList(
 const std::string Schema::GetInfo() const {
   std::ostringstream os;
 
-  os << "\tSchema :: "
+  os << "Schema :: "
      << " column_count = " << column_count
      << " is_inlined = " << tuple_is_inlined << ","
      << " length = " << length << ","

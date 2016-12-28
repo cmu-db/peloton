@@ -485,11 +485,11 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      catalog::FunctionData func_data =
+      const catalog::FunctionData& func_data =
           catalog->GetFunction(func_expr->func_name_);
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,
-                                                 func_data.num_arguments_);
+                                                 func_data.argument_types_);
     }
     // make sure the return types for expressions are set correctly
     // this is useful in operator expressions

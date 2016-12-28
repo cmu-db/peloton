@@ -10,20 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "catalog/manager.h"
 #include "common/platform.h"
-#include "type/types.h"
 #include "index/index.h"
+#include "type/types.h"
 
-#include "stx/btree_multimap.h"
 #include "index/scan_optimizer.h"
+#include "stx/btree_multimap.h"
 
 namespace peloton {
 namespace index {
@@ -69,14 +68,10 @@ class BTreeIndex : public Index {
   bool Cleanup() { return true; }
 
   size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
-  
-  bool NeedGC() {
-    return false;
-  }
 
-  void PerformGC() {
-    return;
-  }
+  bool NeedGC() { return false; }
+
+  void PerformGC() { return; }
 
  protected:
   MapType container;

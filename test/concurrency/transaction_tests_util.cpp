@@ -69,7 +69,7 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   table->AddIndex(pkey_index);
 
@@ -114,7 +114,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   table->AddIndex(pkey_index);
 
@@ -130,7 +130,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
       unique2);
 
   std::shared_ptr<index::Index> ukey_index(
-      index::IndexFactory::GetInstance(index_metadata2));
+      index::IndexFactory::GetIndex(index_metadata2));
 
   table->AddIndex(ukey_index);
 
@@ -176,7 +176,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
       tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetInstance(index_metadata));
+      index::IndexFactory::GetIndex(index_metadata));
 
   table->AddIndex(pkey_index);
 

@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
+
+#include <string>
 
 #include "index/index.h"
 
@@ -25,7 +26,27 @@ namespace index {
 class IndexFactory {
  public:
   // Get an index with required attributes
-  static Index *GetInstance(IndexMetadata *metadata);
+  static Index *GetIndex(IndexMetadata *metadata);
+
+ private:
+  static std::string GetInfo(IndexMetadata *metadata,
+                             std::string comparatorType);
+
+  //===--------------------------------------------------------------------===//
+  // STX::BTREE
+  //===--------------------------------------------------------------------===//
+
+  static Index *GetBTreeIntsKeyIndex(IndexMetadata *metadata);
+
+  static Index *GetBTreeGenericKeyIndex(IndexMetadata *metadata);
+
+  //===--------------------------------------------------------------------===//
+  // PELOTON::BWTREE
+  //===--------------------------------------------------------------------===//
+
+  static Index *GetBwTreeIntsKeyIndex(IndexMetadata *metadata);
+
+  static Index *GetBwTreeGenericKeyIndex(IndexMetadata *metadata);
 };
 
 }  // End index namespace

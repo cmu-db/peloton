@@ -10,11 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
+
+#include "common/printable.h"
 
 //===--------------------------------------------------------------------===//
 // Timer
@@ -25,34 +26,51 @@ typedef std::chrono::high_resolution_clock clock_;
 typedef std::chrono::time_point<clock_> time_point_;
 
 template <typename ResolutionRatio = std::ratio<1> >
-class Timer {
+class Timer : public peloton::Printable {
  public:
-  Timer() : elapsed(0) {}
+  Timer() : elapsed_(0), invocations_(0) {}
 
-  void Start() { begin = clock_::now(); }
+  inline void Start() { begin_ = clock_::now(); }
 
-  void Stop() {
-    end = clock_::now();
+  inline void Stop() {
+    end_ = clock_::now();
 
-    double duration = std::chrono::duration_cast<
-                          std::chrono::duration<double, ResolutionRatio> >(
-                          end - begin).count();
+    double duration =
+        std::chrono::duration_cast<
+            std::chrono::duration<double, ResolutionRatio> >(end_ - begin_)
+            .count();
 
-    elapsed += duration;
+    elapsed_ += duration;
+    invocations_++;
   }
 
-  void Reset() { elapsed = 0; }
+  inline void Reset() { elapsed_ = 0; }
 
   // Get Elapsed duration
-  double GetDuration() const { return elapsed; }
+  inline double GetDuration() const { return elapsed_; }
+
+  // Get Number of invocations
+  inline int GetInvocations() const { return invocations_; }
+
+  // Get a string representation for debugging
+  inline const std::string GetInfo() const {
+    std::ostringstream os;
+    os << "Timer["
+       << "elapsed=" << elapsed_ << ", "
+       << "invocations=" << invocations_ << "]";
+    return (os.str());
+  }
 
  private:
   // Start
-  time_point_ begin;
+  time_point_ begin_;
 
   // End
-  time_point_ end;
+  time_point_ end_;
 
   // Elapsed time (with desired resolution)
-  double elapsed;
+  double elapsed_;
+
+  // Number of invocations
+  int invocations_;
 };
