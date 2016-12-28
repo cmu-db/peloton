@@ -27,9 +27,6 @@ class VarlenType : public Type {
   // Access the raw variable length data
   const char *GetData(const Value& val) const;
 
-  // Access the raw varlen data stored from the tuple storage
-  char *GetData(char *storage) override;
-
   // Get the length of the variable length data
   uint32_t GetLength(const Value& val) const;
 
@@ -63,9 +60,6 @@ class VarlenType : public Type {
                                 const bool inlined, VarlenPool *pool = nullptr) const override;
   Value DeserializeFrom(SerializeInput &in,
                                 VarlenPool *pool = nullptr) const override;
-
-  // Perform a shallow copy from a serialized varlen value to another serialized varlen value
-  void DoShallowCopy(char *dest, char *src, bool inlined, VarlenPool *src_pool) const override;
 
   // Create a copy of this value
   Value Copy(const Value& val) const override;
