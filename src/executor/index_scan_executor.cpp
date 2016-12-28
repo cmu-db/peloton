@@ -289,8 +289,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             index_->GetName().c_str());
 #endif
 
+  LOG_TRACE("%ld tuples before pruning boundaries",
+            visible_tuple_locations.size());
+
   // Check whether the boundaries satisfy the required condition
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
+
+  LOG_TRACE("%ld tuples after pruning boundaries",
+            visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
     visible_tuples[visible_tuple_location.block].push_back(
@@ -541,23 +547,23 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
 void IndexScanExecutor::CheckOpenRangeWithReturnedTuples(
     std::vector<ItemPointer> &tuple_locations) {
-  // This is guaranteed by the index scan execution logic when we need to call
-  // this function.
-  PL_ASSERT(tuple_locations.size() > 0);
-
   while (left_open_) {
+    LOG_ERROR("Left open!");
     auto tuple_location_itr = tuple_locations.begin();
 
-    if (CheckKeyConditions(*tuple_location_itr) == true)
+    if (tuple_location_itr == tuple_locations.end() ||
+        CheckKeyConditions(*tuple_location_itr) == true)
       left_open_ = false;
     else
       tuple_locations.erase(tuple_location_itr);
   }
 
   while (right_open_) {
+    LOG_ERROR("Right open!");
     auto tuple_location_itr = tuple_locations.rbegin();
 
-    if (CheckKeyConditions(*tuple_location_itr) == true)
+    if (tuple_location_itr == tuple_locations.rend() ||
+        CheckKeyConditions(*tuple_location_itr) == true)
       right_open_ = false;
     else
       tuple_locations.pop_back();
