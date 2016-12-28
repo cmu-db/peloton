@@ -681,6 +681,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     }
   }
 
+  LOG_ERROR("Returning true!");
   return true;
 }
 

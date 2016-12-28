@@ -77,9 +77,9 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    auto column = catalog::Column(
-        type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-        std::to_string(col_itr), is_inlined);
+    auto column = catalog::Column(type::Type::INTEGER,
+                                  type::Type::GetTypeSize(type::Type::INTEGER),
+                                  std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
 
@@ -158,8 +158,7 @@ expression::AbstractExpression *GetPredicate() {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
-                                                    0);
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
 
   // Second, create constant value expression.
   auto constant_value_left =
@@ -175,8 +174,7 @@ expression::AbstractExpression *GetPredicate() {
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
-                                                    0);
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
 
   auto constant_value_right =
       type::ValueFactory::GetIntegerValue(tuple_end_offset);
@@ -374,12 +372,8 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
   txn_manager.CommitTransaction(txn);
 }
 
-void CopyTuple(const oid_t &tuple_slot_id,
-               storage::Tuple *tuple,
-               storage::TileGroup* tile_group,
-               const size_t column_count) {
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
-            tuple_slot_id, num_tuple_slots);
+void CopyTuple(const oid_t &tuple_slot_id, storage::Tuple *tuple,
+               storage::TileGroup *tile_group, const size_t column_count) {
   PL_ASSERT(tuple->GetColumnCount() == column_count);
   for (oid_t col_id = 0; col_id < column_count; ++col_id) {
     type::Value val = tile_group->GetValue(tuple_slot_id, col_id);

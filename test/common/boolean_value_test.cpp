@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/boolean_type.h"
 #include "common/harness.h"
+#include "type/boolean_type.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -26,8 +26,7 @@ class BooleanValueTests : public PelotonTest {};
 TEST_F(BooleanValueTests, BasicTest) {
   auto valTrue = type::ValueFactory::GetBooleanValue(true);
   auto valFalse = type::ValueFactory::GetBooleanValue(false);
-  auto valNull =
-      type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
+  auto valNull = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
 
   EXPECT_TRUE(valTrue.IsTrue());
   EXPECT_FALSE(valTrue.IsFalse());
@@ -112,7 +111,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(), expected, result.IsTrue());
+                  val1.ToString().c_str(), expected, result);
 
         if (expected_null) expected = false;
 
@@ -154,8 +153,7 @@ TEST_F(BooleanValueTests, HashTest) {
     if (values[i] == type::PELOTON_BOOLEAN_NULL) {
       val0 = type::ValueFactory::GetNullValueByType(type::Type::BOOLEAN);
     } else {
-      val0 =
-          type::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
+      val0 = type::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
       if (values[j] == type::PELOTON_BOOLEAN_NULL) {

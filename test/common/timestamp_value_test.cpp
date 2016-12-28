@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/timestamp_type.h"
 #include "common/harness.h"
+#include "type/timestamp_type.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -47,8 +47,8 @@ TEST_F(TimestampValueTests, ComparisonTest) {
         val0 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
         expected_null = true;
       } else {
-        val0 =
-            type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[i]));
+        val0 = type::ValueFactory::GetTimestampValue(
+            static_cast<uint64_t>(values[i]));
       }
 
       // VALUE #1
@@ -56,8 +56,8 @@ TEST_F(TimestampValueTests, ComparisonTest) {
         val1 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
         expected_null = true;
       } else {
-        val1 =
-            type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
+        val1 = type::ValueFactory::GetTimestampValue(
+            static_cast<uint64_t>(values[j]));
       }
       bool temp = expected_null;
 
@@ -97,12 +97,11 @@ TEST_F(TimestampValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(), expected, result.IsTrue());
+                  val1.ToString().c_str(), expected, result);
 
         if (expected_null) {
           EXPECT_EQ(expected_null, result == type::CMP_NULL);
-        }
-        else {
+        } else {
           EXPECT_EQ(expected, result == type::CMP_TRUE);
           EXPECT_EQ(!expected, result == type::CMP_FALSE);
         }
@@ -112,8 +111,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
 }
 
 TEST_F(TimestampValueTests, NullToStringTest) {
-  auto valNull =
-      type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+  auto valNull = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
 
   EXPECT_EQ(valNull.ToString(), "timestamp_null");
 }
@@ -129,15 +127,15 @@ TEST_F(TimestampValueTests, HashTest) {
     if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
       val0 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
     } else {
-      val0 =
-        type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[i]));
+      val0 = type::ValueFactory::GetTimestampValue(
+          static_cast<uint64_t>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
       if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
         val1 = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
       } else {
-        val1 =
-          type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(values[j]));
+        val1 = type::ValueFactory::GetTimestampValue(
+            static_cast<uint64_t>(values[j]));
       }
 
       result = type::ValueFactory::GetBooleanValue(val0.CompareEquals(val1));
@@ -155,7 +153,7 @@ TEST_F(TimestampValueTests, HashTest) {
 
 TEST_F(TimestampValueTests, CopyTest) {
   type::Value val0 =
-    type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
+      type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
   type::Value val1 = val0.Copy();
   EXPECT_EQ(val0.CompareEquals(val1) == type::CMP_TRUE, true);
 }
@@ -163,10 +161,8 @@ TEST_F(TimestampValueTests, CopyTest) {
 TEST_F(TimestampValueTests, CastTest) {
   type::Value result;
 
-  auto strNull =
-    type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
-  auto valNull =
-    type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
+  auto strNull = type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  auto valNull = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
 
   result = valNull.CastAs(type::Type::TIMESTAMP);
   EXPECT_TRUE(result.IsNull());
@@ -178,15 +174,13 @@ TEST_F(TimestampValueTests, CastTest) {
   EXPECT_EQ(result.CompareEquals(strNull) == type::CMP_NULL, true);
   EXPECT_EQ(result.GetTypeId(), strNull.GetTypeId());
 
-  EXPECT_THROW(valNull.CastAs(type::Type::BOOLEAN),
-               peloton::Exception);
+  EXPECT_THROW(valNull.CastAs(type::Type::BOOLEAN), peloton::Exception);
 
   auto valValid =
-    type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1481746648));
+      type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1481746648));
   result = valValid.CastAs(type::Type::VARCHAR);
   EXPECT_FALSE(result.IsNull());
 }
-
 
 }  // End test namespace
 }  // End peloton namespace
