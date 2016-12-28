@@ -271,8 +271,8 @@ class CompactIntegerKey {
    * This function has the same limitation as stated for AddInteger()
    */
   template <typename IntType>
-  inline IntType GetInteger(size_t offset) {
-    const IntType *ptr = reinterpret_cast<IntType *>(key_data + offset);
+  inline IntType GetInteger(size_t offset) const {
+    const IntType *ptr = reinterpret_cast<const IntType *>(key_data + offset);
     
     // This always returns an unsigned number
     auto host_endian = ToHostEndian(*ptr);
