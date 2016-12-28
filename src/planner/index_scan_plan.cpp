@@ -60,6 +60,17 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
                                                key_column_ids_, expr_types_);
 
+  // Check whether the scan range is left/right open. Because the index itself
+  // is not able to handle that exactly, we must have extra logic in
+  // IndexScanExecutor to handle that case.
+  //
+  // TODO: We may also need a flag for "IN" expression after we support "IN".
+  for (auto expr_type : expr_types_) {
+    if (expr_type == EXPRESSION_TYPE_COMPARE_GREATERTHAN) left_open_ = true;
+
+    if (expr_type == EXPRESSION_TYPE_COMPARE_LESSTHAN) right_open_ = true;
+  }
+
   return;
 }
 
