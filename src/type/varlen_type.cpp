@@ -40,12 +40,6 @@ const char *VarlenType::GetData(const Value& val) const {
   return val.value_.varlen;
 }
 
-// Access the raw varlen data stored from the tuple storage
-char *VarlenType::GetData(char *storage) {
-  char *ptr = *reinterpret_cast<char **>(storage);
-  return ptr;
-}
-
 // Get the length of the variable length data
 uint32_t VarlenType::GetLength(const Value& val) const {
   return val.size_.len;
@@ -200,19 +194,6 @@ Value VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
   } else {
     const char *data = (char *) in.getRawPointer(len);
     return Value(type_id_, data, len, false);
-  }
-}
-
-// Perform a shallow copy from a serialized varlen value to another serialized varlen value
-void VarlenType::DoShallowCopy(char *dest, char *src, bool inlined UNUSED_ATTRIBUTE, VarlenPool *src_pool) const {
-  // Never do shallow copy for value that is not allocated in the pool
-  PL_ASSERT(inlined == false && src_pool != nullptr);
-  char *ptr = *reinterpret_cast<char **>(src);
-
-  // Construct a shallow copy of a varlen value
-  *reinterpret_cast<char **>(dest) = ptr;
-  if (ptr != nullptr) {
-    src_pool->AddRefCount(ptr);
   }
 }
 

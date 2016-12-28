@@ -113,12 +113,6 @@ class ContainerTuple : public AbstractTuple {
     return true;
   }
 
-  /** @brief Copy a column to a destination tuple
-   */
-  void CopyColumnTo(ContainerTuple<T> *dest, oid_t col_id) {
-    dest->SetValue(col_id, this->GetValue(col_id));
-  }
-
  private:
   /** @brief Underlying container behind this tuple interface. */
   T *container_;
@@ -255,13 +249,6 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
   void SetValue(oid_t column_id, const type::Value &value) {
     type::Value val = value.Copy();
     container_->SetValue(val, tuple_id_, column_id);
-  }
-
-  /** @brief Copy a column from this tuple to a destination tuple.
-   *  Note that we do shallow copy for varlen field here
-   */
-  void CopyColumnTo(ContainerTuple<storage::TileGroup> *dest, oid_t col_id) {
-    this->container_->CopyColumnValueTo(dest->container_, dest->tuple_id_, col_id, this->tuple_id_);
   }
 
   inline char *GetData() const override {
