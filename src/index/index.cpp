@@ -15,8 +15,8 @@
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/logger.h"
-#include "type/varlen_pool.h"
 #include "storage/tuple.h"
+#include "type/varlen_pool.h"
 
 #include "index/scan_optimizer.h"
 

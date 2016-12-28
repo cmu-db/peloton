@@ -16,11 +16,11 @@
 #include <string>
 #include <vector>
 
-#include "planner/abstract_scan_plan.h"
-#include "type/types.h"
 #include "expression/abstract_expression.h"
-#include "storage/tuple.h"
 #include "index/scan_optimizer.h"
+#include "planner/abstract_scan_plan.h"
+#include "storage/tuple.h"
+#include "type/types.h"
 
 namespace peloton {
 
@@ -40,7 +40,6 @@ class IndexScanPlan : public AbstractScan {
    * class IndexScanDesc - Stores information to do the index scan
    */
   struct IndexScanDesc {
-
     /*
      * Default Constructor - Set index pointer to empty
      *
@@ -143,6 +142,10 @@ class IndexScanPlan : public AbstractScan {
     return PLAN_NODE_TYPE_INDEXSCAN;
   }
 
+  inline bool GetLeftOpen() const { return left_open_; }
+
+  inline bool GetRightOpen() const { return right_open_; }
+
   const std::string GetInfo() const { return "IndexScan"; }
 
   void SetParameterValues(std::vector<type::Value> *values);
@@ -195,6 +198,12 @@ class IndexScanPlan : public AbstractScan {
   // In the future this might be extended into an array of conjunctive
   // predicates connected by disjunction
   index::IndexScanPredicate index_predicate_;
+
+  // whether the index scan range is left open
+  bool left_open_ = false;
+
+  // whether the index scan range is right open
+  bool right_open_ = false;
 };
 
 }  // namespace planner

@@ -76,6 +76,28 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Aggregation selected");
 
+  LOG_INFO("Select COUNT(*)...");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id > 1;", result);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  LOG_INFO("Aggregation selected");
+
+  LOG_INFO("Select COUNT(*)...");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id < 3 and dept_id > "
+      "1;",
+      result);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  LOG_INFO("Aggregation selected");
+
+  LOG_INFO("Select COUNT(*)...");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT COUNT(*) FROM department_table WHERE dept_id < 3 and dept_id > "
+      "2;",
+      result);
+  EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
+  LOG_INFO("Aggregation selected");
+
   LOG_INFO("Select COUNT(*)... with removable predicate");
   SQLTestsUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name "

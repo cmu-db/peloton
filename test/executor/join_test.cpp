@@ -14,9 +14,9 @@
 
 #include "common/harness.h"
 
-#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+#include "type/types.h"
 
 #include "executor/hash_executor.h"
 #include "executor/hash_join_executor.h"
@@ -25,11 +25,12 @@
 #include "executor/nested_loop_join_executor.h"
 
 #include "expression/abstract_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
 
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
+#include "planner/index_scan_plan.h"
 #include "planner/merge_join_plan.h"
 #include "planner/nested_loop_join_plan.h"
 
@@ -53,21 +54,20 @@ class JoinTests : public PelotonTest {};
 
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
-  auto left = expression::ExpressionUtil::TupleValueFactory(
-      type::Type::INTEGER, 0, 1);
-  auto right = expression::ExpressionUtil::TupleValueFactory(
-      type::Type::INTEGER, 1, 1);
+  auto left =
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 1);
+  auto right =
+      expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(
-      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(0),
-                           ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(0),
+       ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 // PLAN_NODE_TYPE_NESTLOOP is picked out as a separated test
@@ -93,13 +93,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -113,7 +113,8 @@ enum JOIN_TEST_TYPE {
 TEST_F(JoinTests, BasicTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s",
+              PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
   }
 }
@@ -121,7 +122,8 @@ TEST_F(JoinTests, BasicTest) {
 TEST_F(JoinTests, EmptyTablesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s",
+              PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
   }
 }
@@ -129,7 +131,8 @@ TEST_F(JoinTests, EmptyTablesTest) {
 TEST_F(JoinTests, JoinTypesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s",
+              PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_TRACE("JOIN TYPE :: %d", join_type);
@@ -142,7 +145,8 @@ TEST_F(JoinTests, JoinTypesTest) {
 TEST_F(JoinTests, ComplicatedTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s",
+              PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_TRACE("JOIN TYPE :: %d", join_type);
@@ -155,7 +159,8 @@ TEST_F(JoinTests, ComplicatedTest) {
 TEST_F(JoinTests, LeftTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s",
+              PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_TRACE("JOIN TYPE :: %d", join_type);
@@ -168,7 +173,8 @@ TEST_F(JoinTests, LeftTableEmptyTest) {
 TEST_F(JoinTests, RightTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_TRACE("JOIN ALGORITHM :: %s",
+              PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_TRACE("JOIN TYPE :: %d", join_type);
@@ -182,12 +188,14 @@ TEST_F(JoinTests, JoinPredicateTest) {
   oid_t join_test_types = 1;
 
   // Go over all join test types
-  for (oid_t join_test_type = 0; join_test_type < join_test_types; join_test_type++) {
+  for (oid_t join_test_type = 0; join_test_type < join_test_types;
+       join_test_type++) {
     LOG_TRACE("JOIN TEST_F ------------------------ :: %u", join_test_type);
 
     // Go over all join algorithms
     for (auto join_algorithm : join_algorithms) {
-      LOG_TRACE("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+      LOG_TRACE("JOIN ALGORITHM :: %s",
+                PlanNodeTypeToString(join_algorithm).c_str());
       // Go over all join types
       for (auto join_type : join_types) {
         LOG_TRACE("JOIN TYPE :: %d", join_type);
@@ -225,7 +233,6 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   for (int rowid = 0; rowid < num_rows; rowid++) {
-
     storage::Tuple tuple(schema, allocate);
 
     // First column is unique in this case
@@ -602,7 +609,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           tuples_with_null +=
               CountTuplesWithNullFields(result_logical_tile.get());
           ValidateJoinLogicalTile(result_logical_tile.get());
-          LOG_TRACE("result tile info: %s", result_logical_tile->GetInfo().c_str());
+          LOG_TRACE("result tile info: %s",
+                    result_logical_tile->GetInfo().c_str());
         }
       }
 
@@ -656,15 +664,13 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
           left_hash_keys;
       left_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(type::Type::INTEGER, 0,
-                                                   1)});
+              new expression::TupleValueExpression(type::Type::INTEGER, 0, 1)});
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           right_hash_keys;
       right_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(type::Type::INTEGER, 1,
-                                                   1)});
+              new expression::TupleValueExpression(type::Type::INTEGER, 1, 1)});
 
       // Create hash plan node
       planner::HashPlan hash_plan_node(hash_keys);
@@ -897,8 +903,9 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
     // Check the join fields
     type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(0));
     type::Value right_tuple_join_attribute_val = (join_tuple.GetValue(1));
-    type::Value cmp = type::ValueFactory::GetBooleanValue((left_tuple_join_attribute_val.CompareEquals(
-        right_tuple_join_attribute_val)));
+    type::Value cmp = type::ValueFactory::GetBooleanValue(
+        (left_tuple_join_attribute_val.CompareEquals(
+            right_tuple_join_attribute_val)));
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }
 }
@@ -921,8 +928,9 @@ void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
     // Check the join fields
     type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(2));
     type::Value right_tuple_join_attribute_val = (join_tuple.GetValue(3));
-    type::Value cmp = type::ValueFactory::GetBooleanValue((left_tuple_join_attribute_val.CompareEquals(
-        right_tuple_join_attribute_val)));
+    type::Value cmp = type::ValueFactory::GetBooleanValue(
+        (left_tuple_join_attribute_val.CompareEquals(
+            right_tuple_join_attribute_val)));
     EXPECT_TRUE(cmp.IsNull() || cmp.IsTrue());
   }
 }
@@ -934,20 +942,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
-
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
-
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {
@@ -978,7 +984,7 @@ void ExpectNormalTileResults(
       EXPECT_CALL(*table_scan_executor, GetOutput())
           .InSequence(get_output_sequence)
           .WillOnce(
-               Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
+              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
     }
   }
 }
