@@ -324,11 +324,11 @@ class CompactIntegerKey {
  public:
   
   /*
-   * PrintRawData() - Prints the content of this key
+   * GetInfo() - Prints the content of this key
    *
    * All contents are printed to stderr
    */
-  void PrintRawData() {
+  void GetInfo() {
     // This is the current offset we are on printing the key
     int offset = 0;
     
@@ -590,13 +590,13 @@ class CompactIntegerKey {
 };
 
 /*
- * class IntsComparator - Compares two compact integer key
+ * class CompactIntsComparator - Compares two compact integer key
  */
 template <size_t KeySize>
-class IntsComparator {
+class CompactIntsComparator {
  public: 
-  IntsComparator() {}
-  IntsComparator(const IntsComparator &) {}
+  CompactIntsComparator() {}
+  CompactIntsComparator(const CompactIntsComparator &) {}
   
   /*
    * operator()() - Returns true if lhs < rhs
@@ -608,14 +608,14 @@ class IntsComparator {
 };
 
 /*
- * class IntsEqualityChecker - Compares whether two integer keys are 
- *                             equivalent
+ * class CompactIntsEqualityChecker - Compares whether two integer keys are 
+ *                                    equivalent
  */
 template <size_t KeySize>
-class IntsEqualityChecker {
+class CompactIntsEqualityChecker {
  public:
-  IntsEqualityChecker() {};
-  IntsEqualityChecker(const IntsEqualityChecker &) {}; 
+  CompactIntsEqualityChecker() {};
+  CompactIntsEqualityChecker(const CompactIntsEqualityChecker &) {}; 
    
   inline bool operator()(const CompactIntegerKey<KeySize> &lhs,
                          const CompactIntegerKey<KeySize> &rhs) const {
@@ -624,13 +624,13 @@ class IntsEqualityChecker {
 };
 
 /*
- * class IntsHasher - Hash function for integer key
+ * class CompactIntsHasher - Hash function for integer key
  *
  * This function assumes the length of the integer key is always multiples
  * of 64 bits (8 byte word).
  */
 template <size_t KeySize>
-class IntsHasher {
+class CompactIntsHasher {
  public:
    
   // Emphasize here that we want a 8 byte aligned object
@@ -642,8 +642,8 @@ class IntsHasher {
                        CompactIntegerKey<KeySize>::key_size_byte,
                        "Extra fields detected in class CompactIntegerKey");
   
-  IntsHasher() {};
-  IntsHasher(const IntsHasher &) {}
+  CompactIntsHasher() {};
+  CompactIntsHasher(const CompactIntsHasher &) {}
                  
   /*
    * operator()() - Hashes an object into size_t
