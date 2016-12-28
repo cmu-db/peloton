@@ -16,7 +16,7 @@ namespace peloton {
 namespace index {
 
 /*
- * class IntsKey - Compact representation of integers of different length
+ * class CompactIntegerKey - Compact representation of multifield integers
  * 
  * This class is used for storing multiple integral fields into a compact
  * array representation. This class is largely used as a static object, 
@@ -31,11 +31,11 @@ namespace index {
  * For details of how and why integers must be stored in a big-endian and 
  * sign-magnitude format, please refer to adaptive radix tree's key format
  *
- * Note: IntsKey is always word-aligned on x86-64. KeySize is the number of 
- * 64 bit words inside the key, not byte size
+ * Note: CompactIntegerKey should always be aligned to 64 bit boundaries; There
+ * are static assertion to enforce this rule
  */
 template <size_t KeySize>
-class IntsKey {
+class CompactIntegerKey {
  private:
   // This is the actual byte size of the key
   static constexpr size_t key_size_byte = KeySize * 8UL;
@@ -199,7 +199,7 @@ class IntsKey {
   /*
    * Constructor
    */
-  IntsKey() {
+  CompactIntegerKey() {
     ZeroOut();
     
     return;
@@ -293,24 +293,26 @@ class IntsKey {
    * This function has the same semantics as memcmp(). Negative result means 
    * less than, positive result means greater than, and 0 means equal
    */
-  static inline int Compare(const IntsKey<KeySize> &a, 
-                            const IntsKey<KeySize> &b) {
-    return memcmp(a.key_data, b.key_data, IntsKey<KeySize>::key_size_byte); 
+  static inline int Compare(const CompactIntegerKey<KeySize> &a, 
+                            const CompactIntegerKey<KeySize> &b) {
+    return memcmp(a.key_data, 
+                  b.key_data, 
+                  CompactIntegerKey<KeySize>::key_size_byte); 
   }
   
   /*
    * LessThan() - Returns true if first is less than the second
    */
-  static inline bool LessThan(const IntsKey<KeySize> &a, 
-                              const IntsKey<KeySize> &b) {
+  static inline bool LessThan(const CompactIntegerKey<KeySize> &a, 
+                              const CompactIntegerKey<KeySize> &b) {
     return Compare(a, b) < 0;
   }
   
   /*
    * Equals() - Returns true if first is equivalent to the second
    */
-  static inline bool Equals(const IntsKey<KeySize> &a, 
-                            const IntsKey<KeySize> &b) {
+  static inline bool Equals(const CompactIntegerKey<KeySize> &a, 
+                            const CompactIntegerKey<KeySize> &b) {
     return Compare(a, b) == 0;
   }
   
@@ -325,7 +327,10 @@ class IntsKey {
     // This is the current offset we are on printing the key
     int offset = 0;
     
-    fprintf(stderr, "IntsKey<%lu> - %lu bytes\n", KeySize, key_size_byte);
+    fprintf(stderr, 
+            "CompactIntegerKey<%lu> - %lu bytes\n", 
+            KeySize, 
+            key_size_byte);
     
     while(offset < key_size_byte) {
       constexpr int byte_per_line = 16;
@@ -515,9 +520,9 @@ class IntsComparator {
   /*
    * operator()() - Returns true if lhs < rhs
    */
-  inline bool operator()(const IntsKey<KeySize> &lhs, 
-                         const IntsKey<KeySize> &rhs) const {
-    return IntsKey<KeySize>::LessThan(lhs, rhs);
+  inline bool operator()(const CompactIntegerKey<KeySize> &lhs, 
+                         const CompactIntegerKey<KeySize> &rhs) const {
+    return CompactIntegerKey<KeySize>::LessThan(lhs, rhs);
   }
 };
 
@@ -528,9 +533,9 @@ class IntsComparator {
 template <size_t KeySize>
 class IntsEqualityChecker {
  public:
-  inline bool operator()(const IntsKey<KeySize> &lhs,
-                         const IntsKey<KeySize> &rhs) const {
-    return IntsKey<KeySize>::Equals(lhs, rhs);
+  inline bool operator()(const CompactIntegerKey<KeySize> &lhs,
+                         const CompactIntegerKey<KeySize> &rhs) const {
+    return CompactIntegerKey<KeySize>::Equals(lhs, rhs);
   }
 
   IntsEqualityChecker(const IntsEqualityChecker &) {};
@@ -548,10 +553,10 @@ class IntsHasher {
  public:
    
   // Emphasize here that we want a 8 byte aligned object
-  static_assert(sizeof(IntsKey<KeySize>) % 8 == 0, 
+  static_assert(sizeof(CompactIntegerKey<KeySize>) % 8 == 0, 
                 "Please align the size of compact integer key");
                  
-  inline size_t operator()(IntsKey<KeySize> const &p) const {
+  inline size_t operator()(CompactIntegerKey<KeySize> const &p) const {
     size_t seed = 0UL;
     size_t *ptr = p.GetRawData();
     
