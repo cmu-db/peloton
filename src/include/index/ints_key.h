@@ -505,10 +505,27 @@ class IntsKey {
 };
 
 /*
+ * class IntsComparator - Compares two compact integer key
+ */
+template <size_t KeySize>
+class IntsComparator {
+  IntsComparator() {}
+  IntsComparator(const IntsComparator &) {}
+  
+  /*
+   * operator()() - Returns true if lhs < rhs
+   */
+  inline bool operator()(const IntsKey<KeySize> &lhs, 
+                         const IntsKey<KeySize> &rhs) const {
+    return IntsKey<KeySize>::LessThan(lhs, rhs);
+  }
+};
+
+/*
  * class IntsEqualityChecker - Compares whether two integer keys are 
  *                             equivalent
  */
-template <std::size_t KeySize>
+template <size_t KeySize>
 class IntsEqualityChecker {
  public:
   inline bool operator()(const IntsKey<KeySize> &lhs,
@@ -527,8 +544,10 @@ class IntsEqualityChecker {
  * of 64 bits (8 byte word).
  */
 template <size_t KeySize>
-class IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
+class IntsHasher {
  public:
+   
+  // Emphasize here that we want a 8 byte aligned object
   static_assert(sizeof(IntsKey<KeySize>) % 8 == 0, 
                 "Please align the size of compact integer key");
                  
