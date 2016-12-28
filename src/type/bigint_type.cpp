@@ -383,7 +383,7 @@ void BigintType::SerializeTo(const Value& val, SerializeOutput &out) const {
 }
 
 void BigintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
-    VarlenPool *pool UNUSED_ATTRIBUTE) const {
+    AbstractPool *pool UNUSED_ATTRIBUTE) const {
 
   *reinterpret_cast<int32_t *>(storage) = val.value_.bigint;
 
@@ -391,12 +391,12 @@ void BigintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSE
 
 // Deserialize a value of the given type from the given storage space.
 Value BigintType::DeserializeFrom(const char *storage ,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              const bool inlined UNUSED_ATTRIBUTE, AbstractPool *pool UNUSED_ATTRIBUTE) const{
   int64_t val = *reinterpret_cast<const int64_t *>(storage);
   return Value(type_id_, val);
 }
 Value BigintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              AbstractPool *pool UNUSED_ATTRIBUTE) const{
   return Value(type_id_, in.ReadLong());
 }
 

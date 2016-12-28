@@ -123,7 +123,7 @@ bool OrderByExecutor::DoSort() {
     sort_key_columns.push_back(input_schema_->GetColumn(id));
   }
   sort_key_tuple_schema_.reset(new catalog::Schema(sort_key_columns));
-  auto executor_pool = executor_context_->GetExecutorContextPool();
+  auto executor_pool = executor_context_->GetPool();
 
   // Extract all valid tuples into a single std::vector (the sort buffer)
   sort_buffer_.reserve(count);

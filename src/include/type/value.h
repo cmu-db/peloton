@@ -241,7 +241,7 @@ class Value : public Printable {
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  inline void SerializeTo(char *storage, bool inlined, VarlenPool *pool) const {
+  inline void SerializeTo(char *storage, bool inlined, AbstractPool *pool) const {
     Type::GetInstance(type_id_)->SerializeTo(*this, storage, inlined, pool);
   }
 

@@ -406,7 +406,7 @@ void IntegerType::SerializeTo(const Value& val, SerializeOutput &out) const {
 }
 
 void IntegerType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
-    VarlenPool *pool UNUSED_ATTRIBUTE) const {
+    AbstractPool *pool UNUSED_ATTRIBUTE) const {
 
   *reinterpret_cast<int32_t *>(storage) = val.value_.integer;
   return;
@@ -416,12 +416,12 @@ void IntegerType::SerializeTo(const Value& val, char *storage, bool inlined UNUS
 
 // Deserialize a value of the given type from the given storage space.
 Value IntegerType::DeserializeFrom(const char *storage ,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              const bool inlined UNUSED_ATTRIBUTE, AbstractPool *pool UNUSED_ATTRIBUTE) const{
   int32_t val = *reinterpret_cast<const int32_t *>(storage);
   return Value(type_id_, val);
 }
 Value IntegerType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              AbstractPool *pool UNUSED_ATTRIBUTE) const{
   return Value(type_id_, in.ReadInt());
 }
 

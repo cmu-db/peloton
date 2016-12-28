@@ -59,13 +59,13 @@ class IntegerParentType : public NumericType {
   // Serialize this value into the given storage space
   virtual void SerializeTo(const Value& val, SerializeOutput &out) const override = 0;
   virtual void SerializeTo(const Value& val, char *storage, bool inlined,
-                   VarlenPool *pool) const override = 0;
+                   AbstractPool *pool) const override = 0;
 
   // Deserialize a value of the given type from the given storage space.
   virtual Value DeserializeFrom(const char *storage,
-                                const bool inlined, VarlenPool *pool = nullptr) const override = 0;
+                                const bool inlined, AbstractPool *pool = nullptr) const override = 0;
   virtual Value DeserializeFrom(SerializeInput &in,
-                                VarlenPool *pool = nullptr) const override = 0;
+                                AbstractPool *pool = nullptr) const override = 0;
 
   // Create a copy of this value
   virtual Value Copy(const Value& val) const override = 0;

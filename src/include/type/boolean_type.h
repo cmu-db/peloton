@@ -50,7 +50,7 @@ class BooleanType : public Type {
   }
 
   void SerializeTo(const Value& , char *, bool ,
-                   VarlenPool *) const override{
+                   AbstractPool *) const override{
     throw Exception("Can't serialize boolean types to storage");
   }
 
