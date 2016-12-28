@@ -533,13 +533,13 @@ class IntsComparator {
 template <size_t KeySize>
 class IntsEqualityChecker {
  public:
+  IntsEqualityChecker() {};
+  IntsEqualityChecker(const IntsEqualityChecker &) {}; 
+   
   inline bool operator()(const CompactIntegerKey<KeySize> &lhs,
                          const CompactIntegerKey<KeySize> &rhs) const {
     return CompactIntegerKey<KeySize>::Equals(lhs, rhs);
   }
-
-  IntsEqualityChecker(const IntsEqualityChecker &) {};
-  IntsEqualityChecker() {};
 };
 
 /*
@@ -553,23 +553,36 @@ class IntsHasher {
  public:
    
   // Emphasize here that we want a 8 byte aligned object
-  static_assert(sizeof(CompactIntegerKey<KeySize>) % 8 == 0, 
+  static_assert(sizeof(CompactIntegerKey<KeySize>) % sizeof(uint64_t) == 0, 
                 "Please align the size of compact integer key");
+                
+  // Make sure there is no other field
+  static_assert(sizeof(CompactIntegerKey<KeySize>) == \
+                       CompactIntegerKey<KeySize>::key_size_byte,
+                       "Extra fields detected in class CompactIntegerKey");
+  
+  IntsHasher() {};
+  IntsHasher(const IntsHasher &) {}
                  
+  /*
+   * operator()() - Hashes an object into size_t
+   *
+   * This function hashes integer key using 64 bit chunks. Chunks are 
+   * accumulated to the hash one by one. Since 
+   */
   inline size_t operator()(CompactIntegerKey<KeySize> const &p) const {
     size_t seed = 0UL;
     size_t *ptr = p.GetRawData();
     
     // For every 8 byte word just combine it with the current seed
-    for (size_t i = 0; i < KeySize; i++) {
+    for (size_t i = 0; 
+         i < (CompactIntegerKey<KeySize>::key_size_byte / sizeof(uint64_t)); 
+         i++) {
       boost::hash_combine(seed, ptr[i]);
     }
     
     return seed;
   }
-
-  IntsHasher(const IntsHasher &) {}
-  IntsHasher() {};
 };
 
 }  // End index namespace
