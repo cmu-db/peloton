@@ -295,19 +295,19 @@ std::string BTREE_TEMPLATE_TYPE::GetTypeName() const { return "Btree"; }
 
 // IMPORTANT: Make sure you don't exceed INTSKEY_MAX_SLOTS
 
-template class BTreeIndex<CompactIntegerKey<1>, 
+template class BTreeIndex<CompactIntsKey<1>, 
                           ItemPointer *, 
                           CompactIntsComparator<1>,
                           CompactIntsEqualityChecker<1>>;
-template class BTreeIndex<CompactIntegerKey<2>, 
+template class BTreeIndex<CompactIntsKey<2>, 
                           ItemPointer *, 
                           CompactIntsComparator<2>,
                           CompactIntsEqualityChecker<2>>;
-template class BTreeIndex<CompactIntegerKey<3>, 
+template class BTreeIndex<CompactIntsKey<3>, 
                           ItemPointer *, 
                           CompactIntsComparator<3>,
                           CompactIntsEqualityChecker<3>>;
-template class BTreeIndex<CompactIntegerKey<4>, 
+template class BTreeIndex<CompactIntsKey<4>, 
                           ItemPointer *, 
                           CompactIntsComparator<4>,
                           CompactIntsEqualityChecker<4>>;

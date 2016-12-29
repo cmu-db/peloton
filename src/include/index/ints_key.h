@@ -43,7 +43,7 @@ namespace index {
  * are static assertion to enforce this rule
  */
 template <size_t KeySize>
-class CompactIntegerKey {
+class CompactIntsKey {
  public:
   // This is the actual byte size of the key
   static constexpr size_t key_size_byte = KeySize * 8UL;
@@ -204,7 +204,7 @@ class CompactIntegerKey {
   /*
    * Constructor
    */
-  CompactIntegerKey() {
+  CompactIntsKey() {
     ZeroOut();
 
     return;
@@ -296,25 +296,25 @@ class CompactIntegerKey {
    * This function has the same semantics as memcmp(). Negative result means
    * less than, positive result means greater than, and 0 means equal
    */
-  static inline int Compare(const CompactIntegerKey<KeySize> &a,
-                            const CompactIntegerKey<KeySize> &b) {
+  static inline int Compare(const CompactIntsKey<KeySize> &a,
+                            const CompactIntsKey<KeySize> &b) {
     return memcmp(a.key_data, b.key_data,
-                  CompactIntegerKey<KeySize>::key_size_byte);
+                  CompactIntsKey<KeySize>::key_size_byte);
   }
 
   /*
    * LessThan() - Returns true if first is less than the second
    */
-  static inline bool LessThan(const CompactIntegerKey<KeySize> &a,
-                              const CompactIntegerKey<KeySize> &b) {
+  static inline bool LessThan(const CompactIntsKey<KeySize> &a,
+                              const CompactIntsKey<KeySize> &b) {
     return Compare(a, b) < 0;
   }
 
   /*
    * Equals() - Returns true if first is equivalent to the second
    */
-  static inline bool Equals(const CompactIntegerKey<KeySize> &a,
-                            const CompactIntegerKey<KeySize> &b) {
+  static inline bool Equals(const CompactIntsKey<KeySize> &a,
+                            const CompactIntsKey<KeySize> &b) {
     return Compare(a, b) == 0;
   }
 
@@ -574,9 +574,9 @@ class CompactIntsComparator {
   /*
    * operator()() - Returns true if lhs < rhs
    */
-  inline bool operator()(const CompactIntegerKey<KeySize> &lhs,
-                         const CompactIntegerKey<KeySize> &rhs) const {
-    return CompactIntegerKey<KeySize>::LessThan(lhs, rhs);
+  inline bool operator()(const CompactIntsKey<KeySize> &lhs,
+                         const CompactIntsKey<KeySize> &rhs) const {
+    return CompactIntsKey<KeySize>::LessThan(lhs, rhs);
   }
 };
 
@@ -590,9 +590,9 @@ class CompactIntsEqualityChecker {
   CompactIntsEqualityChecker(){};
   CompactIntsEqualityChecker(const CompactIntsEqualityChecker &){};
 
-  inline bool operator()(const CompactIntegerKey<KeySize> &lhs,
-                         const CompactIntegerKey<KeySize> &rhs) const {
-    return CompactIntegerKey<KeySize>::Equals(lhs, rhs);
+  inline bool operator()(const CompactIntsKey<KeySize> &lhs,
+                         const CompactIntsKey<KeySize> &rhs) const {
+    return CompactIntsKey<KeySize>::Equals(lhs, rhs);
   }
 };
 
@@ -606,12 +606,12 @@ template <size_t KeySize>
 class CompactIntsHasher {
  public:
   // Emphasize here that we want a 8 byte aligned object
-  static_assert(sizeof(CompactIntegerKey<KeySize>) % sizeof(uint64_t) == 0,
+  static_assert(sizeof(CompactIntsKey<KeySize>) % sizeof(uint64_t) == 0,
                 "Please align the size of compact integer key");
 
   // Make sure there is no other field
-  static_assert(sizeof(CompactIntegerKey<KeySize>) ==
-                    CompactIntegerKey<KeySize>::key_size_byte,
+  static_assert(sizeof(CompactIntsKey<KeySize>) ==
+                    CompactIntsKey<KeySize>::key_size_byte,
                 "Extra fields detected in class CompactIntegerKey");
 
   CompactIntsHasher(){};
@@ -623,13 +623,13 @@ class CompactIntsHasher {
    * This function hashes integer key using 64 bit chunks. Chunks are
    * accumulated to the hash one by one. Since
    */
-  inline size_t operator()(CompactIntegerKey<KeySize> const &p) const {
+  inline size_t operator()(CompactIntsKey<KeySize> const &p) const {
     size_t seed = 0UL;
     const size_t *ptr = reinterpret_cast<const size_t *>(p.GetRawData());
 
     // For every 8 byte word just combine it with the current seed
     for (size_t i = 0;
-         i < (CompactIntegerKey<KeySize>::key_size_byte / sizeof(uint64_t));
+         i < (CompactIntsKey<KeySize>::key_size_byte / sizeof(uint64_t));
          i++) {
       boost::hash_combine(seed, ptr[i]);
     }

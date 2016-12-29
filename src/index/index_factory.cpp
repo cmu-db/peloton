@@ -100,33 +100,33 @@ Index *IndexFactory::GetBTreeIntsKeyIndex(IndexMetadata *metadata) {
 
   if (key_size <= sizeof(uint64_t)) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<1>";
+    comparatorType = "CompactIntsKey<1>";
 #endif
-    index = new BTreeIndex<CompactIntegerKey<1>, 
+    index = new BTreeIndex<CompactIntsKey<1>, 
                            ItemPointer *, 
                            CompactIntsComparator<1>,
                            CompactIntsEqualityChecker<1>>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 2) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<2>";
+    comparatorType = "CompactIntsKey<2>";
 #endif
-    index = new BTreeIndex<CompactIntegerKey<2>, 
+    index = new BTreeIndex<CompactIntsKey<2>, 
                            ItemPointer *, 
                            CompactIntsComparator<2>,
                            CompactIntsEqualityChecker<2>>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 3) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<3>";
+    comparatorType = "CompactIntsKey<3>";
 #endif
-    index = new BTreeIndex<CompactIntegerKey<3>, 
+    index = new BTreeIndex<CompactIntsKey<3>, 
                            ItemPointer *, 
                            CompactIntsComparator<3>,
                            CompactIntsEqualityChecker<3>>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 4) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<4>";
+    comparatorType = "CompactIntsKey<4>";
 #endif
-    index = new BTreeIndex<CompactIntegerKey<4>, 
+    index = new BTreeIndex<CompactIntsKey<4>, 
                            ItemPointer *, 
                            CompactIntsComparator<4>,
                            CompactIntsEqualityChecker<4>>(metadata);
@@ -211,10 +211,10 @@ Index *IndexFactory::GetBwTreeIntsKeyIndex(IndexMetadata *metadata) {
 
   if (key_size <= sizeof(uint64_t)) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<1>";
+    comparatorType = "CompactIntsKey<1>";
 #endif
     index = \
-        new BWTreeIndex<CompactIntegerKey<1>, 
+        new BWTreeIndex<CompactIntsKey<1>, 
                         ItemPointer *, 
                         CompactIntsComparator<1>,
                         CompactIntsEqualityChecker<1>, 
@@ -223,10 +223,10 @@ Index *IndexFactory::GetBwTreeIntsKeyIndex(IndexMetadata *metadata) {
                         ItemPointerHashFunc>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 2) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<2>";
+    comparatorType = "CompactIntsKey<2>";
 #endif
     index = \
-        new BWTreeIndex<CompactIntegerKey<2>, 
+        new BWTreeIndex<CompactIntsKey<2>, 
                         ItemPointer *, 
                         CompactIntsComparator<2>,
                         CompactIntsEqualityChecker<2>, 
@@ -235,10 +235,10 @@ Index *IndexFactory::GetBwTreeIntsKeyIndex(IndexMetadata *metadata) {
                         ItemPointerHashFunc>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 3) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<3>";
+    comparatorType = "CompactIntsKey<3>";
 #endif
     index = \
-        new BWTreeIndex<CompactIntegerKey<3>, 
+        new BWTreeIndex<CompactIntsKey<3>, 
                         ItemPointer *, 
                         CompactIntsComparator<3>,
                         CompactIntsEqualityChecker<3>, 
@@ -247,10 +247,10 @@ Index *IndexFactory::GetBwTreeIntsKeyIndex(IndexMetadata *metadata) {
                         ItemPointerHashFunc>(metadata);
   } else if (key_size <= sizeof(uint64_t) * 4) {
 #ifdef LOG_TRACE_ENABLED
-    comparatorType = "CompactIntegerKey<4>";
+    comparatorType = "CompactIntsKey<4>";
 #endif
     index = \
-        new BWTreeIndex<CompactIntegerKey<4>, 
+        new BWTreeIndex<CompactIntsKey<4>, 
                         ItemPointer *, 
                         CompactIntsComparator<4>,
                         CompactIntsEqualityChecker<4>, 
