@@ -273,7 +273,7 @@ const std::string Schema::GetInfo() const {
   std::ostringstream os;
 
   os << "Schema["
-     << "NumColums:" << column_count << ", "
+     << "NumColumns:" << column_count << ", "
      << "IsInlined:" << tuple_is_inlined << ", "
      << "Length:" << length << ", "
      << "UninlinedCount:" << uninlined_column_count << "]";

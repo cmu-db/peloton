@@ -46,17 +46,23 @@ const std::string Column::GetInfo() const {
      << "Offset:" << column_offset << ", ";
 
   if (is_inlined) {
-    os << "FixedLength:" << fixed_length << ", ";
+    os << "FixedLength:" << fixed_length;
   } else {
-    os << "VarLength:" << variable_length << ", ";
+    os << "VarLength:" << variable_length;
   }
 
   if (constraints.empty() == false) {
-    os << "*NO CONSTRAINTS*";
-  } else {
+    os << ", {";
+    bool first = true;
     for (auto constraint : constraints) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
       os << constraint.GetInfo();
     }
+    os << "}";
   }
   os << "]";
 
