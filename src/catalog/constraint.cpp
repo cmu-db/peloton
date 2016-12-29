@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/constraint.h"
 #include "type/types.h"
 
@@ -21,14 +20,8 @@ namespace catalog {
 
 const std::string Constraint::GetInfo() const {
   std::ostringstream os;
-
-  os << "\tCONSTRAINT ";
-
-  os << GetName() << " ";
-  os << ConstraintTypeToString(constraint_type);
-
-  os << "\n\n";
-
+  os << "Constraint[" << GetName() << ", "
+     << ConstraintTypeToString(constraint_type) << "]";
   return os.str();
 }
 
