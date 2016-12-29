@@ -100,5 +100,40 @@ TEST_F(StringUtilTests, UpperTest) {
   EXPECT_EQ(expected, result);
 }
 
+TEST_F(StringUtilTests, FormatIntTest) {
+  int val = 10;
+
+  // <FORMAT, EXPECTED>
+  std::vector<std::pair<std::string, std::string>> data{
+      std::make_pair("%5d", "   10"),   std::make_pair("%-5d", "10   "),
+      std::make_pair("%05d", "00010"),  std::make_pair("%+5d", "  +10"),
+      std::make_pair("%-+5d", "+10  "),
+  };
+
+  for (std::pair<std::string, std::string> x : data) {
+    std::string result = StringUtil::Format(x.first, val);
+    EXPECT_EQ(x.second, result);
+  }
+}
+
+TEST_F(StringUtilTests, FormatFloatTest) {
+  float val = 10.3456;
+
+  // <FORMAT, EXPECTED>
+  std::vector<std::pair<std::string, std::string>> data{
+      std::make_pair("%.1f", "10.3"),
+      std::make_pair("%.2f", "10.35"),
+      std::make_pair("%8.2f", "   10.35"),
+      std::make_pair("%8.4f", " 10.3456"),
+      std::make_pair("%08.2f", "00010.35"),
+      std::make_pair("%-8.2f", "10.35   "),
+  };
+
+  for (std::pair<std::string, std::string> x : data) {
+    std::string result = StringUtil::Format(x.first, val);
+    EXPECT_EQ(x.second, result);
+  }
+}
+
 }  // End test namespace
 }  // End peloton namespace
