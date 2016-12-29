@@ -18,6 +18,8 @@
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 
+#include <iostream>
+
 namespace peloton {
 namespace test {
 
@@ -41,8 +43,8 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   std::vector<catalog::Column> column_list;
   std::vector<oid_t> key_attrs;
 
-  char column_char = 'A';
-  int num_cols = (int)col_types.size();
+  const int num_cols = (int)col_types.size();
+  const char column_char = 'A';
   for (int i = 0; i < num_cols; i++) {
     std::ostringstream os;
     os << static_cast<char>((int)column_char + i);
@@ -82,7 +84,7 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
 }
 
 void IndexIntsKeyTestHelper(IndexType index_type,
-                            std::vector<type::Type::TypeId> col_types) {
+                        std::vector<type::Type::TypeId> col_types) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
@@ -98,6 +100,7 @@ void IndexIntsKeyTestHelper(IndexType index_type,
 
     for (int col_idx = 0; col_idx < (int)col_types.size(); col_idx++) {
       int val = (10 * i) + col_idx;
+      // key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val), pool);
       switch (col_types[col_idx]) {
         case type::Type::TINYINT: {
           key->SetValue(col_idx, type::ValueFactory::GetTinyIntValue(val),
@@ -121,41 +124,39 @@ void IndexIntsKeyTestHelper(IndexType index_type,
         default:
           throw peloton::Exception("Unexpected type!");
       }
+    }
 
-      // INSERT
-      index->InsertEntry(key.get(), item.get());
+    // INSERT
+    index->InsertEntry(key.get(), item.get());
 
-      keys.push_back(key);
-      items.push_back(item);
-    }  // FOR
-
-    // SCAN
-    for (int i = 0; i < NUM_TUPLES; i++) {
-      location_ptrs.clear();
-      index->ScanKey(keys[i].get(), location_ptrs);
-      EXPECT_EQ(location_ptrs.size(), 1);
-      EXPECT_EQ(location_ptrs[0]->block, items[i]->block);
-    }  // FOR
-
-    // DELETE
-    for (int i = 0; i < NUM_TUPLES; i++) {
-      index->DeleteEntry(keys[i].get(), items[i].get());
-      location_ptrs.clear();
-      index->ScanKey(keys[i].get(), location_ptrs);
-      EXPECT_EQ(location_ptrs.size(), 0);
-    }  // FOR
-
-    delete tuple_schema;
+    keys.push_back(key);
+    items.push_back(item);
   }  // FOR
+  // std::cout << "INDEX: " << index->GetInfo() << std::endl;
+
+  // SCAN
+  for (int i = 0; i < NUM_TUPLES; i++) {
+    location_ptrs.clear();
+    index->ScanKey(keys[i].get(), location_ptrs);
+    EXPECT_EQ(location_ptrs.size(), 1);
+    EXPECT_EQ(location_ptrs[0]->block, items[i]->block);
+  }  // FOR
+
+  // DELETE
+  for (int i = 0; i < NUM_TUPLES; i++) {
+    index->DeleteEntry(keys[i].get(), items[i].get());
+    location_ptrs.clear();
+    index->ScanKey(keys[i].get(), location_ptrs);
+    EXPECT_EQ(location_ptrs.size(), 0);
+  }  // FOR
+
+  delete tuple_schema;
 }
 
 TEST_F(IndexIntsKeyTests, BwTreeTest) {
   std::vector<type::Type::TypeId> types = {
       type::Type::BIGINT, type::Type::INTEGER, type::Type::SMALLINT,
       type::Type::TINYINT};
-
-  // I know that there is a more elegant way to do this but I don't
-  // have time for that right now...
 
   // ONE COLUMN
   for (type::Type::TypeId type0 : types) {
