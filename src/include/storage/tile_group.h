@@ -130,7 +130,11 @@ class TileGroup : public Printable {
   unsigned int NumTiles() const { return tiles.size(); }
 
   // Get the tile at given offset in the tile group
-  Tile *GetTile(const oid_t tile_itr) const;
+  inline Tile *GetTile(const oid_t tile_offset) const {
+    PL_ASSERT(tile_offset < tile_count);
+    Tile *tile = tiles[tile_offset].get();
+    return tile;
+  }
 
   // Get a reference to the tile at the given offset in the tile group
   std::shared_ptr<Tile> GetTileReference(const oid_t tile_offset) const;
@@ -157,8 +161,16 @@ class TileGroup : public Printable {
 
   size_t GetTileCount() const { return tile_count; }
 
-  void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                           oid_t &tile_column_offset);
+  // Sets the tile id and column id w.r.t that tile corresponding to
+  // the specified tile group column id.
+  inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
+                           oid_t &tile_column_offset) {
+    PL_ASSERT(column_map.count(column_offset) != 0);
+    // get the entry in the column map
+    auto entry = column_map.at(column_offset);
+    tile_offset = entry.first;
+    tile_column_offset = entry.second;
+  }
 
   oid_t GetTileIdFromColumnId(oid_t column_id);
 

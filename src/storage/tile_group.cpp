@@ -314,18 +314,6 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
-// Sets the tile id and column id w.r.t that tile corresponding to
-// the specified tile group column id.
-void TileGroup::LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                                    oid_t &tile_column_offset) {
-  PL_ASSERT(column_map.count(column_offset) != 0);
-
-  // get the entry in the column map
-  auto entry = column_map.at(column_offset);
-  tile_offset = entry.first;
-  tile_column_offset = entry.second;
-}
-
 oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
@@ -364,12 +352,6 @@ void TileGroup::CopyColumnValueTo(TileGroup *dest_tg, oid_t dest_tuple_id, oid_t
 
   this->GetTile(src_tile_offset)->CopyColumnValueTo(
     dest_tg->GetTile(dest_tile_offset), dest_tuple_id, dest_tile_col_id, src_tuple_id, src_tile_col_id);
-}
-
-Tile *TileGroup::GetTile(const oid_t tile_offset) const {
-  PL_ASSERT(tile_offset < tile_count);
-  Tile *tile = tiles[tile_offset].get();
-  return tile;
 }
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(

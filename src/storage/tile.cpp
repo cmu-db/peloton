@@ -99,7 +99,7 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   char *location = tuple_offset * tuple_length + data;
 
   // Copy over the tuple data into the tuple slot in the tile
-  PL_MEMCPY(location, tuple->tuple_data, tuple_length);
+  PL_MEMCPY(location, tuple->tuple_data_, tuple_length);
 }
 
 /**

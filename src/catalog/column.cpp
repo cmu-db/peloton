@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/column.h"
 #include "type/types.h"
 
@@ -43,22 +42,31 @@ void Column::SetInlined() {
 const std::string Column::GetInfo() const {
   std::ostringstream os;
 
-  os << " name = " << column_name << ","
-     << " type = " << column_type << ","
-     << " offset = " << column_offset << ","
-     << " fixed length = " << fixed_length << ","
-     << " variable length = " << variable_length << ","
-     << " inlined = " << is_inlined;
+  os << "Column[" << column_name << ", " << TypeIdToString(column_type) << ", "
+     << "Offset:" << column_offset << ", ";
+
+  if (is_inlined) {
+    os << "FixedLength:" << fixed_length;
+  } else {
+    os << "VarLength:" << variable_length;
+  }
 
   if (constraints.empty() == false) {
-    os << "\n";
+    os << ", {";
+    bool first = true;
+    for (auto constraint : constraints) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
+      os << constraint.GetInfo();
+    }
+    os << "}";
   }
+  os << "]";
 
-  for (auto constraint : constraints) {
-    os << constraint;
-  }
-
-  return os.str();
+  return (os.str());
 }
 
 }  // End catalog namespace

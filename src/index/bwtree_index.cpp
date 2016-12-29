@@ -250,28 +250,28 @@ std::string BWTREE_INDEX_TYPE::GetTypeName() const { return "BWTree"; }
 
 // IMPORTANT: Make sure you don't exceed CompactIntegerKey_MAX_SLOTS
 
-template class BWTreeIndex<CompactIntegerKey<1>, 
+template class BWTreeIndex<CompactIntsKey<1>, 
                            ItemPointer *, 
                            CompactIntsComparator<1>,
                            CompactIntsEqualityChecker<1>, 
                            CompactIntsHasher<1>,
                            ItemPointerComparator, 
                            ItemPointerHashFunc>;
-template class BWTreeIndex<CompactIntegerKey<2>, 
+template class BWTreeIndex<CompactIntsKey<2>, 
                            ItemPointer *, 
                            CompactIntsComparator<2>,
                            CompactIntsEqualityChecker<2>, 
                            CompactIntsHasher<2>,
                            ItemPointerComparator, 
                            ItemPointerHashFunc>;
-template class BWTreeIndex<CompactIntegerKey<3>, 
+template class BWTreeIndex<CompactIntsKey<3>, 
                            ItemPointer *, 
                            CompactIntsComparator<3>,
                            CompactIntsEqualityChecker<3>, 
                            CompactIntsHasher<3>,
                            ItemPointerComparator, 
                            ItemPointerHashFunc>;
-template class BWTreeIndex<CompactIntegerKey<4>, 
+template class BWTreeIndex<CompactIntsKey<4>, 
                            ItemPointer *, 
                            CompactIntsComparator<4>,
                            CompactIntsEqualityChecker<4>, 

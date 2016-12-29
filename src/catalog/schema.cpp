@@ -272,15 +272,23 @@ Schema *Schema::AppendSchemaPtrList(
 const std::string Schema::GetInfo() const {
   std::ostringstream os;
 
-  os << "Schema :: "
-     << " column_count = " << column_count
-     << " is_inlined = " << tuple_is_inlined << ","
-     << " length = " << length << ","
-     << " uninlined_column_count = " << uninlined_column_count << std::endl;
+  os << "Schema["
+     << "NumColumns:" << column_count << ", "
+     << "IsInlined:" << tuple_is_inlined << ", "
+     << "Length:" << length << ", "
+     << "UninlinedCount:" << uninlined_column_count << "]";
 
-  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    os << "\t Column " << column_itr << " :: " << columns[column_itr];
+  bool first = true;
+  os << " :: (";
+  for (oid_t i = 0; i < column_count; i++) {
+    if (first) {
+      first = false;
+    } else {
+      os << ", ";
+    }
+    os << columns[i].GetInfo();
   }
+  os << ")";
 
   return os.str();
 }

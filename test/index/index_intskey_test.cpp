@@ -36,18 +36,18 @@ const int NUM_TUPLES = 10;
  * BuildIndex()
  */
 index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
-                         int num_cols) {
+                         std::vector<type::Type::TypeId> col_types) {
   // Build tuple and key schema
   std::vector<catalog::Column> column_list;
   std::vector<oid_t> key_attrs;
 
-  char column_char = 'A';
+  const int num_cols = (int)col_types.size();
+  const char column_char = 'A';
   for (int i = 0; i < num_cols; i++) {
     std::ostringstream os;
     os << static_cast<char>((int)column_char + i);
 
-    catalog::Column column(type::Type::INTEGER,
-                           type::Type::GetTypeSize(type::Type::INTEGER),
+    catalog::Column column(col_types[i], type::Type::GetTypeSize(col_types[i]),
                            os.str(), true);
     column_list.push_back(column);
     key_attrs.push_back(i);
@@ -57,12 +57,6 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   tuple_schema = new catalog::Schema(column_list);
 
   // Build index metadata
-  //
-  // NOTE: Since here we use a relatively small key (size = 12)
-  // so index_test is only testing with a certain kind of key
-  // (most likely, GenericKey)
-  //
-  // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "MAGIC_TEST_INDEX", 125,  // Index oid
       INVALID_OID, INVALID_OID, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
@@ -72,6 +66,9 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   // The type of index key has been chosen inside this function, but we are
   // unable to know the exact type of key it has chosen
   index::Index *index = index::IndexFactory::GetIndex(index_metadata);
+  
+  // TODO: I don't think there is an easy way to check what kind of key we got.
+  // It would be nice if we could check for an CompactIntsKey
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway
@@ -81,61 +78,119 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   return index;
 }
 
-void IndexIntsKeyHelper(IndexType index_type) {
+void IndexIntsKeyTestHelper(IndexType index_type,
+                        std::vector<type::Type::TypeId> col_types) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
-  // Scale up the number of integers that we have
-  // in the index
-  for (int num_cols = 1; num_cols <= 4; num_cols++) {
-    // CREATE
-    std::unique_ptr<index::Index> index(
-        BuildIndex(index_type, false, num_cols));
+  // CREATE
+  std::unique_ptr<index::Index> index(BuildIndex(index_type, false, col_types));
 
-    // POPULATE
-    std::vector<std::shared_ptr<storage::Tuple>> keys;
-    std::vector<std::shared_ptr<ItemPointer>> items;
-    for (int i = 0; i < NUM_TUPLES; i++) {
-      std::shared_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
-      std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
+  // POPULATE
+  std::vector<std::shared_ptr<storage::Tuple>> keys;
+  std::vector<std::shared_ptr<ItemPointer>> items;
+  for (int i = 0; i < NUM_TUPLES; i++) {
+    std::shared_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
+    std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
 
-      for (int col_idx = 0; col_idx < num_cols; col_idx++) {
-        int val = (10 * i) + col_idx;
-        key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val), pool);
+    for (int col_idx = 0; col_idx < (int)col_types.size(); col_idx++) {
+      int val = (10 * i) + col_idx;
+      // key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val), pool);
+      switch (col_types[col_idx]) {
+        case type::Type::TINYINT: {
+          key->SetValue(col_idx, type::ValueFactory::GetTinyIntValue(val),
+                        pool);
+          break;
+        }
+        case type::Type::SMALLINT: {
+          key->SetValue(col_idx, type::ValueFactory::GetSmallIntValue(val),
+                        pool);
+          break;
+        }
+        case type::Type::INTEGER: {
+          key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val),
+                        pool);
+          break;
+        }
+        case type::Type::BIGINT: {
+          key->SetValue(col_idx, type::ValueFactory::GetBigIntValue(val), pool);
+          break;
+        }
+        default:
+          throw peloton::Exception("Unexpected type!");
       }
+    }
 
-      // INSERT
-      index->InsertEntry(key.get(), item.get());
+    // INSERT
+    index->InsertEntry(key.get(), item.get());
 
-      keys.push_back(key);
-      items.push_back(item);
-    }  // FOR
-
-    // SCAN
-    for (int i = 0; i < NUM_TUPLES; i++) {
-      location_ptrs.clear();
-      index->ScanKey(keys[i].get(), location_ptrs);
-      EXPECT_EQ(location_ptrs.size(), 1);
-      EXPECT_EQ(location_ptrs[0]->block, items[i]->block);
-    }  // FOR
-
-    // DELETE
-    for (int i = 0; i < NUM_TUPLES; i++) {
-      index->DeleteEntry(keys[i].get(), items[i].get());
-      location_ptrs.clear();
-      index->ScanKey(keys[i].get(), location_ptrs);
-      EXPECT_EQ(location_ptrs.size(), 0);
-    }  // FOR
-
-    delete tuple_schema;
+    keys.push_back(key);
+    items.push_back(item);
   }  // FOR
+
+  // SCAN
+  for (int i = 0; i < NUM_TUPLES; i++) {
+    location_ptrs.clear();
+    index->ScanKey(keys[i].get(), location_ptrs);
+    EXPECT_EQ(location_ptrs.size(), 1);
+    EXPECT_EQ(location_ptrs[0]->block, items[i]->block);
+  }  // FOR
+
+  // DELETE
+  for (int i = 0; i < NUM_TUPLES; i++) {
+    index->DeleteEntry(keys[i].get(), items[i].get());
+    location_ptrs.clear();
+    index->ScanKey(keys[i].get(), location_ptrs);
+    EXPECT_EQ(location_ptrs.size(), 0);
+  }  // FOR
+
+  delete tuple_schema;
 }
 
-TEST_F(IndexIntsKeyTests, BwTreeTest) { IndexIntsKeyHelper(INDEX_TYPE_BWTREE); }
+TEST_F(IndexIntsKeyTests, BwTreeTest) {
+  std::vector<type::Type::TypeId> types = {
+      type::Type::BIGINT, type::Type::INTEGER, type::Type::SMALLINT,
+      type::Type::TINYINT};
+
+  // ONE COLUMN
+  for (type::Type::TypeId type0 : types) {
+    std::vector<type::Type::TypeId> col_types = {type0};
+    IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+  }
+  // TWO COLUMNS
+  for (type::Type::TypeId type0 : types) {
+    for (type::Type::TypeId type1 : types) {
+      std::vector<type::Type::TypeId> col_types = {type0, type1};
+      IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+    }
+  }
+  // THREE COLUMNS
+  for (type::Type::TypeId type0 : types) {
+    for (type::Type::TypeId type1 : types) {
+      for (type::Type::TypeId type2 : types) {
+        std::vector<type::Type::TypeId> col_types = {type0, type1, type2};
+        IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+      }
+    }
+  }
+  // FOUR COLUMNS
+  for (type::Type::TypeId type0 : types) {
+    for (type::Type::TypeId type1 : types) {
+      for (type::Type::TypeId type2 : types) {
+        for (type::Type::TypeId type3 : types) {
+          std::vector<type::Type::TypeId> col_types = {type0, type1, type2,
+                                                       type3};
+          IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+        }
+      }
+    }
+  }
+}
 
 // FIXME: The B-Tree core dumps. If we're not going to support then we should
 // probably drop it.
-// TEST_F(IndexIntsKeyTests, BTreeTest) { IndexIntsKeyHelper(INDEX_TYPE_BTREE);
+// TEST_F(IndexIntsKeyTests, BTreeTest) {
+// IndexIntsKeyHelper(INDEX_TYPE_BTREE);
 // }
 
 }  // End test namespace

@@ -21,7 +21,7 @@ payment_ratio = 0
 order_status_ratio = 0
 delivery_ratio = 0
 stock_level_ratio = 0
-scale_factor = 1
+SCALE_FACTOR = 1
 TEST_TIME = 20
 # TEST_TIME = 60
 
@@ -40,7 +40,7 @@ def prepare_parameters():
     parameters["$ORDER_STATUS_RATIO"] = str(order_status_ratio)
     parameters["$DELIVERY_RATIO"] = str(delivery_ratio)
     parameters["$STOCK_LEVEL_RATIO"] = str(stock_level_ratio)
-    parameters["$SCALE_FACTOR"] = str(scale_factor)
+    parameters["$SCALE_FACTOR"] = str(SCALE_FACTOR)
     parameters["$IP"] = db_host
     parameters["$PORT"] = db_port
     parameters["$TIME"] = str(TEST_TIME)
@@ -48,8 +48,8 @@ def prepare_parameters():
     template = ""
     with open("tpcc_template.xml") as in_file:
         template = in_file.read()
-    for param in parameters:
-        template = template.replace(param, parameters[param])
+    for param,value in parameters.items():
+        template = template.replace(param, value)
     with open(config_filename, "w") as out_file:
         out_file.write(template)
 
@@ -59,7 +59,7 @@ def get_result_path():
     #if not os.path.exists(base_dir):
         #os.mkdir(base_dir)
     #return base_dir +
-    return "outputfile_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor)
+    return "outputfile_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, SCALE_FACTOR)
 
 def start_bench():
     global cwd
@@ -125,9 +125,9 @@ if __name__ == "__main__":
     ## EXECUTE
     ## ----------------------------------------------
     for thread_num in thread_counts:
+        SCALE_FACTOR = thread_num
         prepare_parameters()
-        scale_factor = thread_num
         start_bench()
-        result_dir_name = "tpcc_collected_data_%d_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, scale_factor, thread_num)
+        result_dir_name = "tpcc_collected_data_%d_%d_%d_%d_%d_%d_%d" % (new_order_ratio, payment_ratio, order_status_ratio, delivery_ratio, stock_level_ratio, SCALE_FACTOR, thread_num)
         collect_data(result_dir_name)
 ## MAIN

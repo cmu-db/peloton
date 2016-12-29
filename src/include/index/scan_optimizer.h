@@ -92,44 +92,38 @@ class ConjunctionScanPredicate {
   // at run time
   storage::Tuple *low_key_p_;
   storage::Tuple *high_key_p_;
-  
+
  private:
-  
   /*
    * SetTupleColumnValueForKey() - Similar to SetTupleColumnValue() but only
    *                               sets a given key
    *
-   * This function is designed to work for range query. This function accepts 
+   * This function is designed to work for range query. This function accepts
    * a key pointer, which must be either the low key or high key
    */
-  void SetTupleColumnValueForKey(
-    Index *index_p,
-    const std::vector<oid_t> &column_id_list, 
-    const std::vector<type::Value> &new_value_list,
-    storage::Tuple *key_p) {
-    
+  void SetTupleColumnValueForKey(Index *index_p,
+                                 const std::vector<oid_t> &column_id_list,
+                                 const std::vector<type::Value> &new_value_list,
+                                 storage::Tuple *key_p) {
     // Since we used low key and high key, this cannot be a point query
-    PL_ASSERT(is_point_query_ == false); 
+    PL_ASSERT(is_point_query_ == false);
     PL_ASSERT(new_value_list.size() == column_id_list.size());
-    
-    // We do not accept using other keys except 
+
+    // We do not accept using other keys except
     // low key and high key of this instance
     PL_ASSERT(key_p == low_key_p_ || key_p == high_key_p_);
-    
+
     int i = 0;
-    for(oid_t tuple_column : column_id_list) {
+    for (oid_t tuple_column : column_id_list) {
       oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
-      oid_t bind_ret = BindValueToIndexKey(index_p, 
-                                           new_value_list[i], 
-                                           key_p, 
-                                           index_column);
-                                           
+      UNUSED_ATTRIBUTE oid_t bind_ret =
+          BindValueToIndexKey(index_p, new_value_list[i], key_p, index_column);
       PL_ASSERT(bind_ret == INVALID_OID);
       i++;
     }
-    
+
     return;
-  } 
+  }
 
  public:
   /*
@@ -242,9 +236,9 @@ class ConjunctionScanPredicate {
 
     return;
   }
-  
+
   /*
-   * SetTupleColumnValue() - Sets a value for a particular column inside 
+   * SetTupleColumnValue() - Sets a value for a particular column inside
    *                         both low key and high key
    *
    * This function behaves in a way like this:
@@ -257,79 +251,67 @@ class ConjunctionScanPredicate {
    *   4. column_id is the column ID inside table rather than inside index key
    *   5. The index must be the same as the index passed into the constructor
    *
-   * Note that for this special case we do not call 
+   * Note that for this special case we do not call
    * SetTupleColumnValueForLowKey() because this function requires two traverses
    * of the two lists in the argument which could be avoided
    */
   void SetTupleColumnValue(Index *index_p,
-                           const std::vector<oid_t> &column_id_list, 
+                           const std::vector<oid_t> &column_id_list,
                            const std::vector<type::Value> &new_value_list) {
     // They are one to one
     PL_ASSERT(new_value_list.size() == column_id_list.size());
-    
+
     // This is used to address new_value_list
     int i = 0;
-    for(oid_t tuple_column : column_id_list) {
+    for (oid_t tuple_column : column_id_list) {
       // Translate tuple column to index column
       // This function guarantees the return value must be valid one
       oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
-      
-      oid_t bind_ret;
-      
+
+      UNUSED_ATTRIBUTE oid_t bind_ret;
+
       // Always bind the value to low key
       // It should return INVALID_OID since we do not have any
       // late binding here
-      bind_ret = BindValueToIndexKey(index_p, 
-                                     new_value_list[i], 
-                                     low_key_p_, 
+      bind_ret = BindValueToIndexKey(index_p, new_value_list[i], low_key_p_,
                                      index_column);
       PL_ASSERT(bind_ret == INVALID_OID);
-      
+
       // is_point_query_ is only determined by expression type
       // Also if not point query then also bind to high key
-      if(is_point_query_ == true) {
-        bind_ret = BindValueToIndexKey(index_p, 
-                                     new_value_list[i], 
-                                     high_key_p_, 
-                                     index_column);
-        PL_ASSERT(bind_ret == INVALID_OID); 
+      if (is_point_query_ == true) {
+        bind_ret = BindValueToIndexKey(index_p, new_value_list[i], high_key_p_,
+                                       index_column);
+        PL_ASSERT(bind_ret == INVALID_OID);
       }
-      
+
       i++;
     }
-    
+
     return;
   }
-  
+
   /*
    * SetTupleColumnValueForLowKey() - Sets columns for low key
    */
   inline void SetTupleColumnValueForLowKey(
-    Index *index_p,
-    const std::vector<oid_t> &column_id_list, 
-    const std::vector<type::Value> &new_value_list) {
-    
-    SetTupleColumnValueForKey(index_p, 
-                              column_id_list, 
-                              new_value_list, 
+      Index *index_p, const std::vector<oid_t> &column_id_list,
+      const std::vector<type::Value> &new_value_list) {
+    SetTupleColumnValueForKey(index_p, column_id_list, new_value_list,
                               low_key_p_);
-                              
+
     return;
   }
-  
+
   /*
    * SetTupleColumnValueForHighKey() - Sets columns for high key
    */
   inline void SetTupleColumnValueForHighKey(
-    Index *index_p,
-    const std::vector<oid_t> &column_id_list, 
-    const std::vector<type::Value> &new_value_list) {
-    
-    SetTupleColumnValueForKey(index_p, 
-                              column_id_list, 
-                              new_value_list, 
+      Index *index_p, const std::vector<oid_t> &column_id_list,
+      const std::vector<type::Value> &new_value_list) {
+    SetTupleColumnValueForKey(index_p, column_id_list, new_value_list,
                               high_key_p_);
-                              
+
     return;
   }
 
@@ -353,8 +335,7 @@ class ConjunctionScanPredicate {
     type::Type::TypeId bind_type = value.GetTypeId();
 
     if (bind_type == type::Type::PARAMETER_OFFSET) {
-      return static_cast<oid_t>(
-          type::ValuePeeker::PeekParameterOffset(value));
+      return static_cast<oid_t>(type::ValuePeeker::PeekParameterOffset(value));
     }
 
     // This is the type of the actual column
@@ -425,8 +406,7 @@ class ConjunctionScanPredicate {
 
         // We set the value using index's varlen pool, if any VARCHAR is
         // involved (this is OK since the routine only runs for once)
-        type::Value val = (
-            type::Type::GetMinValue(index_key_column_type));
+        type::Value val = (type::Type::GetMinValue(index_key_column_type));
         low_key_p_->SetValue(i, val, index_p->GetPool());
       } else {
         oid_t bind_ret = BindValueToIndexKey(
@@ -447,8 +427,7 @@ class ConjunctionScanPredicate {
         if (index_pair.second == INVALID_OID) {
           // We set the value using index's varlen pool, if any VARCHAR is
           // involved (this is OK since the routine only runs for once)
-          type::Value val(
-              type::Type::GetMaxValue(index_key_column_type));
+          type::Value val(type::Type::GetMaxValue(index_key_column_type));
           high_key_p_->SetValue(i, val, index_p->GetPool());
         } else {
           oid_t bind_ret = BindValueToIndexKey(
@@ -478,7 +457,7 @@ class ConjunctionScanPredicate {
    *
    * NOTE: This function could not be called if full_index_scan is true
    */
-  void LateBind(Index *index_p, const std::vector<type::Value > &value_list,
+  void LateBind(Index *index_p, const std::vector<type::Value> &value_list,
                 const std::vector<std::pair<oid_t, oid_t>> key_bind_list,
                 storage::Tuple *index_key_p) {
     PL_ASSERT(full_index_scan_ == false);
@@ -517,7 +496,7 @@ class ConjunctionScanPredicate {
    * NOTE 3: This function could not be called if full_index_scan if true
    */
   void LateBindValues(Index *index_p,
-                      const std::vector<type::Value > &value_list) {
+                      const std::vector<type::Value> &value_list) {
     PL_ASSERT(full_index_scan_ == false);
 
     // Bind values to low key and high key respectively
@@ -625,7 +604,7 @@ class IndexScanPredicate {
    * Constructor - Initialize nothing
    *
    * Please note that we do not push any conjunction scan predicate into the
-   * list here because they are usually done in another stage after the 
+   * list here because they are usually done in another stage after the
    * containing IndexScanPlan has been initialized
    */
   IndexScanPredicate() : conjunction_list_{}, full_index_scan_{false} {}
