@@ -57,12 +57,6 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   tuple_schema = new catalog::Schema(column_list);
 
   // Build index metadata
-  //
-  // NOTE: Since here we use a relatively small key (size = 12)
-  // so index_test is only testing with a certain kind of key
-  // (most likely, GenericKey)
-  //
-  // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "MAGIC_TEST_INDEX", 125,  // Index oid
       INVALID_OID, INVALID_OID, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
@@ -72,6 +66,9 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   // The type of index key has been chosen inside this function, but we are
   // unable to know the exact type of key it has chosen
   index::Index *index = index::IndexFactory::GetIndex(index_metadata);
+  
+  // TODO: I don't think there is an easy way to check what kind of key we got.
+  // It would be nice if we could check for an CompactIntsKey
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway
