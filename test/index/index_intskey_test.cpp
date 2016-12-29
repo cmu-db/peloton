@@ -18,8 +18,6 @@
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 
-#include <iostream>
-
 namespace peloton {
 namespace test {
 
@@ -132,7 +130,6 @@ void IndexIntsKeyTestHelper(IndexType index_type,
     keys.push_back(key);
     items.push_back(item);
   }  // FOR
-  // std::cout << "INDEX: " << index->GetInfo() << std::endl;
 
   // SCAN
   for (int i = 0; i < NUM_TUPLES; i++) {
