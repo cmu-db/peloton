@@ -912,8 +912,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
       DEFAULT_DB_NAME, "stock");
 
   // Manually constructing the predicate....
-  expression::ParameterValueExpression* params[5];
-  for (int i = 0; i < 5; ++i)
+  expression::ParameterValueExpression* params[6];
+  for (int i = 0; i < 6; ++i)
     params[i] = new expression::ParameterValueExpression(i);
 
   // Predicate for order_line table
@@ -978,11 +978,10 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto s_quantity = new expression::TupleValueExpression(s_quantity_name);
 
   auto predicate12 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[4]);
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[5]);
 
-  predicate_column_ids = {0, 1};
-  predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL,
-                          EXPRESSION_TYPE_COMPARE_EQUAL};
+  predicate_column_ids = {0};  // S_W_ID
+  predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL};
 
   // Hardcode wid=0 and iid=90
   //  predicate_values = {type::ValueFactory::GetIntegerValue(0).Copy(),
@@ -1008,16 +1007,16 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto schema = CreateHackJoinSchema();
 
   // LEFT.4 == RIGHT.1
-  expression::TupleValueExpression* left_table_attr_4 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
-
-  expression::TupleValueExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
-
-  std::unique_ptr<const expression::AbstractExpression> join_predicate(
-      new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
-                                           left_table_attr_4,
-                                           right_table_attr_1));
+  //  expression::TupleValueExpression* left_table_attr_4 =
+  //      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
+  //
+  //  expression::TupleValueExpression* right_table_attr_1 =
+  //      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
+  //
+  //    std::unique_ptr<const expression::AbstractExpression> join_predicate(
+  //        new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
+  //                                             left_table_attr_4,
+  //                                             right_table_attr_1));
 
   std::vector<oid_t> join_column_ids_left = {0};   // I_I_ID in the result
   std::vector<oid_t> join_column_ids_right = {1};  // S_I_ID in the table
@@ -1025,8 +1024,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   // Create hash join plan node.
   std::unique_ptr<planner::NestedLoopJoinPlan> nested_join_plan_node(
       new planner::NestedLoopJoinPlan(
-          JOIN_TYPE_INNER, std::move(join_predicate), std::move(projection),
-          schema, join_column_ids_left, join_column_ids_right));
+          JOIN_TYPE_INNER, nullptr, std::move(projection), schema,
+          join_column_ids_left, join_column_ids_right));
 
   // Add left and right
   nested_join_plan_node->AddChild(std::move(orderline_scan_node));

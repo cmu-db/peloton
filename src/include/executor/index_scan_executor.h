@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "executor/abstract_scan_executor.h"
+#include "index/scan_optimizer.h"
 
 namespace peloton {
 
@@ -113,6 +114,9 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   // whether the index scan range is right open
   bool right_open_ = false;
+
+  // copy from underlying plan
+  index::IndexScanPredicate index_predicate_;
 };
 
 }  // namespace executor

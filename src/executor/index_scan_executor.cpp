@@ -66,6 +66,8 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   PL_ASSERT(index_ != nullptr);
 
+  index_predicate_ = node.GetIndexPredicate();
+
   result_itr_ = START_OID;
   result_.clear();
   done_ = false;
@@ -88,7 +90,7 @@ bool IndexScanExecutor::DInit() {
 
       for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-        LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
         values_.push_back(value.Copy());
       }
 
@@ -111,7 +113,7 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-  LOG_TRACE("Index Scan executor :: 0 child");
+  LOG_INFO("Index Scan executor :: 0 child");
 
   if (!done_) {
     if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
@@ -130,7 +132,7 @@ bool IndexScanExecutor::DExecute() {
       result_itr_++;
       continue;
     } else {
-      LOG_TRACE("Information %s", result_[result_itr_]->GetInfo().c_str());
+      LOG_INFO("Information %s", result_[result_itr_]->GetInfo().c_str());
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
@@ -142,13 +144,12 @@ bool IndexScanExecutor::DExecute() {
 }
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
-  LOG_TRACE("Exec primary index lookup");
+  LOG_INFO("Exec primary index lookup");
   PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -158,11 +159,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
+
+    LOG_INFO("tuple_location_ptrs:%lu", tuple_location_ptrs.size());
   }
 
   if (tuple_location_ptrs.size() == 0) {
-    LOG_TRACE("no tuple is retrieved from index.");
+    LOG_INFO("no tuple is retrieved from index.");
     return false;
   }
 
@@ -174,7 +177,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer> visible_tuple_locations;
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
-#ifdef LOG_TRACE_ENABLED
+#ifdef LOG_INFO_ENABLED
   int num_tuples_examined = 0;
 #endif
 
@@ -185,7 +188,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     auto tile_group_header = tile_group.get()->GetHeader();
     size_t chain_length = 0;
 
-#ifdef LOG_TRACE_ENABLED
+#ifdef LOG_INFO_ENABLED
     num_tuples_examined++;
 #endif
 
@@ -200,18 +203,19 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
-                  tuple_location.offset);
+        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block,
+                 tuple_location.offset);
         break;
       }
       // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
-        LOG_TRACE("perform read: %u, %u", tuple_location.block,
-                  tuple_location.offset);
+        LOG_INFO("perform read: %u, %u", tuple_location.block,
+                 tuple_location.offset);
 
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
+          LOG_INFO("perform prediate evaluate");
           expression::ContainerTuple<storage::TileGroup> tuple(
               tile_group.get(), tuple_location.offset);
           eval =
@@ -219,9 +223,11 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
+          LOG_INFO("perform read operation");
           auto res = transaction_manager.PerformRead(
               current_txn, tuple_location, acquire_owner);
           if (!res) {
+            LOG_INFO("read nothing");
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
             return res;
@@ -236,8 +242,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
 
-        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
-                  tuple_location.offset);
+        LOG_INFO("Invisible read: %u, %u", tuple_location.block,
+                 tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(
                                 tuple_location.offset) == INITIAL_TXN_ID);
@@ -282,21 +288,21 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         continue;
       }
     }
-    LOG_TRACE("Traverse length: %d\n", (int)chain_length);
+    LOG_INFO("Traverse length: %d\n", (int)chain_length);
   }
-#ifdef LOG_TRACE_ENABLED
-  LOG_TRACE("Examined %d tuples from index %s", num_tuples_examined,
-            index_->GetName().c_str());
+#ifdef LOG_INFO_ENABLED
+  LOG_INFO("Examined %d tuples from index %s", num_tuples_examined,
+           index_->GetName().c_str());
 #endif
 
-  LOG_TRACE("%ld tuples before pruning boundaries",
-            visible_tuple_locations.size());
+  LOG_INFO("%ld tuples before pruning boundaries",
+           visible_tuple_locations.size());
 
   // Check whether the boundaries satisfy the required condition
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
-  LOG_TRACE("%ld tuples after pruning boundaries",
-            visible_tuple_locations.size());
+  LOG_INFO("%ld tuples after pruning boundaries",
+           visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
     visible_tuples[visible_tuple_location.block]
@@ -321,19 +327,18 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   done_ = true;
 
-  LOG_TRACE("Result tiles : %lu", result_.size());
+  LOG_INFO("Result tiles : %lu", result_.size());
 
   return true;
 }
 
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
-  LOG_TRACE("ExecSecondaryIndexLookup");
+  LOG_INFO("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -343,11 +348,11 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
-    LOG_TRACE("no tuple is retrieved from index.");
+    LOG_INFO("no tuple is retrieved from index.");
     return false;
   }
 
@@ -369,7 +374,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   std::shared_ptr<storage::TileGroup> tile_group;
   storage::TileGroupHeader *tile_group_header = nullptr;
 
-#ifdef LOG_TRACE_ENABLED
+#ifdef LOG_INFO_ENABLED
   int num_tuples_examined = 0;
   int num_blocks_reused = 0;
 #endif
@@ -380,7 +385,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       tile_group = manager.GetTileGroup(tuple_location.block);
       tile_group_header = tile_group.get()->GetHeader();
     }
-#ifdef LOG_TRACE_ENABLED
+#ifdef LOG_INFO_ENABLED
     else
       num_blocks_reused++;
     num_tuples_examined++;
@@ -400,14 +405,14 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
-                  tuple_location.offset);
+        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block,
+                 tuple_location.offset);
         break;
       }
       // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
-        LOG_TRACE("perform read: %u, %u", tuple_location.block,
-                  tuple_location.offset);
+        LOG_INFO("perform read: %u, %u", tuple_location.block,
+                 tuple_location.offset);
 
         // Further check if the version has the secondary key
         storage::Tuple key_tuple(index_->GetKeySchema(), true);
@@ -426,8 +431,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // Compare the key tuple and the key
         if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
             false) {
-          LOG_TRACE("Secondary key mismatch: %u, %u\n", tuple_location.block,
-                    tuple_location.offset);
+          LOG_INFO("Secondary key mismatch: %u, %u\n", tuple_location.block,
+                   tuple_location.offset);
           break;
         }
 
@@ -458,8 +463,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
 
-        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
-                  tuple_location.offset);
+        LOG_INFO("Invisible read: %u, %u", tuple_location.block,
+                 tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(
                                 tuple_location.offset) == INITIAL_TXN_ID);
@@ -507,11 +512,11 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
-    LOG_TRACE("Traverse length: %d\n", (int)chain_length);
+    LOG_INFO("Traverse length: %d\n", (int)chain_length);
   }
-#ifdef LOG_TRACE_ENABLED
-  LOG_TRACE("Examined %d tuples from index %s [num_blocks_reused=%d]",
-            num_tuples_examined, index_->GetName().c_str(), num_blocks_reused);
+#ifdef LOG_INFO_ENABLED
+  LOG_INFO("Examined %d tuples from index %s [num_blocks_reused=%d]",
+           num_tuples_examined, index_->GetName().c_str(), num_blocks_reused);
 #endif
 
   // Check whether the boundaries satisfy the required condition
@@ -540,7 +545,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   done_ = true;
 
-  LOG_TRACE("Result tiles : %lu", result_.size());
+  LOG_INFO("Result tiles : %lu", result_.size());
 
   return true;
 }
@@ -548,7 +553,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 void IndexScanExecutor::CheckOpenRangeWithReturnedTuples(
     std::vector<ItemPointer> &tuple_locations) {
   while (left_open_) {
-    LOG_TRACE("Range left open!");
+    LOG_INFO("Range left open!");
     auto tuple_location_itr = tuple_locations.begin();
 
     if (tuple_location_itr == tuple_locations.end() ||
@@ -559,7 +564,7 @@ void IndexScanExecutor::CheckOpenRangeWithReturnedTuples(
   }
 
   while (right_open_) {
-    LOG_TRACE("Range right open!");
+    LOG_INFO("Range right open!");
     auto tuple_location_itr = tuple_locations.rbegin();
 
     if (tuple_location_itr == tuple_locations.rend() ||
@@ -575,7 +580,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
   PL_ASSERT(key_column_ids_.size() == expr_types_.size());
   PL_ASSERT(expr_types_.size() == values_.size());
 
-  LOG_TRACE("Examining key conditions for the returned tuple.");
+  LOG_INFO("Examining key conditions for the returned tuple.");
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -625,7 +630,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
       diff = lhs.Compare(rhs);
     }
 
-    LOG_TRACE("Difference : %d ", diff);*/
+    LOG_INFO("Difference : %d ", diff);*/
     if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
       switch (expr_type) {
         case EXPRESSION_TYPE_COMPARE_EQUAL:
@@ -687,7 +692,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     }
   }
 
-  LOG_TRACE("Examination returning true.");
+  LOG_INFO("Examination returning true.");
 
   return true;
 }
@@ -702,10 +707,10 @@ void IndexScanExecutor::UpdatePredicate(
   // Update index predicate
   // TODO: do we need to update values_? Add a similar SetParameter?
 
-  //  LOG_INFO("values_ size %lu", values_.size());
-  //  for (unsigned int j = 0; j < values_.size(); ++j) {
-  //    LOG_INFO("BEFORE values: %s", values_[j].GetInfo().c_str());
-  //  }
+  LOG_INFO("values_ size %lu", values_.size());
+  for (unsigned int j = 0; j < values_.size(); ++j) {
+    LOG_INFO("BEFORE values: %s", values_[j].GetInfo().c_str());
+  }
 
   // Update values in index plan node
   PL_ASSERT(key_column_ids.size() == values.size());
@@ -714,16 +719,22 @@ void IndexScanExecutor::UpdatePredicate(
   // Find out the position (offset) where is key_column_id
   for (oid_t new_idx = 0; new_idx < key_column_ids.size(); new_idx++) {
     unsigned int current_idx = 0;
-    for (; current_idx < values_.size(); ++current_idx) {
+    for (; current_idx < values_.size(); current_idx++) {
       if (key_column_ids[new_idx] == key_column_ids_[current_idx]) {
         LOG_INFO("Orignial is %s", values_[current_idx].GetInfo().c_str());
-        LOG_INFO("Changed to %s", values[current_idx].GetInfo().c_str());
+        LOG_INFO("Changed to %s", values[new_idx].GetInfo().c_str());
         values_[current_idx] = values[new_idx];
+
+        // There should not be two same columns. So when we find a column, we
+        // should break the loop
+        break;
       }
     }
 
     // If new value doesn't exist in current value list, add it.
     if (current_idx == values_.size()) {
+      LOG_INFO("Add new column for index predicate:%u-%s",
+               key_column_ids[new_idx], values[new_idx].GetInfo().c_str());
       // Add value
       values_.push_back(values[new_idx]);
 
@@ -736,13 +747,14 @@ void IndexScanExecutor::UpdatePredicate(
     }
   }
 
-  //  LOG_INFO("values_ size %lu", values_.size());
-  //  for (unsigned int j = 0; j < values_.size(); ++j) {
-  //    LOG_INFO("AFTER values: %s", values_[j].GetInfo().c_str());
-  //  }
+  // Update the new value
+  index_predicate_.GetConjunctionListToSetup()[0]
+      .SetTupleColumnValue(index_.get(), key_column_ids, values);
 
-  // index_predicate_.LateBindValues(index_.get(), values_);
-  // index_predicate_.UpdatePredicate(key_column_ids, values);
+  LOG_INFO("values_ size %lu", values_.size());
+  for (unsigned int j = 0; j < values_.size(); ++j) {
+    LOG_INFO("AFTER values: %s", values_[j].GetInfo().c_str());
+  }
 }
 
 void IndexScanExecutor::ResetState() {

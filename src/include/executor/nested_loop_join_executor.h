@@ -36,6 +36,8 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   size_t right_result_itr_ = 0;
 
   size_t left_result_itr_ = 0;  // added by Michael
+
+  std::unique_ptr<LogicalTile> output_tile;
 };
 
 }  // namespace executor

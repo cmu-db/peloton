@@ -59,6 +59,9 @@ class AbstractExecutor {
   // in test cases.
   virtual LogicalTile *GetOutput();
 
+  // This is used to print or debug output
+  const LogicalTile *GetOutputInfo() { return output.get(); }
+
   const planner::AbstractPlan *GetRawNode() const { return node_; }
 
   // set the context

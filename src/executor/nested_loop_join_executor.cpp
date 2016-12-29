@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
 #include <vector>
 #include <unordered_set>
 
@@ -84,68 +85,46 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
+  // Grab info from plan node and check it
+  const planner::NestedLoopJoinPlan &node =
+      GetPlanNode<planner::NestedLoopJoinPlan>();
+
+  // Pick out the left and right columns
+  const std::vector<oid_t> &join_column_ids_left = node.GetJoinColumnsLeft();
+  const std::vector<oid_t> &join_column_ids_right = node.GetJoinColumnsRight();
+
+  std::unique_ptr<LogicalTile> output_tile = nullptr;
+  std::unique_ptr<LogicalTile::PositionListsBuilder> pos_lists_builder =
+      nullptr;
+
   // Loop until we have non-empty result tile or exit
   for (;;) {
     //===------------------------------------------------------------------===//
     // Pick left and right tiles
     //===------------------------------------------------------------------===//
 
-    LogicalTile *left_tile = nullptr;
-    LogicalTile *right_tile = nullptr;
-
     // If we have already retrieved all left child's results in buffer
     if (left_child_done_ == true) {
-      LOG_INFO("Advance the left buffer iterator.");
-
-      PL_ASSERT(!right_result_tiles_.empty());
-      left_result_itr_++;
-
-      if (left_result_itr_ >= left_result_tiles_.size()) {
-        left_result_itr_ = 0;
-      }
+      LOG_INFO("Left is done which means all join comparison completes");
+      return false;
     }
+
     // Otherwise, we must attempt to execute the left child
-    else {
-      // Left child is finished, no more tiles
-      if (children_[0]->Execute() == false) {
-        LOG_INFO("Left child is exhausted.");
 
-        left_child_done_ = true;
-        left_result_itr_ = 0;
-      }
-      // Buffer the left child's result
-      else {
-        LOG_INFO("Retrieve a new tile from left child");
-        BufferLeftTile(children_[0]->GetOutput());
-        left_result_itr_ = left_result_tiles_.size() - 1;
-      }
+    // Left child is finished, no more tiles
+    if (children_[0]->Execute() == false) {
+      LOG_INFO("Left child is exhausted.");
+      return false;
     }
 
-    if (left_result_tiles_.empty() && !left_child_done_) {
-      // If there is no result for left lookup, continue the next tile
-      LOG_INFO("Left is empty continue the left.");
-      continue;
-    } else if (left_child_done_) {
-      LOG_INFO("Left_child_done, and return the result.");
-      return BuildOuterJoinOutput();
-    }
+    // Get the left child's result
+    LOG_INFO("Retrieve a new tile from left child");
+    auto left_tile = children_[0]->GetOutput();
 
-    // We already checked whether results are empty
-    left_tile = left_result_tiles_[left_result_itr_].get();
+    // Left result should not be empty if execute returns true
+    PL_ASSERT(left_tile != nullptr);
 
-    //===------------------------------------------------------------------===//
-    // Look up the right table using the left result
-    //===------------------------------------------------------------------===//
-
-    // Grab info from plan node and check it
-    const planner::NestedLoopJoinPlan &node =
-        GetPlanNode<planner::NestedLoopJoinPlan>();
-
-    // Pick out the left and right columns
-    const std::vector<oid_t> &join_column_ids_left = node.GetJoinColumnsLeft();
-    const std::vector<oid_t> &join_column_ids_right =
-        node.GetJoinColumnsRight();
-
+    // Iterate the left tile to lookup right table
     for (auto left_tile_row_itr : *left_tile) {
       // Tuple result
       expression::ContainerTuple<executor::LogicalTile> left_tuple(
@@ -159,25 +138,33 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
 
       // Pass the columns and values to right executor
+      LOG_INFO("Update the new value for index predicate");
       children_[1]->UpdatePredicate(join_column_ids_right, join_values);
 
-      // return if right tile is empty
-      if (right_child_done_ && right_result_tiles_.empty()) {
-        return BuildOuterJoinOutput();
-      }
-
-      // Right child is finished, no more tiles
+      // Execute right child
       for (;;) {
         if (children_[1]->Execute() == true) {
           LOG_INFO("Advance the Right child.");
-          BufferRightTile(children_[1]->GetOutput());
+          auto right_tile = children_[1]->GetOutput();
 
-          // return if left tile is empty
-          if (left_child_done_ && left_result_tiles_.empty()) {
-            return BuildOuterJoinOutput();
+          PL_ASSERT(right_tile != nullptr);
+
+          // Construct output result. Only construct it for once
+          if (output_tile == nullptr) {
+            output_tile = BuildOutputLogicalTile(left_tile, right_tile);
+            pos_lists_builder.reset(
+                new LogicalTile::PositionListsBuilder(left_tile, right_tile));
           }
+
+          // Go over every pair of tuples in left and right logical tiles
+          for (auto right_tile_row_itr : *right_tile) {
+            // Insert a tuple into the output logical tile
+            // First, copy the elements in left logical tile's tuple
+            LOG_INFO("Insert a tuple into the output logical tile");
+            pos_lists_builder->AddRow(left_tile_row_itr, right_tile_row_itr);
+          }  // Outer loop of NLJ
         }
-        // Right is finished
+        // Right table is finished for the current left tuple
         else {
           if (!left_child_done_) {
             children_[1]->ResetState();
@@ -186,85 +173,23 @@ bool NestedLoopJoinExecutor::DExecute() {
           }
           break;
         }
-      }  // End for
-    }    // Buffered all results
+      }  // End for right table for current left tuple
+    }    // End for current left tile
 
-    // Return result
-    if (left_child_done_ && right_result_tiles_.empty()) {
-      LOG_INFO("All done, and return the result.");
-      return BuildOuterJoinOutput();
-    } else if (right_result_tiles_.empty()) {
-      LOG_INFO("Right is empty, continue the left.");
-      continue;
-    }
-
-    // We already checked whether results are empty
-    right_tile = right_result_tiles_.back().get();
-
-    //===------------------------------------------------------------------===//
-    // Build Join Tile
-    //===------------------------------------------------------------------===//
-    LOG_INFO("Build output logical tile.");
-
-    // Build output logical tile
-    auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);
-
-    // Build position lists
-    LogicalTile::PositionListsBuilder pos_lists_builder(left_tile, right_tile);
-
-    // Go over every pair of tuples in left and right logical tiles
-    for (auto right_tile_row_itr : *right_tile) {
-      bool has_left_match = false;
-
-      for (auto left_tile_row_itr : *left_tile) {
-        // Join predicate exists
-        if (predicate_ != nullptr) {
-          expression::ContainerTuple<executor::LogicalTile> left_tuple(
-              left_tile, left_tile_row_itr);
-          expression::ContainerTuple<executor::LogicalTile> right_tuple(
-              right_tile, right_tile_row_itr);
-
-          LOG_INFO("LEFT:%s\n", left_tuple.GetValue(0).GetInfo().c_str());
-          LOG_INFO("RIght:%s\n", right_tuple.GetValue(0).GetInfo().c_str());
-
-          // Join predicate is false. Skip pair and continue.
-          auto eval = predicate_->Evaluate(&left_tuple, &right_tuple,
-                                           executor_context_);
-          if (eval.IsFalse()) {
-            LOG_INFO("Not math join predicate");
-            continue;
-          }
-          LOG_INFO("Find a tuple with join predicate");
-        }
-
-        RecordMatchedLeftRow(left_result_itr_, left_tile_row_itr);
-
-        // For Left and Full Outer Join
-        has_left_match = true;
-
-        // Insert a tuple into the output logical tile
-        // First, copy the elements in left logical tile's tuple
-        pos_lists_builder.AddRow(left_tile_row_itr, right_tile_row_itr);
-      }  // Inner loop of NLJ
-
-      // For Right and Full Outer Join
-      if (has_left_match) {
-        RecordMatchedRightRow(right_result_tiles_.size() - 1,
-                              right_tile_row_itr);
-      }
-
-    }  // Outer loop of NLJ
-
-    // Check if we have any join tuples.
-    if (pos_lists_builder.Size() > 0) {
-      output_tile->SetPositionListsAndVisibility(pos_lists_builder.Release());
+    // Now current left tile is done
+    LOG_INFO("pos_lists_builder's size : %ld", pos_lists_builder->Size());
+    if (pos_lists_builder->Size() > 0) {
+      LOG_INFO("Set output result");
+      output_tile->SetPositionListsAndVisibility(
+          (*pos_lists_builder).Release());
       SetOutput(output_tile.release());
+      LOG_INFO("result is : %s", GetOutputInfo()->GetInfo().c_str());
       return true;
     }
 
     LOG_INFO("This pair produces empty join result. Continue the loop.");
+
   }  // end the very beginning for loop
 }
-
 }  // namespace executor
 }  // namespace peloton
