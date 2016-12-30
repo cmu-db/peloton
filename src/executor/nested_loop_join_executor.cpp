@@ -82,8 +82,8 @@ bool NestedLoopJoinExecutor::DInit() {
 // use the result to lookup right table. If left table is done that means right
 // table is also done. So we only keep the left_child_done_ as the sign.
 bool NestedLoopJoinExecutor::DExecute() {
-  LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
-           GetJoinTypeString());
+  LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
+            GetJoinTypeString());
 
   // Grab info from plan node and check it
   const planner::NestedLoopJoinPlan &node =
@@ -108,18 +108,15 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     // If we have already retrieved all left child's results in buffer
     if (left_child_done_ == true) {
-      LOG_INFO("Left is done which means all join comparison completes");
+      LOG_TRACE("Left is done which means all join comparison completes");
       return false;
     }
-
-    LogicalTile *left_tile = nullptr;
-    LogicalTile *right_tile = nullptr;
 
     // If left tile result is not done, continue the left tuples
     if (!left_tile_done_) {
       // Tuple result
       expression::ContainerTuple<executor::LogicalTile> left_tuple(
-          left_tile_, left_tile_row_itr_);
+          left_tile_.get(), left_tile_row_itr_);
 
       // Grab the values
       std::vector<type::Value> join_values;
@@ -129,60 +126,67 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
 
       // Pass the columns and values to right executor
-      LOG_INFO("Update the new value for index predicate");
+      LOG_TRACE("Update the new value for index predicate");
       children_[1]->UpdatePredicate(join_column_ids_right, join_values);
 
       // Execute the right child to get the right tile
       if (children_[1]->Execute() == true) {
-        LOG_INFO("Advance the Right child.");
-        auto right_tile = children_[1]->GetOutput();
+        LOG_TRACE("Advance the Right child.");
+        std::unique_ptr<LogicalTile> right_tile(children_[1]->GetOutput());
 
         PL_ASSERT(right_tile != nullptr);
 
         // Construct output result
-        auto output_tile = BuildOutputLogicalTile(left_tile_, right_tile);
+        auto output_tile =
+            BuildOutputLogicalTile(left_tile_.get(), right_tile.get());
 
         // Build position list
-        LogicalTile::PositionListsBuilder pos_lists_builder(left_tile_,
-                                                            right_tile);
+        LogicalTile::PositionListsBuilder pos_lists_builder(left_tile_.get(),
+                                                            right_tile.get());
 
         // Go over every pair of tuples in left and right logical tiles
         for (auto right_tile_row_itr : *right_tile) {
           // Insert a tuple into the output logical tile
           // First, copy the elements in left logical tile's tuple
-          LOG_INFO("Insert a tuple into the output logical tile");
+          LOG_TRACE("Insert a tuple into the output logical tile");
           pos_lists_builder.AddRow(left_tile_row_itr_, right_tile_row_itr);
         }  // Outer loop of NLJ
 
         // Now current left tile is done
-        LOG_INFO("pos_lists_builder's size : %ld", pos_lists_builder.Size());
+        LOG_TRACE("pos_lists_builder's size : %ld", pos_lists_builder.Size());
         if (pos_lists_builder.Size() > 0) {
-          LOG_INFO("Set output result");
+          LOG_TRACE("Set output result");
           output_tile->SetPositionListsAndVisibility(
               pos_lists_builder.Release());
           SetOutput(output_tile.release());
-          LOG_INFO("result is : %s", GetOutputInfo()->GetInfo().c_str());
+          LOG_TRACE("result is : %s", GetOutputInfo()->GetInfo().c_str());
           return true;
         }
       }
-      // Right table is finished for the current left tuple
+      // Right table is finished for the current left tuple. move to the next
       else {
         if (!left_child_done_) {
-          LOG_INFO("right child is done, but left is not, so reset right");
+          LOG_TRACE("right child is done, but left is not, so reset right");
           children_[1]->ResetState();
 
           // When all right table is done, examine whether left tile is done
           // If left tile is done, next loop will directly execute child[0]
           if (left_tile_row_itr_ == left_tile_->GetTupleCount() - 1) {
-            // Set up flag
+            LOG_TRACE("left tile is done");
+            // Set up flag and go the execute child 0 to get the next tile
             left_tile_done_ = true;
           } else {
             // Move the row to the next one in left tile
+            LOG_TRACE("Advance left row");
             left_tile_row_itr_++;
+
+            // Continue the new left row
+            continue;
           }
         } else {
-          LOG_INFO("Both left and right child are done");
+          LOG_TRACE("Both left and right child are done");
           right_child_done_ = true;
+          return false;
         }
       }
     }  // End handle left tile
@@ -192,19 +196,19 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     // Left child is finished, no more tiles
     if (children_[0]->Execute() == false) {
-      LOG_INFO("Left child is exhausted.");
+      LOG_TRACE("Left child is exhausted.");
       return false;
     }
     // Cache the new tile
     else {
       // Get the left child's result
-      LOG_INFO("Retrieve a new tile from left child");
-      left_tile_ = children_[0]->GetOutput();
+      LOG_TRACE("Retrieve a new tile from left child");
+      left_tile_.reset(children_[0]->GetOutput());
       left_tile_done_ = false;
       left_tile_row_itr_ = 0;
     }
 
-    LOG_INFO("Get a new left tile. Continue the loop.");
+    LOG_TRACE("Get a new left tile. Continue the loop.");
 
   }  // end the very beginning for loop
 }

@@ -50,7 +50,7 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   // to cache all results in a vector, so I only use this pointer to cache the
   // left result. Each time, we should first finish left and then call child[0]
   // to get the next one left tile
-  LogicalTile *left_tile_ = nullptr;
+  std::unique_ptr<LogicalTile> left_tile_;
 
   bool left_tile_done_ = true;
 };
