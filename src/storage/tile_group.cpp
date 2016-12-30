@@ -341,11 +341,6 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
 
-Tile *TileGroup::GetTile(const oid_t tile_offset) const {
-  PL_ASSERT(tile_offset < tile_count);
-  Tile *tile = tiles[tile_offset].get();
-  return tile;
-}
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
