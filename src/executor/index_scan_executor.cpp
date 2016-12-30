@@ -29,9 +29,9 @@
 #include "index/index.h"
 #include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
+#include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "storage/masked_tuple.h"
 #include "type/types.h"
 #include "type/value.h"
 
@@ -419,15 +419,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
             tile_group.get(), tuple_location.offset);
         // Construct the key tuple
         auto &indexed_columns = index_->GetKeySchema()->GetIndexedColumns();
-//         storage::Tuple key_tuple(index_->GetKeySchema(), true);
         storage::MaskedTuple key_tuple(&candidate_tuple, indexed_columns);
-        
-//         oid_t this_col_itr = 0;
-//         for (auto col : indexed_columns) {
-//           type::Value val = (candidate_tuple.GetValue(col));
-//           key_tuple.SetValue(this_col_itr, val, nullptr);
-//           this_col_itr++;
-//         }
 
         // Compare the key tuple and the key
         if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
