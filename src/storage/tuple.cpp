@@ -44,9 +44,6 @@ type::Value Tuple::GetValue(oid_t column_id) const {
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
                      type::AbstractPool *data_pool) {
-  PL_ASSERT(tuple_schema);
-  PL_ASSERT(tuple_data);
-
   const type::Type::TypeId type = tuple_schema_->GetType(column_offset);
   LOG_TRACE("c offset: %d; using pool: %p", column_offset, data_pool);
 
@@ -112,9 +109,6 @@ void Tuple::SetFromTuple(const AbstractTuple *tuple,
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
 void Tuple::Copy(const void *source, type::AbstractPool *pool) {
-  PL_ASSERT(tuple_schema);
-  PL_ASSERT(tuple_data);
-
   const bool is_inlined = tuple_schema_->IsInlined();
   const oid_t uninlineable_column_count =
       tuple_schema_->GetUninlinedColumnCount();
