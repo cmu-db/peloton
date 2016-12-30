@@ -34,7 +34,7 @@ namespace storage {
  */
 class MaskedTuple : public AbstractTuple {
  public:
-  inline MaskedTuple(AbstractTuple *rhs, std::vector<oid_t> &mask)
+  inline MaskedTuple(AbstractTuple *rhs, const std::vector<oid_t> &mask)
       : tuple_(rhs), mask_(mask) {}
 
   ~MaskedTuple() {
@@ -42,7 +42,7 @@ class MaskedTuple : public AbstractTuple {
       // We don't own it. That's not on us!
   }
 
-  inline void SetMask(std::vector<oid_t> &mask) {
+  inline void SetMask(const std::vector<oid_t> &mask) {
     // PL_ASSERT(mask_ == nullptr);
     mask_ = mask;
   }
