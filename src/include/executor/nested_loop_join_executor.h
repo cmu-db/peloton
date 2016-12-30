@@ -44,9 +44,15 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   // this left tile and pick each row to lookup the right table. Since each time
   // we return a tile result, that is one row in the left tile, and a right
   // tile, we need to keep a pointer to know which row should start next time.
-  size_t left_tile_row_itr = 0;
+  size_t left_tile_row_itr_ = 0;
 
-  std::unique_ptr<LogicalTile> output_tile;
+  // This is used the cache the left result to save memory. It is not necessary
+  // to cache all results in a vector, so I only use this pointer to cache the
+  // left result. Each time, we should first finish left and then call child[0]
+  // to get the next one left tile
+  LogicalTile *left_tile_ = nullptr;
+
+  bool left_tile_done_ = true;
 };
 
 }  // namespace executor
