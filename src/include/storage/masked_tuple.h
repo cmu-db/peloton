@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <memory>
+#include <vector>
 #include <sstream>
 
 #include "catalog/schema.h"
@@ -34,17 +34,16 @@ namespace storage {
  */
 class MaskedTuple : public AbstractTuple {
  public:
-  inline MaskedTuple(AbstractTuple *rhs, oid_t *mask)
+  inline MaskedTuple(AbstractTuple *rhs, std::vector<oid_t> &mask)
       : tuple_(rhs), mask_(mask) {}
 
   ~MaskedTuple() {
-    if (mask_ != nullptr) {
-      delete mask_;
-    }
+      // We don't want to delete the AbstractTuple that we're pointing to
+      // We don't own it. That's not on us!
   }
 
-  inline void SetMask(oid_t *mask) {
-    PL_ASSERT(mask_ == nullptr);
+  inline void SetMask(std::vector<oid_t> &mask) {
+    // PL_ASSERT(mask_ == nullptr);
     mask_ = mask;
   }
 
@@ -77,7 +76,7 @@ class MaskedTuple : public AbstractTuple {
   // The length of this array has to be the same as the # of columns
   // in the underlying tuple schema.
   // MaskOffset -> RealOffset
-  oid_t *mask_;
+  std::vector<oid_t> mask_;
 };
 
 //===--------------------------------------------------------------------===//
