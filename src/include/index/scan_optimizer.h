@@ -272,6 +272,7 @@ class ConjunctionScanPredicate {
       oid_t index_column = index_p->TupleColumnToKeyColumn(tuple_column);
 
       UNUSED_ATTRIBUTE oid_t bind_ret;
+
       // Always bind the value to low key
       // It should return INVALID_OID since we do not have any
       // late binding here
