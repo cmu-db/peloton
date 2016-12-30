@@ -194,9 +194,6 @@ class Tuple : public AbstractTuple {
   size_t HashCode(size_t seed) const;
   size_t HashCode() const;
 
-  // Get a string representation of this tuple
-  friend std::ostream &operator<<(std::ostream &os, const Tuple &tuple);
-
   // Get a string representation for debugging
   const std::string GetInfo() const;
 

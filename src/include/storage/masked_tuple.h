@@ -13,15 +13,12 @@
 #pragma once
 
 #include <memory>
+#include <sstream>
 
 #include "catalog/schema.h"
 #include "common/abstract_tuple.h"
-#include "type/serializeio.h"
-#include "type/serializer.h"
 #include "type/types.h"
 #include "type/value.h"
-#include "type/value_factory.h"
-#include "type/value_peeker.h"
 
 namespace peloton {
 namespace storage {
@@ -37,7 +34,8 @@ namespace storage {
  */
 class MaskedTuple : public AbstractTuple {
  public:
-  inline MaskedTuple(const AbstractTuple *rhs) : tuple_(rhs), mask_(nullptr) {}
+  inline MaskedTuple(AbstractTuple *rhs, oid_t *mask)
+      : tuple_(rhs), mask_(mask) {}
 
   ~MaskedTuple() {
     if (mask_ != nullptr) {
@@ -45,9 +43,27 @@ class MaskedTuple : public AbstractTuple {
     }
   }
 
-  inline void SetMask(int *mask) {
+  inline void SetMask(oid_t *mask) {
     PL_ASSERT(mask_ == nullptr);
     mask_ = mask;
+  }
+
+  inline type::Value GetValue(oid_t column_id) const {
+    return (tuple_->GetValue(mask_[column_id]));
+  }
+
+  inline void SetValue(oid_t column_id, const type::Value &value) {
+    // Not sure if we want to support this...
+    tuple_->SetValue(mask_[column_id], value);
+  }
+
+  inline char *GetData() const { return (tuple_->GetData()); }
+
+  const std::string GetInfo() const {
+    std::stringstream os;
+    os << "***MaskedTuple*** ";
+    os << tuple_->GetInfo();
+    return os.str();
   }
 
  private:
@@ -56,12 +72,12 @@ class MaskedTuple : public AbstractTuple {
   //===--------------------------------------------------------------------===//
 
   // The real tuple that we are masking
-  const AbstractTuple *tuple_;
+  AbstractTuple *tuple_;
 
   // The length of this array has to be the same as the # of columns
   // in the underlying tuple schema.
   // MaskOffset -> RealOffset
-  int *mask_;
+  oid_t *mask_;
 };
 
 //===--------------------------------------------------------------------===//

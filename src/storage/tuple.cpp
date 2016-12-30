@@ -468,10 +468,5 @@ const std::string Tuple::GetInfo() const {
   return os.str();
 }
 
-std::ostream &operator<<(std::ostream &os, const Tuple &tuple) {
-  os << tuple.GetInfo();
-  return os;
-}
-
 }  // End storage namespace
 }  // End peloton namespace
