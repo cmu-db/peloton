@@ -703,10 +703,8 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
 void IndexScanExecutor::UpdatePredicate(
     const std::vector<oid_t> &key_column_ids,
     const std::vector<type::Value> &values) {
-  // TODO: ADD ziqi's API
-  // Update index predicate
-  // TODO: do we need to update values_? Add a similar SetParameter?
 
+  // Update index predicate
   LOG_TRACE("values_ size %lu", values_.size());
   for (unsigned int j = 0; j < values_.size(); ++j) {
     LOG_TRACE("BEFORE values: %s", values_[j].GetInfo().c_str());

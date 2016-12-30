@@ -1006,18 +1006,6 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto projection = CreateHackProjection();
   auto schema = CreateHackJoinSchema();
 
-  // LEFT.4 == RIGHT.1
-  //  expression::TupleValueExpression* left_table_attr_4 =
-  //      new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
-  //
-  //  expression::TupleValueExpression* right_table_attr_1 =
-  //      new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
-  //
-  //    std::unique_ptr<const expression::AbstractExpression> join_predicate(
-  //        new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
-  //                                             left_table_attr_4,
-  //                                             right_table_attr_1));
-
   std::vector<oid_t> join_column_ids_left = {0};   // I_I_ID in the result
   std::vector<oid_t> join_column_ids_right = {1};  // S_I_ID in the table
 
