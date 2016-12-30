@@ -204,6 +204,8 @@ bool NestedLoopJoinExecutor::DExecute() {
       // Get the left child's result
       LOG_TRACE("Retrieve a new tile from left child");
       left_tile_.reset(children_[0]->GetOutput());
+
+      // Set the flag with init status
       left_tile_done_ = false;
       left_tile_row_itr_ = 0;
     }
