@@ -335,13 +335,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
+  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
-
-  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -439,10 +438,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          expression::ContainerTuple<storage::TileGroup> tuple(
-              tile_group.get(), tuple_location.offset);
           eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
+                  .IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {

@@ -113,9 +113,6 @@ class Tuple : public AbstractTuple {
   /**
    * Allocate space to copy strings that can't be inlined rather
    * than copying the pointer.
-   *
-   * Used when setting a NValue that will go into permanent storage in a
-   *persistent table.
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */

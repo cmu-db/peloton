@@ -1,0 +1,79 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// masked_tuple_test.cpp
+//
+// Identification: test/storage/masked_tuple_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#include "common/harness.h"
+
+#include <memory>
+
+#include "storage/masked_tuple.h"
+#include "storage/tuple.h"
+
+namespace peloton {
+namespace test {
+
+catalog::Schema *key_schema = nullptr;
+catalog::Schema *tuple_schema = nullptr;
+
+const int NUM_COLUMNS = 5;
+
+//===--------------------------------------------------------------------===//
+// MaskedTuple Tests
+//===--------------------------------------------------------------------===//
+
+class MaskedTupleTests : public PelotonTest {};
+
+TEST_F(MaskedTupleTests, BasicTest) {
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+
+  // Build tuple and key schema
+  std::vector<catalog::Column> column_list;
+  std::vector<oid_t> key_attrs;
+
+  const char column_char = 'A';
+  for (int i = 0; i < NUM_COLUMNS; i++) {
+    std::ostringstream os;
+    os << static_cast<char>((int)column_char + i);
+    catalog::Column column(type::Type::INTEGER,
+                           type::Type::GetTypeSize(type::Type::INTEGER),
+                           os.str(), true);
+    column_list.push_back(column);
+    key_attrs.push_back(i);
+  }  // FOR
+  key_schema = new catalog::Schema(column_list);
+  key_schema->SetIndexedColumns(key_attrs);
+  tuple_schema = new catalog::Schema(column_list);
+
+  // CREATE REAL TUPLE
+  storage::Tuple *tuple(new storage::Tuple(tuple_schema, true));
+  std::vector<int> values;
+  for (int i = 0; i < NUM_COLUMNS; i++) {
+    int val = (10 * i) + i;
+    tuple->SetValue(i, type::ValueFactory::GetIntegerValue(val), pool);
+    values.push_back(val);
+  }  // FOR
+  for (int i = 0; i < NUM_COLUMNS; i++) {
+    auto v = tuple->GetValue(i);
+    auto result =
+        v.CompareEquals(type::ValueFactory::GetIntegerValue(values[i]));
+    EXPECT_EQ(type::CmpBool::CMP_TRUE, result);
+  }
+
+  // CREATE MASKED TUPLE
+  // storage::MaskedTuple *mask();
+
+  delete tuple;
+  delete tuple_schema;
+  delete key_schema;
+}
+
+}  // End test namespace
+}  // End peloton namespace
