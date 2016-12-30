@@ -35,11 +35,6 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   // Right child's result tiles iterator
   size_t right_result_itr_ = 0;
 
-  // For left result, we only use the current left tile, which is cached in left
-  // result vector. Although, we only need to cache one tile (current tile),
-  // there already exists left result vector, I just re-use it.
-  size_t left_result_itr_ = 0;  // added by Michael
-
   // The offset in the current tile. Each time we get a left tile, and iterate
   // this left tile and pick each row to lookup the right table. Since each time
   // we return a tile result, that is one row in the left tile, and a right
@@ -52,6 +47,9 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   // to get the next one left tile
   std::unique_ptr<LogicalTile> left_tile_;
 
+  // Since we cache the left tile, when iterate each row in left tile, we will
+  // return the combine result when there is a matched right tile. So next time,
+  // we will begin from the point of last time, if left_tile_done is false
   bool left_tile_done_ = true;
 };
 
