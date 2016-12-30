@@ -16,7 +16,7 @@
 namespace peloton {
 namespace gc {
 
-GarbageCollectionType GCManagerFactory::gc_type_ = GARBAGE_COLLECTION_TYPE_OFF;
+GarbageCollectionType GCManagerFactory::gc_type_ = GARBAGE_COLLECTION_TYPE_ON;
 
 int GCManagerFactory::gc_thread_count_ = 1;
 
