@@ -61,15 +61,15 @@ class GenericComparator {
                          const GenericKey<KeySize> &rhs) const {
     auto schema = lhs.schema;
 
+    //    type::Value lhs_value;
+    //    type::Value rhs_value;
+
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      const type::Value lhs_value = (
-          lhs.ToValueFast(schema, column_itr));
-      const type::Value rhs_value = (
-          rhs.ToValueFast(schema, column_itr));
-      
-      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE)
-        return true;
+      const type::Value lhs_value = (lhs.ToValueFast(schema, column_itr));
+      const type::Value rhs_value = (rhs.ToValueFast(schema, column_itr));
+
+      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE) return true;
 
       if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
         return false;
@@ -94,15 +94,13 @@ class GenericComparatorRaw {
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
-      const type::Value lhs_value = (
-          lhs.ToValueFast(schema, column_itr));
-      const type::Value rhs_value = (
-          rhs.ToValueFast(schema, column_itr));
+      const type::Value lhs_value = (lhs.ToValueFast(schema, column_itr));
+      const type::Value rhs_value = (rhs.ToValueFast(schema, column_itr));
 
       if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE)
         return VALUE_COMPARE_LESSTHAN;
 
-      if (lhs_value.CompareGreaterThan(rhs_value)  == type::CMP_TRUE)
+      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
         return VALUE_COMPARE_GREATERTHAN;
     }
 
@@ -140,7 +138,6 @@ class GenericEqualityChecker {
  */
 template <std::size_t KeySize>
 struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
-
   /** Generate a 64-bit number for the key value */
   inline size_t operator()(GenericKey<KeySize> const &p) const {
     auto schema = p.schema;
@@ -151,7 +148,7 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
   }
 
   GenericHasher(const GenericHasher &) {}
-  GenericHasher() {};
+  GenericHasher(){};
 };
 
 }  // End index namespace
