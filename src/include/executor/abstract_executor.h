@@ -72,7 +72,7 @@ class AbstractExecutor {
 
   // Update the predicate in runtime. This is used in Nested Loop Join. Since
   // some executor do not need this function, we set it to empty function.
-  virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
+  virtual void UpdatePredicate(const std::vector<oid_t> &column_ids
                                    UNUSED_ATTRIBUTE,
                                const std::vector<type::Value> &values
                                    UNUSED_ATTRIBUTE) {}

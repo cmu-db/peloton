@@ -1006,8 +1006,8 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto projection = CreateHackProjection();
   auto schema = CreateHackJoinSchema();
 
-  std::vector<oid_t> join_column_ids_left = {0};   // I_I_ID in the result
-  std::vector<oid_t> join_column_ids_right = {1};  // S_I_ID in the table
+  std::vector<oid_t> join_column_ids_left = {0};   // I_I_ID in the left result
+  std::vector<oid_t> join_column_ids_right = {0};  // S_I_ID in the right result
 
   // Create hash join plan node.
   std::unique_ptr<planner::NestedLoopJoinPlan> nested_join_plan_node(

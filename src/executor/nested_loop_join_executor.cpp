@@ -93,10 +93,6 @@ bool NestedLoopJoinExecutor::DExecute() {
   const std::vector<oid_t> &join_column_ids_left = node.GetJoinColumnsLeft();
   const std::vector<oid_t> &join_column_ids_right = node.GetJoinColumnsRight();
 
-  //  std::unique_ptr<LogicalTile> output_tile = nullptr;
-  //  std::unique_ptr<LogicalTile::PositionListsBuilder> pos_lists_builder =
-  //      nullptr;
-
   // We should first deal with the current result. Otherwise we will cache a lot
   // data which is not good to utilize memory. After that we call child execute.
   // Since is the high level idea, each time we get tile from left, we should

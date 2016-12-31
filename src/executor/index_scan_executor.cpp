@@ -697,17 +697,26 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
   return true;
 }
 
-// key_column_ids is the right predicate column id. For example,
-// i_id = s_id,
-// then s_id is key_column_ids
+// column_ids is the right predicate column id. For example,
+// i_id = s_id, then s_id is column_ids
+// But the passing value is the result (output) id. We need to transform it to
+// physical id
 void IndexScanExecutor::UpdatePredicate(
-    const std::vector<oid_t> &key_column_ids,
+    const std::vector<oid_t> &column_ids,
     const std::vector<type::Value> &values) {
 
   // Update index predicate
   LOG_TRACE("values_ size %lu", values_.size());
   for (unsigned int j = 0; j < values_.size(); ++j) {
     LOG_TRACE("BEFORE values: %s", values_[j].GetInfo().c_str());
+  }
+
+  std::vector<oid_t> key_column_ids;
+
+  PL_ASSERT(column_ids.size() <= column_ids_.size());
+  // Get the real physical ids
+  for (auto column_id : column_ids) {
+    key_column_ids.push_back(column_ids_[column_id]);
   }
 
   // Update values in index plan node

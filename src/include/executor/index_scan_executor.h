@@ -39,8 +39,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   ~IndexScanExecutor();
 
-  void UpdatePredicate(const std::vector<oid_t> &key_column_ids
-                           UNUSED_ATTRIBUTE,
+  void UpdatePredicate(const std::vector<oid_t> &column_ids UNUSED_ATTRIBUTE,
                        const std::vector<type::Value> &values UNUSED_ATTRIBUTE);
 
   void ResetState();
