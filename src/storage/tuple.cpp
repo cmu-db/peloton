@@ -43,10 +43,7 @@ type::Value Tuple::GetValue(oid_t column_id) const {
 
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
-                     type::VarlenPool *data_pool) {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
-
+                     type::AbstractPool *data_pool) {
   const type::Type::TypeId type = tuple_schema_->GetType(column_offset);
   LOG_TRACE("c offset: %d; using pool: %p", column_offset, data_pool);
 
@@ -98,7 +95,7 @@ void Tuple::SetValue(oid_t column_offset, const type::Value &value) {
 
 void Tuple::SetFromTuple(const AbstractTuple *tuple,
                          const std::vector<oid_t> &columns,
-                         type::VarlenPool *pool) {
+                         type::AbstractPool *pool) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
@@ -111,10 +108,7 @@ void Tuple::SetFromTuple(const AbstractTuple *tuple,
 
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
-void Tuple::Copy(const void *source, type::VarlenPool *pool) {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
-
+void Tuple::Copy(const void *source, type::AbstractPool *pool) {
   const bool is_inlined = tuple_schema_->IsInlined();
   const oid_t uninlineable_column_count =
       tuple_schema_->GetUninlinedColumnCount();
@@ -210,9 +204,9 @@ size_t Tuple::GetUninlinedMemorySize() const {
 }
 
 void Tuple::DeserializeFrom(UNUSED_ATTRIBUTE SerializeInput &input,
-                            UNUSED_ATTRIBUTE type::VarlenPool *dataPool) {
-  /*PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
+                            UNUSED_ATTRIBUTE type::AbstractPool *dataPool) {
+  /*PL_ASSERT(tuple_schema);
+  PL_ASSERT(tuple_data);
 
   input.ReadInt();
   const int column_count = tuple_schema_->GetColumnCount();

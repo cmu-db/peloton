@@ -341,18 +341,6 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
 
-// Copy a column from this tile group to a destination tile group.
-// Note that we do shallow copy for varlen field
-void TileGroup::CopyColumnValueTo(TileGroup *dest_tg, oid_t dest_tuple_id, oid_t col_id, oid_t src_tuple_id) {
-  PL_ASSERT(src_tuple_id < this->GetNextTupleSlot() && dest_tuple_id < dest_tg->GetNextTupleSlot());
-  oid_t src_tile_col_id, src_tile_offset;
-  oid_t dest_tile_col_id, dest_tile_offset;
-  this->LocateTileAndColumn(col_id, src_tile_offset, src_tile_col_id);
-  dest_tg->LocateTileAndColumn(col_id, dest_tile_offset, dest_tile_col_id);
-
-  this->GetTile(src_tile_offset)->CopyColumnValueTo(
-    dest_tg->GetTile(dest_tile_offset), dest_tuple_id, dest_tile_col_id, src_tuple_id, src_tile_col_id);
-}
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {

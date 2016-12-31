@@ -40,12 +40,6 @@ const char *VarlenType::GetData(const Value& val) const {
   return val.value_.varlen;
 }
 
-// Access the raw varlen data stored from the tuple storage
-char *VarlenType::GetData(char *storage) {
-  char *ptr = *reinterpret_cast<char **>(storage);
-  return ptr;
-}
-
 // Get the length of the variable length data
 uint32_t VarlenType::GetLength(const Value& val) const {
   return val.size_.len;
@@ -168,7 +162,7 @@ void VarlenType::SerializeTo(const Value& val, SerializeOutput &out) const {
 }
 
 void VarlenType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
-    VarlenPool *pool) const {
+    AbstractPool *pool) const {
   uint32_t len = GetLength(val);
   char *data;
   if (len == PELOTON_VALUE_NULL) {
@@ -184,7 +178,7 @@ void VarlenType::SerializeTo(const Value& val, char *storage, bool inlined UNUSE
 
 // Deserialize a value of the given type from the given storage space.
 Value VarlenType::DeserializeFrom(const char *storage ,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              const bool inlined UNUSED_ATTRIBUTE, AbstractPool *pool UNUSED_ATTRIBUTE) const{
   const char *ptr = *reinterpret_cast<const char * const *>(storage);
   if (ptr == nullptr) {
     return Value(type_id_, nullptr, 0, false);
@@ -193,26 +187,13 @@ Value VarlenType::DeserializeFrom(const char *storage ,
   return Value(type_id_, ptr + sizeof(uint32_t), len, false);
 }
 Value VarlenType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              AbstractPool *pool UNUSED_ATTRIBUTE) const{
   uint32_t len = in.ReadInt();
   if (len == PELOTON_VALUE_NULL) {
     return Value(type_id_, nullptr, 0, false);
   } else {
     const char *data = (char *) in.getRawPointer(len);
     return Value(type_id_, data, len, false);
-  }
-}
-
-// Perform a shallow copy from a serialized varlen value to another serialized varlen value
-void VarlenType::DoShallowCopy(char *dest, char *src, bool inlined UNUSED_ATTRIBUTE, VarlenPool *src_pool) const {
-  // Never do shallow copy for value that is not allocated in the pool
-  PL_ASSERT(inlined == false && src_pool != nullptr);
-  char *ptr = *reinterpret_cast<char **>(src);
-
-  // Construct a shallow copy of a varlen value
-  *reinterpret_cast<char **>(dest) = ptr;
-  if (ptr != nullptr) {
-    src_pool->AddRefCount(ptr);
   }
 }
 

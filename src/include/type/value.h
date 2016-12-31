@@ -241,7 +241,7 @@ class Value : public Printable {
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  inline void SerializeTo(char *storage, bool inlined, VarlenPool *pool) const {
+  inline void SerializeTo(char *storage, bool inlined, AbstractPool *pool) const {
     Type::GetInstance(type_id_)->SerializeTo(*this, storage, inlined, pool);
   }
 
@@ -260,29 +260,9 @@ class Value : public Printable {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
   }
 
-  // Perform a shallow copy from a serialized varlen value to another serialized varlen value
-  // Only support VARCHAR/VARBINARY
-  inline static void ShallowCopyTo(char *dest, char *src,
-                                   const Type::TypeId type_id, bool inlined, VarlenPool *src_pool) {
-    Type::GetInstance(type_id)->DoShallowCopy(dest, src, inlined, src_pool);
-  }
-
   // Access the raw variable length data
   inline const char *GetData() const {
     return Type::GetInstance(type_id_)->GetData(*this);
-  }
-
-  // Access the raw variable length data from a pointer pointed to a tuple storage
-  inline static char *GetDataFromStorage(Type::TypeId type_id, char *storage) {
-    switch (type_id) {
-      case Type::VARCHAR:
-      case Type::VARBINARY: {
-        return Type::GetInstance(type_id)->GetData(storage);
-      }
-      default:
-        throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                        "Invalid Type for getting raw data pointer");
-    }
   }
 
   // Get the length of the variable length data

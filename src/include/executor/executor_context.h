@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "type/varlen_pool.h"
+#include "type/ephemeral_pool.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -52,8 +52,8 @@ class ExecutorContext {
 
   void ClearParams();
 
-  // Get a varlen pool (will construct the pool only if needed)
-  type::VarlenPool *GetExecutorContextPool();
+  // Get a pool
+  type::EphemeralPool *GetPool();
 
   // num of tuple processed
   uint32_t num_processed = 0;
@@ -70,7 +70,7 @@ class ExecutorContext {
   std::vector<type::Value> params_;
 
   // pool
-  std::unique_ptr<type::VarlenPool> pool_;
+  std::unique_ptr<type::EphemeralPool> pool_;
 
 };
 

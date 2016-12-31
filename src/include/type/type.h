@@ -19,7 +19,7 @@
 namespace peloton {
 namespace type {
 
-class VarlenPool;
+class AbstractPool;
 class Value;
 class ValueFactory;
 
@@ -133,19 +133,14 @@ class Type {
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
   virtual void SerializeTo(const Value& val, char *storage, bool inlined,
-                           VarlenPool *pool) const;
+                           AbstractPool *pool) const;
   virtual void SerializeTo(const Value& val, SerializeOutput &out) const;
 
   // Deserialize a value of the given type from the given storage space.
   virtual Value DeserializeFrom(const char *storage,
-                                const bool inlined, VarlenPool *pool = nullptr) const;
+                                const bool inlined, AbstractPool *pool = nullptr) const;
   virtual Value DeserializeFrom(SerializeInput &in,
-                                VarlenPool *pool = nullptr) const;
-
-  // Perform a shallow copy from a serialized varlen value to another serialized varlen value
-  // Only support VARCHAR/VARBINARY
-  virtual void DoShallowCopy(char *dest, char *src,
-                             bool inlined, VarlenPool *src_pool) const;
+                                AbstractPool *pool = nullptr) const;
 
   // Create a copy of this value
   virtual Value Copy(const Value& val) const;
@@ -154,9 +149,6 @@ class Type {
 
   // Access the raw variable length data
   virtual const char *GetData(const Value& val) const;
-
-  // Access the raw varlen data stored from the tuple storage
-  virtual char *GetData(char *storage);
 
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;

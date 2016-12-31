@@ -23,7 +23,7 @@
 #include "type/timestamp_type.h"
 #include "type/tinyint_type.h"
 #include "type/value.h"
-#include "type/varlen_pool.h"
+#include "type/abstract_pool.h"
 #include "type/varlen_type.h"
 
 namespace peloton {
@@ -304,7 +304,7 @@ void Type::HashCombine(const Value& val UNUSED_ATTRIBUTE,
 void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
                        char* storage UNUSED_ATTRIBUTE,
                        bool inlined UNUSED_ATTRIBUTE,
-                       VarlenPool* pool UNUSED_ATTRIBUTE) const {
+                       AbstractPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
@@ -315,20 +315,11 @@ void Type::SerializeTo(const Value& val UNUSED_ATTRIBUTE,
 // Deserialize a value of the given type from the given storage space.
 Value Type::DeserializeFrom(const char* storage UNUSED_ATTRIBUTE,
                             const bool inlined UNUSED_ATTRIBUTE,
-                            VarlenPool* pool UNUSED_ATTRIBUTE) const {
+                            AbstractPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 Value Type::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
-                            VarlenPool* pool UNUSED_ATTRIBUTE) const {
-  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
-}
-
-// Perform a shallow copy from a serialized varlen value to another serialized varlen value
-// Only support VARCHAR/VARBINARY
-void Type::DoShallowCopy(char *dest UNUSED_ATTRIBUTE,
-                         char *src UNUSED_ATTRIBUTE,
-                         bool inlined UNUSED_ATTRIBUTE,
-                         VarlenPool *src_pool UNUSED_ATTRIBUTE) const {
+                            AbstractPool* pool UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
@@ -344,11 +335,6 @@ Value Type::CastAs(const Value& val UNUSED_ATTRIBUTE,
 
 // Access the raw variable length data
 const char* Type::GetData(const Value& val UNUSED_ATTRIBUTE) const {
-  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
-}
-
-// Access the raw varlen data stored from the tuple storage
-char * Type::GetData(char *storage UNUSED_ATTRIBUTE) {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
