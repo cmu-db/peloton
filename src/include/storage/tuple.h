@@ -120,7 +120,10 @@ class Tuple : public AbstractTuple {
                 type::AbstractPool *dataPool);
 
   // set value without data pool.
-  void SetValue(oid_t column_id, const type::Value &value);
+  // This just calls the other SetValue with a nullptr pool
+  void SetValue(oid_t column_id, const type::Value &value) {
+    SetValue(column_id, value, nullptr);
+  }
 
   inline int GetLength() const { return tuple_schema_->GetLength(); }
 
