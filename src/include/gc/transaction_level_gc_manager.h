@@ -109,9 +109,9 @@ private:
 
   void Running(const int &thread_id);
 
-  void Unlink(const int &thread_id, const cid_t &max_cid);
+  int Unlink(const int &thread_id, const cid_t &max_cid);
 
-  void Reclaim(const int &thread_id, const cid_t &max_cid);
+  int Reclaim(const int &thread_id, const cid_t &max_cid);
 
   void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
 
