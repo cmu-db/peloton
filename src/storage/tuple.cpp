@@ -301,7 +301,7 @@ bool Tuple::operator==(const Tuple &other) const {
 
 bool Tuple::operator!=(const Tuple &other) const { return !(*this == other); }
 
-bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
+bool Tuple::EqualsNoSchemaCheck(const AbstractTuple &other) const {
   const int column_count = tuple_schema_->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -315,7 +315,7 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   return true;
 }
 
-bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
+bool Tuple::EqualsNoSchemaCheck(const AbstractTuple &other,
                                 const std::vector<oid_t> &columns) const {
   for (auto column_itr : columns) {
     type::Value lhs = (GetValue(column_itr));

@@ -32,15 +32,14 @@ const int NUM_COLUMNS = 5;
 class MaskedTupleTests : public PelotonTest {};
 
 void MaskedTupleTestHelper(storage::MaskedTuple *masked_tuple,
-                           std::vector<int> values, 
-                           std::vector<oid_t> mask) {
+                           std::vector<int> values, std::vector<oid_t> mask) {
   for (int i = 0; i < NUM_COLUMNS; i++) {
     auto v = masked_tuple->GetValue(i);
     int expected = values[mask[i]];
     auto result =
         v.CompareEquals(type::ValueFactory::GetIntegerValue(expected));
-    LOG_TRACE("mask[%d]->%d ==> (Expected=%d / Result=%s)",
-              i, mask[i], expected, v.GetInfo().c_str());
+    LOG_TRACE("mask[%d]->%d ==> (Expected=%d / Result=%s)", i, mask[i],
+              expected, v.GetInfo().c_str());
     EXPECT_EQ(type::CmpBool::CMP_TRUE, result);
   }
 }
@@ -84,12 +83,13 @@ TEST_F(MaskedTupleTests, BasicTest) {
 
   // CREATE MASKED TUPLE
   std::vector<oid_t> mask;
-  for (int i = NUM_COLUMNS-1; i >= 0; i--) {
+  for (int i = NUM_COLUMNS - 1; i >= 0; i--) {
     mask.push_back(i);
   }
   storage::MaskedTuple masked_tuple(tuple, mask);
   MaskedTupleTestHelper(&masked_tuple, values, mask);
-  
+  EXPECT_FALSE(tuple->EqualsNoSchemaCheck(masked_tuple, mask));
+
   // SHOW THAT WE CAN REUSE MASKED TUPLE
   std::vector<oid_t> new_mask;
   for (int i = 0; i < NUM_COLUMNS; i++) {
@@ -97,6 +97,7 @@ TEST_F(MaskedTupleTests, BasicTest) {
   }
   masked_tuple.SetMask(new_mask);
   MaskedTupleTestHelper(&masked_tuple, values, new_mask);
+  EXPECT_TRUE(tuple->EqualsNoSchemaCheck(masked_tuple, new_mask));
 
   delete tuple;
   delete tuple_schema;

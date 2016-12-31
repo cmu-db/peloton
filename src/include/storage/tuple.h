@@ -151,9 +151,9 @@ class Tuple : public AbstractTuple {
     return tuple_schema_->GetColumnCount();
   }
 
-  bool EqualsNoSchemaCheck(const Tuple &other) const;
+  bool EqualsNoSchemaCheck(const AbstractTuple &other) const;
 
-  bool EqualsNoSchemaCheck(const Tuple &other,
+  bool EqualsNoSchemaCheck(const AbstractTuple &other,
                            const std::vector<oid_t> &columns) const;
 
   // this does set NULL in addition to clear string count.
