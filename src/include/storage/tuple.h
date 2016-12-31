@@ -146,6 +146,10 @@ class Tuple : public AbstractTuple {
   // Get the address of this tuple in the table's backing store
   inline char *GetData() const { return tuple_data_; }
 
+  char *GetDataPtr(const oid_t column_id);
+
+  const char *GetDataPtr(const oid_t column_id) const;
+
   // Return the number of columns in this tuple
   inline oid_t GetColumnCount() const {
     return tuple_schema_->GetColumnCount();
@@ -201,10 +205,6 @@ class Tuple : public AbstractTuple {
   const std::string GetInfo() const;
 
  private:
-  char *GetDataPtr(const oid_t column_id);
-
-  const char *GetDataPtr(const oid_t column_id) const;
-
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//

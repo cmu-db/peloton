@@ -36,12 +36,18 @@ class GenericKey {
     return storage::Tuple(key_schema, data);
   }
 
-  inline const type::Value ToValueFast(const catalog::Schema *schema,
-                                       int column_id) const {
+  inline void ToValueFastXXX(type::Value *value, const catalog::Schema *schema,
+                             int column_id) const {
+    const type::Type::TypeId column_type = schema->GetType(column_id);
+    const char *data_ptr = &data[schema->GetOffset(column_id)];
+    value->RawSet(column_type, reinterpret_cast<const void *>(data_ptr));
+  }
+
+  inline type::Value ToValueFast(const catalog::Schema *schema,
+                                 int column_id) const {
     const type::Type::TypeId column_type = schema->GetType(column_id);
     const char *data_ptr = &data[schema->GetOffset(column_id)];
     const bool is_inlined = schema->IsInlined(column_id);
-
     return type::Value::DeserializeFrom(data_ptr, column_type, is_inlined);
   }
 
@@ -61,13 +67,12 @@ class GenericComparator {
                          const GenericKey<KeySize> &rhs) const {
     auto schema = lhs.schema;
 
-    //    type::Value lhs_value;
-    //    type::Value rhs_value;
+    type::Value lhs_value;
+    type::Value rhs_value;
 
-    for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
-         column_itr++) {
-      const type::Value lhs_value = (lhs.ToValueFast(schema, column_itr));
-      const type::Value rhs_value = (rhs.ToValueFast(schema, column_itr));
+    for (oid_t col_itr = 0; col_itr < schema->GetColumnCount(); col_itr++) {
+      lhs.ToValueFastXXX(&lhs_value, schema, col_itr);
+      rhs.ToValueFastXXX(&rhs_value, schema, col_itr);
 
       if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE) return true;
 
