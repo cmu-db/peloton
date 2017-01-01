@@ -727,7 +727,7 @@ enum ReplicationType {
   SEMISYNC_REPLICATION
 };
 
-enum LoggingStatus {
+enum LoggingStatusType {
   LOGGING_STATUS_TYPE_INVALID = INVALID_TYPE_ID,
   LOGGING_STATUS_TYPE_STANDBY = 1,
   LOGGING_STATUS_TYPE_RECOVERY = 2,
@@ -1002,7 +1002,7 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 // Transformers
 //===--------------------------------------------------------------------===//
 
-std::string DatePartToString(DatePart part);
+std::string DatePartToString(DatePart type);
 DatePart StringToDatePart(const std::string &str);
 
 std::string BackendTypeToString(BackendType type);
@@ -1034,15 +1034,20 @@ std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);
 
 std::string LoggingTypeToString(LoggingType type);
-std::string LoggingStatusToString(LoggingStatus type);
+LoggingType StringToLoggingType(const std::string &str);
+
+std::string LoggingStatusTypeToString(LoggingStatusType type);
+LoggingStatusType StringToLoggingStatusType(const std::string &str);
 
 std::string LoggerTypeToString(LoggerType type);
-std::string LogRecordTypeToString(LogRecordType type);
+LoggerType StringToLoggerType(const std::string &str);
 
-type::Type::TypeId PostgresValueTypeToPelotonValueType(
-    PostgresValueType PostgresValType);
+std::string LogRecordTypeToString(LogRecordType type);
+LogRecordType StringToLogRecordType(const std::string &str);
+
+type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
-    PostgresConstraintType PostgresConstrType);
+    PostgresConstraintType type);
 
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code);
 
