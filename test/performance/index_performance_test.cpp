@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "common/harness.h"
+#include "gtest/gtest.h"
 
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include "common/logger.h"
 #include "common/platform.h"
@@ -34,7 +34,6 @@ class IndexPerformanceTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
-
 std::shared_ptr<ItemPointer> item(new ItemPointer(120, 5));
 
 index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
@@ -43,14 +42,18 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "B", true);
-  catalog::Column column3(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
-                          "C", true);
-  catalog::Column column4(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "D", true);
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+                          true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "B",
+                          true);
+  catalog::Column column3(type::Type::DECIMAL,
+                          type::Type::GetTypeSize(type::Type::DECIMAL), "C",
+                          true);
+  catalog::Column column4(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "D",
+                          true);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -105,11 +108,11 @@ static void InsertTest1(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
-  for (size_t i = start_key;i < end_key;i++) {
-    auto key_value =  type::ValueFactory::GetIntegerValue(i);
+  for (size_t i = start_key; i < end_key; i++) {
+    auto key_value = type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -147,11 +150,11 @@ static void DeleteTest1(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
-  for (size_t i = start_key;i < end_key;i++) {
-    auto key_value =  type::ValueFactory::GetIntegerValue(i);
+  for (size_t i = start_key; i < end_key; i++) {
+    auto key_value = type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -186,12 +189,12 @@ static void InsertTest2(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
-  for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
-    auto key_value =  type::ValueFactory::GetIntegerValue(i);
+  for (size_t i = thread_id; j < num_key; (i += num_thread), j++) {
+    auto key_value = type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -226,12 +229,12 @@ static void DeleteTest2(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  //key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
-  //key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
-  for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
-    auto key_value =  type::ValueFactory::GetIntegerValue(i);
+  for (size_t i = thread_id; j < num_key; (i += num_thread), j++) {
+    auto key_value = type::ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -250,7 +253,6 @@ static void DeleteTest2(index::Index *index, size_t num_thread, size_t num_key,
  * key scan
  */
 static void TestIndexPerformance(const IndexType &index_type) {
-
   // This is where we read all values in and verify them
   std::vector<ItemPointer *> location_ptrs;
 
@@ -283,78 +285,75 @@ static void TestIndexPerformance(const IndexType &index_type) {
   }
 
   index->ScanAllKeys(location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), num_thread * num_key);
+  EXPECT_EQ(num_thread * num_key, location_ptrs.size());
   location_ptrs.clear();
 
   timer.Stop();
-  LOG_INFO("Test = InsertTest1; Type = %d; Duration = %.2lf", (int)index_type,
-           timer.GetDuration());
+  LOG_INFO("InsertTest1 :: Type=%s; Duration=%.2lf",
+           IndexTypeToString(index_type).c_str(), timer.GetDuration());
 
   ///////////////////////////////////////////////////////////////////
   // Start DeleteTest1
   ///////////////////////////////////////////////////////////////////
 
-    timer.Start();
+  timer.Start();
 
-    LaunchParallelTest(num_thread, DeleteTest1, index.get(), num_thread,
-                       num_key);
+  LaunchParallelTest(num_thread, DeleteTest1, index.get(), num_thread, num_key);
 
-    // Perform garbage collection
-    if (index->NeedGC() == true) {
-      index->PerformGC();
-    }
+  // Perform garbage collection
+  if (index->NeedGC() == true) {
+    index->PerformGC();
+  }
 
-    index->ScanAllKeys(location_ptrs);
-    EXPECT_EQ(location_ptrs.size(), 0);
-    location_ptrs.clear();
+  index->ScanAllKeys(location_ptrs);
+  EXPECT_EQ(0, location_ptrs.size());
+  location_ptrs.clear();
 
-    timer.Stop();
-    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf", (int)index_type,
-             timer.GetDuration());
+  timer.Stop();
+  LOG_INFO("DeleteTest1 :: Type=%s; Duration=%.2lf",
+           IndexTypeToString(index_type).c_str(), timer.GetDuration());
 
   ///////////////////////////////////////////////////////////////////
   // Start InsertTest2
   ///////////////////////////////////////////////////////////////////
 
-    timer.Start();
+  timer.Start();
 
-    LaunchParallelTest(num_thread, InsertTest2, index.get(), num_thread,
-                       num_key);
+  LaunchParallelTest(num_thread, InsertTest2, index.get(), num_thread, num_key);
 
-    // Perform garbage collection
-    if (index->NeedGC() == true) {
-      index->PerformGC();
-    }
+  // Perform garbage collection
+  if (index->NeedGC() == true) {
+    index->PerformGC();
+  }
 
-    index->ScanAllKeys(location_ptrs);
-    EXPECT_EQ(location_ptrs.size(), num_thread * num_key);
-    location_ptrs.clear();
+  index->ScanAllKeys(location_ptrs);
+  EXPECT_EQ(num_thread * num_key, location_ptrs.size());
+  location_ptrs.clear();
 
-    timer.Stop();
-    LOG_INFO("Test = InsertTest2; Type = %d; Duration = %.2lf", (int)index_type,
-             timer.GetDuration());
+  timer.Stop();
+  LOG_INFO("InsertTest2 :: Type=%s; Duration=%.2lf",
+           IndexTypeToString(index_type).c_str(), timer.GetDuration());
 
   ///////////////////////////////////////////////////////////////////
   // Start DeleteTest2
   ///////////////////////////////////////////////////////////////////
 
-    timer.Start();
+  timer.Start();
 
-    LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread,
-                       num_key);
+  LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread, num_key);
 
-    // Perform garbage collection
-    if (index->NeedGC() == true) {
-      index->PerformGC();
-    }
+  // Perform garbage collection
+  if (index->NeedGC() == true) {
+    index->PerformGC();
+  }
 
-    index->ScanAllKeys(location_ptrs);
-    EXPECT_EQ(location_ptrs.size(), 0);
-    location_ptrs.clear();
+  index->ScanAllKeys(location_ptrs);
+  EXPECT_EQ(0, location_ptrs.size());
+  location_ptrs.clear();
 
-    timer.Stop();
-    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf", (int)index_type,
-             timer.GetDuration());
+  timer.Stop();
+  LOG_INFO("DeleteTest :: Type=%s; Duration=%.2lf",
+           IndexTypeToString(index_type).c_str(), timer.GetDuration());
 
   ///////////////////////////////////////////////////////////////////
   // End of all tests
@@ -366,22 +365,12 @@ static void TestIndexPerformance(const IndexType &index_type) {
 }
 
 TEST_F(IndexPerformanceTests, BwTreeMultiThreadedTest) {
-  std::vector<IndexType> index_types = {
-      INDEX_TYPE_BWTREE,
-  };
-  for (auto index_type : index_types) {
-    TestIndexPerformance(index_type);
-  }
+  TestIndexPerformance(INDEX_TYPE_BWTREE);
 }
 
 // TEST_F(IndexPerformanceTests, BTreeMultiThreadedTest) {
-//   std::vector<IndexType> index_types = {
-//       INDEX_TYPE_BTREE
-//   };
-//   for (auto index_type : index_types) {
-//     TestIndexPerformance(index_type);
-//   }
-// }
+//  TestIndexPerformance(INDEX_TYPE_BTREE);
+//}
 
 }  // End test namespace
 }  // End peloton namespace
