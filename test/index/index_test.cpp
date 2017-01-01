@@ -351,9 +351,9 @@ TEST_F(IndexTests, MultiMapInsertTest) {
   delete tuple_schema;
 }
 
-#ifdef ALLOW_UNIQUE_KEY
+// #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyDeleteTest) {
-  auto pool = TestingHarness::GetIndex().GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -386,12 +386,12 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0].block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   delete tuple_schema;
 }
-#endif
+//#endif
 
 TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
@@ -483,9 +483,9 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
   delete tuple_schema;
 }
 
-#ifdef ALLOW_UNIQUE_KEY
+//#ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
-  auto pool = TestingHarness::GetIndex().GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -526,7 +526,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0].block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -562,7 +562,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   delete tuple_schema;
 }
-#endif
+//#endif
 
 // key0 1 (100, a)   item0
 // key1 5  (100, b)  item1 2 1 1 0

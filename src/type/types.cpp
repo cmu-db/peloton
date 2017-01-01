@@ -37,105 +37,112 @@ size_t QUERY_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
+
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities
 //===--------------------------------------------------------------------===//
-std::string DatePartToString(DatePart part){
-  switch(part){
-  case EXPRESSION_DATE_PART_CENTURY:
-    return "CENTURY";
-  case EXPRESSION_DATE_PART_DAY:
-    return "DAY";
-  case EXPRESSION_DATE_PART_DECADE:
-    return "DECADE";
-  case EXPRESSION_DATE_PART_DOW:
-    return "DOW";
-  case EXPRESSION_DATE_PART_DOY:
-    return "DOY";
-  case EXPRESSION_DATE_PART_EPOCH:
-    return "EPOCH";
-  case EXPRESSION_DATE_PART_HOUR:
-    return "HOUR";
-  case EXPRESSION_DATE_PART_ISODOW:
-    return "ISODOW";
-  case EXPRESSION_DATE_PART_ISOYEAR:
-    return "ISOYEAR";
-  case EXPRESSION_DATE_PART_MICROSECONDS:
-    return "MICROSECONDS";
-  case EXPRESSION_DATE_PART_MILLENNIUM:
-    return "MILLENNIUM";
-  case EXPRESSION_DATE_PART_MILLISECONDS:
-    return "MILLISECONDS";
-  case EXPRESSION_DATE_PART_MINUTE:
-    return "MINUTE";
-  case EXPRESSION_DATE_PART_MONTH:
-    return "MONTH";
-  case EXPRESSION_DATE_PART_QUARTER:
-    return "QUARTER";
-  case EXPRESSION_DATE_PART_SECOND:
-    return "SECOND";
-  case EXPRESSION_DATE_PART_TIMEZONE:
-    return "TIMEZONE";
-  case EXPRESSION_DATE_PART_TIMEZONE_HOUR:
-    return "TIMEZONE_HOUR";
-  case EXPRESSION_DATE_PART_TIMEZONE_MINUTE:
-    return "TIMEZONE_MINUTE";
-  case EXPRESSION_DATE_PART_WEEK:
-    return "WEEK";
-  case EXPRESSION_DATE_PART_YEAR:
-    return "YEAR";
-  default:
-    throw Exception("Invalid date part.");
+std::string DatePartToString(DatePart part) {
+  switch (part) {
+    case EXPRESSION_DATE_PART_INVALID:
+      return ("INVALID");
+    case EXPRESSION_DATE_PART_CENTURY:
+      return "CENTURY";
+    case EXPRESSION_DATE_PART_DAY:
+      return "DAY";
+    case EXPRESSION_DATE_PART_DECADE:
+      return "DECADE";
+    case EXPRESSION_DATE_PART_DOW:
+      return "DOW";
+    case EXPRESSION_DATE_PART_DOY:
+      return "DOY";
+    case EXPRESSION_DATE_PART_EPOCH:
+      return "EPOCH";
+    case EXPRESSION_DATE_PART_HOUR:
+      return "HOUR";
+    case EXPRESSION_DATE_PART_ISODOW:
+      return "ISODOW";
+    case EXPRESSION_DATE_PART_ISOYEAR:
+      return "ISOYEAR";
+    case EXPRESSION_DATE_PART_MICROSECONDS:
+      return "MICROSECONDS";
+    case EXPRESSION_DATE_PART_MILLENNIUM:
+      return "MILLENNIUM";
+    case EXPRESSION_DATE_PART_MILLISECONDS:
+      return "MILLISECONDS";
+    case EXPRESSION_DATE_PART_MINUTE:
+      return "MINUTE";
+    case EXPRESSION_DATE_PART_MONTH:
+      return "MONTH";
+    case EXPRESSION_DATE_PART_QUARTER:
+      return "QUARTER";
+    case EXPRESSION_DATE_PART_SECOND:
+      return "SECOND";
+    case EXPRESSION_DATE_PART_TIMEZONE:
+      return "TIMEZONE";
+    case EXPRESSION_DATE_PART_TIMEZONE_HOUR:
+      return "TIMEZONE_HOUR";
+    case EXPRESSION_DATE_PART_TIMEZONE_MINUTE:
+      return "TIMEZONE_MINUTE";
+    case EXPRESSION_DATE_PART_WEEK:
+      return "WEEK";
+    case EXPRESSION_DATE_PART_YEAR:
+      return "YEAR";
+    default: {
+      throw ConversionException("No string conversion for DatePart");  // FIXME
+    }
   }
+  return ("INVALID");
 }
 
-DatePart StringToDatePart(const std::string &str){
-  if (str == "CENTURY"){
+DatePart StringToDatePart(const std::string& str) {
+  if (str == "INVALID") {
+    return EXPRESSION_DATE_PART_INVALID;
+  } else if (str == "CENTURY") {
     return EXPRESSION_DATE_PART_CENTURY;
-  }else if(str == "DAY"){
+  } else if (str == "DAY") {
     return EXPRESSION_DATE_PART_DAY;
-  }else if (str == "DECADE"){
+  } else if (str == "DECADE") {
     return EXPRESSION_DATE_PART_DECADE;
-  }else if (str == "DOW"){
+  } else if (str == "DOW") {
     return EXPRESSION_DATE_PART_DOW;
-  }else if (str == "DOY"){
+  } else if (str == "DOY") {
     return EXPRESSION_DATE_PART_DOY;
-  }else if (str == "EPOCH"){
+  } else if (str == "EPOCH") {
     return EXPRESSION_DATE_PART_EPOCH;
-  }else if (str == "HOUR"){
+  } else if (str == "HOUR") {
     return EXPRESSION_DATE_PART_HOUR;
-  }else if (str == "ISODOW"){
+  } else if (str == "ISODOW") {
     return EXPRESSION_DATE_PART_ISODOW;
-  }else if (str == "ISOYEAR"){
+  } else if (str == "ISOYEAR") {
     return EXPRESSION_DATE_PART_ISOYEAR;
-  }else if (str == "MICROSECONDS"){
+  } else if (str == "MICROSECONDS") {
     return EXPRESSION_DATE_PART_MICROSECONDS;
-  }else if (str == "MILLENNIUM"){
+  } else if (str == "MILLENNIUM") {
     return EXPRESSION_DATE_PART_MILLENNIUM;
-  }else if (str == "MILLISECONDS"){
+  } else if (str == "MILLISECONDS") {
     return EXPRESSION_DATE_PART_MILLISECONDS;
-  }else if (str == "MINUTE"){
+  } else if (str == "MINUTE") {
     return EXPRESSION_DATE_PART_MINUTE;
-  }else if (str == "MONTH"){
+  } else if (str == "MONTH") {
     return EXPRESSION_DATE_PART_MONTH;
-  }else if (str == "QUARTER"){
+  } else if (str == "QUARTER") {
     return EXPRESSION_DATE_PART_QUARTER;
-  }else if (str == "SECOND"){
+  } else if (str == "SECOND") {
     return EXPRESSION_DATE_PART_SECOND;
-  }else if (str == "TIMEZONE"){
+  } else if (str == "TIMEZONE") {
     return EXPRESSION_DATE_PART_TIMEZONE;
-  }else if (str == "TIMEZONE_HOUR"){
+  } else if (str == "TIMEZONE_HOUR") {
     return EXPRESSION_DATE_PART_TIMEZONE_HOUR;
-  }else if (str == "TIMEZONE_MINUTE"){
+  } else if (str == "TIMEZONE_MINUTE") {
     return EXPRESSION_DATE_PART_TIMEZONE_MINUTE;
-  }else if (str == "WEEK"){
+  } else if (str == "WEEK") {
     return EXPRESSION_DATE_PART_WEEK;
-  }else if (str == "YEAR"){
+  } else if (str == "YEAR") {
     return EXPRESSION_DATE_PART_YEAR;
-  }else{
-    throw Exception("Date Part " + str + " not found.");
+  } else {
+    throw ConversionException("No DatePart conversion from string '" + str +
+                              "'");
   }
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -143,8 +150,6 @@ DatePart StringToDatePart(const std::string &str){
 //===--------------------------------------------------------------------===//
 
 std::string BackendTypeToString(BackendType type) {
-  std::string ret;
-
   switch (type) {
     case (BACKEND_TYPE_MM):
       return "MM";
@@ -156,12 +161,15 @@ std::string BackendTypeToString(BackendType type) {
       return "HDD";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
-    default: { return "UNKNOWN " + std::to_string(type); }
+    default: {
+      throw ConversionException(
+          "No string conversion for BackendType");  // FIXME
+    }
   }
-  return (ret);
+  return ("INVALID");
 }
 
-BackendType StringToBackendType(std::string str) {
+BackendType StringToBackendType(const std::string& str) {
   if (str == "INVALID") {
     return BACKEND_TYPE_INVALID;
   } else if (str == "MM") {
@@ -172,6 +180,9 @@ BackendType StringToBackendType(std::string str) {
     return BACKEND_TYPE_SSD;
   } else if (str == "HDD") {
     return BACKEND_TYPE_HDD;
+  } else {
+    throw ConversionException("No BackendType conversion from string '" + str +
+                              "'");
   }
   return BACKEND_TYPE_INVALID;
 }
@@ -247,7 +258,7 @@ type::Type::TypeId StringToTypeId(const std::string& str) {
   } else if (str == "UDT") {
     return type::Type::UDT;
   } else {
-    throw ConversionException("No conversion from string '" + str + "'");
+    throw ConversionException("No TypeId conversion from string '" + str + "'");
   }
   return type::Type::INVALID;
 }
@@ -373,7 +384,8 @@ StatementType StringToStatementType(const std::string& str) {
   } else if (str == "COPY") {
     return STATEMENT_TYPE_COPY;
   } else {
-    throw ConversionException("No conversion from string '" + str + "'");
+    throw ConversionException("No StatementType conversion from string '" +
+                              str + "'");
   }
   return STATEMENT_TYPE_INVALID;
 }
@@ -1379,7 +1391,7 @@ QuantifierType StringToQuantifierType(std::string str) {
 // Network Message types
 //===--------------------------------------------------------------------===//
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
-  switch(code) {
+  switch (code) {
     case SERIALIZATION_ERROR:
       return "40001";
     default:

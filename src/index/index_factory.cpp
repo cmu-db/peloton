@@ -51,7 +51,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
     ints_only = false;
   }
 
-  auto index_type = metadata->GetIndexMethodType();
+  auto index_type = metadata->GetIndexType();
   Index *index = nullptr;
   LOG_TRACE("Index type : %d", index_type);
 
@@ -339,7 +339,7 @@ std::string IndexFactory::GetInfo(IndexMetadata *metadata,
                                   std::string comparatorType) {
   std::ostringstream os;
   os << "Index '" << metadata->GetName() << "' => "
-     << IndexTypeToString(metadata->GetIndexMethodType())
+     << IndexTypeToString(metadata->GetIndexType())
      << "::" << comparatorType << "(";
   bool first = true;
   for (auto column : metadata->key_schema->GetColumns()) {

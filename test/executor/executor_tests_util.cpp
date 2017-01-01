@@ -460,7 +460,7 @@ std::string ExecutorTestsUtil::GetTileVectorInfo(
     if (first == false) {
       os << std::endl;
     }
-    for (UNUSED_ATTRIBUTE oid_t tuple_id : *tile) {
+    for (oid_t tuple_id : *tile) {
       os << "<";
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
         if (col_id != 0) os << " ";

@@ -47,6 +47,53 @@ TEST_F(TypesTests, TypeIdTest) {
   EXPECT_THROW(peloton::StringToTypeId(invalid), peloton::Exception);
 }
 
+TEST_F(TypesTests, DatePartTest) {
+  std::vector<DatePart> list = {
+      EXPRESSION_DATE_PART_INVALID,       EXPRESSION_DATE_PART_CENTURY,
+      EXPRESSION_DATE_PART_DAY,           EXPRESSION_DATE_PART_DECADE,
+      EXPRESSION_DATE_PART_DOW,           EXPRESSION_DATE_PART_DOY,
+      EXPRESSION_DATE_PART_EPOCH,         EXPRESSION_DATE_PART_HOUR,
+      EXPRESSION_DATE_PART_ISODOW,        EXPRESSION_DATE_PART_ISOYEAR,
+      EXPRESSION_DATE_PART_MICROSECONDS,  EXPRESSION_DATE_PART_MILLENNIUM,
+      EXPRESSION_DATE_PART_MILLISECONDS,  EXPRESSION_DATE_PART_MINUTE,
+      EXPRESSION_DATE_PART_MONTH,         EXPRESSION_DATE_PART_QUARTER,
+      EXPRESSION_DATE_PART_SECOND,        EXPRESSION_DATE_PART_TIMEZONE,
+      EXPRESSION_DATE_PART_TIMEZONE_HOUR, EXPRESSION_DATE_PART_TIMEZONE_MINUTE,
+      EXPRESSION_DATE_PART_WEEK,          EXPRESSION_DATE_PART_YEAR};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::DatePartToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToDatePart(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("MattPerronWroteTheseMethods");
+  EXPECT_THROW(peloton::StringToDatePart(invalid), peloton::Exception);
+}
+
+TEST_F(TypesTests, BackendTypeTest) {
+  std::vector<BackendType> list = {BACKEND_TYPE_INVALID, BACKEND_TYPE_MM,
+                                   BACKEND_TYPE_NVM, BACKEND_TYPE_SSD,
+                                   BACKEND_TYPE_HDD};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::BackendTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToBackendType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToBackendType(invalid), peloton::Exception);
+}
+
 TEST_F(TypesTests, IndexTypeTest) {
   std::vector<IndexType> list = {INDEX_TYPE_INVALID, INDEX_TYPE_BTREE,
                                  INDEX_TYPE_BWTREE, INDEX_TYPE_HASH};
@@ -87,6 +134,26 @@ TEST_F(TypesTests, StatementTypeTest) {
   // Then make sure that we can't cast garbage
   std::string invalid("PrashanthTrillAsFuck");
   EXPECT_THROW(peloton::StringToStatementType(invalid), peloton::Exception);
+}
+
+TEST_F(TypesTests, IndexConstraintTypeTest) {
+  std::vector<IndexConstraintType> list = {
+      INDEX_CONSTRAINT_TYPE_INVALID, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, INDEX_CONSTRAINT_TYPE_UNIQUE};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::IndexConstraintTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToIndexConstraintType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("XXXXX");
+  EXPECT_THROW(peloton::StringToIndexConstraintType(invalid),
+               peloton::Exception);
 }
 
 TEST_F(TypesTests, PlanNodeTypeTest) {

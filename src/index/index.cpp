@@ -45,17 +45,20 @@ oid_t IndexMetadata::GetColumnCount() const {
  * However, tuple schema belongs to the table, such that this metadata should
  * not destroy the tuple schema object on destruction
  */
-IndexMetadata::IndexMetadata(
-    std::string index_name, oid_t index_oid, oid_t table_oid,
-    oid_t database_oid, IndexType method_type, IndexConstraintType index_type,
-    const catalog::Schema *tuple_schema, const catalog::Schema *key_schema,
-    const std::vector<oid_t> &key_attrs, bool unique_keys)
+IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
+                             oid_t table_oid, oid_t database_oid,
+                             IndexType index_type,
+                             IndexConstraintType index_constraint_type,
+                             const catalog::Schema *tuple_schema,
+                             const catalog::Schema *key_schema,
+                             const std::vector<oid_t> &key_attrs,
+                             bool unique_keys)
     : index_name(index_name),
       index_oid(index_oid),
       table_oid(table_oid),
       database_oid(database_oid),
-      method_type(method_type),
-      index_type(index_type),
+      index_type_(index_type),
+      index_constraint_type_(index_constraint_type),
       tuple_schema(tuple_schema),
       key_schema(key_schema),
       key_attrs(key_attrs),
@@ -92,15 +95,15 @@ IndexMetadata::~IndexMetadata() {
 const std::string IndexMetadata::GetInfo() const {
   std::stringstream os;
 
-  os << "\tINDEX METADATA: [";
+  os << "IndexMetadata["
+     << "Oid=" << index_oid << ", "
+     << "Name=" << index_name << ", "
+     << "Type=" << IndexTypeToString(index_type_) << ", "
+     << "ConstraintType=" << IndexConstraintTypeToString(index_constraint_type_)
+     << ", "
+     << "UtilityRatio=" << utility_ratio << "]";
 
-  for (auto key_attr : key_attrs) {
-    os << key_attr << " ";
-  }
-
-  os << " ] :: ";
-
-  os << utility_ratio;
+  os << " -> " << key_schema->GetInfo();
 
   return os.str();
 }
@@ -151,7 +154,7 @@ Index::~Index() {
  *
  * This function accepts an oid_t which must be in the range of table column
  * ID, and returns a oid_t which is also inside the range of key columns.
- * 
+ *
  * If the table column does not have a corresponding key column then assertion
  * would fail. In this case the caller does not have to check since assertion
  * fails inside this function
@@ -159,14 +162,14 @@ Index::~Index() {
 oid_t Index::TupleColumnToKeyColumn(oid_t tuple_column_id) const {
   // This stores the mapping
   const std::vector<oid_t> &mapping = metadata->GetTupleToIndexMapping();
-  
+
   // First check whether the table column ID is valid
   PL_ASSERT(tuple_column_id < mapping.size());
   oid_t key_column_id = mapping[tuple_column_id];
-  
+
   // Then check the table column actually have a index key column
-  PL_ASSERT(key_column_id != INVALID_OID); 
-  
+  PL_ASSERT(key_column_id != INVALID_OID);
+
   return key_column_id;
 }
 
