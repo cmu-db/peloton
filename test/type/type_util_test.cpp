@@ -135,7 +135,8 @@ TEST_F(TypeUtilTests, CompareEqualsRawTest) {
       const char* val0 = tuples[0]->GetDataPtr(i);
       const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
-      bool result = type::TypeUtil::CompareEqualsRaw(type, val0, val1);
+      bool inlined = schema->IsInlined(i);
+      bool result = type::TypeUtil::CompareEqualsRaw(type, val0, val1, inlined);
 
       LOG_TRACE(
           "'%s'=='%s' => Expected:%s / Result:%s",
@@ -164,7 +165,9 @@ TEST_F(TypeUtilTests, CompareLessThanRawTest) {
       const char* val0 = tuples[0]->GetDataPtr(i);
       const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
-      bool result = type::TypeUtil::CompareLessThanRaw(type, val0, val1);
+      bool inlined = schema->IsInlined(i);
+      bool result =
+          type::TypeUtil::CompareLessThanRaw(type, val0, val1, inlined);
 
       auto fullVal0 = tuples[0]->GetValue(i);
       auto fullVal1 = tuples[tuple_idx]->GetValue(i);
@@ -191,7 +194,9 @@ TEST_F(TypeUtilTests, CompareGreaterThanRawTest) {
       const char* val0 = tuples[0]->GetDataPtr(i);
       const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
-      bool result = type::TypeUtil::CompareGreaterThanRaw(type, val0, val1);
+      bool inlined = schema->IsInlined(i);
+      bool result =
+          type::TypeUtil::CompareGreaterThanRaw(type, val0, val1, inlined);
 
       auto fullVal0 = tuples[0]->GetValue(i);
       auto fullVal1 = tuples[tuple_idx]->GetValue(i);

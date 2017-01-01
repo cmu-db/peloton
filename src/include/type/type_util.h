@@ -47,7 +47,7 @@ class TypeUtil {
    * <B>WARNING:</B> This is dangerous AF. Use at your own risk!!
    */
   static CmpBool CompareEqualsRaw(type::Type type, const char* left,
-                                  const char* right) {
+                                  const char* right, bool inlined) {
     CmpBool result = CmpBool::CMP_NULL;
     switch (type.GetTypeId()) {
       case Type::BOOLEAN:
@@ -96,9 +96,17 @@ class TypeUtil {
       }
       case Type::VARCHAR:
       case Type::VARBINARY: {
-        const char* leftPtr = *reinterpret_cast<const char* const*>(left);
+        const char* leftPtr = left;
+        const char* rightPtr = right;
+        if (inlined == false) {
+          leftPtr = *reinterpret_cast<const char* const*>(left);
+          rightPtr = *reinterpret_cast<const char* const*>(right);
+        }
+        if (leftPtr == nullptr || rightPtr == nullptr) {
+          result = CmpBool::CMP_FALSE;
+          break;
+        }
         uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
-        const char* rightPtr = *reinterpret_cast<const char* const*>(right);
         uint32_t rightLen = *reinterpret_cast<const uint32_t*>(rightPtr);
         result = GetCmpBool(TypeUtil::CompareStrings(
                                 leftPtr + sizeof(uint32_t), leftLen,
@@ -118,7 +126,7 @@ class TypeUtil {
    * <B>WARNING:</B> This is dangerous AF. Use at your own risk!!
    */
   static CmpBool CompareLessThanRaw(const type::Type type, const char* left,
-                                    const char* right) {
+                                    const char* right, bool inlined) {
     CmpBool result = CmpBool::CMP_NULL;
     switch (type.GetTypeId()) {
       case Type::BOOLEAN:
@@ -167,9 +175,17 @@ class TypeUtil {
       }
       case Type::VARCHAR:
       case Type::VARBINARY: {
-        const char* leftPtr = *reinterpret_cast<const char* const*>(left);
+        const char* leftPtr = left;
+        const char* rightPtr = right;
+        if (inlined == false) {
+          leftPtr = *reinterpret_cast<const char* const*>(left);
+          rightPtr = *reinterpret_cast<const char* const*>(right);
+        }
+        if (leftPtr == nullptr || rightPtr == nullptr) {
+          result = CmpBool::CMP_FALSE;
+          break;
+        }
         uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
-        const char* rightPtr = *reinterpret_cast<const char* const*>(right);
         uint32_t rightLen = *reinterpret_cast<const uint32_t*>(rightPtr);
         result = GetCmpBool(TypeUtil::CompareStrings(
                                 leftPtr + sizeof(uint32_t), leftLen,
@@ -189,7 +205,7 @@ class TypeUtil {
    * <B>WARNING:</B> This is dangerous AF. Use at your own risk!!
    */
   static CmpBool CompareGreaterThanRaw(const type::Type type, const char* left,
-                                       const char* right) {
+                                       const char* right, bool inlined) {
     CmpBool result = CmpBool::CMP_NULL;
     switch (type.GetTypeId()) {
       case Type::BOOLEAN:
@@ -238,9 +254,17 @@ class TypeUtil {
       }
       case Type::VARCHAR:
       case Type::VARBINARY: {
-        const char* leftPtr = *reinterpret_cast<const char* const*>(left);
+        const char* leftPtr = left;
+        const char* rightPtr = right;
+        if (inlined == false) {
+          leftPtr = *reinterpret_cast<const char* const*>(left);
+          rightPtr = *reinterpret_cast<const char* const*>(right);
+        }
+        if (leftPtr == nullptr || rightPtr == nullptr) {
+          result = CmpBool::CMP_FALSE;
+          break;
+        }
         uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
-        const char* rightPtr = *reinterpret_cast<const char* const*>(right);
         uint32_t rightLen = *reinterpret_cast<const uint32_t*>(rightPtr);
         result = GetCmpBool(TypeUtil::CompareStrings(
                                 leftPtr + sizeof(uint32_t), leftLen,
