@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "type/type_util.h"
+
 namespace peloton {
 namespace index {
 
@@ -51,6 +53,12 @@ class GenericKey {
     return type::Value::DeserializeFrom(data_ptr, column_type, is_inlined);
   }
 
+  inline const char *GetRawData(const catalog::Schema *schema,
+                                int column_id) const {
+    const char *data_ptr = &data[schema->GetOffset(column_id)];
+    return (data_ptr);
+  }
+
   // actual location of data, extends past the end.
   char data[KeySize];
 
@@ -71,13 +79,25 @@ class GenericComparator {
     type::Value rhs_value;
 
     for (oid_t col_itr = 0; col_itr < schema->GetColumnCount(); col_itr++) {
-      lhs.ToValueFastXXX(&lhs_value, schema, col_itr);
-      rhs.ToValueFastXXX(&rhs_value, schema, col_itr);
+      const char *lhs_data = lhs.GetRawData(schema, col_itr);
+      const char *rhs_data = rhs.GetRawData(schema, col_itr);
+      type::Type type = schema->GetType(col_itr);
 
-      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE) return true;
+      //      lhs.ToValueFastXXX(&lhs_value, schema, col_itr);
+      //      rhs.ToValueFastXXX(&rhs_value, schema, col_itr);
 
-      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
+      if (type::TypeUtil::CompareLessThanRaw(type, lhs_data, rhs_data) ==
+          type::CMP_TRUE)
+        return true;
+      else if (type::TypeUtil::CompareGreaterThanRaw(
+                   type, lhs_data, rhs_data) == type::CMP_TRUE)
         return false;
+
+      //      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE) return
+      //      true;
+      //
+      //      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
+      //        return false;
     }
 
     return false;
