@@ -29,9 +29,9 @@ class TypeUtil {
    * We also do not check for nulls here.
    */
   static CmpBool CompareEqualsRaw(type::Type type, const char* left,
-                                  const char* right) const {
+                                  const char* right) {
     CmpBool result = CmpBool::CMP_NULL;
-    switch (type) {
+    switch (type.GetTypeId()) {
       case Type::BOOLEAN:
       case Type::TINYINT: {
         result = (*reinterpret_cast<const int8_t*>(left) ==
@@ -62,8 +62,8 @@ class TypeUtil {
         break;
       }
       case Type::DECIMAL: {
-        result = (*reinterpret_cast<const double>(left) ==
-                          *reinterpret_cast<const double>(right)
+        result = (*reinterpret_cast<const double*>(left) ==
+                          *reinterpret_cast<const double*>(right)
                       ? CmpBool::CMP_TRUE
                       : CmpBool::CMP_FALSE);
         break;
@@ -92,10 +92,10 @@ class TypeUtil {
        * Note: We assume that the left and right values are the same type.
        * We also do not check for nulls here.
        */
-  static CmpBool CompareLessThanRaw(type::Type type, const char* left,
-                                    const char* right) const {
+  static CmpBool CompareLessThanRaw(const type::Type type, const char* left,
+                                    const char* right) {
     CmpBool result = CmpBool::CMP_NULL;
-    switch (type) {
+    switch (type.GetTypeId()) {
       case Type::BOOLEAN:
       case Type::TINYINT: {
         result = (*reinterpret_cast<const int8_t*>(left) <
@@ -126,8 +126,8 @@ class TypeUtil {
         break;
       }
       case Type::DECIMAL: {
-        result = (*reinterpret_cast<const double>(left) <
-                          *reinterpret_cast<const double>(right)
+        result = (*reinterpret_cast<const double*>(left) <
+                          *reinterpret_cast<const double*>(right)
                       ? CmpBool::CMP_TRUE
                       : CmpBool::CMP_FALSE);
         break;
@@ -156,10 +156,10 @@ class TypeUtil {
      * Note: We assume that the left and right values are the same type.
      * We also do not check for nulls here.
      */
-  static CmpBool CompareGreaterThanRaw(type::Type type, const char* left,
-                                       const char* right) const {
+  static CmpBool CompareGreaterThanRaw(const type::Type type, const char* left,
+                                       const char* right) {
     CmpBool result = CmpBool::CMP_NULL;
-    switch (type) {
+    switch (type.GetTypeId()) {
       case Type::BOOLEAN:
       case Type::TINYINT: {
         result = (*reinterpret_cast<const int8_t*>(left) >
@@ -190,8 +190,8 @@ class TypeUtil {
         break;
       }
       case Type::DECIMAL: {
-        result = (*reinterpret_cast<const double>(left) >
-                          *reinterpret_cast<const double>(right)
+        result = (*reinterpret_cast<const double*>(left) >
+                          *reinterpret_cast<const double*>(right)
                       ? CmpBool::CMP_TRUE
                       : CmpBool::CMP_FALSE);
         break;
