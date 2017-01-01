@@ -66,7 +66,7 @@ class IndexMetadata : public Printable {
 
   ~IndexMetadata();
 
-  const std::string &GetName() const { return index_name; }
+  const std::string &GetName() const { return name_; }
 
   inline oid_t GetOid() { return index_oid; }
 
@@ -125,7 +125,7 @@ class IndexMetadata : public Printable {
   // IndexMetadata Data Member Definition
   ///////////////////////////////////////////////////////////////////
 
-  std::string index_name;
+  std::string name_;
 
   oid_t index_oid;
   oid_t table_oid;

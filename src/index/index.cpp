@@ -53,7 +53,7 @@ IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
                              const catalog::Schema *key_schema,
                              const std::vector<oid_t> &key_attrs,
                              bool unique_keys)
-    : index_name(index_name),
+    : name_(index_name),
       index_oid(index_oid),
       table_oid(table_oid),
       database_oid(database_oid),
@@ -97,7 +97,7 @@ const std::string IndexMetadata::GetInfo() const {
 
   os << "IndexMetadata["
      << "Oid=" << index_oid << ", "
-     << "Name=" << index_name << ", "
+     << "Name=" << name_ << ", "
      << "Type=" << IndexTypeToString(index_type_) << ", "
      << "ConstraintType=" << IndexConstraintTypeToString(index_constraint_type_)
      << ", "

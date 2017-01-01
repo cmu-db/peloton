@@ -13,7 +13,8 @@
 
 #pragma once
 
-#include "type.h"
+#include "common/logger.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace type {
@@ -24,9 +25,26 @@ namespace type {
 class TypeUtil {
  public:
   /**
+   * Use strncmp to evaluate two strings
+   * This does not work with VARBINARY attributes.
+   */
+  static inline int CompareStrings(const char* str1, int len1, const char* str2,
+                                   int len2) {
+    PL_ASSERT(len1 >= 0);
+    PL_ASSERT(len2 >= 0);
+    int ret = strncmp(str1, str2, std::min(len1, len2));
+    if (ret == 0 && len1 != len2) {
+      ret = len1 - len2;
+    }
+    return ret;
+  }
+
+  /**
    * Perform CompareEquals directly on raw pointers.
-   * Note: We assume that the left and right values are the same type.
+   * We assume that the left and right values are the same type.
    * We also do not check for nulls here.
+   *
+   * <B>WARNING:</B> This is dangerous AF. Use at your own risk!!
    */
   static CmpBool CompareEqualsRaw(type::Type type, const char* left,
                                   const char* right) {
@@ -78,8 +96,13 @@ class TypeUtil {
       }
       case Type::VARCHAR:
       case Type::VARBINARY: {
-        // FIXME
-        result = CmpBool::CMP_FALSE;
+        const char* leftPtr = *reinterpret_cast<const char* const*>(left);
+        uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
+        const char* rightPtr = *reinterpret_cast<const char* const*>(right);
+        uint32_t rightLen = *reinterpret_cast<const uint32_t*>(rightPtr);
+        result = GetCmpBool(TypeUtil::CompareStrings(
+                                leftPtr + sizeof(uint32_t), leftLen,
+                                rightPtr + sizeof(uint32_t), rightLen) == 0);
         break;
       }
       default: { break; }
@@ -88,10 +111,12 @@ class TypeUtil {
   }
 
   /**
-       * Perform CompareLessThan directly on raw pointers.
-       * Note: We assume that the left and right values are the same type.
-       * We also do not check for nulls here.
-       */
+   * Perform CompareLessThan directly on raw pointers.
+   * We assume that the left and right values are the same type.
+   * We also do not check for nulls here.
+   *
+   * <B>WARNING:</B> This is dangerous AF. Use at your own risk!!
+   */
   static CmpBool CompareLessThanRaw(const type::Type type, const char* left,
                                     const char* right) {
     CmpBool result = CmpBool::CMP_NULL;
@@ -142,8 +167,13 @@ class TypeUtil {
       }
       case Type::VARCHAR:
       case Type::VARBINARY: {
-        // FIXME
-        result = CmpBool::CMP_FALSE;
+        const char* leftPtr = *reinterpret_cast<const char* const*>(left);
+        uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
+        const char* rightPtr = *reinterpret_cast<const char* const*>(right);
+        uint32_t rightLen = *reinterpret_cast<const uint32_t*>(rightPtr);
+        result = GetCmpBool(TypeUtil::CompareStrings(
+                                leftPtr + sizeof(uint32_t), leftLen,
+                                rightPtr + sizeof(uint32_t), rightLen) < 0);
         break;
       }
       default: { break; }
@@ -152,10 +182,12 @@ class TypeUtil {
   }
 
   /**
-     * Perform CompareGreaterThan directly on raw pointers.
-     * Note: We assume that the left and right values are the same type.
-     * We also do not check for nulls here.
-     */
+   * Perform CompareGreaterThan directly on raw pointers.
+   * We assume that the left and right values are the same type.
+   * We also do not check for nulls here.
+   *
+   * <B>WARNING:</B> This is dangerous AF. Use at your own risk!!
+   */
   static CmpBool CompareGreaterThanRaw(const type::Type type, const char* left,
                                        const char* right) {
     CmpBool result = CmpBool::CMP_NULL;
@@ -206,8 +238,13 @@ class TypeUtil {
       }
       case Type::VARCHAR:
       case Type::VARBINARY: {
-        // FIXME
-        result = CmpBool::CMP_FALSE;
+        const char* leftPtr = *reinterpret_cast<const char* const*>(left);
+        uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
+        const char* rightPtr = *reinterpret_cast<const char* const*>(right);
+        uint32_t rightLen = *reinterpret_cast<const uint32_t*>(rightPtr);
+        result = GetCmpBool(TypeUtil::CompareStrings(
+                                leftPtr + sizeof(uint32_t), leftLen,
+                                rightPtr + sizeof(uint32_t), rightLen) > 0);
         break;
       }
       default: { break; }

@@ -227,10 +227,6 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
 BWTREE_TEMPLATE_ARGUMENTS
 std::string BWTREE_INDEX_TYPE::GetTypeName() const { return "BWTree"; }
 
-// NOTE: If ints key is used as an optimization just uncommend
-// the following in order to instanciation the template before it is
-// linked in linking stage
-
 // IMPORTANT: Make sure you don't exceed CompactIntegerKey_MAX_SLOTS
 
 template class BWTreeIndex<CompactIntsKey<1>, ItemPointer *,
@@ -251,22 +247,26 @@ template class BWTreeIndex<CompactIntsKey<4>, ItemPointer *,
                            ItemPointerComparator, ItemPointerHashFunc>;
 
 // Generic key
-template class BWTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
-                           GenericEqualityChecker<4>, GenericHasher<4>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
-                           GenericEqualityChecker<8>, GenericHasher<8>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
+template class BWTreeIndex<GenericKey<4>, ItemPointer *,
+                           FastGenericComparator<4>, GenericEqualityChecker<4>,
+                           GenericHasher<4>, ItemPointerComparator,
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<GenericKey<8>, ItemPointer *,
+                           FastGenericComparator<8>, GenericEqualityChecker<8>,
+                           GenericHasher<8>, ItemPointerComparator,
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<GenericKey<16>, ItemPointer *,
+                           FastGenericComparator<16>,
                            GenericEqualityChecker<16>, GenericHasher<16>,
                            ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
+template class BWTreeIndex<GenericKey<64>, ItemPointer *,
+                           FastGenericComparator<64>,
                            GenericEqualityChecker<64>, GenericHasher<64>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<256>, ItemPointer *,
-                           GenericComparator<256>, GenericEqualityChecker<256>,
-                           GenericHasher<256>, ItemPointerComparator,
-                           ItemPointerHashFunc>;
+                           FastGenericComparator<256>,
+                           GenericEqualityChecker<256>, GenericHasher<256>,
+                           ItemPointerComparator, ItemPointerHashFunc>;
 
 // Tuple key
 template class BWTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
