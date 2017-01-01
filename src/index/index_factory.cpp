@@ -298,7 +298,7 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
     index =
         new BWTreeIndex<GenericKey<4>,
                         ItemPointer *,
-                        FastGenericComparator<4>,
+                        GenericComparator<4>,
                         GenericEqualityChecker<4>,
                         GenericHasher<4>,
                         ItemPointerComparator,
@@ -310,7 +310,7 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
     index =
         new BWTreeIndex<GenericKey<8>,
                         ItemPointer *,
-                        FastGenericComparator<8>,
+                        GenericComparator<8>,
                         GenericEqualityChecker<8>, 
                         GenericHasher<8>,
                         ItemPointerComparator, 
@@ -322,7 +322,7 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
     index =
         new BWTreeIndex<GenericKey<16>, 
                         ItemPointer *, 
-                        FastGenericComparator<16>,
+                        GenericComparator<16>,
                         GenericEqualityChecker<16>, 
                         GenericHasher<16>,
                         ItemPointerComparator, 
@@ -334,7 +334,7 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
     index =
         new BWTreeIndex<GenericKey<64>, 
                         ItemPointer *,
-                        FastGenericComparator<64>,
+                        GenericComparator<64>,
                         GenericEqualityChecker<64>,
                         GenericHasher<64>,
                         ItemPointerComparator,
@@ -346,7 +346,7 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
     index =
         new BWTreeIndex<GenericKey<256>,
                         ItemPointer *,
-                        FastGenericComparator<256>,
+                        GenericComparator<256>,
                         GenericEqualityChecker<256>, 
                         GenericHasher<256>,
                         ItemPointerComparator, 
