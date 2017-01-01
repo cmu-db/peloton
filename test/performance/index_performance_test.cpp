@@ -294,7 +294,6 @@ static void TestIndexPerformance(const IndexType &index_type) {
   // Start DeleteTest1
   ///////////////////////////////////////////////////////////////////
 
-  if (index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
     LaunchParallelTest(num_thread, DeleteTest1, index.get(), num_thread,
@@ -312,18 +311,11 @@ static void TestIndexPerformance(const IndexType &index_type) {
     timer.Stop();
     LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf", (int)index_type,
              timer.GetDuration());
-  } else {
-    LOG_INFO(
-        "INDEX_TYPE_BWTREE (type = %d) does not"
-        " support the following tests",
-        (int)index_type);
-  }
 
   ///////////////////////////////////////////////////////////////////
   // Start InsertTest2
   ///////////////////////////////////////////////////////////////////
 
-  if (index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
     LaunchParallelTest(num_thread, InsertTest2, index.get(), num_thread,
@@ -341,18 +333,11 @@ static void TestIndexPerformance(const IndexType &index_type) {
     timer.Stop();
     LOG_INFO("Test = InsertTest2; Type = %d; Duration = %.2lf", (int)index_type,
              timer.GetDuration());
-  } else {
-    LOG_INFO(
-        "INDEX_TYPE_BWTREE (type = %d) does not"
-        " support the following tests",
-        (int)index_type);
-  }
 
   ///////////////////////////////////////////////////////////////////
   // Start DeleteTest2
   ///////////////////////////////////////////////////////////////////
 
-  if (index_type != INDEX_TYPE_BWTREE) {
     timer.Start();
 
     LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread,
@@ -370,12 +355,6 @@ static void TestIndexPerformance(const IndexType &index_type) {
     timer.Stop();
     LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf", (int)index_type,
              timer.GetDuration());
-  } else {
-    LOG_INFO(
-        "INDEX_TYPE_BWTREE (type = %d) does not"
-        " support the following tests",
-        (int)index_type);
-  }
 
   ///////////////////////////////////////////////////////////////////
   // End of all tests
@@ -386,14 +365,23 @@ static void TestIndexPerformance(const IndexType &index_type) {
   return;
 }
 
-TEST_F(IndexPerformanceTests, MultiThreadedTest) {
-  std::vector<IndexType> index_types = {INDEX_TYPE_BWTREE};
-
-  // Run the test suite for each types of index
+TEST_F(IndexPerformanceTests, BwTreeMultiThreadedTest) {
+  std::vector<IndexType> index_types = {
+      INDEX_TYPE_BWTREE,
+  };
   for (auto index_type : index_types) {
     TestIndexPerformance(index_type);
   }
 }
+
+// TEST_F(IndexPerformanceTests, BTreeMultiThreadedTest) {
+//   std::vector<IndexType> index_types = {
+//       INDEX_TYPE_BTREE
+//   };
+//   for (auto index_type : index_types) {
+//     TestIndexPerformance(index_type);
+//   }
+// }
 
 }  // End test namespace
 }  // End peloton namespace
