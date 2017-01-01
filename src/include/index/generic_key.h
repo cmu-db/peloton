@@ -38,12 +38,13 @@ class GenericKey {
     return storage::Tuple(key_schema, data);
   }
 
-  inline void ToValueFastXXX(type::Value *value, const catalog::Schema *schema,
-                             int column_id) const {
-    const type::Type::TypeId column_type = schema->GetType(column_id);
-    const char *data_ptr = &data[schema->GetOffset(column_id)];
-    value->RawSet(column_type, reinterpret_cast<const void *>(data_ptr));
-  }
+  //  inline void ToValueFastXXX(type::Value *value, const catalog::Schema
+  //  *schema,
+  //                             int column_id) const {
+  //    const type::Type::TypeId column_type = schema->GetType(column_id);
+  //    const char *data_ptr = &data[schema->GetOffset(column_id)];
+  //    value->RawSet(column_type, reinterpret_cast<const void *>(data_ptr));
+  //  }
 
   inline type::Value ToValueFast(const catalog::Schema *schema,
                                  int column_id) const {

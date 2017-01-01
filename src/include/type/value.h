@@ -298,18 +298,18 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->InList(*this, object);
   }
 
-  // This is dangerous AF. Use at your own risk...
-  inline void RawSet(Type::TypeId type, const void *data) {
-    type_id_ = type;
-    if (type == Type::VARBINARY || type == Type::VARCHAR) {
-      const char *ptr = *reinterpret_cast<const char *const *>(data);
-      uint32_t len = *reinterpret_cast<const uint32_t *>(data);
-      PL_MEMCPY(&value_, ptr + sizeof(uint32_t), len);
-    } else {
-      size_.len = Type::GetTypeSize(type);
-      PL_MEMCPY(&value_, data, sizeof(value_));
-    }
-  }
+  //  // This is dangerous AF. Use at your own risk...
+  //  inline void RawSet(Type::TypeId type, const void *data) {
+  //    type_id_ = type;
+  //    if (type == Type::VARBINARY || type == Type::VARCHAR) {
+  //      const char *ptr = *reinterpret_cast<const char *const *>(data);
+  //      uint32_t len = *reinterpret_cast<const uint32_t *>(data);
+  //      PL_MEMCPY(&value_, ptr + sizeof(uint32_t), len);
+  //    } else {
+  //      size_.len = Type::GetTypeSize(type);
+  //      PL_MEMCPY(&value_, data, sizeof(value_));
+  //    }
+  //  }
 
   // For unordered_map
   struct equal_to {
