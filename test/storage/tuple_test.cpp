@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include <memory>
 
-#include "storage/tuple.h"
 #include "common/harness.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace test {
@@ -30,12 +29,15 @@ class TupleTests : public PelotonTest {};
 TEST_F(TupleTests, BasicTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
-                          "C", true);
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+                          true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "B",
+                          true);
+  catalog::Column column3(type::Type::TINYINT,
+                          type::Type::GetTypeSize(type::Type::TINYINT), "C",
+                          true);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -54,21 +56,28 @@ TEST_F(TupleTests, BasicTest) {
   type::Value val1 = (tuple->GetValue(1));
   type::Value val2 = (tuple->GetValue(2));
 
-  type::Value cmp = type::ValueFactory::GetBooleanValue((val0.CompareEquals(
-      type::ValueFactory::GetIntegerValue(23))));
+  type::Value cmp = type::ValueFactory::GetBooleanValue(
+      (val0.CompareEquals(type::ValueFactory::GetIntegerValue(23))));
   EXPECT_TRUE(cmp.IsTrue());
-  cmp = type::ValueFactory::GetBooleanValue((val1.CompareEquals(type::ValueFactory::GetIntegerValue(45))));
+  cmp = type::ValueFactory::GetBooleanValue(
+      (val1.CompareEquals(type::ValueFactory::GetIntegerValue(45))));
   EXPECT_TRUE(cmp.IsTrue());
-  cmp = type::ValueFactory::GetBooleanValue((val2.CompareEquals(type::ValueFactory::GetIntegerValue(1))));
+  cmp = type::ValueFactory::GetBooleanValue(
+      (val2.CompareEquals(type::ValueFactory::GetIntegerValue(1))));
   EXPECT_TRUE(cmp.IsTrue());
 
   tuple->SetValue(2, type::ValueFactory::GetTinyIntValue(2), pool);
 
   val2 = (tuple->GetValue(2));
-  cmp = type::ValueFactory::GetBooleanValue((val2.CompareEquals(type::ValueFactory::GetIntegerValue(2))));
+  cmp = type::ValueFactory::GetBooleanValue(
+      (val2.CompareEquals(type::ValueFactory::GetIntegerValue(2))));
   EXPECT_TRUE(cmp.IsTrue());
 
-  LOG_INFO("%s", tuple->GetInfo().c_str());
+  // Make sure that our tuple tells us the right estimated size
+  // for uninlined attributes
+  EXPECT_EQ(0, tuple->GetUninlinedMemorySize());
+
+  LOG_TRACE("%s", tuple->GetInfo().c_str());
 
   delete tuple;
   delete schema;
@@ -77,12 +86,15 @@ TEST_F(TupleTests, BasicTest) {
 TEST_F(TupleTests, VarcharTest) {
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "A", true);
-  catalog::Column column2(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "B", true);
-  catalog::Column column3(type::Type::TINYINT, type::Type::GetTypeSize(type::Type::TINYINT),
-                          "C", true);
+  catalog::Column column1(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "A",
+                          true);
+  catalog::Column column2(type::Type::INTEGER,
+                          type::Type::GetTypeSize(type::Type::INTEGER), "B",
+                          true);
+  catalog::Column column3(type::Type::TINYINT,
+                          type::Type::GetTypeSize(type::Type::TINYINT), "C",
+                          true);
   catalog::Column column4(type::Type::VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
@@ -99,15 +111,18 @@ TEST_F(TupleTests, VarcharTest) {
   tuple->SetValue(1, type::ValueFactory::GetIntegerValue(45), pool);
   tuple->SetValue(2, type::ValueFactory::GetTinyIntValue(1), pool);
 
-  type::Value val = type::ValueFactory::GetVarcharValue((std::string)"hello hello world", pool);
+  type::Value val = type::ValueFactory::GetVarcharValue(
+      (std::string) "hello hello world", pool);
   tuple->SetValue(3, val, pool);
   type::Value value3 = (tuple->GetValue(3));
-  type::Value cmp = type::ValueFactory::GetBooleanValue((value3.CompareEquals(val)));
+  type::Value cmp =
+      type::ValueFactory::GetBooleanValue((value3.CompareEquals(val)));
   EXPECT_TRUE(cmp.IsTrue());
 
-  LOG_INFO("%s", tuple->GetInfo().c_str());
+  LOG_TRACE("%s", tuple->GetInfo().c_str());
 
-  auto val2 = type::ValueFactory::GetVarcharValue((std::string)"hi joy !", pool);
+  auto val2 =
+      type::ValueFactory::GetVarcharValue((std::string) "hi joy !", pool);
   tuple->SetValue(3, val2, pool);
   value3 = (tuple->GetValue(3));
   cmp = type::ValueFactory::GetBooleanValue((value3.CompareNotEquals(val)));
@@ -115,7 +130,11 @@ TEST_F(TupleTests, VarcharTest) {
   cmp = type::ValueFactory::GetBooleanValue((value3.CompareEquals(val2)));
   EXPECT_TRUE(cmp.IsTrue());
 
-  LOG_INFO("%s", tuple->GetInfo().c_str());
+  LOG_TRACE("%s", tuple->GetInfo().c_str());
+
+  // Make sure that our tuple tells us the right estimated size
+  size_t expected_size = sizeof(int32_t) + value3.GetLength();
+  EXPECT_EQ(expected_size, tuple->GetUninlinedMemorySize());
 
   delete tuple;
   delete schema;

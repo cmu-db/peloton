@@ -65,7 +65,7 @@ index::Index *BuildIndex(const bool unique_keys) {
 
   catalog::Column column2(type::Type::VARCHAR, 1024, "B", false);
 
-  // The following twoc constitutes tuple schema but does not appear in index
+  // The following two constitutes tuple schema but does not appear in index
 
   catalog::Column column3(type::Type::DECIMAL,
                           type::Type::GetTypeSize(type::Type::DECIMAL), "C",
@@ -353,7 +353,7 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyDeleteTest) {
-  auto pool = TestingHarness::GetIndex().GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -386,7 +386,7 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0].block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   delete tuple_schema;
@@ -485,7 +485,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
-  auto pool = TestingHarness::GetIndex().GetTestingPool();
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
@@ -526,7 +526,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0].block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -631,38 +631,36 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                  pool);
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(2, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(2 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 1);
+    EXPECT_EQ(1, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
+    EXPECT_EQ(1 * num_threads, location_ptrs.size());
   }
 
-  EXPECT_EQ(location_ptrs[0]->block, item1->block);
+  EXPECT_EQ(item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 3);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   // FORWARD SCAN
@@ -678,9 +676,9 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 3);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
 
   location_ptrs.clear();
@@ -689,60 +687,68 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(2, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(2 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '1' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 1);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '0' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '2' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key2_val0, key2_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '2' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key0_val0, key0_val1, key2_val0, key2_val1}, {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   index->ScanTest({key0_val0, key0_val1, key4_val0, key4_val1}, {0, 1, 0, 1},
@@ -751,87 +757,89 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                    EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
                    EXPRESSION_TYPE_COMPARE_LESSTHAN},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 3);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   // REVERSE SCAN
   index->ScanTest({key1_val0}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 3);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(2, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(2 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '1' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 1);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '0' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-
-  EXPECT_EQ(location_ptrs.size(), 0);
-
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '2' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key2_val0, key2_val1}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
+  // PAVLO: 2016-12-29
+  // This test used to expect '2' result, but since we removed Index::Compare()
+  // it now returns '3' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key0_val0, key0_val1, key2_val0, key2_val1}, {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   index->ScanTest({key0_val0, key0_val1, key4_val0, key4_val1}, {0, 1, 0, 1},
@@ -842,11 +850,10 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
   if (index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 3);
+    EXPECT_EQ(3, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
+    EXPECT_EQ(3 * num_threads, location_ptrs.size());
   }
-
   location_ptrs.clear();
 
   delete tuple_schema;

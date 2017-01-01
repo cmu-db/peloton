@@ -17,10 +17,10 @@
 #include "brain/index_tuner.h"
 
 #include "catalog/schema.h"
+#include "common/container_tuple.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
-#include "common/container_tuple.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
@@ -85,7 +85,7 @@ static void AddIndex(storage::DataTable* table,
   // Add index
   table->AddIndex(adhoc_index);
 
-  LOG_INFO("Creating index : %s", index_metadata->GetInfo().c_str());
+  LOG_DEBUG("Creating index : %s", index_metadata->GetInfo().c_str());
 }
 
 void IndexTuner::BuildIndex(storage::DataTable* table,
@@ -239,7 +239,6 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
             sample_frequency_entry_list.end(),
             SampleFrequencyMapEntryComparator);
 
-
   // Print sample frequency map
   for (auto sample_frequency_map_entry : sample_frequency_map) {
     LOG_TRACE("Sample: %s Utility %.1lf",
@@ -310,7 +309,7 @@ void IndexTuner::DropIndexes(storage::DataTable* table) {
 
     // Check if index utility below threshold and drop if needed
     // if (average_index_utility < index_utility_threshold) {
-    LOG_INFO("Dropping index : %s", index->GetMetadata()->GetInfo().c_str());
+    LOG_DEBUG("Dropping index : %s", index->GetMetadata()->GetInfo().c_str());
 
     table->DropIndexWithOid(index_oid);
 

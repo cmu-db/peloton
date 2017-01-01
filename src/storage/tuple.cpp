@@ -66,33 +66,6 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
   }
 }
 
-// Set all columns by value into this tuple.
-void Tuple::SetValue(oid_t column_offset, const type::Value &value) {
-  PL_ASSERT(tuple_schema_);
-  PL_ASSERT(tuple_data_);
-
-  const type::Type::TypeId type = tuple_schema_->GetType(column_offset);
-
-  const bool is_inlined = tuple_schema_->IsInlined(column_offset);
-  char *value_location = GetDataPtr(column_offset);
-  UNUSED_ATTRIBUTE int32_t column_length =
-      tuple_schema_->GetLength(column_offset);
-  if (is_inlined == false)
-    column_length = tuple_schema_->GetVariableLength(column_offset);
-
-  // const bool is_in_bytes = false;
-  // Allocate in heap or given data pool depending on whether a pool is provided
-  // Skip casting if type is same
-  if (type == value.GetTypeId()) {
-    value.SerializeTo(value_location, is_inlined, nullptr);
-  } else {
-    type::Value casted_value = value.CastAs(type);
-    casted_value.SerializeTo(value_location, is_inlined, nullptr);
-    // Do not clean up immediately
-    // casted_value.SetCleanUp(false);
-  }
-}
-
 void Tuple::SetFromTuple(const AbstractTuple *tuple,
                          const std::vector<oid_t> &columns,
                          type::AbstractPool *pool) {
@@ -328,7 +301,7 @@ bool Tuple::operator==(const Tuple &other) const {
 
 bool Tuple::operator!=(const Tuple &other) const { return !(*this == other); }
 
-bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
+bool Tuple::EqualsNoSchemaCheck(const AbstractTuple &other) const {
   const int column_count = tuple_schema_->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -342,7 +315,7 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   return true;
 }
 
-bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
+bool Tuple::EqualsNoSchemaCheck(const AbstractTuple &other,
                                 const std::vector<oid_t> &columns) const {
   for (auto column_itr : columns) {
     type::Value lhs = (GetValue(column_itr));
@@ -466,11 +439,6 @@ const std::string Tuple::GetInfo() const {
   }
   os << ")";
   return os.str();
-}
-
-std::ostream &operator<<(std::ostream &os, const Tuple &tuple) {
-  os << tuple.GetInfo();
-  return os;
 }
 
 }  // End storage namespace

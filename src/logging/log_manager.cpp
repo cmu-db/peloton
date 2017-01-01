@@ -109,7 +109,7 @@ void LogManager::TerminateLoggingMode() {
   WaitForModeTransition(LOGGING_STATUS_TYPE_SLEEP, true);
 }
 
-void LogManager::WaitForModeTransition(LoggingStatus logging_status_,
+void LogManager::WaitForModeTransition(LoggingStatusType logging_status_,
                                        bool is_equal) {
   // Wait for mode transition
   {
@@ -350,12 +350,12 @@ bool LogManager::ContainsFrontendLogger(void) {
 /**
  * @brief mark Peloton is ready, so that frontend logger can start logging
  */
-LoggingStatus LogManager::GetLoggingStatus() {
+LoggingStatusType LogManager::GetLoggingStatus() {
   // Get the logging status
   return logging_status;
 }
 
-void LogManager::SetLoggingStatus(LoggingStatus logging_status_) {
+void LogManager::SetLoggingStatus(LoggingStatusType logging_status_) {
   {
     std::lock_guard<std::mutex> wait_lock(logging_status_mutex);
 

@@ -21,63 +21,52 @@ namespace type {
 
 BooleanType::BooleanType() : Type(Type::BOOLEAN) {}
 
-CmpBool BooleanType::CompareEquals(const Value& left, const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
-  return GetCmpBool(left.value_.boolean ==
-                                       right.GetAs<int8_t>());
-}
-
-CmpBool BooleanType::CompareNotEquals(const Value& left,
-                                    const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
-  return GetCmpBool(left.value_.boolean !=
-                                       right.GetAs<int8_t>());
-}
-
-CmpBool BooleanType::CompareLessThan(const Value& left,
+CmpBool BooleanType::CompareEquals(const Value& left,
                                    const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
-  return GetCmpBool(left.value_.boolean <
-                                       right.GetAs<int8_t>());
+  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  return GetCmpBool(left.value_.boolean == right.GetAs<int8_t>());
 }
 
-CmpBool BooleanType::CompareLessThanEquals(const Value& left,
-                                         const Value& right) const {
-  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
-  PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
-  return GetCmpBool(left.value_.boolean <=
-                                       right.GetAs<int8_t>());
-}
-
-CmpBool BooleanType::CompareGreaterThan(const Value& left,
+CmpBool BooleanType::CompareNotEquals(const Value& left,
                                       const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
-  return GetCmpBool(left.value_.boolean >
-                                       right.GetAs<int8_t>());
+  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  return GetCmpBool(left.value_.boolean != right.GetAs<int8_t>());
+}
+
+CmpBool BooleanType::CompareLessThan(const Value& left,
+                                     const Value& right) const {
+  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(left.CheckComparable(right));
+  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  return GetCmpBool(left.value_.boolean < right.GetAs<int8_t>());
+}
+
+CmpBool BooleanType::CompareLessThanEquals(const Value& left,
+                                           const Value& right) const {
+  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(left.CheckComparable(right));
+  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  return GetCmpBool(left.value_.boolean <= right.GetAs<int8_t>());
+}
+
+CmpBool BooleanType::CompareGreaterThan(const Value& left,
+                                        const Value& right) const {
+  PL_ASSERT(GetTypeId() == Type::BOOLEAN);
+  PL_ASSERT(left.CheckComparable(right));
+  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  return GetCmpBool(left.value_.boolean > right.GetAs<int8_t>());
 }
 
 CmpBool BooleanType::CompareGreaterThanEquals(const Value& left,
-                                            const Value& right) const {
+                                              const Value& right) const {
   PL_ASSERT(GetTypeId() == Type::BOOLEAN);
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
-  return GetCmpBool(left.value_.boolean >=
-                                       right.GetAs<int8_t>());
+  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  return GetCmpBool(left.value_.boolean >= right.GetAs<int8_t>());
 }
 
 std::string BooleanType::ToString(const Value& val) const {
@@ -92,6 +81,30 @@ size_t BooleanType::Hash(const Value& val) const {
 
 void BooleanType::HashCombine(const Value& val, size_t& seed) const {
   val.hash_combine<int8_t>(seed, val.value_.boolean);
+}
+
+void BooleanType::SerializeTo(const Value& val, SerializeOutput& out) const {
+  out.WriteByte(val.value_.boolean);
+  return;
+}
+
+void BooleanType::SerializeTo(const Value& val, char* storage,
+                              bool inlined UNUSED_ATTRIBUTE,
+                              AbstractPool* pool UNUSED_ATTRIBUTE) const {
+  *reinterpret_cast<int8_t*>(storage) = val.value_.boolean;
+  return;
+}
+
+// Deserialize a value of the given type from the given storage space.
+Value BooleanType::DeserializeFrom(const char* storage,
+                                   const bool inlined UNUSED_ATTRIBUTE,
+                                   AbstractPool* pool UNUSED_ATTRIBUTE) const {
+  int8_t val = *reinterpret_cast<const int8_t*>(storage);
+  return Value(type_id_, val);
+}
+Value BooleanType::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
+                                   AbstractPool* pool UNUSED_ATTRIBUTE) const {
+  return Value(type_id_, in.ReadByte());
 }
 
 Value BooleanType::Copy(const Value& val) const {

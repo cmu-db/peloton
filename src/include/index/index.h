@@ -58,15 +58,15 @@ class IndexMetadata : public Printable {
 
  public:
   IndexMetadata(std::string index_name, oid_t index_oid, oid_t table_oid,
-                oid_t database_oid, IndexType method_type,
-                IndexConstraintType index_type,
+                oid_t database_oid, IndexType index_type,
+                IndexConstraintType index_constraint_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 const std::vector<oid_t> &key_attrs, bool unique_keys);
 
   ~IndexMetadata();
 
-  const std::string &GetName() const { return index_name; }
+  const std::string &GetName() const { return name_; }
 
   inline oid_t GetOid() { return index_oid; }
 
@@ -74,9 +74,9 @@ class IndexMetadata : public Printable {
 
   inline oid_t GetDatabaseOid() { return database_oid; }
 
-  IndexType GetIndexMethodType() { return method_type; }
+  IndexType GetIndexType() { return index_type_; }
 
-  IndexConstraintType GetIndexType() { return index_type; }
+  IndexConstraintType GetIndexConstraintType() { return index_constraint_type_; }
 
   /*
    * GetKeySchama() - Returns a schema object pointer that represents
@@ -125,15 +125,15 @@ class IndexMetadata : public Printable {
   // IndexMetadata Data Member Definition
   ///////////////////////////////////////////////////////////////////
 
-  std::string index_name;
+  std::string name_;
 
   oid_t index_oid;
   oid_t table_oid;
   oid_t database_oid;
 
-  IndexType method_type;
+  IndexType index_type_;
 
-  IndexConstraintType index_type;
+  IndexConstraintType index_constraint_type_;
 
   // schema of the indexed base table
   const catalog::Schema *tuple_schema;
@@ -301,9 +301,9 @@ class Index : public Printable {
     return metadata->GetKeySchema();
   }
 
-  IndexType GetIndexMethodType() { return metadata->GetIndexMethodType(); }
+  IndexType GetIndexMethodType() { return metadata->GetIndexType(); }
 
-  IndexConstraintType GetIndexType() const { return metadata->GetIndexType(); }
+  IndexConstraintType GetIndexType() const { return metadata->GetIndexConstraintType(); }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;

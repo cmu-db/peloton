@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "common/exception.h"
 #include "type/type.h"
 #include "type/value.h"
-#include "common/exception.h"
 
 namespace peloton {
 namespace type {
@@ -27,12 +27,16 @@ class BooleanType : public Type {
   BooleanType();
 
   // Comparison functions
-  CmpBool CompareEquals(const Value& left, const Value &right) const override;
-  CmpBool CompareNotEquals(const Value& left, const Value &right) const override;
-  CmpBool CompareLessThan(const Value& left, const Value &right) const override;
-  CmpBool CompareLessThanEquals(const Value& left, const Value &right) const override;
-  CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
-  CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  CmpBool CompareEquals(const Value& left, const Value& right) const override;
+  CmpBool CompareNotEquals(const Value& left,
+                           const Value& right) const override;
+  CmpBool CompareLessThan(const Value& left, const Value& right) const override;
+  CmpBool CompareLessThanEquals(const Value& left,
+                                const Value& right) const override;
+  CmpBool CompareGreaterThan(const Value& left,
+                             const Value& right) const override;
+  CmpBool CompareGreaterThanEquals(const Value& left,
+                                   const Value& right) const override;
 
   // Decimal types are always inlined
   bool IsInlined(const Value&) const override { return true; }
@@ -42,17 +46,17 @@ class BooleanType : public Type {
 
   // Compute a hash value
   size_t Hash(const Value& val) const override;
-  void HashCombine(const Value& val, size_t &seed) const override;
+  void HashCombine(const Value& val, size_t& seed) const override;
 
   // Serialize this value into the given storage space
-  void SerializeTo(const Value&, SerializeOutput &) const override{
-    throw Exception("Can't serialize boolean types to storage");
-  }
+  void SerializeTo(const Value&, SerializeOutput&) const override;
+  void SerializeTo(const Value&, char*, bool, AbstractPool*) const override;
 
-  void SerializeTo(const Value& , char *, bool ,
-                   AbstractPool *) const override{
-    throw Exception("Can't serialize boolean types to storage");
-  }
+  // Deserialize a value of the given type from the given storage space.
+  Value DeserializeFrom(const char* storage, const bool inlined,
+                        AbstractPool* pool = nullptr) const override;
+  Value DeserializeFrom(SerializeInput& in,
+                        AbstractPool* pool = nullptr) const override;
 
   // Create a copy of this value
   Value Copy(const Value& val) const override;

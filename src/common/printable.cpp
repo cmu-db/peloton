@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 
 #include "common/printable.h"
@@ -19,7 +18,7 @@ namespace peloton {
 
 // Get a string representation for debugging
 std::ostream &operator<<(std::ostream &os, const Printable &printable) {
-  os << printable.GetInfo() << "\n";
+  os << printable.GetInfo();
   return os;
 };
 
