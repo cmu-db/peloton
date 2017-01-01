@@ -83,9 +83,17 @@ Value::Value(Type::TypeId type, int8_t i) : Value(type) {
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    case Type::TIMESTAMP:
+      value_.timestamp = i;
+      size_.len =
+          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
+      break;
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for 1-byte Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -118,9 +126,17 @@ Value::Value(Type::TypeId type, int16_t i) : Value(type) {
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    case Type::TIMESTAMP:
+      value_.timestamp = i;
+      size_.len =
+          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
+      break;
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for 2-byte Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -153,9 +169,17 @@ Value::Value(Type::TypeId type, int32_t i) : Value(type) {
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    case Type::TIMESTAMP:
+      value_.timestamp = i;
+      size_.len =
+          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
+      break;
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for 4-byte Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -193,9 +217,12 @@ Value::Value(Type::TypeId type, int64_t i) : Value(type) {
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for 8-byte Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -212,9 +239,12 @@ Value::Value(Type::TypeId type, uint64_t i) : Value(type) {
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg = StringUtil::Format(
+          "Invalid Type '%s' for unsigned 8-byte Value constructor",
+          TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -226,9 +256,12 @@ Value::Value(Type::TypeId type, double d) : Value(type) {
       size_.len =
           (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for double Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -239,9 +272,12 @@ Value::Value(Type::TypeId type, float f) : Value(type) {
       size_.len =
           (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for float Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -270,9 +306,12 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len,
         }
       }
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg = StringUtil::Format(
+          "Invalid Type '%s' for variable-length Value constructor",
+          TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 
@@ -289,9 +328,12 @@ Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
       PL_MEMCPY(value_.varlen, data.c_str(), len);
       break;
     }
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%s' for string Value constructor",
+                             TypeIdToString(type).c_str());
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 

@@ -374,9 +374,12 @@ Value::Value(Type::TypeId type, const std::vector<T> &vals,
       value_.array = (char *)&vals;
       size_.elem_type_id = element_type;
       break;
-    default:
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                      "Invalid Type for constructor");
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%d' for Array Value constructor",
+                             static_cast<int>(type));
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+    }
   }
 }
 

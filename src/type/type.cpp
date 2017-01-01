@@ -12,18 +12,18 @@
 
 #include "type/type.h"
 
+#include "common/exception.h"
+#include "type/abstract_pool.h"
 #include "type/array_type.h"
 #include "type/bigint_type.h"
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
-#include "common/exception.h"
 #include "type/integer_type.h"
 #include "type/numeric_type.h"
 #include "type/smallint_type.h"
 #include "type/timestamp_type.h"
 #include "type/tinyint_type.h"
 #include "type/value.h"
-#include "type/abstract_pool.h"
 #include "type/varlen_type.h"
 
 namespace peloton {
@@ -124,39 +124,7 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
   }
 }
 
-std::string Type::ToString() const {
-  switch (type_id_) {
-    case INVALID:
-      return "INVALID";
-    case PARAMETER_OFFSET:
-      return "PARAMETER_OFFSET";
-    case BOOLEAN:
-      return "BOOLEAN";
-    case TINYINT:
-      return "TINYINT";
-    case SMALLINT:
-      return "SMALLINT";
-    case INTEGER:
-      return "INTEGER";
-    case BIGINT:
-      return "BIGINT";
-    case DECIMAL:
-      return "DECIMAL";
-    case TIMESTAMP:
-      return "TIMESTAMP";
-    case DATE:
-      return "DATE";
-    case VARCHAR:
-      return "VARCHAR";
-    case VARBINARY:
-      return "VARBINARY";
-    case ARRAY:
-      return "ARRAY";
-    default:
-      break;
-  }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
-}
+std::string Type::ToString() const { return (TypeIdToString(type_id_)); }
 
 Value Type::GetMinValue(TypeId type_id) {
   switch (type_id) {
@@ -211,28 +179,28 @@ Value Type::GetMaxValue(TypeId type_id) {
 }
 
 CmpBool Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
-                          const Value& right UNUSED_ATTRIBUTE) const {
-  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
-}
-CmpBool Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE,
-                             const Value& right UNUSED_ATTRIBUTE) const {
-  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
-}
-CmpBool Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE,
                             const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
-CmpBool Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE,
-                                  const Value& right UNUSED_ATTRIBUTE) const {
-  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
-}
-CmpBool Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE,
+CmpBool Type::CompareNotEquals(const Value& left UNUSED_ATTRIBUTE,
                                const Value& right UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
+CmpBool Type::CompareLessThan(const Value& left UNUSED_ATTRIBUTE,
+                              const Value& right UNUSED_ATTRIBUTE) const {
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+CmpBool Type::CompareLessThanEquals(const Value& left UNUSED_ATTRIBUTE,
+                                    const Value& right UNUSED_ATTRIBUTE) const {
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+CmpBool Type::CompareGreaterThan(const Value& left UNUSED_ATTRIBUTE,
+                                 const Value& right UNUSED_ATTRIBUTE) const {
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
 CmpBool Type::CompareGreaterThanEquals(const Value& left UNUSED_ATTRIBUTE,
-                                     const Value& right
-                                         UNUSED_ATTRIBUTE) const {
+                                       const Value& right
+                                           UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
