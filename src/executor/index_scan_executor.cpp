@@ -699,10 +699,6 @@ void IndexScanExecutor::UpdatePredicate(
 
   // Update index predicate
   LOG_TRACE("values_ size %lu", values_.size());
-  for (unsigned int j = 0; j < values_.size(); ++j) {
-    LOG_TRACE("BEFORE, key and value: %d:%s", key_column_ids_[j],
-              values_[j].GetInfo().c_str());
-  }
 
   std::vector<oid_t> key_column_ids;
 
@@ -755,13 +751,6 @@ void IndexScanExecutor::UpdatePredicate(
       // Add column type.
       // TODO: We should add other types in the future
       expr_types_.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-
-      LOG_TRACE("Now index predicate is :");
-
-      for (unsigned int j = 0; j < values_.size(); ++j) {
-        LOG_TRACE("AFTER values: %u-%s", key_column_ids_[j],
-                  values_[j].GetInfo().c_str());
-      }
     }
   }
 

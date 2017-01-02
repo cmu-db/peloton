@@ -980,15 +980,12 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto predicate12 = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[5]);
 
-  predicate_column_ids = {0, 1};  // S_W_ID
+  predicate_column_ids = {0, 1};  // S_W_ID, S_I_ID
   predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL,
                           EXPRESSION_TYPE_COMPARE_EQUAL};
 
-  // Hardcode wid=0 and iid=90
-  //  predicate_values = {type::ValueFactory::GetIntegerValue(0).Copy(),
-  //                      type::ValueFactory::GetIntegerValue(90).Copy()};
-
-  // s_w_id the 5th parameter. add s_i_id later
+  // s_w_id the 5th parameter.
+  // s_i_id is a fake value, which will be updated when invoke index_update
   predicate_values = {type::ValueFactory::GetParameterOffsetValue(4).Copy(),
                       type::ValueFactory::GetIntegerValue(0).Copy()};
 
