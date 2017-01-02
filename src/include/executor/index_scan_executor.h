@@ -87,7 +87,6 @@ class IndexScanExecutor : public AbstractScanExecutor {
   /** @brief index associated with index scan. */
   std::shared_ptr<index::Index> index_;
 
-  // the underlying table that the index is for
   const storage::AbstractTable *table_ = nullptr;
 
   // columns to be returned as results

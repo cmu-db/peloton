@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
-#include "common/printable.h"
 #include "type/types.h"
 #include "type/value.h"
 
@@ -26,7 +26,7 @@ class Schema;
 // Tuple Interface
 //===--------------------------------------------------------------------===//
 
-class AbstractTuple : public Printable {
+class AbstractTuple {
  public:
   virtual ~AbstractTuple(){};
 

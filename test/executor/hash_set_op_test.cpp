@@ -10,18 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include <vector>
 
 #include "common/harness.h"
 
 #include "planner/set_op_plan.h"
 
-#include "concurrency/transaction_manager_factory.h"
-#include "executor/hash_set_op_executor.h"
+#include "type/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+#include "executor/hash_set_op_executor.h"
 #include "storage/data_table.h"
-#include "type/types.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -53,8 +54,7 @@ void RunTest(executor::HashSetOpExecutor &executor,
   EXPECT_EQ(expected_num_tuples, actual_num_tuples_returned);
 
   // In case you want to see it by yourself ...
-  LOG_DEBUG("Tile Vectors:\n%s",
-            ExecutorTestsUtil::GetTileVectorInfo(result_tiles).c_str());
+  ExecutorTestsUtil::PrintTileVector(result_tiles);
 }
 
 TEST_F(HashSetOptTests, ExceptTest) {

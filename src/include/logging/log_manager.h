@@ -96,7 +96,7 @@ class LogManager {
   void TerminateLoggingMode();
 
   // Used to wait for a certain mode (or not certain mode if is_equal is false)
-  void WaitForModeTransition(LoggingStatusType logging_status, bool is_equal);
+  void WaitForModeTransition(LoggingStatus logging_status, bool is_equal);
 
   // End the actual logging
   bool EndLogging();
@@ -118,9 +118,9 @@ class LogManager {
   //===--------------------------------------------------------------------===//
 
   // Logging status associated with the front end logger of given type
-  void SetLoggingStatus(LoggingStatusType logging_status);
+  void SetLoggingStatus(LoggingStatus logging_status);
 
-  LoggingStatusType GetLoggingStatus();
+  LoggingStatus GetLoggingStatus();
 
   // Whether to enable or disable synchronous commit ?
   void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit; }
@@ -271,7 +271,7 @@ class LogManager {
   // either write ahead or write behind logging
   std::vector<std::unique_ptr<FrontendLogger>> frontend_loggers;
 
-  LoggingStatusType logging_status = LOGGING_STATUS_TYPE_INVALID;
+  LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
   bool prepared_recovery_ = false;
 

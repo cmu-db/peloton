@@ -23,7 +23,12 @@ class AbstractPool;
 class Value;
 class ValueFactory;
 
-enum CmpBool { CMP_FALSE = 0, CMP_TRUE = 1, CMP_NULL = 2 };
+enum CmpBool{
+  CMP_FALSE = 0,
+  CMP_TRUE = 1,
+  CMP_NULL = 2
+};
+
 
 class Type {
  public:
@@ -42,11 +47,13 @@ class Type {
     VARBINARY,
     ARRAY,
     UDT
-  };
+};
 
   Type(TypeId type_id) : type_id_(type_id) {}
 
-  virtual ~Type() {}
+  virtual ~Type(){
+
+  }
   // Get the size of this data type in bytes
   static uint64_t GetTypeSize(TypeId type_id);
 
@@ -54,7 +61,7 @@ class Type {
   // on the templated types
   template <typename Op, typename T1, typename T2>
   static Type GetResultOfBinaryOp();
-
+  
   // Is this type coercable from the other type
   bool IsCoercableFrom(const TypeId type_id) const;
 
@@ -64,9 +71,13 @@ class Type {
   static Value GetMinValue(TypeId type_id);
   static Value GetMaxValue(TypeId type_id);
 
-  inline static Type* GetInstance(TypeId type_id) { return kTypes[type_id]; }
+  inline static Type * GetInstance(TypeId type_id) {
+    return kTypes[type_id];
+  }
 
-  inline TypeId GetTypeId() const { return type_id_; }
+  inline TypeId GetTypeId() const {
+    return type_id_;
+  }
 
   // Comparison functions
   //
@@ -86,26 +97,23 @@ class Type {
   //     and since Value is a core component of the execution engine, we want to
   //     make it as performant as possible.
   // (2) Keep the interface consistent by making all functions purely virtual.
-  virtual CmpBool CompareEquals(const Value& left, const Value& right) const;
-  virtual CmpBool CompareNotEquals(const Value& left, const Value& right) const;
-  virtual CmpBool CompareLessThan(const Value& left, const Value& right) const;
-  virtual CmpBool CompareLessThanEquals(const Value& left,
-                                        const Value& right) const;
-  virtual CmpBool CompareGreaterThan(const Value& left,
-                                     const Value& right) const;
-  virtual CmpBool CompareGreaterThanEquals(const Value& left,
-                                           const Value& right) const;
+  virtual CmpBool CompareEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareNotEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareLessThan(const Value& left, const Value &right) const;
+  virtual CmpBool CompareLessThanEquals(const Value& left, const Value &right) const;
+  virtual CmpBool CompareGreaterThan(const Value& left, const Value &right) const;
+  virtual CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const;
 
   // Other mathematical functions
-  virtual Value Add(const Value& left, const Value& right) const;
-  virtual Value Subtract(const Value& left, const Value& right) const;
-  virtual Value Multiply(const Value& left, const Value& right) const;
-  virtual Value Divide(const Value& left, const Value& right) const;
-  virtual Value Modulo(const Value& left, const Value& right) const;
-  virtual Value Min(const Value& left, const Value& right) const;
-  virtual Value Max(const Value& left, const Value& right) const;
+  virtual Value Add(const Value& left, const Value &right) const;
+  virtual Value Subtract(const Value& left, const Value &right) const;
+  virtual Value Multiply(const Value& left, const Value &right) const;
+  virtual Value Divide(const Value& left, const Value &right) const;
+  virtual Value Modulo(const Value& left, const Value &right) const;
+  virtual Value Min(const Value& left, const Value &right) const;
+  virtual Value Max(const Value& left, const Value &right) const;
   virtual Value Sqrt(const Value& val) const;
-  virtual Value OperateNull(const Value& val, const Value& right) const;
+  virtual Value OperateNull(const Value& val, const Value &right) const;
   virtual bool IsZero(const Value& val) const;
 
   // Is the data inlined into this classes storage space, or must it be accessed
@@ -117,22 +125,22 @@ class Type {
 
   // Compute a hash value
   virtual size_t Hash(const Value& val) const;
-  virtual void HashCombine(const Value& val, size_t& seed) const;
+  virtual void HashCombine(const Value& val, size_t &seed) const;
 
   // Serialize this value into the given storage space. The inlined parameter
   // indicates whether we are allowed to inline this value into the storage
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  virtual void SerializeTo(const Value& val, char* storage, bool inlined,
-                           AbstractPool* pool) const;
-  virtual void SerializeTo(const Value& val, SerializeOutput& out) const;
+  virtual void SerializeTo(const Value& val, char *storage, bool inlined,
+                           AbstractPool *pool) const;
+  virtual void SerializeTo(const Value& val, SerializeOutput &out) const;
 
   // Deserialize a value of the given type from the given storage space.
-  virtual Value DeserializeFrom(const char* storage, const bool inlined,
-                                AbstractPool* pool = nullptr) const;
-  virtual Value DeserializeFrom(SerializeInput& in,
-                                AbstractPool* pool = nullptr) const;
+  virtual Value DeserializeFrom(const char *storage,
+                                const bool inlined, AbstractPool *pool = nullptr) const;
+  virtual Value DeserializeFrom(SerializeInput &in,
+                                AbstractPool *pool = nullptr) const;
 
   // Create a copy of this value
   virtual Value Copy(const Value& val) const;
@@ -140,7 +148,7 @@ class Type {
   virtual Value CastAs(const Value& val, const Type::TypeId type_id) const;
 
   // Access the raw variable length data
-  virtual const char* GetData(const Value& val) const;
+  virtual const char *GetData(const Value& val) const;
 
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
@@ -150,8 +158,8 @@ class Type {
 
   virtual TypeId GetElementType(const Value& val) const;
 
-  // Does this value exist in this array?
-  virtual Value InList(const Value& list, const Value& object) const;
+    // Does this value exist in this array?
+  virtual Value InList(const Value& list, const Value &object) const;
 
  protected:
   // The actual type ID

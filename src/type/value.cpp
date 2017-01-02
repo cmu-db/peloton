@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/value.h"
 #include <include/type/value.h>
+#include "type/value.h"
 
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
@@ -32,10 +32,11 @@ Value::Value(const Value &other) {
       if (size_.len == PELOTON_VALUE_NULL) {
         value_.varlen = nullptr;
       } else {
-        if (manage_data_) {
+        if (manage_data_){
           value_.varlen = new char[size_.len];
-          PL_MEMCPY(value_.varlen, other.value_.varlen, size_.len);
-        } else {
+          PL_MEMCPY(value_.varlen, other.value_.varlen,
+                    size_.len);
+        }else{
           value_ = other.value_;
         }
       }
@@ -43,6 +44,7 @@ Value::Value(const Value &other) {
     default:
       value_ = other.value_;
   }
+
 }
 
 Value::Value(Value &&other) : Value() { swap(*this, other); }
@@ -59,41 +61,28 @@ Value::Value(Type::TypeId type, int8_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
-      size_.len =
-          (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
-      size_.len =
-          (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
-      size_.len =
-          (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
-      size_.len =
-          (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
-      size_.len =
-          (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
-      value_.timestamp = i;
-      size_.len =
-          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
-      break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for 1-byte Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -102,41 +91,28 @@ Value::Value(Type::TypeId type, int16_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
-      size_.len =
-          (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
-      size_.len =
-          (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
-      size_.len =
-          (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
-      size_.len =
-          (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
-      size_.len =
-          (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
-      value_.timestamp = i;
-      size_.len =
-          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
-      break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for 2-byte Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -145,41 +121,28 @@ Value::Value(Type::TypeId type, int32_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
-      size_.len =
-          (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
-      size_.len =
-          (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
-      size_.len =
-          (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
-      size_.len =
-          (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
-      size_.len =
-          (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    case Type::TIMESTAMP:
-      value_.timestamp = i;
-      size_.len =
-          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
-      break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for 4-byte Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -188,41 +151,32 @@ Value::Value(Type::TypeId type, int64_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
-      size_.len =
-          (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TINYINT:
       value_.tinyint = i;
-      size_.len =
-          (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.tinyint == PELOTON_INT8_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::SMALLINT:
       value_.smallint = i;
-      size_.len =
-          (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.smallint == PELOTON_INT16_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::INTEGER:
     case Type::PARAMETER_OFFSET:
       value_.integer = i;
-      size_.len =
-          (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.integer == PELOTON_INT32_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::BIGINT:
       value_.bigint = i;
-      size_.len =
-          (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TIMESTAMP:
       value_.timestamp = i;
-      size_.len =
-          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for 8-byte Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -231,20 +185,15 @@ Value::Value(Type::TypeId type, uint64_t i) : Value(type) {
   switch (type) {
     case Type::BOOLEAN:
       value_.boolean = i;
-      size_.len =
-          (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.boolean == PELOTON_BOOLEAN_NULL ? PELOTON_VALUE_NULL : 0);
       break;
     case Type::TIMESTAMP:
       value_.timestamp = i;
-      size_.len =
-          (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default: {
-      std::string msg = StringUtil::Format(
-          "Invalid Type '%s' for unsigned 8-byte Value constructor",
-          TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -253,15 +202,11 @@ Value::Value(Type::TypeId type, double d) : Value(type) {
   switch (type) {
     case Type::DECIMAL:
       value_.decimal = d;
-      size_.len =
-          (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for double Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -269,22 +214,16 @@ Value::Value(Type::TypeId type, float f) : Value(type) {
   switch (type) {
     case Type::DECIMAL:
       value_.decimal = f;
-      size_.len =
-          (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
+      size_.len = (value_.decimal == PELOTON_DECIMAL_NULL ? PELOTON_VALUE_NULL : 0);
       break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for float Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
 // VARCHAR and VARBINARY
-Value::Value(Type::TypeId type, const char *data, uint32_t len,
-             bool manage_data)
-    : Value(type) {
+Value::Value(Type::TypeId type, const char *data, uint32_t len, bool manage_data) : Value(type) {
   switch (type) {
     case Type::VARCHAR:
     case Type::VARBINARY:
@@ -293,25 +232,22 @@ Value::Value(Type::TypeId type, const char *data, uint32_t len,
         size_.len = PELOTON_VALUE_NULL;
       } else {
         manage_data_ = manage_data;
-        if (manage_data_) {
+        if(manage_data_){
           PL_ASSERT(len < PELOTON_VARCHAR_MAX_LEN);
           value_.varlen = new char[len];
           PL_ASSERT(value_.varlen != nullptr);
           size_.len = len;
           PL_MEMCPY(value_.varlen, data, len);
-        } else {
+        }else{
           // FUCK YOU GCC I do what I want.
           value_.const_varlen = data;
           size_.len = len;
         }
       }
       break;
-    default: {
-      std::string msg = StringUtil::Format(
-          "Invalid Type '%s' for variable-length Value constructor",
-          TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -328,12 +264,9 @@ Value::Value(Type::TypeId type, const std::string &data) : Value(type) {
       PL_MEMCPY(value_.varlen, data.c_str(), len);
       break;
     }
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%s' for string Value constructor",
-                             TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 
@@ -343,7 +276,7 @@ Value::~Value() {
   switch (type_id_) {
     case Type::VARBINARY:
     case Type::VARCHAR:
-      if (manage_data_) {
+      if (manage_data_){
         delete[] value_.varlen;
       }
       break;
@@ -354,11 +287,8 @@ Value::~Value() {
 
 const std::string Value::GetInfo() const {
   std::ostringstream os;
-  os << TypeIdToString(type_id_);
-  if (type_id_ == Type::VARBINARY || type_id_ == Type::VARCHAR) {
-    os << "[" << GetLength() << "]";
-  }
-  os << "(" << ToString() << ")";
+  os << "Value::" << Type::GetInstance(GetTypeId())->ToString() << "["
+     << ToString() << "]";
   return os.str();
 }
 

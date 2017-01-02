@@ -10,19 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include <functional>
-#include <sstream>
 #include <vector>
 
-#include "catalog/schema.h"
-#include "common/abstract_tuple.h"
-#include "common/exception.h"
-#include "common/macros.h"
-#include "storage/tile_group.h"
 #include "type/types.h"
 #include "type/value.h"
+#include "common/macros.h"
+#include "common/exception.h"
+#include "common/abstract_tuple.h"
+#include "storage/tile_group.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 namespace expression {
@@ -52,7 +52,8 @@ class ContainerTuple : public AbstractTuple {
   oid_t GetTupleId() const { return tuple_id_; }
 
   void SetValue(UNUSED_ATTRIBUTE oid_t column_id,
-                UNUSED_ATTRIBUTE const type::Value &value) {}
+                UNUSED_ATTRIBUTE const type::Value &value) {
+  }
 
   /** @brief Get the value at the given column id. */
   type::Value GetValue(oid_t column_id) const override {
@@ -105,17 +106,11 @@ class ContainerTuple : public AbstractTuple {
       for (size_t column_itr = 0; column_itr < column_count; column_itr++) {
         type::Value lhs = (GetValue(column_itr));
         type::Value rhs = (other.GetValue(column_itr));
-        if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE) return false;
+        if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE)
+          return false;
       }
     }
     return true;
-  }
-
-  // Get a string representation for debugging
-  const std::string GetInfo() const {
-    std::stringstream os;
-    os << "FIXME";
-    return (os.str());
   }
 
  private:
@@ -185,7 +180,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   }
 
   void SetValue(UNUSED_ATTRIBUTE oid_t column_id,
-                UNUSED_ATTRIBUTE const type::Value &value) {}
+    UNUSED_ATTRIBUTE const type::Value &value) {}
 
   /** @brief Get the raw location of the tuple's contents. */
   inline char *GetData() const override {
@@ -214,23 +209,17 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       type::Value lhs = GetValue(column_itr);
       type::Value rhs = other.GetValue(column_itr);
-      if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE) return false;
+      if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE)
+        return false;
     }
     return true;
   }
 
-  // Get a string representation for debugging
-  const std::string GetInfo() const {
-    std::stringstream os;
-    os << "FIXME";
-    return (os.str());
-  }
-
  private:
-  const std::vector<type::Value> *container_ = nullptr;
+  const std::vector<type::Value > *container_ = nullptr;
 };
 
-template <>
+template<>
 class ContainerTuple<storage::TileGroup> : public AbstractTuple {
  public:
   ContainerTuple(const ContainerTuple &) = default;
@@ -268,13 +257,6 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
     throw NotImplementedException(
         "GetData() not supported for container tuples.");
     return nullptr;
-  }
-
-  // Get a string representation for debugging
-  const std::string GetInfo() const {
-    std::stringstream os;
-    os << "FIXME";
-    return (os.str());
   }
 
  private:
