@@ -78,12 +78,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   // be 3 in  join_column_ids_left. The is specified when creating the plan.
   std::vector<oid_t> join_column_ids_left_;
 
-  // columns in right table for join predicate. This is also the columns in the
-  // result. For example, you wan to do i_id = s_id, s_id must be in the output
-  // result of right child. Let's say s_id is the first column in the result.
-  // Then here join_column_ids_right_ is 0. After then, we need to get the
-  // physical column id and pass this physical column id to SetTupleColumnValue
-  // to update the corresponding column in the index predicate
+  // columns in right table for join predicate. This is the physical column id
   std::vector<oid_t> join_column_ids_right_;
 };
 
