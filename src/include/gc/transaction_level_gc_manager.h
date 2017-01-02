@@ -96,6 +96,13 @@ public:
     }
   }
 
+  virtual void DeregisterTable(const oid_t &table_id) override {
+    // Remove dropped tables
+    if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+      recycle_queue_map_.erase(table_id);
+    }
+  }
+
 private:
   void StartGC(int thread_id);
 

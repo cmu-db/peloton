@@ -732,7 +732,7 @@ public class PelotonTest {
   public void BlobTest() throws SQLException {
     System.out.println("Blob Test");
     Random rand = new Random(12345L);
-    for (int i = 1; i < 20; i++) {
+    for (int i = 1; i < 10; i++) {
       Statement initstmt = conn.createStatement();
       initstmt.execute("DROP TABLE IF EXISTS A;");
       initstmt.execute("CREATE TABLE A (id INT PRIMARY KEY, data VARBINARY)");
