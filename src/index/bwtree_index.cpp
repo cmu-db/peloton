@@ -137,6 +137,7 @@ void BWTREE_INDEX_TYPE::Scan(
             csp_p->IsFullIndexScan());
 
   if (csp_p->IsPointQuery() == true) {
+    LOG_TRACE("This is point query");
     // For point query we construct the key and use equal_range
 
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
@@ -177,7 +178,7 @@ void BWTREE_INDEX_TYPE::Scan(
     // or we have seen a key higher than the high key
     for (auto scan_itr = container.Begin(index_low_key);
          (scan_itr.IsEnd() == false) &&
-         (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
+             (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
          scan_itr++) {
       result.push_back(scan_itr->second);
     }
