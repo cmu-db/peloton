@@ -60,6 +60,8 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 
 void TransactionLevelGCManager::Running(const int &thread_id) {
 
+  uint32_t backoff_shifts = 0;
+
   while (true) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -76,7 +78,17 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     }
 
     if (reclaimed_count == 0 && unlinked_count == 0) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      if (backoff_shifts < 63) {
+        ++backoff_shifts;
+      }
+      uint64_t spins = 1UL << backoff_shifts;
+      spins *= 100;
+      while (spins) {
+        _mm_pause();
+        --spins;
+      }
+    } else {
+      backoff_shifts >>= 1;
     }
   }
 }
