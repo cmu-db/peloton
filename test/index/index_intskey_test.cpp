@@ -15,6 +15,7 @@
 
 #include "common/logger.h"
 #include "common/platform.h"
+#include "common/timer.h"
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 
@@ -30,7 +31,7 @@ class IndexIntsKeyTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
-const int NUM_TUPLES = 10;
+const int NUM_TUPLES = 100;
 
 /*
  * BuildIndex()
@@ -66,7 +67,7 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   // The type of index key has been chosen inside this function, but we are
   // unable to know the exact type of key it has chosen
   index::Index *index = index::IndexFactory::GetIndex(index_metadata);
-  
+
   // TODO: I don't think there is an easy way to check what kind of key we got.
   // It would be nice if we could check for an CompactIntsKey
 
@@ -79,22 +80,28 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
 }
 
 void IndexIntsKeyTestHelper(IndexType index_type,
-                        std::vector<type::Type::TypeId> col_types) {
+                            std::vector<type::Type::TypeId> col_types) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // CREATE
-  std::unique_ptr<index::Index> index(BuildIndex(index_type, false, col_types));
+  std::unique_ptr<index::Index> index(BuildIndex(index_type, true, col_types));
 
   // POPULATE
   std::vector<std::shared_ptr<storage::Tuple>> keys;
   std::vector<std::shared_ptr<ItemPointer>> items;
+
+#ifdef LOG_TRACE_ENABLED
+  Timer<std::milli> timer;
+  timer.Start();
+#endif
+
   for (int i = 0; i < NUM_TUPLES; i++) {
     std::shared_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
     std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
 
     for (int col_idx = 0; col_idx < (int)col_types.size(); col_idx++) {
-      int val = (10 * i) + col_idx;
+      int val = (1000 * col_idx) + i;
       // key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val), pool);
       switch (col_types[col_idx]) {
         case type::Type::TINYINT: {
@@ -127,25 +134,58 @@ void IndexIntsKeyTestHelper(IndexType index_type,
     keys.push_back(key);
     items.push_back(item);
   }  // FOR
+#ifdef LOG_TRACE_ENABLED
+  timer.Stop();
+  LOG_INFO("%s<%d Keys> Insert: Duration = %.2lf",
+           IndexTypeToString(index_type).c_str(), (int)col_types.size(),
+           timer.GetDuration());
+  timer.Reset();
+#endif
 
-  // SCAN
+// SCAN
+#ifdef LOG_TRACE_ENABLED
+  timer.Start();
+#endif
   for (int i = 0; i < NUM_TUPLES; i++) {
     location_ptrs.clear();
     index->ScanKey(keys[i].get(), location_ptrs);
     EXPECT_EQ(location_ptrs.size(), 1);
     EXPECT_EQ(location_ptrs[0]->block, items[i]->block);
   }  // FOR
+#ifdef LOG_TRACE_ENABLED
+  timer.Stop();
+  LOG_INFO("%s<%d Keys> Scan: Duration = %.2lf",
+           IndexTypeToString(index_type).c_str(), (int)col_types.size(),
+           timer.GetDuration());
+  timer.Reset();
+#endif
 
-  // DELETE
+// DELETE
+#ifdef LOG_TRACE_ENABLED
+  timer.Start();
+#endif
   for (int i = 0; i < NUM_TUPLES; i++) {
     index->DeleteEntry(keys[i].get(), items[i].get());
     location_ptrs.clear();
     index->ScanKey(keys[i].get(), location_ptrs);
-    EXPECT_EQ(location_ptrs.size(), 0);
+    EXPECT_EQ(0, location_ptrs.size());
   }  // FOR
+#ifdef LOG_TRACE_ENABLED
+  timer.Stop();
+  LOG_INFO("%s<%d Keys> Delete: Duration = %.2lf",
+           IndexTypeToString(index_type).c_str(), (int)col_types.size(),
+           timer.GetDuration());
+#endif
 
   delete tuple_schema;
 }
+
+// TEST_F(IndexIntsKeyTests, SpeedTest) {
+//  std::vector<type::Type::TypeId> col_types = {
+//      type::Type::INTEGER, type::Type::INTEGER, type::Type::INTEGER,
+//  };
+//  IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+//}
 
 TEST_F(IndexIntsKeyTests, BwTreeTest) {
   std::vector<type::Type::TypeId> types = {

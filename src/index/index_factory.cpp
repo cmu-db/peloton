@@ -34,7 +34,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
 
   // Check whether the index key only has ints.
   // If so, then we can rock a specialized IntsKeyComparator
-  // that is faster than the GenericComparator
+  // that is faster than the FastGenericComparator
   bool ints_only = true;
   for (auto column : metadata->key_schema->GetColumns()) {
     auto col_type = column.GetType();
@@ -158,7 +158,7 @@ Index *IndexFactory::GetBTreeGenericKeyIndex(IndexMetadata *metadata) {
 #endif
     index = new BTreeIndex<GenericKey<4>,
                            ItemPointer *,
-                           GenericComparator<4>,
+                           FastGenericComparator<4>,
                            GenericEqualityChecker<4>>(metadata);
   } else if (key_size <= 8) {
 #ifdef LOG_TRACE_ENABLED
@@ -166,7 +166,7 @@ Index *IndexFactory::GetBTreeGenericKeyIndex(IndexMetadata *metadata) {
 #endif
     index = new BTreeIndex<GenericKey<8>,
                            ItemPointer *,
-                           GenericComparator<8>,
+                           FastGenericComparator<8>,
                            GenericEqualityChecker<8>>(metadata);
   } else if (key_size <= 16) {
 #ifdef LOG_TRACE_ENABLED
@@ -174,7 +174,7 @@ Index *IndexFactory::GetBTreeGenericKeyIndex(IndexMetadata *metadata) {
 #endif
     index = new BTreeIndex<GenericKey<16>,
                            ItemPointer *,
-                           GenericComparator<16>,
+                           FastGenericComparator<16>,
                            GenericEqualityChecker<16>>(metadata);
   } else if (key_size <= 64) {
 #ifdef LOG_TRACE_ENABLED
@@ -182,7 +182,7 @@ Index *IndexFactory::GetBTreeGenericKeyIndex(IndexMetadata *metadata) {
 #endif
     index = new BTreeIndex<GenericKey<64>,
                            ItemPointer *,
-                           GenericComparator<64>,
+                           FastGenericComparator<64>,
                            GenericEqualityChecker<64>>(metadata);
   } else if (key_size <= 256) {
 #ifdef LOG_TRACE_ENABLED
@@ -191,7 +191,7 @@ Index *IndexFactory::GetBTreeGenericKeyIndex(IndexMetadata *metadata) {
     index =
         new BTreeIndex<GenericKey<256>,
                        ItemPointer *,
-                       GenericComparator<256>,
+                       FastGenericComparator<256>,
                        GenericEqualityChecker<256>>(metadata);
   } else {
 #ifdef LOG_TRACE_ENABLED
