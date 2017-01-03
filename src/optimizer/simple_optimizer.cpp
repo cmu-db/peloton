@@ -717,6 +717,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
         if (matched_columns > max_columns) {
           index_searchable = true;
           index_id = index_index;
+          max_columns = matched_columns;
         }
         index_index++;
       }

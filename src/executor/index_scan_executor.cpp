@@ -432,9 +432,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          eval =
-              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
-                  .IsTrue();
+          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
+                                      executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
