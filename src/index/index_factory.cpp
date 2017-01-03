@@ -163,105 +163,60 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
 #endif
     index =
         new BWTreeIndex<GenericKey<4>,
-<<<<<<< HEAD
                         ItemPointer *,
                         FastGenericComparator<4>,
                         GenericEqualityChecker<4>,
                         GenericHasher<4>,
                         ItemPointerComparator,
                         ItemPointerHashFunc>(metadata);
-=======
-        ItemPointer *,
-        GenericComparator<4>,
-        GenericEqualityChecker<4>,
-        GenericHasher<4>,
-        ItemPointerComparator,
-        ItemPointerHashFunc>(metadata);
->>>>>>> Removed libcds and btree index
   } else if (key_size <= 8) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<8>";
 #endif
     index =
         new BWTreeIndex<GenericKey<8>,
-<<<<<<< HEAD
                         ItemPointer *,
                         FastGenericComparator<8>,
                         GenericEqualityChecker<8>, 
                         GenericHasher<8>,
                         ItemPointerComparator, 
                         ItemPointerHashFunc>(metadata);
-=======
-        ItemPointer *,
-        GenericComparator<8>,
-        GenericEqualityChecker<8>,
-        GenericHasher<8>,
-        ItemPointerComparator,
-        ItemPointerHashFunc>(metadata);
->>>>>>> Removed libcds and btree index
   } else if (key_size <= 16) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<16>";
 #endif
     index =
         new BWTreeIndex<GenericKey<16>, 
-<<<<<<< HEAD
                         ItemPointer *, 
                         FastGenericComparator<16>,
                         GenericEqualityChecker<16>, 
                         GenericHasher<16>,
                         ItemPointerComparator, 
                         ItemPointerHashFunc>(metadata);
-=======
-        ItemPointer *,
-        GenericComparator<16>,
-        GenericEqualityChecker<16>,
-        GenericHasher<16>,
-        ItemPointerComparator,
-        ItemPointerHashFunc>(metadata);
->>>>>>> Removed libcds and btree index
   } else if (key_size <= 64) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<64>";
 #endif
     index =
         new BWTreeIndex<GenericKey<64>, 
-<<<<<<< HEAD
                         ItemPointer *,
                         FastGenericComparator<64>,
                         GenericEqualityChecker<64>,
                         GenericHasher<64>,
                         ItemPointerComparator,
                         ItemPointerHashFunc>(metadata);
-=======
-        ItemPointer *,
-        GenericComparator<64>,
-        GenericEqualityChecker<64>,
-        GenericHasher<64>,
-        ItemPointerComparator,
-        ItemPointerHashFunc>(metadata);
->>>>>>> Removed libcds and btree index
   } else if (key_size <= 256) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<256>";
 #endif
     index =
         new BWTreeIndex<GenericKey<256>,
-<<<<<<< HEAD
                         ItemPointer *,
                         FastGenericComparator<256>,
                         GenericEqualityChecker<256>, 
                         GenericHasher<256>,
                         ItemPointerComparator, 
                         ItemPointerHashFunc>(metadata);
-=======
-        ItemPointer *,
-        GenericComparator<256>,
-        GenericEqualityChecker<256>,
-        GenericHasher<256>,
-        ItemPointerComparator,
-        ItemPointerHashFunc>(metadata);
->>>>>>> Removed libcds and btree index
   } else {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "TupleKey";
