@@ -108,7 +108,7 @@ class PelotonTest : public ::testing::Test {
 
   virtual void SetUp() {
 
- }
+  }
 
   virtual void TearDown() {
 
