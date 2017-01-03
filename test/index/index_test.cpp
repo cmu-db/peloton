@@ -45,8 +45,6 @@ index::Index *BuildIndex(const bool unique_keys) {
   // Identify the index type to simplify things
   if (index_type == INDEX_TYPE_BWTREE) {
     LOG_INFO("Build index type: peloton::index::BwTree");
-  } else if (index_type == INDEX_TYPE_BTREE) {
-    LOG_INFO("Build index type: stx::BTree");
   } else {
     LOG_INFO("Build index type: Other type");
   }

@@ -780,9 +780,6 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_INVALID: {
       return "INVALID";
     }
-    case INDEX_TYPE_BTREE: {
-      return "BTREE";
-    }
     case INDEX_TYPE_BWTREE: {
       return "BWTREE";
     }
@@ -801,8 +798,6 @@ std::string IndexTypeToString(IndexType type) {
 IndexType StringToIndexType(const std::string& str) {
   if (str == "INVALID") {
     return INDEX_TYPE_INVALID;
-  } else if (str == "BTREE") {
-    return INDEX_TYPE_BTREE;
   } else if (str == "BWTREE") {
     return INDEX_TYPE_BWTREE;
   } else if (str == "HASH") {

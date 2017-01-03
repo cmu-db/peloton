@@ -214,7 +214,7 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 }
 
 TEST_F(TypesTests, IndexTypeTest) {
-  std::vector<IndexType> list = {INDEX_TYPE_INVALID, INDEX_TYPE_BTREE,
+  std::vector<IndexType> list = {INDEX_TYPE_INVALID,
                                  INDEX_TYPE_BWTREE, INDEX_TYPE_HASH};
 
   // Make sure that ToString and FromString work
