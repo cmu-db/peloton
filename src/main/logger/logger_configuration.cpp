@@ -308,8 +308,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'i': {
         char *index = optarg;
         if (strcmp(index, "btree") == 0) {
-          ycsb::state.index = INDEX_TYPE_BTREE;
-          tpcc::state.index = INDEX_TYPE_BTREE;
+          ycsb::state.index = INDEX_TYPE_BWTREE;
+          tpcc::state.index = INDEX_TYPE_BWTREE;
         } else if (strcmp(index, "bwtree") == 0) {
           ycsb::state.index = INDEX_TYPE_BWTREE;
           tpcc::state.index = INDEX_TYPE_BWTREE;
