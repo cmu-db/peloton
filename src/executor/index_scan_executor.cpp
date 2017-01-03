@@ -699,9 +699,6 @@ void IndexScanExecutor::UpdatePredicate(
 
   // Update index predicate
   LOG_TRACE("values_ size %lu", values_.size());
-  for (unsigned int j = 0; j < values_.size(); ++j) {
-    LOG_TRACE("BEFORE values: %s", values_[j].GetInfo().c_str());
-  }
 
   std::vector<oid_t> key_column_ids;
 
@@ -709,6 +706,9 @@ void IndexScanExecutor::UpdatePredicate(
   // Get the real physical ids
   for (auto column_id : column_ids) {
     key_column_ids.push_back(column_ids_[column_id]);
+
+    LOG_TRACE("Output id is %d---physical column id is %d", column_id,
+              column_ids_[column_id]);
   }
 
   // Update values in index plan node
@@ -720,8 +720,10 @@ void IndexScanExecutor::UpdatePredicate(
     unsigned int current_idx = 0;
     for (; current_idx < values_.size(); current_idx++) {
       if (key_column_ids[new_idx] == key_column_ids_[current_idx]) {
-        LOG_TRACE("Orignial is %s", values_[current_idx].GetInfo().c_str());
-        LOG_TRACE("Changed to %s", values[new_idx].GetInfo().c_str());
+        LOG_TRACE("Orignial is %d:%s", key_column_ids[new_idx],
+                  values_[current_idx].GetInfo().c_str());
+        LOG_TRACE("Changed to %d:%s", key_column_ids[new_idx],
+                  values[new_idx].GetInfo().c_str());
         values_[current_idx] = values[new_idx];
 
         // There should not be two same columns. So when we find a column, we
@@ -731,9 +733,15 @@ void IndexScanExecutor::UpdatePredicate(
     }
 
     // If new value doesn't exist in current value list, add it.
+    // For the current simple optimizer, since all the key column ids must be
+    // initiated when creating index_scan_plan, we don't need to examine whether
+    // the passing column and value exist or not (they definitely exist). But
+    // for the future optimizer, we probably change the logic. So we still keep
+    // the examine code here.
     if (current_idx == values_.size()) {
       LOG_TRACE("Add new column for index predicate:%u-%s",
                 key_column_ids[new_idx], values[new_idx].GetInfo().c_str());
+
       // Add value
       values_.push_back(values[new_idx]);
 
@@ -749,11 +757,6 @@ void IndexScanExecutor::UpdatePredicate(
   // Update the new value
   index_predicate_.GetConjunctionListToSetup()[0]
       .SetTupleColumnValue(index_.get(), key_column_ids, values);
-
-  LOG_TRACE("values_ size %lu", values_.size());
-  for (unsigned int j = 0; j < values_.size(); ++j) {
-    LOG_TRACE("AFTER values: %s", values_[j].GetInfo().c_str());
-  }
 }
 
 void IndexScanExecutor::ResetState() {
