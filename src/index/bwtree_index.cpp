@@ -249,23 +249,23 @@ template class BWTreeIndex<CompactIntsKey<4>, ItemPointer *,
 
 // Generic key
 template class BWTreeIndex<GenericKey<4>, ItemPointer *,
-                           GenericComparator<4>, GenericEqualityChecker<4>,
+                           FastGenericComparator<4>, GenericEqualityChecker<4>,
                            GenericHasher<4>, ItemPointerComparator,
                            ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<8>, ItemPointer *,
-                           GenericComparator<8>, GenericEqualityChecker<8>,
+                           FastGenericComparator<8>, GenericEqualityChecker<8>,
                            GenericHasher<8>, ItemPointerComparator,
                            ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<16>, ItemPointer *,
-                           GenericComparator<16>,
+                           FastGenericComparator<16>,
                            GenericEqualityChecker<16>, GenericHasher<16>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<64>, ItemPointer *,
-                           GenericComparator<64>,
+                           FastGenericComparator<64>,
                            GenericEqualityChecker<64>, GenericHasher<64>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<256>, ItemPointer *,
-                           GenericComparator<256>,
+                           FastGenericComparator<256>,
                            GenericEqualityChecker<256>, GenericHasher<256>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 

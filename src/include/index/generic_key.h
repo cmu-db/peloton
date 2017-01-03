@@ -105,12 +105,13 @@ class FastGenericComparator {
       const char *lhs_data = lhs.GetRawData(schema, col_itr);
       const char *rhs_data = rhs.GetRawData(schema, col_itr);
       type::Type type = schema->GetType(col_itr);
+      bool inlined = schema->IsInlined(col_itr);
 
-      if (type::TypeUtil::CompareLessThanRaw(type, lhs_data, rhs_data) ==
-          type::CMP_TRUE)
+      if (type::TypeUtil::CompareLessThanRaw(type, lhs_data, rhs_data,
+                                             inlined) == type::CMP_TRUE)
         return true;
-      else if (type::TypeUtil::CompareGreaterThanRaw(
-                   type, lhs_data, rhs_data) == type::CMP_TRUE)
+      else if (type::TypeUtil::CompareGreaterThanRaw(type, lhs_data, rhs_data,
+                                                     inlined) == type::CMP_TRUE)
         return false;
     }
 

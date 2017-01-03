@@ -312,18 +312,18 @@ template class BTreeIndex<CompactIntsKey<4>,
                           CompactIntsComparator<4>,
                           CompactIntsEqualityChecker<4>>;
 
-template class BTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+template class BTreeIndex<GenericKey<4>, ItemPointer *, FastGenericComparator<4>,
                           GenericEqualityChecker<4>>;
-template class BTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+template class BTreeIndex<GenericKey<8>, ItemPointer *, FastGenericComparator<8>,
                           GenericEqualityChecker<8>>;
-template class BTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
+template class BTreeIndex<GenericKey<16>, ItemPointer *, FastGenericComparator<16>,
                           GenericEqualityChecker<16>>;
-template class BTreeIndex<GenericKey<32>, ItemPointer *, GenericComparator<32>,
+template class BTreeIndex<GenericKey<32>, ItemPointer *, FastGenericComparator<32>,
                           GenericEqualityChecker<32>>;
-template class BTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
+template class BTreeIndex<GenericKey<64>, ItemPointer *, FastGenericComparator<64>,
                           GenericEqualityChecker<64>>;
 template class BTreeIndex<GenericKey<256>, ItemPointer *,
-                          GenericComparator<256>, GenericEqualityChecker<256>>;
+                          FastGenericComparator<256>, GenericEqualityChecker<256>>;
 
 template class BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
                           TupleKeyEqualityChecker>;

@@ -25,6 +25,40 @@ namespace test {
 
 class ValueTests : public PelotonTest {};
 
+const std::vector<type::Type::TypeId> valueTestTypes = {
+    type::Type::BOOLEAN,   type::Type::TINYINT, type::Type::SMALLINT,
+    type::Type::INTEGER,   type::Type::BIGINT,  type::Type::DECIMAL,
+    type::Type::TIMESTAMP, type::Type::VARCHAR};
+
+TEST_F(ValueTests, HashTest) {
+  for (auto col_type : valueTestTypes) {
+    auto maxVal = type::Type::GetMaxValue(col_type);
+    auto minVal = type::Type::GetMinValue(col_type);
+
+    // Special case for VARCHAR
+    if (col_type == type::Type::VARCHAR) {
+      maxVal = type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
+      minVal = type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
+    }
+    LOG_TRACE("%s => MAX:%s <-> MIN:%s", TypeIdToString(col_type).c_str(),
+              maxVal.ToString().c_str(), minVal.ToString().c_str());
+
+    // They should not be equal
+    EXPECT_EQ(type::CmpBool::CMP_FALSE, maxVal.CompareEquals(minVal));
+
+    // Nor should their hash values be equal
+    auto maxHash = maxVal.Hash();
+    auto minHash = minVal.Hash();
+    EXPECT_NE(maxHash, minHash);
+
+    // But if I copy the first value then the hashes should be the same
+    auto copyVal = maxVal.Copy();
+    auto copyHash = copyVal.Hash();
+    EXPECT_EQ(type::CmpBool::CMP_TRUE, maxVal.CompareEquals(copyVal));
+    EXPECT_EQ(maxHash, copyHash);
+  }  // FOR
+}
+
 TEST_F(ValueTests, VarcharCopyTest) {
   std::string str = "hello hello world";
 
