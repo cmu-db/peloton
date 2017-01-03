@@ -112,7 +112,7 @@ class ExecutorTestsUtil {
                                                       type::VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
-  static std::string GetTileVectorInfo(
+  static void PrintTileVector(
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
 };
 

@@ -21,9 +21,9 @@
 #include "common/macros.h"
 #include "common/printable.h"
 
-#include "type/serializeio.h"
 #include "type/type.h"
 #include "type/varlen_pool.h"
+#include "type/serializeio.h"
 
 namespace peloton {
 namespace type {
@@ -64,7 +64,7 @@ static const uint32_t PELOTON_VARCHAR_MAX_LEN = UINT_MAX;
 // Objects (i.e., VARCHAR) with length prefix of -1 are NULL
 #define OBJECTLENGTH_NULL -1
 
-inline CmpBool GetCmpBool(bool boolean) {
+inline CmpBool GetCmpBool(bool boolean){
   return boolean ? CMP_TRUE : CMP_FALSE;
 }
 
@@ -78,9 +78,7 @@ class Value : public Printable {
  private:
 #endif
 
-  Value(const Type::TypeId type) : manage_data_(false), type_id_(type) {
-    size_.len = PELOTON_VALUE_NULL;
-  }
+  Value(const Type::TypeId type) : manage_data_(false), type_id_(type) {}
 
   // ARRAY values
   template <class T>
@@ -187,7 +185,9 @@ class Value : public Printable {
   inline Value Max(const Value &o) const {
     return Type::GetInstance(type_id_)->Max(*this, o);
   }
-  inline Value Sqrt() const { return Type::GetInstance(type_id_)->Sqrt(*this); }
+  inline Value Sqrt() const {
+    return Type::GetInstance(type_id_)->Sqrt(*this);
+  }
   inline Value OperateNull(const Value &o) const {
     return Type::GetInstance(type_id_)->OperateNull(*this, o);
   }
@@ -202,7 +202,9 @@ class Value : public Printable {
   }
 
   // Is a value null?
-  inline bool IsNull() const { return size_.len == PELOTON_VALUE_NULL; }
+  inline bool IsNull() const {
+    return size_.len == PELOTON_VALUE_NULL;
+  }
 
   // Examine the type of this object.
   bool CheckInteger() const;
@@ -239,8 +241,7 @@ class Value : public Printable {
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  inline void SerializeTo(char *storage, bool inlined,
-                          AbstractPool *pool) const {
+  inline void SerializeTo(char *storage, bool inlined, AbstractPool *pool) const {
     Type::GetInstance(type_id_)->SerializeTo(*this, storage, inlined, pool);
   }
 
@@ -249,16 +250,13 @@ class Value : public Printable {
   }
 
   // Deserialize a value of the given type from the given storage space.
-  inline static Value DeserializeFrom(const char *storage,
-                                      const Type::TypeId type_id,
-                                      const bool inlined,
-                                      VarlenPool *pool = nullptr) {
+  inline static Value DeserializeFrom(const char *storage, const Type::TypeId type_id,
+                               const bool inlined, VarlenPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
   }
 
-  inline static Value DeserializeFrom(SerializeInput &in,
-                                      const Type::TypeId type_id,
-                                      VarlenPool *pool = nullptr) {
+  inline static Value DeserializeFrom(SerializeInput &in, const Type::TypeId type_id,
+                               VarlenPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
   }
 
@@ -278,7 +276,9 @@ class Value : public Printable {
   }
 
   // Create a copy of this value
-  inline Value Copy() const { return Type::GetInstance(type_id_)->Copy(*this); }
+  inline Value Copy() const {
+    return Type::GetInstance(type_id_)->Copy(*this);
+  }
 
   inline Value CastAs(const Type::TypeId type_id) const {
     return Type::GetInstance(type_id_)->CastAs(*this, type_id);
@@ -312,9 +312,7 @@ class Value : public Printable {
   }
 
   struct hash {
-    size_t operator()(const Value &x) const {
-      return Type::GetInstance(x.type_id_)->Hash(x);
-    }
+    size_t operator()(const Value &x) const { return Type::GetInstance(x.type_id_)->Hash(x); }
   };
 
   friend struct equal_to;
@@ -347,14 +345,14 @@ class Value : public Printable {
     int64_t bigint;
     double decimal;
     uint64_t timestamp;
-    char *varlen;
-    const char *const_varlen;
-    char *array;
+    char * varlen;
+    const char * const_varlen;
+    char * array;
   } value_;
 
-  union {
-    uint32_t len;
-    Type::TypeId elem_type_id;
+  union{
+   uint32_t len;
+   Type::TypeId elem_type_id;
   } size_;
 
   bool manage_data_;
@@ -374,12 +372,9 @@ Value::Value(Type::TypeId type, const std::vector<T> &vals,
       value_.array = (char *)&vals;
       size_.elem_type_id = element_type;
       break;
-    default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%d' for Array Value constructor",
-                             static_cast<int>(type));
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
-    }
+    default:
+      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                      "Invalid Type for constructor");
   }
 }
 

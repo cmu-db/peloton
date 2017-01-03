@@ -29,7 +29,6 @@
 #include "index/index.h"
 #include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
-#include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
 #include "type/types.h"
@@ -336,12 +335,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
-  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
+
+  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -415,11 +415,18 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                   tuple_location.offset);
 
         // Further check if the version has the secondary key
+        storage::Tuple key_tuple(index_->GetKeySchema(), true);
         expression::ContainerTuple<storage::TileGroup> candidate_tuple(
             tile_group.get(), tuple_location.offset);
         // Construct the key tuple
         auto &indexed_columns = index_->GetKeySchema()->GetIndexedColumns();
-        storage::MaskedTuple key_tuple(&candidate_tuple, indexed_columns);
+
+        oid_t this_col_itr = 0;
+        for (auto col : indexed_columns) {
+          type::Value val = (candidate_tuple.GetValue(col));
+          key_tuple.SetValue(this_col_itr, val, nullptr);
+          this_col_itr++;
+        }
 
         // Compare the key tuple and the key
         if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
@@ -432,9 +439,10 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
+          expression::ContainerTuple<storage::TileGroup> tuple(
+              tile_group.get(), tuple_location.offset);
           eval =
-              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
-                  .IsTrue();
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {

@@ -11,16 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "type/types.h"
-
-#include <algorithm>
-#include <cstring>
-#include <sstream>
-
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "type/value_factory.h"
-#include "util/string_util.h"
+
+#include <algorithm>
+#include <cstring>
+#include <sstream>
 
 namespace peloton {
 
@@ -39,114 +37,105 @@ size_t QUERY_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
-
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities
 //===--------------------------------------------------------------------===//
-std::string DatePartToString(DatePart type) {
-  switch (type) {
-    case EXPRESSION_DATE_PART_INVALID:
-      return ("INVALID");
-    case EXPRESSION_DATE_PART_CENTURY:
-      return "CENTURY";
-    case EXPRESSION_DATE_PART_DAY:
-      return "DAY";
-    case EXPRESSION_DATE_PART_DECADE:
-      return "DECADE";
-    case EXPRESSION_DATE_PART_DOW:
-      return "DOW";
-    case EXPRESSION_DATE_PART_DOY:
-      return "DOY";
-    case EXPRESSION_DATE_PART_EPOCH:
-      return "EPOCH";
-    case EXPRESSION_DATE_PART_HOUR:
-      return "HOUR";
-    case EXPRESSION_DATE_PART_ISODOW:
-      return "ISODOW";
-    case EXPRESSION_DATE_PART_ISOYEAR:
-      return "ISOYEAR";
-    case EXPRESSION_DATE_PART_MICROSECONDS:
-      return "MICROSECONDS";
-    case EXPRESSION_DATE_PART_MILLENNIUM:
-      return "MILLENNIUM";
-    case EXPRESSION_DATE_PART_MILLISECONDS:
-      return "MILLISECONDS";
-    case EXPRESSION_DATE_PART_MINUTE:
-      return "MINUTE";
-    case EXPRESSION_DATE_PART_MONTH:
-      return "MONTH";
-    case EXPRESSION_DATE_PART_QUARTER:
-      return "QUARTER";
-    case EXPRESSION_DATE_PART_SECOND:
-      return "SECOND";
-    case EXPRESSION_DATE_PART_TIMEZONE:
-      return "TIMEZONE";
-    case EXPRESSION_DATE_PART_TIMEZONE_HOUR:
-      return "TIMEZONE_HOUR";
-    case EXPRESSION_DATE_PART_TIMEZONE_MINUTE:
-      return "TIMEZONE_MINUTE";
-    case EXPRESSION_DATE_PART_WEEK:
-      return "WEEK";
-    case EXPRESSION_DATE_PART_YEAR:
-      return "YEAR";
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for DatePart value '%d'",
-                             static_cast<int>(type)));
-    }
+std::string DatePartToString(DatePart part){
+  switch(part){
+  case EXPRESSION_DATE_PART_CENTURY:
+    return "CENTURY";
+  case EXPRESSION_DATE_PART_DAY:
+    return "DAY";
+  case EXPRESSION_DATE_PART_DECADE:
+    return "DECADE";
+  case EXPRESSION_DATE_PART_DOW:
+    return "DOW";
+  case EXPRESSION_DATE_PART_DOY:
+    return "DOY";
+  case EXPRESSION_DATE_PART_EPOCH:
+    return "EPOCH";
+  case EXPRESSION_DATE_PART_HOUR:
+    return "HOUR";
+  case EXPRESSION_DATE_PART_ISODOW:
+    return "ISODOW";
+  case EXPRESSION_DATE_PART_ISOYEAR:
+    return "ISOYEAR";
+  case EXPRESSION_DATE_PART_MICROSECONDS:
+    return "MICROSECONDS";
+  case EXPRESSION_DATE_PART_MILLENNIUM:
+    return "MILLENNIUM";
+  case EXPRESSION_DATE_PART_MILLISECONDS:
+    return "MILLISECONDS";
+  case EXPRESSION_DATE_PART_MINUTE:
+    return "MINUTE";
+  case EXPRESSION_DATE_PART_MONTH:
+    return "MONTH";
+  case EXPRESSION_DATE_PART_QUARTER:
+    return "QUARTER";
+  case EXPRESSION_DATE_PART_SECOND:
+    return "SECOND";
+  case EXPRESSION_DATE_PART_TIMEZONE:
+    return "TIMEZONE";
+  case EXPRESSION_DATE_PART_TIMEZONE_HOUR:
+    return "TIMEZONE_HOUR";
+  case EXPRESSION_DATE_PART_TIMEZONE_MINUTE:
+    return "TIMEZONE_MINUTE";
+  case EXPRESSION_DATE_PART_WEEK:
+    return "WEEK";
+  case EXPRESSION_DATE_PART_YEAR:
+    return "YEAR";
+  default:
+    throw Exception("Invalid date part.");
   }
-  return ("INVALID");
 }
 
-DatePart StringToDatePart(const std::string& str) {
-  if (str == "INVALID") {
-    return EXPRESSION_DATE_PART_INVALID;
-  } else if (str == "CENTURY") {
+DatePart StringToDatePart(const std::string &str){
+  if (str == "CENTURY"){
     return EXPRESSION_DATE_PART_CENTURY;
-  } else if (str == "DAY") {
+  }else if(str == "DAY"){
     return EXPRESSION_DATE_PART_DAY;
-  } else if (str == "DECADE") {
+  }else if (str == "DECADE"){
     return EXPRESSION_DATE_PART_DECADE;
-  } else if (str == "DOW") {
+  }else if (str == "DOW"){
     return EXPRESSION_DATE_PART_DOW;
-  } else if (str == "DOY") {
+  }else if (str == "DOY"){
     return EXPRESSION_DATE_PART_DOY;
-  } else if (str == "EPOCH") {
+  }else if (str == "EPOCH"){
     return EXPRESSION_DATE_PART_EPOCH;
-  } else if (str == "HOUR") {
+  }else if (str == "HOUR"){
     return EXPRESSION_DATE_PART_HOUR;
-  } else if (str == "ISODOW") {
+  }else if (str == "ISODOW"){
     return EXPRESSION_DATE_PART_ISODOW;
-  } else if (str == "ISOYEAR") {
+  }else if (str == "ISOYEAR"){
     return EXPRESSION_DATE_PART_ISOYEAR;
-  } else if (str == "MICROSECONDS") {
+  }else if (str == "MICROSECONDS"){
     return EXPRESSION_DATE_PART_MICROSECONDS;
-  } else if (str == "MILLENNIUM") {
+  }else if (str == "MILLENNIUM"){
     return EXPRESSION_DATE_PART_MILLENNIUM;
-  } else if (str == "MILLISECONDS") {
+  }else if (str == "MILLISECONDS"){
     return EXPRESSION_DATE_PART_MILLISECONDS;
-  } else if (str == "MINUTE") {
+  }else if (str == "MINUTE"){
     return EXPRESSION_DATE_PART_MINUTE;
-  } else if (str == "MONTH") {
+  }else if (str == "MONTH"){
     return EXPRESSION_DATE_PART_MONTH;
-  } else if (str == "QUARTER") {
+  }else if (str == "QUARTER"){
     return EXPRESSION_DATE_PART_QUARTER;
-  } else if (str == "SECOND") {
+  }else if (str == "SECOND"){
     return EXPRESSION_DATE_PART_SECOND;
-  } else if (str == "TIMEZONE") {
+  }else if (str == "TIMEZONE"){
     return EXPRESSION_DATE_PART_TIMEZONE;
-  } else if (str == "TIMEZONE_HOUR") {
+  }else if (str == "TIMEZONE_HOUR"){
     return EXPRESSION_DATE_PART_TIMEZONE_HOUR;
-  } else if (str == "TIMEZONE_MINUTE") {
+  }else if (str == "TIMEZONE_MINUTE"){
     return EXPRESSION_DATE_PART_TIMEZONE_MINUTE;
-  } else if (str == "WEEK") {
+  }else if (str == "WEEK"){
     return EXPRESSION_DATE_PART_WEEK;
-  } else if (str == "YEAR") {
+  }else if (str == "YEAR"){
     return EXPRESSION_DATE_PART_YEAR;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No DatePart conversion from string '%s'", str.c_str()));
+  }else{
+    throw Exception("Date Part " + str + " not found.");
   }
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -154,6 +143,8 @@ DatePart StringToDatePart(const std::string& str) {
 //===--------------------------------------------------------------------===//
 
 std::string BackendTypeToString(BackendType type) {
+  std::string ret;
+
   switch (type) {
     case (BACKEND_TYPE_MM):
       return "MM";
@@ -165,16 +156,12 @@ std::string BackendTypeToString(BackendType type) {
       return "HDD";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for BackendType value '%d'",
-                             static_cast<int>(type)));
-    }
+    default: { return "UNKNOWN " + std::to_string(type); }
   }
-  return ("INVALID");
+  return (ret);
 }
 
-BackendType StringToBackendType(const std::string& str) {
+BackendType StringToBackendType(std::string str) {
   if (str == "INVALID") {
     return BACKEND_TYPE_INVALID;
   } else if (str == "MM") {
@@ -185,9 +172,6 @@ BackendType StringToBackendType(const std::string& str) {
     return BACKEND_TYPE_SSD;
   } else if (str == "HDD") {
     return BACKEND_TYPE_HDD;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No BackendType conversion from string '%s'", str.c_str()));
   }
   return BACKEND_TYPE_INVALID;
 }
@@ -227,9 +211,7 @@ std::string TypeIdToString(type::Type::TypeId type) {
     case type::Type::UDT:
       return "UDT";
     default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for TypeId value '%d'",
-                             static_cast<int>(type)));
+      throw ConversionException("No string conversion for TypeId");  // FIXME
     }
       return "INVALID";
   }
@@ -265,8 +247,7 @@ type::Type::TypeId StringToTypeId(const std::string& str) {
   } else if (str == "UDT") {
     return type::Type::UDT;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No TypeId conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return type::Type::INVALID;
 }
@@ -358,9 +339,7 @@ std::string StatementTypeToString(StatementType type) {
       return "UPDATE";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for StatementType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException("No conversion from StatementType");  // FIXME
     }
   }
   return "NOT A KNOWN TYPE - INVALID";
@@ -394,8 +373,7 @@ StatementType StringToStatementType(const std::string& str) {
   } else if (str == "COPY") {
     return STATEMENT_TYPE_COPY;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No StatementType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return STATEMENT_TYPE_INVALID;
 }
@@ -605,9 +583,7 @@ std::string ExpressionTypeToString(ExpressionType type) {
       return ("CAST");
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for ExpressionType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException("No conversion from ExpressionType");  // FIXME
     } break;
   }
   return "INVALID";
@@ -765,8 +741,7 @@ ExpressionType StringToExpressionType(const std::string& str) {
   } else if (str == "CAST") {
     return EXPRESSION_TYPE_CAST;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No ExpressionType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return EXPRESSION_TYPE_INVALID;
 }
@@ -789,11 +764,6 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_HASH: {
       return "HASH";
     }
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for IndexType value '%d'",
-                             static_cast<int>(type)));
-    }
   }
   return "INVALID";
 }
@@ -808,8 +778,7 @@ IndexType StringToIndexType(const std::string& str) {
   } else if (str == "HASH") {
     return INDEX_TYPE_HASH;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No IndexType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return INDEX_TYPE_INVALID;
 }
@@ -833,9 +802,8 @@ std::string IndexConstraintTypeToString(IndexConstraintType type) {
       return "UNIQUE";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for IndexConstraintType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException(
+          "No conversion from IndexConstraintType");  // FIXME
     }
   }
   return "INVALID";
@@ -851,8 +819,7 @@ IndexConstraintType StringToIndexConstraintType(const std::string& str) {
   } else if (str == "UNIQUE") {
     return INDEX_CONSTRAINT_TYPE_UNIQUE;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No IndexConstraintType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return INDEX_CONSTRAINT_TYPE_INVALID;
 }
@@ -953,9 +920,7 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
       return ("MOCK");
     }
     default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for PlanNodeType value '%d'",
-                             static_cast<int>(type)));
+      throw ConversionException("No conversion from PlanNodeType");  // FIXME
     }
   }
   return "INVALID";
@@ -1023,8 +988,7 @@ PlanNodeType StringToPlanNodeType(const std::string& str) {
   } else if (str == "MOCK") {
     return PLAN_NODE_TYPE_MOCK;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No PlanNodeType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return PLAN_NODE_TYPE_INVALID;
 }
@@ -1075,9 +1039,7 @@ std::string ParseNodeTypeToString(ParseNodeType type) {
       return "MOCK";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for ParseNodeType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException("No conversion from ParseNodeType");  // FIXME
     }
   }
   return "INVALID";
@@ -1111,8 +1073,7 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
   } else if (str == "MOCK") {
     return PARSE_NODE_TYPE_MOCK;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No ParseNodeType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return PARSE_NODE_TYPE_INVALID;
 }
@@ -1151,9 +1112,7 @@ std::string ConstraintTypeToString(ConstraintType type) {
       return ("EXCLUSION");
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for ConstraintType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException("No conversion from ConstraintType");  // FIXME
     }
   }
   return "INVALID";
@@ -1179,8 +1138,7 @@ ConstraintType StringToConstraintType(const std::string& str) {
   } else if (str == "EXCLUSION") {
     return CONSTRAINT_TYPE_EXCLUSION;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No ConstraintType conversion from string '%s'", str.c_str()));
+    throw ConversionException("No conversion from string '" + str + "'");
   }
   return CONSTRAINT_TYPE_INVALID;
 }
@@ -1203,6 +1161,7 @@ std::string LoggingTypeToString(LoggingType type) {
       return "HDD_WAL";
 
     // WBL Based
+
     case LOGGING_TYPE_NVM_WBL:
       return "NVM_WBL";
     case LOGGING_TYPE_SSD_WBL:
@@ -1210,84 +1169,35 @@ std::string LoggingTypeToString(LoggingType type) {
     case LOGGING_TYPE_HDD_WBL:
       return "HDD_WBL";
 
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for LoggingType value '%d'",
-                             static_cast<int>(type)));
-    }
+    default:
+      LOG_ERROR("Invalid logging_type :: %d", type);
+      exit(EXIT_FAILURE);
   }
   return "INVALID";
 }
 
-LoggingType StringToLoggingType(const std::string& str) {
-  if (str == "INVALID") {
-    return LOGGING_TYPE_INVALID;
-  } else if (str == "NVM_WAL") {
-    return LOGGING_TYPE_NVM_WAL;
-  } else if (str == "SSD_WAL") {
-    return LOGGING_TYPE_SSD_WAL;
-  } else if (str == "HDD_WAL") {
-    return LOGGING_TYPE_HDD_WAL;
-  } else if (str == "NVM_WBL") {
-    return LOGGING_TYPE_NVM_WBL;
-  } else if (str == "SSD_WBL") {
-    return LOGGING_TYPE_SSD_WBL;
-  } else if (str == "HDD_WBL") {
-    return LOGGING_TYPE_HDD_WBL;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No LoggingType conversion from string '%s'", str.c_str()));
-  }
-  return LOGGING_TYPE_INVALID;
-}
-
-std::string LoggingStatusTypeToString(LoggingStatusType type) {
+std::string LoggingStatusToString(LoggingStatus type) {
   switch (type) {
     case LOGGING_STATUS_TYPE_INVALID: {
       return "INVALID";
     }
     case LOGGING_STATUS_TYPE_STANDBY: {
-      return "STANDBY";
+      return "LOGGING_STATUS_TYPE_STANDBY";
     }
     case LOGGING_STATUS_TYPE_RECOVERY: {
-      return "RECOVERY";
+      return "LOGGING_STATUS_TYPE_RECOVERY";
     }
     case LOGGING_STATUS_TYPE_LOGGING: {
-      return "LOGGING";
+      return "LOGGING_STATUS_TYPE_ONGOING";
     }
     case LOGGING_STATUS_TYPE_TERMINATE: {
-      return "TERMINATE";
+      return "LOGGING_STATUS_TYPE_TERMINATE";
     }
     case LOGGING_STATUS_TYPE_SLEEP: {
-      return "SLEEP";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LoggingStatusType value '%d'",
-          static_cast<int>(type)));
+      return "LOGGING_STATUS_TYPE_SLEEP";
     }
   }
   return "INVALID";
-}
-
-LoggingStatusType StringToLoggingStatusType(const std::string& str) {
-  if (str == "INVALID") {
-    return LOGGING_STATUS_TYPE_INVALID;
-  } else if (str == "STANDBY") {
-    return LOGGING_STATUS_TYPE_STANDBY;
-  } else if (str == "RECOVERY") {
-    return LOGGING_STATUS_TYPE_RECOVERY;
-  } else if (str == "LOGGING") {
-    return LOGGING_STATUS_TYPE_LOGGING;
-  } else if (str == "TERMINATE") {
-    return LOGGING_STATUS_TYPE_TERMINATE;
-  } else if (str == "SLEEP") {
-    return LOGGING_STATUS_TYPE_SLEEP;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No LoggingStatusType conversion from string '%s'", str.c_str()));
-  }
-  return LOGGING_STATUS_TYPE_INVALID;
 }
 
 std::string LoggerTypeToString(LoggerType type) {
@@ -1296,32 +1206,13 @@ std::string LoggerTypeToString(LoggerType type) {
       return "INVALID";
     }
     case LOGGER_TYPE_FRONTEND: {
-      return "FRONTEND";
+      return "LOGGER_TYPE_FRONTEND";
     }
     case LOGGER_TYPE_BACKEND: {
-      return "BACKEND";
-    }
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for LoggerType value '%d'",
-                             static_cast<int>(type)));
+      return "LOGGER_TYPE_BACKEND";
     }
   }
   return "INVALID";
-}
-
-LoggerType StringToLoggerType(const std::string& str) {
-  if (str == "INVALID") {
-    return LOGGER_TYPE_INVALID;
-  } else if (str == "FRONTEND") {
-    return LOGGER_TYPE_FRONTEND;
-  } else if (str == "BACKEND") {
-    return LOGGER_TYPE_BACKEND;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No LoggerType conversion from string '%s'", str.c_str()));
-  }
-  return LOGGER_TYPE_INVALID;
 }
 
 std::string LogRecordTypeToString(LogRecordType type) {
@@ -1330,101 +1221,57 @@ std::string LogRecordTypeToString(LogRecordType type) {
       return "INVALID";
     }
     case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
-      return "TRANSACTION_BEGIN";
+      return "LOGRECORD_TYPE_TRANSACTION_BEGIN";
     }
     case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
-      return "TRANSACTION_COMMIT";
+      return "LOGRECORD_TYPE_TRANSACTION_COMMIT";
     }
     case LOGRECORD_TYPE_TRANSACTION_END: {
-      return "TRANSACTION_END";
+      return "LOGRECORD_TYPE_TRANSACTION_END";
     }
     case LOGRECORD_TYPE_TRANSACTION_ABORT: {
-      return "TRANSACTION_ABORT";
+      return "LOGRECORD_TYPE_TRANSACTION_ABORT";
     }
     case LOGRECORD_TYPE_TRANSACTION_DONE: {
-      return "TRANSACTION_DONE";
+      return "LOGRECORD_TYPE_TRANSACTION_DONE";
     }
     case LOGRECORD_TYPE_TUPLE_INSERT: {
-      return "TUPLE_INSERT";
+      return "LOGRECORD_TYPE_TUPLE_INSERT";
     }
     case LOGRECORD_TYPE_TUPLE_DELETE: {
-      return "TUPLE_DELETE";
+      return "LOGRECORD_TYPE_TUPLE_DELETE";
     }
     case LOGRECORD_TYPE_TUPLE_UPDATE: {
-      return "TUPLE_UPDATE";
+      return "LOGRECORD_TYPE_TUPLE_UPDATE";
     }
     case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
-      return "WAL_TUPLE_INSERT";
+      return "LOGRECORD_TYPE_WAL_TUPLE_INSERT";
     }
     case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
-      return "WAL_TUPLE_DELETE";
+      return "LOGRECORD_TYPE_WAL_TUPLE_DELETE";
     }
     case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
-      return "WAL_TUPLE_UPDATE";
+      return "LOGRECORD_TYPE_WAL_TUPLE_UPDATE";
     }
     case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
-      return "WBL_TUPLE_INSERT";
+      return "LOGRECORD_TYPE_WBL_TUPLE_INSERT";
     }
     case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
-      return "WBL_TUPLE_DELETE";
+      return "LOGRECORD_TYPE_WBL_TUPLE_DELETE";
     }
     case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-      return "WBL_TUPLE_UPDATE";
+      return "LOGRECORD_TYPE_WBL_TUPLE_UPDATE";
     }
     case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-      return "ITERATION_DELIMITER";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LogRecordType value '%d'",
-          static_cast<int>(type)));
+      return "LOGRECORD_TYPE_ITERATION_DELIMITER";
     }
   }
   return "INVALID";
 }
 
-LogRecordType StringToLogRecordType(const std::string& str) {
-  if (str == "INVALID") {
-    return LOGRECORD_TYPE_INVALID;
-  } else if (str == "TRANSACTION_BEGIN") {
-    return LOGRECORD_TYPE_TRANSACTION_BEGIN;
-  } else if (str == "TRANSACTION_COMMIT") {
-    return LOGRECORD_TYPE_TRANSACTION_COMMIT;
-  } else if (str == "TRANSACTION_END") {
-    return LOGRECORD_TYPE_TRANSACTION_END;
-  } else if (str == "TRANSACTION_ABORT") {
-    return LOGRECORD_TYPE_TRANSACTION_ABORT;
-  } else if (str == "TRANSACTION_DONE") {
-    return LOGRECORD_TYPE_TRANSACTION_DONE;
-  } else if (str == "TUPLE_INSERT") {
-    return LOGRECORD_TYPE_TUPLE_INSERT;
-  } else if (str == "TUPLE_DELETE") {
-    return LOGRECORD_TYPE_TUPLE_DELETE;
-  } else if (str == "TUPLE_UPDATE") {
-    return LOGRECORD_TYPE_TUPLE_UPDATE;
-  } else if (str == "WAL_TUPLE_INSERT") {
-    return LOGRECORD_TYPE_WAL_TUPLE_INSERT;
-  } else if (str == "WAL_TUPLE_DELETE") {
-    return LOGRECORD_TYPE_WAL_TUPLE_DELETE;
-  } else if (str == "WAL_TUPLE_UPDATE") {
-    return LOGRECORD_TYPE_WAL_TUPLE_UPDATE;
-  } else if (str == "WBL_TUPLE_INSERT") {
-    return LOGRECORD_TYPE_WBL_TUPLE_INSERT;
-  } else if (str == "WBL_TUPLE_DELETE") {
-    return LOGRECORD_TYPE_WBL_TUPLE_DELETE;
-  } else if (str == "WBL_TUPLE_UPDATE") {
-    return LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
-  } else if (str == "ITERATION_DELIMITER") {
-    return LOGRECORD_TYPE_ITERATION_DELIMITER;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No LogRecordType conversion from string '%s'", str.c_str()));
-  }
-  return LOGRECORD_TYPE_INVALID;
-}
-
-type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
-  switch (type) {
+type::Type::TypeId PostgresValueTypeToPelotonValueType(
+    PostgresValueType PostgresValType) {
+  switch (PostgresValType) {
     case POSTGRES_VALUE_TYPE_BOOLEAN:
       return type::Type::BOOLEAN;
 
@@ -1454,18 +1301,17 @@ type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
     case POSTGRES_VALUE_TYPE_DECIMAL:
       return type::Type::DECIMAL;
     default:
-      throw ConversionException(StringUtil::Format(
-          "No TypeId conversion for PostgresValueType value '%d'",
-          static_cast<int>(type)));
+      LOG_TRACE("INVALID VALUE TYPE : %d ", PostgresValType);
+      return type::Type::INVALID;
+      break;
   }
-  return type::Type::INVALID;
 }
 
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
-    PostgresConstraintType type) {
+    PostgresConstraintType PostgresConstrType) {
   ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
 
-  switch (type) {
+  switch (PostgresConstrType) {
     case POSTGRES_CONSTRAINT_NULL:
       constraintType = CONSTRAINT_TYPE_NULL;
       break;
@@ -1499,19 +1345,41 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
 
     default:
-      throw ConversionException(StringUtil::Format(
-          "No ConstraintType conversion for PostgresConstraintType value '%d'",
-          static_cast<int>(type)));
+      LOG_ERROR("INVALID CONSTRAINT TYPE : %d ", PostgresConstrType);
       break;
   }
   return constraintType;
+}
+
+std::string QuantifierTypeToString(QuantifierType type) {
+  switch (type) {
+    case QUANTIFIER_TYPE_NONE: {
+      return "NONE";
+    }
+    case QUANTIFIER_TYPE_ANY: {
+      return "ANY";
+    }
+    case QUANTIFIER_TYPE_ALL: {
+      return "ALL";
+    }
+  }
+  return "INVALID";
+}
+
+QuantifierType StringToQuantifierType(std::string str) {
+  if (str == "ANY") {
+    return QUANTIFIER_TYPE_ANY;
+  } else if (str == "ALL") {
+    return QUANTIFIER_TYPE_ALL;
+  }
+  return QUANTIFIER_TYPE_NONE;
 }
 
 //===--------------------------------------------------------------------===//
 // Network Message types
 //===--------------------------------------------------------------------===//
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
-  switch (code) {
+  switch(code) {
     case SERIALIZATION_ERROR:
       return "40001";
     default:
