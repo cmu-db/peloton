@@ -27,9 +27,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-
-#include "libcds/cds/init.h"
-
 #include <google/protobuf/stubs/common.h>
 #include <gflags/gflags.h>
 
@@ -108,19 +105,10 @@ class PelotonTest : public ::testing::Test {
  protected:
 
   virtual void SetUp() {
-    // Initialize CDS library
-    cds::Initialize();
 
-    // Attach thread to cds
-    cds::threading::Manager::attachThread();
   }
 
   virtual void TearDown() {
-    // Detach thread from cds
-    cds::threading::Manager::detachThread();
-
-    // Terminate CDS library
-    cds::Terminate();
 
     // shutdown protocol buf library
     google::protobuf::ShutdownProtobufLibrary();
