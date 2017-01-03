@@ -33,14 +33,6 @@ class IndexFactory {
                              std::string comparatorType);
 
   //===--------------------------------------------------------------------===//
-  // STX::BTREE
-  //===--------------------------------------------------------------------===//
-
-  static Index *GetBTreeIntsKeyIndex(IndexMetadata *metadata);
-
-  static Index *GetBTreeGenericKeyIndex(IndexMetadata *metadata);
-
-  //===--------------------------------------------------------------------===//
   // PELOTON::BWTREE
   //===--------------------------------------------------------------------===//
 
