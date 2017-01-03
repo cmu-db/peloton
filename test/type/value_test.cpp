@@ -37,8 +37,8 @@ TEST_F(ValueTests, HashTest) {
 
     // Special case for VARCHAR
     if (col_type == type::Type::VARCHAR) {
-      maxVal = type::ValueFactory::GetVarcharValue("XXX", nullptr);
-      minVal = type::ValueFactory::GetVarcharValue("YYY", nullptr);
+      maxVal = type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
+      minVal = type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
     }
     LOG_TRACE("%s => MAX:%s <-> MIN:%s", TypeIdToString(col_type).c_str(),
               maxVal.ToString().c_str(), minVal.ToString().c_str());
