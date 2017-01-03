@@ -34,8 +34,12 @@ class GCManagerFactory {
   }
 
   static void Configure(int thread_count = 1) { 
-    gc_type_ = GARBAGE_COLLECTION_TYPE_ON;
-    gc_thread_count_ = thread_count;
+    if (thread_count == 0) {
+      gc_type_ = GARBAGE_COLLECTION_TYPE_OFF;
+    } else {
+      gc_type_ = GARBAGE_COLLECTION_TYPE_ON;
+      gc_thread_count_ = thread_count;
+    }
   }
 
   static GarbageCollectionType GetGCType() { return gc_type_; }
