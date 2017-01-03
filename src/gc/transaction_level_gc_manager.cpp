@@ -63,7 +63,6 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
   uint32_t backoff_shifts = 0;
 
   while (true) {
-
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
 
@@ -78,15 +77,13 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     }
 
     if (reclaimed_count == 0 && unlinked_count == 0) {
-      if (backoff_shifts < 63) {
+      // sleep at most 3.2768 s
+      if (backoff_shifts < 15) {
         ++backoff_shifts;
       }
-      uint64_t spins = 1UL << backoff_shifts;
-      spins *= 100;
-      while (spins) {
-        _mm_pause();
-        --spins;
-      }
+      uint64_t sleep_duration = 1UL << backoff_shifts;
+      sleep_duration *= 100;
+      std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
     } else {
       backoff_shifts >>= 1;
     }
