@@ -32,6 +32,14 @@ const std::vector<type::Type::TypeId> typeTestTypes = {
     // type::Type::VARCHAR
 };
 
+TEST_F(TypeTests, GetInstanceTest) {
+  for (auto col_type : typeTestTypes) {
+    auto t = type::Type::GetInstance(col_type);
+    EXPECT_NE(nullptr, t);
+    EXPECT_EQ(col_type, t->GetTypeId());
+  }
+}
+
 TEST_F(TypeTests, MaxValueTest) {
   for (auto col_type : typeTestTypes) {
     auto maxVal = type::Type::GetMaxValue(col_type);
