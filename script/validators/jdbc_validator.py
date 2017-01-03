@@ -64,7 +64,7 @@ if __name__ == '__main__':
         raise Exception("Unable to find JDBC script dir '%s'" % PELOTON_JDBC_SCRIPT_DIR)
 
     ## Basic
-    # runTest("test_jdbc.sh")
+    runTest("test_jdbc.sh")
 
     ## Stats
     # runTest("test_jdbc.sh", enableStats=True)
