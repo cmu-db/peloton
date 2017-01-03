@@ -31,7 +31,9 @@ class IndexIntsKeyTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
-const int NUM_TUPLES = 100;
+// You can't set this too large because we will
+// have duplicates for the TINYINT keys
+const int NUM_TUPLES = 128;
 
 /*
  * BuildIndex()
@@ -101,10 +103,10 @@ void IndexIntsKeyTestHelper(IndexType index_type,
     std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
 
     for (int col_idx = 0; col_idx < (int)col_types.size(); col_idx++) {
-      int val = (1000 * col_idx) + i;
-      // key->SetValue(col_idx, type::ValueFactory::GetIntegerValue(val), pool);
+      int val = i;
       switch (col_types[col_idx]) {
         case type::Type::TINYINT: {
+          val = val % 128;
           key->SetValue(col_idx, type::ValueFactory::GetTinyIntValue(val),
                         pool);
           break;
