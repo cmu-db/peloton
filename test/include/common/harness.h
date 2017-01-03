@@ -20,9 +20,11 @@
 #include <atomic>
 
 #include "common/macros.h"
-#include "type/types.h"
 #include "common/logger.h"
 #include "common/init.h"
+#include "type/types.h"
+#include "gc/gc_manager_factory.h"
+
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -113,6 +115,9 @@ class PelotonTest : public ::testing::Test {
 
     // Attach thread to cds
     cds::threading::Manager::attachThread();
+
+    // turn off gc under test mode
+    gc::GCManagerFactory::Configure(0);
   }
 
   virtual void TearDown() {

@@ -42,7 +42,7 @@ def runTest(script, enableStats=False):
 
     # start jdbc test
     os.chdir(PELOTON_JDBC_SCRIPT_DIR)
-    jdbc = subprocess.Popen(['/bin/bash ' + script + ' basic'], shell=True, stdout=subprocess.PIPE, 
+    jdbc = subprocess.Popen(['/bin/bash ' + script + ' basic'], shell=True, stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)
     jdbc_out = ''.join(jdbc.stdout.readlines())
     print jdbc_out
@@ -54,19 +54,19 @@ def runTest(script, enableStats=False):
     if re.search('exception', jdbc_out, re.IGNORECASE):
         sys.exit(EXIT_FAILURE)
 ## DEF
-    
+
 
 if __name__ == '__main__':
-    
+
     if not os.path.exists(PELOTON_BIN):
         raise Exception("Unable to find Peloton binary '%s'" % PELOTON_BIN)
     if not os.path.exists(PELOTON_JDBC_SCRIPT_DIR):
         raise Exception("Unable to find JDBC script dir '%s'" % PELOTON_JDBC_SCRIPT_DIR)
-    
+
     ## Basic
     runTest("test_jdbc.sh")
-    
+
     ## Stats
-    runTest("test_jdbc.sh", enableStats=True)
+    # runTest("test_jdbc.sh", enableStats=True)
 
 ## MAIN

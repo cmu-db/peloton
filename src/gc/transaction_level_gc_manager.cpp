@@ -57,19 +57,32 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 
 void TransactionLevelGCManager::Running(const int &thread_id) {
 
-  while (true) {
+  uint32_t backoff_shifts = 0;
 
+  while (true) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
 
     PL_ASSERT(max_cid != MAX_CID);
 
-    Reclaim(thread_id, max_cid);
+    int reclaimed_count = Reclaim(thread_id, max_cid);
 
-    Unlink(thread_id, max_cid);
+    int unlinked_count = Unlink(thread_id, max_cid);
 
     if (is_running_ == false) {
       return;
+    }
+
+    if (reclaimed_count == 0 && unlinked_count == 0) {
+      // sleep at most 3.2768 s
+      if (backoff_shifts < 15) {
+        ++backoff_shifts;
+      }
+      uint64_t sleep_duration = 1UL << backoff_shifts;
+      sleep_duration *= 100;
+      std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+    } else {
+      backoff_shifts >>= 1;
     }
   }
 }
@@ -81,7 +94,7 @@ void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<ReadWriteSet>
     unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
-void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid) {
+int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid) {
   
   int tuple_counter = 0;
 
@@ -132,10 +145,11 @@ void TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_ci
       reclaim_maps_[thread_id].insert(std::make_pair(safe_max_cid, item));
   }
   LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
+  return tuple_counter;
 }
 
 // executed by a single thread. so no synchronization is required.
-void TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_cid) {
+int TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_cid) {
   int gc_counter = 0;
 
   // we delete garbage in the free list
@@ -158,6 +172,7 @@ void TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_c
     }
   }
   LOG_TRACE("Marked %d txn contexts as recycled", gc_counter);
+  return gc_counter;
 }
 
 // Multiple GC thread share the same recycle map
