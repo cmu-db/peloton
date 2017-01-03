@@ -18,6 +18,7 @@
 #include "index/index.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace storage {
@@ -40,6 +41,11 @@ void Database::AddTable(storage::DataTable *table) {
   {
     std::lock_guard<std::mutex> lock(database_mutex);
     tables.push_back(table);
+
+    // Register table to GC manager.
+    auto *gc_manager = &gc::GCManagerFactory::GetInstance();
+    assert(gc_manager != nullptr);
+    gc_manager->RegisterTable(table->GetOid());
   }
 }
 
@@ -58,8 +64,15 @@ storage::DataTable *Database::GetTableWithName(const std::string table_name) con
 }
 
 void Database::DropTableWithOid(const oid_t table_oid) {
+
   {
     std::lock_guard<std::mutex> lock(database_mutex);
+
+    // Deregister table from GC manager.
+    auto *gc_manager = &gc::GCManagerFactory::GetInstance();
+    assert(gc_manager != nullptr);
+    gc_manager->DeregisterTable(table_oid);
+
     oid_t table_offset = 0;
     for (auto table : tables) {
       if (table->GetOid() == table_oid) {

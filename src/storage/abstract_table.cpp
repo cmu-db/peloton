@@ -16,7 +16,6 @@
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/logger.h"
-#include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
@@ -27,12 +26,7 @@ namespace storage {
 
 AbstractTable::AbstractTable(id_t table_oid, catalog::Schema *schema,
                              bool own_schema)
-    : table_oid(table_oid), schema(schema), own_schema_(own_schema) {
-  // Register table to GC manager.
-  auto *gc_manager = &gc::GCManagerFactory::GetInstance();
-  assert(gc_manager != nullptr);
-  gc_manager->RegisterTable(table_oid);
-}
+    : table_oid(table_oid), schema(schema), own_schema_(own_schema) {}
 
 AbstractTable::~AbstractTable() {
   // clean up schema

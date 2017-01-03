@@ -688,15 +688,15 @@ public class PelotonTest {
       stmt.setString(1,"Cool");
       stmt.setInt(2,i);
       stmt.addBatch();
+    }
+    System.out.println("All Good Here");
+    int[] res = stmt.executeBatch();
+    for(int i=0; i < res.length; i++) {
+      if (res[i] < 0) {
+        throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
       }
-      System.out.println("All Good Here");
-      int[] res = stmt.executeBatch();
-      for(int i=0; i < res.length; i++) {
-        if (res[i] < 0) {
-          throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
-        }
-        System.out.println(res[i]);
-      }
+      System.out.println(res[i]);
+    }
     conn.commit();
   }
 
