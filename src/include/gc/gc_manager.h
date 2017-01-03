@@ -55,6 +55,8 @@ public:
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) { }
 
+  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) { }
+
   virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set UNUSED_ATTRIBUTE, 
                                    const cid_t &timestamp UNUSED_ATTRIBUTE,
                                    const GCSetType gc_set_type UNUSED_ATTRIBUTE) {}

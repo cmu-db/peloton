@@ -96,6 +96,13 @@ public:
     }
   }
 
+  virtual void DeregisterTable(const oid_t &table_id) override {
+    // Remove dropped tables
+    if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+      recycle_queue_map_.erase(table_id);
+    }
+  }
+
 private:
   void StartGC(int thread_id);
 
@@ -109,9 +116,9 @@ private:
 
   void Running(const int &thread_id);
 
-  void Unlink(const int &thread_id, const cid_t &max_cid);
+  int Unlink(const int &thread_id, const cid_t &max_cid);
 
-  void Reclaim(const int &thread_id, const cid_t &max_cid);
+  int Reclaim(const int &thread_id, const cid_t &max_cid);
 
   void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
 

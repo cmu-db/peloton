@@ -688,15 +688,15 @@ public class PelotonTest {
       stmt.setString(1,"Cool");
       stmt.setInt(2,i);
       stmt.addBatch();
+    }
+    System.out.println("All Good Here");
+    int[] res = stmt.executeBatch();
+    for(int i=0; i < res.length; i++) {
+      if (res[i] < 0) {
+        throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
       }
-      System.out.println("All Good Here");
-      int[] res = stmt.executeBatch();
-      for(int i=0; i < res.length; i++) {
-        if (res[i] < 0) {
-          throw new SQLException("Query "+ (i+1) +" returned " + res[i]);
-        }
-        System.out.println(res[i]);
-      }
+      System.out.println(res[i]);
+    }
     conn.commit();
   }
 
@@ -732,7 +732,7 @@ public class PelotonTest {
   public void BlobTest() throws SQLException {
     System.out.println("Blob Test");
     Random rand = new Random(12345L);
-    for (int i = 1; i < 20; i++) {
+    for (int i = 1; i < 10; i++) {
       Statement initstmt = conn.createStatement();
       initstmt.execute("DROP TABLE IF EXISTS A;");
       initstmt.execute("CREATE TABLE A (id INT PRIMARY KEY, data VARBINARY)");
