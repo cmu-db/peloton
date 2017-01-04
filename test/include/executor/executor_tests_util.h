@@ -23,7 +23,7 @@ namespace peloton {
 // Utils
 //===--------------------------------------------------------------------===//
 
-namespace common {
+namespace type {
 class VarlenPool;
 }
 
@@ -112,7 +112,7 @@ class ExecutorTestsUtil {
                                                       type::VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
-  static void PrintTileVector(
+  static std::string GetTileVectorInfo(
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
 };
 

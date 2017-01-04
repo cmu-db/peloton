@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "executor/abstract_scan_executor.h"
+#include "index/scan_optimizer.h"
 
 namespace peloton {
 
@@ -38,8 +39,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   ~IndexScanExecutor();
 
-  void UpdatePredicate(const std::vector<oid_t> &key_column_ids
-                           UNUSED_ATTRIBUTE,
+  void UpdatePredicate(const std::vector<oid_t> &column_ids UNUSED_ATTRIBUTE,
                        const std::vector<type::Value> &values UNUSED_ATTRIBUTE);
 
   void ResetState();
@@ -87,6 +87,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   /** @brief index associated with index scan. */
   std::shared_ptr<index::Index> index_;
 
+  // the underlying table that the index is for
   const storage::AbstractTable *table_ = nullptr;
 
   // columns to be returned as results
@@ -113,6 +114,9 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   // whether the index scan range is right open
   bool right_open_ = false;
+
+  // copy from underlying plan
+  index::IndexScanPredicate index_predicate_;
 };
 
 }  // namespace executor

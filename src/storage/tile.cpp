@@ -158,44 +158,6 @@ void Tile::SetValue(const type::Value &value, const oid_t tuple_offset,
   value.SerializeTo(field_location, is_inlined, pool);
 }
 
-// Copy a column from this tile to a destination tile.
-// Note that we do shallow copy for varlen field
-void Tile::CopyColumnValueTo(Tile *dest_tile, oid_t dest_tuple_offset, oid_t dest_col_id, oid_t src_tuple_offset,
-                             oid_t src_col_id) {
-  PL_ASSERT(src_tuple_offset < this->num_tuple_slots);
-  PL_ASSERT(dest_tuple_offset < this->num_tuple_slots);
-
-  type::Type::TypeId src_type_id = this->schema.GetType(src_col_id);
-
-  PL_ASSERT(src_type_id == this->schema.GetType(dest_col_id));
-  switch (src_type_id) {
-    case type::Type::VARCHAR:
-    case type::Type::VARBINARY: {
-      // Shallow copy
-      char *src_tuple_location = this->GetTupleLocation(src_tuple_offset);
-      char *src_filed_location = src_tuple_location + this->schema.GetOffset(src_col_id);
-      char *dest_tuple_location = dest_tile->GetTupleLocation(dest_tuple_offset);
-      char *dest_field_location = dest_tuple_location + dest_tile->schema.GetOffset(dest_col_id);
-      bool is_inlined = this->schema.IsInlined();
-      PL_ASSERT(dest_tile->schema.IsInlined() == is_inlined);
-      type::Value::ShallowCopyTo(dest_field_location, src_filed_location, src_type_id, is_inlined, this->pool);
-      break;
-    }
-    case type::Type::BOOLEAN:
-    case type::Type::TINYINT:
-    case type::Type::SMALLINT:
-    case type::Type::INTEGER:
-    case type::Type::BIGINT:
-    case type::Type::DECIMAL:
-    case type::Type::TIMESTAMP: {
-      type::Value val = this->GetValue(src_tuple_offset, src_col_id);
-      dest_tile->SetValue(val, dest_tuple_offset, dest_col_id);
-      break;
-    }
-    default:
-      break;
-  }
-}
 
 /*
  * Faster way to set value

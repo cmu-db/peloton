@@ -34,7 +34,7 @@ class AbstractScanExecutor : public AbstractExecutor {
   explicit AbstractScanExecutor(const planner::AbstractPlan *node,
                                 ExecutorContext *executor_context);
 
-  virtual void UpdatePredicate(const std::vector<oid_t> &key_column_ids
+  virtual void UpdatePredicate(const std::vector<oid_t> &column_ids
                                    UNUSED_ATTRIBUTE,
                                const std::vector<type::Value> &values
                                    UNUSED_ATTRIBUTE) {}

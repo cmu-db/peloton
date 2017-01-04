@@ -436,7 +436,7 @@ void SmallintType::SerializeTo(const Value& val, SerializeOutput &out) const {
 }
 
 void SmallintType::SerializeTo(const Value& val, char *storage, bool inlined UNUSED_ATTRIBUTE,
-    VarlenPool *pool UNUSED_ATTRIBUTE) const {
+    AbstractPool *pool UNUSED_ATTRIBUTE) const {
 
   *reinterpret_cast<int16_t *>(storage) = val.value_.smallint;
   return;
@@ -445,12 +445,12 @@ void SmallintType::SerializeTo(const Value& val, char *storage, bool inlined UNU
 
 // Deserialize a value of the given type from the given storage space.
 Value SmallintType::DeserializeFrom(const char *storage ,
-                              const bool inlined UNUSED_ATTRIBUTE, VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              const bool inlined UNUSED_ATTRIBUTE, AbstractPool *pool UNUSED_ATTRIBUTE) const{
   int16_t val = *reinterpret_cast<const int16_t *>(storage);
   return Value(type_id_, val);
 }
 Value SmallintType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                              VarlenPool *pool UNUSED_ATTRIBUTE) const{
+                              AbstractPool *pool UNUSED_ATTRIBUTE) const{
   return Value(type_id_, in.ReadShort());
 }
 

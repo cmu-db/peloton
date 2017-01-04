@@ -64,10 +64,11 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(0),
-       ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(
+      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(0),
+                           ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 // PLAN_NODE_TYPE_NESTLOOP is picked out as a separated test
@@ -93,13 +94,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>>
-        &table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(size_t table_tile_group_count,
-                             MockExecutor *table_scan_executor,
-                             std::vector<std::unique_ptr<executor::LogicalTile>>
-                                 &table_logical_tile_ptrs);
+void ExpectNormalTileResults(
+    size_t table_tile_group_count, MockExecutor *table_scan_executor,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -240,9 +241,9 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    tuple.SetValue(1,
-                   type::ValueFactory::GetIntegerValue(50 * rowid * 2).Copy(),
-                   testing_pool);
+    tuple.SetValue(
+        1, type::ValueFactory::GetIntegerValue(50 * rowid * 2 + 1).Copy(),
+        testing_pool);
 
     tuple.SetValue(2, type::ValueFactory::GetDoubleValue(1.5).Copy(),
                    testing_pool);
@@ -268,8 +269,6 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   // Create Table
   //===--------------------------------------------------------------------===//
 
-  // MockExecutor left_table_scan_executor, right_table_scan_executor;
-
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   size_t left_table_tile_group_count = 3;
@@ -293,8 +292,8 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
 
   txn_manager.CommitTransaction(txn);
 
-  LOG_TRACE("%s\n", left_table->GetInfo().c_str());
-  LOG_TRACE("%s\n", right_table->GetInfo().c_str());
+  LOG_INFO("%s\n", left_table->GetInfo().c_str());
+  LOG_INFO("%s\n", right_table->GetInfo().c_str());
 
   //===--------------------------------------------------------------------===//
   // Begin nested loop
@@ -344,7 +343,8 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
 
   key_column_ids_right.push_back(0);
   expr_types_right.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values_right.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
+  // values_right.push_back(type::ValueFactory::GetIntegerValue(100).Copy());
+  values_right.push_back(type::ValueFactory::GetParameterOffsetValue(0).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc_right(
@@ -385,10 +385,14 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
                                            left_table_attr_1,
                                            right_table_attr_1));
 
-  // Differ based on join algorithm
+  // LEFT.A = RIGHT.A
+  std::vector<oid_t> join_column_ids_left = {0};   // A in the result
+  std::vector<oid_t> join_column_ids_right = {0};  // A in the table
+
   // Create nested loop join plan node.
   planner::NestedLoopJoinPlan nested_loop_join_node(
-      join_type, std::move(predicate), std::move(projection), schema);
+      join_type, std::move(predicate), std::move(projection), schema,
+      join_column_ids_left, join_column_ids_right);
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -411,6 +415,8 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
       LOG_INFO("result tile info: %s", result_logical_tile->GetInfo().c_str());
       LOG_INFO("result_tuple_count: %u", result_tuple_count);
       LOG_INFO("tuples_with_null: %u", tuples_with_null);
+    } else {
+      LOG_INFO("Nothing find out");
     }
   }
 
@@ -942,18 +948,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>>
-        &table_logical_tile_ptrs) {
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(size_t table_tile_group_count,
-                             MockExecutor *table_scan_executor,
-                             std::vector<std::unique_ptr<executor::LogicalTile>>
-                                 &table_logical_tile_ptrs) {
+void ExpectNormalTileResults(
+    size_t table_tile_group_count, MockExecutor *table_scan_executor,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {
@@ -984,7 +990,7 @@ void ExpectNormalTileResults(size_t table_tile_group_count,
       EXPECT_CALL(*table_scan_executor, GetOutput())
           .InSequence(get_output_sequence)
           .WillOnce(
-              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
+               Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
     }
   }
 }

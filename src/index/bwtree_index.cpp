@@ -116,12 +116,12 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-void BWTREE_INDEX_TYPE::Scan(const std::vector<type::Value> &value_list,
-                             const std::vector<oid_t> &tuple_column_id_list,
-                             const std::vector<ExpressionType> &expr_list,
-                             const ScanDirectionType &scan_direction,
-                             std::vector<ValueType> &result,
-                             const ConjunctionScanPredicate *csp_p) {
+void BWTREE_INDEX_TYPE::Scan(
+    UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
+    UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
+    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
+    const ScanDirectionType &scan_direction, std::vector<ValueType> &result,
+    const ConjunctionScanPredicate *csp_p) {
   // First make sure all three components of the scan predicate are
   // of the same length
   // Since there is a 1-to-1 correspondense between these three vectors
@@ -137,6 +137,7 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<type::Value> &value_list,
             csp_p->IsFullIndexScan());
 
   if (csp_p->IsPointQuery() == true) {
+    LOG_TRACE("This is point query");
     // For point query we construct the key and use equal_range
 
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
@@ -155,18 +156,7 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<type::Value> &value_list,
     // we take the snapshot of the last leaf node
     for (auto scan_itr = container.Begin(); (scan_itr.IsEnd() == false);
          scan_itr++) {
-      // Unpack the key as a standard tuple for comparison
-      auto scan_current_key = scan_itr->first;
-      auto tuple =
-          scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
-
-      // Compare whether the current key satisfies the predicate
-      // since we just narrowed down search range using low key and
-      // high key for scan, it is still possible that there are tuples
-      // for which the predicate is not true
-      if (Compare(tuple, tuple_column_id_list, expr_list, value_list) == true) {
-        result.push_back(scan_itr->second);
-      }
+      result.push_back(scan_itr->second);
     }  // for it from begin() to end()
   } else {
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
@@ -188,15 +178,9 @@ void BWTREE_INDEX_TYPE::Scan(const std::vector<type::Value> &value_list,
     // or we have seen a key higher than the high key
     for (auto scan_itr = container.Begin(index_low_key);
          (scan_itr.IsEnd() == false) &&
-         (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
+             (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
          scan_itr++) {
-      auto scan_current_key = scan_itr->first;
-      auto tuple =
-          scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
-
-      if (Compare(tuple, tuple_column_id_list, expr_list, value_list) == true) {
-        result.push_back(scan_itr->second);
-      }
+      result.push_back(scan_itr->second);
     }
   }  // if is full scan
 
@@ -244,58 +228,46 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
 BWTREE_TEMPLATE_ARGUMENTS
 std::string BWTREE_INDEX_TYPE::GetTypeName() const { return "BWTree"; }
 
-// NOTE: If ints key is used as an optimization just uncommend
-// the following in order to instanciation the template before it is
-// linked in linking stage
-
 // IMPORTANT: Make sure you don't exceed CompactIntegerKey_MAX_SLOTS
 
-template class BWTreeIndex<CompactIntsKey<1>, 
-                           ItemPointer *, 
+template class BWTreeIndex<CompactIntsKey<1>, ItemPointer *,
                            CompactIntsComparator<1>,
-                           CompactIntsEqualityChecker<1>, 
-                           CompactIntsHasher<1>,
-                           ItemPointerComparator, 
-                           ItemPointerHashFunc>;
-template class BWTreeIndex<CompactIntsKey<2>, 
-                           ItemPointer *, 
+                           CompactIntsEqualityChecker<1>, CompactIntsHasher<1>,
+                           ItemPointerComparator, ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntsKey<2>, ItemPointer *,
                            CompactIntsComparator<2>,
-                           CompactIntsEqualityChecker<2>, 
-                           CompactIntsHasher<2>,
-                           ItemPointerComparator, 
-                           ItemPointerHashFunc>;
-template class BWTreeIndex<CompactIntsKey<3>, 
-                           ItemPointer *, 
+                           CompactIntsEqualityChecker<2>, CompactIntsHasher<2>,
+                           ItemPointerComparator, ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntsKey<3>, ItemPointer *,
                            CompactIntsComparator<3>,
-                           CompactIntsEqualityChecker<3>, 
-                           CompactIntsHasher<3>,
-                           ItemPointerComparator, 
-                           ItemPointerHashFunc>;
-template class BWTreeIndex<CompactIntsKey<4>, 
-                           ItemPointer *, 
+                           CompactIntsEqualityChecker<3>, CompactIntsHasher<3>,
+                           ItemPointerComparator, ItemPointerHashFunc>;
+template class BWTreeIndex<CompactIntsKey<4>, ItemPointer *,
                            CompactIntsComparator<4>,
-                           CompactIntsEqualityChecker<4>, 
-                           CompactIntsHasher<4>,
-                           ItemPointerComparator, 
-                           ItemPointerHashFunc>;
+                           CompactIntsEqualityChecker<4>, CompactIntsHasher<4>,
+                           ItemPointerComparator, ItemPointerHashFunc>;
 
 // Generic key
-template class BWTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
-                           GenericEqualityChecker<4>, GenericHasher<4>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
-                           GenericEqualityChecker<8>, GenericHasher<8>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
+template class BWTreeIndex<GenericKey<4>, ItemPointer *,
+                           FastGenericComparator<4>, GenericEqualityChecker<4>,
+                           GenericHasher<4>, ItemPointerComparator,
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<GenericKey<8>, ItemPointer *,
+                           FastGenericComparator<8>, GenericEqualityChecker<8>,
+                           GenericHasher<8>, ItemPointerComparator,
+                           ItemPointerHashFunc>;
+template class BWTreeIndex<GenericKey<16>, ItemPointer *,
+                           FastGenericComparator<16>,
                            GenericEqualityChecker<16>, GenericHasher<16>,
                            ItemPointerComparator, ItemPointerHashFunc>;
-template class BWTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
+template class BWTreeIndex<GenericKey<64>, ItemPointer *,
+                           FastGenericComparator<64>,
                            GenericEqualityChecker<64>, GenericHasher<64>,
                            ItemPointerComparator, ItemPointerHashFunc>;
 template class BWTreeIndex<GenericKey<256>, ItemPointer *,
-                           GenericComparator<256>, GenericEqualityChecker<256>,
-                           GenericHasher<256>, ItemPointerComparator,
-                           ItemPointerHashFunc>;
+                           FastGenericComparator<256>,
+                           GenericEqualityChecker<256>, GenericHasher<256>,
+                           ItemPointerComparator, ItemPointerHashFunc>;
 
 // Tuple key
 template class BWTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,

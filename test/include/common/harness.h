@@ -37,7 +37,7 @@
 
 namespace peloton {
 
-namespace common{
+namespace type{
 class VarlenPool;
 }
 

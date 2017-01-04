@@ -30,7 +30,6 @@ class NumericValueTests : public PelotonTest {};
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 #define SEED 233
 #define TEST_NUM 1
-using namespace peloton::common;
 
 int8_t RANDOM8() {
   return ((rand() % (SCHAR_MAX * 2 - 1)) - (SCHAR_MAX - 1));

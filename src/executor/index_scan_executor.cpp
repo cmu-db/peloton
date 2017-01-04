@@ -29,6 +29,7 @@
 #include "index/index.h"
 #include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
+#include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
 #include "type/types.h"
@@ -65,6 +66,8 @@ bool IndexScanExecutor::DInit() {
 
   index_ = node.GetIndex();
   PL_ASSERT(index_ != nullptr);
+
+  index_predicate_ = node.GetIndexPredicate();
 
   result_itr_ = START_OID;
   result_.clear();
@@ -148,7 +151,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -158,7 +160,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
+
+    LOG_TRACE("tuple_location_ptrs:%lu", tuple_location_ptrs.size());
   }
 
   if (tuple_location_ptrs.size() == 0) {
@@ -212,6 +216,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
+          LOG_TRACE("perform prediate evaluate");
           expression::ContainerTuple<storage::TileGroup> tuple(
               tile_group.get(), tuple_location.offset);
           eval =
@@ -219,9 +224,11 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
+          LOG_TRACE("perform read operation");
           auto res = transaction_manager.PerformRead(
               current_txn, tuple_location, acquire_owner);
           if (!res) {
+            LOG_TRACE("read nothing");
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
             return res;
@@ -299,8 +306,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -329,21 +336,19 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
+  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node
-  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
-
-  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &node.GetIndexPredicate().GetConjunctionList()[0]);
+                 &index_predicate_.GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
@@ -410,18 +415,11 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                   tuple_location.offset);
 
         // Further check if the version has the secondary key
-        storage::Tuple key_tuple(index_->GetKeySchema(), true);
         expression::ContainerTuple<storage::TileGroup> candidate_tuple(
             tile_group.get(), tuple_location.offset);
         // Construct the key tuple
         auto &indexed_columns = index_->GetKeySchema()->GetIndexedColumns();
-
-        oid_t this_col_itr = 0;
-        for (auto col : indexed_columns) {
-          type::Value val = (candidate_tuple.GetValue(col));
-          key_tuple.SetValue(this_col_itr, val, nullptr);
-          this_col_itr++;
-        }
+        storage::MaskedTuple key_tuple(&candidate_tuple, indexed_columns);
 
         // Compare the key tuple and the key
         if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
@@ -434,10 +432,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          expression::ContainerTuple<storage::TileGroup> tuple(
-              tile_group.get(), tuple_location.offset);
-          eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
+                                      executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -518,8 +514,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -692,25 +688,74 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
   return true;
 }
 
+// column_ids is the right predicate column id. For example,
+// i_id = s_id, then s_id is column_ids
+// But the passing value is the result (output) id. We need to transform it to
+// physical id
 void IndexScanExecutor::UpdatePredicate(
-    const std::vector<oid_t> &key_column_ids UNUSED_ATTRIBUTE,
-    const std::vector<type::Value> &values UNUSED_ATTRIBUTE) {
-  // TODO: ADD ziqi's API
+    const std::vector<oid_t> &column_ids,
+    const std::vector<type::Value> &values) {
+
   // Update index predicate
+  LOG_TRACE("values_ size %lu", values_.size());
+
+  std::vector<oid_t> key_column_ids;
+
+  PL_ASSERT(column_ids.size() <= column_ids_.size());
+  // Get the real physical ids
+  for (auto column_id : column_ids) {
+    key_column_ids.push_back(column_ids_[column_id]);
+
+    LOG_TRACE("Output id is %d---physical column id is %d", column_id,
+              column_ids_[column_id]);
+  }
 
   // Update values in index plan node
   PL_ASSERT(key_column_ids.size() == values.size());
   PL_ASSERT(key_column_ids_.size() == values_.size());
-  PL_ASSERT(key_column_ids.size() < key_column_ids_.size());
 
   // Find out the position (offset) where is key_column_id
-  for (oid_t i = 0; i < key_column_ids.size(); i++) {
-    for (unsigned int j = 0; j < values_.size(); ++j) {
-      if (key_column_ids[i] == key_column_ids_[j]) {
-        values_[j] = values[i];
+  for (oid_t new_idx = 0; new_idx < key_column_ids.size(); new_idx++) {
+    unsigned int current_idx = 0;
+    for (; current_idx < values_.size(); current_idx++) {
+      if (key_column_ids[new_idx] == key_column_ids_[current_idx]) {
+        LOG_TRACE("Orignial is %d:%s", key_column_ids[new_idx],
+                  values_[current_idx].GetInfo().c_str());
+        LOG_TRACE("Changed to %d:%s", key_column_ids[new_idx],
+                  values[new_idx].GetInfo().c_str());
+        values_[current_idx] = values[new_idx];
+
+        // There should not be two same columns. So when we find a column, we
+        // should break the loop
+        break;
       }
     }
+
+    // If new value doesn't exist in current value list, add it.
+    // For the current simple optimizer, since all the key column ids must be
+    // initiated when creating index_scan_plan, we don't need to examine whether
+    // the passing column and value exist or not (they definitely exist). But
+    // for the future optimizer, we probably change the logic. So we still keep
+    // the examine code here.
+    if (current_idx == values_.size()) {
+      LOG_TRACE("Add new column for index predicate:%u-%s",
+                key_column_ids[new_idx], values[new_idx].GetInfo().c_str());
+
+      // Add value
+      values_.push_back(values[new_idx]);
+
+      // Add column id
+      key_column_ids_.push_back(key_column_ids[new_idx]);
+
+      // Add column type.
+      // TODO: We should add other types in the future
+      expr_types_.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    }
   }
+
+  // Update the new value
+  index_predicate_.GetConjunctionListToSetup()[0]
+      .SetTupleColumnValue(index_.get(), key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {

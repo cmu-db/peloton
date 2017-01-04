@@ -4,13 +4,13 @@
 #include <stdexcept>
 
 #include "common/macros.h"
-
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
 #include "type/numeric_type.h"
 #include "type/serializer.h"
 #include "type/timestamp_type.h"
 #include "type/varlen_type.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace type {
@@ -55,7 +55,8 @@ class ValueFactory {
   }
 
   static inline Value GetBooleanValue(CmpBool value) {
-    return Value(Type::BOOLEAN, value == CMP_NULL ? PELOTON_BOOLEAN_NULL : (int8_t) value);
+    return Value(Type::BOOLEAN,
+                 value == CMP_NULL ? PELOTON_BOOLEAN_NULL : (int8_t)value);
   }
 
   static inline Value GetBooleanValue(bool value) {
@@ -67,9 +68,10 @@ class ValueFactory {
   }
 
   static inline Value GetVarcharValue(
-      const char *value, bool manage_data, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
-    return Value(Type::VARCHAR, value,
-                 value == nullptr ? 0 : strlen(value) + 1 , manage_data);
+      const char *value, bool manage_data,
+      UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+    return Value(Type::VARCHAR, value, value == nullptr ? 0 : strlen(value) + 1,
+                 manage_data);
   }
 
   static inline Value GetVarcharValue(
@@ -118,8 +120,12 @@ class ValueFactory {
       case Type::VARBINARY:
         ret_value = GetVarbinaryValue(nullptr, 0, false, nullptr);
         break;
-      default:
-        throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+      default: {
+        std::string msg =
+            StringUtil::Format("Unknown Type '%d' for GetNullValueByType",
+                               static_cast<int>(type_id));
+        throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
+      }
     }
     ret_value.size_.len = PELOTON_VALUE_NULL;
     return ret_value;
@@ -150,7 +156,9 @@ class ValueFactory {
       default:
         break;
     }
-    throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+    std::string msg = StringUtil::Format(
+        "Unknown Type '%d' for GetZeroValueByType", static_cast<int>(type_id));
+    throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
   }
 
   static inline Value CastAsBigInt(const Value &value) {

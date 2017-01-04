@@ -22,8 +22,6 @@
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/exception.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
@@ -35,6 +33,8 @@
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
 #include "storage/tuple.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 
 #include "executor/mock_executor.h"
 
@@ -78,10 +78,9 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
   switch (index) {
     case 0: {
-      auto column =
-          catalog::Column(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER),
-                          "COL_A", is_inlined);
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -89,10 +88,9 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 1: {
-      auto column =
-          catalog::Column(type::Type::INTEGER,
-                          type::Type::GetTypeSize(type::Type::INTEGER),
-                          "COL_B", is_inlined);
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -100,10 +98,9 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 2: {
-      auto column =
-          catalog::Column(type::Type::DECIMAL,
-                          type::Type::GetTypeSize(type::Type::DECIMAL),
-                          "COL_C", is_inlined);
+      auto column = catalog::Column(
+          type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+          "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -111,9 +108,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column =
-          catalog::Column(type::Type::VARCHAR, 25,  // Column length.
-                          "COL_D", !is_inlined);      // inlined.
+      auto column = catalog::Column(type::Type::VARCHAR, 25,  // Column length.
+                                    "COL_D", !is_inlined);    // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -428,10 +424,8 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
     storage::DataTable *table, oid_t tuple_id, type::VarlenPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
-  auto val1 =
-      type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
-  auto val2 =
-      type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
+  auto val1 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
+  auto val2 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
   auto val3 = type::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
   auto val4 = type::ValueFactory::GetVarcharValue("12345");
   tuple->SetValue(0, val1, pool);
@@ -458,19 +452,25 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
   return tuple;
 }
 
-void ExecutorTestsUtil::PrintTileVector(
+std::string ExecutorTestsUtil::GetTileVectorInfo(
     std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
   std::ostringstream os;
+  bool first = true;
   for (auto &tile : tile_vec) {
-    for (UNUSED_ATTRIBUTE oid_t tuple_id : *tile) {
+    if (first == false) {
+      os << std::endl;
+    }
+    for (oid_t tuple_id : *tile) {
       os << "<";
       for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        os << tile->GetValue(tuple_id, col_id).GetInfo() << " ";
+        if (col_id != 0) os << " ";
+        os << tile->GetValue(tuple_id, col_id).GetInfo();
       }
-      os << ">" << std::endl;
+      os << ">";
     }
+    first = false;
   }
-  LOG_DEBUG("%s", os.str().c_str());
+  return (os.str());
 }
 
 }  // namespace test

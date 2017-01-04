@@ -73,7 +73,7 @@ bool InsertExecutor::DExecute() {
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
             target_table->GetTupleCount());
-  auto executor_pool = executor_context_->GetExecutorContextPool();
+  auto executor_pool = executor_context_->GetPool();
 
   // Inserting a logical tile.
   if (children_.size() == 1) {

@@ -57,7 +57,7 @@ class ArrayType : public Type {
 
   void SerializeTo(const Value& val UNUSED_ATTRIBUTE, char *storage UNUSED_ATTRIBUTE,
                    bool inlined UNUSED_ATTRIBUTE,
-                   VarlenPool *pool UNUSED_ATTRIBUTE) const override {
+                   AbstractPool *pool UNUSED_ATTRIBUTE) const override {
     throw Exception("Can't serialize array types to storage");
   }
 

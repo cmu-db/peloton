@@ -80,7 +80,7 @@ class Tuple : public AbstractTuple {
   // Assignment operator
   Tuple &operator=(const Tuple &rhs);
 
-  void Copy(const void *source, type::VarlenPool *pool = NULL);
+  void Copy(const void *source, type::AbstractPool *pool = NULL);
 
   /**
    * Set the tuple to point toward a given address in a table's
@@ -113,17 +113,17 @@ class Tuple : public AbstractTuple {
   /**
    * Allocate space to copy strings that can't be inlined rather
    * than copying the pointer.
-   *
-   * Used when setting a NValue that will go into permanent storage in a
-   *persistent table.
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
   void SetValue(const oid_t column_id, const type::Value &value,
-                type::VarlenPool *dataPool);
+                type::AbstractPool *dataPool);
 
   // set value without data pool.
-  void SetValue(oid_t column_id, const type::Value &value);
+  // This just calls the other SetValue with a nullptr pool
+  void SetValue(oid_t column_id, const type::Value &value) {
+    SetValue(column_id, value, nullptr);
+  }
 
   inline int GetLength() const { return tuple_schema_->GetLength(); }
 
@@ -146,14 +146,18 @@ class Tuple : public AbstractTuple {
   // Get the address of this tuple in the table's backing store
   inline char *GetData() const { return tuple_data_; }
 
+  char *GetDataPtr(const oid_t column_id);
+
+  const char *GetDataPtr(const oid_t column_id) const;
+
   // Return the number of columns in this tuple
   inline oid_t GetColumnCount() const {
     return tuple_schema_->GetColumnCount();
   }
 
-  bool EqualsNoSchemaCheck(const Tuple &other) const;
+  bool EqualsNoSchemaCheck(const AbstractTuple &other) const;
 
-  bool EqualsNoSchemaCheck(const Tuple &other,
+  bool EqualsNoSchemaCheck(const AbstractTuple &other,
                            const std::vector<oid_t> &columns) const;
 
   // this does set NULL in addition to clear string count.
@@ -176,7 +180,8 @@ class Tuple : public AbstractTuple {
 
   // This sets the relevant columns from the source tuple
   void SetFromTuple(const AbstractTuple *tuple,
-                    const std::vector<oid_t> &columns, type::VarlenPool *pool);
+                    const std::vector<oid_t> &columns,
+                    type::AbstractPool *pool);
 
   // Used to wrap read only tuples in indexing code.
   void MoveToTuple(const void *address);
@@ -190,23 +195,16 @@ class Tuple : public AbstractTuple {
                          uint8_t *null_array);
   void SerializeWithHeaderTo(SerializeOutput &output);
 
-  void DeserializeFrom(SerializeInput &input, type::VarlenPool *pool);
+  void DeserializeFrom(SerializeInput &input, type::AbstractPool *pool);
   void DeserializeWithHeaderFrom(SerializeInput &input);
 
   size_t HashCode(size_t seed) const;
   size_t HashCode() const;
 
-  // Get a string representation of this tuple
-  friend std::ostream &operator<<(std::ostream &os, const Tuple &tuple);
-
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
  private:
-  char *GetDataPtr(const oid_t column_id);
-
-  const char *GetDataPtr(const oid_t column_id) const;
-
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//

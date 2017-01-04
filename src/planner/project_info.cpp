@@ -12,7 +12,6 @@
 
 #include "planner/project_info.h"
 
-#include "common/container_tuple.h"
 #include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
@@ -51,8 +50,8 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
                            executor::ExecutorContext *econtext) const {
   // Get varlen pool
-  type::VarlenPool *pool = nullptr;
-  if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
+  type::AbstractPool *pool = nullptr;
+  if (econtext != nullptr) pool = econtext->GetPool();
 
   // (A) Execute target list
   for (auto target : target_list_) {
@@ -82,38 +81,36 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
   return true;
 }
 
-bool ProjectInfo::Evaluate(expression::ContainerTuple<storage::TileGroup> *dest,
-                           expression::ContainerTuple<storage::TileGroup> *src,
-                           executor::ExecutorContext *econtext, bool inplace) const {
+bool ProjectInfo::Evaluate(AbstractTuple *dest, const AbstractTuple *tuple1,
+                           const AbstractTuple *tuple2,
+                           executor::ExecutorContext *econtext) const {
   // (A) Execute target list
   for (auto target : target_list_) {
     auto col_id = target.first;
     auto expr = target.second;
-    auto value = expr->Evaluate(src, nullptr, econtext);
+    auto value = expr->Evaluate(tuple1, tuple2, econtext);
     dest->SetValue(col_id, value);
   }
 
   // (B) Execute direct map
-  if (inplace == false) {
-    // For update that creates a new version, we copy all unmodified columns
-    // to the new version. Note that for varlen column, we perform shallow copy.
-    for (auto dm : direct_map_list_) {
-      // whether left tuple or right tuple ?
-      auto tuple_index = dm.second.first;
-      auto src_col_id = dm.second.second;
+  for (auto dm : direct_map_list_) {
+    auto dest_col_id = dm.first;
+    // whether left tuple or right tuple ?
+    auto tuple_index = dm.second.first;
+    auto src_col_id = dm.second.second;
 
-      PL_ASSERT(dm.first == dm.second.second);
-      PL_ASSERT(tuple_index == 0);
-      if (tuple_index == 0) {
-        src->CopyColumnTo(dest, src_col_id);
-      }
+    if (tuple_index == 0) {
+      type::Value val1 = (tuple1->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, val1);
+    } else {
+      type::Value val2 = (tuple2->GetValue(src_col_id));
+      dest->SetValue(dest_col_id, val2);
     }
   }
-  // For inplace update, we don't need to do anything for unmodified columns
-  // because they are already there
 
   return true;
 }
+
 
 std::string ProjectInfo::Debug() const {
   std::ostringstream buffer;
@@ -126,7 +123,7 @@ std::string ProjectInfo::Debug() const {
   buffer << "DirectMap List: < NEW_col_id , <tuple_idx , OLD_col_id>  > \n";
   for (auto &dmap : direct_map_list_) {
     buffer << "<" << dmap.first << ", <" << dmap.second.first << ", "
-           << dmap.second.second << "> >\n";
+        << dmap.second.second << "> >\n";
   }
 
   return (buffer.str());
