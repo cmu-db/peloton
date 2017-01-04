@@ -1277,6 +1277,7 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
   }
 
   if (index_scan_plan != nullptr) {
+    LOG_TRACE("Set index scan plan");
     index_scan_plan->SetLimit(true);
     index_scan_plan->SetLimitNumber(limit);
     index_scan_plan->SetLimitOffset(offset);
