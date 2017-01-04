@@ -108,6 +108,9 @@ class PelotonTest : public ::testing::Test {
 
   virtual void SetUp() {
 
+    // turn off gc under test mode
+    gc::GCManagerFactory::Configure(0);
+
   }
 
   virtual void TearDown() {
