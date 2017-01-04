@@ -36,6 +36,7 @@
 #include "storage/table_factory.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace benchmark {
@@ -86,7 +87,7 @@ void LoadTable() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {

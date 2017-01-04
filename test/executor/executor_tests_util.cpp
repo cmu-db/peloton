@@ -421,7 +421,7 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 }
 
 std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
-    storage::DataTable *table, oid_t tuple_id, type::VarlenPool *pool) {
+    storage::DataTable *table, oid_t tuple_id, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
   auto val1 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
@@ -437,7 +437,7 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
 }
 
 std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
-    storage::DataTable *table, type::VarlenPool *pool) {
+    storage::DataTable *table, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
   auto val1 = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);

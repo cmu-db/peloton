@@ -16,7 +16,8 @@
 #include "catalog/schema.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-#include "type/varlen_pool.h"
+#include "type/abstract_pool.h"
+#include "type/ephemeral_pool.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
@@ -212,8 +213,10 @@ class Catalog {
   std::unordered_map<std::string, FunctionData> functions_;
 
  public:
-  // The var len pool for new varlen tuple fields
-  type::VarlenPool *pool_ = new type::VarlenPool();
+
+  // The pool for new varlen tuple fields
+  type::AbstractPool *pool_ = new type::EphemeralPool();
 };
+
 }
 }

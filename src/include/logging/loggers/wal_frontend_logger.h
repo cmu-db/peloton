@@ -17,7 +17,6 @@
 #include "logging/records/tuple_record.h"
 #include "logging/log_file.h"
 #include "executor/executors.h"
-#include "type/varlen_pool.h"
 
 #include <dirent.h>
 #include <vector>
@@ -131,7 +130,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   cid_t max_cid = 0;
 
   // pool for allocating non-inlined values
-  type::VarlenPool *recovery_pool;
+  type::AbstractPool *recovery_pool;
 
   // abj1 adding code here!
   std::vector<LogFile *> log_files_;

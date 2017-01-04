@@ -96,7 +96,7 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
  */
 std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
     const catalog::Schema *schema, oid_t database_id, std::string database_name,
-    type::VarlenPool *pool) {
+    type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(database_id);
   auto val2 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
@@ -197,7 +197,7 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
     stats::QueryMetric::QueryParamBuf format_buf,
     stats::QueryMetric::QueryParamBuf val_buf, int64_t reads, int64_t updates,
     int64_t deletes, int64_t inserts, int64_t latency, int64_t cpu_time,
-    int64_t time_stamp, type::VarlenPool *pool) {
+    int64_t time_stamp, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
   auto val1 = type::ValueFactory::GetVarcharValue(query_name, nullptr);
@@ -255,7 +255,7 @@ std::unique_ptr<storage::Tuple> GetQueryMetricsCatalogTuple(
  */
 std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
     const catalog::Schema *schema, oid_t table_id, std::string table_name,
-    oid_t database_id, std::string database_name, type::VarlenPool *pool) {
+    oid_t database_id, std::string database_name, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto val1 = type::ValueFactory::GetIntegerValue(table_id);
   auto val2 = type::ValueFactory::GetVarcharValue(table_name, nullptr);

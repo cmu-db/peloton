@@ -23,7 +23,6 @@
 #include "storage/tuple.h"
 #include "planner/seq_scan_plan.h"
 #include "executor/plan_executor.h"
-#include "type/varlen_pool.h"
 
 #include <unistd.h>
 #include <signal.h>

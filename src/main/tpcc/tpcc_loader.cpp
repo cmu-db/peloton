@@ -39,6 +39,7 @@
 #include "storage/table_factory.h"
 #include "storage/database.h"
 
+
 // Logging mode
 extern peloton::LoggingType peloton_logging_mode;
 
@@ -1153,7 +1154,7 @@ int GetTimeStamp() {
 }
 
 std::unique_ptr<storage::Tuple> BuildItemTuple(
-    const int item_id, const std::unique_ptr<type::VarlenPool> &pool) {
+    const int item_id, const std::unique_ptr<type::AbstractPool> &pool) {
   auto item_table_schema = item_table->GetSchema();
   std::unique_ptr<storage::Tuple> item_tuple(
       new storage::Tuple(item_table_schema, allocate));
@@ -1176,7 +1177,7 @@ std::unique_ptr<storage::Tuple> BuildItemTuple(
 }
 
 std::unique_ptr<storage::Tuple> BuildWarehouseTuple(
-    const int warehouse_id, const std::unique_ptr<type::VarlenPool> &pool) {
+    const int warehouse_id, const std::unique_ptr<type::AbstractPool> &pool) {
   auto warehouse_table_schema = warehouse_table->GetSchema();
   std::unique_ptr<storage::Tuple> warehouse_tuple(
       new storage::Tuple(warehouse_table_schema, allocate));
@@ -1217,7 +1218,7 @@ std::unique_ptr<storage::Tuple> BuildWarehouseTuple(
 
 std::unique_ptr<storage::Tuple> BuildDistrictTuple(
     const int district_id, const int warehouse_id,
-    const std::unique_ptr<type::VarlenPool> &pool) {
+    const std::unique_ptr<type::AbstractPool> &pool) {
   auto district_table_schema = district_table->GetSchema();
   std::unique_ptr<storage::Tuple> district_tuple(
       new storage::Tuple(district_table_schema, allocate));
@@ -1263,7 +1264,7 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(
 
 std::unique_ptr<storage::Tuple> BuildCustomerTuple(
     const int customer_id, const int district_id, const int warehouse_id,
-    const std::unique_ptr<type::VarlenPool> &pool) {
+    const std::unique_ptr<type::AbstractPool> &pool) {
   // Customer id begins from 0
   PL_ASSERT(customer_id >= 0 && customer_id < state.customers_per_district);
 
@@ -1358,7 +1359,7 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(
 std::unique_ptr<storage::Tuple> BuildHistoryTuple(
     const int customer_id, const int district_id, const int warehouse_id,
     const int history_district_id, const int history_warehouse_id,
-    const std::unique_ptr<type::VarlenPool> &pool) {
+    const std::unique_ptr<type::AbstractPool> &pool) {
   auto history_table_schema = history_table->GetSchema();
   std::unique_ptr<storage::Tuple> history_tuple(
       new storage::Tuple(history_table_schema, allocate));
@@ -1455,7 +1456,7 @@ std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
 std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
     const int orders_id, const int district_id, const int warehouse_id,
     const int order_line_id, const int ol_supply_w_id, const bool new_order,
-    const std::unique_ptr<type::VarlenPool> &pool) {
+    const std::unique_ptr<type::AbstractPool> &pool) {
   auto order_line_table_schema = order_line_table->GetSchema();
   std::unique_ptr<storage::Tuple> order_line_tuple(
       new storage::Tuple(order_line_table_schema, allocate));
@@ -1507,7 +1508,7 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
 
 std::unique_ptr<storage::Tuple> BuildStockTuple(
     const int stock_id, const int s_w_id,
-    const std::unique_ptr<type::VarlenPool> &pool) {
+    const std::unique_ptr<type::AbstractPool> &pool) {
   auto stock_table_schema = stock_table->GetSchema();
   std::unique_ptr<storage::Tuple> stock_tuple(
       new storage::Tuple(stock_table_schema, allocate));
@@ -1552,7 +1553,7 @@ std::unique_ptr<storage::Tuple> BuildStockTuple(
 void LoadItems() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -1573,7 +1574,7 @@ void LoadWarehouses(const int &warehouse_from, const int &warehouse_to) {
   // WAREHOUSES
   for (auto warehouse_itr = warehouse_from; warehouse_itr < warehouse_to; warehouse_itr++) {
 
-    std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
+    std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
     auto txn = txn_manager.BeginTransaction();
     context.reset(new executor::ExecutorContext(txn));

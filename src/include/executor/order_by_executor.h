@@ -14,7 +14,6 @@
 #pragma once
 
 #include "type/types.h"
-#include "type/varlen_pool.h"
 #include "executor/abstract_executor.h"
 #include "storage/tuple.h"
 

@@ -16,6 +16,7 @@
 #include "type/boolean_type.h"
 #include "type/type_util.h"
 #include "type/value_factory.h"
+#include "type/abstract_pool.h"
 
 namespace peloton {
 namespace type {

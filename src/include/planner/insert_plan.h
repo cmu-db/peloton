@@ -59,7 +59,7 @@ class InsertPlan : public AbstractPlan {
           insert_values);
 
   // Get a varlen pool (will construct the pool only if needed)
-  type::VarlenPool *GetPlanPool();
+  type::AbstractPool *GetPlanPool();
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
@@ -109,7 +109,7 @@ class InsertPlan : public AbstractPlan {
   oid_t bulk_insert_count;
 
   // pool for variable length types
-  std::unique_ptr<type::VarlenPool> pool_;
+  std::unique_ptr<type::AbstractPool> pool_;
 };
 
 }  // namespace planner

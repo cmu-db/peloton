@@ -134,7 +134,7 @@ void LoadYCSBDatabase() {
   // Load in the data
   /////////////////////////////////////////////////////////
 
-  std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

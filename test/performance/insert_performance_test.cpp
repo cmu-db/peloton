@@ -21,7 +21,6 @@
 
 #include "catalog/schema.h"
 #include "type/value_factory.h"
-#include "type/varlen_pool.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 
@@ -59,7 +58,7 @@ std::atomic<int> loader_tuple_id;
 // Utility
 //===------------------------------===//
 
-void InsertTuple(storage::DataTable *table, type::VarlenPool *pool,
+void InsertTuple(storage::DataTable *table, type::AbstractPool *pool,
                  oid_t tilegroup_count_per_loader,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

@@ -22,7 +22,7 @@
 #include "common/printable.h"
 #include "type/types.h"
 #include "common/logger.h"
-#include "type/varlen_pool.h"
+#include "type/abstract_pool.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -316,7 +316,7 @@ class Index : public Printable {
                const std::vector<ExpressionType> &expr_types,
                const std::vector<type::Value> &values);
 
-  type::VarlenPool *GetPool() const { return pool; }
+  type::AbstractPool *GetPool() const { return pool; }
 
   // Garbage collect
   virtual bool Cleanup() = 0;
@@ -359,7 +359,7 @@ class Index : public Printable {
   bool dirty = false;
 
   // pool
-  type::VarlenPool *pool = nullptr;
+  type::AbstractPool *pool = nullptr;
 
   // This is used by index tuner
   std::atomic<size_t> indexed_tile_group_offset;

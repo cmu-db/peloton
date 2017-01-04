@@ -13,7 +13,7 @@
 
 #include "common/harness.h"
 
-#include "type/varlen_pool.h"
+#include "type/ephemeral_pool.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 
@@ -32,7 +32,7 @@ TestingHarness::TestingHarness()
     : txn_id_counter(INVALID_TXN_ID),
       cid_counter(INVALID_CID),
       tile_group_id_counter(START_OID),
-      pool_(new type::VarlenPool(BACKEND_TYPE_MM)) {}
+      pool_(new type::EphemeralPool()) {}
 
 uint64_t TestingHarness::GetThreadId() {
   std::hash<std::thread::id> hash_fn;
@@ -52,7 +52,7 @@ txn_id_t TestingHarness::GetNextTransactionId() {
   return txn_id;
 }
 
-type::VarlenPool* TestingHarness::GetTestingPool() {
+type::AbstractPool* TestingHarness::GetTestingPool() {
   // return pool
   return pool_.get();
 }

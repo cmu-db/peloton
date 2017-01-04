@@ -20,7 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "type/varlen_pool.h"
+#include "type/ephemeral_pool.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_manager.h"
@@ -64,7 +64,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
   test_mode_ = for_testing;
 
   // allocate pool
-  recovery_pool = new type::VarlenPool(BACKEND_TYPE_MM);
+  recovery_pool = new type::EphemeralPool();
   if (test_mode_) {
     cur_file_handle.file = nullptr;
   } else {
@@ -77,7 +77,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
   LOG_TRACE("Instantiating wal_fel with log directory: %s", log_dir.c_str());
   
   // allocate pool
-  recovery_pool = new type::VarlenPool(BACKEND_TYPE_MM);
+  recovery_pool = new type::EphemeralPool();
 
   InitSelf();
 }

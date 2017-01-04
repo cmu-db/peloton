@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 
 #include "type/types.h"
-#include "type/varlen_pool.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 
@@ -38,7 +38,7 @@ class Checkpoint {
  public:
   Checkpoint(bool disable_file_access)
       : disable_file_access(disable_file_access) {
-    pool.reset(new type::VarlenPool(BACKEND_TYPE_MM));
+    pool.reset(new type::EphemeralPool());
   }
 
   virtual ~Checkpoint(void) { pool.reset(); }
@@ -75,7 +75,7 @@ class Checkpoint {
 
   // variable length memory pool
   // TODO better periodically clean up varlen pool?
-  std::unique_ptr<type::VarlenPool> pool;
+  std::unique_ptr<type::AbstractPool> pool;
 
   // TODO set directory to configurable variables
   std::string checkpoint_dir = "pl_checkpoint";

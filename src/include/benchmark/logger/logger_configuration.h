@@ -20,7 +20,6 @@
 #include <iostream>
 
 #include "type/types.h"
-#include "type/varlen_pool.h"
 
 namespace peloton {
 namespace benchmark {

@@ -156,10 +156,10 @@ InsertPlan::InsertPlan(
   }
 }
 
-type::VarlenPool *InsertPlan::GetPlanPool() {
+type::AbstractPool *InsertPlan::GetPlanPool() {
   // construct pool if needed
   if (pool_.get() == nullptr)
-    pool_.reset(new type::VarlenPool(BACKEND_TYPE_MM));
+    pool_.reset(new type::EphemeralPool());
   // return pool
   return pool_.get();
 }

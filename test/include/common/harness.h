@@ -25,7 +25,6 @@
 #include "type/types.h"
 #include "gc/gc_manager_factory.h"
 
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -35,7 +34,7 @@
 namespace peloton {
 
 namespace type{
-class VarlenPool;
+class AbstractPool;
 }
 
 namespace test {
@@ -63,7 +62,7 @@ class TestingHarness {
 
   txn_id_t GetNextTransactionId();
 
-  type::VarlenPool *GetTestingPool();
+  type::AbstractPool *GetTestingPool();
 
   oid_t GetNextTileGroupId();
 
@@ -80,7 +79,7 @@ class TestingHarness {
   std::atomic<oid_t> tile_group_id_counter;
 
   // Testing pool
-  std::unique_ptr<type::VarlenPool> pool_;
+  std::unique_ptr<type::AbstractPool> pool_;
 };
 
 template <typename... Args>

@@ -29,7 +29,7 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
       aggregation_interval_ms_(aggregation_interval_ms),
       thread_number_(0),
       total_prev_txn_committed_(0) {
-  pool_.reset(new type::VarlenPool());
+  pool_.reset(new type::EphemeralPool());
   try {
     ofs_.open(peloton_stats_directory_, std::ofstream::out);
   } catch (std::ofstream::failure &e) {
