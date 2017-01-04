@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <vector>
 
+#include "common/platform.h"
+
 namespace peloton {
 namespace type {
 
@@ -33,9 +35,11 @@ public:
   // Destroy this pool, and all memory it owns.
   ~EphemeralPool(){
 
+    pool_lock_.Lock();
     for(auto location: locations_){
       delete[] location;
     }
+    pool_lock_.Unlock();
 
   }
 
@@ -44,7 +48,11 @@ public:
   // null pointer will be returned.
   void *Allocate(size_t size){
     auto location = new char[size];
+
+    pool_lock_.Lock();
     locations_.push_back(location);
+    pool_lock_.Unlock();
+
     return location;
   }
 
@@ -55,8 +63,11 @@ public:
 
 public:
 
-  // Buffer lists
+  // Location list
   std::vector<char*> locations_;
+
+  // Spin lock protecting location list
+  Spinlock pool_lock_;
 
 };
 
