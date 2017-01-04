@@ -83,6 +83,12 @@ bool IndexScanExecutor::DInit() {
   left_open_ = node.GetLeftOpen();
   right_open_ = node.GetRightOpen();
 
+  // This is for limit operation accelerate
+  limit_ = node.GetLimit();
+  limit_number_ = node.GetLimitNumber();
+  limit_offset_ = node.GetLimitOffset();
+  descend_ = node.GetDescend();
+
   if (runtime_keys_.size() != 0) {
     PL_ASSERT(runtime_keys_.size() == values_.size());
 
@@ -158,6 +164,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
+
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                  &index_predicate_.GetConjunctionList()[0]);
