@@ -14,6 +14,8 @@
 
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
+#include "storage/database.h"
+
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_tests_util.h"
 

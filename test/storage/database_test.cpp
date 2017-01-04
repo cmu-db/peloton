@@ -12,8 +12,12 @@
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
-#include "executor/executor_tests_util.h"
+
+#include "storage/data_table.h"
+#include "storage/tile_group.h"
 #include "storage/database.h"
+
+#include "executor/executor_tests_util.h"
 
 namespace peloton {
 namespace test {
@@ -30,6 +34,36 @@ TEST_F(DatabaseTests, AddDropTest) {
   auto database = ExecutorTestsUtil::InitializeDatabase(DEFAULT_DB_NAME);
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(catalog->HasDatabase(db_id));
+
+  // DROP!
+  ExecutorTestsUtil::DeleteDatabase(DEFAULT_DB_NAME);
+  EXPECT_FALSE(catalog->HasDatabase(db_id));
+}
+
+
+TEST_F(DatabaseTests, AddDropTableTest) {
+  // ADD!
+  auto catalog = catalog::Catalog::GetInstance();
+  auto database = ExecutorTestsUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  oid_t db_id = database->GetOid();
+  EXPECT_TRUE(catalog->HasDatabase(db_id));
+
+  // create data table
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(TESTS_TUPLES_PER_TILEGROUP, false));
+
+  int table_oid = data_table->GetOid();
+
+  database->AddTable(data_table.get());
+
+  EXPECT_TRUE(database->GetTableCount() == 1);
+
+
+  database->DropTableWithOid(table_oid);
+  
+  EXPECT_TRUE(database->GetTableCount() == 0);
+
+  data_table.release();
 
   // DROP!
   ExecutorTestsUtil::DeleteDatabase(DEFAULT_DB_NAME);
