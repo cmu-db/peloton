@@ -37,15 +37,17 @@ Database::~Database() {
 // TABLE
 //===--------------------------------------------------------------------===//
 
-void Database::AddTable(storage::DataTable *table) {
+void Database::AddTable(storage::DataTable *table, bool is_catalog) {
   {
     std::lock_guard<std::mutex> lock(database_mutex);
     tables.push_back(table);
 
-    // Register table to GC manager.
-    auto *gc_manager = &gc::GCManagerFactory::GetInstance();
-    assert(gc_manager != nullptr);
-    gc_manager->RegisterTable(table->GetOid());
+    if (is_catalog == false) {
+      // Register table to GC manager.
+      auto *gc_manager = &gc::GCManagerFactory::GetInstance();
+      assert(gc_manager != nullptr);
+      gc_manager->RegisterTable(table->GetOid());
+    }
   }
 }
 

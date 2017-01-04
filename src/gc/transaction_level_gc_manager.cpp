@@ -22,14 +22,10 @@ namespace peloton {
 namespace gc {
 
 void TransactionLevelGCManager::StartGC(int thread_id) {
-  LOG_TRACE("Starting GC");
-  this->is_running_ = true;
   gc_threads_[thread_id].reset(new std::thread(&TransactionLevelGCManager::Running, this, thread_id));
 }
 
 void TransactionLevelGCManager::StopGC(int thread_id) {
-  LOG_TRACE("Stopping GC");
-  this->is_running_ = false;
   this->gc_threads_[thread_id]->join();
   ClearGarbage(thread_id);
 }
@@ -220,8 +216,13 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
-  PL_ASSERT(recycle_queue_map_.count(table_id) != 0);
+  // for catalog tables, we directly return invalid item pointer.
+  if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
+    return INVALID_ITEMPOINTER;
+  }
+
   ItemPointer location;
+  PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
   auto recycle_queue = recycle_queue_map_[table_id];
 
   if (recycle_queue->Dequeue(location) == true) {

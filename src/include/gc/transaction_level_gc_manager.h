@@ -47,8 +47,7 @@ struct GarbageContext {
 class TransactionLevelGCManager : public GCManager {
 public:
   TransactionLevelGCManager(int thread_count) 
-    : is_running_(true),
-      gc_thread_count_(thread_count),
+    : gc_thread_count_(thread_count),
       gc_threads_(thread_count),
       reclaim_maps_(thread_count) {
 
@@ -69,16 +68,17 @@ public:
     return gc_manager;
   }
 
-  // Get status of whether GC thread is running or not
-  virtual bool GetStatus() override { return this->is_running_; }
-
   virtual void StartGC() override {
+    LOG_TRACE("Starting GC");
+    this->is_running_ = true;
     for (int i = 0; i < gc_thread_count_; ++i) {
       StartGC(i);
     }
   };
 
   virtual void StopGC() override {
+    LOG_TRACE("Stopping GC");
+    this->is_running_ = false;
     for (int i = 0; i < gc_thread_count_; ++i) {
       StopGC(i);
     }
@@ -101,6 +101,10 @@ public:
     if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
       recycle_queue_map_.erase(table_id);
     }
+  }
+
+  virtual size_t GetTableCount() override {
+    return recycle_queue_map_.size();
   }
 
 private:
@@ -132,7 +136,6 @@ private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-  volatile bool is_running_;
 
   int gc_thread_count_;
 

@@ -46,22 +46,22 @@ void Catalog::CreateMetricsCatalog() {
   // Create table for database metrics
   auto database_metrics_catalog = CreateMetricsCatalog(default_db_oid,
       DATABASE_METRIC_NAME);
-  default_db->AddTable(database_metrics_catalog.release());
+  default_db->AddTable(database_metrics_catalog.release(), true);
 
   // Create table for index metrics
   auto index_metrics_catalog = CreateMetricsCatalog(default_db_oid,
       INDEX_METRIC_NAME);
-  default_db->AddTable(index_metrics_catalog.release());
+  default_db->AddTable(index_metrics_catalog.release(), true);
 
   // Create table for table metrics
   auto table_metrics_catalog = CreateMetricsCatalog(default_db_oid,
       TABLE_METRIC_NAME);
-  default_db->AddTable(table_metrics_catalog.release());
+  default_db->AddTable(table_metrics_catalog.release(), true);
 
   // Create table for query metrics
   auto query_metrics_catalog = CreateMetricsCatalog(default_db_oid,
       QUERY_METRIC_NAME);
-  default_db->AddTable(query_metrics_catalog.release());
+  default_db->AddTable(query_metrics_catalog.release(), true);
   LOG_TRACE("Metrics tables created");
 }
 
@@ -72,10 +72,10 @@ void Catalog::CreateCatalogDatabase() {
   auto database_catalog = CreateDatabaseCatalog(START_OID,
       DATABASE_CATALOG_NAME);
   storage::DataTable *databases_table = database_catalog.release();
-  database->AddTable(databases_table);
+  database->AddTable(databases_table, true);
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
-  database->AddTable(tables_table);
+  database->AddTable(tables_table, true);
   databases_.push_back(database);
   LOG_TRACE("Catalog database created");
 }
