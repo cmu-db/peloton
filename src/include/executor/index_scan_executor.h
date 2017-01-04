@@ -117,6 +117,16 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   // copy from underlying plan
   index::IndexScanPredicate index_predicate_;
+
+  // whether it is an order by + limit plan
+  // the default is -1 which means it's not order by + limit
+  int limit_ = -1;
+
+  // whether order by is descending
+  bool descend_ = false;
+
+  // offset means from which point
+  int offset_ = 0;
 };
 
 }  // namespace executor

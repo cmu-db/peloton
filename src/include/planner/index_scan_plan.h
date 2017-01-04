@@ -146,7 +146,23 @@ class IndexScanPlan : public AbstractScan {
 
   inline bool GetRightOpen() const { return right_open_; }
 
+  inline bool GetLimit() const { return limit_; }
+
+  inline int64_t GetLimitNumber() const { return limit_number_; }
+
+  inline int64_t GetLimitOffset() const { return limit_offset_; }
+
+  inline bool GetDescend() const { return descend_; }
+
   const std::string GetInfo() const { return "IndexScan"; }
+
+  void SetLimit(bool limit) { limit_ = limit; }
+
+  void SetLimitNumber(int64_t limit) { limit_number_ = limit; }
+
+  void SetLimitOffset(int64_t offset) { limit_offset_ = offset; }
+
+  void SetDescend(bool descend) { descend_ = descend; }
 
   void SetParameterValues(std::vector<type::Value> *values);
 
@@ -204,6 +220,18 @@ class IndexScanPlan : public AbstractScan {
 
   // whether the index scan range is right open
   bool right_open_ = false;
+
+  // whether it is an order by + limit plan
+  bool limit_ = false;
+
+  // how many tuples should be returned
+  int64_t limit_number_ = 0;
+
+  // offset means from which point
+  int64_t limit_offset_ = 0;
+
+  // whether order by is descending
+  bool descend_ = false;
 };
 
 }  // namespace planner

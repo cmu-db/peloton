@@ -96,6 +96,10 @@ class SimpleOptimizer : public AbstractOptimizer {
       const parser::SelectStatement *statement);
   static std::unique_ptr<planner::AbstractPlan> CreateJoinPlan(
       parser::SelectStatement *select_stmt);
+
+  static void SetIndexScanFlag(planner::AbstractPlan *select_plan,
+                               uint64_t limit, uint64_t offset,
+                               bool descent = false);
 };
 }  // namespace optimizer
 }  // namespace peloton
