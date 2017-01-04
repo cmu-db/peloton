@@ -47,6 +47,8 @@ public:
     return gc_manager;
   }
 
+  virtual void Reset() { is_running_ = false; }
+
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }
 

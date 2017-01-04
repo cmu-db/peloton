@@ -30,8 +30,15 @@ struct Epoch {
   std::atomic<int> rw_txn_ref_count_;
   cid_t max_cid_;
 
-  Epoch()
-    :ro_txn_ref_count_(0), rw_txn_ref_count_(0),max_cid_(0) {}
+  Epoch(): 
+    ro_txn_ref_count_(0), 
+    rw_txn_ref_count_(0),
+    max_cid_(0) {}
+
+  Epoch(const Epoch &epoch): 
+    ro_txn_ref_count_(epoch.ro_txn_ref_count_.load()), 
+    rw_txn_ref_count_(epoch.rw_txn_ref_count_.load()),
+    max_cid_(0) {}
 
   void Init() {
     ro_txn_ref_count_ = 0;
@@ -63,9 +70,27 @@ class EpochManager {
 public:
   EpochManager()
     : epoch_queue_(epoch_queue_size_),
-      queue_tail_(0), reclaim_tail_(0), current_epoch_(0),
-      queue_tail_token_(true), reclaim_tail_token_(true),
-      max_cid_ro_(READ_ONLY_START_CID), max_cid_gc_(0), finish_(false) {
+      queue_tail_(0), 
+      reclaim_tail_(0), 
+      current_epoch_(0),
+      queue_tail_token_(true), 
+      reclaim_tail_token_(true),
+      max_cid_ro_(READ_ONLY_START_CID), 
+      max_cid_gc_(0), 
+      finish_(false) {
+  }
+
+  void Reset() {
+    epoch_queue_.clear();
+    epoch_queue_.resize(epoch_queue_size_);
+    queue_tail_ = 0;
+    reclaim_tail_ = 0; 
+    current_epoch_ = 0;
+    queue_tail_token_ = true;
+    reclaim_tail_token_ = true;
+    max_cid_ro_ = READ_ONLY_START_CID; 
+    max_cid_gc_ = 0; 
+    finish_ = false;
   }
 
   void StartEpoch() {
