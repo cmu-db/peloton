@@ -13,8 +13,8 @@ project(Peloton CXX C)
 include(CTest)
 
 # ---[ Peloton version
-set(PELOTON_TARGET_VERSION "0.0.3" CACHE STRING "Peloton logical version")
-set(PELOTON_TARGET_SOVERSION "0.0.3" CACHE STRING "Peloton soname version")
+set(PELOTON_TARGET_VERSION "0.0.5" CACHE STRING "Peloton logical version")
+set(PELOTON_TARGET_SOVERSION "0.0.5" CACHE STRING "Peloton soname version")
 add_definitions(-DPELOTON_VERSION=${PELOTON_TARGET_VERSION})
 
 # --[ Output directory
