@@ -67,7 +67,7 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
   return tiles[tile_id]->GetTileId();
 }
 
-type::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
+type::AbstractPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   Tile *tile = GetTile(tile_id);
 
   if (tile != nullptr) {

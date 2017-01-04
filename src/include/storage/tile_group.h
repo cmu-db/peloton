@@ -22,7 +22,7 @@
 #include "type/types.h"
 #include "type/value.h"
 #include "common/printable.h"
-#include "type/varlen_pool.h"
+#include "type/abstract_pool.h"
 #include "planner/project_info.h"
 
 namespace peloton {
@@ -136,7 +136,7 @@ class TileGroup : public Printable {
 
   oid_t GetTileId(const oid_t tile_id) const;
 
-  peloton::type::VarlenPool *GetTilePool(const oid_t tile_id) const;
+  peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 
   const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
     return column_map;
