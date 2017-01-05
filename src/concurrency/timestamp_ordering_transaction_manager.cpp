@@ -129,14 +129,18 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   auto &log_manager = logging::LogManager::GetInstance();
 
   if (current_txn->GetResult() == RESULT_SUCCESS) {
-    gc::GCManagerFactory::GetInstance().
-        RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
-        // Log the transaction's commit
-        // For time stamp ordering, every transaction only has one timestamp
-        log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
+    if (current_txn->IsGCSetEmpty() != true) {
+      gc::GCManagerFactory::GetInstance().
+          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
+    }
+    // Log the transaction's commit
+    // For time stamp ordering, every transaction only has one timestamp
+    log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
   } else {
-    gc::GCManagerFactory::GetInstance().
-        RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+    if (current_txn->IsGCSetEmpty() != true) {
+      gc::GCManagerFactory::GetInstance().
+          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+    }
     log_manager.DoneLogging();
   }
 

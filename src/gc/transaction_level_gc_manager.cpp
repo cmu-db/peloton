@@ -70,8 +70,8 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     }
 
     if (reclaimed_count == 0 && unlinked_count == 0) {
-      // sleep at most 3.2768 s
-      if (backoff_shifts < 15) {
+      // sleep at most 0.8192 s
+      if (backoff_shifts < 13) {
         ++backoff_shifts;
       }
       uint64_t sleep_duration = 1UL << backoff_shifts;
@@ -85,9 +85,10 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 
 
 void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType gc_set_type) {
-    // Add the garbage context to the lockfree queue
-    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp, gc_set_type));
-    unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
+
+  // Add the garbage context to the lock-free queue
+  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp, gc_set_type));
+  unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
 int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid) {
@@ -105,6 +106,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
       if (res == true) {
         DeleteFromIndexes(garbage_ctx);
         // Add to the garbage map
+
         garbages.push_back(garbage_ctx);
         tuple_counter++;
       }
@@ -121,6 +123,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
     }
 
     if (garbage_ctx->timestamp_ < max_cid) {
+
       // as the max timestamp of committed transactions is larger than the gc's timestamp,
       // it means that no active transactions can read it.
       // so we can unlink it.
