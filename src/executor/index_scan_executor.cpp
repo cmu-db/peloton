@@ -363,6 +363,10 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     // Limit clause accelerate
     if (limit_) {
       // invoke index scan limit
+      index_->ScanLimit(values_, key_column_ids_, expr_types_,
+                        SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                        &index_predicate_.GetConjunctionList()[0],
+                        limit_number_, limit_offset_);
     }
     // Normal SQL (without limit)
     else {
