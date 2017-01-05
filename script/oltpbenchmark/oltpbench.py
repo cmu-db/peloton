@@ -8,12 +8,11 @@ import subprocess
 OLTP_HOME = "/home/pavlo/Documents/OLTPBenchmark/oltpbench"
 BENCHMARK = "tpcc"
 CONFIG = "%s/config/%s_config_peloton.xml" % (OLTP_HOME, BENCHMARK)
-INTERVAL = 1000
 BUCKETS = 5
 
 REGEX = re.compile(".*?INFO[\s]+-[\s]+Throughput: ([\d]+\.[\d]+) txn/sec")
 
-def execute(create=True, load=True, execute=False):
+def executeBenchmark(create=True, load=True, execute=False, interval=1000):
     params = {
         "home": OLTP_HOME,
         "benchmark": BENCHMARK,
@@ -21,7 +20,7 @@ def execute(create=True, load=True, execute=False):
         "create": str(create),
         "load": str(load),
         "execute": str(execute),
-        "interval": INTERVAL,
+        "interval": interval,
         "buckets": BUCKETS,
     }
     cmd = [
@@ -49,4 +48,12 @@ def execute(create=True, load=True, execute=False):
     return_code = popen.wait()
     if return_code:
         raise subprocess.CalledProcessError(return_code, cmd)
+## DEF
+
+def pollFile(path):
+    cmd = [ "tail", "-F", path ]
+    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    for line in iter(popen.stdout.readline, ""):
+        yield line.strip()
+    ## FOR
 ## DEF

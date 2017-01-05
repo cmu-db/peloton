@@ -26,11 +26,13 @@ BENCHMARK_INTERVAL = 1000 # ms
 FINISHED = False
 START_INTERVAL = 300
 
+p = None
 PLOT_DATA = [0]*START_INTERVAL
 PLOT_LOCATION = 0
 PLOT_CURVE = None
 PLOT_THROUGHPUT = None
 PLOT_THROUGHPUT_AMOUNT = None
+PLOT_LINES = [None]*START_INTERVAL
 NEW_DATA = [ ]
 
 ## -------------------------------------------------
@@ -79,7 +81,7 @@ class CustomAxis(pg.AxisItem):
 ## UPDATE PLOT
 ## -------------------------------------------------
 def updatePlot():
-    global PLOT_DATA, PLOT_CURVE, PLOT_LOCATION, PLOT_THROUGHPUT, PLOT_THROUGHPUT_AMOUNT, FINISHED
+    global p, PLOT_DATA, PLOT_CURVE, PLOT_LOCATION, PLOT_THROUGHPUT, PLOT_THROUGHPUT_AMOUNT, FINISHED
     lastPoint = PLOT_DATA[-1]
 
     # Get the new data point
@@ -97,15 +99,29 @@ def updatePlot():
     # PLOT_DATA[-1] = max(100, last + random.randint(-10, 10)) # np.random.normal()
     PLOT_DATA[-1] = nextPoint
     PLOT_LOCATION += 1
+    
+    # Always make the first point zero to prevent the y-axis
+    # from auto-scaling
+    #PLOT_DATA[0] = 0
+    
     PLOT_CURVE.setData(PLOT_DATA)
     PLOT_CURVE.setPos(PLOT_LOCATION, 0)
+
+    # Shift lines
+    #PLOT_LINES[:-1] = PLOT_LINES[1:]
+    #InfiniteLine(pos=None, angle=90, pen=None, movable=False, bounds=None, hoverPen=None, label=None, labelOpts=None, name=None)
+
+    if PLOT_THROUGHPUT_AMOUNT != None and not FINISHED:
+        p.setTitle("<font size=\"64\">%.1f txn/sec</font>" % PLOT_THROUGHPUT_AMOUNT)
+    elif FINISHED:
+        p.setTitle("<font size=\"64\">-- txn/sec</font>")
+        PLOT_THROUGHPUT_AMOUNT = None
     
-    if not PLOT_THROUGHPUT is None:
-        if nextPoint == PLOT_THROUGHPUT_AMOUNT and not nextPoint is None:
-            PLOT_THROUGHPUT.setText("Throughput: %.1f txn/sec" % PLOT_THROUGHPUT_AMOUNT)
-        elif PLOT_THROUGHPUT_AMOUNT is not None and FINISHED:
-            PLOT_THROUGHPUT.setText("Throughput: --")
-    ## IF
+        #if nextPoint == PLOT_THROUGHPUT_AMOUNT and not nextPoint is None:
+            #PLOT_THROUGHPUT.setText("Throughput: %.1f txn/sec" % PLOT_THROUGHPUT_AMOUNT)
+        #elif PLOT_THROUGHPUT_AMOUNT is not None and FINISHED:
+            #PLOT_THROUGHPUT.setText("Throughput: --")
+    ### IF
         
 ## UPDATE PLOT
 
@@ -113,8 +129,11 @@ def updatePlot():
 ## EXECUTE BENCHMARK
 ## -------------------------------------------------
 def execBenchmark():
-    global NEW_DATA, FINISHED, PLOT_THROUGHPUT_AMOUNT
-    results = oltpbench.execute(create=False, load=False, execute=True)
+    global p, NEW_DATA, FINISHED, PLOT_THROUGHPUT_AMOUNT
+    results = oltpbench.executeBenchmark(create=False, \
+                                load=False, \
+                                execute=True, \
+                                interval=BENCHMARK_INTERVAL)
     steps = BENCHMARK_INTERVAL / float(GRAPH_INTERVAL)
     for nextPoint in results:
         # Smooth interpolation
@@ -129,12 +148,22 @@ def execBenchmark():
     FINISHED = True
 ## DEF
 
+## -------------------------------------------------
+## POLL PELOTON LOG
+## -------------------------------------------------
+def pollPelotonLog():
+    results = oltpbench.pollFile("/tmp/peloton.log")
+    for line in results:
+        print line
+        if FINISHED: break
+    ## FOR (iterator)
+## DEF
+
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
     # Initialize graph
     win = pg.GraphicsWindow(title="Peloton")
-    #win.setWindowFlags(win.windowFlags() | QtCore.Qt.FramelessWindowHint)
     win.resize(1000,300)
 
     customAxis = CustomAxis(orientation='bottom')
@@ -150,14 +179,14 @@ if __name__ == '__main__':
 
     limits = {'yMin': 0}
     p.setLimits(**limits)
-    p.setRange(yRange=[0,200])
+    #p.setRange(yRange=[0,1500])
     #print p
     #pprint(dir(p))
     #sys.exit(1)
     
-    PLOT_THROUGHPUT = None # pg.TextItem(text="Throughput: --", border='w')
-    #p.addItem(PLOT_THROUGHPUT)
+    #PLOT_THROUGHPUT = pg.TextItem(text="Throughput: --", border='w', anchor=(1,1))
     #PLOT_THROUGHPUT.setPos(0, 0)
+    #p.addItem(PLOT_THROUGHPUT)
     
     PLOT_CURVE = p.plot(PLOT_DATA)
     #PLOT_CURVE.setPen(color=(40,54,83), width=3)
@@ -167,12 +196,26 @@ if __name__ == '__main__':
     timer.timeout.connect(updatePlot)
     timer.start(100)
     
+    threads = [ ]
+    
+    # Start Peloton log monitor
+    threads.append(threading.Thread(target=pollPelotonLog))
+    threads[-1].setDaemon(True)
+    threads[-1].start()
     
     # Start OLTP-Bench thread
-    t = threading.Thread(target=execBenchmark)
-    t.start()
+    threads.append(threading.Thread(target=execBenchmark))
+    threads[-1].setDaemon(True)
+    threads[-1].start()
+    
+    def close():
+        global threads
+        pass
+            
     
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        #sh = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+C"),imv,None, close)
+        #sh.setContext(QtCore.Qt.ApplicationShortcut)
         QtGui.QApplication.instance().exec_()
         
 ## MAIN
