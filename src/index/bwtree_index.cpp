@@ -122,24 +122,16 @@ void BWTREE_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
     const ScanDirectionType &scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p) {
-  // First make sure all three components of the scan predicate are
-  // of the same length
-  // Since there is a 1-to-1 correspondense between these three vectors
-  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
-  PL_ASSERT(tuple_column_id_list.size() == value_list.size());
-
   // This is a hack - we do not support backward scan
   if (scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
     throw Exception("Invalid scan direction \n");
   }
 
-  LOG_TRACE("Point Query = %d; Full Scan = %d ", csp_p->IsPointQuery(),
+  LOG_TRACE("Scan() Point Query = %d; Full Scan = %d ", 
+            csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
 
   if (csp_p->IsPointQuery() == true) {
-    LOG_TRACE("This is point query");
-    // For point query we construct the key and use equal_range
-
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
 
     KeyType point_query_key;
@@ -211,33 +203,16 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const ConjunctionScanPredicate *csp_p,
     uint64_t limit,
     uint64_t offset) {
-  // First make sure all three components of the scan predicate are
-  // of the same length
-  // Since there is a 1-to-1 correspondense between these three vectors
-  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
-  PL_ASSERT(tuple_column_id_list.size() == value_list.size());
-
-  // This is a hack - we do not support backward scan
-  if (scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
-    throw Exception("Invalid scan direction \n");
-  }
-
-  LOG_TRACE("Point Query = %d; Full Scan = %d ", csp_p->IsPointQuery(),
+  LOG_TRACE("ScanLimit() Point Query = %d; Full Scan = %d ", 
+            csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
 
   if (csp_p->IsPointQuery() == true) {
-    LOG_TRACE("This is point query");
-    // For point query we construct the key and use equal_range
-
-    const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
+    const storage::Tuple *point_query_tuple_key_p = csp_p->GetPointQueryKey();
 
     KeyType point_query_key;
-    point_query_key.SetFromKey(point_query_key_p);
+    point_query_key.SetFromKey(point_query_tuple_key_p);
 
-    // Note: We could call ScanKey() to achieve better modularity
-    // (slightly less code), but since ScanKey() is a virtual function
-    // this would induce an overhead for point query, which must be highly
-    // optimized and super fast
     container.GetValue(point_query_key, result);
   } else if (csp_p->IsFullIndexScan() == true) {
     // If it is a full index scan, then just do the scan
