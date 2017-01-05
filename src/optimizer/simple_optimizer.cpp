@@ -245,18 +245,32 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 "Not supported: Ordering column is not an element of select "
                 "list!");
           }
-          std::unique_ptr<planner::OrderByPlan> order_by_plan(
-              new planner::OrderByPlan(key, flags, keys));
-          order_by_plan->AddChild(std::move(child_SelectPlan));
+
+          // Get offset
           int offset = select_stmt->limit->offset;
           if (offset < 0) {
             offset = 0;
           }
+
+          // Set the flag for the underlying index scan plan to accelerate the
+          // limit operation speed. That is to say the limit flags are passed
+          // to index, then index returns the tuples matched with the limit
+          SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
+                           offset, flags.front());
+
+          // Create order_by_plan
+          std::unique_ptr<planner::OrderByPlan> order_by_plan(
+              new planner::OrderByPlan(key, flags, keys));
+          order_by_plan->AddChild(std::move(child_SelectPlan));
+
+          // Create limit_plan
           std::unique_ptr<planner::LimitPlan> limit_plan(
               new planner::LimitPlan(select_stmt->limit->limit, offset));
           limit_plan->AddChild(std::move(order_by_plan));
           child_plan = std::move(limit_plan);
-        } else if (select_stmt->order != NULL) {
+        }
+        // Only order by statement (without limit)
+        else if (select_stmt->order != NULL) {
           std::vector<oid_t> keys;
           for (size_t column_ctr = 0;
                column_ctr < select_stmt->select_list->size(); column_ctr++) {
@@ -285,15 +299,26 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 "Not supported: Ordering column is not an element of select "
                 "list!");
           }
+
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
           order_by_plan->AddChild(std::move(child_SelectPlan));
           child_plan = std::move(order_by_plan);
-        } else if (select_stmt->limit != NULL) {
+        }
+        // limit statement without order by
+        else if (select_stmt->limit != NULL) {
           int offset = select_stmt->limit->offset;
           if (offset < 0) {
             offset = 0;
           }
+
+          // Set the flag for the underlying index scan plan to accelerate the
+          // limit operation speed. That is to say the limit flags are passed
+          // to index, then index returns the tuples matched with the limit
+          SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
+                           offset);
+
+          // Create limit_plan
           std::unique_ptr<planner::LimitPlan> limit_plan(
               new planner::LimitPlan(select_stmt->limit->limit, offset));
           limit_plan->AddChild(std::move(child_SelectPlan));
@@ -1232,5 +1257,36 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   return std::move(hash_join_plan_node);
 }
 
+void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
+                                       uint64_t limit, uint64_t offset,
+                                       bool descent) {
+  // Set the flag for the underlying index scan plan
+  planner::IndexScanPlan* index_scan_plan = nullptr;
+
+  // child_SelectPlan is projection plan or scan plan
+  if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_PROJECTION) {
+    // it's child is index_scan or seq_scan. Only index_scan is set
+    if (select_plan->GetChildren()[0]->GetPlanNodeType() ==
+        PLAN_NODE_TYPE_INDEXSCAN) {
+      index_scan_plan =
+          (planner::IndexScanPlan*)select_plan->GetChildren()[0].get();
+    }
+  }
+  // otherwise child_SelectPlan itself is scan plan
+  else {
+    // child_SelectPlan is index_scan or seq_scan
+    if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_INDEXSCAN) {
+      index_scan_plan = (planner::IndexScanPlan*)select_plan;
+    }
+  }
+
+  if (index_scan_plan != nullptr) {
+    LOG_TRACE("Set index scan plan");
+    index_scan_plan->SetLimit(true);
+    index_scan_plan->SetLimitNumber(limit);
+    index_scan_plan->SetLimitOffset(offset);
+    index_scan_plan->SetDescend(descent);
+  }
+}
 }  // namespace optimizer
 }  // namespace peloton

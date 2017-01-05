@@ -226,9 +226,18 @@ class Index : public Printable {
   virtual void Scan(const std::vector<type::Value> &value_list,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
-                    const ScanDirectionType &scan_direction,
+                    ScanDirectionType scan_direction,
                     std::vector<ItemPointer *> &result,
                     const ConjunctionScanPredicate *csp_p) = 0;
+                    
+  virtual void ScanLimit(const std::vector<type::Value> &value_list,
+                         const std::vector<oid_t> &tuple_column_id_list,
+                         const std::vector<ExpressionType> &expr_list,
+                         ScanDirectionType scan_direction,
+                         std::vector<ItemPointer *> &result,
+                         const ConjunctionScanPredicate *csp_p,
+                         uint64_t limit,
+                         uint64_t offset) = 0;
 
   // This is the version used to test scan
   // Since it does scan planning everytime, it is slow, and should

@@ -98,9 +98,18 @@ class BWTreeIndex : public Index {
   void Scan(const std::vector<type::Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
-            const ScanDirectionType &scan_direction,
+            ScanDirectionType scan_direction,
             std::vector<ValueType> &result,
             const ConjunctionScanPredicate *csp_p);
+            
+  void ScanLimit(const std::vector<type::Value> &values,
+                 const std::vector<oid_t> &key_column_ids,
+                 const std::vector<ExpressionType> &expr_types,
+                 ScanDirectionType scan_direction,
+                 std::vector<ValueType> &result,
+                 const ConjunctionScanPredicate *csp_p,
+                 uint64_t limit,
+                 uint64_t offset);
 
   void ScanAllKeys(std::vector<ValueType> &result);
 

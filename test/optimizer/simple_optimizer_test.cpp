@@ -32,19 +32,19 @@ class SimpleOptimizerTests : public PelotonTest {};
 // Test whether update stament will use index scan plan
 // TODO: Split the tests into separate test cases.
 TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
-  LOG_INFO("Bootstrapping...");
+  LOG_TRACE("Bootstrapping...");
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-  LOG_INFO("Bootstrapping completed!");
+  LOG_TRACE("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
-  LOG_INFO("Creating table");
-  LOG_INFO(
+  LOG_TRACE("Creating table");
+  LOG_TRACE(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
       "INT, dept_name TEXT);");
   std::unique_ptr<Statement> statement;
@@ -63,15 +63,15 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   std::vector<type::Value> params;
   std::vector<ResultType> result;
-  LOG_INFO("Query Plan:\n%s",
-           planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+  LOG_TRACE("Query Plan:\n%s",
+            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Table Created");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Table Created");
   txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(catalog::Catalog::GetInstance()
@@ -81,8 +81,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
-  LOG_INFO("Inserting a tuple...");
-  LOG_INFO(
+  LOG_TRACE("Inserting a tuple...");
+  LOG_TRACE(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
       "VALUES (1,52,'hello_1');");
   statement.reset(new Statement("INSERT",
@@ -100,14 +100,14 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple inserted!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
 
   // Now Create index
   txn = txn_manager.BeginTransaction();
-  LOG_INFO("Creating and Index");
-  LOG_INFO("Query: CREATE INDEX saif ON department_table (student_id);");
+  LOG_TRACE("Creating and Index");
+  LOG_TRACE("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement(
       "CREATE", "CREATE INDEX saif ON department_table (student_id);"));
 
@@ -120,8 +120,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("INDEX CREATED!");
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);
 
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
@@ -130,8 +130,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
 
   // Test update tuple with index scan
-  LOG_INFO("Updating a tuple...");
-  LOG_INFO(
+  LOG_TRACE("Updating a tuple...");
+  LOG_TRACE(
       "Query: UPDATE department_table SET dept_name = 'CS' WHERE student_id = "
       "52");
   update_stmt = peloton_parser.BuildParseTree(
@@ -151,8 +151,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
             PLAN_NODE_TYPE_SEQSCAN);
 
   // Test delete tuple with index scan
-  LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table WHERE student_id = 52");
+  LOG_TRACE("Deleting a tuple...");
+  LOG_TRACE("Query: DELETE FROM department_table WHERE student_id = 52");
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE student_id = 52");
   auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt);

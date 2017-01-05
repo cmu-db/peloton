@@ -117,6 +117,18 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   // copy from underlying plan
   index::IndexScanPredicate index_predicate_;
+
+  // whether it is an order by + limit plan
+  bool limit_ = false;
+
+  // how many tuples should be returned
+  int64_t limit_number_ = 0;
+
+  // offset means from which point
+  int64_t limit_offset_ = 0;
+
+  // whether order by is descending
+  bool descend_ = false;
 };
 
 }  // namespace executor
