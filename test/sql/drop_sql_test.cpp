@@ -43,7 +43,7 @@ TEST_F(DropSQLTests, DropSQLTest) {
   int rows_affected;
 
   // Insert and query from that table
-  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10, 100);", result,
+  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10);", result,
                                 tuple_descriptor, rows_affected, error_message);
   SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
                                 rows_affected, error_message);
@@ -53,6 +53,7 @@ TEST_F(DropSQLTests, DropSQLTest) {
   SQLTestsUtil::ExecuteSQLQuery("DROP TABLE test;");
 
   // Query from the dropped table
+  result.clear();
   SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
                                 rows_affected, error_message);
   EXPECT_EQ(result.empty(), true);
