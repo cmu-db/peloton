@@ -4,6 +4,7 @@ import sys
 import os
 import random
 import threading
+import subprocess
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore
@@ -37,6 +38,9 @@ PLOT_THROUGHPUT = None
 PLOT_THROUGHPUT_AMOUNT = None
 PLOT_LINES = [None]*START_INTERVAL
 NEW_DATA = [ ]
+
+NOTIFICATION_SOUND = "/home/pavlo/Dropbox/optimized.wav"
+NOTIFICATION_CMD = "aplay" # linux alsa 
 
 ## -------------------------------------------------
 ## CustomAxis
@@ -149,6 +153,15 @@ def execBenchmark():
         PLOT_THROUGHPUT_AMOUNT = nextPoint
     ## FOR (iterator)
     FINISHED = True
+    notification()
+## DEF
+
+## -------------------------------------------------
+## NOTIFICATION
+## -------------------------------------------------
+def notification():
+    cmd = [ NOTIFICATION_CMD, NOTIFICATION_SOUND ]
+    subprocess.call(cmd)
 ## DEF
 
 ## -------------------------------------------------
