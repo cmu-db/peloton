@@ -226,7 +226,7 @@ class Index : public Printable {
   virtual void Scan(const std::vector<type::Value> &value_list,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
-                    const ScanDirectionType &scan_direction,
+                    ScanDirectionType scan_direction,
                     std::vector<ItemPointer *> &result,
                     const ConjunctionScanPredicate *csp_p) = 0;
 

@@ -127,7 +127,8 @@ void BWTREE_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-    const ScanDirectionType &scan_direction, std::vector<ValueType> &result,
+    ScanDirectionType scan_direction, 
+    std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p) {
   // This is a hack - we do not support backward scan
   if (scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
@@ -205,7 +206,7 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-    const ScanDirectionType &scan_direction, 
+    ScanDirectionType scan_direction, 
     std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p,
     uint64_t limit,
