@@ -40,6 +40,9 @@ bool OrderByExecutor::DInit() {
   sort_done_ = false;
   num_tuples_returned_ = 0;
 
+  // Recursively init all children
+  InitResultOrderFlag(order_, columns_, descend_);
+
   return true;
 }
 
@@ -73,8 +76,8 @@ bool OrderByExecutor::DExecute() {
         sort_buffer_[num_tuples_returned_ + id].item_pointer.offset;
     // Insert a physical tuple into physical tile
     for (oid_t col = 0; col < input_schema_->GetColumnCount(); col++) {
-      type::Value val = (
-          input_tiles_[source_tile_id]->GetValue(source_tuple_id, col));
+      type::Value val =
+          (input_tiles_[source_tile_id]->GetValue(source_tuple_id, col));
       ptile.get()->SetValue(val, id, col);
     }
   }
@@ -140,8 +143,8 @@ bool OrderByExecutor::DoSort() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(sort_key_tuple_schema_.get(), true));
       for (oid_t id = 0; id < node.GetSortKeys().size(); id++) {
-        type::Value val = (
-            input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]));
+        type::Value val =
+            (input_tiles_[tile_id]->GetValue(tuple_id, node.GetSortKeys()[id]));
         tuple->SetValue(id, val, executor_pool);
       }
       // Inert the sort key tuple into sort buffer
@@ -160,22 +163,19 @@ bool OrderByExecutor::DoSort() {
 
     bool operator()(const storage::Tuple *ta, const storage::Tuple *tb) {
       for (oid_t id = 0; id < descend_flags.size(); id++) {
-        type::Value va =(ta->GetValue(id));
+        type::Value va = (ta->GetValue(id));
         type::Value vb = (tb->GetValue(id));
         if (!descend_flags[id]) {
           if (va.CompareLessThan(vb) == type::CMP_TRUE)
             return true;
           else {
-            if (va.CompareGreaterThan(vb) == type::CMP_TRUE)
-              return false;
+            if (va.CompareGreaterThan(vb) == type::CMP_TRUE) return false;
           }
-        }
-        else {
+        } else {
           if (vb.CompareLessThan(va) == type::CMP_TRUE)
             return true;
           else {
-            if (vb.CompareGreaterThan(va) == type::CMP_TRUE)
-            return false;
+            if (vb.CompareGreaterThan(va) == type::CMP_TRUE) return false;
           }
         }
       }

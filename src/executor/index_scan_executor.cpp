@@ -331,8 +331,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -371,7 +371,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    //    // Limit clause accelerate
+    // Limit clause accelerate
     if (limit_) {
       // invoke index scan limit
       if (!descend_) {
@@ -476,9 +476,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          eval =
-              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
-                  .IsTrue();
+          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
+                                      executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -559,8 +558,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -800,8 +799,8 @@ void IndexScanExecutor::UpdatePredicate(
   }
 
   // Update the new value
-  index_predicate_.GetConjunctionListToSetup()[0].SetTupleColumnValue(
-      index_.get(), key_column_ids, values);
+  index_predicate_.GetConjunctionListToSetup()[0]
+      .SetTupleColumnValue(index_.get(), key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {

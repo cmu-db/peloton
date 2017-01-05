@@ -84,8 +84,8 @@ class AbstractExecutor {
   // columns. For example, order_by executor will pass a empty column
   // vector to index scan executor. The passing column vector is a reference.
   // The index executor will
-  void InitResultOrderFlag(bool &order, std::vector<oid_t> &columns,
-                           bool &descend);
+  virtual void InitResultOrderFlag(bool &order, std::vector<oid_t> &columns,
+                                   bool &descend);
 
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor

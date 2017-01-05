@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "type/types.h"
@@ -92,6 +91,10 @@ class OrderByExecutor : public AbstractExecutor {
 
   /** How many tuples have been returned to parent */
   size_t num_tuples_returned_ = 0;
+
+  bool order_ = false;
+  std::vector<oid_t> columns_;
+  bool descend_ = false;
 };
 
 } /* namespace executor */
