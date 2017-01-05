@@ -13,7 +13,6 @@
 #include <algorithm>
 
 #include "common/logger.h"
-#include "type/varlen_pool.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/order_by_executor.h"

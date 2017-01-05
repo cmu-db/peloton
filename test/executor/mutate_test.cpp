@@ -21,7 +21,6 @@
 
 #include "catalog/schema.h"
 #include "type/value_factory.h"
-#include "type/varlen_pool.h"
 #include "catalog/catalog.h"
 
 #include "executor/executor_context.h"
@@ -63,7 +62,7 @@ class MutateTests : public PelotonTest {};
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::DataTable *table, type::VarlenPool *pool,
+void InsertTuple(storage::DataTable *table, type::AbstractPool *pool,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();

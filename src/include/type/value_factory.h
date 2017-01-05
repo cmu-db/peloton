@@ -22,7 +22,7 @@ namespace type {
 class ValueFactory {
  public:
   static inline Value Clone(const Value &src,
-                            UNUSED_ATTRIBUTE VarlenPool *dataPool = nullptr) {
+                            UNUSED_ATTRIBUTE AbstractPool *dataPool = nullptr) {
     return src.Copy();
   }
 
@@ -69,24 +69,24 @@ class ValueFactory {
 
   static inline Value GetVarcharValue(
       const char *value, bool manage_data,
-      UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+      UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     return Value(Type::VARCHAR, value, value == nullptr ? 0 : strlen(value) + 1,
                  manage_data);
   }
 
   static inline Value GetVarcharValue(
-      const std::string &value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+      const std::string &value, UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     return Value(Type::VARCHAR, value);
   }
 
   static inline Value GetVarbinaryValue(
-      const std::string &value, UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+      const std::string &value, UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     return Value(Type::VARBINARY, value);
   }
 
   static inline Value GetVarbinaryValue(
       const unsigned char *rawBuf, int32_t rawLength, bool manage_data,
-      UNUSED_ATTRIBUTE VarlenPool *pool = nullptr) {
+      UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
     return Value(Type::VARBINARY, (const char *)rawBuf, rawLength, manage_data);
   }
 

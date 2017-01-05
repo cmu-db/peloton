@@ -143,8 +143,8 @@ class StatsAggregator {
   // Whether the aggregator is running
   bool is_aggregating_ = false;
 
-  // Varlen Pool to hold query strings
-  std::unique_ptr<type::VarlenPool> pool_;
+  // Abstract Pool to hold query strings
+  std::unique_ptr<type::AbstractPool> pool_;
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS

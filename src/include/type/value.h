@@ -23,7 +23,6 @@
 
 #include "type/serializeio.h"
 #include "type/type.h"
-#include "type/varlen_pool.h"
 
 namespace peloton {
 namespace type {
@@ -252,13 +251,13 @@ class Value : public Printable {
   inline static Value DeserializeFrom(const char *storage,
                                       const Type::TypeId type_id,
                                       const bool inlined,
-                                      VarlenPool *pool = nullptr) {
+                                      AbstractPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(storage, inlined, pool);
   }
 
   inline static Value DeserializeFrom(SerializeInput &in,
                                       const Type::TypeId type_id,
-                                      VarlenPool *pool = nullptr) {
+                                      AbstractPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
   }
 

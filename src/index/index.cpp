@@ -16,7 +16,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "storage/tuple.h"
-#include "type/varlen_pool.h"
+#include "type/ephemeral_pool.h"
 
 #include "index/scan_optimizer.h"
 
@@ -128,7 +128,7 @@ Index::Index(IndexMetadata *metadata)
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 
   // initialize pool
-  pool = new type::VarlenPool(BACKEND_TYPE_MM);
+  pool = new type::EphemeralPool();
 
   return;
 }

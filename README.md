@@ -9,10 +9,13 @@
 
 ## What Is Peloton?
 
-* Peloton is a self-driving in-memory relational DBMS for real-time analytics. 
-* It contains domain-specific AI for automatically adapting to evolving real-world workloads. 
-* It is designed from the ground up to leverage the characteristics of non-volatile memory.
-* It can handle both fast ACID transactions and complex analytical queries on the same database. 
+* Peloton is a self-driving SQL database management system.
+* Integrated artificial intelligence components that enable autonomous optimizations.
+* Native support for byte-addressable non-volatile memory (NVM) storage technology.
+* Lock-free multi-version concurrency control to support real-time analytics.
+* Postgres wire-protocol and JDBC compatible.
+* High-performance, lock-free Bw-Tree for indexing.
+* 100% Open-Source (Apache Software License v2.0).
 
 ## What Problem Does Peloton Solve?
 

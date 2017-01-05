@@ -17,7 +17,7 @@
 #include "catalog/schema.h"
 #include "type/serializer.h"
 #include "type/serializeio.h"
-#include "type/varlen_pool.h"
+#include "type/abstract_pool.h"
 #include "common/printable.h"
 
 #include <mutex>
@@ -160,11 +160,11 @@ class Tile : public Printable {
                          int num_tuples);
 
   void DeserializeTuplesFrom(SerializeInput &serialize_in,
-                             type::VarlenPool *pool = nullptr);
+                             type::AbstractPool *pool = nullptr);
   void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                          type::VarlenPool *pool = nullptr);
+                                          type::AbstractPool *pool = nullptr);
 
-  type::VarlenPool *GetPool() { return (pool); }
+  type::AbstractPool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_offset) const;
 
@@ -195,7 +195,7 @@ class Tile : public Printable {
   TileGroup *tile_group;
 
   // storage pool for uninlined data
-  type::VarlenPool *pool;
+  type::AbstractPool *pool;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;

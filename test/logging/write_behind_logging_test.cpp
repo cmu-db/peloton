@@ -95,10 +95,11 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   ItemPointer *index_entry_ptr = nullptr;
 
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
-  std::unique_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+
   txn_manager.SetNextCid(1);
   auto txn = txn_manager.BeginTransaction();
-  auto tuple = ExecutorTestsUtil::GetTuple(table.get(), 1, pool.get());
+  auto tuple = ExecutorTestsUtil::GetTuple(table.get(), 1, pool);
   index_entry_ptr = nullptr;
   auto visible1 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
   txn_manager.PerformInsert(txn, visible1, index_entry_ptr);
@@ -106,7 +107,7 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
 
   // got cid 2
   txn = txn_manager.BeginTransaction();
-  tuple = ExecutorTestsUtil::GetTuple(table.get(), 2, pool.get());
+  tuple = ExecutorTestsUtil::GetTuple(table.get(), 2, pool);
   index_entry_ptr = nullptr;
   auto visible2 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
   txn_manager.PerformInsert(txn, visible2, index_entry_ptr);
@@ -114,7 +115,7 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   
   // got cid 3
   txn = txn_manager.BeginTransaction();
-  tuple = ExecutorTestsUtil::GetTuple(table.get(), 3, pool.get());
+  tuple = ExecutorTestsUtil::GetTuple(table.get(), 3, pool);
   index_entry_ptr = nullptr;
   auto invisible1 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
   txn_manager.PerformInsert(txn, invisible1, index_entry_ptr);
@@ -122,7 +123,7 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   
   // got cid 4
   txn = txn_manager.BeginTransaction();
-  tuple = ExecutorTestsUtil::GetTuple(table.get(), 4, pool.get());
+  tuple = ExecutorTestsUtil::GetTuple(table.get(), 4, pool);
   index_entry_ptr = nullptr;
   auto invisible2 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
   txn_manager.PerformInsert(txn, invisible2, index_entry_ptr);
@@ -130,7 +131,7 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   
   // got cid 5
   txn = txn_manager.BeginTransaction();
-  tuple = ExecutorTestsUtil::GetTuple(table.get(), 5, pool.get());
+  tuple = ExecutorTestsUtil::GetTuple(table.get(), 5, pool);
   index_entry_ptr = nullptr;
   auto visible3 = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
   txn_manager.PerformInsert(txn, visible3, index_entry_ptr);

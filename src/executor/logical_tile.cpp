@@ -469,9 +469,8 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
         LOG_TRACE("data length: %ld", data_length);
         char *val_binary = new char[data_length];
         bool is_inlined = false;
-        type::VarlenPool *pool = nullptr;
 
-        val.SerializeTo(val_binary, is_inlined, pool);
+        val.SerializeTo(val_binary, is_inlined, nullptr);
 
         // convert little endian to big endian...
         // TODO: This is stupid.... But I think this hack is fine for now.

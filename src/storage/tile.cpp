@@ -18,7 +18,7 @@
 #include "common/macros.h"
 #include "type/serializer.h"
 #include "type/types.h"
-#include "type/varlen_pool.h"
+#include "type/ephemeral_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
@@ -63,7 +63,7 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
 
   // allocate pool for blob storage if schema not inlined
   // if (schema.IsInlined() == false) {
-  pool = new type::VarlenPool(backend_type);
+  pool = new type::EphemeralPool();
   //}
 }
 
@@ -377,7 +377,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
  * @param allow_export if false, export enabled is overriden for this load.
  */
 void Tile::DeserializeTuplesFrom(SerializeInput &input,
-                                 type::VarlenPool *pool) {
+                                 type::AbstractPool *pool) {
   /*
    * Directly receives a Tile buffer.
    * [00 01]   [02 03]   [04 .. 0x]
@@ -442,7 +442,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input,
  * @param allow_export if false, export enabled is overriden for this load.
  */
 void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input,
-                                              type::VarlenPool *pool) {
+                                              type::AbstractPool *pool) {
   oid_t tuple_count = input.ReadInt();
   PL_ASSERT(tuple_count > 0);
 

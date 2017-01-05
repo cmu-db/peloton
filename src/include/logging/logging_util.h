@@ -17,6 +17,7 @@
 #include "logging/records/tuple_record.h"
 #include "storage/data_table.h"
 #include "type/types.h"
+#include "type/ephemeral_pool.h"
 
 namespace peloton {
 namespace logging {
@@ -55,7 +56,7 @@ class LoggingUtil {
                                     FileHandle &file_handle);
 
   static storage::Tuple *ReadTupleRecordBody(const catalog::Schema *schema,
-                                             type::VarlenPool *pool,
+                                             type::AbstractPool *pool,
                                              FileHandle &file_handle);
 
   static void SkipTupleRecordBody(FileHandle &file_handle);

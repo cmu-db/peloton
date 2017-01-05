@@ -25,12 +25,8 @@
 #include "type/types.h"
 #include "gc/gc_manager_factory.h"
 
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-
-#include "libcds/cds/init.h"
 
 #include <google/protobuf/stubs/common.h>
 #include <gflags/gflags.h>
@@ -38,7 +34,7 @@
 namespace peloton {
 
 namespace type{
-class VarlenPool;
+class AbstractPool;
 }
 
 namespace test {
@@ -66,7 +62,7 @@ class TestingHarness {
 
   txn_id_t GetNextTransactionId();
 
-  type::VarlenPool *GetTestingPool();
+  type::AbstractPool *GetTestingPool();
 
   oid_t GetNextTileGroupId();
 
@@ -83,7 +79,7 @@ class TestingHarness {
   std::atomic<oid_t> tile_group_id_counter;
 
   // Testing pool
-  std::unique_ptr<type::VarlenPool> pool_;
+  std::unique_ptr<type::AbstractPool> pool_;
 };
 
 template <typename... Args>
@@ -110,22 +106,13 @@ class PelotonTest : public ::testing::Test {
  protected:
 
   virtual void SetUp() {
-    // Initialize CDS library
-    cds::Initialize();
-
-    // Attach thread to cds
-    cds::threading::Manager::attachThread();
 
     // turn off gc under test mode
     gc::GCManagerFactory::Configure(0);
+
   }
 
   virtual void TearDown() {
-    // Detach thread from cds
-    cds::threading::Manager::detachThread();
-
-    // Terminate CDS library
-    cds::Terminate();
 
     // shutdown protocol buf library
     google::protobuf::ShutdownProtobufLibrary();

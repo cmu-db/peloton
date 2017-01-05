@@ -45,8 +45,6 @@ index::Index *BuildIndex(const bool unique_keys) {
   // Identify the index type to simplify things
   if (index_type == INDEX_TYPE_BWTREE) {
     LOG_INFO("Build index type: peloton::index::BwTree");
-  } else if (index_type == INDEX_TYPE_BTREE) {
-    LOG_INFO("Build index type: stx::BTree");
   } else {
     LOG_INFO("Build index type: Other type");
   }
@@ -158,7 +156,7 @@ TEST_F(IndexTests, BasicTest) {
 }
 
 // INSERT HELPER FUNCTION
-void InsertTest(index::Index *index, type::VarlenPool *pool,
+void InsertTest(index::Index *index, type::AbstractPool *pool,
                 size_t scale_factor, UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
@@ -217,7 +215,7 @@ void InsertTest(index::Index *index, type::VarlenPool *pool,
 }
 
 // DELETE HELPER FUNCTION
-void DeleteTest(index::Index *index, type::VarlenPool *pool,
+void DeleteTest(index::Index *index, type::AbstractPool *pool,
                 size_t scale_factor, UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {

@@ -64,7 +64,7 @@ TEST_F(ValueTests, VarcharCopyTest) {
 
   // Try it once with and without a pool
   for (int i = 0; i < 2; i++) {
-    type::VarlenPool *pool = nullptr;
+    type::AbstractPool *pool = nullptr;
     if (i == 0) {
       pool = TestingHarness::GetInstance().GetTestingPool();
     }

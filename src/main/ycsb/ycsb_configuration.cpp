@@ -61,7 +61,7 @@ static struct option opts[] = {
 };
 
 void ValidateIndex(const configuration &state) {
-  if (state.index != INDEX_TYPE_BTREE && state.index != INDEX_TYPE_BWTREE) {
+  if (state.index != INDEX_TYPE_BWTREE && state.index != INDEX_TYPE_BWTREE) {
     LOG_ERROR("Invalid index");
     exit(EXIT_FAILURE);
   }
@@ -174,9 +174,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     switch (c) {
       case 'i': {
         char *index = optarg;
-        if (strcmp(index, "btree") == 0) {
-          state.index = INDEX_TYPE_BTREE;
-        } else if (strcmp(index, "bwtree") == 0) {
+        if (strcmp(index, "bwtree") == 0) {
           state.index = INDEX_TYPE_BWTREE;
         } else {
           LOG_ERROR("Unknown index: %s", index);
