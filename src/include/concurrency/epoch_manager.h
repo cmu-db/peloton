@@ -80,17 +80,8 @@ public:
       finish_(false) {
   }
 
-  void Reset() {
-    epoch_queue_.clear();
-    epoch_queue_.resize(epoch_queue_size_);
-    queue_tail_ = 0;
-    reclaim_tail_ = 0; 
-    current_epoch_ = 0;
-    queue_tail_token_ = true;
-    reclaim_tail_token_ = true;
-    max_cid_ro_ = READ_ONLY_START_CID; 
-    max_cid_gc_ = 0; 
-    finish_ = false;
+  void Reset(const size_t &current_epoch) {
+    current_epoch_ = current_epoch;
   }
 
   void StartEpoch() {
