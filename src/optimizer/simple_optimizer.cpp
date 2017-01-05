@@ -151,6 +151,15 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                                                         needs_projection);
       }
 
+      //Adds order by column to column ids if it was not added through select_list
+      //No problem given that the underlying structure is a map.
+      if(select_stmt->order != nullptr) {
+
+        expression::ExpressionUtil::TransformExpression(
+            column_ids, select_stmt->order->expr, schema, needs_projection);
+
+      }
+
       // Check if there are any aggregate functions
       bool agg_flag = false;
       for (auto expr : *select_stmt->getSelectList()) {
@@ -288,11 +297,13 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               ((expression::TupleValueExpression*)select_stmt->order->expr)
                   ->GetColumnName());
           for (size_t column_ctr = 0;
-               column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            std::string col_name((
-                (expression::TupleValueExpression*)select_stmt->select_list->at(
-                    column_ctr))->GetColumnName());
-            if (col_name == sort_col_name) key.push_back(column_ctr);
+               column_ctr < target_table->GetSchema()->GetColumns().size(); column_ctr++) {
+            std::string col_name(target_table->GetSchema()->GetColumns().at(column_ctr).GetName());
+            if (col_name == sort_col_name) {
+                //The column_ctr is not reliable anymore given that we are looking to the whole schema.
+                //Since the columns were added in the column_ids, it is safe to retrieve only those indexes.
+                key.push_back(find(column_ids.begin(), column_ids.end(), column_ctr) - column_ids.begin());
+            }
           }
           if (key.size() == 0) {
             LOG_ERROR(
