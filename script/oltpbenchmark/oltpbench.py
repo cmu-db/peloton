@@ -51,7 +51,7 @@ def executeBenchmark(create=True, load=True, execute=False, interval=1000):
 ## DEF
 
 def pollFile(path):
-    cmd = [ "tail", "-F", path ]
+    cmd = [ "tail", "-F", "-n", "0", path ]
     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
     for line in iter(popen.stdout.readline, ""):
         yield line.strip()

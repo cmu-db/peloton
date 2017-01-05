@@ -26,6 +26,9 @@ BENCHMARK_INTERVAL = 1000 # ms
 FINISHED = False
 START_INTERVAL = 300
 
+PLOT_WIDTH = 800
+PLOT_HEIGHT = 250
+
 p = None
 PLOT_DATA = [0]*START_INTERVAL
 PLOT_LOCATION = 0
@@ -164,7 +167,7 @@ def pollPelotonLog():
 if __name__ == '__main__':
     # Initialize graph
     win = pg.GraphicsWindow(title="Peloton")
-    win.resize(1000,300)
+    win.resize(PLOT_WIDTH, PLOT_HEIGHT)
 
     customAxis = CustomAxis(orientation='bottom')
     #plot = win.addPlot()
