@@ -46,6 +46,8 @@ void IndexTuner::Start() {
 
   // Launch thread
   index_tuner_thread = std::thread(&brain::IndexTuner::Tune, this);
+
+  LOG_INFO("Started index tuner");
 }
 
 // Add an ad-hoc index
@@ -525,7 +527,7 @@ void IndexTuner::Tune() {
 
     // Sleep a bit if needed
     if (duration > duration_between_pauses) {
-      LOG_INFO("TUNER PAUSE : %.0lf", duration);
+      LOG_DEBUG("TUNER PAUSE : %.0lf", duration);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
       pause_timer.Reset();
       pause_timer.Start();
@@ -539,6 +541,8 @@ void IndexTuner::Stop() {
 
   // Stop thread
   index_tuner_thread.join();
+
+  LOG_INFO("Stopped index tuner");
 }
 
 void IndexTuner::AddTable(storage::DataTable* table) {
