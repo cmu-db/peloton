@@ -210,13 +210,17 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const ConjunctionScanPredicate *csp_p,
     uint64_t limit,
     uint64_t offset) {
-  (void)limit;
-  (void)offset;
-  (void)scan_direction;
   LOG_TRACE("ScanLimit() Point Query = %d; Full Scan = %d ", 
             csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
 
+  if(csp_p->IsPointQuery() == false && \
+     limit == 1 && \
+     offset == 0 && \
+     scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
+    
+  }
+/*
   if (csp_p->IsPointQuery() == true) {
     const storage::Tuple *point_query_tuple_key_p = csp_p->GetPointQueryKey();
 
@@ -262,7 +266,8 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }
-  
+*/
+
   return;
 }
 
