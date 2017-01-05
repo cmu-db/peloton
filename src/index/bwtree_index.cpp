@@ -115,6 +115,13 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   return ret;
 }
 
+/*
+ * Scan() - Scans a range inside the index using index scan optimizer
+ *
+ * The scan optimizer specifies whether a scan is point query, full scan
+ * or interval scan. For all of these cases the corresponding functions from
+ * the index is called, and all elements are returned in result vector
+ */
 BWTREE_TEMPLATE_ARGUMENTS
 void BWTREE_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
