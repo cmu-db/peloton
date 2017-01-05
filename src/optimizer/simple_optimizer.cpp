@@ -1261,8 +1261,6 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
                                        uint64_t limit, uint64_t offset,
                                        bool descent) {
   // Set the flag for the underlying index scan plan
-  // SetIndexScanFlag(planner::AbstractPlan child_SelectPlan, uint64_t
-  // limit, uint64_t offset, bool descent);
   planner::IndexScanPlan* index_scan_plan = nullptr;
 
   // child_SelectPlan is projection plan or scan plan

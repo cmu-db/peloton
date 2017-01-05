@@ -165,15 +165,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     // Limit clause accelerate
-    //    if (limit_) {
-    //      // invoke index scan limit
-    //    }
-    //    // Normal SQL (without limit)
-    //    else {
-    index_->Scan(values_, key_column_ids_, expr_types_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &index_predicate_.GetConjunctionList()[0]);
-    //    }
+    if (limit_) {
+      // invoke index scan limit
+    }
+    // Normal SQL (without limit)
+    else {
+      index_->Scan(values_, key_column_ids_, expr_types_,
+                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                   &index_predicate_.GetConjunctionList()[0]);
+    }
 
     LOG_TRACE("tuple_location_ptrs:%lu", tuple_location_ptrs.size());
   }
@@ -361,19 +361,20 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   } else {
 
     //    // Limit clause accelerate
-    //    if (limit_) {
-    //      // invoke index scan limit
-    //      index_->ScanLimit(values_, key_column_ids_, expr_types_,
-    //                        SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-    //                        &index_predicate_.GetConjunctionList()[0],
-    //                        limit_number_, limit_offset_);
-    //    }
-    //    // Normal SQL (without limit)
-    //    else {
-    index_->Scan(values_, key_column_ids_, expr_types_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                 &index_predicate_.GetConjunctionList()[0]);
-    //    }
+    if (limit_) {
+      // invoke index scan limit
+      //      index_->ScanLimit(values_, key_column_ids_, expr_types_,
+      //                        SCAN_DIRECTION_TYPE_FORWARD,
+      // tuple_location_ptrs,
+      //                        &index_predicate_.GetConjunctionList()[0],
+      //                        limit_number_, limit_offset_);
+    }
+    // Normal SQL (without limit)
+    else {
+      index_->Scan(values_, key_column_ids_, expr_types_,
+                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                   &index_predicate_.GetConjunctionList()[0]);
+    }
   }
 
   if (tuple_location_ptrs.size() == 0) {
@@ -419,7 +420,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     // the following code traverses the version chain until a certain visible
     // version is found.
     // we should always find a visible version from a version chain.
-    // different from primary key index lookup, we have to compare the secondary
+    // different from primary key index lookup, we have to compare the
+    // secondary
     // key to guarantee the correctness of the result.
     size_t chain_length = 0;
     while (true) {
@@ -758,9 +760,11 @@ void IndexScanExecutor::UpdatePredicate(
 
     // If new value doesn't exist in current value list, add it.
     // For the current simple optimizer, since all the key column ids must be
-    // initiated when creating index_scan_plan, we don't need to examine whether
+    // initiated when creating index_scan_plan, we don't need to examine
+    // whether
     // the passing column and value exist or not (they definitely exist). But
-    // for the future optimizer, we probably change the logic. So we still keep
+    // for the future optimizer, we probably change the logic. So we still
+    // keep
     // the examine code here.
     if (current_idx == values_.size()) {
       LOG_TRACE("Add new column for index predicate:%u-%s",

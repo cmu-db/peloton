@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "type/value.h"
 #include "common/logger.h"
 #include "executor/abstract_executor.h"
@@ -100,10 +99,12 @@ void AbstractExecutor::SetContext(type::Value &value) {
   executor_context_->SetParams(value);
 }
 
-void AbstractExecutor::ClearContext() {
-  executor_context_->ClearParams();
-}
+void AbstractExecutor::ClearContext() { executor_context_->ClearParams(); }
 
-
+// TODO: To be implemented in the next PR
+void AbstractExecutor::InitResultOrderFlag(bool &order UNUSED_ATTRIBUTE,
+                                           std::vector<oid_t> &columns
+                                               UNUSED_ATTRIBUTE,
+                                           bool &descend UNUSED_ATTRIBUTE) {}
 }  // namespace executor
 }  // namespace peloton
