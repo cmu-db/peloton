@@ -210,6 +210,8 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const ConjunctionScanPredicate *csp_p,
     uint64_t limit,
     uint64_t offset) {
+  (void)limit;
+  (void)offset;
   LOG_TRACE("ScanLimit() Point Query = %d; Full Scan = %d ", 
             csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
