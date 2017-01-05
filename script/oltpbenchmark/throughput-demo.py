@@ -27,8 +27,8 @@ BENCHMARK_INTERVAL = 1000 # ms
 FINISHED = False
 START_INTERVAL = 300
 
-PLOT_WIDTH = 800
-PLOT_HEIGHT = 250
+PLOT_WIDTH = 1900
+PLOT_HEIGHT = 200
 
 p = None
 PLOT_DATA = [0]*START_INTERVAL
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     titleStyle = {'color': '#FFF', 'font-size': '50pt'}
     p.setTitle("<font size=\"64\">Self-Driving Demo</font>", **titleStyle)
 
-    labelStyle = {'color': '#FFF', 'font-size': '16pt'}
+    labelStyle = {} # {'color': '#FFF', 'font-size': '14pt'}
     p.setLabel('left', "Throughput", units='txn/sec', **labelStyle) 
     p.setLabel('bottom', "Elapsed Time", **labelStyle) 
     #ax = p.getAxis('bottom')
