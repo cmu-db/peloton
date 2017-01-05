@@ -1272,7 +1272,7 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
           (planner::IndexScanPlan*)select_plan->GetChildren()[0].get();
     }
   }
-  // other wise child_SelectPlan itself is scan plan
+  // otherwise child_SelectPlan itself is scan plan
   else {
     // child_SelectPlan is index_scan or seq_scan
     if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_INDEXSCAN) {
