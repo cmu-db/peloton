@@ -33,7 +33,7 @@ public:
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(true) { }
+  GCManager() : is_running_(false) { }
 
   virtual ~GCManager() { }
 
@@ -42,8 +42,10 @@ public:
     return gc_manager;
   }
 
+  virtual void Reset() { is_running_ = false; }
+
   // Get status of whether GC thread is running or not
-  virtual bool GetStatus() { return this->is_running_; }
+  bool GetStatus() { return this->is_running_; }
 
   virtual void StartGC() {}
 
@@ -57,12 +59,15 @@ public:
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) { }
 
+  virtual size_t GetTableCount() { return 0; }
+
   virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set UNUSED_ATTRIBUTE, 
                                    const cid_t &timestamp UNUSED_ATTRIBUTE,
                                    const GCSetType gc_set_type UNUSED_ATTRIBUTE) {}
 
-private:
-  bool is_running_;
+protected:
+  volatile bool is_running_;
+
 };
 
 }  // namespace gc

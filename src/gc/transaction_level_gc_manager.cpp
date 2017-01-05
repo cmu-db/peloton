@@ -22,14 +22,10 @@ namespace peloton {
 namespace gc {
 
 void TransactionLevelGCManager::StartGC(int thread_id) {
-  LOG_TRACE("Starting GC");
-  this->is_running_ = true;
   gc_threads_[thread_id].reset(new std::thread(&TransactionLevelGCManager::Running, this, thread_id));
 }
 
 void TransactionLevelGCManager::StopGC(int thread_id) {
-  LOG_TRACE("Stopping GC");
-  this->is_running_ = false;
   this->gc_threads_[thread_id]->join();
   ClearGarbage(thread_id);
 }
@@ -74,8 +70,8 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     }
 
     if (reclaimed_count == 0 && unlinked_count == 0) {
-      // sleep at most 3.2768 s
-      if (backoff_shifts < 15) {
+      // sleep at most 0.8192 s
+      if (backoff_shifts < 13) {
         ++backoff_shifts;
       }
       uint64_t sleep_duration = 1UL << backoff_shifts;
@@ -89,9 +85,10 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 
 
 void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType gc_set_type) {
-    // Add the garbage context to the lockfree queue
-    std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp, gc_set_type));
-    unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
+
+  // Add the garbage context to the lock-free queue
+  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp, gc_set_type));
+  unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
 int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid) {
@@ -109,6 +106,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
       if (res == true) {
         DeleteFromIndexes(garbage_ctx);
         // Add to the garbage map
+
         garbages.push_back(garbage_ctx);
         tuple_counter++;
       }
@@ -125,6 +123,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
     }
 
     if (garbage_ctx->timestamp_ < max_cid) {
+
       // as the max timestamp of committed transactions is larger than the gc's timestamp,
       // it means that no active transactions can read it.
       // so we can unlink it.
@@ -217,8 +216,13 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
-  PL_ASSERT(recycle_queue_map_.count(table_id) != 0);
+  // for catalog tables, we directly return invalid item pointer.
+  if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
+    return INVALID_ITEMPOINTER;
+  }
+
   ItemPointer location;
+  PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
   auto recycle_queue = recycle_queue_map_[table_id];
 
   if (recycle_queue->Dequeue(location) == true) {

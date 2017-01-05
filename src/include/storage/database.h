@@ -49,7 +49,7 @@ class Database : public Printable {
   // TABLE
   //===--------------------------------------------------------------------===//
 
-  void AddTable(storage::DataTable *table);
+  void AddTable(storage::DataTable *table, bool is_catalog = false);
 
   storage::DataTable *GetTable(const oid_t table_offset) const;
 

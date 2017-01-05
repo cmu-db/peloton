@@ -102,6 +102,10 @@ class Transaction : public Printable {
     return gc_set_;
   }
 
+  inline bool IsGCSetEmpty() {
+    return gc_set_->size() == 0;
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
