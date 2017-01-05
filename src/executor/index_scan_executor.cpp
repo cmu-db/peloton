@@ -165,15 +165,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     // Limit clause accelerate
-    if (limit_) {
-      // invoke index scan limit
-    }
-    // Normal SQL (without limit)
-    else {
-      index_->Scan(values_, key_column_ids_, expr_types_,
-                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                   &index_predicate_.GetConjunctionList()[0]);
-    }
+    //    if (limit_) {
+    //      // invoke index scan limit
+    //    }
+    //    // Normal SQL (without limit)
+    //    else {
+    index_->Scan(values_, key_column_ids_, expr_types_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                 &index_predicate_.GetConjunctionList()[0]);
+    //    }
 
     LOG_TRACE("tuple_location_ptrs:%lu", tuple_location_ptrs.size());
   }
@@ -360,20 +360,20 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
 
-    // Limit clause accelerate
-    if (limit_) {
-      // invoke index scan limit
-      index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                        SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                        &index_predicate_.GetConjunctionList()[0],
-                        limit_number_, limit_offset_);
-    }
-    // Normal SQL (without limit)
-    else {
-      index_->Scan(values_, key_column_ids_, expr_types_,
-                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
-                   &index_predicate_.GetConjunctionList()[0]);
-    }
+    //    // Limit clause accelerate
+    //    if (limit_) {
+    //      // invoke index scan limit
+    //      index_->ScanLimit(values_, key_column_ids_, expr_types_,
+    //                        SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+    //                        &index_predicate_.GetConjunctionList()[0],
+    //                        limit_number_, limit_offset_);
+    //    }
+    //    // Normal SQL (without limit)
+    //    else {
+    index_->Scan(values_, key_column_ids_, expr_types_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                 &index_predicate_.GetConjunctionList()[0]);
+    //    }
   }
 
   if (tuple_location_ptrs.size() == 0) {

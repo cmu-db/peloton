@@ -245,9 +245,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 "Not supported: Ordering column is not an element of select "
                 "list!");
           }
-          std::unique_ptr<planner::OrderByPlan> order_by_plan(
-              new planner::OrderByPlan(key, flags, keys));
-          order_by_plan->AddChild(std::move(child_SelectPlan));
+
+          // Get offset
           int offset = select_stmt->limit->offset;
           if (offset < 0) {
             offset = 0;
@@ -259,6 +258,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
                            offset, flags.front());
 
+          // Create order_by_plan
+          std::unique_ptr<planner::OrderByPlan> order_by_plan(
+              new planner::OrderByPlan(key, flags, keys));
+          order_by_plan->AddChild(std::move(child_SelectPlan));
+
+          // Create limit_plan
           std::unique_ptr<planner::LimitPlan> limit_plan(
               new planner::LimitPlan(select_stmt->limit->limit, offset));
           limit_plan->AddChild(std::move(order_by_plan));
@@ -313,6 +318,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
                            offset);
 
+          // Create limit_plan
           std::unique_ptr<planner::LimitPlan> limit_plan(
               new planner::LimitPlan(select_stmt->limit->limit, offset));
           limit_plan->AddChild(std::move(child_SelectPlan));
