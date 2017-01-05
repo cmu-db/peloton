@@ -212,6 +212,7 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     uint64_t offset) {
   (void)limit;
   (void)offset;
+  (void)scan_direction;
   LOG_TRACE("ScanLimit() Point Query = %d; Full Scan = %d ", 
             csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
