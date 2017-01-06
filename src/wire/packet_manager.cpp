@@ -72,6 +72,34 @@ PacketManager::~PacketManager() {
   }
 }
 
+void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
+  if (table_statement_cache_.find(table_id) == table_statement_cache_.end()) {
+    return;
+  }
+  for (auto statement : table_statement_cache_[table_id]) {
+    statement->SetNeedsPlan(true);
+  }
+}
+
+void PacketManager::ReplanPreparedStatement(Statement *statement) {
+  std::string error_message;
+  auto new_statement = traffic_cop_->PrepareStatement(
+      statement->GetStatementName(), statement->GetQueryString(),
+      error_message);
+  // But then rip out its query plan and stick it in our old statement
+  if (new_statement.get() == nullptr) {
+    LOG_ERROR(
+        "Failed to generate a new query plan for PreparedStatement '%s'\n%s",
+        statement->GetStatementName().c_str(), error_message.c_str());
+  } else {
+    auto old_plan = statement->GetPlanTree();
+    auto new_plan = new_statement->GetPlanTree();
+    statement->SetPlanTree(new_plan);
+    new_statement->SetPlanTree(old_plan);
+    statement->SetNeedsPlan(false);
+  }
+}
+
 void PacketManager::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -368,7 +396,6 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   } else {
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
-
     for (auto table_id : statement->GetReferencedTables()) {
       table_statement_cache_[table_id].push_back(statement.get());
     }
@@ -413,6 +440,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   std::shared_ptr<Statement> statement;
   stats::QueryMetric::QueryParamBuf param_type_buf;
 
+  // UNNAMED STATEMENT
   if (statement_name.empty()) {
     statement = unnamed_statement_;
     param_type_buf = unnamed_stmt_param_types_;
@@ -424,16 +452,16 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
     }
+    // NAMED STATEMENT
   } else {
     auto statement_cache_itr = statement_cache_.find(statement_name);
-    // Did not find statement with same name
     if (statement_cache_itr != statement_cache_.end()) {
       statement = *statement_cache_itr;
       param_type_buf = statement_param_types_[statement_name];
     }
-    // Found statement with same name
+    // Did not find statement with same name
     else {
-      std::string error_message = "Prepared statement name already exists";
+      std::string error_message = "The prepared statement does not exist";
       LOG_ERROR("%s", error_message.c_str());
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
@@ -445,7 +473,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
 
   // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
-  if (!HardcodedExecuteFilter(query_type)) {
+  if (HardcodedExecuteFilter(query_type) == false) {
     skipped_stmt_ = true;
     skipped_query_string_ = query_string;
     std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -453,6 +481,12 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
     response->msg_type = BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
+  }
+
+  // Check whether somebody wants us to generate a new query plan
+  // for this prepared statement
+  if (statement->GetNeedsPlan()) {
+    ReplanPreparedStatement(statement.get());
   }
 
   // Group the parameter types and the parameters in this vector
@@ -773,6 +807,7 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
       if (is_unnamed) {
         unnamed_statement_.reset();
       } else {
+        // TODO: Invalidate table_statement_cache!
         statement_cache_.delete_key(name);
       }
       break;
@@ -897,6 +932,7 @@ void PacketManager::Reset() {
   skipped_query_type_.clear();
 
   statement_cache_.clear();
+  table_statement_cache_.clear();
   portals_.clear();
   pkt_cntr_ = 0;
 

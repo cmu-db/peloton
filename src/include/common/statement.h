@@ -72,6 +72,10 @@ class Statement : public Printable {
 
   const std::shared_ptr<planner::AbstractPlan>& GetPlanTree() const;
 
+  inline bool GetNeedsPlan() const { return (needs_replan_); }
+
+  inline void SetNeedsPlan(bool replan) { needs_replan_ = replan; }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -97,6 +101,9 @@ class Statement : public Printable {
   // the oids of the tables referenced by this statement
   // this may be empty
   std::set<oid_t> table_ids_;
+
+  // If this flag is true, then somebody wants us to replan this query
+  bool needs_replan_ = false;
 };
 
 }  // namespace peloton

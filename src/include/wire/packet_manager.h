@@ -62,6 +62,11 @@ class PacketManager {
     return table_statement_cache_[table_id];
   }
 
+  void InvalidatePreparedStatements(oid_t table_id);
+
+  // Ugh... this should not be here but we have no choice...
+  void ReplanPreparedStatement(Statement* statement);
+
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//
@@ -189,7 +194,8 @@ class PacketManager {
   stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
 
   // Parameter types for statements
-  // Warning: the data in the param buffer becomes invalid when the value stored
+  // Warning: the data in the param buffer becomes invalid when the value
+  // stored
   // in stat table is destroyed
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
