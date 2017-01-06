@@ -888,7 +888,7 @@ static const cid_t START_CID = 2;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 // For epoch
-static const size_t EPOCH_LENGTH = 10;
+static const size_t EPOCH_LENGTH = 40;
 
 // For threads
 extern size_t QUERY_THREAD_COUNT;
