@@ -20,6 +20,7 @@
 #include "gc/gc_manager_factory.h"
 #include "storage/data_table.h"
 #include "brain/index_tuner.h"
+#include "brain/layout_tuner.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -51,13 +52,14 @@ void PelotonInit::Initialize() {
 
   // start index tuner
   if(FLAGS_index_tuner == true){
-    // Index tuner
     auto& index_tuner = brain::IndexTuner::GetInstance();
-
-    // Start index tuner
     index_tuner.Start();
+  }
 
-    // TODO: Add tables, collect samples, and use constructed indexes
+  // start layout tuner
+  if(FLAGS_layout_tuner == true){
+    auto& layout_tuner = brain::LayoutTuner::GetInstance();
+    layout_tuner.Start();
   }
 
   // initialize the catalog and add the default database, so we don't do this on
@@ -70,9 +72,13 @@ void PelotonInit::Shutdown() {
   // shut down index tuner
   if(FLAGS_index_tuner == true){
     auto& index_tuner = brain::IndexTuner::GetInstance();
-
-    // Stop index tuner
     index_tuner.Stop();
+  }
+
+  // shut down layout tuner
+  if(FLAGS_layout_tuner == true){
+    auto& layout_tuner = brain::LayoutTuner::GetInstance();
+    layout_tuner.Stop();
   }
 
   // shut down GC.
