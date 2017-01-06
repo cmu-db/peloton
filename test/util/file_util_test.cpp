@@ -13,6 +13,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 
+#include <cstdio>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,7 +28,19 @@ namespace test {
 // FileUtil Test
 //===--------------------------------------------------------------------===//
 
-class FileUtilTests : public PelotonTest {};
+class FileUtilTests : public PelotonTest {
+ public:
+  void TearDown() override {
+    for (auto path : tempFiles) {
+      if (FileUtil::Exists(path)) {
+        LOG_TRACE("Deleting temp file '%s'", path.c_str());
+        std::remove(path.c_str());
+      }
+    }  // FOR
+  }
+
+  std::vector<std::string> tempFiles;
+};
 
 TEST_F(FileUtilTests, WriteTempTest) {
   std::string contents =
@@ -37,13 +50,16 @@ TEST_F(FileUtilTests, WriteTempTest) {
   std::string suffix = "tmpfile";
 
   std::string path = FileUtil::WriteTempFile(contents, prefix, suffix);
-  LOG_INFO("Temp: %s", path.c_str());
+  tempFiles.push_back(path);
+  LOG_TRACE("Temp: %s", path.c_str());
   EXPECT_FALSE(path.empty());
   EXPECT_TRUE(FileUtil::Exists(path));
   EXPECT_TRUE(StringUtil::Contains(path, prefix));
   EXPECT_TRUE(StringUtil::EndsWith(path, suffix));
 
-  // TODO: Clean-up temp file
+  // Read the file back in and make sure the contains match
+  std::string result = FileUtil::GetFile(path);
+  EXPECT_EQ(contents, result);
 }
 
 TEST_F(FileUtilTests, ExistsTest) {
