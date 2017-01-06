@@ -44,6 +44,8 @@ class OrderByPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "OrderBy"; }
 
+  void SetUnderlyingOrder(bool same_order) {underling_ordered_ = same_order};
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
         new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_));

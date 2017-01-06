@@ -271,17 +271,23 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
                            offset, flags.front());
 
-          // Whether underlying child's output has the same order with the
-          // order_by clause.
-          bool ordered = UnderlyingSameOrder(
-              child_SelectPlan,
-              ((expression::TupleValueExpression*)select_stmt->order->expr)
-                  ->GetColumnId(),
-              flags.front());
-
           // Create order_by_plan
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
+
+          // Whether underlying child's output has the same order with the
+          // order_by clause.
+          if (UnderlyingSameOrder(
+                  child_SelectPlan.get(),
+                  ((expression::TupleValueExpression*)select_stmt->order->expr)
+                      ->GetColumnId(),
+                  flags.front()) == true) {
+            LOG_INFO(
+                "Underlying plan has the same ordering output with order by "
+                "plan");
+            order_by_plan->SetUnderlyingOrder(true);
+          }
+
           order_by_plan->AddChild(std::move(child_SelectPlan));
 
           // Create limit_plan
@@ -1379,7 +1385,7 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
   }
 
   // Check whether order_by column_id follows the index ids
-  int size = index_scan_plan->GetKeyColumnIds().size();
+  uint64_t size = index_scan_plan->GetKeyColumnIds().size();
 
   // Get the index_id following key column ids
   if (size >= index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs().size())
