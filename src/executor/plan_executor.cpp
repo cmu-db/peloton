@@ -86,8 +86,6 @@ peloton_status PlanExecutor::ExecutePlan(
       if (logical_tile.get() != nullptr) {
         LOG_TRACE("Final Answer: %s",
                   logical_tile->GetInfo().c_str());  // Printing the answers
-        std::unique_ptr<catalog::Schema> output_schema(
-            logical_tile->GetPhysicalSchema());  // Physical schema of the tile
         std::vector<std::vector<std::string>> answer_tuples;
         answer_tuples =
             std::move(logical_tile->GetAllValuesAsStrings(result_format, false));
@@ -95,17 +93,13 @@ peloton_status PlanExecutor::ExecutePlan(
         // Construct the returned results
         for (auto &tuple : answer_tuples) {
           unsigned int col_index = 0;
-          auto &schema_columns = output_schema->GetColumns();
-          for (auto &column : schema_columns) {
-            auto column_name = column.GetName();
+          for (unsigned int i = 0; i < logical_tile->GetColumnCount(); i++) {
             auto res = ResultType();
-            PlanExecutor::copyFromTo(column_name, res.first);
-            LOG_TRACE("column name: %s", column_name.c_str());
             PlanExecutor::copyFromTo(tuple[col_index++], res.second);
             if (tuple[col_index - 1].c_str() != nullptr) {
               LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
             }
-            result.push_back(res);
+            result.push_back(std::move(res));
           }
         }
       }
