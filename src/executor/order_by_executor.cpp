@@ -111,7 +111,7 @@ bool OrderByExecutor::DoSort() {
 
     // Optimization for ordered output
     if (underling_ordered_ && limit_) {
-      // We already get enough tuples
+      // We already get enough tuples, break while
       if (num_tuples_get_ >= (limit_offset_ + limit_number_)) break;
     }
   }
@@ -167,7 +167,8 @@ bool OrderByExecutor::DoSort() {
   // If the underlying result has the same order, it is not necessary to sort
   // the result again. Instead, go to the end.
   if (underling_ordered_) {
-    goto done_;
+    sort_done_ = true;
+    return true;
   }
 
   // Prepare the compare function
@@ -208,8 +209,6 @@ bool OrderByExecutor::DoSort() {
       [&comp](const sort_buffer_entry_t &a, const sort_buffer_entry_t &b) {
         return comp(a.tuple.get(), b.tuple.get());
       });
-
-done_:
 
   sort_done_ = true;
 
