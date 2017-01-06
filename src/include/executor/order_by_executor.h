@@ -109,10 +109,6 @@ class OrderByExecutor : public AbstractExecutor {
 
   // Copied from plan node
   uint64_t limit_offset_ = 0;
-
-  bool order_ = false;
-  std::vector<oid_t> columns_;
-  bool descend_ = false;
 };
 
 } /* namespace executor */
