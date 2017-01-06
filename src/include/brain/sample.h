@@ -73,6 +73,11 @@ class Sample : public Printable {
     return (columns_accessed_);
   }
 
+  // set the columns accessed
+  inline void SetColumnsAccessed(const std::vector<double> columns_accessed) {
+    columns_accessed_ = columns_accessed;
+  }
+
   // get enabled columns
   std::vector<oid_t> GetEnabledColumns() const;
 
