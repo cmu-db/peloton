@@ -71,6 +71,9 @@ class Sample : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // Convert this sample into a parseable string
+  const std::string ToString() const;
+
   bool operator==(const Sample &other) const;
 
   //===--------------------------------------------------------------------===//

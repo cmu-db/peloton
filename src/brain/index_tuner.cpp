@@ -9,13 +9,12 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "brain/index_tuner.h"
 
 #include <algorithm>
 #include <unordered_map>
 
 #include "brain/clusterer.h"
-#include "brain/index_tuner.h"
-
 #include "catalog/schema.h"
 #include "common/container_tuple.h"
 #include "common/logger.h"

@@ -9,14 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "brain/sample.h"
 
-#include <common/macros.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
 #include "brain/sample.h"
 #include "common/logger.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace brain {
@@ -95,6 +96,22 @@ const std::string Sample::GetInfo() const {
   os << "  ::  " << std::round(metric_);
 
   return os.str();
+}
+
+const std::string Sample::ToString() const {
+  std::ostringstream os;
+  // This needs to match expected format in BrainUtil::LoadSamplesFile
+  // except for the <NAME>
+  os << weight_ << " " << metric_ << " " << columns_accessed_.size() << " ";
+  bool first = true;
+  for (auto column_value : columns_accessed_) {
+    if (first == false) {
+      os << " ";
+    }
+    os << column_value;
+    first = false;
+  }  // FOR
+  return (os.str());
 }
 
 bool Sample::operator==(const Sample &other) const {
