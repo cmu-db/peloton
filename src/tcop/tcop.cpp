@@ -39,7 +39,10 @@
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
+TrafficCop::TrafficCop() {
+  LOG_TRACE("Starting a new TrafficCop");
+  optimizer_.reset(new optimizer::SimpleOptimizer());
+}
 
 void TrafficCop::Reset() {
   std::stack<TcopTxnState> new_tcop_txn_state;

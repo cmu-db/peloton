@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "wire/packet_manager.h"
 
 #include <cstdio>
 #include <unordered_map>
@@ -16,17 +17,16 @@
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "type/types.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 #include "optimizer/simple_optimizer.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
 #include "tcop/tcop.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "wire/marshal.h"
-#include "wire/packet_manager.h"
 
 #include <boost/algorithm/string.hpp>
 #include "wire/packet_manager.h"
@@ -47,8 +47,29 @@ const std::unordered_map<std::string, std::string>
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
+std::vector<const PacketManager *> PacketManager::packet_managers_;
+std::mutex PacketManager::packet_managers_mutex_;
+
 PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
   traffic_cop_.reset(new tcop::TrafficCop());
+  {
+    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
+    PacketManager::packet_managers_.push_back(this);
+    LOG_DEBUG("Registered new PacketManager [count=%d]",
+              (int)PacketManager::packet_managers_.size());
+  }
+}
+
+PacketManager::~PacketManager() {
+  {
+    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
+    PacketManager::packet_managers_.erase(
+        std::remove(PacketManager::packet_managers_.begin(),
+                    PacketManager::packet_managers_.end(), this),
+        PacketManager::packet_managers_.end());
+    LOG_DEBUG("Removed PacketManager [count=%d]",
+              (int)PacketManager::packet_managers_.size());
+  }
 }
 
 void PacketManager::MakeHardcodedParameterStatus(
@@ -595,8 +616,8 @@ size_t PacketManager::ReadParamValue(
               buf = (buf << 8) | param[i];
             }
             PL_MEMCPY(&float_val, &buf, sizeof(double));
-            bind_parameters[param_idx] = std::make_pair(
-                type::Type::DECIMAL, std::to_string(float_val));
+            bind_parameters[param_idx] =
+                std::make_pair(type::Type::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
                 type::ValueFactory::GetDoubleValue(float_val).Copy();
           } break;
@@ -604,8 +625,8 @@ size_t PacketManager::ReadParamValue(
             bind_parameters[param_idx] = std::make_pair(
                 type::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
-            param_values[param_idx] =
-                type::ValueFactory::GetVarbinaryValue(&param[0], param_len, true);
+            param_values[param_idx] = type::ValueFactory::GetVarbinaryValue(
+                &param[0], param_len, true);
 
           } break;
           default: {
@@ -710,7 +731,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
       statement, param_values, unnamed, param_stat, result_format_, results,
       rows_affected, error_message);
 
-  switch(status) {
+  switch (status) {
     case Result::RESULT_FAILURE:
       LOG_ERROR("Failed to execute: %s", error_message.c_str());
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
@@ -720,8 +741,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
         LOG_DEBUG("Failed to execute: Conflicting txn aborted");
         // Send an error response if the abort is not due to ROLLBACK query
         SendErrorResponse({{SQLSTATE_CODE_ERROR,
-                               SqlStateErrorCodeToString(
-                                   SqlStateErrorCode::SERIALIZATION_ERROR)}});
+                            SqlStateErrorCodeToString(
+                                SqlStateErrorCode::SERIALIZATION_ERROR)}});
       }
       return;
     default: {
@@ -739,7 +760,7 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
   PacketGetByte(pkt, close_type);
   PacketGetString(pkt, 0, name);
   bool is_unnamed = (name.size() == 0) ? true : false;
-  switch(close_type) {
+  switch (close_type) {
     case 'S':
       LOG_TRACE("Deleting statement %s from cache", name.c_str());
       if (is_unnamed) {
