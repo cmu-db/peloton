@@ -80,13 +80,6 @@ class AbstractExecutor {
   // Used to reset the state. For now it's overloaded by index scan executor
   virtual void ResetState() {}
 
-  // Used to initiate the flag to show that the result is ordered by which
-  // columns. For example, order_by executor will pass a empty column
-  // vector to index scan executor. The passing column vector is a reference.
-  // The index executor will
-  virtual void InitResultOrderFlag(bool &order, std::vector<oid_t> &columns,
-                                   bool &descend);
-
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times

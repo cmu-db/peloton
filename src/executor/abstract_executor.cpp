@@ -101,14 +101,5 @@ void AbstractExecutor::SetContext(type::Value &value) {
 
 void AbstractExecutor::ClearContext() { executor_context_->ClearParams(); }
 
-// Init all children's flag
-void AbstractExecutor::InitResultOrderFlag(bool &order,
-                                           std::vector<oid_t> &columns,
-                                           bool &descend) {
-  for (auto child : children_) {
-    child->InitResultOrderFlag(order, columns, descend);
-  }
-}
-
 }  // namespace executor
 }  // namespace peloton

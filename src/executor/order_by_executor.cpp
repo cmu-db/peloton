@@ -40,9 +40,6 @@ bool OrderByExecutor::DInit() {
   sort_done_ = false;
   num_tuples_returned_ = 0;
 
-  // Recursively init all children
-  InitResultOrderFlag(order_, columns_, descend_);
-
   return true;
 }
 
