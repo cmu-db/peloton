@@ -105,6 +105,15 @@ bool OrderByExecutor::DoSort() {
   // Extract all data from child
   while (children_[0]->Execute()) {
     input_tiles_.emplace_back(children_[0]->GetOutput());
+
+    // increase the counter
+    num_tuples_get_ += input_tiles_.back()->GetTupleCount();
+
+    // Optimization for ordered output
+    if (underling_ordered_ && limit_) {
+      // We already get enough tuples
+      if (num_tuples_get_ >= (limit_offset_ + limit_number_)) break;
+    }
   }
 
   /** Number of valid tuples to be sorted. */
@@ -155,6 +164,12 @@ bool OrderByExecutor::DoSort() {
 
   PL_ASSERT(count == sort_buffer_.size());
 
+  // If the underlying result has the same order, it is not necessary to sort
+  // the result again. Instead, go to the end.
+  if (underling_ordered_) {
+    goto done_;
+  }
+
   // Prepare the compare function
   // Note: This is a less-than comparer, NOT an equality comparer.
   struct TupleComparer {
@@ -193,6 +208,8 @@ bool OrderByExecutor::DoSort() {
       [&comp](const sort_buffer_entry_t &a, const sort_buffer_entry_t &b) {
         return comp(a.tuple.get(), b.tuple.get());
       });
+
+done_:
 
   sort_done_ = true;
 

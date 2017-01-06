@@ -63,6 +63,11 @@ class OrderByPlan : public AbstractPlan {
    * Now we just output the same schema as input tiles.
    */
   const std::vector<oid_t> output_column_ids_;
+
+  // Used to show that whether the output is has the same ordering with order by
+  // expression. If the so, we can directly used the output result without any
+  // additional sorting operation
+  bool underling_ordered_ = false;
 };
 }
 }

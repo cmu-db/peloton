@@ -92,6 +92,24 @@ class OrderByExecutor : public AbstractExecutor {
   /** How many tuples have been returned to parent */
   size_t num_tuples_returned_ = 0;
 
+  /** How many tuples have been get from the child */
+  size_t num_tuples_get_ = 0;
+
+  // Copied from plan node
+  // Used to show that whether the output is has the same ordering with order by
+  // expression. If the so, we can directly used the output result without any
+  // additional sorting operation
+  bool underling_ordered_ = false;
+
+  // Whether there is limit clause;
+  bool limit_ = false;
+
+  // Copied from plan node
+  uint64_t limit_number_ = 0;
+
+  // Copied from plan node
+  uint64_t limit_offset_ = 0;
+
   bool order_ = false;
   std::vector<oid_t> columns_;
   bool descend_ = false;
