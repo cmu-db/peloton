@@ -273,7 +273,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
           // Whether underlying child's output has the same order with the
           // order_by clause.
-          // bool ordered = UnderlyingSameOrder(child_SelectPlan, );
+          bool ordered = UnderlyingSameOrder(
+              child_SelectPlan,
+              ((expression::TupleValueExpression*)select_stmt->order->expr)
+                  ->GetColumnId(),
+              flags.front());
 
           // Create order_by_plan
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
@@ -1305,6 +1309,46 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
 void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
                                        uint64_t limit, uint64_t offset,
                                        bool descent) {
+  // Set the flag for the underlying index scan plan
+  planner::IndexScanPlan* index_scan_plan = nullptr;
+
+  // child_SelectPlan is projection plan or scan plan
+  if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_PROJECTION) {
+    // it's child is index_scan or seq_scan. Only index_scan is set
+    if (select_plan->GetChildren()[0]->GetPlanNodeType() ==
+        PLAN_NODE_TYPE_INDEXSCAN) {
+      index_scan_plan =
+          (planner::IndexScanPlan*)select_plan->GetChildren()[0].get();
+    }
+  }
+  // otherwise child_SelectPlan itself is scan plan
+  else {
+    // child_SelectPlan is index_scan or seq_scan
+    if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_INDEXSCAN) {
+      index_scan_plan = (planner::IndexScanPlan*)select_plan;
+    }
+  }
+
+  if (index_scan_plan != nullptr) {
+    LOG_TRACE("Set index scan plan");
+    index_scan_plan->SetLimit(true);
+    index_scan_plan->SetLimitNumber(limit);
+    index_scan_plan->SetLimitOffset(offset);
+    index_scan_plan->SetDescend(descent);
+  }
+}
+
+void SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
+                                          oid_t column_id, bool descending) {
+  // Check whether underlying node is index scan
+
+  // Check whether index scan output has the same ordering with order_by
+
+  // Check whether all predicates of index scan are equal
+
+  // Check whether order_by column_id is inside the index predicates or just
+  // follows the index predicates
+
   // Set the flag for the underlying index scan plan
   planner::IndexScanPlan* index_scan_plan = nullptr;
 
