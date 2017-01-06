@@ -100,6 +100,9 @@ class SimpleOptimizer : public AbstractOptimizer {
   static void SetIndexScanFlag(planner::AbstractPlan *select_plan,
                                uint64_t limit, uint64_t offset,
                                bool descent = false);
+
+  static bool UnderlyingSameOrder(planner::AbstractPlan *select_plan,
+                                  oid_t orderby_column_id, bool descending);
 };
 }  // namespace optimizer
 }  // namespace peloton

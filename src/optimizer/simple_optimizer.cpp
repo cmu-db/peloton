@@ -1372,8 +1372,8 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
     if (type != EXPRESSION_TYPE_COMPARE_EQUAL) return false;
   }
 
-  // Check whether order_by column_id is inside the index ids or just
-  // follows the index predicates
+  // Check whether order_by column_id is inside the index ids. If yes, we
+  // directly return true
   for (auto index_id : index_scan_plan->GetKeyColumnIds()) {
     if (index_id == orderby_column_id) return true;
   }
@@ -1382,17 +1382,16 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
   int size = index_scan_plan->GetKeyColumnIds().size();
 
   // Get the index_id following key column ids
+  if (size >= index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs().size())
+    return false;
+
+  oid_t physical_column_id =
+      index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs()[size];
 
   // Whether the order by id is the same with the following index id
+  if (physical_column_id != orderby_column_id) return false;
 
-  if (index_scan_plan != nullptr) {
-    LOG_TRACE("Set index scan plan");
-    index_scan_plan->SetLimit(true);
-    index_scan_plan->SetLimitNumber(limit);
-    index_scan_plan->SetLimitOffset(offset);
-    index_scan_plan->SetDescend(descent);
-  }
-
+  // All the checking is done, return true
   return true;
 }
 }  // namespace optimizer
