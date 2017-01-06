@@ -65,6 +65,19 @@ class Sample : public Printable {
   // addition operator with a sample
   Sample &operator+(const Sample &rhs);
 
+  // the sample's weight
+  inline double GetWeight() const { return (weight_); }
+
+  // the sample type
+  inline SampleType GetSampleType() const { return (sample_type_); }
+
+  // the metric for this sample
+  inline double GetMetric() const { return (metric_); }
+
+  inline const std::vector<double> GetColumnsAccessed() const {
+    return (columns_accessed_);
+  }
+
   // get enabled columns
   std::vector<oid_t> GetEnabledColumns() const;
 
@@ -80,6 +93,7 @@ class Sample : public Printable {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
+ private:
   // column accessed bitmap
   std::vector<double> columns_accessed_;
 
@@ -103,9 +117,10 @@ struct hash<peloton::brain::Sample> {
   size_t operator()(const peloton::brain::Sample &sample) const {
     // Compute individual hash values using XOR and bit shifting:
     long hash = 31;
-    auto sample_size = sample.columns_accessed_.size();
+    auto columns = sample.GetColumnsAccessed();
+    auto sample_size = columns.size();
     for (size_t sample_itr = 0; sample_itr < sample_size; sample_itr++) {
-      hash *= (sample.columns_accessed_[sample_itr] + 31);
+      hash *= (columns[sample_itr] + 31);
     }
 
     return hash;

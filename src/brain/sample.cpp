@@ -115,8 +115,12 @@ const std::string Sample::ToString() const {
 }
 
 bool Sample::operator==(const Sample &other) const {
-  auto sample_size = columns_accessed_.size();
+  if (this->weight_ != other.weight_) return false;
+  if (this->metric_ != other.metric_) return false;
+  if (this->sample_type_ != other.sample_type_) return false;
 
+  auto sample_size = columns_accessed_.size();
+  if (sample_size != other.columns_accessed_.size()) return (false);
   for (oid_t sample_itr = 0; sample_itr < sample_size; sample_itr++) {
     if (columns_accessed_[sample_itr] != other.columns_accessed_[sample_itr]) {
       return false;

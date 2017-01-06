@@ -40,6 +40,7 @@ class BrainUtil {
     std::ifstream infile(file_path);
     std::string line;
     while (std::getline(infile, line)) {
+      if (line.empty()) continue;
       std::istringstream iss(line);
 
       // FORMAT: <NAME> <WEIGHT> <METRIC> <NUM_COLS> <COLUMNS...>
@@ -57,9 +58,9 @@ class BrainUtil {
         columns.push_back(col);
       }
 
-      // brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS,
-      // metric);
-      // samples[name] = sample;
+      brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS, metric);
+      samples.insert(
+          std::map<std::string, brain::Sample>::value_type(name, sample));
 
     }  // WHILE
     return (samples);
