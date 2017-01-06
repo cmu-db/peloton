@@ -534,10 +534,14 @@ void IndexTuner::Tune() {
 
   // Continue till signal is not false
   while (index_tuning_stop == false) {
-    // Go over all tables
+
+    // Go over one table at a time
     for (auto table : tables) {
       // Update indices periodically
       IndexTuneHelper(table);
+
+      LOG_INFO("TUNER PAUSE");
+      std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
     }
 
     pause_timer.Stop();
@@ -545,7 +549,6 @@ void IndexTuner::Tune() {
 
     // Sleep a bit if needed
     if (duration > duration_between_pauses) {
-      LOG_DEBUG("TUNER PAUSE : %.0lf", duration);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
       pause_timer.Reset();
       pause_timer.Start();
@@ -581,7 +584,6 @@ void IndexTuner::BootstrapTPCC() {
 
   // Enable visibility mode
   SetVisibilityMode();
-
 
   // Build sample map
   std::string database_name = "TPCC";

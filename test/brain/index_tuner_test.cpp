@@ -105,6 +105,9 @@ TEST_F(IndexTunerTests, BasicTest) {
     }
   }
 
+  // Wait for tuner to build indexes
+  sleep(5);
+
   // Stop index tuner
   index_tuner.Stop();
 
@@ -1217,6 +1220,10 @@ TEST_F(IndexTunerTests, TPCCTest) {
   // Index tuner
   brain::IndexTuner &index_tuner = brain::IndexTuner::GetInstance();
 
+  // Set duration between pauses
+  auto duration = 10000; // in ms
+  index_tuner.SetDurationBetweenPauses(duration);
+
   // Start index tuner
   index_tuner.Start();
 
@@ -1224,7 +1231,7 @@ TEST_F(IndexTunerTests, TPCCTest) {
   index_tuner.BootstrapTPCC();
 
   // Wait for tuner to build indexes
-  sleep(1);
+  sleep(5);
 
   // Stop index tuner
   index_tuner.Stop();
