@@ -124,6 +124,12 @@ class IndexMetadata : public Printable {
 
   inline void SetVisibility(bool visibile) { visible_ = visibile; }
 
+  bool IsVisible() const { return visible_; }
+
+  void SetVisible(bool visible) {
+    visible_ = visible;
+  }
+
   /*
    * GetInfo() - Get a string representation for debugging
    */
@@ -169,6 +175,7 @@ class IndexMetadata : public Printable {
 
   // If set to true, then this index is visible to the planner
   bool visible_ = true;
+
 };
 
 /////////////////////////////////////////////////////////////////////
