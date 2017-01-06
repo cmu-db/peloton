@@ -45,23 +45,23 @@ class BrainUtil {
       if (line.empty()) continue;
       std::istringstream iss(line);
 
-      // FORMAT: <NAME> <WEIGHT> <METRIC> <NUM_COLS> <COLUMNS...>
+      // FORMAT: <NAME> <WEIGHT> <NUM_COLS> <COLUMNS...>
       // TODO: Need include SAMPLE_TYPE
       std::string name;
       double weight;
-      double metric = 0;
       int num_cols;
       std::vector<double> columns;
 
-      iss >> name >> weight >> metric >> num_cols;
+      iss >> name >> weight >> num_cols;
       for (int i = 0; i < num_cols; i++) {
         int col;
         iss >> col;
         columns.push_back(col);
       }
 
-      brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS, metric);
-      samples.push_back(std::make_pair(name, sample));
+      brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS);
+      samples.insert(
+          std::map<std::string, brain::Sample>::value_type(name, sample));
 
     }  // WHILE
     return (samples);
