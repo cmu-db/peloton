@@ -178,6 +178,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                           SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
+
+        LOG_TRACE("1-Result size is %lu", result_.size());
       }
     }
     // Normal SQL (without limit)
@@ -384,6 +386,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                           SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
+
+        LOG_TRACE("2-Result size is %lu", tuple_location_ptrs.size());
       }
     }
     // Normal SQL (without limit)
@@ -461,6 +465,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // Further check if the version has the secondary key
         expression::ContainerTuple<storage::TileGroup> candidate_tuple(
             tile_group.get(), tuple_location.offset);
+
+        LOG_TRACE("candidate_tuple size: %s",
+                  candidate_tuple.GetInfo().c_str());
         // Construct the key tuple
         auto &indexed_columns = index_->GetKeySchema()->GetIndexedColumns();
         storage::MaskedTuple key_tuple(&candidate_tuple, indexed_columns);
@@ -486,10 +493,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
+            LOG_TRACE("passed evaluation, but txn read fails");
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
           visible_tuple_locations.push_back(tuple_location);
+          LOG_TRACE("passed evaluation, visible_tuple_locations size: %lu",
+                    visible_tuple_locations.size());
         }
 
         break;

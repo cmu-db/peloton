@@ -127,16 +127,14 @@ void BWTREE_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-    ScanDirectionType scan_direction, 
-    std::vector<ValueType> &result,
+    ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p) {
   // This is a hack - we do not support backward scan
   if (scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
     throw Exception("Invalid scan direction \n");
   }
 
-  LOG_TRACE("Scan() Point Query = %d; Full Scan = %d ", 
-            csp_p->IsPointQuery(),
+  LOG_TRACE("Scan() Point Query = %d; Full Scan = %d ", csp_p->IsPointQuery(),
             csp_p->IsFullIndexScan());
 
   if (csp_p->IsPointQuery() == true) {
@@ -188,7 +186,7 @@ void BWTREE_INDEX_TYPE::Scan(
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
         result.size(), metadata);
   }
-  
+
   return;
 }
 
@@ -206,21 +204,16 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const std::vector<type::Value> &value_list,
     const std::vector<oid_t> &tuple_column_id_list,
     const std::vector<ExpressionType> &expr_list,
-    ScanDirectionType scan_direction, 
-    std::vector<ValueType> &result,
-    const ConjunctionScanPredicate *csp_p,
-    uint64_t limit,
-    uint64_t offset) {
-      
+    ScanDirectionType scan_direction, std::vector<ValueType> &result,
+    const ConjunctionScanPredicate *csp_p, uint64_t limit, uint64_t offset) {
+
   // Only work with limit == 1 and offset == 0
   // Because that gets translated to "min"
   // But still since we could not access tuples in the table
   // the index just fetches the first qualified key without further checking
   // including checking for non-exact bounds!!!
-  if(csp_p->IsPointQuery() == false && \
-     limit == 1 && \
-     offset == 0 && \
-     scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
+  if (csp_p->IsPointQuery() == false && limit == 1 && offset == 0 &&
+      scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
@@ -231,20 +224,16 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     KeyType index_high_key;
     index_low_key.SetFromKey(low_key_p);
     index_high_key.SetFromKey(high_key_p);
-              
+
     auto scan_itr = container.Begin(index_low_key);
-    if((scan_itr.IsEnd() == false) && \
-       (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
-        
+    if ((scan_itr.IsEnd() == false) &&
+        (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
+
       result.push_back(scan_itr->second);
     }
   } else {
-    Scan(value_list, 
-         tuple_column_id_list,
-         expr_list,
-         scan_direction,
-         result,
-         csp_p); 
+    Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
+         csp_p);
   }
 
   return;
@@ -335,4 +324,3 @@ template class BWTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
 
 }  // End index namespace
 }  // End peloton namespace
-

@@ -271,6 +271,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           SetIndexScanFlag(child_SelectPlan.get(), select_stmt->limit->limit,
                            offset, flags.front());
 
+          // Whether underlying child's output has the same order with the
+          // order_by clause.
+          // bool ordered = UnderlyingSameOrder(child_SelectPlan, );
+
           // Create order_by_plan
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
