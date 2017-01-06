@@ -31,6 +31,10 @@ class DataTable;
 
 namespace brain {
 
+// Load statistics for Index Tuner from a file
+void LoadStatsFromFile(std::string path);
+
+
 class Sample;
 
 //===--------------------------------------------------------------------===//
