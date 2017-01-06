@@ -168,7 +168,7 @@ class IndexMetadata : public Printable {
   double utility_ratio = INVALID_RATIO;
 
   // If set to true, then this index is visible to the planner
-  bool visible_ = false;
+  bool visible_ = true;
 };
 
 /////////////////////////////////////////////////////////////////////
