@@ -30,11 +30,13 @@ namespace brain {
 class BrainUtil {
  public:
   /**
-   * Load Samples for from a file
+   * Load Samples for from a file.
+   * It's a vector because there could be more multiple samples per table.
+   * TableName -> Sample
    */
-  static std::map<std::string, brain::Sample> LoadSamplesFile(
+  static std::vector<std::pair<std::string, brain::Sample>> LoadSamplesFile(
       const std::string file_path) {
-    std::map<std::string, brain::Sample> samples;
+    std::vector<std::pair<std::string, brain::Sample>> samples;
 
     // Parse the input file line-by-line
     std::ifstream infile(file_path);
@@ -59,8 +61,7 @@ class BrainUtil {
       }
 
       brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS, metric);
-      samples.insert(
-          std::map<std::string, brain::Sample>::value_type(name, sample));
+      samples.push_back(std::make_pair(name, sample));
 
     }  // WHILE
     return (samples);

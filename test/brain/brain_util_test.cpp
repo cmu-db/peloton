@@ -50,6 +50,7 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
   // Create some Table samples
   std::vector<double> cols0 = {0, 1, 2};
   std::vector<double> cols1 = {9, 8, 7, 6};
+
   std::map<std::string, brain::Sample> expected;
   expected.insert(std::map<std::string, brain::Sample>::value_type(
       "TABLE_X", brain::Sample(cols0, 888, brain::SAMPLE_TYPE_ACCESS, 1.234)));
@@ -69,7 +70,7 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
             FileUtil::GetFile(path).c_str());
 
   // Load that mofo back in and make sure our objects match
-  std::map<std::string, brain::Sample> result =
+  std::vector<std::pair<std::string, brain::Sample>> result =
       brain::BrainUtil::LoadSamplesFile(path);
   EXPECT_EQ(expected.size(), result.size());
   for (auto s0 : result) {
