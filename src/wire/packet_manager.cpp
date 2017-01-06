@@ -323,6 +323,9 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
+  LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
+            query_string.c_str());
+
   statement = traffic_cop_->PrepareStatement(statement_name, query_string,
                                              error_message);
   if (statement.get() == nullptr) {
@@ -365,6 +368,10 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   } else {
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
+
+    for (auto table_id : statement->GetReferencedTables()) {
+      table_statement_cache_[table_id].push_back(statement.get());
+    }
   }
   // Send Parse complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());

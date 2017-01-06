@@ -56,6 +56,12 @@ class PacketManager {
   //  bool ManageStartupPacket();
   void Reset();
 
+  // Returns a vector of all the PreparedStatements that this PacketManager has
+  // that reference the given table id
+  const std::vector<Statement*> GetPreparedStatements(oid_t table_id) {
+    return table_statement_cache_[table_id];
+  }
+
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//
@@ -89,29 +95,6 @@ class PacketManager {
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
   ResponseBuffer responses;
-
-  // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_statement_;
-
-  // The result-column format code
-  std::vector<int> result_format_;
-
-  // global txn state
-  uchar txn_state_;
-
-  // state to mang skipped queries
-  bool skipped_stmt_ = false;
-  std::string skipped_query_string_;
-  std::string skipped_query_type_;
-
-  // Statement cache
-  Cache<std::string, Statement> statement_cache_;
-
-  //  Portals
-  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
-
-  // packets ready for read
-  size_t pkt_cntr_;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -172,6 +155,35 @@ class PacketManager {
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
+
+  // Manage standalone queries
+  std::shared_ptr<Statement> unnamed_statement_;
+
+  // The result-column format code
+  std::vector<int> result_format_;
+
+  // global txn state
+  uchar txn_state_;
+
+  // state to mang skipped queries
+  bool skipped_stmt_ = false;
+  std::string skipped_query_string_;
+  std::string skipped_query_type_;
+
+  // Statement cache
+  // StatementName -> Statement
+  Cache<std::string, Statement> statement_cache_;
+  // TableOid -> Statements
+  // FIXME: This table statement cache is not in sync with the other cache.
+  // That means if something gets thrown out of the statement cache it is not
+  // automatically evicted from this cache.
+  std::unordered_map<oid_t, std::vector<Statement*>> table_statement_cache_;
+
+  //  Portals
+  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
+
+  // packets ready for read
+  size_t pkt_cntr_;
 
   // Manage parameter types for unnamed statement
   stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;

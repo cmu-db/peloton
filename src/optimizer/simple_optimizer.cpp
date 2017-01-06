@@ -750,7 +750,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
   }
 
   if (!index_searchable) {
-    LOG_DEBUG("No suitable index for %s exists. Skipping...",
+    LOG_DEBUG("No suitable index for table '%s' exists. Skipping...",
               target_table->GetName().c_str());
     return (false);
   }
@@ -761,7 +761,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
   // Check whether the index is visible
   // This is for the IndexTuner demo
   if (index->GetMetadata()->GetVisibility() == false) {
-    LOG_DEBUG("Index %s.%s is not visible. Skipping...",
+    LOG_DEBUG("Index '%s.%s' is not visible. Skipping...",
               target_table->GetName().c_str(), index->GetName().c_str());
     return (false);
   }

@@ -15,8 +15,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mutex>
-#include <vector>
 #include <stack>
+#include <vector>
 
 #include "common/portal.h"
 #include "common/statement.h"
@@ -42,7 +42,7 @@ class TrafficCop {
   ~TrafficCop();
 
   // static singleton method used by tests
-  static TrafficCop& GetInstance();
+  static TrafficCop &GetInstance();
 
   // reset this object
   void Reset();
@@ -61,7 +61,8 @@ class TrafficCop {
       const std::vector<int> &result_format, std::vector<ResultType> &result,
       int &rows_change, std::string &error_message);
 
-  // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a statement
+  // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
+  // statement
   bridge::peloton_status ExecuteStatementPlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<ResultType> &result, const std::vector<int> &result_format);
@@ -89,13 +90,13 @@ class TrafficCop {
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  typedef std::pair<concurrency::Transaction*, Result> TcopTxnState;
+  typedef std::pair<concurrency::Transaction *, Result> TcopTxnState;
   std::stack<TcopTxnState> tcop_txn_state_;
 
  private:
-  static TcopTxnState& GetDefaultTxnState();
+  static TcopTxnState &GetDefaultTxnState();
 
-  TcopTxnState& GetCurrentTxnState();
+  TcopTxnState &GetCurrentTxnState();
 
   Result BeginQueryHelper();
 

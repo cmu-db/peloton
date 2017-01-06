@@ -12,10 +12,12 @@
 
 #pragma once
 
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
 
+#include "common/printable.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -29,8 +31,7 @@ typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>>
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfoType;
 
-class Statement {
-
+class Statement : public Printable {
  public:
   Statement() = delete;
   Statement(const Statement&) = delete;
@@ -42,7 +43,7 @@ class Statement {
 
   ~Statement();
 
-  static void ParseQueryType(const std::string &query_string,
+  static void ParseQueryType(const std::string& query_string,
                              std::string& query_type);
 
   std::vector<FieldInfoType> GetTupleDescriptor() const;
@@ -63,9 +64,16 @@ class Statement {
 
   void SetTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
 
+  void SetReferencedTables(const std::set<oid_t> table_ids);
+
+  const std::set<oid_t> GetReferencedTables() const;
+
   void SetPlanTree(std::shared_ptr<planner::AbstractPlan> plan_tree);
 
   const std::shared_ptr<planner::AbstractPlan>& GetPlanTree() const;
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   // logical name of statement
@@ -85,6 +93,10 @@ class Statement {
 
   // cached plan tree
   std::shared_ptr<planner::AbstractPlan> plan_tree_;
+
+  // the oids of the tables referenced by this statement
+  // this may be empty
+  std::set<oid_t> table_ids_;
 };
 
 }  // namespace peloton
