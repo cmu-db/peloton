@@ -148,7 +148,7 @@ class IndexTuner {
   // Threshold sample count
 
   // duration between pauses (in ms)
-  oid_t duration_between_pauses = 10000;
+  oid_t duration_between_pauses = 1000;
 
   // duration of pause (in ms)
   oid_t duration_of_pause = 1000;
