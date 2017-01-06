@@ -105,7 +105,7 @@ peloton_status PlanExecutor::ExecutePlan(
             if (tuple[col_index - 1].c_str() != nullptr) {
               LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
             }
-            result.push_back(res);
+            result.push_back(std::move(res));
           }
         }
       }
