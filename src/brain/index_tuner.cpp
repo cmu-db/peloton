@@ -375,10 +375,10 @@ void IndexTuner::AddIndexes(
       auto index = table->GetIndex(index_itr);
       auto index_metadata = index->GetMetadata();
 
-      auto index_is_visible = index_metadata->IsVisible();
+      auto index_is_visible = index_metadata->GetVisibility();
       if(index_is_visible == false){
         LOG_INFO("Enabling index : %s", index_metadata->GetName().c_str());
-        index_metadata->SetVisible(true);
+        index_metadata->SetVisibility(true);
       }
 
     }

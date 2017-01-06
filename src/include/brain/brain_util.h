@@ -60,8 +60,7 @@ class BrainUtil {
       }
 
       brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS);
-      samples.insert(
-          std::map<std::string, brain::Sample>::value_type(name, sample));
+      samples.push_back(std::make_pair(name, sample));
 
     }  // WHILE
     return (samples);

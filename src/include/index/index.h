@@ -124,18 +124,6 @@ class IndexMetadata : public Printable {
 
   inline void SetVisibility(bool visibile) { visible_ = visibile; }
 
-  bool IsVisible() const { return visible_; }
-
-  void SetVisible(bool visible) {
-    visible_ = visible;
-  }
-
-  bool IsVisible() const { return visible_; }
-
-  void SetVisible(bool visible) {
-    visible_ = visible;
-  }
-
   /*
    * GetInfo() - Get a string representation for debugging
    */
