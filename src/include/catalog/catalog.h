@@ -85,6 +85,10 @@ class Catalog {
   // Add a database
   void AddDatabase(storage::Database *database);
 
+  // Add a database with name
+  void AddDatabase(std::string database_name,
+                   storage::Database *database);
+
   // Create a table in a database
   Result CreateTable(std::string database_name, std::string table_name,
                      std::unique_ptr<catalog::Schema>,
