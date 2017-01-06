@@ -224,8 +224,8 @@ void BWTREE_INDEX_TYPE::ScanLimit(
       const storage::Tuple *low_key_p = csp_p->GetLowKey();
       const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-      LOG_TRACE("ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
-                low_key_p->GetInfo().c_str());
+      LOG_INFO("ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
+               low_key_p->GetInfo().c_str());
   
       KeyType index_low_key;
       KeyType index_high_key;
@@ -242,9 +242,9 @@ void BWTREE_INDEX_TYPE::ScanLimit(
       const storage::Tuple *low_key_p = csp_p->GetLowKey();
       const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-      LOG_TRACE("ScanLimit() special case (limit = 1;"
-                " offset = 0; DESCENDING): %s",
-                low_key_p->GetInfo().c_str());
+      LOG_INFO("ScanLimit() special case (limit = 1;"
+               " offset = 0; DESCENDING): %s",
+               high_key_p->GetInfo().c_str());
   
       KeyType index_low_key;
       KeyType index_high_key;
@@ -270,6 +270,8 @@ void BWTREE_INDEX_TYPE::ScanLimit(
         // If after decreament it is REND then return because we could not
         // test the current element
         if(scan_itr.IsREnd() == true) {
+          LOG_INFO("After decreamenting it is REND iterator");
+          
           return;
         }
         
@@ -278,7 +280,17 @@ void BWTREE_INDEX_TYPE::ScanLimit(
         // But still it might not be exact
         PL_ASSERT(container.KeyCmpLess(index_high_key, 
                                        scan_itr->first) == false);
+      } 
+      
+      if(container.KeyCmpLess(scan_itr->first, index_low_key) == true) {
+        LOG_INFO("The iterator is not qualified "
+                 "because it is smaller than low key");
+        
+        return; 
       }
+      
+      // After this we know the iterator is between [low key, high key]
+      // and may be on the high end
       
       result.push_back(scan_itr->second);
     } else {
