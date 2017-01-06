@@ -29,8 +29,7 @@ LayoutTuner::LayoutTuner() {
   // Nothing to do here !
 }
 
-LayoutTuner::~LayoutTuner() {
-}
+LayoutTuner::~LayoutTuner() {}
 
 void LayoutTuner::Start() {
   // Set signal
@@ -91,7 +90,7 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   }
 
   for (auto sample : samples) {
-    if(sample.columns_accessed_.size() == 0){
+    if (sample.GetColumnsAccessed().size() == 0) {
       continue;
     }
     clusterer.ProcessSample(sample);

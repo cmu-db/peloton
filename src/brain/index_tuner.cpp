@@ -9,13 +9,12 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "brain/index_tuner.h"
 
 #include <algorithm>
 #include <unordered_map>
 
 #include "brain/clusterer.h"
-#include "brain/index_tuner.h"
-
 #include "catalog/schema.h"
 #include "common/container_tuple.h"
 #include "common/logger.h"
@@ -46,6 +45,8 @@ void IndexTuner::Start() {
 
   // Launch thread
   index_tuner_thread = std::thread(&brain::IndexTuner::Tune, this);
+
+  LOG_INFO("Started index tuner");
 }
 
 // Add an ad-hoc index
@@ -158,13 +159,13 @@ double IndexTuner::ComputeWorkloadWriteRatio(
 
   // Go over all samples
   for (auto sample : samples) {
-    if (sample.sample_type_ == SAMPLE_TYPE_ACCESS) {
-      total_read_duration += sample.weight_;
-    } else if (sample.sample_type_ == SAMPLE_TYPE_UPDATE) {
-      total_write_duration += sample.weight_;
+    if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
+      total_read_duration += sample.GetWeight();
+    } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
+      total_write_duration += sample.GetWeight();
     } else {
       throw Exception("Unknown sample type : " +
-                      std::to_string(sample.sample_type_));
+                      std::to_string(sample.GetSampleType()));
     }
   }
 
@@ -201,17 +202,17 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
 
   // Go over all samples
   for (auto sample : samples) {
-    if (sample.sample_type_ == SAMPLE_TYPE_ACCESS) {
+    if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
       // Update sample count
-      sample_frequency_map[sample] += sample.metric_;
-      total_metric += sample.metric_;
-    } else if (sample.sample_type_ == SAMPLE_TYPE_UPDATE) {
+      sample_frequency_map[sample] += sample.GetMetric();
+      total_metric += sample.GetMetric();
+    } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
       // Update sample count
-      sample_frequency_map[sample] += sample.metric_;
-      total_metric += sample.metric_;
+      sample_frequency_map[sample] += sample.GetMetric();
+      total_metric += sample.GetMetric();
     } else {
       throw Exception("Unknown sample type : " +
-                      std::to_string(sample.sample_type_));
+                      std::to_string(sample.GetSampleType()));
     }
   }
 
@@ -264,7 +265,7 @@ std::vector<std::vector<double>> GetSuggestedIndices(
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
     LOG_TRACE("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
-    suggested_indices.push_back(sample.columns_accessed_);
+    suggested_indices.push_back(sample.GetColumnsAccessed());
   }
 
   return suggested_indices;
@@ -279,7 +280,7 @@ double GetCurrentIndexUtility(
   for (size_t entry_itr = 0; entry_itr < list_size; entry_itr++) {
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
-    auto& columns = sample.columns_accessed_;
+    auto& columns = sample.GetColumnsAccessed();
 
     std::set<oid_t> columns_set(columns.begin(), columns.end());
 
@@ -525,7 +526,7 @@ void IndexTuner::Tune() {
 
     // Sleep a bit if needed
     if (duration > duration_between_pauses) {
-      LOG_INFO("TUNER PAUSE : %.0lf", duration);
+      LOG_DEBUG("TUNER PAUSE : %.0lf", duration);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
       pause_timer.Reset();
       pause_timer.Start();
@@ -539,6 +540,8 @@ void IndexTuner::Stop() {
 
   // Stop thread
   index_tuner_thread.join();
+
+  LOG_INFO("Stopped index tuner");
 }
 
 void IndexTuner::AddTable(storage::DataTable* table) {

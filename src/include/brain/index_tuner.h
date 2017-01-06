@@ -64,37 +64,39 @@ class IndexTuner {
   void AddTable(storage::DataTable *table);
 
   // Add indexes to table
-  void AddIndexes(storage::DataTable* table,
-                  const std::vector<std::vector<double>>& suggested_indices);
+  void AddIndexes(storage::DataTable *table,
+                  const std::vector<std::vector<double>> &suggested_indices);
 
   // Clear list
   void ClearTables();
 
-  void SetDurationBetweenPauses(const oid_t& duration_between_pauses_){
+  void SetDurationBetweenPauses(const oid_t &duration_between_pauses_) {
     duration_between_pauses = duration_between_pauses_;
   }
 
-  void SetDurationOfPause(const oid_t& duration_of_pause_){
+  void SetDurationOfPause(const oid_t &duration_of_pause_) {
     duration_of_pause = duration_of_pause_;
   }
 
-  void SetAnalyzeSampleCountThreshold(const oid_t &analyze_sample_count_threshold_) {
+  void SetAnalyzeSampleCountThreshold(
+      const oid_t &analyze_sample_count_threshold_) {
     analyze_sample_count_threshold = analyze_sample_count_threshold_;
   }
 
-  void SetTileGroupsIndexedPerIteration(const oid_t &tile_groups_indexed_per_iteration_) {
+  void SetTileGroupsIndexedPerIteration(
+      const oid_t &tile_groups_indexed_per_iteration_) {
     tile_groups_indexed_per_iteration = tile_groups_indexed_per_iteration_;
   }
 
-  void SetIndexUtilityThreshold(const double& index_utility_threshold_){
+  void SetIndexUtilityThreshold(const double &index_utility_threshold_) {
     index_utility_threshold = index_utility_threshold_;
   }
 
-  void SetIndexCountThreshold(const oid_t& index_count_threshold_){
+  void SetIndexCountThreshold(const oid_t &index_count_threshold_) {
     index_count_threshold = index_count_threshold_;
   }
 
-  void SetWriteRatioThreshold(const double& write_ratio_threshold_){
+  void SetWriteRatioThreshold(const double &write_ratio_threshold_) {
     write_ratio_threshold = write_ratio_threshold_;
   }
 
@@ -116,7 +118,8 @@ class IndexTuner {
 
   void DropIndexes(storage::DataTable *table);
 
-  void CalculateStatistics(const std::vector<double> data, double &mean, double &sum);
+  void CalculateStatistics(const std::vector<double> data, double &mean,
+                           double &sum);
 
  private:
   // Tables whose indices must be tuned
@@ -136,11 +139,11 @@ class IndexTuner {
 
   // Threshold sample count
 
-  // duration between pauses
-  oid_t duration_between_pauses = 1000;
+  // duration between pauses (in ms)
+  oid_t duration_between_pauses = 10000;
 
   // duration of pause (in ms)
-  oid_t duration_of_pause = 100;
+  oid_t duration_of_pause = 1000;
 
   // frequency with which index analysis happens
   oid_t analyze_sample_count_threshold = 10;

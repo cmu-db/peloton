@@ -27,6 +27,34 @@ namespace test {
 
 class StringUtilTests : public PelotonTest {};
 
+TEST_F(StringUtilTests, ContainsTest) {
+  std::string str = "Word up, two for fives over here baby";
+  EXPECT_TRUE(StringUtil::Contains(str, "fives"));
+  EXPECT_TRUE(StringUtil::Contains(str, "two for fives"));
+  EXPECT_FALSE(StringUtil::Contains(str, "CREAM"));
+  EXPECT_TRUE(StringUtil::Contains(str, ""));
+}
+
+TEST_F(StringUtilTests, StartsWithTest) {
+  std::string str = "I grew up on the crime side, the New York Times side";
+  EXPECT_TRUE(StringUtil::StartsWith(str, "I"));
+  EXPECT_TRUE(StringUtil::StartsWith(str, "I grew up"));
+  EXPECT_TRUE(StringUtil::StartsWith(str, str));
+  EXPECT_TRUE(StringUtil::StartsWith(str, ""));
+  EXPECT_FALSE(StringUtil::StartsWith(str, "grew up"));
+  EXPECT_FALSE(StringUtil::StartsWith(str, "CREAM"));
+}
+
+TEST_F(StringUtilTests, EndsWithTest) {
+  std::string str = "Staying alive was no jive";
+  EXPECT_TRUE(StringUtil::EndsWith(str, "jive"));
+  EXPECT_TRUE(StringUtil::EndsWith(str, "no jive"));
+  EXPECT_TRUE(StringUtil::EndsWith(str, str));
+  EXPECT_TRUE(StringUtil::EndsWith(str, ""));
+  EXPECT_FALSE(StringUtil::EndsWith(str, "Staying alive"));
+  EXPECT_FALSE(StringUtil::EndsWith(str, "CREAM"));
+}
+
 TEST_F(StringUtilTests, RepeatTest) {
   std::vector<int> sizes = {0, 1, 2, 4, 8, 16, 17};
   std::vector<std::string> strs = {"", "A", "XYZ"};

@@ -259,12 +259,11 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message) {
-  std::shared_ptr<Statement> statement;
-
   LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
   LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
-  statement.reset(new Statement(statement_name, query_string));
+  std::shared_ptr<Statement> statement(
+      new Statement(statement_name, query_string));
   try {
     auto &peloton_parser = parser::Parser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);

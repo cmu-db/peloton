@@ -9,14 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "brain/sample.h"
 
-#include <common/macros.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
 #include "brain/sample.h"
 #include "common/logger.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace brain {
@@ -97,9 +98,29 @@ const std::string Sample::GetInfo() const {
   return os.str();
 }
 
-bool Sample::operator==(const Sample &other) const {
-  auto sample_size = columns_accessed_.size();
+const std::string Sample::ToString() const {
+  std::ostringstream os;
+  // This needs to match expected format in BrainUtil::LoadSamplesFile
+  // except for the <NAME>
+  os << weight_ << " " << metric_ << " " << columns_accessed_.size() << " ";
+  bool first = true;
+  for (auto column_value : columns_accessed_) {
+    if (first == false) {
+      os << " ";
+    }
+    os << column_value;
+    first = false;
+  }  // FOR
+  return (os.str());
+}
 
+bool Sample::operator==(const Sample &other) const {
+  if (this->weight_ != other.weight_) return false;
+  if (this->metric_ != other.metric_) return false;
+  if (this->sample_type_ != other.sample_type_) return false;
+
+  auto sample_size = columns_accessed_.size();
+  if (sample_size != other.columns_accessed_.size()) return (false);
   for (oid_t sample_itr = 0; sample_itr < sample_size; sample_itr++) {
     if (columns_accessed_[sample_itr] != other.columns_accessed_[sample_itr]) {
       return false;

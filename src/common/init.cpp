@@ -19,6 +19,7 @@
 #include "concurrency/epoch_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "storage/data_table.h"
+#include "brain/index_tuner.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -44,16 +45,39 @@ void PelotonInit::Initialize() {
 
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
+
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
+
+  // start index tuner
+  if(FLAGS_index_tuner == true){
+    // Index tuner
+    auto& index_tuner = brain::IndexTuner::GetInstance();
+
+    // Start index tuner
+    index_tuner.Start();
+
+    // TODO: Add tables, collect samples, and use constructed indexes
+  }
+
   // initialize the catalog and add the default database, so we don't do this on
   // the first query
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 void PelotonInit::Shutdown() {
+
+  // shut down index tuner
+  if(FLAGS_index_tuner == true){
+    auto& index_tuner = brain::IndexTuner::GetInstance();
+
+    // Stop index tuner
+    index_tuner.Stop();
+  }
+
   // shut down GC.
   gc::GCManagerFactory::GetInstance().StopGC();
+
   // shut down epoch.
   concurrency::EpochManagerFactory::GetInstance().StopEpoch();
 

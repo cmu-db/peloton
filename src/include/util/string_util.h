@@ -61,6 +61,32 @@ static const int TXN_ID_WIDTH = 10;
 class StringUtil {
  public:
   /**
+   * Returns true if the needle string exists in the haystack
+   */
+  static inline bool Contains(const std::string &haystack,
+                              const std::string &needle) {
+    return (haystack.find(needle) != std::string::npos);
+  }
+
+  /**
+   * Returns true if the target string starts with the given prefix
+   */
+  static inline bool StartsWith(const std::string &str,
+                                const std::string &prefix) {
+    return std::equal(prefix.begin(), prefix.end(), str.begin());
+  }
+
+  /**
+   * Returns true if the target string <b>ends</b> with the given suffix.
+   * http://stackoverflow.com/a/2072890
+   */
+  static inline bool EndsWith(const std::string &str,
+                              const std::string &suffix) {
+    if (suffix.size() > str.size()) return (false);
+    return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
+  }
+
+  /**
    * Repeat a string multiple times
    */
   static std::string Repeat(const std::string &str, const std::size_t n) {
