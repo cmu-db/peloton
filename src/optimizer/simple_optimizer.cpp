@@ -275,18 +275,21 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
 
-          // Whether underlying child's output has the same order with the
-          // order_by clause.
-          if (UnderlyingSameOrder(
-                  child_SelectPlan.get(),
-                  ((expression::TupleValueExpression*)select_stmt->order->expr)
-                      ->GetColumnId(),
-                  flags.front()) == true) {
-            LOG_INFO(
-                "Underlying plan has the same ordering output with order by "
-                "plan");
-            order_by_plan->SetUnderlyingOrder(true);
-          }
+          //          // Whether underlying child's output has the same order
+          // with the
+          //          // order_by clause.
+          //          LOG_TRACE("order by column id is %d",
+          //                    target_table->GetSchema()->GetColumnID(sort_col_name));
+          //          if (UnderlyingSameOrder(
+          //                  child_SelectPlan.get(),
+          //                  target_table->GetSchema()->GetColumnID(sort_col_name),
+          //                  flags.front()) == true) {
+          //            LOG_TRACE(
+          //                "Underlying plan has the same ordering output with
+          // order_by "
+          //                "plan with limit");
+          //            order_by_plan->SetUnderlyingOrder(false);
+          //          }
 
           order_by_plan->AddChild(std::move(child_SelectPlan));
 
@@ -334,6 +337,22 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
           std::unique_ptr<planner::OrderByPlan> order_by_plan(
               new planner::OrderByPlan(key, flags, keys));
+
+          // Whether underlying child's output has the same order with the
+          // order_by clause.
+          //          LOG_TRACE("order by column id is %d",
+          //                    target_table->GetSchema()->GetColumnID(sort_col_name));
+          //          if (UnderlyingSameOrder(
+          //                  child_SelectPlan.get(),
+          //                  target_table->GetSchema()->GetColumnID(sort_col_name),
+          //                  flags.front()) == true) {
+          //            LOG_TRACE(
+          //                "Underlying plan has the same ordering output with
+          // order_by "
+          //                "plan without limit");
+          //            order_by_plan->SetUnderlyingOrder(false);
+          //          }
+
           order_by_plan->AddChild(std::move(child_SelectPlan));
           child_plan = std::move(order_by_plan);
         }
@@ -1368,36 +1387,56 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
   }
 
   // If the underling node is not index scan return false
-  if (index_scan_plan == nullptr) return false;
+  if (index_scan_plan == nullptr) {
+    LOG_TRACE("underling node is not index scan");
+    return false;
+  }
 
   // Check whether index scan output has the same ordering with order_by
-  if (index_scan_plan->GetDescend() != descending) return false;
+  if (index_scan_plan->GetDescend() != descending) {
+    LOG_TRACE("index scan output does not have the same ordering");
+    return false;
+  }
 
   // Check whether all predicates types of index scan are equal
   for (auto type : index_scan_plan->GetExprTypes()) {
-    if (type != EXPRESSION_TYPE_COMPARE_EQUAL) return false;
+    if (type != EXPRESSION_TYPE_COMPARE_EQUAL) {
+      LOG_TRACE("predicates types of index scan are not equal");
+      return false;
+    }
   }
 
   // Check whether order_by column_id is inside the index ids. If yes, we
   // directly return true
   for (auto index_id : index_scan_plan->GetKeyColumnIds()) {
-    if (index_id == orderby_column_id) return true;
+    if (index_id == orderby_column_id) {
+      LOG_TRACE("order_by column_id is inside the index ids");
+      return true;
+    }
   }
 
   // Check whether order_by column_id follows the index ids
   uint64_t size = index_scan_plan->GetKeyColumnIds().size();
 
   // Get the index_id following key column ids
-  if (size >= index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs().size())
+  if (size >=
+      index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs().size()) {
+    LOG_TRACE("size of index scan key ids is larger or eqaul than index ids");
     return false;
+  }
 
   oid_t physical_column_id =
       index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs()[size];
 
   // Whether the order by id is the same with the following index id
-  if (physical_column_id != orderby_column_id) return false;
+  if (physical_column_id != orderby_column_id) {
+    LOG_TRACE("order by id (%u) is not equal to physical_column_id (%u)",
+              orderby_column_id, physical_column_id);
+    return false;
+  }
 
   // All the checking is done, return true
+  LOG_TRACE("All checking is done, so ordering is the same");
   return true;
 }
 }  // namespace optimizer
