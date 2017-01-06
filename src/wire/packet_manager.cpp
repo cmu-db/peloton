@@ -47,8 +47,29 @@ const std::unordered_map<std::string, std::string>
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
+std::vector<const PacketManager *> PacketManager::packet_managers_;
+std::mutex PacketManager::packet_managers_mutex_;
+
 PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
   traffic_cop_.reset(new tcop::TrafficCop());
+  {
+    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
+    PacketManager::packet_managers_.push_back(this);
+    LOG_DEBUG("Registered new PacketManager [count=%d]",
+              (int)PacketManager::packet_managers_.size());
+  }
+}
+
+PacketManager::~PacketManager() {
+  {
+    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
+    PacketManager::packet_managers_.erase(
+        std::remove(PacketManager::packet_managers_.begin(),
+                    PacketManager::packet_managers_.end(), this),
+        PacketManager::packet_managers_.end());
+    LOG_DEBUG("Removed PacketManager [count=%d]",
+              (int)PacketManager::packet_managers_.size());
+  }
 }
 
 void PacketManager::MakeHardcodedParameterStatus(
