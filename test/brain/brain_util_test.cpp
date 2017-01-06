@@ -41,6 +41,7 @@ class BrainUtilTests : public PelotonTest {
         std::remove(path.c_str());
       }
     }  // FOR
+    PelotonTest::TearDown();
   }
   std::vector<std::string> tempFiles;
 };
@@ -54,6 +55,7 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
       "TABLE_X", brain::Sample(cols0, 888, brain::SAMPLE_TYPE_ACCESS, 1.234)));
   expected.insert(std::map<std::string, brain::Sample>::value_type(
       "TABLE_Y", brain::Sample(cols1, 999, brain::SAMPLE_TYPE_ACCESS, 5.6789)));
+  EXPECT_FALSE(expected.empty());
 
   // Serialize them to a string and write them out to a temp file
   std::ostringstream os;

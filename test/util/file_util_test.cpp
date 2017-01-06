@@ -37,6 +37,7 @@ class FileUtilTests : public PelotonTest {
         std::remove(path.c_str());
       }
     }  // FOR
+    PelotonTest::TearDown();
   }
 
   std::vector<std::string> tempFiles;
