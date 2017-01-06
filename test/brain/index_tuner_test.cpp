@@ -72,7 +72,6 @@ TEST_F(IndexTunerTests, BasicTest) {
 
   std::vector<double> columns_accessed(column_count, 0);
   double sample_weight;
-  double selectivity = 0.1;
 
   UniformGenerator generator;
   for (int sample_itr = 0; sample_itr < 10000; sample_itr++) {
@@ -93,8 +92,7 @@ TEST_F(IndexTunerTests, BasicTest) {
     // Indicates the columns present in predicate, query weight, and selectivity
     brain::Sample sample(columns_accessed,
                          sample_weight,
-                         brain::SAMPLE_TYPE_ACCESS,
-                         selectivity);
+                         brain::SAMPLE_TYPE_ACCESS);
 
     // Collect index sample in table
     data_table->RecordIndexSample(sample);

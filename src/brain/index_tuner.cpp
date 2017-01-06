@@ -207,25 +207,25 @@ bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
 std::vector<sample_frequency_map_entry> GetFrequentSamples(
     const std::vector<brain::Sample>& samples) {
   std::unordered_map<brain::Sample, double> sample_frequency_map;
-  double total_metric = 0;
+  double total_weight = 0;
 
   // Go over all samples
   for (auto sample : samples) {
     if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
       // Update sample count
-      sample_frequency_map[sample] += sample.GetMetric();
-      total_metric += sample.GetMetric();
+      sample_frequency_map[sample] += sample.GetWeight();
+      total_weight += sample.GetWeight();
     } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
       // Update sample count
-      sample_frequency_map[sample] += sample.GetMetric();
-      total_metric += sample.GetMetric();
+      sample_frequency_map[sample] += sample.GetWeight();
+      total_weight += sample.GetWeight();
     } else {
       throw Exception("Unknown sample type : " +
                       std::to_string(sample.GetSampleType()));
     }
   }
 
-  PL_ASSERT(total_metric > 0);
+  PL_ASSERT(total_weight > 0);
 
   // Normalize
   std::unordered_map<brain::Sample, double>::iterator sample_frequency_map_itr;
@@ -234,7 +234,7 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
        sample_frequency_map_itr != sample_frequency_map.end();
        ++sample_frequency_map_itr) {
     // Normalize sample's utility
-    sample_frequency_map_itr->second /= total_metric;
+    sample_frequency_map_itr->second /= total_weight;
   }
 
   std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
