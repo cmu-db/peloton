@@ -63,10 +63,6 @@ class IndexTuner {
   // Add table to list of tables whose layout must be tuned
   void AddTable(storage::DataTable *table);
 
-  // Add indexes to table
-  void AddIndexes(storage::DataTable *table,
-                  const std::vector<std::vector<double>> &suggested_indices);
-
   // Clear list
   void ClearTables();
 
@@ -103,7 +99,19 @@ class IndexTuner {
   // Get # of indexes in managed tables
   oid_t GetIndexCount() const;
 
+  // Bootstrap for TPCC
+  void BootstrapTPCC();
+
+  void SetVisibilityMode() {
+    visibility_mode_ = true;
+  }
+
  protected:
+
+  // Add indexes to table
+  void AddIndexes(storage::DataTable *table,
+                  const std::vector<std::vector<double>> &suggested_indices);
+
   // Index tuning helper
   void IndexTuneHelper(storage::DataTable *table);
 
@@ -146,7 +154,7 @@ class IndexTuner {
   oid_t duration_of_pause = 1000;
 
   // frequency with which index analysis happens
-  oid_t analyze_sample_count_threshold = 10;
+  oid_t analyze_sample_count_threshold = 1;
 
   // # of tile groups to be indexed per iteration
   oid_t tile_groups_indexed_per_iteration = 10;
@@ -171,6 +179,9 @@ class IndexTuner {
   double write_ratio_threshold = 0.75;
 
   oid_t tile_groups_indexed_;
+
+  // visibility mode
+  bool visibility_mode_ = false;
 };
 
 }  // End brain namespace

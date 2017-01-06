@@ -116,6 +116,12 @@ class IndexMetadata : public Printable {
 
   void SetUtility(double p_utility_ratio) { utility_ratio = p_utility_ratio; }
 
+  bool IsVisible() const { return visible_; }
+
+  void SetVisible(bool visible) {
+    visible_ = visible;
+  }
+
   /*
    * GetInfo() - Get a string representation for debugging
    */
@@ -157,6 +163,10 @@ class IndexMetadata : public Printable {
 
   // utility of an index
   double utility_ratio = INVALID_RATIO;
+
+  // visible to optimizer
+  bool visible_ = false;
+
 };
 
 /////////////////////////////////////////////////////////////////////
