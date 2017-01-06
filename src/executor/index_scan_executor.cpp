@@ -107,6 +107,7 @@ bool IndexScanExecutor::DInit() {
 
   table_ = node.GetTable();
 
+  // PAVLO (2017-01-05): This seems unnecessary and a waste of time
   if (table_ != nullptr) {
     full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
     std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
@@ -330,8 +331,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block]
-        .push_back(visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block].push_back(
+        visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -370,7 +371,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-
     //    // Limit clause accelerate
     if (limit_) {
       // invoke index scan limit
@@ -476,8 +476,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
-                                      executor_context_).IsTrue();
+          eval =
+              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
+                  .IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -558,8 +559,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block]
-        .push_back(visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block].push_back(
+        visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -739,7 +740,6 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
 void IndexScanExecutor::UpdatePredicate(
     const std::vector<oid_t> &column_ids,
     const std::vector<type::Value> &values) {
-
   // Update index predicate
   LOG_TRACE("values_ size %lu", values_.size());
 
@@ -800,8 +800,8 @@ void IndexScanExecutor::UpdatePredicate(
   }
 
   // Update the new value
-  index_predicate_.GetConjunctionListToSetup()[0]
-      .SetTupleColumnValue(index_.get(), key_column_ids, values);
+  index_predicate_.GetConjunctionListToSetup()[0].SetTupleColumnValue(
+      index_.get(), key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {

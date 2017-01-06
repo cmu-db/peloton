@@ -78,7 +78,13 @@ const std::shared_ptr<planner::AbstractPlan>& Statement::GetPlanTree() const {
 
 const std::string Statement::GetInfo() const {
   std::ostringstream os;
-  os << "Statement[" << statement_name_ << "] -> " << query_string_ << " (";
+  os << "Statement[";
+  if (statement_name_.empty()) {
+    os << "**UNNAMED**";
+  } else {
+    os << statement_name_;
+  }
+  os << "] -> " << query_string_ << " (";
 
   // Tables Oids Referenced
   os << "TablesRef={";
@@ -89,6 +95,9 @@ const std::string Statement::GetInfo() const {
     first = false;
   }
   os << "}";
+
+  // Replan Flag
+  os << ", ReplanNeeded=" << needs_replan_;
 
   // Query Type
   os << ", QueryType=" << query_type_;

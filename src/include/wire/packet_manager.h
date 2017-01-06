@@ -85,7 +85,7 @@ class PacketManager {
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
-  static std::vector<const PacketManager*> GetPacketManagers() {
+  static std::vector<PacketManager*> GetPacketManagers() {
     return (PacketManager::packet_managers_);
   }
 
@@ -133,7 +133,7 @@ class PacketManager {
   void MakeHardcodedParameterStatus(
       const std::pair<std::string, std::string>& kv);
 
-  /* SQLite doesn't support "SET" and "SHOW" SQL commands.
+  /* We don't support "SET" and "SHOW" SQL commands yet.
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
    * This function helps filtering out the execution for such cases
    */
@@ -213,7 +213,7 @@ class PacketManager {
   // HACK: Global list of PacketManager instances
   // We need this in order to reset statement caches when the catalog changes
   // We need to think of a more elegant solution for this
-  static std::vector<const PacketManager*> packet_managers_;
+  static std::vector<PacketManager*> packet_managers_;
   static std::mutex packet_managers_mutex_;
 };
 

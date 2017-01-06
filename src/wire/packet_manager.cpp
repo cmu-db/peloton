@@ -47,7 +47,7 @@ const std::unordered_map<std::string, std::string>
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
-std::vector<const PacketManager *> PacketManager::packet_managers_;
+std::vector<PacketManager *> PacketManager::packet_managers_;
 std::mutex PacketManager::packet_managers_mutex_;
 
 PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
@@ -76,7 +76,11 @@ void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
   if (table_statement_cache_.find(table_id) == table_statement_cache_.end()) {
     return;
   }
+  LOG_DEBUG("Marking all PreparedStatements that access table '%d' as invalid",
+            (int)table_id);
   for (auto statement : table_statement_cache_[table_id]) {
+    LOG_DEBUG("Setting PreparedStatement '%s' as needing to be replanned",
+              statement->GetStatementName().c_str());
     statement->SetNeedsPlan(true);
   }
 }
@@ -92,11 +96,16 @@ void PacketManager::ReplanPreparedStatement(Statement *statement) {
         "Failed to generate a new query plan for PreparedStatement '%s'\n%s",
         statement->GetStatementName().c_str(), error_message.c_str());
   } else {
+    LOG_DEBUG("Generating new plan for PreparedStatement '%s'",
+              statement->GetStatementName().c_str());
+
     auto old_plan = statement->GetPlanTree();
     auto new_plan = new_statement->GetPlanTree();
     statement->SetPlanTree(new_plan);
     new_statement->SetPlanTree(old_plan);
     statement->SetNeedsPlan(false);
+
+    // TODO: We may need to delete the old plan and new statement here
   }
 }
 

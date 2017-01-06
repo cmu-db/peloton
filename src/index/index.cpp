@@ -81,6 +81,14 @@ IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
     tuple_attrs[tuple_column_id] = i;
   }
 
+  // Just in case somebody forgets they set our flag to default and
+  // was wondering why there indexes weren't working...
+  if (visible_ == false) {
+    LOG_WARN(
+        "Creating IndexMetadata for '%s' but visible flag is set to false.",
+        name_.c_str());
+  }
+
   return;
 }
 
