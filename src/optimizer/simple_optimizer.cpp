@@ -1338,21 +1338,13 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
   }
 }
 
-void SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
-                                          oid_t column_id, bool descending) {
-  // Check whether underlying node is index scan
-
-  // Check whether index scan output has the same ordering with order_by
-
-  // Check whether all predicates of index scan are equal
-
-  // Check whether order_by column_id is inside the index predicates or just
-  // follows the index predicates
-
-  // Set the flag for the underlying index scan plan
+bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
+                                          oid_t orderby_column_id,
+                                          bool descending) {
   planner::IndexScanPlan* index_scan_plan = nullptr;
 
-  // child_SelectPlan is projection plan or scan plan
+  // Check whether underlying node is index scan
+  // Child_SelectPlan is projection plan or scan plan
   if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_PROJECTION) {
     // it's child is index_scan or seq_scan. Only index_scan is set
     if (select_plan->GetChildren()[0]->GetPlanNodeType() ==
@@ -1369,6 +1361,30 @@ void SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
     }
   }
 
+  // If the underling node is not index scan return false
+  if (index_scan_plan == nullptr) return false;
+
+  // Check whether index scan output has the same ordering with order_by
+  if (index_scan_plan->GetDescend() != descending) return false;
+
+  // Check whether all predicates types of index scan are equal
+  for (auto type : index_scan_plan->GetExprTypes()) {
+    if (type != EXPRESSION_TYPE_COMPARE_EQUAL) return false;
+  }
+
+  // Check whether order_by column_id is inside the index ids or just
+  // follows the index predicates
+  for (auto index_id : index_scan_plan->GetKeyColumnIds()) {
+    if (index_id == orderby_column_id) return true;
+  }
+
+  // Check whether order_by column_id follows the index ids
+  int size = index_scan_plan->GetKeyColumnIds().size();
+
+  // Get the index_id following key column ids
+
+  // Whether the order by id is the same with the following index id
+
   if (index_scan_plan != nullptr) {
     LOG_TRACE("Set index scan plan");
     index_scan_plan->SetLimit(true);
@@ -1376,6 +1392,8 @@ void SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
     index_scan_plan->SetLimitOffset(offset);
     index_scan_plan->SetDescend(descent);
   }
+
+  return true;
 }
 }  // namespace optimizer
 }  // namespace peloton
