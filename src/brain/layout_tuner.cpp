@@ -37,6 +37,8 @@ void LayoutTuner::Start() {
 
   // Launch thread
   layout_tuner_thread = std::thread(&brain::LayoutTuner::Tune, this);
+
+  LOG_INFO("Started layout tuner");
 }
 
 /**
@@ -136,6 +138,8 @@ void LayoutTuner::Stop() {
 
   // Stop thread
   layout_tuner_thread.join();
+
+  LOG_INFO("Stopped layout tuner");
 }
 
 void LayoutTuner::AddTable(storage::DataTable* table) {
