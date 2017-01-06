@@ -1,0 +1,84 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// drop_table_sql_test.cpp
+//
+// Identification: test/sql/drop_table_sql_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#include <memory>
+
+#include "catalog/catalog.h"
+#include "common/harness.h"
+#include "executor/create_executor.h"
+#include "optimizer/simple_optimizer.h"
+#include "planner/create_plan.h"
+
+#include "sql/sql_tests_util.h"
+
+namespace peloton {
+namespace test {
+
+class DropTableSQLTests : public PelotonTest {};
+
+TEST_F(DropTableSQLTests, DropTableSQLTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  // Create a table first
+  SQLTestsUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+
+  // Check the table in catalog
+  storage::DataTable *table;
+  try {
+    table = catalog::Catalog::GetInstance()
+                ->GetTableWithName(DEFAULT_DB_NAME, "test");
+  } catch (CatalogException &e) {
+    table = nullptr;
+  }
+  EXPECT_NE(table, nullptr);
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  // Insert and query from that table
+  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10);", result,
+                                tuple_descriptor, rows_affected, error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
+                                rows_affected, error_message);
+  EXPECT_EQ(result[0].second[0], '1');
+
+  // Drop the table
+  EXPECT_EQ(SQLTestsUtil::ExecuteSQLQuery("DROP TABLE test;"),
+            Result::RESULT_SUCCESS);
+
+  // Query from the dropped table
+  result.clear();
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
+                                rows_affected, error_message);
+  EXPECT_EQ(result.empty(), true);
+
+  // Check the table does not exist
+  try {
+    table = catalog::Catalog::GetInstance()
+                ->GetTableWithName(DEFAULT_DB_NAME, "test");
+  } catch (CatalogException &e) {
+    table = nullptr;
+  }
+  EXPECT_EQ(table, nullptr);
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+}
+
+}  // namespace test
+}  // namespace peloton
