@@ -172,7 +172,7 @@ inline void outputLogHeader_(const char *file, int line, const char *func,
       type = "UNKWN";
   }
   // PAVLO: DO NOT CHANGE THIS
-  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] [%s] - ",
+  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ",
             time_str,
             file, line, func,
             type);
