@@ -102,7 +102,8 @@ class SimpleOptimizer : public AbstractOptimizer {
                                bool descent = false);
 
   static bool UnderlyingSameOrder(planner::AbstractPlan *select_plan,
-                                  oid_t orderby_column_id, bool descending);
+                                  oid_t orderby_column_id,
+                                  bool order_by_descending);
 };
 }  // namespace optimizer
 }  // namespace peloton
