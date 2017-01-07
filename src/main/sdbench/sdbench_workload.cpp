@@ -32,11 +32,11 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
-#include "concurrency/transaction_manager_factory.h"
 
 #include "executor/abstract_executor.h"
 #include "executor/aggregate_executor.h"
@@ -109,7 +109,8 @@ std::vector<std::vector<oid_t>> predicate_distribution;
 
 // Bitmap for already used predicate
 #define MAX_PREDICATE_ATTR 10
-bool predicate_used[MAX_PREDICATE_ATTR][MAX_PREDICATE_ATTR][MAX_PREDICATE_ATTR] = {};
+bool predicate_used[MAX_PREDICATE_ATTR][MAX_PREDICATE_ATTR]
+                   [MAX_PREDICATE_ATTR] = {};
 
 std::size_t predicate_distribution_size = 0;
 
@@ -169,7 +170,8 @@ static expression::AbstractExpression *CreateSimpleScanPredicate(
                                                     left_tuple_idx, key_attr);
 
   // Second, create constant value expression.
-  type::Value constant_value_left = type::ValueFactory::GetIntegerValue(constant);
+  type::Value constant_value_left =
+      type::ValueFactory::GetIntegerValue(constant);
 
   expression::AbstractExpression *constant_value_expr_left =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
@@ -356,7 +358,7 @@ static std::vector<double> GetColumnsAccessed(
   for (auto col : column_ids) columns_accessed_map[(int)col] = 1;
 
   for (oid_t column_itr = 0; column_itr < state.attribute_count + 1;
-      column_itr++) {
+       column_itr++) {
     auto location = columns_accessed_map.find(column_itr);
     auto end = columns_accessed_map.end();
     if (location != end)
@@ -382,7 +384,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
                         brain::SampleType sample_type,
                         std::vector<std::vector<double>> index_columns_accessed,
                         std::vector<std::vector<oid_t>> tuple_columns_accessed,
-                        double selectivity) {
+                        UNUSED_ATTRIBUTE double selectivity) {
   Timer<> timer;
 
   bool status = false;
@@ -410,8 +412,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     size_t sum = 0;
     for (auto &result_tile : result_tiles) {
-      if (result_tile != nullptr)
-        sum += result_tile->GetTupleCount();
+      if (result_tile != nullptr) sum += result_tile->GetTupleCount();
     }
 
     LOG_TRACE("result tiles have %d tuples", (int)sum);
@@ -422,8 +423,8 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
   // For holistic index
   if (state.holistic_indexing) {
-    for (auto index_columns: index_columns_accessed) {
-      if (index_columns.size() == 3) { // It should be so for moderate query
+    for (auto index_columns : index_columns_accessed) {
+      if (index_columns.size() == 3) {  // It should be so for moderate query
         oid_t i = oid_t(index_columns[0]);
         oid_t j = oid_t(index_columns[1]);
         oid_t k = oid_t(index_columns[2]);
@@ -447,9 +448,9 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
   // Record index sample
   for (auto &index_columns : index_columns_accessed) {
-    brain::Sample index_access_sample(index_columns,
-                                      duration / index_columns_accessed.size(),
-                                      sample_type, selectivity);
+    brain::Sample index_access_sample(
+        index_columns, duration / index_columns_accessed.size(), sample_type);
+    // ???, selectivity);
     sdbench_table->RecordIndexSample(index_access_sample);
   }
 
@@ -531,13 +532,14 @@ static std::shared_ptr<index::Index> PickIndex(storage::DataTable *table,
  */
 static void CopyColumn(oid_t col_itr) {
   auto tile_group_count = sdbench_table->GetTileGroupCount();
-  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count; tile_group_itr++) {
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
     // Prepare a tile for copying
     std::vector<catalog::Column> columns;
 
     catalog::Column column1(type::Type::INTEGER,
-                            type::Type::GetTypeSize(type::Type::INTEGER),
-                            "A", true);
+                            type::Type::GetTypeSize(type::Type::INTEGER), "A",
+                            true);
     columns.push_back(column1);
 
     // Schema
@@ -549,8 +551,8 @@ static void CopyColumn(oid_t col_itr) {
     column_names.push_back("COL 1");
 
     // TG Header
-    storage::TileGroupHeader *header =
-        new storage::TileGroupHeader(BACKEND_TYPE_MM, state.tuples_per_tilegroup);
+    storage::TileGroupHeader *header = new storage::TileGroupHeader(
+        BACKEND_TYPE_MM, state.tuples_per_tilegroup);
 
     storage::Tile *new_tile = storage::TileFactory::GetTile(
         BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
@@ -632,7 +634,7 @@ static void RunComplexQuery() {
   std::vector<oid_t> tuple_key_attrs = predicate;
   std::vector<oid_t> index_key_attrs = {0, 1, 2};
   right_table_tuple_key_attrs = {predicate[0] + 10, predicate[1] + 10,
-      predicate[2] + 10};
+                                 predicate[2] + 10};
   right_table_index_key_attrs = {0, 1, 2};
 
   predicate = GetPredicate();
@@ -652,11 +654,12 @@ static void RunComplexQuery() {
   }
 
   if (is_join_query == true) {
-    LOG_INFO("Complex :: %s, %s, c1: %d, c2: %d", GetOidVectorString(left_table_tuple_key_attrs).c_str(),
-             GetOidVectorString(right_table_tuple_key_attrs).c_str(), (int)left_table_join_column, (int)right_table_join_column);
+    LOG_INFO("Complex :: %s, %s, c1: %d, c2: %d",
+             GetOidVectorString(left_table_tuple_key_attrs).c_str(),
+             GetOidVectorString(right_table_tuple_key_attrs).c_str(),
+             (int)left_table_join_column, (int)right_table_join_column);
   } else if (is_aggregate_query == true) {
-    LOG_TRACE("Complex :: %s", GetOidVectorString(tuple_key_attrs)
-              .c_str());
+    LOG_TRACE("Complex :: %s", GetOidVectorString(tuple_key_attrs).c_str());
   } else {
     LOG_ERROR("Invalid query \n");
     return;
@@ -734,9 +737,9 @@ static void JoinQueryHelper(
       new expression::TupleValueExpression(type::Type::INTEGER, 1,
                                            right_table_join_column);
 
-  std::unique_ptr<expression::ComparisonExpression>
-  join_predicate(new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_LESSTHAN, left_table_attr, right_table_attr));
+  std::unique_ptr<expression::ComparisonExpression> join_predicate(
+      new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                                           left_table_attr, right_table_attr));
 
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   std::shared_ptr<const catalog::Schema> schema(nullptr);
@@ -762,10 +765,9 @@ static void JoinQueryHelper(
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t join_column_count = column_count * 2;
   for (oid_t col_itr = 0; col_itr < join_column_count; col_itr++) {
-    auto column =
-        catalog::Column(type::Type::INTEGER,
-                        type::Type::GetTypeSize(type::Type::INTEGER),
-                        "" + std::to_string(col_itr), is_inlined);
+    auto column = catalog::Column(type::Type::INTEGER,
+                                  type::Type::GetTypeSize(type::Type::INTEGER),
+                                  "" + std::to_string(col_itr), is_inlined);
     output_columns.push_back(column);
 
     old_to_new_cols[col_itr] = col_itr;
@@ -817,7 +819,6 @@ static void JoinQueryHelper(
   } else {
     LOG_TRACE("commit failed");
   }
-
 }
 
 static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
@@ -886,10 +887,9 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   for (col_itr = 0; col_itr < column_count; col_itr++) {
     planner::AggregatePlan::AggTerm max_column_agg(
         EXPRESSION_TYPE_AGGREGATE_MAX,
-        expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER,
-                                                      0,
+        expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                       col_itr),
-                                                      false);
+        false);
     agg_terms.push_back(max_column_agg);
   }
 
@@ -927,10 +927,9 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   col_itr = 0;
   for (auto column_id : column_ids) {
-    auto column =
-        catalog::Column(type::Type::INTEGER,
-                        type::Type::GetTypeSize(type::Type::INTEGER),
-                        std::to_string(column_id), is_inlined);
+    auto column = catalog::Column(type::Type::INTEGER,
+                                  type::Type::GetTypeSize(type::Type::INTEGER),
+                                  std::to_string(column_id), is_inlined);
     output_columns.push_back(column);
 
     old_to_new_cols[col_itr] = col_itr;
@@ -977,7 +976,6 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   } else {
     LOG_TRACE("commit failed");
   }
-
 }
 
 /**
@@ -1088,7 +1086,6 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
   } else {
     LOG_TRACE("commit failed");
   }
-
 }
 
 static void InsertHelper() {
@@ -1106,7 +1103,8 @@ static void InsertHelper() {
       new executor::ExecutorContext(txn));
 
   std::vector<type::Value> values;
-  type::Value insert_val = type::ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
+  type::Value insert_val =
+      type::ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
   TargetList target_list;
   DirectMapList direct_map_list;
   std::vector<oid_t> column_ids;
@@ -1143,8 +1141,7 @@ static void InsertHelper() {
   std::vector<double> index_columns_accessed;
   double selectivity = 0;
 
-  ExecuteTest(executors, brain::SAMPLE_TYPE_UPDATE, {{}}, {},
-              selectivity);
+  ExecuteTest(executors, brain::SAMPLE_TYPE_UPDATE, {{}}, {}, selectivity);
 
   auto result = txn_manager.CommitTransaction(txn);
 
@@ -1153,7 +1150,6 @@ static void InsertHelper() {
   } else {
     LOG_TRACE("commit failed");
   }
-
 }
 
 /**
@@ -1343,8 +1339,7 @@ static bool HasIndexConfigurationConverged() {
   prev_index_summary = index_summary;
 
   // Check threshold # of ops
-  if (stable_index_configuration_op_count
-      >= state.convergence_op_threshold) {
+  if (stable_index_configuration_op_count >= state.convergence_op_threshold) {
     LOG_INFO("Has converged");
     return true;
   }
@@ -1472,17 +1467,17 @@ static void SDBenchHelper() {
     // Randomly add some access sample to build indices
     if (state.holistic_indexing && state.multi_stage_idx == 1) {
       auto predicate = GetPredicate();
-      std::vector<double> index_columns_accessed(predicate.begin(), predicate.end());
-      double selectivity = state.selectivity;
+      std::vector<double> index_columns_accessed(predicate.begin(),
+                                                 predicate.end());
+      // double selectivity = state.selectivity;
       double duration = rand() % 100;
-      brain::Sample index_access_sample(index_columns_accessed,
-                                        duration,
-                                        brain::SAMPLE_TYPE_ACCESS, selectivity);
+      brain::Sample index_access_sample(index_columns_accessed, duration,
+                                        brain::SAMPLE_TYPE_ACCESS);
+      // ??? , selectivity);
       for (oid_t i = 0; i < state.analyze_sample_count_threshold; i++) {
         sdbench_table->RecordIndexSample(index_access_sample);
       }
     }
-
 
     // Check index convergence
     if (state.convergence == true) {
@@ -1501,18 +1496,21 @@ static void SDBenchHelper() {
 void RunMultiStageBenchmark() {
   BenchmarkPrepare();
 
-  int orig_analyze_sample_count_threshold = state.analyze_sample_count_threshold;
+  int orig_analyze_sample_count_threshold =
+      state.analyze_sample_count_threshold;
   // The first stage
   if (state.holistic_indexing) {
     // Make the index build speed faster
-    index_tuner.SetAnalyzeSampleCountThreshold((int)(orig_analyze_sample_count_threshold * 0.6));
+    index_tuner.SetAnalyzeSampleCountThreshold(
+        (int)(orig_analyze_sample_count_threshold * 0.6));
   }
   state.multi_stage_idx = 0;
   SDBenchHelper();
   // The second stage
   if (state.holistic_indexing) {
     // Make the index build speed slower
-    index_tuner.SetAnalyzeSampleCountThreshold((int)(orig_analyze_sample_count_threshold * 2));
+    index_tuner.SetAnalyzeSampleCountThreshold(
+        (int)(orig_analyze_sample_count_threshold * 2));
   }
   state.multi_stage_idx = 1;
   SDBenchHelper();
@@ -1521,7 +1519,8 @@ void RunMultiStageBenchmark() {
   state.multi_stage_idx = 2;
   if (state.holistic_indexing) {
     // Holistic doesn't drop index
-    index_tuner.SetAnalyzeSampleCountThreshold((int)(orig_analyze_sample_count_threshold));
+    index_tuner.SetAnalyzeSampleCountThreshold(
+        (int)(orig_analyze_sample_count_threshold));
     index_tuner.SetWriteRatioThreshold(1.0);
   }
   SDBenchHelper();
