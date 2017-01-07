@@ -1221,8 +1221,8 @@ TEST_F(IndexTunerTests, TPCCTest) {
   brain::IndexTuner &index_tuner = brain::IndexTuner::GetInstance();
 
   // Set duration between pauses
-  auto duration = 10000; // in ms
-  index_tuner.SetDurationBetweenPauses(duration);
+  auto duration = 1000; // in ms
+  index_tuner.SetDurationOfPause(duration);
 
   // Start index tuner
   index_tuner.Start();
