@@ -232,7 +232,9 @@ void BWTREE_INDEX_TYPE::ScanLimit(
 
         result.push_back(scan_itr->second);
       }
-    } else if (scan_direction == SCAN_DIRECTION_TYPE_BACKWARD) {
+    }
+    // descending
+    else if (scan_direction == SCAN_DIRECTION_TYPE_BACKWARD) {
       const storage::Tuple *low_key_p = csp_p->GetLowKey();
       const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
@@ -286,16 +288,23 @@ void BWTREE_INDEX_TYPE::ScanLimit(
       }
 
       // After this we know the iterator is between [low key, high key]
-      // and may be on the high end
-      LOG_TRACE(
-          "ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
-          low_key_p->GetInfo().c_str());
+      // and may be on the high en
+
+      KeyType prev_key = scan_itr->first;
+
+      do {
+        result.push_back(scan_itr->second);
+        scan_itr--;
+      } while (scan_itr.IsREnd() == false &&
+               container.KeyCmpEqual(scan_itr->first, prev_key) == true);
 
       LOG_TRACE("In bewtree, result size is %lu", result.size());
     } else {
-      throw "ScanLimit(): Invalid scan direction!";
+      throw "ScanLimit(): Invalid scan direction";
     }
-  } else {
+  }
+  // Last
+  else {
     Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
          csp_p);
   }
