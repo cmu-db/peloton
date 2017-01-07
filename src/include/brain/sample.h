@@ -46,12 +46,10 @@ class Sample : public Printable {
 
   Sample(const std::vector<double> &columns_accessed,
          double weight = DEFAULT_SAMPLE_WEIGHT,
-         SampleType sample_type = SAMPLE_TYPE_ACCESS,
-         double metric = DEFAULT_METRIC_VALUE)
+         SampleType sample_type = SAMPLE_TYPE_ACCESS)
       : columns_accessed_(columns_accessed),
         weight_(weight),
-        sample_type_(sample_type),
-        metric_(metric) {}
+        sample_type_(sample_type) {}
 
   // get the distance from other sample
   double GetDistance(const Sample &other) const;
@@ -71,11 +69,13 @@ class Sample : public Printable {
   // the sample type
   inline SampleType GetSampleType() const { return (sample_type_); }
 
-  // the metric for this sample
-  inline double GetMetric() const { return (metric_); }
-
   inline const std::vector<double> GetColumnsAccessed() const {
     return (columns_accessed_);
+  }
+
+  // set the columns accessed
+  inline void SetColumnsAccessed(const std::vector<double> columns_accessed) {
+    columns_accessed_ = columns_accessed;
   }
 
   // get enabled columns
@@ -103,8 +103,6 @@ class Sample : public Printable {
   // type of sample
   SampleType sample_type_;
 
-  // more info about the sample
-  double metric_ = 0;
 };
 
 }  // End brain namespace

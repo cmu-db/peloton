@@ -56,6 +56,17 @@ class PacketManager {
   //  bool ManageStartupPacket();
   void Reset();
 
+  // Returns a vector of all the PreparedStatements that this PacketManager has
+  // that reference the given table id
+  const std::vector<Statement*> GetPreparedStatements(oid_t table_id) {
+    return table_statement_cache_[table_id];
+  }
+
+  void InvalidatePreparedStatements(oid_t table_id);
+
+  // Ugh... this should not be here but we have no choice...
+  void ReplanPreparedStatement(Statement* statement);
+
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//
@@ -74,7 +85,7 @@ class PacketManager {
       std::vector<std::pair<int, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
-  static std::vector<const PacketManager*> GetPacketManagers() {
+  static std::vector<PacketManager*> GetPacketManagers() {
     return (PacketManager::packet_managers_);
   }
 
@@ -89,29 +100,6 @@ class PacketManager {
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
   ResponseBuffer responses;
-
-  // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_statement_;
-
-  // The result-column format code
-  std::vector<int> result_format_;
-
-  // global txn state
-  uchar txn_state_;
-
-  // state to mang skipped queries
-  bool skipped_stmt_ = false;
-  std::string skipped_query_string_;
-  std::string skipped_query_type_;
-
-  // Statement cache
-  Cache<std::string, Statement> statement_cache_;
-
-  //  Portals
-  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
-
-  // packets ready for read
-  size_t pkt_cntr_;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -145,7 +133,7 @@ class PacketManager {
   void MakeHardcodedParameterStatus(
       const std::pair<std::string, std::string>& kv);
 
-  /* SQLite doesn't support "SET" and "SHOW" SQL commands.
+  /* We don't support "SET" and "SHOW" SQL commands yet.
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
    * This function helps filtering out the execution for such cases
    */
@@ -173,11 +161,41 @@ class PacketManager {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
+  // Manage standalone queries
+  std::shared_ptr<Statement> unnamed_statement_;
+
+  // The result-column format code
+  std::vector<int> result_format_;
+
+  // global txn state
+  uchar txn_state_;
+
+  // state to mang skipped queries
+  bool skipped_stmt_ = false;
+  std::string skipped_query_string_;
+  std::string skipped_query_type_;
+
+  // Statement cache
+  // StatementName -> Statement
+  Cache<std::string, Statement> statement_cache_;
+  // TableOid -> Statements
+  // FIXME: This table statement cache is not in sync with the other cache.
+  // That means if something gets thrown out of the statement cache it is not
+  // automatically evicted from this cache.
+  std::unordered_map<oid_t, std::vector<Statement*>> table_statement_cache_;
+
+  //  Portals
+  std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
+
+  // packets ready for read
+  size_t pkt_cntr_;
+
   // Manage parameter types for unnamed statement
   stats::QueryMetric::QueryParamBuf unnamed_stmt_param_types_;
 
   // Parameter types for statements
-  // Warning: the data in the param buffer becomes invalid when the value stored
+  // Warning: the data in the param buffer becomes invalid when the value
+  // stored
   // in stat table is destroyed
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
@@ -195,7 +213,7 @@ class PacketManager {
   // HACK: Global list of PacketManager instances
   // We need this in order to reset statement caches when the catalog changes
   // We need to think of a more elegant solution for this
-  static std::vector<const PacketManager*> packet_managers_;
+  static std::vector<PacketManager*> packet_managers_;
   static std::mutex packet_managers_mutex_;
 };
 

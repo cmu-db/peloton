@@ -129,6 +129,16 @@ class IndexMetadata : public Printable {
    */
   const std::string GetInfo() const;
 
+  //===--------------------------------------------------------------------===//
+  // STATIC HELPERS
+  //===--------------------------------------------------------------------===//
+
+  static inline void SetDefaultVisibleFlag(bool flag) {
+    LOG_DEBUG("Set IndexMetadata visible flag to '%s'",
+              (flag ? "true" : "false"));
+    index_default_visibility = flag;
+  }
+
   ///////////////////////////////////////////////////////////////////
   // IndexMetadata Data Member Definition
   ///////////////////////////////////////////////////////////////////
@@ -150,10 +160,10 @@ class IndexMetadata : public Printable {
   // of the underlying table schema
   const catalog::Schema *key_schema;
 
+ private:
   // The mapping relation between key schema and tuple schema
   std::vector<oid_t> key_attrs;
 
- private:
   // The mapping relation between tuple schema and key schema
   // i.e. if the column in tuple is not indexed, then it is set to INVALID_OID
   //      if the column in tuple is indexed, then it is the index in index_key
@@ -168,7 +178,10 @@ class IndexMetadata : public Printable {
   double utility_ratio = INVALID_RATIO;
 
   // If set to true, then this index is visible to the planner
-  bool visible_ = true;
+  bool visible_;
+
+  // This is a magic flag that tells us whether new
+  static bool index_default_visibility;
 };
 
 /////////////////////////////////////////////////////////////////////

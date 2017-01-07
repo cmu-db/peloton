@@ -16,10 +16,11 @@
 
 #include "configuration/configuration.h"
 
+#include "brain/index_tuner.h"
+#include "brain/layout_tuner.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "storage/data_table.h"
-#include "brain/index_tuner.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -30,7 +31,6 @@ namespace peloton {
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
-
   QUERY_THREAD_COUNT = std::thread::hardware_concurrency();
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
@@ -50,14 +50,17 @@ void PelotonInit::Initialize() {
   gc::GCManagerFactory::GetInstance().StartGC();
 
   // start index tuner
-  if(FLAGS_index_tuner == true){
-    // Index tuner
+  if (FLAGS_index_tuner == true) {
+    // Set the default visibility flag for all indexes to false
+    index::IndexMetadata::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
-
-    // Start index tuner
     index_tuner.Start();
+  }
 
-    // TODO: Add tables, collect samples, and use constructed indexes
+  // start layout tuner
+  if (FLAGS_layout_tuner == true) {
+    auto& layout_tuner = brain::LayoutTuner::GetInstance();
+    layout_tuner.Start();
   }
 
   // initialize the catalog and add the default database, so we don't do this on
@@ -66,13 +69,16 @@ void PelotonInit::Initialize() {
 }
 
 void PelotonInit::Shutdown() {
-
   // shut down index tuner
-  if(FLAGS_index_tuner == true){
+  if (FLAGS_index_tuner == true) {
     auto& index_tuner = brain::IndexTuner::GetInstance();
-
-    // Stop index tuner
     index_tuner.Stop();
+  }
+
+  // shut down layout tuner
+  if (FLAGS_layout_tuner == true) {
+    auto& layout_tuner = brain::LayoutTuner::GetInstance();
+    layout_tuner.Stop();
   }
 
   // shut down GC.
@@ -90,12 +96,8 @@ void PelotonInit::Shutdown() {
   ::google::ShutDownCommandLineFlags();
 }
 
-void PelotonInit::SetUpThread() {
+void PelotonInit::SetUpThread() {}
 
-}
-
-void PelotonInit::TearDownThread() {
-
-}
+void PelotonInit::TearDownThread() {}
 
 }  // End peloton namespace

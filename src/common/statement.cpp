@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cstdio>
 #include "common/statement.h"
+#include <cstdio>
 #include "common/logger.h"
 #include "planner/abstract_plan.h"
 
@@ -25,8 +25,8 @@ Statement::Statement(const std::string& statement_name,
 
 Statement::~Statement() {}
 
-void Statement::ParseQueryType(const std::string &query_string,
-                               std::string &query_type) {
+void Statement::ParseQueryType(const std::string& query_string,
+                               std::string& query_type) {
   std::stringstream stream(query_string);
   stream >> query_type;
 }
@@ -64,8 +64,47 @@ void Statement::SetPlanTree(std::shared_ptr<planner::AbstractPlan> plan_tree) {
   plan_tree_ = std::move(plan_tree);
 }
 
+void Statement::SetReferencedTables(const std::set<oid_t> table_ids) {
+  table_ids_.insert(table_ids.begin(), table_ids.end());
+}
+
+const std::set<oid_t> Statement::GetReferencedTables() const {
+  return (table_ids_);
+}
+
 const std::shared_ptr<planner::AbstractPlan>& Statement::GetPlanTree() const {
   return plan_tree_;
+}
+
+const std::string Statement::GetInfo() const {
+  std::ostringstream os;
+  os << "Statement[";
+  if (statement_name_.empty()) {
+    os << "**UNNAMED**";
+  } else {
+    os << statement_name_;
+  }
+  os << "] -> " << query_string_ << " (";
+
+  // Tables Oids Referenced
+  os << "TablesRef={";
+  bool first = true;
+  for (auto t_id : table_ids_) {
+    if (first == false) os << ",";
+    os << t_id;
+    first = false;
+  }
+  os << "}";
+
+  // Replan Flag
+  os << ", ReplanNeeded=" << needs_replan_;
+
+  // Query Type
+  os << ", QueryType=" << query_type_;
+
+  os << ")";
+
+  return os.str();
 }
 
 }  // namespace peloton

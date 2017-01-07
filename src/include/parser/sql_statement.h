@@ -32,18 +32,18 @@ class QueryNodeVisitor;
 
 namespace parser {
 
-struct TableInfo{
-
-  ~TableInfo(){
+struct TableInfo {
+  ~TableInfo() {
     delete[] table_name;
     delete[] database_name;
   }
-  char * table_name = nullptr;;
-  char * database_name = nullptr;
+  char* table_name = nullptr;
+  ;
+  char* database_name = nullptr;
 };
 
 // Base class for every SQLStatement
-class SQLStatement {
+class SQLStatement : public Printable {
  public:
   SQLStatement(StatementType type) : stmt_type(type){};
 
@@ -63,14 +63,11 @@ class SQLStatement {
   StatementType stmt_type;
 };
 
-class TableRefStatement : public SQLStatement{
-public:
+class TableRefStatement : public SQLStatement {
+ public:
+  TableRefStatement(StatementType type) : SQLStatement(type) {}
 
-  TableRefStatement(StatementType type) : SQLStatement(type){}
-
-  virtual ~TableRefStatement(){
-    delete table_info_;
-  }
+  virtual ~TableRefStatement() { delete table_info_; }
 
   virtual inline std::string GetTableName() { return table_info_->table_name; }
 
@@ -82,12 +79,12 @@ public:
     return table_info_->database_name;
   }
 
-  TableInfo *table_info_ = nullptr;
+  TableInfo* table_info_ = nullptr;
 };
 
 // Represents the result of the SQLParser.
 // If parsing was successful it is a list of SQLStatement.
-class SQLStatementList {
+class SQLStatementList : public Printable {
  public:
   SQLStatementList()
       : is_valid(true), parser_msg(NULL), error_line(0), error_col(0){};
