@@ -87,8 +87,8 @@ IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
   // was wondering why there indexes weren't working...
   if (visible_ == false) {
     LOG_WARN(
-        "Creating IndexMetadata for '%s' but visible flag is set to false.",
-        name_.c_str());
+        "Creating IndexMetadata for '%s' (%s) but visible flag is set to false.",
+        name_.c_str(), GetInfo().c_str());
   }
 
   return;

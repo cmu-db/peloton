@@ -597,7 +597,7 @@ void IndexTuner::BootstrapTPCC() {
   std::map<std::string, std::vector<std::vector<double>>> tables_samples;
 
   tables_samples["customer"].push_back({0, 1, 2});
-  tables_samples["customer"].push_back({0, 1, 5, 6});
+  tables_samples["customer"].push_back({0, 1, 5});
   tables_samples["district"].push_back({0, 1});
   tables_samples["item"].push_back({0});
   tables_samples["new_order"].push_back({0, 1, 2});
@@ -605,6 +605,7 @@ void IndexTuner::BootstrapTPCC() {
   tables_samples["oorder"].push_back({0, 1, 2, 3});
   tables_samples["stock"].push_back({0, 1});
   tables_samples["warehouse"].push_back({0});
+  tables_samples["order_line"].push_back({0, 1, 2, 3});
 
   auto catalog = catalog::Catalog::GetInstance();
   double sample_weight = 100;
