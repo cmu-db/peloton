@@ -29,13 +29,6 @@
 namespace peloton {
 namespace brain {
 
-// Load statistics for Index Tuner from a file
-void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path) {
-  LOG_DEBUG("Loading stats from file: %s", path.c_str());
-  // TODO: Implement this
-  return;
-}
-
 IndexTuner& IndexTuner::GetInstance() {
   static IndexTuner index_tuner;
   return index_tuner;
@@ -639,6 +632,19 @@ void IndexTuner::BootstrapTPCC() {
     // Attach table to tuner
     AddTable(table);
   }
+}
+
+// Load statistics for Index Tuner from a file
+void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path) {
+  LOG_INFO("LoadStatsFromFile Invoked");
+
+  // Get index tuner
+  auto& index_tuner = brain::IndexTuner::GetInstance();
+
+  // Bootstrap
+  index_tuner.BootstrapTPCC();
+
+  return;
 }
 
 }  // End brain namespace
