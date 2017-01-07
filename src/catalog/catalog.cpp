@@ -107,6 +107,15 @@ void Catalog::AddDatabase(storage::Database *database) {
   InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
 }
 
+void Catalog::AddDatabase(std::string database_name,
+                          storage::Database *database){
+  database->setDBName(database_name);
+  databases_.push_back(database);
+  LOG_DEBUG("Added database with name: %s", database_name.c_str());
+  InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
+}
+
+
 void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
     std::string &database_name, concurrency::Transaction *txn) {
   // Update catalog_db with this database info

@@ -169,6 +169,7 @@ class IndexMetadata : public Printable {
 
   // If set to true, then this index is visible to the planner
   bool visible_ = true;
+
 };
 
 /////////////////////////////////////////////////////////////////////

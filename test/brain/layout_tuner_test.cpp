@@ -74,11 +74,11 @@ TEST_F(LayoutTunerTests, BasicTest) {
     auto rng_val = generator.GetSample();
 
     if (rng_val < 0.9) {
-      columns_accessed = {1, 1, 1, 0};
+      columns_accessed = {0, 1, 2};
       sample_weight = 100;
     }
     else {
-      columns_accessed = {0, 0, 0, 1};
+      columns_accessed = {3};
       sample_weight = 10;
     }
 
