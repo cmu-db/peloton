@@ -40,6 +40,21 @@ bool OrderByExecutor::DInit() {
   sort_done_ = false;
   num_tuples_returned_ = 0;
 
+  // Grab info from plan node and check it
+  const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
+
+  // copy from underlying plan
+  underling_ordered_ = node.GetUnderlyingOrder();
+
+  // Whether there is limit clause
+  limit_ = node.GetLimit();
+
+  // Copied from plan node
+  limit_number_ = node.GetLimitNumber();
+
+  // Copied from plan node
+  limit_offset_ = node.GetLimitOffset();
+
   return true;
 }
 

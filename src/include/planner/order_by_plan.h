@@ -46,7 +46,19 @@ class OrderByPlan : public AbstractPlan {
 
   void SetUnderlyingOrder(bool same_order) { underling_ordered_ = same_order; }
 
-  bool GetUnderlyingOrder() { return underling_ordered_; }
+  void SetLimit(bool limit) { limit_ = limit; }
+
+  void SetLimitNumber(uint64_t limit_number) { limit_number_ = limit_number; }
+
+  void SetLimitOffset(uint64_t limit_offset) { limit_offset_ = limit_offset; }
+
+  bool GetUnderlyingOrder() const { return underling_ordered_; }
+
+  bool GetLimit() const { return limit_; }
+
+  uint64_t GetLimitNumber() const { return limit_number_; }
+
+  uint64_t GetLimitOffset() const { return limit_offset_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
@@ -72,6 +84,15 @@ class OrderByPlan : public AbstractPlan {
   // expression. If the so, we can directly used the output result without any
   // additional sorting operation
   bool underling_ordered_ = false;
+
+  // Whether there is limit clause;
+  bool limit_ = false;
+
+  // How many tuples denoted by limit clause
+  uint64_t limit_number_ = 0;
+
+  // The point denoted by limit clause
+  uint64_t limit_offset_ = 0;
 };
 }
 }
