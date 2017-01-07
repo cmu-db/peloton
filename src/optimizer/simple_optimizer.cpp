@@ -281,20 +281,20 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
           // Whether underlying child's output has the same order
           // with the order_by clause
-          //          LOG_TRACE("order by column id is %d",
-          //                    target_table->GetSchema()->GetColumnID(sort_col_name));
-          //          if (UnderlyingSameOrder(
-          //                  child_SelectPlan.get(),
-          //                  target_table->GetSchema()->GetColumnID(sort_col_name),
-          //                  flags.front()) == true) {
-          //            LOG_TRACE(
-          //                "Underlying plan has the same ordering output with"
-          //                "order_by plan with limit");
-          //            order_by_plan->SetUnderlyingOrder(true);
-          //            order_by_plan->SetLimit(true);
-          //            order_by_plan->SetLimitNumber(select_stmt->limit->limit);
-          //            order_by_plan->SetLimitOffset(offset);
-          //          }
+          LOG_TRACE("order by column id is %d",
+                    target_table->GetSchema()->GetColumnID(sort_col_name));
+          if (UnderlyingSameOrder(
+                  child_SelectPlan.get(),
+                  target_table->GetSchema()->GetColumnID(sort_col_name),
+                  flags.front()) == true) {
+            LOG_TRACE(
+                "Underlying plan has the same ordering output with"
+                "order_by plan with limit");
+            order_by_plan->SetUnderlyingOrder(true);
+            order_by_plan->SetLimit(true);
+            order_by_plan->SetLimitNumber(select_stmt->limit->limit);
+            order_by_plan->SetLimitOffset(offset);
+          }
 
           order_by_plan->AddChild(std::move(child_SelectPlan));
 
@@ -348,17 +348,17 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
           // Whether underlying child's output has the same order with the
           // order_by clause.
-          //          LOG_TRACE("order by column id is %d",
-          //                    target_table->GetSchema()->GetColumnID(sort_col_name));
-          //          if (UnderlyingSameOrder(
-          //                  child_SelectPlan.get(),
-          //                  target_table->GetSchema()->GetColumnID(sort_col_name),
-          //                  flags.front()) == true) {
-          //            LOG_TRACE(
-          //                "Underlying plan has the same ordering output with"
-          //                "order_by plan without limit");
-          //            order_by_plan->SetUnderlyingOrder(true);
-          //          }
+          LOG_TRACE("order by column id is %d",
+                    target_table->GetSchema()->GetColumnID(sort_col_name));
+          if (UnderlyingSameOrder(
+                  child_SelectPlan.get(),
+                  target_table->GetSchema()->GetColumnID(sort_col_name),
+                  flags.front()) == true) {
+            LOG_TRACE(
+                "Underlying plan has the same ordering output with"
+                "order_by plan without limit");
+            order_by_plan->SetUnderlyingOrder(true);
+          }
 
           order_by_plan->AddChild(std::move(child_SelectPlan));
           child_plan = std::move(order_by_plan);
