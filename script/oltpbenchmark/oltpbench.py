@@ -23,20 +23,22 @@ def executeBenchmark(create=True, load=True, execute=False, interval=1000):
         "interval": interval,
         "buckets": BUCKETS,
     }
-    cmd = [
-        "%(home)s/oltpbenchmark" % params,
-        "-b %(benchmark)s" % params,
-        "-c %(config)s" % params,
-        "--create=%(create)s" % params,
-        "--load=%(load)s" % params,
-        "--execute=%(execute)s" % params,
-        "--histograms" % params,
-        "-im %(interval)d" % params,
-        "-s %(buckets)d" % params,
+    cmd = "cd %(home)s && %(home)s/oltpbenchmark " \
+          "-b %(benchmark)s " \
+          "-c %(config)s " \
+          "--create=%(create)s " \
+          "--load=%(load)s " \
+          "--execute=%(execute)s " \
+          "--histograms " \
+          "-im %(interval)d " \
+          "-s %(buckets)d " % params
+    
+    ssh_cmd = [
+        "ssh", "ottertune", cmd 
     ]
     
     os.chdir(OLTP_HOME)
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    popen = subprocess.Popen(ssh_cmd, stdout=subprocess.PIPE, universal_newlines=True)
     for line in iter(popen.stdout.readline, ""):
         m = REGEX.search(line)
         if m:
