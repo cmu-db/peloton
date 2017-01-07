@@ -1,6 +1,5 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
 //
 // index.cpp
 //
@@ -25,6 +24,8 @@
 
 namespace peloton {
 namespace index {
+
+bool IndexMetadata::index_default_visibility = true;
 
 /*
  * GetColumnCount() - Returns the number of indexed columns
@@ -63,7 +64,8 @@ IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
       key_schema(key_schema),
       key_attrs(key_attrs),
       tuple_attrs(),
-      unique_keys(unique_keys) {
+      unique_keys(unique_keys),
+      visible_(IndexMetadata::index_default_visibility) {
   // Push the reverse mapping relation into tuple_attrs which maps
   // tuple key's column into index key's column
   // resize() automatially does allocation, extending and insertion
@@ -109,7 +111,8 @@ const std::string IndexMetadata::GetInfo() const {
      << "Type=" << IndexTypeToString(index_type_) << ", "
      << "ConstraintType=" << IndexConstraintTypeToString(index_constraint_type_)
      << ", "
-     << "UtilityRatio=" << utility_ratio << "]";
+     << "UtilityRatio=" << utility_ratio << ", "
+     << "Visible=" << visible_ << "]";
 
   os << " -> " << key_schema->GetInfo();
 
