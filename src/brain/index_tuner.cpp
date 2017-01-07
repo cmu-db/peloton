@@ -643,7 +643,7 @@ void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path) {
 
   // Set duration between pauses
   auto duration = 1000; // in ms
-  index_tuner.SetDurationBetweenPauses(duration);
+  index_tuner.SetDurationOfPause(duration);
 
   // Bootstrap
   index_tuner.BootstrapTPCC();
