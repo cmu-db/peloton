@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 import random
 import threading
 import subprocess
@@ -36,11 +37,14 @@ PLOT_LOCATION = 0
 PLOT_CURVE = None
 PLOT_THROUGHPUT = None
 PLOT_THROUGHPUT_AMOUNT = None
-PLOT_LINES = [None]*START_INTERVAL
+PLOT_LINE_POSITIONS = set()
+PLOT_LINES = { }
 NEW_DATA = [ ]
 
 NOTIFICATION_SOUND = "/home/pavlo/Dropbox/optimized.wav"
 NOTIFICATION_CMD = "aplay" # linux alsa 
+
+TEST_MODE = False
 
 ## -------------------------------------------------
 ## CustomAxis
@@ -103,20 +107,36 @@ def updatePlot():
         nextPoint = 0
     
     PLOT_DATA[:-1] = PLOT_DATA[1:]  # shift PLOT_DATA in the array one sample left
-    # PLOT_DATA[-1] = max(100, last + random.randint(-10, 10)) # np.random.normal()
-    PLOT_DATA[-1] = nextPoint
+    if TEST_MODE:
+        PLOT_DATA[-1] = max(100, lastPoint + random.randint(-10, 10))
+        if PLOT_LOCATION % 100 == 0: print "PLOT_LOCATION:", PLOT_LOCATION
+    else:
+        PLOT_DATA[-1] = nextPoint
     PLOT_LOCATION += 1
     
     # Always make the first point zero to prevent the y-axis
     # from auto-scaling
     #PLOT_DATA[0] = 0
-    
     PLOT_CURVE.setData(PLOT_DATA)
     PLOT_CURVE.setPos(PLOT_LOCATION, 0)
 
-    # Shift lines
-    #PLOT_LINES[:-1] = PLOT_LINES[1:]
-    #InfiniteLine(pos=None, angle=90, pen=None, movable=False, bounds=None, hoverPen=None, label=None, labelOpts=None, name=None)
+    # Vertical Lines
+    to_remove = [ ]
+    for line_pos in PLOT_LINE_POSITIONS:
+        if line_pos >= PLOT_LOCATION and line_pos <= (PLOT_LOCATION + START_INTERVAL):
+            linePen = pg.mkPen('y', width=3)
+            l = p.addLine(x=line_pos, pen=linePen)
+            to_remove.append(line_pos)
+            PLOT_LINES[line_pos] = l
+    ## FOR
+    map(PLOT_LINE_POSITIONS.remove, to_remove)
+    to_remove = [ ]
+    for line_pos in PLOT_LINES.keys():
+        if line_pos < PLOT_LOCATION:
+            to_remove.append(line_pos)
+            p.removeItem(PLOT_LINES[line_pos])
+    ## FOR
+    map(PLOT_LINES.pop, to_remove)
 
     if PLOT_THROUGHPUT_AMOUNT != None and not FINISHED:
         p.setTitle("<font size=\"64\">%.1f txn/sec</font>" % PLOT_THROUGHPUT_AMOUNT)
@@ -168,9 +188,14 @@ def notification():
 ## POLL PELOTON LOG
 ## -------------------------------------------------
 def pollPelotonLog():
+    global PLOT_LOCATION
+    regex = re.compile(".*?INFO[\s]+-[\s]+Enabling index[\s]+:[\s]+([\w]+)")
     results = oltpbench.pollFile("/tmp/peloton.log")
     for line in results:
-        print line
+        # Look for when we add an index
+        m = regex.search(line)
+        if m:
+            PLOT_LINE_POSITIONS.add(START_INTERVAL + PLOT_LOCATION)
         if FINISHED: break
     ## FOR (iterator)
 ## DEF
@@ -195,16 +220,21 @@ if __name__ == '__main__':
 
     limits = {'yMin': 0}
     p.setLimits(**limits)
-    #p.setRange(yRange=[0,1500])
+    if not TEST_MODE:
+        p.setRange(yRange=[0,40000])
     #print p
     #pprint(dir(p))
     #sys.exit(1)
+    
+    if TEST_MODE:
+        for x in xrange(10):
+            PLOT_LINE_POSITIONS.add(START_INTERVAL + 100 + (10 * x))
     
     #PLOT_THROUGHPUT = pg.TextItem(text="Throughput: --", border='w', anchor=(1,1))
     #PLOT_THROUGHPUT.setPos(0, 0)
     #p.addItem(PLOT_THROUGHPUT)
     
-    PLOT_CURVE = p.plot(PLOT_DATA)
+    PLOT_CURVE = p.plot(PLOT_DATA, fillLevel=-0.3, brush=(50,50,200,100))
     #PLOT_CURVE.setPen(color=(40,54,83), width=3)
     PLOT_CURVE.setPen(width=3)
     
@@ -217,12 +247,12 @@ if __name__ == '__main__':
     # Start Peloton log monitor
     threads.append(threading.Thread(target=pollPelotonLog))
     threads[-1].setDaemon(True)
-    threads[-1].start()
+    if not TEST_MODE: threads[-1].start()
     
     # Start OLTP-Bench thread
     threads.append(threading.Thread(target=execBenchmark))
     threads[-1].setDaemon(True)
-    threads[-1].start()
+    if not TEST_MODE: threads[-1].start()
     
     def close():
         global threads

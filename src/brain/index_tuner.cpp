@@ -456,7 +456,7 @@ void PrintIndexInformation(storage::DataTable* table) {
       fraction *= 100;
     }
 
-    LOG_INFO("%s %.1f%%", index->GetMetadata()->GetInfo().c_str(), fraction);
+    LOG_DEBUG("%s %.1f%%", index->GetMetadata()->GetInfo().c_str(), fraction);
   }
 }
 
@@ -549,7 +549,7 @@ void IndexTuner::Tune() {
       // Update indices periodically
       IndexTuneHelper(table);
 
-      LOG_INFO("TUNER PAUSE");
+      LOG_INFO("TUNER PAUSE [%dms]", duration_of_pause);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
     }
 
