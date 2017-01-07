@@ -311,6 +311,11 @@ uint32_t Type::GetLength(const Value& val UNUSED_ATTRIBUTE) const {
   throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
 }
 
+// Access the raw varlen data stored from the tuple storage
+char * Type::GetData(char *storage UNUSED_ATTRIBUTE) {
+  throw new Exception(EXCEPTION_TYPE_INVALID, "invalid type");
+}
+
 // Get the element at a given index in this array
 Value Type::GetElementAt(const Value& val UNUSED_ATTRIBUTE,
                          uint64_t idx UNUSED_ATTRIBUTE) const {

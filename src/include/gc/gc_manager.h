@@ -20,6 +20,11 @@
 #include "common/logger.h"
 
 namespace peloton {
+
+namespace storage {
+  class TileGroup;
+}
+
 namespace gc {
 
 //===--------------------------------------------------------------------===//
@@ -64,6 +69,9 @@ public:
   virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set UNUSED_ATTRIBUTE, 
                                    const cid_t &timestamp UNUSED_ATTRIBUTE,
                                    const GCSetType gc_set_type UNUSED_ATTRIBUTE) {}
+
+protected:
+  void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);
 
 protected:
   volatile bool is_running_;

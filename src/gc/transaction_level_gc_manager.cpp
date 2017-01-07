@@ -32,7 +32,7 @@ void TransactionLevelGCManager::StopGC(int thread_id) {
 
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group = manager.GetTileGroup(location.block).get();
 
   auto tile_group_header = tile_group->GetHeader();
 
@@ -46,6 +46,9 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   PL_MEMSET(
     tile_group_header->GetReservedFieldRef(location.offset), 0,
     storage::TileGroupHeader::GetReservedSize());
+
+  // Reclaim the varlen pool
+  CheckAndReclaimVarlenColumns(tile_group, location.offset);
 
   LOG_TRACE("Garbage tuple(%u, %u) is reset", location.block, location.offset);
   return true;
