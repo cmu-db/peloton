@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// drop_table_sql_test.cpp
+// drop_sql_test.cpp
 //
-// Identification: test/sql/drop_table_sql_test.cpp
+// Identification: test/sql/drop_sql_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,9 +23,9 @@
 namespace peloton {
 namespace test {
 
-class DropTableSQLTests : public PelotonTest {};
+class DropSQLTests : public PelotonTest {};
 
-TEST_F(DropTableSQLTests, DropTableSQLTest) {
+TEST_F(DropSQLTests, DropTableTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
