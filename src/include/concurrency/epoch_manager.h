@@ -140,10 +140,6 @@ public:
     IncreaseQueueTail();
     IncreaseReclaimTail();
 
-    if (current_epoch_ - queue_tail_ > 10) {
-      size_t epoch_idx = queue_tail_ % epoch_queue_size_;
-      epoch_queue_[epoch_idx].rw_txn_ref_count_ = 0;
-    }
     return max_cid_gc_;
   }
 
