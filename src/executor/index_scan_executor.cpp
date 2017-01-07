@@ -388,7 +388,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                           limit_number_, limit_offset_);
 
         if (tuple_location_ptrs.size() == 0) {
-          LOG_INFO("2-Result size is %lu", tuple_location_ptrs.size());
+          LOG_TRACE("2-Result size is %lu", tuple_location_ptrs.size());
         }
       }
     }
@@ -455,8 +455,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
+                  tuple_location.offset);
         break;
       }
       // if the tuple is visible.
@@ -477,8 +477,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // Compare the key tuple and the key
         if (index_->Compare(key_tuple, key_column_ids_, expr_types_, values_) ==
             false) {
-          LOG_INFO("Secondary key mismatch: %u, %u\n", tuple_location.block,
-                   tuple_location.offset);
+          LOG_TRACE("Secondary key mismatch: %u, %u\n", tuple_location.block,
+                    tuple_location.offset);
           break;
         }
 
@@ -495,7 +495,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
-            LOG_INFO("passed evaluation, but txn read fails");
+            LOG_TRACE("passed evaluation, but txn read fails");
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
@@ -503,7 +503,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           LOG_TRACE("passed evaluation, visible_tuple_locations size: %lu",
                     visible_tuple_locations.size());
         } else {
-          LOG_INFO("predicate evaluate fails");
+          LOG_TRACE("predicate evaluate fails");
         }
 
         break;
@@ -512,8 +512,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       else {
         PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
 
-        LOG_INFO("Invisible read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+        LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
+                  tuple_location.offset);
 
         bool is_acquired = (tile_group_header->GetTransactionId(
                                 tuple_location.offset) == INITIAL_TXN_ID);
