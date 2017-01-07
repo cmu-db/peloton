@@ -232,82 +232,14 @@ void BWTREE_INDEX_TYPE::ScanLimit(
 
         result.push_back(scan_itr->second);
       }
-    }
-    // descending
-    else if (scan_direction == SCAN_DIRECTION_TYPE_BACKWARD) {
-      const storage::Tuple *low_key_p = csp_p->GetLowKey();
-      const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-      LOG_TRACE(
-          "ScanLimit() special case (limit = 1;"
-          " offset = 0; DESCENDING): %s",
-          high_key_p->GetInfo().c_str());
-
-      KeyType index_low_key;
-      KeyType index_high_key;
-      index_low_key.SetFromKey(low_key_p);
-      index_high_key.SetFromKey(high_key_p);
-
-      // This might or might not reach the high key
-      // If it does not reach high key then the high key does not exist
-      // and we need to move the iterator backward by 1
-      auto scan_itr = container.Begin(index_high_key);
-
-      // It could not be REND since we just use lower_bound
-      // Note that REND < BEGIN <= END
-      // and REND == --BEGIN
-      // and Beein() must return something between [BEGIN, END]
-      // we do not worry about REND
-      // We rely on short circuited logic expression here to make sure
-      // either iterator is END or it is a valid value for testing
-      if (scan_itr.IsEnd() == true ||
-          container.KeyCmpLess(index_high_key, scan_itr->first) == true) {
-        scan_itr--;
-
-        // If after decreament it is REND then return because we could not
-        // test the current element
-        if (scan_itr.IsREnd() == true) {
-          LOG_TRACE("After decreamenting it is REND iterator");
-
-          return;
-        }
-
-        // We must reach a valid key; otherwise we will reach it in
-        // the previous Begin()
-        // But still it might not be exact
-        PL_ASSERT(container.KeyCmpLess(index_high_key, scan_itr->first) ==
-                  false);
-      }
-
-      if (container.KeyCmpLess(scan_itr->first, index_low_key) == true) {
-        LOG_TRACE(
-            "The iterator is not qualified "
-            "because it is smaller than low key");
-
-        return;
-      }
-
-      // After this we know the iterator is between [low key, high key]
-      // and may be on the high en
-
-      KeyType prev_key = scan_itr->first;
-
-      do {
-        result.push_back(scan_itr->second);
-        scan_itr--;
-      } while (scan_itr.IsREnd() == false &&
-               container.KeyCmpEqual(scan_itr->first, prev_key) == true);
-
-      LOG_TRACE("In bewtree, result size is %lu", result.size());
-    } else {
-      throw "ScanLimit(): Invalid scan direction";
+      // If the passing is forward and limit 1, return 1 tuple
+      return;
     }
   }
-  // Last
-  else {
-    Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
-         csp_p);
-  }
+
+  Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
+       csp_p);
 
   return;
 }
