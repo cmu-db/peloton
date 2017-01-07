@@ -33,6 +33,12 @@ const char *VarlenType::GetData(const Value &val) const {
 // Get the length of the variable length data
 uint32_t VarlenType::GetLength(const Value &val) const { return val.size_.len; }
 
+// Access the raw varlen data stored from the tuple storage
+char *VarlenType::GetData(char *storage) {
+  char *ptr = *reinterpret_cast<char **>(storage);
+  return ptr;
+}
+
 CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
