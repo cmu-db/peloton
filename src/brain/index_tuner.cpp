@@ -15,8 +15,8 @@
 #include <unordered_map>
 
 #include "brain/clusterer.h"
-#include "catalog/schema.h"
 #include "catalog/catalog.h"
+#include "catalog/schema.h"
 #include "common/container_tuple.h"
 #include "common/logger.h"
 #include "common/macros.h"
@@ -24,14 +24,15 @@
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
+#include "wire/packet_manager.h"
 
 namespace peloton {
 namespace brain {
 
 // Load statistics for Index Tuner from a file
-void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path){
+void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path) {
   LOG_DEBUG("Loading stats from file: %s", path.c_str());
-  //TODO: Implement this
+  // TODO: Implement this
   return;
 }
 
@@ -60,7 +61,6 @@ void IndexTuner::Start() {
 // Add an ad-hoc index
 static void AddIndex(storage::DataTable* table,
                      std::set<oid_t> suggested_index_attrs) {
-
   // Construct index metadata
   std::vector<oid_t> key_attrs(suggested_index_attrs.size());
   std::copy(suggested_index_attrs.begin(), suggested_index_attrs.end(),
@@ -155,7 +155,7 @@ void IndexTuner::BuildIndices(storage::DataTable* table) {
     }
 
     // Build index
-    //BuildIndex(table, index);
+    // BuildIndex(table, index);
   }
 }
 
@@ -375,7 +375,7 @@ void IndexTuner::AddIndexes(
       constructed_index_itr++;
     }
     // Found suggested index, enable it
-    else if(suggested_index_found == true) {
+    else if (suggested_index_found == true) {
       LOG_TRACE("Found suggested index.");
 
       // Make it visible if it already isn't
@@ -383,11 +383,20 @@ void IndexTuner::AddIndexes(
       auto index_metadata = index->GetMetadata();
 
       auto index_is_visible = index_metadata->GetVisibility();
-      if(index_is_visible == false){
+      if (index_is_visible == false) {
         LOG_INFO("Enabling index : %s", index_metadata->GetName().c_str());
         index_metadata->SetVisibility(true);
-      }
 
+        // BARON VON PAVLO'S HACK ATTACK!
+        // Tell all our PacketManagers back up in the front-end that they need
+        // to replan their PreparedStatements that reference this index's table!
+        // At some point the PreparedStatement handles should be moved out of
+        // the PacketManager and into some more sane that doesn't require us
+        // to start up the networking layer to test...
+        for (auto pm : wire::PacketManager::GetPacketManagers()) {
+          pm->InvalidatePreparedStatements(index->GetMetadata()->GetTableOid());
+        }  // FOR
+      }
     }
   }
 }
@@ -484,7 +493,7 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
   // Skip drop table time
   if (visibility_mode_ == false) {
-    if(index_overflow == true || write_intensive_workload == true) {
+    if (index_overflow == true || write_intensive_workload == true) {
       DropIndexes(table);
     }
   }
@@ -541,7 +550,6 @@ void IndexTuner::Tune() {
 
   // Continue till signal is not false
   while (index_tuning_stop == false) {
-
     // Go over one table at a time
     for (auto table : tables) {
       // Update indices periodically
@@ -588,7 +596,6 @@ void IndexTuner::ClearTables() {
 }
 
 void IndexTuner::BootstrapTPCC() {
-
   // Enable visibility mode
   SetVisibilityMode();
 
@@ -610,8 +617,7 @@ void IndexTuner::BootstrapTPCC() {
   double sample_weight = 100;
 
   // Go over set of tables, and add samples
-  for(auto table_samples : tables_samples){
-
+  for (auto table_samples : tables_samples) {
     // Get table name
     auto table_name = table_samples.first;
     auto samples = table_samples.second;
@@ -620,11 +626,9 @@ void IndexTuner::BootstrapTPCC() {
     auto table = catalog->GetTableWithName(database_name, table_name);
     PL_ASSERT(table != nullptr);
 
-    for(auto sample_columns : samples){
-
+    for (auto sample_columns : samples) {
       // Construct sample
-      brain::Sample sample(sample_columns,
-                           sample_weight,
+      brain::Sample sample(sample_columns, sample_weight,
                            brain::SAMPLE_TYPE_ACCESS);
 
       table->RecordIndexSample(sample);
@@ -634,9 +638,7 @@ void IndexTuner::BootstrapTPCC() {
 
     // Attach table to tuner
     AddTable(table);
-
   }
-
 }
 
 }  // End brain namespace
