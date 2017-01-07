@@ -123,8 +123,12 @@ bool OrderByExecutor::DoSort() {
 
     // Optimization for ordered output
     if (underling_ordered_ && limit_) {
+      LOG_TRACE("underling_ordered and limit both work");
       // We already get enough tuples, break while
-      if (num_tuples_get_ >= (limit_offset_ + limit_number_)) break;
+      if (num_tuples_get_ >= (limit_offset_ + limit_number_)) {
+        LOG_TRACE("num_tuples_get_ (%lu) are enough", num_tuples_get_);
+        break;
+      }
     }
   }
 
@@ -179,6 +183,7 @@ bool OrderByExecutor::DoSort() {
   // If the underlying result has the same order, it is not necessary to sort
   // the result again. Instead, go to the end.
   if (underling_ordered_) {
+    LOG_TRACE("underling_ordered works and already get all tuples");
     sort_done_ = true;
     return true;
   }

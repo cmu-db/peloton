@@ -290,7 +290,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             LOG_TRACE(
                 "Underlying plan has the same ordering output with"
                 "order_by plan with limit");
-            order_by_plan->SetUnderlyingOrder(false);
+            order_by_plan->SetUnderlyingOrder(true);
             order_by_plan->SetLimit(true);
             order_by_plan->SetLimitNumber(select_stmt->limit->limit);
             order_by_plan->SetLimitOffset(offset);
@@ -357,7 +357,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             LOG_TRACE(
                 "Underlying plan has the same ordering output with"
                 "order_by plan without limit");
-            order_by_plan->SetUnderlyingOrder(false);
+            order_by_plan->SetUnderlyingOrder(true);
           }
 
           order_by_plan->AddChild(std::move(child_SelectPlan));
