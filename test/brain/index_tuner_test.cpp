@@ -1222,7 +1222,7 @@ TEST_F(IndexTunerTests, TPCCTest) {
 
   // Set duration between pauses
   auto duration = 10000; // in ms
-  index_tuner.SetDurationBetweenPauses(duration);
+  index_tuner.SetDurationOfPause(duration);
 
   // Start index tuner
   index_tuner.Start();

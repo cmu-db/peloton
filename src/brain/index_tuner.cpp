@@ -641,6 +641,10 @@ void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path) {
   // Get index tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
+  // Set duration between pauses
+  auto duration = 1000; // in ms
+  index_tuner.SetDurationBetweenPauses(duration);
+
   // Bootstrap
   index_tuner.BootstrapTPCC();
 
