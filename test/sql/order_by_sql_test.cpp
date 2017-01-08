@@ -76,9 +76,6 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
       "OrderBy Query (table size:%d) with Limit 10 Execution Time is: %lu ms",
       table_size, latency);
 
-  // Check the return value
-  EXPECT_EQ(result[0].second[0], '1');
-
   // test OrderBy without Limit
   start_time = std::chrono::system_clock::now();
 
