@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <unordered_map>
+#include <include/brain/brain_util.h>
 
 #include "brain/clusterer.h"
 #include "catalog/catalog.h"
@@ -588,27 +589,17 @@ void IndexTuner::ClearTables() {
   }
 }
 
-void IndexTuner::BootstrapTPCC() {
+void IndexTuner::BootstrapTPCC(const std::string& path) {
   // Enable visibility mode
   SetVisibilityMode();
 
+
+  auto tables_samples = brain::BrainUtil::LoadSamplesFile(path);
+
   // Build sample map
   std::string database_name = "default_database";
-  std::map<std::string, std::vector<std::vector<double>>> tables_samples;
-
-  tables_samples["customer"].push_back({0, 1, 2});
-  tables_samples["customer"].push_back({0, 1, 5});
-  tables_samples["district"].push_back({0, 1});
-  tables_samples["item"].push_back({0});
-  tables_samples["new_order"].push_back({0, 1, 2});
-  tables_samples["oorder"].push_back({0, 1, 2});
-  tables_samples["oorder"].push_back({0, 1, 2, 3});
-  tables_samples["stock"].push_back({0, 1});
-  tables_samples["warehouse"].push_back({0});
-  tables_samples["order_line"].push_back({0, 1, 2, 3});
 
   auto catalog = catalog::Catalog::GetInstance();
-  double sample_weight = 100;
 
   // Go over set of tables, and add samples
   for (auto table_samples : tables_samples) {
@@ -619,15 +610,9 @@ void IndexTuner::BootstrapTPCC() {
     // Locate table in catalog
     auto table = catalog->GetTableWithName(database_name, table_name);
     PL_ASSERT(table != nullptr);
-
-    for (auto sample_columns : samples) {
-      // Construct sample
-      brain::Sample sample(sample_columns, sample_weight,
-                           brain::SAMPLE_TYPE_ACCESS);
-
+    for (auto &sample : samples) {
       table->RecordIndexSample(sample);
     }
-
     LOG_INFO("Added table to index tuner : %s", table_name.c_str());
 
     // Attach table to tuner
@@ -636,18 +621,18 @@ void IndexTuner::BootstrapTPCC() {
 }
 
 // Load statistics for Index Tuner from a file
-void LoadStatsFromFile(UNUSED_ATTRIBUTE std::string path) {
+void LoadStatsFromFile(const std::string &path) {
   LOG_INFO("LoadStatsFromFile Invoked");
 
   // Get index tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
   // Set duration between pauses
-  auto duration = 1000; // in ms
+  auto duration = 10000; // in ms
   index_tuner.SetDurationOfPause(duration);
 
   // Bootstrap
-  index_tuner.BootstrapTPCC();
+  index_tuner.BootstrapTPCC(path);
 
   return;
 }

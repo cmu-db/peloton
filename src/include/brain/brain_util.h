@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "brain/sample.h"
 
@@ -34,9 +35,9 @@ class BrainUtil {
    * It's a vector because there could be more multiple samples per table.
    * TableName -> Sample
    */
-  static std::vector<std::pair<std::string, brain::Sample>> LoadSamplesFile(
+  static std::unordered_map<std::string, std::vector<brain::Sample>> LoadSamplesFile(
       const std::string file_path) {
-    std::vector<std::pair<std::string, brain::Sample>> samples;
+    std::unordered_map<std::string, std::vector<brain::Sample>> samples;
 
     // Parse the input file line-by-line
     std::ifstream infile(file_path);
@@ -58,9 +59,10 @@ class BrainUtil {
         iss >> col;
         columns.push_back(col);
       }
+      std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
       brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS);
-      samples.push_back(std::make_pair(name, sample));
+      samples[name].push_back(sample);
 
     }  // WHILE
     return (samples);
