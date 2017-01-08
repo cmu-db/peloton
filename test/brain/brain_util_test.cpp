@@ -53,9 +53,9 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
 
   std::map<std::string, brain::Sample> expected;
   expected.insert(std::map<std::string, brain::Sample>::value_type(
-      "TABLE_X", brain::Sample(cols0, 888, brain::SAMPLE_TYPE_ACCESS)));
+      "table_x", brain::Sample(cols0, 888, brain::SAMPLE_TYPE_ACCESS)));
   expected.insert(std::map<std::string, brain::Sample>::value_type(
-      "TABLE_Y", brain::Sample(cols1, 999, brain::SAMPLE_TYPE_ACCESS)));
+      "table_y", brain::Sample(cols1, 999, brain::SAMPLE_TYPE_ACCESS)));
   EXPECT_FALSE(expected.empty());
 
   // Serialize them to a string and write them out to a temp file
@@ -70,13 +70,13 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
             FileUtil::GetFile(path).c_str());
 
   // Load that mofo back in and make sure our objects match
-  std::vector<std::pair<std::string, brain::Sample>> result =
+  std::unordered_map<std::string, std::vector<brain::Sample>> result =
       brain::BrainUtil::LoadSamplesFile(path);
   EXPECT_EQ(expected.size(), result.size());
   for (auto s0 : result) {
     auto s1 = expected.find(s0.first);
     // EXPECT_TRUE(s1 != nullptr);
-    EXPECT_TRUE(s1->second == s0.second);
+    EXPECT_TRUE(s1->second == s0.second[0]);
   }
 }
 
