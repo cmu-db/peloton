@@ -222,6 +222,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         }
 
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
+          LOG_TRACE("OrderBy + Limit query");
           std::vector<oid_t> keys;
           // Add all selected columns to the output
           // We already generated the "real" physical output schema in the scan
@@ -231,6 +232,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             keys.push_back(column_ctr);
           }
 
+          LOG_TRACE("Get and set OrderBy descending");
           std::vector<bool> flags;
           if (select_stmt->order->type == 0) {
             flags.push_back(false);
@@ -239,6 +241,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           }
           std::vector<oid_t> key;
 
+          LOG_TRACE("Set OrderBy expr");
           std::string sort_col_name(
               ((expression::TupleValueExpression*)select_stmt->order->expr)
                   ->GetColumnName());
@@ -263,6 +266,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 "list!");
           }
 
+          LOG_TRACE("Set order by offset");
           // Get offset
           int offset = select_stmt->limit->offset;
           if (offset < 0) {
@@ -1328,6 +1332,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
 void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
                                        uint64_t limit, uint64_t offset,
                                        bool descent) {
+  LOG_TRACE("Setting index scan flag.");
   // Set the flag for the underlying index scan plan
   planner::IndexScanPlan* index_scan_plan = nullptr;
 
@@ -1355,6 +1360,8 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
     index_scan_plan->SetLimitOffset(offset);
     index_scan_plan->SetDescend(descent);
   }
+
+  LOG_TRACE("Set Index scan flag is done.");
 }
 
 bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,

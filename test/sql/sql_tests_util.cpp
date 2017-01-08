@@ -28,6 +28,18 @@ namespace peloton {
 
 namespace test {
 
+std::random_device rd;
+std::mt19937 rng(rd());
+
+// Create a uniform random number
+int SQLTestsUtil::GetRandomInteger(const int lower_bound,
+                                   const int upper_bound) {
+  std::uniform_int_distribution<> dist(lower_bound, upper_bound);
+
+  int sample = dist(rng);
+  return sample;
+}
+
 // Show the content in the specific table in the specific database
 // Note: In order to see the content from the command line, you have to
 // turn-on LOG_TRACE.
@@ -65,13 +77,13 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params,
-                                                    result, result_format);
+    auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params, result,
+                                                    result_format);
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %d", status.m_result);
     return status.m_result;
-
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
