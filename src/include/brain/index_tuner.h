@@ -32,7 +32,7 @@ class DataTable;
 namespace brain {
 
 // Load statistics for Index Tuner from a file
-void LoadStatsFromFile(std::string path);
+void LoadStatsFromFile(const std::string& path);
 
 
 class Sample;
@@ -104,7 +104,7 @@ class IndexTuner {
   oid_t GetIndexCount() const;
 
   // Bootstrap for TPCC
-  void BootstrapTPCC();
+  void BootstrapTPCC(const std::string& path);
 
   void SetVisibilityMode() {
     visibility_mode_ = true;
