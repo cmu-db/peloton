@@ -20,6 +20,8 @@
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
 
+#include <random>
+
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
