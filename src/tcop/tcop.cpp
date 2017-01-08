@@ -192,7 +192,8 @@ Result TrafficCop::ExecuteStatement(
       rows_changed = status.m_processed;
       return status.m_result;
     }
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return Result::RESULT_FAILURE;
   }
@@ -262,8 +263,8 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message) {
-  LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
-  LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
+  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
+  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
@@ -298,7 +299,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
 #endif
     return std::move(statement);
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }

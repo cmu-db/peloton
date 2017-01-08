@@ -36,7 +36,8 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
   SQLTestsUtil::ExecuteSQLQuery("CREATE INDEX idx_order ON test (b,c);");
 
   // Load table
-  int table_size = 100000;
+  // You can increase the size of the table to test large result
+  int table_size = 100;
   int min = 1;
   int max = 100;
   std::string insert_prefix = "INSERT INTO test VALUES (";
