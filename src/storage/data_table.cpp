@@ -50,13 +50,13 @@ namespace storage {
 
 oid_t DataTable::invalid_tile_group_id = -1;
 
-size_t DataTable::active_tilegroup_count_ = 1;
-size_t DataTable::active_indirection_array_count_ = 1;
+size_t DataTable::default_active_tilegroup_count_ = 1;
+size_t DataTable::default_active_indirection_array_count_ = 1;
 
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
-                     const bool adapt_table)
+                     const bool adapt_table, const bool is_catalog)
     : AbstractTable(table_oid, schema, own_schema),
       database_oid(database_oid),
       table_name(table_name),
@@ -68,10 +68,17 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
 
+  if (is_catalog == true) {
+    active_tilegroup_count_ = 1;
+    active_indirection_array_count_ = 1;
+  } else {
+    active_tilegroup_count_ = default_active_tilegroup_count_;
+    active_indirection_array_count_ = default_active_indirection_array_count_;
+  }
+
   active_tile_groups_.resize(active_tilegroup_count_);
 
   active_indirection_arrays_.resize(active_indirection_array_count_);
-
   // Create tile groups.
   for (size_t i = 0; i < active_tilegroup_count_; ++i) {
     AddDefaultTileGroup(i);
@@ -626,7 +633,6 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   tile_group_id = tile_group->GetTileGroupId();
 
   LOG_TRACE("Added a tile group ");
-
   tile_groups_.Append(tile_group_id);
 
   // add tile group metadata in locator
