@@ -250,46 +250,23 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
 
 void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx) {
 
-  // GCSetType gc_set_type = garbage_ctx->gc_set_type_;
-  
-  // if (gc_set_type == GC_SET_TYPE_COMMITTED) {
-    // if the transaction is committed, 
-    // then we need to remove tuples that are deleted by the transaction from indexes.
-    for (auto entry : *(garbage_ctx->gc_set_.get())) {
-      for (auto &element : entry.second) {
-        // if (element.second == RW_TYPE_DELETE || element.second == RW_TYPE_INS_DEL) {
-        if (element.second == true) {
-          // only old versions are stored in the gc set.
-          // so we can safely get indirection from the indirection array.
-          auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
-          if (tile_group != nullptr){
-            auto tile_group_header = catalog::Manager::GetInstance()
-                                         .GetTileGroup(entry.first)
-                                         ->GetHeader();
-            ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
+  for (auto entry : *(garbage_ctx->gc_set_.get())) {
+    for (auto &element : entry.second) {
+      if (element.second == true) {
+        // only old versions are stored in the gc set.
+        // so we can safely get indirection from the indirection array.
+        auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
+        if (tile_group != nullptr){
+          auto tile_group_header = catalog::Manager::GetInstance()
+                                       .GetTileGroup(entry.first)
+                                       ->GetHeader();
+          ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
 
-            DeleteTupleFromIndexes(indirection);
-          }
+          DeleteTupleFromIndexes(indirection);
         }
       }
     }
-
-  // } else {
-  //   PL_ASSERT(gc_set_type == GC_SET_TYPE_ABORTED);
-
-  //   for (auto entry : *(garbage_ctx->gc_set_.get())) {
-  //     for (auto &element : entry.second) {
-  //       if (element.second == RW_TYPE_INSERT || element.second == RW_TYPE_INS_DEL) {
-  //         auto tile_group_header = catalog::Manager::GetInstance()
-  //                                      .GetTileGroup(entry.first)
-  //                                      ->GetHeader();
-  //         ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
-  //         DeleteTupleFromIndexes(indirection);
-
-  //       }
-  //     }
-  //   }
-  // }
+  }
 
 }
 
