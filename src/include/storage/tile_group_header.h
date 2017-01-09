@@ -42,7 +42,7 @@ class TileGroup;
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
  *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
- *  | Indirection (8 bytes) | ReservedField (24 bytes)
+ *  | Indirection (8 bytes) | ReservedField (16 bytes)
  *  -----------------------------------------------------------------------------
  *
  *  FIELD DESCRIPTIONS:
@@ -169,7 +169,7 @@ class TileGroupHeader : public Printable {
     return *(ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset);
   }
 
-  // constraint: at most 24 bytes.
+  // constraint: at most 16 bytes.
   inline char *GetReservedFieldRef(const oid_t &tuple_slot_id) const {
     return (char *)(TUPLE_HEADER_LOCATION + reserved_field_offset);
   }
@@ -243,7 +243,7 @@ class TileGroupHeader : public Printable {
   static inline size_t GetReservedSize() { return reserved_size; }
 
   // header entry size is the size of the layout described above
-  static const size_t reserved_size = 24;
+  static const size_t reserved_size = 16;
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
                                           2 * sizeof(ItemPointer) +
                                           sizeof(ItemPointer *) + reserved_size;
