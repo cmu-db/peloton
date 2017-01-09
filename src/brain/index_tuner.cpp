@@ -628,11 +628,7 @@ void LoadStatsFromFile(const std::string &path) {
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
   // Set duration between pauses
-<<<<<<< HEAD
-  auto duration = 10000; // in ms
-=======
-  auto duration = 60000; // in ms
->>>>>>> 9681849... Tweaking logger output again...
+  auto duration = 30000; // in ms
   index_tuner.SetDurationOfPause(duration);
 
   // Bootstrap
