@@ -57,7 +57,13 @@ class AbstractScan : public AbstractPlan {
 
   inline storage::DataTable *GetTable() const { return target_table_; }
 
-  inline bool IsForUpdate() const { return is_for_update; }
+  inline bool IsForUpdate() const {
+    // return is_for_update;
+
+    // TODO: Manually disable the select_for_update feature.
+    // There is some bug with the current select_for_update logic, we need to fix it later -- Jiexi
+    return false;
+  }
 
  protected:
   // These methods only used by its derived classes (when deserialization)
