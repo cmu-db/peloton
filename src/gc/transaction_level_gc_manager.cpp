@@ -87,10 +87,10 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType gc_set_type) {
+void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) {
 
   // Add the garbage context to the lock-free queue
-  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp, gc_set_type));
+  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp));
   unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
 }
 
@@ -250,14 +250,15 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
 
 void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageContext>& garbage_ctx) {
 
-  GCSetType gc_set_type = garbage_ctx->gc_set_type_;
+  // GCSetType gc_set_type = garbage_ctx->gc_set_type_;
   
-  if (gc_set_type == GC_SET_TYPE_COMMITTED) {
+  // if (gc_set_type == GC_SET_TYPE_COMMITTED) {
     // if the transaction is committed, 
     // then we need to remove tuples that are deleted by the transaction from indexes.
     for (auto entry : *(garbage_ctx->gc_set_.get())) {
       for (auto &element : entry.second) {
-        if (element.second == RW_TYPE_DELETE || element.second == RW_TYPE_INS_DEL) {
+        // if (element.second == RW_TYPE_DELETE || element.second == RW_TYPE_INS_DEL) {
+        if (element.second == true) {
           // only old versions are stored in the gc set.
           // so we can safely get indirection from the indirection array.
           auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
@@ -273,22 +274,22 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
       }
     }
 
-  } else {
-    PL_ASSERT(gc_set_type == GC_SET_TYPE_ABORTED);
+  // } else {
+  //   PL_ASSERT(gc_set_type == GC_SET_TYPE_ABORTED);
 
-    for (auto entry : *(garbage_ctx->gc_set_.get())) {
-      for (auto &element : entry.second) {
-        if (element.second == RW_TYPE_INSERT || element.second == RW_TYPE_INS_DEL) {
-          auto tile_group_header = catalog::Manager::GetInstance()
-                                       .GetTileGroup(entry.first)
-                                       ->GetHeader();
-          ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
-          DeleteTupleFromIndexes(indirection);
+  //   for (auto entry : *(garbage_ctx->gc_set_.get())) {
+  //     for (auto &element : entry.second) {
+  //       if (element.second == RW_TYPE_INSERT || element.second == RW_TYPE_INS_DEL) {
+  //         auto tile_group_header = catalog::Manager::GetInstance()
+  //                                      .GetTileGroup(entry.first)
+  //                                      ->GetHeader();
+  //         ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
+  //         DeleteTupleFromIndexes(indirection);
 
-        }
-      }
-    }
-  }
+  //       }
+  //     }
+  //   }
+  // }
 
 }
 

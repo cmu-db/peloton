@@ -62,7 +62,7 @@ class Transaction : public Printable {
     is_written_ = false;
     declared_readonly_ = false;
     insert_count_ = 0;
-    gc_set_.reset(new ReadWriteSet());
+    gc_set_.reset(new GCSet());
   }
 
   //===--------------------------------------------------------------------===//

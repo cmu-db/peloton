@@ -33,13 +33,13 @@ namespace gc {
 
 struct GarbageContext {
   GarbageContext() : timestamp_(INVALID_CID) {}
-  GarbageContext(std::shared_ptr<ReadWriteSet> gc_set, 
+  GarbageContext(std::shared_ptr<GCSet> gc_set, 
                  const cid_t &timestamp) {
     gc_set_ = gc_set;
     timestamp_ = timestamp;
   }
 
-  std::shared_ptr<ReadWriteSet> gc_set_;
+  std::shared_ptr<GCSet> gc_set_;
   cid_t timestamp_;
 };
 
@@ -83,7 +83,7 @@ public:
     }
   }
 
-  virtual void RecycleTransaction(std::shared_ptr<ReadWriteSet> gc_set, const cid_t &timestamp, const GCSetType) override;
+  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) override;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 

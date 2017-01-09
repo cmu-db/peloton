@@ -131,7 +131,7 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   if (current_txn->GetResult() == RESULT_SUCCESS) {
     if (current_txn->IsGCSetEmpty() != true) {
       gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
+          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId());
     }
     // Log the transaction's commit
     // For time stamp ordering, every transaction only has one timestamp
@@ -139,7 +139,7 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   } else {
     if (current_txn->IsGCSetEmpty() != true) {
       gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
     }
     log_manager.DoneLogging();
   }
@@ -856,7 +856,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
         // recycle old version, delete from index
         gc_set->operator[](tile_group_id)[tuple_slot] = true;
         // recycle new version (which is an empty version), do not delete from index
-        gc_set->operator[](new_version.block)[new_verison.offset] = false;
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
 
         // add to log manager
         log_manager.LogDelete(end_commit_id, ItemPointer(tile_group_id, tuple_slot));
