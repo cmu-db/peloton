@@ -98,7 +98,7 @@ class Transaction : public Printable {
     return rw_set_;
   }
 
-  inline std::shared_ptr<ReadWriteSet> GetGCSetPtr() {
+  inline std::shared_ptr<GCSet> GetGCSetPtr() {
     return gc_set_;
   }
 
@@ -143,7 +143,7 @@ class Transaction : public Printable {
   ReadWriteSet rw_set_;
 
   // this set contains data location that needs to be gc'd in the transaction.
-  std::shared_ptr<ReadWriteSet> gc_set_;
+  std::shared_ptr<GCSet> gc_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
