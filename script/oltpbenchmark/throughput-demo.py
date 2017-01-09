@@ -40,6 +40,21 @@ PLOT_THROUGHPUT_AMOUNT = None
 PLOT_LINE_POSITIONS = set()
 PLOT_LINES = { }
 NEW_DATA = [ ]
+NUM_INDEXES = 0
+EXPECTED_INDEXES = 10
+
+INDEX_MAP = {
+    "CUSTOMER_PKEY": ["CUSTOMER",  "c_w_id", "c_d_id", "c_id"],
+    "IDX_CUSTOMER_NAME": ["CUSTOMER",  "c_w_id", "c_d_id", "c_last"],
+    "DISTRICT_PKEY": ["DISTRICT", "d_w_id", "d_id"],
+    "ITEM_PKEY": ["ITEM", "i_id"],
+    "NEW_ORDER_PKEY": ["NEW_ORDER", "no_w_id", "no_d_id", "no_o_id"],
+    "IDX_ORDER": ["OORDER", "o_w_id", "o_d_id", "o_c_id", "o_id"],
+    "OORDER_PKEY": ["OORDER", "o_w_id", "o_d_id", "o_id"],
+    "ORDER_LINE_PKEY": ["ORDER_LINE", "ol_w_id", "ol_d_id", "ol_o_id", "ol_number"],
+    "STOCK_PKEY": ["STOCK", "s_w_id", "s_i_id"],
+    "WAREHOUSE_PKEY": ["WAREHOUSE", "w_id"],
+}
 
 NOTIFICATION_SOUND = "/home/pavlo/Dropbox/optimized.wav"
 NOTIFICATION_CMD = "aplay" # linux alsa 
@@ -139,7 +154,7 @@ def updatePlot():
     map(PLOT_LINES.pop, to_remove)
 
     if PLOT_THROUGHPUT_AMOUNT != None and not FINISHED:
-        p.setTitle("<font size=\"64\">%.1f txn/sec</font>" % PLOT_THROUGHPUT_AMOUNT)
+        p.setTitle("<font size=\"64\">%d txn/sec</font>" % PLOT_THROUGHPUT_AMOUNT)
     elif FINISHED:
         p.setTitle("<font size=\"64\">-- txn/sec</font>")
         PLOT_THROUGHPUT_AMOUNT = None
@@ -173,7 +188,7 @@ def execBenchmark():
         PLOT_THROUGHPUT_AMOUNT = nextPoint
     ## FOR (iterator)
     FINISHED = True
-    notification()
+    #notification()
 ## DEF
 
 ## -------------------------------------------------
@@ -188,7 +203,7 @@ def notification():
 ## POLL PELOTON LOG
 ## -------------------------------------------------
 def pollPelotonLog():
-    global PLOT_LOCATION
+    global PLOT_LOCATION, NUM_INDEXES, EXPECTED_INDEXES
     regex = re.compile(".*?INFO[\s]+-[\s]+Enabling index[\s]+:[\s]+([\w]+)")
     results = oltpbench.pollFile("/tmp/peloton.log")
     for line in results:
@@ -196,13 +211,33 @@ def pollPelotonLog():
         m = regex.search(line)
         if m:
             PLOT_LINE_POSITIONS.add(START_INTERVAL + PLOT_LOCATION)
+            NUM_INDEXES += 1
+            addIndex(m.groups()[0])
+            if NUM_INDEXES == EXPECTED_INDEXES: notification()
         if FINISHED: break
     ## FOR (iterator)
+## DEF
+
+def addIndex(name):
+    global INDEX_MAP
+    name = name.strip().upper()
+    info = INDEX_MAP[name]
+    params = {
+        "table": info[0],
+        "index": name,
+        "type": "Bw-Tree",
+        "cols": ",".join(info[1:])
+    }
+    remoteCmd = "./add-index.sh %(table)s %(index)s %(type)s '(%(cols)s)'" % params
+    cmd = [ "ssh", "dev4", remoteCmd ]
+    subprocess.call(cmd)
+    return
 ## DEF
 
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
+    
     # Initialize graph
     win = pg.GraphicsWindow(title="Peloton")
     win.resize(PLOT_WIDTH, PLOT_HEIGHT)
@@ -220,8 +255,8 @@ if __name__ == '__main__':
 
     limits = {'yMin': 0}
     p.setLimits(**limits)
-    if not TEST_MODE:
-        p.setRange(yRange=[0,40000])
+    #if not TEST_MODE:
+        #p.setRange(yRange=[0,40000])
     #print p
     #pprint(dir(p))
     #sys.exit(1)
