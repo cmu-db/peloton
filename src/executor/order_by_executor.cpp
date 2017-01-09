@@ -56,8 +56,8 @@ bool OrderByExecutor::DExecute() {
   PL_ASSERT(input_schema_.get());
   PL_ASSERT(input_tiles_.size() > 0);
 
-  // Returned tiles must be newly created physical tiles,
-  // which not always have the same physical schema as input tiles.
+  // Returned tiles must be newly created physical tiles.
+  // NOTE: the schema of these tiles might not match the input tiles when some of the order by columns are not be part of the output schema
 
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
