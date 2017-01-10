@@ -2,6 +2,9 @@
 #include <cassert>
 #include <algorithm>
 
+namespace peloton {
+namespace index {
+
 /*
  * class SortedSmallSet - An implementation of small sorted set with known
  *                        element count upper bound
@@ -157,3 +160,6 @@ class SortedSmallSet {
     end_p = start_p;
   }
 };
+
+} // namespace index
+} // namespace peloton
