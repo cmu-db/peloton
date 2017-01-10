@@ -17,4 +17,4 @@ We strive to make index wrapper a mere interfacing component and thus make it ca
 
 Index Factory
 =============
-The index factory is 
+The index factory is responsible for selecting an index given restrictions on keys. The selection of index type is based on whether the key could be represented in a special compact form and the size of the key. If requirements for the special compact form are satisfied then the index could be made faster and more memory friendly by using the more compact form of keys
