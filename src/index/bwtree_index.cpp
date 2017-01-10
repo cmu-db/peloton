@@ -219,82 +219,24 @@ void BWTREE_INDEX_TYPE::ScanLimit(
   // including checking for non-exact bounds!!!
   if(csp_p->IsPointQuery() == false && \
      limit == 1 && \
-     offset == 0) {
-    if(scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
-      const storage::Tuple *low_key_p = csp_p->GetLowKey();
-      const storage::Tuple *high_key_p = csp_p->GetHighKey();
+     offset == 0 && \
+     scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
+    const storage::Tuple *low_key_p = csp_p->GetLowKey();
+    const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-      LOG_INFO("ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
-               low_key_p->GetInfo().c_str());
-  
-      KeyType index_low_key;
-      KeyType index_high_key;
-      index_low_key.SetFromKey(low_key_p);
-      index_high_key.SetFromKey(high_key_p);
-  
-      auto scan_itr = container.Begin(index_low_key);
-      if((scan_itr.IsEnd() == false) && \
-         (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
-          
-        result.push_back(scan_itr->second);
-      }
-    } else if(scan_direction == SCAN_DIRECTION_TYPE_BACKWARD) {
-      const storage::Tuple *low_key_p = csp_p->GetLowKey();
-      const storage::Tuple *high_key_p = csp_p->GetHighKey();
+    LOG_TRACE("ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
+              low_key_p->GetInfo().c_str());
 
-      LOG_INFO("ScanLimit() special case (limit = 1;"
-               " offset = 0; DESCENDING): %s",
-               high_key_p->GetInfo().c_str());
-  
-      KeyType index_low_key;
-      KeyType index_high_key;
-      index_low_key.SetFromKey(low_key_p);
-      index_high_key.SetFromKey(high_key_p);
-      
-      // This might or might not reach the high key
-      // If it does not reach high key then the high key does not exist
-      // and we need to move the iterator backward by 1
-      auto scan_itr = container.Begin(index_high_key);
-      
-      // It could not be REND since we just use lower_bound
-      // Note that REND < BEGIN <= END
-      // and REND == --BEGIN
-      // and Beein() must return something between [BEGIN, END]
-      // we do not worry about REND
-      // We rely on short circuited logic expression here to make sure
-      // either iterator is END or it is a valid value for testing
-      if(scan_itr.IsEnd() == true || \
-         container.KeyCmpLess(index_high_key, scan_itr->first) == true) {
-        scan_itr--;
+    KeyType index_low_key;
+    KeyType index_high_key;
+    index_low_key.SetFromKey(low_key_p);
+    index_high_key.SetFromKey(high_key_p);
+              
+    auto scan_itr = container.Begin(index_low_key);
+    if((scan_itr.IsEnd() == false) && \
+       (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
         
-        // If after decreament it is REND then return because we could not
-        // test the current element
-        if(scan_itr.IsREnd() == true) {
-          LOG_INFO("After decreamenting it is REND iterator");
-          
-          return;
-        }
-        
-        // We must reach a valid key; otherwise we will reach it in
-        // the previous Begin()
-        // But still it might not be exact
-        PL_ASSERT(container.KeyCmpLess(index_high_key, 
-                                       scan_itr->first) == false);
-      } 
-      
-      if(container.KeyCmpLess(scan_itr->first, index_low_key) == true) {
-        LOG_INFO("The iterator is not qualified "
-                 "because it is smaller than low key");
-        
-        return; 
-      }
-      
-      // After this we know the iterator is between [low key, high key]
-      // and may be on the high end
-      
       result.push_back(scan_itr->second);
-    } else {
-      throw "ScanLimit(): Invalid scan direction!"; 
     }
   } else {
     Scan(value_list, 
@@ -304,55 +246,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
          result,
          csp_p); 
   }
-  
-  return;
-/*
-  if (csp_p->IsPointQuery() == true) {
-    const storage::Tuple *point_query_tuple_key_p = csp_p->GetPointQueryKey();
-
-    KeyType point_query_key;
-    point_query_key.SetFromKey(point_query_tuple_key_p);
-
-    container.GetValue(point_query_key, result);
-  } else if (csp_p->IsFullIndexScan() == true) {
-    // If it is a full index scan, then just do the scan
-    // until we have reached the end of the index by the same
-    // we take the snapshot of the last leaf node
-    for (auto scan_itr = container.Begin(); (scan_itr.IsEnd() == false);
-         scan_itr++) {
-      result.push_back(scan_itr->second);
-    }  // for it from begin() to end()
-  } else {
-    const storage::Tuple *low_key_p = csp_p->GetLowKey();
-    const storage::Tuple *high_key_p = csp_p->GetHighKey();
-
-    LOG_TRACE("Partial scan low key: %s\n high key: %s",
-              low_key_p->GetInfo().c_str(), high_key_p->GetInfo().c_str());
-
-    // Construct low key and high key in KeyType form, rather than
-    // the standard in-memory tuple
-    KeyType index_low_key;
-    KeyType index_high_key;
-    index_low_key.SetFromKey(low_key_p);
-    index_high_key.SetFromKey(high_key_p);
-
-    // We use bwtree Begin() to first reach the lower bound
-    // of the search key
-    // Also we keep scanning until we have reached the end of the index
-    // or we have seen a key higher than the high key
-    for (auto scan_itr = container.Begin(index_low_key);
-         (scan_itr.IsEnd() == false) &&
-             (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
-         scan_itr++) {
-      result.push_back(scan_itr->second);
-    }
-  }  // if is full scan
-
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
-  }
-*/
 
   return;
 }
@@ -442,3 +335,4 @@ template class BWTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
 
 }  // End index namespace
 }  // End peloton namespace
+
