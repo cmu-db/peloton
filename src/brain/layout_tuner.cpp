@@ -29,8 +29,7 @@ LayoutTuner::LayoutTuner() {
   // Nothing to do here !
 }
 
-LayoutTuner::~LayoutTuner() {
-}
+LayoutTuner::~LayoutTuner() {}
 
 void LayoutTuner::Start() {
   // Set signal
@@ -38,6 +37,8 @@ void LayoutTuner::Start() {
 
   // Launch thread
   layout_tuner_thread = std::thread(&brain::LayoutTuner::Tune, this);
+
+  LOG_INFO("Started layout tuner");
 }
 
 /**
@@ -76,6 +77,37 @@ std::string LayoutTuner::GetColumnMapInfo(const column_map_type& column_map) {
   return ss.str();
 }
 
+Sample GetClustererSample(const Sample& sample, oid_t column_count) {
+
+  // Copy over the sample
+  Sample clusterer_sample = sample;
+
+  // Figure out columns accessed, and construct a bitmap
+  auto& columns_accessed = sample.GetColumnsAccessed();
+  std::vector<double> columns_accessed_bitmap;
+
+  for(oid_t column_itr = 0;
+      column_itr < column_count;
+      column_itr++){
+
+    // Append column into sample
+    auto column_found = std::find(columns_accessed.begin(),
+                                  columns_accessed.end(),
+                                  column_itr) != columns_accessed.end();
+
+    if(column_found == true) {
+      columns_accessed_bitmap.push_back(1);
+    } else {
+      columns_accessed_bitmap.push_back(0);
+    }
+  }
+
+  PL_ASSERT(columns_accessed_bitmap.size() == column_count);
+  clusterer_sample.SetColumnsAccessed(columns_accessed_bitmap);
+
+  return clusterer_sample;
+}
+
 void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   oid_t column_count = table->GetSchema()->GetColumnCount();
 
@@ -91,10 +123,15 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   }
 
   for (auto sample : samples) {
-    if(sample.columns_accessed_.size() == 0){
+    if (sample.GetColumnsAccessed().size() == 0) {
       continue;
     }
-    clusterer.ProcessSample(sample);
+
+    // Transform the regular sample to a bitmap sample for clusterer
+    // {0, 3} => { 1, 0, 0, 1}
+    auto clusterer_sample = GetClustererSample(sample, column_count);
+
+    clusterer.ProcessSample(clusterer_sample);
   }
 
   // Clear all samples in table
@@ -137,6 +174,8 @@ void LayoutTuner::Stop() {
 
   // Stop thread
   layout_tuner_thread.join();
+
+  LOG_INFO("Stopped layout tuner");
 }
 
 void LayoutTuner::AddTable(storage::DataTable* table) {

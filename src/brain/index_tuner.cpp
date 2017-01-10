@@ -9,13 +9,14 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "brain/index_tuner.h"
 
 #include <algorithm>
 #include <unordered_map>
+#include <include/brain/brain_util.h>
 
 #include "brain/clusterer.h"
-#include "brain/index_tuner.h"
-
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/container_tuple.h"
 #include "common/logger.h"
@@ -24,6 +25,7 @@
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
+#include "wire/packet_manager.h"
 
 namespace peloton {
 namespace brain {
@@ -46,6 +48,8 @@ void IndexTuner::Start() {
 
   // Launch thread
   index_tuner_thread = std::thread(&brain::IndexTuner::Tune, this);
+
+  LOG_INFO("Started index tuner");
 }
 
 // Add an ad-hoc index
@@ -145,7 +149,7 @@ void IndexTuner::BuildIndices(storage::DataTable* table) {
     }
 
     // Build index
-    BuildIndex(table, index);
+    // BuildIndex(table, index);
   }
 }
 
@@ -158,13 +162,13 @@ double IndexTuner::ComputeWorkloadWriteRatio(
 
   // Go over all samples
   for (auto sample : samples) {
-    if (sample.sample_type_ == SAMPLE_TYPE_ACCESS) {
-      total_read_duration += sample.weight_;
-    } else if (sample.sample_type_ == SAMPLE_TYPE_UPDATE) {
-      total_write_duration += sample.weight_;
+    if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
+      total_read_duration += sample.GetWeight();
+    } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
+      total_write_duration += sample.GetWeight();
     } else {
       throw Exception("Unknown sample type : " +
-                      std::to_string(sample.sample_type_));
+                      std::to_string(sample.GetSampleType()));
     }
   }
 
@@ -197,25 +201,25 @@ bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
 std::vector<sample_frequency_map_entry> GetFrequentSamples(
     const std::vector<brain::Sample>& samples) {
   std::unordered_map<brain::Sample, double> sample_frequency_map;
-  double total_metric = 0;
+  double total_weight = 0;
 
   // Go over all samples
   for (auto sample : samples) {
-    if (sample.sample_type_ == SAMPLE_TYPE_ACCESS) {
+    if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
       // Update sample count
-      sample_frequency_map[sample] += sample.metric_;
-      total_metric += sample.metric_;
-    } else if (sample.sample_type_ == SAMPLE_TYPE_UPDATE) {
+      sample_frequency_map[sample] += sample.GetWeight();
+      total_weight += sample.GetWeight();
+    } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
       // Update sample count
-      sample_frequency_map[sample] += sample.metric_;
-      total_metric += sample.metric_;
+      sample_frequency_map[sample] += sample.GetWeight();
+      total_weight += sample.GetWeight();
     } else {
       throw Exception("Unknown sample type : " +
-                      std::to_string(sample.sample_type_));
+                      std::to_string(sample.GetSampleType()));
     }
   }
 
-  PL_ASSERT(total_metric > 0);
+  PL_ASSERT(total_weight > 0);
 
   // Normalize
   std::unordered_map<brain::Sample, double>::iterator sample_frequency_map_itr;
@@ -224,7 +228,7 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
        sample_frequency_map_itr != sample_frequency_map.end();
        ++sample_frequency_map_itr) {
     // Normalize sample's utility
-    sample_frequency_map_itr->second /= total_metric;
+    sample_frequency_map_itr->second /= total_weight;
   }
 
   std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
@@ -264,7 +268,7 @@ std::vector<std::vector<double>> GetSuggestedIndices(
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
     LOG_TRACE("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
-    suggested_indices.push_back(sample.columns_accessed_);
+    suggested_indices.push_back(sample.GetColumnsAccessed());
   }
 
   return suggested_indices;
@@ -279,7 +283,7 @@ double GetCurrentIndexUtility(
   for (size_t entry_itr = 0; entry_itr < list_size; entry_itr++) {
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
-    auto& columns = sample.columns_accessed_;
+    auto& columns = sample.GetColumnsAccessed();
 
     std::set<oid_t> columns_set(columns.begin(), columns.end());
 
@@ -357,14 +361,36 @@ void IndexTuner::AddIndexes(
     }
 
     // Did we find suggested index ?
-    if (suggested_index_found == false) {
+    if (visibility_mode_ == false && suggested_index_found == false) {
       LOG_TRACE("Did not find suggested index.");
 
       // Add adhoc index with given utility
       AddIndex(table, suggested_index_set);
       constructed_index_itr++;
-    } else {
+    }
+    // Found suggested index, enable it
+    else if (suggested_index_found == true) {
       LOG_TRACE("Found suggested index.");
+
+      // Make it visible if it already isn't
+      auto index = table->GetIndex(index_itr);
+      auto index_metadata = index->GetMetadata();
+
+      auto index_is_visible = index_metadata->GetVisibility();
+      if (index_is_visible == false) {
+        LOG_INFO("Enabling index : %s", index_metadata->GetName().c_str());
+        index_metadata->SetVisibility(true);
+
+        // BARON VON PAVLO'S HACK ATTACK!
+        // Tell all our PacketManagers back up in the front-end that they need
+        // to replan their PreparedStatements that reference this index's table!
+        // At some point the PreparedStatement handles should be moved out of
+        // the PacketManager and into some more sane that doesn't require us
+        // to start up the networking layer to test...
+        for (auto pm : wire::PacketManager::GetPacketManagers()) {
+          pm->InvalidatePreparedStatements(index->GetMetadata()->GetTableOid());
+        }  // FOR
+      }
     }
   }
 }
@@ -460,15 +486,19 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   auto write_intensive_workload = (average_write_ratio > write_ratio_threshold);
 
   // Skip drop table time
-  if (index_overflow == true || write_intensive_workload == true) {
-    DropIndexes(table);
+  if (visibility_mode_ == false) {
+    if (index_overflow == true || write_intensive_workload == true) {
+      DropIndexes(table);
+    }
   }
 
   // Add indexes if needed
   AddIndexes(table, suggested_indices);
 
   // Update index utility
-  UpdateIndexUtility(table, sample_frequency_entry_list);
+  if (visibility_mode_ == false) {
+    UpdateIndexUtility(table, sample_frequency_entry_list);
+  }
 
   // Display index information
   PrintIndexInformation(table);
@@ -514,10 +544,13 @@ void IndexTuner::Tune() {
 
   // Continue till signal is not false
   while (index_tuning_stop == false) {
-    // Go over all tables
+    // Go over one table at a time
     for (auto table : tables) {
       // Update indices periodically
       IndexTuneHelper(table);
+
+      LOG_INFO("TUNER PAUSE");
+      std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
     }
 
     pause_timer.Stop();
@@ -525,7 +558,6 @@ void IndexTuner::Tune() {
 
     // Sleep a bit if needed
     if (duration > duration_between_pauses) {
-      LOG_INFO("TUNER PAUSE : %.0lf", duration);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
       pause_timer.Reset();
       pause_timer.Start();
@@ -539,6 +571,8 @@ void IndexTuner::Stop() {
 
   // Stop thread
   index_tuner_thread.join();
+
+  LOG_INFO("Stopped index tuner");
 }
 
 void IndexTuner::AddTable(storage::DataTable* table) {
@@ -553,6 +587,54 @@ void IndexTuner::ClearTables() {
     std::lock_guard<std::mutex> lock(index_tuner_mutex);
     tables.clear();
   }
+}
+
+void IndexTuner::BootstrapTPCC(const std::string& path) {
+  // Enable visibility mode
+  SetVisibilityMode();
+
+
+  auto tables_samples = brain::BrainUtil::LoadSamplesFile(path);
+
+  // Build sample map
+  std::string database_name = "default_database";
+
+  auto catalog = catalog::Catalog::GetInstance();
+
+  // Go over set of tables, and add samples
+  for (auto table_samples : tables_samples) {
+    // Get table name
+    auto table_name = table_samples.first;
+    auto samples = table_samples.second;
+
+    // Locate table in catalog
+    auto table = catalog->GetTableWithName(database_name, table_name);
+    PL_ASSERT(table != nullptr);
+    for (auto &sample : samples) {
+      table->RecordIndexSample(sample);
+    }
+    LOG_INFO("Added table to index tuner : %s", table_name.c_str());
+
+    // Attach table to tuner
+    AddTable(table);
+  }
+}
+
+// Load statistics for Index Tuner from a file
+void LoadStatsFromFile(const std::string &path) {
+  LOG_INFO("LoadStatsFromFile Invoked");
+
+  // Get index tuner
+  auto& index_tuner = brain::IndexTuner::GetInstance();
+
+  // Set duration between pauses
+  auto duration = 10000; // in ms
+  index_tuner.SetDurationOfPause(duration);
+
+  // Bootstrap
+  index_tuner.BootstrapTPCC(path);
+
+  return;
 }
 
 }  // End brain namespace

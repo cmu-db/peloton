@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>
+#include <unordered_set>
 
 #include "common/platform.h"
 
@@ -50,21 +51,25 @@ public:
     auto location = new char[size];
 
     pool_lock_.Lock();
-    locations_.push_back(location);
+    locations_.insert(location);
     pool_lock_.Unlock();
 
     return location;
   }
 
   // Returns the provided chunk of memory back into the pool
-  void Free(UNUSED_ATTRIBUTE void *ptr){
-
+  void Free(UNUSED_ATTRIBUTE void *ptr) {
+    char *cptr = (char *) ptr;
+    pool_lock_.Lock();
+    locations_.erase(cptr);
+    pool_lock_.Unlock();
+    delete [] cptr;
   }
 
 public:
 
   // Location list
-  std::vector<char*> locations_;
+  std::unordered_set<char*> locations_;
 
   // Spin lock protecting location list
   Spinlock pool_lock_;

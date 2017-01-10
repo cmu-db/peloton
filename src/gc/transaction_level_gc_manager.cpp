@@ -32,7 +32,7 @@ void TransactionLevelGCManager::StopGC(int thread_id) {
 
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(location.block);
+  auto tile_group = manager.GetTileGroup(location.block).get();
 
   auto tile_group_header = tile_group->GetHeader();
 
@@ -46,6 +46,9 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   PL_MEMSET(
     tile_group_header->GetReservedFieldRef(location.offset), 0,
     storage::TileGroupHeader::GetReservedSize());
+
+  // Reclaim the varlen pool
+  CheckAndReclaimVarlenColumns(tile_group, location.offset);
 
   LOG_TRACE("Garbage tuple(%u, %u) is reset", location.block, location.offset);
   return true;
@@ -257,13 +260,15 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
         if (element.second == RW_TYPE_DELETE || element.second == RW_TYPE_INS_DEL) {
           // only old versions are stored in the gc set.
           // so we can safely get indirection from the indirection array.
-          auto tile_group_header = catalog::Manager::GetInstance()
-                                       .GetTileGroup(entry.first)
-                                       ->GetHeader();
-          ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
+          auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
+          if (tile_group != nullptr){
+            auto tile_group_header = catalog::Manager::GetInstance()
+                                         .GetTileGroup(entry.first)
+                                         ->GetHeader();
+            ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
 
-          DeleteTupleFromIndexes(indirection);
-
+            DeleteTupleFromIndexes(indirection);
+          }
         }
       }
     }
@@ -278,9 +283,8 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
                                        .GetTileGroup(entry.first)
                                        ->GetHeader();
           ItemPointer *indirection = tile_group_header->GetIndirection(element.first);
-
           DeleteTupleFromIndexes(indirection);
-           
+
         }
       }
     }
@@ -290,6 +294,10 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
 
 // delete a tuple from all its indexes it belongs to.
 void TransactionLevelGCManager::DeleteTupleFromIndexes(ItemPointer *indirection) {
+  // do nothing if indirection is null
+  if (indirection == nullptr){
+    return;
+  }
   LOG_TRACE("Deleting indirection %p from index", indirection);
   
   ItemPointer location = *indirection;

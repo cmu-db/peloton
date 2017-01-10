@@ -266,6 +266,19 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->GetData(*this);
   }
 
+  // Access the raw variable length data from a pointer pointed to a tuple storage
+  inline static char *GetDataFromStorage(Type::TypeId type_id, char *storage) {
+    switch (type_id) {
+      case Type::VARCHAR:
+      case Type::VARBINARY: {
+        return Type::GetInstance(type_id)->GetData(storage);
+      }
+      default:
+        throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+                        "Invalid Type for getting raw data pointer");
+    }
+  }
+
   // Get the length of the variable length data
   inline uint32_t GetLength() const {
     return Type::GetInstance(type_id_)->GetLength(*this);

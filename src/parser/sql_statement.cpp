@@ -36,10 +36,9 @@ namespace parser {
 const std::string SQLStatement::GetInfo() const {
   std::ostringstream os;
 
-  os << "STATEMENT : Type :: " << stmt_type << "\n";
+  os << "SQLStatement[" << StatementTypeToString(stmt_type) << "]\n";
 
   int indent = 1;
-
   switch (stmt_type) {
     case STATEMENT_TYPE_SELECT:
       GetSelectStatementInfo((SelectStatement*)this, indent);
@@ -53,7 +52,6 @@ const std::string SQLStatement::GetInfo() const {
     default:
       break;
   }
-
   return os.str();
 }
 
@@ -64,8 +62,7 @@ const std::string SQLStatementList::GetInfo() const {
     for (auto stmt : statements) {
       os << stmt->GetInfo();
     }
-  }
-  else {
+  } else {
     os << "Invalid statement list \n";
   }
 

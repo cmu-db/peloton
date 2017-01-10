@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "brain/index_tuner.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -197,7 +198,7 @@ struct PARSER_CUST_LTYPE {
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
-%token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
+%token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS STATS
 %token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER COUNT
 %token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE BWTREE
@@ -283,6 +284,7 @@ input:
 statement_list:
 		statement { $$ = new SQLStatementList($1); }
 	|	statement_list ';' statement { $1->AddStatement($3); $$ = $1; }
+    |   load_stats_from_file { $$ = new SQLStatementList(); $$->is_valid = false; }
 	;
 
 statement:
@@ -977,6 +979,9 @@ ident_commalist:
 		IDENTIFIER { $$ = new std::vector<char*>(); $$->push_back($1); }
 	|	ident_commalist ',' IDENTIFIER { $1->push_back($3); $$ = $1; }
 	;
+
+load_stats_from_file:
+        LOAD STATS FROM STRING { peloton::brain::LoadStatsFromFile(CharsToStringDestructive($4));};
 
 %%
 /*********************************

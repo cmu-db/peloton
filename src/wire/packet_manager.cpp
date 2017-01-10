@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "wire/packet_manager.h"
 
 #include <cstdio>
 #include <unordered_map>
@@ -16,17 +17,16 @@
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
-#include "type/types.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 #include "optimizer/simple_optimizer.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
 #include "tcop/tcop.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
 #include "wire/marshal.h"
-#include "wire/packet_manager.h"
 
 #include <boost/algorithm/string.hpp>
 #include "wire/packet_manager.h"
@@ -47,8 +47,66 @@ const std::unordered_map<std::string, std::string>
             "server_version", "9.5devel")("session_authorization", "postgres")(
             "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
+std::vector<PacketManager *> PacketManager::packet_managers_;
+std::mutex PacketManager::packet_managers_mutex_;
+
 PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
   traffic_cop_.reset(new tcop::TrafficCop());
+  {
+    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
+    PacketManager::packet_managers_.push_back(this);
+    LOG_DEBUG("Registered new PacketManager [count=%d]",
+              (int)PacketManager::packet_managers_.size());
+  }
+}
+
+PacketManager::~PacketManager() {
+  {
+    std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
+    PacketManager::packet_managers_.erase(
+        std::remove(PacketManager::packet_managers_.begin(),
+                    PacketManager::packet_managers_.end(), this),
+        PacketManager::packet_managers_.end());
+    LOG_DEBUG("Removed PacketManager [count=%d]",
+              (int)PacketManager::packet_managers_.size());
+  }
+}
+
+void PacketManager::InvalidatePreparedStatements(oid_t table_id) {
+  if (table_statement_cache_.find(table_id) == table_statement_cache_.end()) {
+    return;
+  }
+  LOG_DEBUG("Marking all PreparedStatements that access table '%d' as invalid",
+            (int)table_id);
+  for (auto statement : table_statement_cache_[table_id]) {
+    LOG_DEBUG("Setting PreparedStatement '%s' as needing to be replanned",
+              statement->GetStatementName().c_str());
+    statement->SetNeedsPlan(true);
+  }
+}
+
+void PacketManager::ReplanPreparedStatement(Statement *statement) {
+  std::string error_message;
+  auto new_statement = traffic_cop_->PrepareStatement(
+      statement->GetStatementName(), statement->GetQueryString(),
+      error_message);
+  // But then rip out its query plan and stick it in our old statement
+  if (new_statement.get() == nullptr) {
+    LOG_ERROR(
+        "Failed to generate a new query plan for PreparedStatement '%s'\n%s",
+        statement->GetStatementName().c_str(), error_message.c_str());
+  } else {
+    LOG_DEBUG("Generating new plan for PreparedStatement '%s'",
+              statement->GetStatementName().c_str());
+
+    auto old_plan = statement->GetPlanTree();
+    auto new_plan = new_statement->GetPlanTree();
+    statement->SetPlanTree(new_plan);
+    new_statement->SetPlanTree(old_plan);
+    statement->SetNeedsPlan(false);
+
+    // TODO: We may need to delete the old plan and new statement here
+  }
 }
 
 void PacketManager::MakeHardcodedParameterStatus(
@@ -302,6 +360,9 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
+  LOG_DEBUG("PrepareStatement[%s] => %s", statement_name.c_str(),
+            query_string.c_str());
+
   statement = traffic_cop_->PrepareStatement(statement_name, query_string,
                                              error_message);
   if (statement.get() == nullptr) {
@@ -344,6 +405,9 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   } else {
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
+    for (auto table_id : statement->GetReferencedTables()) {
+      table_statement_cache_[table_id].push_back(statement.get());
+    }
   }
   // Send Parse complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -385,6 +449,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   std::shared_ptr<Statement> statement;
   stats::QueryMetric::QueryParamBuf param_type_buf;
 
+  // UNNAMED STATEMENT
   if (statement_name.empty()) {
     statement = unnamed_statement_;
     param_type_buf = unnamed_stmt_param_types_;
@@ -396,16 +461,16 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
     }
+    // NAMED STATEMENT
   } else {
     auto statement_cache_itr = statement_cache_.find(statement_name);
-    // Did not find statement with same name
     if (statement_cache_itr != statement_cache_.end()) {
       statement = *statement_cache_itr;
       param_type_buf = statement_param_types_[statement_name];
     }
-    // Found statement with same name
+    // Did not find statement with same name
     else {
-      std::string error_message = "Prepared statement name already exists";
+      std::string error_message = "The prepared statement does not exist";
       LOG_ERROR("%s", error_message.c_str());
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
       return;
@@ -417,7 +482,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
 
   // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
-  if (!HardcodedExecuteFilter(query_type)) {
+  if (HardcodedExecuteFilter(query_type) == false) {
     skipped_stmt_ = true;
     skipped_query_string_ = query_string;
     std::unique_ptr<OutputPacket> response(new OutputPacket());
@@ -425,6 +490,12 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
     response->msg_type = BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
+  }
+
+  // Check whether somebody wants us to generate a new query plan
+  // for this prepared statement
+  if (statement->GetNeedsPlan()) {
+    ReplanPreparedStatement(statement.get());
   }
 
   // Group the parameter types and the parameters in this vector
@@ -595,8 +666,8 @@ size_t PacketManager::ReadParamValue(
               buf = (buf << 8) | param[i];
             }
             PL_MEMCPY(&float_val, &buf, sizeof(double));
-            bind_parameters[param_idx] = std::make_pair(
-                type::Type::DECIMAL, std::to_string(float_val));
+            bind_parameters[param_idx] =
+                std::make_pair(type::Type::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
                 type::ValueFactory::GetDoubleValue(float_val).Copy();
           } break;
@@ -604,8 +675,8 @@ size_t PacketManager::ReadParamValue(
             bind_parameters[param_idx] = std::make_pair(
                 type::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
-            param_values[param_idx] =
-                type::ValueFactory::GetVarbinaryValue(&param[0], param_len, true);
+            param_values[param_idx] = type::ValueFactory::GetVarbinaryValue(
+                &param[0], param_len, true);
 
           } break;
           default: {
@@ -710,7 +781,7 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
       statement, param_values, unnamed, param_stat, result_format_, results,
       rows_affected, error_message);
 
-  switch(status) {
+  switch (status) {
     case Result::RESULT_FAILURE:
       LOG_ERROR("Failed to execute: %s", error_message.c_str());
       SendErrorResponse({{HUMAN_READABLE_ERROR, error_message}});
@@ -720,8 +791,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
         LOG_DEBUG("Failed to execute: Conflicting txn aborted");
         // Send an error response if the abort is not due to ROLLBACK query
         SendErrorResponse({{SQLSTATE_CODE_ERROR,
-                               SqlStateErrorCodeToString(
-                                   SqlStateErrorCode::SERIALIZATION_ERROR)}});
+                            SqlStateErrorCodeToString(
+                                SqlStateErrorCode::SERIALIZATION_ERROR)}});
       }
       return;
     default: {
@@ -739,12 +810,13 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
   PacketGetByte(pkt, close_type);
   PacketGetString(pkt, 0, name);
   bool is_unnamed = (name.size() == 0) ? true : false;
-  switch(close_type) {
+  switch (close_type) {
     case 'S':
       LOG_TRACE("Deleting statement %s from cache", name.c_str());
       if (is_unnamed) {
         unnamed_statement_.reset();
       } else {
+        // TODO: Invalidate table_statement_cache!
         statement_cache_.delete_key(name);
       }
       break;
@@ -869,6 +941,7 @@ void PacketManager::Reset() {
   skipped_query_type_.clear();
 
   statement_cache_.clear();
+  table_statement_cache_.clear();
   portals_.clear();
   pkt_cntr_ = 0;
 

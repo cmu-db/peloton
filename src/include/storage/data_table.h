@@ -85,7 +85,7 @@ class DataTable : public AbstractTable {
   DataTable(catalog::Schema *schema, const std::string &table_name,
             const oid_t &database_oid, const oid_t &table_oid,
             const size_t &tuples_per_tilegroup, const bool own_schema,
-            const bool adapt_table);
+            const bool adapt_table, const bool is_catalog = false);
 
   ~DataTable();
 
@@ -250,12 +250,12 @@ class DataTable : public AbstractTable {
                        ItemPointer **index_entry_ptr);
 
   static void SetActiveTileGroupCount(const size_t active_tile_group_count) {
-    active_tilegroup_count_ = active_tile_group_count;
+    default_active_tilegroup_count_ = active_tile_group_count;
   }
 
   static void SetActiveIndirectionArrayCount(
       const size_t active_indirection_array_count) {
-    active_indirection_array_count_ = active_indirection_array_count;
+    default_active_indirection_array_count_ = active_indirection_array_count;
   }
 
  protected:
@@ -294,14 +294,17 @@ class DataTable : public AbstractTable {
   bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
 
  public:
-  static size_t active_tilegroup_count_;
+  static size_t default_active_tilegroup_count_;
 
-  static size_t active_indirection_array_count_;
+  static size_t default_active_indirection_array_count_;
 
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
+
+  size_t active_tilegroup_count_;
+  size_t active_indirection_array_count_;
 
   oid_t database_oid;
   std::string table_name;

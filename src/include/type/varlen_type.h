@@ -27,6 +27,9 @@ class VarlenType : public Type {
   // Access the raw variable length data
   const char *GetData(const Value& val) const;
 
+  // Access the raw varlen data stored from the tuple storage
+  char *GetData(char *storage) override;
+
   // Get the length of the variable length data
   uint32_t GetLength(const Value& val) const;
 

@@ -94,6 +94,18 @@ DEFINE_uint64(stats_mode,
               peloton::STATS_TYPE_INVALID,
               "Enable statistics collection (default: 0)");
 
+//===----------------------------------------------------------------------===//
+// AI
+//===----------------------------------------------------------------------===//
+
+DEFINE_bool(index_tuner,
+            false,
+            "Enable index tuner (default: false)");
+
+DEFINE_bool(layout_tuner,
+            false,
+            "Enable layout tuner (default: false)");
+
 // Layout mode
 int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 

@@ -39,7 +39,10 @@
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop() { optimizer_.reset(new optimizer::SimpleOptimizer()); }
+TrafficCop::TrafficCop() {
+  LOG_TRACE("Starting a new TrafficCop");
+  optimizer_.reset(new optimizer::SimpleOptimizer());
+}
 
 void TrafficCop::Reset() {
   std::stack<TcopTxnState> new_tcop_txn_state;
@@ -259,31 +262,39 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
     UNUSED_ATTRIBUTE std::string &error_message) {
-  std::shared_ptr<Statement> statement;
-
   LOG_DEBUG("Prepare Statement name: %s", statement_name.c_str());
   LOG_DEBUG("Prepare Statement query: %s", query_string.c_str());
 
-  statement.reset(new Statement(statement_name, query_string));
+  std::shared_ptr<Statement> statement(
+      new Statement(statement_name, query_string));
   try {
     auto &peloton_parser = parser::Parser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    statement->SetPlanTree(optimizer_->BuildPelotonPlanTree(sql_stmt));
+    auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt);
+    statement->SetPlanTree(plan);
+
+    // Get the tables that our plan references so that we know how to
+    // invalidate it at a later point when the catalog changes
+    const std::set<oid_t> table_oids =
+        planner::PlanUtil::GetTablesReferenced(plan.get());
+    statement->SetReferencedTables(table_oids);
 
     for (auto stmt : sql_stmt->GetStatements()) {
+      LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
       if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
         auto tuple_descriptor = GenerateTupleDescriptor(stmt);
         statement->SetTupleDescriptor(tuple_descriptor);
       }
       break;
     }
-#ifdef LOG_TRACE_ENABLED
+
+#ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
-      LOG_TRACE("Statement Prepared\n%s",
-                statement->GetPlanTree().get()->GetInfo().c_str());
+      LOG_DEBUG("Statement Prepared: %s", statement->GetInfo().c_str());
+      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
     return std::move(statement);
@@ -294,10 +305,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 }
 
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
-    parser::SQLStatement *stmt) {
+    parser::SQLStatement *sql_stmt) {
   std::vector<FieldInfoType> tuple_descriptor;
-  if (stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
-  auto select_stmt = (parser::SelectStatement *)stmt;
+  if (sql_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
+  auto select_stmt = (parser::SelectStatement *)sql_stmt;
 
   // TODO: this is a hack which I don't have time to fix now
   // but it replaces a worse hack that was here before
@@ -377,6 +388,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
           GetColumnFieldForValueType(col_name, expr->GetValueType()));
     }
   }
+
   return tuple_descriptor;
 }
 

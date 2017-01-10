@@ -12,17 +12,17 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <set>
-#include <atomic>
+#include <string>
+#include <vector>
 
-#include "common/printable.h"
-#include "type/types.h"
 #include "common/logger.h"
+#include "common/printable.h"
 #include "type/abstract_pool.h"
+#include "type/types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -74,9 +74,11 @@ class IndexMetadata : public Printable {
 
   inline oid_t GetDatabaseOid() { return database_oid; }
 
-  IndexType GetIndexType() { return index_type_; }
+  inline IndexType GetIndexType() { return index_type_; }
 
-  IndexConstraintType GetIndexConstraintType() { return index_constraint_type_; }
+  IndexConstraintType GetIndexConstraintType() {
+    return index_constraint_type_;
+  }
 
   /*
    * GetKeySchama() - Returns a schema object pointer that represents
@@ -112,14 +114,30 @@ class IndexMetadata : public Printable {
     return tuple_attrs;
   }
 
-  double GetUtility() const { return utility_ratio; }
+  inline double GetUtility() const { return utility_ratio; }
 
-  void SetUtility(double p_utility_ratio) { utility_ratio = p_utility_ratio; }
+  inline void SetUtility(double p_utility_ratio) {
+    utility_ratio = p_utility_ratio;
+  }
+
+  inline bool GetVisibility() const { return (visible_); }
+
+  inline void SetVisibility(bool visibile) { visible_ = visibile; }
 
   /*
    * GetInfo() - Get a string representation for debugging
    */
   const std::string GetInfo() const;
+
+  //===--------------------------------------------------------------------===//
+  // STATIC HELPERS
+  //===--------------------------------------------------------------------===//
+
+  static inline void SetDefaultVisibleFlag(bool flag) {
+    LOG_DEBUG("Set IndexMetadata visible flag to '%s'",
+              (flag ? "true" : "false"));
+    index_default_visibility = flag;
+  }
 
   ///////////////////////////////////////////////////////////////////
   // IndexMetadata Data Member Definition
@@ -142,6 +160,7 @@ class IndexMetadata : public Printable {
   // of the underlying table schema
   const catalog::Schema *key_schema;
 
+ private:
   // The mapping relation between key schema and tuple schema
   std::vector<oid_t> key_attrs;
 
@@ -157,6 +176,12 @@ class IndexMetadata : public Printable {
 
   // utility of an index
   double utility_ratio = INVALID_RATIO;
+
+  // If set to true, then this index is visible to the planner
+  bool visible_;
+
+  // This is a magic flag that tells us whether new
+  static bool index_default_visibility;
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -192,7 +217,7 @@ class Index : public Printable {
 
   // Return the metadata object associated with the index
   IndexMetadata *GetMetadata() const { return metadata; }
-  
+
   // Convert table column ID to index column ID
   oid_t TupleColumnToKeyColumn(oid_t tuple_column_id) const;
 
@@ -215,9 +240,8 @@ class Index : public Printable {
   // If not any of those k-v pair satisfy the predicate, insert the k-v pair
   // into the index and return true.
   // This function should be called for all primary/unique index insert
-  virtual bool CondInsertEntry(
-      const storage::Tuple *key, ItemPointer *location,
-      std::function<bool(const void *)> predicate) = 0;
+  virtual bool CondInsertEntry(const storage::Tuple *key, ItemPointer *location,
+                               std::function<bool(const void *)> predicate) = 0;
 
   ///////////////////////////////////////////////////////////////////
   // Index Scan
@@ -229,14 +253,13 @@ class Index : public Printable {
                     ScanDirectionType scan_direction,
                     std::vector<ItemPointer *> &result,
                     const ConjunctionScanPredicate *csp_p) = 0;
-                    
+
   virtual void ScanLimit(const std::vector<type::Value> &value_list,
                          const std::vector<oid_t> &tuple_column_id_list,
                          const std::vector<ExpressionType> &expr_list,
                          ScanDirectionType scan_direction,
                          std::vector<ItemPointer *> &result,
-                         const ConjunctionScanPredicate *csp_p,
-                         uint64_t limit,
+                         const ConjunctionScanPredicate *csp_p, uint64_t limit,
                          uint64_t offset) = 0;
 
   // This is the version used to test scan
@@ -312,7 +335,9 @@ class Index : public Printable {
 
   IndexType GetIndexMethodType() { return metadata->GetIndexType(); }
 
-  IndexConstraintType GetIndexType() const { return metadata->GetIndexConstraintType(); }
+  IndexConstraintType GetIndexType() const {
+    return metadata->GetIndexConstraintType();
+  }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;

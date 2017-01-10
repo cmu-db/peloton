@@ -107,6 +107,15 @@ void Catalog::AddDatabase(storage::Database *database) {
   InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
 }
 
+void Catalog::AddDatabase(std::string database_name,
+                          storage::Database *database){
+  database->setDBName(database_name);
+  databases_.push_back(database);
+  LOG_DEBUG("Added database with name: %s", database_name.c_str());
+  InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
+}
+
+
 void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
     std::string &database_name, concurrency::Transaction *txn) {
   // Update catalog_db with this database info
@@ -465,12 +474,13 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
     oid_t database_id, std::string table_name) {
   bool own_schema = true;
   bool adapt_table = false;
+  bool is_catalog = true;
   auto table_schema = InitializeTablesSchema();
 
   catalog::Schema *schema = table_schema.release();
   std::unique_ptr<storage::DataTable> table(
       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
+          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
   return table;
 }
 
@@ -479,6 +489,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
     oid_t database_id, std::string database_name) {
   bool own_schema = true;
   bool adapt_table = false;
+  bool is_catalog = true;
   auto database_schema = InitializeDatabaseSchema();
 
   catalog::Schema *schema = database_schema.release();
@@ -486,7 +497,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   std::unique_ptr<storage::DataTable> table(
       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
           database_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema,
-          adapt_table));
+          adapt_table, is_catalog));
 
   return table;
 }
@@ -496,6 +507,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
     oid_t database_id, std::string table_name) {
   bool own_schema = true;
   bool adapt_table = false;
+  bool is_catalog = true;
   auto table_schema = InitializeQueryMetricsSchema();
 
   catalog::Schema *schema = nullptr;
@@ -511,7 +523,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
 
   std::unique_ptr<storage::DataTable> table(
       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table));
+          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
 
   return table;
 }

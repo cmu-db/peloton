@@ -139,6 +139,7 @@ public:
   cid_t GetMaxDeadTxnCid() {
     IncreaseQueueTail();
     IncreaseReclaimTail();
+
     return max_cid_gc_;
   }
 
