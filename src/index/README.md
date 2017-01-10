@@ -11,3 +11,10 @@ A standalone version of BwTree could be downloaded here: https://github.com/wang
 
 Index Wrapper 
 =============
+The index wrapper interfaces between BwTree and Peloton by exposing a uniform set of functions to the external world. Future addition of indices could be achieved by providing wrappers with appropriate member functions.
+
+We strive to make index wrapper a mere interfacing component and thus make it carry as little logic as possible. In future development of Peloton please implement index logic either inside the index or inside coprresponding executors.
+
+Index Factory
+=============
+The index factory is 
