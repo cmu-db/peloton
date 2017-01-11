@@ -56,8 +56,9 @@ bool OrderByExecutor::DExecute() {
   PL_ASSERT(input_schema_.get());
   PL_ASSERT(input_tiles_.size() > 0);
 
-  // Returned tiles must be newly created physical tiles,
-  // which have the same physical schema as input tiles.
+  // Returned tiles must be newly created physical tiles.
+  // NOTE: the schema of these tiles might not match the input tiles when some of the order by columns are not be part of the output schema
+
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
 
@@ -116,12 +117,19 @@ bool OrderByExecutor::DoSort() {
   descend_flags_ = node.GetDescendFlags();
 
   // Extract the schema for sort keys.
-  input_schema_.reset(input_tiles_[0]->GetPhysicalSchema());
+
+  std::unique_ptr<catalog::Schema> physical_schema;
+  physical_schema.reset(input_tiles_[0]->GetPhysicalSchema());
   std::vector<catalog::Column> sort_key_columns;
+  std::vector<catalog::Column> output_key_columns;
   for (auto id : node.GetSortKeys()) {
-    sort_key_columns.push_back(input_schema_->GetColumn(id));
+    sort_key_columns.push_back(physical_schema->GetColumn(id));
+  }
+  for (auto id : node.GetOutputColumnIds()) {
+    output_key_columns.push_back(physical_schema->GetColumn(id));
   }
   sort_key_tuple_schema_.reset(new catalog::Schema(sort_key_columns));
+  input_schema_.reset(new catalog::Schema(output_key_columns));
   auto executor_pool = executor_context_->GetPool();
 
   // Extract all valid tuples into a single std::vector (the sort buffer)
