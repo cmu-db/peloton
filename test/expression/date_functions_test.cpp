@@ -38,13 +38,17 @@ class DateFunctionsTests : public PelotonTest {};
 
 // A simple test to make sure function expressions are filled in correctly
 TEST_F(DateFunctionsTests, ExtractTests) {
-  std::string date = "2017-01-01 12:13:14.000000+00";
+  std::string date = "2017-01-01 12:13:14.999999+00";
 
   // <PART> <EXPECTED>
   // You can generate the expected value in postgres using this SQL:
   // SELECT EXTRACT(MILLISECONDS
   //                FROM CAST('2017-01-01 12:13:14.999999+00' AS TIMESTAMP));
   std::vector<std::pair<DatePartType, double>> data = {
+      std::make_pair(EXPRESSION_DATE_PART_CENTURY, 21),
+      std::make_pair(EXPRESSION_DATE_PART_DECADE, 201),
+      std::make_pair(EXPRESSION_DATE_PART_DOW, 0),
+      std::make_pair(EXPRESSION_DATE_PART_DOY, 1),
       std::make_pair(EXPRESSION_DATE_PART_YEAR, 2017),
       std::make_pair(EXPRESSION_DATE_PART_MONTH, 1),
       std::make_pair(EXPRESSION_DATE_PART_DAY, 2),
