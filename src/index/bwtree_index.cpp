@@ -212,34 +212,29 @@ void BWTREE_INDEX_TYPE::ScanLimit(
   // But still since we could not access tuples in the table
   // the index just fetches the first qualified key without further checking
   // including checking for non-exact bounds!!!
-  if (csp_p->IsPointQuery() == false && limit == 1 && offset == 0) {
-    if (scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
-      const storage::Tuple *low_key_p = csp_p->GetLowKey();
-      const storage::Tuple *high_key_p = csp_p->GetHighKey();
+  if (csp_p->IsPointQuery() == false && limit == 1 && offset == 0 &&
+      scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
+    const storage::Tuple *low_key_p = csp_p->GetLowKey();
+    const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-      LOG_TRACE(
-          "ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
-          low_key_p->GetInfo().c_str());
+    LOG_TRACE("ScanLimit() special case (limit = 1; offset = 0; ASCENDING): %s",
+              low_key_p->GetInfo().c_str());
 
-      KeyType index_low_key;
-      KeyType index_high_key;
-      index_low_key.SetFromKey(low_key_p);
-      index_high_key.SetFromKey(high_key_p);
+    KeyType index_low_key;
+    KeyType index_high_key;
+    index_low_key.SetFromKey(low_key_p);
+    index_high_key.SetFromKey(high_key_p);
 
-      auto scan_itr = container.Begin(index_low_key);
-      if ((scan_itr.IsEnd() == false) &&
-          (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
+    auto scan_itr = container.Begin(index_low_key);
+    if ((scan_itr.IsEnd() == false) &&
+        (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
 
-        result.push_back(scan_itr->second);
-      }
-
-      // If the passing is forward and limit 1, return 1 tuple
-      return;
+      result.push_back(scan_itr->second);
     }
+  } else {
+    Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
+         csp_p);
   }
-
-  Scan(value_list, tuple_column_id_list, expr_list, scan_direction, result,
-       csp_p);
 
   return;
 }
