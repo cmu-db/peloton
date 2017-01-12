@@ -28,7 +28,7 @@ BENCHMARK_INTERVAL = 1000 # ms
 FINISHED = False
 START_INTERVAL = 300
 
-PLOT_WIDTH = 1980
+PLOT_WIDTH = 1600
 PLOT_HEIGHT = 200
 
 p = None
@@ -39,6 +39,7 @@ PLOT_THROUGHPUT = None
 PLOT_THROUGHPUT_AMOUNT = None
 PLOT_LINE_POSITIONS = set()
 PLOT_LINES = { }
+PLOT_LINE_WIDTH = 5
 NEW_DATA = [ ]
 NUM_INDEXES = 0
 EXPECTED_INDEXES = 10
@@ -139,7 +140,7 @@ def updatePlot():
     to_remove = [ ]
     for line_pos in PLOT_LINE_POSITIONS:
         if line_pos >= PLOT_LOCATION and line_pos <= (PLOT_LOCATION + START_INTERVAL):
-            linePen = pg.mkPen('y', width=3)
+            linePen = pg.mkPen('y', width=PLOT_LINE_WIDTH)
             l = p.addLine(x=line_pos, pen=linePen)
             to_remove.append(line_pos)
             PLOT_LINES[line_pos] = l
@@ -209,7 +210,9 @@ def pollPelotonLog():
     for line in results:
         # Look for when we add an index
         m = regex.search(line)
+        #print "XXX", line
         if m:
+            #print "FOUND:", m.groups()[0]
             PLOT_LINE_POSITIONS.add(START_INTERVAL + PLOT_LOCATION)
             NUM_INDEXES += 1
             addIndex(m.groups()[0])
