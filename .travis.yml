@@ -28,8 +28,8 @@ before_script:
     - pip install --user cpp-coveralls
 
 script:
-    # first, run validator
-    - python ./script/validators/validator.py
+    # first, run source_validator
+    - python ./script/validators/source_validator.py
     # create build directory
     - mkdir build
     - cd build
