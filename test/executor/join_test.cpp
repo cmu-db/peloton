@@ -245,7 +245,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
         1, type::ValueFactory::GetIntegerValue(50 * rowid * 2 + 1).Copy(),
         testing_pool);
 
-    tuple.SetValue(2, type::ValueFactory::GetDoubleValue(1.5).Copy(),
+    tuple.SetValue(2, type::ValueFactory::GetDecimalValue(1.5).Copy(),
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values

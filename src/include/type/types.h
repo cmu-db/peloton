@@ -271,7 +271,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_CAST = 900
 };
 
-enum DatePart {
+enum DatePartType {
   EXPRESSION_DATE_PART_INVALID = INVALID_TYPE_ID,
   EXPRESSION_DATE_PART_CENTURY = 1,
   EXPRESSION_DATE_PART_DAY = 2,
@@ -284,7 +284,7 @@ enum DatePart {
   EXPRESSION_DATE_PART_ISOYEAR = 9,
   EXPRESSION_DATE_PART_MICROSECONDS = 10,
   EXPRESSION_DATE_PART_MILLENNIUM = 11,
-  EXPRESSION_DATE_PART_MILLISECONDS = 12,
+  EXPRESSION_DATE_PART_MILLISECOND = 12,
   EXPRESSION_DATE_PART_MINUTE = 13,
   EXPRESSION_DATE_PART_MONTH = 14,
   EXPRESSION_DATE_PART_QUARTER = 15,
@@ -1001,8 +1001,8 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 // Transformers
 //===--------------------------------------------------------------------===//
 
-std::string DatePartToString(DatePart type);
-DatePart StringToDatePart(const std::string &str);
+std::string DatePartTypeToString(DatePartType type);
+DatePartType StringToDatePartType(const std::string &str);
 
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(const std::string &str);

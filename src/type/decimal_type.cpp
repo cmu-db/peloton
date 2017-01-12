@@ -42,15 +42,15 @@ Value DecimalType::Add(const Value& left, const Value &right) const {
 
   switch(right.GetTypeId()) {
     case Type::TINYINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal + right.GetAs<int8_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal + right.GetAs<int8_t>());
     case Type::SMALLINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal + right.GetAs<int16_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal + right.GetAs<int16_t>());
     case Type::INTEGER:
-      return ValueFactory::GetDoubleValue(left.value_.decimal + right.GetAs<int32_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal + right.GetAs<int32_t>());
     case Type::BIGINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal + right.GetAs<int64_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal + right.GetAs<int64_t>());
     case Type::DECIMAL:
-      return ValueFactory::GetDoubleValue(left.value_.decimal + right.GetAs<double>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal + right.GetAs<double>());
     default:
       throw Exception("type error");
   }
@@ -64,15 +64,15 @@ Value DecimalType::Subtract(const Value& left, const Value &right) const {
   
   switch(right.GetTypeId()) {
     case Type::TINYINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal - right.GetAs<int8_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal - right.GetAs<int8_t>());
     case Type::SMALLINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal - right.GetAs<int16_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal - right.GetAs<int16_t>());
     case Type::INTEGER:
-      return ValueFactory::GetDoubleValue(left.value_.decimal - right.GetAs<int32_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal - right.GetAs<int32_t>());
     case Type::BIGINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal - right.GetAs<int64_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal - right.GetAs<int64_t>());
     case Type::DECIMAL:
-      return ValueFactory::GetDoubleValue(left.value_.decimal - right.GetAs<double>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal - right.GetAs<double>());
     default:
       throw Exception("type error");
   }
@@ -86,15 +86,15 @@ Value DecimalType::Multiply(const Value& left, const Value &right) const {
 
   switch(right.GetTypeId()) {
     case Type::TINYINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal * right.GetAs<int8_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal * right.GetAs<int8_t>());
     case Type::SMALLINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal * right.GetAs<int16_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal * right.GetAs<int16_t>());
     case Type::INTEGER:
-      return ValueFactory::GetDoubleValue(left.value_.decimal * right.GetAs<int32_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal * right.GetAs<int32_t>());
     case Type::BIGINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal * right.GetAs<int64_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal * right.GetAs<int64_t>());
     case Type::DECIMAL:
-      return ValueFactory::GetDoubleValue(left.value_.decimal * right.GetAs<double>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal * right.GetAs<double>());
     default:
       throw Exception("type error");
   }
@@ -112,15 +112,15 @@ Value DecimalType::Divide(const Value& left, const Value &right) const {
   }
   switch(right.GetTypeId()) {
     case Type::TINYINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal / right.GetAs<int8_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal / right.GetAs<int8_t>());
     case Type::SMALLINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal / right.GetAs<int16_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal / right.GetAs<int16_t>());
     case Type::INTEGER:
-      return ValueFactory::GetDoubleValue(left.value_.decimal / right.GetAs<int32_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal / right.GetAs<int32_t>());
     case Type::BIGINT:
-      return ValueFactory::GetDoubleValue(left.value_.decimal / right.GetAs<int64_t>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal / right.GetAs<int64_t>());
     case Type::DECIMAL:
-      return ValueFactory::GetDoubleValue(left.value_.decimal / right.GetAs<double>());
+      return ValueFactory::GetDecimalValue(left.value_.decimal / right.GetAs<double>());
     default:
       throw Exception("type error");
   }
@@ -138,15 +138,15 @@ Value DecimalType::Modulo(const Value& left, const Value &right) const {
   }
   switch(right.GetTypeId()) {
     case Type::TINYINT:
-      return ValueFactory::GetDoubleValue(ValMod(left.value_.decimal, right.GetAs<int8_t>()));
+      return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int8_t>()));
     case Type::SMALLINT:
-      return ValueFactory::GetDoubleValue(ValMod(left.value_.decimal, right.GetAs<int16_t>()));
+      return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int16_t>()));
     case Type::INTEGER:
-      return ValueFactory::GetDoubleValue(ValMod(left.value_.decimal, right.GetAs<int32_t>()));
+      return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int32_t>()));
     case Type::BIGINT:
-      return ValueFactory::GetDoubleValue(ValMod(left.value_.decimal, right.GetAs<int64_t>()));
+      return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<int64_t>()));
     case Type::DECIMAL:
-      return ValueFactory::GetDoubleValue(ValMod(left.value_.decimal, right.GetAs<double>()));
+      return ValueFactory::GetDecimalValue(ValMod(left.value_.decimal, right.GetAs<double>()));
     default:
       throw Exception("type error");
   }
@@ -177,16 +177,16 @@ Value DecimalType::Max(const Value& left, const Value &right) const {
 Value DecimalType::Sqrt(const Value& val) const {
   PL_ASSERT(GetTypeId() == Type::DECIMAL);
   if (val.IsNull())
-    return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
   if (val.value_.decimal < 0) {
     throw Exception(EXCEPTION_TYPE_DECIMAL,
                     "Cannot take square root of a negative number.");
   }
-  return ValueFactory::GetDoubleValue(sqrt(val.value_.decimal));
+  return ValueFactory::GetDecimalValue(sqrt(val.value_.decimal));
 }
 
 Value DecimalType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &right UNUSED_ATTRIBUTE) const {
-  return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
+  return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 }
 
 CmpBool DecimalType::CompareEquals(const Value& left, const Value &right) const {
@@ -409,7 +409,7 @@ Value DecimalType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
 }
 
 Value DecimalType::Copy(const Value& val) const {
-  return ValueFactory::GetDoubleValue(val.value_.decimal);
+  return ValueFactory::GetDecimalValue(val.value_.decimal);
 }
 
 }  // namespace peloton

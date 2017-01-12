@@ -47,7 +47,7 @@ Value BigintType::Add(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return AddValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(left.value_.bigint + right.GetAs<double>());
+    return ValueFactory::GetDecimalValue(left.value_.bigint + right.GetAs<double>());
   default:
     break;
   }
@@ -71,7 +71,7 @@ Value BigintType::Subtract(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return SubtractValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(left.value_.bigint - right.GetAs<double>());
+    return ValueFactory::GetDecimalValue(left.value_.bigint - right.GetAs<double>());
   default:
     break;
   }
@@ -95,7 +95,7 @@ Value BigintType::Multiply(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return MultiplyValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(left.value_.bigint * right.GetAs<double>());
+    return ValueFactory::GetDecimalValue(left.value_.bigint * right.GetAs<double>());
   default:
     break;
   }
@@ -124,7 +124,7 @@ Value BigintType::Divide(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return DivideValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(left.value_.bigint / right.GetAs<double>());
+    return ValueFactory::GetDecimalValue(left.value_.bigint / right.GetAs<double>());
   default:
     break;
   }
@@ -152,7 +152,7 @@ Value BigintType::Modulo(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return ModuloValue<int64_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(
+    return ValueFactory::GetDecimalValue(
         ValMod(left.value_.bigint, right.GetAs<double>()));
   default:
     break;
@@ -163,13 +163,13 @@ Value BigintType::Modulo(const Value& left, const Value &right) const {
 Value BigintType::Sqrt(const Value& val) const {
   PL_ASSERT(val.CheckInteger());
   if (val.IsNull())
-    return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
   if (val.value_.bigint < 0) {
     throw Exception(EXCEPTION_TYPE_DECIMAL,
         "Cannot take square root of a negative number.");
   }
-  return ValueFactory::GetDoubleValue(sqrt(val.value_.bigint));
+  return ValueFactory::GetDecimalValue(sqrt(val.value_.bigint));
 
 }
 
@@ -183,7 +183,7 @@ Value BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &r
   case Type::BIGINT:
     return ValueFactory::GetBigIntValue((int64_t) PELOTON_INT64_NULL);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue((double) PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue((double) PELOTON_DECIMAL_NULL);
   default:
     break;
   }
@@ -446,9 +446,9 @@ Value BigintType::CastAs(const Value& val, const Type::TypeId type_id) const {
   }
   case Type::DECIMAL: {
     if (val.IsNull())
-      return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
+      return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
-    return ValueFactory::GetDoubleValue((double) val.GetAs<int64_t>());
+    return ValueFactory::GetDecimalValue((double) val.GetAs<int64_t>());
   }
   case Type::VARCHAR:
     if (val.IsNull())

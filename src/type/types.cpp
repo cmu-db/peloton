@@ -43,7 +43,7 @@ size_t EPOCH_THREAD_COUNT = 1;
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities
 //===--------------------------------------------------------------------===//
-std::string DatePartToString(DatePart type) {
+std::string DatePartTypeToString(DatePartType type) {
   switch (type) {
     case EXPRESSION_DATE_PART_INVALID:
       return ("INVALID");
@@ -69,7 +69,7 @@ std::string DatePartToString(DatePart type) {
       return "MICROSECONDS";
     case EXPRESSION_DATE_PART_MILLENNIUM:
       return "MILLENNIUM";
-    case EXPRESSION_DATE_PART_MILLISECONDS:
+    case EXPRESSION_DATE_PART_MILLISECOND:
       return "MILLISECONDS";
     case EXPRESSION_DATE_PART_MINUTE:
       return "MINUTE";
@@ -98,7 +98,7 @@ std::string DatePartToString(DatePart type) {
   return ("INVALID");
 }
 
-DatePart StringToDatePart(const std::string& str) {
+DatePartType StringToDatePartType(const std::string& str) {
   if (str == "INVALID") {
     return EXPRESSION_DATE_PART_INVALID;
   } else if (str == "CENTURY") {
@@ -124,7 +124,7 @@ DatePart StringToDatePart(const std::string& str) {
   } else if (str == "MILLENNIUM") {
     return EXPRESSION_DATE_PART_MILLENNIUM;
   } else if (str == "MILLISECONDS") {
-    return EXPRESSION_DATE_PART_MILLISECONDS;
+    return EXPRESSION_DATE_PART_MILLISECOND;
   } else if (str == "MINUTE") {
     return EXPRESSION_DATE_PART_MINUTE;
   } else if (str == "MONTH") {

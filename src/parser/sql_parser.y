@@ -775,7 +775,7 @@ function_expr:
 // date functions
 	|	EXTRACT '(' IDENTIFIER FROM expr ')' { $$ = new peloton::expression::FunctionExpression("extract",
 					std::vector<peloton::expression::AbstractExpression*>{new peloton::expression::ConstantValueExpression(
-					peloton::type::ValueFactory::GetIntegerValue(peloton::StringToDatePart(CharsToStringDestructive($3)))), $5}); }
+					peloton::type::ValueFactory::GetIntegerValue(peloton::StringToDatePartType(CharsToStringDestructive($3)))), $5}); }
 	;
 
 aggregate_expr:
@@ -806,7 +806,7 @@ string_literal:
 
 
 num_literal:
-		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetDoubleValue($1)); }
+		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetDecimalValue($1)); }
 	|	int_literal
 	;
 

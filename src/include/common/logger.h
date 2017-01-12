@@ -171,8 +171,11 @@ inline void outputLogHeader_(const char *file, int line, const char *func,
     default:
       type = "UNKWN";
   }
-  ::fprintf(LOG_OUTPUT_STREAM, "[%s] [%s:%d:%s()] %s - ", type, file, line,
-            func, time_str);
+  // PAVLO: DO NOT CHANGE THIS
+  ::fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ",
+            time_str,
+            file, line, func,
+            type);
 }
 
 }  // End peloton namespace

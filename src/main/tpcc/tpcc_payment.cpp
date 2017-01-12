@@ -368,7 +368,7 @@ bool RunPayment(const size_t &thread_id){
     warehouse_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
   // Update the 9th column
-  type::Value  warehouse_new_balance_value = type::ValueFactory::GetDoubleValue(warehouse_new_balance).Copy();
+  type::Value  warehouse_new_balance_value = type::ValueFactory::GetDecimalValue(warehouse_new_balance).Copy();
 
   warehouse_target_list.emplace_back(
     8, expression::ExpressionUtil::ConstantValueFactory(warehouse_new_balance_value)
@@ -427,7 +427,7 @@ bool RunPayment(const size_t &thread_id){
     }
   }
   // Update the 10th column
-  type::Value  district_new_balance_value = type::ValueFactory::GetDoubleValue(district_new_balance).Copy();
+  type::Value  district_new_balance_value = type::ValueFactory::GetDecimalValue(district_new_balance).Copy();
   
   district_target_list.emplace_back(
     9, expression::ExpressionUtil::ConstantValueFactory(district_new_balance_value)
@@ -511,8 +511,8 @@ bool RunPayment(const size_t &thread_id){
       customer_bc_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
     }
 
-    type::Value customer_new_balance_value = type::ValueFactory::GetDoubleValue(customer_balance).Copy();
-    type::Value customer_new_ytd_value = type::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
+    type::Value customer_new_balance_value = type::ValueFactory::GetDecimalValue(customer_balance).Copy();
+    type::Value customer_new_ytd_value = type::ValueFactory::GetDecimalValue(customer_ytd_payment).Copy();
     type::Value customer_new_paycnt_value = type::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
     type::Value customer_new_data_value = type::ValueFactory::GetVarcharValue(data_constant.c_str()).Copy();
 
@@ -582,8 +582,8 @@ bool RunPayment(const size_t &thread_id){
       }
       customer_gc_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
     }
-    type::Value  customer_new_balance_value = type::ValueFactory::GetDoubleValue(customer_balance).Copy();
-    type::Value  customer_new_ytd_value = type::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
+    type::Value  customer_new_balance_value = type::ValueFactory::GetDecimalValue(customer_balance).Copy();
+    type::Value  customer_new_ytd_value = type::ValueFactory::GetDecimalValue(customer_ytd_payment).Copy();
     type::Value  customer_new_paycnt_value = type::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
 
     customer_gc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
@@ -630,7 +630,7 @@ bool RunPayment(const size_t &thread_id){
   // H_DATE
   history_tuple->SetValue(5, type::ValueFactory::GetTimestampValue(h_date), nullptr);
   // H_AMOUNT
-  history_tuple->SetValue(6, type::ValueFactory::GetDoubleValue(h_amount), nullptr);
+  history_tuple->SetValue(6, type::ValueFactory::GetDecimalValue(h_amount), nullptr);
   // H_DATA
   // Note: workaround
   history_tuple->SetValue(7, type::ValueFactory::GetVarcharValue(data_constant), context.get()->GetPool());

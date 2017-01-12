@@ -125,7 +125,7 @@ class AvgAgg : public Agg {
       return type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
     }
     type::Value final_result = aggregate.Divide(
-        type::ValueFactory::GetDoubleValue(static_cast<double>(count)));
+        type::ValueFactory::GetDecimalValue(static_cast<double>(count)));
     return final_result;
   }
 

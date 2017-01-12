@@ -51,7 +51,7 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
     }
     case Type::DECIMAL: {
       std::vector<double> vec = *(std::vector<double> *)(val.value_.array);
-      return ValueFactory::GetDoubleValue((double)vec.at(idx));
+      return ValueFactory::GetDecimalValue((double)vec.at(idx));
     }
     case Type::TIMESTAMP: {
       std::vector<uint64_t> vec =
@@ -129,7 +129,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
           *(std::vector<double> *)(list.value_.array);
       std::vector<double>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetDoubleValue(*it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetDecimalValue(*it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
