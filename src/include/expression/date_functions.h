@@ -47,48 +47,48 @@ class DateFunctions {
     // You should replace all of this with your own implementation
     switch (date_part) {
       case EXPRESSION_DATE_PART_CENTURY: {
-        result = type::ValueFactory::GetDoubleValue(21);
+        result = type::ValueFactory::GetDecimalValue(21);
         break;
       }
       case EXPRESSION_DATE_PART_DECADE: {
-        result = type::ValueFactory::GetDoubleValue(201);
+        result = type::ValueFactory::GetDecimalValue(201);
         break;
       }
       case EXPRESSION_DATE_PART_DOW: {
-        result = type::ValueFactory::GetDoubleValue(0);
+        result = type::ValueFactory::GetDecimalValue(0);
         break;
       }
       case EXPRESSION_DATE_PART_DOY: {
-        result = type::ValueFactory::GetDoubleValue(1);
+        result = type::ValueFactory::GetDecimalValue(1);
         break;
       }
       case EXPRESSION_DATE_PART_YEAR: {
-        result = type::ValueFactory::GetDoubleValue(2017);
+        result = type::ValueFactory::GetDecimalValue(2017);
         break;
       }
       case EXPRESSION_DATE_PART_MONTH: {
-        result = type::ValueFactory::GetDoubleValue(1);
+        result = type::ValueFactory::GetDecimalValue(1);
         break;
       }
       case EXPRESSION_DATE_PART_DAY: {
-        result = type::ValueFactory::GetDoubleValue(2);
+        result = type::ValueFactory::GetDecimalValue(2);
         break;
       }
       case EXPRESSION_DATE_PART_HOUR: {
-        result = type::ValueFactory::GetDoubleValue(12);
+        result = type::ValueFactory::GetDecimalValue(12);
         break;
       }
       case EXPRESSION_DATE_PART_MINUTE: {
-        result = type::ValueFactory::GetDoubleValue(13);
+        result = type::ValueFactory::GetDecimalValue(13);
         break;
       }
       case EXPRESSION_DATE_PART_SECOND: {
-        result = type::ValueFactory::GetDoubleValue(14);
+        result = type::ValueFactory::GetDecimalValue(14);
         break;
       }
       case EXPRESSION_DATE_PART_MILLISECOND: {
         // Note that the milliseconds could be a double
-        result = type::ValueFactory::GetDoubleValue(14999.999);
+        result = type::ValueFactory::GetDecimalValue(14999.999);
         break;
       }
       default: {

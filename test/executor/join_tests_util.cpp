@@ -88,7 +88,7 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
       new expression::TupleValueExpression(type::Type::DECIMAL, 0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
-          type::ValueFactory::GetDoubleValue(50.0));
+          type::ValueFactory::GetDecimalValue(50.0));
   expression::ComparisonExpression *comp_b =
       new expression::ComparisonExpression(
           EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);

@@ -218,7 +218,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
-    tuple.SetValue(2, type::ValueFactory::GetDoubleValue(PopulatedValue(
+    tuple.SetValue(2, type::ValueFactory::GetDecimalValue(PopulatedValue(
                           random ? std::rand() : populate_value, 2)),
                    testing_pool);
 
@@ -269,7 +269,7 @@ void ExecutorTestsUtil::PopulateTiles(
         1, type::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
         testing_pool);
     tuple.SetValue(
-        2, type::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
+        2, type::ValueFactory::GetDecimalValue(PopulatedValue(col_itr, 2)),
         testing_pool);
     auto string_value = type::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(col_itr, 3)));
@@ -426,7 +426,7 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
       new storage::Tuple(table->GetSchema(), true));
   auto val1 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
   auto val2 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
-  auto val3 = type::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
+  auto val3 = type::ValueFactory::GetDecimalValue(PopulatedValue(tuple_id, 2));
   auto val4 = type::ValueFactory::GetVarcharValue("12345");
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);

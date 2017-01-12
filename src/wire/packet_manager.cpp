@@ -669,7 +669,7 @@ size_t PacketManager::ReadParamValue(
             bind_parameters[param_idx] =
                 std::make_pair(type::Type::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
-                type::ValueFactory::GetDoubleValue(float_val).Copy();
+                type::ValueFactory::GetDecimalValue(float_val).Copy();
           } break;
           case POSTGRES_VALUE_TYPE_VARBINARY: {
             bind_parameters[param_idx] = std::make_pair(

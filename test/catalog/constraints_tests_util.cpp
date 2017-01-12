@@ -132,7 +132,7 @@ void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     // In case of random, make sure this column has duplicated values
     auto col2 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    auto col3 = type::ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
+    auto col3 = type::ValueFactory::GetDecimalValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
     auto col4 = type::ValueFactory::GetVarcharValue(

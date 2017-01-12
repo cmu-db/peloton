@@ -89,7 +89,7 @@ void UpdateTuple(storage::DataTable *table,
   // Update
   //std::vector<oid_t> update_column_ids = {2};
   //std::vector<type::Value *> values;
-  auto update_val = type::ValueFactory::GetDoubleValue(23.5);
+  auto update_val = type::ValueFactory::GetDecimalValue(23.5);
 
   TargetList target_list;
   DirectMapList direct_map_list;
@@ -399,7 +399,7 @@ TEST_F(MutateTests, UpdateTest) {
       new expression::TupleValueExpression(type::Type::DECIMAL, 0, 2);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
-          type::ValueFactory::GetDoubleValue(23.5));
+          type::ValueFactory::GetDecimalValue(23.5));
 
   auto predicate = new expression::ComparisonExpression(
       EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);

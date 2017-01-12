@@ -238,7 +238,7 @@ TEST_F(ArrayValueTests, InListTest) {
   type::Value array_decimal = type::Value(type::Type::ARRAY, vec_decimal, type::Type::DECIMAL);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
-        array_decimal.InList(type::ValueFactory::GetDoubleValue(vec_decimal[i]));
+        array_decimal.InList(type::ValueFactory::GetDecimalValue(vec_decimal[i]));
     EXPECT_TRUE((in_list).IsTrue());
   }
   for (size_t i = 0; i < n; i++) {
@@ -246,7 +246,7 @@ TEST_F(ArrayValueTests, InListTest) {
     std::vector<double>::iterator it =
         find(vec_decimal.begin(), vec_decimal.end(), val);
     if (it == vec_decimal.end()) {
-      type::Value in_list = array_decimal.InList(type::ValueFactory::GetDoubleValue(val));
+      type::Value in_list = array_decimal.InList(type::ValueFactory::GetDecimalValue(val));
       EXPECT_TRUE((in_list).IsFalse());
     }
   }

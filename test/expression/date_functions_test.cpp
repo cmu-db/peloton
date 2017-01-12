@@ -75,7 +75,7 @@ TEST_F(DateFunctionsTests, ExtractTests) {
 
     // Perform evaluation and check the result matches
     // NOTE: We pass null schema because there are no tuple value expressions
-    type::Value expected = type::ValueFactory::GetDoubleValue(x.second);
+    type::Value expected = type::ValueFactory::GetDecimalValue(x.second);
     type::Value result = extract_expr->Evaluate(nullptr, nullptr, nullptr);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));

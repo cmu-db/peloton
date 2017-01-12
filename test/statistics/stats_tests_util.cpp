@@ -63,7 +63,7 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   tuple.SetValue(1, type::ValueFactory::GetIntegerValue(second_col_val),
                  testing_pool);
 
-  tuple.SetValue(2, type::ValueFactory::GetDoubleValue(third_col_val),
+  tuple.SetValue(2, type::ValueFactory::GetDecimalValue(third_col_val),
                  testing_pool);
 
   type::Value string_value =

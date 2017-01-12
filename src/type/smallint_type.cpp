@@ -47,7 +47,7 @@ Value SmallintType::Add(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return AddValue<int16_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(
+    return ValueFactory::GetDecimalValue(
         left.value_.smallint + right.GetAs<double>());
   default:
     break;
@@ -73,7 +73,7 @@ Value SmallintType::Subtract(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return SubtractValue<int16_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(
+    return ValueFactory::GetDecimalValue(
         left.value_.smallint - right.GetAs<double>());
   default:
     break;
@@ -99,7 +99,7 @@ Value SmallintType::Multiply(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return MultiplyValue<int16_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(
+    return ValueFactory::GetDecimalValue(
         left.value_.smallint * right.GetAs<double>());
   default:
     break;
@@ -129,7 +129,7 @@ Value SmallintType::Divide(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return DivideValue<int16_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(
+    return ValueFactory::GetDecimalValue(
         left.value_.smallint / right.GetAs<double>());
   default:
     break;
@@ -159,7 +159,7 @@ Value SmallintType::Modulo(const Value& left, const Value &right) const {
   case Type::BIGINT:
     return ModuloValue<int16_t, int64_t>(left, right);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue(
+    return ValueFactory::GetDecimalValue(
         ValMod(left.value_.smallint, right.GetAs<double>()));
   default:
     break;
@@ -171,13 +171,13 @@ Value SmallintType::Modulo(const Value& left, const Value &right) const {
 Value SmallintType::Sqrt(const Value& val) const {
   PL_ASSERT(val.CheckInteger());
   if (val.IsNull())
-    return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
   if (val.value_.smallint < 0) {
     throw Exception(EXCEPTION_TYPE_DECIMAL,
         "Cannot take square root of a negative number.");
   }
-  return ValueFactory::GetDoubleValue(sqrt(val.value_.smallint));
+  return ValueFactory::GetDecimalValue(sqrt(val.value_.smallint));
 
   throw Exception("type error");
 }
@@ -195,7 +195,7 @@ Value SmallintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value 
   case Type::BIGINT:
     return ValueFactory::GetBigIntValue((int64_t) PELOTON_INT64_NULL);
   case Type::DECIMAL:
-    return ValueFactory::GetDoubleValue((double) PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue((double) PELOTON_DECIMAL_NULL);
   default:
     break;
   }
@@ -497,9 +497,9 @@ Value SmallintType::CastAs(const Value& val,
   }
   case Type::DECIMAL: {
     if (val.IsNull())
-      return ValueFactory::GetDoubleValue(PELOTON_DECIMAL_NULL);
+      return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
-    return ValueFactory::GetDoubleValue((double) val.GetAs<int16_t>());
+    return ValueFactory::GetDecimalValue((double) val.GetAs<int16_t>());
   }
   case Type::VARCHAR:
     if (val.IsNull())

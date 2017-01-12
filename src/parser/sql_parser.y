@@ -806,7 +806,7 @@ string_literal:
 
 
 num_literal:
-		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetDoubleValue($1)); }
+		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::type::ValueFactory::GetDecimalValue($1)); }
 	|	int_literal
 	;
 

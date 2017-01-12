@@ -604,7 +604,7 @@ bool RunNewOrder(const size_t &thread_id){
     order_line_tuple->SetValue(7, type::ValueFactory::GetIntegerValue(ol_qty), nullptr);
     // OL_AMOUNT
     // TODO: workaround!!! I don't know how to get float from Value.
-    order_line_tuple->SetValue(8, type::ValueFactory::GetDoubleValue(0), nullptr);
+    order_line_tuple->SetValue(8, type::ValueFactory::GetDecimalValue(0), nullptr);
     // OL_DIST_INFO
     order_line_tuple->SetValue(9, s_data, nullptr);
 

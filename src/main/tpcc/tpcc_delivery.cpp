@@ -271,7 +271,7 @@ bool RunDelivery(const size_t &thread_id){
       sum_res += type::ValuePeeker::PeekDouble(v[0]);
     }
 
-    auto ol_total = type::ValueFactory::GetDoubleValue(sum_res);
+    auto ol_total = type::ValueFactory::GetDecimalValue(sum_res);
 
     LOG_TRACE("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
 

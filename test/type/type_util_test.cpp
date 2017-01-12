@@ -87,7 +87,7 @@ std::shared_ptr<storage::Tuple> TypeUtilTestsHelper(catalog::Schema* schema,
       }
       case type::Type::DECIMAL: {
         tuple->SetValue(
-            i, type::ValueFactory::GetDoubleValue(static_cast<double>(val)),
+            i, type::ValueFactory::GetDecimalValue(static_cast<double>(val)),
             pool);
         break;
       }

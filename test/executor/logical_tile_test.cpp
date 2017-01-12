@@ -59,7 +59,7 @@ TEST_F(LogicalTileTests, TempTableTest) {
         ExecutorTestsUtil::PopulatedValue(i, 0));
     auto val2 = type::ValueFactory::GetIntegerValue(
         ExecutorTestsUtil::PopulatedValue(i, 1));
-    auto val3 = type::ValueFactory::GetDoubleValue(
+    auto val3 = type::ValueFactory::GetDecimalValue(
         ExecutorTestsUtil::PopulatedValue(i, 2));
     tuple->SetValue(0, val1, pool);
     tuple->SetValue(1, val2, pool);

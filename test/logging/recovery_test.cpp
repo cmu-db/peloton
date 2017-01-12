@@ -84,7 +84,7 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
         testing_pool);
 
     tuple->SetValue(
-        2, type::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
+        2, type::ValueFactory::GetDecimalValue(ExecutorTestsUtil::PopulatedValue(
                random ? std::rand() : populate_value, 2)),
         testing_pool);
 
