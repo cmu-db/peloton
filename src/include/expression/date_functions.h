@@ -21,7 +21,7 @@
 namespace peloton {
 namespace expression {
 
-class DateFunctions{
+class DateFunctions {
 public:
   // Extract
   // Arguments:
