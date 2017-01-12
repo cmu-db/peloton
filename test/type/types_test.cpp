@@ -24,14 +24,14 @@ namespace test {
 class TypesTests : public PelotonTest {};
 
 TEST_F(TypesTests, DatePartTest) {
-  std::vector<DatePart> list = {
+  std::vector<DatePartType> list = {
       EXPRESSION_DATE_PART_INVALID,       EXPRESSION_DATE_PART_CENTURY,
       EXPRESSION_DATE_PART_DAY,           EXPRESSION_DATE_PART_DECADE,
       EXPRESSION_DATE_PART_DOW,           EXPRESSION_DATE_PART_DOY,
       EXPRESSION_DATE_PART_EPOCH,         EXPRESSION_DATE_PART_HOUR,
       EXPRESSION_DATE_PART_ISODOW,        EXPRESSION_DATE_PART_ISOYEAR,
       EXPRESSION_DATE_PART_MICROSECONDS,  EXPRESSION_DATE_PART_MILLENNIUM,
-      EXPRESSION_DATE_PART_MILLISECONDS,  EXPRESSION_DATE_PART_MINUTE,
+      EXPRESSION_DATE_PART_MILLISECOND,  EXPRESSION_DATE_PART_MINUTE,
       EXPRESSION_DATE_PART_MONTH,         EXPRESSION_DATE_PART_QUARTER,
       EXPRESSION_DATE_PART_SECOND,        EXPRESSION_DATE_PART_TIMEZONE,
       EXPRESSION_DATE_PART_TIMEZONE_HOUR, EXPRESSION_DATE_PART_TIMEZONE_MINUTE,
@@ -39,17 +39,17 @@ TEST_F(TypesTests, DatePartTest) {
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
-    std::string str = peloton::DatePartToString(val);
+    std::string str = peloton::DatePartTypeToString(val);
     EXPECT_TRUE(str.size() > 0);
 
-    auto newVal = peloton::StringToDatePart(str);
+    auto newVal = peloton::StringToDatePartType(str);
     EXPECT_EQ(val, newVal);
   }
 
   // Then make sure that we can't cast garbage
   std::string invalid("MattPerronWroteTheseMethods");
-  EXPECT_THROW(peloton::StringToDatePart(invalid), peloton::Exception);
-  EXPECT_THROW(peloton::DatePartToString(static_cast<DatePart>(-99999)),
+  EXPECT_THROW(peloton::StringToDatePartType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::DatePartTypeToString(static_cast<DatePartType>(-99999)),
                peloton::Exception);
 }
 

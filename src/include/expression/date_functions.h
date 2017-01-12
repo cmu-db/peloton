@@ -22,25 +22,66 @@ namespace peloton {
 namespace expression {
 
 class DateFunctions {
-public:
+ public:
   // Extract
   // Arguments:
   // the arguements are contained in the args vector
-  // the first argument is the part of the date to extract (see type/types.h DatePart)
+  // the first argument is the part of the date to extract (see type/types.h
+  // DatePart)
   // the second argument is the timestamp to extract the part from
   //
   // Return value: the Value returned should be of type Double and
   // should be constructed using type::ValueFactory
-  static type::Value Extract(const std::vector<type::Value>& args){
-    UNUSED_ATTRIBUTE DatePart date_part = args[0].GetAs<DatePart>();
+  static type::Value Extract(const std::vector<type::Value>& args) {
+    DatePartType date_part = args[0].GetAs<DatePartType>();
     UNUSED_ATTRIBUTE uint64_t timestamp = args[1].GetAs<uint64_t>();
 
-    // TODO: define what parts should be implemented for the assignment
+    LOG_INFO(
+        "Extracting %s from '%s'", DatePartTypeToString(date_part).c_str(),
+        type::ValueFactory::GetTimestampValue(timestamp).ToString().c_str());
 
-    return type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+    type::Value result;
+
+    // HACK HACK HACK
+    // These values are hardcoded for project #1
+    // You should replace all of this with your own implementation
+    switch (date_part) {
+      case EXPRESSION_DATE_PART_YEAR: {
+        result = type::ValueFactory::GetDoubleValue(2017);
+        break;
+      }
+      case EXPRESSION_DATE_PART_MONTH: {
+        result = type::ValueFactory::GetDoubleValue(1);
+        break;
+      }
+      case EXPRESSION_DATE_PART_DAY: {
+        result = type::ValueFactory::GetDoubleValue(2);
+        break;
+      }
+      case EXPRESSION_DATE_PART_HOUR: {
+        result = type::ValueFactory::GetDoubleValue(12);
+        break;
+      }
+      case EXPRESSION_DATE_PART_MINUTE: {
+        result = type::ValueFactory::GetDoubleValue(13);
+        break;
+      }
+      case EXPRESSION_DATE_PART_SECOND: {
+        result = type::ValueFactory::GetDoubleValue(14);
+        break;
+      }
+      case EXPRESSION_DATE_PART_MILLISECOND: {
+        // Note that the milliseconds could be a double
+        result = type::ValueFactory::GetDoubleValue(14999.999);
+        break;
+      }
+      default: {
+        result = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+      }
+    };
+
+    return (result);
   }
-
-
 };
 }  // namespace expression
 }  // namespace peloton
