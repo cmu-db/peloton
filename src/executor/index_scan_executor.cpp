@@ -169,19 +169,24 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     if (limit_) {
       // invoke index scan limit
       if (!descend_) {
+        LOG_TRACE("ASCENDING SCAN LIMIT in Primary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
                           SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
       } else {
+        LOG_TRACE("DESCENDING SCAN LIMIT in Primary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
                           SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
+
+        LOG_TRACE("1-Result size is %lu", result_.size());
       }
     }
     // Normal SQL (without limit)
     else {
+      LOG_TRACE("Index Scan in Primary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
                    SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
@@ -331,8 +336,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuple_locations.size());
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -371,23 +376,30 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    //    // Limit clause accelerate
+    // Limit clause accelerate
     if (limit_) {
       // invoke index scan limit
       if (!descend_) {
+        LOG_TRACE("ASCENDING SCAN LIMIT in Secondary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
                           SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
       } else {
+        LOG_TRACE("DESCENDING SCAN LIMIT in Secondary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
                           SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
+
+        if (tuple_location_ptrs.size() == 0) {
+          LOG_TRACE("2-Result size is %lu", tuple_location_ptrs.size());
+        }
       }
     }
     // Normal SQL (without limit)
     else {
+      LOG_TRACE("Index Scan in Primary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
                    SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
@@ -461,6 +473,9 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // Further check if the version has the secondary key
         expression::ContainerTuple<storage::TileGroup> candidate_tuple(
             tile_group.get(), tuple_location.offset);
+
+        LOG_TRACE("candidate_tuple size: %s",
+                  candidate_tuple.GetInfo().c_str());
         // Construct the key tuple
         auto &indexed_columns = index_->GetKeySchema()->GetIndexedColumns();
         storage::MaskedTuple key_tuple(&candidate_tuple, indexed_columns);
@@ -476,9 +491,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         bool eval = true;
         // if having predicate, then perform evaluation.
         if (predicate_ != nullptr) {
-          eval =
-              predicate_->Evaluate(&candidate_tuple, nullptr, executor_context_)
-                  .IsTrue();
+          eval = predicate_->Evaluate(&candidate_tuple, nullptr,
+                                      executor_context_).IsTrue();
         }
         // if passed evaluation, then perform write.
         if (eval == true) {
@@ -487,10 +501,15 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
                                                      RESULT_FAILURE);
+            LOG_TRACE("passed evaluation, but txn read fails");
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
           visible_tuple_locations.push_back(tuple_location);
+          LOG_TRACE("passed evaluation, visible_tuple_locations size: %lu",
+                    visible_tuple_locations.size());
+        } else {
+          LOG_TRACE("predicate evaluate fails");
         }
 
         break;
@@ -559,8 +578,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block].push_back(
-        visible_tuple_location.offset);
+    visible_tuples[visible_tuple_location.block]
+        .push_back(visible_tuple_location.offset);
   }
 
   // Construct a logical tile for each block
@@ -800,8 +819,8 @@ void IndexScanExecutor::UpdatePredicate(
   }
 
   // Update the new value
-  index_predicate_.GetConjunctionListToSetup()[0].SetTupleColumnValue(
-      index_.get(), key_column_ids, values);
+  index_predicate_.GetConjunctionListToSetup()[0]
+      .SetTupleColumnValue(index_.get(), key_column_ids, values);
 }
 
 void IndexScanExecutor::ResetState() {

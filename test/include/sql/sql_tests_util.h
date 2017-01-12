@@ -76,6 +76,9 @@ class SQLTestsUtil {
     return std::move(value);
   }
 
+  // Create a random number
+  static int GetRandomInteger(const int lower_bound, const int upper_bound);
+
   static tcop::TrafficCop traffic_cop_;
 };
 }  // namespace test

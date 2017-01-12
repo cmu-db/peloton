@@ -97,9 +97,26 @@ class SimpleOptimizer : public AbstractOptimizer {
   static std::unique_ptr<planner::AbstractPlan> CreateJoinPlan(
       parser::SelectStatement *select_stmt);
 
+  // This is used for order_by + limit optimization. Let the index scan executor
+  // know order_by flags when create an order_by
+  // plan. This is used when we create a order_by plan and the underlying
+  // plan is index scan. Then we pass these flags to index and index can
+  // output limit number tuples. But now, it only works when limit is 1
   static void SetIndexScanFlag(planner::AbstractPlan *select_plan,
                                uint64_t limit, uint64_t offset,
                                bool descent = false);
+
+  // This is used for order_by optimization. When creating a order_by plan,
+  // it checks whether the underlying plan has the same output order with
+  // order_by plan. Same means: 1) for underlying index scan, its all expression
+  // types are equal, otherwise, it can't guarantee the output has the same
+  // ordering with order_by expression. 2) the underlying output has the same
+  // ascending or descending with order_by plan. 3) order_by column is within
+  // the key column ids (lookup ids) with the underlying plan or order_by column
+  // plus key column ids are the prefix of the index
+  static bool UnderlyingSameOrder(planner::AbstractPlan *select_plan,
+                                  oid_t orderby_column_id,
+                                  bool order_by_descending);
 };
 }  // namespace optimizer
 }  // namespace peloton

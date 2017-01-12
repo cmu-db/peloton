@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "networking/peloton_service.h"
 #include "networking/peloton_endpoint.h"
 #include "networking/rpc_server.h"
@@ -250,7 +249,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
   // If request is not null, this is a rpc  call, server should handle the
   // reqeust
   if (request != NULL) {
-    LOG_TRACE("Received from client, sender site: %d, last_txn_id: %ld",
+    LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
               request->sender_site(), request->last_transaction_id());
 
     response->set_sender_site(9876);
@@ -331,14 +330,14 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     }
 
     // construct parameter list
-    //int param_num = request->param_num();
+    // int param_num = request->param_num();
     std::string param_list = request->param_list();
-    ReferenceSerializeInput param_input(param_list.c_str(),
-                                        param_list.size());
+    ReferenceSerializeInput param_input(param_list.c_str(), param_list.size());
     std::vector<type::Value> params;
-    //for (int it = 0; it < param_num; it++) {
+    // for (int it = 0; it < param_num; it++) {
     //  // TODO: Make sure why varlen_pool is used as parameter
-    //  std::shared_ptr<type::VarlenPool> pool(new type::VarlenPool(BACKEND_TYPE_MM));
+    //  std::shared_ptr<type::VarlenPool> pool(new
+    // type::VarlenPool(BACKEND_TYPE_MM));
     //  Value value_item;
     //  value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
     //  params.push_back(value_item);
@@ -424,8 +423,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     for (int idx = 0; idx < result_size; idx++) {
       // Get the tile bytes
       std::string tile_bytes = response->result(idx);
-      ReferenceSerializeInput tile_input(tile_bytes.c_str(),
-                                         tile_bytes.size());
+      ReferenceSerializeInput tile_input(tile_bytes.c_str(), tile_bytes.size());
 
       // Create a tile or tuple that depends on our protocol.
       // Tuple is prefered, since it voids copying from tile again

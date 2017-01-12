@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -43,8 +42,8 @@ namespace executor {
 
 HybridScanExecutor::HybridScanExecutor(const planner::AbstractPlan *node,
                                        ExecutorContext *executor_context)
-: AbstractScanExecutor(node, executor_context),
-  indexed_tile_offset_(START_OID) {}
+    : AbstractScanExecutor(node, executor_context),
+      indexed_tile_offset_(START_OID) {}
 
 bool HybridScanExecutor::DInit() {
   auto status = AbstractScanExecutor::DInit();
@@ -104,7 +103,7 @@ bool HybridScanExecutor::DInit() {
     }
 
     if (table_ != nullptr) {
-      LOG_TRACE("Column count : %u", table_->GetSchema()->GetColumnCount());
+      LOG_TRACE("Column count : %lu", table_->GetSchema()->GetColumnCount());
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
@@ -215,30 +214,32 @@ bool HybridScanExecutor::SeqScanUtil() {
       }
 
       // Check transaction visibility
-      if (transaction_manager.IsVisible(current_txn, tile_group_header, tuple_id) == VISIBILITY_OK) {
+      if (transaction_manager.IsVisible(current_txn, tile_group_header,
+                                        tuple_id) == VISIBILITY_OK) {
         // If the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
-        }
-        else {
+        } else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                                tuple_id);
-          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          auto eval =
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             position_list.push_back(tuple_id);
           }
         }
-      }
-      else {
+      } else {
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                              tuple_id);
         auto eval =
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);
+          auto res = transaction_manager.PerformRead(current_txn, location,
+                                                     acquire_owner);
           if (!res) {
-            transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+            transaction_manager.SetTransactionResult(current_txn,
+                                                     RESULT_FAILURE);
             return res;
           }
         }
@@ -272,8 +273,7 @@ bool HybridScanExecutor::IndexScanUtil() {
     if (result_[result_itr_]->GetTupleCount() == 0) {
       result_itr_++;
       continue;
-    }
-    else {
+    } else {
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
@@ -301,8 +301,7 @@ bool HybridScanExecutor::DExecute() {
         if (status == false) {
           return false;
         }
-      }
-      else {
+      } else {
         return false;
       }
     }
@@ -333,7 +332,6 @@ bool HybridScanExecutor::DExecute() {
   else {
     throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
   }
-
 }
 
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
@@ -354,11 +352,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     LOG_TRACE("Scan");
-    index_->Scan(values_,
-                 key_column_ids_,
-                 expr_type_,
-                 SCAN_DIRECTION_TYPE_FORWARD,
-                 tuple_location_ptrs,
+    index_->Scan(values_, key_column_ids_, expr_type_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
                  &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 
@@ -394,12 +389,14 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     while (true) {
       ++chain_length;
 
-      auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_location.offset);
+      auto visibility = transaction_manager.IsVisible(
+          current_txn, tile_group_header, tuple_location.offset);
 
       if (visibility == VISIBILITY_OK) {
 
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-        auto res = transaction_manager.PerformRead(current_txn, tuple_location, acquire_owner);
+        auto res = transaction_manager.PerformRead(current_txn, tuple_location,
+                                                   acquire_owner);
         if (!res) {
           transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
           return res;
@@ -418,12 +415,12 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
         // check whether older version is garbage.
         if (old_end_cid < max_committed_cid) {
           assert(tile_group_header->GetTransactionId(old_item.offset) ==
-              INITIAL_TXN_ID ||
-              tile_group_header->GetTransactionId(old_item.offset) ==
-                  INVALID_TXN_ID);
+                     INITIAL_TXN_ID ||
+                 tile_group_header->GetTransactionId(old_item.offset) ==
+                     INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(
-              old_item.offset, INVALID_TXN_ID) == true) {
+                  old_item.offset, INVALID_TXN_ID) == true) {
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
           }
