@@ -144,6 +144,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto predicate = select_stmt->where_clause;
       bool needs_projection = false;
       expression::ExpressionUtil::TransformExpression(&schema, predicate);
+      bool is_star =
+              (*select_stmt->getSelectList())[0]->GetExpressionType() == EXPRESSION_TYPE_STAR;
 
       for (auto col : *select_stmt->select_list) {
         expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
@@ -153,10 +155,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // Adds order by column to column ids if it was not added through
       // select_list
       // No problem given that the underlying structure is a map.
-      if (select_stmt->order != nullptr) {
+      // If query is 'select *', the column will be already added.
+      if(select_stmt->order != nullptr && !is_star) {
         expression::ExpressionUtil::TransformExpression(
             column_ids, select_stmt->order->expr, schema, needs_projection);
       }
+
 
       // Check if there are any aggregate functions
       bool agg_flag = false;
@@ -221,13 +225,22 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
           LOG_TRACE("OrderBy + Limit query");
+          auto schema_columns = target_table->GetSchema()->GetColumns();
           std::vector<oid_t> keys;
           // Add all selected columns to the output
           // We already generated the "real" physical output schema in the scan
-          // plan, so now we just need to directly copy all the columns
-          for (size_t column_ctr = 0;
-               column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            keys.push_back(column_ctr);
+          // plan, so now we just need to directly copy all the columns.
+          // In the 'select *' case, they need to be copied manually.
+          if(is_star){
+              for (size_t column_ctr = 0;
+                   column_ctr < schema_columns.size(); column_ctr++) {
+                keys.push_back(column_ctr);
+              }
+          } else {
+            for (size_t column_ctr = 0;
+                   column_ctr < select_stmt->select_list->size(); column_ctr++) {
+              keys.push_back(column_ctr);
+            }
           }
 
           LOG_TRACE("Get and set OrderBy descending");
@@ -243,19 +256,25 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           std::string sort_col_name(
               ((expression::TupleValueExpression*)select_stmt->order->expr)
                   ->GetColumnName());
-          auto schema_columns = target_table->GetSchema()->GetColumns();
+
           for (size_t column_ctr = 0; column_ctr < schema_columns.size();
                column_ctr++) {
             std::string col_name(schema_columns.at(column_ctr).GetName());
             if (col_name == sort_col_name) {
-              // The column_ctr is not reliable anymore given that we are
-              // looking to the whole schema.
-              // Since the columns were added in the column_ids, it is safe to
-              // retrieve only those indexes.
-              auto iter =
-                  find(column_ids.begin(), column_ids.end(), column_ctr);
-              auto column_offset = std::distance(column_ids.begin(), iter);
-              key.push_back(column_offset);
+                if(is_star){
+                    //The whole schema is already added, and column_ids
+                    //doesn't represent faithfully the columns.
+                    key.push_back(column_ctr);
+                } else {
+                    // The column_ctr is not reliable anymore given that we are
+                    // looking to the whole schema.
+                    // Since the columns were added in the column_ids, it is safe to
+                    // retrieve only those indexes.
+                    auto iter =
+                        find(column_ids.begin(), column_ids.end(), column_ctr);
+                    auto column_offset = std::distance(column_ids.begin(), iter);
+                    key.push_back(column_offset);
+                }
             }
           }
           if (key.size() == 0) {
@@ -308,12 +327,21 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         }
         // Only order by statement (without limit)
         else if (select_stmt->order != NULL) {
+          auto schema_columns = target_table->GetSchema()->GetColumns();
           std::vector<oid_t> keys;
-          for (size_t column_ctr = 0;
-               column_ctr < select_stmt->select_list->size(); column_ctr++) {
-            keys.push_back(column_ctr);
+          // The order_by plan is oblivious to the type of query, so,
+          // the columns must be manually added for it.
+          if(is_star){
+              for (size_t column_ctr = 0;
+                   column_ctr < schema_columns.size(); column_ctr++) {
+                keys.push_back(column_ctr);
+              }
+          } else {
+            for (size_t column_ctr = 0;
+                   column_ctr < select_stmt->select_list->size(); column_ctr++) {
+              keys.push_back(column_ctr);
+            }
           }
-
           std::vector<bool> flags;
           if (select_stmt->order->type == 0) {
             flags.push_back(false);
@@ -324,19 +352,22 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           std::string sort_col_name(
               ((expression::TupleValueExpression*)select_stmt->order->expr)
                   ->GetColumnName());
-          auto schema_columns = target_table->GetSchema()->GetColumns();
           for (size_t column_ctr = 0; column_ctr < schema_columns.size();
                column_ctr++) {
             std::string col_name(schema_columns.at(column_ctr).GetName());
-            if (col_name == sort_col_name) {
-              // The column_ctr is not reliable anymore given that we are
-              // looking to the whole schema.
-              // Since the columns were added in the column_ids, it is safe to
-              // retrieve only those indexes.
-              auto iter =
-                  find(column_ids.begin(), column_ids.end(), column_ctr);
-              auto column_offset = std::distance(column_ids.begin(), iter);
-              key.push_back(column_offset);
+            if (col_name == sort_col_name) { 
+                if(is_star){
+                    //The whole schema is already added, and column_ids
+                    //doesn't represent faithfully the columns.
+                    key.push_back(column_ctr);
+                } else {
+                    // The column_ctr is not reliable anymore given that we are
+                    // looking to the whole schema.
+                    auto iter =
+                        find(column_ids.begin(), column_ids.end(), column_ctr);
+                    auto column_offset = std::distance(column_ids.begin(), iter);
+                    key.push_back(column_offset);
+                }
             }
           }
           if (key.size() == 0) {
