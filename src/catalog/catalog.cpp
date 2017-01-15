@@ -86,7 +86,7 @@ ResultType Catalog::CreateDatabase(std::string database_name,
   // Check if a database with the same name exists
   for (auto database : databases_) {
     if (database->GetDBName() == database_name) {
-      LOG_TRACE("Database already exists. Returning RESULT_TYPE_FAILURE.");
+      LOG_TRACE("Database already exists. Returning ResultType::RESULT_TYPE_FAILURE.");
       return ResultType::RESULT_TYPE_FAILURE;
     }
   }

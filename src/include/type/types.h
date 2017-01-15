@@ -641,7 +641,7 @@ enum TaskPriorityType {
 // Result Types
 //===--------------------------------------------------------------------===//
 
-enum ResultType {
+enum class ResultType {
   RESULT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid result type
   RESULT_TYPE_SUCCESS = 1,
   RESULT_TYPE_FAILURE = 2,
@@ -649,6 +649,9 @@ enum ResultType {
   RESULT_TYPE_NOOP = 4,     // no op
   RESULT_TYPE_UNKNOWN = 5
 };
+std::string ResultTypeToString(ResultType type);
+ResultType StringToResultType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ResultType &type);
 
 //===--------------------------------------------------------------------===//
 // Constraint Types

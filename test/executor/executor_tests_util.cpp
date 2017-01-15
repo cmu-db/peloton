@@ -49,7 +49,7 @@ storage::Database *ExecutorTestsUtil::InitializeDatabase(
     const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto result = catalog->CreateDatabase(db_name, nullptr);
-  EXPECT_EQ(RESULT_TYPE_SUCCESS, result);
+  EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, result);
   auto database = catalog->GetDatabaseWithName(db_name);
   return (database);
 }
@@ -57,7 +57,7 @@ storage::Database *ExecutorTestsUtil::InitializeDatabase(
 void ExecutorTestsUtil::DeleteDatabase(const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto result = catalog->DropDatabaseWithName(db_name, nullptr);
-  EXPECT_EQ(RESULT_TYPE_SUCCESS, result);
+  EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, result);
 }
 
 /** @brief Helper function for defining schema */

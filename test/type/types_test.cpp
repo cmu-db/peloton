@@ -357,6 +357,28 @@ TEST_F(TypesTests, ParseNodeTypeTest) {
       peloton::Exception);
 }
 
+TEST_F(TypesTests, ResultTypeTest) {
+  std::vector<ResultType> list = {
+      ResultType::RESULT_TYPE_INVALID, ResultType::RESULT_TYPE_SUCCESS,
+      ResultType::RESULT_TYPE_FAILURE, ResultType::RESULT_TYPE_ABORTED,
+      ResultType::RESULT_TYPE_NOOP,    ResultType::RESULT_TYPE_UNKNOWN};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::ResultTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToResultType(str);
+    EXPECT_EQ(val, newVal);
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("Blah blah blah!!!");
+  EXPECT_THROW(peloton::StringToResultType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::ResultTypeToString(static_cast<ResultType>(-99999)),
+               peloton::Exception);
+}
+
 TEST_F(TypesTests, ConstraintTypeTest) {
   std::vector<ConstraintType> list = {
       CONSTRAINT_TYPE_INVALID,  CONSTRAINT_TYPE_NULL,

@@ -1129,6 +1129,65 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
 }
 
 //===--------------------------------------------------------------------===//
+// ResultType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string ResultTypeToString(ResultType type) {
+  switch (type) {
+    case ResultType::RESULT_TYPE_INVALID: {
+      return ("INVALID");
+    }
+    case ResultType::RESULT_TYPE_SUCCESS: {
+      return ("SUCCESS");
+    }
+    case ResultType::RESULT_TYPE_FAILURE: {
+      return ("FAILURE");
+    }
+    case ResultType::RESULT_TYPE_ABORTED: {
+      return ("ABORTED");
+    }
+    case ResultType::RESULT_TYPE_NOOP: {
+      return ("NOOP");
+    }
+    case ResultType::RESULT_TYPE_UNKNOWN: {
+      return ("UNKNOWN");
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for ResultType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+ResultType StringToResultType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return ResultType::RESULT_TYPE_INVALID;
+  } else if (upper_str == "SUCCESS") {
+    return ResultType::RESULT_TYPE_SUCCESS;
+  } else if (upper_str == "FAILURE") {
+    return ResultType::RESULT_TYPE_FAILURE;
+  } else if (upper_str == "ABORTED") {
+    return ResultType::RESULT_TYPE_ABORTED;
+  } else if (upper_str == "NOOP") {
+    return ResultType::RESULT_TYPE_NOOP;
+  } else if (upper_str == "UNKNOWN") {
+    return ResultType::RESULT_TYPE_UNKNOWN;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No ResultType conversion from string '%s'", upper_str.c_str()));
+  }
+  return ResultType::RESULT_TYPE_INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const ResultType& type) {
+  os << ResultTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // Constraint Type - String Utilities
 //===--------------------------------------------------------------------===//
 

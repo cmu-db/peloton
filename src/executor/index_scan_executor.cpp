@@ -260,7 +260,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           if (!res) {
             LOG_TRACE("read nothing");
             transaction_manager.SetTransactionResult(current_txn,
-                                                     RESULT_TYPE_FAILURE);
+                                                     ResultType::RESULT_TYPE_FAILURE);
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
@@ -309,7 +309,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // if we have traversed through the chain and still can not fulfill
           // one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(current_txn, RESULT_TYPE_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, ResultType::RESULT_TYPE_FAILURE);
           return false;
         }
 
@@ -500,7 +500,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
               current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
-                                                     RESULT_TYPE_FAILURE);
+                                                     ResultType::RESULT_TYPE_FAILURE);
             LOG_TRACE("passed evaluation, but txn read fails");
             return res;
           }
@@ -558,7 +558,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           // if we have traversed through the chain and still can not fulfill
           // one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(current_txn, RESULT_TYPE_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, ResultType::RESULT_TYPE_FAILURE);
           return false;
         }
 

@@ -140,7 +140,8 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
   //      params,
   //                                        result, result_format);
-  //  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  //  LOG_INFO("Statement executed. Result: %s",
+  //  ResultTypeToString(status.m_result).c_str());
 }
 
 TEST_F(UpdateTests, UpdatingOld) {
@@ -150,7 +151,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::SimpleOptimizer optimizer;
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  auto& traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table first
   LOG_INFO("Creating a table...");
@@ -215,7 +216,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
 
@@ -242,7 +244,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
 
@@ -269,8 +272,9 @@ TEST_F(UpdateTests, UpdatingOld) {
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
-                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+                                            params, result, result_format);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
 
@@ -294,7 +298,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
   txn_manager.CommitTransaction(txn);
 
@@ -319,7 +324,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
   txn_manager.CommitTransaction(txn);
 

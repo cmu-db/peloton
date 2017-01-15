@@ -58,7 +58,8 @@ ResultType SQLTestsUtil::ExecuteSQLQuery(
   LOG_INFO("Query: %s", query.c_str());
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
-  LOG_INFO("Statement executed. Result: %d", status);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status).c_str());
   return status;
 }
 
@@ -82,7 +83,8 @@ ResultType SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
     auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params, result,
                                                     result_format);
     rows_changed = status.m_processed;
-    LOG_INFO("Statement executed. Result: %d", status.m_result);
+    LOG_INFO("Statement executed. Result: %s",
+             ResultTypeToString(status.m_result).c_str());
     return status.m_result;
   }
   catch (Exception &e) {
@@ -102,7 +104,7 @@ std::shared_ptr<planner::AbstractPlan> SQLTestsUtil::GeneratePlanWithOptimizer(
 }
 
 ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query,
-                                     std::vector<PlannerResult> &result) {
+                                         std::vector<PlannerResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

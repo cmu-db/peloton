@@ -63,7 +63,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
   txn_manager.CommitTransaction(txn);
 
@@ -87,7 +88,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
   txn_manager.CommitTransaction(txn);
 
@@ -112,7 +114,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_a!");
   txn_manager.CommitTransaction(txn);
 
@@ -132,7 +135,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_b!");
   txn_manager.CommitTransaction(txn);
 
@@ -150,7 +154,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format = std::move(std::vector<int>(4, 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Join completed!");
   txn_manager.CommitTransaction(txn);
 

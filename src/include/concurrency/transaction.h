@@ -146,7 +146,7 @@ class Transaction : public Printable {
   std::shared_ptr<ReadWriteSet> gc_set_;
 
   // result of the transaction
-  ResultType result_ = peloton::RESULT_TYPE_SUCCESS;
+  ResultType result_ = peloton::ResultType::RESULT_TYPE_SUCCESS;
 
   bool is_written_;
   size_t insert_count_;
