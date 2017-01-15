@@ -65,12 +65,12 @@ std::string DatePartTypeToString(DatePartType type) {
       return "ISODOW";
     case EXPRESSION_DATE_PART_ISOYEAR:
       return "ISOYEAR";
-    case EXPRESSION_DATE_PART_MICROSECONDS:
-      return "MICROSECONDS";
+    case EXPRESSION_DATE_PART_MICROSECOND:
+      return "MICROSECOND";
     case EXPRESSION_DATE_PART_MILLENNIUM:
       return "MILLENNIUM";
     case EXPRESSION_DATE_PART_MILLISECOND:
-      return "MILLISECONDS";
+      return "MILLISECONS";
     case EXPRESSION_DATE_PART_MINUTE:
       return "MINUTE";
     case EXPRESSION_DATE_PART_MONTH:
@@ -99,53 +99,54 @@ std::string DatePartTypeToString(DatePartType type) {
 }
 
 DatePartType StringToDatePartType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return EXPRESSION_DATE_PART_INVALID;
-  } else if (str == "CENTURY") {
+  } else if (upper_str == "CENTURY") {
     return EXPRESSION_DATE_PART_CENTURY;
-  } else if (str == "DAY") {
+  } else if (upper_str == "DAY") {
     return EXPRESSION_DATE_PART_DAY;
-  } else if (str == "DECADE") {
+  } else if (upper_str == "DECADE") {
     return EXPRESSION_DATE_PART_DECADE;
-  } else if (str == "DOW") {
+  } else if (upper_str == "DOW") {
     return EXPRESSION_DATE_PART_DOW;
-  } else if (str == "DOY") {
+  } else if (upper_str == "DOY") {
     return EXPRESSION_DATE_PART_DOY;
-  } else if (str == "EPOCH") {
+  } else if (upper_str == "EPOCH") {
     return EXPRESSION_DATE_PART_EPOCH;
-  } else if (str == "HOUR") {
+  } else if (upper_str == "HOUR") {
     return EXPRESSION_DATE_PART_HOUR;
-  } else if (str == "ISODOW") {
+  } else if (upper_str == "ISODOW") {
     return EXPRESSION_DATE_PART_ISODOW;
-  } else if (str == "ISOYEAR") {
+  } else if (upper_str == "ISOYEAR") {
     return EXPRESSION_DATE_PART_ISOYEAR;
-  } else if (str == "MICROSECONDS") {
-    return EXPRESSION_DATE_PART_MICROSECONDS;
-  } else if (str == "MILLENNIUM") {
+  } else if (upper_str == "MICROSECONDS") {
+    return EXPRESSION_DATE_PART_MICROSECOND;
+  } else if (upper_str == "MILLENNIUM") {
     return EXPRESSION_DATE_PART_MILLENNIUM;
-  } else if (str == "MILLISECONDS") {
+  } else if (upper_str == "MILLISECOND") {
     return EXPRESSION_DATE_PART_MILLISECOND;
-  } else if (str == "MINUTE") {
+  } else if (upper_str == "MINUTE") {
     return EXPRESSION_DATE_PART_MINUTE;
-  } else if (str == "MONTH") {
+  } else if (upper_str == "MONTH") {
     return EXPRESSION_DATE_PART_MONTH;
-  } else if (str == "QUARTER") {
+  } else if (upper_str == "QUARTER") {
     return EXPRESSION_DATE_PART_QUARTER;
-  } else if (str == "SECOND") {
+  } else if (upper_str == "SECOND") {
     return EXPRESSION_DATE_PART_SECOND;
-  } else if (str == "TIMEZONE") {
+  } else if (upper_str == "TIMEZONE") {
     return EXPRESSION_DATE_PART_TIMEZONE;
-  } else if (str == "TIMEZONE_HOUR") {
+  } else if (upper_str == "TIMEZONE_HOUR") {
     return EXPRESSION_DATE_PART_TIMEZONE_HOUR;
-  } else if (str == "TIMEZONE_MINUTE") {
+  } else if (upper_str == "TIMEZONE_MINUTE") {
     return EXPRESSION_DATE_PART_TIMEZONE_MINUTE;
-  } else if (str == "WEEK") {
+  } else if (upper_str == "WEEK") {
     return EXPRESSION_DATE_PART_WEEK;
-  } else if (str == "YEAR") {
+  } else if (upper_str == "YEAR") {
     return EXPRESSION_DATE_PART_YEAR;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No DatePart conversion from string '%s'", str.c_str()));
+        "No DatePartType conversion from string '%s'", upper_str.c_str()));
   }
 }
 
@@ -236,37 +237,38 @@ std::string TypeIdToString(type::Type::TypeId type) {
 }
 
 type::Type::TypeId StringToTypeId(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return type::Type::INVALID;
-  } else if (str == "PARAMETER_OFFSET") {
+  } else if (upper_str == "PARAMETER_OFFSET") {
     return type::Type::PARAMETER_OFFSET;
-  } else if (str == "BOOLEAN") {
+  } else if (upper_str == "BOOLEAN") {
     return type::Type::BOOLEAN;
-  } else if (str == "TINYINT") {
+  } else if (upper_str == "TINYINT") {
     return type::Type::TINYINT;
-  } else if (str == "SMALLINT") {
+  } else if (upper_str == "SMALLINT") {
     return type::Type::SMALLINT;
-  } else if (str == "INTEGER") {
+  } else if (upper_str == "INTEGER") {
     return type::Type::INTEGER;
-  } else if (str == "BIGINT") {
+  } else if (upper_str == "BIGINT") {
     return type::Type::BIGINT;
-  } else if (str == "DECIMAL") {
+  } else if (upper_str == "DECIMAL") {
     return type::Type::DECIMAL;
-  } else if (str == "TIMESTAMP") {
+  } else if (upper_str == "TIMESTAMP") {
     return type::Type::TIMESTAMP;
-  } else if (str == "DATE") {
+  } else if (upper_str == "DATE") {
     return type::Type::DATE;
-  } else if (str == "VARCHAR") {
+  } else if (upper_str == "VARCHAR") {
     return type::Type::VARCHAR;
-  } else if (str == "VARBINARY") {
+  } else if (upper_str == "VARBINARY") {
     return type::Type::VARBINARY;
-  } else if (str == "ARRAY") {
+  } else if (upper_str == "ARRAY") {
     return type::Type::ARRAY;
-  } else if (str == "UDT") {
+  } else if (upper_str == "UDT") {
     return type::Type::UDT;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No TypeId conversion from string '%s'", str.c_str()));
+        "No TypeId conversion from string '%s'", upper_str.c_str()));
   }
   return type::Type::INVALID;
 }
@@ -367,35 +369,36 @@ std::string StatementTypeToString(StatementType type) {
 }
 
 StatementType StringToStatementType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return STATEMENT_TYPE_INVALID;
-  } else if (str == "SELECT") {
+  } else if (upper_str == "SELECT") {
     return STATEMENT_TYPE_SELECT;
-  } else if (str == "INSERT") {
+  } else if (upper_str == "INSERT") {
     return STATEMENT_TYPE_INSERT;
-  } else if (str == "UPDATE") {
+  } else if (upper_str == "UPDATE") {
     return STATEMENT_TYPE_UPDATE;
-  } else if (str == "DELETE") {
+  } else if (upper_str == "DELETE") {
     return STATEMENT_TYPE_DELETE;
-  } else if (str == "CREATE") {
+  } else if (upper_str == "CREATE") {
     return STATEMENT_TYPE_CREATE;
-  } else if (str == "DROP") {
+  } else if (upper_str == "DROP") {
     return STATEMENT_TYPE_DROP;
-  } else if (str == "PREPARE") {
+  } else if (upper_str == "PREPARE") {
     return STATEMENT_TYPE_PREPARE;
-  } else if (str == "EXECUTE") {
+  } else if (upper_str == "EXECUTE") {
     return STATEMENT_TYPE_EXECUTE;
-  } else if (str == "RENAME") {
+  } else if (upper_str == "RENAME") {
     return STATEMENT_TYPE_RENAME;
-  } else if (str == "ALTER") {
+  } else if (upper_str == "ALTER") {
     return STATEMENT_TYPE_ALTER;
-  } else if (str == "TRANSACTION") {
+  } else if (upper_str == "TRANSACTION") {
     return STATEMENT_TYPE_TRANSACTION;
-  } else if (str == "COPY") {
+  } else if (upper_str == "COPY") {
     return STATEMENT_TYPE_COPY;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No StatementType conversion from string '%s'", str.c_str()));
+        "No StatementType conversion from string '%s'", upper_str.c_str()));
   }
   return STATEMENT_TYPE_INVALID;
 }
@@ -632,141 +635,142 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string& str) {
 }
 
 ExpressionType StringToExpressionType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return EXPRESSION_TYPE_INVALID;
-  } else if (str == "OPERATOR_PLUS") {
+  } else if (upper_str == "OPERATOR_PLUS") {
     return EXPRESSION_TYPE_OPERATOR_PLUS;
-  } else if (str == "OPERATOR_MINUS") {
+  } else if (upper_str == "OPERATOR_MINUS") {
     return EXPRESSION_TYPE_OPERATOR_MINUS;
-  } else if (str == "OPERATOR_MULTIPLY") {
+  } else if (upper_str == "OPERATOR_MULTIPLY") {
     return EXPRESSION_TYPE_OPERATOR_MULTIPLY;
-  } else if (str == "OPERATOR_DIVIDE") {
+  } else if (upper_str == "OPERATOR_DIVIDE") {
     return EXPRESSION_TYPE_OPERATOR_DIVIDE;
-  } else if (str == "OPERATOR_CONCAT") {
+  } else if (upper_str == "OPERATOR_CONCAT") {
     return EXPRESSION_TYPE_OPERATOR_CONCAT;
-  } else if (str == "OPERATOR_MOD") {
+  } else if (upper_str == "OPERATOR_MOD") {
     return EXPRESSION_TYPE_OPERATOR_MOD;
-  } else if (str == "OPERATOR_CAST") {
+  } else if (upper_str == "OPERATOR_CAST") {
     return EXPRESSION_TYPE_OPERATOR_CAST;
-  } else if (str == "OPERATOR_NOT") {
+  } else if (upper_str == "OPERATOR_NOT") {
     return EXPRESSION_TYPE_OPERATOR_NOT;
-  } else if (str == "OPERATOR_IS_NULL") {
+  } else if (upper_str == "OPERATOR_IS_NULL") {
     return EXPRESSION_TYPE_OPERATOR_IS_NULL;
-  } else if (str == "OPERATOR_EXISTS") {
+  } else if (upper_str == "OPERATOR_EXISTS") {
     return EXPRESSION_TYPE_OPERATOR_EXISTS;
-  } else if (str == "OPERATOR_UNARY_MINUS") {
+  } else if (upper_str == "OPERATOR_UNARY_MINUS") {
     return EXPRESSION_TYPE_OPERATOR_UNARY_MINUS;
-  } else if (str == "COMPARE_EQUAL") {
+  } else if (upper_str == "COMPARE_EQUAL") {
     return EXPRESSION_TYPE_COMPARE_EQUAL;
-  } else if (str == "COMPARE_NOTEQUAL") {
+  } else if (upper_str == "COMPARE_NOTEQUAL") {
     return EXPRESSION_TYPE_COMPARE_NOTEQUAL;
-  } else if (str == "COMPARE_LESSTHAN") {
+  } else if (upper_str == "COMPARE_LESSTHAN") {
     return EXPRESSION_TYPE_COMPARE_LESSTHAN;
-  } else if (str == "COMPARE_GREATERTHAN") {
+  } else if (upper_str == "COMPARE_GREATERTHAN") {
     return EXPRESSION_TYPE_COMPARE_GREATERTHAN;
-  } else if (str == "COMPARE_LESSTHANOREQUALTO") {
+  } else if (upper_str == "COMPARE_LESSTHANOREQUALTO") {
     return EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
-  } else if (str == "COMPARE_GREATERTHANOREQUALTO") {
+  } else if (upper_str == "COMPARE_GREATERTHANOREQUALTO") {
     return EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
-  } else if (str == "COMPARE_LIKE") {
+  } else if (upper_str == "COMPARE_LIKE") {
     return EXPRESSION_TYPE_COMPARE_LIKE;
-  } else if (str == "COMPARE_NOTLIKE") {
+  } else if (upper_str == "COMPARE_NOTLIKE") {
     return EXPRESSION_TYPE_COMPARE_NOTLIKE;
-  } else if (str == "COMPARE_IN") {
+  } else if (upper_str == "COMPARE_IN") {
     return EXPRESSION_TYPE_COMPARE_IN;
-  } else if (str == "CONJUNCTION_AND") {
+  } else if (upper_str == "CONJUNCTION_AND") {
     return EXPRESSION_TYPE_CONJUNCTION_AND;
-  } else if (str == "CONJUNCTION_OR") {
+  } else if (upper_str == "CONJUNCTION_OR") {
     return EXPRESSION_TYPE_CONJUNCTION_OR;
-  } else if (str == "VALUE_CONSTANT") {
+  } else if (upper_str == "VALUE_CONSTANT") {
     return EXPRESSION_TYPE_VALUE_CONSTANT;
-  } else if (str == "VALUE_PARAMETER") {
+  } else if (upper_str == "VALUE_PARAMETER") {
     return EXPRESSION_TYPE_VALUE_PARAMETER;
-  } else if (str == "VALUE_TUPLE") {
+  } else if (upper_str == "VALUE_TUPLE") {
     return EXPRESSION_TYPE_VALUE_TUPLE;
-  } else if (str == "VALUE_TUPLE_ADDRESS") {
+  } else if (upper_str == "VALUE_TUPLE_ADDRESS") {
     return EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS;
-  } else if (str == "VALUE_NULL") {
+  } else if (upper_str == "VALUE_NULL") {
     return EXPRESSION_TYPE_VALUE_NULL;
-  } else if (str == "VALUE_VECTOR") {
+  } else if (upper_str == "VALUE_VECTOR") {
     return EXPRESSION_TYPE_VALUE_VECTOR;
-  } else if (str == "VALUE_SCALAR") {
+  } else if (upper_str == "VALUE_SCALAR") {
     return EXPRESSION_TYPE_VALUE_SCALAR;
-  } else if (str == "AGGREGATE_COUNT") {
+  } else if (upper_str == "AGGREGATE_COUNT") {
     return EXPRESSION_TYPE_AGGREGATE_COUNT;
-  } else if (str == "AGGREGATE_COUNT_STAR") {
+  } else if (upper_str == "AGGREGATE_COUNT_STAR") {
     return EXPRESSION_TYPE_AGGREGATE_COUNT_STAR;
-  } else if (str == "AGGREGATE_SUM") {
+  } else if (upper_str == "AGGREGATE_SUM") {
     return EXPRESSION_TYPE_AGGREGATE_SUM;
-  } else if (str == "AGGREGATE_MIN") {
+  } else if (upper_str == "AGGREGATE_MIN") {
     return EXPRESSION_TYPE_AGGREGATE_MIN;
-  } else if (str == "AGGREGATE_MAX") {
+  } else if (upper_str == "AGGREGATE_MAX") {
     return EXPRESSION_TYPE_AGGREGATE_MAX;
-  } else if (str == "AGGREGATE_AVG") {
+  } else if (upper_str == "AGGREGATE_AVG") {
     return EXPRESSION_TYPE_AGGREGATE_AVG;
-  } else if (str == "FUNCTION") {
+  } else if (upper_str == "FUNCTION") {
     return EXPRESSION_TYPE_FUNCTION;
-  } else if (str == "HASH_RANGE") {
+  } else if (upper_str == "HASH_RANGE") {
     return EXPRESSION_TYPE_HASH_RANGE;
-  } else if (str == "OPERATOR_CASE_EXPR") {
+  } else if (upper_str == "OPERATOR_CASE_EXPR") {
     return EXPRESSION_TYPE_OPERATOR_CASE_EXPR;
-  } else if (str == "OPERATOR_NULLIF") {
+  } else if (upper_str == "OPERATOR_NULLIF") {
     return EXPRESSION_TYPE_OPERATOR_NULLIF;
-  } else if (str == "OPERATOR_COALESCE") {
+  } else if (upper_str == "OPERATOR_COALESCE") {
     return EXPRESSION_TYPE_OPERATOR_COALESCE;
-  } else if (str == "ROW_SUBQUERY") {
+  } else if (upper_str == "ROW_SUBQUERY") {
     return EXPRESSION_TYPE_ROW_SUBQUERY;
-  } else if (str == "SELECT_SUBQUERY") {
+  } else if (upper_str == "SELECT_SUBQUERY") {
     return EXPRESSION_TYPE_SELECT_SUBQUERY;
-  } else if (str == "SUBSTR") {
+  } else if (upper_str == "SUBSTR") {
     return EXPRESSION_TYPE_SUBSTR;
-  } else if (str == "ASCII") {
+  } else if (upper_str == "ASCII") {
     return EXPRESSION_TYPE_ASCII;
-  } else if (str == "OCTET_LEN") {
+  } else if (upper_str == "OCTET_LEN") {
     return EXPRESSION_TYPE_OCTET_LEN;
-  } else if (str == "CHAR") {
+  } else if (upper_str == "CHAR") {
     return EXPRESSION_TYPE_CHAR;
-  } else if (str == "CHAR_LEN") {
+  } else if (upper_str == "CHAR_LEN") {
     return EXPRESSION_TYPE_CHAR_LEN;
-  } else if (str == "SPACE") {
+  } else if (upper_str == "SPACE") {
     return EXPRESSION_TYPE_SPACE;
-  } else if (str == "REPEAT") {
+  } else if (upper_str == "REPEAT") {
     return EXPRESSION_TYPE_REPEAT;
-  } else if (str == "POSITION") {
+  } else if (upper_str == "POSITION") {
     return EXPRESSION_TYPE_POSITION;
-  } else if (str == "LEFT") {
+  } else if (upper_str == "LEFT") {
     return EXPRESSION_TYPE_LEFT;
-  } else if (str == "RIGHT") {
+  } else if (upper_str == "RIGHT") {
     return EXPRESSION_TYPE_RIGHT;
-  } else if (str == "CONCAT") {
+  } else if (upper_str == "CONCAT") {
     return EXPRESSION_TYPE_CONCAT;
-  } else if (str == "LTRIM") {
+  } else if (upper_str == "LTRIM") {
     return EXPRESSION_TYPE_LTRIM;
-  } else if (str == "RTRIM") {
+  } else if (upper_str == "RTRIM") {
     return EXPRESSION_TYPE_RTRIM;
-  } else if (str == "BTRIM") {
+  } else if (upper_str == "BTRIM") {
     return EXPRESSION_TYPE_BTRIM;
-  } else if (str == "REPLACE") {
+  } else if (upper_str == "REPLACE") {
     return EXPRESSION_TYPE_REPLACE;
-  } else if (str == "OVERLAY") {
+  } else if (upper_str == "OVERLAY") {
     return EXPRESSION_TYPE_OVERLAY;
-  } else if (str == "EXTRACT") {
+  } else if (upper_str == "EXTRACT") {
     return EXPRESSION_TYPE_EXTRACT;
-  } else if (str == "DATE_TO_TIMESTAMP") {
+  } else if (upper_str == "DATE_TO_TIMESTAMP") {
     return EXPRESSION_TYPE_DATE_TO_TIMESTAMP;
-  } else if (str == "STAR") {
+  } else if (upper_str == "STAR") {
     return EXPRESSION_TYPE_STAR;
-  } else if (str == "PLACEHOLDER") {
+  } else if (upper_str == "PLACEHOLDER") {
     return EXPRESSION_TYPE_PLACEHOLDER;
-  } else if (str == "COLUMN_REF") {
+  } else if (upper_str == "COLUMN_REF") {
     return EXPRESSION_TYPE_COLUMN_REF;
-  } else if (str == "FUNCTION_REF") {
+  } else if (upper_str == "FUNCTION_REF") {
     return EXPRESSION_TYPE_FUNCTION_REF;
-  } else if (str == "CAST") {
+  } else if (upper_str == "CAST") {
     return EXPRESSION_TYPE_CAST;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ExpressionType conversion from string '%s'", str.c_str()));
+        "No ExpressionType conversion from string '%s'", upper_str.c_str()));
   }
   return EXPRESSION_TYPE_INVALID;
 }
@@ -796,15 +800,16 @@ std::string IndexTypeToString(IndexType type) {
 }
 
 IndexType StringToIndexType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return INDEX_TYPE_INVALID;
-  } else if (str == "BWTREE") {
+  } else if (upper_str == "BWTREE") {
     return INDEX_TYPE_BWTREE;
-  } else if (str == "HASH") {
+  } else if (upper_str == "HASH") {
     return INDEX_TYPE_HASH;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No IndexType conversion from string '%s'", str.c_str()));
+        "No IndexType conversion from string '%s'", upper_str.c_str()));
   }
   return INDEX_TYPE_INVALID;
 }
@@ -837,17 +842,19 @@ std::string IndexConstraintTypeToString(IndexConstraintType type) {
 }
 
 IndexConstraintType StringToIndexConstraintType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return INDEX_CONSTRAINT_TYPE_INVALID;
-  } else if (str == "NORMAL") {
+  } else if (upper_str == "NORMAL") {
     return INDEX_CONSTRAINT_TYPE_DEFAULT;
-  } else if (str == "PRIMARY_KEY") {
+  } else if (upper_str == "PRIMARY_KEY") {
     return INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
-  } else if (str == "UNIQUE") {
+  } else if (upper_str == "UNIQUE") {
     return INDEX_CONSTRAINT_TYPE_UNIQUE;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No IndexConstraintType conversion from string '%s'", str.c_str()));
+    throw ConversionException(
+        StringUtil::Format("No IndexConstraintType conversion from string '%s'",
+                           upper_str.c_str()));
   }
   return INDEX_CONSTRAINT_TYPE_INVALID;
 }
@@ -957,69 +964,70 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
 }
 
 PlanNodeType StringToPlanNodeType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return PLAN_NODE_TYPE_INVALID;
-  } else if (str == "ABSTRACT_SCAN") {
+  } else if (upper_str == "ABSTRACT_SCAN") {
     return PLAN_NODE_TYPE_ABSTRACT_SCAN;
-  } else if (str == "SEQSCAN") {
+  } else if (upper_str == "SEQSCAN") {
     return PLAN_NODE_TYPE_SEQSCAN;
-  } else if (str == "INDEXSCAN") {
+  } else if (upper_str == "INDEXSCAN") {
     return PLAN_NODE_TYPE_INDEXSCAN;
-  } else if (str == "NESTLOOP") {
+  } else if (upper_str == "NESTLOOP") {
     return PLAN_NODE_TYPE_NESTLOOP;
-  } else if (str == "NESTLOOPINDEX") {
+  } else if (upper_str == "NESTLOOPINDEX") {
     return PLAN_NODE_TYPE_NESTLOOPINDEX;
-  } else if (str == "MERGEJOIN") {
+  } else if (upper_str == "MERGEJOIN") {
     return PLAN_NODE_TYPE_MERGEJOIN;
-  } else if (str == "HASHJOIN") {
+  } else if (upper_str == "HASHJOIN") {
     return PLAN_NODE_TYPE_HASHJOIN;
-  } else if (str == "UPDATE") {
+  } else if (upper_str == "UPDATE") {
     return PLAN_NODE_TYPE_UPDATE;
-  } else if (str == "INSERT") {
+  } else if (upper_str == "INSERT") {
     return PLAN_NODE_TYPE_INSERT;
-  } else if (str == "DELETE") {
+  } else if (upper_str == "DELETE") {
     return PLAN_NODE_TYPE_DELETE;
-  } else if (str == "DROP") {
+  } else if (upper_str == "DROP") {
     return PLAN_NODE_TYPE_DROP;
-  } else if (str == "CREATE") {
+  } else if (upper_str == "CREATE") {
     return PLAN_NODE_TYPE_CREATE;
-  } else if (str == "SEND") {
+  } else if (upper_str == "SEND") {
     return PLAN_NODE_TYPE_SEND;
-  } else if (str == "RECEIVE") {
+  } else if (upper_str == "RECEIVE") {
     return PLAN_NODE_TYPE_RECEIVE;
-  } else if (str == "PRINT") {
+  } else if (upper_str == "PRINT") {
     return PLAN_NODE_TYPE_PRINT;
-  } else if (str == "AGGREGATE") {
+  } else if (upper_str == "AGGREGATE") {
     return PLAN_NODE_TYPE_AGGREGATE;
-  } else if (str == "UNION") {
+  } else if (upper_str == "UNION") {
     return PLAN_NODE_TYPE_UNION;
-  } else if (str == "ORDERBY") {
+  } else if (upper_str == "ORDERBY") {
     return PLAN_NODE_TYPE_ORDERBY;
-  } else if (str == "PROJECTION") {
+  } else if (upper_str == "PROJECTION") {
     return PLAN_NODE_TYPE_PROJECTION;
-  } else if (str == "MATERIALIZE") {
+  } else if (upper_str == "MATERIALIZE") {
     return PLAN_NODE_TYPE_MATERIALIZE;
-  } else if (str == "LIMIT") {
+  } else if (upper_str == "LIMIT") {
     return PLAN_NODE_TYPE_LIMIT;
-  } else if (str == "DISTINCT") {
+  } else if (upper_str == "DISTINCT") {
     return PLAN_NODE_TYPE_DISTINCT;
-  } else if (str == "SETOP") {
+  } else if (upper_str == "SETOP") {
     return PLAN_NODE_TYPE_SETOP;
-  } else if (str == "APPEND") {
+  } else if (upper_str == "APPEND") {
     return PLAN_NODE_TYPE_APPEND;
-  } else if (str == "AGGREGATE_V2") {
+  } else if (upper_str == "AGGREGATE_V2") {
     return PLAN_NODE_TYPE_AGGREGATE_V2;
-  } else if (str == "HASH") {
+  } else if (upper_str == "HASH") {
     return PLAN_NODE_TYPE_HASH;
-  } else if (str == "RESULT") {
+  } else if (upper_str == "RESULT") {
     return PLAN_NODE_TYPE_RESULT;
-  } else if (str == "COPY") {
+  } else if (upper_str == "COPY") {
     return PLAN_NODE_TYPE_COPY;
-  } else if (str == "MOCK") {
+  } else if (upper_str == "MOCK") {
     return PLAN_NODE_TYPE_MOCK;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No PlanNodeType conversion from string '%s'", str.c_str()));
+        "No PlanNodeType conversion from string '%s'", upper_str.c_str()));
   }
   return PLAN_NODE_TYPE_INVALID;
 }
@@ -1079,35 +1087,36 @@ std::string ParseNodeTypeToString(ParseNodeType type) {
 }
 
 ParseNodeType StringToParseNodeType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return PARSE_NODE_TYPE_INVALID;
-  } else if (str == "SCAN") {
+  } else if (upper_str == "SCAN") {
     return PARSE_NODE_TYPE_SCAN;
-  } else if (str == "CREATE") {
+  } else if (upper_str == "CREATE") {
     return PARSE_NODE_TYPE_CREATE;
-  } else if (str == "DROP") {
+  } else if (upper_str == "DROP") {
     return PARSE_NODE_TYPE_DROP;
-  } else if (str == "UPDATE") {
+  } else if (upper_str == "UPDATE") {
     return PARSE_NODE_TYPE_UPDATE;
-  } else if (str == "INSERT") {
+  } else if (upper_str == "INSERT") {
     return PARSE_NODE_TYPE_INSERT;
-  } else if (str == "DELETE") {
+  } else if (upper_str == "DELETE") {
     return PARSE_NODE_TYPE_DELETE;
-  } else if (str == "PREPARE") {
+  } else if (upper_str == "PREPARE") {
     return PARSE_NODE_TYPE_PREPARE;
-  } else if (str == "EXECUTE") {
+  } else if (upper_str == "EXECUTE") {
     return PARSE_NODE_TYPE_EXECUTE;
-  } else if (str == "SELECT") {
+  } else if (upper_str == "SELECT") {
     return PARSE_NODE_TYPE_SELECT;
-  } else if (str == "JOIN_EXPR") {
+  } else if (upper_str == "JOIN_EXPR") {
     return PARSE_NODE_TYPE_JOIN_EXPR;
-  } else if (str == "TABLE") {
+  } else if (upper_str == "TABLE") {
     return PARSE_NODE_TYPE_TABLE;
-  } else if (str == "MOCK") {
+  } else if (upper_str == "MOCK") {
     return PARSE_NODE_TYPE_MOCK;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ParseNodeType conversion from string '%s'", str.c_str()));
+        "No ParseNodeType conversion from string '%s'", upper_str.c_str()));
   }
   return PARSE_NODE_TYPE_INVALID;
 }
@@ -1155,27 +1164,28 @@ std::string ConstraintTypeToString(ConstraintType type) {
 }
 
 ConstraintType StringToConstraintType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return CONSTRAINT_TYPE_INVALID;
-  } else if (str == "NULL") {
+  } else if (upper_str == "NULL") {
     return CONSTRAINT_TYPE_NULL;
-  } else if (str == "NOTNULL") {
+  } else if (upper_str == "NOTNULL") {
     return CONSTRAINT_TYPE_NOTNULL;
-  } else if (str == "DEFAULT") {
+  } else if (upper_str == "DEFAULT") {
     return CONSTRAINT_TYPE_DEFAULT;
-  } else if (str == "CHECK") {
+  } else if (upper_str == "CHECK") {
     return CONSTRAINT_TYPE_CHECK;
-  } else if (str == "PRIMARY") {
+  } else if (upper_str == "PRIMARY") {
     return CONSTRAINT_TYPE_PRIMARY;
-  } else if (str == "UNIQUE") {
+  } else if (upper_str == "UNIQUE") {
     return CONSTRAINT_TYPE_UNIQUE;
-  } else if (str == "FOREIGN") {
+  } else if (upper_str == "FOREIGN") {
     return CONSTRAINT_TYPE_FOREIGN;
-  } else if (str == "EXCLUSION") {
+  } else if (upper_str == "EXCLUSION") {
     return CONSTRAINT_TYPE_EXCLUSION;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No ConstraintType conversion from string '%s'", str.c_str()));
+        "No ConstraintType conversion from string '%s'", upper_str.c_str()));
   }
   return CONSTRAINT_TYPE_INVALID;
 }
@@ -1215,23 +1225,24 @@ std::string LoggingTypeToString(LoggingType type) {
 }
 
 LoggingType StringToLoggingType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return LOGGING_TYPE_INVALID;
-  } else if (str == "NVM_WAL") {
+  } else if (upper_str == "NVM_WAL") {
     return LOGGING_TYPE_NVM_WAL;
-  } else if (str == "SSD_WAL") {
+  } else if (upper_str == "SSD_WAL") {
     return LOGGING_TYPE_SSD_WAL;
-  } else if (str == "HDD_WAL") {
+  } else if (upper_str == "HDD_WAL") {
     return LOGGING_TYPE_HDD_WAL;
-  } else if (str == "NVM_WBL") {
+  } else if (upper_str == "NVM_WBL") {
     return LOGGING_TYPE_NVM_WBL;
-  } else if (str == "SSD_WBL") {
+  } else if (upper_str == "SSD_WBL") {
     return LOGGING_TYPE_SSD_WBL;
-  } else if (str == "HDD_WBL") {
+  } else if (upper_str == "HDD_WBL") {
     return LOGGING_TYPE_HDD_WBL;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LoggingType conversion from string '%s'", str.c_str()));
+        "No LoggingType conversion from string '%s'", upper_str.c_str()));
   }
   return LOGGING_TYPE_INVALID;
 }
@@ -1266,21 +1277,22 @@ std::string LoggingStatusTypeToString(LoggingStatusType type) {
 }
 
 LoggingStatusType StringToLoggingStatusType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return LOGGING_STATUS_TYPE_INVALID;
-  } else if (str == "STANDBY") {
+  } else if (upper_str == "STANDBY") {
     return LOGGING_STATUS_TYPE_STANDBY;
-  } else if (str == "RECOVERY") {
+  } else if (upper_str == "RECOVERY") {
     return LOGGING_STATUS_TYPE_RECOVERY;
-  } else if (str == "LOGGING") {
+  } else if (upper_str == "LOGGING") {
     return LOGGING_STATUS_TYPE_LOGGING;
-  } else if (str == "TERMINATE") {
+  } else if (upper_str == "TERMINATE") {
     return LOGGING_STATUS_TYPE_TERMINATE;
-  } else if (str == "SLEEP") {
+  } else if (upper_str == "SLEEP") {
     return LOGGING_STATUS_TYPE_SLEEP;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LoggingStatusType conversion from string '%s'", str.c_str()));
+        "No LoggingStatusType conversion from string '%s'", upper_str.c_str()));
   }
   return LOGGING_STATUS_TYPE_INVALID;
 }
@@ -1306,15 +1318,16 @@ std::string LoggerTypeToString(LoggerType type) {
 }
 
 LoggerType StringToLoggerType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return LOGGER_TYPE_INVALID;
-  } else if (str == "FRONTEND") {
+  } else if (upper_str == "FRONTEND") {
     return LOGGER_TYPE_FRONTEND;
-  } else if (str == "BACKEND") {
+  } else if (upper_str == "BACKEND") {
     return LOGGER_TYPE_BACKEND;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LoggerType conversion from string '%s'", str.c_str()));
+        "No LoggerType conversion from string '%s'", upper_str.c_str()));
   }
   return LOGGER_TYPE_INVALID;
 }
@@ -1379,41 +1392,42 @@ std::string LogRecordTypeToString(LogRecordType type) {
 }
 
 LogRecordType StringToLogRecordType(const std::string& str) {
-  if (str == "INVALID") {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
     return LOGRECORD_TYPE_INVALID;
-  } else if (str == "TRANSACTION_BEGIN") {
+  } else if (upper_str == "TRANSACTION_BEGIN") {
     return LOGRECORD_TYPE_TRANSACTION_BEGIN;
-  } else if (str == "TRANSACTION_COMMIT") {
+  } else if (upper_str == "TRANSACTION_COMMIT") {
     return LOGRECORD_TYPE_TRANSACTION_COMMIT;
-  } else if (str == "TRANSACTION_END") {
+  } else if (upper_str == "TRANSACTION_END") {
     return LOGRECORD_TYPE_TRANSACTION_END;
-  } else if (str == "TRANSACTION_ABORT") {
+  } else if (upper_str == "TRANSACTION_ABORT") {
     return LOGRECORD_TYPE_TRANSACTION_ABORT;
-  } else if (str == "TRANSACTION_DONE") {
+  } else if (upper_str == "TRANSACTION_DONE") {
     return LOGRECORD_TYPE_TRANSACTION_DONE;
-  } else if (str == "TUPLE_INSERT") {
+  } else if (upper_str == "TUPLE_INSERT") {
     return LOGRECORD_TYPE_TUPLE_INSERT;
-  } else if (str == "TUPLE_DELETE") {
+  } else if (upper_str == "TUPLE_DELETE") {
     return LOGRECORD_TYPE_TUPLE_DELETE;
-  } else if (str == "TUPLE_UPDATE") {
+  } else if (upper_str == "TUPLE_UPDATE") {
     return LOGRECORD_TYPE_TUPLE_UPDATE;
-  } else if (str == "WAL_TUPLE_INSERT") {
+  } else if (upper_str == "WAL_TUPLE_INSERT") {
     return LOGRECORD_TYPE_WAL_TUPLE_INSERT;
-  } else if (str == "WAL_TUPLE_DELETE") {
+  } else if (upper_str == "WAL_TUPLE_DELETE") {
     return LOGRECORD_TYPE_WAL_TUPLE_DELETE;
-  } else if (str == "WAL_TUPLE_UPDATE") {
+  } else if (upper_str == "WAL_TUPLE_UPDATE") {
     return LOGRECORD_TYPE_WAL_TUPLE_UPDATE;
-  } else if (str == "WBL_TUPLE_INSERT") {
+  } else if (upper_str == "WBL_TUPLE_INSERT") {
     return LOGRECORD_TYPE_WBL_TUPLE_INSERT;
-  } else if (str == "WBL_TUPLE_DELETE") {
+  } else if (upper_str == "WBL_TUPLE_DELETE") {
     return LOGRECORD_TYPE_WBL_TUPLE_DELETE;
-  } else if (str == "WBL_TUPLE_UPDATE") {
+  } else if (upper_str == "WBL_TUPLE_UPDATE") {
     return LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
-  } else if (str == "ITERATION_DELIMITER") {
+  } else if (upper_str == "ITERATION_DELIMITER") {
     return LOGRECORD_TYPE_ITERATION_DELIMITER;
   } else {
     throw ConversionException(StringUtil::Format(
-        "No LogRecordType conversion from string '%s'", str.c_str()));
+        "No LogRecordType conversion from string '%s'", upper_str.c_str()));
   }
   return LOGRECORD_TYPE_INVALID;
 }
