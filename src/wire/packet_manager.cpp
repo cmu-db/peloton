@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 #include "wire/packet_manager.h"
 
+#include <boost/algorithm/string.hpp>
 #include <cstdio>
 #include <unordered_map>
 
@@ -28,9 +29,6 @@
 #include "type/value_factory.h"
 #include "wire/marshal.h"
 
-#include <boost/algorithm/string.hpp>
-#include "wire/packet_manager.h"
-
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
 namespace peloton {
@@ -39,18 +37,26 @@ namespace wire {
 // TODO: Remove hardcoded auth strings
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
+    // clang-format off
     PacketManager::parameter_status_map_ =
-        boost::assign::map_list_of("application_name", "psql")(
-            "client_encoding", "UTF8")("DateStyle", "ISO, MDY")(
-            "integer_datetimes", "on")("IntervalStyle", "postgres")(
-            "is_superuser", "on")("server_encoding", "UTF8")(
-            "server_version", "9.5devel")("session_authorization", "postgres")(
-            "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
+        boost::assign::map_list_of("application_name", "psql")
+				("client_encoding", "UTF8")
+				("DateStyle", "ISO, MDY")
+				("integer_datetimes", "on")
+				("IntervalStyle", "postgres")
+				("is_superuser", "on")
+				("server_encoding", "UTF8")
+				("server_version", "9.5devel")
+				("session_authorization", "postgres")
+				("standard_conforming_strings", "on")
+				("TimeZone", "US/Eastern");
+// clang-format on
 
 std::vector<PacketManager *> PacketManager::packet_managers_;
 std::mutex PacketManager::packet_managers_mutex_;
 
-PacketManager::PacketManager() : txn_state_(TXN_IDLE), pkt_cntr_(0) {
+PacketManager::PacketManager()
+    : txn_state_(NetworkTransactionStateType::IDLE), pkt_cntr_(0) {
   traffic_cop_.reset(new tcop::TrafficCop());
   {
     std::lock_guard<std::mutex> lock(PacketManager::packet_managers_mutex_);
@@ -112,7 +118,7 @@ void PacketManager::ReplanPreparedStatement(Statement *statement) {
 void PacketManager::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NETWORK_MESSAGE_TYPE_PARAMETER_STATUS;
+  response->msg_type = NetworkMessageType::PARAMETER_STATUS;
   PacketPutString(response.get(), kv.first);
   PacketPutString(response.get(), kv.second);
   responses.push_back(std::move(response));
@@ -157,7 +163,7 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
   }
 
   // send auth-ok ('R')
-  response->msg_type = NETWORK_MESSAGE_TYPE_AUTHENTICATION_REQUEST;
+  response->msg_type = NetworkMessageType::AUTHENTICATION_REQUEST;
   PacketPutInt(response.get(), 0, 4);
   responses.push_back(std::move(response));
 
@@ -168,7 +174,7 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
   }
 
   // ready-for-query packet -> 'Z'
-  SendReadyForQuery(TXN_IDLE);
+  SendReadyForQuery(NetworkTransactionStateType::IDLE);
 
   // we need to send the response right away
   force_flush = true;
@@ -181,7 +187,7 @@ void PacketManager::PutTupleDescriptor(
   if (tuple_descriptor.empty()) return;
 
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-  pkt->msg_type = NETWORK_MESSAGE_TYPE_ROW_DESCRIPTION;
+  pkt->msg_type = NetworkMessageType::ROW_DESCRIPTION;
   PacketPutInt(pkt.get(), tuple_descriptor.size(), 2);
 
   for (auto col : tuple_descriptor) {
@@ -202,8 +208,8 @@ void PacketManager::PutTupleDescriptor(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendDataRows(std::vector<PlannerResult> &results, int colcount,
-                                 int &rows_affected) {
+void PacketManager::SendDataRows(std::vector<PlannerResult> &results,
+                                 int colcount, int &rows_affected) {
   if (results.empty() || colcount == 0) return;
 
   size_t numrows = results.size() / colcount;
@@ -211,7 +217,7 @@ void PacketManager::SendDataRows(std::vector<PlannerResult> &results, int colcou
   // 1 packet per row
   for (size_t i = 0; i < numrows; i++) {
     std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-    pkt->msg_type = NETWORK_MESSAGE_TYPE_DATA_ROW;
+    pkt->msg_type = NetworkMessageType::DATA_ROW;
     PacketPutInt(pkt.get(), colcount, 2);
     for (int j = 0; j < colcount; j++) {
       auto content = results[i * colcount + j].second;
@@ -233,21 +239,26 @@ void PacketManager::SendDataRows(std::vector<PlannerResult> &results, int colcou
 
 void PacketManager::CompleteCommand(const std::string &query_type, int rows) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-  pkt->msg_type = NETWORK_MESSAGE_TYPE_COMMAND_COMPLETE;
+  pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
   std::string tag = query_type;
   /* After Begin, we enter a txn block */
-  if (query_type.compare("BEGIN") == 0) txn_state_ = TXN_BLOCK;
+  if (query_type.compare("BEGIN") == 0) {
+    txn_state_ = NetworkTransactionStateType::BLOCK;
+  }
   /* After commit, we end the txn block */
-  else if (query_type.compare("COMMIT") == 0)
-    txn_state_ = TXN_IDLE;
+  else if (query_type.compare("COMMIT") == 0) {
+    txn_state_ = NetworkTransactionStateType::IDLE;
+  }
   /* After rollback, the txn block is ended */
-  else if (!query_type.compare("ROLLBACK"))
-    txn_state_ = TXN_IDLE;
+  else if (!query_type.compare("ROLLBACK")) {
+    txn_state_ = NetworkTransactionStateType::IDLE;
+  }
   /* the rest are custom status messages for each command */
-  else if (!query_type.compare("INSERT"))
+  else if (!query_type.compare("INSERT")) {
     tag += " 0 " + std::to_string(rows);
-  else
+  } else {
     tag += " " + std::to_string(rows);
+  }
   PacketPutString(pkt.get(), tag);
 
   responses.push_back(std::move(pkt));
@@ -258,7 +269,7 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows) {
  */
 void PacketManager::SendEmptyQueryResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NETWORK_MESSAGE_TYPE_EMPTY_QUERY_RESPONSE;
+  response->msg_type = NetworkMessageType::EMPTY_QUERY_RESPONSE;
   responses.push_back(std::move(response));
 }
 
@@ -267,11 +278,18 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
   if (query_type.compare("SET") == 0 || query_type.compare("SHOW") == 0)
     return false;
   // skip duplicate BEGIN
-  if (!query_type.compare("BEGIN") && txn_state_ == TXN_BLOCK) return false;
+  if (!query_type.compare("BEGIN") &&
+      txn_state_ == NetworkTransactionStateType::BLOCK) {
+    return false;
+  }
   // skip duplicate Commits
-  if (!query_type.compare("COMMIT") && txn_state_ == TXN_IDLE) return false;
+  if (!query_type.compare("COMMIT") &&
+      txn_state_ == NetworkTransactionStateType::IDLE)
+    return false;
   // skip duplicate Rollbacks
-  if (!query_type.compare("ROLLBACK") && txn_state_ == TXN_IDLE) return false;
+  if (!query_type.compare("ROLLBACK") &&
+      txn_state_ == NetworkTransactionStateType::IDLE)
+    return false;
   return true;
 }
 
@@ -294,7 +312,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
     if (query != queries.back()) {
       if (query.empty()) {
         SendEmptyQueryResponse();
-        SendReadyForQuery(TXN_IDLE);
+        SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return;
       }
 
@@ -309,7 +327,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
 
       // check status
       if (status == ResultType::FAILURE) {
-        SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
         break;
       }
 
@@ -327,7 +346,13 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
     }
   }
 
-  SendReadyForQuery(NETWORK_MESSAGE_TYPE_READ_FOR_QUERY);
+  // PAVLO: 2017-01-15
+  // There used to be code here that would invoke this method passing
+  // in NetworkMessageType::READY_FOR_QUERY as the argument. But when
+  // I switched to strong types, this obviously doesn't work. So I
+  // switched it to be NetworkTransactionStateType::IDLE. I don't know
+  // we just don't always send back the internal txn state?
+  SendReadyForQuery(NetworkTransactionStateType::IDLE);
 }
 
 /*
@@ -352,7 +377,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
 
     // Send Parse complete response
     std::unique_ptr<OutputPacket> response(new OutputPacket());
-    response->msg_type = NETWORK_MESSAGE_TYPE_PARSE_COMPLETE;
+    response->msg_type = NetworkMessageType::PARSE_COMPLETE;
     responses.push_back(std::move(response));
     return;
   }
@@ -367,7 +392,8 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
                                              error_message);
   if (statement.get() == nullptr) {
     skipped_stmt_ = true;
-    SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     LOG_TRACE("ExecParse Error");
     return;
   }
@@ -411,7 +437,7 @@ void PacketManager::ExecParseMessage(InputPacket *pkt) {
   }
   // Send Parse complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NETWORK_MESSAGE_TYPE_PARSE_COMPLETE;
+  response->msg_type = NetworkMessageType::PARSE_COMPLETE;
   responses.push_back(std::move(response));
 }
 
@@ -424,7 +450,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   if (skipped_stmt_) {
     // send bind complete
     std::unique_ptr<OutputPacket> response(new OutputPacket());
-    response->msg_type = NETWORK_MESSAGE_TYPE_BIND_COMPLETE;
+    response->msg_type = NetworkMessageType::BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
   }
@@ -441,7 +467,8 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   if (num_params_format != num_params) {
     std::string error_message =
         "Malformed request: num_params_format is not equal to num_params";
-    SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     return;
   }
 
@@ -458,7 +485,8 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
     if (statement.get() == nullptr) {
       std::string error_message = "Invalid unnamed statement";
       LOG_ERROR("%s", error_message.c_str());
-      SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+      SendErrorResponse(
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
       return;
     }
     // NAMED STATEMENT
@@ -472,7 +500,8 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
     else {
       std::string error_message = "The prepared statement does not exist";
       LOG_ERROR("%s", error_message.c_str());
-      SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+      SendErrorResponse(
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
       return;
     }
   }
@@ -487,7 +516,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
     skipped_query_string_ = query_string;
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     // Send Bind complete response
-    response->msg_type = NETWORK_MESSAGE_TYPE_BIND_COMPLETE;
+    response->msg_type = NetworkMessageType::BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
   }
@@ -571,7 +600,7 @@ void PacketManager::ExecBindMessage(InputPacket *pkt) {
   }
   // send bind complete
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NETWORK_MESSAGE_TYPE_BIND_COMPLETE;
+  response->msg_type = NetworkMessageType::BIND_COMPLETE;
   responses.push_back(std::move(response));
 }
 
@@ -695,7 +724,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
   if (skipped_stmt_) {
     // send 'no-data' message
     std::unique_ptr<OutputPacket> response(new OutputPacket());
-    response->msg_type = NETWORK_MESSAGE_TYPE_NO_DATA_RESPONSE;
+    response->msg_type = NetworkMessageType::NO_DATA_RESPONSE;
     responses.push_back(std::move(response));
     return true;
   }
@@ -757,7 +786,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   auto portal = portals_[portal_name];
   if (portal.get() == nullptr) {
     LOG_ERROR("Did not find portal : %s", portal_name.c_str());
-    SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     SendReadyForQuery(txn_state_);
     return;
   }
@@ -768,7 +798,8 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   auto param_stat = portal->GetParamStat();
   if (statement.get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
-    SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     SendReadyForQuery(txn_state_);
     return;
   }
@@ -784,13 +815,14 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   switch (status) {
     case ResultType::FAILURE:
       LOG_ERROR("Failed to execute: %s", error_message.c_str());
-      SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
+      SendErrorResponse(
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
       return;
     case ResultType::ABORTED:
       if (query_type != "ROLLBACK") {
         LOG_DEBUG("Failed to execute: Conflicting txn aborted");
         // Send an error response if the abort is not due to ROLLBACK query
-        SendErrorResponse({{NETWORK_MESSAGE_TYPE_SQLSTATE_CODE_ERROR,
+        SendErrorResponse({{NetworkMessageType::SQLSTATE_CODE_ERROR,
                             SqlStateErrorCodeToString(
                                 SqlStateErrorCode::SERIALIZATION_ERROR)}});
       }
@@ -835,7 +867,7 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
   }
   // Send close complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NETWORK_MESSAGE_TYPE_CLOSE_COMPLETE;
+  response->msg_type = NetworkMessageType::CLOSE_COMPLETE;
   responses.push_back(std::move(response));
 }
 
@@ -844,54 +876,55 @@ void PacketManager::ExecCloseMessage(InputPacket *pkt) {
  *  Returns false if the session needs to be closed.
  */
 bool PacketManager::ProcessPacket(InputPacket *pkt) {
-  LOG_TRACE("message type: %c", pkt->msg_type);
+  LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
   // we see a SYNC
   switch (pkt->msg_type) {
-    case NETWORK_MESSAGE_TYPE_SIMPLE_QUERY_COMMAND: {
+    case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
       ExecQueryMessage(pkt);
       force_flush = true;
     } break;
-    case NETWORK_MESSAGE_TYPE_PARSE_COMMAND: {
+    case NetworkMessageType::PARSE_COMMAND: {
       LOG_TRACE("PARSE_COMMAND");
       ExecParseMessage(pkt);
     } break;
-    case NETWORK_MESSAGE_TYPE_BIND_COMMAND: {
+    case NetworkMessageType::BIND_COMMAND: {
       LOG_TRACE("BIND_COMMAND");
       ExecBindMessage(pkt);
     } break;
-    case NETWORK_MESSAGE_TYPE_DESCRIBE_COMMAND: {
+    case NetworkMessageType::DESCRIBE_COMMAND: {
       LOG_TRACE("DESCRIBE_COMMAND");
       return ExecDescribeMessage(pkt);
     } break;
-    case NETWORK_MESSAGE_TYPE_EXECUTE_COMMAND: {
+    case NetworkMessageType::EXECUTE_COMMAND: {
       LOG_TRACE("EXECUTE_COMMAND");
       ExecExecuteMessage(pkt);
     } break;
-    case NETWORK_MESSAGE_TYPE_SYNC_COMMAND: {
+    case NetworkMessageType::SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
       force_flush = true;
     } break;
-    case NETWORK_MESSAGE_TYPE_CLOSE_COMMAND: {
+    case NetworkMessageType::CLOSE_COMMAND: {
       LOG_TRACE("CLOSE_COMMAND");
       ExecCloseMessage(pkt);
     } break;
-    case NETWORK_MESSAGE_TYPE_TERMINATE_COMMAND: {
+    case NetworkMessageType::TERMINATE_COMMAND: {
       LOG_TRACE("TERMINATE_COMMAND");
       force_flush = true;
       return false;
     } break;
-    case NULL: {
+    case NetworkMessageType::NULL_COMMAND: {
       LOG_TRACE("NULL");
       force_flush = true;
       return false;
     } break;
     default: {
-      LOG_ERROR("Packet type not supported yet: %d (%c)", pkt->msg_type,
-                pkt->msg_type);
+      LOG_ERROR("Packet type not supported yet: %d (%c)",
+                static_cast<int>(pkt->msg_type),
+                static_cast<unsigned char>(pkt->msg_type));
     }
   }
   return true;
@@ -902,12 +935,12 @@ bool PacketManager::ProcessPacket(InputPacket *pkt) {
  *    For now, it only supports the human readable 'M' message body
  */
 void PacketManager::SendErrorResponse(
-    std::vector<std::pair<uchar, std::string>> error_status) {
+    std::vector<std::pair<NetworkMessageType, std::string>> error_status) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-  pkt->msg_type = NETWORK_MESSAGE_TYPE_ERROR_RESPONSE;
+  pkt->msg_type = NetworkMessageType::ERROR_RESPONSE;
 
   for (auto entry : error_status) {
-    PacketPutByte(pkt.get(), entry.first);
+    PacketPutByte(pkt.get(), static_cast<unsigned char>(entry.first));
     PacketPutString(pkt.get(), entry.second);
   }
 
@@ -918,11 +951,11 @@ void PacketManager::SendErrorResponse(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendReadyForQuery(uchar txn_status) {
+void PacketManager::SendReadyForQuery(NetworkTransactionStateType txn_status) {
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-  pkt->msg_type = NETWORK_MESSAGE_TYPE_READ_FOR_QUERY;
+  pkt->msg_type = NetworkMessageType::READY_FOR_QUERY;
 
-  PacketPutByte(pkt.get(), txn_status);
+  PacketPutByte(pkt.get(), static_cast<unsigned char>(txn_status));
 
   responses.push_back(std::move(pkt));
 }
@@ -935,7 +968,7 @@ void PacketManager::Reset() {
   responses.clear();
   unnamed_statement_.reset();
   result_format_.clear();
-  txn_state_ = TXN_IDLE;
+  txn_state_ = NetworkTransactionStateType::IDLE;
   skipped_stmt_ = false;
   skipped_query_string_.clear();
   skipped_query_type_.clear();

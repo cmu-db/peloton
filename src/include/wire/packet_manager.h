@@ -25,11 +25,6 @@
 #include "tcop/tcop.h"
 #include "wire/marshal.h"
 
-// TXN state definitions
-#define TXN_IDLE 'I'
-#define TXN_BLOCK 'T'
-#define TXN_FAIL 'E'
-
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
 
@@ -108,10 +103,10 @@ class PacketManager {
 
   // Generic error protocol packet
   void SendErrorResponse(
-      std::vector<std::pair<uchar, std::string>> error_status);
+      std::vector<std::pair<NetworkMessageType, std::string>> error_status);
 
   // Sends ready for query packet to the frontend
-  void SendReadyForQuery(uchar txn_status);
+  void SendReadyForQuery(NetworkTransactionStateType txn_status);
 
   // Sends the attribute headers required by SELECT queries
   void PutTupleDescriptor(const std::vector<FieldInfo>& tuple_descriptor);
@@ -168,7 +163,7 @@ class PacketManager {
   std::vector<int> result_format_;
 
   // global txn state
-  uchar txn_state_;
+  NetworkTransactionStateType txn_state_;
 
   // state to mang skipped queries
   bool skipped_stmt_ = false;
