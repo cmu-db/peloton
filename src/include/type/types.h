@@ -881,14 +881,18 @@ typedef uint64_t cid_t;
 
 static const cid_t INVALID_CID = 0;
 
-static const cid_t READ_ONLY_START_CID = 1;
-
 static const cid_t START_CID = 2;
 
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 // For epoch
 static const size_t EPOCH_LENGTH = 40;
+
+static const size_t MIN_EPOCH = 0;
+
+static const size_t RO_BEGIN_EPOCH = 1;
+
+static const size_t RW_BEGIN_EPOCH = 2;
 
 // For threads
 extern size_t QUERY_THREAD_COUNT;

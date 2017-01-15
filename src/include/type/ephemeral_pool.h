@@ -61,9 +61,12 @@ public:
   void Free(UNUSED_ATTRIBUTE void *ptr) {
     char *cptr = (char *) ptr;
     pool_lock_.Lock();
-    locations_.erase(cptr);
+    size_t removed = locations_.erase(cptr);
     pool_lock_.Unlock();
-    delete [] cptr;
+
+    if (removed) {
+      delete[] cptr;
+    }
   }
 
 public:

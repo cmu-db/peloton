@@ -202,8 +202,7 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
     }
-    // if we have already got the
-    // ownership
+    // If we haven't got the ownership
     else {
       // Skip the IsOwnable and AcquireOwnership if we have already got the
       // ownership
@@ -248,6 +247,9 @@ bool UpdateExecutor::DExecute() {
 
           // acquire a version slot from the table.
           ItemPointer new_location = target_table_->AcquireVersion();
+
+          PL_ASSERT(concurrency::EpochManagerFactory::GetInstance().GetMaxDeadTxnCid()
+             < current_txn->GetBeginCommitId());
 
           auto &manager = catalog::Manager::GetInstance();
           auto new_tile_group = manager.GetTileGroup(new_location.block);

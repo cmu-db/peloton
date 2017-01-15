@@ -28,22 +28,18 @@ namespace concurrency {
 struct Epoch {
   std::atomic<int> ro_txn_ref_count_;
   std::atomic<int> rw_txn_ref_count_;
-  cid_t max_cid_;
 
   Epoch(): 
     ro_txn_ref_count_(0), 
-    rw_txn_ref_count_(0),
-    max_cid_(0) {}
+    rw_txn_ref_count_(0) {}
 
   Epoch(const Epoch &epoch): 
     ro_txn_ref_count_(epoch.ro_txn_ref_count_.load()), 
-    rw_txn_ref_count_(epoch.rw_txn_ref_count_.load()),
-    max_cid_(0) {}
+    rw_txn_ref_count_(epoch.rw_txn_ref_count_.load()) {}
 
   void Init() {
     ro_txn_ref_count_ = 0;
     rw_txn_ref_count_ = 0;
-    max_cid_ = 0;
   }
 };
 
@@ -70,13 +66,11 @@ class EpochManager {
 public:
   EpochManager()
     : epoch_queue_(epoch_queue_size_),
-      queue_tail_(0), 
-      reclaim_tail_(0), 
-      current_epoch_(0),
+      queue_tail_(RO_BEGIN_EPOCH),
+      reclaim_tail_(MIN_EPOCH),
+      current_epoch_(RW_BEGIN_EPOCH),
       queue_tail_token_(true), 
       reclaim_tail_token_(true),
-      max_cid_ro_(READ_ONLY_START_CID), 
-      max_cid_gc_(0), 
       finish_(false) {
   }
 
@@ -93,30 +87,56 @@ public:
     finish_ = true;
   }
 
-  size_t EnterReadOnlyEpoch(cid_t begin_cid) {
+  static inline size_t ExtractEpochIdFromCid(cid_t cid) {
+    return (cid >> 32) & 0xffffffff;
+  }
+
+  cid_t EnterReadOnlyEpoch() {
     auto epoch = queue_tail_.load();
 
     size_t epoch_idx = epoch % epoch_queue_size_;
-    epoch_queue_[epoch_idx].ro_txn_ref_count_++;
+    size_t cnt = epoch_queue_[epoch_idx].ro_txn_ref_count_++;
 
-    // Set the max cid in the tuple
-    auto max_cid_ptr = &(epoch_queue_[epoch_idx].max_cid_);
-    AtomicMax(max_cid_ptr, begin_cid);
+    // Validation
+    auto validate_epoch = queue_tail_.load();
+    while (validate_epoch != epoch) {
+      // Reset the registered epoch
+      epoch_queue_[epoch_idx].ro_txn_ref_count_--;
+      // Register into new current epoch
+      epoch = validate_epoch;
+      epoch_idx = epoch % epoch_queue_size_;
+      cnt = epoch_queue_[epoch_idx].ro_txn_ref_count_++;
+      // Get new validate epoch
+      validate_epoch = queue_tail_.load();
+    }
 
-    return epoch;
+    return MakeCid(epoch, cnt);
   }
 
-  size_t EnterEpoch(cid_t begin_cid) {
+  cid_t EnterEpoch() {
     auto epoch = current_epoch_.load();
 
     size_t epoch_idx = epoch % epoch_queue_size_;
-    epoch_queue_[epoch_idx].rw_txn_ref_count_++;
+    size_t cnt = epoch_queue_[epoch_idx].rw_txn_ref_count_++;
 
-    // Set the max cid in the tuple
-    auto max_cid_ptr = &(epoch_queue_[epoch_idx].max_cid_);
-    AtomicMax(max_cid_ptr, begin_cid);
+    // Validation
+    auto validate_epoch = current_epoch_.load();
+    while (validate_epoch != epoch) {
+      // Reset the registered epoch
+      epoch_queue_[epoch_idx].rw_txn_ref_count_--;
+      // Register into new current epoch
+      epoch = validate_epoch;
+      epoch_idx = epoch % epoch_queue_size_;
+      cnt = epoch_queue_[epoch_idx].rw_txn_ref_count_++;
+      // Get new validate epoch
+      validate_epoch = current_epoch_.load();
+    }
 
-    return epoch;
+    return MakeCid(epoch, cnt);
+  }
+
+  cid_t GetNextSafeCid() {
+    return MakeCid(current_epoch_.load(), 0xffffffff);
   }
 
   void ExitReadOnlyEpoch(size_t epoch) {
@@ -140,15 +160,15 @@ public:
     IncreaseQueueTail();
     IncreaseReclaimTail();
 
-    return max_cid_gc_;
-  }
-
-  cid_t GetReadOnlyTxnCid() {
-    IncreaseQueueTail();
-    return max_cid_ro_;
+    return MakeCid(reclaim_tail_.load(), 0);
   }
 
 private:
+  inline cid_t MakeCid(size_t eid, size_t cnt) {
+    uint64_t high32 = (eid & 0xffffffff) << 32;
+    return high32 | (cnt & 0xffffffff);
+  }
+
   void Start() {
     while (!finish_) {
       // the epoch advances every EPOCH_LENGTH milliseconds.
@@ -197,9 +217,6 @@ private:
         break;
       }
 
-      // save max cid
-      auto max = epoch_queue_[idx].max_cid_;
-      AtomicMax(&max_cid_gc_, max);
       tail++;
     }
 
@@ -233,10 +250,6 @@ private:
       if(epoch_queue_[idx].rw_txn_ref_count_ > 0) {
         break;
       }
-
-      // save max cid
-      auto max = epoch_queue_[idx].max_cid_;
-      AtomicMax(&max_cid_ro_, max);
       tail++;
     }
 
@@ -247,17 +260,6 @@ private:
 
     queue_tail_token_.compare_exchange_weak(expect, desired);
     return;
-  }
-
-  void AtomicMax(cid_t* addr, cid_t max) {
-    while(true) {
-      auto old = *addr;
-      if(old > max) {
-        return;
-      }else if ( __sync_bool_compare_and_swap(addr, old, max) ) {
-        return;
-      }
-    }
   }
 
   inline void InitEpochQueue() {
@@ -281,8 +283,6 @@ private:
   std::atomic<size_t> current_epoch_;
   std::atomic<bool> queue_tail_token_;
   std::atomic<bool> reclaim_tail_token_;
-  cid_t max_cid_ro_;
-  cid_t max_cid_gc_;
   bool finish_;
 };
 

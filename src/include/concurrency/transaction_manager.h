@@ -53,13 +53,10 @@ class TransactionManager {
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
   cid_t GetNextCommitId() {
-    cid_t temp_cid = next_cid_++;
-    // wait if we do not yet have a grant for this commit id
-    while (temp_cid > maximum_grant_cid_.load())
-      ;
-    return temp_cid;
+    return EpochManagerFactory::GetInstance().GetNextSafeCid();
   }
 
+  // WARNING: THIS IS DEPRECATED! REMOVE IT AFTER WE HAVE NEW LOGGING
   cid_t GetCurrentCommitId() { return next_cid_.load(); }
 
   // This method is used for avoiding concurrent inserts.
@@ -132,8 +129,10 @@ class TransactionManager {
   }
 
   // for use by recovery
+  // WARNING: THIS IS DEPRECATED! REMOVE IT AFTER WE HAVE NEW LOGGING
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
+  // WARNING: THIS IS DEPRECATED! REMOVE IT AFTER WE HAVE NEW LOGGING
   void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
   virtual Transaction *BeginTransaction() = 0;
@@ -176,6 +175,7 @@ class TransactionManager {
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
+  // WARNING: THIS IS DEPRECATED! REMOVE IT AFTER WE HAVE NEW LOGGING
   std::atomic<cid_t> maximum_grant_cid_;
 };
 }  // End storage namespace

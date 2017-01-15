@@ -89,12 +89,11 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.PrepareLogging();
 
+  auto cid = EpochManagerFactory::GetInstance().EnterEpoch();
   txn_id_t txn_id = GetNextTransactionId();
-  cid_t begin_cid = GetNextCommitId();
-  Transaction *txn = new Transaction(txn_id, begin_cid);
+  Transaction *txn = new Transaction(txn_id, cid);
 
-  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  txn->SetEpochId(EpochManager::ExtractEpochIdFromCid(cid));
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -109,11 +108,10 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
     txn_id_t txn_id = READONLY_TXN_ID;
     auto &epoch_manager = EpochManagerFactory::GetInstance();
 
-    cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-    Transaction *txn = new Transaction(txn_id, begin_cid, true);
+    auto cid = epoch_manager.EnterReadOnlyEpoch();
+    Transaction *txn = new Transaction(txn_id, cid, true);
 
-    auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
-    txn->SetEpochId(eid);
+    txn->SetEpochId(EpochManager::ExtractEpochIdFromCid(cid));
 
     if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
       stats::BackendStatsContext::GetInstance()

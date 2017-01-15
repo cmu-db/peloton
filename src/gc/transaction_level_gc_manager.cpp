@@ -231,6 +231,8 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
   if (recycle_queue->Dequeue(location) == true) {
     LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
               location.offset, table_id);
+    PL_ASSERT(catalog::Manager::GetInstance().
+      GetTileGroup(location.block)->GetHeader()->GetTransactionId(location.offset) == INVALID_TXN_ID);
     return location;
   }
   return INVALID_ITEMPOINTER;
