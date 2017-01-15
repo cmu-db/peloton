@@ -71,21 +71,21 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   auto parse_tree2 = parse_tree->GetStatements().at(0);
 
   switch (parse_item_node_type) {
-    case STATEMENT_TYPE_DROP: {
+    case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
           new planner::DropPlan((parser::DropStatement*)parse_tree2));
       child_plan = std::move(child_DropPlan);
     } break;
 
-    case STATEMENT_TYPE_CREATE: {
+    case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
           new planner::CreatePlan((parser::CreateStatement*)parse_tree2));
       child_plan = std::move(child_CreatePlan);
     } break;
 
-    case STATEMENT_TYPE_SELECT: {
+    case StatementType::SELECT: {
       LOG_TRACE("Processing SELECT...");
       auto select_stmt = (parser::SelectStatement*)parse_tree2;
       LOG_TRACE("SELECT Info: %s", select_stmt->GetInfo().c_str());
@@ -557,7 +557,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     } break;
 
-    case STATEMENT_TYPE_INSERT: {
+    case StatementType::INSERT: {
       LOG_TRACE("Adding Insert plan...");
       parser::InsertStatement* insertStmt =
           (parser::InsertStatement*)parse_tree2;
@@ -573,14 +573,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       child_plan = std::move(child_InsertPlan);
     } break;
 
-    case STATEMENT_TYPE_COPY: {
+    case StatementType::COPY: {
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement* copy_parse_tree =
           static_cast<parser::CopyStatement*>(parse_tree2);
       child_plan = std::move(CreateCopyPlan(copy_parse_tree));
     } break;
 
-    case STATEMENT_TYPE_DELETE: {
+    case StatementType::DELETE: {
       LOG_TRACE("Adding Delete plan...");
 
       // column predicates passing to the index
@@ -645,7 +645,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
     } break;
 
-    case STATEMENT_TYPE_UPDATE: {
+    case StatementType::UPDATE: {
       LOG_TRACE("Adding Update plan...");
 
       // column predicates passing to the index
@@ -688,7 +688,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       }
     } break;
 
-    case STATEMENT_TYPE_TRANSACTION: {
+    case StatementType::TRANSACTION: {
     } break;
     default:
       LOG_ERROR("Unsupported Parse Node Type %d", parse_item_node_type);

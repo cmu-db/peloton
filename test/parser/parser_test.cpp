@@ -160,7 +160,7 @@ TEST_F(ParserTest, SelectParserTest) {
   }
 
   EXPECT_EQ(list->GetNumStatements(), 1);
-  EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_SELECT);
+  EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::SELECT);
 
   parser::SelectStatement* stmt =
       (parser::SelectStatement*)list->GetStatement(0);
@@ -227,7 +227,7 @@ TEST_F(ParserTest, TransactionTest) {
       parser::Parser::ParseSQLString(valid_queries[0].c_str());
   parser::TransactionStatement* stmt =
       (parser::TransactionStatement*)list->GetStatement(0);
-  EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_TRANSACTION);
+  EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
   delete list;
 

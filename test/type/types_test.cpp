@@ -142,13 +142,13 @@ TEST_F(TypesTests, TypeIdTest) {
 
 TEST_F(TypesTests, StatementTypeTest) {
   std::vector<StatementType> list = {
-      STATEMENT_TYPE_INVALID, STATEMENT_TYPE_SELECT,
-      STATEMENT_TYPE_INSERT,  STATEMENT_TYPE_UPDATE,
-      STATEMENT_TYPE_DELETE,  STATEMENT_TYPE_CREATE,
-      STATEMENT_TYPE_DROP,    STATEMENT_TYPE_PREPARE,
-      STATEMENT_TYPE_EXECUTE, STATEMENT_TYPE_RENAME,
-      STATEMENT_TYPE_ALTER,   STATEMENT_TYPE_TRANSACTION,
-      STATEMENT_TYPE_COPY};
+      StatementType::INVALID, StatementType::SELECT,
+      StatementType::INSERT,  StatementType::UPDATE,
+      StatementType::DELETE,  StatementType::CREATE,
+      StatementType::DROP,    StatementType::PREPARE,
+      StatementType::EXECUTE, StatementType::RENAME,
+      StatementType::ALTER,   StatementType::TRANSACTION,
+      StatementType::COPY};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

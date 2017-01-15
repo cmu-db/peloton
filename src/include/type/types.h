@@ -552,20 +552,23 @@ enum CreateType {
 //===--------------------------------------------------------------------===//
 
 enum StatementType {
-  STATEMENT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid statement type
-  STATEMENT_TYPE_SELECT = 1,                 // select statement type
-  STATEMENT_TYPE_INSERT = 3,                 // insert statement type
-  STATEMENT_TYPE_UPDATE = 4,                 // update statement type
-  STATEMENT_TYPE_DELETE = 5,                 // delete statement type
-  STATEMENT_TYPE_CREATE = 6,                 // create statement type
-  STATEMENT_TYPE_DROP = 7,                   // drop statement type
-  STATEMENT_TYPE_PREPARE = 8,                // prepare statement type
-  STATEMENT_TYPE_EXECUTE = 9,                // execute statement type
-  STATEMENT_TYPE_RENAME = 11,                // rename statement type
-  STATEMENT_TYPE_ALTER = 12,                 // alter statement type
-  STATEMENT_TYPE_TRANSACTION = 13,           // transaction statement type,
-  STATEMENT_TYPE_COPY = 14                   // copy type
+  INVALID = INVALID_TYPE_ID,  // invalid statement type
+  SELECT = 1,                 // select statement type
+  INSERT = 3,                 // insert statement type
+  UPDATE = 4,                 // update statement type
+  DELETE = 5,                 // delete statement type
+  CREATE = 6,                 // create statement type
+  DROP = 7,                   // drop statement type
+  PREPARE = 8,                // prepare statement type
+  EXECUTE = 9,                // execute statement type
+  RENAME = 11,                // rename statement type
+  ALTER = 12,                 // alter statement type
+  TRANSACTION = 13,           // transaction statement type,
+  COPY = 14                   // copy type
 };
+std::string StatementTypeToString(StatementType type);
+StatementType StringToStatementType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const StatementType &type);
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
@@ -1051,9 +1054,6 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 std::string TypeIdToString(type::Type::TypeId type);
 type::Type::TypeId StringToTypeId(const std::string &str);
-
-std::string StatementTypeToString(StatementType type);
-StatementType StringToStatementType(const std::string &str);
 
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(const std::string &str);

@@ -26,7 +26,7 @@ namespace parser {
  */
 struct CopyStatement : SQLStatement {
   CopyStatement(CopyType type)
-      : SQLStatement(STATEMENT_TYPE_COPY),
+      : SQLStatement(StatementType::COPY),
         cpy_table(NULL),
         type(type),
         file_path(NULL),

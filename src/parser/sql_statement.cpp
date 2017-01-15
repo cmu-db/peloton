@@ -40,13 +40,13 @@ const std::string SQLStatement::GetInfo() const {
 
   int indent = 1;
   switch (stmt_type) {
-    case STATEMENT_TYPE_SELECT:
+    case StatementType::SELECT:
       GetSelectStatementInfo((SelectStatement*)this, indent);
       break;
-    case STATEMENT_TYPE_INSERT:
+    case StatementType::INSERT:
       GetInsertStatementInfo((InsertStatement*)this, indent);
       break;
-    case STATEMENT_TYPE_CREATE:
+    case StatementType::CREATE:
       GetCreateStatementInfo((CreateStatement*)this, indent);
       break;
     default:

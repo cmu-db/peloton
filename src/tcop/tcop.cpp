@@ -285,7 +285,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
     for (auto stmt : sql_stmt->GetStatements()) {
       LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
-      if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
+      if (stmt->GetType() == StatementType::SELECT) {
         auto tuple_descriptor = GenerateTupleDescriptor(stmt);
         statement->SetTupleDescriptor(tuple_descriptor);
       }
@@ -309,7 +309,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     parser::SQLStatement *sql_stmt) {
   std::vector<FieldInfo> tuple_descriptor;
-  if (sql_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
+  if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
   auto select_stmt = (parser::SelectStatement *)sql_stmt;
 
   // TODO: this is a hack which I don't have time to fix now

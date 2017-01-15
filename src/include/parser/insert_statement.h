@@ -26,7 +26,7 @@ namespace parser {
  */
 struct InsertStatement : TableRefStatement {
   InsertStatement(InsertType type)
-      : TableRefStatement(STATEMENT_TYPE_INSERT),
+      : TableRefStatement(StatementType::INSERT),
         type(type),
         columns(NULL),
         insert_values(NULL),

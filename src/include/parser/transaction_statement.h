@@ -30,7 +30,7 @@ struct TransactionStatement : SQLStatement {
   };
 
   TransactionStatement(CommandType type)
-      : SQLStatement(STATEMENT_TYPE_TRANSACTION), type(type) {}
+      : SQLStatement(StatementType::TRANSACTION), type(type) {}
 
   virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
     v->Visit(this);

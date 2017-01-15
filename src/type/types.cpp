@@ -337,43 +337,43 @@ bool AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
 
 std::string StatementTypeToString(StatementType type) {
   switch (type) {
-    case STATEMENT_TYPE_SELECT: {
+    case StatementType::SELECT: {
       return "SELECT";
     }
-    case STATEMENT_TYPE_ALTER: {
+    case StatementType::ALTER: {
       return "ALTER";
     }
-    case STATEMENT_TYPE_CREATE: {
+    case StatementType::CREATE: {
       return "CREATE";
     }
-    case STATEMENT_TYPE_DELETE: {
+    case StatementType::DELETE: {
       return "DELETE";
     }
-    case STATEMENT_TYPE_DROP: {
+    case StatementType::DROP: {
       return "DROP";
     }
-    case STATEMENT_TYPE_EXECUTE: {
+    case StatementType::EXECUTE: {
       return "EXECUTE";
     }
-    case STATEMENT_TYPE_COPY: {
+    case StatementType::COPY: {
       return "COPY";
     }
-    case STATEMENT_TYPE_INSERT: {
+    case StatementType::INSERT: {
       return "INSERT";
     }
-    case STATEMENT_TYPE_INVALID: {
+    case StatementType::INVALID: {
       return "INVALID";
     }
-    case STATEMENT_TYPE_PREPARE: {
+    case StatementType::PREPARE: {
       return "PREPARE";
     }
-    case STATEMENT_TYPE_RENAME: {
+    case StatementType::RENAME: {
       return "RENAME";
     }
-    case STATEMENT_TYPE_TRANSACTION: {
+    case StatementType::TRANSACTION: {
       return "TRANSACTION";
     }
-    case STATEMENT_TYPE_UPDATE: {
+    case StatementType::UPDATE: {
       return "UPDATE";
     }
     default: {
@@ -382,42 +382,46 @@ std::string StatementTypeToString(StatementType type) {
           static_cast<int>(type)));
     }
   }
-  return "NOT A KNOWN TYPE - INVALID";
+  return "INVALID";
 }
 
 StatementType StringToStatementType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return STATEMENT_TYPE_INVALID;
+    return StatementType::INVALID;
   } else if (upper_str == "SELECT") {
-    return STATEMENT_TYPE_SELECT;
+    return StatementType::SELECT;
   } else if (upper_str == "INSERT") {
-    return STATEMENT_TYPE_INSERT;
+    return StatementType::INSERT;
   } else if (upper_str == "UPDATE") {
-    return STATEMENT_TYPE_UPDATE;
+    return StatementType::UPDATE;
   } else if (upper_str == "DELETE") {
-    return STATEMENT_TYPE_DELETE;
+    return StatementType::DELETE;
   } else if (upper_str == "CREATE") {
-    return STATEMENT_TYPE_CREATE;
+    return StatementType::CREATE;
   } else if (upper_str == "DROP") {
-    return STATEMENT_TYPE_DROP;
+    return StatementType::DROP;
   } else if (upper_str == "PREPARE") {
-    return STATEMENT_TYPE_PREPARE;
+    return StatementType::PREPARE;
   } else if (upper_str == "EXECUTE") {
-    return STATEMENT_TYPE_EXECUTE;
+    return StatementType::EXECUTE;
   } else if (upper_str == "RENAME") {
-    return STATEMENT_TYPE_RENAME;
+    return StatementType::RENAME;
   } else if (upper_str == "ALTER") {
-    return STATEMENT_TYPE_ALTER;
+    return StatementType::ALTER;
   } else if (upper_str == "TRANSACTION") {
-    return STATEMENT_TYPE_TRANSACTION;
+    return StatementType::TRANSACTION;
   } else if (upper_str == "COPY") {
-    return STATEMENT_TYPE_COPY;
+    return StatementType::COPY;
   } else {
     throw ConversionException(StringUtil::Format(
         "No StatementType conversion from string '%s'", upper_str.c_str()));
   }
-  return STATEMENT_TYPE_INVALID;
+  return StatementType::INVALID;
+}
+std::ostream& operator<<(std::ostream& os, const StatementType& type) {
+  os << StatementTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//

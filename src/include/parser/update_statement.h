@@ -56,7 +56,7 @@ class UpdateClause {
  */
 struct UpdateStatement : SQLStatement {
   UpdateStatement()
-      : SQLStatement(STATEMENT_TYPE_UPDATE),
+      : SQLStatement(StatementType::UPDATE),
         table(NULL),
         updates(NULL),
         where(NULL) {}
