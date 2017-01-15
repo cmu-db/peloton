@@ -447,13 +447,13 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
   allocation_count++;
 
   switch (type) {
-    case BACKEND_TYPE_MM:
-    case BACKEND_TYPE_NVM: {
+    case BackendType::MM:
+    case BackendType::NVM: {
       return ::operator new(size);
     } break;
 
-    case BACKEND_TYPE_SSD:
-    case BACKEND_TYPE_HDD: {
+    case BackendType::SSD:
+    case BackendType::HDD: {
       {
         size_t cache_data_file_offset = 0;
 
@@ -484,7 +484,7 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       }
     } break;
 
-    case BACKEND_TYPE_INVALID:
+    case BackendType::INVALID:
     default: {
       throw Exception("invalid backend: " + std::to_string(data_file_len));
       return nullptr;
@@ -494,17 +494,17 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
 
 void StorageManager::Release(BackendType type, void *address) {
   switch (type) {
-    case BACKEND_TYPE_MM:
-    case BACKEND_TYPE_NVM: {
+    case BackendType::MM:
+    case BackendType::NVM: {
       ::operator delete(address);
     } break;
 
-    case BACKEND_TYPE_SSD:
-    case BACKEND_TYPE_HDD: {
+    case BackendType::SSD:
+    case BackendType::HDD: {
       // Nothing to do here
     } break;
 
-    case BACKEND_TYPE_INVALID:
+    case BackendType::INVALID:
     default: {
       // Nothing to do here
       break;
@@ -514,19 +514,19 @@ void StorageManager::Release(BackendType type, void *address) {
 
 void StorageManager::Sync(BackendType type, void *address, size_t length) {
   switch (type) {
-    case BACKEND_TYPE_MM: {
+    case BackendType::MM: {
       // Nothing to do here
     } break;
 
-    case BACKEND_TYPE_NVM: {
+    case BackendType::NVM: {
       // flush writes to NVM
       Func_flush(address, length);
       Func_drain();
       clflush_count++;
     } break;
 
-    case BACKEND_TYPE_SSD:
-    case BACKEND_TYPE_HDD: {
+    case BackendType::SSD:
+    case BackendType::HDD: {
       // sync the mmap'ed file to SSD or HDD
       int status = msync(data_file_address, data_file_len, MS_SYNC);
       if (status != 0) {
@@ -537,7 +537,7 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
       msync_count++;
     } break;
 
-    case BACKEND_TYPE_INVALID:
+    case BackendType::INVALID:
     default: {
       // Nothing to do here
     } break;

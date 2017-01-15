@@ -394,12 +394,12 @@ enum IsolationLevelType {
 // Garbage Collection Types
 //===--------------------------------------------------------------------===//
 
-enum BackendType {
-  BACKEND_TYPE_INVALID = INVALID_TYPE_ID,  // invalid backend type
-  BACKEND_TYPE_MM = 1,                     // on volatile memory
-  BACKEND_TYPE_NVM = 2,                    // on non-volatile memory
-  BACKEND_TYPE_SSD = 3,                    // on ssd
-  BACKEND_TYPE_HDD = 4                     // on hdd
+enum class BackendType {
+  INVALID = INVALID_TYPE_ID,  // invalid backend type
+  MM = 1,                     // on volatile memory
+  NVM = 2,                    // on non-volatile memory
+  SSD = 3,                    // on ssd
+  HDD = 4                     // on hdd
 };
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(const std::string &str);

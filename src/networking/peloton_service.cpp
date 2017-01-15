@@ -336,8 +336,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     std::vector<type::Value> params;
     // for (int it = 0; it < param_num; it++) {
     //  // TODO: Make sure why varlen_pool is used as parameter
-    //  std::shared_ptr<type::VarlenPool> pool(new
-    // type::VarlenPool(BACKEND_TYPE_MM));
+    //  std::shared_ptr<type::VarlenPool> pool(new type::VarlenPool(BackendType::MM));
     //  Value value_item;
     //  value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
     //  params.push_back(value_item);
@@ -433,7 +432,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
       storage::Tuple tuple;
 
       // TODO: Make sure why varlen_pool is used as parameter
-      // std::shared_ptr<VarlenPool> var_pool(new VarlenPool(BACKEND_TYPE_MM));
+      // std::shared_ptr<VarlenPool> var_pool(new VarlenPool(BackendType::MM));
 
       // Tile deserialization.
       // tile.DeserializeTuplesFrom(tile_input, var_pool);

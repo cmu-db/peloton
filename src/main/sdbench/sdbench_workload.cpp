@@ -552,10 +552,10 @@ static void CopyColumn(oid_t col_itr) {
 
     // TG Header
     storage::TileGroupHeader *header = new storage::TileGroupHeader(
-        BACKEND_TYPE_MM, state.tuples_per_tilegroup);
+        BackendType::MM, state.tuples_per_tilegroup);
 
     storage::Tile *new_tile = storage::TileFactory::GetTile(
-        BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+        BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
         header, *schema, nullptr, state.tuples_per_tilegroup);
 
     // Begin copy

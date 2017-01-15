@@ -28,25 +28,25 @@ namespace logging {
 
 BackendType LoggingUtil::GetBackendType(const LoggingType &logging_type) {
   // Default backend type
-  BackendType backend_type = BACKEND_TYPE_MM;
+  BackendType backend_type = BackendType::MM;
 
   switch (logging_type) {
     case LOGGING_TYPE_NVM_WBL:
-      backend_type = BACKEND_TYPE_NVM;
+      backend_type = BackendType::NVM;
       break;
 
     case LOGGING_TYPE_SSD_WBL:
-      backend_type = BACKEND_TYPE_SSD;
+      backend_type = BackendType::SSD;
       break;
 
     case LOGGING_TYPE_HDD_WBL:
-      backend_type = BACKEND_TYPE_HDD;
+      backend_type = BackendType::HDD;
       break;
 
     case LOGGING_TYPE_NVM_WAL:
     case LOGGING_TYPE_SSD_WAL:
     case LOGGING_TYPE_HDD_WAL:
-      backend_type = BACKEND_TYPE_MM;
+      backend_type = BackendType::MM;
       break;
 
     default:

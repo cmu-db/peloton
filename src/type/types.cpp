@@ -168,15 +168,15 @@ std::ostream& operator<<(std::ostream& os, const DatePartType& type) {
 
 std::string BackendTypeToString(BackendType type) {
   switch (type) {
-    case (BACKEND_TYPE_MM):
+    case (BackendType::MM):
       return "MM";
-    case (BACKEND_TYPE_NVM):
+    case (BackendType::NVM):
       return "NVM";
-    case (BACKEND_TYPE_SSD):
+    case (BackendType::SSD):
       return "SSD";
-    case (BACKEND_TYPE_HDD):
+    case (BackendType::HDD):
       return "HDD";
-    case (BACKEND_TYPE_INVALID):
+    case (BackendType::INVALID):
       return "INVALID";
     default: {
       throw ConversionException(
@@ -189,20 +189,20 @@ std::string BackendTypeToString(BackendType type) {
 
 BackendType StringToBackendType(const std::string& str) {
   if (str == "INVALID") {
-    return BACKEND_TYPE_INVALID;
+    return BackendType::INVALID;
   } else if (str == "MM") {
-    return BACKEND_TYPE_MM;
+    return BackendType::MM;
   } else if (str == "NVM") {
-    return BACKEND_TYPE_NVM;
+    return BackendType::NVM;
   } else if (str == "SSD") {
-    return BACKEND_TYPE_SSD;
+    return BackendType::SSD;
   } else if (str == "HDD") {
-    return BACKEND_TYPE_HDD;
+    return BackendType::HDD;
   } else {
     throw ConversionException(StringUtil::Format(
         "No BackendType conversion from string '%s'", str.c_str()));
   }
-  return BACKEND_TYPE_INVALID;
+  return BackendType::INVALID;
 }
 
 std::ostream& operator<<(std::ostream& os, const BackendType& type) {

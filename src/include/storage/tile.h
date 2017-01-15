@@ -272,7 +272,7 @@ class TileFactory {
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
 
-    Tile *tile = GetTile(BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID,
+    Tile *tile = GetTile(BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID,
                          INVALID_OID, header, schema, tile_group, tuple_count);
 
     return tile;

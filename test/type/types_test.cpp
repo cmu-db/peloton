@@ -94,9 +94,9 @@ TEST_F(TypesTests, DatePartTypeTest) {
 }
 
 TEST_F(TypesTests, BackendTypeTest) {
-  std::vector<BackendType> list = {BACKEND_TYPE_INVALID, BACKEND_TYPE_MM,
-                                   BACKEND_TYPE_NVM, BACKEND_TYPE_SSD,
-                                   BACKEND_TYPE_HDD};
+  std::vector<BackendType> list = {BackendType::INVALID, BackendType::MM,
+                                   BackendType::NVM, BackendType::SSD,
+                                   BackendType::HDD};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

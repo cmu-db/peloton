@@ -31,7 +31,7 @@ class StorageManagerTests : public PelotonTest {};
 TEST_F(StorageManagerTests, BasicTest) {
   peloton::storage::StorageManager storage_manager;
 
-  std::vector<peloton::BackendType> backend_types = {peloton::BACKEND_TYPE_MM};
+  std::vector<peloton::BackendType> backend_types = {peloton::BackendType::MM};
 
   size_t length = 256;
   size_t rounds = 100;
