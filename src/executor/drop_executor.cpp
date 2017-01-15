@@ -47,13 +47,13 @@ bool DropExecutor::DExecute() {
       DEFAULT_DB_NAME, table_name, current_txn);
   current_txn->SetResult(result);
 
-  if (current_txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS) {
+  if (current_txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
-  } else if (current_txn->GetResult() == ResultType::RESULT_TYPE_FAILURE &&
+  } else if (current_txn->GetResult() == ResultType::FAILURE &&
              node.IsMissing()) {
-    current_txn->SetResult(ResultType::RESULT_TYPE_SUCCESS);
+    current_txn->SetResult(ResultType::SUCCESS);
     LOG_TRACE("Dropping table Succeeded!");
-  } else if (current_txn->GetResult() == ResultType::RESULT_TYPE_FAILURE &&
+  } else if (current_txn->GetResult() == ResultType::FAILURE &&
              !node.IsMissing()) {
     LOG_TRACE("Dropping table Failed!");
   } else {

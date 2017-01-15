@@ -175,7 +175,7 @@ struct TransactionSchedule {
   int schedule_id;
   bool declared_ro;
   TransactionSchedule(int schedule_id_, bool ro = false)
-      : txn_result(ResultType::RESULT_TYPE_FAILURE),
+      : txn_result(ResultType::FAILURE),
         stored_value(0),
         schedule_id(schedule_id_),
         declared_ro(ro) {}
@@ -243,7 +243,7 @@ class TransactionThread {
       }
     }
 
-    if (schedule->txn_result == ResultType::RESULT_TYPE_ABORTED) {
+    if (schedule->txn_result == ResultType::ABORTED) {
       cur_seq++;
       return;
     }
@@ -303,7 +303,7 @@ class TransactionThread {
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction(txn);
         LOG_INFO("Txn %d commits: %s", schedule->schedule_id,
-                 schedule->txn_result == ResultType::RESULT_TYPE_SUCCESS ? "Success" : "Fail");
+                 schedule->txn_result == ResultType::SUCCESS ? "Success" : "Fail");
         txn = NULL;
         break;
       }
@@ -320,12 +320,12 @@ class TransactionThread {
       }
     }
 
-    if (txn != NULL && txn->GetResult() == ResultType::RESULT_TYPE_FAILURE) {
+    if (txn != NULL && txn->GetResult() == ResultType::FAILURE) {
       txn_manager->AbortTransaction(txn);
       txn = NULL;
       LOG_TRACE("ABORT NOW");
       if (execute_result == false) LOG_TRACE("Executor returns false");
-      schedule->txn_result = ResultType::RESULT_TYPE_ABORTED;
+      schedule->txn_result = ResultType::ABORTED;
     }
   }
 

@@ -108,9 +108,9 @@ peloton_status PlanExecutor::ExecutePlan(
     // Set the result
     p_status.m_processed = executor_context->num_processed;
     // success so far
-    p_status.m_result = ResultType::RESULT_TYPE_SUCCESS;
+    p_status.m_result = ResultType::SUCCESS;
   } else {
-    p_status.m_result = ResultType::RESULT_TYPE_FAILURE;
+    p_status.m_result = ResultType::FAILURE;
   }
 
   p_status.m_result_slots = nullptr;
@@ -170,7 +170,7 @@ int PlanExecutor::ExecutePlan(
   // Abort and cleanup
   if (status == false) {
     init_failure = true;
-    txn->SetResult(ResultType::RESULT_TYPE_FAILURE);
+    txn->SetResult(ResultType::FAILURE);
     goto cleanup;
   }
 
@@ -209,13 +209,13 @@ cleanup:
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
     switch (status) {
-      case ResultType::RESULT_TYPE_SUCCESS:
+      case ResultType::SUCCESS:
         // Commit
         return executor_context->num_processed;
 
         break;
 
-      case ResultType::RESULT_TYPE_FAILURE:
+      case ResultType::FAILURE:
       default:
         // Abort
         return -1;

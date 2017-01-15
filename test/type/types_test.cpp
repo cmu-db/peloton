@@ -359,9 +359,9 @@ TEST_F(TypesTests, ParseNodeTypeTest) {
 
 TEST_F(TypesTests, ResultTypeTest) {
   std::vector<ResultType> list = {
-      ResultType::RESULT_TYPE_INVALID, ResultType::RESULT_TYPE_SUCCESS,
-      ResultType::RESULT_TYPE_FAILURE, ResultType::RESULT_TYPE_ABORTED,
-      ResultType::RESULT_TYPE_NOOP,    ResultType::RESULT_TYPE_UNKNOWN};
+      ResultType::INVALID, ResultType::SUCCESS,
+      ResultType::FAILURE, ResultType::ABORTED,
+      ResultType::NOOP,    ResultType::UNKNOWN};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

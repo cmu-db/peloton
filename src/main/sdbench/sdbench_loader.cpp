@@ -108,7 +108,7 @@ void LoadTable() {
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");

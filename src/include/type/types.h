@@ -642,12 +642,12 @@ enum TaskPriorityType {
 //===--------------------------------------------------------------------===//
 
 enum class ResultType {
-  RESULT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid result type
-  RESULT_TYPE_SUCCESS = 1,
-  RESULT_TYPE_FAILURE = 2,
-  RESULT_TYPE_ABORTED = 3,  // aborted
-  RESULT_TYPE_NOOP = 4,     // no op
-  RESULT_TYPE_UNKNOWN = 5
+  INVALID = INVALID_TYPE_ID,  // invalid result type
+  SUCCESS = 1,
+  FAILURE = 2,
+  ABORTED = 3,  // aborted
+  NOOP = 4,     // no op
+  UNKNOWN = 5
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);

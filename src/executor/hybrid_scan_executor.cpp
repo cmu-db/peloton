@@ -239,7 +239,7 @@ bool HybridScanExecutor::SeqScanUtil() {
                                                      acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
-                                                     ResultType::RESULT_TYPE_FAILURE);
+                                                     ResultType::FAILURE);
             return res;
           }
         }
@@ -397,7 +397,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
                                                    acquire_owner);
         if (!res) {
           transaction_manager.SetTransactionResult(current_txn,
-                                                   ResultType::RESULT_TYPE_FAILURE);
+                                                   ResultType::FAILURE);
           return res;
         }
         break;

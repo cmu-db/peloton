@@ -308,7 +308,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
           query, result, tuple_descriptor, rows_affected, error_message);
 
       // check status
-      if (status == ResultType::RESULT_TYPE_FAILURE) {
+      if (status == ResultType::FAILURE) {
         SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
         break;
       }
@@ -782,11 +782,11 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
       rows_affected, error_message);
 
   switch (status) {
-    case ResultType::RESULT_TYPE_FAILURE:
+    case ResultType::FAILURE:
       LOG_ERROR("Failed to execute: %s", error_message.c_str());
       SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
       return;
-    case ResultType::RESULT_TYPE_ABORTED:
+    case ResultType::ABORTED:
       if (query_type != "ROLLBACK") {
         LOG_DEBUG("Failed to execute: Conflicting txn aborted");
         // Send an error response if the abort is not due to ROLLBACK query

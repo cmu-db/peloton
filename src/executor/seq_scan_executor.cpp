@@ -146,7 +146,7 @@ bool SeqScanExecutor::DExecute() {
             position_list.push_back(tuple_id);
             auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);
             if (!res) {
-              transaction_manager.SetTransactionResult(current_txn, ResultType::RESULT_TYPE_FAILURE);
+              transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
               return res;
             }
           } else {
@@ -159,7 +159,7 @@ bool SeqScanExecutor::DExecute() {
               position_list.push_back(tuple_id);
               auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);
               if (!res) {
-                transaction_manager.SetTransactionResult(current_txn, ResultType::RESULT_TYPE_FAILURE);
+                transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
                 return res;
               } else {
                 LOG_TRACE("Sequential Scan Predicate Satisfied");

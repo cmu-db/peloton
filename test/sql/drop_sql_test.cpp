@@ -55,7 +55,7 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Drop the table
   EXPECT_EQ(SQLTestsUtil::ExecuteSQLQuery("DROP TABLE test;"),
-            ResultType::RESULT_TYPE_SUCCESS);
+            ResultType::SUCCESS);
 
   // Query from the dropped table
   result.clear();

@@ -162,7 +162,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto new_order_ids = ExecuteRead(&limit_executor);
     
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -215,7 +215,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto orders_ids = ExecuteRead(&orders_index_scan_executor);
     
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -257,7 +257,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto order_line_index_scan_res = ExecuteRead(&order_line_index_scan_executor);
 
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -312,7 +312,7 @@ bool RunDelivery(const size_t &thread_id){
     ExecuteDelete(&new_order_delete_executor);
     
     // Check if aborted
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -369,7 +369,7 @@ bool RunDelivery(const size_t &thread_id){
     // Execute the query
     ExecuteUpdate(&orders_update_executor);
     
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -425,7 +425,7 @@ bool RunDelivery(const size_t &thread_id){
 
     ExecuteUpdate(&order_line_update_executor);
     
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -498,23 +498,23 @@ bool RunDelivery(const size_t &thread_id){
     // Execute the query
     ExecuteUpdate(&customer_update_executor);
 
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
     }
   }
 
-  assert(txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS);
+  assert(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
     return true;
   } else {
-    assert(result == ResultType::RESULT_TYPE_ABORTED || 
-           result == ResultType::RESULT_TYPE_FAILURE);
+    assert(result == ResultType::ABORTED || 
+           result == ResultType::FAILURE);
     return false;
   }
 }

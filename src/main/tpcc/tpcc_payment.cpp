@@ -187,7 +187,7 @@ bool RunPayment(const size_t &thread_id){
     auto customer_list = ExecuteRead(&customer_pindex_scan_executor);
 
     // Check if aborted
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -237,7 +237,7 @@ bool RunPayment(const size_t &thread_id){
     auto customer_list = ExecuteRead(&customer_index_scan_executor);
 
     // Check if aborted
-    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -283,7 +283,7 @@ bool RunPayment(const size_t &thread_id){
   auto warehouse_list = ExecuteRead(&warehouse_index_scan_executor);
 
   // Check if aborted
-  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -328,7 +328,7 @@ bool RunPayment(const size_t &thread_id){
   auto district_list = ExecuteRead(&district_index_scan_executor);
 
   // Check if aborted
-  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -387,7 +387,7 @@ bool RunPayment(const size_t &thread_id){
   ExecuteUpdate(&warehouse_update_executor);
 
   // Check if aborted
-  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -446,7 +446,7 @@ bool RunPayment(const size_t &thread_id){
   ExecuteUpdate(&district_update_executor);
 
   // Check the result
-  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -608,7 +608,7 @@ bool RunPayment(const size_t &thread_id){
   }
 
   // Check the result
-  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -642,21 +642,21 @@ bool RunPayment(const size_t &thread_id){
   history_insert_executor.Execute();
 
   // Check result
-  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
   }
 
-  PL_ASSERT(txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     return true;
   } else {
-    PL_ASSERT(result == ResultType::RESULT_TYPE_ABORTED || 
-           result == ResultType::RESULT_TYPE_FAILURE);
+    PL_ASSERT(result == ResultType::ABORTED || 
+           result == ResultType::FAILURE);
     return false;
   }
 }

@@ -47,7 +47,7 @@
 //
 //      scheduler.Run();
 //
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
 //      EXPECT_EQ(4, scheduler.schedules[0].results[0]);
 //    }
 //
@@ -70,7 +70,7 @@
 //
 //      scheduler.Run();
 //
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
 //      EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
 //      EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
 //      EXPECT_EQ(3, scheduler.schedules[0].results[2]);
@@ -98,7 +98,7 @@
 //
 //      scheduler.Run();
 //
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
 //      EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
 //      EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
 //      EXPECT_EQ(2, scheduler.schedules[0].results[2]);
@@ -130,9 +130,9 @@
 //      scheduler.Txn(2).Commit();
 //
 //      scheduler.Run();
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[0].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_ABORTED, scheduler.schedules[1].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_ABORTED, scheduler.schedules[2].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[1].txn_result);
+//      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[2].txn_result);
 //
 //      EXPECT_EQ(10, scheduler.schedules[0].results.size());
 //    }
@@ -149,8 +149,8 @@
 //      scheduler.Txn(1).Commit();
 //
 //      scheduler.Run();
-//      EXPECT_EQ(ResultType::RESULT_TYPE_ABORTED, scheduler.schedules[0].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[1].txn_result);
+//      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
 //
 //      EXPECT_EQ(10, scheduler.schedules[1].results.size());
 //    }
@@ -167,8 +167,8 @@
 //      scheduler.Txn(1).Commit();
 //
 //      scheduler.Run();
-//      EXPECT_EQ(ResultType::RESULT_TYPE_ABORTED, scheduler.schedules[0].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[1].txn_result);
+//      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
 //
 //      EXPECT_EQ(1, scheduler.schedules[1].results.size());
 //    }
@@ -190,8 +190,8 @@
 //
 //      scheduler.Run();
 //
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[0].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[1].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
 //      EXPECT_EQ(0, scheduler.schedules[0].results[0]);
 //      EXPECT_EQ(0, scheduler.schedules[0].results[1]);
 //      EXPECT_EQ(0, scheduler.schedules[0].results[2]);
@@ -218,9 +218,9 @@
 //      scheduler.Txn(2).Commit();
 //
 //      scheduler.Run();
-//      EXPECT_EQ(ResultType::RESULT_TYPE_ABORTED, scheduler.schedules[0].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[1].txn_result);
-//      EXPECT_EQ(ResultType::RESULT_TYPE_SUCCESS, scheduler.schedules[2].txn_result);
+//      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
+//      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[2].txn_result);
 //
 //      EXPECT_EQ(0, scheduler.schedules[1].results[0]);
 //      EXPECT_EQ(0, scheduler.schedules[1].results[1]);

@@ -33,7 +33,7 @@ typedef struct peloton_status {
 
   peloton_status() {
     m_processed = 0;
-    m_result = peloton::ResultType::RESULT_TYPE_SUCCESS;
+    m_result = peloton::ResultType::SUCCESS;
     m_result_slots = nullptr;
   }
 

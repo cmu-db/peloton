@@ -128,7 +128,7 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
   auto &log_manager = logging::LogManager::GetInstance();
 
-  if (current_txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS) {
+  if (current_txn->GetResult() == ResultType::SUCCESS) {
     if (current_txn->IsGCSetEmpty() != true) {
       gc::GCManagerFactory::GetInstance().
           RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
@@ -758,7 +758,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   if (current_txn->IsDeclaredReadOnly() == true) {
     EndReadonlyTransaction(current_txn);
-    return ResultType::RESULT_TYPE_SUCCESS;
+    return ResultType::SUCCESS;
   }
 
   auto &manager = catalog::Manager::GetInstance();
@@ -1077,7 +1077,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     }
   }
 
-  current_txn->SetResult(ResultType::RESULT_TYPE_ABORTED);
+  current_txn->SetResult(ResultType::ABORTED);
   EndTransaction(current_txn);
 
   // Increment # txns aborted metric
@@ -1085,7 +1085,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
   }
 
-  return ResultType::RESULT_TYPE_ABORTED;
+  return ResultType::ABORTED;
 }
 
 }  // End storage namespace

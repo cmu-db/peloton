@@ -89,7 +89,7 @@ ResultType SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
   }
   catch (Exception &e) {
     error_message = e.what();
-    return ResultType::RESULT_TYPE_FAILURE;
+    return ResultType::FAILURE;
   }
 }
 

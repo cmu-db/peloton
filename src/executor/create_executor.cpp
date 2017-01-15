@@ -50,9 +50,9 @@ bool CreateExecutor::DExecute() {
         database_name, table_name, std::move(schema), current_txn);
     current_txn->SetResult(result);
 
-    if (current_txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS) {
+    if (current_txn->GetResult() == ResultType::SUCCESS) {
       LOG_TRACE("Creating table succeeded!");
-    } else if (current_txn->GetResult() == ResultType::RESULT_TYPE_FAILURE) {
+    } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
       LOG_TRACE("Result is: %d", current_txn->GetResult());
@@ -73,9 +73,9 @@ bool CreateExecutor::DExecute() {
         index_type);
     current_txn->SetResult(result);
 
-    if (current_txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS) {
+    if (current_txn->GetResult() == ResultType::SUCCESS) {
       LOG_TRACE("Creating table succeeded!");
-    } else if (current_txn->GetResult() == ResultType::RESULT_TYPE_FAILURE) {
+    } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
       LOG_TRACE("Result is: %d", current_txn->GetResult());

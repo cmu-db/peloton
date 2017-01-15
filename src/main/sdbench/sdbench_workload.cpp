@@ -814,7 +814,7 @@ static void JoinQueryHelper(
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
@@ -971,7 +971,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
@@ -1081,7 +1081,7 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
@@ -1145,7 +1145,7 @@ static void InsertHelper() {
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == ResultType::RESULT_TYPE_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
