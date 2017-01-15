@@ -50,7 +50,7 @@ class AbstractScan : public AbstractPlan {
   inline const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_ABSTRACT_SCAN;
+    return PlanNodeType::ABSTRACT_SCAN;
   }
 
   inline const std::string GetInfo() const { return "AbstractScan"; }

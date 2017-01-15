@@ -45,7 +45,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
       std::vector<oid_t> &join_column_ids_right);
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_NESTLOOP;
+    return PlanNodeType::NESTLOOP;
   }
 
   const std::string GetInfo() const { return "NestedLoopJoin"; }

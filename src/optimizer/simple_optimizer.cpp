@@ -52,9 +52,9 @@ class AbstractPlan;
 }
 namespace optimizer {
 
-SimpleOptimizer::SimpleOptimizer() {};
+SimpleOptimizer::SimpleOptimizer(){};
 
-SimpleOptimizer::~SimpleOptimizer() {};
+SimpleOptimizer::~SimpleOptimizer(){};
 
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList>& parse_tree) {
@@ -107,8 +107,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           auto child_SelectPlan = CreateHackingNestedLoopJoinPlan(select_stmt);
           child_plan = std::move(child_SelectPlan);
           break;
-        }
-        catch (Exception& e) {
+        } catch (Exception& e) {
           throw NotImplementedException("Error: Joins are not implemented yet");
         }
       }
@@ -155,7 +154,6 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // select_list
       // No problem given that the underlying structure is a map.
       if (select_stmt->order != nullptr) {
-
         expression::ExpressionUtil::TransformExpression(
             column_ids, select_stmt->order->expr, schema, needs_projection);
       }
@@ -423,10 +421,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_TRACE("Function name: %s",
                         ((expression::TupleValueExpression*)agg_expr)
                             ->GetExpressionName());
-              LOG_TRACE("Aggregate type: %s",
-                        ExpressionTypeToString(
-                            ParserExpressionNameToExpressionType(
-                                expr->GetExpressionName())).c_str());
+              LOG_TRACE(
+                  "Aggregate type: %s",
+                  ExpressionTypeToString(ParserExpressionNameToExpressionType(
+                                             expr->GetExpressionName()))
+                      .c_str());
               planner::AggregatePlan::AggTerm agg_term(
                   agg_expr->GetExpressionType(), agg_over->Copy(),
                   agg_expr->distinct_);
@@ -940,14 +939,19 @@ void SimpleOptimizer::GetPredicateColumns(
       // (constant_value_expression.h:40)
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-            expression->GetModifiableChild(1))->GetValue());
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))->GetValueType());
+                      expression->GetModifiableChild(1))
+                      ->GetValueType());
       } else
-        values.push_back(type::ValueFactory::GetParameterOffsetValue(
-            reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableChild(1))->GetValueIdx()).Copy());
+        values.push_back(
+            type::ValueFactory::GetParameterOffsetValue(
+                reinterpret_cast<expression::ParameterValueExpression*>(
+                    expression->GetModifiableChild(1))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -965,14 +969,19 @@ void SimpleOptimizer::GetPredicateColumns(
 
       if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-            expression->GetModifiableChild(1))->GetValue());
+                             expression->GetModifiableChild(1))
+                             ->GetValue());
         LOG_TRACE("Value Type: %d",
                   reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))->GetValueType());
+                      expression->GetModifiableChild(0))
+                      ->GetValueType());
       } else
-        values.push_back(type::ValueFactory::GetParameterOffsetValue(
-            reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableChild(0))->GetValueIdx()).Copy());
+        values.push_back(
+            type::ValueFactory::GetParameterOffsetValue(
+                reinterpret_cast<expression::ParameterValueExpression*>(
+                    expression->GetModifiableChild(0))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
@@ -1221,10 +1230,12 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
 
   // Get the key column name based on the join condition
   auto right_key_col_name = static_cast<expression::TupleValueExpression*>(
-      join_condition->GetModifiableChild(0))->GetColumnName();
-  if (right_schema->GetColumnID(right_key_col_name) == (oid_t) - 1)
+                                join_condition->GetModifiableChild(0))
+                                ->GetColumnName();
+  if (right_schema->GetColumnID(right_key_col_name) == (oid_t)-1)
     right_key_col_name = static_cast<expression::TupleValueExpression*>(
-        join_condition->GetModifiableChild(1))->GetColumnName();
+                             join_condition->GetModifiableChild(1))
+                             ->GetColumnName();
   // Generate hash for right table
   auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(
       right_schema, right_key_col_name);
@@ -1277,7 +1288,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
         for (int schema_index = 0; schema_index < 2; schema_index++) {
           auto& schema = schemas[schema_index];
           old_col_id = schema->GetColumnID(tup_expr->GetColumnName());
-          if (old_col_id != (oid_t) - 1) {
+          if (old_col_id != (oid_t)-1) {
             column = schema->GetColumn(old_col_id);
             output_table_columns.push_back(column);
             dml.push_back(
@@ -1337,10 +1348,10 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
   planner::IndexScanPlan* index_scan_plan = nullptr;
 
   // child_SelectPlan is projection plan or scan plan
-  if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_PROJECTION) {
+  if (select_plan->GetPlanNodeType() == PlanNodeType::PROJECTION) {
     // it's child is index_scan or seq_scan. Only index_scan is set
     if (select_plan->GetChildren()[0]->GetPlanNodeType() ==
-        PLAN_NODE_TYPE_INDEXSCAN) {
+        PlanNodeType::INDEXSCAN) {
       index_scan_plan =
           (planner::IndexScanPlan*)select_plan->GetChildren()[0].get();
     }
@@ -1348,7 +1359,7 @@ void SimpleOptimizer::SetIndexScanFlag(planner::AbstractPlan* select_plan,
   // otherwise child_SelectPlan itself is scan plan
   else {
     // child_SelectPlan is index_scan or seq_scan
-    if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_INDEXSCAN) {
+    if (select_plan->GetPlanNodeType() == PlanNodeType::INDEXSCAN) {
       index_scan_plan = (planner::IndexScanPlan*)select_plan;
     }
   }
@@ -1371,10 +1382,10 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
 
   // Check whether underlying node is index scan
   // Child_SelectPlan is projection plan or scan plan
-  if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_PROJECTION) {
+  if (select_plan->GetPlanNodeType() == PlanNodeType::PROJECTION) {
     // it's child is index_scan or seq_scan. Only index_scan is set
     if (select_plan->GetChildren()[0]->GetPlanNodeType() ==
-        PLAN_NODE_TYPE_INDEXSCAN) {
+        PlanNodeType::INDEXSCAN) {
       index_scan_plan =
           (planner::IndexScanPlan*)select_plan->GetChildren()[0].get();
     }
@@ -1382,7 +1393,7 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
   // otherwise child_SelectPlan itself is scan plan
   else {
     // child_SelectPlan is index_scan or seq_scan
-    if (select_plan->GetPlanNodeType() == PLAN_NODE_TYPE_INDEXSCAN) {
+    if (select_plan->GetPlanNodeType() == PlanNodeType::INDEXSCAN) {
       index_scan_plan = (planner::IndexScanPlan*)select_plan;
     }
   }
@@ -1401,7 +1412,7 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
 
   // Check whether all predicates types of index scan are equal
   for (auto type : index_scan_plan->GetExprTypes()) {
-    if (type != EXPRESSION_TYPE_COMPARE_EQUAL) {
+    if (type != ExpressionType::COMPARE_EQUAL) {
       LOG_TRACE("predicates types of index scan are not equal");
       return false;
     }

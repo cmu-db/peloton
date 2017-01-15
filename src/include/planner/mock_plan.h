@@ -31,7 +31,7 @@ class MockPlan : public planner::AbstractPlan {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_MOCK; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::MOCK; }
 
   //===--------------------------------------------------------------------===//
   // Utilities

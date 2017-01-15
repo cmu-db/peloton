@@ -63,7 +63,7 @@ class UpdatePlan : public AbstractPlan {
     return project_info_.get();
   }
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_UPDATE; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::UPDATE; }
 
   storage::DataTable *GetTable() const { return target_table_; }
 

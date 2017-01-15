@@ -41,7 +41,7 @@ class LimitPlan : public AbstractPlan {
 
   size_t GetOffset() const { return offset_; }
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_LIMIT; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::LIMIT; }
 
   const std::string GetInfo() const { return "Limit"; }
 

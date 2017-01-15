@@ -140,15 +140,15 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
 
   // Check scan plan
   ASSERT_FALSE(update_plan == nullptr);
-  EXPECT_EQ(update_plan->GetPlanNodeType(), PLAN_NODE_TYPE_UPDATE);
+  EXPECT_EQ(update_plan->GetPlanNodeType(), PlanNodeType::UPDATE);
   auto& update_scan_plan = update_plan->GetChildren().front();
-  EXPECT_EQ(update_scan_plan->GetPlanNodeType(), PLAN_NODE_TYPE_INDEXSCAN);
+  EXPECT_EQ(update_scan_plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
 
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_name = 'CS'");
   update_plan = optimizer.BuildPelotonPlanTree(update_stmt);
   EXPECT_EQ(update_plan->GetChildren().front()->GetPlanNodeType(),
-            PLAN_NODE_TYPE_SEQSCAN);
+            PlanNodeType::SEQSCAN);
 
   // Test delete tuple with index scan
   LOG_TRACE("Deleting a tuple...");
@@ -158,9 +158,9 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt);
 
   // Check scan plan
-  EXPECT_EQ(del_plan->GetPlanNodeType(), PLAN_NODE_TYPE_DELETE);
+  EXPECT_EQ(del_plan->GetPlanNodeType(), PlanNodeType::DELETE);
   auto& del_scan_plan = del_plan->GetChildren().front();
-  EXPECT_EQ(del_scan_plan->GetPlanNodeType(), PLAN_NODE_TYPE_INDEXSCAN);
+  EXPECT_EQ(del_scan_plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   del_plan = nullptr;
 
   // Test delete tuple with seq scan
@@ -168,7 +168,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
       "DELETE FROM department_table WHERE dept_name = 'CS'");
   auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq);
   auto& del_scan_plan_seq = del_plan_seq->GetChildren().front();
-  EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
+  EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PlanNodeType::SEQSCAN);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

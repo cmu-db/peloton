@@ -350,12 +350,12 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
 
     // TODO: We can add more plan type in this switch to process
     switch (plan_type) {
-      case PLAN_NODE_TYPE_INVALID: {
+      case PlanNodeType::INVALID: {
         LOG_ERROR("Queryplan recived desen't have type");
         break;
       }
 
-      case PLAN_NODE_TYPE_SEQSCAN: {
+      case PlanNodeType::SEQSCAN: {
         LOG_TRACE("SEQSCAN revieved");
         std::string plan = request->plan();
         ReferenceSerializeInput input(plan.c_str(), plan.size());

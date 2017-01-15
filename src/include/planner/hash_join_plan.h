@@ -41,7 +41,7 @@ class HashJoinPlan : public AbstractJoinPlan {
       const std::vector<oid_t> &outer_hashkeys);
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_HASHJOIN;
+    return PlanNodeType::HASHJOIN;
   }
 
   const std::string GetInfo() const { return "HashJoin"; }

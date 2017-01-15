@@ -83,7 +83,7 @@ class AggregatePlan : public AbstractPlan {
   PelotonAggType GetAggregateStrategy() const { return agg_strategy_; }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
+    return PlanNodeType::AGGREGATE_V2;
   }
 
   ~AggregatePlan() {

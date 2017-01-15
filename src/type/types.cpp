@@ -886,94 +886,94 @@ IndexConstraintType StringToIndexConstraintType(const std::string& str) {
 
 std::string PlanNodeTypeToString(PlanNodeType type) {
   switch (type) {
-    case PLAN_NODE_TYPE_INVALID: {
+    case PlanNodeType::INVALID: {
       return ("INVALID");
     }
-    case PLAN_NODE_TYPE_ABSTRACT_SCAN: {
+    case PlanNodeType::ABSTRACT_SCAN: {
       return ("ABSTRACT_SCAN");
     }
-    case PLAN_NODE_TYPE_SEQSCAN: {
+    case PlanNodeType::SEQSCAN: {
       return ("SEQSCAN");
     }
-    case PLAN_NODE_TYPE_INDEXSCAN: {
+    case PlanNodeType::INDEXSCAN: {
       return ("INDEXSCAN");
     }
-    case PLAN_NODE_TYPE_NESTLOOP: {
+    case PlanNodeType::NESTLOOP: {
       return ("NESTLOOP");
     }
-    case PLAN_NODE_TYPE_NESTLOOPINDEX: {
+    case PlanNodeType::NESTLOOPINDEX: {
       return ("NESTLOOPINDEX");
     }
-    case PLAN_NODE_TYPE_MERGEJOIN: {
+    case PlanNodeType::MERGEJOIN: {
       return ("MERGEJOIN");
     }
-    case PLAN_NODE_TYPE_HASHJOIN: {
+    case PlanNodeType::HASHJOIN: {
       return ("HASHJOIN");
     }
-    case PLAN_NODE_TYPE_UPDATE: {
+    case PlanNodeType::UPDATE: {
       return ("UPDATE");
     }
-    case PLAN_NODE_TYPE_INSERT: {
+    case PlanNodeType::INSERT: {
       return ("INSERT");
     }
-    case PLAN_NODE_TYPE_DELETE: {
+    case PlanNodeType::DELETE: {
       return ("DELETE");
     }
-    case PLAN_NODE_TYPE_DROP: {
+    case PlanNodeType::DROP: {
       return ("DROP");
     }
-    case PLAN_NODE_TYPE_CREATE: {
+    case PlanNodeType::CREATE: {
       return ("CREATE");
     }
-    case PLAN_NODE_TYPE_SEND: {
+    case PlanNodeType::SEND: {
       return ("SEND");
     }
-    case PLAN_NODE_TYPE_RECEIVE: {
+    case PlanNodeType::RECEIVE: {
       return ("RECEIVE");
     }
-    case PLAN_NODE_TYPE_PRINT: {
+    case PlanNodeType::PRINT: {
       return ("PRINT");
     }
-    case PLAN_NODE_TYPE_AGGREGATE: {
+    case PlanNodeType::AGGREGATE: {
       return ("AGGREGATE");
     }
-    case PLAN_NODE_TYPE_UNION: {
+    case PlanNodeType::UNION: {
       return ("UNION");
     }
-    case PLAN_NODE_TYPE_ORDERBY: {
+    case PlanNodeType::ORDERBY: {
       return ("ORDERBY");
     }
-    case PLAN_NODE_TYPE_PROJECTION: {
+    case PlanNodeType::PROJECTION: {
       return ("PROJECTION");
     }
-    case PLAN_NODE_TYPE_MATERIALIZE: {
+    case PlanNodeType::MATERIALIZE: {
       return ("MATERIALIZE");
     }
-    case PLAN_NODE_TYPE_LIMIT: {
+    case PlanNodeType::LIMIT: {
       return ("LIMIT");
     }
-    case PLAN_NODE_TYPE_DISTINCT: {
+    case PlanNodeType::DISTINCT: {
       return ("DISTINCT");
     }
-    case PLAN_NODE_TYPE_SETOP: {
+    case PlanNodeType::SETOP: {
       return ("SETOP");
     }
-    case PLAN_NODE_TYPE_APPEND: {
+    case PlanNodeType::APPEND: {
       return ("APPEND");
     }
-    case PLAN_NODE_TYPE_AGGREGATE_V2: {
+    case PlanNodeType::AGGREGATE_V2: {
       return ("AGGREGATE_V2");
     }
-    case PLAN_NODE_TYPE_HASH: {
+    case PlanNodeType::HASH: {
       return ("HASH");
     }
-    case PLAN_NODE_TYPE_RESULT: {
+    case PlanNodeType::RESULT: {
       return ("RESULT");
     }
-    case PLAN_NODE_TYPE_COPY: {
+    case PlanNodeType::COPY: {
       return ("COPY");
     }
-    case PLAN_NODE_TYPE_MOCK: {
+    case PlanNodeType::MOCK: {
       return ("MOCK");
     }
     default: {
@@ -988,70 +988,75 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
 PlanNodeType StringToPlanNodeType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return PLAN_NODE_TYPE_INVALID;
+    return PlanNodeType::INVALID;
   } else if (upper_str == "ABSTRACT_SCAN") {
-    return PLAN_NODE_TYPE_ABSTRACT_SCAN;
+    return PlanNodeType::ABSTRACT_SCAN;
   } else if (upper_str == "SEQSCAN") {
-    return PLAN_NODE_TYPE_SEQSCAN;
+    return PlanNodeType::SEQSCAN;
   } else if (upper_str == "INDEXSCAN") {
-    return PLAN_NODE_TYPE_INDEXSCAN;
+    return PlanNodeType::INDEXSCAN;
   } else if (upper_str == "NESTLOOP") {
-    return PLAN_NODE_TYPE_NESTLOOP;
+    return PlanNodeType::NESTLOOP;
   } else if (upper_str == "NESTLOOPINDEX") {
-    return PLAN_NODE_TYPE_NESTLOOPINDEX;
+    return PlanNodeType::NESTLOOPINDEX;
   } else if (upper_str == "MERGEJOIN") {
-    return PLAN_NODE_TYPE_MERGEJOIN;
+    return PlanNodeType::MERGEJOIN;
   } else if (upper_str == "HASHJOIN") {
-    return PLAN_NODE_TYPE_HASHJOIN;
+    return PlanNodeType::HASHJOIN;
   } else if (upper_str == "UPDATE") {
-    return PLAN_NODE_TYPE_UPDATE;
+    return PlanNodeType::UPDATE;
   } else if (upper_str == "INSERT") {
-    return PLAN_NODE_TYPE_INSERT;
+    return PlanNodeType::INSERT;
   } else if (upper_str == "DELETE") {
-    return PLAN_NODE_TYPE_DELETE;
+    return PlanNodeType::DELETE;
   } else if (upper_str == "DROP") {
-    return PLAN_NODE_TYPE_DROP;
+    return PlanNodeType::DROP;
   } else if (upper_str == "CREATE") {
-    return PLAN_NODE_TYPE_CREATE;
+    return PlanNodeType::CREATE;
   } else if (upper_str == "SEND") {
-    return PLAN_NODE_TYPE_SEND;
+    return PlanNodeType::SEND;
   } else if (upper_str == "RECEIVE") {
-    return PLAN_NODE_TYPE_RECEIVE;
+    return PlanNodeType::RECEIVE;
   } else if (upper_str == "PRINT") {
-    return PLAN_NODE_TYPE_PRINT;
+    return PlanNodeType::PRINT;
   } else if (upper_str == "AGGREGATE") {
-    return PLAN_NODE_TYPE_AGGREGATE;
+    return PlanNodeType::AGGREGATE;
   } else if (upper_str == "UNION") {
-    return PLAN_NODE_TYPE_UNION;
+    return PlanNodeType::UNION;
   } else if (upper_str == "ORDERBY") {
-    return PLAN_NODE_TYPE_ORDERBY;
+    return PlanNodeType::ORDERBY;
   } else if (upper_str == "PROJECTION") {
-    return PLAN_NODE_TYPE_PROJECTION;
+    return PlanNodeType::PROJECTION;
   } else if (upper_str == "MATERIALIZE") {
-    return PLAN_NODE_TYPE_MATERIALIZE;
+    return PlanNodeType::MATERIALIZE;
   } else if (upper_str == "LIMIT") {
-    return PLAN_NODE_TYPE_LIMIT;
+    return PlanNodeType::LIMIT;
   } else if (upper_str == "DISTINCT") {
-    return PLAN_NODE_TYPE_DISTINCT;
+    return PlanNodeType::DISTINCT;
   } else if (upper_str == "SETOP") {
-    return PLAN_NODE_TYPE_SETOP;
+    return PlanNodeType::SETOP;
   } else if (upper_str == "APPEND") {
-    return PLAN_NODE_TYPE_APPEND;
+    return PlanNodeType::APPEND;
   } else if (upper_str == "AGGREGATE_V2") {
-    return PLAN_NODE_TYPE_AGGREGATE_V2;
+    return PlanNodeType::AGGREGATE_V2;
   } else if (upper_str == "HASH") {
-    return PLAN_NODE_TYPE_HASH;
+    return PlanNodeType::HASH;
   } else if (upper_str == "RESULT") {
-    return PLAN_NODE_TYPE_RESULT;
+    return PlanNodeType::RESULT;
   } else if (upper_str == "COPY") {
-    return PLAN_NODE_TYPE_COPY;
+    return PlanNodeType::COPY;
   } else if (upper_str == "MOCK") {
-    return PLAN_NODE_TYPE_MOCK;
+    return PlanNodeType::MOCK;
   } else {
     throw ConversionException(StringUtil::Format(
         "No PlanNodeType conversion from string '%s'", upper_str.c_str()));
   }
-  return PLAN_NODE_TYPE_INVALID;
+  return PlanNodeType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const PlanNodeType& type) {
+  os << PlanNodeTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//

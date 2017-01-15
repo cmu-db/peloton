@@ -42,7 +42,7 @@ class CreatePlan : public AbstractPlan {
 
   explicit CreatePlan(parser::CreateStatement *parse_tree);
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_CREATE; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::CREATE; }
 
   const std::string GetInfo() const { return "Create Plan"; }
 

@@ -298,21 +298,21 @@ TEST_F(TypesTests, IndexConstraintTypeTest) {
 
 TEST_F(TypesTests, PlanNodeTypeTest) {
   std::vector<PlanNodeType> list = {
-      PLAN_NODE_TYPE_INVALID,     PLAN_NODE_TYPE_ABSTRACT_SCAN,
-      PLAN_NODE_TYPE_SEQSCAN,     PLAN_NODE_TYPE_INDEXSCAN,
-      PLAN_NODE_TYPE_NESTLOOP,    PLAN_NODE_TYPE_NESTLOOPINDEX,
-      PLAN_NODE_TYPE_MERGEJOIN,   PLAN_NODE_TYPE_HASHJOIN,
-      PLAN_NODE_TYPE_UPDATE,      PLAN_NODE_TYPE_INSERT,
-      PLAN_NODE_TYPE_DELETE,      PLAN_NODE_TYPE_DROP,
-      PLAN_NODE_TYPE_CREATE,      PLAN_NODE_TYPE_SEND,
-      PLAN_NODE_TYPE_RECEIVE,     PLAN_NODE_TYPE_PRINT,
-      PLAN_NODE_TYPE_AGGREGATE,   PLAN_NODE_TYPE_UNION,
-      PLAN_NODE_TYPE_ORDERBY,     PLAN_NODE_TYPE_PROJECTION,
-      PLAN_NODE_TYPE_MATERIALIZE, PLAN_NODE_TYPE_LIMIT,
-      PLAN_NODE_TYPE_DISTINCT,    PLAN_NODE_TYPE_SETOP,
-      PLAN_NODE_TYPE_APPEND,      PLAN_NODE_TYPE_AGGREGATE_V2,
-      PLAN_NODE_TYPE_HASH,        PLAN_NODE_TYPE_RESULT,
-      PLAN_NODE_TYPE_COPY,        PLAN_NODE_TYPE_MOCK};
+      PlanNodeType::INVALID,     PlanNodeType::ABSTRACT_SCAN,
+      PlanNodeType::SEQSCAN,     PlanNodeType::INDEXSCAN,
+      PlanNodeType::NESTLOOP,    PlanNodeType::NESTLOOPINDEX,
+      PlanNodeType::MERGEJOIN,   PlanNodeType::HASHJOIN,
+      PlanNodeType::UPDATE,      PlanNodeType::INSERT,
+      PlanNodeType::DELETE,      PlanNodeType::DROP,
+      PlanNodeType::CREATE,      PlanNodeType::SEND,
+      PlanNodeType::RECEIVE,     PlanNodeType::PRINT,
+      PlanNodeType::AGGREGATE,   PlanNodeType::UNION,
+      PlanNodeType::ORDERBY,     PlanNodeType::PROJECTION,
+      PlanNodeType::MATERIALIZE, PlanNodeType::LIMIT,
+      PlanNodeType::DISTINCT,    PlanNodeType::SETOP,
+      PlanNodeType::APPEND,      PlanNodeType::AGGREGATE_V2,
+      PlanNodeType::HASH,        PlanNodeType::RESULT,
+      PlanNodeType::COPY,        PlanNodeType::MOCK};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

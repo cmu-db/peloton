@@ -484,53 +484,56 @@ enum ParseNodeType {
 //===--------------------------------------------------------------------===//
 
 enum PlanNodeType {
-  PLAN_NODE_TYPE_INVALID = INVALID_TYPE_ID,  // invalid plan node type
+  INVALID = INVALID_TYPE_ID,  // invalid plan node type
 
   // Scan Nodes
-  PLAN_NODE_TYPE_ABSTRACT_SCAN = 10,
-  PLAN_NODE_TYPE_SEQSCAN = 11,
-  PLAN_NODE_TYPE_INDEXSCAN = 12,
+  ABSTRACT_SCAN = 10,
+  SEQSCAN = 11,
+  INDEXSCAN = 12,
 
   // Join Nodes
-  PLAN_NODE_TYPE_NESTLOOP = 20,
-  PLAN_NODE_TYPE_NESTLOOPINDEX = 21,
-  PLAN_NODE_TYPE_MERGEJOIN = 22,
-  PLAN_NODE_TYPE_HASHJOIN = 23,
+  NESTLOOP = 20,
+  NESTLOOPINDEX = 21,
+  MERGEJOIN = 22,
+  HASHJOIN = 23,
 
   // Mutator Nodes
-  PLAN_NODE_TYPE_UPDATE = 30,
-  PLAN_NODE_TYPE_INSERT = 31,
-  PLAN_NODE_TYPE_DELETE = 32,
+  UPDATE = 30,
+  INSERT = 31,
+  DELETE = 32,
 
   // DDL Nodes
-  PLAN_NODE_TYPE_DROP = 33,
-  PLAN_NODE_TYPE_CREATE = 34,
+  DROP = 33,
+  CREATE = 34,
 
   // Communication Nodes
-  PLAN_NODE_TYPE_SEND = 40,
-  PLAN_NODE_TYPE_RECEIVE = 41,
-  PLAN_NODE_TYPE_PRINT = 42,
+  SEND = 40,
+  RECEIVE = 41,
+  PRINT = 42,
 
   // Algebra Nodes
-  PLAN_NODE_TYPE_AGGREGATE = 50,
-  PLAN_NODE_TYPE_UNION = 52,
-  PLAN_NODE_TYPE_ORDERBY = 53,
-  PLAN_NODE_TYPE_PROJECTION = 54,
-  PLAN_NODE_TYPE_MATERIALIZE = 55,
-  PLAN_NODE_TYPE_LIMIT = 56,
-  PLAN_NODE_TYPE_DISTINCT = 57,
-  PLAN_NODE_TYPE_SETOP = 58,   // set operation
-  PLAN_NODE_TYPE_APPEND = 59,  // append
-  PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
-  PLAN_NODE_TYPE_HASH = 62,
+  AGGREGATE = 50,
+  UNION = 52,
+  ORDERBY = 53,
+  PROJECTION = 54,
+  MATERIALIZE = 55,
+  LIMIT = 56,
+  DISTINCT = 57,
+  SETOP = 58,   // set operation
+  APPEND = 59,  // append
+  AGGREGATE_V2 = 61,
+  HASH = 62,
 
   // Utility
-  PLAN_NODE_TYPE_RESULT = 70,
-  PLAN_NODE_TYPE_COPY = 71,
+  RESULT = 70,
+  COPY = 71,
 
   // Test
-  PLAN_NODE_TYPE_MOCK = 80
+  MOCK = 80
 };
+std::string PlanNodeTypeToString(PlanNodeType type);
+PlanNodeType StringToPlanNodeType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PlanNodeType &type);
 
 //===--------------------------------------------------------------------===//
 // Create Types
@@ -1056,9 +1059,6 @@ IndexType StringToIndexType(const std::string &str);
 
 std::string IndexConstraintTypeToString(IndexConstraintType type);
 IndexConstraintType StringToIndexConstraintType(const std::string &str);
-
-std::string PlanNodeTypeToString(PlanNodeType type);
-PlanNodeType StringToPlanNodeType(const std::string &str);
 
 std::string ParseNodeTypeToString(ParseNodeType type);
 ParseNodeType StringToParseNodeType(const std::string &str);

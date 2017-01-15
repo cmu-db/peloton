@@ -71,9 +71,9 @@ std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
                            ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
-// PLAN_NODE_TYPE_NESTLOOP is picked out as a separated test
-std::vector<PlanNodeType> join_algorithms = {PLAN_NODE_TYPE_MERGEJOIN,
-                                             PLAN_NODE_TYPE_HASHJOIN};
+// PlanNodeType::NESTLOOP is picked out as a separated test
+std::vector<PlanNodeType> join_algorithms = {PlanNodeType::MERGEJOIN,
+                                             PlanNodeType::HASHJOIN};
 
 std::vector<PelotonJoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
                                            JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
@@ -208,15 +208,15 @@ TEST_F(JoinTests, JoinPredicateTest) {
 }
 
 TEST_F(JoinTests, SpeedTest) {
-  ExecuteJoinTest(PLAN_NODE_TYPE_HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+  ExecuteJoinTest(PlanNodeType::HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
 
-  ExecuteJoinTest(PLAN_NODE_TYPE_MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+  ExecuteJoinTest(PlanNodeType::MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
 
   ExecuteNestedLoopJoinTest(JOIN_TYPE_OUTER);
 }
 
 TEST_F(JoinTests, BasicNestedLoopTest) {
-  LOG_TRACE("PLAN_NODE_TYPE_NESTLOOP");
+  LOG_TRACE("PlanNodeType::NESTLOOP");
   ExecuteNestedLoopJoinTest(JOIN_TYPE_INNER);
 }
 
@@ -557,7 +557,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   } else if (join_test_type == LEFT_TABLE_EMPTY) {
     if (join_type == JOIN_TYPE_INNER || join_type == JOIN_TYPE_LEFT) {
       // For hash join, we always build the hash table from right child
-      if (join_algorithm == PLAN_NODE_TYPE_HASHJOIN) {
+      if (join_algorithm == PlanNodeType::HASHJOIN) {
         ExpectNormalTileResults(right_table_tile_group_count,
                                 &right_table_scan_executor,
                                 right_table_logical_tile_ptrs);
@@ -591,7 +591,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
   // Differ based on join algorithm
   switch (join_algorithm) {
-    case PLAN_NODE_TYPE_NESTLOOP: {
+    case PlanNodeType::NESTLOOP: {
       // Create nested loop join plan node.
       planner::NestedLoopJoinPlan nested_loop_join_node(
           join_type, std::move(predicate), std::move(projection), schema);
@@ -622,7 +622,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
     } break;
 
-    case PLAN_NODE_TYPE_MERGEJOIN: {
+    case PlanNodeType::MERGEJOIN: {
       // Create join clauses
       std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
       join_clauses = CreateJoinClauses();
@@ -657,7 +657,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
     } break;
 
-    case PLAN_NODE_TYPE_HASHJOIN: {
+    case PlanNodeType::HASHJOIN: {
       // Create hash plan node
       expression::AbstractExpression *right_table_attr_1 =
           new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);

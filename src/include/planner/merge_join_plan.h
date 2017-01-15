@@ -61,7 +61,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_MERGEJOIN;
+    return PlanNodeType::MERGEJOIN;
   }
 
   const std::vector<JoinClause> *GetJoinClauses() const {

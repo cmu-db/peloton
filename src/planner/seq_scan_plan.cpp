@@ -92,7 +92,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
   // Write parent, but parent seems never be set or used right now
   if (GetParent() == nullptr) {
     // Write the type
-    output.WriteByte(static_cast<int8_t>(PLAN_NODE_TYPE_INVALID));
+    output.WriteByte(static_cast<int8_t>(PlanNodeType::INVALID));
   } else {
     // Write the parent type
     PlanNodeType parent_type = GetParent()->GetPlanNodeType();
@@ -177,7 +177,7 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
   PlanNodeType parent_type = (PlanNodeType)input.ReadEnumInSingleByte();
 
   // Parent deserialization
-  if (parent_type != PLAN_NODE_TYPE_INVALID) {
+  if (parent_type != PlanNodeType::INVALID) {
     switch (expr_type) {
       //            case ExpressionType::COMPARE_IN:
       //                predicate_ =
