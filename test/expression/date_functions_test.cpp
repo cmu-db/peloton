@@ -45,22 +45,22 @@ TEST_F(DateFunctionsTests, ExtractTests) {
   // SELECT EXTRACT(MILLISECONDS
   //                FROM CAST('2017-01-01 12:13:14.999999+00' AS TIMESTAMP));
   std::vector<std::pair<DatePartType, double>> data = {
-      std::make_pair(EXPRESSION_DATE_PART_CENTURY, 21),
-      std::make_pair(EXPRESSION_DATE_PART_DECADE, 201),
-      std::make_pair(EXPRESSION_DATE_PART_DOW, 0),
-      std::make_pair(EXPRESSION_DATE_PART_DOY, 1),
-      std::make_pair(EXPRESSION_DATE_PART_YEAR, 2017),
-      std::make_pair(EXPRESSION_DATE_PART_MONTH, 1),
-      std::make_pair(EXPRESSION_DATE_PART_DAY, 2),
-      std::make_pair(EXPRESSION_DATE_PART_HOUR, 12),
-      std::make_pair(EXPRESSION_DATE_PART_MINUTE, 13),
+      std::make_pair(DatePartType::CENTURY, 21),
+      std::make_pair(DatePartType::DECADE, 201),
+      std::make_pair(DatePartType::DOW, 0),
+      std::make_pair(DatePartType::DOY, 1),
+      std::make_pair(DatePartType::YEAR, 2017),
+      std::make_pair(DatePartType::MONTH, 1),
+      std::make_pair(DatePartType::DAY, 2),
+      std::make_pair(DatePartType::HOUR, 12),
+      std::make_pair(DatePartType::MINUTE, 13),
 
       // Note that we can support these DatePartTypes with and without
       // a trailing 's' at the end.
-      std::make_pair(EXPRESSION_DATE_PART_SECOND, 14),
-      std::make_pair(EXPRESSION_DATE_PART_SECONDS, 14),
-      std::make_pair(EXPRESSION_DATE_PART_MILLISECOND, 14999.999),
-      std::make_pair(EXPRESSION_DATE_PART_MILLISECONDS, 14999.999),
+      std::make_pair(DatePartType::SECOND, 14),
+      std::make_pair(DatePartType::SECONDS, 14),
+      std::make_pair(DatePartType::MILLISECOND, 14999.999),
+      std::make_pair(DatePartType::MILLISECONDS, 14999.999),
   };
 
   for (auto x : data) {

@@ -282,43 +282,46 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 // Note that we have some duplicate DatePartTypes with the 's' suffix
 // They have to have the same value in order for it to work.
-enum DatePartType {
-  EXPRESSION_DATE_PART_INVALID = INVALID_TYPE_ID,
-  EXPRESSION_DATE_PART_CENTURY = 1,
-  EXPRESSION_DATE_PART_DAY = 2,
-  EXPRESSION_DATE_PART_DAYS = 2,
-  EXPRESSION_DATE_PART_DECADE = 3,
-  EXPRESSION_DATE_PART_DECADES = 3,
-  EXPRESSION_DATE_PART_DOW = 4,
-  EXPRESSION_DATE_PART_DOY = 5,
-  EXPRESSION_DATE_PART_EPOCH = 6,
-  EXPRESSION_DATE_PART_HOUR = 7,
-  EXPRESSION_DATE_PART_HOURS = 7,
-  EXPRESSION_DATE_PART_ISODOW = 8,
-  EXPRESSION_DATE_PART_ISOYEAR = 9,
-  EXPRESSION_DATE_PART_MICROSECOND = 10,
-  EXPRESSION_DATE_PART_MICROSECONDS = 10,
-  EXPRESSION_DATE_PART_MILLENNIUM = 11,
-  EXPRESSION_DATE_PART_MILLISECOND = 12,
-  EXPRESSION_DATE_PART_MILLISECONDS = 12,
-  EXPRESSION_DATE_PART_MINUTE = 13,
-  EXPRESSION_DATE_PART_MINUTES = 13,
-  EXPRESSION_DATE_PART_MONTH = 14,
-  EXPRESSION_DATE_PART_MONTHS = 14,
-  EXPRESSION_DATE_PART_QUARTER = 15,
-  EXPRESSION_DATE_PART_QUARTERS = 15,
-  EXPRESSION_DATE_PART_SECOND = 16,
-  EXPRESSION_DATE_PART_SECONDS = 16,
-  EXPRESSION_DATE_PART_TIMEZONE = 17,
-  EXPRESSION_DATE_PART_TIMEZONE_HOUR = 18,
-  EXPRESSION_DATE_PART_TIMEZONE_HOURS = 18,
-  EXPRESSION_DATE_PART_TIMEZONE_MINUTE = 19,
-  EXPRESSION_DATE_PART_TIMEZONE_MINUTES = 19,
-  EXPRESSION_DATE_PART_WEEK = 20,
-  EXPRESSION_DATE_PART_WEEKS = 20,
-  EXPRESSION_DATE_PART_YEAR = 21,
-  EXPRESSION_DATE_PART_YEARS = 21,
+enum class DatePartType {
+  INVALID = INVALID_TYPE_ID,
+  CENTURY = 1,
+  DAY = 2,
+  DAYS = 2,
+  DECADE = 3,
+  DECADES = 3,
+  DOW = 4,
+  DOY = 5,
+  EPOCH = 6,
+  HOUR = 7,
+  HOURS = 7,
+  ISODOW = 8,
+  ISOYEAR = 9,
+  MICROSECOND = 10,
+  MICROSECONDS = 10,
+  MILLENNIUM = 11,
+  MILLISECOND = 12,
+  MILLISECONDS = 12,
+  MINUTE = 13,
+  MINUTES = 13,
+  MONTH = 14,
+  MONTHS = 14,
+  QUARTER = 15,
+  QUARTERS = 15,
+  SECOND = 16,
+  SECONDS = 16,
+  TIMEZONE = 17,
+  TIMEZONE_HOUR = 18,
+  TIMEZONE_HOURS = 18,
+  TIMEZONE_MINUTE = 19,
+  TIMEZONE_MINUTES = 19,
+  WEEK = 20,
+  WEEKS = 20,
+  YEAR = 21,
+  YEARS = 21,
 };
+std::string DatePartTypeToString(DatePartType type);
+DatePartType StringToDatePartType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const DatePartType &type);
 
 //===--------------------------------------------------------------------===//
 // Network Message Types
@@ -1027,9 +1030,6 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 //===--------------------------------------------------------------------===//
 // Transformers
 //===--------------------------------------------------------------------===//
-
-std::string DatePartTypeToString(DatePartType type);
-DatePartType StringToDatePartType(const std::string &str);
 
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(const std::string &str);

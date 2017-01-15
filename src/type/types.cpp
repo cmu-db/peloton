@@ -46,53 +46,53 @@ size_t EPOCH_THREAD_COUNT = 1;
 std::string DatePartTypeToString(DatePartType type) {
   // IMPORTANT: You should not include any of the duplicate plural DatePartTypes
   // in this switch statement, otherwise the compiler will throw an error.
-  // For example, you will want to use 'EXPRESSION_DATE_PART_SECOND' and not
-  // 'EXPRESSION_DATE_PART_SECONDS'. Make sure that none of the returned strings
+  // For example, you will want to use 'DatePartType::SECOND' and not
+  // 'DatePartType::SECONDS'. Make sure that none of the returned strings
   // include the 'S' suffix.
   switch (type) {
-    case EXPRESSION_DATE_PART_INVALID:
+    case DatePartType::INVALID:
       return ("INVALID");
-    case EXPRESSION_DATE_PART_CENTURY:
+    case DatePartType::CENTURY:
       return "CENTURY";
-    case EXPRESSION_DATE_PART_DAY:
+    case DatePartType::DAY:
       return "DAY";
-    case EXPRESSION_DATE_PART_DECADE:
+    case DatePartType::DECADE:
       return "DECADE";
-    case EXPRESSION_DATE_PART_DOW:
+    case DatePartType::DOW:
       return "DOW";
-    case EXPRESSION_DATE_PART_DOY:
+    case DatePartType::DOY:
       return "DOY";
-    case EXPRESSION_DATE_PART_EPOCH:
+    case DatePartType::EPOCH:
       return "EPOCH";
-    case EXPRESSION_DATE_PART_HOUR:
+    case DatePartType::HOUR:
       return "HOUR";
-    case EXPRESSION_DATE_PART_ISODOW:
+    case DatePartType::ISODOW:
       return "ISODOW";
-    case EXPRESSION_DATE_PART_ISOYEAR:
+    case DatePartType::ISOYEAR:
       return "ISOYEAR";
-    case EXPRESSION_DATE_PART_MICROSECOND:
+    case DatePartType::MICROSECOND:
       return "MICROSECOND";
-    case EXPRESSION_DATE_PART_MILLENNIUM:
+    case DatePartType::MILLENNIUM:
       return "MILLENNIUM";
-    case EXPRESSION_DATE_PART_MILLISECOND:
+    case DatePartType::MILLISECOND:
       return "MILLISECOND";
-    case EXPRESSION_DATE_PART_MINUTE:
+    case DatePartType::MINUTE:
       return "MINUTE";
-    case EXPRESSION_DATE_PART_MONTH:
+    case DatePartType::MONTH:
       return "MONTH";
-    case EXPRESSION_DATE_PART_QUARTER:
+    case DatePartType::QUARTER:
       return "QUARTER";
-    case EXPRESSION_DATE_PART_SECOND:
+    case DatePartType::SECOND:
       return "SECOND";
-    case EXPRESSION_DATE_PART_TIMEZONE:
+    case DatePartType::TIMEZONE:
       return "TIMEZONE";
-    case EXPRESSION_DATE_PART_TIMEZONE_HOUR:
+    case DatePartType::TIMEZONE_HOUR:
       return "TIMEZONE_HOUR";
-    case EXPRESSION_DATE_PART_TIMEZONE_MINUTE:
+    case DatePartType::TIMEZONE_MINUTE:
       return "TIMEZONE_MINUTE";
-    case EXPRESSION_DATE_PART_WEEK:
+    case DatePartType::WEEK:
       return "WEEK";
-    case EXPRESSION_DATE_PART_YEAR:
+    case DatePartType::YEAR:
       return "YEAR";
     default: {
       throw ConversionException(
@@ -106,55 +106,60 @@ std::string DatePartTypeToString(DatePartType type) {
 DatePartType StringToDatePartType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return EXPRESSION_DATE_PART_INVALID;
+    return DatePartType::INVALID;
   } else if (upper_str == "CENTURY") {
-    return EXPRESSION_DATE_PART_CENTURY;
+    return DatePartType::CENTURY;
   } else if (upper_str == "DAY") {
-    return EXPRESSION_DATE_PART_DAY;
+    return DatePartType::DAY;
   } else if (upper_str == "DECADE") {
-    return EXPRESSION_DATE_PART_DECADE;
+    return DatePartType::DECADE;
   } else if (upper_str == "DOW") {
-    return EXPRESSION_DATE_PART_DOW;
+    return DatePartType::DOW;
   } else if (upper_str == "DOY") {
-    return EXPRESSION_DATE_PART_DOY;
+    return DatePartType::DOY;
   } else if (upper_str == "EPOCH") {
-    return EXPRESSION_DATE_PART_EPOCH;
+    return DatePartType::EPOCH;
   } else if (upper_str == "HOUR") {
-    return EXPRESSION_DATE_PART_HOUR;
+    return DatePartType::HOUR;
   } else if (upper_str == "ISODOW") {
-    return EXPRESSION_DATE_PART_ISODOW;
+    return DatePartType::ISODOW;
   } else if (upper_str == "ISOYEAR") {
-    return EXPRESSION_DATE_PART_ISOYEAR;
+    return DatePartType::ISOYEAR;
   } else if (upper_str == "MICROSECOND") {
-    return EXPRESSION_DATE_PART_MICROSECOND;
+    return DatePartType::MICROSECOND;
   } else if (upper_str == "MILLENNIUM") {
-    return EXPRESSION_DATE_PART_MILLENNIUM;
+    return DatePartType::MILLENNIUM;
   } else if (upper_str == "MILLISECOND") {
-    return EXPRESSION_DATE_PART_MILLISECOND;
+    return DatePartType::MILLISECOND;
   } else if (upper_str == "MILLISECOND") {
-    return EXPRESSION_DATE_PART_MILLISECOND;
+    return DatePartType::MILLISECOND;
   } else if (upper_str == "MINUTE") {
-    return EXPRESSION_DATE_PART_MINUTE;
+    return DatePartType::MINUTE;
   } else if (upper_str == "MONTH") {
-    return EXPRESSION_DATE_PART_MONTH;
+    return DatePartType::MONTH;
   } else if (upper_str == "QUARTER") {
-    return EXPRESSION_DATE_PART_QUARTER;
+    return DatePartType::QUARTER;
   } else if (upper_str == "SECOND") {
-    return EXPRESSION_DATE_PART_SECOND;
+    return DatePartType::SECOND;
   } else if (upper_str == "TIMEZONE") {
-    return EXPRESSION_DATE_PART_TIMEZONE;
+    return DatePartType::TIMEZONE;
   } else if (upper_str == "TIMEZONE_HOUR") {
-    return EXPRESSION_DATE_PART_TIMEZONE_HOUR;
+    return DatePartType::TIMEZONE_HOUR;
   } else if (upper_str == "TIMEZONE_MINUTE") {
-    return EXPRESSION_DATE_PART_TIMEZONE_MINUTE;
+    return DatePartType::TIMEZONE_MINUTE;
   } else if (upper_str == "WEEK") {
-    return EXPRESSION_DATE_PART_WEEK;
+    return DatePartType::WEEK;
   } else if (upper_str == "YEAR") {
-    return EXPRESSION_DATE_PART_YEAR;
+    return DatePartType::YEAR;
   } else {
     throw ConversionException(StringUtil::Format(
         "No DatePartType conversion from string '%s'", upper_str.c_str()));
   }
+}
+
+std::ostream& operator<<(std::ostream& os, const DatePartType& type) {
+  os << DatePartTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
