@@ -11,21 +11,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "networking/peloton_service.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "executor/plan_executor.h"
 #include "networking/peloton_endpoint.h"
 #include "networking/rpc_server.h"
-#include "common/logger.h"
-#include "type/types.h"
-#include "type/serializer.h"
-#include "type/serializeio.h"
-#include "common/macros.h"
+#include "planner/seq_scan_plan.h"
 #include "storage/tile.h"
 #include "storage/tuple.h"
-#include "planner/seq_scan_plan.h"
-#include "executor/plan_executor.h"
+#include "type/serializeio.h"
+#include "type/serializer.h"
+#include "type/types.h"
 
-#include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <iostream>
 
 namespace peloton {
@@ -336,7 +336,8 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     std::vector<type::Value> params;
     // for (int it = 0; it < param_num; it++) {
     //  // TODO: Make sure why varlen_pool is used as parameter
-    //  std::shared_ptr<type::VarlenPool> pool(new type::VarlenPool(BackendType::MM));
+    //  std::shared_ptr<type::VarlenPool> pool(new
+    //  type::VarlenPool(BackendType::MM));
     //  Value value_item;
     //  value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
     //  params.push_back(value_item);
@@ -399,7 +400,8 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
       }
 
       default: {
-        LOG_ERROR("Queryplan recived :: Unsupported TYPE: %u ", plan_type);
+        LOG_ERROR("Queryplan recived :: Unsupported TYPE: %s",
+                  PlanNodeTypeToString(plan_type).c_str());
         break;
       }
     }

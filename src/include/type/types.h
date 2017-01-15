@@ -483,7 +483,7 @@ enum ParseNodeType {
 // Plan Node Types
 //===--------------------------------------------------------------------===//
 
-enum PlanNodeType {
+enum class PlanNodeType {
   INVALID = INVALID_TYPE_ID,  // invalid plan node type
 
   // Scan Nodes
@@ -581,7 +581,7 @@ enum ScanDirectionType {
 // Join Types
 //===--------------------------------------------------------------------===//
 
-enum PelotonJoinType {
+enum JoinType {
   JOIN_TYPE_INVALID = INVALID_TYPE_ID,  // invalid join type
   JOIN_TYPE_LEFT = 1,                   // left
   JOIN_TYPE_RIGHT = 2,                  // right
@@ -593,7 +593,8 @@ enum PelotonJoinType {
 //===--------------------------------------------------------------------===//
 // Aggregate Types
 //===--------------------------------------------------------------------===//
-enum PelotonAggType {
+
+enum AggregateType {
   AGGREGATE_TYPE_INVALID = INVALID_TYPE_ID,
   AGGREGATE_TYPE_SORTED = 1,
   AGGREGATE_TYPE_HASH = 2,

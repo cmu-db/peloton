@@ -142,7 +142,7 @@ class JoinExprParse : public AbstractParse {
   const std::string GetInfo() const { return "DropParse"; }
 
  private:
-  PelotonJoinType join_type_;
+  JoinType join_type_;
 
   // left child of the join tree
   std::unique_ptr<AbstractParse> left_node_;

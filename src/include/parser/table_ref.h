@@ -88,7 +88,7 @@ struct JoinDefinition {
   TableRef* right;
   expression::AbstractExpression* condition;
 
-  PelotonJoinType type;
+  JoinType type;
 };
 
 }  // End parser namespace

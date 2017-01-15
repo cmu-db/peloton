@@ -38,7 +38,7 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan &operator=(AbstractJoinPlan &&) = delete;
 
   AbstractJoinPlan(
-      PelotonJoinType joinType,
+      JoinType joinType,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema)
@@ -54,7 +54,7 @@ class AbstractJoinPlan : public AbstractPlan {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  PelotonJoinType GetJoinType() const { return join_type_; }
+  JoinType GetJoinType() const { return join_type_; }
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
@@ -68,7 +68,7 @@ class AbstractJoinPlan : public AbstractPlan {
 
  private:
   /** @brief The type of join that we're going to perform */
-  PelotonJoinType join_type_;
+  JoinType join_type_;
 
   /** @brief Join predicate. */
   const std::unique_ptr<const expression::AbstractExpression> predicate_;

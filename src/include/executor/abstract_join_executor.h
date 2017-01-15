@@ -175,7 +175,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
   const planner::ProjectInfo *proj_info_ = nullptr;
 
   /** @brief Join Type */
-  PelotonJoinType join_type_ = JOIN_TYPE_INVALID;
+  JoinType join_type_ = JOIN_TYPE_INVALID;
 
   /** @brief Schema of the output tile before projection */
   const catalog::Schema *proj_schema_ = nullptr;

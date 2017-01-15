@@ -1215,7 +1215,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
       select_stmt->from_table->join->right->GetDatabaseName(),
       select_stmt->from_table->join->right->GetTableName());
 
-  PelotonJoinType join_type = select_stmt->from_table->join->type;
+  JoinType join_type = select_stmt->from_table->join->type;
   std::unique_ptr<const peloton::expression::AbstractExpression> join_condition(
       select_stmt->from_table->join->condition->Copy());
   auto join_for_update = select_stmt->is_for_update;

@@ -64,23 +64,22 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(
-      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(0),
-                           ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(0),
+       ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 // PlanNodeType::NESTLOOP is picked out as a separated test
 std::vector<PlanNodeType> join_algorithms = {PlanNodeType::MERGEJOIN,
                                              PlanNodeType::HASHJOIN};
 
-std::vector<PelotonJoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
-                                           JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
+std::vector<JoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
+                                    JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
+void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
                      oid_t join_test_type);
-void ExecuteNestedLoopJoinTest(PelotonJoinType join_type);
+void ExecuteNestedLoopJoinTest(JoinType join_type);
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
                    concurrency::Transaction *current_txn);
@@ -94,13 +93,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -264,7 +263,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   }
 }
 
-void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
+void ExecuteNestedLoopJoinTest(JoinType join_type) {
   //===--------------------------------------------------------------------===//
   // Create Table
   //===--------------------------------------------------------------------===//
@@ -423,7 +422,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   txn_manager.CommitTransaction(txn);
 }
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
+void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
                      oid_t join_test_type) {
   //===--------------------------------------------------------------------===//
   // Mock table scan executors
@@ -717,7 +716,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
     default:
       throw Exception("Unsupported join algorithm : " +
-                      std::to_string(join_algorithm));
+                      PlanNodeTypeToString(join_algorithm));
       break;
   }
 
@@ -948,18 +947,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {
@@ -990,7 +989,7 @@ void ExpectNormalTileResults(
       EXPECT_CALL(*table_scan_executor, GetOutput())
           .InSequence(get_output_sequence)
           .WillOnce(
-               Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
+              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
     }
   }
 }

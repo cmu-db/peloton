@@ -87,8 +87,8 @@ peloton_status PlanExecutor::ExecutePlan(
         LOG_TRACE("Final Answer: %s",
                   logical_tile->GetInfo().c_str());  // Printing the answers
         std::vector<std::vector<std::string>> answer_tuples;
-        answer_tuples =
-            std::move(logical_tile->GetAllValuesAsStrings(result_format, false));
+        answer_tuples = std::move(
+            logical_tile->GetAllValuesAsStrings(result_format, false));
 
         // Construct the returned results
         for (auto &tuple : answer_tuples) {
@@ -340,7 +340,8 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     default:
-      LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);
+      LOG_ERROR("Unsupported plan node type : %s",
+                PlanNodeTypeToString(plan_node_type).c_str());
       break;
   }
 
