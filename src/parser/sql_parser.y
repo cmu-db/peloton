@@ -913,7 +913,7 @@ join_clause:
 		{ 
 			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
 			$$->join = new JoinDefinition();
-			$$->join->type = (peloton::PelotonJoinType) $2;
+			$$->join->type = (peloton::JoinType) $2;
 			$$->join->left = $1;
 			$$->join->right = $4;
 			$$->join->condition = $6;
