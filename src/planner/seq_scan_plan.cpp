@@ -18,10 +18,9 @@
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "type/types.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
-
+#include "type/types.h"
 
 namespace peloton {
 namespace planner {
@@ -83,7 +82,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
   // Write predicate
   if (GetPredicate() == nullptr) {
     // Write the type
-    output.WriteByte(static_cast<int8_t>(EXPRESSION_TYPE_INVALID));
+    output.WriteByte(static_cast<int8_t>(ExpressionType::INVALID));
   } else {
     // Write the expression type
     ExpressionType expr_type = GetPredicate()->GetExpressionType();
@@ -156,19 +155,19 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
   ExpressionType expr_type = (ExpressionType)input.ReadEnumInSingleByte();
 
   // Predicate deserialization
-  if (expr_type != EXPRESSION_TYPE_INVALID) {
+  if (expr_type != ExpressionType::INVALID) {
     switch (expr_type) {
-      //            case EXPRESSION_TYPE_COMPARE_IN:
+      //            case ExpressionType::COMPARE_IN:
       //                predicate_ =
-      //                std::unique_ptr<EXPRESSION_TYPE_COMPARE_IN>(new
+      //                std::unique_ptr<ExpressionType::COMPARE_IN>(new
       //                ComparisonExpression (101));
       //                predicate_.DeserializeFrom(input);
       //              break;
 
       default: {
         LOG_ERROR(
-            "Expression deserialization :: Unsupported EXPRESSION_TYPE: %u ",
-            expr_type);
+            "Expression deserialization :: Unsupported EXPRESSION_TYPE: %s",
+            ExpressionTypeToString(expr_type).c_str());
         break;
       }
     }
@@ -180,16 +179,16 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
   // Parent deserialization
   if (parent_type != PLAN_NODE_TYPE_INVALID) {
     switch (expr_type) {
-      //            case EXPRESSION_TYPE_COMPARE_IN:
+      //            case ExpressionType::COMPARE_IN:
       //                predicate_ =
-      //                std::unique_ptr<EXPRESSION_TYPE_COMPARE_IN>(new
+      //                std::unique_ptr<ExpressionType::COMPARE_IN>(new
       //                ComparisonExpression (101));
       //                predicate_.DeserializeFrom(input);
       //              break;
 
       default: {
-        LOG_ERROR("Parent deserialization :: Unsupported PlanNodeType: %u ",
-                  expr_type);
+        LOG_ERROR("Parent deserialization :: Unsupported PlanNodeType: %s",
+                  ExpressionTypeToString(expr_type).c_str());
         break;
       }
     }

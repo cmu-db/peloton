@@ -204,15 +204,15 @@ static expression::AbstractExpression *CreateScanPredicate(
     // ATTR >= LOWER_BOUND && < UPPER_BOUND
 
     auto left_predicate = CreateSimpleScanPredicate(
-        key_attr, EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+        key_attr, ExpressionType::COMPARE_GREATERTHANOREQUALTO,
         tuple_start_offset);
 
     auto right_predicate = CreateSimpleScanPredicate(
-        key_attr, EXPRESSION_TYPE_COMPARE_LESSTHAN, tuple_end_offset);
+        key_attr, ExpressionType::COMPARE_LESSTHAN, tuple_end_offset);
 
     expression::AbstractExpression *attr_predicate =
         expression::ExpressionUtil::ConjunctionFactory(
-            EXPRESSION_TYPE_CONJUNCTION_AND, left_predicate, right_predicate);
+            ExpressionType::CONJUNCTION_AND, left_predicate, right_predicate);
 
     // Build complex predicate
     if (predicate == nullptr) {
@@ -220,7 +220,7 @@ static expression::AbstractExpression *CreateScanPredicate(
     } else {
       // Join predicate with given attribute predicate
       predicate = expression::ExpressionUtil::ConjunctionFactory(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate, attr_predicate);
+          ExpressionType::CONJUNCTION_AND, predicate, attr_predicate);
     }
   }
 
@@ -238,11 +238,11 @@ static void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
   for (auto key_attr : key_attrs) {
     key_column_ids.push_back(key_attr);
     expr_types.push_back(
-        ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+        ExpressionType::COMPARE_GREATERTHANOREQUALTO);
     values.push_back(type::ValueFactory::GetIntegerValue(tuple_start_offset));
 
     key_column_ids.push_back(key_attr);
-    expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+    expr_types.push_back(ExpressionType::COMPARE_LESSTHAN);
     values.push_back(type::ValueFactory::GetIntegerValue(tuple_end_offset));
   }
 }
@@ -738,7 +738,7 @@ static void JoinQueryHelper(
                                            right_table_join_column);
 
   std::unique_ptr<expression::ComparisonExpression> join_predicate(
-      new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_LESSTHAN,
+      new expression::ComparisonExpression(ExpressionType::COMPARE_LESSTHAN,
                                            left_table_attr, right_table_attr));
 
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
@@ -886,7 +886,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   for (col_itr = 0; col_itr < column_count; col_itr++) {
     planner::AggregatePlan::AggTerm max_column_agg(
-        EXPRESSION_TYPE_AGGREGATE_MAX,
+        ExpressionType::AGGREGATE_MAX,
         expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                       col_itr),
         false);

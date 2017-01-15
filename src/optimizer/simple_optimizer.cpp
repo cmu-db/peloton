@@ -193,7 +193,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             auto expr = select_list[i];
             // if the root of the expression is a column value we can
             // just do a direct mapping
-            if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+            if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
               auto tup_expr = (expression::TupleValueExpression*)expr;
               oid_t old_col_id =
                   table_schema->GetColumnID(tup_expr->GetColumnName());
@@ -417,7 +417,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             // Count a column expression
             if (agg_expr->GetChild(0) != nullptr &&
                 agg_expr->GetChild(0)->GetExpressionType() ==
-                    EXPRESSION_TYPE_VALUE_TUPLE) {
+                    ExpressionType::VALUE_TUPLE) {
               auto agg_over =
                   (expression::TupleValueExpression*)agg_expr->GetChild(0);
               LOG_TRACE("Function name: %s",
@@ -441,7 +441,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
               // If aggregate type is average the value type should be double
               if (agg_expr->GetExpressionType() ==
-                  EXPRESSION_TYPE_AGGREGATE_AVG) {
+                  ExpressionType::AGGREGATE_AVG) {
                 // COL_A should be used only when there is no AS
                 auto column = catalog::Column(
                     type::Type::DECIMAL,
@@ -473,10 +473,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
             // Check for COUNT STAR Expression
             else if (agg_expr->GetExpressionType() ==
-                     EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
+                     ExpressionType::AGGREGATE_COUNT_STAR) {
               LOG_TRACE("Creating an aggregate plan");
               planner::AggregatePlan::AggTerm agg_term(
-                  EXPRESSION_TYPE_AGGREGATE_COUNT_STAR,
+                  ExpressionType::AGGREGATE_COUNT_STAR,
                   nullptr,  // No predicate for star expression. Nothing to
                             // evaluate
                   agg_expr->distinct_);
@@ -903,7 +903,7 @@ void SimpleOptimizer::GetPredicateColumns(
     std::vector<oid_t>& column_ids, std::vector<ExpressionType>& expr_types,
     std::vector<type::Value>& values, bool& index_searchable) {
   // For now, all conjunctions should be AND when using index scan.
-  if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_OR)
+  if (expression->GetExpressionType() == ExpressionType::CONJUNCTION_OR)
     index_searchable = false;
 
   LOG_TRACE("Expression Type --> %s",
@@ -919,10 +919,10 @@ void SimpleOptimizer::GetPredicateColumns(
   // We're only supporting comparing a column_ref to a constant/parameter for
   // index scan right now
   if (expression->GetChild(0)->GetExpressionType() ==
-      EXPRESSION_TYPE_VALUE_TUPLE) {
+      ExpressionType::VALUE_TUPLE) {
     auto right_type = expression->GetChild(1)->GetExpressionType();
-    if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
-        right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
+    if (right_type == ExpressionType::VALUE_CONSTANT ||
+        right_type == ExpressionType::VALUE_PARAMETER) {
       auto expr = (expression::TupleValueExpression*)expression->GetChild(0);
       std::string col_name(expr->GetColumnName());
       LOG_TRACE("Column name: %s", col_name.c_str());
@@ -938,7 +938,7 @@ void SimpleOptimizer::GetPredicateColumns(
       // peloton::type::IntegerValue::Copy() const (numeric_value.cpp:1288)
       // peloton::expression::ConstantValueExpression::GetValue() const
       // (constant_value_expression.h:40)
-      if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
+      if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
             expression->GetModifiableChild(1))->GetValue());
         LOG_TRACE("Value Type: %d",
@@ -951,10 +951,10 @@ void SimpleOptimizer::GetPredicateColumns(
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
-             EXPRESSION_TYPE_VALUE_TUPLE) {
+             ExpressionType::VALUE_TUPLE) {
     auto left_type = expression->GetChild(0)->GetExpressionType();
-    if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
-        left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
+    if (left_type == ExpressionType::VALUE_CONSTANT ||
+        left_type == ExpressionType::VALUE_PARAMETER) {
       auto expr = (expression::TupleValueExpression*)expression->GetChild(1);
       std::string col_name(expr->GetColumnName());
       LOG_TRACE("Column name: %s", col_name.c_str());
@@ -963,7 +963,7 @@ void SimpleOptimizer::GetPredicateColumns(
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
 
-      if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
+      if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
             expression->GetModifiableChild(1))->GetValue());
         LOG_TRACE("Value Type: %d",
@@ -1025,20 +1025,20 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto ol_o_id_2 = new expression::TupleValueExpression(ol_o_id_2_name);
 
   auto predicate1 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, ol_w_id, params[0]);
+      ExpressionType::COMPARE_EQUAL, ol_w_id, params[0]);
   auto predicate2 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, ol_d_id, params[1]);
+      ExpressionType::COMPARE_EQUAL, ol_d_id, params[1]);
   auto predicate3 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_LESSTHAN, ol_o_id_1, params[2]);
+      ExpressionType::COMPARE_LESSTHAN, ol_o_id_1, params[2]);
   auto predicate4 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, params[3]);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, params[3]);
 
   auto predicate6 = new expression::ConjunctionExpression(
-      EXPRESSION_TYPE_CONJUNCTION_AND, predicate1, predicate2);
+      ExpressionType::CONJUNCTION_AND, predicate1, predicate2);
   auto predicate7 = new expression::ConjunctionExpression(
-      EXPRESSION_TYPE_CONJUNCTION_AND, predicate3, predicate4);
+      ExpressionType::CONJUNCTION_AND, predicate3, predicate4);
   auto predicate8 = new expression::ConjunctionExpression(
-      EXPRESSION_TYPE_CONJUNCTION_AND, predicate6, predicate7);
+      ExpressionType::CONJUNCTION_AND, predicate6, predicate7);
 
   // Get the index scan descriptor
   bool index_searchable;
@@ -1076,11 +1076,11 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   auto s_quantity = new expression::TupleValueExpression(s_quantity_name);
 
   auto predicate12 = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[5]);
+      ExpressionType::COMPARE_LESSTHAN, s_quantity, params[5]);
 
   predicate_column_ids = {0, 1};  // S_W_ID, S_I_ID
-  predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL,
-                          EXPRESSION_TYPE_COMPARE_EQUAL};
+  predicate_expr_types = {ExpressionType::COMPARE_EQUAL,
+                          ExpressionType::COMPARE_EQUAL};
 
   // s_w_id the 5th parameter.
   // s_i_id is a fake value, which will be updated when invoke index_update
@@ -1246,7 +1246,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   std::vector<const catalog::Schema*> schemas = {left_schema, right_schema};
 
   // SELECT * FROM A JOIN B
-  if (select_list[0]->GetExpressionType() == EXPRESSION_TYPE_STAR) {
+  if (select_list[0]->GetExpressionType() == ExpressionType::STAR) {
     auto& left_cols = left_schema->GetColumns();
     auto& right_cols = right_schema->GetColumns();
     output_table_columns = left_cols;
@@ -1269,7 +1269,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
 
       auto expr_type = expr->GetExpressionType();
       // Column experssion
-      if (expr_type == EXPRESSION_TYPE_VALUE_TUPLE) {
+      if (expr_type == ExpressionType::VALUE_TUPLE) {
         auto tup_expr = (expression::TupleValueExpression*)expr;
         oid_t old_col_id = -1;
         catalog::Column column;
@@ -1285,7 +1285,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
             break;
           }
         }
-      } else if (expr_type == EXPRESSION_TYPE_STAR) {
+      } else if (expr_type == ExpressionType::STAR) {
         for (int schema_index = 0; schema_index < 2; schema_index++) {
           auto& schema = schemas[schema_index];
           auto& cols = schema->GetColumns();

@@ -123,153 +123,162 @@ enum PostgresValueType {
 // Predicate Expression Operation Types
 //===--------------------------------------------------------------------===//
 
-enum ExpressionType {
-  EXPRESSION_TYPE_INVALID = INVALID_TYPE_ID,
+enum class ExpressionType {
+  INVALID = INVALID_TYPE_ID,
 
   // -----------------------------
   // Arithmetic Operators
   // Implicit Numeric Casting: Trying to implement SQL-92.
   // Implicit Character Casting: Trying to implement SQL-92, but not easy...
-  // Anyway, use explicit EXPRESSION_TYPE_OPERATOR_CAST if you could.
+  // Anyway, use explicit OPERATOR_CAST if you could.
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_PLUS =
-      1,  // left + right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_MINUS =
-      2,  // left - right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_MULTIPLY =
-      3,  // left * right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_DIVIDE =
-      4,  // left / right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_CONCAT =
-      5,  // left || right (both must be char/varchar)
-  EXPRESSION_TYPE_OPERATOR_MOD = 6,  // left % right (both must be integer)
-  EXPRESSION_TYPE_OPERATOR_CAST =
-      7,  // explicitly cast left as right (right is integer in ValueType enum)
-  EXPRESSION_TYPE_OPERATOR_NOT = 8,      // logical not operator
-  EXPRESSION_TYPE_OPERATOR_IS_NULL = 9,  // is null test.
-  EXPRESSION_TYPE_OPERATOR_EXISTS = 18,  // exists test.
-  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 50,
+
+  // left + right (both must be number. implicitly casted)
+  OPERATOR_PLUS = 1,
+  // left - right (both must be number. implicitly casted)
+  OPERATOR_MINUS = 2,
+  // left * right (both must be number. implicitly casted)
+  OPERATOR_MULTIPLY = 3,
+  // left / right (both must be number. implicitly casted)
+  OPERATOR_DIVIDE = 4,
+  // left || right (both must be char/varchar)
+  OPERATOR_CONCAT = 5,
+  // left % right (both must be integer)
+  OPERATOR_MOD = 6,
+  // explicitly cast left as right (right is integer in ValueType enum)
+  OPERATOR_CAST = 7,
+  // logical not operator
+  OPERATOR_NOT = 8,
+  // is null test.
+  OPERATOR_IS_NULL = 9,
+  // exists test.
+  OPERATOR_EXISTS = 18,
+  OPERATOR_UNARY_MINUS = 50,
 
   // -----------------------------
   // Comparison Operators
   // -----------------------------
-  EXPRESSION_TYPE_COMPARE_EQUAL = 10,  // equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_NOTEQUAL =
-      11,  // inequal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LESSTHAN =
-      12,  // less than operator between left and right
-  EXPRESSION_TYPE_COMPARE_GREATERTHAN =
-      13,  // greater than operator between left and right
-  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO =
-      14,  // less than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO =
-      15,  // greater than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LIKE =
-      16,  // LIKE operator (left LIKE right). both children must be string.
-  EXPRESSION_TYPE_COMPARE_NOTLIKE = 17,  // NOT LIKE operator (left NOT LIKE
-                                         // right). both children must be
-                                         // string.
-  EXPRESSION_TYPE_COMPARE_IN =
-      19,  // IN operator [left IN (right1, right2, ...)]
+  // equal operator between left and right
+  COMPARE_EQUAL = 10,
+  // inequal operator between left and right
+  COMPARE_NOTEQUAL = 11,
+  // less than operator between left and right
+  COMPARE_LESSTHAN = 12,
+  // greater than operator between left and right
+  COMPARE_GREATERTHAN = 13,
+  // less than equal operator between left and right
+  COMPARE_LESSTHANOREQUALTO = 14,
+  // greater than equal operator between left and right
+  COMPARE_GREATERTHANOREQUALTO = 15,
+  // LIKE operator (left LIKE right). Both children must be string.
+  COMPARE_LIKE = 16,
+  // NOT LIKE operator (left NOT LIKE right). Both children must be string.
+  COMPARE_NOTLIKE = 17,
+  // IN operator [left IN (right1, right2, ...)]
+  COMPARE_IN = 19,
 
   // -----------------------------
   // Conjunction Operators
   // -----------------------------
-  EXPRESSION_TYPE_CONJUNCTION_AND = 20,
-  EXPRESSION_TYPE_CONJUNCTION_OR = 21,
+  CONJUNCTION_AND = 20,
+  CONJUNCTION_OR = 21,
 
   // -----------------------------
   // Values
   // -----------------------------
-  EXPRESSION_TYPE_VALUE_CONSTANT = 30,
-  EXPRESSION_TYPE_VALUE_PARAMETER = 31,
-  EXPRESSION_TYPE_VALUE_TUPLE = 32,
-  EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS = 33,
-  EXPRESSION_TYPE_VALUE_NULL = 34,
-  EXPRESSION_TYPE_VALUE_VECTOR = 35,
-  EXPRESSION_TYPE_VALUE_SCALAR = 36,
+  VALUE_CONSTANT = 30,
+  VALUE_PARAMETER = 31,
+  VALUE_TUPLE = 32,
+  VALUE_TUPLE_ADDRESS = 33,
+  VALUE_NULL = 34,
+  VALUE_VECTOR = 35,
+  VALUE_SCALAR = 36,
 
   // -----------------------------
   // Aggregates
   // -----------------------------
-  EXPRESSION_TYPE_AGGREGATE_COUNT = 40,
-  EXPRESSION_TYPE_AGGREGATE_COUNT_STAR = 41,
-  EXPRESSION_TYPE_AGGREGATE_SUM = 42,
-  EXPRESSION_TYPE_AGGREGATE_MIN = 43,
-  EXPRESSION_TYPE_AGGREGATE_MAX = 44,
-  EXPRESSION_TYPE_AGGREGATE_AVG = 45,
+  AGGREGATE_COUNT = 40,
+  AGGREGATE_COUNT_STAR = 41,
+  AGGREGATE_SUM = 42,
+  AGGREGATE_MIN = 43,
+  AGGREGATE_MAX = 44,
+  AGGREGATE_AVG = 45,
 
   // -----------------------------
   // Functions
   // -----------------------------
-  EXPRESSION_TYPE_FUNCTION = 100,
+  FUNCTION = 100,
 
   // -----------------------------
   // Internals added for Elastic
   // -----------------------------
-  EXPRESSION_TYPE_HASH_RANGE = 200,
+  HASH_RANGE = 200,
 
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
+  OPERATOR_CASE_EXPR = 302,
 
   // -----------------------------
   // Internals added for NULLIF
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_NULLIF = 304,
+  OPERATOR_NULLIF = 304,
 
   // -----------------------------
   // Internals added for COALESCE
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_COALESCE = 305,
+  OPERATOR_COALESCE = 305,
 
   // -----------------------------
   // Subquery IN/EXISTS
   // -----------------------------
-  EXPRESSION_TYPE_ROW_SUBQUERY = 400,
-  EXPRESSION_TYPE_SELECT_SUBQUERY = 401,
+  ROW_SUBQUERY = 400,
+  SELECT_SUBQUERY = 401,
 
   // -----------------------------
   // String operators
   // -----------------------------
-  EXPRESSION_TYPE_SUBSTR = 500,
-  EXPRESSION_TYPE_ASCII = 501,
-  EXPRESSION_TYPE_OCTET_LEN = 502,
-  EXPRESSION_TYPE_CHAR = 503,
-  EXPRESSION_TYPE_CHAR_LEN = 504,
-  EXPRESSION_TYPE_SPACE = 505,
-  EXPRESSION_TYPE_REPEAT = 506,
-  EXPRESSION_TYPE_POSITION = 507,
-  EXPRESSION_TYPE_LEFT = 508,
-  EXPRESSION_TYPE_RIGHT = 509,
-  EXPRESSION_TYPE_CONCAT = 510,
-  EXPRESSION_TYPE_LTRIM = 511,
-  EXPRESSION_TYPE_RTRIM = 512,
-  EXPRESSION_TYPE_BTRIM = 513,
-  EXPRESSION_TYPE_REPLACE = 514,
-  EXPRESSION_TYPE_OVERLAY = 515,
+  SUBSTR = 500,
+  ASCII = 501,
+  OCTET_LEN = 502,
+  CHAR = 503,
+  CHAR_LEN = 504,
+  SPACE = 505,
+  REPEAT = 506,
+  POSITION = 507,
+  LEFT = 508,
+  RIGHT = 509,
+  CONCAT = 510,
+  LTRIM = 511,
+  RTRIM = 512,
+  BTRIM = 513,
+  REPLACE = 514,
+  OVERLAY = 515,
 
   // -----------------------------
   // Date operators
   // -----------------------------
-  EXPRESSION_TYPE_EXTRACT = 600,
-  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
+  EXTRACT = 600,
+  DATE_TO_TIMESTAMP = 601,
 
   //===--------------------------------------------------------------------===//
   // Parser
   //===--------------------------------------------------------------------===//
-  EXPRESSION_TYPE_STAR = 700,
-  EXPRESSION_TYPE_PLACEHOLDER = 701,
-  EXPRESSION_TYPE_COLUMN_REF = 702,
-  EXPRESSION_TYPE_FUNCTION_REF = 703,
-  EXPRESSION_TYPE_TABLE_REF = 704,
+  STAR = 700,
+  PLACEHOLDER = 701,
+  COLUMN_REF = 702,
+  FUNCTION_REF = 703,
+  TABLE_REF = 704,
 
   //===--------------------------------------------------------------------===//
   // Misc
   //===--------------------------------------------------------------------===//
-  EXPRESSION_TYPE_CAST = 900
+  CAST = 900
 };
+std::string ExpressionTypeToString(ExpressionType type);
+ExpressionType StringToExpressionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ExpressionType &type);
+ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 // Note that we have some duplicate DatePartTypes with the 's' suffix
 // They have to have the same value in order for it to work.
@@ -1030,10 +1039,6 @@ type::Type::TypeId StringToTypeId(const std::string &str);
 
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
-
-std::string ExpressionTypeToString(ExpressionType type);
-ExpressionType StringToExpressionType(const std::string &str);
-ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(const std::string &str);

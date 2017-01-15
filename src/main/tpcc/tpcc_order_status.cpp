@@ -125,13 +125,13 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<type::Value > customer_key_values;
     std::vector<expression::AbstractExpression *> runtime_keys;
 
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     customer_key_values.push_back(type::ValueFactory::GetIntegerValue(w_id).Copy());
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_key_values.push_back(type::ValueFactory::GetIntegerValue(d_id).Copy());
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_key_values.push_back(type::ValueFactory::GetIntegerValue(c_id).Copy());
 
     auto customer_pkey_index = customer_table->GetIndexWithOid(customer_table_pkey_index_oid);
@@ -170,13 +170,13 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<type::Value > customer_key_values;
     std::vector<expression::AbstractExpression *> runtime_keys;
 
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     customer_key_values.push_back(type::ValueFactory::GetIntegerValue(w_id).Copy());
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_key_values.push_back(type::ValueFactory::GetIntegerValue(d_id).Copy());
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_key_values.push_back(type::ValueFactory::GetVarcharValue(c_last).Copy());
 
     auto customer_skey_index = customer_table->GetIndexWithOid(customer_table_skey_index_oid);
@@ -230,11 +230,11 @@ bool RunOrderStatus(const size_t &thread_id){
   std::vector<type::Value > orders_key_values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   orders_key_values.push_back(type::ValueFactory::GetIntegerValue(w_id).Copy());
-  orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   orders_key_values.push_back(type::ValueFactory::GetIntegerValue(d_id).Copy());
-  orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   orders_key_values.push_back(type::ValueFactory::GetIntegerValue(c_id).Copy());
 
   // Get the index
@@ -283,11 +283,11 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<ExpressionType> order_line_expr_types;
     std::vector<type::Value > order_line_key_values;
 
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     order_line_key_values.push_back(type::ValueFactory::GetIntegerValue(w_id).Copy());
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     order_line_key_values.push_back(type::ValueFactory::GetIntegerValue(d_id).Copy());
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     order_line_key_values.push_back(orders[0][0]);
 
     auto order_line_skey_index = order_line_table->GetIndexWithOid(order_line_table_skey_index_oid);

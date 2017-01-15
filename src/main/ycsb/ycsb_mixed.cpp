@@ -100,7 +100,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
   std::vector<ExpressionType> expr_types;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
   std::vector<expression::AbstractExpression *> runtime_keys;
   

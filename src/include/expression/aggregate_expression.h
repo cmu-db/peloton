@@ -28,26 +28,26 @@ public:
       AbstractExpression(type){
     switch(type){
     distinct_ = distinct;
-    case EXPRESSION_TYPE_AGGREGATE_COUNT:
-      if (child != nullptr && child->GetExpressionType() == EXPRESSION_TYPE_STAR){
+    case ExpressionType::AGGREGATE_COUNT:
+      if (child != nullptr && child->GetExpressionType() == ExpressionType::STAR){
         delete child;
         child = nullptr;
-        exp_type_ = EXPRESSION_TYPE_AGGREGATE_COUNT_STAR;
+        exp_type_ = ExpressionType::AGGREGATE_COUNT_STAR;
         expr_name_ = "count(*)";
       }else{
         expr_name_ = "count";
       }
       break;
-    case EXPRESSION_TYPE_AGGREGATE_SUM:
+    case ExpressionType::AGGREGATE_SUM:
       expr_name_ = "sum";
       break;
-    case EXPRESSION_TYPE_AGGREGATE_MIN:
+    case ExpressionType::AGGREGATE_MIN:
       expr_name_ = "min";
       break;
-    case EXPRESSION_TYPE_AGGREGATE_MAX:
+    case ExpressionType::AGGREGATE_MAX:
       expr_name_ = "max";
       break;
-    case EXPRESSION_TYPE_AGGREGATE_AVG:
+    case ExpressionType::AGGREGATE_AVG:
       expr_name_ = "avg";
       break;
     default:
@@ -73,18 +73,18 @@ public:
   void DeduceExpressionType() override{
     switch (exp_type_){
     // if count return an integer
-    case EXPRESSION_TYPE_AGGREGATE_COUNT:
-    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+    case ExpressionType::AGGREGATE_COUNT:
+    case ExpressionType::AGGREGATE_COUNT_STAR:
       return_value_type_ = type::Type::INTEGER;
       break;
     // return the type of the base
-    case EXPRESSION_TYPE_AGGREGATE_MAX:
-    case EXPRESSION_TYPE_AGGREGATE_MIN:
-    case EXPRESSION_TYPE_AGGREGATE_SUM:
+    case ExpressionType::AGGREGATE_MAX:
+    case ExpressionType::AGGREGATE_MIN:
+    case ExpressionType::AGGREGATE_SUM:
       PL_ASSERT(children_.size() >= 1);
       return_value_type_ = children_[0]->GetValueType();
       break;
-    case EXPRESSION_TYPE_AGGREGATE_AVG:
+    case ExpressionType::AGGREGATE_AVG:
       return_value_type_ = type::Type::DECIMAL;
       break;
     default:

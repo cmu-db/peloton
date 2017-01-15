@@ -160,11 +160,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_pkey_column_ids = {0, 1, 2};
     std::vector<ExpressionType> customer_pexpr_types;
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_pkey_values;
 
@@ -209,11 +209,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_key_column_ids = {1, 2, 5};
     std::vector<ExpressionType> customer_expr_types;
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_key_values;
 
@@ -259,7 +259,7 @@ bool RunPayment(const size_t &thread_id){
   std::vector<oid_t> warehouse_key_column_ids = {0};
   std::vector<ExpressionType> warehouse_expr_types;
   warehouse_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   
   std::vector<type::Value > warehouse_key_values;
 
@@ -301,9 +301,9 @@ bool RunPayment(const size_t &thread_id){
   std::vector<oid_t> district_key_column_ids = {0, 1};
   std::vector<ExpressionType> district_expr_types;
   district_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
   district_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
   
   std::vector<type::Value > district_key_values;
 
@@ -472,11 +472,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_pkey_column_ids = {0, 1, 2};
     std::vector<ExpressionType> customer_pexpr_types;
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_pkey_values;
 
@@ -545,11 +545,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_pkey_column_ids = {0, 1, 2};
     std::vector<ExpressionType> customer_pexpr_types;
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_pkey_values;
 

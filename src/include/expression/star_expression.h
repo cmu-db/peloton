@@ -24,7 +24,7 @@ namespace expression {
 class StarExpression: public AbstractExpression {
 public:
   StarExpression() :
-      AbstractExpression(EXPRESSION_TYPE_STAR){
+      AbstractExpression(ExpressionType::STAR){
   }
 
   type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,

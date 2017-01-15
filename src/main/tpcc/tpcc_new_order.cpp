@@ -141,7 +141,7 @@ bool RunNewOrder(const size_t &thread_id){
   std::vector<ExpressionType> item_expr_types;
   item_key_column_ids.push_back(0); // I_ID
   item_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
   
   auto item_pkey_index = item_table->GetIndexWithOid(
     item_table_pkey_index_oid);
@@ -189,7 +189,7 @@ bool RunNewOrder(const size_t &thread_id){
   std::vector<ExpressionType> warehouse_expr_types;
   warehouse_key_column_ids.push_back(0); // W_ID
   warehouse_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
 
   std::vector<type::Value > warehouse_key_values;
 
@@ -236,9 +236,9 @@ bool RunNewOrder(const size_t &thread_id){
   district_key_column_ids.push_back(0); // D_ID
   district_key_column_ids.push_back(1); // D_W_ID
   district_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   district_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
@@ -289,11 +289,11 @@ bool RunNewOrder(const size_t &thread_id){
   customer_key_column_ids.push_back(1); // C_D_ID
   customer_key_column_ids.push_back(2); // C_W_ID
   customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
 
   std::vector<type::Value > customer_key_values;
   customer_key_values.push_back(type::ValueFactory::GetIntegerValue(customer_id).Copy());
@@ -451,9 +451,9 @@ bool RunNewOrder(const size_t &thread_id){
   stock_key_column_ids.push_back(0); // S_I_ID
   stock_key_column_ids.push_back(1); // S_W_ID
   stock_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   stock_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
 
 
   auto stock_pkey_index = stock_table->GetIndexWithOid(

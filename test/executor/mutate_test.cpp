@@ -116,7 +116,7 @@ void UpdateTuple(storage::DataTable *table,
       new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue(70));
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_LESSTHAN, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_LESSTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
@@ -158,7 +158,7 @@ void DeleteTuple(storage::DataTable *table,
       new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue(60));
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_GREATERTHAN, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_GREATERTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {};
@@ -402,7 +402,7 @@ TEST_F(MutateTests, UpdateTest) {
           type::ValueFactory::GetDecimalValue(23.5));
 
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   tuple_cnt = SeqScanCount(table, column_ids, predicate);
   EXPECT_EQ(tuple_cnt, 6);

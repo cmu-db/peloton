@@ -31,28 +31,28 @@ Agg *GetAggInstance(ExpressionType agg_type) {
   Agg *aggregator;
 
   switch (agg_type) {
-    case EXPRESSION_TYPE_AGGREGATE_COUNT:
+    case ExpressionType::AGGREGATE_COUNT:
       aggregator = new CountAgg();
       break;
-    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+    case ExpressionType::AGGREGATE_COUNT_STAR:
       aggregator = new CountStarAgg();
       break;
-    case EXPRESSION_TYPE_AGGREGATE_SUM:
+    case ExpressionType::AGGREGATE_SUM:
       aggregator = new SumAgg();
       break;
-    case EXPRESSION_TYPE_AGGREGATE_AVG:
+    case ExpressionType::AGGREGATE_AVG:
       aggregator = new AvgAgg(false);
       break;
-    case EXPRESSION_TYPE_AGGREGATE_MIN:
+    case ExpressionType::AGGREGATE_MIN:
       aggregator = new MinAgg();
       break;
-    case EXPRESSION_TYPE_AGGREGATE_MAX:
+    case ExpressionType::AGGREGATE_MAX:
       aggregator = new MaxAgg();
       break;
     default: {
       std::string message =
-          "Unknown aggregate type " + std::to_string(agg_type);
-      throw UnknownTypeException(agg_type, message);
+          "Unknown aggregate type " + ExpressionTypeToString(agg_type);
+      throw UnknownTypeException(static_cast<int>(agg_type), message);
     }
   }
 

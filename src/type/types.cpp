@@ -416,202 +416,202 @@ StatementType StringToStatementType(const std::string& str) {
 
 std::string ExpressionTypeToString(ExpressionType type) {
   switch (type) {
-    case EXPRESSION_TYPE_INVALID: {
+    case ExpressionType::INVALID: {
       return ("INVALID");
     }
-    case EXPRESSION_TYPE_OPERATOR_PLUS: {
+    case ExpressionType::OPERATOR_PLUS: {
       return ("OPERATOR_PLUS");
     }
-    case EXPRESSION_TYPE_OPERATOR_MINUS: {
+    case ExpressionType::OPERATOR_MINUS: {
       return ("OPERATOR_MINUS");
     }
-    case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
+    case ExpressionType::OPERATOR_MULTIPLY: {
       return ("OPERATOR_MULTIPLY");
     }
-    case EXPRESSION_TYPE_OPERATOR_DIVIDE: {
+    case ExpressionType::OPERATOR_DIVIDE: {
       return ("OPERATOR_DIVIDE");
     }
-    case EXPRESSION_TYPE_OPERATOR_CONCAT: {
+    case ExpressionType::OPERATOR_CONCAT: {
       return ("OPERATOR_CONCAT");
     }
-    case EXPRESSION_TYPE_OPERATOR_MOD: {
+    case ExpressionType::OPERATOR_MOD: {
       return ("OPERATOR_MOD");
     }
-    case EXPRESSION_TYPE_OPERATOR_CAST: {
+    case ExpressionType::OPERATOR_CAST: {
       return ("OPERATOR_CAST");
     }
-    case EXPRESSION_TYPE_OPERATOR_NOT: {
+    case ExpressionType::OPERATOR_NOT: {
       return ("OPERATOR_NOT");
     }
-    case EXPRESSION_TYPE_OPERATOR_IS_NULL: {
+    case ExpressionType::OPERATOR_IS_NULL: {
       return ("OPERATOR_IS_NULL");
     }
-    case EXPRESSION_TYPE_OPERATOR_EXISTS: {
+    case ExpressionType::OPERATOR_EXISTS: {
       return ("OPERATOR_EXISTS");
     }
-    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
+    case ExpressionType::OPERATOR_UNARY_MINUS: {
       return ("OPERATOR_UNARY_MINUS");
     }
-    case EXPRESSION_TYPE_COMPARE_EQUAL: {
+    case ExpressionType::COMPARE_EQUAL: {
       return ("COMPARE_EQUAL");
     }
-    case EXPRESSION_TYPE_COMPARE_NOTEQUAL: {
+    case ExpressionType::COMPARE_NOTEQUAL: {
       return ("COMPARE_NOTEQUAL");
     }
-    case EXPRESSION_TYPE_COMPARE_LESSTHAN: {
+    case ExpressionType::COMPARE_LESSTHAN: {
       return ("COMPARE_LESSTHAN");
     }
-    case EXPRESSION_TYPE_COMPARE_GREATERTHAN: {
+    case ExpressionType::COMPARE_GREATERTHAN: {
       return ("COMPARE_GREATERTHAN");
     }
-    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO: {
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
       return ("COMPARE_LESSTHANOREQUALTO");
     }
-    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO: {
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
       return ("COMPARE_GREATERTHANOREQUALTO");
     }
-    case EXPRESSION_TYPE_COMPARE_LIKE: {
+    case ExpressionType::COMPARE_LIKE: {
       return ("COMPARE_LIKE");
     }
-    case EXPRESSION_TYPE_COMPARE_NOTLIKE: {
+    case ExpressionType::COMPARE_NOTLIKE: {
       return ("COMPARE_NOTLIKE");
     }
-    case EXPRESSION_TYPE_COMPARE_IN: {
+    case ExpressionType::COMPARE_IN: {
       return ("COMPARE_IN");
     }
-    case EXPRESSION_TYPE_CONJUNCTION_AND: {
+    case ExpressionType::CONJUNCTION_AND: {
       return ("CONJUNCTION_AND");
     }
-    case EXPRESSION_TYPE_CONJUNCTION_OR: {
+    case ExpressionType::CONJUNCTION_OR: {
       return ("CONJUNCTION_OR");
     }
-    case EXPRESSION_TYPE_VALUE_CONSTANT: {
+    case ExpressionType::VALUE_CONSTANT: {
       return ("VALUE_CONSTANT");
     }
-    case EXPRESSION_TYPE_VALUE_PARAMETER: {
+    case ExpressionType::VALUE_PARAMETER: {
       return ("VALUE_PARAMETER");
     }
-    case EXPRESSION_TYPE_VALUE_TUPLE: {
+    case ExpressionType::VALUE_TUPLE: {
       return ("VALUE_TUPLE");
     }
-    case EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS: {
+    case ExpressionType::VALUE_TUPLE_ADDRESS: {
       return ("VALUE_TUPLE_ADDRESS");
     }
-    case EXPRESSION_TYPE_VALUE_NULL: {
+    case ExpressionType::VALUE_NULL: {
       return ("VALUE_NULL");
     }
-    case EXPRESSION_TYPE_VALUE_VECTOR: {
+    case ExpressionType::VALUE_VECTOR: {
       return ("VALUE_VECTOR");
     }
-    case EXPRESSION_TYPE_VALUE_SCALAR: {
+    case ExpressionType::VALUE_SCALAR: {
       return ("VALUE_SCALAR");
     }
-    case EXPRESSION_TYPE_AGGREGATE_COUNT: {
+    case ExpressionType::AGGREGATE_COUNT: {
       return ("AGGREGATE_COUNT");
     }
-    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR: {
+    case ExpressionType::AGGREGATE_COUNT_STAR: {
       return ("AGGREGATE_COUNT_STAR");
     }
-    case EXPRESSION_TYPE_AGGREGATE_SUM: {
+    case ExpressionType::AGGREGATE_SUM: {
       return ("AGGREGATE_SUM");
     }
-    case EXPRESSION_TYPE_AGGREGATE_MIN: {
+    case ExpressionType::AGGREGATE_MIN: {
       return ("AGGREGATE_MIN");
     }
-    case EXPRESSION_TYPE_AGGREGATE_MAX: {
+    case ExpressionType::AGGREGATE_MAX: {
       return ("AGGREGATE_MAX");
     }
-    case EXPRESSION_TYPE_AGGREGATE_AVG: {
+    case ExpressionType::AGGREGATE_AVG: {
       return ("AGGREGATE_AVG");
     }
-    case EXPRESSION_TYPE_FUNCTION: {
+    case ExpressionType::FUNCTION: {
       return ("FUNCTION");
     }
-    case EXPRESSION_TYPE_HASH_RANGE: {
+    case ExpressionType::HASH_RANGE: {
       return ("HASH_RANGE");
     }
-    case EXPRESSION_TYPE_OPERATOR_CASE_EXPR: {
+    case ExpressionType::OPERATOR_CASE_EXPR: {
       return ("OPERATOR_CASE_EXPR");
     }
-    case EXPRESSION_TYPE_OPERATOR_NULLIF: {
+    case ExpressionType::OPERATOR_NULLIF: {
       return ("OPERATOR_NULLIF");
     }
-    case EXPRESSION_TYPE_OPERATOR_COALESCE: {
+    case ExpressionType::OPERATOR_COALESCE: {
       return ("OPERATOR_COALESCE");
     }
-    case EXPRESSION_TYPE_ROW_SUBQUERY: {
+    case ExpressionType::ROW_SUBQUERY: {
       return ("ROW_SUBQUERY");
     }
-    case EXPRESSION_TYPE_SELECT_SUBQUERY: {
+    case ExpressionType::SELECT_SUBQUERY: {
       return ("SELECT_SUBQUERY");
     }
-    case EXPRESSION_TYPE_SUBSTR: {
+    case ExpressionType::SUBSTR: {
       return ("SUBSTR");
     }
-    case EXPRESSION_TYPE_ASCII: {
+    case ExpressionType::ASCII: {
       return ("ASCII");
     }
-    case EXPRESSION_TYPE_OCTET_LEN: {
+    case ExpressionType::OCTET_LEN: {
       return ("OCTET_LEN");
     }
-    case EXPRESSION_TYPE_CHAR: {
+    case ExpressionType::CHAR: {
       return ("CHAR");
     }
-    case EXPRESSION_TYPE_CHAR_LEN: {
+    case ExpressionType::CHAR_LEN: {
       return ("CHAR_LEN");
     }
-    case EXPRESSION_TYPE_SPACE: {
+    case ExpressionType::SPACE: {
       return ("SPACE");
     }
-    case EXPRESSION_TYPE_REPEAT: {
+    case ExpressionType::REPEAT: {
       return ("REPEAT");
     }
-    case EXPRESSION_TYPE_POSITION: {
+    case ExpressionType::POSITION: {
       return ("POSITION");
     }
-    case EXPRESSION_TYPE_LEFT: {
+    case ExpressionType::LEFT: {
       return ("LEFT");
     }
-    case EXPRESSION_TYPE_RIGHT: {
+    case ExpressionType::RIGHT: {
       return ("RIGHT");
     }
-    case EXPRESSION_TYPE_CONCAT: {
+    case ExpressionType::CONCAT: {
       return ("CONCAT");
     }
-    case EXPRESSION_TYPE_LTRIM: {
+    case ExpressionType::LTRIM: {
       return ("LTRIM");
     }
-    case EXPRESSION_TYPE_RTRIM: {
+    case ExpressionType::RTRIM: {
       return ("RTRIM");
     }
-    case EXPRESSION_TYPE_BTRIM: {
+    case ExpressionType::BTRIM: {
       return ("BTRIM");
     }
-    case EXPRESSION_TYPE_REPLACE: {
+    case ExpressionType::REPLACE: {
       return ("REPLACE");
     }
-    case EXPRESSION_TYPE_OVERLAY: {
+    case ExpressionType::OVERLAY: {
       return ("OVERLAY");
     }
-    case EXPRESSION_TYPE_EXTRACT: {
+    case ExpressionType::EXTRACT: {
       return ("EXTRACT");
     }
-    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP: {
+    case ExpressionType::DATE_TO_TIMESTAMP: {
       return ("DATE_TO_TIMESTAMP");
     }
-    case EXPRESSION_TYPE_STAR: {
+    case ExpressionType::STAR: {
       return ("STAR");
     }
-    case EXPRESSION_TYPE_PLACEHOLDER: {
+    case ExpressionType::PLACEHOLDER: {
       return ("PLACEHOLDER");
     }
-    case EXPRESSION_TYPE_COLUMN_REF: {
+    case ExpressionType::COLUMN_REF: {
       return ("COLUMN_REF");
     }
-    case EXPRESSION_TYPE_FUNCTION_REF: {
+    case ExpressionType::FUNCTION_REF: {
       return ("FUNCTION_REF");
     }
-    case EXPRESSION_TYPE_CAST: {
+    case ExpressionType::CAST: {
       return ("CAST");
     }
     default: {
@@ -628,158 +628,163 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string& str) {
   std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(),
                  ::tolower);
   if (str == "count") {
-    return EXPRESSION_TYPE_AGGREGATE_COUNT;
+    return ExpressionType::AGGREGATE_COUNT;
   } else if (str == "sum") {
-    return EXPRESSION_TYPE_AGGREGATE_SUM;
+    return ExpressionType::AGGREGATE_SUM;
   } else if (str == "avg") {
-    return EXPRESSION_TYPE_AGGREGATE_AVG;
+    return ExpressionType::AGGREGATE_AVG;
   } else if (str == "max") {
-    return EXPRESSION_TYPE_AGGREGATE_MAX;
+    return ExpressionType::AGGREGATE_MAX;
   } else if (str == "min") {
-    return EXPRESSION_TYPE_AGGREGATE_MIN;
+    return ExpressionType::AGGREGATE_MIN;
   }
-  return EXPRESSION_TYPE_INVALID;
+  return ExpressionType::INVALID;
 }
 
 ExpressionType StringToExpressionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return EXPRESSION_TYPE_INVALID;
+    return ExpressionType::INVALID;
   } else if (upper_str == "OPERATOR_PLUS") {
-    return EXPRESSION_TYPE_OPERATOR_PLUS;
+    return ExpressionType::OPERATOR_PLUS;
   } else if (upper_str == "OPERATOR_MINUS") {
-    return EXPRESSION_TYPE_OPERATOR_MINUS;
+    return ExpressionType::OPERATOR_MINUS;
   } else if (upper_str == "OPERATOR_MULTIPLY") {
-    return EXPRESSION_TYPE_OPERATOR_MULTIPLY;
+    return ExpressionType::OPERATOR_MULTIPLY;
   } else if (upper_str == "OPERATOR_DIVIDE") {
-    return EXPRESSION_TYPE_OPERATOR_DIVIDE;
+    return ExpressionType::OPERATOR_DIVIDE;
   } else if (upper_str == "OPERATOR_CONCAT") {
-    return EXPRESSION_TYPE_OPERATOR_CONCAT;
+    return ExpressionType::OPERATOR_CONCAT;
   } else if (upper_str == "OPERATOR_MOD") {
-    return EXPRESSION_TYPE_OPERATOR_MOD;
+    return ExpressionType::OPERATOR_MOD;
   } else if (upper_str == "OPERATOR_CAST") {
-    return EXPRESSION_TYPE_OPERATOR_CAST;
+    return ExpressionType::OPERATOR_CAST;
   } else if (upper_str == "OPERATOR_NOT") {
-    return EXPRESSION_TYPE_OPERATOR_NOT;
+    return ExpressionType::OPERATOR_NOT;
   } else if (upper_str == "OPERATOR_IS_NULL") {
-    return EXPRESSION_TYPE_OPERATOR_IS_NULL;
+    return ExpressionType::OPERATOR_IS_NULL;
   } else if (upper_str == "OPERATOR_EXISTS") {
-    return EXPRESSION_TYPE_OPERATOR_EXISTS;
+    return ExpressionType::OPERATOR_EXISTS;
   } else if (upper_str == "OPERATOR_UNARY_MINUS") {
-    return EXPRESSION_TYPE_OPERATOR_UNARY_MINUS;
+    return ExpressionType::OPERATOR_UNARY_MINUS;
   } else if (upper_str == "COMPARE_EQUAL") {
-    return EXPRESSION_TYPE_COMPARE_EQUAL;
+    return ExpressionType::COMPARE_EQUAL;
   } else if (upper_str == "COMPARE_NOTEQUAL") {
-    return EXPRESSION_TYPE_COMPARE_NOTEQUAL;
+    return ExpressionType::COMPARE_NOTEQUAL;
   } else if (upper_str == "COMPARE_LESSTHAN") {
-    return EXPRESSION_TYPE_COMPARE_LESSTHAN;
+    return ExpressionType::COMPARE_LESSTHAN;
   } else if (upper_str == "COMPARE_GREATERTHAN") {
-    return EXPRESSION_TYPE_COMPARE_GREATERTHAN;
+    return ExpressionType::COMPARE_GREATERTHAN;
   } else if (upper_str == "COMPARE_LESSTHANOREQUALTO") {
-    return EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
+    return ExpressionType::COMPARE_LESSTHANOREQUALTO;
   } else if (upper_str == "COMPARE_GREATERTHANOREQUALTO") {
-    return EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
+    return ExpressionType::COMPARE_GREATERTHANOREQUALTO;
   } else if (upper_str == "COMPARE_LIKE") {
-    return EXPRESSION_TYPE_COMPARE_LIKE;
+    return ExpressionType::COMPARE_LIKE;
   } else if (upper_str == "COMPARE_NOTLIKE") {
-    return EXPRESSION_TYPE_COMPARE_NOTLIKE;
+    return ExpressionType::COMPARE_NOTLIKE;
   } else if (upper_str == "COMPARE_IN") {
-    return EXPRESSION_TYPE_COMPARE_IN;
+    return ExpressionType::COMPARE_IN;
   } else if (upper_str == "CONJUNCTION_AND") {
-    return EXPRESSION_TYPE_CONJUNCTION_AND;
+    return ExpressionType::CONJUNCTION_AND;
   } else if (upper_str == "CONJUNCTION_OR") {
-    return EXPRESSION_TYPE_CONJUNCTION_OR;
+    return ExpressionType::CONJUNCTION_OR;
   } else if (upper_str == "VALUE_CONSTANT") {
-    return EXPRESSION_TYPE_VALUE_CONSTANT;
+    return ExpressionType::VALUE_CONSTANT;
   } else if (upper_str == "VALUE_PARAMETER") {
-    return EXPRESSION_TYPE_VALUE_PARAMETER;
+    return ExpressionType::VALUE_PARAMETER;
   } else if (upper_str == "VALUE_TUPLE") {
-    return EXPRESSION_TYPE_VALUE_TUPLE;
+    return ExpressionType::VALUE_TUPLE;
   } else if (upper_str == "VALUE_TUPLE_ADDRESS") {
-    return EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS;
+    return ExpressionType::VALUE_TUPLE_ADDRESS;
   } else if (upper_str == "VALUE_NULL") {
-    return EXPRESSION_TYPE_VALUE_NULL;
+    return ExpressionType::VALUE_NULL;
   } else if (upper_str == "VALUE_VECTOR") {
-    return EXPRESSION_TYPE_VALUE_VECTOR;
+    return ExpressionType::VALUE_VECTOR;
   } else if (upper_str == "VALUE_SCALAR") {
-    return EXPRESSION_TYPE_VALUE_SCALAR;
+    return ExpressionType::VALUE_SCALAR;
   } else if (upper_str == "AGGREGATE_COUNT") {
-    return EXPRESSION_TYPE_AGGREGATE_COUNT;
+    return ExpressionType::AGGREGATE_COUNT;
   } else if (upper_str == "AGGREGATE_COUNT_STAR") {
-    return EXPRESSION_TYPE_AGGREGATE_COUNT_STAR;
+    return ExpressionType::AGGREGATE_COUNT_STAR;
   } else if (upper_str == "AGGREGATE_SUM") {
-    return EXPRESSION_TYPE_AGGREGATE_SUM;
+    return ExpressionType::AGGREGATE_SUM;
   } else if (upper_str == "AGGREGATE_MIN") {
-    return EXPRESSION_TYPE_AGGREGATE_MIN;
+    return ExpressionType::AGGREGATE_MIN;
   } else if (upper_str == "AGGREGATE_MAX") {
-    return EXPRESSION_TYPE_AGGREGATE_MAX;
+    return ExpressionType::AGGREGATE_MAX;
   } else if (upper_str == "AGGREGATE_AVG") {
-    return EXPRESSION_TYPE_AGGREGATE_AVG;
+    return ExpressionType::AGGREGATE_AVG;
   } else if (upper_str == "FUNCTION") {
-    return EXPRESSION_TYPE_FUNCTION;
+    return ExpressionType::FUNCTION;
   } else if (upper_str == "HASH_RANGE") {
-    return EXPRESSION_TYPE_HASH_RANGE;
+    return ExpressionType::HASH_RANGE;
   } else if (upper_str == "OPERATOR_CASE_EXPR") {
-    return EXPRESSION_TYPE_OPERATOR_CASE_EXPR;
+    return ExpressionType::OPERATOR_CASE_EXPR;
   } else if (upper_str == "OPERATOR_NULLIF") {
-    return EXPRESSION_TYPE_OPERATOR_NULLIF;
+    return ExpressionType::OPERATOR_NULLIF;
   } else if (upper_str == "OPERATOR_COALESCE") {
-    return EXPRESSION_TYPE_OPERATOR_COALESCE;
+    return ExpressionType::OPERATOR_COALESCE;
   } else if (upper_str == "ROW_SUBQUERY") {
-    return EXPRESSION_TYPE_ROW_SUBQUERY;
+    return ExpressionType::ROW_SUBQUERY;
   } else if (upper_str == "SELECT_SUBQUERY") {
-    return EXPRESSION_TYPE_SELECT_SUBQUERY;
+    return ExpressionType::SELECT_SUBQUERY;
   } else if (upper_str == "SUBSTR") {
-    return EXPRESSION_TYPE_SUBSTR;
+    return ExpressionType::SUBSTR;
   } else if (upper_str == "ASCII") {
-    return EXPRESSION_TYPE_ASCII;
+    return ExpressionType::ASCII;
   } else if (upper_str == "OCTET_LEN") {
-    return EXPRESSION_TYPE_OCTET_LEN;
+    return ExpressionType::OCTET_LEN;
   } else if (upper_str == "CHAR") {
-    return EXPRESSION_TYPE_CHAR;
+    return ExpressionType::CHAR;
   } else if (upper_str == "CHAR_LEN") {
-    return EXPRESSION_TYPE_CHAR_LEN;
+    return ExpressionType::CHAR_LEN;
   } else if (upper_str == "SPACE") {
-    return EXPRESSION_TYPE_SPACE;
+    return ExpressionType::SPACE;
   } else if (upper_str == "REPEAT") {
-    return EXPRESSION_TYPE_REPEAT;
+    return ExpressionType::REPEAT;
   } else if (upper_str == "POSITION") {
-    return EXPRESSION_TYPE_POSITION;
+    return ExpressionType::POSITION;
   } else if (upper_str == "LEFT") {
-    return EXPRESSION_TYPE_LEFT;
+    return ExpressionType::LEFT;
   } else if (upper_str == "RIGHT") {
-    return EXPRESSION_TYPE_RIGHT;
+    return ExpressionType::RIGHT;
   } else if (upper_str == "CONCAT") {
-    return EXPRESSION_TYPE_CONCAT;
+    return ExpressionType::CONCAT;
   } else if (upper_str == "LTRIM") {
-    return EXPRESSION_TYPE_LTRIM;
+    return ExpressionType::LTRIM;
   } else if (upper_str == "RTRIM") {
-    return EXPRESSION_TYPE_RTRIM;
+    return ExpressionType::RTRIM;
   } else if (upper_str == "BTRIM") {
-    return EXPRESSION_TYPE_BTRIM;
+    return ExpressionType::BTRIM;
   } else if (upper_str == "REPLACE") {
-    return EXPRESSION_TYPE_REPLACE;
+    return ExpressionType::REPLACE;
   } else if (upper_str == "OVERLAY") {
-    return EXPRESSION_TYPE_OVERLAY;
+    return ExpressionType::OVERLAY;
   } else if (upper_str == "EXTRACT") {
-    return EXPRESSION_TYPE_EXTRACT;
+    return ExpressionType::EXTRACT;
   } else if (upper_str == "DATE_TO_TIMESTAMP") {
-    return EXPRESSION_TYPE_DATE_TO_TIMESTAMP;
+    return ExpressionType::DATE_TO_TIMESTAMP;
   } else if (upper_str == "STAR") {
-    return EXPRESSION_TYPE_STAR;
+    return ExpressionType::STAR;
   } else if (upper_str == "PLACEHOLDER") {
-    return EXPRESSION_TYPE_PLACEHOLDER;
+    return ExpressionType::PLACEHOLDER;
   } else if (upper_str == "COLUMN_REF") {
-    return EXPRESSION_TYPE_COLUMN_REF;
+    return ExpressionType::COLUMN_REF;
   } else if (upper_str == "FUNCTION_REF") {
-    return EXPRESSION_TYPE_FUNCTION_REF;
+    return ExpressionType::FUNCTION_REF;
   } else if (upper_str == "CAST") {
-    return EXPRESSION_TYPE_CAST;
+    return ExpressionType::CAST;
   } else {
     throw ConversionException(StringUtil::Format(
         "No ExpressionType conversion from string '%s'", upper_str.c_str()));
   }
-  return EXPRESSION_TYPE_INVALID;
+  return ExpressionType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const ExpressionType& type) {
+  os << ExpressionTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//

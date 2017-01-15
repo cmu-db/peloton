@@ -25,7 +25,7 @@ class FunctionExpression: public AbstractExpression {
 public:
   FunctionExpression(const char * func_name,
       const std::vector<AbstractExpression*>& children) :
-      AbstractExpression(EXPRESSION_TYPE_FUNCTION), func_name_(func_name), func_ptr_(
+      AbstractExpression(ExpressionType::FUNCTION), func_name_(func_name), func_ptr_(
           nullptr) {
     for (auto &child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
@@ -36,7 +36,7 @@ public:
       type::Type::TypeId return_type,
       const std::vector<type::Type::TypeId>& arg_types,
       const std::vector<AbstractExpression*>& children) :
-      AbstractExpression(EXPRESSION_TYPE_FUNCTION, return_type), func_ptr_(
+      AbstractExpression(ExpressionType::FUNCTION, return_type), func_ptr_(
           func_ptr) {
     for (auto &child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));

@@ -170,7 +170,7 @@ expression::AbstractExpression *GetPredicate() {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate_left =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr_left,
+          ExpressionType::COMPARE_GREATERTHANOREQUALTO, tuple_value_expr_left,
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
@@ -184,12 +184,12 @@ expression::AbstractExpression *GetPredicate() {
 
   expression::AbstractExpression *predicate_right =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_LESSTHAN, tuple_value_expr_right,
+          ExpressionType::COMPARE_LESSTHAN, tuple_value_expr_right,
           constant_value_expr_right);
 
   expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ConjunctionFactory(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate_left, predicate_right);
+          ExpressionType::CONJUNCTION_AND, predicate_left, predicate_right);
 
   return predicate;
 }
@@ -199,12 +199,12 @@ void CreateIndexScanPredicate(std::vector<oid_t> &key_column_ids,
                               std::vector<type::Value> &values) {
   key_column_ids.push_back(0);
   expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO);
   values.push_back(
       type::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
 
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+  expr_types.push_back(ExpressionType::COMPARE_LESSTHAN);
   values.push_back(
       type::ValueFactory::GetIntegerValue(tuple_end_offset).Copy());
 }

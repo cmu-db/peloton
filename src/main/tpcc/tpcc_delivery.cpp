@@ -131,9 +131,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> new_order_expr_types;
     
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
+    new_order_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_expr_types.push_back(ExpressionType::COMPARE_GREATERTHAN);
     
     std::vector<type::Value> new_order_key_values;
     
@@ -189,9 +189,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> orders_expr_types;
     
-    orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value> orders_key_values;
 
@@ -235,9 +235,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> order_line_expr_types;
     
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
     std::vector<type::Value> order_line_key_values;
 
@@ -280,9 +280,9 @@ bool RunDelivery(const size_t &thread_id){
 
     std::vector<ExpressionType> new_order_delete_expr_types;
     
-    new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    new_order_delete_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_delete_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_delete_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
     std::vector<type::Value> new_order_delete_key_values;
 
@@ -439,9 +439,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> customer_expr_types;
 
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
     std::vector<type::Value> customer_key_values;
 
@@ -480,7 +480,7 @@ bool RunDelivery(const size_t &thread_id){
       ol_total);
     // + operator expression
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
+      ExpressionType::OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
 
     customer_target_list.emplace_back(
       COL_IDX_C_BALANCE, plus_operator_expr);

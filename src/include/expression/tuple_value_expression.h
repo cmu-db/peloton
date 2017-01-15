@@ -25,14 +25,14 @@ namespace expression {
 class TupleValueExpression : public AbstractExpression {
  public:
   TupleValueExpression(std::string &&col_name)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type::Type::INVALID),
+      : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
         tuple_idx_(-1) {
     col_name_ = col_name;
   }
 
   TupleValueExpression(std::string &&col_name, std::string &&table_name)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type::Type::INVALID),
+      : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
         tuple_idx_(-1) {
     table_name_ = table_name;
@@ -41,7 +41,7 @@ class TupleValueExpression : public AbstractExpression {
 
   TupleValueExpression(type::Type::TypeId type_id, const int tuple_idx,
                        const int value_idx)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type_id),
+      : AbstractExpression(ExpressionType::VALUE_TUPLE, type_id),
         value_idx_(value_idx),
         tuple_idx_(tuple_idx) {}
 

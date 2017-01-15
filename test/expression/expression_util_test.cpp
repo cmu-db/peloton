@@ -42,17 +42,17 @@ expression::AbstractExpression* createExpTree() {
   auto exp2 = expression::ExpressionUtil::ConstantValueFactory(
       type::ValueFactory::GetIntegerValue(1));
   auto exp3 = expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_EQUAL, exp1, exp2);
+      ExpressionType::COMPARE_EQUAL, exp1, exp2);
 
   auto exp4 = expression::ExpressionUtil::ConstantValueFactory(
 	  type::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING1));
   auto exp5 = expression::ExpressionUtil::ConstantValueFactory(
   	  type::ValueFactory::GetVarcharValue(CONSTANT_VALUE_STRING2));
   auto exp6 = expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_NOTEQUAL, exp4, exp5);
+      ExpressionType::COMPARE_NOTEQUAL, exp4, exp5);
 
   auto root = expression::ExpressionUtil::ConjunctionFactory(
-		  EXPRESSION_TYPE_CONJUNCTION_AND, exp3, exp6);
+		  ExpressionType::CONJUNCTION_AND, exp3, exp6);
   return (root);
 }
 

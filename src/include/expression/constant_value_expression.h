@@ -26,7 +26,7 @@ namespace expression {
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const type::Value &value)
-    : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT,
+    : AbstractExpression(ExpressionType::VALUE_CONSTANT,
                          value.GetTypeId()), value_(value.Copy()) {}
   
   type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,

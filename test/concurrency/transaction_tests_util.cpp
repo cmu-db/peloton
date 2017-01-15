@@ -243,7 +243,7 @@ TransactionTestsUtil::MakePredicate(int id) {
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(id));
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   return predicate;
 }
@@ -257,7 +257,7 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
 
   std::vector<oid_t> key_column_ids = {0};
 
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
   values.push_back(type::ValueFactory::GetIntegerValue(id).Copy());
 
@@ -389,7 +389,7 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   auto const_val_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(old_value));
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
@@ -418,7 +418,7 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
       type::ValueFactory::GetIntegerValue(id));
 
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};

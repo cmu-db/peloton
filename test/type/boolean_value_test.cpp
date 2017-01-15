@@ -43,12 +43,12 @@ TEST_F(BooleanValueTests, BasicTest) {
 
 TEST_F(BooleanValueTests, ComparisonTest) {
   std::vector<ExpressionType> compares = {
-      EXPRESSION_TYPE_COMPARE_EQUAL,
-      EXPRESSION_TYPE_COMPARE_NOTEQUAL,
-      EXPRESSION_TYPE_COMPARE_LESSTHAN,
-      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-      EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO};
+      ExpressionType::COMPARE_EQUAL,
+      ExpressionType::COMPARE_NOTEQUAL,
+      ExpressionType::COMPARE_LESSTHAN,
+      ExpressionType::COMPARE_LESSTHANOREQUALTO,
+      ExpressionType::COMPARE_GREATERTHAN,
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO};
 
   int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
@@ -82,27 +82,27 @@ TEST_F(BooleanValueTests, ComparisonTest) {
         bool expected;
 
         switch (etype) {
-          case EXPRESSION_TYPE_COMPARE_EQUAL:
+          case ExpressionType::COMPARE_EQUAL:
             expected = values[i] == values[j];
             result = val0.CompareEquals(val1);
             break;
-          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+          case ExpressionType::COMPARE_NOTEQUAL:
             expected = values[i] != values[j];
             result = val0.CompareNotEquals(val1);
             break;
-          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+          case ExpressionType::COMPARE_LESSTHAN:
             expected = values[i] < values[j];
             result = val0.CompareLessThan(val1);
             break;
-          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+          case ExpressionType::COMPARE_LESSTHANOREQUALTO:
             expected = values[i] <= values[j];
             result = val0.CompareLessThanEquals(val1);
             break;
-          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+          case ExpressionType::COMPARE_GREATERTHAN:
             expected = values[i] > values[j];
             result = val0.CompareGreaterThan(val1);
             break;
-          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+          case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
             expected = values[i] >= values[j];
             result = val0.CompareGreaterThanEquals(val1);
             break;

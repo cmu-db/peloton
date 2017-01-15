@@ -309,7 +309,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // if we have traversed through the chain and still can not fulfill
           // one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return false;
         }
 
@@ -558,7 +559,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           // if we have traversed through the chain and still can not fulfill
           // one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return false;
         }
 
@@ -673,7 +675,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     // To make the procedure more uniform, we interpret IN as EQUAL
     // and NOT IN as NOT EQUAL, and react based on expression type below
     // accordingly
-    /*if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
+    /*if (expr_type == ExpressionType::COMPARE_IN) {
       bool bret = lhs.InList(rhs);
 
       if (bret == true) {
@@ -688,56 +690,56 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     LOG_TRACE("Difference : %d ", diff);*/
     if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
       switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_EQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN:
+        case ExpressionType::COMPARE_EQUAL:
+        case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+        case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+        case ExpressionType::COMPARE_IN:
           continue;
 
-        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+        case ExpressionType::COMPARE_NOTEQUAL:
+        case ExpressionType::COMPARE_LESSTHAN:
+        case ExpressionType::COMPARE_GREATERTHAN:
           return false;
 
         default:
           throw IndexException("Unsupported expression type : " +
-                               std::to_string(expr_type));
+                               ExpressionTypeToString(expr_type));
       }
     } else {
       if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
         switch (expr_type) {
-          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+          case ExpressionType::COMPARE_NOTEQUAL:
+          case ExpressionType::COMPARE_LESSTHAN:
+          case ExpressionType::COMPARE_LESSTHANOREQUALTO:
             continue;
 
-          case EXPRESSION_TYPE_COMPARE_EQUAL:
-          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-          case EXPRESSION_TYPE_COMPARE_IN:
+          case ExpressionType::COMPARE_EQUAL:
+          case ExpressionType::COMPARE_GREATERTHAN:
+          case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+          case ExpressionType::COMPARE_IN:
             return false;
 
           default:
             throw IndexException("Unsupported expression type : " +
-                                 std::to_string(expr_type));
+                                 ExpressionTypeToString(expr_type));
         }
       } else {
         if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
           switch (expr_type) {
-            case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-            case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-            case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+            case ExpressionType::COMPARE_NOTEQUAL:
+            case ExpressionType::COMPARE_GREATERTHAN:
+            case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
               continue;
 
-            case EXPRESSION_TYPE_COMPARE_EQUAL:
-            case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-            case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-            case EXPRESSION_TYPE_COMPARE_IN:
+            case ExpressionType::COMPARE_EQUAL:
+            case ExpressionType::COMPARE_LESSTHAN:
+            case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+            case ExpressionType::COMPARE_IN:
               return false;
 
             default:
               throw IndexException("Unsupported expression type : " +
-                                   std::to_string(expr_type));
+                                   ExpressionTypeToString(expr_type));
           }
         } else {
           // Since it is an AND predicate, we could directly return false
@@ -814,7 +816,7 @@ void IndexScanExecutor::UpdatePredicate(
 
       // Add column type.
       // TODO: We should add other types in the future
-      expr_types_.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      expr_types_.push_back(ExpressionType::COMPARE_EQUAL);
     }
   }
 

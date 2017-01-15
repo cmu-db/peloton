@@ -107,21 +107,21 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
   LOG_TRACE("-> Expr Type :: %s", ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
   switch (expr->GetExpressionType()) {
-    case EXPRESSION_TYPE_STAR:
+    case ExpressionType::STAR:
       inprint("*", num_indent);
       break;
-    case EXPRESSION_TYPE_COLUMN_REF:
+    case ExpressionType::COLUMN_REF:
       // TODO: Fix this
       inprint((expr)->GetExpressionName(), num_indent);
       //if (expr->GetColumn() != NULL) inprint((expr)->GetColumn(), num_indent);
       break;
-    case EXPRESSION_TYPE_VALUE_CONSTANT:
+    case ExpressionType::VALUE_CONSTANT:
       // TODO: Fix this
       // ((expression::ConstantValueExpression*)expr)->Evaluate(nullptr,
       // nullptr, nullptr);
       printf("\n");
       break;
-    case EXPRESSION_TYPE_FUNCTION_REF:
+    case ExpressionType::FUNCTION_REF:
       // TODO: Fix this
       // inprint(expr->GetName(), num_indent);
       // inprint(expr->GetExpression()->GetName(), num_indent);

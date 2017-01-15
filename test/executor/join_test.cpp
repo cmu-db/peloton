@@ -316,7 +316,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
 
   // Create index scan desc
@@ -342,7 +342,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   std::vector<expression::AbstractExpression *> runtime_keys_right;
 
   key_column_ids_right.push_back(0);
-  expr_types_right.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types_right.push_back(ExpressionType::COMPARE_EQUAL);
   // values_right.push_back(type::ValueFactory::GetIntegerValue(100).Copy());
   values_right.push_back(type::ValueFactory::GetParameterOffsetValue(0).Copy());
 
@@ -381,7 +381,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
       new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
 
   std::unique_ptr<const expression::AbstractExpression> predicate(
-      new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
                                            left_table_attr_1,
                                            right_table_attr_1));
 

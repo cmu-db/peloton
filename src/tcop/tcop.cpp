@@ -367,7 +367,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   int count = 0;
   for (auto expr : *select_stmt->select_list) {
     count++;
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto target_table : target_tables) {
         // Get the columns of the table
         auto &table_columns = target_table->GetSchema()->GetColumns();
@@ -422,18 +422,18 @@ FieldInfo TrafficCop::GetColumnFieldForAggregates(
   // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
 
   // Check the expression type and return the corresponding description
-  if (expr_type == EXPRESSION_TYPE_AGGREGATE_MAX ||
-      expr_type == EXPRESSION_TYPE_AGGREGATE_MIN ||
-      expr_type == EXPRESSION_TYPE_AGGREGATE_COUNT) {
+  if (expr_type == ExpressionType::AGGREGATE_MAX ||
+      expr_type == ExpressionType::AGGREGATE_MIN ||
+      expr_type == ExpressionType::AGGREGATE_COUNT) {
     return std::make_tuple(name, POSTGRES_VALUE_TYPE_INTEGER, 4);
   }
 
   // Return double if function is AVERAGE
-  if (expr_type == EXPRESSION_TYPE_AGGREGATE_AVG) {
+  if (expr_type == ExpressionType::AGGREGATE_AVG) {
     return std::make_tuple(name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
   }
 
-  if (expr_type == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
+  if (expr_type == ExpressionType::AGGREGATE_COUNT_STAR) {
     return std::make_tuple("COUNT(*)", POSTGRES_VALUE_TYPE_INTEGER, 4);
   }
 
