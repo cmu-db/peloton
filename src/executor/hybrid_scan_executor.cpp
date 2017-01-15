@@ -10,32 +10,32 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cassert>
+#include <chrono>
+#include <ctime>
+#include <iostream>
 #include <memory>
+#include <numeric>
+#include <string>
+#include <thread>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <string>
-#include <unordered_map>
-#include <chrono>
-#include <iostream>
-#include <ctime>
-#include <cassert>
-#include <thread>
-#include <numeric>
 
+#include "common/container_tuple.h"
+#include "common/logger.h"
 #include "common/timer.h"
-#include "type/types.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "executor/hybrid_scan_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
-#include "common/container_tuple.h"
 #include "planner/hybrid_scan_plan.h"
-#include "executor/hybrid_scan_executor.h"
 #include "storage/data_table.h"
-#include "storage/tile_group_header.h"
 #include "storage/tile.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "common/logger.h"
+#include "storage/tile_group_header.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace executor {
@@ -239,7 +239,7 @@ bool HybridScanExecutor::SeqScanUtil() {
                                                      acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
-                                                     RESULT_FAILURE);
+                                                     RESULT_TYPE_FAILURE);
             return res;
           }
         }
@@ -284,7 +284,6 @@ bool HybridScanExecutor::IndexScanUtil() {
 }
 
 bool HybridScanExecutor::DExecute() {
-
   // SEQUENTIAL SCAN
   if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
     LOG_TRACE("Sequential Scan");
@@ -393,12 +392,12 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
           current_txn, tile_group_header, tuple_location.offset);
 
       if (visibility == VISIBILITY_OK) {
-
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         auto res = transaction_manager.PerformRead(current_txn, tuple_location,
                                                    acquire_owner);
         if (!res) {
-          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   RESULT_TYPE_FAILURE);
           return res;
         }
         break;

@@ -66,7 +66,7 @@ bool InsertExecutor::DExecute() {
 
   if (!target_table) {
     transaction_manager.SetTransactionResult(current_txn,
-                                             peloton::Result::RESULT_FAILURE);
+                                             peloton::ResultType::RESULT_TYPE_FAILURE);
     return false;
   }
 
@@ -114,7 +114,7 @@ bool InsertExecutor::DExecute() {
       // in this case, abort the transaction.
       if (location.block == INVALID_OID) {
         transaction_manager.SetTransactionResult(
-            current_txn, peloton::Result::RESULT_FAILURE);
+            current_txn, peloton::ResultType::RESULT_TYPE_FAILURE);
         return false;
       }
 
@@ -175,7 +175,7 @@ bool InsertExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         LOG_TRACE("Failed to Insert. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
-                                                 Result::RESULT_FAILURE);
+                                                 ResultType::RESULT_TYPE_FAILURE);
         return false;
       }
 

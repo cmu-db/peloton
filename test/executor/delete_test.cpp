@@ -46,7 +46,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto& peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
   std::vector<type::Value> params;
-  std::vector<ResultType> result;
+  std::vector<PlannerResult> result;
   optimizer::SimpleOptimizer optimizer;
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
@@ -120,7 +120,7 @@ TEST_F(DeleteTests, VariousOperations) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
-  std::vector<ResultType> result;
+  std::vector<PlannerResult> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;

@@ -177,7 +177,7 @@ bool PacketManager::ProcessStartupPacket(InputPacket *pkt) {
 }
 
 void PacketManager::PutTupleDescriptor(
-    const std::vector<FieldInfoType> &tuple_descriptor) {
+    const std::vector<FieldInfo> &tuple_descriptor) {
   if (tuple_descriptor.empty()) return;
 
   std::unique_ptr<OutputPacket> pkt(new OutputPacket());
@@ -202,7 +202,7 @@ void PacketManager::PutTupleDescriptor(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
+void PacketManager::SendDataRows(std::vector<PlannerResult> &results, int colcount,
                                  int &rows_affected) {
   if (results.empty() || colcount == 0) return;
 
@@ -298,8 +298,8 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
         return;
       }
 
-      std::vector<ResultType> result;
-      std::vector<FieldInfoType> tuple_descriptor;
+      std::vector<PlannerResult> result;
+      std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
       int rows_affected;
 
@@ -308,7 +308,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
           query, result, tuple_descriptor, rows_affected, error_message);
 
       // check status
-      if (status == Result::RESULT_FAILURE) {
+      if (status == ResultType::RESULT_TYPE_FAILURE) {
         SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
         break;
       }
@@ -714,7 +714,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
     // when false is returned, the connection is closed
     if (portal_itr == portals_.end()) {
       LOG_ERROR("Did not find portal : %s", portal_name.c_str());
-      std::vector<FieldInfoType> tuple_descriptor;
+      std::vector<FieldInfo> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor);
       return false;
     }
@@ -722,7 +722,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
     auto portal = portal_itr->second;
     if (portal == nullptr) {
       LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
-      std::vector<FieldInfoType> tuple_descriptor;
+      std::vector<FieldInfo> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor);
       return false;
     }
@@ -737,7 +737,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
 
 void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   // EXECUTE message
-  std::vector<ResultType> results;
+  std::vector<PlannerResult> results;
   std::string error_message, portal_name;
   int rows_affected = 0;
   GetStringToken(pkt, portal_name);
@@ -782,11 +782,11 @@ void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
       rows_affected, error_message);
 
   switch (status) {
-    case Result::RESULT_FAILURE:
+    case ResultType::RESULT_TYPE_FAILURE:
       LOG_ERROR("Failed to execute: %s", error_message.c_str());
       SendErrorResponse({{NETWORK_MESSAGE_TYPE_HUMAN_READABLE_ERROR, error_message}});
       return;
-    case Result::RESULT_ABORTED:
+    case ResultType::RESULT_TYPE_ABORTED:
       if (query_type != "ROLLBACK") {
         LOG_DEBUG("Failed to execute: Conflicting txn aborted");
         // Send an error response if the abort is not due to ROLLBACK query

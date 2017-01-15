@@ -129,7 +129,7 @@ bool RunStockLevel(const size_t &thread_id) {
   executor::IndexScanExecutor district_index_scan_executor(&district_index_scan_node, context.get());
 
   auto districts = ExecuteRead(&district_index_scan_executor);
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
     txn_manager.AbortTransaction(txn);
     return false;
   }
@@ -190,7 +190,7 @@ bool RunStockLevel(const size_t &thread_id) {
 
     auto order_line_values = ExecuteRead(&order_line_index_scan_executor);
     
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -227,7 +227,7 @@ bool RunStockLevel(const size_t &thread_id) {
 
     auto stock_values = ExecuteRead(&stock_index_scan_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -246,11 +246,11 @@ bool RunStockLevel(const size_t &thread_id) {
   }
   LOG_TRACE("number of distinct items=%lu", distinct_items.size());
 
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::RESULT_TYPE_SUCCESS) {
     return true;
   } else {
     return false;

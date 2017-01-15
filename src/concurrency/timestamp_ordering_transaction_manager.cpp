@@ -128,7 +128,7 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
   auto &log_manager = logging::LogManager::GetInstance();
 
-  if (current_txn->GetResult() == RESULT_SUCCESS) {
+  if (current_txn->GetResult() == RESULT_TYPE_SUCCESS) {
     if (current_txn->IsGCSetEmpty() != true) {
       gc::GCManagerFactory::GetInstance().
           RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
@@ -752,13 +752,13 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 }
 
-Result TimestampOrderingTransactionManager::CommitTransaction(
+ResultType TimestampOrderingTransactionManager::CommitTransaction(
     Transaction *const current_txn) {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   if (current_txn->IsDeclaredReadOnly() == true) {
     EndReadonlyTransaction(current_txn);
-    return RESULT_SUCCESS;
+    return RESULT_TYPE_SUCCESS;
   }
 
   auto &manager = catalog::Manager::GetInstance();
@@ -894,7 +894,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
     }
   }
 
-  Result result = current_txn->GetResult();
+  ResultType result = current_txn->GetResult();
 
   EndTransaction(current_txn);
 
@@ -907,7 +907,7 @@ Result TimestampOrderingTransactionManager::CommitTransaction(
   return result;
 }
 
-Result TimestampOrderingTransactionManager::AbortTransaction(
+ResultType TimestampOrderingTransactionManager::AbortTransaction(
     Transaction *const current_txn) {
   // It's impossible that a pre-declared readonly transaction aborts
   PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
@@ -1077,7 +1077,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
     }
   }
 
-  current_txn->SetResult(RESULT_ABORTED);
+  current_txn->SetResult(RESULT_TYPE_ABORTED);
   EndTransaction(current_txn);
 
   // Increment # txns aborted metric
@@ -1085,7 +1085,7 @@ Result TimestampOrderingTransactionManager::AbortTransaction(
     stats::BackendStatsContext::GetInstance()->IncrementTxnAborted(database_id);
   }
 
-  return Result::RESULT_ABORTED;
+  return ResultType::RESULT_TYPE_ABORTED;
 }
 
 }  // End storage namespace

@@ -46,13 +46,13 @@ bool CreateExecutor::DExecute() {
     auto database_name = node.GetDatabaseName();
     std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
-    Result result = catalog::Catalog::GetInstance()->CreateTable(
+    ResultType result = catalog::Catalog::GetInstance()->CreateTable(
         database_name, table_name, std::move(schema), current_txn);
     current_txn->SetResult(result);
 
-    if (current_txn->GetResult() == Result::RESULT_SUCCESS) {
+    if (current_txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS) {
       LOG_TRACE("Creating table succeeded!");
-    } else if (current_txn->GetResult() == Result::RESULT_FAILURE) {
+    } else if (current_txn->GetResult() == ResultType::RESULT_TYPE_FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
       LOG_TRACE("Result is: %d", current_txn->GetResult());
@@ -68,14 +68,14 @@ bool CreateExecutor::DExecute() {
 
     auto index_attrs = node.GetIndexAttributes();
 
-    Result result = catalog::Catalog::GetInstance()->CreateIndex(
+    ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
         DEFAULT_DB_NAME, table_name, index_attrs, index_name, unique_flag,
         index_type);
     current_txn->SetResult(result);
 
-    if (current_txn->GetResult() == Result::RESULT_SUCCESS) {
+    if (current_txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS) {
       LOG_TRACE("Creating table succeeded!");
-    } else if (current_txn->GetResult() == Result::RESULT_FAILURE) {
+    } else if (current_txn->GetResult() == ResultType::RESULT_TYPE_FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
       LOG_TRACE("Result is: %d", current_txn->GetResult());

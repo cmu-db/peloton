@@ -42,8 +42,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -75,8 +75,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -109,8 +109,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -141,8 +141,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(

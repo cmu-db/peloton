@@ -63,7 +63,7 @@ const int num_txn) {
   // stats
   int nabort = 0;
   for (auto &schedule : scheduler.schedules) {
-    if (schedule.txn_result == RESULT_ABORTED) nabort += 1;
+    if (schedule.txn_result == RESULT_TYPE_ABORTED) nabort += 1;
   }
   LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   return num_txn - nabort;
@@ -79,7 +79,7 @@ void SelectTuple(storage::DataTable *table, const int num_key) {
   scheduler.Txn(0).Commit();
   scheduler.Run();
 
-  EXPECT_TRUE(scheduler.schedules[0].txn_result == RESULT_SUCCESS);
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == RESULT_TYPE_SUCCESS);
 }
 
 // count number of expired versions.

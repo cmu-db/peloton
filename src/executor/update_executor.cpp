@@ -85,7 +85,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
                                          physical_tuple_id);
     }
     transaction_manager.SetTransactionResult(current_txn,
-                                             Result::RESULT_FAILURE);
+                                             ResultType::RESULT_TYPE_FAILURE);
     return false;
   }
   transaction_manager.PerformDelete(current_txn, old_location, new_location);
@@ -113,7 +113,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
   // in this case, abort the transaction.
   if (location.block == INVALID_OID) {
     transaction_manager.SetTransactionResult(current_txn,
-                                             peloton::Result::RESULT_FAILURE);
+                                             peloton::ResultType::RESULT_TYPE_FAILURE);
     return false;
   }
 
@@ -222,7 +222,7 @@ bool UpdateExecutor::DExecute() {
         if (acquire_ownership_success == false) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           transaction_manager.SetTransactionResult(current_txn,
-                                                   Result::RESULT_FAILURE);
+                                                   ResultType::RESULT_TYPE_FAILURE);
           return false;
         }
 
@@ -289,7 +289,7 @@ bool UpdateExecutor::DExecute() {
                                                  physical_tuple_id);
             }
             transaction_manager.SetTransactionResult(current_txn,
-                                                     Result::RESULT_FAILURE);
+                                                     ResultType::RESULT_TYPE_FAILURE);
             return false;
           }
 
@@ -308,7 +308,7 @@ bool UpdateExecutor::DExecute() {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(current_txn,
-                                                 Result::RESULT_FAILURE);
+                                                 ResultType::RESULT_TYPE_FAILURE);
         return false;
       }
     }

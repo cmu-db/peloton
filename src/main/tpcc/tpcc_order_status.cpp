@@ -146,7 +146,7 @@ bool RunOrderStatus(const size_t &thread_id){
     executor::IndexScanExecutor customer_index_scan_executor(&customer_index_scan_node, context.get());
 
     auto result = ExecuteRead(&customer_index_scan_executor);
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
       txn_manager.AbortTransaction(txn);
       return false;
     }
@@ -202,7 +202,7 @@ bool RunOrderStatus(const size_t &thread_id){
     customer_order_by_executor.AddChild(&customer_index_scan_executor);
     
     auto result = ExecuteRead(&customer_order_by_executor);
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
       txn_manager.AbortTransaction(txn);
       return false;
     }
@@ -269,7 +269,7 @@ bool RunOrderStatus(const size_t &thread_id){
   limit_executor.AddChild(&orders_order_by_executor);
 
   auto orders = ExecuteRead(&orders_order_by_executor);
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
     txn_manager.AbortTransaction(txn);
     return false;
   }
@@ -303,17 +303,17 @@ bool RunOrderStatus(const size_t &thread_id){
     executor::IndexScanExecutor order_line_index_scan_executor(&order_line_index_scan_node, context.get());
 
     ExecuteRead(&order_line_index_scan_executor);
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
       txn_manager.AbortTransaction(txn);
       return false;
     }
   }
 
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::RESULT_TYPE_SUCCESS) {
     return true;
   } else {
     return false;

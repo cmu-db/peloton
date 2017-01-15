@@ -110,10 +110,10 @@ class Transaction : public Printable {
   const std::string GetInfo() const;
 
   // Set result and status
-  inline void SetResult(Result result) { result_ = result; }
+  inline void SetResult(ResultType result) { result_ = result; }
 
   // Get result and status
-  inline Result GetResult() const { return result_; }
+  inline ResultType GetResult() const { return result_; }
 
   inline bool IsReadOnly() const {
     return is_written_ == false && insert_count_ == 0;
@@ -146,7 +146,7 @@ class Transaction : public Printable {
   std::shared_ptr<ReadWriteSet> gc_set_;
 
   // result of the transaction
-  Result result_ = peloton::RESULT_SUCCESS;
+  ResultType result_ = peloton::RESULT_TYPE_SUCCESS;
 
   bool is_written_;
   size_t insert_count_;

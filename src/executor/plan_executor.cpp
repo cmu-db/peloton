@@ -44,7 +44,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 peloton_status PlanExecutor::ExecutePlan(
     const planner::AbstractPlan *plan, concurrency::Transaction *txn,
-    const std::vector<type::Value> &params, std::vector<ResultType> &result,
+    const std::vector<type::Value> &params, std::vector<PlannerResult> &result,
     const std::vector<int> &result_format) {
   peloton_status p_status;
   if (plan == nullptr) return p_status;
@@ -94,7 +94,7 @@ peloton_status PlanExecutor::ExecutePlan(
         for (auto &tuple : answer_tuples) {
           unsigned int col_index = 0;
           for (unsigned int i = 0; i < logical_tile->GetColumnCount(); i++) {
-            auto res = ResultType();
+            auto res = PlannerResult();
             PlanExecutor::copyFromTo(tuple[col_index++], res.second);
             if (tuple[col_index - 1].c_str() != nullptr) {
               LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
@@ -108,9 +108,9 @@ peloton_status PlanExecutor::ExecutePlan(
     // Set the result
     p_status.m_processed = executor_context->num_processed;
     // success so far
-    p_status.m_result = Result::RESULT_SUCCESS;
+    p_status.m_result = ResultType::RESULT_TYPE_SUCCESS;
   } else {
-    p_status.m_result = Result::RESULT_FAILURE;
+    p_status.m_result = ResultType::RESULT_TYPE_FAILURE;
   }
 
   p_status.m_result_slots = nullptr;
@@ -170,7 +170,7 @@ int PlanExecutor::ExecutePlan(
   // Abort and cleanup
   if (status == false) {
     init_failure = true;
-    txn->SetResult(Result::RESULT_FAILURE);
+    txn->SetResult(ResultType::RESULT_TYPE_FAILURE);
     goto cleanup;
   }
 
@@ -209,13 +209,13 @@ cleanup:
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
     switch (status) {
-      case Result::RESULT_SUCCESS:
+      case ResultType::RESULT_TYPE_SUCCESS:
         // Commit
         return executor_context->num_processed;
 
         break;
 
-      case Result::RESULT_FAILURE:
+      case ResultType::RESULT_TYPE_FAILURE:
       default:
         // Abort
         return -1;

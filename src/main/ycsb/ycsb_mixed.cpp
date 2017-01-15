@@ -173,7 +173,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
 
       ExecuteUpdate(&update_executor);
 
-      if (txn->GetResult() != Result::RESULT_SUCCESS) {
+      if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
         txn_manager.AbortTransaction(txn);
         return false;
       }
@@ -209,7 +209,7 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
       
       ExecuteRead(&index_scan_executor);
 
-      if (txn->GetResult() != Result::RESULT_SUCCESS) {
+      if (txn->GetResult() != ResultType::RESULT_TYPE_SUCCESS) {
         txn_manager.AbortTransaction(txn);
         return false;
       }
@@ -217,17 +217,17 @@ bool RunMixed(ZipfDistribution &zipf, FastRandom &rng) {
   }
 
   // transaction passed execution.
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::RESULT_TYPE_SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::RESULT_TYPE_SUCCESS) {
     return true;
     
   } else {
     // transaction failed commitment.
-    PL_ASSERT(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
+    PL_ASSERT(result == ResultType::RESULT_TYPE_ABORTED ||
+           result == ResultType::RESULT_TYPE_FAILURE);
     return false;
   }
 }

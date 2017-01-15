@@ -31,8 +31,8 @@ TEST_F(AggregateSQLTests, EmptyTableTest) {
   // Create a table first
   SQLTestsUtil::ExecuteSQLQuery("CREATE TABLE xxx(a INT PRIMARY KEY, b INT);");
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
   optimizer::SimpleOptimizer optimizer;
@@ -95,8 +95,8 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
 
   SQLTestsUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
   optimizer::SimpleOptimizer optimizer;

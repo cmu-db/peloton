@@ -26,10 +26,10 @@ class AbstractPlan;
 }
 
 typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>>
-    ResultType;
+    PlannerResult;
 
 // FIELD INFO TYPE : field name, oid (data type), size
-typedef std::tuple<std::string, oid_t, size_t> FieldInfoType;
+typedef std::tuple<std::string, oid_t, size_t> FieldInfo;
 
 class Statement : public Printable {
  public:
@@ -46,7 +46,7 @@ class Statement : public Printable {
   static void ParseQueryType(const std::string& query_string,
                              std::string& query_type);
 
-  std::vector<FieldInfoType> GetTupleDescriptor() const;
+  std::vector<FieldInfo> GetTupleDescriptor() const;
 
   void SetStatementName(const std::string& statement_name);
 
@@ -62,7 +62,7 @@ class Statement : public Printable {
 
   std::vector<int32_t> GetParamTypes() const;
 
-  void SetTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
+  void SetTupleDescriptor(const std::vector<FieldInfo>& tuple_descriptor);
 
   void SetReferencedTables(const std::set<oid_t> table_ids);
 
@@ -93,7 +93,7 @@ class Statement : public Printable {
   std::vector<int32_t> param_types_;
 
   // schema of result tuple
-  std::vector<FieldInfoType> tuple_descriptor_;
+  std::vector<FieldInfo> tuple_descriptor_;
 
   // cached plan tree
   std::shared_ptr<planner::AbstractPlan> plan_tree_;

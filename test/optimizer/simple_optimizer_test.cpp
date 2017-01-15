@@ -62,7 +62,7 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
 
   std::vector<type::Value> params;
-  std::vector<ResultType> result;
+  std::vector<PlannerResult> result;
   LOG_TRACE("Query Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;

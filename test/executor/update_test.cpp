@@ -206,7 +206,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
-  std::vector<ResultType> result;
+  std::vector<PlannerResult> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 

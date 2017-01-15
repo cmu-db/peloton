@@ -38,8 +38,8 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
 
   SQLTestsUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
 

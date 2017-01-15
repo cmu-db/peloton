@@ -79,10 +79,10 @@ TEST_F(CopyTests, Copying) {
     auto statement = StatsTestsUtil::GetInsertStmt(12345, insert_str);
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-    std::vector<ResultType> result;
+    std::vector<PlannerResult> result;
     bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree().get(), params, result, result_format);
-    EXPECT_EQ(status.m_result, peloton::RESULT_SUCCESS);
+    EXPECT_EQ(status.m_result, peloton::RESULT_TYPE_SUCCESS);
     LOG_TRACE("Statement executed. Result: %d", status.m_result);
   }
   LOG_INFO("Tuples inserted!");

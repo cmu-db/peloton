@@ -40,8 +40,8 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -82,8 +82,8 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(

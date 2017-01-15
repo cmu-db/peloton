@@ -25,7 +25,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 typedef struct peloton_status {
-  peloton::Result m_result;
+  peloton::ResultType m_result;
   int *m_result_slots;
 
   // number of tuples processed
@@ -33,7 +33,7 @@ typedef struct peloton_status {
 
   peloton_status() {
     m_processed = 0;
-    m_result = peloton::RESULT_SUCCESS;
+    m_result = peloton::RESULT_TYPE_SUCCESS;
     m_result_slots = nullptr;
   }
 
@@ -81,7 +81,7 @@ class PlanExecutor {
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                     concurrency::Transaction* txn,
                                     const std::vector<type::Value> &params,
-                                    std::vector<ResultType> &result,
+                                    std::vector<PlannerResult> &result,
                                     const std::vector<int> &result_format);
 
   /*

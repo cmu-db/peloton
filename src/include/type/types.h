@@ -641,13 +641,13 @@ enum TaskPriorityType {
 // Result Types
 //===--------------------------------------------------------------------===//
 
-enum Result {
-  RESULT_INVALID = INVALID_TYPE_ID,  // invalid result type
-  RESULT_SUCCESS = 1,
-  RESULT_FAILURE = 2,
-  RESULT_ABORTED = 3,  // aborted
-  RESULT_NOOP = 4,     // no op
-  RESULT_UNKNOWN = 5
+enum ResultType {
+  RESULT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid result type
+  RESULT_TYPE_SUCCESS = 1,
+  RESULT_TYPE_FAILURE = 2,
+  RESULT_TYPE_ABORTED = 3,  // aborted
+  RESULT_TYPE_NOOP = 4,     // no op
+  RESULT_TYPE_UNKNOWN = 5
 };
 
 //===--------------------------------------------------------------------===//

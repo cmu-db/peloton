@@ -41,8 +41,8 @@ TEST_F(DropSQLTests, DropTableTest) {
   }
   EXPECT_NE(table, nullptr);
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<PlannerResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
 
@@ -55,7 +55,7 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Drop the table
   EXPECT_EQ(SQLTestsUtil::ExecuteSQLQuery("DROP TABLE test;"),
-            Result::RESULT_SUCCESS);
+            ResultType::RESULT_TYPE_SUCCESS);
 
   // Query from the dropped table
   result.clear();

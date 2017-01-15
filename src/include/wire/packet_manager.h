@@ -114,10 +114,10 @@ class PacketManager {
   void SendReadyForQuery(uchar txn_status);
 
   // Sends the attribute headers required by SELECT queries
-  void PutTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
+  void PutTupleDescriptor(const std::vector<FieldInfo>& tuple_descriptor);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<ResultType>& results, int colcount,
+  void SendDataRows(std::vector<PlannerResult>& results, int colcount,
                     int& rows_affected);
 
   // Used to send a packet that indicates the completion of a query. Also has

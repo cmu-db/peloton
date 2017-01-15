@@ -81,13 +81,13 @@ void Catalog::CreateCatalogDatabase() {
 }
 
 // Create a database
-Result Catalog::CreateDatabase(std::string database_name,
+ResultType Catalog::CreateDatabase(std::string database_name,
     concurrency::Transaction *txn) {
   // Check if a database with the same name exists
   for (auto database : databases_) {
     if (database->GetDBName() == database_name) {
-      LOG_TRACE("Database already exists. Returning RESULT_FAILURE.");
-      return Result::RESULT_FAILURE;
+      LOG_TRACE("Database already exists. Returning RESULT_TYPE_FAILURE.");
+      return ResultType::RESULT_TYPE_FAILURE;
     }
   }
   oid_t database_id = GetNextOid();
@@ -98,7 +98,7 @@ Result Catalog::CreateDatabase(std::string database_name,
   InsertDatabaseIntoCatalogDatabase(database_id, database_name, txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
-  return Result::RESULT_SUCCESS;
+  return ResultType::RESULT_TYPE_SUCCESS;
 }
 
 void Catalog::AddDatabase(storage::Database *database) {
@@ -129,7 +129,7 @@ void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
 }
 
 // Create a table in a database
-Result Catalog::CreateTable(std::string database_name, std::string table_name,
+ResultType Catalog::CreateTable(std::string database_name, std::string table_name,
     std::unique_ptr<catalog::Schema> schema, concurrency::Transaction *txn) {
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
       database_name.c_str());
@@ -142,7 +142,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     try {
       database->GetTableWithName(table_name);
       LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
-      return Result::RESULT_FAILURE;
+      return ResultType::RESULT_TYPE_FAILURE;
     } catch (CatalogException &e) {
       // Table doesn't exist, now create it
       oid_t database_id = database->GetOid();
@@ -171,15 +171,15 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
       catalog::InsertTuple(
           databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
           std::move(tuple), txn);
-      return Result::RESULT_SUCCESS;
+      return ResultType::RESULT_TYPE_SUCCESS;
     }
   } catch (CatalogException &e) {
     LOG_ERROR("Could not find a database with name %s", database_name.c_str());
-    return Result::RESULT_FAILURE;
+    return ResultType::RESULT_TYPE_FAILURE;
   }
 }
 
-Result Catalog::CreatePrimaryIndex(const std::string &database_name,
+ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     const std::string &table_name) {
   LOG_TRACE("Trying to create primary index for table %s", table_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
@@ -188,7 +188,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     if (table == nullptr) {
       LOG_TRACE(
           "Cannot find the table to create the primary key index. Return " "RESULT_FAILURE.");
-      return Result::RESULT_FAILURE;
+      return ResultType::RESULT_TYPE_FAILURE;
     }
 
     std::vector<oid_t> key_attrs;
@@ -225,15 +225,15 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 
     LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
               pkey_index->GetName().c_str(), table->GetName().c_str());
-    return Result::RESULT_SUCCESS;
+    return ResultType::RESULT_TYPE_SUCCESS;
   } else {
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
-    return Result::RESULT_FAILURE;
+    return ResultType::RESULT_TYPE_FAILURE;
   }
 }
 
 // Function to add non-primary Key index
-Result Catalog::CreateIndex(const std::string &database_name,
+ResultType Catalog::CreateIndex(const std::string &database_name,
     const std::string &table_name, std::vector<std::string> index_attr,
     std::string index_name, bool unique, IndexType index_type) {
   auto database = GetDatabaseWithName(database_name);
@@ -242,7 +242,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
     if (table == nullptr) {
       LOG_TRACE(
           "Cannot find the table to create the primary key index. Return " "RESULT_FAILURE.");
-      return Result::RESULT_FAILURE;
+      return ResultType::RESULT_TYPE_FAILURE;
     }
 
     std::vector<oid_t> key_attrs;
@@ -264,7 +264,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
     // that came out of the parser
     if (key_attrs.size() != index_attr.size()) {
       LOG_TRACE("Some columns are missing");
-      return Result::RESULT_FAILURE;
+      return ResultType::RESULT_TYPE_FAILURE;
     }
 
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
@@ -287,10 +287,10 @@ Result Catalog::CreateIndex(const std::string &database_name,
     table->AddIndex(key_index);
 
     LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
-    return Result::RESULT_SUCCESS;
+    return ResultType::RESULT_TYPE_SUCCESS;
   }
 
-  return Result::RESULT_FAILURE;
+  return ResultType::RESULT_TYPE_FAILURE;
 }
 
 index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
@@ -308,7 +308,7 @@ index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
 }
 
 // Drop a database
-Result Catalog::DropDatabaseWithName(std::string database_name,
+ResultType Catalog::DropDatabaseWithName(std::string database_name,
     concurrency::Transaction *txn) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   try {
@@ -334,9 +334,9 @@ Result Catalog::DropDatabaseWithName(std::string database_name,
     databases_.erase(databases_.begin() + database_offset);
   } catch (CatalogException &e) {
     LOG_TRACE("Database is not found!");
-    return Result::RESULT_FAILURE;
+    return ResultType::RESULT_TYPE_FAILURE;
   }
-  return Result::RESULT_SUCCESS;
+  return ResultType::RESULT_TYPE_SUCCESS;
 }
 
 // Drop a database with its oid
@@ -368,7 +368,7 @@ void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
 }
 
 // Drop a table
-Result Catalog::DropTable(std::string database_name, std::string table_name,
+ResultType Catalog::DropTable(std::string database_name, std::string table_name,
     concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
       database_name.c_str());
@@ -386,14 +386,14 @@ Result Catalog::DropTable(std::string database_name, std::string table_name,
               TABLE_CATALOG_NAME), table_id, txn);
       LOG_TRACE("Deleting table!");
       database->DropTableWithOid(table_id);
-      return Result::RESULT_SUCCESS;
+      return ResultType::RESULT_TYPE_SUCCESS;
     } else {
       LOG_TRACE("Could not find table");
-      return Result::RESULT_FAILURE;
+      return ResultType::RESULT_TYPE_FAILURE;
     }
   } catch (CatalogException &e) {
     LOG_TRACE("Could not find database");
-    return Result::RESULT_FAILURE;
+    return ResultType::RESULT_TYPE_FAILURE;
   }
 }
 
