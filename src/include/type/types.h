@@ -82,10 +82,10 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-enum GarbageCollectionType {
-  GARBAGE_COLLECTION_TYPE_INVALID = INVALID_TYPE_ID,
-  GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
-  GARBAGE_COLLECTION_TYPE_ON = 2    // turn on GC
+enum class GarbageCollectionType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
@@ -360,7 +360,7 @@ enum SqlStateErrorCode {
 };
 
 //===--------------------------------------------------------------------===//
-// Storage Backend Types
+// Concurrency Control Types
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
@@ -401,6 +401,9 @@ enum BackendType {
   BACKEND_TYPE_SSD = 3,                    // on ssd
   BACKEND_TYPE_HDD = 4                     // on hdd
 };
+std::string BackendTypeToString(BackendType type);
+BackendType StringToBackendType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const BackendType &type);
 
 //===--------------------------------------------------------------------===//
 // Index Types
@@ -1030,9 +1033,6 @@ bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 //===--------------------------------------------------------------------===//
 // Transformers
 //===--------------------------------------------------------------------===//
-
-std::string BackendTypeToString(BackendType type);
-BackendType StringToBackendType(const std::string &str);
 
 std::string TypeIdToString(type::Type::TypeId type);
 type::Type::TypeId StringToTypeId(const std::string &str);

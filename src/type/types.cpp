@@ -205,6 +205,11 @@ BackendType StringToBackendType(const std::string& str) {
   return BACKEND_TYPE_INVALID;
 }
 
+std::ostream& operator<<(std::ostream& os, const BackendType& type) {
+  os << BackendTypeToString(type);
+  return os;
+}
+
 //===--------------------------------------------------------------------===//
 // Value <--> String Utilities
 //===--------------------------------------------------------------------===//

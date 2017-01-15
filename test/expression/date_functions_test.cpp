@@ -66,7 +66,7 @@ TEST_F(DateFunctionsTests, ExtractTests) {
   for (auto x : data) {
     // these will be cleaned up by extract_expr
     auto part = expression::ExpressionUtil::ConstantValueFactory(
-        type::ValueFactory::GetIntegerValue(x.first));
+        type::ValueFactory::GetIntegerValue(static_cast<int>(x.first)));
     auto timestamp = expression::ExpressionUtil::ConstantValueFactory(
         type::ValueFactory::CastAsTimestamp(
             type::ValueFactory::GetVarcharValue(date)));
