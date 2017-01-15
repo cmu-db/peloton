@@ -23,15 +23,13 @@ namespace expression {
 
 class DateFunctions {
  public:
-  // Extract
-  // Arguments:
-  // the arguements are contained in the args vector
+  // The arguments are contained in the args vector
   // the first argument is the part of the date to extract (see type/types.h
   // DatePart)
   // the second argument is the timestamp to extract the part from
   //
-  // Return value: the Value returned should be of type Double and
-  // should be constructed using type::ValueFactory
+  // @return The Value returned should be a type::DecimalValue that is
+  // constructed using type::ValueFactory
   static type::Value Extract(const std::vector<type::Value>& args) {
     DatePartType date_part = args[0].GetAs<DatePartType>();
     UNUSED_ATTRIBUTE uint64_t timestamp = args[1].GetAs<uint64_t>();

@@ -54,8 +54,13 @@ TEST_F(DateFunctionsTests, ExtractTests) {
       std::make_pair(EXPRESSION_DATE_PART_DAY, 2),
       std::make_pair(EXPRESSION_DATE_PART_HOUR, 12),
       std::make_pair(EXPRESSION_DATE_PART_MINUTE, 13),
+
+      // Note that we can support these DatePartTypes with and without
+      // a trailing 's' at the end.
       std::make_pair(EXPRESSION_DATE_PART_SECOND, 14),
+      std::make_pair(EXPRESSION_DATE_PART_SECONDS, 14),
       std::make_pair(EXPRESSION_DATE_PART_MILLISECOND, 14999.999),
+      std::make_pair(EXPRESSION_DATE_PART_MILLISECONDS, 14999.999),
   };
 
   for (auto x : data) {

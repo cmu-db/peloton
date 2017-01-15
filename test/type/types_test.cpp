@@ -10,8 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/types.h"
+#include <set>
+#include <string>
+
 #include "common/harness.h"
+#include "type/types.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -23,34 +26,71 @@ namespace test {
 
 class TypesTests : public PelotonTest {};
 
-TEST_F(TypesTests, DatePartTest) {
-  std::vector<DatePartType> list = {
-      EXPRESSION_DATE_PART_INVALID,       EXPRESSION_DATE_PART_CENTURY,
-      EXPRESSION_DATE_PART_DAY,           EXPRESSION_DATE_PART_DECADE,
-      EXPRESSION_DATE_PART_DOW,           EXPRESSION_DATE_PART_DOY,
-      EXPRESSION_DATE_PART_EPOCH,         EXPRESSION_DATE_PART_HOUR,
-      EXPRESSION_DATE_PART_ISODOW,        EXPRESSION_DATE_PART_ISOYEAR,
-      EXPRESSION_DATE_PART_MICROSECOND,  EXPRESSION_DATE_PART_MILLENNIUM,
-      EXPRESSION_DATE_PART_MILLISECOND,  EXPRESSION_DATE_PART_MINUTE,
-      EXPRESSION_DATE_PART_MONTH,         EXPRESSION_DATE_PART_QUARTER,
-      EXPRESSION_DATE_PART_SECOND,        EXPRESSION_DATE_PART_TIMEZONE,
-      EXPRESSION_DATE_PART_TIMEZONE_HOUR, EXPRESSION_DATE_PART_TIMEZONE_MINUTE,
-      EXPRESSION_DATE_PART_WEEK,          EXPRESSION_DATE_PART_YEAR};
+TEST_F(TypesTests, DatePartTypeTest) {
+  std::vector<DatePartType> list = {EXPRESSION_DATE_PART_INVALID,
+                                    EXPRESSION_DATE_PART_CENTURY,
+                                    EXPRESSION_DATE_PART_DAY,
+                                    EXPRESSION_DATE_PART_DAYS,
+                                    EXPRESSION_DATE_PART_DECADE,
+                                    EXPRESSION_DATE_PART_DECADES,
+                                    EXPRESSION_DATE_PART_DOW,
+                                    EXPRESSION_DATE_PART_DOY,
+                                    EXPRESSION_DATE_PART_EPOCH,
+                                    EXPRESSION_DATE_PART_HOUR,
+                                    EXPRESSION_DATE_PART_HOURS,
+                                    EXPRESSION_DATE_PART_ISODOW,
+                                    EXPRESSION_DATE_PART_ISOYEAR,
+                                    EXPRESSION_DATE_PART_MICROSECOND,
+                                    EXPRESSION_DATE_PART_MICROSECONDS,
+                                    EXPRESSION_DATE_PART_MILLENNIUM,
+                                    EXPRESSION_DATE_PART_MILLISECOND,
+                                    EXPRESSION_DATE_PART_MILLISECONDS,
+                                    EXPRESSION_DATE_PART_MINUTE,
+                                    EXPRESSION_DATE_PART_MINUTES,
+                                    EXPRESSION_DATE_PART_MONTH,
+                                    EXPRESSION_DATE_PART_MONTHS,
+                                    EXPRESSION_DATE_PART_QUARTER,
+                                    EXPRESSION_DATE_PART_QUARTERS,
+                                    EXPRESSION_DATE_PART_SECOND,
+                                    EXPRESSION_DATE_PART_SECONDS,
+                                    EXPRESSION_DATE_PART_TIMEZONE,
+                                    EXPRESSION_DATE_PART_TIMEZONE_HOUR,
+                                    EXPRESSION_DATE_PART_TIMEZONE_HOURS,
+                                    EXPRESSION_DATE_PART_TIMEZONE_MINUTE,
+                                    EXPRESSION_DATE_PART_TIMEZONE_MINUTES,
+                                    EXPRESSION_DATE_PART_WEEK,
+                                    EXPRESSION_DATE_PART_WEEKS,
+                                    EXPRESSION_DATE_PART_YEAR,
+                                    EXPRESSION_DATE_PART_YEARS};
 
   // Make sure that ToString and FromString work
+  std::set<std::string> all_strings;
   for (auto val : list) {
     std::string str = peloton::DatePartTypeToString(val);
     EXPECT_TRUE(str.size() > 0);
+    all_strings.insert(str);
 
     auto newVal = peloton::StringToDatePartType(str);
     EXPECT_EQ(val, newVal);
   }
+  EXPECT_FALSE(all_strings.empty());
 
   // Then make sure that we can't cast garbage
   std::string invalid("MattPerronWroteTheseMethods");
   EXPECT_THROW(peloton::StringToDatePartType(invalid), peloton::Exception);
   EXPECT_THROW(peloton::DatePartTypeToString(static_cast<DatePartType>(-99999)),
                peloton::Exception);
+
+  // Extra: Make sure that the duplicate DatePartTypes with the 's' suffix map
+  // to the same value. For example, 'SECOND' should be equivalent to 'SECONDS'
+  for (auto str : all_strings) {
+    std::string plural = str + "S";
+    if (all_strings.find(plural) == all_strings.end()) continue;
+
+    auto expected = peloton::StringToDatePartType(str);
+    auto result = peloton::StringToDatePartType(plural);
+    EXPECT_EQ(expected, result);
+  }  // FOR
 }
 
 TEST_F(TypesTests, BackendTypeTest) {
@@ -214,8 +254,8 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 }
 
 TEST_F(TypesTests, IndexTypeTest) {
-  std::vector<IndexType> list = {INDEX_TYPE_INVALID,
-                                 INDEX_TYPE_BWTREE, INDEX_TYPE_HASH};
+  std::vector<IndexType> list = {INDEX_TYPE_INVALID, INDEX_TYPE_BWTREE,
+                                 INDEX_TYPE_HASH};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

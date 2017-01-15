@@ -44,6 +44,11 @@ size_t EPOCH_THREAD_COUNT = 1;
 // DatePart <--> String Utilities
 //===--------------------------------------------------------------------===//
 std::string DatePartTypeToString(DatePartType type) {
+  // IMPORTANT: You should not include any of the duplicate plural DatePartTypes
+  // in this switch statement, otherwise the compiler will throw an error.
+  // For example, you will want to use 'EXPRESSION_DATE_PART_SECOND' and not
+  // 'EXPRESSION_DATE_PART_SECONDS'. Make sure that none of the returned strings
+  // include the 'S' suffix.
   switch (type) {
     case EXPRESSION_DATE_PART_INVALID:
       return ("INVALID");
@@ -70,7 +75,7 @@ std::string DatePartTypeToString(DatePartType type) {
     case EXPRESSION_DATE_PART_MILLENNIUM:
       return "MILLENNIUM";
     case EXPRESSION_DATE_PART_MILLISECOND:
-      return "MILLISECONS";
+      return "MILLISECOND";
     case EXPRESSION_DATE_PART_MINUTE:
       return "MINUTE";
     case EXPRESSION_DATE_PART_MONTH:
@@ -120,10 +125,12 @@ DatePartType StringToDatePartType(const std::string& str) {
     return EXPRESSION_DATE_PART_ISODOW;
   } else if (upper_str == "ISOYEAR") {
     return EXPRESSION_DATE_PART_ISOYEAR;
-  } else if (upper_str == "MICROSECONDS") {
+  } else if (upper_str == "MICROSECOND") {
     return EXPRESSION_DATE_PART_MICROSECOND;
   } else if (upper_str == "MILLENNIUM") {
     return EXPRESSION_DATE_PART_MILLENNIUM;
+  } else if (upper_str == "MILLISECOND") {
+    return EXPRESSION_DATE_PART_MILLISECOND;
   } else if (upper_str == "MILLISECOND") {
     return EXPRESSION_DATE_PART_MILLISECOND;
   } else if (upper_str == "MINUTE") {
