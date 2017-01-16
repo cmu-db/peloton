@@ -25,6 +25,17 @@ namespace test {
 
 class OrderBySQLTests : public PelotonTest {};
 
+void CreateAndLoadTable() {
+  // Create a table first
+  SQLTestsUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT, d VARCHAR);");
+
+  // Insert tuples into table
+  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333, 'abcd');");
+  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 33, 111, 'bcda');");
+  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 11, 222, 'bcd');");
+}
+
 TEST_F(OrderBySQLTests, PerformanceTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
@@ -99,6 +110,349 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
+
+
+TEST_F(OrderBySQLTests, OrderByWithColumnsTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b FROM test ORDER BY b;", result, tuple_descriptor, rows_changed, error_message);
+
+
+  // Check the return value
+  // Should be: 3, 1, 2
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 4));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithColumnsDescTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b FROM test ORDER BY b DESC;", result, tuple_descriptor, rows_changed, error_message);
+
+
+  // Check the return value
+  // Should be: 2, 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
+
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithoutColumnsTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY b;", result, tuple_descriptor, rows_changed, error_message);
+
+
+  // Check the return value
+  // Should be: 3, 1, 2
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 2));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+
+TEST_F(OrderBySQLTests, OrderByWithoutColumnsDescTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY b DESC;", result, tuple_descriptor, rows_changed, error_message);
+
+
+  // Check the return value
+  // Should be: 2, 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 2));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b, d FROM test ORDER BY d LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+  //Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+
+  // Check the return value
+  // Should be: 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 3));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitDescTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b, d FROM test ORDER BY d DESC LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+  //Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+
+  // Check the return value
+  // Should be: 2, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 3));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY d LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+  //Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+
+  // Check the return value
+  // Should be: 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 1));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY d DESC LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+  //Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+
+  // Check the return value
+  // Should be: 2, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 1));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+
+TEST_F(OrderBySQLTests, OrderByStar) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d;", result, tuple_descriptor, rows_changed, error_message);
+
+  // Check the return value
+  // Should be: [1, 22, 333, 'abcd']; [3,...], [2,...];
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("333", SQLTestsUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("abcd", SQLTestsUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 8));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByStarDesc) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d DESC;", result, tuple_descriptor, rows_changed, error_message);
+
+  // Check the return value
+  // Should be: [2, 33, 111, 'bcda']; [3,...], [1,...];
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("33", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("111", SQLTestsUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("bcda", SQLTestsUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 8));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+
+
+  //Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+
+  // Check the return value
+  // Should be: 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
+
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<ResultType> result;
+  std::vector<FieldInfoType> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d DESC LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+
+
+  //Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+
+  // Check the return value
+  // Should be: 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
+
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 
 }  // namespace test
 }  // namespace peloton
