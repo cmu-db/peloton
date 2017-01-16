@@ -130,7 +130,7 @@ ResultType TrafficCop::AbortQueryHelper() {
 }
 
 ResultType TrafficCop::ExecuteStatement(
-    const std::string &query, std::vector<PlannerResult> &result,
+    const std::string &query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_TRACE("Received %s", query.c_str());
@@ -165,7 +165,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<PlannerResult> &result,
+    const std::vector<int> &result_format, std::vector<StatementResult> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
@@ -200,7 +200,7 @@ ResultType TrafficCop::ExecuteStatement(
 
 bridge::peloton_status TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<PlannerResult> &result, const std::vector<int> &result_format) {
+    std::vector<StatementResult> &result, const std::vector<int> &result_format) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
   bridge::peloton_status p_status;

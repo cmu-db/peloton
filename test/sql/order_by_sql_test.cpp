@@ -52,7 +52,7 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   SQLTestsUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;

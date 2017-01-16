@@ -56,7 +56,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt));
 
   std::vector<type::Value> params;
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<int> result_format;
   result_format =
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));

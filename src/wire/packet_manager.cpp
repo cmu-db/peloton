@@ -208,7 +208,7 @@ void PacketManager::PutTupleDescriptor(
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendDataRows(std::vector<PlannerResult> &results,
+void PacketManager::SendDataRows(std::vector<StatementResult> &results,
                                  int colcount, int &rows_affected) {
   if (results.empty() || colcount == 0) return;
 
@@ -316,7 +316,7 @@ void PacketManager::ExecQueryMessage(InputPacket *pkt) {
         return;
       }
 
-      std::vector<PlannerResult> result;
+      std::vector<StatementResult> result;
       std::vector<FieldInfo> tuple_descriptor;
       std::string error_message;
       int rows_affected;
@@ -770,7 +770,7 @@ bool PacketManager::ExecDescribeMessage(InputPacket *pkt) {
 
 void PacketManager::ExecExecuteMessage(InputPacket *pkt) {
   // EXECUTE message
-  std::vector<PlannerResult> results;
+  std::vector<StatementResult> results;
   std::string error_message, portal_name;
   int rows_affected = 0;
   GetStringToken(pkt, portal_name);

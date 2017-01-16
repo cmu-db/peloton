@@ -112,7 +112,7 @@ class PacketManager {
   void PutTupleDescriptor(const std::vector<FieldInfo>& tuple_descriptor);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<PlannerResult>& results, int colcount,
+  void SendDataRows(std::vector<StatementResult>& results, int colcount,
                     int& rows_affected);
 
   // Used to send a packet that indicates the completion of a query. Also has

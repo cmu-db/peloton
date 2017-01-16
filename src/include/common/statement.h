@@ -25,8 +25,9 @@ namespace planner {
 class AbstractPlan;
 }
 
+// TODO: Somebody needs to define what the hell this is???
 typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>>
-    PlannerResult;
+    StatementResult;
 
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfo;

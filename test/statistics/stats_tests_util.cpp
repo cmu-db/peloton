@@ -37,7 +37,7 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   std::vector<type::Value> params;
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::string sql = "SELECT * FROM " + database_name + "." + table_name;
   statement.reset(new Statement("SELECT", sql));
   auto select_stmt = peloton_parser.BuildParseTree(sql);

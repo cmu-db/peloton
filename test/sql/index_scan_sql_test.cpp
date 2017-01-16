@@ -37,7 +37,7 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       "VARCHAR);");
   LOG_INFO("Table created!");
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   SQLTestsUtil::ExecuteSQLQuery(

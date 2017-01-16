@@ -35,7 +35,7 @@ TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
   // Insert tuples into table
   SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10, 100);");
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;

@@ -42,7 +42,7 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -75,7 +75,7 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -109,7 +109,7 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -141,7 +141,7 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

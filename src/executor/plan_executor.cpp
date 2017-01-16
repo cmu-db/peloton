@@ -44,7 +44,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 peloton_status PlanExecutor::ExecutePlan(
     const planner::AbstractPlan *plan, concurrency::Transaction *txn,
-    const std::vector<type::Value> &params, std::vector<PlannerResult> &result,
+    const std::vector<type::Value> &params, std::vector<StatementResult> &result,
     const std::vector<int> &result_format) {
   peloton_status p_status;
   if (plan == nullptr) return p_status;
@@ -94,7 +94,7 @@ peloton_status PlanExecutor::ExecutePlan(
         for (auto &tuple : answer_tuples) {
           unsigned int col_index = 0;
           for (unsigned int i = 0; i < logical_tile->GetColumnCount(); i++) {
-            auto res = PlannerResult();
+            auto res = StatementResult();
             PlanExecutor::copyFromTo(tuple[col_index++], res.second);
             if (tuple[col_index - 1].c_str() != nullptr) {
               LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());

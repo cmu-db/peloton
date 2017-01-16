@@ -49,7 +49,7 @@ class TrafficCop {
 
   // PortalExec - Execute query string
   ResultType ExecuteStatement(const std::string &query,
-                          std::vector<PlannerResult> &result,
+                          std::vector<StatementResult> &result,
                           std::vector<FieldInfo> &tuple_descriptor,
                           int &rows_changed, std::string &error_message);
 
@@ -58,14 +58,14 @@ class TrafficCop {
       const std::shared_ptr<Statement> &statement,
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-      const std::vector<int> &result_format, std::vector<PlannerResult> &result,
+      const std::vector<int> &result_format, std::vector<StatementResult> &result,
       int &rows_change, std::string &error_message);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
   bridge::peloton_status ExecuteStatementPlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-      std::vector<PlannerResult> &result, const std::vector<int> &result_format);
+      std::vector<StatementResult> &result, const std::vector<int> &result_format);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,

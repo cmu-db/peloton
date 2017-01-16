@@ -41,7 +41,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   }
   EXPECT_NE(table, nullptr);
 
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;

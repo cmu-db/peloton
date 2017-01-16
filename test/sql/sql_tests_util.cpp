@@ -52,7 +52,7 @@ void SQLTestsUtil::ShowTable(std::string database_name,
 
 // Execute a SQL query end-to-end
 ResultType SQLTestsUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<PlannerResult> &result,
+    const std::string query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_INFO("Query: %s", query.c_str());
@@ -66,7 +66,7 @@ ResultType SQLTestsUtil::ExecuteSQLQuery(
 // Execute a SQL query end-to-end with the specific optimizer
 ResultType SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-    const std::string query, std::vector<PlannerResult> &result,
+    const std::string query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   auto &peloton_parser = parser::Parser::GetInstance();
@@ -104,7 +104,7 @@ std::shared_ptr<planner::AbstractPlan> SQLTestsUtil::GeneratePlanWithOptimizer(
 }
 
 ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query,
-                                         std::vector<PlannerResult> &result) {
+                                         std::vector<StatementResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -117,7 +117,7 @@ ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query,
 }
 
 ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
-  std::vector<PlannerResult> result;
+  std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

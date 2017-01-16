@@ -40,7 +40,7 @@ class SQLTestsUtil {
 
   // Execute a SQL query end-to-end
   static ResultType ExecuteSQLQuery(const std::string query,
-                                std::vector<PlannerResult> &result,
+                                std::vector<StatementResult> &result,
                                 std::vector<FieldInfo> &tuple_descriptor,
                                 int &rows_affected, std::string &error_message);
 
@@ -50,7 +50,7 @@ class SQLTestsUtil {
   // the refactor by Siddharth
   static ResultType ExecuteSQLQueryWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-      const std::string query, std::vector<PlannerResult> &result,
+      const std::string query, std::vector<StatementResult> &result,
       std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
       std::string &error_message);
 
@@ -61,7 +61,7 @@ class SQLTestsUtil {
 
   // A simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query,
-                                std::vector<PlannerResult> &result);
+                                std::vector<StatementResult> &result);
 
   // A another simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query);
@@ -70,7 +70,7 @@ class SQLTestsUtil {
   // NOTE: Result columns across different rows are unfolded into a single
   // vector (vector<ResultType>).
   static std::string GetResultValueAsString(
-      const std::vector<PlannerResult> &result, size_t index) {
+      const std::vector<StatementResult> &result, size_t index) {
     std::string value(result[index].second.begin(), result[index].second.end());
 
     return std::move(value);
