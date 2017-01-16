@@ -34,8 +34,8 @@ TEST_F(DropSQLTests, DropTableTest) {
   // Check the table in catalog
   storage::DataTable *table;
   try {
-    table = catalog::Catalog::GetInstance()
-                ->GetTableWithName(DEFAULT_DB_NAME, "test");
+    table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                              "test");
   } catch (CatalogException &e) {
     table = nullptr;
   }
@@ -65,8 +65,8 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // Check the table does not exist
   try {
-    table = catalog::Catalog::GetInstance()
-                ->GetTableWithName(DEFAULT_DB_NAME, "test");
+    table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                              "test");
   } catch (CatalogException &e) {
     table = nullptr;
   }
@@ -77,7 +77,6 @@ TEST_F(DropSQLTests, DropTableTest) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
 }
 
 }  // namespace test
