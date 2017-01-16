@@ -122,9 +122,9 @@ class JoinExprParse : public AbstractParse {
   // Get all base relation tables in a join node.
   static void GetJoinNodeTables(std::vector<TableParse *> &tables,
                                 AbstractParse *expr) {
-    if (expr->GetParseNodeType() == PARSE_NODE_TYPE_TABLE) {
+    if (expr->GetParseNodeType() == ParseNodeType::TABLE) {
       return tables.push_back(static_cast<TableParse *>(expr));
-    } else if (expr->GetParseNodeType() == PARSE_NODE_TYPE_JOIN_EXPR) {
+    } else if (expr->GetParseNodeType() == ParseNodeType::JOIN_EXPR) {
       JoinExprParse *join = static_cast<JoinExprParse *>(expr);
 
       tables.insert(tables.end(), join->left_node_tables_.begin(),
@@ -137,7 +137,7 @@ class JoinExprParse : public AbstractParse {
     return {};
   }
 
-  inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
+  inline ParseNodeType GetParseNodeType() const { return ParseNodeType::DROP; }
 
   const std::string GetInfo() const { return "DropParse"; }
 

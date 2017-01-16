@@ -461,33 +461,36 @@ std::ostream &operator<<(std::ostream &os, const HybridScanType &type);
 // Parse Node Types
 //===--------------------------------------------------------------------===//
 
-enum ParseNodeType {
-  PARSE_NODE_TYPE_INVALID = INVALID_TYPE_ID,  // invalid parse node type
+enum class ParseNodeType {
+  INVALID = INVALID_TYPE_ID,  // invalid parse node type
 
   // Scan Nodes
-  PARSE_NODE_TYPE_SCAN = 10,
+  SCAN = 10,
 
   // DDL Nodes
-  PARSE_NODE_TYPE_CREATE = 20,
-  PARSE_NODE_TYPE_DROP = 21,
+  CREATE = 20,
+  DROP = 21,
 
   // Mutator Nodes
-  PARSE_NODE_TYPE_UPDATE = 30,
-  PARSE_NODE_TYPE_INSERT = 31,
-  PARSE_NODE_TYPE_DELETE = 32,
+  UPDATE = 30,
+  INSERT = 31,
+  DELETE = 32,
 
   // Prepared Nodes
-  PARSE_NODE_TYPE_PREPARE = 40,
-  PARSE_NODE_TYPE_EXECUTE = 41,
+  PREPARE = 40,
+  EXECUTE = 41,
 
   // Select Nodes
-  PARSE_NODE_TYPE_SELECT = 50,
-  PARSE_NODE_TYPE_JOIN_EXPR = 51,  // a join tree
-  PARSE_NODE_TYPE_TABLE = 52,      // a single table
+  SELECT = 50,
+  JOIN_EXPR = 51,  // a join tree
+  TABLE = 52,      // a single table
 
   // Test
-  PARSE_NODE_TYPE_MOCK = 80
+  MOCK = 80
 };
+std::string ParseNodeTypeToString(ParseNodeType type);
+ParseNodeType StringToParseNodeType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ParseNodeType &type);
 
 //===--------------------------------------------------------------------===//
 // Plan Node Types
@@ -1024,9 +1027,6 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string TypeIdToString(type::Type::TypeId type);
 type::Type::TypeId StringToTypeId(const std::string &str);
-
-std::string ParseNodeTypeToString(ParseNodeType type);
-ParseNodeType StringToParseNodeType(const std::string &str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);

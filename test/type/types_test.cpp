@@ -332,13 +332,13 @@ TEST_F(TypesTests, PlanNodeTypeTest) {
 
 TEST_F(TypesTests, ParseNodeTypeTest) {
   std::vector<ParseNodeType> list = {
-      PARSE_NODE_TYPE_INVALID,   PARSE_NODE_TYPE_SCAN,
-      PARSE_NODE_TYPE_CREATE,    PARSE_NODE_TYPE_DROP,
-      PARSE_NODE_TYPE_UPDATE,    PARSE_NODE_TYPE_INSERT,
-      PARSE_NODE_TYPE_DELETE,    PARSE_NODE_TYPE_PREPARE,
-      PARSE_NODE_TYPE_EXECUTE,   PARSE_NODE_TYPE_SELECT,
-      PARSE_NODE_TYPE_JOIN_EXPR, PARSE_NODE_TYPE_TABLE,
-      PARSE_NODE_TYPE_MOCK};
+      ParseNodeType::INVALID,   ParseNodeType::SCAN,
+      ParseNodeType::CREATE,    ParseNodeType::DROP,
+      ParseNodeType::UPDATE,    ParseNodeType::INSERT,
+      ParseNodeType::DELETE,    ParseNodeType::PREPARE,
+      ParseNodeType::EXECUTE,   ParseNodeType::SELECT,
+      ParseNodeType::JOIN_EXPR, ParseNodeType::TABLE,
+      ParseNodeType::MOCK};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

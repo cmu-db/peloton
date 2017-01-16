@@ -923,9 +923,8 @@ HybridScanType StringToHybridScanType(const std::string& str) {
   } else if (upper_str == "HYBRID") {
     return HybridScanType::HYBRID;
   } else {
-    throw ConversionException(
-        StringUtil::Format("No HybridScanType conversion from string '%s'",
-                           upper_str.c_str()));
+    throw ConversionException(StringUtil::Format(
+        "No HybridScanType conversion from string '%s'", upper_str.c_str()));
   }
   return HybridScanType::INVALID;
 }
@@ -1120,43 +1119,43 @@ std::ostream& operator<<(std::ostream& os, const PlanNodeType& type) {
 
 std::string ParseNodeTypeToString(ParseNodeType type) {
   switch (type) {
-    case PARSE_NODE_TYPE_INVALID: {
+    case ParseNodeType::INVALID: {
       return "INVALID";
     }
-    case PARSE_NODE_TYPE_SCAN: {
+    case ParseNodeType::SCAN: {
       return "SCAN";
     }
-    case PARSE_NODE_TYPE_CREATE: {
+    case ParseNodeType::CREATE: {
       return "CREATE";
     }
-    case PARSE_NODE_TYPE_DROP: {
+    case ParseNodeType::DROP: {
       return "DROP";
     }
-    case PARSE_NODE_TYPE_UPDATE: {
+    case ParseNodeType::UPDATE: {
       return "UPDATE";
     }
-    case PARSE_NODE_TYPE_INSERT: {
+    case ParseNodeType::INSERT: {
       return "INSERT";
     }
-    case PARSE_NODE_TYPE_DELETE: {
+    case ParseNodeType::DELETE: {
       return "DELETE";
     }
-    case PARSE_NODE_TYPE_PREPARE: {
+    case ParseNodeType::PREPARE: {
       return "PREPARE";
     }
-    case PARSE_NODE_TYPE_EXECUTE: {
+    case ParseNodeType::EXECUTE: {
       return "EXECUTE";
     }
-    case PARSE_NODE_TYPE_SELECT: {
+    case ParseNodeType::SELECT: {
       return "SELECT";
     }
-    case PARSE_NODE_TYPE_JOIN_EXPR: {
+    case ParseNodeType::JOIN_EXPR: {
       return "JOIN_EXPR";
     }
-    case PARSE_NODE_TYPE_TABLE: {
+    case ParseNodeType::TABLE: {
       return "TABLE";
     }
-    case PARSE_NODE_TYPE_MOCK: {
+    case ParseNodeType::MOCK: {
       return "MOCK";
     }
     default: {
@@ -1171,36 +1170,41 @@ std::string ParseNodeTypeToString(ParseNodeType type) {
 ParseNodeType StringToParseNodeType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return PARSE_NODE_TYPE_INVALID;
+    return ParseNodeType::INVALID;
   } else if (upper_str == "SCAN") {
-    return PARSE_NODE_TYPE_SCAN;
+    return ParseNodeType::SCAN;
   } else if (upper_str == "CREATE") {
-    return PARSE_NODE_TYPE_CREATE;
+    return ParseNodeType::CREATE;
   } else if (upper_str == "DROP") {
-    return PARSE_NODE_TYPE_DROP;
+    return ParseNodeType::DROP;
   } else if (upper_str == "UPDATE") {
-    return PARSE_NODE_TYPE_UPDATE;
+    return ParseNodeType::UPDATE;
   } else if (upper_str == "INSERT") {
-    return PARSE_NODE_TYPE_INSERT;
+    return ParseNodeType::INSERT;
   } else if (upper_str == "DELETE") {
-    return PARSE_NODE_TYPE_DELETE;
+    return ParseNodeType::DELETE;
   } else if (upper_str == "PREPARE") {
-    return PARSE_NODE_TYPE_PREPARE;
+    return ParseNodeType::PREPARE;
   } else if (upper_str == "EXECUTE") {
-    return PARSE_NODE_TYPE_EXECUTE;
+    return ParseNodeType::EXECUTE;
   } else if (upper_str == "SELECT") {
-    return PARSE_NODE_TYPE_SELECT;
+    return ParseNodeType::SELECT;
   } else if (upper_str == "JOIN_EXPR") {
-    return PARSE_NODE_TYPE_JOIN_EXPR;
+    return ParseNodeType::JOIN_EXPR;
   } else if (upper_str == "TABLE") {
-    return PARSE_NODE_TYPE_TABLE;
+    return ParseNodeType::TABLE;
   } else if (upper_str == "MOCK") {
-    return PARSE_NODE_TYPE_MOCK;
+    return ParseNodeType::MOCK;
   } else {
     throw ConversionException(StringUtil::Format(
         "No ParseNodeType conversion from string '%s'", upper_str.c_str()));
   }
-  return PARSE_NODE_TYPE_INVALID;
+  return ParseNodeType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const ParseNodeType& type) {
+  os << ParseNodeTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
