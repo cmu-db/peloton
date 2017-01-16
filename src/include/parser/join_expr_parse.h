@@ -104,17 +104,17 @@ class JoinExprParse : public AbstractParse {
   static PelotonJoinType TransformJoinType(const JoinType type) {
     switch (type) {
       case JOIN_INNER:
-        return JOIN_TYPE_INNER;
+        return JoinType::INNER;
       case JOIN_FULL:
-        return JOIN_TYPE_OUTER;
+        return JoinType::OUTER;
       case JOIN_LEFT:
-        return JOIN_TYPE_LEFT;
+        return JoinType::LEFT;
       case JOIN_RIGHT:
-        return JOIN_TYPE_RIGHT;
+        return JoinType::RIGHT;
       case JOIN_SEMI:  // IN+Subquery is JOIN_SEMI
-        return JOIN_TYPE_SEMI;
+        return JoinType::SEMI;
       default:
-        return JOIN_TYPE_INVALID;
+        return JoinType::INVALID;
     }
   }
   */

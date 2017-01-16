@@ -923,8 +923,9 @@ HybridScanType StringToHybridScanType(const std::string& str) {
   } else if (upper_str == "HYBRID") {
     return HybridScanType::HYBRID;
   } else {
-    throw ConversionException(StringUtil::Format(
-        "No HybridScanType conversion from string '%s'", upper_str.c_str()));
+    throw ConversionException(
+        StringUtil::Format("No HybridScanType conversion from string '%s'",
+                           upper_str.c_str()));
   }
   return HybridScanType::INVALID;
 }
@@ -1204,6 +1205,66 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
 
 std::ostream& operator<<(std::ostream& os, const ParseNodeType& type) {
   os << ParseNodeTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// JoinType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string JoinTypeToString(JoinType type) {
+  switch (type) {
+    case JoinType::INVALID: {
+      return "INVALID";
+    }
+    case JoinType::LEFT: {
+      return "LEFT";
+    }
+    case JoinType::RIGHT: {
+      return "RIGHT";
+    }
+    case JoinType::INNER: {
+      return "INNER";
+    }
+    case JoinType::OUTER: {
+      return "OUTER";
+    }
+    case JoinType::SEMI: {
+      return "SEMI";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for JoinType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+JoinType StringToJoinType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return JoinType::INVALID;
+  } else if (upper_str == "LEFT") {
+    return JoinType::LEFT;
+  } else if (upper_str == "RIGHT") {
+    return JoinType::RIGHT;
+  } else if (upper_str == "INNER") {
+    return JoinType::INNER;
+  } else if (upper_str == "OUTER") {
+    return JoinType::OUTER;
+  } else if (upper_str == "SEMI") {
+    return JoinType::SEMI;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No JoinType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return JoinType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const JoinType& type) {
+  os << JoinTypeToString(type);
   return os;
 }
 

@@ -352,7 +352,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   } else {
     LOG_TRACE("Scan");
     index_->Scan(values_, key_column_ids_, expr_type_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                 ScanDirectionType::FORWARD, tuple_location_ptrs,
                  &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 

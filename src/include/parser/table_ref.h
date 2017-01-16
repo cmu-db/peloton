@@ -76,7 +76,7 @@ struct TableRef {
 // Definition of a join table
 struct JoinDefinition {
   JoinDefinition()
-      : left(NULL), right(NULL), condition(NULL), type(JOIN_TYPE_INNER) {}
+      : left(NULL), right(NULL), condition(NULL), type(JoinType::INNER) {}
 
   virtual ~JoinDefinition() {
     delete left;

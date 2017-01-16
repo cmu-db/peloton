@@ -495,28 +495,28 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   // FORWARD SCAN
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
-                  SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+                  ScanDirectionType::FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_GREATERTHAN, ExpressionType::COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
@@ -614,7 +614,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   type::Value key4_val0 = (key4->GetValue(0));
   type::Value key4_val1 = (key4->GetValue(1));
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
-                  SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+                  ScanDirectionType::FORWARD, location_ptrs);
 
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
@@ -627,7 +627,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(2, location_ptrs.size());
   } else {
@@ -642,7 +642,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -657,7 +657,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_GREATERTHAN, ExpressionType::COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
@@ -668,7 +668,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key2_val0, key2_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -684,7 +684,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key0_val0, key0_val1, key2_val0, key2_val1}, {0, 1, 0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+      ScanDirectionType::FORWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -697,7 +697,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                    ExpressionType::COMPARE_GREATERTHAN,
                    ExpressionType::COMPARE_LESSTHANOREQUALTO,
                    ExpressionType::COMPARE_LESSTHAN},
-                  SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+                  ScanDirectionType::FORWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -707,7 +707,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   // REVERSE SCAN
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
-                  SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+                  ScanDirectionType::BACKWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -718,7 +718,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+      ScanDirectionType::BACKWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(2, location_ptrs.size());
   } else {
@@ -733,7 +733,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+      ScanDirectionType::BACKWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -748,7 +748,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_GREATERTHAN, ExpressionType::COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+      ScanDirectionType::BACKWARD, location_ptrs);
   EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
@@ -759,7 +759,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest(
       {key2_val0, key2_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+      ScanDirectionType::BACKWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -775,7 +775,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key0_val0, key0_val1, key2_val0, key2_val1}, {0, 1, 0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+      ScanDirectionType::BACKWARD, location_ptrs);
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
@@ -788,7 +788,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                    ExpressionType::COMPARE_GREATERTHAN,
                    ExpressionType::COMPARE_LESSTHANOREQUALTO,
                    ExpressionType::COMPARE_LESSTHAN},
-                  SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
+                  ScanDirectionType::BACKWARD, location_ptrs);
 
   if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());

@@ -274,11 +274,11 @@ std::vector<std::vector<oid_t>> AbstractJoinExecutor::BuildPostitionLists(
  * to the new result tile
  */
 void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
-  PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
+  PL_ASSERT(join_type_ != JoinType::INVALID);
   left_result_tiles_.emplace_back(left_tile);
   switch (join_type_) {
-    case JOIN_TYPE_LEFT:
-    case JOIN_TYPE_OUTER:
+    case JoinType::LEFT:
+    case JoinType::OUTER:
       UpdateLeftJoinRowSets();
       break;
     default:
@@ -292,11 +292,11 @@ void AbstractJoinExecutor::BufferLeftTile(LogicalTile *left_tile) {
  * to the new result tile
  */
 void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
-  PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
+  PL_ASSERT(join_type_ != JoinType::INVALID);
   right_result_tiles_.emplace_back(right_tile);
   switch (join_type_) {
-    case JOIN_TYPE_RIGHT:
-    case JOIN_TYPE_OUTER:
+    case JoinType::RIGHT:
+    case JoinType::OUTER:
       UpdateRightJoinRowSets();
       break;
     default:
@@ -312,15 +312,15 @@ void AbstractJoinExecutor::BufferRightTile(LogicalTile *right_tile) {
  * should be updated when new result tile is buffered
  */
 void AbstractJoinExecutor::UpdateJoinRowSets() {
-  PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
+  PL_ASSERT(join_type_ != JoinType::INVALID);
   switch (join_type_) {
-    case JOIN_TYPE_LEFT:
+    case JoinType::LEFT:
       UpdateLeftJoinRowSets();
       break;
-    case JOIN_TYPE_RIGHT:
+    case JoinType::RIGHT:
       UpdateRightJoinRowSets();
       break;
-    case JOIN_TYPE_OUTER:
+    case JoinType::OUTER:
       UpdateFullJoinRowSets();
       break;
     default:
@@ -363,14 +363,14 @@ void AbstractJoinExecutor::UpdateFullJoinRowSets() {
  * there will be a match later.
  */
 bool AbstractJoinExecutor::BuildOuterJoinOutput() {
-  PL_ASSERT(join_type_ != JOIN_TYPE_INVALID);
+  PL_ASSERT(join_type_ != JoinType::INVALID);
 
   switch (join_type_) {
-    case JOIN_TYPE_LEFT: { return BuildLeftJoinOutput(); }
+    case JoinType::LEFT: { return BuildLeftJoinOutput(); }
 
-    case JOIN_TYPE_RIGHT: { return BuildRightJoinOutput(); }
+    case JoinType::RIGHT: { return BuildRightJoinOutput(); }
 
-    case JOIN_TYPE_OUTER: {
+    case JoinType::OUTER: {
       bool status = BuildLeftJoinOutput();
 
       if (status == true) {
@@ -381,10 +381,10 @@ bool AbstractJoinExecutor::BuildOuterJoinOutput() {
       break;
     }
 
-    case JOIN_TYPE_INNER: { return false; }
+    case JoinType::INNER: { return false; }
 
     default: {
-      throw Exception("Unsupported join type : " + std::to_string(join_type_));
+      throw Exception("Unsupported join type : " + JoinTypeToString(join_type_));
       break;
     }
   }

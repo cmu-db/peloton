@@ -96,7 +96,7 @@ bool MergeJoinExecutor::DExecute() {
       left_child_done_ = true;
       // if we know the join type is left join, we don't have to get the
       // tiles from right child anymore.
-      if (join_type_ == JOIN_TYPE_LEFT || join_type_ == JOIN_TYPE_INNER) {
+      if (join_type_ == JoinType::LEFT || join_type_ == JoinType::INNER) {
         return BuildOuterJoinOutput();
       } else {
         // otherwise, try again

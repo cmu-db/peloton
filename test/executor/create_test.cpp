@@ -52,7 +52,7 @@ TEST_F(CreateTests, CreatingTable) {
   // Create plans
   planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
                            std::move(table_schema),
-                           CreateType::CREATE_TYPE_TABLE);
+                           CreateType::TABLE);
 
   // Create executer
   executor::CreateExecutor executor(&node, context.get());

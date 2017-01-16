@@ -1122,7 +1122,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
   // Create hash join plan node.
   std::unique_ptr<planner::NestedLoopJoinPlan> nested_join_plan_node(
       new planner::NestedLoopJoinPlan(
-          JOIN_TYPE_INNER, nullptr, std::move(projection), schema,
+          JoinType::INNER, nullptr, std::move(projection), schema,
           join_column_ids_left, join_column_ids_right));
 
   // Add left and right

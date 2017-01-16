@@ -727,7 +727,7 @@ static void JoinQueryHelper(
   // JOIN EXECUTOR
   /////////////////////////////////////////////////////////
 
-  auto join_type = JOIN_TYPE_INNER;
+  auto join_type = JoinType::INNER;
 
   // Create join predicate
   expression::TupleValueExpression *left_table_attr =

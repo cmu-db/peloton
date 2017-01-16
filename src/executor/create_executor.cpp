@@ -41,7 +41,7 @@ bool CreateExecutor::DExecute() {
   auto current_txn = context->GetTransaction();
 
   // Check if query was for creating table
-  if (node.GetCreateType() == CreateType::CREATE_TYPE_TABLE) {
+  if (node.GetCreateType() == CreateType::TABLE) {
     std::string table_name = node.GetTableName();
     auto database_name = node.GetDatabaseName();
     std::unique_ptr<catalog::Schema> schema(node.GetSchema());
@@ -60,7 +60,7 @@ bool CreateExecutor::DExecute() {
   }
 
   // Check if query was for creating index
-  if (node.GetCreateType() == CreateType::CREATE_TYPE_INDEX) {
+  if (node.GetCreateType() == CreateType::INDEX) {
     std::string table_name = node.GetTableName();
     std::string index_name = node.GetIndexName();
     bool unique_flag = node.IsUnique();

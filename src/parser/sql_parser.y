@@ -921,11 +921,11 @@ join_clause:
 		;
 
 opt_join_type:
-		INNER 	{ $$ = peloton::JOIN_TYPE_INNER; }
-	|	OUTER 	{ $$ = peloton::JOIN_TYPE_OUTER; }
-	|	LEFT 	{ $$ = peloton::JOIN_TYPE_LEFT; }
-	|	RIGHT 	{ $$ = peloton::JOIN_TYPE_RIGHT; }
-	|	/* empty, default */ 	{ $$ = peloton::JOIN_TYPE_INNER; }
+		INNER 	{ $$ = static_cast<int32_t>(peloton::JoinType::INNER); }
+	|	OUTER 	{ $$ = static_cast<int32_t>(peloton::JoinType::OUTER); }
+	|	LEFT 	{ $$ = static_cast<int32_t>(peloton::JoinType::LEFT); }
+	|	RIGHT 	{ $$ = static_cast<int32_t>(peloton::JoinType::RIGHT); }
+	|	/* empty, default */ 	{ $$ = static_cast<int32_t>(peloton::JoinType::INNER); }
 	;
 
 

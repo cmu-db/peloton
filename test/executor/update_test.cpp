@@ -174,7 +174,7 @@ TEST_F(UpdateTests, UpdatingOld) {
       new executor::ExecutorContext(txn));
   planner::CreatePlan node("department_table", DEFAULT_DB_NAME,
                            std::move(table_schema),
-                           CreateType::CREATE_TYPE_TABLE);
+                           CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();

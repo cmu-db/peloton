@@ -40,7 +40,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Constraint> column_contraints;
   if (parse_tree->type == parse_tree->CreateType::kTable) {
-    create_type = CreateType::CREATE_TYPE_TABLE;
+    create_type = CreateType::TABLE;
     for (auto col : *parse_tree->columns) {
       type::Type::TypeId val = col->GetValueType(col->type);
 
@@ -71,7 +71,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     table_schema = schema;
   }
   if (parse_tree->type == parse_tree->CreateType::kIndex) {
-    create_type = CreateType::CREATE_TYPE_INDEX;
+    create_type = CreateType::INDEX;
     index_name = std::string(parse_tree->index_name);
     table_name = std::string(parse_tree->GetTableName());
 

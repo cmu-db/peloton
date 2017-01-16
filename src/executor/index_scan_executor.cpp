@@ -171,13 +171,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       if (!descend_) {
         LOG_TRACE("ASCENDING SCAN LIMIT in Primary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                          ScanDirectionType::FORWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
       } else {
         LOG_TRACE("DESCENDING SCAN LIMIT in Primary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
+                          ScanDirectionType::BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
 
@@ -188,7 +188,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     else {
       LOG_TRACE("Index Scan in Primary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
-                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                   ScanDirectionType::FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
     }
 
@@ -383,13 +383,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       if (!descend_) {
         LOG_TRACE("ASCENDING SCAN LIMIT in Secondary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                          ScanDirectionType::FORWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
       } else {
         LOG_TRACE("DESCENDING SCAN LIMIT in Secondary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
+                          ScanDirectionType::BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
 
@@ -402,7 +402,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     else {
       LOG_TRACE("Index Scan in Primary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
-                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                   ScanDirectionType::FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
     }
   }

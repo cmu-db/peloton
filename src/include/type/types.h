@@ -552,12 +552,12 @@ std::ostream &operator<<(std::ostream &os, const PlanNodeType &type);
 // Create Types
 //===--------------------------------------------------------------------===//
 
-enum CreateType {
-  CREATE_TYPE_INVALID = INVALID_TYPE_ID,  // invalid create type
-  CREATE_TYPE_DB = 1,                     // db create type
-  CREATE_TYPE_TABLE = 2,                  // table create type
-  CREATE_TYPE_INDEX = 3,                  // index create type
-  CREATE_TYPE_CONSTRAINT = 4              // constraint create type
+enum class CreateType {
+  INVALID = INVALID_TYPE_ID,  // invalid create type
+  DB = 1,                     // db create type
+  TABLE = 2,                  // table create type
+  INDEX = 3,                  // index create type
+  CONSTRAINT = 4              // constraint create type
 };
 
 //===--------------------------------------------------------------------===//
@@ -587,24 +587,27 @@ std::ostream &operator<<(std::ostream &os, const StatementType &type);
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
 
-enum ScanDirectionType {
-  SCAN_DIRECTION_TYPE_INVALID = INVALID_TYPE_ID,  // invalid scan direction
-  SCAN_DIRECTION_TYPE_FORWARD = 1,                // forward
-  SCAN_DIRECTION_TYPE_BACKWARD = 2                // backward
+enum class ScanDirectionType {
+  INVALID = INVALID_TYPE_ID,  // invalid scan direction
+  FORWARD = 1,                // forward
+  BACKWARD = 2                // backward
 };
 
 //===--------------------------------------------------------------------===//
 // Join Types
 //===--------------------------------------------------------------------===//
 
-enum JoinType {
-  JOIN_TYPE_INVALID = INVALID_TYPE_ID,  // invalid join type
-  JOIN_TYPE_LEFT = 1,                   // left
-  JOIN_TYPE_RIGHT = 2,                  // right
-  JOIN_TYPE_INNER = 3,                  // inner
-  JOIN_TYPE_OUTER = 4,                  // outer
-  JOIN_TYPE_SEMI = 5                    // IN+Subquery is SEMI
+enum class JoinType {
+  INVALID = INVALID_TYPE_ID,  // invalid join type
+  LEFT = 1,                   // left
+  RIGHT = 2,                  // right
+  INNER = 3,                  // inner
+  OUTER = 4,                  // outer
+  SEMI = 5                    // IN+Subquery is SEMI
 };
+std::string JoinTypeToString(JoinType type);
+JoinType StringToJoinType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const JoinType &type);
 
 //===--------------------------------------------------------------------===//
 // Aggregate Types
@@ -731,6 +734,8 @@ enum ConstraintType {
   CONSTRAINT_TYPE_FOREIGN = 7,                // foreign key
   CONSTRAINT_TYPE_EXCLUSION = 8               // foreign key
 };
+std::string ConstraintTypeToString(ConstraintType type);
+ConstraintType StringToConstraintType(const std::string &str);
 
 //===--------------------------------------------------------------------===//
 // Set Operation Types
@@ -763,6 +768,9 @@ enum LoggingType {
   LOGGING_TYPE_SSD_WAL = 5,
   LOGGING_TYPE_HDD_WAL = 6,
 };
+std::string LoggingTypeToString(LoggingType type);
+LoggingType StringToLoggingType(const std::string &str);
+
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
@@ -798,12 +806,16 @@ enum LoggingStatusType {
   LOGGING_STATUS_TYPE_TERMINATE = 4,
   LOGGING_STATUS_TYPE_SLEEP = 5
 };
+std::string LoggingStatusTypeToString(LoggingStatusType type);
+LoggingStatusType StringToLoggingStatusType(const std::string &str);
 
 enum LoggerType {
   LOGGER_TYPE_INVALID = INVALID_TYPE_ID,
   LOGGER_TYPE_FRONTEND = 1,
   LOGGER_TYPE_BACKEND = 2
 };
+std::string LoggerTypeToString(LoggerType type);
+LoggerType StringToLoggerType(const std::string &str);
 
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
@@ -834,6 +846,8 @@ enum LogRecordType {
   // includes max persistent commit_id
   LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
 };
+std::string LogRecordTypeToString(LogRecordType type);
+LogRecordType StringToLogRecordType(const std::string &str);
 
 enum CheckpointStatus {
   CHECKPOINT_STATUS_INVALID = INVALID_TYPE_ID,
@@ -1027,21 +1041,6 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string TypeIdToString(type::Type::TypeId type);
 type::Type::TypeId StringToTypeId(const std::string &str);
-
-std::string ConstraintTypeToString(ConstraintType type);
-ConstraintType StringToConstraintType(const std::string &str);
-
-std::string LoggingTypeToString(LoggingType type);
-LoggingType StringToLoggingType(const std::string &str);
-
-std::string LoggingStatusTypeToString(LoggingStatusType type);
-LoggingStatusType StringToLoggingStatusType(const std::string &str);
-
-std::string LoggerTypeToString(LoggerType type);
-LoggerType StringToLoggerType(const std::string &str);
-
-std::string LogRecordTypeToString(LogRecordType type);
-LogRecordType StringToLogRecordType(const std::string &str);
 
 type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
