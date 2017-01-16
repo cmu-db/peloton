@@ -111,8 +111,8 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        "primary_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -448,8 +448,8 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      "primary_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
   std::shared_ptr<index::Index> pkey_index(

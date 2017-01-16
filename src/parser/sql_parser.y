@@ -364,7 +364,7 @@ create_statement:
 			$$->index_name = $4;
 			$$->table_info_ = $6;
 			$$->index_attrs = $8;
-			$$->index_type = peloton::INDEX_TYPE_BWTREE;
+			$$->index_type = peloton::IndexType::BWTREE;
 		}
 
 		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' USING opt_index_type {
@@ -373,7 +373,7 @@ create_statement:
 			$$->index_name = $4;
 			$$->table_info_ = $6;
 			$$->index_attrs = $8;
-			$$->index_type = $11;
+			$$->index_type = peloton::StringToIndexType(CharsToStringDestructive($11));
 		}
 	;
 
@@ -453,8 +453,8 @@ column_type:
 	;
 
 opt_index_type:
-		HASH { $$ = peloton::INDEX_TYPE_HASH; }
-	|	BWTREE { $$ = peloton::INDEX_TYPE_BWTREE; }
+		HASH { $$ = static_cast<uint32_t>(peloton::IndexType::HASH); }
+	|	BWTREE { $$ = static_cast<uint32_t>(peloton::IndexType::BWTREE); }
 	;
 
 /******************************

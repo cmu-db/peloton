@@ -394,11 +394,11 @@ enum class VisibilityType {
 // Isolation Levels
 //===--------------------------------------------------------------------===//
 
-enum IsolationLevelType {
-  ISOLATION_LEVEL_TYPE_INVALID = INVALID_TYPE_ID,
-  ISOLATION_LEVEL_TYPE_FULL = 1,            // full serializability
-  ISOLATION_LEVEL_TYPE_SNAPSHOT = 2,        // snapshot isolation
-  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 3  // repeatable read
+enum class IsolationLevelType {
+  INVALID = INVALID_TYPE_ID,
+  FULL = 1,            // full serializability
+  SNAPSHOT = 2,        // snapshot isolation
+  REPEATABLE_READ = 3  // repeatable read
 };
 
 //===--------------------------------------------------------------------===//
@@ -420,21 +420,28 @@ std::ostream &operator<<(std::ostream &os, const BackendType &type);
 // Index Types
 //===--------------------------------------------------------------------===//
 
-enum IndexType {
-  INDEX_TYPE_INVALID = INVALID_TYPE_ID,  // invalid index type
-  INDEX_TYPE_BWTREE = 1,                 // bwtree
-  INDEX_TYPE_HASH = 2                    // hash
+enum class IndexType {
+  INVALID = INVALID_TYPE_ID,  // invalid index type
+  BWTREE = 1,                 // bwtree
+  HASH = 2                    // hash
 };
+std::string IndexTypeToString(IndexType type);
+IndexType StringToIndexType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const IndexType &type);
 
-enum IndexConstraintType {
-  INDEX_CONSTRAINT_TYPE_INVALID =
-      INVALID_TYPE_ID,  // invalid index constraint type
-  INDEX_CONSTRAINT_TYPE_DEFAULT =
-      1,  // default type - not used to enforce constraints
-  INDEX_CONSTRAINT_TYPE_PRIMARY_KEY =
-      2,                            // used to enforce primary key constraint
-  INDEX_CONSTRAINT_TYPE_UNIQUE = 3  // used for unique constraint
+enum class IndexConstraintType {
+  // invalid index constraint type
+  INVALID = INVALID_TYPE_ID,
+  // default type - not used to enforce constraints
+  DEFAULT = 1,
+  // used to enforce primary key constraint
+  PRIMARY_KEY = 2,
+  // used for unique constraint
+  UNIQUE = 3
 };
+std::string IndexConstraintTypeToString(IndexConstraintType type);
+IndexConstraintType StringToIndexConstraintType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const IndexConstraintType &type);
 
 //===--------------------------------------------------------------------===//
 // Hybrid Scan Types
@@ -1014,12 +1021,6 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string TypeIdToString(type::Type::TypeId type);
 type::Type::TypeId StringToTypeId(const std::string &str);
-
-std::string IndexTypeToString(IndexType type);
-IndexType StringToIndexType(const std::string &str);
-
-std::string IndexConstraintTypeToString(IndexConstraintType type);
-IndexConstraintType StringToIndexConstraintType(const std::string &str);
 
 std::string ParseNodeTypeToString(ParseNodeType type);
 ParseNodeType StringToParseNodeType(const std::string &str);

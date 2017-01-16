@@ -295,7 +295,7 @@ bool HybridScanExecutor::DExecute() {
     PL_ASSERT(children_.size() == 0);
 
     if (index_done_ == false) {
-      if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+      if (index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         auto status = ExecPrimaryIndexLookup();
         if (status == false) {
           return false;
@@ -344,7 +344,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     LOG_TRACE("Scan all keys");

@@ -254,8 +254,8 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 }
 
 TEST_F(TypesTests, IndexTypeTest) {
-  std::vector<IndexType> list = {INDEX_TYPE_INVALID, INDEX_TYPE_BWTREE,
-                                 INDEX_TYPE_HASH};
+  std::vector<IndexType> list = {IndexType::INVALID, IndexType::BWTREE,
+                                 IndexType::HASH};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -275,8 +275,8 @@ TEST_F(TypesTests, IndexTypeTest) {
 
 TEST_F(TypesTests, IndexConstraintTypeTest) {
   std::vector<IndexConstraintType> list = {
-      INDEX_CONSTRAINT_TYPE_INVALID, INDEX_CONSTRAINT_TYPE_DEFAULT,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, INDEX_CONSTRAINT_TYPE_UNIQUE};
+      IndexConstraintType::INVALID, IndexConstraintType::DEFAULT,
+      IndexConstraintType::PRIMARY_KEY, IndexConstraintType::UNIQUE};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

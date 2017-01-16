@@ -64,8 +64,8 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      "primary_btree_index", 1234, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -109,8 +109,8 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      "primary_btree_index", 1234, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -125,8 +125,8 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
   auto index_metadata2 = new index::IndexMetadata(
-      "unique_btree_index", 1235, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, key_attrs2,
+      "unique_btree_index", 1235, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      IndexConstraintType::UNIQUE, tuple_schema2, key_schema2, key_attrs2,
       unique2);
 
   std::shared_ptr<index::Index> ukey_index(
@@ -171,8 +171,8 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", index_oid, INVALID_OID, INVALID_OID,
-      INDEX_TYPE_BWTREE, need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY
-                                            : INDEX_CONSTRAINT_TYPE_DEFAULT,
+      IndexType::BWTREE, need_primary_index ? IndexConstraintType::PRIMARY_KEY
+                                            : IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(

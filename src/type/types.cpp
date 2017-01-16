@@ -797,13 +797,13 @@ std::ostream& operator<<(std::ostream& os, const ExpressionType& type) {
 
 std::string IndexTypeToString(IndexType type) {
   switch (type) {
-    case INDEX_TYPE_INVALID: {
+    case IndexType::INVALID: {
       return "INVALID";
     }
-    case INDEX_TYPE_BWTREE: {
+    case IndexType::BWTREE: {
       return "BWTREE";
     }
-    case INDEX_TYPE_HASH: {
+    case IndexType::HASH: {
       return "HASH";
     }
     default: {
@@ -818,16 +818,21 @@ std::string IndexTypeToString(IndexType type) {
 IndexType StringToIndexType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return INDEX_TYPE_INVALID;
+    return IndexType::INVALID;
   } else if (upper_str == "BWTREE") {
-    return INDEX_TYPE_BWTREE;
+    return IndexType::BWTREE;
   } else if (upper_str == "HASH") {
-    return INDEX_TYPE_HASH;
+    return IndexType::HASH;
   } else {
     throw ConversionException(StringUtil::Format(
         "No IndexType conversion from string '%s'", upper_str.c_str()));
   }
-  return INDEX_TYPE_INVALID;
+  return IndexType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const IndexType& type) {
+  os << IndexTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
@@ -836,16 +841,16 @@ IndexType StringToIndexType(const std::string& str) {
 
 std::string IndexConstraintTypeToString(IndexConstraintType type) {
   switch (type) {
-    case INDEX_CONSTRAINT_TYPE_INVALID: {
+    case IndexConstraintType::INVALID: {
       return "INVALID";
     }
-    case INDEX_CONSTRAINT_TYPE_DEFAULT: {
+    case IndexConstraintType::DEFAULT: {
       return "NORMAL";
     }
-    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
+    case IndexConstraintType::PRIMARY_KEY: {
       return "PRIMARY_KEY";
     }
-    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+    case IndexConstraintType::UNIQUE: {
       return "UNIQUE";
     }
     default: {
@@ -860,20 +865,26 @@ std::string IndexConstraintTypeToString(IndexConstraintType type) {
 IndexConstraintType StringToIndexConstraintType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return INDEX_CONSTRAINT_TYPE_INVALID;
+    return IndexConstraintType::INVALID;
   } else if (upper_str == "NORMAL") {
-    return INDEX_CONSTRAINT_TYPE_DEFAULT;
+    return IndexConstraintType::DEFAULT;
   } else if (upper_str == "PRIMARY_KEY") {
-    return INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
+    return IndexConstraintType::PRIMARY_KEY;
   } else if (upper_str == "UNIQUE") {
-    return INDEX_CONSTRAINT_TYPE_UNIQUE;
+    return IndexConstraintType::UNIQUE;
   } else {
     throw ConversionException(
         StringUtil::Format("No IndexConstraintType conversion from string '%s'",
                            upper_str.c_str()));
   }
-  return INDEX_CONSTRAINT_TYPE_INVALID;
+  return IndexConstraintType::INVALID;
 }
+
+std::ostream& operator<<(std::ostream& os, const IndexConstraintType& type) {
+  os << IndexConstraintTypeToString(type);
+  return os;
+}
+
 //===--------------------------------------------------------------------===//
 // Plan Node - String Utilities
 //===--------------------------------------------------------------------===//

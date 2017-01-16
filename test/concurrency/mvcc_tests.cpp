@@ -33,7 +33,7 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
 
   for (auto protocol : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol, ISOLATION_LEVEL_TYPE_FULL);
+        protocol, IsolationLevelType::FULL);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
@@ -96,7 +96,7 @@ TEST_F(MVCCTests, AbortVersionChainTest) {
 
   for (auto protocol : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        protocol, ISOLATION_LEVEL_TYPE_FULL);
+        protocol, IsolationLevelType::FULL);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
@@ -129,7 +129,7 @@ TEST_F(MVCCTests, VersionChainTest) {
   for (auto protocol : TEST_TYPES) {
     LOG_INFO("Validating %d", static_cast<int>(protocol));
     concurrency::TransactionManagerFactory::Configure(
-        protocol, ISOLATION_LEVEL_TYPE_FULL);
+        protocol, IsolationLevelType::FULL);
 
     const int num_txn = 2;  // 5
     const int scale = 1;    // 20

@@ -72,7 +72,7 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "test_index", 125, INVALID_OID, INVALID_OID, index_type,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, key_attrs,
+      IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
       unique_keys);
 
   // Build index
@@ -365,11 +365,11 @@ static void TestIndexPerformance(const IndexType &index_type) {
 }
 
 TEST_F(IndexPerformanceTests, BwTreeMultiThreadedTest) {
-  TestIndexPerformance(INDEX_TYPE_BWTREE);
+  TestIndexPerformance(IndexType::BWTREE);
 }
 
 // TEST_F(IndexPerformanceTests, BTreeMultiThreadedTest) {
-//  TestIndexPerformance(INDEX_TYPE_BTREE);
+//  TestIndexPerformance(IndexType::BTREE);
 //}
 
 }  // End test namespace

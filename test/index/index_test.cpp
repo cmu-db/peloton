@@ -36,14 +36,14 @@ std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
 
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
-static IndexType index_type = INDEX_TYPE_BWTREE;
+static IndexType index_type = IndexType::BWTREE;
 
 /*
  * BuildIndex() - Builds an index with 4 columns, the first 2 being indexed
  */
 index::Index *BuildIndex(const bool unique_keys) {
   // Identify the index type to simplify things
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     LOG_INFO("Build index type: peloton::index::BwTree");
   } else {
     LOG_INFO("Build index type: Other type");
@@ -101,7 +101,7 @@ index::Index *BuildIndex(const bool unique_keys) {
   // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "test_index", 125,  // Index oid
-      INVALID_OID, INVALID_OID, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      INVALID_OID, INVALID_OID, index_type, IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique_keys);
 
   // Build index
@@ -283,7 +283,7 @@ TEST_F(IndexTests, MultiMapInsertTest) {
   // Checks
   index->ScanAllKeys(location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(location_ptrs.size(), 7);
   } else {
     EXPECT_EQ(location_ptrs.size(), 9);
@@ -407,7 +407,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 
   index->ScanAllKeys(location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(location_ptrs.size(), 7);
   } else {
     EXPECT_EQ(location_ptrs.size(), 9 * num_threads);
@@ -431,7 +431,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 
   index->ScanKey(key0.get(), location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(location_ptrs.size(), 1);
   } else {
     EXPECT_EQ(location_ptrs.size(), num_threads);
@@ -577,7 +577,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   index->ScanKey(key1.get(), location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(2, location_ptrs.size());
   } else {
     EXPECT_EQ(2 * num_threads, location_ptrs.size());
@@ -586,7 +586,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(1, location_ptrs.size());
   } else {
     EXPECT_EQ(1 * num_threads, location_ptrs.size());
@@ -597,7 +597,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   index->ScanAllKeys(location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -616,7 +616,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -628,7 +628,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(2, location_ptrs.size());
   } else {
     EXPECT_EQ(2 * num_threads, location_ptrs.size());
@@ -643,7 +643,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -669,7 +669,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key2_val0, key2_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -685,7 +685,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -698,7 +698,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                    ExpressionType::COMPARE_LESSTHANOREQUALTO,
                    ExpressionType::COMPARE_LESSTHAN},
                   SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -708,7 +708,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   // REVERSE SCAN
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -719,7 +719,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(2, location_ptrs.size());
   } else {
     EXPECT_EQ(2 * num_threads, location_ptrs.size());
@@ -734,7 +734,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -760,7 +760,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {key2_val0, key2_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -776,7 +776,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -790,7 +790,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                    ExpressionType::COMPARE_LESSTHAN},
                   SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(3, location_ptrs.size());
   } else {
     EXPECT_EQ(3 * num_threads, location_ptrs.size());
@@ -832,7 +832,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
 
   index->ScanKey(key1.get(), location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(location_ptrs.size(), 2);
   } else {
     EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
@@ -842,7 +842,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(location_ptrs.size(), 1);
   } else {
     EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
@@ -853,7 +853,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
 
   index->ScanAllKeys(location_ptrs);
 
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
   } else {
     EXPECT_EQ(location_ptrs.size(), 3 * num_threads * scale_factor);
@@ -879,13 +879,13 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
 
   index->ScanAllKeys(location_ptrs);
   if (index->HasUniqueKeys()) {
-    if (index_type == INDEX_TYPE_BWTREE) {
+    if (index_type == IndexType::BWTREE) {
       EXPECT_EQ(location_ptrs.size(), scale_factor);
     } else {
       EXPECT_EQ(location_ptrs.size(), scale_factor);
     }
   } else {
-    if (index_type == INDEX_TYPE_BWTREE) {
+    if (index_type == IndexType::BWTREE) {
       EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
     } else {
       EXPECT_EQ(location_ptrs.size(), 3 * scale_factor * num_threads);
@@ -906,7 +906,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   if (index->HasUniqueKeys()) {
     EXPECT_EQ(location_ptrs.size(), 0);
   } else {
-    if (index_type == INDEX_TYPE_BWTREE) {
+    if (index_type == IndexType::BWTREE) {
       EXPECT_EQ(location_ptrs.size(), 2);
     } else {
       EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
@@ -918,7 +918,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   if (index->HasUniqueKeys()) {
     EXPECT_EQ(location_ptrs.size(), num_threads);
   } else {
-    if (index_type == INDEX_TYPE_BWTREE) {
+    if (index_type == IndexType::BWTREE) {
       EXPECT_EQ(location_ptrs.size(), 1);
     } else {
       EXPECT_EQ(location_ptrs.size(), 1 * num_threads);

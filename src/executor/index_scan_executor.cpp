@@ -124,7 +124,7 @@ bool IndexScanExecutor::DExecute() {
   LOG_TRACE("Index Scan executor :: 0 child");
 
   if (!done_) {
-    if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+    if (index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
       auto status = ExecPrimaryIndexLookup();
       if (status == false) return false;
     } else {
@@ -160,7 +160,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   // Grab info from plan node
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
-  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -367,7 +367,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
-  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() != IndexConstraintType::PRIMARY_KEY);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 

@@ -61,7 +61,7 @@ static struct option opts[] = {
 };
 
 void ValidateIndex(const configuration &state) {
-  if (state.index != INDEX_TYPE_BWTREE && state.index != INDEX_TYPE_BWTREE) {
+  if (state.index != IndexType::BWTREE && state.index != IndexType::BWTREE) {
     LOG_ERROR("Invalid index");
     exit(EXIT_FAILURE);
   }
@@ -150,7 +150,7 @@ void ValidateGCBackendCount(const configuration &state) {
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
-  state.index = INDEX_TYPE_BWTREE;
+  state.index = IndexType::BWTREE;
   state.scale_factor = 1;
   state.duration = 10;
   state.profile_duration = 1;
@@ -175,7 +175,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'i': {
         char *index = optarg;
         if (strcmp(index, "bwtree") == 0) {
-          state.index = INDEX_TYPE_BWTREE;
+          state.index = IndexType::BWTREE;
         } else {
           LOG_ERROR("Unknown index: %s", index);
           exit(EXIT_FAILURE);

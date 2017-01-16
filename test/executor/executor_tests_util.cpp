@@ -372,8 +372,8 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -392,7 +392,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     unique = false;
     index_metadata = new index::IndexMetadata(
         "secondary_btree_index", 124, INVALID_OID, INVALID_OID,
-        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
+        IndexType::BWTREE, IndexConstraintType::DEFAULT, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(
         index::IndexFactory::GetIndex(index_metadata));

@@ -215,8 +215,8 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
 
     index_metadata = new index::IndexMetadata(
         StringUtil::Upper(index_name), GetNextOid(),
-        table->GetOid(), database->GetOid(), INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs,
+        table->GetOid(), database->GetOid(), IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, schema, key_schema, key_attrs,
         unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -274,11 +274,11 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     if (unique == false) {
       index_metadata = new index::IndexMetadata(index_name.c_str(),
           GetNextOid(), table->GetOid(), database->GetOid(), index_type,
-          INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
+          IndexConstraintType::DEFAULT, schema, key_schema, key_attrs, true);
     } else {
       index_metadata = new index::IndexMetadata(index_name.c_str(),
           GetNextOid(), table->GetOid(), database->GetOid(), index_type,
-          INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true);
+          IndexConstraintType::UNIQUE, schema, key_schema, key_attrs, true);
     }
 
     // Add index to table
