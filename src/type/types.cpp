@@ -836,7 +836,7 @@ std::ostream& operator<<(std::ostream& os, const IndexType& type) {
 }
 
 //===--------------------------------------------------------------------===//
-// Index  Type - String Utilities
+// IndexConstraintType - String Utilities
 //===--------------------------------------------------------------------===//
 
 std::string IndexConstraintTypeToString(IndexConstraintType type) {
@@ -882,6 +882,56 @@ IndexConstraintType StringToIndexConstraintType(const std::string& str) {
 
 std::ostream& operator<<(std::ostream& os, const IndexConstraintType& type) {
   os << IndexConstraintTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// HybridScanType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string HybridScanTypeToString(HybridScanType type) {
+  switch (type) {
+    case HybridScanType::INVALID: {
+      return "INVALID";
+    }
+    case HybridScanType::SEQUENTIAL: {
+      return "SEQUENTIAL";
+    }
+    case HybridScanType::INDEX: {
+      return "INDEX";
+    }
+    case HybridScanType::HYBRID: {
+      return "HYBRID";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for HybridScanType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+HybridScanType StringToHybridScanType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return HybridScanType::INVALID;
+  } else if (upper_str == "SEQUENTIAL") {
+    return HybridScanType::SEQUENTIAL;
+  } else if (upper_str == "INDEX") {
+    return HybridScanType::INDEX;
+  } else if (upper_str == "HYBRID") {
+    return HybridScanType::HYBRID;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No HybridScanType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return HybridScanType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const HybridScanType& type) {
+  os << HybridScanTypeToString(type);
   return os;
 }
 

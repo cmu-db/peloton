@@ -75,7 +75,7 @@ class HybridScanPlan : public AbstractScan {
   HybridScanType GetHybridType() const { return type_; }
 
  private:
-  HybridScanType type_ = HYBRID_SCAN_TYPE_INVALID;
+  HybridScanType type_ = HybridScanType::INVALID;
 
   const std::vector<oid_t> column_ids_;
 

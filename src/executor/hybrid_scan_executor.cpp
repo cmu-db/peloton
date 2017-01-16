@@ -58,7 +58,7 @@ bool HybridScanExecutor::DInit() {
   PL_ASSERT(table_ != nullptr);
 
   // SEQUENTIAL SCAN
-  if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
+  if (type_ == HybridScanType::SEQUENTIAL) {
     LOG_TRACE("Sequential Scan");
     current_tile_group_offset_ = START_OID;
 
@@ -69,7 +69,7 @@ bool HybridScanExecutor::DInit() {
     }
   }
   // INDEX SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_INDEX) {
+  else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
     index_ = node.GetIndex();
 
@@ -109,7 +109,7 @@ bool HybridScanExecutor::DInit() {
     }
   }
   // HYBRID SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_HYBRID) {
+  else if (type_ == HybridScanType::HYBRID) {
     LOG_TRACE("Hybrid Scan");
 
     table_tile_group_count_ = table_->GetTileGroupCount();
@@ -167,7 +167,7 @@ bool HybridScanExecutor::DInit() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
+    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
   }
 
   return true;
@@ -206,7 +206,7 @@ bool HybridScanExecutor::SeqScanUtil() {
     std::vector<oid_t> position_list;
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-      if (type_ == HYBRID_SCAN_TYPE_HYBRID && item_pointers_.size() > 0 &&
+      if (type_ == HybridScanType::HYBRID && item_pointers_.size() > 0 &&
           location.block <= upper_bound_block) {
         if (item_pointers_.find(location) != item_pointers_.end()) {
           continue;
@@ -285,12 +285,12 @@ bool HybridScanExecutor::IndexScanUtil() {
 
 bool HybridScanExecutor::DExecute() {
   // SEQUENTIAL SCAN
-  if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
+  if (type_ == HybridScanType::SEQUENTIAL) {
     LOG_TRACE("Sequential Scan");
     return SeqScanUtil();
   }
   // INDEX SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_INDEX) {
+  else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
     PL_ASSERT(children_.size() == 0);
 
@@ -308,7 +308,7 @@ bool HybridScanExecutor::DExecute() {
     return IndexScanUtil();
   }
   // HYBRID SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_HYBRID) {
+  else if (type_ == HybridScanType::HYBRID) {
     LOG_TRACE("Hybrid Scan");
 
     // do two part search
@@ -329,7 +329,7 @@ bool HybridScanExecutor::DExecute() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
+    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
   }
 }
 
@@ -374,7 +374,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
 
-    if (type_ == HYBRID_SCAN_TYPE_HYBRID &&
+    if (type_ == HybridScanType::HYBRID &&
         tuple_location.block >= (block_threshold)) {
       item_pointers_.insert(tuple_location);
     }

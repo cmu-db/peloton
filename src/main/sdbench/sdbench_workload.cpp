@@ -285,7 +285,7 @@ static std::shared_ptr<planner::HybridScanPlan> CreateHybridScanPlan(
   CreateIndexScanPredicate(index_key_attrs, key_column_ids, expr_types, values);
 
   // Determine hybrid scan type
-  auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
+  auto hybrid_scan_type = HybridScanType::SEQUENTIAL;
 
   // Pick index
   auto index = PickIndex(sdbench_table.get(), tuple_key_attrs);
@@ -294,7 +294,7 @@ static std::shared_ptr<planner::HybridScanPlan> CreateHybridScanPlan(
     index_scan_desc = planner::IndexScanPlan::IndexScanDesc(
         index, key_column_ids, expr_types, values, runtime_keys);
 
-    hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
+    hybrid_scan_type = HybridScanType::HYBRID;
   }
 
   LOG_TRACE("Hybrid scan type : %d", hybrid_scan_type);

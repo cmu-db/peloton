@@ -447,12 +447,15 @@ std::ostream &operator<<(std::ostream &os, const IndexConstraintType &type);
 // Hybrid Scan Types
 //===--------------------------------------------------------------------===//
 
-enum HybridScanType {
-  HYBRID_SCAN_TYPE_INVALID = INVALID_TYPE_ID,
-  HYBRID_SCAN_TYPE_SEQUENTIAL = 1,
-  HYBRID_SCAN_TYPE_INDEX = 2,
-  HYBRID_SCAN_TYPE_HYBRID = 3
+enum class HybridScanType {
+  INVALID = INVALID_TYPE_ID,
+  SEQUENTIAL = 1,
+  INDEX = 2,
+  HYBRID = 3
 };
+std::string HybridScanTypeToString(HybridScanType type);
+HybridScanType StringToHybridScanType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const HybridScanType &type);
 
 //===--------------------------------------------------------------------===//
 // Parse Node Types

@@ -272,7 +272,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate,
                                            column_ids, dummy_index_scan_desc,
-                                           HYBRID_SCAN_TYPE_SEQUENTIAL);
+                                           HybridScanType::SEQUENTIAL);
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
@@ -309,7 +309,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
                                            column_ids, index_scan_desc,
-                                           HYBRID_SCAN_TYPE_INDEX);
+                                           HybridScanType::INDEX);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -355,7 +355,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
                                            column_ids_second, index_scan_desc,
-                                           HYBRID_SCAN_TYPE_HYBRID);
+                                           HybridScanType::HYBRID);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
