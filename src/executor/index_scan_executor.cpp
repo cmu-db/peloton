@@ -233,13 +233,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
-      if (visibility == VISIBILITY_DELETED) {
+      if (visibility == VisibilityType::DELETED) {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
                   tuple_location.offset);
         break;
       }
       // if the tuple is visible.
-      else if (visibility == VISIBILITY_OK) {
+      else if (visibility == VisibilityType::OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
@@ -271,7 +271,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       }
       // if the tuple is not visible.
       else {
-        PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
+        PL_ASSERT(visibility == VisibilityType::INVISIBLE);
 
         LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);
@@ -461,13 +461,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
-      if (visibility == VISIBILITY_DELETED) {
+      if (visibility == VisibilityType::DELETED) {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
                   tuple_location.offset);
         break;
       }
       // if the tuple is visible.
-      else if (visibility == VISIBILITY_OK) {
+      else if (visibility == VisibilityType::OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
@@ -517,7 +517,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       }
       // if the tuple is not visible.
       else {
-        PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
+        PL_ASSERT(visibility == VisibilityType::INVISIBLE);
 
         LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);

@@ -25,7 +25,7 @@
 //class SelectForUpdateTxnTests : public PelotonTest {};
 //
 //static std::vector<ConcurrencyType> TEST_TYPES = {
-//  CONCURRENCY_TYPE_TIMESTAMP_ORDERING
+//  ConcurrencyType::TIMESTAMP_ORDERING
 //};
 //
 //TEST_F(SelectForUpdateTxnTests, SingleTransactionTest) {

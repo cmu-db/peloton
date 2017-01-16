@@ -215,7 +215,7 @@ bool HybridScanExecutor::SeqScanUtil() {
 
       // Check transaction visibility
       if (transaction_manager.IsVisible(current_txn, tile_group_header,
-                                        tuple_id) == VISIBILITY_OK) {
+                                        tuple_id) == VisibilityType::OK) {
         // If the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
@@ -391,7 +391,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       auto visibility = transaction_manager.IsVisible(
           current_txn, tile_group_header, tuple_location.offset);
 
-      if (visibility == VISIBILITY_OK) {
+      if (visibility == VisibilityType::OK) {
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         auto res = transaction_manager.PerformRead(current_txn, tuple_location,
                                                    acquire_owner);

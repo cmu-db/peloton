@@ -12,14 +12,14 @@
 
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 
-#include "common/platform.h"
-#include "logging/log_manager.h"
-#include "logging/records/transaction_record.h"
-#include "concurrency/transaction.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "common/platform.h"
+#include "concurrency/transaction.h"
 #include "gc/gc_manager_factory.h"
+#include "logging/log_manager.h"
+#include "logging/records/transaction_record.h"
 
 namespace peloton {
 namespace concurrency {
@@ -46,7 +46,6 @@ cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
 bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id, const cid_t &current_cid) {
-
   // get the pointer to the last_reader_cid field.
   cid_t *ts_ptr = (cid_t *)(tile_group_header->GetReservedFieldRef(tuple_id) +
                             LAST_READER_OFFSET);
@@ -106,40 +105,42 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
-    txn_id_t txn_id = READONLY_TXN_ID;
-    auto &epoch_manager = EpochManagerFactory::GetInstance();
+  txn_id_t txn_id = READONLY_TXN_ID;
+  auto &epoch_manager = EpochManagerFactory::GetInstance();
 
-    cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-    Transaction *txn = new Transaction(txn_id, begin_cid, true);
+  cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
+  Transaction *txn = new Transaction(txn_id, begin_cid, true);
 
-    auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
-    txn->SetEpochId(eid);
+  auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
+  txn->SetEpochId(eid);
 
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .StartTimer();
-    }
+  }
 
-    return txn;
+  return txn;
 }
 
-void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_txn) {
+void TimestampOrderingTransactionManager::EndTransaction(
+    Transaction *current_txn) {
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
   auto &log_manager = logging::LogManager::GetInstance();
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(), GC_SET_TYPE_COMMITTED);
+      gc::GCManagerFactory::GetInstance().RecycleTransaction(
+          current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(),
+          GC_SET_TYPE_COMMITTED);
     }
     // Log the transaction's commit
     // For time stamp ordering, every transaction only has one timestamp
     log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
   } else {
     if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+      gc::GCManagerFactory::GetInstance().RecycleTransaction(
+          current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
     }
     log_manager.DoneLogging();
   }
@@ -154,32 +155,34 @@ void TimestampOrderingTransactionManager::EndTransaction(Transaction *current_tx
   }
 }
 
-void TimestampOrderingTransactionManager::EndReadonlyTransaction(Transaction *current_txn) {
+void TimestampOrderingTransactionManager::EndReadonlyTransaction(
+    Transaction *current_txn) {
   PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
-  EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(current_txn->GetEpochId());
+  EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(
+      current_txn->GetEpochId());
 
   delete current_txn;
   current_txn = nullptr;
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
-      ->GetTxnLatencyMetric()
-      .RecordLatency();
+        ->GetTxnLatencyMetric()
+        .RecordLatency();
   }
 }
 
-
-TimestampOrderingTransactionManager &TimestampOrderingTransactionManager::GetInstance() {
+TimestampOrderingTransactionManager &
+TimestampOrderingTransactionManager::GetInstance() {
   static TimestampOrderingTransactionManager txn_manager;
   return txn_manager;
 }
 
-// this function checks whether a concurrent transaction is inserting the same tuple
+// this function checks whether a concurrent transaction is inserting the same
+// tuple
 // that is to-be-inserted by the current transaction.
 bool TimestampOrderingTransactionManager::IsOccupied(
-    Transaction *const current_txn, 
-    const void *position_ptr) {
-  ItemPointer &position = *((ItemPointer*)position_ptr);
+    Transaction *const current_txn, const void *position_ptr) {
+  ItemPointer &position = *((ItemPointer *)position_ptr);
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
@@ -193,7 +196,7 @@ bool TimestampOrderingTransactionManager::IsOccupied(
     // the tuple is not available.
     return false;
   }
-  
+
   // the tuple has already been owned by the current transaction.
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
   // the tuple has already been committed.
@@ -210,7 +213,7 @@ bool TimestampOrderingTransactionManager::IsOccupied(
       return true;
     } else if (current_txn->GetRWType(position) == RW_TYPE_READ_OWN) {
       // the ownership is from a select-for-update read operation
-      return VISIBILITY_OK;
+      return true;
     } else {
       // the older version is not visible.
       return false;
@@ -267,10 +270,10 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
     // the tuple is not available.
     if (activated && !invalidated) {
       // deleted tuple
-      return VISIBILITY_DELETED;
+      return VisibilityType::DELETED;
     } else {
       // aborted tuple
-      return VISIBILITY_INVISIBLE;
+      return VisibilityType::INVISIBLE;
     }
   }
 
@@ -280,16 +283,17 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       PL_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted/updated one.
-      return VISIBILITY_OK;
-    } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) == RW_TYPE_READ_OWN) {
+      return VisibilityType::OK;
+    } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) ==
+               RW_TYPE_READ_OWN) {
       // the ownership is from a select-for-update read operation
-      return VISIBILITY_OK;
+      return VisibilityType::OK;
     } else if (tuple_end_cid == INVALID_CID) {
       // tuple being deleted by current txn
-      return VISIBILITY_DELETED;
+      return VisibilityType::DELETED;
     } else {
       // old version of the tuple that is being updated by current txn
-      return VISIBILITY_INVISIBLE;
+      return VisibilityType::INVISIBLE;
     }
   } else {
     if (tuple_txn_id != INITIAL_TXN_ID) {
@@ -297,21 +301,21 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
       if (tuple_begin_cid == MAX_CID) {
         // in this protocol, we do not allow cascading abort. so never read an
         // uncommitted version.
-        return VISIBILITY_INVISIBLE;
+        return VisibilityType::INVISIBLE;
       } else {
         // the older version may be visible.
         if (activated && !invalidated) {
-          return VISIBILITY_OK;
+          return VisibilityType::OK;
         } else {
-          return VISIBILITY_INVISIBLE;
+          return VisibilityType::INVISIBLE;
         }
       }
     } else {
       // if the tuple is not owned by any transaction.
       if (activated && !invalidated) {
-        return VISIBILITY_OK;
+        return VisibilityType::OK;
       } else {
-        return VISIBILITY_INVISIBLE;
+        return VisibilityType::INVISIBLE;
       }
     }
   }
@@ -328,14 +332,14 @@ bool TimestampOrderingTransactionManager::IsOwner(
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-// This method tests whether the current transaction has created this version of the tuple
+// This method tests whether the current transaction has created this version of
+// the tuple
 bool TimestampOrderingTransactionManager::IsWritten(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id
-  ) {
-  return IsOwner(current_txn, tile_group_header, tuple_id)
-      && tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID;
+    const oid_t &tuple_id) {
+  return IsOwner(current_txn, tile_group_header, tuple_id) &&
+         tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID;
 }
 
 // if the tuple is not owned by any transaction and is visible to current
@@ -365,18 +369,15 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   cid_t last_reader_cid = GetLastReaderCommitId(tile_group_header, tuple_id);
 
   if (last_reader_cid > current_txn->GetBeginCommitId()) {
-
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 
     return false;
   } else {
     if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-
       GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 
       return false;
     } else {
-
       GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 
       return true;
@@ -393,7 +394,6 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
 void TimestampOrderingTransactionManager::YieldOwnership(
     UNUSED_ATTRIBUTE Transaction *const current_txn, const oid_t &tile_group_id,
     const oid_t &tuple_id) {
-
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id));
@@ -401,8 +401,8 @@ void TimestampOrderingTransactionManager::YieldOwnership(
 }
 
 bool TimestampOrderingTransactionManager::PerformRead(
-    Transaction *const current_txn, const ItemPointer &location, bool acquire_ownership) {
-
+    Transaction *const current_txn, const ItemPointer &location,
+    bool acquire_ownership) {
   if (current_txn->IsDeclaredReadOnly() == true) {
     // Ignore read validation for all readonly transactions
     return true;
@@ -416,10 +416,11 @@ bool TimestampOrderingTransactionManager::PerformRead(
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
-  // Check if it's select for update before we check the ownership and modify the
+  // Check if it's select for update before we check the ownership and modify
+  // the
   // last reader tid
-  if (acquire_ownership == true
-      && IsOwner(current_txn, tile_group_header, tuple_id) == false) {
+  if (acquire_ownership == true &&
+      IsOwner(current_txn, tile_group_header, tuple_id) == false) {
     // Acquire ownership if we haven't
     if (IsOwnable(current_txn, tile_group_header, tuple_id) == false) {
       // Can not own
@@ -504,7 +505,6 @@ void TimestampOrderingTransactionManager::PerformInsert(
 void TimestampOrderingTransactionManager::PerformUpdate(
     Transaction *const current_txn, const ItemPointer &old_location,
     const ItemPointer &new_location) {
-
   PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
   LOG_TRACE("Performing Write old tuple %u %u", old_location.block,
@@ -546,7 +546,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
 
-  // we should guarantee that the newer version is all set before linking the 
+  // we should guarantee that the newer version is all set before linking the
   // newer version to older version.
   COMPILER_MEMORY_FENCE;
 
@@ -554,7 +554,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
     auto old_prev_tile_group_header = catalog::Manager::GetInstance()
                                           .GetTileGroup(old_prev.block)
                                           ->GetHeader();
-
 
     // once everything is set, we can allow traversing the new version.
     old_prev_tile_group_header->SetNextItemPointer(old_prev.offset,
@@ -599,7 +598,6 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
 void TimestampOrderingTransactionManager::PerformUpdate(
     Transaction *const current_txn, const ItemPointer &location) {
-
   PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
   oid_t tile_group_id = location.block;
@@ -669,7 +667,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
 
-  // we should guarantee that the newer version is all set before linking the 
+  // we should guarantee that the newer version is all set before linking the
   // newer version to older version.
   COMPILER_MEMORY_FENCE;
 
@@ -791,7 +789,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ_OWN) {
-        // A read operation has acquired ownership but hasn't done any further update/delete yet
+        // A read operation has acquired ownership but hasn't done any further
+        // update/delete yet
         // Yield the ownership
         YieldOwnership(current_txn, tile_group_id, tuple_slot);
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -825,7 +824,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_UPDATE;
 
         // add to log manager
-        log_manager.LogUpdate(end_commit_id, ItemPointer(tile_group_id, tuple_slot), new_version);
+        log_manager.LogUpdate(
+            end_commit_id, ItemPointer(tile_group_id, tuple_slot), new_version);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -854,7 +854,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         gc_set->operator[](tile_group_id)[tuple_slot] = RW_TYPE_DELETE;
 
         // add to log manager
-        log_manager.LogDelete(end_commit_id, ItemPointer(tile_group_id, tuple_slot));
+        log_manager.LogDelete(end_commit_id,
+                              ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -871,7 +872,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // nothing to be added to gc set.
 
         // add to log manager
-        log_manager.LogInsert(end_commit_id, ItemPointer(tile_group_id, tuple_slot));
+        log_manager.LogInsert(end_commit_id,
+                              ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -935,7 +937,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ_OWN) {
-        // A read operation has acquired ownership but hasn't done any further update/delete yet
+        // A read operation has acquired ownership but hasn't done any further
+        // update/delete yet
         // Yield the ownership
         YieldOwnership(current_txn, tile_group_id, tuple_slot);
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -984,7 +987,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
               old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
           tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
         } else {
-          tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+          tile_group_header->SetPrevItemPointer(tuple_slot,
+                                                INVALID_ITEMPOINTER);
         }
 
         // we should set the version before releasing the lock.
@@ -993,10 +997,10 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = RW_TYPE_UPDATE;
+        gc_set->operator[](new_version.block)[new_version.offset] =
+            RW_TYPE_UPDATE;
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -1048,7 +1052,8 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-        gc_set->operator[](new_version.block)[new_version.offset] = RW_TYPE_DELETE;
+        gc_set->operator[](new_version.block)[new_version.offset] =
+            RW_TYPE_DELETE;
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);

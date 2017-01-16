@@ -374,20 +374,20 @@ enum SqlStateErrorCode {
 // Concurrency Control Types
 //===--------------------------------------------------------------------===//
 
-enum ConcurrencyType {
-  CONCURRENCY_TYPE_INVALID = INVALID_TYPE_ID,
-  CONCURRENCY_TYPE_TIMESTAMP_ORDERING = 1  // timestamp ordering
+enum class ConcurrencyType {
+  INVALID = INVALID_TYPE_ID,
+  TIMESTAMP_ORDERING = 1  // timestamp ordering
 };
 
 //===--------------------------------------------------------------------===//
 // Visibility Types
 //===--------------------------------------------------------------------===//
 
-enum VisibilityType {
-  VISIBILITY_INVALID = INVALID_TYPE_ID,
-  VISIBILITY_INVISIBLE = 1,
-  VISIBILITY_DELETED = 2,
-  VISIBILITY_OK = 3
+enum class VisibilityType {
+  INVALID = INVALID_TYPE_ID,
+  INVISIBLE = 1,
+  DELETED = 2,
+  OK = 3
 };
 
 //===--------------------------------------------------------------------===//
