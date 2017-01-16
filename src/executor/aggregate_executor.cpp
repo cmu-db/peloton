@@ -146,8 +146,8 @@ bool AggregateExecutor::DExecute() {
     bool all_count_aggs = true;
     for (oid_t aggno = 0; aggno < node.GetUniqueAggTerms().size(); aggno++) {
       auto agg_type = node.GetUniqueAggTerms()[aggno].aggtype;
-      if (agg_type != EXPRESSION_TYPE_AGGREGATE_COUNT &&
-          agg_type != EXPRESSION_TYPE_AGGREGATE_COUNT_STAR)
+      if (agg_type != ExpressionType::AGGREGATE_COUNT &&
+          agg_type != ExpressionType::AGGREGATE_COUNT_STAR)
         all_count_aggs = false;
     }
 

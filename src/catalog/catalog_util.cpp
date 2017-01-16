@@ -69,7 +69,7 @@ void DeleteTuple(storage::DataTable *table, oid_t id,
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(tmp_value);
   auto predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+      ExpressionType::COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};

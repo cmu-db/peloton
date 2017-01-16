@@ -67,7 +67,7 @@ TEST_F(IndexScanTests, IndexPredicateTest) {
 
   key_column_ids.push_back(0);
   expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+      ExpressionType::COMPARE_LESSTHANOREQUALTO);
   values.push_back(type::ValueFactory::GetIntegerValue(110).Copy());
 
   // Create index scan desc
@@ -130,8 +130,8 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
 
   key_column_ids.push_back(1);
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+  expr_types.push_back(ExpressionType::COMPARE_GREATERTHAN);
+  expr_types.push_back(ExpressionType::COMPARE_LESSTHAN);
   values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(70).Copy());
 

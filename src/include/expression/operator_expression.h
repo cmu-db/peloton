@@ -34,7 +34,7 @@ class OperatorExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
-    if (exp_type_ == EXPRESSION_TYPE_OPERATOR_NOT) {
+    if (exp_type_ == ExpressionType::OPERATOR_NOT) {
       PL_ASSERT(children_.size() == 1);
       type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
       if (vl.IsTrue())
@@ -49,15 +49,15 @@ class OperatorExpression : public AbstractExpression {
     type::Value vr = children_[1]->Evaluate(tuple1, tuple2, context);
 
     switch (exp_type_) {
-      case (EXPRESSION_TYPE_OPERATOR_PLUS):
+      case (ExpressionType::OPERATOR_PLUS):
         return (vl.Add(vr));
-      case (EXPRESSION_TYPE_OPERATOR_MINUS):
+      case (ExpressionType::OPERATOR_MINUS):
         return (vl.Subtract(vr));
-      case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
+      case (ExpressionType::OPERATOR_MULTIPLY):
         return (vl.Multiply(vr));
-      case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
+      case (ExpressionType::OPERATOR_DIVIDE):
         return (vl.Divide(vr));
-      case (EXPRESSION_TYPE_OPERATOR_MOD):
+      case (ExpressionType::OPERATOR_MOD):
         return (vl.Modulo(vr));
       default:
         throw Exception("Invalid operator expression type.");
@@ -86,7 +86,7 @@ class OperatorExpression : public AbstractExpression {
 class OperatorUnaryMinusExpression : public AbstractExpression {
  public:
   OperatorUnaryMinusExpression(AbstractExpression *left)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS,
+      : AbstractExpression(ExpressionType::OPERATOR_UNARY_MINUS,
                            left->GetValueType(), left, nullptr) {}
 
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,

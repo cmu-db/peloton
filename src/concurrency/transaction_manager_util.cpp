@@ -26,14 +26,14 @@ concurrency::Transaction* BeginTransaction() {
 
 }
 
-Result CommitTransaction(concurrency::Transaction *transaction) {
+ResultType CommitTransaction(concurrency::Transaction *transaction) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   return txn_manager.CommitTransaction(transaction);
 }
 
-Result AbortTransaction(concurrency::Transaction *transaction) {
+ResultType AbortTransaction(concurrency::Transaction *transaction) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

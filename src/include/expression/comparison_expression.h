@@ -41,17 +41,17 @@ class ComparisonExpression : public AbstractExpression {
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {
-      case(EXPRESSION_TYPE_COMPARE_EQUAL) :
+      case(ExpressionType::COMPARE_EQUAL) :
         return type::ValueFactory::GetBooleanValue(vl.CompareEquals(vr));
-      case(EXPRESSION_TYPE_COMPARE_NOTEQUAL) :
+      case(ExpressionType::COMPARE_NOTEQUAL) :
         return type::ValueFactory::GetBooleanValue(vl.CompareNotEquals(vr));
-      case(EXPRESSION_TYPE_COMPARE_LESSTHAN) :
+      case(ExpressionType::COMPARE_LESSTHAN) :
         return type::ValueFactory::GetBooleanValue(vl.CompareLessThan(vr));
-      case(EXPRESSION_TYPE_COMPARE_GREATERTHAN) :
+      case(ExpressionType::COMPARE_GREATERTHAN) :
         return type::ValueFactory::GetBooleanValue(vl.CompareGreaterThan(vr));
-      case(EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) :
+      case(ExpressionType::COMPARE_LESSTHANOREQUALTO) :
         return type::ValueFactory::GetBooleanValue(vl.CompareLessThanEquals(vr));
-      case(EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) :
+      case(ExpressionType::COMPARE_GREATERTHANOREQUALTO) :
         return type::ValueFactory::GetBooleanValue(vl.CompareGreaterThanEquals(vr));
       default:
         throw Exception("Invalid comparison expression type.");

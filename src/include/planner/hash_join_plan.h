@@ -28,20 +28,20 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan &operator=(HashJoinPlan &&) = delete;
 
   HashJoinPlan(
-      PelotonJoinType join_type,
+      JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema);
 
   HashJoinPlan(
-      PelotonJoinType join_type,
+      JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
       const std::vector<oid_t> &outer_hashkeys);
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_HASHJOIN;
+    return PlanNodeType::HASHJOIN;
   }
 
   const std::string GetInfo() const { return "HashJoin"; }

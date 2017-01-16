@@ -43,7 +43,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
 
   oid_t indexed_tile_offset_ = INVALID_OID;
 
-  HybridScanType type_ = HYBRID_SCAN_TYPE_INVALID;
+  HybridScanType type_ = HybridScanType::INVALID;
 
   //  bool build_index_ = true;
 

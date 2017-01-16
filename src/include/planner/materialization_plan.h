@@ -51,7 +51,7 @@ class MaterializationPlan : public AbstractPlan {
   inline bool GetPhysifyFlag() const { return physify_flag_; }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_MATERIALIZE;
+    return PlanNodeType::MATERIALIZE;
   }
 
   const std::string GetInfo() const { return "Materialize"; }

@@ -126,10 +126,10 @@ const std::string Database::GetInfo() const {
           auto index = table->GetIndex(index_itr);
 
           switch (index->GetIndexType()) {
-            case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+            case IndexConstraintType::PRIMARY_KEY:
               os << "primary key index \n";
               break;
-            case INDEX_CONSTRAINT_TYPE_UNIQUE:
+            case IndexConstraintType::UNIQUE:
               os << "unique index \n";
               break;
             default:

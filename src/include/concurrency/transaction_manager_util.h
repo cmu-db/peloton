@@ -20,9 +20,9 @@ namespace concurrency {
 
 concurrency::Transaction* BeginTransaction();
 
-Result CommitTransaction(concurrency::Transaction *);
+ResultType CommitTransaction(concurrency::Transaction *);
 
-Result AbortTransaction(concurrency::Transaction *);
+ResultType AbortTransaction(concurrency::Transaction *);
   
 }
 }

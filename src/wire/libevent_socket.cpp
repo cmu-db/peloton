@@ -111,7 +111,8 @@ bool LibeventSocket::ReadPacketHeader() {
   // get packet size from the header
   if (pkt_manager.is_started == true) {
     // Header also contains msg type
-    rpkt.msg_type = rbuf_.GetByte(rbuf_.buf_ptr);
+    rpkt.msg_type =
+        static_cast<NetworkMessageType>(rbuf_.GetByte(rbuf_.buf_ptr));
     // extract packet size
     GetSizeFromPktHeader(rbuf_.buf_ptr + 1);
   } else {
@@ -390,7 +391,7 @@ WriteState LibeventSocket::BufferWriteBytesHeader(OutputPacket *pkt) {
   }
 
   size_t len = pkt->len;
-  uchar type = pkt->msg_type;
+  unsigned char type = static_cast<unsigned char>(pkt->msg_type);
   int len_nb;  // length in network byte order
 
   // check if we have enough space in the buffer

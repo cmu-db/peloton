@@ -18,6 +18,7 @@
 #include <queue>
 #include <vector>
 
+#include "common/item_pointer.h"
 #include "common/macros.h"
 #include "common/platform.h"
 #include "common/printable.h"

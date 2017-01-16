@@ -69,7 +69,7 @@ TrafficCop &TrafficCop::GetInstance() {
 
 TrafficCop::TcopTxnState &TrafficCop::GetDefaultTxnState() {
   static TcopTxnState default_state;
-  default_state = std::make_pair(nullptr, Result::RESULT_INVALID);
+  default_state = std::make_pair(nullptr, ResultType::INVALID);
   return default_state;
 }
 
@@ -80,58 +80,58 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   return tcop_txn_state_.top();
 }
 
-Result TrafficCop::BeginQueryHelper() {
+ResultType TrafficCop::BeginQueryHelper() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   // this shouldn't happen
   if (txn == nullptr) {
     LOG_DEBUG("Begin txn failed");
-    return Result::RESULT_FAILURE;
+    return ResultType::FAILURE;
   }
 
   // initialize the current result as success
-  tcop_txn_state_.emplace(txn, Result::RESULT_SUCCESS);
-  return Result::RESULT_SUCCESS;
+  tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  return ResultType::SUCCESS;
 }
 
-Result TrafficCop::CommitQueryHelper() {
+ResultType TrafficCop::CommitQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return Result::RESULT_NOOP;
+  if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   // commit the txn only if it has not aborted already
-  if (curr_state.second != Result::RESULT_ABORTED) {
+  if (curr_state.second != ResultType::ABORTED) {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.CommitTransaction(txn);
     return result;
   } else {
     // otherwise, the txn has already been aborted
-    return Result::RESULT_ABORTED;
+    return ResultType::ABORTED;
   }
 }
 
-Result TrafficCop::AbortQueryHelper() {
+ResultType TrafficCop::AbortQueryHelper() {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return Result::RESULT_NOOP;
+  if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   // explicitly abort the txn only if it has not aborted already
-  if (curr_state.second != Result::RESULT_ABORTED) {
+  if (curr_state.second != ResultType::ABORTED) {
     auto txn = curr_state.first;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto result = txn_manager.AbortTransaction(txn);
     return result;
   } else {
     // otherwise, the txn has already been aborted
-    return Result::RESULT_ABORTED;
+    return ResultType::ABORTED;
   }
 }
 
-Result TrafficCop::ExecuteStatement(
-    const std::string &query, std::vector<ResultType> &result,
-    std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
+ResultType TrafficCop::ExecuteStatement(
+    const std::string &query, std::vector<StatementResult> &result,
+    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_TRACE("Received %s", query.c_str());
 
@@ -140,7 +140,7 @@ Result TrafficCop::ExecuteStatement(
   auto statement = PrepareStatement(unnamed_statement, query, error_message);
 
   if (statement.get() == nullptr) {
-    return Result::RESULT_FAILURE;
+    return ResultType::FAILURE;
   }
 
   // Then, execute the statement
@@ -151,7 +151,7 @@ Result TrafficCop::ExecuteStatement(
       ExecuteStatement(statement, params, unnamed, nullptr, result_format,
                        result, rows_changed, error_message);
 
-  if (status == Result::RESULT_SUCCESS) {
+  if (status == ResultType::SUCCESS) {
     LOG_TRACE("Execution succeeded!");
     tuple_descriptor = std::move(statement->GetTupleDescriptor());
   } else {
@@ -161,11 +161,11 @@ Result TrafficCop::ExecuteStatement(
   return status;
 }
 
-Result TrafficCop::ExecuteStatement(
+ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<ResultType> &result,
+    const std::vector<int> &result_format, std::vector<StatementResult> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
@@ -192,16 +192,15 @@ Result TrafficCop::ExecuteStatement(
       rows_changed = status.m_processed;
       return status.m_result;
     }
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
-    return Result::RESULT_FAILURE;
+    return ResultType::FAILURE;
   }
 }
 
 bridge::peloton_status TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<ResultType> &result, const std::vector<int> &result_format) {
+    std::vector<StatementResult> &result, const std::vector<int> &result_format) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
   bridge::peloton_status p_status;
@@ -211,7 +210,7 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
     // no active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
-    curr_state.second = Result::RESULT_SUCCESS;
+    curr_state.second = ResultType::SUCCESS;
     txn = txn_manager.BeginTransaction();
     single_statement_txn = true;
   } else {
@@ -220,42 +219,42 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
   }
 
   // skip if already aborted
-  if (curr_state.second != Result::RESULT_ABORTED) {
+  if (curr_state.second != ResultType::ABORTED) {
     PL_ASSERT(txn);
     p_status = bridge::PlanExecutor::ExecutePlan(plan, txn, params, result,
                                                  result_format);
 
-    if (p_status.m_result == Result::RESULT_FAILURE) {
+    if (p_status.m_result == ResultType::FAILURE) {
       // only possible if init failed
       init_failure = true;
     }
 
     auto txn_result = txn->GetResult();
     if (single_statement_txn == true || init_failure == true ||
-        txn_result == Result::RESULT_FAILURE) {
+        txn_result == ResultType::FAILURE) {
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
       LOG_TRACE(
           "About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
           single_statement_txn, init_failure, txn_result);
       switch (txn_result) {
-        case Result::RESULT_SUCCESS:
+        case ResultType::SUCCESS:
           // Commit
           LOG_TRACE("Commit Transaction");
           p_status.m_result = txn_manager.CommitTransaction(txn);
           break;
 
-        case Result::RESULT_FAILURE:
+        case ResultType::FAILURE:
         default:
           // Abort
           LOG_TRACE("Abort Transaction");
           p_status.m_result = txn_manager.AbortTransaction(txn);
-          curr_state.second = Result::RESULT_ABORTED;
+          curr_state.second = ResultType::ABORTED;
       }
     }
   } else {
     // otherwise, we have already aborted
-    p_status.m_result = Result::RESULT_ABORTED;
+    p_status.m_result = ResultType::ABORTED;
   }
   return p_status;
 }
@@ -285,7 +284,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
     for (auto stmt : sql_stmt->GetStatements()) {
       LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
-      if (stmt->GetType() == STATEMENT_TYPE_SELECT) {
+      if (stmt->GetType() == StatementType::SELECT) {
         auto tuple_descriptor = GenerateTupleDescriptor(stmt);
         statement->SetTupleDescriptor(tuple_descriptor);
       }
@@ -299,17 +298,16 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
 #endif
     return std::move(statement);
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }
 }
 
-std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
+std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     parser::SQLStatement *sql_stmt) {
-  std::vector<FieldInfoType> tuple_descriptor;
-  if (sql_stmt->GetType() != STATEMENT_TYPE_SELECT) return tuple_descriptor;
+  std::vector<FieldInfo> tuple_descriptor;
+  if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
   auto select_stmt = (parser::SelectStatement *)sql_stmt;
 
   // TODO: this is a hack which I don't have time to fix now
@@ -367,7 +365,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   int count = 0;
   for (auto expr : *select_stmt->select_list) {
     count++;
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto target_table : target_tables) {
         // Get the columns of the table
         auto &table_columns = target_table->GetSchema()->GetColumns();
@@ -394,50 +392,88 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   return tuple_descriptor;
 }
 
-FieldInfoType TrafficCop::GetColumnFieldForValueType(
+FieldInfo TrafficCop::GetColumnFieldForValueType(
     std::string column_name, type::Type::TypeId column_type) {
+  PostgresValueType field_type;
+  size_t field_size;
   switch (column_type) {
-    case type::Type::INTEGER:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-    case type::Type::DECIMAL:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
+    case type::Type::INTEGER: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      break;
+    }
+    case type::Type::DECIMAL: {
+      field_type = PostgresValueType::DOUBLE;
+      field_size = 8;
+      break;
+    }
     case type::Type::VARCHAR:
-    case type::Type::VARBINARY:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
-    case type::Type::TIMESTAMP:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
-    default:
+    case type::Type::VARBINARY: {
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      break;
+    }
+    case type::Type::TIMESTAMP: {
+      field_type = PostgresValueType::TIMESTAMPS;
+      field_size = 64;
+      break;
+    }
+    default: {
       // Type not Identified
-      LOG_ERROR("Unrecognized column type '%s' [%d] for column '%s'",
+      LOG_ERROR("Unrecognized field type '%s' [%d] for field '%s'",
                 TypeIdToString(column_type).c_str(), column_type,
                 column_name.c_str());
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      break;
+    }
   }
-  // return String
-  return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
+  // HACK: Convert the type into a oid_t
+  // This ugly and I don't like it one bit...
+  return std::make_tuple(column_name, static_cast<oid_t>(field_type),
+                         field_size);
 }
 
-FieldInfoType TrafficCop::GetColumnFieldForAggregates(
-    std::string name, ExpressionType expr_type) {
+FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
+                                                  ExpressionType expr_type) {
   // For now we only return INT for (MAX , MIN)
   // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
 
+  PostgresValueType field_type;
+  size_t field_size;
+  std::string field_name;
+
   // Check the expression type and return the corresponding description
-  if (expr_type == EXPRESSION_TYPE_AGGREGATE_MAX ||
-      expr_type == EXPRESSION_TYPE_AGGREGATE_MIN ||
-      expr_type == EXPRESSION_TYPE_AGGREGATE_COUNT) {
-    return std::make_tuple(name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-  }
-
-  // Return double if function is AVERAGE
-  if (expr_type == EXPRESSION_TYPE_AGGREGATE_AVG) {
-    return std::make_tuple(name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
-  }
-
-  if (expr_type == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
-    return std::make_tuple("COUNT(*)", POSTGRES_VALUE_TYPE_INTEGER, 4);
-  }
-
-  return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
+  switch (expr_type) {
+    case ExpressionType::AGGREGATE_MAX:
+    case ExpressionType::AGGREGATE_MIN:
+    case ExpressionType::AGGREGATE_COUNT: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      field_name = name;
+      break;
+    }
+    // Return a DOUBLE if the functiob is AVG
+    case ExpressionType::AGGREGATE_AVG: {
+      field_type = PostgresValueType::DOUBLE;
+      field_size = 8;
+      field_name = name;
+      break;
+    }
+    case ExpressionType::AGGREGATE_COUNT_STAR: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      field_name = "COUNT(*)";
+      break;
+    }
+    default: {
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      field_name = name;
+    }
+  }  // SWITCH
+  return std::make_tuple(field_name, static_cast<oid_t>(field_type),
+                         field_size);
 }
 
 }  // End tcop namespace

@@ -42,8 +42,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -51,7 +51,7 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsTest) {
 
   std::string query("SELECT a, b FROM test ORDER BY b;");
   auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_ORDERBY);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
@@ -75,8 +75,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -84,7 +84,7 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsTest) {
 
   std::string query("SELECT a FROM test ORDER BY b;");
   auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_ORDERBY);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
@@ -109,8 +109,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -118,8 +118,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithColumnsAndLimitTest) {
 
   std::string query("SELECT a, b, d FROM test ORDER BY d LIMIT 2;");
   auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_LIMIT);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(), PLAN_NODE_TYPE_ORDERBY);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(), PlanNodeType::ORDERBY);
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
@@ -141,8 +141,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -150,8 +150,8 @@ TEST_F(OrderByQueriesSQLTests, OrderByWithoutColumnsAndLimitTest) {
 
   std::string query("SELECT a FROM test ORDER BY d LIMIT 2;");
   auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_LIMIT);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(), PLAN_NODE_TYPE_ORDERBY);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(), PlanNodeType::ORDERBY);
 
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);

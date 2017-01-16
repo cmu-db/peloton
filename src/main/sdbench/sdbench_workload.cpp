@@ -204,15 +204,15 @@ static expression::AbstractExpression *CreateScanPredicate(
     // ATTR >= LOWER_BOUND && < UPPER_BOUND
 
     auto left_predicate = CreateSimpleScanPredicate(
-        key_attr, EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+        key_attr, ExpressionType::COMPARE_GREATERTHANOREQUALTO,
         tuple_start_offset);
 
     auto right_predicate = CreateSimpleScanPredicate(
-        key_attr, EXPRESSION_TYPE_COMPARE_LESSTHAN, tuple_end_offset);
+        key_attr, ExpressionType::COMPARE_LESSTHAN, tuple_end_offset);
 
     expression::AbstractExpression *attr_predicate =
         expression::ExpressionUtil::ConjunctionFactory(
-            EXPRESSION_TYPE_CONJUNCTION_AND, left_predicate, right_predicate);
+            ExpressionType::CONJUNCTION_AND, left_predicate, right_predicate);
 
     // Build complex predicate
     if (predicate == nullptr) {
@@ -220,7 +220,7 @@ static expression::AbstractExpression *CreateScanPredicate(
     } else {
       // Join predicate with given attribute predicate
       predicate = expression::ExpressionUtil::ConjunctionFactory(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate, attr_predicate);
+          ExpressionType::CONJUNCTION_AND, predicate, attr_predicate);
     }
   }
 
@@ -238,11 +238,11 @@ static void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
   for (auto key_attr : key_attrs) {
     key_column_ids.push_back(key_attr);
     expr_types.push_back(
-        ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+        ExpressionType::COMPARE_GREATERTHANOREQUALTO);
     values.push_back(type::ValueFactory::GetIntegerValue(tuple_start_offset));
 
     key_column_ids.push_back(key_attr);
-    expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+    expr_types.push_back(ExpressionType::COMPARE_LESSTHAN);
     values.push_back(type::ValueFactory::GetIntegerValue(tuple_end_offset));
   }
 }
@@ -285,7 +285,7 @@ static std::shared_ptr<planner::HybridScanPlan> CreateHybridScanPlan(
   CreateIndexScanPredicate(index_key_attrs, key_column_ids, expr_types, values);
 
   // Determine hybrid scan type
-  auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
+  auto hybrid_scan_type = HybridScanType::SEQUENTIAL;
 
   // Pick index
   auto index = PickIndex(sdbench_table.get(), tuple_key_attrs);
@@ -294,7 +294,7 @@ static std::shared_ptr<planner::HybridScanPlan> CreateHybridScanPlan(
     index_scan_desc = planner::IndexScanPlan::IndexScanDesc(
         index, key_column_ids, expr_types, values, runtime_keys);
 
-    hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
+    hybrid_scan_type = HybridScanType::HYBRID;
   }
 
   LOG_TRACE("Hybrid scan type : %d", hybrid_scan_type);
@@ -552,10 +552,10 @@ static void CopyColumn(oid_t col_itr) {
 
     // TG Header
     storage::TileGroupHeader *header = new storage::TileGroupHeader(
-        BACKEND_TYPE_MM, state.tuples_per_tilegroup);
+        BackendType::MM, state.tuples_per_tilegroup);
 
     storage::Tile *new_tile = storage::TileFactory::GetTile(
-        BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+        BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
         header, *schema, nullptr, state.tuples_per_tilegroup);
 
     // Begin copy
@@ -727,7 +727,7 @@ static void JoinQueryHelper(
   // JOIN EXECUTOR
   /////////////////////////////////////////////////////////
 
-  auto join_type = JOIN_TYPE_INNER;
+  auto join_type = JoinType::INNER;
 
   // Create join predicate
   expression::TupleValueExpression *left_table_attr =
@@ -738,7 +738,7 @@ static void JoinQueryHelper(
                                            right_table_join_column);
 
   std::unique_ptr<expression::ComparisonExpression> join_predicate(
-      new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_LESSTHAN,
+      new expression::ComparisonExpression(ExpressionType::COMPARE_LESSTHAN,
                                            left_table_attr, right_table_attr));
 
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
@@ -814,7 +814,7 @@ static void JoinQueryHelper(
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
@@ -886,7 +886,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   for (col_itr = 0; col_itr < column_count; col_itr++) {
     planner::AggregatePlan::AggTerm max_column_agg(
-        EXPRESSION_TYPE_AGGREGATE_MAX,
+        ExpressionType::AGGREGATE_MAX,
         expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                       col_itr),
         false);
@@ -971,7 +971,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
@@ -1081,7 +1081,7 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
@@ -1145,7 +1145,7 @@ static void InsertHelper() {
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");

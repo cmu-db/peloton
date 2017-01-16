@@ -34,17 +34,17 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
   const char *GetJoinTypeString() const {
     switch (join_type_) {
-      case JOIN_TYPE_LEFT:
-        return "JOIN_TYPE_LEFT";
-      case JOIN_TYPE_RIGHT:
-        return "JOIN_TYPE_RIGHT";
-      case JOIN_TYPE_INNER:
-        return "JOIN_TYPE_INNER";
-      case JOIN_TYPE_OUTER:
-        return "JOIN_TYPE_OUTER";
-      case JOIN_TYPE_INVALID:
+      case JoinType::LEFT:
+        return "JoinType::LEFT";
+      case JoinType::RIGHT:
+        return "JoinType::RIGHT";
+      case JoinType::INNER:
+        return "JoinType::INNER";
+      case JoinType::OUTER:
+        return "JoinType::OUTER";
+      case JoinType::INVALID:
       default:
-        return "JOIN_TYPE_INVALID";
+        return "JoinType::INVALID";
     }
   }
 
@@ -129,8 +129,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
    */
   inline void RecordMatchedLeftRow(size_t tile_idx, oid_t row_idx) {
     switch (join_type_) {
-      case JOIN_TYPE_LEFT:
-      case JOIN_TYPE_OUTER:
+      case JoinType::LEFT:
+      case JoinType::OUTER:
         no_matching_left_row_sets_[tile_idx].erase(row_idx);
         break;
       default:
@@ -144,8 +144,8 @@ class AbstractJoinExecutor : public AbstractExecutor {
    */
   inline void RecordMatchedRightRow(size_t tile_idx, oid_t row_idx) {
     switch (join_type_) {
-      case JOIN_TYPE_RIGHT:
-      case JOIN_TYPE_OUTER:
+      case JoinType::RIGHT:
+      case JoinType::OUTER:
         no_matching_right_row_sets_[tile_idx].erase(row_idx);
         break;
       default:
@@ -175,7 +175,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
   const planner::ProjectInfo *proj_info_ = nullptr;
 
   /** @brief Join Type */
-  PelotonJoinType join_type_ = JOIN_TYPE_INVALID;
+  JoinType join_type_ = JoinType::INVALID;
 
   /** @brief Schema of the output tile before projection */
   const catalog::Schema *proj_schema_ = nullptr;

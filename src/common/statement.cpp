@@ -31,7 +31,7 @@ void Statement::ParseQueryType(const std::string& query_string,
   stream >> query_type;
 }
 
-std::vector<FieldInfoType> Statement::GetTupleDescriptor() const {
+std::vector<FieldInfo> Statement::GetTupleDescriptor() const {
   return tuple_descriptor_;
 }
 
@@ -56,7 +56,7 @@ void Statement::SetParamTypes(const std::vector<int32_t>& param_types) {
 std::vector<int32_t> Statement::GetParamTypes() const { return param_types_; }
 
 void Statement::SetTupleDescriptor(
-    const std::vector<FieldInfoType>& tuple_descriptor) {
+    const std::vector<FieldInfo>& tuple_descriptor) {
   tuple_descriptor_ = tuple_descriptor;
 }
 

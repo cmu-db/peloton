@@ -221,7 +221,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto tuple_value_expr =
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0, 0);
   expression::AbstractExpression *expr =
-      expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+      expression::ExpressionUtil::OperatorFactory(ExpressionType::OPERATOR_PLUS,
                                                   type::Type::INTEGER,
                                                   tuple_value_expr, const_val);
 

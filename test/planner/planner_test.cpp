@@ -55,7 +55,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   auto tuple_expr =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tuple_expr, parameter_expr);
+      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");
@@ -146,7 +146,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto tuple_expr =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tuple_expr, parameter_expr);
+      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   update_statement->where = cmp_expr;
 

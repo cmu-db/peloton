@@ -33,10 +33,10 @@ class TransactionLevelGCManagerTests : public PelotonTest {};
 
 TEST_F(TransactionLevelGCManagerTests, EnableTest) {
   gc::GCManagerFactory::Configure(1);
-  EXPECT_TRUE(gc::GCManagerFactory::GetGCType() == GARBAGE_COLLECTION_TYPE_ON);
+  EXPECT_TRUE(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON);
 
   gc::GCManagerFactory::Configure(0);
-  EXPECT_TRUE(gc::GCManagerFactory::GetGCType() == GARBAGE_COLLECTION_TYPE_OFF);
+  EXPECT_TRUE(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::OFF);
 }
 
 TEST_F(TransactionLevelGCManagerTests, StartGC) {

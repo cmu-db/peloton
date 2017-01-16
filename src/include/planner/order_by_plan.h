@@ -40,7 +40,7 @@ class OrderByPlan : public AbstractPlan {
     return output_column_ids_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_ORDERBY; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ORDERBY; }
 
   const std::string GetInfo() const { return "OrderBy"; }
 

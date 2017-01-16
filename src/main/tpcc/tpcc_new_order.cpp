@@ -141,7 +141,7 @@ bool RunNewOrder(const size_t &thread_id){
   std::vector<ExpressionType> item_expr_types;
   item_key_column_ids.push_back(0); // I_ID
   item_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
   
   auto item_pkey_index = item_table->GetIndexWithOid(
     item_table_pkey_index_oid);
@@ -169,7 +169,7 @@ bool RunNewOrder(const size_t &thread_id){
 
     auto gii_lists_values = ExecuteRead(&item_index_scan_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -189,7 +189,7 @@ bool RunNewOrder(const size_t &thread_id){
   std::vector<ExpressionType> warehouse_expr_types;
   warehouse_key_column_ids.push_back(0); // W_ID
   warehouse_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
 
   std::vector<type::Value > warehouse_key_values;
 
@@ -212,7 +212,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   auto gwtr_lists_values = ExecuteRead(&warehouse_index_scan_executor);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -236,9 +236,9 @@ bool RunNewOrder(const size_t &thread_id){
   district_key_column_ids.push_back(0); // D_ID
   district_key_column_ids.push_back(1); // D_W_ID
   district_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   district_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
@@ -262,7 +262,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   auto gd_lists_values = ExecuteRead(&district_index_scan_executor);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -289,11 +289,11 @@ bool RunNewOrder(const size_t &thread_id){
   customer_key_column_ids.push_back(1); // C_D_ID
   customer_key_column_ids.push_back(2); // C_W_ID
   customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
 
   std::vector<type::Value > customer_key_values;
   customer_key_values.push_back(type::ValueFactory::GetIntegerValue(customer_id).Copy());
@@ -318,7 +318,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   auto gc_lists_values = ExecuteRead(&customer_index_scan_executor);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -382,7 +382,7 @@ bool RunNewOrder(const size_t &thread_id){
 
   ExecuteUpdate(&district_update_executor);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -415,7 +415,7 @@ bool RunNewOrder(const size_t &thread_id){
   executor::InsertExecutor orders_executor(&orders_node, context.get());
   orders_executor.Execute();
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)type::ValuePeeker::PeekInteger(d_next_o_id));
     txn_manager.AbortTransaction(txn);
     return false;
@@ -437,7 +437,7 @@ bool RunNewOrder(const size_t &thread_id){
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
   new_order_executor.Execute();
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction when inserting new order table");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -451,9 +451,9 @@ bool RunNewOrder(const size_t &thread_id){
   stock_key_column_ids.push_back(0); // S_I_ID
   stock_key_column_ids.push_back(1); // S_W_ID
   stock_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   stock_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
 
 
   auto stock_pkey_index = stock_table->GetIndexWithOid(
@@ -499,7 +499,7 @@ bool RunNewOrder(const size_t &thread_id){
 
     auto gsi_lists_values = ExecuteRead(&stock_index_scan_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -569,7 +569,7 @@ bool RunNewOrder(const size_t &thread_id){
 
     ExecuteUpdate(&stock_update_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -612,7 +612,7 @@ bool RunNewOrder(const size_t &thread_id){
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());
     order_line_executor.Execute();
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction when inserting order line table");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -620,19 +620,19 @@ bool RunNewOrder(const size_t &thread_id){
   }
 
   // transaction passed execution.
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     // transaction passed commitment.
     LOG_TRACE("commit txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)type::ValuePeeker::PeekInteger(d_next_o_id));
     return true;
     
   } else {
     // transaction failed commitment.
-    PL_ASSERT(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
+    PL_ASSERT(result == ResultType::ABORTED ||
+           result == ResultType::FAILURE);
     LOG_TRACE("abort txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)type::ValuePeeker::PeekInteger(d_next_o_id));
     return false;
   }

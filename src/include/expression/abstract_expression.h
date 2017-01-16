@@ -158,7 +158,7 @@ class AbstractExpression : public Printable {
     }
   }
 
-  ExpressionType exp_type_ = EXPRESSION_TYPE_INVALID;
+  ExpressionType exp_type_ = ExpressionType::INVALID;
   type::Type::TypeId return_value_type_ = type::Type::INVALID;
 
   std::vector<std::unique_ptr<AbstractExpression>> children_;

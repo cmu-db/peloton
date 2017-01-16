@@ -33,7 +33,7 @@ struct DropStatement : TableRefStatement {
   };
 
   DropStatement(EntityType type)
-      : TableRefStatement(STATEMENT_TYPE_DROP), type(type), missing(false) {}
+      : TableRefStatement(StatementType::DROP), type(type), missing(false) {}
 
   virtual ~DropStatement() {
     free(database_name);

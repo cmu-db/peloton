@@ -40,8 +40,8 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -49,7 +49,7 @@ TEST_F(OptimizerSQLTests, SimpleSelectTest) {
 
   std::string query("SELECT * from test");
   auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_SEQSCAN);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::SEQSCAN);
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
@@ -82,8 +82,8 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
 
   CreateAndLoadTable();
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -93,9 +93,9 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
 
   // check for plan node type
   auto select_plan = SQLTestsUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PLAN_NODE_TYPE_PROJECTION);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::PROJECTION);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PLAN_NODE_TYPE_SEQSCAN);
+            PlanNodeType::SEQSCAN);
 
   // test small int
   SQLTestsUtil::ExecuteSQLQueryWithOptimizer(

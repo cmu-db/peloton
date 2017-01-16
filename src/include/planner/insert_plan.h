@@ -61,7 +61,7 @@ class InsertPlan : public AbstractPlan {
   // Get a varlen pool (will construct the pool only if needed)
   type::AbstractPool *GetPlanPool();
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::INSERT; }
 
   void SetParameterValues(std::vector<type::Value> *values);
 

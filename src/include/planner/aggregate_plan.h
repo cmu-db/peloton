@@ -52,7 +52,7 @@ class AggregatePlan : public AbstractPlan {
       const std::vector<AggTerm> &&unique_agg_terms,
       const std::vector<oid_t> &&groupby_col_ids,
       std::shared_ptr<const catalog::Schema> &output_schema,
-      PelotonAggType aggregate_strategy)
+      AggregateType aggregate_strategy)
       : project_info_(std::move(project_info)),
         predicate_(std::move(predicate)),
         unique_agg_terms_(unique_agg_terms),
@@ -80,10 +80,10 @@ class AggregatePlan : public AbstractPlan {
     return output_schema_.get();
   }
 
-  PelotonAggType GetAggregateStrategy() const { return agg_strategy_; }
+  AggregateType GetAggregateStrategy() const { return agg_strategy_; }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE_V2;
+    return PlanNodeType::AGGREGATE_V2;
   }
 
   ~AggregatePlan() {
@@ -135,7 +135,7 @@ class AggregatePlan : public AbstractPlan {
   std::shared_ptr<const catalog::Schema> output_schema_;
 
   /* Aggregate Strategy */
-  const PelotonAggType agg_strategy_;
+  const AggregateType agg_strategy_;
 
   /** @brief Columns involved */
   std::vector<oid_t> column_ids_;

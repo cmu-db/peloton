@@ -131,8 +131,8 @@ TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
 
     scheduler.Run();
 
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[0].txn_result);
-    EXPECT_TRUE(RESULT_ABORTED == scheduler.schedules[1].txn_result);
+    EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[0].txn_result);
+    EXPECT_TRUE(ResultType::ABORTED == scheduler.schedules[1].txn_result);
   }
 }
 
@@ -160,10 +160,10 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
 
     scheduler.Run();
 
-    EXPECT_TRUE((RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_ABORTED == scheduler.schedules[1].txn_result) ||
-                (RESULT_SUCCESS == scheduler.schedules[1].txn_result &&
-                 RESULT_ABORTED == scheduler.schedules[0].txn_result));
+    EXPECT_TRUE((ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+                 ResultType::ABORTED == scheduler.schedules[1].txn_result) ||
+                (ResultType::SUCCESS == scheduler.schedules[1].txn_result &&
+                 ResultType::ABORTED == scheduler.schedules[0].txn_result));
   }
 
   {
@@ -182,8 +182,8 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
 
     scheduler.Run();
 
-    EXPECT_TRUE(RESULT_ABORTED == scheduler.schedules[0].txn_result);
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    EXPECT_TRUE(ResultType::ABORTED == scheduler.schedules[0].txn_result);
+    EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[1].txn_result);
   }
 
   {
@@ -202,8 +202,8 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
 
     scheduler.Run();
 
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[0].txn_result);
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[0].txn_result);
+    EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[1].txn_result);
   }
 }
 #endif
@@ -251,8 +251,8 @@ TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
 
     scheduler.Run();
 
-    EXPECT_TRUE(RESULT_ABORTED == scheduler.schedules[0].txn_result);
-    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+    EXPECT_TRUE(ResultType::ABORTED == scheduler.schedules[0].txn_result);
+    EXPECT_TRUE(ResultType::SUCCESS == scheduler.schedules[1].txn_result);
   }
 
   // this will also indirectly delete all tables in this database

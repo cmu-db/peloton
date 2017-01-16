@@ -111,8 +111,8 @@ void CreateTable(std::unique_ptr<storage::DataTable> &hyadapt_table,
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        "primary_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -170,7 +170,7 @@ expression::AbstractExpression *GetPredicate() {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate_left =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr_left,
+          ExpressionType::COMPARE_GREATERTHANOREQUALTO, tuple_value_expr_left,
           constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
@@ -184,12 +184,12 @@ expression::AbstractExpression *GetPredicate() {
 
   expression::AbstractExpression *predicate_right =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_LESSTHAN, tuple_value_expr_right,
+          ExpressionType::COMPARE_LESSTHAN, tuple_value_expr_right,
           constant_value_expr_right);
 
   expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ConjunctionFactory(
-          EXPRESSION_TYPE_CONJUNCTION_AND, predicate_left, predicate_right);
+          ExpressionType::CONJUNCTION_AND, predicate_left, predicate_right);
 
   return predicate;
 }
@@ -199,12 +199,12 @@ void CreateIndexScanPredicate(std::vector<oid_t> &key_column_ids,
                               std::vector<type::Value> &values) {
   key_column_ids.push_back(0);
   expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO);
   values.push_back(
       type::ValueFactory::GetIntegerValue(tuple_start_offset).Copy());
 
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+  expr_types.push_back(ExpressionType::COMPARE_LESSTHAN);
   values.push_back(
       type::ValueFactory::GetIntegerValue(tuple_end_offset).Copy());
 }
@@ -272,7 +272,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate,
                                            column_ids, dummy_index_scan_desc,
-                                           HYBRID_SCAN_TYPE_SEQUENTIAL);
+                                           HybridScanType::SEQUENTIAL);
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
@@ -309,7 +309,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
                                            column_ids, index_scan_desc,
-                                           HYBRID_SCAN_TYPE_INDEX);
+                                           HybridScanType::INDEX);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -355,7 +355,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable> &hyadapt_table) {
 
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
                                            column_ids_second, index_scan_desc,
-                                           HYBRID_SCAN_TYPE_HYBRID);
+                                           HybridScanType::HYBRID);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -448,8 +448,8 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      "primary_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
   std::shared_ptr<index::Index> pkey_index(

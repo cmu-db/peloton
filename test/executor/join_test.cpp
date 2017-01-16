@@ -64,23 +64,22 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(
-      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(0),
-                           ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(0),
+       ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
-// PLAN_NODE_TYPE_NESTLOOP is picked out as a separated test
-std::vector<PlanNodeType> join_algorithms = {PLAN_NODE_TYPE_MERGEJOIN,
-                                             PLAN_NODE_TYPE_HASHJOIN};
+// PlanNodeType::NESTLOOP is picked out as a separated test
+std::vector<PlanNodeType> join_algorithms = {PlanNodeType::MERGEJOIN,
+                                             PlanNodeType::HASHJOIN};
 
-std::vector<PelotonJoinType> join_types = {JOIN_TYPE_INNER, JOIN_TYPE_LEFT,
-                                           JOIN_TYPE_RIGHT, JOIN_TYPE_OUTER};
+std::vector<JoinType> join_types = {JoinType::INNER, JoinType::LEFT,
+                                    JoinType::RIGHT, JoinType::OUTER};
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
+void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
                      oid_t join_test_type);
-void ExecuteNestedLoopJoinTest(PelotonJoinType join_type);
+void ExecuteNestedLoopJoinTest(JoinType join_type);
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
                    concurrency::Transaction *current_txn);
@@ -94,13 +93,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs);
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -116,7 +115,7 @@ TEST_F(JoinTests, BasicTest) {
   for (auto join_algorithm : join_algorithms) {
     LOG_TRACE("JOIN ALGORITHM :: %s",
               PlanNodeTypeToString(join_algorithm).c_str());
-    ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
+    ExecuteJoinTest(join_algorithm, JoinType::INNER, BASIC_TEST);
   }
 }
 
@@ -125,7 +124,7 @@ TEST_F(JoinTests, EmptyTablesTest) {
   for (auto join_algorithm : join_algorithms) {
     LOG_TRACE("JOIN ALGORITHM :: %s",
               PlanNodeTypeToString(join_algorithm).c_str());
-    ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
+    ExecuteJoinTest(join_algorithm, JoinType::INNER, BOTH_TABLES_EMPTY);
   }
 }
 
@@ -208,16 +207,16 @@ TEST_F(JoinTests, JoinPredicateTest) {
 }
 
 TEST_F(JoinTests, SpeedTest) {
-  ExecuteJoinTest(PLAN_NODE_TYPE_HASHJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+  ExecuteJoinTest(PlanNodeType::HASHJOIN, JoinType::OUTER, SPEED_TEST);
 
-  ExecuteJoinTest(PLAN_NODE_TYPE_MERGEJOIN, JOIN_TYPE_OUTER, SPEED_TEST);
+  ExecuteJoinTest(PlanNodeType::MERGEJOIN, JoinType::OUTER, SPEED_TEST);
 
-  ExecuteNestedLoopJoinTest(JOIN_TYPE_OUTER);
+  ExecuteNestedLoopJoinTest(JoinType::OUTER);
 }
 
 TEST_F(JoinTests, BasicNestedLoopTest) {
-  LOG_TRACE("PLAN_NODE_TYPE_NESTLOOP");
-  ExecuteNestedLoopJoinTest(JOIN_TYPE_INNER);
+  LOG_TRACE("PlanNodeType::NESTLOOP");
+  ExecuteNestedLoopJoinTest(JoinType::INNER);
 }
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
@@ -264,7 +263,7 @@ void PopulateTable(storage::DataTable *table, int num_rows, bool random,
   }
 }
 
-void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
+void ExecuteNestedLoopJoinTest(JoinType join_type) {
   //===--------------------------------------------------------------------===//
   // Create Table
   //===--------------------------------------------------------------------===//
@@ -316,7 +315,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   values.push_back(type::ValueFactory::GetIntegerValue(50).Copy());
 
   // Create index scan desc
@@ -342,7 +341,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   std::vector<expression::AbstractExpression *> runtime_keys_right;
 
   key_column_ids_right.push_back(0);
-  expr_types_right.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types_right.push_back(ExpressionType::COMPARE_EQUAL);
   // values_right.push_back(type::ValueFactory::GetIntegerValue(100).Copy());
   values_right.push_back(type::ValueFactory::GetParameterOffsetValue(0).Copy());
 
@@ -381,7 +380,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
       new expression::TupleValueExpression(type::Type::INTEGER, 1, 0);
 
   std::unique_ptr<const expression::AbstractExpression> predicate(
-      new expression::ComparisonExpression(EXPRESSION_TYPE_COMPARE_EQUAL,
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
                                            left_table_attr_1,
                                            right_table_attr_1));
 
@@ -423,7 +422,7 @@ void ExecuteNestedLoopJoinTest(PelotonJoinType join_type) {
   txn_manager.CommitTransaction(txn);
 }
 
-void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
+void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
                      oid_t join_test_type) {
   //===--------------------------------------------------------------------===//
   // Mock table scan executors
@@ -529,7 +528,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   } else if (join_test_type == LEFT_TABLE_EMPTY) {
     ExpectEmptyTileResult(&left_table_scan_executor);
   } else if (join_test_type == RIGHT_TABLE_EMPTY) {
-    if (join_type == JOIN_TYPE_INNER || join_type == JOIN_TYPE_RIGHT) {
+    if (join_type == JoinType::INNER || join_type == JoinType::RIGHT) {
       ExpectMoreThanOneTileResults(&left_table_scan_executor,
                                    left_table_logical_tile_ptrs);
     } else {
@@ -555,9 +554,9 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   } else if (join_test_type == BOTH_TABLES_EMPTY) {
     ExpectEmptyTileResult(&right_table_scan_executor);
   } else if (join_test_type == LEFT_TABLE_EMPTY) {
-    if (join_type == JOIN_TYPE_INNER || join_type == JOIN_TYPE_LEFT) {
+    if (join_type == JoinType::INNER || join_type == JoinType::LEFT) {
       // For hash join, we always build the hash table from right child
-      if (join_algorithm == PLAN_NODE_TYPE_HASHJOIN) {
+      if (join_algorithm == PlanNodeType::HASHJOIN) {
         ExpectNormalTileResults(right_table_tile_group_count,
                                 &right_table_scan_executor,
                                 right_table_logical_tile_ptrs);
@@ -566,7 +565,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
                                      right_table_logical_tile_ptrs);
       }
 
-    } else if (join_type == JOIN_TYPE_OUTER || join_type == JOIN_TYPE_RIGHT) {
+    } else if (join_type == JoinType::OUTER || join_type == JoinType::RIGHT) {
       ExpectNormalTileResults(right_table_tile_group_count,
                               &right_table_scan_executor,
                               right_table_logical_tile_ptrs);
@@ -591,7 +590,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
   // Differ based on join algorithm
   switch (join_algorithm) {
-    case PLAN_NODE_TYPE_NESTLOOP: {
+    case PlanNodeType::NESTLOOP: {
       // Create nested loop join plan node.
       planner::NestedLoopJoinPlan nested_loop_join_node(
           join_type, std::move(predicate), std::move(projection), schema);
@@ -622,7 +621,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
     } break;
 
-    case PLAN_NODE_TYPE_MERGEJOIN: {
+    case PlanNodeType::MERGEJOIN: {
       // Create join clauses
       std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
       join_clauses = CreateJoinClauses();
@@ -657,7 +656,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
     } break;
 
-    case PLAN_NODE_TYPE_HASHJOIN: {
+    case PlanNodeType::HASHJOIN: {
       // Create hash plan node
       expression::AbstractExpression *right_table_attr_1 =
           new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
@@ -717,7 +716,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
     default:
       throw Exception("Unsupported join algorithm : " +
-                      std::to_string(join_algorithm));
+                      PlanNodeTypeToString(join_algorithm));
       break;
   }
 
@@ -728,139 +727,139 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   if (join_test_type == BASIC_TEST) {
     // Check output
     switch (join_type) {
-      case JOIN_TYPE_INNER:
+      case JoinType::INNER:
         EXPECT_EQ(result_tuple_count, 10);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_LEFT:
+      case JoinType::LEFT:
         EXPECT_EQ(result_tuple_count, 15);
         EXPECT_EQ(tuples_with_null, 5);
         break;
 
-      case JOIN_TYPE_RIGHT:
+      case JoinType::RIGHT:
         EXPECT_EQ(result_tuple_count, 10);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_OUTER:
+      case JoinType::OUTER:
         EXPECT_EQ(result_tuple_count, 15);
         EXPECT_EQ(tuples_with_null, 5);
         break;
 
       default:
-        throw Exception("Unsupported join type : " + std::to_string(join_type));
+        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
         break;
     }
 
   } else if (join_test_type == BOTH_TABLES_EMPTY) {
     // Check output
     switch (join_type) {
-      case JOIN_TYPE_INNER:
+      case JoinType::INNER:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_LEFT:
+      case JoinType::LEFT:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_RIGHT:
+      case JoinType::RIGHT:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_OUTER:
+      case JoinType::OUTER:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
       default:
-        throw Exception("Unsupported join type : " + std::to_string(join_type));
+        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
         break;
     }
 
   } else if (join_test_type == COMPLICATED_TEST) {
     // Check output
     switch (join_type) {
-      case JOIN_TYPE_INNER:
+      case JoinType::INNER:
         EXPECT_EQ(result_tuple_count, 10);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_LEFT:
+      case JoinType::LEFT:
         EXPECT_EQ(result_tuple_count, 17);
         EXPECT_EQ(tuples_with_null, 7);
         break;
 
-      case JOIN_TYPE_RIGHT:
+      case JoinType::RIGHT:
         EXPECT_EQ(result_tuple_count, 10);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_OUTER:
+      case JoinType::OUTER:
         EXPECT_EQ(result_tuple_count, 17);
         EXPECT_EQ(tuples_with_null, 7);
         break;
 
       default:
-        throw Exception("Unsupported join type : " + std::to_string(join_type));
+        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
         break;
     }
 
   } else if (join_test_type == LEFT_TABLE_EMPTY) {
     // Check output
     switch (join_type) {
-      case JOIN_TYPE_INNER:
+      case JoinType::INNER:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_LEFT:
+      case JoinType::LEFT:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_RIGHT:
+      case JoinType::RIGHT:
         EXPECT_EQ(result_tuple_count, 10);
         EXPECT_EQ(tuples_with_null, 10);
         break;
 
-      case JOIN_TYPE_OUTER:
+      case JoinType::OUTER:
         EXPECT_EQ(result_tuple_count, 10);
         EXPECT_EQ(tuples_with_null, 10);
         break;
 
       default:
-        throw Exception("Unsupported join type : " + std::to_string(join_type));
+        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
         break;
     }
   } else if (join_test_type == RIGHT_TABLE_EMPTY) {
     // Check output
     switch (join_type) {
-      case JOIN_TYPE_INNER:
+      case JoinType::INNER:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_LEFT:
+      case JoinType::LEFT:
         EXPECT_EQ(result_tuple_count, 15);
         EXPECT_EQ(tuples_with_null, 15);
         break;
 
-      case JOIN_TYPE_RIGHT:
+      case JoinType::RIGHT:
         EXPECT_EQ(result_tuple_count, 0);
         EXPECT_EQ(tuples_with_null, 0);
         break;
 
-      case JOIN_TYPE_OUTER:
+      case JoinType::OUTER:
         EXPECT_EQ(result_tuple_count, 15);
         EXPECT_EQ(tuples_with_null, 15);
         break;
 
       default:
-        throw Exception("Unsupported join type : " + std::to_string(join_type));
+        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
         break;
     }
   }
@@ -948,18 +947,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
+    std::vector<std::unique_ptr<executor::LogicalTile>>
+        &table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
+void ExpectNormalTileResults(size_t table_tile_group_count,
+                             MockExecutor *table_scan_executor,
+                             std::vector<std::unique_ptr<executor::LogicalTile>>
+                                 &table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {
@@ -990,7 +989,7 @@ void ExpectNormalTileResults(
       EXPECT_CALL(*table_scan_executor, GetOutput())
           .InSequence(get_output_sequence)
           .WillOnce(
-               Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
+              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
     }
   }
 }

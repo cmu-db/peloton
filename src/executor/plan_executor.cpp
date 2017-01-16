@@ -44,7 +44,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 peloton_status PlanExecutor::ExecutePlan(
     const planner::AbstractPlan *plan, concurrency::Transaction *txn,
-    const std::vector<type::Value> &params, std::vector<ResultType> &result,
+    const std::vector<type::Value> &params, std::vector<StatementResult> &result,
     const std::vector<int> &result_format) {
   peloton_status p_status;
   if (plan == nullptr) return p_status;
@@ -87,14 +87,14 @@ peloton_status PlanExecutor::ExecutePlan(
         LOG_TRACE("Final Answer: %s",
                   logical_tile->GetInfo().c_str());  // Printing the answers
         std::vector<std::vector<std::string>> answer_tuples;
-        answer_tuples =
-            std::move(logical_tile->GetAllValuesAsStrings(result_format, false));
+        answer_tuples = std::move(
+            logical_tile->GetAllValuesAsStrings(result_format, false));
 
         // Construct the returned results
         for (auto &tuple : answer_tuples) {
           unsigned int col_index = 0;
           for (unsigned int i = 0; i < logical_tile->GetColumnCount(); i++) {
-            auto res = ResultType();
+            auto res = StatementResult();
             PlanExecutor::copyFromTo(tuple[col_index++], res.second);
             if (tuple[col_index - 1].c_str() != nullptr) {
               LOG_TRACE("column content: %s", tuple[col_index - 1].c_str());
@@ -108,9 +108,9 @@ peloton_status PlanExecutor::ExecutePlan(
     // Set the result
     p_status.m_processed = executor_context->num_processed;
     // success so far
-    p_status.m_result = Result::RESULT_SUCCESS;
+    p_status.m_result = ResultType::SUCCESS;
   } else {
-    p_status.m_result = Result::RESULT_FAILURE;
+    p_status.m_result = ResultType::FAILURE;
   }
 
   p_status.m_result_slots = nullptr;
@@ -170,7 +170,7 @@ int PlanExecutor::ExecutePlan(
   // Abort and cleanup
   if (status == false) {
     init_failure = true;
-    txn->SetResult(Result::RESULT_FAILURE);
+    txn->SetResult(ResultType::FAILURE);
     goto cleanup;
   }
 
@@ -209,13 +209,13 @@ cleanup:
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
     switch (status) {
-      case Result::RESULT_SUCCESS:
+      case ResultType::SUCCESS:
         // Commit
         return executor_context->num_processed;
 
         break;
 
-      case Result::RESULT_FAILURE:
+      case ResultType::FAILURE:
       default:
         // Abort
         return -1;
@@ -249,98 +249,99 @@ executor::AbstractExecutor *BuildExecutorTree(
 
   auto plan_node_type = plan->GetPlanNodeType();
   switch (plan_node_type) {
-    case PLAN_NODE_TYPE_INVALID:
+    case PlanNodeType::INVALID:
       LOG_ERROR("Invalid plan node type ");
       break;
 
-    case PLAN_NODE_TYPE_SEQSCAN:
+    case PlanNodeType::SEQSCAN:
       LOG_TRACE("Adding Sequential Scan Executer");
       child_executor = new executor::SeqScanExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_INDEXSCAN:
+    case PlanNodeType::INDEXSCAN:
       LOG_TRACE("Adding Index Scan Executer");
       child_executor = new executor::IndexScanExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_INSERT:
+    case PlanNodeType::INSERT:
       LOG_TRACE("Adding Insert Executer");
       child_executor = new executor::InsertExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_DELETE:
+    case PlanNodeType::DELETE:
       LOG_TRACE("Adding Delete Executer");
       child_executor = new executor::DeleteExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_UPDATE:
+    case PlanNodeType::UPDATE:
       LOG_TRACE("Adding Update Executer");
       child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_LIMIT:
+    case PlanNodeType::LIMIT:
       LOG_TRACE("Adding Limit Executer");
       child_executor = new executor::LimitExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_NESTLOOP:
+    case PlanNodeType::NESTLOOP:
       LOG_TRACE("Adding Nested Loop Joing Executer");
       child_executor =
           new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_MERGEJOIN:
+    case PlanNodeType::MERGEJOIN:
       LOG_TRACE("Adding Merge Join Executer");
       child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_HASH:
+    case PlanNodeType::HASH:
       LOG_TRACE("Adding Hash Executer");
       child_executor = new executor::HashExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_HASHJOIN:
+    case PlanNodeType::HASHJOIN:
       LOG_TRACE("Adding Hash Join Executer");
       child_executor = new executor::HashJoinExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_PROJECTION:
+    case PlanNodeType::PROJECTION:
       LOG_TRACE("Adding Projection Executer");
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_MATERIALIZE:
+    case PlanNodeType::MATERIALIZE:
       LOG_TRACE("Adding Materialization Executer");
       child_executor =
           new executor::MaterializationExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_AGGREGATE_V2:
+    case PlanNodeType::AGGREGATE_V2:
       LOG_TRACE("Adding Aggregate Executer");
       child_executor = new executor::AggregateExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_ORDERBY:
+    case PlanNodeType::ORDERBY:
       LOG_TRACE("Adding Order By Executer");
       child_executor = new executor::OrderByExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_DROP:
+    case PlanNodeType::DROP:
       LOG_TRACE("Adding Drop Executer");
       child_executor = new executor::DropExecutor(plan, executor_context);
       break;
 
-    case PLAN_NODE_TYPE_CREATE:
+    case PlanNodeType::CREATE:
       LOG_TRACE("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
-    case PLAN_NODE_TYPE_COPY:
+    case PlanNodeType::COPY:
       LOG_TRACE("Adding Copy Executer");
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
 
     default:
-      LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);
+      LOG_ERROR("Unsupported plan node type : %s",
+                PlanNodeTypeToString(plan_node_type).c_str());
       break;
   }
 

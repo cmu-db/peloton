@@ -83,7 +83,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
 
     // if the root of the expression is a column value we can
     // just do a direct mapping
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto tup_expr = (expression::TupleValueExpression *)expr;
       column_name = tup_expr->GetColumnName();
       dml.push_back(

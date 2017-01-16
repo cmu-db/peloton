@@ -140,13 +140,13 @@ bool SeqScanExecutor::DExecute() {
         auto visibility = transaction_manager.IsVisible(current_txn, tile_group_header, tuple_id);
 
         // check transaction visibility
-        if (visibility == VISIBILITY_OK) {
+        if (visibility == VisibilityType::OK) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
             auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);
             if (!res) {
-              transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+              transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
               return res;
             }
           } else {
@@ -159,7 +159,7 @@ bool SeqScanExecutor::DExecute() {
               position_list.push_back(tuple_id);
               auto res = transaction_manager.PerformRead(current_txn, location, acquire_owner);
               if (!res) {
-                transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+                transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
                 return res;
               } else {
                 LOG_TRACE("Sequential Scan Predicate Satisfied");

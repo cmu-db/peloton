@@ -64,7 +64,7 @@ class ExpressionUtil {
       LOG_TRACE("expression->left: %s",
                 expression->GetChild(0)->GetInfo().c_str());
       if (expression->GetChild(0)->GetExpressionType() ==
-          EXPRESSION_TYPE_VALUE_PARAMETER) {
+          ExpressionType::VALUE_PARAMETER) {
         // left expression is parameter
         auto left = (ParameterValueExpression *)expression->GetChild(0);
         auto value =
@@ -84,7 +84,7 @@ class ExpressionUtil {
       LOG_TRACE("expression->right: %s",
                 expression->GetChild(1)->GetInfo().c_str());
       if (expression->GetChild(1)->GetExpressionType() ==
-          EXPRESSION_TYPE_VALUE_PARAMETER) {
+          ExpressionType::VALUE_PARAMETER) {
         // right expression is parameter
         auto right = (ParameterValueExpression *)expression->GetChild(1);
         LOG_TRACE("right in vector type: %s",
@@ -120,7 +120,7 @@ class ExpressionUtil {
     size_t children_size = expression->GetChildrenSize();
 
     // Return itself if the TupleValueExpression is not indexed.
-    if (expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
+    if (expression->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto tuple_expr = (expression::TupleValueExpression *)expression;
       std::string col_name(tuple_expr->GetColumnName());
 
@@ -144,9 +144,9 @@ class ExpressionUtil {
     // Right now I couldn't think of other cases, so otherwise it's not handled.
     if (children_size == 0) {
       PL_ASSERT(
-          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE ||
-          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT ||
-          expression->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER);
+          expression->GetExpressionType() == ExpressionType::VALUE_TUPLE ||
+          expression->GetExpressionType() == ExpressionType::VALUE_CONSTANT ||
+          expression->GetExpressionType() == ExpressionType::VALUE_PARAMETER);
       return nullptr;
     }
 
@@ -172,7 +172,7 @@ class ExpressionUtil {
     if (fully_removable) return nullptr;
 
     // Only in an 'and' expression, we may be able to remove one literal
-    if (expression->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND) {
+    if (expression->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
       // If one child is removable, return the other child
       if (partial_removable) {
         for (auto child : new_children)
@@ -248,12 +248,12 @@ class ExpressionUtil {
 
   inline static bool IsAggregateExpression(ExpressionType type) {
     switch (type) {
-      case EXPRESSION_TYPE_AGGREGATE_COUNT:
-      case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
-      case EXPRESSION_TYPE_AGGREGATE_SUM:
-      case EXPRESSION_TYPE_AGGREGATE_MIN:
-      case EXPRESSION_TYPE_AGGREGATE_MAX:
-      case EXPRESSION_TYPE_AGGREGATE_AVG:
+      case ExpressionType::AGGREGATE_COUNT:
+      case ExpressionType::AGGREGATE_COUNT_STAR:
+      case ExpressionType::AGGREGATE_SUM:
+      case ExpressionType::AGGREGATE_MIN:
+      case ExpressionType::AGGREGATE_MAX:
+      case ExpressionType::AGGREGATE_AVG:
         return true;
       default:
         return false;
@@ -262,17 +262,17 @@ class ExpressionUtil {
 
   inline static bool IsOperatorExpression(ExpressionType type) {
     switch (type) {
-      case EXPRESSION_TYPE_OPERATOR_PLUS:
-      case EXPRESSION_TYPE_OPERATOR_MINUS:
-      case EXPRESSION_TYPE_OPERATOR_MULTIPLY:
-      case EXPRESSION_TYPE_OPERATOR_DIVIDE:
-      case EXPRESSION_TYPE_OPERATOR_CONCAT:
-      case EXPRESSION_TYPE_OPERATOR_MOD:
-      case EXPRESSION_TYPE_OPERATOR_CAST:
-      case EXPRESSION_TYPE_OPERATOR_NOT:
-      case EXPRESSION_TYPE_OPERATOR_IS_NULL:
-      case EXPRESSION_TYPE_OPERATOR_EXISTS:
-      case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
+      case ExpressionType::OPERATOR_PLUS:
+      case ExpressionType::OPERATOR_MINUS:
+      case ExpressionType::OPERATOR_MULTIPLY:
+      case ExpressionType::OPERATOR_DIVIDE:
+      case ExpressionType::OPERATOR_CONCAT:
+      case ExpressionType::OPERATOR_MOD:
+      case ExpressionType::OPERATOR_CAST:
+      case ExpressionType::OPERATOR_NOT:
+      case ExpressionType::OPERATOR_IS_NULL:
+      case ExpressionType::OPERATOR_EXISTS:
+      case ExpressionType::OPERATOR_UNARY_MINUS:
         return true;
       default:
         return false;
@@ -305,7 +305,7 @@ class ExpressionUtil {
        << "ValueType[" << TypeIdToString(vtype) << "]";
 
     switch (etype) {
-      case EXPRESSION_TYPE_VALUE_CONSTANT: {
+      case ExpressionType::VALUE_CONSTANT: {
         const ConstantValueExpression *c_expr =
             dynamic_cast<const ConstantValueExpression *>(expr);
         os << " -> Value=" << c_expr->GetValue().ToString();
@@ -350,7 +350,7 @@ class ExpressionUtil {
   //		  std::vector<catalog::Column> &columns) {
   //
   //	  ExpressionType etype = expr->GetExpressionType();
-  //	  if (etype == EXPRESSION_TYPE_VALUE_TUPLE) {
+  //	  if (etype == ExpressionType::VALUE_TUPLE) {
   //		  // TODO: Get the table + column name and grab the
   //		  // the handle from schema object!
   //		  const TupleValueExpression t_expr = dynamic_cast<const
@@ -433,7 +433,7 @@ class ExpressionUtil {
                           needs_projection, find_columns);
     }
     // if this is a column, we need to find if it is exists in the schema
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE &&
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
         expr->GetValueType() == type::Type::INVALID) {
       auto val_expr = (expression::TupleValueExpression *)expr;
       oid_t col_id = -1;
@@ -478,11 +478,11 @@ class ExpressionUtil {
     }
     // if we have any expression besides column expressions and star, we
     // need to add a projection node
-    else if (expr->GetExpressionType() != EXPRESSION_TYPE_STAR) {
+    else if (expr->GetExpressionType() != ExpressionType::STAR) {
       needs_projection = true;
     }
     // if the expression is a function, do a lookup and make sure it exists
-    if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION) {
+    if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData& func_data =

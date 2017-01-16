@@ -50,7 +50,7 @@ class DeletePlan : public AbstractPlan {
   explicit DeletePlan(storage::DataTable *table,
                       expression::AbstractExpression *predicate);
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DELETE; }
 
   storage::DataTable *GetTable() const { return target_table_; }
 

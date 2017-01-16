@@ -235,7 +235,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
 
   // YCSB Default Values
-  ycsb::state.index = INDEX_TYPE_BWTREE;
+  ycsb::state.index = IndexType::BWTREE;
   ycsb::state.scale_factor = 1;
   ycsb::state.duration = 10;
   ycsb::state.profile_duration = 1;
@@ -250,7 +250,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::state.gc_backend_count = 1;
 
   // TPC-C Default Values
-  tpcc::state.index = INDEX_TYPE_BWTREE;
+  tpcc::state.index = IndexType::BWTREE;
   tpcc::state.scale_factor = 1;
   tpcc::state.duration = 10;
   tpcc::state.profile_duration = 1;
@@ -308,11 +308,11 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'i': {
         char *index = optarg;
         if (strcmp(index, "btree") == 0) {
-          ycsb::state.index = INDEX_TYPE_BWTREE;
-          tpcc::state.index = INDEX_TYPE_BWTREE;
+          ycsb::state.index = IndexType::BWTREE;
+          tpcc::state.index = IndexType::BWTREE;
         } else if (strcmp(index, "bwtree") == 0) {
-          ycsb::state.index = INDEX_TYPE_BWTREE;
-          tpcc::state.index = INDEX_TYPE_BWTREE;
+          ycsb::state.index = IndexType::BWTREE;
+          tpcc::state.index = IndexType::BWTREE;
         } else {
           LOG_ERROR("Unknown index: %s", index);
           exit(EXIT_FAILURE);

@@ -68,7 +68,7 @@ InsertPlan::InsertPlan(
         int col_cntr = 0;
         int param_index = 0;
         for (expression::AbstractExpression *elem : *values) {
-          if (elem->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
+          if (elem->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
             std::tuple<oid_t, oid_t, oid_t> pair =
                 std::make_tuple(tuple_idx, col_cntr, param_index++);
             parameter_vector_->push_back(pair);
@@ -130,7 +130,7 @@ InsertPlan::InsertPlan(
                     .c_str());
 
             if (values->at(pos)->GetExpressionType() ==
-                EXPRESSION_TYPE_VALUE_PARAMETER) {
+                ExpressionType::VALUE_PARAMETER) {
               std::tuple<oid_t, oid_t, oid_t> pair =
                   std::make_tuple(tuple_idx, col_cntr, pos);
               parameter_vector_->push_back(pair);

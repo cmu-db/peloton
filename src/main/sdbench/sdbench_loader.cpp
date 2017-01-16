@@ -23,6 +23,7 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
+#include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "concurrency/transaction.h"
@@ -52,9 +53,9 @@ void CreateTable() {
   std::vector<catalog::Column> columns;
 
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    auto column =
-        catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                        "" + std::to_string(col_itr), is_inlined);
+    auto column = catalog::Column(type::Type::INTEGER,
+                                  type::Type::GetTypeSize(type::Type::INTEGER),
+                                  "" + std::to_string(col_itr), is_inlined);
 
     columns.push_back(column);
   }
@@ -108,12 +109,11 @@ void LoadTable() {
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
   } else {
     LOG_TRACE("commit failed");
   }
-
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {

@@ -25,7 +25,7 @@ namespace peloton {
 namespace planner {
 
 NestedLoopJoinPlan::NestedLoopJoinPlan(
-    PelotonJoinType join_type,
+    JoinType join_type,
     std::unique_ptr<const expression::AbstractExpression> &&predicate,
     std::unique_ptr<const ProjectInfo> &&proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema)
@@ -33,7 +33,7 @@ NestedLoopJoinPlan::NestedLoopJoinPlan(
                        proj_schema) {}
 
 NestedLoopJoinPlan::NestedLoopJoinPlan(
-    PelotonJoinType join_type,
+    JoinType join_type,
     std::unique_ptr<const expression::AbstractExpression> &&predicate,
     std::unique_ptr<const ProjectInfo> &&proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema,

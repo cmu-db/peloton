@@ -36,9 +36,9 @@ namespace executor {
  * Base class for an individual aggregate that aggregates a specific
  * column for a group
  */
-class Agg {
+class AbstractAttributeAggregator {
  public:
-  virtual ~Agg();
+  virtual ~AbstractAttributeAggregator();
 
   void SetDistinct(bool distinct) { is_distinct_ = distinct; }
 
@@ -58,9 +58,9 @@ class Agg {
   bool is_distinct_ = false;
 };
 
-class SumAgg : public Agg {
+class SumAggregator : public AbstractAttributeAggregator {
  public:
-  SumAgg() : have_advanced(false) {
+  SumAggregator() : have_advanced(false) {
     // aggregate initialized on first advance
   }
 
@@ -88,9 +88,9 @@ class SumAgg : public Agg {
   bool have_advanced;
 };
 
-class AvgAgg : public Agg {
+class AvgAggregator : public AbstractAttributeAggregator {
  public:
-  AvgAgg(bool is_weighted) : is_weighted(is_weighted), count(0) {
+  AvgAggregator(bool is_weighted) : is_weighted(is_weighted), count(0) {
     default_delta = type::ValueFactory::GetIntegerValue(1);
   }
 
@@ -143,9 +143,9 @@ class AvgAgg : public Agg {
 };
 
 // count always holds integer
-class CountAgg : public Agg {
+class CountAggregator : public AbstractAttributeAggregator {
  public:
-  CountAgg() : count(0) {}
+  CountAggregator() : count(0) {}
 
   void DAdvance(const type::Value &val) {
     if (val.IsNull()) {
@@ -160,9 +160,9 @@ class CountAgg : public Agg {
   int64_t count;
 };
 
-class CountStarAgg : public Agg {
+class CountStarAggregator : public AbstractAttributeAggregator {
  public:
-  CountStarAgg() : count(0) {}
+  CountStarAggregator() : count(0) {}
 
   void DAdvance(const type::Value &val UNUSED_ATTRIBUTE) { ++count; }
 
@@ -172,9 +172,9 @@ class CountStarAgg : public Agg {
   int64_t count;
 };
 
-class MaxAgg : public Agg {
+class MaxAggregator : public AbstractAttributeAggregator {
  public:
-  MaxAgg() : have_advanced(false) {
+  MaxAggregator() : have_advanced(false) {
     aggregate = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
   }
 
@@ -198,9 +198,9 @@ class MaxAgg : public Agg {
   bool have_advanced;
 };
 
-class MinAgg : public Agg {
+class MinAggregator : public AbstractAttributeAggregator {
  public:
-  MinAgg() : have_advanced(false) {
+  MinAggregator() : have_advanced(false) {
     aggregate = type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
   }
 
@@ -226,10 +226,11 @@ class MinAgg : public Agg {
 };
 
 /** brief Create an instance of an aggregator for the specified aggregate */
-Agg *GetAggInstance(ExpressionType agg_type);
+AbstractAttributeAggregator *GetAttributeAggregatorInstance(
+    ExpressionType agg_type);
 
 /*
- * Interface for an aggregator (not an an individual aggregate)
+ * Interface for an aggregator (not an an individual attribute aggregate)
  *
  * This will aggregate some number of tuples and produce the results in the
  * provided output .
@@ -283,7 +284,7 @@ class HashAggregator : public AbstractAggregator {
     std::vector<type::Value> first_tuple_values;
 
     // The aggregates for each column for this group
-    Agg **aggregates;
+    AbstractAttributeAggregator **aggregates;
   };
 
   /** Hash function of internal hash table */
@@ -343,7 +344,7 @@ class SortedAggregator : public AbstractAggregator {
   std::vector<type::Value> delegate_tuple_values_;
   const expression::ContainerTuple<std::vector<type::Value>> delegate_tuple_;
   const size_t num_input_columns_;
-  Agg **aggregates;
+  AbstractAttributeAggregator **aggregates;
 };
 
 /**
@@ -362,7 +363,7 @@ class PlainAggregator : public AbstractAggregator {
   ~PlainAggregator();
 
  private:
-  Agg **aggregates;
+  AbstractAttributeAggregator **aggregates;
 };
 }
 // namespace executor

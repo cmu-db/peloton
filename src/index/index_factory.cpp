@@ -57,7 +57,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   // -----------------------
   // BW-TREE
   // -----------------------
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     if (ints_only) {
       index = IndexFactory::GetBwTreeIntsKeyIndex(metadata);
     } else {

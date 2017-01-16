@@ -10,32 +10,32 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cassert>
+#include <chrono>
+#include <ctime>
+#include <iostream>
 #include <memory>
+#include <numeric>
+#include <string>
+#include <thread>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <string>
-#include <unordered_map>
-#include <chrono>
-#include <iostream>
-#include <ctime>
-#include <cassert>
-#include <thread>
-#include <numeric>
 
+#include "common/container_tuple.h"
+#include "common/logger.h"
 #include "common/timer.h"
-#include "type/types.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "executor/hybrid_scan_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
-#include "common/container_tuple.h"
 #include "planner/hybrid_scan_plan.h"
-#include "executor/hybrid_scan_executor.h"
 #include "storage/data_table.h"
-#include "storage/tile_group_header.h"
 #include "storage/tile.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "common/logger.h"
+#include "storage/tile_group_header.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace executor {
@@ -58,7 +58,7 @@ bool HybridScanExecutor::DInit() {
   PL_ASSERT(table_ != nullptr);
 
   // SEQUENTIAL SCAN
-  if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
+  if (type_ == HybridScanType::SEQUENTIAL) {
     LOG_TRACE("Sequential Scan");
     current_tile_group_offset_ = START_OID;
 
@@ -69,7 +69,7 @@ bool HybridScanExecutor::DInit() {
     }
   }
   // INDEX SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_INDEX) {
+  else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
     index_ = node.GetIndex();
 
@@ -109,7 +109,7 @@ bool HybridScanExecutor::DInit() {
     }
   }
   // HYBRID SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_HYBRID) {
+  else if (type_ == HybridScanType::HYBRID) {
     LOG_TRACE("Hybrid Scan");
 
     table_tile_group_count_ = table_->GetTileGroupCount();
@@ -167,7 +167,7 @@ bool HybridScanExecutor::DInit() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
+    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
   }
 
   return true;
@@ -206,7 +206,7 @@ bool HybridScanExecutor::SeqScanUtil() {
     std::vector<oid_t> position_list;
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-      if (type_ == HYBRID_SCAN_TYPE_HYBRID && item_pointers_.size() > 0 &&
+      if (type_ == HybridScanType::HYBRID && item_pointers_.size() > 0 &&
           location.block <= upper_bound_block) {
         if (item_pointers_.find(location) != item_pointers_.end()) {
           continue;
@@ -215,7 +215,7 @@ bool HybridScanExecutor::SeqScanUtil() {
 
       // Check transaction visibility
       if (transaction_manager.IsVisible(current_txn, tile_group_header,
-                                        tuple_id) == VISIBILITY_OK) {
+                                        tuple_id) == VisibilityType::OK) {
         // If the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
@@ -239,7 +239,7 @@ bool HybridScanExecutor::SeqScanUtil() {
                                                      acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
-                                                     RESULT_FAILURE);
+                                                     ResultType::FAILURE);
             return res;
           }
         }
@@ -284,19 +284,18 @@ bool HybridScanExecutor::IndexScanUtil() {
 }
 
 bool HybridScanExecutor::DExecute() {
-
   // SEQUENTIAL SCAN
-  if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
+  if (type_ == HybridScanType::SEQUENTIAL) {
     LOG_TRACE("Sequential Scan");
     return SeqScanUtil();
   }
   // INDEX SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_INDEX) {
+  else if (type_ == HybridScanType::INDEX) {
     LOG_TRACE("Index Scan");
     PL_ASSERT(children_.size() == 0);
 
     if (index_done_ == false) {
-      if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+      if (index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         auto status = ExecPrimaryIndexLookup();
         if (status == false) {
           return false;
@@ -309,7 +308,7 @@ bool HybridScanExecutor::DExecute() {
     return IndexScanUtil();
   }
   // HYBRID SCAN
-  else if (type_ == HYBRID_SCAN_TYPE_HYBRID) {
+  else if (type_ == HybridScanType::HYBRID) {
     LOG_TRACE("Hybrid Scan");
 
     // do two part search
@@ -330,7 +329,7 @@ bool HybridScanExecutor::DExecute() {
   }
   // FALLBACK
   else {
-    throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
+    throw Exception("Invalid hybrid scan type : " + HybridScanTypeToString(type_));
   }
 }
 
@@ -345,7 +344,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     LOG_TRACE("Scan all keys");
@@ -353,7 +352,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   } else {
     LOG_TRACE("Scan");
     index_->Scan(values_, key_column_ids_, expr_type_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                 ScanDirectionType::FORWARD, tuple_location_ptrs,
                  &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 
@@ -375,7 +374,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
 
-    if (type_ == HYBRID_SCAN_TYPE_HYBRID &&
+    if (type_ == HybridScanType::HYBRID &&
         tuple_location.block >= (block_threshold)) {
       item_pointers_.insert(tuple_location);
     }
@@ -392,13 +391,13 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       auto visibility = transaction_manager.IsVisible(
           current_txn, tile_group_header, tuple_location.offset);
 
-      if (visibility == VISIBILITY_OK) {
-
+      if (visibility == VisibilityType::OK) {
         visible_tuples[tuple_location.block].push_back(tuple_location.offset);
         auto res = transaction_manager.PerformRead(current_txn, tuple_location,
                                                    acquire_owner);
         if (!res) {
-          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return res;
         }
         break;

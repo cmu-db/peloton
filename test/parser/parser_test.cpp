@@ -160,7 +160,7 @@ TEST_F(ParserTest, SelectParserTest) {
   }
 
   EXPECT_EQ(list->GetNumStatements(), 1);
-  EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_SELECT);
+  EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::SELECT);
 
   parser::SelectStatement* stmt =
       (parser::SelectStatement*)list->GetStatement(0);
@@ -177,9 +177,9 @@ TEST_F(ParserTest, SelectParserTest) {
   // Select List
   EXPECT_EQ(stmt->select_list->size(), 2);
   EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(),
-            EXPRESSION_TYPE_VALUE_TUPLE);
+            ExpressionType::VALUE_TUPLE);
   EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(),
-            EXPRESSION_TYPE_AGGREGATE_SUM);
+            ExpressionType::AGGREGATE_SUM);
 
   // Join Table
   parser::JoinDefinition* join = stmt->from_table->join;
@@ -195,7 +195,7 @@ TEST_F(ParserTest, SelectParserTest) {
   // Order By
   EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
   EXPECT_EQ(stmt->order->expr->GetExpressionType(),
-            EXPRESSION_TYPE_AGGREGATE_SUM);
+            ExpressionType::AGGREGATE_SUM);
 
   // Limit
   EXPECT_EQ(stmt->limit->limit, 5);
@@ -227,7 +227,7 @@ TEST_F(ParserTest, TransactionTest) {
       parser::Parser::ParseSQLString(valid_queries[0].c_str());
   parser::TransactionStatement* stmt =
       (parser::TransactionStatement*)list->GetStatement(0);
-  EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_TRANSACTION);
+  EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
   delete list;
 

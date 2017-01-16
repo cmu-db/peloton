@@ -386,7 +386,7 @@ TEST_F(StatsTest, PerQueryStatsTest) {
 
   // Execute insert
   std::vector<type::Value> params;
-  std::vector<ResultType> result;
+  std::vector<StatementResult> result;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);

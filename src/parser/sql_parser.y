@@ -364,7 +364,7 @@ create_statement:
 			$$->index_name = $4;
 			$$->table_info_ = $6;
 			$$->index_attrs = $8;
-			$$->index_type = peloton::INDEX_TYPE_BWTREE;
+			$$->index_type = peloton::IndexType::BWTREE;
 		}
 
 		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' USING opt_index_type {
@@ -373,7 +373,7 @@ create_statement:
 			$$->index_name = $4;
 			$$->table_info_ = $6;
 			$$->index_attrs = $8;
-			$$->index_type = $11;
+			$$->index_type = peloton::StringToIndexType(CharsToStringDestructive($11));
 		}
 	;
 
@@ -453,8 +453,8 @@ column_type:
 	;
 
 opt_index_type:
-		HASH { $$ = peloton::INDEX_TYPE_HASH; }
-	|	BWTREE { $$ = peloton::INDEX_TYPE_BWTREE; }
+		HASH { $$ = static_cast<uint32_t>(peloton::IndexType::HASH); }
+	|	BWTREE { $$ = static_cast<uint32_t>(peloton::IndexType::BWTREE); }
 	;
 
 /******************************
@@ -745,29 +745,29 @@ scalar_expr:
 
 unary_expr:
 		'-' expr { $$ = new peloton::expression::OperatorUnaryMinusExpression($2); }
-	|	NOT expr { $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_NOT, peloton::type::Type::BOOLEAN, $2, nullptr); }
+	|	NOT expr { $$ = new peloton::expression::OperatorExpression(peloton::ExpressionType::OPERATOR_NOT, peloton::type::Type::BOOLEAN, $2, nullptr); }
 	;
 
 binary_expr:
 		comp_expr
-	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_MINUS, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
-	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_PLUS, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
-	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_DIVIDE, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
-	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::EXPRESSION_TYPE_OPERATOR_MULTIPLY, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
-	|	expr AND expr	{ $$ = new peloton::expression::ConjunctionExpression(peloton::EXPRESSION_TYPE_CONJUNCTION_AND, $1, $3); }
-	|	expr OR expr	{ $$ = new peloton::expression::ConjunctionExpression(peloton::EXPRESSION_TYPE_CONJUNCTION_OR, $1, $3); }
-	|	expr LIKE expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $3); }
-	|	expr NOT LIKE expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $4); }
+	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::ExpressionType::OPERATOR_MINUS, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::ExpressionType::OPERATOR_PLUS, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::ExpressionType::OPERATOR_DIVIDE, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression(peloton::ExpressionType::OPERATOR_MULTIPLY, std::max($1->GetValueType(), $3->GetValueType()), $1, $3); }
+	|	expr AND expr	{ $$ = new peloton::expression::ConjunctionExpression(peloton::ExpressionType::CONJUNCTION_AND, $1, $3); }
+	|	expr OR expr	{ $$ = new peloton::expression::ConjunctionExpression(peloton::ExpressionType::CONJUNCTION_OR, $1, $3); }
+	|	expr LIKE expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_LIKE, $1, $3); }
+	|	expr NOT LIKE expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_LIKE, $1, $4); }
 	;
 
 
 comp_expr:
-		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_EQUAL, $1, $3); }
-	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_NOTEQUAL, $1, $3); }
-	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LESSTHAN, $1, $3);; }
-	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHAN, $1, $3); }
-	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, $1, $3); }
-	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, $1, $3); }
+		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_EQUAL, $1, $3); }
+	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_NOTEQUAL, $1, $3); }
+	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_LESSTHAN, $1, $3);; }
+	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_GREATERTHAN, $1, $3); }
+	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_LESSTHANOREQUALTO, $1, $3); }
+	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression(peloton::ExpressionType::COMPARE_GREATERTHANOREQUALTO, $1, $3); }
 	;
 
 function_expr:
@@ -775,15 +775,15 @@ function_expr:
 // date functions
 	|	EXTRACT '(' IDENTIFIER FROM expr ')' { $$ = new peloton::expression::FunctionExpression("extract",
 					std::vector<peloton::expression::AbstractExpression*>{new peloton::expression::ConstantValueExpression(
-					peloton::type::ValueFactory::GetIntegerValue(peloton::StringToDatePartType(CharsToStringDestructive($3)))), $5}); }
+					peloton::type::ValueFactory::GetIntegerValue(static_cast<int>(peloton::StringToDatePartType(CharsToStringDestructive($3))))), $5}); }
 	;
 
 aggregate_expr:
-		SUM '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_SUM, $3, $4); }
-	|	MIN '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_MIN, $3, $4); }
-	|	MAX '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_MAX, $3, $4); }
-	|	AVG '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_AVG, $3, $4); }
-	|	COUNT '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::EXPRESSION_TYPE_AGGREGATE_COUNT, $3, $4); }
+		SUM '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::ExpressionType::AGGREGATE_SUM, $3, $4); }
+	|	MIN '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::ExpressionType::AGGREGATE_MIN, $3, $4); }
+	|	MAX '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::ExpressionType::AGGREGATE_MAX, $3, $4); }
+	|	AVG '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::ExpressionType::AGGREGATE_AVG, $3, $4); }
+	|	COUNT '(' opt_distinct expr ')' { $$ = new peloton::expression::AggregateExpression(peloton::ExpressionType::AGGREGATE_COUNT, $3, $4); }
 
 	;
 	
@@ -913,7 +913,7 @@ join_clause:
 		{ 
 			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
 			$$->join = new JoinDefinition();
-			$$->join->type = (peloton::PelotonJoinType) $2;
+			$$->join->type = (peloton::JoinType) $2;
 			$$->join->left = $1;
 			$$->join->right = $4;
 			$$->join->condition = $6;
@@ -921,11 +921,11 @@ join_clause:
 		;
 
 opt_join_type:
-		INNER 	{ $$ = peloton::JOIN_TYPE_INNER; }
-	|	OUTER 	{ $$ = peloton::JOIN_TYPE_OUTER; }
-	|	LEFT 	{ $$ = peloton::JOIN_TYPE_LEFT; }
-	|	RIGHT 	{ $$ = peloton::JOIN_TYPE_RIGHT; }
-	|	/* empty, default */ 	{ $$ = peloton::JOIN_TYPE_INNER; }
+		INNER 	{ $$ = static_cast<int32_t>(peloton::JoinType::INNER); }
+	|	OUTER 	{ $$ = static_cast<int32_t>(peloton::JoinType::OUTER); }
+	|	LEFT 	{ $$ = static_cast<int32_t>(peloton::JoinType::LEFT); }
+	|	RIGHT 	{ $$ = static_cast<int32_t>(peloton::JoinType::RIGHT); }
+	|	/* empty, default */ 	{ $$ = static_cast<int32_t>(peloton::JoinType::INNER); }
 	;
 
 

@@ -23,15 +23,13 @@ namespace expression {
 
 class DateFunctions {
  public:
-  // Extract
-  // Arguments:
-  // the arguements are contained in the args vector
+  // The arguments are contained in the args vector
   // the first argument is the part of the date to extract (see type/types.h
   // DatePart)
   // the second argument is the timestamp to extract the part from
   //
-  // Return value: the Value returned should be of type Double and
-  // should be constructed using type::ValueFactory
+  // @return The Value returned should be a type::DecimalValue that is
+  // constructed using type::ValueFactory
   static type::Value Extract(const std::vector<type::Value>& args) {
     DatePartType date_part = args[0].GetAs<DatePartType>();
     UNUSED_ATTRIBUTE uint64_t timestamp = args[1].GetAs<uint64_t>();
@@ -46,47 +44,47 @@ class DateFunctions {
     // These values are hardcoded for project #1 to pass the test case
     // You should replace all of this with your own implementation
     switch (date_part) {
-      case EXPRESSION_DATE_PART_CENTURY: {
+      case DatePartType::CENTURY: {
         result = type::ValueFactory::GetDecimalValue(21);
         break;
       }
-      case EXPRESSION_DATE_PART_DECADE: {
+      case DatePartType::DECADE: {
         result = type::ValueFactory::GetDecimalValue(201);
         break;
       }
-      case EXPRESSION_DATE_PART_DOW: {
+      case DatePartType::DOW: {
         result = type::ValueFactory::GetDecimalValue(0);
         break;
       }
-      case EXPRESSION_DATE_PART_DOY: {
+      case DatePartType::DOY: {
         result = type::ValueFactory::GetDecimalValue(1);
         break;
       }
-      case EXPRESSION_DATE_PART_YEAR: {
+      case DatePartType::YEAR: {
         result = type::ValueFactory::GetDecimalValue(2017);
         break;
       }
-      case EXPRESSION_DATE_PART_MONTH: {
+      case DatePartType::MONTH: {
         result = type::ValueFactory::GetDecimalValue(1);
         break;
       }
-      case EXPRESSION_DATE_PART_DAY: {
+      case DatePartType::DAY: {
         result = type::ValueFactory::GetDecimalValue(2);
         break;
       }
-      case EXPRESSION_DATE_PART_HOUR: {
+      case DatePartType::HOUR: {
         result = type::ValueFactory::GetDecimalValue(12);
         break;
       }
-      case EXPRESSION_DATE_PART_MINUTE: {
+      case DatePartType::MINUTE: {
         result = type::ValueFactory::GetDecimalValue(13);
         break;
       }
-      case EXPRESSION_DATE_PART_SECOND: {
+      case DatePartType::SECOND: {
         result = type::ValueFactory::GetDecimalValue(14);
         break;
       }
-      case EXPRESSION_DATE_PART_MILLISECOND: {
+      case DatePartType::MILLISECOND: {
         // Note that the milliseconds could be a double
         result = type::ValueFactory::GetDecimalValue(14999.999);
         break;

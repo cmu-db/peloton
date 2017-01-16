@@ -24,7 +24,7 @@ namespace parser {
  */
 struct ExecuteStatement : SQLStatement {
   ExecuteStatement()
-      : SQLStatement(STATEMENT_TYPE_EXECUTE), name(NULL), parameters(NULL) {}
+      : SQLStatement(StatementType::EXECUTE), name(NULL), parameters(NULL) {}
 
   virtual ~ExecuteStatement() {
     free (name);

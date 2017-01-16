@@ -69,9 +69,9 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   //
   // TODO: We may also need a flag for "IN" expression after we support "IN".
   for (auto expr_type : expr_types_) {
-    if (expr_type == EXPRESSION_TYPE_COMPARE_GREATERTHAN) left_open_ = true;
+    if (expr_type == ExpressionType::COMPARE_GREATERTHAN) left_open_ = true;
 
-    if (expr_type == EXPRESSION_TYPE_COMPARE_LESSTHAN) right_open_ = true;
+    if (expr_type == ExpressionType::COMPARE_LESSTHAN) right_open_ = true;
   }
 
   return;

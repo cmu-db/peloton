@@ -24,11 +24,11 @@ namespace executor {
  * The actual executor class templated on the type of aggregation that
  * should be performed.
  *
- * If it is instantiated using PLAN_NODE_TYPE_AGGREGATE,
+ * If it is instantiated using PlanNodeType::AGGREGATE,
  * then it will do a constant space aggregation that expects the input table
  * to be sorted on the group by key.
  *
- * If it is instantiated using PLAN_NODE_TYPE_HASHAGGREGATE,
+ * If it is instantiated using PlanNodeType::HASHAGGREGATE,
  * then the input does not need to be sorted and it will hash the group by key
  * to aggregate the tuples.
  */

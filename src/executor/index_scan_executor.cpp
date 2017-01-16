@@ -124,7 +124,7 @@ bool IndexScanExecutor::DExecute() {
   LOG_TRACE("Index Scan executor :: 0 child");
 
   if (!done_) {
-    if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+    if (index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
       auto status = ExecPrimaryIndexLookup();
       if (status == false) return false;
     } else {
@@ -160,7 +160,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   // Grab info from plan node
   bool acquire_owner = GetPlanNode<planner::AbstractScan>().IsForUpdate();
 
-  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == IndexConstraintType::PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -171,13 +171,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       if (!descend_) {
         LOG_TRACE("ASCENDING SCAN LIMIT in Primary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                          ScanDirectionType::FORWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
       } else {
         LOG_TRACE("DESCENDING SCAN LIMIT in Primary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
+                          ScanDirectionType::BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
 
@@ -188,7 +188,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     else {
       LOG_TRACE("Index Scan in Primary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
-                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                   ScanDirectionType::FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
     }
 
@@ -233,13 +233,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
-      if (visibility == VISIBILITY_DELETED) {
+      if (visibility == VisibilityType::DELETED) {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
                   tuple_location.offset);
         break;
       }
       // if the tuple is visible.
-      else if (visibility == VISIBILITY_OK) {
+      else if (visibility == VisibilityType::OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
@@ -260,7 +260,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           if (!res) {
             LOG_TRACE("read nothing");
             transaction_manager.SetTransactionResult(current_txn,
-                                                     RESULT_FAILURE);
+                                                     ResultType::FAILURE);
             return res;
           }
           // if perform read is successful, then add to visible tuple vector.
@@ -271,7 +271,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       }
       // if the tuple is not visible.
       else {
-        PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
+        PL_ASSERT(visibility == VisibilityType::INVISIBLE);
 
         LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);
@@ -309,7 +309,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // if we have traversed through the chain and still can not fulfill
           // one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return false;
         }
 
@@ -366,7 +367,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   LOG_TRACE("ExecSecondaryIndexLookup");
   PL_ASSERT(!done_);
-  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() != IndexConstraintType::PRIMARY_KEY);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
@@ -382,13 +383,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       if (!descend_) {
         LOG_TRACE("ASCENDING SCAN LIMIT in Secondary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                          ScanDirectionType::FORWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
       } else {
         LOG_TRACE("DESCENDING SCAN LIMIT in Secondary Index");
         index_->ScanLimit(values_, key_column_ids_, expr_types_,
-                          SCAN_DIRECTION_TYPE_BACKWARD, tuple_location_ptrs,
+                          ScanDirectionType::BACKWARD, tuple_location_ptrs,
                           &index_predicate_.GetConjunctionList()[0],
                           limit_number_, limit_offset_);
 
@@ -401,7 +402,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     else {
       LOG_TRACE("Index Scan in Primary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
-                   SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs,
+                   ScanDirectionType::FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
     }
   }
@@ -460,13 +461,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           current_txn, tile_group_header, tuple_location.offset);
 
       // if the tuple is deleted
-      if (visibility == VISIBILITY_DELETED) {
+      if (visibility == VisibilityType::DELETED) {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block,
                   tuple_location.offset);
         break;
       }
       // if the tuple is visible.
-      else if (visibility == VISIBILITY_OK) {
+      else if (visibility == VisibilityType::OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                   tuple_location.offset);
 
@@ -500,7 +501,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
               current_txn, tuple_location, acquire_owner);
           if (!res) {
             transaction_manager.SetTransactionResult(current_txn,
-                                                     RESULT_FAILURE);
+                                                     ResultType::FAILURE);
             LOG_TRACE("passed evaluation, but txn read fails");
             return res;
           }
@@ -516,7 +517,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       }
       // if the tuple is not visible.
       else {
-        PL_ASSERT(visibility == VISIBILITY_INVISIBLE);
+        PL_ASSERT(visibility == VisibilityType::INVISIBLE);
 
         LOG_TRACE("Invisible read: %u, %u", tuple_location.block,
                   tuple_location.offset);
@@ -558,7 +559,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
           // if we have traversed through the chain and still can not fulfill
           // one of the above conditions,
           // then return result_failure.
-          transaction_manager.SetTransactionResult(current_txn, RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn,
+                                                   ResultType::FAILURE);
           return false;
         }
 
@@ -673,7 +675,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     // To make the procedure more uniform, we interpret IN as EQUAL
     // and NOT IN as NOT EQUAL, and react based on expression type below
     // accordingly
-    /*if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
+    /*if (expr_type == ExpressionType::COMPARE_IN) {
       bool bret = lhs.InList(rhs);
 
       if (bret == true) {
@@ -688,56 +690,56 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     LOG_TRACE("Difference : %d ", diff);*/
     if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
       switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_EQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN:
+        case ExpressionType::COMPARE_EQUAL:
+        case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+        case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+        case ExpressionType::COMPARE_IN:
           continue;
 
-        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+        case ExpressionType::COMPARE_NOTEQUAL:
+        case ExpressionType::COMPARE_LESSTHAN:
+        case ExpressionType::COMPARE_GREATERTHAN:
           return false;
 
         default:
           throw IndexException("Unsupported expression type : " +
-                               std::to_string(expr_type));
+                               ExpressionTypeToString(expr_type));
       }
     } else {
       if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
         switch (expr_type) {
-          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+          case ExpressionType::COMPARE_NOTEQUAL:
+          case ExpressionType::COMPARE_LESSTHAN:
+          case ExpressionType::COMPARE_LESSTHANOREQUALTO:
             continue;
 
-          case EXPRESSION_TYPE_COMPARE_EQUAL:
-          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-          case EXPRESSION_TYPE_COMPARE_IN:
+          case ExpressionType::COMPARE_EQUAL:
+          case ExpressionType::COMPARE_GREATERTHAN:
+          case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+          case ExpressionType::COMPARE_IN:
             return false;
 
           default:
             throw IndexException("Unsupported expression type : " +
-                                 std::to_string(expr_type));
+                                 ExpressionTypeToString(expr_type));
         }
       } else {
         if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
           switch (expr_type) {
-            case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-            case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-            case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+            case ExpressionType::COMPARE_NOTEQUAL:
+            case ExpressionType::COMPARE_GREATERTHAN:
+            case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
               continue;
 
-            case EXPRESSION_TYPE_COMPARE_EQUAL:
-            case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-            case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-            case EXPRESSION_TYPE_COMPARE_IN:
+            case ExpressionType::COMPARE_EQUAL:
+            case ExpressionType::COMPARE_LESSTHAN:
+            case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+            case ExpressionType::COMPARE_IN:
               return false;
 
             default:
               throw IndexException("Unsupported expression type : " +
-                                   std::to_string(expr_type));
+                                   ExpressionTypeToString(expr_type));
           }
         } else {
           // Since it is an AND predicate, we could directly return false
@@ -814,7 +816,7 @@ void IndexScanExecutor::UpdatePredicate(
 
       // Add column type.
       // TODO: We should add other types in the future
-      expr_types_.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      expr_types_.push_back(ExpressionType::COMPARE_EQUAL);
     }
   }
 

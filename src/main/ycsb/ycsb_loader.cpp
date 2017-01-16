@@ -115,7 +115,7 @@ void CreateYCSBDatabase() {
 
   index_metadata = new index::IndexMetadata(
     "primary_index", user_table_pkey_index_oid, user_table_oid,
-    ycsb_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+    ycsb_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(

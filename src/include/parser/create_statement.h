@@ -156,7 +156,7 @@ struct CreateStatement : TableRefStatement {
   enum CreateType { kTable, kDatabase, kIndex };
 
   CreateStatement(CreateType type)
-      : TableRefStatement(STATEMENT_TYPE_CREATE),
+      : TableRefStatement(StatementType::CREATE),
         type(type),
         if_not_exists(false),
         columns(nullptr){};

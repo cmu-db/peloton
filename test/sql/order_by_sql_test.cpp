@@ -52,8 +52,8 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   SQLTestsUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
   optimizer::SimpleOptimizer optimizer;
@@ -70,7 +70,8 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
       std::chrono::system_clock::now();
 
   auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-      end_time - start_time).count();
+                     end_time - start_time)
+                     .count();
 
   LOG_INFO(
       "OrderBy Query (table size:%d) with Limit 10 Execution Time is: %lu ms",
@@ -85,8 +86,9 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   end_time = std::chrono::system_clock::now();
 
-  latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-      end_time - start_time).count();
+  latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
+                                                                  start_time)
+                .count();
 
   LOG_INFO("OrderBy Query (table size:%d) Execution Time is: %lu ms",
            table_size, latency);

@@ -71,7 +71,7 @@ bool HashExecutor::DExecute() {
 
     // Construct a logical tile
     for (auto &hashkey : hashkeys) {
-      PL_ASSERT(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+      PL_ASSERT(hashkey->GetExpressionType() == ExpressionType::VALUE_TUPLE);
       auto tuple_value =
           reinterpret_cast<const expression::TupleValueExpression *>(
               hashkey.get());

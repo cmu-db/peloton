@@ -78,7 +78,7 @@ bool OrderByExecutor::DExecute() {
                               sort_buffer_.size() - num_tuples_returned_);
 
   std::shared_ptr<storage::Tile> ptile(storage::TileFactory::GetTile(
-      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       nullptr, *input_schema_, nullptr, tile_size));
 
   for (size_t id = 0; id < tile_size; id++) {

@@ -127,7 +127,7 @@ class TransactionManager {
   virtual void PerformDelete(Transaction *const current_txn, 
                              const ItemPointer &location) = 0;
 
-  void SetTransactionResult(Transaction *const current_txn, const Result result) {
+  void SetTransactionResult(Transaction *const current_txn, const ResultType result) {
     current_txn->SetResult(result);
   }
 
@@ -144,9 +144,9 @@ class TransactionManager {
 
   virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
 
-  virtual Result CommitTransaction(Transaction *const current_txn) = 0;
+  virtual ResultType CommitTransaction(Transaction *const current_txn) = 0;
 
-  virtual Result AbortTransaction(Transaction *const current_txn) = 0;
+  virtual ResultType AbortTransaction(Transaction *const current_txn) = 0;
 
   void ResetStates() {
     next_txn_id_ = START_TXN_ID;

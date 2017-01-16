@@ -130,7 +130,7 @@ void BWTREE_INDEX_TYPE::Scan(
     ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p) {
   // This is a hack - we do not support backward scan
-  if (scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
+  if (scan_direction == ScanDirectionType::INVALID) {
     throw Exception("Invalid scan direction \n");
   }
 
@@ -213,7 +213,7 @@ void BWTREE_INDEX_TYPE::ScanLimit(
   // the index just fetches the first qualified key without further checking
   // including checking for non-exact bounds!!!
   if (csp_p->IsPointQuery() == false && limit == 1 && offset == 0 &&
-      scan_direction == SCAN_DIRECTION_TYPE_FORWARD) {
+      scan_direction == ScanDirectionType::FORWARD) {
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
 

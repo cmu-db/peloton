@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "common/logger.h"
 #include "type/types.h"
@@ -27,7 +27,7 @@ class LibeventSocket;
 
 class InputPacket {
  public:
-  uchar msg_type;                      // header
+  NetworkMessageType msg_type;         // header
   size_t len;                          // size of packet without header
   size_t ptr;                          // ByteBuf cursor
   ByteBuf::const_iterator begin, end;  // start and end iterators of the buffer
@@ -54,7 +54,8 @@ class InputPacket {
 
   inline void Reset() {
     is_initialized = header_parsed = is_extended = false;
-    len = ptr = msg_type = 0;
+    len = ptr = 0;
+    msg_type = NetworkMessageType::NULL_COMMAND;
     extended_buffer_.clear();
   }
 
@@ -93,10 +94,10 @@ class InputPacket {
 };
 
 struct OutputPacket {
-  ByteBuf buf;     // stores packet contents
-  size_t len;      // size of packet
-  size_t ptr;      // ByteBuf cursor, which is used for get and put
-  uchar msg_type;  // header
+  ByteBuf buf;                  // stores packet contents
+  size_t len;                   // size of packet
+  size_t ptr;                   // ByteBuf cursor, which is used for get and put
+  NetworkMessageType msg_type;  // header
 
   bool skip_header_write;  // whether we should write header to socket wbuf
   size_t write_ptr;        // cursor used to write packet content to socket wbuf
@@ -106,7 +107,8 @@ struct OutputPacket {
     buf.resize(BUFFER_INIT_SIZE);
     buf.shrink_to_fit();
     buf.clear();
-    len = ptr = write_ptr = msg_type = 0;
+    len = ptr = write_ptr = 0;
+    msg_type = NetworkMessageType::NULL_COMMAND;
     skip_header_write = true;
   }
 };

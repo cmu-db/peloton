@@ -36,9 +36,9 @@ namespace index {
  */
 inline bool DefinesLowerBound(ExpressionType e) {
   // To reduce branch misprediction penalty
-  return e == EXPRESSION_TYPE_COMPARE_EQUAL ||
-         e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
-         e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
+  return e == ExpressionType::COMPARE_EQUAL ||
+         e == ExpressionType::COMPARE_GREATERTHAN ||
+         e == ExpressionType::COMPARE_GREATERTHANOREQUALTO;
 }
 
 /*
@@ -47,9 +47,9 @@ inline bool DefinesLowerBound(ExpressionType e) {
  * Please refer to DefinesLowerBound() for more information
  */
 inline bool DefinesUpperBound(ExpressionType e) {
-  return e == EXPRESSION_TYPE_COMPARE_EQUAL ||
-         e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
-         e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
+  return e == ExpressionType::COMPARE_EQUAL ||
+         e == ExpressionType::COMPARE_LESSTHAN ||
+         e == ExpressionType::COMPARE_LESSTHANOREQUALTO;
 }
 
 /*
@@ -73,10 +73,10 @@ inline bool DefinesUpperBound(ExpressionType e) {
  */
 bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
   for(auto t : expr_types) {
-    if (t == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
-        t == EXPRESSION_TYPE_COMPARE_IN       ||
-        t == EXPRESSION_TYPE_COMPARE_LIKE     ||
-        t == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
+    if (t == ExpressionType::COMPARE_NOTEQUAL ||
+        t == ExpressionType::COMPARE_IN       ||
+        t == ExpressionType::COMPARE_LIKE     ||
+        t == ExpressionType::COMPARE_NOTLIKE) {
       return true;
     }
   }
@@ -254,7 +254,7 @@ void ConstructIntervals(oid_t leading_column_id,
       // Currently if it is not >  < <= then it must be ==
       // *** I could not find BETWEEN expression in types.h so did not add it
       // into the list
-      PL_ASSERT(expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL);
+      PL_ASSERT(expr_types[i] == ExpressionType::COMPARE_EQUAL);
       
       nums.push_back(std::pair<type::Value, int>(values[i], -1));
       nums.push_back(std::pair<type::Value, int>(values[i], 1));
@@ -337,7 +337,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
     }
 
     if (DefinesLowerBound(expr_types[i]) ||
-        expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+        expr_types[i] == ExpressionType::COMPARE_EQUAL) {
       LOG_TRACE("min cur %lu compare with %s\n",
                 non_leading_columns[column_id].first.GetInfo().size(),
                 values[i].GetInfo().c_str());
@@ -350,7 +350,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
     }
 
     if (DefinesUpperBound(expr_types[i]) ||
-        expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+        expr_types[i] == ExpressionType::COMPARE_EQUAL) {
       LOG_TRACE("max cur %s compare with %s\n",
                 non_leading_columns[column_id].second.GetInfo().c_str(),
                 values[i].GetInfo().c_str());

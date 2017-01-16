@@ -61,10 +61,10 @@ TEST_F(TileTests, BasicTest) {
   const int tuple_count = 6;
 
   storage::TileGroupHeader *header =
-      new storage::TileGroupHeader(BACKEND_TYPE_MM, tuple_count);
+      new storage::TileGroupHeader(BackendType::MM, tuple_count);
 
   storage::Tile *tile = storage::TileFactory::GetTile(
-      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       header, *schema, nullptr, tuple_count);
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);

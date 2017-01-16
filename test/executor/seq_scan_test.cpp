@@ -162,12 +162,12 @@ expression::AbstractExpression *CreatePredicate(
     // Finally, link them together using an equality expression.
     expression::AbstractExpression *equality_expr =
         expression::ExpressionUtil::ComparisonFactory(
-            EXPRESSION_TYPE_COMPARE_EQUAL, tuple_value_expr,
+            ExpressionType::COMPARE_EQUAL, tuple_value_expr,
             constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
     predicate = expression::ExpressionUtil::ConjunctionFactory(
-        EXPRESSION_TYPE_CONJUNCTION_OR, predicate, equality_expr);
+        ExpressionType::CONJUNCTION_OR, predicate, equality_expr);
   }
 
   return predicate;

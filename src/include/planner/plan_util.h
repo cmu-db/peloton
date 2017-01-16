@@ -76,15 +76,15 @@ class PlanUtil {
   static void GetTablesReferenced(const planner::AbstractPlan *plan,
                                   std::set<oid_t> &table_ids) {
     switch (plan->GetPlanNodeType()) {
-      case PLAN_NODE_TYPE_ABSTRACT_SCAN:
-      case PLAN_NODE_TYPE_SEQSCAN:
-      case PLAN_NODE_TYPE_INDEXSCAN: {
+      case PlanNodeType::ABSTRACT_SCAN:
+      case PlanNodeType::SEQSCAN:
+      case PlanNodeType::INDEXSCAN: {
         const planner::AbstractScan *scan_node =
             reinterpret_cast<const planner::AbstractScan *>(plan);
         table_ids.insert(scan_node->GetTable()->GetOid());
         break;
       }
-      case PLAN_NODE_TYPE_INSERT: {
+      case PlanNodeType::INSERT: {
         const planner::InsertPlan *insert_node =
             reinterpret_cast<const planner::InsertPlan *>(plan);
         table_ids.insert(insert_node->GetTable()->GetOid());
