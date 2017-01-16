@@ -66,11 +66,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // One to one Mapping
-  auto parse_item_node_type = parse_tree->GetStatements().at(0)->GetType();
+  auto stmt_type = parse_tree->GetStatements().at(0)->GetType();
 
   auto parse_tree2 = parse_tree->GetStatements().at(0);
 
-  switch (parse_item_node_type) {
+  switch (stmt_type) {
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
@@ -689,9 +689,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     } break;
 
     case StatementType::TRANSACTION: {
-    } break;
+      // Nothing???
+      break;
+    }
     default:
-      LOG_ERROR("Unsupported Parse Node Type %d", parse_item_node_type);
+      LOG_ERROR("Unsupported StatementType %s",
+                StatementTypeToString(stmt_type).c_str());
       throw NotImplementedException("Error: Query plan not implemented");
   }
 

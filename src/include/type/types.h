@@ -94,29 +94,29 @@ enum class GarbageCollectionType {
 // We do not allow for user-defined types, nor do we try to do anything dynamic.
 //===--------------------------------------------------------------------===//
 
-enum PostgresValueType {
-  POSTGRES_VALUE_TYPE_INVALID = INVALID_TYPE_ID,
-  POSTGRES_VALUE_TYPE_BOOLEAN = 16,
-  POSTGRES_VALUE_TYPE_SMALLINT = 21,
-  POSTGRES_VALUE_TYPE_INTEGER = 23,
-  POSTGRES_VALUE_TYPE_VARBINARY = 17,
-  POSTGRES_VALUE_TYPE_BIGINT = 20,
-  POSTGRES_VALUE_TYPE_REAL = 700,
-  POSTGRES_VALUE_TYPE_DOUBLE = 701,
-  POSTGRES_VALUE_TYPE_TEXT = 25,
-  POSTGRES_VALUE_TYPE_BPCHAR = 1042,
-  POSTGRES_VALUE_TYPE_BPCHAR2 = 1014,
-  POSTGRES_VALUE_TYPE_VARCHAR = 1015,
-  POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
-  POSTGRES_VALUE_TYPE_DATE = 1082,
-  POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
-  POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
-  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_DECIMAL = 1700
+enum class PostgresValueType {
+  INVALID = INVALID_TYPE_ID,
+  BOOLEAN = 16,
+  SMALLINT = 21,
+  INTEGER = 23,
+  VARBINARY = 17,
+  BIGINT = 20,
+  REAL = 700,
+  DOUBLE = 701,
+  TEXT = 25,
+  BPCHAR = 1042,
+  BPCHAR2 = 1014,
+  VARCHAR = 1015,
+  VARCHAR2 = 1043,
+  DATE = 1082,
+  TIMESTAMPS = 1114,
+  TIMESTAMPS2 = 1184,
+  TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
+  INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
+  INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
+  OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
+  FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
+  DECIMAL = 1700
 };
 
 //===--------------------------------------------------------------------===//
@@ -551,7 +551,7 @@ enum CreateType {
 // Statement Types
 //===--------------------------------------------------------------------===//
 
-enum StatementType {
+enum class StatementType {
   INVALID = INVALID_TYPE_ID,  // invalid statement type
   SELECT = 1,                 // select statement type
   INSERT = 3,                 // insert statement type
@@ -845,7 +845,7 @@ enum StatsType {
 
 enum MetricType {
   // Metric type is invalid
-  INVALID_METRIC = 0,
+  INVALID_METRIC = INVALID_TYPE_ID,
   // Metric to count a number
   COUNTER_METRIC = 1,
   // Access information, e.g., # tuples read, inserted, updated, deleted

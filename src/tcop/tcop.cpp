@@ -192,8 +192,7 @@ ResultType TrafficCop::ExecuteStatement(
       rows_changed = status.m_processed;
       return status.m_result;
     }
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return ResultType::FAILURE;
   }
@@ -299,8 +298,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
 #endif
     return std::move(statement);
-  }
-  catch (Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     return nullptr;
   }
@@ -396,48 +394,86 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 
 FieldInfo TrafficCop::GetColumnFieldForValueType(
     std::string column_name, type::Type::TypeId column_type) {
+  PostgresValueType field_type;
+  size_t field_size;
   switch (column_type) {
-    case type::Type::INTEGER:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-    case type::Type::DECIMAL:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
+    case type::Type::INTEGER: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      break;
+    }
+    case type::Type::DECIMAL: {
+      field_type = PostgresValueType::DOUBLE;
+      field_size = 8;
+      break;
+    }
     case type::Type::VARCHAR:
-    case type::Type::VARBINARY:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
-    case type::Type::TIMESTAMP:
-      return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TIMESTAMPS, 64);
-    default:
+    case type::Type::VARBINARY: {
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      break;
+    }
+    case type::Type::TIMESTAMP: {
+      field_type = PostgresValueType::TIMESTAMPS;
+      field_size = 64;
+      break;
+    }
+    default: {
       // Type not Identified
-      LOG_ERROR("Unrecognized column type '%s' [%d] for column '%s'",
+      LOG_ERROR("Unrecognized field type '%s' [%d] for field '%s'",
                 TypeIdToString(column_type).c_str(), column_type,
                 column_name.c_str());
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      break;
+    }
   }
-  // return String
-  return std::make_tuple(column_name, POSTGRES_VALUE_TYPE_TEXT, 255);
+  // HACK: Convert the type into a oid_t
+  // This ugly and I don't like it one bit...
+  return std::make_tuple(column_name, static_cast<oid_t>(field_type),
+                         field_size);
 }
 
-FieldInfo TrafficCop::GetColumnFieldForAggregates(
-    std::string name, ExpressionType expr_type) {
+FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
+                                                  ExpressionType expr_type) {
   // For now we only return INT for (MAX , MIN)
   // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
 
+  PostgresValueType field_type;
+  size_t field_size;
+  std::string field_name;
+
   // Check the expression type and return the corresponding description
-  if (expr_type == ExpressionType::AGGREGATE_MAX ||
-      expr_type == ExpressionType::AGGREGATE_MIN ||
-      expr_type == ExpressionType::AGGREGATE_COUNT) {
-    return std::make_tuple(name, POSTGRES_VALUE_TYPE_INTEGER, 4);
-  }
-
-  // Return double if function is AVERAGE
-  if (expr_type == ExpressionType::AGGREGATE_AVG) {
-    return std::make_tuple(name, POSTGRES_VALUE_TYPE_DOUBLE, 8);
-  }
-
-  if (expr_type == ExpressionType::AGGREGATE_COUNT_STAR) {
-    return std::make_tuple("COUNT(*)", POSTGRES_VALUE_TYPE_INTEGER, 4);
-  }
-
-  return std::make_tuple(name, POSTGRES_VALUE_TYPE_TEXT, 255);
+  switch (expr_type) {
+    case ExpressionType::AGGREGATE_MAX:
+    case ExpressionType::AGGREGATE_MIN:
+    case ExpressionType::AGGREGATE_COUNT: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      field_name = name;
+      break;
+    }
+    // Return a DOUBLE if the functiob is AVG
+    case ExpressionType::AGGREGATE_AVG: {
+      field_type = PostgresValueType::DOUBLE;
+      field_size = 8;
+      field_name = name;
+      break;
+    }
+    case ExpressionType::AGGREGATE_COUNT_STAR: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      field_name = "COUNT(*)";
+      break;
+    }
+    default: {
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      field_name = name;
+    }
+  }  // SWITCH
+  return std::make_tuple(field_name, static_cast<oid_t>(field_type),
+                         field_size);
 }
 
 }  // End tcop namespace

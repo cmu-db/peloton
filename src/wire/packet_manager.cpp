@@ -667,8 +667,8 @@ size_t PacketManager::ReadParamValue(
         PL_ASSERT(param_values[param_idx].GetTypeId() != type::Type::INVALID);
       } else {
         // BINARY mode
-        switch (param_types[param_idx]) {
-          case POSTGRES_VALUE_TYPE_INTEGER: {
+        switch (static_cast<PostgresValueType>(param_types[param_idx])) {
+          case PostgresValueType::INTEGER: {
             int int_val = 0;
             for (size_t i = 0; i < sizeof(int); ++i) {
               int_val = (int_val << 8) | param[i];
@@ -677,8 +677,9 @@ size_t PacketManager::ReadParamValue(
                 std::make_pair(type::Type::INTEGER, std::to_string(int_val));
             param_values[param_idx] =
                 type::ValueFactory::GetIntegerValue(int_val).Copy();
-          } break;
-          case POSTGRES_VALUE_TYPE_BIGINT: {
+            break;
+          }
+          case PostgresValueType::BIGINT: {
             int64_t int_val = 0;
             for (size_t i = 0; i < sizeof(int64_t); ++i) {
               int_val = (int_val << 8) | param[i];
@@ -687,8 +688,9 @@ size_t PacketManager::ReadParamValue(
                 std::make_pair(type::Type::BIGINT, std::to_string(int_val));
             param_values[param_idx] =
                 type::ValueFactory::GetBigIntValue(int_val).Copy();
-          } break;
-          case POSTGRES_VALUE_TYPE_DOUBLE: {
+            break;
+          }
+          case PostgresValueType::DOUBLE: {
             double float_val = 0;
             unsigned long buf = 0;
             for (size_t i = 0; i < sizeof(double); ++i) {
@@ -699,18 +701,20 @@ size_t PacketManager::ReadParamValue(
                 std::make_pair(type::Type::DECIMAL, std::to_string(float_val));
             param_values[param_idx] =
                 type::ValueFactory::GetDecimalValue(float_val).Copy();
-          } break;
-          case POSTGRES_VALUE_TYPE_VARBINARY: {
+            break;
+          }
+          case PostgresValueType::VARBINARY: {
             bind_parameters[param_idx] = std::make_pair(
                 type::Type::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
             param_values[param_idx] = type::ValueFactory::GetVarbinaryValue(
                 &param[0], param_len, true);
-
-          } break;
+            break;
+          }
           default: {
             LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
-          } break;
+            break;
+          }
         }
         PL_ASSERT(param_values[param_idx].GetTypeId() != type::Type::INVALID);
       }

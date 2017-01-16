@@ -1524,33 +1524,33 @@ LogRecordType StringToLogRecordType(const std::string& str) {
 
 type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
-    case POSTGRES_VALUE_TYPE_BOOLEAN:
+    case PostgresValueType::BOOLEAN:
       return type::Type::BOOLEAN;
 
-    case POSTGRES_VALUE_TYPE_SMALLINT:
+    case PostgresValueType::SMALLINT:
       return type::Type::SMALLINT;
-    case POSTGRES_VALUE_TYPE_INTEGER:
+    case PostgresValueType::INTEGER:
       return type::Type::INTEGER;
-    case POSTGRES_VALUE_TYPE_BIGINT:
+    case PostgresValueType::BIGINT:
       return type::Type::BIGINT;
-    case POSTGRES_VALUE_TYPE_REAL:
+    case PostgresValueType::REAL:
       return type::Type::DECIMAL;
-    case POSTGRES_VALUE_TYPE_DOUBLE:
+    case PostgresValueType::DOUBLE:
       return type::Type::DECIMAL;
 
-    case POSTGRES_VALUE_TYPE_BPCHAR:
-    case POSTGRES_VALUE_TYPE_BPCHAR2:
-    case POSTGRES_VALUE_TYPE_VARCHAR:
-    case POSTGRES_VALUE_TYPE_VARCHAR2:
-    case POSTGRES_VALUE_TYPE_TEXT:
+    case PostgresValueType::BPCHAR:
+    case PostgresValueType::BPCHAR2:
+    case PostgresValueType::VARCHAR:
+    case PostgresValueType::VARCHAR2:
+    case PostgresValueType::TEXT:
       return type::Type::VARCHAR;
 
-    case POSTGRES_VALUE_TYPE_DATE:
-    case POSTGRES_VALUE_TYPE_TIMESTAMPS:
-    case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
+    case PostgresValueType::DATE:
+    case PostgresValueType::TIMESTAMPS:
+    case PostgresValueType::TIMESTAMPS2:
       return type::Type::TIMESTAMP;
 
-    case POSTGRES_VALUE_TYPE_DECIMAL:
+    case PostgresValueType::DECIMAL:
       return type::Type::DECIMAL;
     default:
       throw ConversionException(StringUtil::Format(
