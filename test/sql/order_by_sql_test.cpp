@@ -31,8 +31,10 @@ void CreateAndLoadTable() {
       "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT, d VARCHAR);");
 
   // Insert tuples into table
-  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333, 'abcd');");
-  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 33, 111, 'bcda');");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (1, 22, 333, 'abcd');");
+  SQLTestsUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (2, 33, 111, 'bcda');");
   SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 11, 222, 'bcd');");
 }
 
@@ -81,8 +83,7 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
       std::chrono::system_clock::now();
 
   auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                     end_time - start_time)
-                     .count();
+                     end_time - start_time).count();
 
   LOG_INFO(
       "OrderBy Query (table size:%d) with Limit 10 Execution Time is: %lu ms",
@@ -97,9 +98,8 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   end_time = std::chrono::system_clock::now();
 
-  latency = std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
-                                                                  start_time)
-                .count();
+  latency = std::chrono::duration_cast<std::chrono::milliseconds>(
+                end_time - start_time).count();
 
   LOG_INFO("OrderBy Query (table size:%d) Execution Time is: %lu ms",
            table_size, latency);
@@ -111,7 +111,6 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-
 TEST_F(OrderBySQLTests, OrderByWithColumnsTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
@@ -122,9 +121,8 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsTest) {
   std::string error_message;
   int rows_changed;
 
-
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b FROM test ORDER BY b;", result, tuple_descriptor, rows_changed, error_message);
-
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b FROM test ORDER BY b;", result,
+                                tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: 3, 1, 2
@@ -150,9 +148,9 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsDescTest) {
   std::string error_message;
   int rows_changed;
 
-
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b FROM test ORDER BY b DESC;", result, tuple_descriptor, rows_changed, error_message);
-
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b FROM test ORDER BY b DESC;",
+                                result, tuple_descriptor, rows_changed,
+                                error_message);
 
   // Check the return value
   // Should be: 2, 1, 3
@@ -160,7 +158,6 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsDescTest) {
   EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
-
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -179,8 +176,8 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsTest) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY b;", result, tuple_descriptor, rows_changed, error_message);
-
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY b;", result,
+                                tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: 3, 1, 2
@@ -196,7 +193,6 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-
 TEST_F(OrderBySQLTests, OrderByWithoutColumnsDescTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
@@ -207,8 +203,8 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsDescTest) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY b DESC;", result, tuple_descriptor, rows_changed, error_message);
-
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY b DESC;", result,
+                                tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: 2, 1, 3
@@ -234,10 +230,11 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitTest) {
   std::string error_message;
   int rows_changed;
 
-
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b, d FROM test ORDER BY d LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
-  //Check if the correct amount of results is here
-  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b, d FROM test ORDER BY d LIMIT 2;",
+                                result, tuple_descriptor, rows_changed,
+                                error_message);
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
 
   // Check the return value
   // Should be: 1, 3
@@ -262,10 +259,11 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitDescTest) {
   std::string error_message;
   int rows_changed;
 
-
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a, b, d FROM test ORDER BY d DESC LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
-  //Check if the correct amount of results is here
-  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+  SQLTestsUtil::ExecuteSQLQuery(
+      "SELECT a, b, d FROM test ORDER BY d DESC LIMIT 2;", result,
+      tuple_descriptor, rows_changed, error_message);
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
 
   // Check the return value
   // Should be: 2, 3
@@ -290,9 +288,11 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitTest) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY d LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
-  //Check if the correct amount of results is here
-  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY d LIMIT 2;",
+                                result, tuple_descriptor, rows_changed,
+                                error_message);
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
 
   // Check the return value
   // Should be: 1, 3
@@ -317,9 +317,11 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY d DESC LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
-  //Check if the correct amount of results is here
-  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+  SQLTestsUtil::ExecuteSQLQuery("SELECT a FROM test ORDER BY d DESC LIMIT 2;",
+                                result, tuple_descriptor, rows_changed,
+                                error_message);
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
 
   // Check the return value
   // Should be: 2, 3
@@ -334,7 +336,6 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-
 TEST_F(OrderBySQLTests, OrderByStar) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
@@ -345,7 +346,8 @@ TEST_F(OrderBySQLTests, OrderByStar) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d;", result, tuple_descriptor, rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d;", result,
+                                tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: [1, 22, 333, 'abcd']; [3,...], [2,...];
@@ -374,7 +376,8 @@ TEST_F(OrderBySQLTests, OrderByStarDesc) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d DESC;", result, tuple_descriptor, rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d DESC;", result,
+                                tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
   // Should be: [2, 33, 111, 'bcda']; [3,...], [1,...];
@@ -403,18 +406,18 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d LIMIT 2;",
+                                result, tuple_descriptor, rows_changed,
+                                error_message);
 
-
-  //Check if the correct amount of results is here
-  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
 
   // Check the return value
   // Should be: 1, 3
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
-
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -433,11 +436,12 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
   std::string error_message;
   int rows_changed;
 
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d DESC LIMIT 2;", result, tuple_descriptor, rows_changed, error_message);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test ORDER BY d DESC LIMIT 2;",
+                                result, tuple_descriptor, rows_changed,
+                                error_message);
 
-
-  //Check if the correct amount of results is here
-  EXPECT_EQ(2, result.size()/tuple_descriptor.size());
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
 
   // Check the return value
   // Should be: 1, 3
@@ -445,14 +449,12 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
   EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("3", SQLTestsUtil::GetResultValueAsString(result, 4));
 
-
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
 
 }  // namespace test
 }  // namespace peloton
