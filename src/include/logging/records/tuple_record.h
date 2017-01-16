@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
+#include "common/item_pointer.h"
+#include "common/printable.h"
 #include "logging/log_record.h"
 #include "storage/tuple.h"
-#include "type/serializer.h"
-#include "common/printable.h"
 #include "type/serializeio.h"
+#include "type/serializer.h"
 
 namespace peloton {
 namespace logging {

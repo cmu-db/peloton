@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <string>
-#include <memory>
 #include <sys/stat.h>
+#include <memory>
+#include <string>
 
-#include "type/types.h"
+#include "common/item_pointer.h"
 #include "type/ephemeral_pool.h"
+#include "type/types.h"
 
 namespace peloton {
 

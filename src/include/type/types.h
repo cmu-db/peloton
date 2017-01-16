@@ -964,44 +964,6 @@ static const size_t max_col_count = 128;
 typedef std::bitset<max_col_count> ColBitmap;
 
 //===--------------------------------------------------------------------===//
-// ItemPointer
-//===--------------------------------------------------------------------===//
-
-// logical physical location
-struct ItemPointer {
-  // block
-  oid_t block;
-
-  // 0-based offset within block
-  oid_t offset;
-
-  ItemPointer() : block(INVALID_OID), offset(INVALID_OID) {}
-
-  ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
-
-  bool IsNull() const {
-    return (block == INVALID_OID && offset == INVALID_OID);
-  }
-
-  bool operator<(const ItemPointer &rhs) const {
-    if (block != rhs.block) {
-      return block < rhs.block;
-    } else {
-      return offset < rhs.offset;
-    }
-  }
-
-} __attribute__((__aligned__(8))) __attribute__((__packed__));
-
-extern ItemPointer INVALID_ITEMPOINTER;
-
-struct ItemPointerHasher {
-  size_t operator()(const ItemPointer &item) const {
-    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
-  }
-};
-
-//===--------------------------------------------------------------------===//
 // read-write set
 //===--------------------------------------------------------------------===//
 
@@ -1045,8 +1007,6 @@ extern FileHandle INVALID_FILE_HANDLE;
 //===--------------------------------------------------------------------===//
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
-
-bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

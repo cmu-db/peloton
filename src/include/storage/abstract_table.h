@@ -12,15 +12,16 @@
 
 #pragma once
 
-#include "common/printable.h"
-#include "type/types.h"
-
 #include <map>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <set>
 #include <string>
+
+#include "common/item_pointer.h"
+#include "common/printable.h"
+#include "type/types.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
