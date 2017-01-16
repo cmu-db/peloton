@@ -72,6 +72,10 @@ TEST_F(TypesTests, DatePartTypeTest) {
 
     auto newVal = peloton::StringToDatePartType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
   EXPECT_FALSE(all_strings.empty());
 
@@ -105,6 +109,10 @@ TEST_F(TypesTests, BackendTypeTest) {
 
     auto newVal = peloton::StringToBackendType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -157,6 +165,10 @@ TEST_F(TypesTests, StatementTypeTest) {
 
     auto newVal = peloton::StringToStatementType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -243,6 +255,10 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 
     auto newVal = peloton::StringToExpressionType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -264,6 +280,10 @@ TEST_F(TypesTests, IndexTypeTest) {
 
     auto newVal = peloton::StringToIndexType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -285,6 +305,10 @@ TEST_F(TypesTests, IndexConstraintTypeTest) {
 
     auto newVal = peloton::StringToIndexConstraintType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -293,6 +317,57 @@ TEST_F(TypesTests, IndexConstraintTypeTest) {
                peloton::Exception);
   EXPECT_THROW(peloton::IndexConstraintTypeToString(
                    static_cast<IndexConstraintType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, HybridScanTypeTest) {
+  std::vector<HybridScanType> list = {
+      HybridScanType::INVALID, HybridScanType::SEQUENTIAL,
+      HybridScanType::INDEX, HybridScanType::HYBRID};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::HybridScanTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToHybridScanType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("XXXXX");
+  EXPECT_THROW(peloton::StringToHybridScanType(invalid), peloton::Exception);
+  EXPECT_THROW(
+      peloton::HybridScanTypeToString(static_cast<HybridScanType>(-99999)),
+      peloton::Exception);
+}
+
+TEST_F(TypesTests, JoinTypeTest) {
+  std::vector<JoinType> list = {JoinType::INVALID, JoinType::LEFT,
+                                JoinType::RIGHT,   JoinType::INNER,
+                                JoinType::OUTER,   JoinType::SEMI};
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::JoinTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToJoinType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("XXXXX");
+  EXPECT_THROW(peloton::StringToJoinType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::JoinTypeToString(static_cast<JoinType>(-99999)),
                peloton::Exception);
 }
 
@@ -321,6 +396,10 @@ TEST_F(TypesTests, PlanNodeTypeTest) {
 
     auto newVal = peloton::StringToPlanNodeType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -332,12 +411,10 @@ TEST_F(TypesTests, PlanNodeTypeTest) {
 
 TEST_F(TypesTests, ParseNodeTypeTest) {
   std::vector<ParseNodeType> list = {
-      ParseNodeType::INVALID,   ParseNodeType::SCAN,
-      ParseNodeType::CREATE,    ParseNodeType::DROP,
-      ParseNodeType::UPDATE,    ParseNodeType::INSERT,
-      ParseNodeType::DELETE,    ParseNodeType::PREPARE,
-      ParseNodeType::EXECUTE,   ParseNodeType::SELECT,
-      ParseNodeType::JOIN_EXPR, ParseNodeType::TABLE,
+      ParseNodeType::INVALID, ParseNodeType::SCAN,      ParseNodeType::CREATE,
+      ParseNodeType::DROP,    ParseNodeType::UPDATE,    ParseNodeType::INSERT,
+      ParseNodeType::DELETE,  ParseNodeType::PREPARE,   ParseNodeType::EXECUTE,
+      ParseNodeType::SELECT,  ParseNodeType::JOIN_EXPR, ParseNodeType::TABLE,
       ParseNodeType::MOCK};
 
   // Make sure that ToString and FromString work
@@ -347,6 +424,10 @@ TEST_F(TypesTests, ParseNodeTypeTest) {
 
     auto newVal = peloton::StringToParseNodeType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -358,10 +439,9 @@ TEST_F(TypesTests, ParseNodeTypeTest) {
 }
 
 TEST_F(TypesTests, ResultTypeTest) {
-  std::vector<ResultType> list = {
-      ResultType::INVALID, ResultType::SUCCESS,
-      ResultType::FAILURE, ResultType::ABORTED,
-      ResultType::NOOP,    ResultType::UNKNOWN};
+  std::vector<ResultType> list = {ResultType::INVALID, ResultType::SUCCESS,
+                                  ResultType::FAILURE, ResultType::ABORTED,
+                                  ResultType::NOOP,    ResultType::UNKNOWN};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -370,6 +450,10 @@ TEST_F(TypesTests, ResultTypeTest) {
 
     auto newVal = peloton::StringToResultType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
