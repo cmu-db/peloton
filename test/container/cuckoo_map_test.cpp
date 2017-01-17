@@ -22,10 +22,10 @@ namespace test {
 // Cuckoo Map Test
 //===--------------------------------------------------------------------===//
 
-class CuckooMapTest : public PelotonTest {};
+class CuckooMapTests : public PelotonTest {};
 
 // Test basic functionality
-TEST_F(CuckooMapTest, BasicTest) {
+TEST_F(CuckooMapTests, BasicTest) {
 
   typedef uint32_t  key_type;
   typedef uint32_t  value_type;
@@ -58,7 +58,7 @@ TEST_F(CuckooMapTest, BasicTest) {
 }
 
 // Test shared pointers
-TEST_F(CuckooMapTest, SharedPointerTest) {
+TEST_F(CuckooMapTests, SharedPointerTest) {
 
   typedef oid_t  key_type;
   typedef std::shared_ptr<oid_t> value_type;

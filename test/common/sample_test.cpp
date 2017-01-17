@@ -20,11 +20,11 @@ namespace test {
 // Sample Test
 //===--------------------------------------------------------------------===//
 
-class SampleTest : public PelotonTest {};
+class SampleTests : public PelotonTest {};
 
-TEST_F(SampleTest, Test1) { EXPECT_EQ(3, 1 + 2); }
+TEST_F(SampleTests, Test1) { EXPECT_EQ(3, 1 + 2); }
 
-TEST_F(SampleTest, Test2) { EXPECT_NE(1, 1 + 2); }
+TEST_F(SampleTests, Test2) { EXPECT_NE(1, 1 + 2); }
 
 }  // End test namespace
 }  // End peloton namespace

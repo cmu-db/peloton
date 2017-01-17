@@ -10,9 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 #include "common/harness.h"
 
@@ -23,6 +22,8 @@ namespace test {
 // Rule Test
 // Based on http://en.cppreference.com/w/cpp/language/rule_of_three
 //===--------------------------------------------------------------------===//
+
+class RuleTests : public PelotonTest {};
 
 class RuleOfThree {
  public:
@@ -70,8 +71,6 @@ class RuleOfThree {
   // raw pointer used as a handle to a dynamically-allocated memory block
   char* cstring;
 };
-
-class RuleTests : public PelotonTest {};
 
 TEST_F(RuleTests, RuleOfThreeTest) {
   RuleOfThree a("foo");

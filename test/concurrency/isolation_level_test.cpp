@@ -21,7 +21,7 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class IsolationLevelTest : public PelotonTest {};
+class IsolationLevelTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
     ConcurrencyType::TIMESTAMP_ORDERING};
@@ -389,7 +389,7 @@ void SIAnomalyTest1() {
   }
 }
 
-TEST_F(IsolationLevelTest, SerializableTest) {
+TEST_F(IsolationLevelTests, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         test_type, IsolationLevelType::FULL);
@@ -403,7 +403,7 @@ TEST_F(IsolationLevelTest, SerializableTest) {
   }
 }
 
-TEST_F(IsolationLevelTest, StressTest) {
+TEST_F(IsolationLevelTests, StressTest) {
   const int num_txn = 2;  // 16
   const int scale = 1;    // 20
   const int num_key = 2;  // 256
