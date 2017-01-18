@@ -32,11 +32,8 @@ namespace peloton {
 
 namespace test {
 
-typedef std::unique_ptr<expression::AbstractExpression> ExpPtr;
-
 class DateFunctionsTests : public PelotonTest {};
 
-// A simple test to make sure function expressions are filled in correctly
 TEST_F(DateFunctionsTests, ExtractTests) {
   std::string date = "2017-01-01 12:13:14.999999+00";
 
@@ -64,24 +61,16 @@ TEST_F(DateFunctionsTests, ExtractTests) {
   };
 
   for (auto x : data) {
-    // these will be cleaned up by extract_expr
-    auto part = expression::ExpressionUtil::ConstantValueFactory(
-        type::ValueFactory::GetIntegerValue(static_cast<int>(x.first)));
-    auto timestamp = expression::ExpressionUtil::ConstantValueFactory(
-        type::ValueFactory::CastAsTimestamp(
-            type::ValueFactory::GetVarcharValue(date)));
-
-    // these need unique ptrs to clean them
-    auto extract_expr = ExpPtr(
-        new expression::FunctionExpression("extract", {part, timestamp}));
-
-    expression::ExpressionUtil::TransformExpression(nullptr,
-                                                    extract_expr.get());
-
-    // Perform evaluation and check the result matches
-    // NOTE: We pass null schema because there are no tuple value expressions
     type::Value expected = type::ValueFactory::GetDecimalValue(x.second);
-    type::Value result = extract_expr->Evaluate(nullptr, nullptr, nullptr);
+
+    // Invoke DateFunctions::Extract()
+    std::vector<type::Value> args = {
+        type::ValueFactory::GetIntegerValue(static_cast<int>(x.first)),
+        type::ValueFactory::CastAsTimestamp(
+            type::ValueFactory::GetVarcharValue(date))};
+    auto result = expression::DateFunctions::Extract(args);
+
+    // Check that result equals our expected value
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
   }

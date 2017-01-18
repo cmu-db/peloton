@@ -24,15 +24,14 @@ namespace expression {
 class DateFunctions {
  public:
   // The arguments are contained in the args vector
-  // the first argument is the part of the date to extract (see type/types.h
-  // DatePart)
-  // the second argument is the timestamp to extract the part from
-  //
+  // (1) The first argument is the part of the date to extract
+  // (see DatePartType in type/types.h
+  // (2) The second argument is the timestamp to extract the part from
   // @return The Value returned should be a type::DecimalValue that is
   // constructed using type::ValueFactory
   static type::Value Extract(const std::vector<type::Value>& args) {
     DatePartType date_part = args[0].GetAs<DatePartType>();
-    UNUSED_ATTRIBUTE uint64_t timestamp = args[1].GetAs<uint64_t>();
+    uint64_t timestamp = args[1].GetAs<uint64_t>();
 
     LOG_INFO(
         "Extracting %s from '%s'", DatePartTypeToString(date_part).c_str(),
@@ -85,7 +84,6 @@ class DateFunctions {
         break;
       }
       case DatePartType::MILLISECOND: {
-        // Note that the milliseconds could be a double
         result = type::ValueFactory::GetDecimalValue(14999.999);
         break;
       }
