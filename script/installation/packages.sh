@@ -7,9 +7,11 @@ if [ "$UNAME" == "linux" ]; then
     # If available, use LSB to identify distribution
     if [ -f /etc/lsb-release -o -d /etc/lsb-release.d ]; then
         export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
+        DISTRO_VER=$(lsb_release -r | cut -d: -f2 | sed s/'^\t'//)
     # Otherwise, use release info file
     else
         export DISTRO=$(ls -d /etc/[A-Za-z]*[_-][rv]e[lr]* | grep -v "lsb" | cut -d'/' -f3 | cut -d'-' -f1 | cut -d'_' -f1)
+        DISTRO_VER=$(cat /etc/*-release | grep "VERSION_ID" | cut -d'=' -f2 | tr -d '"')
     fi
 fi
 # For everything else (or if above failed), just use generic identifier
@@ -98,7 +100,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
 ## ------------------------------------------------
 ## REDHAT
 ## ------------------------------------------------
-elif [[ "$DISTRO" == *"REDHAT"* ]]; then
+elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
     # Package download paths
     PKG_REPOS=(
         "https://download.postgresql.org/pub/repos/yum/9.3/redhat/rhel-7-x86_64/pgdg-redhat93-9.3-3.noarch.rpm"
