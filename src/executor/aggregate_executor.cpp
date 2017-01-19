@@ -103,17 +103,17 @@ bool AggregateExecutor::DExecute() {
     if (nullptr == aggregator.get()) {
       // Initialize the aggregator
       switch (node.GetAggregateStrategy()) {
-        case AGGREGATE_TYPE_HASH:
+        case AggregateType::HASH:
           LOG_TRACE("Use HashAggregator");
           aggregator.reset(new HashAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
-        case AGGREGATE_TYPE_SORTED:
+        case AggregateType::SORTED:
           LOG_TRACE("Use SortedAggregator");
           aggregator.reset(new SortedAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
-        case AGGREGATE_TYPE_PLAIN:
+        case AggregateType::PLAIN:
           LOG_TRACE("Use PlainAggregator");
           aggregator.reset(
               new PlainAggregator(&node, output_table, executor_context_));

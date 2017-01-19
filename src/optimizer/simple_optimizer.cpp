@@ -89,7 +89,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       LOG_TRACE("Processing SELECT...");
       auto select_stmt = (parser::SelectStatement*)parse_tree2;
       LOG_TRACE("SELECT Info: %s", select_stmt->GetInfo().c_str());
-      auto agg_type = AGGREGATE_TYPE_PLAIN;  // default aggregator
+      auto agg_type = AggregateType::PLAIN;  // default aggregator
       std::vector<oid_t> group_by_columns;
       auto group_by = select_stmt->group_by;
       expression::AbstractExpression* having = nullptr;
@@ -535,7 +535,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           // Column name
           else {
             // There are columns in the query
-            agg_type = AGGREGATE_TYPE_HASH;
+            agg_type = AggregateType::HASH;
             std::string col_name(expr->GetExpressionName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
@@ -1192,7 +1192,7 @@ SimpleOptimizer::CreateHackingNestedLoopJoinPlan(
             output_table_schema.get()->GetInfo().c_str());
   std::unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN));
+      std::move(group_by_columns), output_table_schema, AggregateType::PLAIN));
   LOG_DEBUG("Aggregation plan constructed");
 
   agg_plan->AddChild(std::move(nested_join_plan_node));
