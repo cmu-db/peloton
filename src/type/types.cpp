@@ -1317,6 +1317,51 @@ std::ostream &operator<<(std::ostream &os, const AggregateType &type) {
   return os;
 }
 
+// ------------------------------------------------------------------
+// Expression Quantifier Types - String Utilities
+// ------------------------------------------------------------------
+
+std::string QuantifierTypeToString(QuantifierType type) {
+  switch (type) {
+    case QuantifierType::NONE: {
+      return "NONE";
+    }
+    case QuantifierType::ANY: {
+      return "ANY";
+    }
+    case QuantifierType::ALL: {
+      return "ALL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for QuantifierType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "NONE";
+}
+
+QuantifierType StringToQuantifierType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "NONE") {
+    return QuantifierType::NONE;
+  } else if (upper_str == "ANY") {
+    return QuantifierType::ANY;
+  } else if (upper_str == "ALL") {
+    return QuantifierType::ALL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No QuantifierType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return QuantifierType::NONE;
+}
+
+std::ostream& operator<<(std::ostream& os, const QuantifierType& type) {
+  os << QuantifierTypeToString(type);
+  return os;
+}
+
 //===--------------------------------------------------------------------===//
 // PayloadType - String Utilities
 //===--------------------------------------------------------------------===//

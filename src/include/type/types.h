@@ -626,11 +626,14 @@ std::ostream &operator<<(std::ostream &os, const AggregateType &type);
 // ------------------------------------------------------------------
 // Expression Quantifier Types
 // ------------------------------------------------------------------
-enum QuantifierType {
-  QUANTIFIER_TYPE_NONE = 0,
-  QUANTIFIER_TYPE_ANY = 1,
-  QUANTIFIER_TYPE_ALL = 2,
+enum class QuantifierType {
+  NONE = 0,
+  ANY = 1,
+  ALL = 2,
 };
+std::string QuantifierTypeToString(QuantifierType type);
+QuantifierType StringToQuantifierType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const QuantifierType &type);
 
 //===--------------------------------------------------------------------===//
 // Table Reference Types
