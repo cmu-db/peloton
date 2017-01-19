@@ -956,7 +956,7 @@ join_condition:
  
 copy_statement:
 		COPY table_ref_name TO STRING DELIMITER STRING { 
-			$$ = new CopyStatement(peloton::COPY_TYPE_EXPORT_OTHER);
+			$$ = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
 			$$->cpy_table = $2;
 			$$->file_path = $4; 
 			$$->delimiter = *($6);
