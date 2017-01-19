@@ -65,7 +65,7 @@ TEST_F(InsertTests, InsertRecord) {
       new executor::ExecutorContext(txn));
 
   std::unique_ptr<parser::InsertStatement> insert_node(
-      new parser::InsertStatement(INSERT_TYPE_VALUES));
+      new parser::InsertStatement(InsertType::VALUES));
 
   char *name = new char[11]();
   strcpy(name, "TEST_TABLE");

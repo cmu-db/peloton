@@ -654,11 +654,14 @@ std::ostream &operator<<(std::ostream &os, const TableReferenceType &type);
 // Insert Types
 //===--------------------------------------------------------------------===//
 
-enum InsertType {
-  INSERT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid insert type
-  INSERT_TYPE_VALUES = 1,                 // values
-  INSERT_TYPE_SELECT = 2                  // select
+enum class InsertType {
+  INVALID = INVALID_TYPE_ID,  // invalid insert type
+  VALUES = 1,                 // values
+  SELECT = 2                  // select
 };
+std::string InsertTypeToString(InsertType type);
+InsertType StringToInsertType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const InsertType &type);
 
 //===--------------------------------------------------------------------===//
 // Copy Types

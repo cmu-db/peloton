@@ -221,7 +221,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
     }
   }
   switch (stmt->type) {
-    case INSERT_TYPE_VALUES:
+    case InsertType::VALUES:
       inprint("-> Values", num_indent + 1);
       for (auto value_item : *stmt->insert_values){
         // TODO this is a debugging method which is currently unused.
@@ -230,7 +230,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
         }
       }
       break;
-    case INSERT_TYPE_SELECT:
+    case InsertType::SELECT:
       GetSelectStatementInfo(stmt->select, num_indent + 1);
       break;
     default:

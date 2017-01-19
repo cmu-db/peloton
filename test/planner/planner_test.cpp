@@ -191,7 +191,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   // INSERT INTO department_table VALUES ($0, $1)
   auto insert_statement =
-      new parser::InsertStatement(peloton::INSERT_TYPE_VALUES);
+      new parser::InsertStatement(peloton::InsertType::VALUES);
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");

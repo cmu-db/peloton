@@ -544,13 +544,13 @@ truncate_statement:
  ******************************/
 insert_statement:
 		INSERT INTO table_name opt_column_list VALUES insert_list {
-			$$ = new InsertStatement(peloton::INSERT_TYPE_VALUES);
+			$$ = new InsertStatement(peloton::InsertType::VALUES);
 			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->insert_values = $6;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
-			$$ = new InsertStatement(peloton::INSERT_TYPE_SELECT);
+			$$ = new InsertStatement(peloton::InsertType::SELECT);
 			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->select = $5;

@@ -1418,6 +1418,51 @@ std::ostream& operator<<(std::ostream& os, const TableReferenceType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// InsertType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string InsertTypeToString(InsertType type) {
+  switch (type) {
+    case InsertType::INVALID: {
+      return "INVALID";
+    }
+    case InsertType::VALUES: {
+      return "VALUES";
+    }
+    case InsertType::SELECT: {
+      return "SELECT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for InsertType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+InsertType StringToInsertType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return InsertType::INVALID;
+  } else if (upper_str == "VALUES") {
+    return InsertType::VALUES;
+  } else if (upper_str == "SELECT") {
+    return InsertType::SELECT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No InsertType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return InsertType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const InsertType &type) {
+  os << InsertTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // PayloadType - String Utilities
 //===--------------------------------------------------------------------===//
 
