@@ -82,13 +82,13 @@ function(peloton_pickup_peloton_sources root)
   # murmur3
   file(GLOB_RECURSE murmur_srcs ${root}/third_party/murmur3/*.cpp)
 
-  # libcds
-  file(GLOB_RECURSE libcds_srcs ${root}/third_party/libcds/src/*.cpp)  
-  set(libcds_hdrs ${root}/third_party/libcds/)
-  include_directories(SYSTEM "${libcds_hdrs}")
-
   # jsoncpp
   file(GLOB_RECURSE jsoncpp_srcs ${root}/third_party/jsoncpp/*.cpp)
+  
+  # date
+  file(GLOB_RECURSE jsoncpp_srcs ${root}/third_party/date/*.cpp)
+  set(date_hdrs ${root}/third_party/date/)
+  include_directories(SYSTEM "${date_hdrs}")
     
   # adding headers to make the visible in some IDEs (Qt, VS, Xcode)
   list(APPEND srcs ${hdrs} ${PROJECT_BINARY_DIR}/peloton_config.h)
