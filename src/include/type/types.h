@@ -620,7 +620,7 @@ enum class AggregateType {
   PLAIN = 3  // no group-by
 };
 std::string AggregateTypeToString(AggregateType type);
-JoinType StringToAggregateType(const std::string &str);
+AggregateType StringToAggregateType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const AggregateType &type);
 
 // ------------------------------------------------------------------
