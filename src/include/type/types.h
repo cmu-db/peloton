@@ -693,12 +693,15 @@ std::ostream &operator<<(std::ostream &os, const PayloadType &type);
 // Task Priority Types
 //===--------------------------------------------------------------------===//
 
-enum TaskPriorityType {
-  TASK_PRIORTY_TYPE_INVALID = INVALID_TYPE_ID,  // invalid priority
-  TASK_PRIORTY_TYPE_LOW = 10,
-  TASK_PRIORTY_TYPE_NORMAL = 11,
-  TASK_PRIORTY_TYPE_HIGH = 12
+enum class TaskPriorityType {
+  INVALID = INVALID_TYPE_ID,  // invalid priority
+  LOW = 10,
+  NORMAL = 11,
+  HIGH = 12
 };
+std::string TaskPriorityTypeToString(TaskPriorityType type);
+TaskPriorityType StringToTaskPriorityType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TaskPriorityType &type);
 
 //===--------------------------------------------------------------------===//
 // Result Types

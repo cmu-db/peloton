@@ -1560,6 +1560,56 @@ std::ostream &operator<<(std::ostream &os, const PayloadType &type) {
 }
 
 //===--------------------------------------------------------------------===//
+// TaskPriorityType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string TaskPriorityTypeToString(TaskPriorityType type) {
+  switch (type) {
+    case TaskPriorityType::INVALID: {
+      return "INVALID";
+    }
+    case TaskPriorityType::LOW: {
+      return "LOW";
+    }
+    case TaskPriorityType::NORMAL: {
+      return "NORMAL";
+    }
+    case TaskPriorityType::HIGH: {
+      return "HIGH";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for TaskPriorityType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+TaskPriorityType StringToTaskPriorityType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return TaskPriorityType::INVALID;
+  } else if (upper_str == "LOW") {
+    return TaskPriorityType::LOW;
+  } else if (upper_str == "NORMAL") {
+    return TaskPriorityType::NORMAL;
+  } else if (upper_str == "HIGH") {
+    return TaskPriorityType::HIGH;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No TaskPriorityType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return TaskPriorityType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const TaskPriorityType& type) {
+  os << TaskPriorityTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // ResultType - String Utilities
 //===--------------------------------------------------------------------===//
 
