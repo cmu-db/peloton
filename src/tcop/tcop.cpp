@@ -188,7 +188,8 @@ ResultType TrafficCop::ExecuteStatement(
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
                                          result, result_format);
-      LOG_TRACE("Statement executed. Result: %d", status.m_result);
+      LOG_TRACE("Statement executed. Result: %s",
+                ResultTypeToString(status.m_result).c_str());
       rows_changed = status.m_processed;
       return status.m_result;
     }
@@ -235,8 +236,9 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
       LOG_TRACE(
-          "About to commit: single stmt: %d, init_failure: %d, txn_result: %d",
-          single_statement_txn, init_failure, txn_result);
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+          single_statement_txn, init_failure,
+          ResultTypeToString(txn_result).c_str());
       switch (txn_result) {
         case ResultType::SUCCESS:
           // Commit
