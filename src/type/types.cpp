@@ -1269,6 +1269,104 @@ std::ostream& operator<<(std::ostream& os, const JoinType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// AggregateType - String Utilities
+//===--------------------------------------------------------------------===//
+std::string AggregateTypeToString(AggregateType type) {
+  switch (type) {
+    case AggregateType::INVALID: {
+      return "INVALID";
+    }
+    case AggregateType::SORTED: {
+      return "SORTED";
+    }
+    case AggregateType::HASH: {
+      return "HASH";
+    }
+    case AggregateType::PLAIN: {
+      return "PLAIN";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for AggregateType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+AggregateType StringToAggregateType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return AggregateType::INVALID;
+  } else if (upper_str == "SORTED") {
+    return AggregateType::SORTED;
+  } else if (upper_str == "HASH") {
+    return AggregateType::HASH;
+  } else if (upper_str == "PLAIN") {
+    return AggregateType::PLAIN;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No AggregateType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return AggregateType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const AggregateType &type) {
+  os << AggregateTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// PayloadType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string PayloadTypeToString(PayloadType type) {
+  switch (type) {
+    case PayloadType::INVALID: {
+      return ("INVALID");
+    }
+    case PayloadType::CLIENT_REQUEST: {
+      return ("CLIENT_REQUEST");
+    }
+    case PayloadType::CLIENT_RESPONSE: {
+      return ("CLIENT_RESPONSE");
+    }
+    case PayloadType::STOP: {
+      return ("STOP");
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for PayloadType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+PayloadType StringToPayloadType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return PayloadType::INVALID;
+  } else if (upper_str == "CLIENT_REQUEST") {
+    return PayloadType::CLIENT_REQUEST;
+  } else if (upper_str == "CLIENT_RESPONSE") {
+    return PayloadType::CLIENT_RESPONSE;
+  } else if (upper_str == "STOP") {
+    return PayloadType::STOP;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No PayloadType conversion from string '%s'", upper_str.c_str()));
+  }
+  return PayloadType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const PayloadType &type) {
+  os << PayloadTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // ResultType - String Utilities
 //===--------------------------------------------------------------------===//
 

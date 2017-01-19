@@ -613,12 +613,15 @@ std::ostream &operator<<(std::ostream &os, const JoinType &type);
 // Aggregate Types
 //===--------------------------------------------------------------------===//
 
-enum AggregateType {
-  AGGREGATE_TYPE_INVALID = INVALID_TYPE_ID,
-  AGGREGATE_TYPE_SORTED = 1,
-  AGGREGATE_TYPE_HASH = 2,
-  AGGREGATE_TYPE_PLAIN = 3  // no group-by
+enum class AggregateType {
+  INVALID = INVALID_TYPE_ID,
+  SORTED = 1,
+  HASH = 2,
+  PLAIN = 3  // no group-by
 };
+std::string AggregateTypeToString(AggregateType type);
+AggregateType StringToAggregateType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const AggregateType &type);
 
 // ------------------------------------------------------------------
 // Expression Quantifier Types
@@ -668,12 +671,15 @@ enum CopyType {
 // Payload Types
 //===--------------------------------------------------------------------===//
 
-enum PayloadType {
-  PAYLOAD_TYPE_INVALID = INVALID_TYPE_ID,  // invalid message type
-  PAYLOAD_TYPE_CLIENT_REQUEST = 1,         // request
-  PAYLOAD_TYPE_CLIENT_RESPONSE = 2,        // response
-  PAYLOAD_TYPE_STOP = 3                    // stop loop
+enum class PayloadType {
+  INVALID = INVALID_TYPE_ID,  // invalid message type
+  CLIENT_REQUEST = 1,         // request
+  CLIENT_RESPONSE = 2,        // response
+  STOP = 3                    // stop loop
 };
+std::string PayloadTypeToString(PayloadType type);
+PayloadType StringToPayloadType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PayloadType &type);
 
 //===--------------------------------------------------------------------===//
 // Task Priority Types
