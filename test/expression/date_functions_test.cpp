@@ -72,14 +72,14 @@ TEST_F(DateFunctionsTests, ExtractTest) {
       std::make_pair(DatePartType::DOY, 1),
       std::make_pair(DatePartType::YEAR, 2017),
       std::make_pair(DatePartType::MONTH, 1),
-      std::make_pair(DatePartType::DAY, 2),
+      std::make_pair(DatePartType::DAY, 1),
       std::make_pair(DatePartType::HOUR, 12),
       std::make_pair(DatePartType::MINUTE, 13),
 
       // Note that we support these DatePartTypes with and without
       // a trailing 's' at the end.
-      std::make_pair(DatePartType::SECOND, 14),
-      std::make_pair(DatePartType::SECONDS, 14),
+      std::make_pair(DatePartType::SECOND, 14.999999),
+      std::make_pair(DatePartType::SECONDS, 14.999999),
       std::make_pair(DatePartType::MILLISECOND, 14999.999),
       std::make_pair(DatePartType::MILLISECONDS, 14999.999),
   };

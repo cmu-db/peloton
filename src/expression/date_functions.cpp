@@ -40,6 +40,7 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
   // These values are hardcoded for project #1 to pass the test case
   // You should replace all of this with your own implementation
   // Be sure to add all of the DatePartType members!
+  // These are hardcoded for "2017-01-01 12:13:14.999999+00"
   switch (date_part) {
     case DatePartType::CENTURY: {
       result = type::ValueFactory::GetDecimalValue(21);
@@ -66,7 +67,7 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
       break;
     }
     case DatePartType::DAY: {
-      result = type::ValueFactory::GetDecimalValue(2);
+      result = type::ValueFactory::GetDecimalValue(1);
       break;
     }
     case DatePartType::HOUR: {
@@ -78,7 +79,7 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
       break;
     }
     case DatePartType::SECOND: {
-      result = type::ValueFactory::GetDecimalValue(14);
+      result = type::ValueFactory::GetDecimalValue(14.999999);
       break;
     }
     case DatePartType::MILLISECOND: {
