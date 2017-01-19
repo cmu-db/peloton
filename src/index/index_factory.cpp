@@ -52,7 +52,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
 
   auto index_type = metadata->GetIndexType();
   Index *index = nullptr;
-  LOG_TRACE("Index type : %d", index_type);
+  LOG_TRACE("Index type : %s", IndexTypeToString(index_type).c_str());
 
   // -----------------------
   // BW-TREE

@@ -70,7 +70,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Table Created");
   txn_manager.CommitTransaction(txn);
 
@@ -100,7 +101,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Tuple inserted!");
   txn_manager.CommitTransaction(txn);
 
@@ -120,7 +122,8 @@ TEST_F(SimpleOptimizerTests, UpdateDelWithIndexScanTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("INDEX CREATED!");
   txn_manager.CommitTransaction(txn);
 
