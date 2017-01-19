@@ -57,7 +57,8 @@ bool DropExecutor::DExecute() {
              !node.IsMissing()) {
     LOG_TRACE("Dropping table Failed!");
   } else {
-    LOG_TRACE("Result is: %d", current_txn->GetResult());
+    LOG_TRACE("Result is: %s", ResultTypeToString(
+              current_txn->GetResult()).c_str());
   }
 
   return false;

@@ -44,9 +44,9 @@ namespace test {
 
 using namespace optimizer;
 
-class RuleTests : public PelotonTest {};
+class OptimizerRuleTests : public PelotonTest {};
 
-TEST_F(RuleTests, SimpleRuleApplyTest) {
+TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make(0));
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make(0));

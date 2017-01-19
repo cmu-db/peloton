@@ -25,9 +25,9 @@ namespace test {
 // Parser Tests
 //===--------------------------------------------------------------------===//
 
-class ParserTest : public PelotonTest {};
+class ParserTests : public PelotonTest {};
 
-TEST_F(ParserTest, BasicTest) {
+TEST_F(ParserTests, BasicTest) {
 
   std::vector<std::string> queries;
 
@@ -121,7 +121,7 @@ TEST_F(ParserTest, BasicTest) {
   }
 }
 
-TEST_F(ParserTest, GrammarTest) {
+TEST_F(ParserTests, GrammarTest) {
   std::vector<std::string> valid_queries;
 
   valid_queries.push_back("SELECT * FROM test;");
@@ -146,7 +146,7 @@ TEST_F(ParserTest, GrammarTest) {
 #define EXPECT_NULL(pointer) EXPECT_TRUE(pointer == NULL);
 #define EXPECT_NOTNULL(pointer) EXPECT_TRUE(pointer != NULL);
 
-TEST_F(ParserTest, SelectParserTest) {
+TEST_F(ParserTests, SelectParserTest) {
   std::string query =
       "SELECT customer_id, SUM(order_value) FROM order_db.customers JOIN "
       "orders ON customers.id = orders.customer_id GROUP BY customer_id ORDER "
@@ -203,7 +203,7 @@ TEST_F(ParserTest, SelectParserTest) {
   delete list;
 }
 
-TEST_F(ParserTest, TransactionTest) {
+TEST_F(ParserTests, TransactionTest) {
   std::vector<std::string> valid_queries;
 
   valid_queries.push_back("BEGIN TRANSACTION;");
@@ -247,7 +247,7 @@ TEST_F(ParserTest, TransactionTest) {
   delete list;
 }
 
-TEST_F(ParserTest, CreateTest) {
+TEST_F(ParserTests, CreateTest) {
   std::vector<std::string> queries;
 
   queries.push_back(
@@ -287,7 +287,7 @@ TEST_F(ParserTest, CreateTest) {
   }
 }
 
-TEST_F(ParserTest, TM1Test) {
+TEST_F(ParserTests, TM1Test) {
   std::vector<std::string> queries;
 
   queries.push_back(
@@ -344,7 +344,7 @@ TEST_F(ParserTest, TM1Test) {
   }
 }
 
-TEST_F(ParserTest, IndexTest) {
+TEST_F(ParserTests, IndexTest) {
   std::vector<std::string> queries;
 
   queries.push_back(
@@ -376,7 +376,7 @@ TEST_F(ParserTest, IndexTest) {
   }
 }
 
-TEST_F(ParserTest, CopyTest) {
+TEST_F(ParserTests, CopyTest) {
   std::vector<std::string> queries;
   std::string file_path = "/home/user/output.csv";
   queries.push_back("COPY catalog_db.query_metric TO '" + file_path +

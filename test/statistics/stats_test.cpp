@@ -41,7 +41,7 @@
 namespace peloton {
 namespace test {
 
-class StatsTest : public PelotonTest {};
+class StatsTests : public PelotonTest {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
@@ -112,7 +112,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   }
 }
 
-TEST_F(StatsTest, MultiThreadStatsTest) {
+TEST_F(StatsTests, MultiThreadStatsTest) {
   auto catalog = catalog::Catalog::GetInstance();
 
   // Launch aggregator thread
@@ -194,7 +194,7 @@ TEST_F(StatsTest, MultiThreadStatsTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(StatsTest, PerThreadStatsTest) {
+TEST_F(StatsTests, PerThreadStatsTest) {
   FLAGS_stats_mode = STATS_TYPE_ENABLE;
 
   // Register to StatsAggregator
@@ -353,7 +353,7 @@ TEST_F(StatsTest, PerThreadStatsTest) {
   aggregator.ShutdownAggregator();
 }
 
-TEST_F(StatsTest, PerQueryStatsTest) {
+TEST_F(StatsTests, PerQueryStatsTest) {
   int64_t aggregate_interval = 1000;
   LaunchAggregator(aggregate_interval);
   auto &aggregator = stats::StatsAggregator::GetInstance();
@@ -390,7 +390,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
       statement->GetPlanTree().get(), params, result, result_format);
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Tuple inserted!");
 
   // Now Updating end-to-end
@@ -405,7 +406,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Tuple updated!");
 
   // Deleting end-to-end
@@ -420,7 +422,8 @@ TEST_F(StatsTest, PerQueryStatsTest) {
       std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
                                             params, result, result_format);
-  LOG_TRACE("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %s",
+            ResultTypeToString(status.m_result).c_str());
   LOG_TRACE("Tuple deleted!");
 
   // Wait for aggregation to finish

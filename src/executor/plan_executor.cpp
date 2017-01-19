@@ -199,8 +199,9 @@ int PlanExecutor::ExecutePlan(
 // final cleanup
 cleanup:
 
-  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
-            single_statement_txn, init_failure, txn->GetResult());
+  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %s",
+            single_statement_txn, init_failure,
+            ResultTypeToString(txn->GetResult()).c_str());
 
   // clean up executor tree
   CleanExecutorTree(executor_tree.get());

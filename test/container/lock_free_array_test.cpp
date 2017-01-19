@@ -22,10 +22,10 @@ namespace test {
 // LockFreeArray Test
 //===--------------------------------------------------------------------===//
 
-class LockFreeArrayTest : public PelotonTest {};
+class LockFreeArrayTests : public PelotonTest {};
 
 // Test basic functionality
-TEST_F(LockFreeArrayTest, BasicTest) {
+TEST_F(LockFreeArrayTests, BasicTest) {
 
   typedef uint32_t  value_type;
 
@@ -45,7 +45,7 @@ TEST_F(LockFreeArrayTest, BasicTest) {
 }
 
 // Test shared pointers
-TEST_F(LockFreeArrayTest, SharedPointerTest) {
+TEST_F(LockFreeArrayTests, SharedPointerTest) {
 
   typedef std::shared_ptr<oid_t> value_type;
 

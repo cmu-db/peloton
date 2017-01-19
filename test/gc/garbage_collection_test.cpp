@@ -31,7 +31,7 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class GCTest : public PelotonTest {};
+class GarbageCollectionTests : public PelotonTest {};
 
 int UpdateTuple(storage::DataTable *table, const int scale, const int num_key,
 const int num_txn) {
@@ -119,7 +119,7 @@ int RecycledNum(storage::DataTable *table) {
 }
 
 
-TEST_F(GCTest, SimpleTest) {
+TEST_F(GarbageCollectionTests, SimpleTest) {
 
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();

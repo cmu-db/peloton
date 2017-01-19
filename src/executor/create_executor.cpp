@@ -55,7 +55,8 @@ bool CreateExecutor::DExecute() {
     } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
-      LOG_TRACE("Result is: %d", current_txn->GetResult());
+      LOG_TRACE("Result is: %s", ResultTypeToString(
+                current_txn->GetResult()).c_str());
     }
   }
 
@@ -78,7 +79,8 @@ bool CreateExecutor::DExecute() {
     } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
-      LOG_TRACE("Result is: %d", current_txn->GetResult());
+      LOG_TRACE("Result is: %s", ResultTypeToString(
+                current_txn->GetResult()).c_str());
     }
   }
   return false;

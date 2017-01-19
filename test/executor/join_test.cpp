@@ -135,7 +135,7 @@ TEST_F(JoinTests, JoinTypesTest) {
               PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_TRACE("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %s", JoinTypeToString(join_type).c_str());
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, BASIC_TEST);
     }
@@ -149,7 +149,7 @@ TEST_F(JoinTests, ComplicatedTest) {
               PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_TRACE("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %s", JoinTypeToString(join_type).c_str());
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, COMPLICATED_TEST);
     }
@@ -163,7 +163,7 @@ TEST_F(JoinTests, LeftTableEmptyTest) {
               PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_TRACE("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %s", JoinTypeToString(join_type).c_str());
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, LEFT_TABLE_EMPTY);
     }
@@ -177,7 +177,7 @@ TEST_F(JoinTests, RightTableEmptyTest) {
               PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
-      LOG_TRACE("JOIN TYPE :: %d", join_type);
+      LOG_TRACE("JOIN TYPE :: %s", JoinTypeToString(join_type).c_str());
       // Execute the join test
       ExecuteJoinTest(join_algorithm, join_type, RIGHT_TABLE_EMPTY);
     }
@@ -198,7 +198,7 @@ TEST_F(JoinTests, JoinPredicateTest) {
                 PlanNodeTypeToString(join_algorithm).c_str());
       // Go over all join types
       for (auto join_type : join_types) {
-        LOG_TRACE("JOIN TYPE :: %d", join_type);
+        LOG_TRACE("JOIN TYPE :: %s", JoinTypeToString(join_type).c_str());
         // Execute the join test
         ExecuteJoinTest(join_algorithm, join_type, join_test_type);
       }

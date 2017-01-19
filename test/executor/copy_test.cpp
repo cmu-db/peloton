@@ -83,7 +83,8 @@ TEST_F(CopyTests, Copying) {
     bridge::peloton_status status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree().get(), params, result, result_format);
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
-    LOG_TRACE("Statement executed. Result: %d", status.m_result);
+    LOG_TRACE("Statement executed. Result: %s",
+              ResultTypeToString(status.m_result).c_str());
   }
   LOG_INFO("Tuples inserted!");
   txn_manager.CommitTransaction(txn);
