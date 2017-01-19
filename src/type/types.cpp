@@ -1269,6 +1269,55 @@ std::ostream& operator<<(std::ostream& os, const JoinType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// PayloadType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string PayloadTypeToString(PayloadType type) {
+  switch (type) {
+    case PayloadType::INVALID: {
+      return ("INVALID");
+    }
+    case PayloadType::CLIENT_REQUEST: {
+      return ("CLIENT_REQUEST");
+    }
+    case PayloadType::CLIENT_RESPONSE: {
+      return ("CLIENT_RESPONSE");
+    }
+    case PayloadType::STOP: {
+      return ("STOP");
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for PayloadType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+PayloadType StringToPayloadType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return PayloadType::INVALID;
+  } else if (upper_str == "CLIENT_REQUEST") {
+    return PayloadType::CLIENT_REQUEST;
+  } else if (upper_str == "CLIENT_RESPONSE") {
+    return PayloadType::CLIENT_RESPONSE;
+  } else if (upper_str == "STOP") {
+    return PayloadType::STOP;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No PayloadType conversion from string '%s'", upper_str.c_str()));
+  }
+  return PayloadType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const PayloadType &type) {
+  os << PayloadTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // ResultType - String Utilities
 //===--------------------------------------------------------------------===//
 
