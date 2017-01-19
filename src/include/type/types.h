@@ -291,11 +291,8 @@ enum class DatePartType {
   DECADES = 3,
   DOW = 4,
   DOY = 5,
-  EPOCH = 6,
   HOUR = 7,
   HOURS = 7,
-  ISODOW = 8,
-  ISOYEAR = 9,
   MICROSECOND = 10,
   MICROSECONDS = 10,
   MILLENNIUM = 11,
@@ -320,7 +317,11 @@ std::ostream &operator<<(std::ostream &os, const DatePartType &type);
 
 // PAVLO: 2017-01-18
 // I removed these DatePartTypes because I don't think that
-// it's something we can easily support right now
+// it's something we can easily support right now. Things get
+// weird with timezones
+//   EPOCH = 6,
+//   ISODOW = 8,
+//   ISOYEAR = 9,
 //   TIMEZONE = 17,
 //   TIMEZONE_HOUR = 18,
 //   TIMEZONE_HOURS = 18,

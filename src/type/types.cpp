@@ -60,14 +60,8 @@ std::string DatePartTypeToString(DatePartType type) {
       return "DOW";
     case DatePartType::DOY:
       return "DOY";
-    case DatePartType::EPOCH:
-      return "EPOCH";
     case DatePartType::HOUR:
       return "HOUR";
-    case DatePartType::ISODOW:
-      return "ISODOW";
-    case DatePartType::ISOYEAR:
-      return "ISOYEAR";
     case DatePartType::MICROSECOND:
       return "MICROSECOND";
     case DatePartType::MILLENNIUM:
@@ -113,16 +107,10 @@ DatePartType StringToDatePartType(const std::string& str) {
     return DatePartType::DOW;
   } else if (upper_str == "DOY") {
     return DatePartType::DOY;
-  } else if (upper_str == "EPOCH") {
-    return DatePartType::EPOCH;
   } else if (upper_str == "HOUR") {
     return DatePartType::HOUR;
   } else if (upper_str == "HOURS") {
     return DatePartType::HOURS;
-  } else if (upper_str == "ISODOW") {
-    return DatePartType::ISODOW;
-  } else if (upper_str == "ISOYEAR") {
-    return DatePartType::ISOYEAR;
   } else if (upper_str == "MICROSECOND") {
     return DatePartType::MICROSECOND;
   } else if (upper_str == "MICROSECONDS") {

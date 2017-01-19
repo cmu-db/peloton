@@ -32,17 +32,16 @@ TEST_F(TypesTests, DatePartTypeTest) {
       DatePartType::DAY,          DatePartType::DAYS,
       DatePartType::DECADE,       DatePartType::DECADES,
       DatePartType::DOW,          DatePartType::DOY,
-      DatePartType::EPOCH,        DatePartType::HOUR,
-      DatePartType::HOURS,        DatePartType::ISODOW,
-      DatePartType::ISOYEAR,      DatePartType::MICROSECOND,
-      DatePartType::MICROSECONDS, DatePartType::MILLENNIUM,
-      DatePartType::MILLISECOND,  DatePartType::MILLISECONDS,
-      DatePartType::MINUTE,       DatePartType::MINUTES,
-      DatePartType::MONTH,        DatePartType::MONTHS,
-      DatePartType::QUARTER,      DatePartType::QUARTERS,
-      DatePartType::SECOND,       DatePartType::SECONDS,
-      DatePartType::WEEK,         DatePartType::WEEKS,
-      DatePartType::YEAR,         DatePartType::YEARS};
+      DatePartType::HOUR,         DatePartType::HOURS,
+      DatePartType::MICROSECOND,  DatePartType::MICROSECONDS,
+      DatePartType::MILLENNIUM,   DatePartType::MILLISECOND,
+      DatePartType::MILLISECONDS, DatePartType::MINUTE,
+      DatePartType::MINUTES,      DatePartType::MONTH,
+      DatePartType::MONTHS,       DatePartType::QUARTER,
+      DatePartType::QUARTERS,     DatePartType::SECOND,
+      DatePartType::SECONDS,      DatePartType::WEEK,
+      DatePartType::WEEKS,        DatePartType::YEAR,
+      DatePartType::YEARS};
 
   // Make sure that ToString and FromString work
   std::set<std::string> all_strings;
