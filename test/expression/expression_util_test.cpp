@@ -30,7 +30,7 @@ namespace peloton {
 
 namespace test {
 
-class ExpressionUtilTest : public PelotonTest {};
+class ExpressionUtilTests : public PelotonTest {};
 
 std::string CONSTANT_VALUE_STRING1 = "ABC";
 std::string CONSTANT_VALUE_STRING2 = "XYZ";
@@ -57,7 +57,7 @@ expression::AbstractExpression* createExpTree() {
 }
 
 // Make sure that we can traverse a tree
-TEST_F(ExpressionUtilTest, GetInfoTest) {
+TEST_F(ExpressionUtilTests, GetInfoTest) {
   auto root = createExpTree();
   std::string info = expression::ExpressionUtil::GetInfo(root);
 

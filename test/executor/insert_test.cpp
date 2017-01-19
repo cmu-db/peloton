@@ -13,7 +13,6 @@
 
 #include <cstdio>
 
-#include "../../src/include/parser/insert_statement.h"
 #include "gtest/gtest.h"
 
 #include "catalog/catalog.h"
@@ -21,6 +20,7 @@
 #include "common/logger.h"
 #include "executor/insert_executor.h"
 #include "expression/tuple_value_expression.h"
+#include "parser/insert_statement.h"
 #include "parser/select_statement.h"
 #include "planner/insert_plan.h"
 
@@ -39,9 +39,9 @@ TEST_F(InsertTests, InsertRecord) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert a table first
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "dept_id", true);
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "dept_id", true);
   auto name_column =
       catalog::Column(type::Type::VARCHAR, 32, "dept_name", false);
 

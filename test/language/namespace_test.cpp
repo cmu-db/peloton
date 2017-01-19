@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 namespace peloton {
@@ -21,6 +20,8 @@ namespace test {
 // Based on http://en.cppreference.com/w/cpp/language/namespace
 //===--------------------------------------------------------------------===//
 
+class NamespaceTests : public PelotonTest {};
+
 namespace vec {
 
 template <typename T>
@@ -30,8 +31,6 @@ class vector {
 };
 
 }  // of vec
-
-class NamespaceTests : public PelotonTest {};
 
 TEST_F(NamespaceTests, BasicTest) {
   std::vector<int> v1;  // Standard vector.

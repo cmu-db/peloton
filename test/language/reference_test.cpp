@@ -10,10 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <utility>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <utility>
 
 #include "common/harness.h"
 
@@ -21,9 +20,11 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Namespace Test
+// Reference Tests
 // Based on http://en.cppreference.com/w/cpp/language/reference_initialization
 //===--------------------------------------------------------------------===//
+
+class ReferenceTests : public PelotonTest {};
 
 struct S {
   int mi;
@@ -62,15 +63,13 @@ B bar() { return B(); }
 // int& bad_r; // error: no initializer
 extern int& ext_r;  // OK
 
-class ReferenceTests : public PelotonTest {};
-
 TEST_F(ReferenceTests, BasicTest) {
   // lvalues
   int n = 1;
-  int& r1 = n;          // lvalue reference to the object n
-  const int& cr(n);     // reference can be more cv-qualified
+  int& r1 = n;                           // lvalue reference to the object n
+  const int& cr(n);                      // reference can be more cv-qualified
   UNUSED_ATTRIBUTE volatile int& cv{n};  // any initializer syntax can be used
-  UNUSED_ATTRIBUTE int& r2 = r1;         // another lvalue reference to the object n
+  UNUSED_ATTRIBUTE int& r2 = r1;  // another lvalue reference to the object n
   //    int& bad = cr; // error: less cv-qualified
   UNUSED_ATTRIBUTE int& r3 = const_cast<int&>(cr);  // const_cast is needed
 
@@ -88,7 +87,8 @@ TEST_F(ReferenceTests, BasicTest) {
 
   UNUSED_ATTRIBUTE int&& xref = static_cast<int&&>(n);  // bind directly to n
   //  int&& copy_ref = n; // error: can't bind to an lvalue
-  UNUSED_ATTRIBUTE double&& copy_ref = n;  // bind to an rvalue temporary with value 1.0
+  UNUSED_ATTRIBUTE double&& copy_ref =
+      n;  // bind to an rvalue temporary with value 1.0
 
   // restrictions on temporary lifetimes
   // std::ostream& buf_ref = std::ostringstream() << 'a'; // the ostringstream
