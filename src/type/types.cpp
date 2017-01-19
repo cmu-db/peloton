@@ -1269,6 +1269,55 @@ std::ostream& operator<<(std::ostream& os, const JoinType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// AggregateType - String Utilities
+//===--------------------------------------------------------------------===//
+std::string AggregateTypeToString(AggregateType type) {
+  switch (type) {
+    case AggregateType::INVALID: {
+      return "INVALID";
+    }
+    case AggregateType::SORTED: {
+      return "SORTED";
+    }
+    case AggregateType::HASH: {
+      return "HASH";
+    }
+    case AggregateType::PLAIN: {
+      return "PLAIN";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for AggregateType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+AggregateType StringToAggregateType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return AggregateType::INVALID;
+  } else if (upper_str == "SORTED") {
+    return AggregateType::SORTED;
+  } else if (upper_str == "HASH") {
+    return AggregateType::HASH;
+  } else if (upper_str == "PLAIN") {
+    return AggregateType::PLAIN;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No AggregateType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return AggregateType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const AggregateType &type) {
+  os << AggregateTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // PayloadType - String Utilities
 //===--------------------------------------------------------------------===//
 
