@@ -1312,7 +1312,7 @@ std::ostream &operator<<(std::ostream &os, const AggregateType &type) {
 }
 
 // ------------------------------------------------------------------
-// Expression Quantifier Types - String Utilities
+// QuantifierType - String Utilities
 // ------------------------------------------------------------------
 
 std::string QuantifierTypeToString(QuantifierType type) {
