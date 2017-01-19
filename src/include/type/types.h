@@ -639,14 +639,16 @@ std::ostream &operator<<(std::ostream &os, const QuantifierType &type);
 // Table Reference Types
 //===--------------------------------------------------------------------===//
 
-enum TableReferenceType {
-  TABLE_REFERENCE_TYPE_INVALID =
-      INVALID_TYPE_ID,                    // invalid table reference type
-  TABLE_REFERENCE_TYPE_NAME = 1,          // table name
-  TABLE_REFERENCE_TYPE_SELECT = 2,        // output of select
-  TABLE_REFERENCE_TYPE_JOIN = 3,          // output of join
-  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
+enum class TableReferenceType {
+  INVALID = INVALID_TYPE_ID,  // invalid table reference type
+  NAME = 1,                   // table name
+  SELECT = 2,                 // output of select
+  JOIN = 3,                   // output of join
+  CROSS_PRODUCT = 4           // out of cartesian product
 };
+std::string TableReferenceTypeToString(TableReferenceType type);
+TableReferenceType StringToTableReferenceType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TableReferenceType &type);
 
 //===--------------------------------------------------------------------===//
 // Insert Types

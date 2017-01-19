@@ -183,7 +183,7 @@ TEST_F(ParserTest, SelectParserTest) {
 
   // Join Table
   parser::JoinDefinition* join = stmt->from_table->join;
-  EXPECT_EQ(stmt->from_table->type, TABLE_REFERENCE_TYPE_JOIN);
+  EXPECT_EQ(stmt->from_table->type, TableReferenceType::JOIN);
   EXPECT_NOTNULL(join);
   EXPECT_STREQ(join->left->GetTableName(), "customers");
   EXPECT_STREQ(join->right->GetTableName(), "orders");

@@ -118,7 +118,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // UPDATE department_table SET name = $0 WHERE id = $1
   parser::UpdateStatement *update_statement = new parser::UpdateStatement();
   parser::TableRef *table_ref =
-      new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
+      new parser::TableRef(peloton::TableReferenceType::JOIN);
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");

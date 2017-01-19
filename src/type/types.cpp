@@ -1363,6 +1363,61 @@ std::ostream& operator<<(std::ostream& os, const QuantifierType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// TableReferenceType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string TableReferenceTypeToString(TableReferenceType type) {
+  switch (type) {
+    case TableReferenceType::INVALID: {
+      return "INVALID";
+    }
+    case TableReferenceType::NAME: {
+      return "NAME";
+    };
+    case TableReferenceType::SELECT: {
+      return "SELECT";
+    }
+    case TableReferenceType::JOIN: {
+      return "JOIN";
+    }
+    case TableReferenceType::CROSS_PRODUCT: {
+      return "CROSS_PRODUCT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for TableReferenceType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+TableReferenceType StringToTableReferenceType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return TableReferenceType::INVALID;
+  } else if (upper_str == "NAME") {
+    return TableReferenceType::NAME;
+  } else if (upper_str == "SELECT") {
+    return TableReferenceType::SELECT;
+  } else if (upper_str == "JOIN") {
+    return TableReferenceType::JOIN;
+  } else if (upper_str == "CROSS_PRODUCT") {
+    return TableReferenceType::CROSS_PRODUCT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No TableReferenceType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return TableReferenceType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const TableReferenceType& type) {
+  os << TableReferenceTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // PayloadType - String Utilities
 //===--------------------------------------------------------------------===//
 
