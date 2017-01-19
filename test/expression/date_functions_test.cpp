@@ -34,7 +34,7 @@ namespace test {
 
 class DateFunctionsTests : public PelotonTest {};
 
-TEST_F(DateFunctionsTests, ExtractTests) {
+TEST_F(DateFunctionsTests, ExtractTest) {
   std::string date = "2017-01-01 12:13:14.999999+00";
 
   // <PART> <EXPECTED>
@@ -42,8 +42,6 @@ TEST_F(DateFunctionsTests, ExtractTests) {
   // SELECT EXTRACT(MILLISECONDS
   //                FROM CAST('2017-01-01 12:13:14.999999+00' AS TIMESTAMP));
   std::vector<std::pair<DatePartType, double>> data = {
-      std::make_pair(DatePartType::CENTURY, 21),
-      std::make_pair(DatePartType::DECADE, 201),
       std::make_pair(DatePartType::DOW, 0),
       std::make_pair(DatePartType::DOY, 1),
       std::make_pair(DatePartType::YEAR, 2017),
