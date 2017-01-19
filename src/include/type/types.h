@@ -309,11 +309,6 @@ enum class DatePartType {
   QUARTERS = 15,
   SECOND = 16,
   SECONDS = 16,
-  TIMEZONE = 17,
-  TIMEZONE_HOUR = 18,
-  TIMEZONE_HOURS = 18,
-  TIMEZONE_MINUTE = 19,
-  TIMEZONE_MINUTES = 19,
   WEEK = 20,
   WEEKS = 20,
   YEAR = 21,
@@ -322,6 +317,15 @@ enum class DatePartType {
 std::string DatePartTypeToString(DatePartType type);
 DatePartType StringToDatePartType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const DatePartType &type);
+
+// PAVLO: 2017-01-18
+// I removed these DatePartTypes because I don't think that
+// it's something we can easily support right now
+//   TIMEZONE = 17,
+//   TIMEZONE_HOUR = 18,
+//   TIMEZONE_HOURS = 18,
+//   TIMEZONE_MINUTE = 19,
+//   TIMEZONE_MINUTES = 19,
 
 //===--------------------------------------------------------------------===//
 // Network Message Types
@@ -770,7 +774,6 @@ enum LoggingType {
 };
 std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
-
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {

@@ -82,12 +82,6 @@ std::string DatePartTypeToString(DatePartType type) {
       return "QUARTER";
     case DatePartType::SECOND:
       return "SECOND";
-    case DatePartType::TIMEZONE:
-      return "TIMEZONE";
-    case DatePartType::TIMEZONE_HOUR:
-      return "TIMEZONE_HOUR";
-    case DatePartType::TIMEZONE_MINUTE:
-      return "TIMEZONE_MINUTE";
     case DatePartType::WEEK:
       return "WEEK";
     case DatePartType::YEAR:
@@ -109,8 +103,12 @@ DatePartType StringToDatePartType(const std::string& str) {
     return DatePartType::CENTURY;
   } else if (upper_str == "DAY") {
     return DatePartType::DAY;
+  } else if (upper_str == "DAYS") {
+    return DatePartType::DAYS;
   } else if (upper_str == "DECADE") {
     return DatePartType::DECADE;
+  } else if (upper_str == "DECADES") {
+    return DatePartType::DECADES;
   } else if (upper_str == "DOW") {
     return DatePartType::DOW;
   } else if (upper_str == "DOY") {
@@ -119,36 +117,46 @@ DatePartType StringToDatePartType(const std::string& str) {
     return DatePartType::EPOCH;
   } else if (upper_str == "HOUR") {
     return DatePartType::HOUR;
+  } else if (upper_str == "HOURS") {
+    return DatePartType::HOURS;
   } else if (upper_str == "ISODOW") {
     return DatePartType::ISODOW;
   } else if (upper_str == "ISOYEAR") {
     return DatePartType::ISOYEAR;
   } else if (upper_str == "MICROSECOND") {
     return DatePartType::MICROSECOND;
+  } else if (upper_str == "MICROSECONDS") {
+    return DatePartType::MICROSECONDS;
   } else if (upper_str == "MILLENNIUM") {
     return DatePartType::MILLENNIUM;
   } else if (upper_str == "MILLISECOND") {
     return DatePartType::MILLISECOND;
-  } else if (upper_str == "MILLISECOND") {
-    return DatePartType::MILLISECOND;
+  } else if (upper_str == "MILLISECONDS") {
+    return DatePartType::MILLISECONDS;
   } else if (upper_str == "MINUTE") {
     return DatePartType::MINUTE;
+  } else if (upper_str == "MINUTES") {
+    return DatePartType::MINUTES;
   } else if (upper_str == "MONTH") {
     return DatePartType::MONTH;
+  } else if (upper_str == "MONTHS") {
+    return DatePartType::MONTHS;
   } else if (upper_str == "QUARTER") {
     return DatePartType::QUARTER;
+  } else if (upper_str == "QUARTERS") {
+    return DatePartType::QUARTERS;
   } else if (upper_str == "SECOND") {
+    return DatePartType::SECONDS;
+  } else if (upper_str == "SECONDS") {
     return DatePartType::SECOND;
-  } else if (upper_str == "TIMEZONE") {
-    return DatePartType::TIMEZONE;
-  } else if (upper_str == "TIMEZONE_HOUR") {
-    return DatePartType::TIMEZONE_HOUR;
-  } else if (upper_str == "TIMEZONE_MINUTE") {
-    return DatePartType::TIMEZONE_MINUTE;
   } else if (upper_str == "WEEK") {
     return DatePartType::WEEK;
+  } else if (upper_str == "WEEKS") {
+    return DatePartType::WEEKS;
   } else if (upper_str == "YEAR") {
     return DatePartType::YEAR;
+  } else if (upper_str == "YEARS") {
+    return DatePartType::YEARS;
   } else {
     throw ConversionException(StringUtil::Format(
         "No DatePartType conversion from string '%s'", upper_str.c_str()));
@@ -923,9 +931,8 @@ HybridScanType StringToHybridScanType(const std::string& str) {
   } else if (upper_str == "HYBRID") {
     return HybridScanType::HYBRID;
   } else {
-    throw ConversionException(
-        StringUtil::Format("No HybridScanType conversion from string '%s'",
-                           upper_str.c_str()));
+    throw ConversionException(StringUtil::Format(
+        "No HybridScanType conversion from string '%s'", upper_str.c_str()));
   }
   return HybridScanType::INVALID;
 }
@@ -1233,9 +1240,9 @@ std::string JoinTypeToString(JoinType type) {
       return "SEMI";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for JoinType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException(
+          StringUtil::Format("No string conversion for JoinType value '%d'",
+                             static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -1256,9 +1263,8 @@ JoinType StringToJoinType(const std::string& str) {
   } else if (upper_str == "SEMI") {
     return JoinType::SEMI;
   } else {
-    throw ConversionException(
-        StringUtil::Format("No JoinType conversion from string '%s'",
-                           upper_str.c_str()));
+    throw ConversionException(StringUtil::Format(
+        "No JoinType conversion from string '%s'", upper_str.c_str()));
   }
   return JoinType::INVALID;
 }

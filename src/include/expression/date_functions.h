@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "type/types.h"
 
