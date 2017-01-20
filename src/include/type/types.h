@@ -679,9 +679,6 @@ enum class CopyType {
   EXPORT_STDOUT,  // Export data to std out
   EXPORT_OTHER,   // Export data to other file format
 };
-std::string CopyTypeToString(CopyType type);
-CopyType StringToCopyType(const std::string& str);
-std::ostream& operator<<(std::ostream& os, const CopyType& type);
 
 //===--------------------------------------------------------------------===//
 // Payload Types
