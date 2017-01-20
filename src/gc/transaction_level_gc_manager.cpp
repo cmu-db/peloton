@@ -208,8 +208,9 @@ void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> 
         continue;
       }
       // if the entry for table_id exists.
-      PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
-      recycle_queue_map_[table_id]->Enqueue(location);
+      if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+        recycle_queue_map_[table_id]->Enqueue(location);
+      }
 
     }
   }

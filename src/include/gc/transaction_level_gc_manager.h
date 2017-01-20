@@ -141,17 +141,21 @@ private:
   std::vector<std::unique_ptr<std::thread>> gc_threads_;
 
   // queues for to-be-unlinked tuples.
+  // # unlink_queues == # gc_threads
   std::vector<std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>> unlink_queues_;
   
   // local queues for to-be-unlinked tuples.
+  // # local_unlink_queues == # gc_threads
   std::vector<std::list<std::shared_ptr<GarbageContext>>> local_unlink_queues_;
 
   // multimaps for to-be-reclaimed tuples.
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
+  // # reclaim_maps == # gc_threads
   std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>> reclaim_maps_;
 
   // queues for to-be-reused tuples.
+  // # recycle_queue_maps == # tables
   std::unordered_map<oid_t, std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>> recycle_queue_map_;
 
 };
