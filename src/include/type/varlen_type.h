@@ -40,6 +40,10 @@ class VarlenType : public Type {
   CmpBool CompareLessThanEquals(const Value& left, const Value &right) const override;
   CmpBool CompareGreaterThan(const Value& left, const Value &right) const override;
   CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
+  
+  // Other mathematical functions
+  virtual Value Min(const Value& left, const Value &right) const override;
+  virtual Value Max(const Value& left, const Value &right) const override;
 
   Value CastAs(const Value& val, const Type::TypeId type_id) const override;
 
