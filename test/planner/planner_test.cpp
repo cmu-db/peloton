@@ -55,7 +55,7 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   auto tuple_expr =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tuple_expr, parameter_expr);
+      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table");
@@ -118,7 +118,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   // UPDATE department_table SET name = $0 WHERE id = $1
   parser::UpdateStatement *update_statement = new parser::UpdateStatement();
   parser::TableRef *table_ref =
-      new parser::TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
+      new parser::TableRef(peloton::TableReferenceType::JOIN);
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");
@@ -146,7 +146,7 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   auto tuple_expr =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto cmp_expr = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, tuple_expr, parameter_expr);
+      ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   update_statement->where = cmp_expr;
 
@@ -191,7 +191,7 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   // INSERT INTO department_table VALUES ($0, $1)
   auto insert_statement =
-      new parser::InsertStatement(peloton::INSERT_TYPE_VALUES);
+      new parser::InsertStatement(peloton::InsertType::VALUES);
 
   auto name = new char[strlen("department_table") + 1]();
   strcpy(name, "department_table");

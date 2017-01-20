@@ -131,9 +131,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> new_order_expr_types;
     
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
+    new_order_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_expr_types.push_back(ExpressionType::COMPARE_GREATERTHAN);
     
     std::vector<type::Value> new_order_key_values;
     
@@ -162,7 +162,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto new_order_ids = ExecuteRead(&limit_executor);
     
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -189,9 +189,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> orders_expr_types;
     
-    orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    orders_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value> orders_key_values;
 
@@ -215,7 +215,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto orders_ids = ExecuteRead(&orders_index_scan_executor);
     
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -235,9 +235,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> order_line_expr_types;
     
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
     std::vector<type::Value> order_line_key_values;
 
@@ -257,7 +257,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto order_line_index_scan_res = ExecuteRead(&order_line_index_scan_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -271,7 +271,7 @@ bool RunDelivery(const size_t &thread_id){
       sum_res += type::ValuePeeker::PeekDouble(v[0]);
     }
 
-    auto ol_total = type::ValueFactory::GetDoubleValue(sum_res);
+    auto ol_total = type::ValueFactory::GetDecimalValue(sum_res);
 
     LOG_TRACE("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
 
@@ -280,9 +280,9 @@ bool RunDelivery(const size_t &thread_id){
 
     std::vector<ExpressionType> new_order_delete_expr_types;
     
-    new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    new_order_delete_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_delete_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    new_order_delete_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
     std::vector<type::Value> new_order_delete_key_values;
 
@@ -312,7 +312,7 @@ bool RunDelivery(const size_t &thread_id){
     ExecuteDelete(&new_order_delete_executor);
     
     // Check if aborted
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -369,7 +369,7 @@ bool RunDelivery(const size_t &thread_id){
     // Execute the query
     ExecuteUpdate(&orders_update_executor);
     
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -425,7 +425,7 @@ bool RunDelivery(const size_t &thread_id){
 
     ExecuteUpdate(&order_line_update_executor);
     
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -439,9 +439,9 @@ bool RunDelivery(const size_t &thread_id){
     
     std::vector<ExpressionType> customer_expr_types;
 
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+    customer_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
     std::vector<type::Value> customer_key_values;
 
@@ -480,7 +480,7 @@ bool RunDelivery(const size_t &thread_id){
       ol_total);
     // + operator expression
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
+      ExpressionType::OPERATOR_PLUS, type::Type::INTEGER, tuple_val_expr, constant_val_expr);
 
     customer_target_list.emplace_back(
       COL_IDX_C_BALANCE, plus_operator_expr);
@@ -498,23 +498,23 @@ bool RunDelivery(const size_t &thread_id){
     // Execute the query
     ExecuteUpdate(&customer_update_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
     }
   }
 
-  assert(txn->GetResult() == Result::RESULT_SUCCESS);
+  assert(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     LOG_TRACE("commit successfully");
     return true;
   } else {
-    assert(result == Result::RESULT_ABORTED || 
-           result == Result::RESULT_FAILURE);
+    assert(result == ResultType::ABORTED || 
+           result == ResultType::FAILURE);
     return false;
   }
 }

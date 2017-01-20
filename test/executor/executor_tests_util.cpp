@@ -49,7 +49,7 @@ storage::Database *ExecutorTestsUtil::InitializeDatabase(
     const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto result = catalog->CreateDatabase(db_name, nullptr);
-  EXPECT_EQ(RESULT_SUCCESS, result);
+  EXPECT_EQ(ResultType::SUCCESS, result);
   auto database = catalog->GetDatabaseWithName(db_name);
   return (database);
 }
@@ -57,7 +57,7 @@ storage::Database *ExecutorTestsUtil::InitializeDatabase(
 void ExecutorTestsUtil::DeleteDatabase(const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto result = catalog->DropDatabaseWithName(db_name, nullptr);
-  EXPECT_EQ(RESULT_SUCCESS, result);
+  EXPECT_EQ(ResultType::SUCCESS, result);
 }
 
 /** @brief Helper function for defining schema */
@@ -218,7 +218,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
-    tuple.SetValue(2, type::ValueFactory::GetDoubleValue(PopulatedValue(
+    tuple.SetValue(2, type::ValueFactory::GetDecimalValue(PopulatedValue(
                           random ? std::rand() : populate_value, 2)),
                    testing_pool);
 
@@ -269,7 +269,7 @@ void ExecutorTestsUtil::PopulateTiles(
         1, type::ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
         testing_pool);
     tuple.SetValue(
-        2, type::ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
+        2, type::ValueFactory::GetDecimalValue(PopulatedValue(col_itr, 2)),
         testing_pool);
     auto string_value = type::ValueFactory::GetVarcharValue(
         std::to_string(PopulatedValue(col_itr, 3)));
@@ -372,8 +372,8 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -392,7 +392,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     unique = false;
     index_metadata = new index::IndexMetadata(
         "secondary_btree_index", 124, INVALID_OID, INVALID_OID,
-        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
+        IndexType::BWTREE, IndexConstraintType::DEFAULT, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(
         index::IndexFactory::GetIndex(index_metadata));
@@ -426,7 +426,7 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
       new storage::Tuple(table->GetSchema(), true));
   auto val1 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0));
   auto val2 = type::ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1));
-  auto val3 = type::ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2));
+  auto val3 = type::ValueFactory::GetDecimalValue(PopulatedValue(tuple_id, 2));
   auto val4 = type::ValueFactory::GetVarcharValue("12345");
   tuple->SetValue(0, val1, pool);
   tuple->SetValue(1, val2, pool);

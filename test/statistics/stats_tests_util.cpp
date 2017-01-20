@@ -37,7 +37,7 @@ void StatsTestsUtil::ShowTable(std::string database_name,
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   std::vector<type::Value> params;
-  std::vector<ResultType> result;
+  std::vector<StatementResult> result;
   std::string sql = "SELECT * FROM " + database_name + "." + table_name;
   statement.reset(new Statement("SELECT", sql));
   auto select_stmt = peloton_parser.BuildParseTree(sql);
@@ -63,7 +63,7 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   tuple.SetValue(1, type::ValueFactory::GetIntegerValue(second_col_val),
                  testing_pool);
 
-  tuple.SetValue(2, type::ValueFactory::GetDoubleValue(third_col_val),
+  tuple.SetValue(2, type::ValueFactory::GetDecimalValue(third_col_val),
                  testing_pool);
 
   type::Value string_value =
@@ -119,7 +119,7 @@ void StatsTestsUtil::CreateTable(bool has_primary_key) {
       new executor::ExecutorContext(txn));
   planner::CreatePlan node("department_table", "emp_db",
                            std::move(table_schema),
-                           CreateType::CREATE_TYPE_TABLE);
+                           CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();

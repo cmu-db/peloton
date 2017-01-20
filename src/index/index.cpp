@@ -87,7 +87,8 @@ IndexMetadata::IndexMetadata(std::string index_name, oid_t index_oid,
   // was wondering why there indexes weren't working...
   if (visible_ == false) {
     LOG_WARN(
-        "Creating IndexMetadata for '%s' (%s) but visible flag is set to false.",
+        "Creating IndexMetadata for '%s' (%s) but visible flag is set to "
+        "false.",
         name_.c_str(), GetInfo().c_str());
   }
 
@@ -260,7 +261,7 @@ bool Index::Compare(const AbstractTuple &index_key,
     // To make the procedure more uniform, we interpret IN as EQUAL
     // and NOT IN as NOT EQUAL, and react based on expression type below
     // accordingly
-    /*if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
+    /*if (expr_type == ExpressionType::COMPARE_IN) {
       bool bret = lhs.InList(rhs);
 
       if (bret == true) {
@@ -275,56 +276,56 @@ bool Index::Compare(const AbstractTuple &index_key,
     LOG_TRACE("Difference : %d ", diff);*/
     if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
       switch (expr_type) {
-        case EXPRESSION_TYPE_COMPARE_EQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-        case EXPRESSION_TYPE_COMPARE_IN:
+        case ExpressionType::COMPARE_EQUAL:
+        case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+        case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+        case ExpressionType::COMPARE_IN:
           continue;
 
-        case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-        case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-        case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+        case ExpressionType::COMPARE_NOTEQUAL:
+        case ExpressionType::COMPARE_LESSTHAN:
+        case ExpressionType::COMPARE_GREATERTHAN:
           return false;
 
         default:
           throw IndexException("Unsupported expression type : " +
-                               std::to_string(expr_type));
+                               ExpressionTypeToString(expr_type));
       }
     } else {
       if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
         switch (expr_type) {
-          case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-          case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-          case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+          case ExpressionType::COMPARE_NOTEQUAL:
+          case ExpressionType::COMPARE_LESSTHAN:
+          case ExpressionType::COMPARE_LESSTHANOREQUALTO:
             continue;
 
-          case EXPRESSION_TYPE_COMPARE_EQUAL:
-          case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-          case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-          case EXPRESSION_TYPE_COMPARE_IN:
+          case ExpressionType::COMPARE_EQUAL:
+          case ExpressionType::COMPARE_GREATERTHAN:
+          case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+          case ExpressionType::COMPARE_IN:
             return false;
 
           default:
             throw IndexException("Unsupported expression type : " +
-                                 std::to_string(expr_type));
+                                 ExpressionTypeToString(expr_type));
         }
       } else {
         if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
           switch (expr_type) {
-            case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
-            case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
-            case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+            case ExpressionType::COMPARE_NOTEQUAL:
+            case ExpressionType::COMPARE_GREATERTHAN:
+            case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
               continue;
 
-            case EXPRESSION_TYPE_COMPARE_EQUAL:
-            case EXPRESSION_TYPE_COMPARE_LESSTHAN:
-            case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-            case EXPRESSION_TYPE_COMPARE_IN:
+            case ExpressionType::COMPARE_EQUAL:
+            case ExpressionType::COMPARE_LESSTHAN:
+            case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+            case ExpressionType::COMPARE_IN:
               return false;
 
             default:
               throw IndexException("Unsupported expression type : " +
-                                   std::to_string(expr_type));
+                                   ExpressionTypeToString(expr_type));
           }
         } else {
           // Since it is an AND predicate, we could directly return false
@@ -340,16 +341,9 @@ bool Index::Compare(const AbstractTuple &index_key,
 const std::string Index::GetInfo() const {
   std::stringstream os;
 
-  os << "\t-----------------------------------------------------------\n";
-
-  os << "\tINDEX\n";
-
-  os << GetTypeName() << "\t(" << GetName() << ")";
+  os << "INDEX: " << GetTypeName() << "(" << GetName() << ")";
   os << (HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
-
-  os << "\tValue schema : " << *(GetKeySchema());
-
-  os << "\t-----------------------------------------------------------\n";
+  os << "Value schema : " << *(GetKeySchema());
 
   return os.str();
 }

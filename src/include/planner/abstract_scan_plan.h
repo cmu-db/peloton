@@ -50,14 +50,20 @@ class AbstractScan : public AbstractPlan {
   inline const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_ABSTRACT_SCAN;
+    return PlanNodeType::ABSTRACT_SCAN;
   }
 
   inline const std::string GetInfo() const { return "AbstractScan"; }
 
   inline storage::DataTable *GetTable() const { return target_table_; }
 
-  inline bool IsForUpdate() const { return is_for_update; }
+  inline bool IsForUpdate() const {
+    // return is_for_update;
+
+    // TODO: Manually disable the select_for_update feature.
+    // There is some bug with the current select_for_update logic, we need to fix it later -- Jiexi
+    return false;
+  }
 
  protected:
   // These methods only used by its derived classes (when deserialization)

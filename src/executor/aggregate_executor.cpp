@@ -103,17 +103,17 @@ bool AggregateExecutor::DExecute() {
     if (nullptr == aggregator.get()) {
       // Initialize the aggregator
       switch (node.GetAggregateStrategy()) {
-        case AGGREGATE_TYPE_HASH:
+        case AggregateType::HASH:
           LOG_TRACE("Use HashAggregator");
           aggregator.reset(new HashAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
-        case AGGREGATE_TYPE_SORTED:
+        case AggregateType::SORTED:
           LOG_TRACE("Use SortedAggregator");
           aggregator.reset(new SortedAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
-        case AGGREGATE_TYPE_PLAIN:
+        case AggregateType::PLAIN:
           LOG_TRACE("Use PlainAggregator");
           aggregator.reset(
               new PlainAggregator(&node, output_table, executor_context_));
@@ -146,8 +146,8 @@ bool AggregateExecutor::DExecute() {
     bool all_count_aggs = true;
     for (oid_t aggno = 0; aggno < node.GetUniqueAggTerms().size(); aggno++) {
       auto agg_type = node.GetUniqueAggTerms()[aggno].aggtype;
-      if (agg_type != EXPRESSION_TYPE_AGGREGATE_COUNT &&
-          agg_type != EXPRESSION_TYPE_AGGREGATE_COUNT_STAR)
+      if (agg_type != ExpressionType::AGGREGATE_COUNT &&
+          agg_type != ExpressionType::AGGREGATE_COUNT_STAR)
         all_count_aggs = false;
     }
 

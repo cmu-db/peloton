@@ -10,19 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
-#include <vector>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
+#include "common/exception.h"
+#include "common/item_pointer.h"
 #include "common/printable.h"
 #include "type/types.h"
-#include "common/exception.h"
-
 
 namespace peloton {
 namespace concurrency {
@@ -31,18 +30,13 @@ namespace concurrency {
 // Transaction
 //===--------------------------------------------------------------------===//
 
-
 class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction() {
-    Init(INVALID_TXN_ID, INVALID_CID);
-  }
+  Transaction() { Init(INVALID_TXN_ID, INVALID_CID); }
 
-  Transaction(const txn_id_t &txn_id) {
-    Init(txn_id, INVALID_CID);
-  }
+  Transaction(const txn_id_t &txn_id) { Init(txn_id, INVALID_CID); }
 
   Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) {
     Init(txn_id, begin_cid);
@@ -92,36 +86,30 @@ class Transaction : public Printable {
   // Return true if we detect INS_DEL
   bool RecordDelete(const ItemPointer &);
 
-  RWType GetRWType(const ItemPointer&);
+  RWType GetRWType(const ItemPointer &);
 
-  inline const ReadWriteSet &GetReadWriteSet() {
-    return rw_set_;
-  }
+  inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
   inline std::shared_ptr<GCSet> GetGCSetPtr() {
     return gc_set_;
   }
 
-  inline bool IsGCSetEmpty() {
-    return gc_set_->size() == 0;
-  }
+  inline bool IsGCSetEmpty() { return gc_set_->size() == 0; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
   // Set result and status
-  inline void SetResult(Result result) { result_ = result; }
+  inline void SetResult(ResultType result) { result_ = result; }
 
   // Get result and status
-  inline Result GetResult() const { return result_; }
+  inline ResultType GetResult() const { return result_; }
 
   inline bool IsReadOnly() const {
     return is_written_ == false && insert_count_ == 0;
   }
 
-  inline bool IsDeclaredReadOnly() const {
-    return declared_readonly_;
-  }
+  inline bool IsDeclaredReadOnly() const { return declared_readonly_; }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -146,7 +134,7 @@ class Transaction : public Printable {
   std::shared_ptr<GCSet> gc_set_;
 
   // result of the transaction
-  Result result_ = peloton::RESULT_SUCCESS;
+  ResultType result_ = peloton::ResultType::SUCCESS;
 
   bool is_written_;
   size_t insert_count_;

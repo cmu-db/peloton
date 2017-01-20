@@ -44,7 +44,7 @@ class ResultPlan : public AbstractPlan {
 
   storage::Backend *GetBackend() const { return backend_; }
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_RESULT; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::RESULT; }
 
   inline std::string GetInfo() const { return "Result"; }
 

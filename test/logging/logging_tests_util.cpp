@@ -110,7 +110,7 @@ std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
                            random ? std::rand() % (num_rows / 3) : populate_value, 1)),
                     testing_pool);
 
-    tuple->SetValue(2, type::ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
+    tuple->SetValue(2, type::ValueFactory::GetDecimalValue(ExecutorTestsUtil::PopulatedValue(
                            random ? std::rand() : populate_value, 2)),
                     testing_pool);
 

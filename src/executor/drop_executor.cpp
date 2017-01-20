@@ -43,21 +43,22 @@ bool DropExecutor::DExecute() {
 
   auto current_txn = context->GetTransaction();
 
-  Result result = catalog::Catalog::GetInstance()->DropTable(
+  ResultType result = catalog::Catalog::GetInstance()->DropTable(
       DEFAULT_DB_NAME, table_name, current_txn);
   current_txn->SetResult(result);
 
-  if (current_txn->GetResult() == Result::RESULT_SUCCESS) {
+  if (current_txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
-  } else if (current_txn->GetResult() == Result::RESULT_FAILURE &&
+  } else if (current_txn->GetResult() == ResultType::FAILURE &&
              node.IsMissing()) {
-    current_txn->SetResult(Result::RESULT_SUCCESS);
+    current_txn->SetResult(ResultType::SUCCESS);
     LOG_TRACE("Dropping table Succeeded!");
-  } else if (current_txn->GetResult() == Result::RESULT_FAILURE &&
+  } else if (current_txn->GetResult() == ResultType::FAILURE &&
              !node.IsMissing()) {
     LOG_TRACE("Dropping table Failed!");
   } else {
-    LOG_TRACE("Result is: %d", current_txn->GetResult());
+    LOG_TRACE("Result is: %s", ResultTypeToString(
+              current_txn->GetResult()).c_str());
   }
 
   return false;

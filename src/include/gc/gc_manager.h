@@ -10,19 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
 
+#include "common/item_pointer.h"
+#include "common/logger.h"
 #include "common/macros.h"
 #include "type/types.h"
-#include "common/logger.h"
 
 namespace peloton {
 
 namespace storage {
-  class TileGroup;
+class TileGroup;
 }
 
 namespace gc {
@@ -32,17 +32,17 @@ namespace gc {
 //===--------------------------------------------------------------------===//
 
 class GCManager {
-public:
+ public:
   GCManager(const GCManager &) = delete;
   GCManager &operator=(const GCManager &) = delete;
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager() : is_running_(false) { }
+  GCManager() : is_running_(false) {}
 
-  virtual ~GCManager() { }
+  virtual ~GCManager() {}
 
-  static GCManager& GetInstance() {
+  static GCManager &GetInstance() {
     static GCManager gc_manager;
     return gc_manager;
   }
@@ -60,21 +60,20 @@ public:
     return INVALID_ITEMPOINTER;
   }
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) { }
+  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
-  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) { }
+  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
   virtual size_t GetTableCount() { return 0; }
 
   virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set UNUSED_ATTRIBUTE, 
                                    const cid_t &timestamp UNUSED_ATTRIBUTE) {}
 
-protected:
+ protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);
 
-protected:
+ protected:
   volatile bool is_running_;
-
 };
 
 }  // namespace gc

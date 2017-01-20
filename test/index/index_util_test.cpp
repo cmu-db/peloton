@@ -106,8 +106,8 @@ static index::Index *BuildIndex() {
   // For testing IntsKey and TupleKey we need more test cases
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "index_util_test", 88888,  // Index oid
-      INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema.get(), key_schema, key_attrs,
+      INVALID_OID, INVALID_OID, IndexType::BWTREE,
+      IndexConstraintType::DEFAULT, tuple_schema.get(), key_schema, key_attrs,
       true);  // unique_keys
 
   // Build index
@@ -140,24 +140,24 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {3, 0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, true);
   value_index_list.clear();
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {1, 0, 3},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, true);
   value_index_list.clear();
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {0, 1, 3},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, true);
   value_index_list.clear();
@@ -166,14 +166,14 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {3, 0},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
@@ -189,9 +189,9 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // This should return false, since the < already defines a lower bound
   ret = FindValueIndex(
       index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
-      {EXPRESSION_TYPE_COMPARE_LESSTHAN, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_LESSTHAN, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
@@ -199,9 +199,9 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   // This should return true
   ret = FindValueIndex(
       index_p->GetMetadata(), {0, 3, 3, 0, 3, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_LESSTHAN, EXPRESSION_TYPE_COMPARE_LESSTHAN,
-       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_LESSTHAN,
+       ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, true);
   value_index_list.clear();
@@ -210,8 +210,8 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {3, 3, 3},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_EQUAL},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_EQUAL},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
@@ -224,9 +224,9 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
 
   ret = FindValueIndex(
       index_p->GetMetadata(), {3, 0, 1, 0},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-       EXPRESSION_TYPE_COMPARE_EQUAL,
-       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO},
+      {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHANOREQUALTO,
+       ExpressionType::COMPARE_EQUAL,
+       ExpressionType::COMPARE_GREATERTHANOREQUALTO},
       value_index_list);
   EXPECT_EQ(ret, false);
   value_index_list.clear();
@@ -259,9 +259,9 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   tuple_column_id_list = {3, 3, 0};
 
   expr_list = {
-      EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+      ExpressionType::COMPARE_GREATERTHAN,
+      ExpressionType::COMPARE_LESSTHANOREQUALTO,
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO,
   };
 
   IndexScanPredicate isp{};
@@ -304,7 +304,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   };
 
   expr_list = {
-      EXPRESSION_TYPE_COMPARE_NOTEQUAL,
+      ExpressionType::COMPARE_NOTEQUAL,
   };
 
   isp.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
@@ -335,8 +335,8 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   tuple_column_id_list = {3, 1, 0};
 
   expr_list = {
-      EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL,
-      EXPRESSION_TYPE_COMPARE_EQUAL,
+      ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
+      ExpressionType::COMPARE_EQUAL,
   };
 
   isp2.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
@@ -383,9 +383,9 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   tuple_column_id_list = {3, 3, 0};
 
   expr_list = {
-      EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+      ExpressionType::COMPARE_GREATERTHAN,
+      ExpressionType::COMPARE_LESSTHANOREQUALTO,
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO,
   };
 
   IndexScanPredicate isp{};

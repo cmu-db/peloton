@@ -216,7 +216,7 @@ void CreateWarehouseTable() {
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
     "warehouse_pkey", warehouse_table_pkey_index_oid, warehouse_table_oid,
-    tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+    tpcc_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -303,7 +303,7 @@ void CreateDistrictTable() {
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "district_pkey", district_table_pkey_index_oid,
       district_table_pkey_index_oid, district_table_oid, state.index,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -364,7 +364,7 @@ void CreateItemTable() {
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "item_pkey", item_table_pkey_index_oid, item_table_oid, tpcc_database_oid,
-      state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+      state.index, IndexConstraintType::PRIMARY_KEY, tuple_schema,
       key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -501,7 +501,7 @@ void CreateCustomerTable() {
 
   index_metadata = new index::IndexMetadata(
     "customer_pkey", customer_table_pkey_index_oid, customer_table_oid,
-    tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+    tpcc_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
     tuple_schema, key_schema, key_attrs, true);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -515,7 +515,7 @@ void CreateCustomerTable() {
 
   index_metadata = new index::IndexMetadata(
       "customer_skey", customer_table_skey_index_oid, customer_table_oid,
-      tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_INVALID,
+      tpcc_database_oid, state.index, IndexConstraintType::INVALID,
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
@@ -690,7 +690,7 @@ void CreateStockTable() {
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "stock_pkey", stock_table_pkey_index_oid, stock_table_oid,
-      tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+      tpcc_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
       tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -773,7 +773,7 @@ void CreateOrdersTable() {
 
   index_metadata = new index::IndexMetadata(
       "orders_pkey", orders_table_pkey_index_oid, orders_table_oid,
-      tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+      tpcc_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
       tuple_schema, key_schema, key_attrs, true);
 
 
@@ -788,7 +788,7 @@ void CreateOrdersTable() {
 
   index_metadata = new index::IndexMetadata(
       "orders_skey", orders_table_skey_index_oid, orders_table_oid,
-      tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_INVALID,
+      tpcc_database_oid, state.index, IndexConstraintType::INVALID,
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
@@ -844,7 +844,7 @@ void CreateNewOrderTable() {
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
     "new_order_pkey", new_order_table_pkey_index_oid, new_order_table_oid,
-    tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+    tpcc_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
     tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -939,7 +939,7 @@ void CreateOrderLineTable() {
 
   index_metadata = new index::IndexMetadata(
       "order_line_pkey", order_line_table_pkey_index_oid, order_line_table_oid,
-      tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+      tpcc_database_oid, state.index, IndexConstraintType::PRIMARY_KEY,
       tuple_schema, key_schema, key_attrs, true);
 
 
@@ -954,7 +954,7 @@ void CreateOrderLineTable() {
 
   index_metadata = new index::IndexMetadata(
       "order_line_skey", order_line_table_skey_index_oid, order_line_table_oid,
-      tpcc_database_oid, state.index, INDEX_CONSTRAINT_TYPE_INVALID,
+      tpcc_database_oid, state.index, IndexConstraintType::INVALID,
       tuple_schema, key_schema, key_attrs, false);
 
   std::shared_ptr<index::Index> skey_index(
@@ -1168,7 +1168,7 @@ std::unique_ptr<storage::Tuple> BuildItemTuple(
   item_tuple->SetValue(2, type::ValueFactory::GetVarcharValue(i_name), pool.get());
   // I_PRICE
   double i_price = GetRandomDouble(item_min_price, item_max_price);
-  item_tuple->SetValue(3, type::ValueFactory::GetDoubleValue(i_price), nullptr);
+  item_tuple->SetValue(3, type::ValueFactory::GetDecimalValue(i_price), nullptr);
   // I_DATA
   auto i_data = GetRandomAlphaNumericString(data_length);
   item_tuple->SetValue(4, type::ValueFactory::GetVarcharValue(i_data), pool.get());
@@ -1208,10 +1208,10 @@ std::unique_ptr<storage::Tuple> BuildWarehouseTuple(
   warehouse_tuple->SetValue(6, type::ValueFactory::GetVarcharValue(w_zip), pool.get());
   // W_TAX
   double w_tax = GetRandomDouble(warehouse_min_tax, warehouse_max_tax);
-  warehouse_tuple->SetValue(7, type::ValueFactory::GetDoubleValue(w_tax), nullptr);
+  warehouse_tuple->SetValue(7, type::ValueFactory::GetDecimalValue(w_tax), nullptr);
   // W_YTD
   warehouse_tuple->SetValue(
-      8, type::ValueFactory::GetDoubleValue(warehouse_initial_ytd), nullptr);
+      8, type::ValueFactory::GetDecimalValue(warehouse_initial_ytd), nullptr);
 
   return warehouse_tuple;
 }
@@ -1250,10 +1250,10 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(
   district_tuple->SetValue(7, type::ValueFactory::GetVarcharValue(d_zip), pool.get());
   // D_TAX
   double d_tax = GetRandomDouble(district_min_tax, district_max_tax);
-  district_tuple->SetValue(8, type::ValueFactory::GetDoubleValue(d_tax), nullptr);
+  district_tuple->SetValue(8, type::ValueFactory::GetDecimalValue(d_tax), nullptr);
   // D_YTD
   district_tuple->SetValue(
-      9, type::ValueFactory::GetDoubleValue(district_initial_ytd), nullptr);
+      9, type::ValueFactory::GetDecimalValue(district_initial_ytd), nullptr);
   // D_NEXT_O_ID
   auto next_o_id = state.customers_per_district + 1;
   district_tuple->SetValue(10, type::ValueFactory::GetIntegerValue(next_o_id),
@@ -1330,24 +1330,24 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(
                            pool.get());
   // C_CREDIT_LIM
   customer_tuple->SetValue(
-      14, type::ValueFactory::GetDoubleValue(customers_init_credit_lim), nullptr);
+      14, type::ValueFactory::GetDecimalValue(customers_init_credit_lim), nullptr);
   // C_DISCOUNT
   double c_discount =
       GetRandomDouble(customers_min_discount, customers_max_discount);
-  customer_tuple->SetValue(15, type::ValueFactory::GetDoubleValue(c_discount),
+  customer_tuple->SetValue(15, type::ValueFactory::GetDecimalValue(c_discount),
                            nullptr);
   // C_BALANCE
   customer_tuple->SetValue(
-      16, type::ValueFactory::GetDoubleValue(customers_init_balance), nullptr);
+      16, type::ValueFactory::GetDecimalValue(customers_init_balance), nullptr);
   // C_YTD_PAYMENT
-  customer_tuple->SetValue(17, type::ValueFactory::GetDoubleValue(customers_init_ytd),
+  customer_tuple->SetValue(17, type::ValueFactory::GetDecimalValue(customers_init_ytd),
                            nullptr);
   // C_PAYMENT_CNT
   customer_tuple->SetValue(
-      18, type::ValueFactory::GetDoubleValue(customers_init_payment_cnt), nullptr);
+      18, type::ValueFactory::GetDecimalValue(customers_init_payment_cnt), nullptr);
   // C_DELIVERY_CNT
   customer_tuple->SetValue(
-      19, type::ValueFactory::GetDoubleValue(customers_init_delivery_cnt), nullptr);
+      19, type::ValueFactory::GetDecimalValue(customers_init_delivery_cnt), nullptr);
   // C_DATA
   auto c_data = GetRandomAlphaNumericString(data_length);
   customer_tuple->SetValue(20, type::ValueFactory::GetVarcharValue(c_data),
@@ -1383,7 +1383,7 @@ std::unique_ptr<storage::Tuple> BuildHistoryTuple(
   auto h_date = GetTimeStamp();
   history_tuple->SetValue(5, type::ValueFactory::GetTimestampValue(h_date), nullptr);
   // H_AMOUNT
-  history_tuple->SetValue(6, type::ValueFactory::GetDoubleValue(history_init_amount),
+  history_tuple->SetValue(6, type::ValueFactory::GetDecimalValue(history_init_amount),
                           nullptr);
   // H_DATA
   auto h_data = GetRandomAlphaNumericString(history_data_length);
@@ -1496,7 +1496,7 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
     ol_amount = GetRandomDouble(order_line_min_amount,
                                 order_line_max_ol_quantity * item_max_price);
   }
-  order_line_tuple->SetValue(8, type::ValueFactory::GetDoubleValue(ol_amount),
+  order_line_tuple->SetValue(8, type::ValueFactory::GetDecimalValue(ol_amount),
                              nullptr);
   // OL_DIST_INFO
   auto ol_dist_info = GetRandomAlphaNumericString(order_line_dist_info_length);

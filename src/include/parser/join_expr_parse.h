@@ -104,17 +104,17 @@ class JoinExprParse : public AbstractParse {
   static PelotonJoinType TransformJoinType(const JoinType type) {
     switch (type) {
       case JOIN_INNER:
-        return JOIN_TYPE_INNER;
+        return JoinType::INNER;
       case JOIN_FULL:
-        return JOIN_TYPE_OUTER;
+        return JoinType::OUTER;
       case JOIN_LEFT:
-        return JOIN_TYPE_LEFT;
+        return JoinType::LEFT;
       case JOIN_RIGHT:
-        return JOIN_TYPE_RIGHT;
+        return JoinType::RIGHT;
       case JOIN_SEMI:  // IN+Subquery is JOIN_SEMI
-        return JOIN_TYPE_SEMI;
+        return JoinType::SEMI;
       default:
-        return JOIN_TYPE_INVALID;
+        return JoinType::INVALID;
     }
   }
   */
@@ -122,9 +122,9 @@ class JoinExprParse : public AbstractParse {
   // Get all base relation tables in a join node.
   static void GetJoinNodeTables(std::vector<TableParse *> &tables,
                                 AbstractParse *expr) {
-    if (expr->GetParseNodeType() == PARSE_NODE_TYPE_TABLE) {
+    if (expr->GetParseNodeType() == ParseNodeType::TABLE) {
       return tables.push_back(static_cast<TableParse *>(expr));
-    } else if (expr->GetParseNodeType() == PARSE_NODE_TYPE_JOIN_EXPR) {
+    } else if (expr->GetParseNodeType() == ParseNodeType::JOIN_EXPR) {
       JoinExprParse *join = static_cast<JoinExprParse *>(expr);
 
       tables.insert(tables.end(), join->left_node_tables_.begin(),
@@ -137,12 +137,12 @@ class JoinExprParse : public AbstractParse {
     return {};
   }
 
-  inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
+  inline ParseNodeType GetParseNodeType() const { return ParseNodeType::DROP; }
 
   const std::string GetInfo() const { return "DropParse"; }
 
  private:
-  PelotonJoinType join_type_;
+  JoinType join_type_;
 
   // left child of the join tree
   std::unique_ptr<AbstractParse> left_node_;

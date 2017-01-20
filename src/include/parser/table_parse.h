@@ -39,7 +39,7 @@ class TableParse : public AbstractParse {
   }
   */
 
-  inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
+  inline ParseNodeType GetParseNodeType() const { return ParseNodeType::DROP; }
 
   const std::string GetInfo() const { return "DropParse"; }
 

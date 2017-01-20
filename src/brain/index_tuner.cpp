@@ -75,8 +75,8 @@ static void AddIndex(storage::DataTable* table,
 
   index_metadata = new index::IndexMetadata(
       "adhoc_index_" + std::to_string(index_oid), index_oid, table->GetOid(),
-      table->GetDatabaseOid(), INDEX_TYPE_BWTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+      table->GetDatabaseOid(), IndexType::BWTREE,
+      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       unique);
 
   // Set initial utility ratio
@@ -456,7 +456,7 @@ void PrintIndexInformation(storage::DataTable* table) {
       fraction *= 100;
     }
 
-    LOG_INFO("%s %.1f%%", index->GetMetadata()->GetInfo().c_str(), fraction);
+    LOG_DEBUG("%s %.1f%%", index->GetMetadata()->GetInfo().c_str(), fraction);
   }
 }
 
@@ -549,7 +549,7 @@ void IndexTuner::Tune() {
       // Update indices periodically
       IndexTuneHelper(table);
 
-      LOG_INFO("TUNER PAUSE");
+      LOG_INFO("TUNER PAUSE [%dms]", duration_of_pause);
       std::this_thread::sleep_for(std::chrono::milliseconds(duration_of_pause));
     }
 
@@ -628,7 +628,7 @@ void LoadStatsFromFile(const std::string &path) {
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
   // Set duration between pauses
-  auto duration = 10000; // in ms
+  auto duration = 30000; // in ms
   index_tuner.SetDurationOfPause(duration);
 
   // Bootstrap

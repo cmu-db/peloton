@@ -38,7 +38,7 @@ bool HashJoinExecutor::DInit() {
   if (status == false) return status;
 
   PL_ASSERT(children_[1]->GetRawNode()->GetPlanNodeType() ==
-            PLAN_NODE_TYPE_HASH);
+            PlanNodeType::HASH);
 
   hash_executor_ = reinterpret_cast<HashExecutor *>(children_[1]);
 

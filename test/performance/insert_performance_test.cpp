@@ -50,7 +50,7 @@ namespace test {
 // Insert Tests
 //===--------------------------------------------------------------------===//
 
-class InsertTests : public PelotonTest {};
+class InsertPerformanceTests : public PelotonTest {};
 
 std::atomic<int> loader_tuple_id;
 
@@ -84,7 +84,7 @@ void InsertTuple(storage::DataTable *table, type::AbstractPool *pool,
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertTests, LoadingTest) {
+TEST_F(InsertPerformanceTests, LoadingTest) {
   // We are going to simply load tile groups concurrently in this test
   // WARNING: This test may potentially run for a long time if
   // TEST_TUPLES_PER_TILEGROUP is large, consider rewrite the test or hard

@@ -37,14 +37,14 @@ class ConjunctionExpression : public AbstractExpression {
     auto vl = children_[0]->Evaluate(tuple1, tuple2, context);
     auto vr = children_[1]->Evaluate(tuple1, tuple2, context);
     switch (exp_type_) {
-      case (EXPRESSION_TYPE_CONJUNCTION_AND): {
+      case (ExpressionType::CONJUNCTION_AND): {
         if (vl.IsTrue() && vr.IsTrue())
           return type::ValueFactory::GetBooleanValue(true);
         if (vl.IsFalse() || vr.IsFalse())
           return type::ValueFactory::GetBooleanValue(false);
         return type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL);
       }
-      case (EXPRESSION_TYPE_CONJUNCTION_OR): {
+      case (ExpressionType::CONJUNCTION_OR): {
         if (vl.IsFalse() && vr.IsFalse())
           return type::ValueFactory::GetBooleanValue(false);
         if (vl.IsTrue() || vr.IsTrue())

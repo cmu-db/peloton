@@ -3,6 +3,9 @@
 #include <cassert>
 #include <cstddef>
 
+namespace peloton {
+namespace index{ 
+
 /*
  * class VersionedPointer - Pointer with a version number
  *
@@ -362,3 +365,6 @@ class AtomicStack {
      return {false, T{}};
    }
 };
+
+} // namespace index
+} // namespace peloton

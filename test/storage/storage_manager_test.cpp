@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "storage/storage_manager.h"
@@ -31,13 +30,13 @@ class StorageManagerTests : public PelotonTest {};
 TEST_F(StorageManagerTests, BasicTest) {
   peloton::storage::StorageManager storage_manager;
 
-  std::vector<peloton::BackendType> backend_types = {peloton::BACKEND_TYPE_MM};
+  std::vector<BackendType> backend_types = {BackendType::MM};
 
   size_t length = 256;
   size_t rounds = 100;
 
   for (auto backend_type : backend_types) {
-    LOG_INFO("Backend :: %d", backend_type);
+    LOG_INFO("Backend :: %s", BackendTypeToString(backend_type).c_str());
 
     for (size_t round_itr = 0; round_itr < rounds; round_itr++) {
       // Allocate

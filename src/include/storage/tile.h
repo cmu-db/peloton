@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
+
+#include <mutex>
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "type/serializer.h"
-#include "type/serializeio.h"
-#include "type/abstract_pool.h"
+#include "common/item_pointer.h"
 #include "common/printable.h"
-
-#include <mutex>
+#include "type/abstract_pool.h"
+#include "type/serializeio.h"
+#include "type/serializer.h"
 
 namespace peloton {
 
@@ -93,8 +93,8 @@ class Tile : public Printable {
    * By amortizing schema lookups
    */
   type::Value GetValueFast(const oid_t tuple_offset, const size_t column_offset,
-                     const type::Type::TypeId column_type,
-                     const bool is_inlined);
+                           const type::Type::TypeId column_type,
+                           const bool is_inlined);
 
   /**
    * Sets value at tuple slot.
@@ -272,7 +272,7 @@ class TileFactory {
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
 
-    Tile *tile = GetTile(BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID,
+    Tile *tile = GetTile(BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID,
                          INVALID_OID, header, schema, tile_group, tuple_count);
 
     return tile;

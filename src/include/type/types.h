@@ -82,10 +82,10 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-enum GarbageCollectionType {
-  GARBAGE_COLLECTION_TYPE_INVALID = INVALID_TYPE_ID,
-  GARBAGE_COLLECTION_TYPE_OFF = 1,  // turn off GC
-  GARBAGE_COLLECTION_TYPE_ON = 2    // turn on GC
+enum class GarbageCollectionType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
@@ -94,213 +94,249 @@ enum GarbageCollectionType {
 // We do not allow for user-defined types, nor do we try to do anything dynamic.
 //===--------------------------------------------------------------------===//
 
-enum PostgresValueType {
-  POSTGRES_VALUE_TYPE_INVALID = INVALID_TYPE_ID,
-  POSTGRES_VALUE_TYPE_BOOLEAN = 16,
-  POSTGRES_VALUE_TYPE_SMALLINT = 21,
-  POSTGRES_VALUE_TYPE_INTEGER = 23,
-  POSTGRES_VALUE_TYPE_VARBINARY = 17,
-  POSTGRES_VALUE_TYPE_BIGINT = 20,
-  POSTGRES_VALUE_TYPE_REAL = 700,
-  POSTGRES_VALUE_TYPE_DOUBLE = 701,
-  POSTGRES_VALUE_TYPE_TEXT = 25,
-  POSTGRES_VALUE_TYPE_BPCHAR = 1042,
-  POSTGRES_VALUE_TYPE_BPCHAR2 = 1014,
-  POSTGRES_VALUE_TYPE_VARCHAR = 1015,
-  POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
-  POSTGRES_VALUE_TYPE_DATE = 1082,
-  POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
-  POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
-  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_DECIMAL = 1700
+enum class PostgresValueType {
+  INVALID = INVALID_TYPE_ID,
+  BOOLEAN = 16,
+  SMALLINT = 21,
+  INTEGER = 23,
+  VARBINARY = 17,
+  BIGINT = 20,
+  REAL = 700,
+  DOUBLE = 701,
+  TEXT = 25,
+  BPCHAR = 1042,
+  BPCHAR2 = 1014,
+  VARCHAR = 1015,
+  VARCHAR2 = 1043,
+  DATE = 1082,
+  TIMESTAMPS = 1114,
+  TIMESTAMPS2 = 1184,
+  TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
+  INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
+  INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
+  OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
+  FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
+  DECIMAL = 1700
 };
 
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types
 //===--------------------------------------------------------------------===//
 
-enum ExpressionType {
-  EXPRESSION_TYPE_INVALID = INVALID_TYPE_ID,
+enum class ExpressionType {
+  INVALID = INVALID_TYPE_ID,
 
   // -----------------------------
   // Arithmetic Operators
   // Implicit Numeric Casting: Trying to implement SQL-92.
   // Implicit Character Casting: Trying to implement SQL-92, but not easy...
-  // Anyway, use explicit EXPRESSION_TYPE_OPERATOR_CAST if you could.
+  // Anyway, use explicit OPERATOR_CAST if you could.
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_PLUS =
-      1,  // left + right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_MINUS =
-      2,  // left - right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_MULTIPLY =
-      3,  // left * right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_DIVIDE =
-      4,  // left / right (both must be number. implicitly casted)
-  EXPRESSION_TYPE_OPERATOR_CONCAT =
-      5,  // left || right (both must be char/varchar)
-  EXPRESSION_TYPE_OPERATOR_MOD = 6,  // left % right (both must be integer)
-  EXPRESSION_TYPE_OPERATOR_CAST =
-      7,  // explicitly cast left as right (right is integer in ValueType enum)
-  EXPRESSION_TYPE_OPERATOR_NOT = 8,      // logical not operator
-  EXPRESSION_TYPE_OPERATOR_IS_NULL = 9,  // is null test.
-  EXPRESSION_TYPE_OPERATOR_EXISTS = 18,  // exists test.
-  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 50,
+
+  // left + right (both must be number. implicitly casted)
+  OPERATOR_PLUS = 1,
+  // left - right (both must be number. implicitly casted)
+  OPERATOR_MINUS = 2,
+  // left * right (both must be number. implicitly casted)
+  OPERATOR_MULTIPLY = 3,
+  // left / right (both must be number. implicitly casted)
+  OPERATOR_DIVIDE = 4,
+  // left || right (both must be char/varchar)
+  OPERATOR_CONCAT = 5,
+  // left % right (both must be integer)
+  OPERATOR_MOD = 6,
+  // explicitly cast left as right (right is integer in ValueType enum)
+  OPERATOR_CAST = 7,
+  // logical not operator
+  OPERATOR_NOT = 8,
+  // is null test.
+  OPERATOR_IS_NULL = 9,
+  // exists test.
+  OPERATOR_EXISTS = 18,
+  OPERATOR_UNARY_MINUS = 50,
 
   // -----------------------------
   // Comparison Operators
   // -----------------------------
-  EXPRESSION_TYPE_COMPARE_EQUAL = 10,  // equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_NOTEQUAL =
-      11,  // inequal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LESSTHAN =
-      12,  // less than operator between left and right
-  EXPRESSION_TYPE_COMPARE_GREATERTHAN =
-      13,  // greater than operator between left and right
-  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO =
-      14,  // less than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO =
-      15,  // greater than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LIKE =
-      16,  // LIKE operator (left LIKE right). both children must be string.
-  EXPRESSION_TYPE_COMPARE_NOTLIKE = 17,  // NOT LIKE operator (left NOT LIKE
-                                         // right). both children must be
-                                         // string.
-  EXPRESSION_TYPE_COMPARE_IN =
-      19,  // IN operator [left IN (right1, right2, ...)]
+  // equal operator between left and right
+  COMPARE_EQUAL = 10,
+  // inequal operator between left and right
+  COMPARE_NOTEQUAL = 11,
+  // less than operator between left and right
+  COMPARE_LESSTHAN = 12,
+  // greater than operator between left and right
+  COMPARE_GREATERTHAN = 13,
+  // less than equal operator between left and right
+  COMPARE_LESSTHANOREQUALTO = 14,
+  // greater than equal operator between left and right
+  COMPARE_GREATERTHANOREQUALTO = 15,
+  // LIKE operator (left LIKE right). Both children must be string.
+  COMPARE_LIKE = 16,
+  // NOT LIKE operator (left NOT LIKE right). Both children must be string.
+  COMPARE_NOTLIKE = 17,
+  // IN operator [left IN (right1, right2, ...)]
+  COMPARE_IN = 19,
 
   // -----------------------------
   // Conjunction Operators
   // -----------------------------
-  EXPRESSION_TYPE_CONJUNCTION_AND = 20,
-  EXPRESSION_TYPE_CONJUNCTION_OR = 21,
+  CONJUNCTION_AND = 20,
+  CONJUNCTION_OR = 21,
 
   // -----------------------------
   // Values
   // -----------------------------
-  EXPRESSION_TYPE_VALUE_CONSTANT = 30,
-  EXPRESSION_TYPE_VALUE_PARAMETER = 31,
-  EXPRESSION_TYPE_VALUE_TUPLE = 32,
-  EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS = 33,
-  EXPRESSION_TYPE_VALUE_NULL = 34,
-  EXPRESSION_TYPE_VALUE_VECTOR = 35,
-  EXPRESSION_TYPE_VALUE_SCALAR = 36,
+  VALUE_CONSTANT = 30,
+  VALUE_PARAMETER = 31,
+  VALUE_TUPLE = 32,
+  VALUE_TUPLE_ADDRESS = 33,
+  VALUE_NULL = 34,
+  VALUE_VECTOR = 35,
+  VALUE_SCALAR = 36,
 
   // -----------------------------
   // Aggregates
   // -----------------------------
-  EXPRESSION_TYPE_AGGREGATE_COUNT = 40,
-  EXPRESSION_TYPE_AGGREGATE_COUNT_STAR = 41,
-  EXPRESSION_TYPE_AGGREGATE_SUM = 42,
-  EXPRESSION_TYPE_AGGREGATE_MIN = 43,
-  EXPRESSION_TYPE_AGGREGATE_MAX = 44,
-  EXPRESSION_TYPE_AGGREGATE_AVG = 45,
+  AGGREGATE_COUNT = 40,
+  AGGREGATE_COUNT_STAR = 41,
+  AGGREGATE_SUM = 42,
+  AGGREGATE_MIN = 43,
+  AGGREGATE_MAX = 44,
+  AGGREGATE_AVG = 45,
 
   // -----------------------------
   // Functions
   // -----------------------------
-  EXPRESSION_TYPE_FUNCTION = 100,
+  FUNCTION = 100,
 
   // -----------------------------
   // Internals added for Elastic
   // -----------------------------
-  EXPRESSION_TYPE_HASH_RANGE = 200,
+  HASH_RANGE = 200,
 
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
+  OPERATOR_CASE_EXPR = 302,
 
   // -----------------------------
   // Internals added for NULLIF
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_NULLIF = 304,
+  OPERATOR_NULLIF = 304,
 
   // -----------------------------
   // Internals added for COALESCE
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_COALESCE = 305,
+  OPERATOR_COALESCE = 305,
 
   // -----------------------------
   // Subquery IN/EXISTS
   // -----------------------------
-  EXPRESSION_TYPE_ROW_SUBQUERY = 400,
-  EXPRESSION_TYPE_SELECT_SUBQUERY = 401,
+  ROW_SUBQUERY = 400,
+  SELECT_SUBQUERY = 401,
 
   // -----------------------------
   // String operators
   // -----------------------------
-  EXPRESSION_TYPE_SUBSTR = 500,
-  EXPRESSION_TYPE_ASCII = 501,
-  EXPRESSION_TYPE_OCTET_LEN = 502,
-  EXPRESSION_TYPE_CHAR = 503,
-  EXPRESSION_TYPE_CHAR_LEN = 504,
-  EXPRESSION_TYPE_SPACE = 505,
-  EXPRESSION_TYPE_REPEAT = 506,
-  EXPRESSION_TYPE_POSITION = 507,
-  EXPRESSION_TYPE_LEFT = 508,
-  EXPRESSION_TYPE_RIGHT = 509,
-  EXPRESSION_TYPE_CONCAT = 510,
-  EXPRESSION_TYPE_LTRIM = 511,
-  EXPRESSION_TYPE_RTRIM = 512,
-  EXPRESSION_TYPE_BTRIM = 513,
-  EXPRESSION_TYPE_REPLACE = 514,
-  EXPRESSION_TYPE_OVERLAY = 515,
+  SUBSTR = 500,
+  ASCII = 501,
+  OCTET_LEN = 502,
+  CHAR = 503,
+  CHAR_LEN = 504,
+  SPACE = 505,
+  REPEAT = 506,
+  POSITION = 507,
+  LEFT = 508,
+  RIGHT = 509,
+  CONCAT = 510,
+  LTRIM = 511,
+  RTRIM = 512,
+  BTRIM = 513,
+  REPLACE = 514,
+  OVERLAY = 515,
 
   // -----------------------------
   // Date operators
   // -----------------------------
-  EXPRESSION_TYPE_EXTRACT = 600,
-  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
+  EXTRACT = 600,
+  DATE_TO_TIMESTAMP = 601,
 
   //===--------------------------------------------------------------------===//
   // Parser
   //===--------------------------------------------------------------------===//
-  EXPRESSION_TYPE_STAR = 700,
-  EXPRESSION_TYPE_PLACEHOLDER = 701,
-  EXPRESSION_TYPE_COLUMN_REF = 702,
-  EXPRESSION_TYPE_FUNCTION_REF = 703,
-  EXPRESSION_TYPE_TABLE_REF = 704,
+  STAR = 700,
+  PLACEHOLDER = 701,
+  COLUMN_REF = 702,
+  FUNCTION_REF = 703,
+  TABLE_REF = 704,
 
   //===--------------------------------------------------------------------===//
   // Misc
   //===--------------------------------------------------------------------===//
-  EXPRESSION_TYPE_CAST = 900
+  CAST = 900
 };
+std::string ExpressionTypeToString(ExpressionType type);
+ExpressionType StringToExpressionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ExpressionType &type);
+ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
-enum DatePart {
-  EXPRESSION_DATE_PART_INVALID = INVALID_TYPE_ID,
-  EXPRESSION_DATE_PART_CENTURY = 1,
-  EXPRESSION_DATE_PART_DAY = 2,
-  EXPRESSION_DATE_PART_DECADE = 3,
-  EXPRESSION_DATE_PART_DOW = 4,
-  EXPRESSION_DATE_PART_DOY = 5,
-  EXPRESSION_DATE_PART_EPOCH = 6,
-  EXPRESSION_DATE_PART_HOUR = 7,
-  EXPRESSION_DATE_PART_ISODOW = 8,
-  EXPRESSION_DATE_PART_ISOYEAR = 9,
-  EXPRESSION_DATE_PART_MICROSECONDS = 10,
-  EXPRESSION_DATE_PART_MILLENNIUM = 11,
-  EXPRESSION_DATE_PART_MILLISECONDS = 12,
-  EXPRESSION_DATE_PART_MINUTE = 13,
-  EXPRESSION_DATE_PART_MONTH = 14,
-  EXPRESSION_DATE_PART_QUARTER = 15,
-  EXPRESSION_DATE_PART_SECOND = 16,
-  EXPRESSION_DATE_PART_TIMEZONE = 17,
-  EXPRESSION_DATE_PART_TIMEZONE_HOUR = 18,
-  EXPRESSION_DATE_PART_TIMEZONE_MINUTE = 19,
-  EXPRESSION_DATE_PART_WEEK = 20,
-  EXPRESSION_DATE_PART_YEAR = 21
+// Note that we have some duplicate DatePartTypes with the 's' suffix
+// They have to have the same value in order for it to work.
+enum class DatePartType {
+  INVALID = INVALID_TYPE_ID,
+  CENTURY = 1,
+  DAY = 2,
+  DAYS = 2,
+  DECADE = 3,
+  DECADES = 3,
+  DOW = 4,
+  DOY = 5,
+  HOUR = 7,
+  HOURS = 7,
+  MICROSECOND = 10,
+  MICROSECONDS = 10,
+  MILLENNIUM = 11,
+  MILLISECOND = 12,
+  MILLISECONDS = 12,
+  MINUTE = 13,
+  MINUTES = 13,
+  MONTH = 14,
+  MONTHS = 14,
+  QUARTER = 15,
+  QUARTERS = 15,
+  SECOND = 16,
+  SECONDS = 16,
+  WEEK = 20,
+  WEEKS = 20,
+  YEAR = 21,
+  YEARS = 21,
 };
+std::string DatePartTypeToString(DatePartType type);
+DatePartType StringToDatePartType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const DatePartType &type);
+
+// PAVLO: 2017-01-18
+// I removed these DatePartTypes because I don't think that
+// it's something we can easily support right now. Things get
+// weird with timezones
+//   EPOCH = 6,
+//   ISODOW = 8,
+//   ISOYEAR = 9,
+//   TIMEZONE = 17,
+//   TIMEZONE_HOUR = 18,
+//   TIMEZONE_HOURS = 18,
+//   TIMEZONE_MINUTE = 19,
+//   TIMEZONE_MINUTES = 19,
 
 //===--------------------------------------------------------------------===//
 // Network Message Types
 //===--------------------------------------------------------------------===//
 
-enum NetworkMessageType {
+enum class NetworkMessageType : unsigned char {
+  // Important: The character '0' is treated as a null message
+  // That means we cannot have an invalid type
+  NULL_COMMAND = '0',
+
   // Responses
   PARSE_COMPLETE = '1',
   BIND_COMPLETE = '2',
@@ -311,7 +347,7 @@ enum NetworkMessageType {
   ERROR_RESPONSE = 'E',
   EMPTY_QUERY_RESPONSE = 'I',
   NO_DATA_RESPONSE = 'n',
-  READ_FOR_QUERY = 'Z',
+  READY_FOR_QUERY = 'Z',
   ROW_DESCRIPTION = 'T',
   DATA_ROW = 'D',
   // Errors
@@ -328,312 +364,365 @@ enum NetworkMessageType {
   CLOSE_COMMAND = 'C',
 };
 
+enum class NetworkTransactionStateType : unsigned char {
+  INVALID = static_cast<unsigned char>(INVALID_TYPE_ID),
+  IDLE = 'I',
+  BLOCK = 'T',
+  FAIL = 'E',
+};
+
 enum SqlStateErrorCode {
   SERIALIZATION_ERROR = '1',
 };
 
 //===--------------------------------------------------------------------===//
-// Storage Backend Types
+// Concurrency Control Types
 //===--------------------------------------------------------------------===//
 
-enum ConcurrencyType {
-  CONCURRENCY_TYPE_INVALID = INVALID_TYPE_ID,
-  CONCURRENCY_TYPE_TIMESTAMP_ORDERING = 1  // timestamp ordering
+enum class ConcurrencyType {
+  INVALID = INVALID_TYPE_ID,
+  TIMESTAMP_ORDERING = 1  // timestamp ordering
 };
 
 //===--------------------------------------------------------------------===//
 // Visibility Types
 //===--------------------------------------------------------------------===//
 
-enum VisibilityType {
-  VISIBILITY_INVALID = INVALID_TYPE_ID,
-  VISIBILITY_INVISIBLE = 1,
-  VISIBILITY_DELETED = 2,
-  VISIBILITY_OK = 3
+enum class VisibilityType {
+  INVALID = INVALID_TYPE_ID,
+  INVISIBLE = 1,
+  DELETED = 2,
+  OK = 3
 };
 
 //===--------------------------------------------------------------------===//
 // Isolation Levels
 //===--------------------------------------------------------------------===//
 
-enum IsolationLevelType {
-  ISOLATION_LEVEL_TYPE_INVALID = INVALID_TYPE_ID,
-  ISOLATION_LEVEL_TYPE_FULL = 1,            // full serializability
-  ISOLATION_LEVEL_TYPE_SNAPSHOT = 2,        // snapshot isolation
-  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 3  // repeatable read
+enum class IsolationLevelType {
+  INVALID = INVALID_TYPE_ID,
+  FULL = 1,            // full serializability
+  SNAPSHOT = 2,        // snapshot isolation
+  REPEATABLE_READ = 3  // repeatable read
 };
 
 //===--------------------------------------------------------------------===//
 // Garbage Collection Types
 //===--------------------------------------------------------------------===//
 
-enum BackendType {
-  BACKEND_TYPE_INVALID = INVALID_TYPE_ID,  // invalid backend type
-  BACKEND_TYPE_MM = 1,                     // on volatile memory
-  BACKEND_TYPE_NVM = 2,                    // on non-volatile memory
-  BACKEND_TYPE_SSD = 3,                    // on ssd
-  BACKEND_TYPE_HDD = 4                     // on hdd
+enum class BackendType {
+  INVALID = INVALID_TYPE_ID,  // invalid backend type
+  MM = 1,                     // on volatile memory
+  NVM = 2,                    // on non-volatile memory
+  SSD = 3,                    // on ssd
+  HDD = 4                     // on hdd
 };
+std::string BackendTypeToString(BackendType type);
+BackendType StringToBackendType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const BackendType &type);
 
 //===--------------------------------------------------------------------===//
 // Index Types
 //===--------------------------------------------------------------------===//
 
-enum IndexType {
-  INDEX_TYPE_INVALID = INVALID_TYPE_ID,  // invalid index type
-  INDEX_TYPE_BWTREE = 1,                 // bwtree
-  INDEX_TYPE_HASH = 2                    // hash
+enum class IndexType {
+  INVALID = INVALID_TYPE_ID,  // invalid index type
+  BWTREE = 1,                 // bwtree
+  HASH = 2                    // hash
 };
+std::string IndexTypeToString(IndexType type);
+IndexType StringToIndexType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const IndexType &type);
 
-enum IndexConstraintType {
-  INDEX_CONSTRAINT_TYPE_INVALID =
-      INVALID_TYPE_ID,  // invalid index constraint type
-  INDEX_CONSTRAINT_TYPE_DEFAULT =
-      1,  // default type - not used to enforce constraints
-  INDEX_CONSTRAINT_TYPE_PRIMARY_KEY =
-      2,                            // used to enforce primary key constraint
-  INDEX_CONSTRAINT_TYPE_UNIQUE = 3  // used for unique constraint
+enum class IndexConstraintType {
+  // invalid index constraint type
+  INVALID = INVALID_TYPE_ID,
+  // default type - not used to enforce constraints
+  DEFAULT = 1,
+  // used to enforce primary key constraint
+  PRIMARY_KEY = 2,
+  // used for unique constraint
+  UNIQUE = 3
 };
+std::string IndexConstraintTypeToString(IndexConstraintType type);
+IndexConstraintType StringToIndexConstraintType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const IndexConstraintType &type);
 
 //===--------------------------------------------------------------------===//
 // Hybrid Scan Types
 //===--------------------------------------------------------------------===//
 
-enum HybridScanType {
-  HYBRID_SCAN_TYPE_INVALID = INVALID_TYPE_ID,
-  HYBRID_SCAN_TYPE_SEQUENTIAL = 1,
-  HYBRID_SCAN_TYPE_INDEX = 2,
-  HYBRID_SCAN_TYPE_HYBRID = 3
+enum class HybridScanType {
+  INVALID = INVALID_TYPE_ID,
+  SEQUENTIAL = 1,
+  INDEX = 2,
+  HYBRID = 3
 };
+std::string HybridScanTypeToString(HybridScanType type);
+HybridScanType StringToHybridScanType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const HybridScanType &type);
 
 //===--------------------------------------------------------------------===//
 // Parse Node Types
 //===--------------------------------------------------------------------===//
 
-enum ParseNodeType {
-  PARSE_NODE_TYPE_INVALID = INVALID_TYPE_ID,  // invalid parse node type
+enum class ParseNodeType {
+  INVALID = INVALID_TYPE_ID,  // invalid parse node type
 
   // Scan Nodes
-  PARSE_NODE_TYPE_SCAN = 10,
+  SCAN = 10,
 
   // DDL Nodes
-  PARSE_NODE_TYPE_CREATE = 20,
-  PARSE_NODE_TYPE_DROP = 21,
+  CREATE = 20,
+  DROP = 21,
 
   // Mutator Nodes
-  PARSE_NODE_TYPE_UPDATE = 30,
-  PARSE_NODE_TYPE_INSERT = 31,
-  PARSE_NODE_TYPE_DELETE = 32,
+  UPDATE = 30,
+  INSERT = 31,
+  DELETE = 32,
 
   // Prepared Nodes
-  PARSE_NODE_TYPE_PREPARE = 40,
-  PARSE_NODE_TYPE_EXECUTE = 41,
+  PREPARE = 40,
+  EXECUTE = 41,
 
   // Select Nodes
-  PARSE_NODE_TYPE_SELECT = 50,
-  PARSE_NODE_TYPE_JOIN_EXPR = 51,  // a join tree
-  PARSE_NODE_TYPE_TABLE = 52,      // a single table
+  SELECT = 50,
+  JOIN_EXPR = 51,  // a join tree
+  TABLE = 52,      // a single table
 
   // Test
-  PARSE_NODE_TYPE_MOCK = 80
+  MOCK = 80
 };
+std::string ParseNodeTypeToString(ParseNodeType type);
+ParseNodeType StringToParseNodeType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ParseNodeType &type);
 
 //===--------------------------------------------------------------------===//
 // Plan Node Types
 //===--------------------------------------------------------------------===//
 
-enum PlanNodeType {
-  PLAN_NODE_TYPE_INVALID = INVALID_TYPE_ID,  // invalid plan node type
+enum class PlanNodeType {
+  INVALID = INVALID_TYPE_ID,  // invalid plan node type
 
   // Scan Nodes
-  PLAN_NODE_TYPE_ABSTRACT_SCAN = 10,
-  PLAN_NODE_TYPE_SEQSCAN = 11,
-  PLAN_NODE_TYPE_INDEXSCAN = 12,
+  ABSTRACT_SCAN = 10,
+  SEQSCAN = 11,
+  INDEXSCAN = 12,
 
   // Join Nodes
-  PLAN_NODE_TYPE_NESTLOOP = 20,
-  PLAN_NODE_TYPE_NESTLOOPINDEX = 21,
-  PLAN_NODE_TYPE_MERGEJOIN = 22,
-  PLAN_NODE_TYPE_HASHJOIN = 23,
+  NESTLOOP = 20,
+  NESTLOOPINDEX = 21,
+  MERGEJOIN = 22,
+  HASHJOIN = 23,
 
   // Mutator Nodes
-  PLAN_NODE_TYPE_UPDATE = 30,
-  PLAN_NODE_TYPE_INSERT = 31,
-  PLAN_NODE_TYPE_DELETE = 32,
+  UPDATE = 30,
+  INSERT = 31,
+  DELETE = 32,
 
   // DDL Nodes
-  PLAN_NODE_TYPE_DROP = 33,
-  PLAN_NODE_TYPE_CREATE = 34,
+  DROP = 33,
+  CREATE = 34,
 
   // Communication Nodes
-  PLAN_NODE_TYPE_SEND = 40,
-  PLAN_NODE_TYPE_RECEIVE = 41,
-  PLAN_NODE_TYPE_PRINT = 42,
+  SEND = 40,
+  RECEIVE = 41,
+  PRINT = 42,
 
   // Algebra Nodes
-  PLAN_NODE_TYPE_AGGREGATE = 50,
-  PLAN_NODE_TYPE_UNION = 52,
-  PLAN_NODE_TYPE_ORDERBY = 53,
-  PLAN_NODE_TYPE_PROJECTION = 54,
-  PLAN_NODE_TYPE_MATERIALIZE = 55,
-  PLAN_NODE_TYPE_LIMIT = 56,
-  PLAN_NODE_TYPE_DISTINCT = 57,
-  PLAN_NODE_TYPE_SETOP = 58,   // set operation
-  PLAN_NODE_TYPE_APPEND = 59,  // append
-  PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
-  PLAN_NODE_TYPE_HASH = 62,
+  AGGREGATE = 50,
+  UNION = 52,
+  ORDERBY = 53,
+  PROJECTION = 54,
+  MATERIALIZE = 55,
+  LIMIT = 56,
+  DISTINCT = 57,
+  SETOP = 58,   // set operation
+  APPEND = 59,  // append
+  AGGREGATE_V2 = 61,
+  HASH = 62,
 
   // Utility
-  PLAN_NODE_TYPE_RESULT = 70,
-  PLAN_NODE_TYPE_COPY = 71,
+  RESULT = 70,
+  COPY = 71,
 
   // Test
-  PLAN_NODE_TYPE_MOCK = 80
+  MOCK = 80
 };
+std::string PlanNodeTypeToString(PlanNodeType type);
+PlanNodeType StringToPlanNodeType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PlanNodeType &type);
 
 //===--------------------------------------------------------------------===//
 // Create Types
 //===--------------------------------------------------------------------===//
 
-enum CreateType {
-  CREATE_TYPE_INVALID = INVALID_TYPE_ID,  // invalid create type
-  CREATE_TYPE_DB = 1,                     // db create type
-  CREATE_TYPE_TABLE = 2,                  // table create type
-  CREATE_TYPE_INDEX = 3,                  // index create type
-  CREATE_TYPE_CONSTRAINT = 4              // constraint create type
+enum class CreateType {
+  INVALID = INVALID_TYPE_ID,  // invalid create type
+  DB = 1,                     // db create type
+  TABLE = 2,                  // table create type
+  INDEX = 3,                  // index create type
+  CONSTRAINT = 4              // constraint create type
 };
 
 //===--------------------------------------------------------------------===//
 // Statement Types
 //===--------------------------------------------------------------------===//
 
-enum StatementType {
-  STATEMENT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid statement type
-  STATEMENT_TYPE_SELECT = 1,                 // select statement type
-  STATEMENT_TYPE_INSERT = 3,                 // insert statement type
-  STATEMENT_TYPE_UPDATE = 4,                 // update statement type
-  STATEMENT_TYPE_DELETE = 5,                 // delete statement type
-  STATEMENT_TYPE_CREATE = 6,                 // create statement type
-  STATEMENT_TYPE_DROP = 7,                   // drop statement type
-  STATEMENT_TYPE_PREPARE = 8,                // prepare statement type
-  STATEMENT_TYPE_EXECUTE = 9,                // execute statement type
-  STATEMENT_TYPE_RENAME = 11,                // rename statement type
-  STATEMENT_TYPE_ALTER = 12,                 // alter statement type
-  STATEMENT_TYPE_TRANSACTION = 13,           // transaction statement type,
-  STATEMENT_TYPE_COPY = 14                   // copy type
+enum class StatementType {
+  INVALID = INVALID_TYPE_ID,  // invalid statement type
+  SELECT = 1,                 // select statement type
+  INSERT = 3,                 // insert statement type
+  UPDATE = 4,                 // update statement type
+  DELETE = 5,                 // delete statement type
+  CREATE = 6,                 // create statement type
+  DROP = 7,                   // drop statement type
+  PREPARE = 8,                // prepare statement type
+  EXECUTE = 9,                // execute statement type
+  RENAME = 11,                // rename statement type
+  ALTER = 12,                 // alter statement type
+  TRANSACTION = 13,           // transaction statement type,
+  COPY = 14                   // copy type
 };
+std::string StatementTypeToString(StatementType type);
+StatementType StringToStatementType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const StatementType &type);
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
 
-enum ScanDirectionType {
-  SCAN_DIRECTION_TYPE_INVALID = INVALID_TYPE_ID,  // invalid scan direction
-  SCAN_DIRECTION_TYPE_FORWARD = 1,                // forward
-  SCAN_DIRECTION_TYPE_BACKWARD = 2                // backward
+enum class ScanDirectionType {
+  INVALID = INVALID_TYPE_ID,  // invalid scan direction
+  FORWARD = 1,                // forward
+  BACKWARD = 2                // backward
 };
 
 //===--------------------------------------------------------------------===//
 // Join Types
 //===--------------------------------------------------------------------===//
 
-enum PelotonJoinType {
-  JOIN_TYPE_INVALID = INVALID_TYPE_ID,  // invalid join type
-  JOIN_TYPE_LEFT = 1,                   // left
-  JOIN_TYPE_RIGHT = 2,                  // right
-  JOIN_TYPE_INNER = 3,                  // inner
-  JOIN_TYPE_OUTER = 4,                  // outer
-  JOIN_TYPE_SEMI = 5                    // IN+Subquery is SEMI
+enum class JoinType {
+  INVALID = INVALID_TYPE_ID,  // invalid join type
+  LEFT = 1,                   // left
+  RIGHT = 2,                  // right
+  INNER = 3,                  // inner
+  OUTER = 4,                  // outer
+  SEMI = 5                    // IN+Subquery is SEMI
 };
+std::string JoinTypeToString(JoinType type);
+JoinType StringToJoinType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const JoinType &type);
 
 //===--------------------------------------------------------------------===//
 // Aggregate Types
 //===--------------------------------------------------------------------===//
-enum PelotonAggType {
-  AGGREGATE_TYPE_INVALID = INVALID_TYPE_ID,
-  AGGREGATE_TYPE_SORTED = 1,
-  AGGREGATE_TYPE_HASH = 2,
-  AGGREGATE_TYPE_PLAIN = 3  // no group-by
+
+enum class AggregateType {
+  INVALID = INVALID_TYPE_ID,
+  SORTED = 1,
+  HASH = 2,
+  PLAIN = 3  // no group-by
 };
+std::string AggregateTypeToString(AggregateType type);
+AggregateType StringToAggregateType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const AggregateType &type);
 
 // ------------------------------------------------------------------
 // Expression Quantifier Types
 // ------------------------------------------------------------------
-enum QuantifierType {
-  QUANTIFIER_TYPE_NONE = 0,
-  QUANTIFIER_TYPE_ANY = 1,
-  QUANTIFIER_TYPE_ALL = 2,
+enum class QuantifierType {
+  NONE = 0,
+  ANY = 1,
+  ALL = 2,
 };
+std::string QuantifierTypeToString(QuantifierType type);
+QuantifierType StringToQuantifierType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const QuantifierType &type);
 
 //===--------------------------------------------------------------------===//
 // Table Reference Types
 //===--------------------------------------------------------------------===//
 
-enum TableReferenceType {
-  TABLE_REFERENCE_TYPE_INVALID =
-      INVALID_TYPE_ID,                    // invalid table reference type
-  TABLE_REFERENCE_TYPE_NAME = 1,          // table name
-  TABLE_REFERENCE_TYPE_SELECT = 2,        // output of select
-  TABLE_REFERENCE_TYPE_JOIN = 3,          // output of join
-  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
+enum class TableReferenceType {
+  INVALID = INVALID_TYPE_ID,  // invalid table reference type
+  NAME = 1,                   // table name
+  SELECT = 2,                 // output of select
+  JOIN = 3,                   // output of join
+  CROSS_PRODUCT = 4           // out of cartesian product
 };
+std::string TableReferenceTypeToString(TableReferenceType type);
+TableReferenceType StringToTableReferenceType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TableReferenceType &type);
 
 //===--------------------------------------------------------------------===//
 // Insert Types
 //===--------------------------------------------------------------------===//
 
-enum InsertType {
-  INSERT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid insert type
-  INSERT_TYPE_VALUES = 1,                 // values
-  INSERT_TYPE_SELECT = 2                  // select
+enum class InsertType {
+  INVALID = INVALID_TYPE_ID,  // invalid insert type
+  VALUES = 1,                 // values
+  SELECT = 2                  // select
 };
+std::string InsertTypeToString(InsertType type);
+InsertType StringToInsertType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const InsertType &type);
 
 //===--------------------------------------------------------------------===//
 // Copy Types
 //===--------------------------------------------------------------------===//
 
-enum CopyType {
-  COPY_TYPE_IMPORT_CSV,     // Import csv data to database
-  COPY_TYPE_IMPORT_TSV,     // Import tsv data to database
-  COPY_TYPE_EXPORT_CSV,     // Export data to csv file
-  COPY_TYPE_EXPORT_STDOUT,  // Export data to std out
-  COPY_TYPE_EXPORT_OTHER,   // Export data to other file format
+enum class CopyType {
+  IMPORT_CSV,     // Import csv data to database
+  IMPORT_TSV,     // Import tsv data to database
+  EXPORT_CSV,     // Export data to csv file
+  EXPORT_STDOUT,  // Export data to std out
+  EXPORT_OTHER,   // Export data to other file format
 };
 
 //===--------------------------------------------------------------------===//
 // Payload Types
 //===--------------------------------------------------------------------===//
 
-enum PayloadType {
-  PAYLOAD_TYPE_INVALID = INVALID_TYPE_ID,  // invalid message type
-  PAYLOAD_TYPE_CLIENT_REQUEST = 1,         // request
-  PAYLOAD_TYPE_CLIENT_RESPONSE = 2,        // response
-  PAYLOAD_TYPE_STOP = 3                    // stop loop
+enum class PayloadType {
+  INVALID = INVALID_TYPE_ID,  // invalid message type
+  CLIENT_REQUEST = 1,         // request
+  CLIENT_RESPONSE = 2,        // response
+  STOP = 3                    // stop loop
 };
+std::string PayloadTypeToString(PayloadType type);
+PayloadType StringToPayloadType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PayloadType &type);
 
 //===--------------------------------------------------------------------===//
 // Task Priority Types
 //===--------------------------------------------------------------------===//
 
-enum TaskPriorityType {
-  TASK_PRIORTY_TYPE_INVALID = INVALID_TYPE_ID,  // invalid priority
-  TASK_PRIORTY_TYPE_LOW = 10,
-  TASK_PRIORTY_TYPE_NORMAL = 11,
-  TASK_PRIORTY_TYPE_HIGH = 12
+enum class TaskPriorityType {
+  INVALID = INVALID_TYPE_ID,  // invalid priority
+  LOW = 10,
+  NORMAL = 11,
+  HIGH = 12
 };
+std::string TaskPriorityTypeToString(TaskPriorityType type);
+TaskPriorityType StringToTaskPriorityType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TaskPriorityType &type);
 
 //===--------------------------------------------------------------------===//
 // Result Types
 //===--------------------------------------------------------------------===//
 
-enum Result {
-  RESULT_INVALID = INVALID_TYPE_ID,  // invalid result type
-  RESULT_SUCCESS = 1,
-  RESULT_FAILURE = 2,
-  RESULT_ABORTED = 3,  // aborted
-  RESULT_NOOP = 4,     // no op
-  RESULT_UNKNOWN = 5
+enum class ResultType {
+  INVALID = INVALID_TYPE_ID,  // invalid result type
+  SUCCESS = 1,
+  FAILURE = 2,
+  ABORTED = 3,  // aborted
+  NOOP = 4,     // no op
+  UNKNOWN = 5
 };
+std::string ResultTypeToString(ResultType type);
+ResultType StringToResultType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ResultType &type);
 
 //===--------------------------------------------------------------------===//
 // Constraint Types
@@ -667,6 +756,8 @@ enum ConstraintType {
   CONSTRAINT_TYPE_FOREIGN = 7,                // foreign key
   CONSTRAINT_TYPE_EXCLUSION = 8               // foreign key
 };
+std::string ConstraintTypeToString(ConstraintType type);
+ConstraintType StringToConstraintType(const std::string &str);
 
 //===--------------------------------------------------------------------===//
 // Set Operation Types
@@ -699,6 +790,8 @@ enum LoggingType {
   LOGGING_TYPE_SSD_WAL = 5,
   LOGGING_TYPE_HDD_WAL = 6,
 };
+std::string LoggingTypeToString(LoggingType type);
+LoggingType StringToLoggingType(const std::string &str);
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
@@ -734,12 +827,16 @@ enum LoggingStatusType {
   LOGGING_STATUS_TYPE_TERMINATE = 4,
   LOGGING_STATUS_TYPE_SLEEP = 5
 };
+std::string LoggingStatusTypeToString(LoggingStatusType type);
+LoggingStatusType StringToLoggingStatusType(const std::string &str);
 
 enum LoggerType {
   LOGGER_TYPE_INVALID = INVALID_TYPE_ID,
   LOGGER_TYPE_FRONTEND = 1,
   LOGGER_TYPE_BACKEND = 2
 };
+std::string LoggerTypeToString(LoggerType type);
+LoggerType StringToLoggerType(const std::string &str);
 
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
@@ -770,6 +867,8 @@ enum LogRecordType {
   // includes max persistent commit_id
   LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
 };
+std::string LogRecordTypeToString(LogRecordType type);
+LogRecordType StringToLogRecordType(const std::string &str);
 
 enum CheckpointStatus {
   CHECKPOINT_STATUS_INVALID = INVALID_TYPE_ID,
@@ -794,7 +893,7 @@ enum StatsType {
 
 enum MetricType {
   // Metric type is invalid
-  INVALID_METRIC = 0,
+  INVALID_METRIC = INVALID_TYPE_ID,
   // Metric to count a number
   COUNTER_METRIC = 1,
   // Access information, e.g., # tuples read, inserted, updated, deleted
@@ -913,44 +1012,6 @@ static const size_t max_col_count = 128;
 typedef std::bitset<max_col_count> ColBitmap;
 
 //===--------------------------------------------------------------------===//
-// ItemPointer
-//===--------------------------------------------------------------------===//
-
-// logical physical location
-struct ItemPointer {
-  // block
-  oid_t block;
-
-  // 0-based offset within block
-  oid_t offset;
-
-  ItemPointer() : block(INVALID_OID), offset(INVALID_OID) {}
-
-  ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
-
-  bool IsNull() const {
-    return (block == INVALID_OID && offset == INVALID_OID);
-  }
-
-  bool operator<(const ItemPointer &rhs) const {
-    if (block != rhs.block) {
-      return block < rhs.block;
-    } else {
-      return offset < rhs.offset;
-    }
-  }
-
-} __attribute__((__aligned__(8))) __attribute__((__packed__));
-
-extern ItemPointer INVALID_ITEMPOINTER;
-
-struct ItemPointerHasher {
-  size_t operator()(const ItemPointer &item) const {
-    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
-  }
-};
-
-//===--------------------------------------------------------------------===//
 // read-write set
 //===--------------------------------------------------------------------===//
 
@@ -998,54 +1059,12 @@ extern FileHandle INVALID_FILE_HANDLE;
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
-
 //===--------------------------------------------------------------------===//
 // Transformers
 //===--------------------------------------------------------------------===//
 
-std::string DatePartToString(DatePart type);
-DatePart StringToDatePart(const std::string &str);
-
-std::string BackendTypeToString(BackendType type);
-BackendType StringToBackendType(const std::string &str);
-
 std::string TypeIdToString(type::Type::TypeId type);
 type::Type::TypeId StringToTypeId(const std::string &str);
-
-std::string StatementTypeToString(StatementType type);
-StatementType StringToStatementType(const std::string &str);
-
-std::string ExpressionTypeToString(ExpressionType type);
-ExpressionType StringToExpressionType(const std::string &str);
-ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
-
-std::string IndexTypeToString(IndexType type);
-IndexType StringToIndexType(const std::string &str);
-
-std::string IndexConstraintTypeToString(IndexConstraintType type);
-IndexConstraintType StringToIndexConstraintType(const std::string &str);
-
-std::string PlanNodeTypeToString(PlanNodeType type);
-PlanNodeType StringToPlanNodeType(const std::string &str);
-
-std::string ParseNodeTypeToString(ParseNodeType type);
-ParseNodeType StringToParseNodeType(const std::string &str);
-
-std::string ConstraintTypeToString(ConstraintType type);
-ConstraintType StringToConstraintType(const std::string &str);
-
-std::string LoggingTypeToString(LoggingType type);
-LoggingType StringToLoggingType(const std::string &str);
-
-std::string LoggingStatusTypeToString(LoggingStatusType type);
-LoggingStatusType StringToLoggingStatusType(const std::string &str);
-
-std::string LoggerTypeToString(LoggerType type);
-LoggerType StringToLoggerType(const std::string &str);
-
-std::string LogRecordTypeToString(LogRecordType type);
-LogRecordType StringToLogRecordType(const std::string &str);
 
 type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(

@@ -139,7 +139,7 @@ class IndexScanPlan : public AbstractScan {
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_INDEXSCAN;
+    return PlanNodeType::INDEXSCAN;
   }
 
   inline bool GetLeftOpen() const { return left_open_; }

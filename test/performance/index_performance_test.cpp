@@ -72,7 +72,7 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "test_index", 125, INVALID_OID, INVALID_OID, index_type,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, key_attrs,
+      IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
       unique_keys);
 
   // Build index
@@ -108,7 +108,7 @@ static void InsertTest1(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDecimalValue(1.11), nullptr);
   // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   for (size_t i = start_key; i < end_key; i++) {
@@ -150,7 +150,7 @@ static void DeleteTest1(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDecimalValue(1.11), nullptr);
   // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   for (size_t i = start_key; i < end_key; i++) {
@@ -189,7 +189,7 @@ static void InsertTest2(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDecimalValue(1.11), nullptr);
   // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
@@ -229,7 +229,7 @@ static void DeleteTest2(index::Index *index, size_t num_thread, size_t num_key,
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
 
   // Set the non-indexed column of the key to avoid undefined behaviour
-  // key->SetValue(2, type::ValueFactory::GetDoubleValue(1.11), nullptr);
+  // key->SetValue(2, type::ValueFactory::GetDecimalValue(1.11), nullptr);
   // key->SetValue(3, type::ValueFactory::GetIntegerValue(12345), nullptr);
 
   size_t j = 0;
@@ -365,11 +365,11 @@ static void TestIndexPerformance(const IndexType &index_type) {
 }
 
 TEST_F(IndexPerformanceTests, BwTreeMultiThreadedTest) {
-  TestIndexPerformance(INDEX_TYPE_BWTREE);
+  TestIndexPerformance(IndexType::BWTREE);
 }
 
 // TEST_F(IndexPerformanceTests, BTreeMultiThreadedTest) {
-//  TestIndexPerformance(INDEX_TYPE_BTREE);
+//  TestIndexPerformance(IndexType::BTREE);
 //}
 
 }  // End test namespace

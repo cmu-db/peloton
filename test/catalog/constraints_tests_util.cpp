@@ -132,7 +132,7 @@ void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     // In case of random, make sure this column has duplicated values
     auto col2 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    auto col3 = type::ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
+    auto col3 = type::ValueFactory::GetDecimalValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
     auto col4 = type::ValueFactory::GetVarcharValue(
@@ -213,7 +213,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     index_metadata = new index::IndexMetadata(
         "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
-        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+        IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
         key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -229,7 +229,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     unique = false;
     index_metadata = new index::IndexMetadata(
         "secondary_btree_index", 124, table->GetOid(), table->GetDatabaseOid(),
-        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
+        IndexType::BWTREE, IndexConstraintType::DEFAULT, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(
         index::IndexFactory::GetIndex(index_metadata));
@@ -244,7 +244,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     unique = false;
     index_metadata = new index::IndexMetadata(
         "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
-        INDEX_TYPE_BWTREE, INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema,
+        IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> unique_index(
         index::IndexFactory::GetIndex(index_metadata));

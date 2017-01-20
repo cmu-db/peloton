@@ -52,12 +52,12 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
 
   auto index_type = metadata->GetIndexType();
   Index *index = nullptr;
-  LOG_TRACE("Index type : %d", index_type);
+  LOG_TRACE("Index type : %s", IndexTypeToString(index_type).c_str());
 
   // -----------------------
   // BW-TREE
   // -----------------------
-  if (index_type == INDEX_TYPE_BWTREE) {
+  if (index_type == IndexType::BWTREE) {
     if (ints_only) {
       index = IndexFactory::GetBwTreeIntsKeyIndex(metadata);
     } else {

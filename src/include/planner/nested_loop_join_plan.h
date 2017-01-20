@@ -30,14 +30,14 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
   NestedLoopJoinPlan(
-      PelotonJoinType join_type,
+      JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema);
 
   // This is added for passing the left and right join column ids
   NestedLoopJoinPlan(
-      PelotonJoinType join_type,
+      JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
@@ -45,7 +45,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
       std::vector<oid_t> &join_column_ids_right);
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_NESTLOOP;
+    return PlanNodeType::NESTLOOP;
   }
 
   const std::string GetInfo() const { return "NestedLoopJoin"; }

@@ -31,7 +31,7 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class GCTest : public PelotonTest {};
+class GarbageCollectionTests : public PelotonTest {};
 
 int UpdateTuple(storage::DataTable *table, const int scale, const int num_key,
 const int num_txn) {
@@ -63,7 +63,7 @@ const int num_txn) {
   // stats
   int nabort = 0;
   for (auto &schedule : scheduler.schedules) {
-    if (schedule.txn_result == RESULT_ABORTED) nabort += 1;
+    if (schedule.txn_result == ResultType::ABORTED) nabort += 1;
   }
   LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   return num_txn - nabort;
@@ -79,7 +79,7 @@ void SelectTuple(storage::DataTable *table, const int num_key) {
   scheduler.Txn(0).Commit();
   scheduler.Run();
 
-  EXPECT_TRUE(scheduler.schedules[0].txn_result == RESULT_SUCCESS);
+  EXPECT_TRUE(scheduler.schedules[0].txn_result == ResultType::SUCCESS);
 }
 
 // count number of expired versions.
@@ -119,7 +119,7 @@ int RecycledNum(storage::DataTable *table) {
 }
 
 
-TEST_F(GCTest, SimpleTest) {
+TEST_F(GarbageCollectionTests, SimpleTest) {
 
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();

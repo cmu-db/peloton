@@ -50,7 +50,7 @@ class ValueFactory {
     return Value(Type::TIMESTAMP, value);
   }
 
-  static inline Value GetDoubleValue(double value) {
+  static inline Value GetDecimalValue(double value) {
     return Value(Type::DECIMAL, value);
   }
 
@@ -109,7 +109,7 @@ class ValueFactory {
         ret_value = GetBigIntValue(PELOTON_INT64_NULL);
         break;
       case Type::DECIMAL:
-        ret_value = GetDoubleValue(PELOTON_DECIMAL_NULL);
+        ret_value = GetDecimalValue(PELOTON_DECIMAL_NULL);
         break;
       case Type::TIMESTAMP:
         ret_value = GetTimestampValue(PELOTON_TIMESTAMP_NULL);
@@ -146,7 +146,7 @@ class ValueFactory {
       case Type::BIGINT:
         return GetBigIntValue(0);
       case Type::DECIMAL:
-        return GetDoubleValue((double)0);
+        return GetDecimalValue((double)0);
       case Type::TIMESTAMP:
         return GetTimestampValue(0);
       case Type::VARCHAR:
@@ -364,18 +364,18 @@ class ValueFactory {
   static inline Value CastAsDecimal(const Value &value) {
     if (Type::GetInstance(Type::DECIMAL)->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetDoubleValue((double)PELOTON_DECIMAL_NULL);
+        return ValueFactory::GetDecimalValue((double)PELOTON_DECIMAL_NULL);
       switch (value.GetTypeId()) {
         case Type::TINYINT:
-          return ValueFactory::GetDoubleValue((double)value.GetAs<int8_t>());
+          return ValueFactory::GetDecimalValue((double)value.GetAs<int8_t>());
         case Type::SMALLINT:
-          return ValueFactory::GetDoubleValue((double)value.GetAs<int16_t>());
+          return ValueFactory::GetDecimalValue((double)value.GetAs<int16_t>());
         case Type::INTEGER:
-          return ValueFactory::GetDoubleValue((double)value.GetAs<int32_t>());
+          return ValueFactory::GetDecimalValue((double)value.GetAs<int32_t>());
         case Type::BIGINT:
-          return ValueFactory::GetDoubleValue((double)value.GetAs<int64_t>());
+          return ValueFactory::GetDecimalValue((double)value.GetAs<int64_t>());
         case Type::DECIMAL:
-          return ValueFactory::GetDoubleValue(value.GetAs<double>());
+          return ValueFactory::GetDecimalValue(value.GetAs<double>());
         case Type::VARCHAR: {
           std::string str = value.ToString();
           double res = 0;
@@ -388,7 +388,7 @@ class ValueFactory {
           if (res > PELOTON_DECIMAL_MAX || res < PELOTON_DECIMAL_MIN)
             throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                             "Numeric value out of range.");
-          return ValueFactory::GetDoubleValue(res);
+          return ValueFactory::GetDecimalValue(res);
         }
         default:
           break;

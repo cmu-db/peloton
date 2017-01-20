@@ -37,7 +37,7 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
       new expression::TupleValueExpression(type::Type::INTEGER, 1, 1);
 
   predicate = new expression::ComparisonExpression(
-      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+      ExpressionType::COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
 
   return predicate;
 }
@@ -80,7 +80,7 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
 
   expression::ComparisonExpression *comp_a =
       new expression::ComparisonExpression(
-          EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+          ExpressionType::COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
 
   // LEFT.3 > 50.0
 
@@ -88,13 +88,13 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
       new expression::TupleValueExpression(type::Type::DECIMAL, 0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
-          type::ValueFactory::GetDoubleValue(50.0));
+          type::ValueFactory::GetDecimalValue(50.0));
   expression::ComparisonExpression *comp_b =
       new expression::ComparisonExpression(
-          EXPRESSION_TYPE_COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
+          ExpressionType::COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
 
   predicate = new expression::ConjunctionExpression(
-      EXPRESSION_TYPE_CONJUNCTION_AND, comp_a, comp_b);
+      ExpressionType::CONJUNCTION_AND, comp_a, comp_b);
 
   return predicate;
 }

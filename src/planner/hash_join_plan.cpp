@@ -25,7 +25,7 @@ namespace peloton{
 namespace planner{
 
 HashJoinPlan::HashJoinPlan(
-    PelotonJoinType join_type,
+    JoinType join_type,
     std::unique_ptr<const expression::AbstractExpression> &&predicate,
     std::unique_ptr<const ProjectInfo> &&proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema)
@@ -33,7 +33,7 @@ HashJoinPlan::HashJoinPlan(
                        proj_schema) {}
 
 HashJoinPlan::HashJoinPlan(
-    PelotonJoinType join_type,
+    JoinType join_type,
     std::unique_ptr<const expression::AbstractExpression> &&predicate,
     std::unique_ptr<const ProjectInfo> &&proj_info,
     std::shared_ptr<const catalog::Schema> &proj_schema,

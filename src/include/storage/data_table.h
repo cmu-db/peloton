@@ -18,6 +18,7 @@
 #include <queue>
 #include <set>
 
+#include "common/item_pointer.h"
 #include "common/platform.h"
 #include "container/lock_free_array.h"
 #include "index/index.h"

@@ -15,32 +15,22 @@
 #include <string>
 #include <vector>
 
+#include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "type/types.h"
 
 namespace peloton {
 namespace expression {
 
-class DateFunctions{
-public:
-  // Extract
-  // Arguments:
-  // the arguements are contained in the args vector
-  // the first argument is the part of the date to extract (see type/types.h DatePart)
-  // the second argument is the timestamp to extract the part from
-  //
-  // Return value: the Value returned should be of type Double and
-  // should be constructed using type::ValueFactory
-  static type::Value Extract(const std::vector<type::Value>& args){
-    UNUSED_ATTRIBUTE DatePart date_part = args[0].GetAs<DatePart>();
-    UNUSED_ATTRIBUTE uint64_t timestamp = args[1].GetAs<uint64_t>();
-
-    // TODO: define what parts should be implemented for the assignment
-
-    return type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
-  }
-
-
+class DateFunctions {
+ public:
+  // The arguments are contained in the args vector
+  // (1) The first argument is the part of the date to extract
+  // (see DatePartType in type/types.h
+  // (2) The second argument is the timestamp to extract the part from
+  // @return The Value returned should be a type::DecimalValue that is
+  // constructed using type::ValueFactory
+  static type::Value Extract(const std::vector<type::Value>& args);
 };
 }  // namespace expression
 }  // namespace peloton

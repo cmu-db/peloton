@@ -48,37 +48,37 @@ class TrafficCop {
   void Reset();
 
   // PortalExec - Execute query string
-  Result ExecuteStatement(const std::string &query,
-                          std::vector<ResultType> &result,
-                          std::vector<FieldInfoType> &tuple_descriptor,
+  ResultType ExecuteStatement(const std::string &query,
+                          std::vector<StatementResult> &result,
+                          std::vector<FieldInfo> &tuple_descriptor,
                           int &rows_changed, std::string &error_message);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
-  Result ExecuteStatement(
+  ResultType ExecuteStatement(
       const std::shared_ptr<Statement> &statement,
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-      const std::vector<int> &result_format, std::vector<ResultType> &result,
+      const std::vector<int> &result_format, std::vector<StatementResult> &result,
       int &rows_change, std::string &error_message);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
   bridge::peloton_status ExecuteStatementPlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-      std::vector<ResultType> &result, const std::vector<int> &result_format);
+      std::vector<StatementResult> &result, const std::vector<int> &result_format);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
                                               std::string &error_message);
 
-  std::vector<FieldInfoType> GenerateTupleDescriptor(
+  std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
 
-  FieldInfoType GetColumnFieldForValueType(std::string column_name,
+  FieldInfo GetColumnFieldForValueType(std::string column_name,
                                            type::Type::TypeId column_type);
 
-  FieldInfoType GetColumnFieldForAggregates(std::string name,
+  FieldInfo GetColumnFieldForAggregates(std::string name,
                                             ExpressionType expr_type);
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
@@ -90,7 +90,7 @@ class TrafficCop {
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  typedef std::pair<concurrency::Transaction *, Result> TcopTxnState;
+  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
   std::stack<TcopTxnState> tcop_txn_state_;
 
  private:
@@ -98,11 +98,11 @@ class TrafficCop {
 
   TcopTxnState &GetCurrentTxnState();
 
-  Result BeginQueryHelper();
+  ResultType BeginQueryHelper();
 
-  Result CommitQueryHelper();
+  ResultType CommitQueryHelper();
 
-  Result AbortQueryHelper();
+  ResultType AbortQueryHelper();
 };
 
 }  // End tcop namespace

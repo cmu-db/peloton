@@ -14,9 +14,10 @@
 
 #include <memory>
 #include <vector>
-#include <type/value.h>
 
+#include "common/item_pointer.h"
 #include "executor/logical_tile.h"
+#include "type/types.h"
 
 namespace peloton {
 
@@ -72,20 +73,12 @@ class AbstractExecutor {
 
   // Update the predicate in runtime. This is used in Nested Loop Join. Since
   // some executor do not need this function, we set it to empty function.
-  virtual void UpdatePredicate(const std::vector<oid_t> &column_ids
-                                   UNUSED_ATTRIBUTE,
-                               const std::vector<type::Value> &values
-                                   UNUSED_ATTRIBUTE) {}
+  virtual void UpdatePredicate(
+      const std::vector<oid_t> &column_ids UNUSED_ATTRIBUTE,
+      const std::vector<type::Value> &values UNUSED_ATTRIBUTE) {}
 
   // Used to reset the state. For now it's overloaded by index scan executor
   virtual void ResetState() {}
-
-  // Used to initiate the flag to show that the result is ordered by which
-  // columns. For example, order_by executor will pass a empty column
-  // vector to index scan executor. The passing column vector is a reference.
-  // The index executor will
-  void InitResultOrderFlag(bool &order, std::vector<oid_t> &columns,
-                           bool &descend);
 
  protected:
   // NOTE: The reason why we keep the plan node separate from the executor

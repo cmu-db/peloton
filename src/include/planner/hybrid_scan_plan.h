@@ -50,7 +50,7 @@ class HybridScanPlan : public AbstractScan {
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
-  PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
+  PlanNodeType GetPlanNodeType() const { return PlanNodeType::SEQSCAN; }
 
   std::shared_ptr<index::Index> GetIndex() const { return index_; }
 
@@ -75,7 +75,7 @@ class HybridScanPlan : public AbstractScan {
   HybridScanType GetHybridType() const { return type_; }
 
  private:
-  HybridScanType type_ = HYBRID_SCAN_TYPE_INVALID;
+  HybridScanType type_ = HybridScanType::INVALID;
 
   const std::vector<oid_t> column_ids_;
 

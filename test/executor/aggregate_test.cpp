@@ -91,7 +91,7 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_SORTED);
+                              output_table_schema, AggregateType::SORTED);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -128,13 +128,13 @@ TEST_F(AggregateTests, SortedDistinctTest) {
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(0, 3));
-  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(2)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(5, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(51)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(5, 3));
-  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(52)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(52)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
 }
 
@@ -172,7 +172,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(
-      EXPRESSION_TYPE_AGGREGATE_SUM,
+      ExpressionType::AGGREGATE_SUM,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1));
   agg_terms.push_back(sumb);
@@ -193,7 +193,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_SORTED);
+                              output_table_schema, AggregateType::SORTED);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -273,11 +273,11 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumb(
-      EXPRESSION_TYPE_AGGREGATE_SUM,
+      ExpressionType::AGGREGATE_SUM,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1));
   planner::AggregatePlan::AggTerm maxc(
-      EXPRESSION_TYPE_AGGREGATE_MAX,
+      ExpressionType::AGGREGATE_MAX,
       expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2));
   agg_terms.push_back(sumb);
@@ -299,7 +299,7 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_SORTED);
+                              output_table_schema, AggregateType::SORTED);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -338,7 +338,7 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(0, 2));
-  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(42)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(42)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(1, 0));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
@@ -380,22 +380,22 @@ TEST_F(AggregateTests, MinMaxTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm minB(
-      EXPRESSION_TYPE_AGGREGATE_MIN,
+      ExpressionType::AGGREGATE_MIN,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);
   planner::AggregatePlan::AggTerm maxB(
-      EXPRESSION_TYPE_AGGREGATE_MAX,
+      ExpressionType::AGGREGATE_MAX,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);
   planner::AggregatePlan::AggTerm minC(
-      EXPRESSION_TYPE_AGGREGATE_MIN,
+      ExpressionType::AGGREGATE_MIN,
       expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2),
       false);
   planner::AggregatePlan::AggTerm maxC(
-      EXPRESSION_TYPE_AGGREGATE_MAX,
+      ExpressionType::AGGREGATE_MAX,
       expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2),
       false);
@@ -420,7 +420,7 @@ TEST_F(AggregateTests, MinMaxTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_PLAIN);
+                              output_table_schema, AggregateType::PLAIN);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -459,10 +459,10 @@ TEST_F(AggregateTests, MinMaxTest) {
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(91)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(0, 2));
-  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(2)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
   val = (result_tile->GetValue(0, 3));
-  cmp = (val.CompareEquals(type::ValueFactory::GetDoubleValue(92)));
+  cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(92)));
   EXPECT_TRUE(cmp == type::CMP_TRUE);
 }
 
@@ -517,7 +517,7 @@ TEST_F(AggregateTests, HashDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_HASH);
+                              output_table_schema, AggregateType::HASH);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -588,7 +588,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumC(
-      EXPRESSION_TYPE_AGGREGATE_SUM,
+      ExpressionType::AGGREGATE_SUM,
       expression::ExpressionUtil::TupleValueFactory(type::Type::DECIMAL, 0,
                                                     2));
   agg_terms.push_back(sumC);
@@ -609,7 +609,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_HASH);
+                              output_table_schema, AggregateType::HASH);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -677,12 +677,12 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm countB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      ExpressionType::AGGREGATE_COUNT,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      ExpressionType::AGGREGATE_COUNT,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       true);  // Flag distinct
@@ -705,7 +705,7 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_HASH);
+                              output_table_schema, AggregateType::HASH);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -786,17 +786,17 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
   planner::AggregatePlan::AggTerm sumA(
-      EXPRESSION_TYPE_AGGREGATE_SUM,
+      ExpressionType::AGGREGATE_SUM,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     0),
       false);
   planner::AggregatePlan::AggTerm countB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      ExpressionType::AGGREGATE_COUNT,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       false);  // Flag distinct
   planner::AggregatePlan::AggTerm countDistinctB(
-      EXPRESSION_TYPE_AGGREGATE_COUNT,
+      ExpressionType::AGGREGATE_COUNT,
       expression::ExpressionUtil::TupleValueFactory(type::Type::INTEGER, 0,
                                                     1),
       true);  // Flag distinct
@@ -820,7 +820,7 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_PLAIN);
+                              output_table_schema, AggregateType::PLAIN);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();

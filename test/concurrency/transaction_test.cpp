@@ -25,7 +25,7 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_TIMESTAMP_ORDERING
+    ConcurrencyType::TIMESTAMP_ORDERING
 };
 
 void TransactionTest(concurrency::TransactionManager *txn_manager,
@@ -111,8 +111,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
 
       scheduler.Run();
 
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
       EXPECT_EQ(0, scheduler.schedules[0].results[0]);
       EXPECT_EQ(0, scheduler.schedules[0].results[1]);
       EXPECT_EQ(0, scheduler.schedules[0].results[2]);
@@ -134,7 +134,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
 
       scheduler.Run();
 
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
       EXPECT_EQ(4, scheduler.schedules[0].results[0]);
     }
 
@@ -157,7 +157,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
 
       scheduler.Run();
 
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
       EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
       EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
       EXPECT_EQ(3, scheduler.schedules[0].results[2]);
@@ -185,7 +185,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
 
       scheduler.Run();
 
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
       EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
       EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
       EXPECT_EQ(2, scheduler.schedules[0].results[2]);
@@ -210,8 +210,8 @@ TEST_F(TransactionTests, AbortTest) {
 
       scheduler.Run();
 
-      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
 
@@ -223,8 +223,8 @@ TEST_F(TransactionTests, AbortTest) {
       scheduler.Txn(1).Commit();
 
       scheduler.Run();
-      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
+      EXPECT_EQ(ResultType::ABORTED, scheduler.schedules[0].txn_result);
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[1].txn_result);
       EXPECT_EQ(-1, scheduler.schedules[1].results[0]);
     }
   }

@@ -40,7 +40,7 @@ class CopyPlan : public AbstractPlan {
     LOG_DEBUG("Creating a Copy Plan");
   }
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_COPY; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::COPY; }
 
   const std::string GetInfo() const { return "CopyPlan"; }
 

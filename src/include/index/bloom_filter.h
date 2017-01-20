@@ -26,6 +26,9 @@
 
 #define BLOOM_FILTER_ENABLED
 
+namespace peloton{
+namespace index {
+
 /*
  * class BloomFilter
  */
@@ -196,3 +199,6 @@ class BloomFilter {
     return __ExistsScalar(value);
   }
 };
+
+} // namespace index
+} // namespace peloton

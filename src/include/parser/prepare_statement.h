@@ -29,7 +29,7 @@ namespace parser {
  */
 struct PrepareStatement : SQLStatement {
   PrepareStatement()
-      : SQLStatement(STATEMENT_TYPE_PREPARE), name(NULL), query(NULL) {}
+      : SQLStatement(StatementType::PREPARE), name(NULL), query(NULL) {}
 
   virtual ~PrepareStatement() {
     delete query;

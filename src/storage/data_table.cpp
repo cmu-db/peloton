@@ -384,15 +384,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+      case IndexConstraintType::PRIMARY_KEY:
+      case IndexConstraintType::UNIQUE: {
         // get unique tuple from primary/unique index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
         res = index->CondInsertEntry(key.get(), *index_entry_ptr, fn);
       } break;
 
-      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      case IndexConstraintType::DEFAULT:
       default:
         index->InsertEntry(key.get(), *index_entry_ptr);
         break;
@@ -444,7 +444,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
 
-    if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+    if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
       continue;
     }
 
@@ -468,11 +468,11 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+      case IndexConstraintType::PRIMARY_KEY:
+      case IndexConstraintType::UNIQUE: {
         res = index->CondInsertEntry(key.get(), index_entry_ptr, fn);
       } break;
-      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      case IndexConstraintType::DEFAULT:
       default:
         index->InsertEntry(key.get(), index_entry_ptr);
         break;
@@ -510,7 +510,7 @@ bool DataTable::CheckForeignKeyConstraints(
       auto index = ref_table->GetIndex(index_itr);
 
       // The foreign key constraints only refer to the primary key
-      if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+      if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_TRACE("BEGIN checking referred table");
         auto key_attrs = foreign_key->GetFKColumnOffsets();
 
@@ -768,9 +768,9 @@ void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
 
   // Update index stats
   auto index_type = index->GetIndexType();
-  if (index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+  if (index_type == IndexConstraintType::PRIMARY_KEY) {
     has_primary_key_ = true;
-  } else if (index_type == INDEX_CONSTRAINT_TYPE_UNIQUE) {
+  } else if (index_type == IndexConstraintType::UNIQUE) {
     unique_constraint_count_++;
   }
 }

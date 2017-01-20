@@ -399,7 +399,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
   storage::Tile *tile = storage::TileFactory::GetTile(
-      BACKEND_TYPE_MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       tile_group_header, *schema, nullptr, tuple_count);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -455,7 +455,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
-  storage::Tile *new_tile = tile->CopyTile(BACKEND_TYPE_MM);
+  storage::Tile *new_tile = tile->CopyTile(BackendType::MM);
 
   LOG_INFO("\t Copied Tile Details ...");
   LOG_INFO("%s", new_tile->GetInfo().c_str());

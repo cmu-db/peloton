@@ -79,7 +79,7 @@ class Catalog {
   void CreateMetricsCatalog();
 
   // Create a database
-  Result CreateDatabase(std::string database_name,
+  ResultType CreateDatabase(std::string database_name,
                         concurrency::Transaction *txn);
 
   // Add a database
@@ -90,15 +90,15 @@ class Catalog {
                    storage::Database *database);
 
   // Create a table in a database
-  Result CreateTable(std::string database_name, std::string table_name,
+  ResultType CreateTable(std::string database_name, std::string table_name,
                      std::unique_ptr<catalog::Schema>,
                      concurrency::Transaction *txn);
 
   // Create the primary key index for a table
-  Result CreatePrimaryIndex(const std::string &database_name,
+  ResultType CreatePrimaryIndex(const std::string &database_name,
                             const std::string &table_name);
 
-  Result CreateIndex(const std::string &database_name,
+  ResultType CreateIndex(const std::string &database_name,
                      const std::string &table_name,
                      std::vector<std::string> index_attr,
                      std::string index_name, bool unique, IndexType index_type);
@@ -107,14 +107,14 @@ class Catalog {
   index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
                                 const oid_t index_oid) const;
   // Drop a database
-  Result DropDatabaseWithName(std::string database_name,
+  ResultType DropDatabaseWithName(std::string database_name,
                               concurrency::Transaction *txn);
 
   // Drop a database with its oid
   void DropDatabaseWithOid(const oid_t database_oid);
 
   // Drop a table
-  Result DropTable(std::string database_name, std::string table_name,
+  ResultType DropTable(std::string database_name, std::string table_name,
                    concurrency::Transaction *txn);
 
   // Returns true if the catalog contains the given database with the id

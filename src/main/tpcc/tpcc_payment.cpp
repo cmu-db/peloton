@@ -160,11 +160,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_pkey_column_ids = {0, 1, 2};
     std::vector<ExpressionType> customer_pexpr_types;
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_pkey_values;
 
@@ -187,7 +187,7 @@ bool RunPayment(const size_t &thread_id){
     auto customer_list = ExecuteRead(&customer_pindex_scan_executor);
 
     // Check if aborted
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -209,11 +209,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_key_column_ids = {1, 2, 5};
     std::vector<ExpressionType> customer_expr_types;
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_key_values;
 
@@ -237,7 +237,7 @@ bool RunPayment(const size_t &thread_id){
     auto customer_list = ExecuteRead(&customer_index_scan_executor);
 
     // Check if aborted
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -259,7 +259,7 @@ bool RunPayment(const size_t &thread_id){
   std::vector<oid_t> warehouse_key_column_ids = {0};
   std::vector<ExpressionType> warehouse_expr_types;
   warehouse_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
   
   std::vector<type::Value > warehouse_key_values;
 
@@ -283,7 +283,7 @@ bool RunPayment(const size_t &thread_id){
   auto warehouse_list = ExecuteRead(&warehouse_index_scan_executor);
 
   // Check if aborted
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -301,9 +301,9 @@ bool RunPayment(const size_t &thread_id){
   std::vector<oid_t> district_key_column_ids = {0, 1};
   std::vector<ExpressionType> district_expr_types;
   district_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
   district_expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+    ExpressionType::COMPARE_EQUAL);
   
   std::vector<type::Value > district_key_values;
 
@@ -328,7 +328,7 @@ bool RunPayment(const size_t &thread_id){
   auto district_list = ExecuteRead(&district_index_scan_executor);
 
   // Check if aborted
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -368,7 +368,7 @@ bool RunPayment(const size_t &thread_id){
     warehouse_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
   // Update the 9th column
-  type::Value  warehouse_new_balance_value = type::ValueFactory::GetDoubleValue(warehouse_new_balance).Copy();
+  type::Value  warehouse_new_balance_value = type::ValueFactory::GetDecimalValue(warehouse_new_balance).Copy();
 
   warehouse_target_list.emplace_back(
     8, expression::ExpressionUtil::ConstantValueFactory(warehouse_new_balance_value)
@@ -387,7 +387,7 @@ bool RunPayment(const size_t &thread_id){
   ExecuteUpdate(&warehouse_update_executor);
 
   // Check if aborted
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -427,7 +427,7 @@ bool RunPayment(const size_t &thread_id){
     }
   }
   // Update the 10th column
-  type::Value  district_new_balance_value = type::ValueFactory::GetDoubleValue(district_new_balance).Copy();
+  type::Value  district_new_balance_value = type::ValueFactory::GetDecimalValue(district_new_balance).Copy();
   
   district_target_list.emplace_back(
     9, expression::ExpressionUtil::ConstantValueFactory(district_new_balance_value)
@@ -446,7 +446,7 @@ bool RunPayment(const size_t &thread_id){
   ExecuteUpdate(&district_update_executor);
 
   // Check the result
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -472,11 +472,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_pkey_column_ids = {0, 1, 2};
     std::vector<ExpressionType> customer_pexpr_types;
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_pkey_values;
 
@@ -511,8 +511,8 @@ bool RunPayment(const size_t &thread_id){
       customer_bc_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
     }
 
-    type::Value customer_new_balance_value = type::ValueFactory::GetDoubleValue(customer_balance).Copy();
-    type::Value customer_new_ytd_value = type::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
+    type::Value customer_new_balance_value = type::ValueFactory::GetDecimalValue(customer_balance).Copy();
+    type::Value customer_new_ytd_value = type::ValueFactory::GetDecimalValue(customer_ytd_payment).Copy();
     type::Value customer_new_paycnt_value = type::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
     type::Value customer_new_data_value = type::ValueFactory::GetVarcharValue(data_constant.c_str()).Copy();
 
@@ -545,11 +545,11 @@ bool RunPayment(const size_t &thread_id){
     std::vector<oid_t> customer_pkey_column_ids = {0, 1, 2};
     std::vector<ExpressionType> customer_pexpr_types;
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     customer_pexpr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+      ExpressionType::COMPARE_EQUAL);
     
     std::vector<type::Value > customer_pkey_values;
 
@@ -582,8 +582,8 @@ bool RunPayment(const size_t &thread_id){
       }
       customer_gc_direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
     }
-    type::Value  customer_new_balance_value = type::ValueFactory::GetDoubleValue(customer_balance).Copy();
-    type::Value  customer_new_ytd_value = type::ValueFactory::GetDoubleValue(customer_ytd_payment).Copy();
+    type::Value  customer_new_balance_value = type::ValueFactory::GetDecimalValue(customer_balance).Copy();
+    type::Value  customer_new_ytd_value = type::ValueFactory::GetDecimalValue(customer_ytd_payment).Copy();
     type::Value  customer_new_paycnt_value = type::ValueFactory::GetIntegerValue(customer_payment_cnt).Copy();
 
     customer_gc_target_list.emplace_back(16, expression::ExpressionUtil::ConstantValueFactory(customer_new_balance_value));
@@ -608,7 +608,7 @@ bool RunPayment(const size_t &thread_id){
   }
 
   // Check the result
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
@@ -630,7 +630,7 @@ bool RunPayment(const size_t &thread_id){
   // H_DATE
   history_tuple->SetValue(5, type::ValueFactory::GetTimestampValue(h_date), nullptr);
   // H_AMOUNT
-  history_tuple->SetValue(6, type::ValueFactory::GetDoubleValue(h_amount), nullptr);
+  history_tuple->SetValue(6, type::ValueFactory::GetDecimalValue(h_amount), nullptr);
   // H_DATA
   // Note: workaround
   history_tuple->SetValue(7, type::ValueFactory::GetVarcharValue(data_constant), context.get()->GetPool());
@@ -642,21 +642,21 @@ bool RunPayment(const size_t &thread_id){
   history_insert_executor.Execute();
 
   // Check result
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction(txn);
     return false;
   }
 
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     return true;
   } else {
-    PL_ASSERT(result == Result::RESULT_ABORTED || 
-           result == Result::RESULT_FAILURE);
+    PL_ASSERT(result == ResultType::ABORTED || 
+           result == ResultType::FAILURE);
     return false;
   }
 }

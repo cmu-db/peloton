@@ -20,6 +20,8 @@
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
 
+#include <random>
+
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
@@ -27,6 +29,18 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 namespace test {
+
+std::random_device rd;
+std::mt19937 rng(rd());
+
+// Create a uniform random number
+int SQLTestsUtil::GetRandomInteger(const int lower_bound,
+                                   const int upper_bound) {
+  std::uniform_int_distribution<> dist(lower_bound, upper_bound);
+
+  int sample = dist(rng);
+  return sample;
+}
 
 // Show the content in the specific table in the specific database
 // Note: In order to see the content from the command line, you have to
@@ -37,22 +51,23 @@ void SQLTestsUtil::ShowTable(std::string database_name,
 }
 
 // Execute a SQL query end-to-end
-Result SQLTestsUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<ResultType> &result,
-    std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
+ResultType SQLTestsUtil::ExecuteSQLQuery(
+    const std::string query, std::vector<StatementResult> &result,
+    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_INFO("Query: %s", query.c_str());
   auto status = traffic_cop_.ExecuteStatement(query, result, tuple_descriptor,
                                               rows_changed, error_message);
-  LOG_INFO("Statement executed. Result: %d", status);
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status).c_str());
   return status;
 }
 
 // Execute a SQL query end-to-end with the specific optimizer
-Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
+ResultType SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-    const std::string query, std::vector<ResultType> &result,
-    std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
+    const std::string query, std::vector<StatementResult> &result,
+    std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   auto &peloton_parser = parser::Parser::GetInstance();
   std::vector<type::Value> params;
@@ -65,15 +80,16 @@ Result SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params,
-                                                    result, result_format);
+    auto status = traffic_cop_.ExecuteStatementPlan(plan.get(), params, result,
+                                                    result_format);
     rows_changed = status.m_processed;
-    LOG_INFO("Statement executed. Result: %d", status.m_result);
+    LOG_INFO("Statement executed. Result: %s",
+             ResultTypeToString(status.m_result).c_str());
     return status.m_result;
-
-  } catch (Exception &e) {
+  }
+  catch (Exception &e) {
     error_message = e.what();
-    return Result::RESULT_FAILURE;
+    return ResultType::FAILURE;
   }
 }
 
@@ -87,9 +103,9 @@ std::shared_ptr<planner::AbstractPlan> SQLTestsUtil::GeneratePlanWithOptimizer(
   return optimizer->BuildPelotonPlanTree(parsed_stmt);
 }
 
-Result SQLTestsUtil::ExecuteSQLQuery(const std::string query,
-                                     std::vector<ResultType> &result) {
-  std::vector<FieldInfoType> tuple_descriptor;
+ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query,
+                                         std::vector<StatementResult> &result) {
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
 
@@ -100,9 +116,9 @@ Result SQLTestsUtil::ExecuteSQLQuery(const std::string query,
   return status;
 }
 
-Result SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
-  std::vector<ResultType> result;
-  std::vector<FieldInfoType> tuple_descriptor;
+ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
 

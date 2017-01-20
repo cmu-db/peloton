@@ -26,14 +26,14 @@
 namespace peloton {
 namespace test {
 
-class ContainerTupleTest : public PelotonTest {};
+class ContainerTupleTests : public PelotonTest {};
 
-TEST_F(ContainerTupleTest, VectorValue) {
+TEST_F(ContainerTupleTests, VectorValue) {
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(11));
   values.push_back(type::ValueFactory::GetIntegerValue(22));
-  values.push_back(type::ValueFactory::GetDoubleValue(3.14));
+  values.push_back(type::ValueFactory::GetDecimalValue(3.14));
   values.push_back(type::ValueFactory::GetVarcharValue("Hello from ContainerTupleTest"));
 
   expression::ContainerTuple<std::vector<type::Value>> ctuple(&values);

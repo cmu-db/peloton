@@ -110,9 +110,9 @@ bool RunStockLevel(const size_t &thread_id) {
   std::vector<type::Value > district_key_values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  district_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  district_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   district_key_values.push_back(type::ValueFactory::GetIntegerValue(w_id).Copy());
-  district_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  district_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   district_key_values.push_back(type::ValueFactory::GetIntegerValue(d_id).Copy());
 
   auto district_pkey_index = district_table->GetIndexWithOid(district_table_pkey_index_oid);
@@ -129,7 +129,7 @@ bool RunStockLevel(const size_t &thread_id) {
   executor::IndexScanExecutor district_index_scan_executor(&district_index_scan_node, context.get());
 
   auto districts = ExecuteRead(&district_index_scan_executor);
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  if (txn->GetResult() != ResultType::SUCCESS) {
     txn_manager.AbortTransaction(txn);
     return false;
   }
@@ -149,9 +149,9 @@ bool RunStockLevel(const size_t &thread_id) {
   std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_I_ID};
   std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID};
   std::vector<ExpressionType> order_line_expr_types;
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  order_line_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
 
   auto order_line_skey_index = order_line_table->GetIndexWithOid(order_line_table_skey_index_oid);
   
@@ -159,8 +159,8 @@ bool RunStockLevel(const size_t &thread_id) {
   std::vector<oid_t> stock_column_ids = {COL_IDX_S_QUANTITY};
   std::vector<oid_t> stock_key_column_ids = {COL_IDX_S_W_ID, COL_IDX_S_I_ID};
   std::vector<ExpressionType> stock_expr_types;
-  stock_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  stock_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  stock_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  stock_expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   
   auto stock_pkey_index = stock_table->GetIndexWithOid(stock_table_pkey_index_oid);
 
@@ -190,7 +190,7 @@ bool RunStockLevel(const size_t &thread_id) {
 
     auto order_line_values = ExecuteRead(&order_line_index_scan_executor);
     
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -227,7 +227,7 @@ bool RunStockLevel(const size_t &thread_id) {
 
     auto stock_values = ExecuteRead(&stock_index_scan_executor);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    if (txn->GetResult() != ResultType::SUCCESS) {
       LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -246,11 +246,11 @@ bool RunStockLevel(const size_t &thread_id) {
   }
   LOG_TRACE("number of distinct items=%lu", distinct_items.size());
 
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == ResultType::SUCCESS);
 
   auto result = txn_manager.CommitTransaction(txn);
 
-  if (result == Result::RESULT_SUCCESS) {
+  if (result == ResultType::SUCCESS) {
     return true;
   } else {
     return false;

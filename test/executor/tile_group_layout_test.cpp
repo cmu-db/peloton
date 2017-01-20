@@ -58,7 +58,7 @@ namespace test {
 // Tile Group Layout Tests
 //===--------------------------------------------------------------------===//
 
-class TileGroupLayoutTest : public PelotonTest {};
+class TileGroupLayoutTests : public PelotonTest {};
 
 void ExecuteTileGroupTest() {
   const int tuples_per_tilegroup_count = 10;
@@ -107,8 +107,8 @@ void ExecuteTileGroupTest() {
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BWTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        "primary_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -208,12 +208,12 @@ void ExecuteTileGroupTest() {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(TileGroupLayoutTest, RowLayout) {
+TEST_F(TileGroupLayoutTests, RowLayout) {
   peloton_layout_mode = LAYOUT_TYPE_ROW;
   ExecuteTileGroupTest();
 }
 
-TEST_F(TileGroupLayoutTest, ColumnLayout) {
+TEST_F(TileGroupLayoutTests, ColumnLayout) {
   peloton_layout_mode = LAYOUT_TYPE_COLUMN;
   ExecuteTileGroupTest();
 }

@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/printable.h"
 #include "type/abstract_pool.h"

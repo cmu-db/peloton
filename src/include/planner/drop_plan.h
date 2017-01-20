@@ -40,7 +40,7 @@ class DropPlan : public AbstractPlan {
 
   explicit DropPlan(parser::DropStatement *parse_tree);
 
-  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DROP; }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DROP; }
 
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";

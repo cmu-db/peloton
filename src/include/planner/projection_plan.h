@@ -42,7 +42,7 @@ class ProjectionPlan : public AbstractPlan {
   inline const catalog::Schema *GetSchema() const { return schema_.get(); }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_PROJECTION;
+    return PlanNodeType::PROJECTION;
   }
 
   const std::string GetInfo() const { return "Projection"; }

@@ -271,8 +271,8 @@ bool PrepareLogFile() {
   // Get an instance of the storage manager to force posix_fallocate
   // to be invoked before we begin benchmarking
   auto& storage_manager = storage::StorageManager::GetInstance();
-  auto tmp = storage_manager.Allocate(BACKEND_TYPE_MM, 1024);
-  storage_manager.Release(BACKEND_TYPE_MM, tmp);
+  auto tmp = storage_manager.Allocate(BackendType::MM, 1024);
+  storage_manager.Release(BackendType::MM, tmp);
 
   // Pick sync commit mode
   switch (state.asynchronous_mode) {

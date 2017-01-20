@@ -51,15 +51,15 @@ void inprintU(UNUSED_ATTRIBUTE uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
 
 void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
   switch (table->type) {
-    case TABLE_REFERENCE_TYPE_NAME:
+    case TableReferenceType::NAME:
       inprint(table->GetTableName(), num_indent);
       break;
 
-    case TABLE_REFERENCE_TYPE_SELECT:
+    case TableReferenceType::SELECT:
       GetSelectStatementInfo(table->select, num_indent);
       break;
 
-    case TABLE_REFERENCE_TYPE_JOIN:
+    case TableReferenceType::JOIN:
       inprint("-> Join Table", num_indent);
       inprint("-> Left", num_indent + 1);
       PrintTableRefInfo(table->join->left, num_indent + 2);
@@ -69,11 +69,11 @@ void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
       GetExpressionInfo(table->join->condition, num_indent + 2);
       break;
 
-    case TABLE_REFERENCE_TYPE_CROSS_PRODUCT:
+    case TableReferenceType::CROSS_PRODUCT:
       for (TableRef* tbl : *table->list) PrintTableRefInfo(tbl, num_indent);
       break;
 
-    case TABLE_REFERENCE_TYPE_INVALID:
+    case TableReferenceType::INVALID:
     default:
       LOG_ERROR("invalid table ref type");
       break;
@@ -107,21 +107,21 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
   LOG_TRACE("-> Expr Type :: %s", ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
   switch (expr->GetExpressionType()) {
-    case EXPRESSION_TYPE_STAR:
+    case ExpressionType::STAR:
       inprint("*", num_indent);
       break;
-    case EXPRESSION_TYPE_COLUMN_REF:
+    case ExpressionType::COLUMN_REF:
       // TODO: Fix this
       inprint((expr)->GetExpressionName(), num_indent);
       //if (expr->GetColumn() != NULL) inprint((expr)->GetColumn(), num_indent);
       break;
-    case EXPRESSION_TYPE_VALUE_CONSTANT:
+    case ExpressionType::VALUE_CONSTANT:
       // TODO: Fix this
       // ((expression::ConstantValueExpression*)expr)->Evaluate(nullptr,
       // nullptr, nullptr);
       printf("\n");
       break;
-    case EXPRESSION_TYPE_FUNCTION_REF:
+    case ExpressionType::FUNCTION_REF:
       // TODO: Fix this
       // inprint(expr->GetName(), num_indent);
       // inprint(expr->GetExpression()->GetName(), num_indent);
@@ -221,7 +221,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
     }
   }
   switch (stmt->type) {
-    case INSERT_TYPE_VALUES:
+    case InsertType::VALUES:
       inprint("-> Values", num_indent + 1);
       for (auto value_item : *stmt->insert_values){
         // TODO this is a debugging method which is currently unused.
@@ -230,7 +230,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
         }
       }
       break;
-    case INSERT_TYPE_SELECT:
+    case InsertType::SELECT:
       GetSelectStatementInfo(stmt->select, num_indent + 1);
       break;
     default:

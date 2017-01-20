@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 #include "concurrency/transaction_tests_util.h"
 
@@ -22,11 +21,10 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class IsolationLevelTest : public PelotonTest {};
+class IsolationLevelTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_TIMESTAMP_ORDERING
-};
+    ConcurrencyType::TIMESTAMP_ORDERING};
 
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -48,13 +46,13 @@ void DirtyWriteTest() {
     auto &schedules = scheduler.schedules;
 
     // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
+    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::SUCCESS);
     // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
+    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::ABORTED) ||
+                (schedules[0].txn_result == ResultType::ABORTED &&
+                 schedules[1].txn_result == ResultType::SUCCESS));
     schedules.clear();
   }
 
@@ -70,13 +68,13 @@ void DirtyWriteTest() {
     auto &schedules = scheduler.schedules;
 
     // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
+    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::SUCCESS);
     // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
+    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::ABORTED) ||
+                (schedules[0].txn_result == ResultType::ABORTED &&
+                 schedules[1].txn_result == ResultType::SUCCESS));
   }
 
   {
@@ -94,13 +92,13 @@ void DirtyWriteTest() {
     auto &schedules = scheduler.schedules;
 
     // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
+    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::SUCCESS);
     // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
+    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::ABORTED) ||
+                (schedules[0].txn_result == ResultType::ABORTED &&
+                 schedules[1].txn_result == ResultType::SUCCESS));
     schedules.clear();
   }
 
@@ -119,13 +117,13 @@ void DirtyWriteTest() {
     auto &schedules = scheduler.schedules;
 
     // T1 and T2 can't both succeed
-    EXPECT_FALSE(schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_SUCCESS);
+    EXPECT_FALSE(schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::SUCCESS);
     // For MVCC, actually one and only one T should succeed?
-    EXPECT_TRUE((schedules[0].txn_result == RESULT_SUCCESS &&
-                 schedules[1].txn_result == RESULT_ABORTED) ||
-                (schedules[0].txn_result == RESULT_ABORTED &&
-                 schedules[1].txn_result == RESULT_SUCCESS));
+    EXPECT_TRUE((schedules[0].txn_result == ResultType::SUCCESS &&
+                 schedules[1].txn_result == ResultType::ABORTED) ||
+                (schedules[0].txn_result == ResultType::ABORTED &&
+                 schedules[1].txn_result == ResultType::SUCCESS));
     schedules.clear();
   }
 }
@@ -149,8 +147,8 @@ void DirtyReadTest() {
 
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
@@ -166,8 +164,8 @@ void DirtyReadTest() {
 
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
@@ -183,8 +181,8 @@ void DirtyReadTest() {
 
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
@@ -208,8 +206,8 @@ void FuzzyReadTest() {
 
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       EXPECT_EQ(0, scheduler.schedules[0].results[0]);
       EXPECT_EQ(0, scheduler.schedules[0].results[1]);
     }
@@ -227,8 +225,8 @@ void FuzzyReadTest() {
 
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       EXPECT_EQ(1, scheduler.schedules[0].results[0]);
       EXPECT_EQ(1, scheduler.schedules[0].results[1]);
     }
@@ -250,8 +248,8 @@ void PhantomTest() {
 
     scheduler.Run();
     size_t original_tuple_count = 10;
-    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS &&
-        scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
+    if (scheduler.schedules[0].txn_result == ResultType::SUCCESS &&
+        scheduler.schedules[1].txn_result == ResultType::SUCCESS) {
       // Should scan no more tuples
       EXPECT_TRUE(scheduler.schedules[0].results.size() ==
                   original_tuple_count * 2);
@@ -269,8 +267,8 @@ void PhantomTest() {
     scheduler.Run();
 
     size_t original_tuple_count = 11;
-    if (scheduler.schedules[0].txn_result == RESULT_SUCCESS &&
-        scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
+    if (scheduler.schedules[0].txn_result == ResultType::SUCCESS &&
+        scheduler.schedules[1].txn_result == ResultType::SUCCESS) {
       // Should scan no less tuples
       EXPECT_TRUE(scheduler.schedules[0].results.size() ==
                   original_tuple_count * 2);
@@ -290,7 +288,8 @@ void WriteSkewTest() {
     scheduler.Txn(0).Update(1, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler.schedules[0].txn_result);
   }
   {
     // the database has tuple (0, 0), (1, 1)
@@ -300,10 +299,10 @@ void WriteSkewTest() {
     // transactions.
     TransactionScheduler scheduler(3, table.get(), &txn_manager);
 
-    scheduler.Txn(0)
-        .UpdateByValue(1, 0);  // txn 0 see (1, 1), update it to (1, 0)
-    scheduler.Txn(1)
-        .UpdateByValue(0, 1);  // txn 1 see (0, 0), update it to (0, 1)
+    scheduler.Txn(0).UpdateByValue(1,
+                                   0);  // txn 0 see (1, 1), update it to (1, 0)
+    scheduler.Txn(1).UpdateByValue(0,
+                                   1);  // txn 1 see (0, 0), update it to (0, 1)
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Commit();
     scheduler.Txn(2).Read(0);
@@ -312,10 +311,11 @@ void WriteSkewTest() {
 
     scheduler.Run();
 
-    EXPECT_TRUE(scheduler.schedules[2].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler.schedules[2].txn_result);
     // Can't all success
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       EXPECT_TRUE(scheduler.schedules[2].results[0] ==
                   scheduler.schedules[2].results[1]);
     }
@@ -337,8 +337,8 @@ void ReadSkewTest() {
 
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result) {
       EXPECT_TRUE(scheduler.schedules[0].results[0] ==
                   scheduler.schedules[0].results[1]);
     }
@@ -360,7 +360,8 @@ void SIAnomalyTest1() {
     scheduler.Txn(0).Update(100, 1);
     scheduler.Txn(0).Commit();
     scheduler.Run();
-    EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler.schedules[0].txn_result);
   }
   {
     TransactionScheduler scheduler(4, table.get(), &txn_manager);
@@ -379,19 +380,19 @@ void SIAnomalyTest1() {
     scheduler.Txn(3).Commit();
     scheduler.Run();
 
-    if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[2].txn_result) {
+    if (ResultType::SUCCESS == scheduler.schedules[0].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[1].txn_result &&
+        ResultType::SUCCESS == scheduler.schedules[2].txn_result) {
       EXPECT_TRUE(scheduler.schedules[0].results[1] ==
                   scheduler.schedules[3].results[1]);
     }
   }
 }
 
-TEST_F(IsolationLevelTest, SerializableTest) {
+TEST_F(IsolationLevelTests, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        test_type, ISOLATION_LEVEL_TYPE_FULL);
+        test_type, IsolationLevelType::FULL);
     DirtyWriteTest();
     DirtyReadTest();
     FuzzyReadTest();
@@ -402,16 +403,15 @@ TEST_F(IsolationLevelTest, SerializableTest) {
   }
 }
 
-TEST_F(IsolationLevelTest, StressTest) {
-
-  const int num_txn = 2;    // 16
-  const int scale = 1;      // 20
-  const int num_key = 2;    // 256
+TEST_F(IsolationLevelTests, StressTest) {
+  const int num_txn = 2;  // 16
+  const int scale = 1;    // 20
+  const int num_key = 2;  // 256
   srand(15721);
 
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        test_type, ISOLATION_LEVEL_TYPE_FULL);
+        test_type, IsolationLevelType::FULL);
     std::unique_ptr<storage::DataTable> table(
         TransactionTestsUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -445,7 +445,8 @@ TEST_F(IsolationLevelTest, StressTest) {
     scheduler2.Txn(0).Commit();
     scheduler2.Run();
 
-    EXPECT_EQ(RESULT_SUCCESS, scheduler2.schedules[0].txn_result);
+    EXPECT_EQ(ResultType::SUCCESS,
+              scheduler2.schedules[0].txn_result);
     // The sum should be zero
     int sum = 0;
     for (auto result : scheduler2.schedules[0].results) {
@@ -458,7 +459,7 @@ TEST_F(IsolationLevelTest, StressTest) {
     // stats
     int nabort = 0;
     for (auto &schedule : scheduler.schedules) {
-      if (schedule.txn_result == RESULT_ABORTED) nabort += 1;
+      if (schedule.txn_result == ResultType::ABORTED) nabort += 1;
     }
     LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   }

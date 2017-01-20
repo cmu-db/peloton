@@ -13,34 +13,7 @@ import sys
 import pprint
 
 ## ==============================================
-## CONFIGURATION
-## ==============================================
-
-# NOTE: absolute path to peloton directory is calculated from current directory
-# directory structure: peloton/scripts/formatting/<this_file>
-# PELOTON_DIR needs to be redefined if the directory structure is changed
-CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
-PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
-
-#other directory paths used are relative to peloton_dir
-PELOTON_SRC_DIR = os.path.join(PELOTON_DIR, "src")
-PELOTON_TEST_DIR = os.path.join(PELOTON_DIR, "test")
-
-# DEFAULT DIRS
-DEFAULT_DIRS = []
-DEFAULT_DIRS.append(PELOTON_SRC_DIR)
-DEFAULT_DIRS.append(PELOTON_TEST_DIR)
-
-EXIT_SUCCESS = 0
-EXIT_FAILURE = -1
-
-VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout",
-                      " malloc\(", " free\(", " memset\(", " memcpy\(",
-                      " \:\:memset\(", " \:\:memcpy\(", " std\:\:memset\(", " std\:\:memcpy\(",
-                      "\_\_attribute\_\_\(\(unused\)\)"]
-
-## ==============================================
-##             LOGGING CONFIGURATION
+## LOGGING CONFIGURATION
 ## ==============================================
 
 LOG = logging.getLogger(__name__)
@@ -52,6 +25,41 @@ LOG_formatter = logging.Formatter(
 LOG_handler.setFormatter(LOG_formatter)
 LOG.addHandler(LOG_handler)
 LOG.setLevel(logging.INFO)
+
+
+## ==============================================
+## CONFIGURATION
+## ==============================================
+
+# NOTE: absolute path to peloton directory is calculated from current directory
+# directory structure: peloton/scripts/formatting/<this_file>
+# PELOTON_DIR needs to be redefined if the directory structure is changed
+CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
+PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
+
+#other directory paths used are relative to PELOTON_DIR
+DEFAULT_DIRS = [
+    os.path.join(PELOTON_DIR, "src"),
+    os.path.join(PELOTON_DIR, "test")
+]
+
+EXIT_SUCCESS = 0
+EXIT_FAILURE = -1
+
+VALIDATOR_PATTERNS = [
+    "std\:\:cout",
+    " printf\(",
+    "cout",
+    " malloc\(",
+    " free\(",
+    " memset\(",
+    " memcpy\(",
+    " \:\:memset\(",
+    " \:\:memcpy\(",
+    " std\:\:memset\(",
+    " std\:\:memcpy\(",
+    "\_\_attribute\_\_\(\(unused\)\)"
+]
 
 SKIP_FILES_LIST = [
     "src/common/allocator.cpp",
@@ -72,9 +80,9 @@ SKIP_FILES_LIST = [
     "src/include/parser/update_statement.h",
     "src/parser/table_ref.cpp",
     "src/include/index/bloom_filter.h",
-	"src/include/index/ints_key.h",
-	"src/include/index/bwtree.h",
-];
+    "src/include/index/ints_key.h",
+    "src/include/index/bwtree.h",
+]
 
 ## ==============================================
 ##           UTILITY FUNCTION DEFINITIONS
@@ -85,7 +93,7 @@ def validate_file(file_path):
 
     file_name = os.path.basename(file_path)
     abs_path = os.path.abspath(file_path)
-    rel_path_from_peloton_dir = os.path.relpath(abs_path,PELOTON_DIR)
+    rel_path_from_peloton_dir = os.path.relpath(abs_path, PELOTON_DIR)
 
     # Skip some files
     if rel_path_from_peloton_dir in SKIP_FILES_LIST:
@@ -128,9 +136,9 @@ def validate_dir(dir_path):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Check for some strings')
-
     args = parser.parse_args()
 
+    ## VALIDATE!!!
     for dir in DEFAULT_DIRS:
         LOG.info("Scanning : " + dir)
 
@@ -141,5 +149,5 @@ if __name__ == '__main__':
 
     LOG.info("Validation successful")
     sys.exit(EXIT_SUCCESS)
-
+## MAIN
 

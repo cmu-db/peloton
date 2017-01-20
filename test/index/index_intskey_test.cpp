@@ -62,7 +62,7 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "MAGIC_TEST_INDEX", 125,  // Index oid
-      INVALID_OID, INVALID_OID, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      INVALID_OID, INVALID_OID, index_type, IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique_keys);
 
   // Build index
@@ -186,7 +186,7 @@ void IndexIntsKeyTestHelper(IndexType index_type,
 //  std::vector<type::Type::TypeId> col_types = {
 //      type::Type::INTEGER, type::Type::INTEGER, type::Type::INTEGER,
 //  };
-//  IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+//  IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
 //}
 
 TEST_F(IndexIntsKeyTests, BwTreeTest) {
@@ -197,13 +197,13 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
   // ONE COLUMN
   for (type::Type::TypeId type0 : types) {
     std::vector<type::Type::TypeId> col_types = {type0};
-    IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+    IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
   }
   // TWO COLUMNS
   for (type::Type::TypeId type0 : types) {
     for (type::Type::TypeId type1 : types) {
       std::vector<type::Type::TypeId> col_types = {type0, type1};
-      IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+      IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
     }
   }
   // THREE COLUMNS
@@ -211,7 +211,7 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
     for (type::Type::TypeId type1 : types) {
       for (type::Type::TypeId type2 : types) {
         std::vector<type::Type::TypeId> col_types = {type0, type1, type2};
-        IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+        IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
       }
     }
   }
@@ -222,7 +222,7 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
         for (type::Type::TypeId type3 : types) {
           std::vector<type::Type::TypeId> col_types = {type0, type1, type2,
                                                        type3};
-          IndexIntsKeyTestHelper(INDEX_TYPE_BWTREE, col_types);
+          IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
         }
       }
     }
@@ -232,7 +232,7 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
 // FIXME: The B-Tree core dumps. If we're not going to support then we should
 // probably drop it.
 // TEST_F(IndexIntsKeyTests, BTreeTest) {
-// IndexIntsKeyHelper(INDEX_TYPE_BTREE);
+// IndexIntsKeyHelper(IndexType::BTREE);
 // }
 
 }  // End test namespace

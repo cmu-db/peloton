@@ -25,7 +25,7 @@ class GCManagerFactory {
   static GCManager &GetInstance() {
     switch (gc_type_) {
 
-      case GARBAGE_COLLECTION_TYPE_ON:
+      case GarbageCollectionType::ON:
         return TransactionLevelGCManager::GetInstance(gc_thread_count_);
 
       default:
@@ -35,9 +35,9 @@ class GCManagerFactory {
 
   static void Configure(int thread_count = 1) { 
     if (thread_count == 0) {
-      gc_type_ = GARBAGE_COLLECTION_TYPE_OFF;
+      gc_type_ = GarbageCollectionType::OFF;
     } else {
-      gc_type_ = GARBAGE_COLLECTION_TYPE_ON;
+      gc_type_ = GarbageCollectionType::ON;
       gc_thread_count_ = thread_count;
     }
   }

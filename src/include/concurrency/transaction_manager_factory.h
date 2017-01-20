@@ -22,7 +22,7 @@ class TransactionManagerFactory {
   static TransactionManager &GetInstance() {
     switch (protocol_) {
 
-      case CONCURRENCY_TYPE_TIMESTAMP_ORDERING:
+      case ConcurrencyType::TIMESTAMP_ORDERING:
         return TimestampOrderingTransactionManager::GetInstance();
 
       default:
@@ -31,7 +31,7 @@ class TransactionManagerFactory {
   }
 
   static void Configure(ConcurrencyType protocol,
-                        IsolationLevelType level = ISOLATION_LEVEL_TYPE_FULL) {
+                        IsolationLevelType level = IsolationLevelType::FULL) {
     protocol_ = protocol;
     isolation_level_ = level;
   }

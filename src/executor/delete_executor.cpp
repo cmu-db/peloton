@@ -128,7 +128,7 @@ bool DeleteExecutor::DExecute() {
 
 
         if (acquire_ownership_success == false) {
-          transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
           return false;
         }
         // if it is the latest version and not locked by other threads, then
@@ -146,7 +146,7 @@ bool DeleteExecutor::DExecute() {
             // If the ownership is acquire inside this update executor, we release it here
             transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
           }
-          transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
           return false;
         }
         transaction_manager.PerformDelete(current_txn, old_location, new_location);
@@ -156,7 +156,7 @@ bool DeleteExecutor::DExecute() {
       } else {
         // transaction should be aborted as we cannot update the latest version.
         LOG_TRACE("Fail to update tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(current_txn, Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
         return false;
       }
     }
