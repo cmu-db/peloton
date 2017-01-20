@@ -1001,12 +1001,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-<<<<<<< HEAD
         gc_set->operator[](new_version.block)[new_version.offset] = false;
-=======
-        gc_set->operator[](new_version.block)[new_version.offset] =
-            RW_TYPE_UPDATE;
->>>>>>> upstream/master
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -1060,12 +1055,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
-<<<<<<< HEAD
         gc_set->operator[](new_version.block)[new_version.offset] = false;
-=======
-        gc_set->operator[](new_version.block)[new_version.offset] =
-            RW_TYPE_DELETE;
->>>>>>> upstream/master
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
