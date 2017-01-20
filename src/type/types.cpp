@@ -1263,6 +1263,299 @@ std::ostream& operator<<(std::ostream& os, const JoinType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// AggregateType - String Utilities
+//===--------------------------------------------------------------------===//
+std::string AggregateTypeToString(AggregateType type) {
+  switch (type) {
+    case AggregateType::INVALID: {
+      return "INVALID";
+    }
+    case AggregateType::SORTED: {
+      return "SORTED";
+    }
+    case AggregateType::HASH: {
+      return "HASH";
+    }
+    case AggregateType::PLAIN: {
+      return "PLAIN";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for AggregateType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+AggregateType StringToAggregateType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return AggregateType::INVALID;
+  } else if (upper_str == "SORTED") {
+    return AggregateType::SORTED;
+  } else if (upper_str == "HASH") {
+    return AggregateType::HASH;
+  } else if (upper_str == "PLAIN") {
+    return AggregateType::PLAIN;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No AggregateType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return AggregateType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const AggregateType &type) {
+  os << AggregateTypeToString(type);
+  return os;
+}
+
+// ------------------------------------------------------------------
+// QuantifierType - String Utilities
+// ------------------------------------------------------------------
+
+std::string QuantifierTypeToString(QuantifierType type) {
+  switch (type) {
+    case QuantifierType::NONE: {
+      return "NONE";
+    }
+    case QuantifierType::ANY: {
+      return "ANY";
+    }
+    case QuantifierType::ALL: {
+      return "ALL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for QuantifierType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "NONE";
+}
+
+QuantifierType StringToQuantifierType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "NONE") {
+    return QuantifierType::NONE;
+  } else if (upper_str == "ANY") {
+    return QuantifierType::ANY;
+  } else if (upper_str == "ALL") {
+    return QuantifierType::ALL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No QuantifierType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return QuantifierType::NONE;
+}
+
+std::ostream& operator<<(std::ostream& os, const QuantifierType& type) {
+  os << QuantifierTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// TableReferenceType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string TableReferenceTypeToString(TableReferenceType type) {
+  switch (type) {
+    case TableReferenceType::INVALID: {
+      return "INVALID";
+    }
+    case TableReferenceType::NAME: {
+      return "NAME";
+    };
+    case TableReferenceType::SELECT: {
+      return "SELECT";
+    }
+    case TableReferenceType::JOIN: {
+      return "JOIN";
+    }
+    case TableReferenceType::CROSS_PRODUCT: {
+      return "CROSS_PRODUCT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for TableReferenceType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+TableReferenceType StringToTableReferenceType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return TableReferenceType::INVALID;
+  } else if (upper_str == "NAME") {
+    return TableReferenceType::NAME;
+  } else if (upper_str == "SELECT") {
+    return TableReferenceType::SELECT;
+  } else if (upper_str == "JOIN") {
+    return TableReferenceType::JOIN;
+  } else if (upper_str == "CROSS_PRODUCT") {
+    return TableReferenceType::CROSS_PRODUCT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No TableReferenceType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return TableReferenceType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const TableReferenceType& type) {
+  os << TableReferenceTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// InsertType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string InsertTypeToString(InsertType type) {
+  switch (type) {
+    case InsertType::INVALID: {
+      return "INVALID";
+    }
+    case InsertType::VALUES: {
+      return "VALUES";
+    }
+    case InsertType::SELECT: {
+      return "SELECT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for InsertType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+InsertType StringToInsertType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return InsertType::INVALID;
+  } else if (upper_str == "VALUES") {
+    return InsertType::VALUES;
+  } else if (upper_str == "SELECT") {
+    return InsertType::SELECT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No InsertType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return InsertType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const InsertType &type) {
+  os << InsertTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// PayloadType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string PayloadTypeToString(PayloadType type) {
+  switch (type) {
+    case PayloadType::INVALID: {
+      return ("INVALID");
+    }
+    case PayloadType::CLIENT_REQUEST: {
+      return ("CLIENT_REQUEST");
+    }
+    case PayloadType::CLIENT_RESPONSE: {
+      return ("CLIENT_RESPONSE");
+    }
+    case PayloadType::STOP: {
+      return ("STOP");
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for PayloadType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+PayloadType StringToPayloadType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return PayloadType::INVALID;
+  } else if (upper_str == "CLIENT_REQUEST") {
+    return PayloadType::CLIENT_REQUEST;
+  } else if (upper_str == "CLIENT_RESPONSE") {
+    return PayloadType::CLIENT_RESPONSE;
+  } else if (upper_str == "STOP") {
+    return PayloadType::STOP;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No PayloadType conversion from string '%s'", upper_str.c_str()));
+  }
+  return PayloadType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const PayloadType &type) {
+  os << PayloadTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
+// TaskPriorityType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string TaskPriorityTypeToString(TaskPriorityType type) {
+  switch (type) {
+    case TaskPriorityType::INVALID: {
+      return "INVALID";
+    }
+    case TaskPriorityType::LOW: {
+      return "LOW";
+    }
+    case TaskPriorityType::NORMAL: {
+      return "NORMAL";
+    }
+    case TaskPriorityType::HIGH: {
+      return "HIGH";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for TaskPriorityType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+TaskPriorityType StringToTaskPriorityType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return TaskPriorityType::INVALID;
+  } else if (upper_str == "LOW") {
+    return TaskPriorityType::LOW;
+  } else if (upper_str == "NORMAL") {
+    return TaskPriorityType::NORMAL;
+  } else if (upper_str == "HIGH") {
+    return TaskPriorityType::HIGH;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No TaskPriorityType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return TaskPriorityType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const TaskPriorityType& type) {
+  os << TaskPriorityTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // ResultType - String Utilities
 //===--------------------------------------------------------------------===//
 

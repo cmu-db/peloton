@@ -911,7 +911,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
   planner::AggregatePlan aggregation_node(
       std::move(proj_info), std::move(aggregate_predicate),
       std::move(agg_terms), std::move(group_by_columns), output_table_schema,
-      AGGREGATE_TYPE_PLAIN);
+      AggregateType::PLAIN);
 
   executor::AggregateExecutor aggregation_executor(&aggregation_node,
                                                    context.get());

@@ -91,7 +91,7 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_SORTED);
+                              output_table_schema, AggregateType::SORTED);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -193,7 +193,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_SORTED);
+                              output_table_schema, AggregateType::SORTED);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -299,7 +299,7 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_SORTED);
+                              output_table_schema, AggregateType::SORTED);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -420,7 +420,7 @@ TEST_F(AggregateTests, MinMaxTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_PLAIN);
+                              output_table_schema, AggregateType::PLAIN);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -517,7 +517,7 @@ TEST_F(AggregateTests, HashDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_HASH);
+                              output_table_schema, AggregateType::HASH);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -609,7 +609,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_HASH);
+                              output_table_schema, AggregateType::HASH);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -705,7 +705,7 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_HASH);
+                              output_table_schema, AggregateType::HASH);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();
@@ -820,7 +820,7 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   // OK) Create the plan node
   planner::AggregatePlan node(std::move(proj_info), std::move(predicate),
                               std::move(agg_terms), std::move(group_by_columns),
-                              output_table_schema, AGGREGATE_TYPE_PLAIN);
+                              output_table_schema, AggregateType::PLAIN);
 
   // Create and set up executor
   txn = txn_manager.BeginTransaction();

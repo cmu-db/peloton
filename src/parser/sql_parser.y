@@ -544,13 +544,13 @@ truncate_statement:
  ******************************/
 insert_statement:
 		INSERT INTO table_name opt_column_list VALUES insert_list {
-			$$ = new InsertStatement(peloton::INSERT_TYPE_VALUES);
+			$$ = new InsertStatement(peloton::InsertType::VALUES);
 			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->insert_values = $6;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
-			$$ = new InsertStatement(peloton::INSERT_TYPE_SELECT);
+			$$ = new InsertStatement(peloton::InsertType::SELECT);
 			$$->table_info_ = $3;
 			$$->columns = $4;
 			$$->select = $5;
@@ -843,7 +843,7 @@ table_ref:
 		table_ref_atomic
 	|	table_ref_atomic ',' table_ref_commalist {
 			$3->push_back($1);
-			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_CROSS_PRODUCT);
+			auto tbl = new TableRef(peloton::TableReferenceType::CROSS_PRODUCT);
 			tbl->list = $3;
 			$$ = tbl;
 		}
@@ -853,7 +853,7 @@ table_ref:
 table_ref_atomic:
 		table_ref_name
 	|	'(' select_statement ')' alias {
-			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_SELECT);
+			auto tbl = new TableRef(peloton::TableReferenceType::SELECT);
 			tbl->select = $2;
 			tbl->alias = $4;
 			$$ = tbl;
@@ -869,7 +869,7 @@ table_ref_commalist:
 
 table_ref_name:
 		table_name opt_alias {
-			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
+			auto tbl = new TableRef(peloton::TableReferenceType::NAME);
 			tbl->alias = $2;
 			$$ = tbl;
 			tbl->table_info_ = $1;
@@ -879,7 +879,7 @@ table_ref_name:
 
 table_ref_name_no_alias:
 		table_name {
-			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
+			$$ = new TableRef(peloton::TableReferenceType::NAME);
 			$$->table_info_ = $1;
 		}
 	;
@@ -911,7 +911,7 @@ opt_alias:
 join_clause:
 		join_table opt_join_type JOIN join_table ON join_condition
 		{ 
-			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
+			$$ = new TableRef(peloton::TableReferenceType::JOIN);
 			$$->join = new JoinDefinition();
 			$$->join->type = (peloton::JoinType) $2;
 			$$->join->left = $1;
@@ -932,7 +932,7 @@ opt_join_type:
 
 join_table:
 		'(' select_statement ')' alias {
-			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_SELECT);
+			auto tbl = new TableRef(peloton::TableReferenceType::SELECT);
 			tbl->select = $2;
 			tbl->alias = $4;
 			$$ = tbl;
@@ -956,7 +956,7 @@ join_condition:
  
 copy_statement:
 		COPY table_ref_name TO STRING DELIMITER STRING { 
-			$$ = new CopyStatement(peloton::COPY_TYPE_EXPORT_OTHER);
+			$$ = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
 			$$->cpy_table = $2;
 			$$->file_path = $4; 
 			$$->delimiter = *($6);

@@ -618,78 +618,95 @@ std::ostream &operator<<(std::ostream &os, const JoinType &type);
 // Aggregate Types
 //===--------------------------------------------------------------------===//
 
-enum AggregateType {
-  AGGREGATE_TYPE_INVALID = INVALID_TYPE_ID,
-  AGGREGATE_TYPE_SORTED = 1,
-  AGGREGATE_TYPE_HASH = 2,
-  AGGREGATE_TYPE_PLAIN = 3  // no group-by
+enum class AggregateType {
+  INVALID = INVALID_TYPE_ID,
+  SORTED = 1,
+  HASH = 2,
+  PLAIN = 3  // no group-by
 };
+std::string AggregateTypeToString(AggregateType type);
+AggregateType StringToAggregateType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const AggregateType &type);
 
 // ------------------------------------------------------------------
 // Expression Quantifier Types
 // ------------------------------------------------------------------
-enum QuantifierType {
-  QUANTIFIER_TYPE_NONE = 0,
-  QUANTIFIER_TYPE_ANY = 1,
-  QUANTIFIER_TYPE_ALL = 2,
+enum class QuantifierType {
+  NONE = 0,
+  ANY = 1,
+  ALL = 2,
 };
+std::string QuantifierTypeToString(QuantifierType type);
+QuantifierType StringToQuantifierType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const QuantifierType &type);
 
 //===--------------------------------------------------------------------===//
 // Table Reference Types
 //===--------------------------------------------------------------------===//
 
-enum TableReferenceType {
-  TABLE_REFERENCE_TYPE_INVALID =
-      INVALID_TYPE_ID,                    // invalid table reference type
-  TABLE_REFERENCE_TYPE_NAME = 1,          // table name
-  TABLE_REFERENCE_TYPE_SELECT = 2,        // output of select
-  TABLE_REFERENCE_TYPE_JOIN = 3,          // output of join
-  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
+enum class TableReferenceType {
+  INVALID = INVALID_TYPE_ID,  // invalid table reference type
+  NAME = 1,                   // table name
+  SELECT = 2,                 // output of select
+  JOIN = 3,                   // output of join
+  CROSS_PRODUCT = 4           // out of cartesian product
 };
+std::string TableReferenceTypeToString(TableReferenceType type);
+TableReferenceType StringToTableReferenceType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TableReferenceType &type);
 
 //===--------------------------------------------------------------------===//
 // Insert Types
 //===--------------------------------------------------------------------===//
 
-enum InsertType {
-  INSERT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid insert type
-  INSERT_TYPE_VALUES = 1,                 // values
-  INSERT_TYPE_SELECT = 2                  // select
+enum class InsertType {
+  INVALID = INVALID_TYPE_ID,  // invalid insert type
+  VALUES = 1,                 // values
+  SELECT = 2                  // select
 };
+std::string InsertTypeToString(InsertType type);
+InsertType StringToInsertType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const InsertType &type);
 
 //===--------------------------------------------------------------------===//
 // Copy Types
 //===--------------------------------------------------------------------===//
 
-enum CopyType {
-  COPY_TYPE_IMPORT_CSV,     // Import csv data to database
-  COPY_TYPE_IMPORT_TSV,     // Import tsv data to database
-  COPY_TYPE_EXPORT_CSV,     // Export data to csv file
-  COPY_TYPE_EXPORT_STDOUT,  // Export data to std out
-  COPY_TYPE_EXPORT_OTHER,   // Export data to other file format
+enum class CopyType {
+  IMPORT_CSV,     // Import csv data to database
+  IMPORT_TSV,     // Import tsv data to database
+  EXPORT_CSV,     // Export data to csv file
+  EXPORT_STDOUT,  // Export data to std out
+  EXPORT_OTHER,   // Export data to other file format
 };
 
 //===--------------------------------------------------------------------===//
 // Payload Types
 //===--------------------------------------------------------------------===//
 
-enum PayloadType {
-  PAYLOAD_TYPE_INVALID = INVALID_TYPE_ID,  // invalid message type
-  PAYLOAD_TYPE_CLIENT_REQUEST = 1,         // request
-  PAYLOAD_TYPE_CLIENT_RESPONSE = 2,        // response
-  PAYLOAD_TYPE_STOP = 3                    // stop loop
+enum class PayloadType {
+  INVALID = INVALID_TYPE_ID,  // invalid message type
+  CLIENT_REQUEST = 1,         // request
+  CLIENT_RESPONSE = 2,        // response
+  STOP = 3                    // stop loop
 };
+std::string PayloadTypeToString(PayloadType type);
+PayloadType StringToPayloadType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PayloadType &type);
 
 //===--------------------------------------------------------------------===//
 // Task Priority Types
 //===--------------------------------------------------------------------===//
 
-enum TaskPriorityType {
-  TASK_PRIORTY_TYPE_INVALID = INVALID_TYPE_ID,  // invalid priority
-  TASK_PRIORTY_TYPE_LOW = 10,
-  TASK_PRIORTY_TYPE_NORMAL = 11,
-  TASK_PRIORTY_TYPE_HIGH = 12
+enum class TaskPriorityType {
+  INVALID = INVALID_TYPE_ID,  // invalid priority
+  LOW = 10,
+  NORMAL = 11,
+  HIGH = 12
 };
+std::string TaskPriorityTypeToString(TaskPriorityType type);
+TaskPriorityType StringToTaskPriorityType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const TaskPriorityType &type);
 
 //===--------------------------------------------------------------------===//
 // Result Types
