@@ -172,15 +172,11 @@ TEST_F(AggregateSQLTests, MinMaxTest) {
   EXPECT_EQ(static_cast<oid_t>(PostgresValueType::DOUBLE),
             std::get<1>(tuple_descriptor[0]));
 
-  /*
-   * TODO: LM: I commented these out because we will core dump when doing
-             min/max on varchar
   // test varchar
-  SQLTestsUtil::ExecuteSQLQuery("SELECT", "SELECT min(g) from test", result);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT min(g) from test", result);
   EXPECT_EQ(result[0].second[0], '1');
-  SQLTestsUtil::ExecuteSQLQuery("SELECT", "SELECT max(g) from test", result);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT max(g) from test", result);
   EXPECT_EQ(result[0].second[0], '4');
-  */
 
   // test timestamp
   SQLTestsUtil::ExecuteSQLQuery("SELECT min(h) from test", result);
