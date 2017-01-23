@@ -869,7 +869,7 @@ void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
     catalog::Schema *schema = this->GetSchema();
-    catalog::Constraint constraint(CONSTRAINT_TYPE_FOREIGN,
+    catalog::Constraint constraint(ConstraintType::FOREIGN,
                                    key->GetConstraintName());
     constraint.SetForeignKeyListOffset(GetForeignKeyCount());
     for (auto fk_column : key->GetFKColumnNames()) {

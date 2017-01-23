@@ -445,11 +445,11 @@ TEST_F(TypesTests, ResultTypeTest) {
 
 TEST_F(TypesTests, ConstraintTypeTest) {
   std::vector<ConstraintType> list = {
-      CONSTRAINT_TYPE_INVALID,  CONSTRAINT_TYPE_NULL,
-      CONSTRAINT_TYPE_NOTNULL,  CONSTRAINT_TYPE_DEFAULT,
-      CONSTRAINT_TYPE_CHECK,    CONSTRAINT_TYPE_PRIMARY,
-      CONSTRAINT_TYPE_UNIQUE,   CONSTRAINT_TYPE_FOREIGN,
-      CONSTRAINT_TYPE_EXCLUSION};
+      ConstraintType::INVALID,  ConstraintType::NULL_TYPE,
+      ConstraintType::NOTNULL,  ConstraintType::DEFAULT,
+      ConstraintType::CHECK,    ConstraintType::PRIMARY,
+      ConstraintType::UNIQUE,   ConstraintType::FOREIGN,
+      ConstraintType::EXCLUSION};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

@@ -536,22 +536,22 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
                                    type::Type::GetTypeSize(type::Type::INTEGER),
                                    "table_id", true);
   id_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
       "table_name", true);
   name_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_id_column = catalog::Column(type::Type::INTEGER,
       type::Type::GetTypeSize(type::Type::INTEGER), "database_id", true);
   database_id_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(type::Type::VARCHAR,
       max_name_size, "database_name", true);
   database_name_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema( {
       id_column, name_column, database_id_column, database_name_column }));
@@ -567,11 +567,11 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
                                    type::Type::GetTypeSize(type::Type::INTEGER),
                                    "database_id", true);
   id_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
       "database_name", true);
   name_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema( {
       id_column, name_column }));
@@ -581,7 +581,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 // Initialize database catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
+  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
       not_null_constraint_name);
   oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
   type::Type::TypeId integer_type = type::Type::INTEGER;
@@ -608,7 +608,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
 // Initialize table catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
+  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
       not_null_constraint_name);
   oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
   type::Type::TypeId integer_type = type::Type::INTEGER;
@@ -647,7 +647,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
 // Initialize index catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
+  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
       not_null_constraint_name);
   oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
   type::Type::TypeId integer_type = type::Type::INTEGER;
@@ -685,7 +685,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
 // Initialize query catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
-  catalog::Constraint not_null_constraint(CONSTRAINT_TYPE_NOTNULL,
+  catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
       not_null_constraint_name);
   oid_t integer_type_size = type::Type::GetTypeSize(type::Type::INTEGER);
   oid_t varbinary_type_size = type::Type::GetTypeSize(type::Type::VARBINARY);

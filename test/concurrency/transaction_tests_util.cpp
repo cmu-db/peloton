@@ -41,11 +41,11 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column = catalog::Column(type::Type::INTEGER,
                                    type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   id_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
+      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "value", true);
   value_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
+      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
 
   // Create the table
   catalog::Schema *table_schema =
@@ -88,7 +88,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto id_column = catalog::Column(type::Type::INTEGER,
                                    type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   id_column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
+      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "value", true);
 

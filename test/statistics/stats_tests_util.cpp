@@ -106,7 +106,7 @@ void StatsTestsUtil::CreateTable(bool has_primary_key) {
                                    type::Type::GetTypeSize(type::Type::INTEGER),
                                    "dept_id", true);
   if (has_primary_key) {
-    catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+    catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
     id_column.AddConstraint(constraint);
   }
   auto name_column =
