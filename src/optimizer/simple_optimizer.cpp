@@ -227,11 +227,22 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
         //Workflow for DISTINCT
         if (select_stmt->select_distinct){
-            std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
-            for (auto col : *select_stmt->select_list) {
-              //Copy column for handling of unique_ptr
-              auto copy_col = col->Copy();
-              hash_keys.emplace_back(copy_col);
+            std::vector<std::unique_ptr<const expression::AbstractExpression>>
+			  hash_keys;
+            if (is_star){
+                for (auto col : target_table->GetSchema()->GetColumns()){
+                 auto key =
+                          expression::ExpressionUtil::
+                            ConvertToTupleValueExpression(
+                        		target_table->GetSchema(), col.GetName());
+                    hash_keys.emplace_back(key);
+                }
+            } else {
+            	for (auto col : *select_stmt->select_list) {
+              		//Copy column for handling of unique_ptr
+              		auto copy_col = col->Copy();
+              		hash_keys.emplace_back(copy_col);
+            	}
             }
             // Create hash plan node
             std::unique_ptr<planner::HashPlan> hash_plan_node(
@@ -281,7 +292,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             if (col_name == sort_col_name) {
                 if(is_star){
                     //The whole schema is already added, and column_ids
-                    //doesn't represent faithfully the columns.
+                    //don't represent faithfully the columns.
                     key.push_back(column_ctr);
                 } else {
                     // The column_ctr is not reliable anymore given that we are
