@@ -91,7 +91,7 @@ DEFINE_bool(display_configuration,
 //===----------------------------------------------------------------------===//
 
 DEFINE_uint64(stats_mode,
-              peloton::StatsType::INVALID,
+              peloton::STATS_TYPE_INVALID,
               "Enable statistics collection (default: 0)");
 
 //===----------------------------------------------------------------------===//

@@ -2247,46 +2247,6 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
 }
 
 //===--------------------------------------------------------------------===//
-// StatsType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string StatsTypeToString(StatsType type) {
-  switch (type) {
-    case StatsType::INVALID: {
-      return "INVALID";
-    }
-    case StatsType::ENABLE: {
-      return "ENABLE";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for StatsType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-StatsType StringToStatsType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return StatsType::INVALID;
-  } else if (upper_str == "ENABLE") {
-    return StatsType::ENABLE;
-  } else {
-    throw ConversionException(
-        StringUtil::Format("No StatsType conversion from string '%s'",
-                           upper_str.c_str()));
-  }
-  return StatsType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const StatsType& type) {
-  os << StatsTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
 // EntityType - String Utilities
 //===--------------------------------------------------------------------===//
 
