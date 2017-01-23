@@ -949,14 +949,17 @@ enum class TupleSerializationFormat {
 // Entity types
 // ------------------------------------------------------------------
 
-enum EntityType {
-  ENTITY_TYPE_INVALID = INVALID_TYPE_ID,
-  ENTITY_TYPE_TABLE = 1,
-  ENTITY_TYPE_SCHEMA = 2,
-  ENTITY_TYPE_INDEX = 3,
-  ENTITY_TYPE_VIEW = 4,
-  ENTITY_TYPE_PREPARED_STATEMENT = 5,
+enum class EntityType {
+  INVALID = INVALID_TYPE_ID,
+  TABLE = 1,
+  SCHEMA = 2,
+  INDEX = 3,
+  VIEW = 4,
+  PREPARED_STATEMENT = 5,
 };
+std::string EntityTypeToString(EntityType type);
+EntityType StringToEntityType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const EntityType &type);
 
 // ------------------------------------------------------------------
 // Endianess
