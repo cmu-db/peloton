@@ -80,6 +80,7 @@ TEST_F(DistinctSQLTests, DistinctVarcharTest) {
   // Check the return value
   // Should be: 'abcd', 'abc'
   EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
   EXPECT_EQ("abcd", SQLTestsUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("abc", SQLTestsUtil::GetResultValueAsString(result, 1));
 
@@ -106,6 +107,7 @@ TEST_F(DistinctSQLTests, DistinctTupleTest) {
   // Check the return value
   // Should be: [22,333]; [11,222]
   EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
   EXPECT_EQ("22", SQLTestsUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("333", SQLTestsUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("11", SQLTestsUtil::GetResultValueAsString(result, 2));
@@ -141,7 +143,7 @@ TEST_F(DistinctSQLTests, DistinctStarTest) {
                                 tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
-  // Should be: [22,333]; [11,222]
+  // Should be: [1,22,333,'abcd']; [1, 22, 222, 'abcd']
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ(2, result.size() / tuple_descriptor.size());
   EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
@@ -149,6 +151,9 @@ TEST_F(DistinctSQLTests, DistinctStarTest) {
   EXPECT_EQ("333", SQLTestsUtil::GetResultValueAsString(result, 2));
   EXPECT_EQ("abcd", SQLTestsUtil::GetResultValueAsString(result, 3));
   EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("22", SQLTestsUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("222", SQLTestsUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("abcd", SQLTestsUtil::GetResultValueAsString(result, 7));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
