@@ -76,7 +76,7 @@ class LogManager {
   // reset log status to invalid
   void ResetLogStatus() {
     this->recovery_to_logging_counter = 0;
-    SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+    SetLoggingStatus(LoggingStatusType::INVALID);
   }
 
   // Wait for the system to begin
@@ -88,7 +88,7 @@ class LogManager {
   // Check whether the frontend logger is in logging mode
   inline bool IsInLoggingMode() {
     // Check the logging status
-    auto is_in_logging_mode = (logging_status == LOGGING_STATUS_TYPE_LOGGING);
+    auto is_in_logging_mode = (logging_status == LoggingStatusType::LOGGING);
     return is_in_logging_mode;
   }
 
@@ -271,7 +271,7 @@ class LogManager {
   // either write ahead or write behind logging
   std::vector<std::unique_ptr<FrontendLogger>> frontend_loggers;
 
-  LoggingStatusType logging_status = LOGGING_STATUS_TYPE_INVALID;
+  LoggingStatusType logging_status = LoggingStatusType::INVALID;
 
   bool prepared_recovery_ = false;
 

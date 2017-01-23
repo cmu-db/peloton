@@ -828,16 +828,17 @@ enum ReplicationType {
   SEMISYNC_REPLICATION
 };
 
-enum LoggingStatusType {
-  LOGGING_STATUS_TYPE_INVALID = INVALID_TYPE_ID,
-  LOGGING_STATUS_TYPE_STANDBY = 1,
-  LOGGING_STATUS_TYPE_RECOVERY = 2,
-  LOGGING_STATUS_TYPE_LOGGING = 3,
-  LOGGING_STATUS_TYPE_TERMINATE = 4,
-  LOGGING_STATUS_TYPE_SLEEP = 5
+enum class LoggingStatusType {
+  INVALID = INVALID_TYPE_ID,
+  STANDBY = 1,
+  RECOVERY = 2,
+  LOGGING = 3,
+  TERMINATE = 4,
+  SLEEP = 5
 };
 std::string LoggingStatusTypeToString(LoggingStatusType type);
 LoggingStatusType StringToLoggingStatusType(const std::string &str);
+std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type);
 
 enum LoggerType {
   LOGGER_TYPE_INVALID = INVALID_TYPE_ID,
