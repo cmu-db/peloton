@@ -54,6 +54,7 @@ TEST_F(DistinctSQLTests, DistinctIntTest) {
   // Check the return value
   // Should be: 22, 11
   EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
   EXPECT_EQ("22", SQLTestsUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("11", SQLTestsUtil::GetResultValueAsString(result, 1));
 
