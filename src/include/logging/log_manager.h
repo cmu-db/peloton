@@ -59,7 +59,7 @@ class LogManager {
   void Configure(LoggingType logging_type, bool test_mode = false,
                  unsigned int num_frontend_loggers = 1,
                  LoggerMappingStrategyType logger_mapping_strategy =
-                     LOGGER_MAPPING_TYPE_ROUND_ROBIN) {
+                     LoggerMappingStrategyType::ROUND_ROBIN) {
     logging_type_ = logging_type;
     test_mode_ = test_mode;
     num_frontend_loggers_ = num_frontend_loggers;
@@ -259,7 +259,7 @@ class LogManager {
 
   // set the strategy for mapping frontend loggers to worker threads
   LoggerMappingStrategyType logger_mapping_strategy_ =
-      LOGGER_MAPPING_TYPE_INVALID;
+      LoggerMappingStrategyType::INVALID;
 
   // default log file size
   size_t log_file_size_limit_ = LOG_FILE_LEN;
