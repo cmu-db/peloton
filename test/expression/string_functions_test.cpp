@@ -22,6 +22,7 @@
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "util/string_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -76,6 +77,48 @@ TEST_F(StringFunctionsTests, ChrTest) {
       type::ValueFactory::GetNullValueByType(type::Type::INTEGER)
   };
   auto result = expression::StringFunctions::Chr(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(StringFunctionsTests, CharLengthTest) {
+  const std::string str = "A";
+  for (int i = 0; i < 100; i++) {
+    std::string input = StringUtil::Repeat(str, i);
+    std::vector<type::Value> args = {
+      type::ValueFactory::GetVarcharValue(input)
+    };
+
+    auto result = expression::StringFunctions::CharLength(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(i, result.GetAs<int>());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
+  };
+  auto result = expression::StringFunctions::Ascii(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(StringFunctionsTests, RepeatTest) {
+  const std::string str = "A";
+  for (int i = 0; i < 100; i++) {
+    std::string expected = StringUtil::Repeat(str, i);
+    EXPECT_EQ(i, expected.size());
+    std::vector<type::Value> args = {
+        type::ValueFactory::GetVarcharValue(str),
+        type::ValueFactory::GetIntegerValue(i)
+    };
+
+    auto result = expression::StringFunctions::Repeat(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(expected, result.ToString());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
+  };
+  auto result = expression::StringFunctions::Ascii(args);
   EXPECT_TRUE(result.IsNull());
 }
 
