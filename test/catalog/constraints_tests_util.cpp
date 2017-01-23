@@ -64,7 +64,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
           catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -74,7 +74,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
           catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
                           "COL_B", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -84,7 +84,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
           catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
                           "COL_C", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -95,10 +95,10 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
                                     "COL_D",
                                     !is_inlined);  // inlined.
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       column.AddConstraint(
-          catalog::Constraint(CONSTRAINT_TYPE_UNIQUE, unique_constraint_name));
+          catalog::Constraint(ConstraintType::UNIQUE, unique_constraint_name));
       return column;
     } break;
 

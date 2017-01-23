@@ -84,7 +84,7 @@ class Column : public Printable {
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
     constraints.push_back(constraint);
-    if (constraint.GetType() == CONSTRAINT_TYPE_PRIMARY) {
+    if (constraint.GetType() == ConstraintType::PRIMARY) {
       is_primary_ = true;
     }
   }

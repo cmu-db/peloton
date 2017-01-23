@@ -82,7 +82,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
           "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -92,7 +92,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
           "COL_B", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -102,7 +102,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
           type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
           "COL_C", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;
@@ -111,7 +111,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
       auto column = catalog::Column(type::Type::VARCHAR, 25,  // Column length.
                                     "COL_D", !is_inlined);    // inlined.
 
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
       return column;
     } break;

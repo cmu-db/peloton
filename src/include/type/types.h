@@ -729,7 +729,7 @@ std::ostream &operator<<(std::ostream &os, const ResultType &type);
 //===--------------------------------------------------------------------===//
 
 enum class PostgresConstraintType {
-  NULL, /* not standard SQL, but a lot of people * expect it */
+  NULL_TYPE, /* not standard SQL, but a lot of people * expect it */
   NOTNULL,
   DEFAULT,
   CHECK,
@@ -743,19 +743,20 @@ enum class PostgresConstraintType {
   ATTR_IMMEDIATE
 };
 
-enum ConstraintType {
-  CONSTRAINT_TYPE_INVALID = INVALID_TYPE_ID,  // invalid
-  CONSTRAINT_TYPE_NULL = 1,                   // notnull
-  CONSTRAINT_TYPE_NOTNULL = 2,                // notnull
-  CONSTRAINT_TYPE_DEFAULT = 3,                // default
-  CONSTRAINT_TYPE_CHECK = 4,                  // check
-  CONSTRAINT_TYPE_PRIMARY = 5,                // primary key
-  CONSTRAINT_TYPE_UNIQUE = 6,                 // unique
-  CONSTRAINT_TYPE_FOREIGN = 7,                // foreign key
-  CONSTRAINT_TYPE_EXCLUSION = 8               // foreign key
+enum class ConstraintType {
+  INVALID = INVALID_TYPE_ID,  // invalid
+  NULL_TYPE = 1,              // notnull
+  NOTNULL = 2,                // notnull
+  DEFAULT = 3,                // default
+  CHECK = 4,                  // check
+  PRIMARY = 5,                // primary key
+  UNIQUE = 6,                 // unique
+  FOREIGN = 7,                // foreign key
+  EXCLUSION = 8               // foreign key
 };
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const ConstraintType &type);
 
 //===--------------------------------------------------------------------===//
 // Set Operation Types

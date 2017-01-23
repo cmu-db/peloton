@@ -1620,31 +1620,31 @@ std::ostream& operator<<(std::ostream& os, const ResultType& type) {
 
 std::string ConstraintTypeToString(ConstraintType type) {
   switch (type) {
-    case CONSTRAINT_TYPE_INVALID: {
+    case ConstraintType::INVALID: {
       return ("INVALID");
     }
-    case CONSTRAINT_TYPE_NULL: {
+    case ConstraintType::NULL_TYPE: {
       return ("NULL");
     }
-    case CONSTRAINT_TYPE_NOTNULL: {
+    case ConstraintType::NOTNULL: {
       return ("NOTNULL");
     }
-    case CONSTRAINT_TYPE_DEFAULT: {
+    case ConstraintType::DEFAULT: {
       return ("DEFAULT");
     }
-    case CONSTRAINT_TYPE_CHECK: {
+    case ConstraintType::CHECK: {
       return ("CHECK");
     }
-    case CONSTRAINT_TYPE_PRIMARY: {
+    case ConstraintType::PRIMARY: {
       return ("PRIMARY");
     }
-    case CONSTRAINT_TYPE_UNIQUE: {
+    case ConstraintType::UNIQUE: {
       return ("UNIQUE");
     }
-    case CONSTRAINT_TYPE_FOREIGN: {
+    case ConstraintType::FOREIGN: {
       return ("FOREIGN");
     }
-    case CONSTRAINT_TYPE_EXCLUSION: {
+    case ConstraintType::EXCLUSION: {
       return ("EXCLUSION");
     }
     default: {
@@ -1659,28 +1659,33 @@ std::string ConstraintTypeToString(ConstraintType type) {
 ConstraintType StringToConstraintType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return CONSTRAINT_TYPE_INVALID;
+    return ConstraintType::INVALID;
   } else if (upper_str == "NULL") {
-    return CONSTRAINT_TYPE_NULL;
+    return ConstraintType::NULL_TYPE;
   } else if (upper_str == "NOTNULL") {
-    return CONSTRAINT_TYPE_NOTNULL;
+    return ConstraintType::NOTNULL;
   } else if (upper_str == "DEFAULT") {
-    return CONSTRAINT_TYPE_DEFAULT;
+    return ConstraintType::DEFAULT;
   } else if (upper_str == "CHECK") {
-    return CONSTRAINT_TYPE_CHECK;
+    return ConstraintType::CHECK;
   } else if (upper_str == "PRIMARY") {
-    return CONSTRAINT_TYPE_PRIMARY;
+    return ConstraintType::PRIMARY;
   } else if (upper_str == "UNIQUE") {
-    return CONSTRAINT_TYPE_UNIQUE;
+    return ConstraintType::UNIQUE;
   } else if (upper_str == "FOREIGN") {
-    return CONSTRAINT_TYPE_FOREIGN;
+    return ConstraintType::FOREIGN;
   } else if (upper_str == "EXCLUSION") {
-    return CONSTRAINT_TYPE_EXCLUSION;
+    return ConstraintType::EXCLUSION;
   } else {
     throw ConversionException(StringUtil::Format(
         "No ConstraintType conversion from string '%s'", upper_str.c_str()));
   }
-  return CONSTRAINT_TYPE_INVALID;
+  return ConstraintType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
+  os << ConstraintTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
@@ -1965,39 +1970,39 @@ type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
 
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType type) {
-  ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
+  ConstraintType constraintType = ConstraintType::INVALID;
 
   switch (type) {
-    case PostgresConstraintType::NULL:
-      constraintType = CONSTRAINT_TYPE_NULL;
+    case PostgresConstraintType::NULL_TYPE:
+      constraintType = ConstraintType::NULL_TYPE;
       break;
 
     case PostgresConstraintType::NOTNULL:
-      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      constraintType = ConstraintType::NOTNULL;
       break;
 
     case PostgresConstraintType::DEFAULT:
-      constraintType = CONSTRAINT_TYPE_DEFAULT;
+      constraintType = ConstraintType::DEFAULT;
       break;
 
     case PostgresConstraintType::CHECK:
-      constraintType = CONSTRAINT_TYPE_CHECK;
+      constraintType = ConstraintType::CHECK;
       break;
 
     case PostgresConstraintType::PRIMARY:
-      constraintType = CONSTRAINT_TYPE_PRIMARY;
+      constraintType = ConstraintType::PRIMARY;
       break;
 
     case PostgresConstraintType::UNIQUE:
-      constraintType = CONSTRAINT_TYPE_UNIQUE;
+      constraintType = ConstraintType::UNIQUE;
       break;
 
     case PostgresConstraintType::FOREIGN:
-      constraintType = CONSTRAINT_TYPE_FOREIGN;
+      constraintType = ConstraintType::FOREIGN;
       break;
 
     case PostgresConstraintType::EXCLUSION:
-      constraintType = CONSTRAINT_TYPE_EXCLUSION;
+      constraintType = ConstraintType::EXCLUSION;
       break;
 
     default:
