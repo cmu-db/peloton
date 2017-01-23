@@ -899,12 +899,15 @@ std::ostream &operator<<(std::ostream &os, const CheckpointStatus &type);
 
 // Statistics Collection Type
 // Disable or enable
-enum StatsType {
+enum class StatsType {
   // Disable statistics collection
-  STATS_TYPE_INVALID = INVALID_TYPE_ID,
+  INVALID = INVALID_TYPE_ID,
   // Enable statistics collection
-  STATS_TYPE_ENABLE = 1,
+  ENABLE = 1,
 };
+std::string StatsTypeToString(StatsType type);
+StatsType StringToStatsType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const StatsType &type);
 
 enum MetricType {
   // Metric type is invalid

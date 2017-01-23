@@ -45,7 +45,7 @@ class StatsTests : public PelotonTest {};
 
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
-  FLAGS_stats_mode = STATS_TYPE_ENABLE;
+  FLAGS_stats_mode = StatsType::ENABLE;
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);
   aggregator.GetAggregatedStats().ResetQueryCount();
@@ -195,7 +195,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 }
 
 TEST_F(StatsTests, PerThreadStatsTest) {
-  FLAGS_stats_mode = STATS_TYPE_ENABLE;
+  FLAGS_stats_mode = StatsType::ENABLE;
 
   // Register to StatsAggregator
   auto &aggregator = peloton::stats::StatsAggregator::GetInstance(1000000);
