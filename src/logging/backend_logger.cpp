@@ -79,7 +79,7 @@ void BackendLogger::Log(LogRecord *record) {
     log_buffer_ = std::move(new_buff);
   }
   // update max logged commit id
-  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+  if (record->GetType() == LogRecordType::TRANSACTION_COMMIT) {
     auto new_log_commit_id = record->GetTransactionId();
     PL_ASSERT(new_log_commit_id > highest_logged_commit_message);
     highest_logged_commit_message = new_log_commit_id;

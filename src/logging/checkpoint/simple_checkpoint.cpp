@@ -81,7 +81,7 @@ void SimpleCheckpoint::DoCheckpoint() {
 
   // Add txn begin record
   std::shared_ptr<LogRecord> begin_record(new TransactionRecord(
-      LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id_));
+      LogRecordType::TRANSACTION_BEGIN, start_commit_id_));
   CopySerializeOutput begin_output_buffer;
   begin_record->Serialize(begin_output_buffer);
   records_.push_back(begin_record);
@@ -108,7 +108,7 @@ void SimpleCheckpoint::DoCheckpoint() {
 
   // Add txn commit record
   std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
-      LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id_));
+      LogRecordType::TRANSACTION_COMMIT, start_commit_id_));
   CopySerializeOutput commit_output_buffer;
   commit_record->Serialize(commit_output_buffer);
   records_.push_back(commit_record);
@@ -142,16 +142,16 @@ cid_t SimpleCheckpoint::DoRecovery() {
   while (!should_stop) {
     auto record_type = LoggingUtil::GetNextLogRecordType(file_handle_);
     switch (record_type) {
-      case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
+      case LogRecordType::WAL_TUPLE_INSERT: {
         LOG_TRACE("Read checkpoint insert entry");
         InsertTuple(commit_id);
         break;
       }
-      case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+      case LogRecordType::TRANSACTION_COMMIT: {
         should_stop = true;
         break;
       }
-      case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
+      case LogRecordType::TRANSACTION_BEGIN: {
         LOG_TRACE("Read checkpoint begin entry");
         TransactionRecord txn_rec(record_type);
         if (LoggingUtil::ReadTransactionRecordHeader(txn_rec, file_handle_) ==
@@ -184,7 +184,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
 }
 
 void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
-  TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+  TupleRecord tuple_record(LogRecordType::WAL_TUPLE_INSERT);
 
   // Check for torn log write
   if (LoggingUtil::ReadTupleRecordHeader(tuple_record, file_handle_) == false) {
@@ -264,7 +264,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
         ItemPointer location(tile_group_id, tuple_id);
         // TODO is it possible to avoid `new` for checkpoint?
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
+            LogRecordType::TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
             database_oid, location, INVALID_ITEMPOINTER, tuple.get()));
         PL_ASSERT(record);
         CopySerializeOutput output_buffer;

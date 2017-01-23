@@ -849,37 +849,38 @@ std::string LoggerTypeToString(LoggerType type);
 LoggerType StringToLoggerType(const std::string &str);
 std::ostream& operator<<(std::ostream& os, const LoggerType& type);
 
-enum LogRecordType {
-  LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
+enum class LogRecordType {
+  INVALID = INVALID_TYPE_ID,
 
   // Transaction-related records
-  LOGRECORD_TYPE_TRANSACTION_BEGIN = 1,
-  LOGRECORD_TYPE_TRANSACTION_COMMIT = 2,
-  LOGRECORD_TYPE_TRANSACTION_END = 3,
-  LOGRECORD_TYPE_TRANSACTION_ABORT = 4,
-  LOGRECORD_TYPE_TRANSACTION_DONE = 5,
+  TRANSACTION_BEGIN = 1,
+  TRANSACTION_COMMIT = 2,
+  TRANSACTION_END = 3,
+  TRANSACTION_ABORT = 4,
+  TRANSACTION_DONE = 5,
 
   // Generic dml records
-  LOGRECORD_TYPE_TUPLE_INSERT = 11,
-  LOGRECORD_TYPE_TUPLE_DELETE = 12,
-  LOGRECORD_TYPE_TUPLE_UPDATE = 13,
+  TUPLE_INSERT = 11,
+  TUPLE_DELETE = 12,
+  TUPLE_UPDATE = 13,
 
   // DML records for Write ahead logging
-  LOGRECORD_TYPE_WAL_TUPLE_INSERT = 21,
-  LOGRECORD_TYPE_WAL_TUPLE_DELETE = 22,
-  LOGRECORD_TYPE_WAL_TUPLE_UPDATE = 23,
+  WAL_TUPLE_INSERT = 21,
+  WAL_TUPLE_DELETE = 22,
+  WAL_TUPLE_UPDATE = 23,
 
   // DML records for Write behind logging
-  LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
-  LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
-  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33,
+  WBL_TUPLE_INSERT = 31,
+  WBL_TUPLE_DELETE = 32,
+  WBL_TUPLE_UPDATE = 33,
 
   // Record for delimiting transactions
   // includes max persistent commit_id
-  LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
+  ITERATION_DELIMITER = 41,
 };
 std::string LogRecordTypeToString(LogRecordType type);
 LogRecordType StringToLogRecordType(const std::string &str);
+std::ostream& operator<<(std::ostream& os, const LogRecordType &type);
 
 enum CheckpointStatus {
   CHECKPOINT_STATUS_INVALID = INVALID_TYPE_ID,
