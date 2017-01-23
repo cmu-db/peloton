@@ -35,7 +35,7 @@ class Logger {
   LoggingType logging_type = LoggingType::INVALID;
 
   // Type of logger -- frontend, backend etc.
-  LoggerType logger_type = LOGGER_TYPE_INVALID;
+  LoggerType logger_type = LoggerType::INVALID;
 };
 
 }  // namespace logging

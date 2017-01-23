@@ -29,7 +29,7 @@ namespace peloton {
 namespace logging {
 
 FrontendLogger::FrontendLogger() {
-  logger_type = LOGGER_TYPE_FRONTEND;
+  logger_type = LoggerType::FRONTEND;
 
   // Set wait timeout
   wait_timeout = peloton_wait_timeout;

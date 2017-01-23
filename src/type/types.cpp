@@ -1954,15 +1954,19 @@ std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type) {
   return os;
 }
 
+//===--------------------------------------------------------------------===//
+// LoggerType - String Utilities
+//===--------------------------------------------------------------------===//
+
 std::string LoggerTypeToString(LoggerType type) {
   switch (type) {
-    case LOGGER_TYPE_INVALID: {
+    case LoggerType::INVALID: {
       return "INVALID";
     }
-    case LOGGER_TYPE_FRONTEND: {
+    case LoggerType::FRONTEND: {
       return "FRONTEND";
     }
-    case LOGGER_TYPE_BACKEND: {
+    case LoggerType::BACKEND: {
       return "BACKEND";
     }
     default: {
@@ -1977,16 +1981,21 @@ std::string LoggerTypeToString(LoggerType type) {
 LoggerType StringToLoggerType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGGER_TYPE_INVALID;
+    return LoggerType::INVALID;
   } else if (upper_str == "FRONTEND") {
-    return LOGGER_TYPE_FRONTEND;
+    return LoggerType::FRONTEND;
   } else if (upper_str == "BACKEND") {
-    return LOGGER_TYPE_BACKEND;
+    return LoggerType::BACKEND;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggerType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGGER_TYPE_INVALID;
+  return LoggerType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LoggerType& type) {
+  os << LoggerTypeToString(type);
+  return os;
 }
 
 std::string LogRecordTypeToString(LogRecordType type) {
