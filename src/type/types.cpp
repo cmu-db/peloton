@@ -2347,6 +2347,71 @@ std::ostream& operator<<(std::ostream& os, const EntityType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// RWType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string RWTypeToString(RWType type) {
+  switch (type) {
+    case RWType::INVALID: {
+      return "INVALID";
+    }
+    case RWType::READ: {
+      return "READ";
+    }
+    case RWType::READ_OWN: {
+      return "READ_OWN";
+    }
+    case RWType::UPDATE: {
+      return "UPDATE";
+    }
+    case RWType::INSERT: {
+      return "INSERT";
+    }
+    case RWType::DELETE: {
+      return "DELETE";
+    }
+    case RWType::INS_DEL: {
+      return "INS_DEL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for RWType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+RWType StringToRWType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return RWType::INVALID;
+  } else if (upper_str == "READ") {
+    return RWType::READ;
+  } else if (upper_str == "READ_OWN") {
+    return RWType::READ_OWN;
+  } else if (upper_str == "UPDATE") {
+    return RWType::UPDATE;
+  } else if (upper_str == "INSERT") {
+    return RWType::INSERT;
+  } else if (upper_str == "DELETE") {
+    return RWType::DELETE;
+  } else if (upper_str == "INS_DEL") {
+    return RWType::INS_DEL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No RWType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return RWType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const RWType& type) {
+  os << RWTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // Network Message types
 //===--------------------------------------------------------------------===//
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {

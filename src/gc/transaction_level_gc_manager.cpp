@@ -257,7 +257,7 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
     // then we need to remove tuples that are deleted by the transaction from indexes.
     for (auto entry : *(garbage_ctx->gc_set_.get())) {
       for (auto &element : entry.second) {
-        if (element.second == RW_TYPE_DELETE || element.second == RW_TYPE_INS_DEL) {
+        if (element.second == RWType::DELETE || element.second == RWType::INS_DEL) {
           // only old versions are stored in the gc set.
           // so we can safely get indirection from the indirection array.
           auto tile_group = catalog::Manager::GetInstance().GetTileGroup(entry.first);
@@ -278,7 +278,7 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
 
     for (auto entry : *(garbage_ctx->gc_set_.get())) {
       for (auto &element : entry.second) {
-        if (element.second == RW_TYPE_INSERT || element.second == RW_TYPE_INS_DEL) {
+        if (element.second == RWType::INSERT || element.second == RWType::INS_DEL) {
           auto tile_group_header = catalog::Manager::GetInstance()
                                        .GetTileGroup(entry.first)
                                        ->GetHeader();
