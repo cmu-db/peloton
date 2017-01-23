@@ -137,7 +137,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);
       log_thread.swap(local_thread);
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
+      log_manager.WaitForModeTransition(peloton::LoggingStatusType::STANDBY,
                                         true);
 
       // Clean up database tile state before recovery from checkpoint
@@ -147,7 +147,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
       log_manager.StartRecoveryMode();
 
       // Wait for logging mode
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING,
+      log_manager.WaitForModeTransition(peloton::LoggingStatusType::LOGGING,
                                         true);
 
       // Done recovery

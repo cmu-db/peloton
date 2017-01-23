@@ -69,7 +69,7 @@ void LogManager::StartStandbyMode() {
     frontend_loggers[0].get()->SetIsDistinguishedLogger(true);
 
   // Toggle status in log manager map
-  SetLoggingStatus(LOGGING_STATUS_TYPE_STANDBY);
+  SetLoggingStatus(LoggingStatusType::STANDBY);
 
   // Launch the frontend logger's main loop
   for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
@@ -97,16 +97,16 @@ void LogManager::StartStandbyMode() {
 void LogManager::StartRecoveryMode() {
   // Toggle the status after STANDBY
   LOG_TRACE("TRACKING: LogManager::StartRecoveryMode()");
-  SetLoggingStatus(LOGGING_STATUS_TYPE_RECOVERY);
+  SetLoggingStatus(LoggingStatusType::RECOVERY);
 }
 
 void LogManager::TerminateLoggingMode() {
   LOG_TRACE("TRACKING: LogManager::TerminateLoggingMode()");
-  SetLoggingStatus(LOGGING_STATUS_TYPE_TERMINATE);
+  SetLoggingStatus(LoggingStatusType::TERMINATE);
 
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to sleep mode
-  WaitForModeTransition(LOGGING_STATUS_TYPE_SLEEP, true);
+  WaitForModeTransition(LoggingStatusType::SLEEP, true);
 }
 
 void LogManager::WaitForModeTransition(LoggingStatusType logging_status_,
@@ -129,7 +129,7 @@ void LogManager::WaitForModeTransition(LoggingStatusType logging_status_,
 bool LogManager::EndLogging() {
   // Wait if current status is recovery
   LOG_TRACE("TRACKING: LogManager::EndLogging()");
-  WaitForModeTransition(LOGGING_STATUS_TYPE_RECOVERY, false);
+  WaitForModeTransition(LoggingStatusType::RECOVERY, false);
 
   LOG_TRACE("Wait until frontend logger escapes main loop..");
 
@@ -139,7 +139,7 @@ bool LogManager::EndLogging() {
   LOG_TRACE("Escaped from MainLoop");
 
   // Remove the frontend logger
-  SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  SetLoggingStatus(LoggingStatusType::INVALID);
   LOG_TRACE("Terminated successfully");
 
   return true;
@@ -507,7 +507,7 @@ void LogManager::NotifyRecoveryDone() {
     LOG_TRACE(
         "This was the last one! Recover Index and change to LOGGING mode.");
     frontend_loggers[0].get()->RecoverIndex();
-    SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+    SetLoggingStatus(LoggingStatusType::LOGGING);
   }
 }
 

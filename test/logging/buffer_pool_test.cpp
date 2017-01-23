@@ -161,7 +161,7 @@ TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
 
   auto &log_manager = logging::LogManager::GetInstance();
   logging::LogManager::GetInstance().Configure(LoggingType::NVM_WAL, true);
-  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager.SetLoggingStatus(LoggingStatusType::LOGGING);
   log_manager.InitFrontendLoggers();
 
   logging::WriteAheadFrontendLogger *frontend_logger =

@@ -1895,24 +1895,28 @@ std::ostream& operator<<(std::ostream& os, const CheckpointType& type) {
   return os;
 }
 
+//===--------------------------------------------------------------------===//
+// LoggingStatusType - String Utilities
+//===--------------------------------------------------------------------===//
+
 std::string LoggingStatusTypeToString(LoggingStatusType type) {
   switch (type) {
-    case LOGGING_STATUS_TYPE_INVALID: {
+    case LoggingStatusType::INVALID: {
       return "INVALID";
     }
-    case LOGGING_STATUS_TYPE_STANDBY: {
+    case LoggingStatusType::STANDBY: {
       return "STANDBY";
     }
-    case LOGGING_STATUS_TYPE_RECOVERY: {
+    case LoggingStatusType::RECOVERY: {
       return "RECOVERY";
     }
-    case LOGGING_STATUS_TYPE_LOGGING: {
+    case LoggingStatusType::LOGGING: {
       return "LOGGING";
     }
-    case LOGGING_STATUS_TYPE_TERMINATE: {
+    case LoggingStatusType::TERMINATE: {
       return "TERMINATE";
     }
-    case LOGGING_STATUS_TYPE_SLEEP: {
+    case LoggingStatusType::SLEEP: {
       return "SLEEP";
     }
     default: {
@@ -1927,22 +1931,27 @@ std::string LoggingStatusTypeToString(LoggingStatusType type) {
 LoggingStatusType StringToLoggingStatusType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGGING_STATUS_TYPE_INVALID;
+    return LoggingStatusType::INVALID;
   } else if (upper_str == "STANDBY") {
-    return LOGGING_STATUS_TYPE_STANDBY;
+    return LoggingStatusType::STANDBY;
   } else if (upper_str == "RECOVERY") {
-    return LOGGING_STATUS_TYPE_RECOVERY;
+    return LoggingStatusType::RECOVERY;
   } else if (upper_str == "LOGGING") {
-    return LOGGING_STATUS_TYPE_LOGGING;
+    return LoggingStatusType::LOGGING;
   } else if (upper_str == "TERMINATE") {
-    return LOGGING_STATUS_TYPE_TERMINATE;
+    return LoggingStatusType::TERMINATE;
   } else if (upper_str == "SLEEP") {
-    return LOGGING_STATUS_TYPE_SLEEP;
+    return LoggingStatusType::SLEEP;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggingStatusType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGGING_STATUS_TYPE_INVALID;
+  return LoggingStatusType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type) {
+  os << LoggingStatusTypeToString(type);
+  return os;
 }
 
 std::string LoggerTypeToString(LoggerType type) {

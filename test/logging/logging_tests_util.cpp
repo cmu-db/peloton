@@ -308,7 +308,7 @@ void LoggingScheduler::Run() {
 void LoggingScheduler::Init() {
   logging::LogManager::GetInstance().Configure(LoggingType::NVM_WAL, true, num_frontend_logger,
                                                LoggerMappingStrategyType::MANUAL);
-  log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager->SetLoggingStatus(LoggingStatusType::LOGGING);
   log_manager->InitFrontendLoggers();
 
   for (unsigned int i = 0; i < num_frontend_logger; i++) {

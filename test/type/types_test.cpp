@@ -493,9 +493,9 @@ TEST_F(TypesTests, LoggingTypeTest) {
 
 TEST_F(TypesTests, LoggingStatusTypeTest) {
   std::vector<LoggingStatusType> list = {
-      LOGGING_STATUS_TYPE_INVALID,   LOGGING_STATUS_TYPE_STANDBY,
-      LOGGING_STATUS_TYPE_RECOVERY,  LOGGING_STATUS_TYPE_LOGGING,
-      LOGGING_STATUS_TYPE_TERMINATE, LOGGING_STATUS_TYPE_SLEEP};
+      LoggingStatusType::INVALID,   LoggingStatusType::STANDBY,
+      LoggingStatusType::RECOVERY,  LoggingStatusType::LOGGING,
+      LoggingStatusType::TERMINATE, LoggingStatusType::SLEEP};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
