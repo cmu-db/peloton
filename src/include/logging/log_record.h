@@ -52,7 +52,7 @@ class LogRecord {
  public:
   LogRecord(LogRecordType log_record_type, cid_t cid)
       : log_record_type(log_record_type), cid(cid) {
-    PL_ASSERT(log_record_type != LOGRECORD_TYPE_INVALID);
+    PL_ASSERT(log_record_type != LogRecordType::INVALID);
   }
 
   virtual ~LogRecord() {}
@@ -68,7 +68,7 @@ class LogRecord {
   size_t GetMessageLength(void) const { return message_length; }
 
  protected:
-  LogRecordType log_record_type = LOGRECORD_TYPE_INVALID;
+  LogRecordType log_record_type = LogRecordType::INVALID;
 
   cid_t cid;
 
