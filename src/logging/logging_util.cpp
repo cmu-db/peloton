@@ -191,14 +191,14 @@ LogRecordType LoggingUtil::GetNextLogRecordType(FileHandle &file_handle) {
   // Check if the log record type is broken
   if (IsFileTruncated(file_handle, 1)) {
     LOG_TRACE("Log file is truncated");
-    return LogRecordType::INVALID;
+    return LOGRECORD_TYPE_INVALID;
   }
 
   // Otherwise, read the log record type
   int ret = fread((void *)&buffer, 1, sizeof(char), file_handle.file);
   if (ret <= 0) {
     LOG_ERROR("Could not read from log file");
-    return LogRecordType::INVALID;
+    return LOGRECORD_TYPE_INVALID;
   }
 
   CopySerializeInput input(&buffer, sizeof(char));
