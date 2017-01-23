@@ -317,7 +317,7 @@ TEST_F(LoggingTests, InsertUpdateDeleteTest) {
 }
 
 TEST_F(LoggingTests, BasicLogManagerTest) {
-  peloton_logging_mode = LOGGING_TYPE_INVALID;
+  peloton_logging_mode = LoggingType::INVALID;
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.DropFrontendLoggers();
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
@@ -343,7 +343,7 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(table, 5, true, false, false, txn);
   txn_manager.CommitTransaction(txn);
-  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
+  peloton_logging_mode = LoggingType::NVM_WAL;
 
   log_manager.SetSyncCommit(true);
   EXPECT_FALSE(log_manager.ContainsFrontendLogger());

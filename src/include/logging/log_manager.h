@@ -146,7 +146,7 @@ class LogManager {
   std::string GetLogDirectoryName(void);
 
   bool HasPelotonFrontendLogger() const {
-    return (peloton_logging_mode == LOGGING_TYPE_NVM_WBL);
+    return (peloton_logging_mode == LoggingType::NVM_WBL);
   }
 
   // Drop all default tiles for tables before recovery
@@ -249,7 +249,7 @@ class LogManager {
   //===--------------------------------------------------------------------===//
 
   // static configurations for logging
-  LoggingType logging_type_ = LOGGING_TYPE_INVALID;
+  LoggingType logging_type_ = LoggingType::INVALID;
 
   // test mode will not log to disk
   bool test_mode_ = false;

@@ -1749,23 +1749,23 @@ std::ostream& operator<<(std::ostream& os, const SetOpType& type) {
 
 std::string LoggingTypeToString(LoggingType type) {
   switch (type) {
-    case LOGGING_TYPE_INVALID:
+    case LoggingType::INVALID:
       return "INVALID";
 
     // WAL Based
-    case LOGGING_TYPE_NVM_WAL:
+    case LoggingType::NVM_WAL:
       return "NVM_WAL";
-    case LOGGING_TYPE_SSD_WAL:
+    case LoggingType::SSD_WAL:
       return "SSD_WAL";
-    case LOGGING_TYPE_HDD_WAL:
+    case LoggingType::HDD_WAL:
       return "HDD_WAL";
 
     // WBL Based
-    case LOGGING_TYPE_NVM_WBL:
+    case LoggingType::NVM_WBL:
       return "NVM_WBL";
-    case LOGGING_TYPE_SSD_WBL:
+    case LoggingType::SSD_WBL:
       return "SSD_WBL";
-    case LOGGING_TYPE_HDD_WBL:
+    case LoggingType::HDD_WBL:
       return "HDD_WBL";
 
     default: {
@@ -1780,24 +1780,29 @@ std::string LoggingTypeToString(LoggingType type) {
 LoggingType StringToLoggingType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LOGGING_TYPE_INVALID;
+    return LoggingType::INVALID;
   } else if (upper_str == "NVM_WAL") {
-    return LOGGING_TYPE_NVM_WAL;
+    return LoggingType::NVM_WAL;
   } else if (upper_str == "SSD_WAL") {
-    return LOGGING_TYPE_SSD_WAL;
+    return LoggingType::SSD_WAL;
   } else if (upper_str == "HDD_WAL") {
-    return LOGGING_TYPE_HDD_WAL;
+    return LoggingType::HDD_WAL;
   } else if (upper_str == "NVM_WBL") {
-    return LOGGING_TYPE_NVM_WBL;
+    return LoggingType::NVM_WBL;
   } else if (upper_str == "SSD_WBL") {
-    return LOGGING_TYPE_SSD_WBL;
+    return LoggingType::SSD_WBL;
   } else if (upper_str == "HDD_WBL") {
-    return LOGGING_TYPE_HDD_WBL;
+    return LoggingType::HDD_WBL;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LoggingType conversion from string '%s'", upper_str.c_str()));
   }
-  return LOGGING_TYPE_INVALID;
+  return LoggingType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
+  os << LoggingTypeToString(type);
+  return os;
 }
 
 std::string LoggingStatusTypeToString(LoggingStatusType type) {
