@@ -2287,6 +2287,66 @@ std::ostream& operator<<(std::ostream& os, const StatsType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// EntityType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string EntityTypeToString(EntityType type) {
+  switch (type) {
+    case EntityType::INVALID: {
+      return "INVALID";
+    }
+    case EntityType::TABLE: {
+      return "TABLE";
+    }
+    case EntityType::SCHEMA: {
+      return "SCHEMA";
+    }
+    case EntityType::INDEX: {
+      return "INDEX";
+    }
+    case EntityType::VIEW: {
+      return "VIEW";
+    }
+    case EntityType::PREPARED_STATEMENT: {
+      return "PREPARED_STATEMENT";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for EntityType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+EntityType StringToEntityType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return EntityType::INVALID;
+  } else if (upper_str == "TABLE") {
+    return EntityType::TABLE;
+  } else if (upper_str == "SCHEMA") {
+    return EntityType::SCHEMA;
+  } else if (upper_str == "INDEX") {
+    return EntityType::INDEX;
+  } else if (upper_str == "VIEW") {
+    return EntityType::VIEW;
+  } else if (upper_str == "PREPARED_STATEMENT") {
+    return EntityType::PREPARED_STATEMENT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No EntityType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return EntityType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const EntityType& type) {
+  os << EntityTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // Network Message types
 //===--------------------------------------------------------------------===//
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
