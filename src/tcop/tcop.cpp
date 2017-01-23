@@ -167,7 +167,7 @@ ResultType TrafficCop::ExecuteStatement(
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
     int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
-  if (FLAGS_stats_mode != StatsType::INVALID) {
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
