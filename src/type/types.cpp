@@ -1689,6 +1689,61 @@ std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
 }
 
 //===--------------------------------------------------------------------===//
+// SetOpType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string SetOpTypeToString(SetOpType type) {
+  switch (type) {
+    case SetOpType::INVALID: {
+      return "INVALID";
+    }
+    case SetOpType::INTERSECT: {
+      return "INTERSECT";
+    }
+    case SetOpType::INTERSECT_ALL: {
+      return "INTERSECT_ALL";
+    }
+    case SetOpType::EXCEPT: {
+      return "EXCEPT";
+    }
+    case SetOpType::EXCEPT_ALL: {
+      return "EXCEPT_ALL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for SetOpType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+SetOpType StringToSetOpType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return SetOpType::INVALID;
+  } else if (upper_str == "INTERSECT") {
+    return SetOpType::INTERSECT;
+  } else if (upper_str == "INTERSECT_ALL") {
+    return SetOpType::INTERSECT_ALL;
+  } else if (upper_str == "EXCEPT") {
+    return SetOpType::EXCEPT;
+  } else if (upper_str == "EXCEPT_ALL") {
+    return SetOpType::EXCEPT_ALL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No SetOpType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return SetOpType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const SetOpType& type) {
+  os << SetOpTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // Log Types - String Utilities
 //===--------------------------------------------------------------------===//
 
