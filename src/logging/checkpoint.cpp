@@ -98,7 +98,7 @@ void Checkpoint::InitDirectory() {
 
 std::unique_ptr<Checkpoint> Checkpoint::GetCheckpoint(
     CheckpointType checkpoint_type, bool disable_file_access) {
-  if (checkpoint_type == CHECKPOINT_TYPE_NORMAL) {
+  if (checkpoint_type == CheckpointType::NORMAL) {
     std::unique_ptr<Checkpoint> checkpoint(
         new SimpleCheckpoint(disable_file_access));
     return std::move(checkpoint);

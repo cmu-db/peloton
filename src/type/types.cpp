@@ -1855,6 +1855,46 @@ std::ostream& operator<<(std::ostream& os, const LoggerMappingStrategyType& type
   return os;
 }
 
+//===--------------------------------------------------------------------===//
+// CheckpointType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string CheckpointTypeToString(CheckpointType type) {
+  switch (type) {
+    case CheckpointType::INVALID: {
+      return "INVALID";
+    }
+    case CheckpointType::NORMAL: {
+      return "NORMAL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for CheckpointType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+CheckpointType StringToCheckpointType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return CheckpointType::INVALID;
+  } else if (upper_str == "NORMAL") {
+    return CheckpointType::NORMAL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No CheckpointType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return CheckpointType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const CheckpointType& type) {
+  os << CheckpointTypeToString(type);
+  return os;
+}
+
 std::string LoggingStatusTypeToString(LoggingStatusType type) {
   switch (type) {
     case LOGGING_STATUS_TYPE_INVALID: {
