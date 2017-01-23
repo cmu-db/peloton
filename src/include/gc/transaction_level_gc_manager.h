@@ -32,7 +32,7 @@ namespace gc {
 
 
 struct GarbageContext {
-  GarbageContext() : timestamp_(INVALID_CID), gc_set_type_(GC_SET_TYPE_COMMITTED) {}
+  GarbageContext() : timestamp_(INVALID_CID), gc_set_type_(GCSetType::COMMITTED) {}
   GarbageContext(std::shared_ptr<ReadWriteSet> gc_set, 
                  const cid_t &timestamp, 
                  const GCSetType gc_set_type) : timestamp_(timestamp), gc_set_type_(gc_set_type) {

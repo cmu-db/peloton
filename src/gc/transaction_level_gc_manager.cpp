@@ -252,7 +252,7 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
 
   GCSetType gc_set_type = garbage_ctx->gc_set_type_;
   
-  if (gc_set_type == GC_SET_TYPE_COMMITTED) {
+  if (gc_set_type == GCSetType::COMMITTED) {
     // if the transaction is committed, 
     // then we need to remove tuples that are deleted by the transaction from indexes.
     for (auto entry : *(garbage_ctx->gc_set_.get())) {
@@ -274,7 +274,7 @@ void TransactionLevelGCManager::DeleteFromIndexes(const std::shared_ptr<GarbageC
     }
 
   } else {
-    PL_ASSERT(gc_set_type == GC_SET_TYPE_ABORTED);
+    PL_ASSERT(gc_set_type == GCSetType::ABORTED);
 
     for (auto entry : *(garbage_ctx->gc_set_.get())) {
       for (auto &element : entry.second) {

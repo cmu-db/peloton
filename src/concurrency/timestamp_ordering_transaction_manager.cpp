@@ -132,7 +132,7 @@ void TimestampOrderingTransactionManager::EndTransaction(
     if (current_txn->IsGCSetEmpty() != true) {
       gc::GCManagerFactory::GetInstance().RecycleTransaction(
           current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(),
-          GC_SET_TYPE_COMMITTED);
+          GCSetType::COMMITTED);
     }
     // Log the transaction's commit
     // For time stamp ordering, every transaction only has one timestamp
@@ -140,7 +140,7 @@ void TimestampOrderingTransactionManager::EndTransaction(
   } else {
     if (current_txn->IsGCSetEmpty() != true) {
       gc::GCManagerFactory::GetInstance().RecycleTransaction(
-          current_txn->GetGCSetPtr(), GetNextCommitId(), GC_SET_TYPE_ABORTED);
+          current_txn->GetGCSetPtr(), GetNextCommitId(), GCSetType::ABORTED);
     }
     log_manager.DoneLogging();
   }

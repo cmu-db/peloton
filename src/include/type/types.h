@@ -1049,7 +1049,7 @@ std::string RWTypeToString(RWType type);
 RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
-enum GCSetType { GC_SET_TYPE_COMMITTED, GC_SET_TYPE_ABORTED };
+enum class GCSetType { COMMITTED, ABORTED };
 
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
