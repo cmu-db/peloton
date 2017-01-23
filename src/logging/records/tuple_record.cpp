@@ -32,20 +32,20 @@ bool TupleRecord::Serialize(CopySerializeOutput &output) {
 
   // Serialize other parts depends on type
   switch (GetType()) {
-    case LogRecordType::WAL_TUPLE_INSERT:
-    case LogRecordType::WAL_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
       storage::Tuple *tuple = (storage::Tuple *)data;
       tuple->SerializeTo(output);
       break;
     }
 
-    case LogRecordType::WAL_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
       // Nothing to do here !
       break;
 
-    case LogRecordType::WBL_TUPLE_INSERT:
-    case LogRecordType::WBL_TUPLE_DELETE:
-    case LogRecordType::WBL_TUPLE_UPDATE:
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
       // Nothing to do here !
       break;
 
