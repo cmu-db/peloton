@@ -54,7 +54,7 @@ void CheckpointManager::StartStandbyMode() {
   auto checkpointer = GetCheckpointer(0);
 
   // Toggle status in log manager map
-  SetCheckpointStatus(CHECKPOINT_STATUS_STANDBY);
+  SetCheckpointStatus(CheckpointStatus::STANDBY);
 
   // Launch the checkpointer's main loop
   checkpointer->MainLoop();
@@ -62,7 +62,7 @@ void CheckpointManager::StartStandbyMode() {
 
 void CheckpointManager::StartRecoveryMode() {
   // Toggle the status after STANDBY
-  SetCheckpointStatus(CHECKPOINT_STATUS_RECOVERY);
+  SetCheckpointStatus(CheckpointStatus::RECOVERY);
 }
 
 Checkpoint *CheckpointManager::GetCheckpointer(unsigned int idx) {

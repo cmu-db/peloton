@@ -107,7 +107,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
                       &checkpoint_manager);
       checkpoint_thread.swap(local_thread);
       checkpoint_manager.WaitForModeTransition(
-          peloton::CHECKPOINT_STATUS_STANDBY, true);
+          peloton::CheckpointStatus::STANDBY, true);
 
       // Clean up table tile state before recovery from checkpoint
       log_manager.PrepareRecovery();
@@ -117,7 +117,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
 
       // Wait for standby mode
       checkpoint_manager.WaitForModeTransition(
-          peloton::CHECKPOINT_STATUS_DONE_RECOVERY, true);
+          peloton::CheckpointStatus::DONE_RECOVERY, true);
     }
 
     // start checkpointing mode after recovery
@@ -125,7 +125,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
       if (!checkpoint_manager.IsInCheckpointingMode()) {
         // Now, enter CHECKPOINTING mode
         checkpoint_manager.SetCheckpointStatus(
-            peloton::CHECKPOINT_STATUS_CHECKPOINTING);
+            peloton::CheckpointStatus::CHECKPOINTING);
       }
     }
   }
@@ -309,8 +309,8 @@ bool PrepareLogFile() {
   // Stop frontend logger if in a valid logging mode
   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
-    checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
-    checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_INVALID, true);
+    checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
+    checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
     checkpoint_thread.join();
   }
   // Stop frontend logger if in a valid logging mode
@@ -381,8 +381,8 @@ void DoRecovery() {
   auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
   // Synchronize and finish recovery
   if (peloton_checkpoint_mode != CheckpointType::INVALID) {
-    checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
-    checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_INVALID, true);
+    checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
+    checkpoint_manager.WaitForModeTransition(CheckpointStatus::INVALID, true);
     cp_thread.join();
   }
 

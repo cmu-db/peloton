@@ -43,7 +43,7 @@ class CheckpointManager {
 
   // Check whether the checkpointer is in checkpointing mode
   inline bool IsInCheckpointingMode() {
-    return (checkpoint_status_ == CHECKPOINT_STATUS_CHECKPOINTING);
+    return (checkpoint_status_ == CheckpointStatus::CHECKPOINTING);
   }
 
   // start recovery mode for checkpointers
@@ -89,7 +89,7 @@ class CheckpointManager {
   unsigned int num_checkpointers_ = 1;
 
   // the status of checkpoint manager
-  CheckpointStatus checkpoint_status_ = CHECKPOINT_STATUS_INVALID;
+  CheckpointStatus checkpoint_status_ = CheckpointStatus::INVALID;
 
   cid_t recovered_cid_ = 0;
 

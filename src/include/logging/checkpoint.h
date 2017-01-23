@@ -90,7 +90,7 @@ class Checkpoint {
   const std::string FILE_SUFFIX = ".log";
 
   // current status
-  CheckpointStatus checkpoint_status = CHECKPOINT_STATUS_INVALID;
+  CheckpointStatus checkpoint_status = CheckpointStatus::INVALID;
 
   // the most recent successful checkpoint cid
   cid_t most_recent_checkpoint_cid = INVALID_CID;
