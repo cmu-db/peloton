@@ -2107,6 +2107,61 @@ std::ostream& operator<<(std::ostream& os, const LogRecordType& type) {
   return os;
 }
 
+//===--------------------------------------------------------------------===//
+// CheckpointStatus - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string CheckpointStatusToString(CheckpointStatus type) {
+  switch (type) {
+    case CheckpointStatus::INVALID: {
+      return "INVALID";
+    }
+    case CheckpointStatus::STANDBY: {
+      return "STANDBY";
+    }
+    case CheckpointStatus::RECOVERY: {
+      return "RECOVERY";
+    }
+    case CheckpointStatus::DONE_RECOVERY: {
+      return "DONE_RECOVERY";
+    }
+    case CheckpointStatus::CHECKPOINTING: {
+      return "CHECKPOINTING";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for CheckpointStatus value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+CheckpointStatus StringToCheckpointStatus(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return CheckpointStatus::INVALID;
+  } else if (upper_str == "STANDBY") {
+    return CheckpointStatus::STANDBY;
+  } else if (upper_str == "RECOVERY") {
+    return CheckpointStatus::RECOVERY;
+  } else if (upper_str == "DONE_RECOVERY") {
+    return CheckpointStatus::DONE_RECOVERY;
+  } else if (upper_str == "CHECKPOINTING") {
+    return CheckpointStatus::CHECKPOINTING;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No CheckpointStatus conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return CheckpointStatus::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const CheckpointStatus& type) {
+  os << CheckpointStatusToString(type);
+  return os;
+}
+
 type::Type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
     case PostgresValueType::BOOLEAN:

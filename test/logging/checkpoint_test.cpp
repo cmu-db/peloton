@@ -218,7 +218,7 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   auto thread = std::thread(&logging::CheckpointManager::StartStandbyMode,
                             &checkpoint_manager);
 
-  checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY,
+  checkpoint_manager.WaitForModeTransition(peloton::CheckpointStatus::STANDBY,
                                            true);
 
   // Clean up table tile state before recovery from checkpoint
@@ -228,18 +228,18 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   checkpoint_manager.StartRecoveryMode();
 
   // Wait for standby mode
-  checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_DONE_RECOVERY,
+  checkpoint_manager.WaitForModeTransition(CheckpointStatus::DONE_RECOVERY,
                                            true);
 
   // Now, enter CHECKPOINTING mode
-  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_CHECKPOINTING);
+  checkpoint_manager.SetCheckpointStatus(CheckpointStatus::CHECKPOINTING);
   auto checkpointer = checkpoint_manager.GetCheckpointer(0);
   while (checkpointer->GetCheckpointStatus() !=
-         CHECKPOINT_STATUS_CHECKPOINTING) {
+         CheckpointStatus::CHECKPOINTING) {
     std::chrono::milliseconds sleep_time(10);
     std::this_thread::sleep_for(sleep_time);
   }
-  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
+  checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
   thread.join();
 }
 

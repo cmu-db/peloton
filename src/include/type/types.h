@@ -882,13 +882,16 @@ std::string LogRecordTypeToString(LogRecordType type);
 LogRecordType StringToLogRecordType(const std::string &str);
 std::ostream& operator<<(std::ostream& os, const LogRecordType &type);
 
-enum CheckpointStatus {
-  CHECKPOINT_STATUS_INVALID = INVALID_TYPE_ID,
-  CHECKPOINT_STATUS_STANDBY = 1,
-  CHECKPOINT_STATUS_RECOVERY = 2,
-  CHECKPOINT_STATUS_DONE_RECOVERY = 3,
-  CHECKPOINT_STATUS_CHECKPOINTING = 4,
+enum class CheckpointStatus {
+  INVALID = INVALID_TYPE_ID,
+  STANDBY = 1,
+  RECOVERY = 2,
+  DONE_RECOVERY = 3,
+  CHECKPOINTING = 4,
 };
+std::string CheckpointStatusToString(CheckpointStatus type);
+CheckpointStatus StringToCheckpointStatus(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CheckpointStatus &type);
 
 //===--------------------------------------------------------------------===//
 // Statistics Types
