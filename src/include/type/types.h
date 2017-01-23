@@ -840,13 +840,14 @@ std::string LoggingStatusTypeToString(LoggingStatusType type);
 LoggingStatusType StringToLoggingStatusType(const std::string &str);
 std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type);
 
-enum LoggerType {
-  LOGGER_TYPE_INVALID = INVALID_TYPE_ID,
-  LOGGER_TYPE_FRONTEND = 1,
-  LOGGER_TYPE_BACKEND = 2
+enum class LoggerType {
+  INVALID = INVALID_TYPE_ID,
+  FRONTEND = 1,
+  BACKEND = 2
 };
 std::string LoggerTypeToString(LoggerType type);
 LoggerType StringToLoggerType(const std::string &str);
+std::ostream& operator<<(std::ostream& os, const LoggerType& type);
 
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,

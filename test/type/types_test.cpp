@@ -515,8 +515,8 @@ TEST_F(TypesTests, LoggingStatusTypeTest) {
 }
 
 TEST_F(TypesTests, LoggerTypeTest) {
-  std::vector<LoggerType> list = {LOGGER_TYPE_INVALID, LOGGER_TYPE_FRONTEND,
-                                  LOGGER_TYPE_BACKEND};
+  std::vector<LoggerType> list = {LoggerType::INVALID, LoggerType::FRONTEND,
+                                  LoggerType::BACKEND};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
