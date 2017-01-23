@@ -21,6 +21,9 @@ namespace expression {
 
 // ASCII code of the first character of the argument.
 type::Value StringFunctions::Ascii(const std::vector<type::Value>& args) {
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::INTEGER);
+  }
   std::string str = args[0].ToString();
   int32_t val = str[0];
   return type::ValueFactory::GetIntegerValue(val);
@@ -28,6 +31,9 @@ type::Value StringFunctions::Ascii(const std::vector<type::Value>& args) {
 
 // Get Character from integer
 type::Value StringFunctions::Chr(const std::vector<type::Value>& args) {
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  }
   int32_t val = args[0].GetAs<int32_t>();
   std::string str(1, char(static_cast<char>(val)));
   return type::ValueFactory::GetVarcharValue(str);
