@@ -728,21 +728,19 @@ std::ostream &operator<<(std::ostream &os, const ResultType &type);
 // Constraint Types
 //===--------------------------------------------------------------------===//
 
-enum PostgresConstraintType {
-  POSTGRES_CONSTRAINT_NULL, /* not standard SQL, but a lot of people * expect it
-                               */
-  POSTGRES_CONSTRAINT_NOTNULL,
-  POSTGRES_CONSTRAINT_DEFAULT,
-  POSTGRES_CONSTRAINT_CHECK,
-  POSTGRES_CONSTRAINT_PRIMARY,
-  POSTGRES_CONSTRAINT_UNIQUE,
-  POSTGRES_CONSTRAINT_EXCLUSION,
-  POSTGRES_CONSTRAINT_FOREIGN,
-  POSTGRES_CONSTRAINT_ATTR_DEFERRABLE, /* attributes for previous constraint
-                                          node */
-  POSTGRES_CONSTRAINT_ATTR_NOT_DEFERRABLE,
-  POSTGRES_CONSTRAINT_ATTR_DEFERRED,
-  POSTGRES_CONSTRAINT_ATTR_IMMEDIATE
+enum class PostgresConstraintType {
+  NULL, /* not standard SQL, but a lot of people * expect it */
+  NOTNULL,
+  DEFAULT,
+  CHECK,
+  PRIMARY,
+  UNIQUE,
+  EXCLUSION,
+  FOREIGN,
+  ATTR_DEFERRABLE, /* attributes for previous constraint node */
+  ATTR_NOT_DEFERRABLE,
+  ATTR_DEFERRED,
+  ATTR_IMMEDIATE
 };
 
 enum ConstraintType {
