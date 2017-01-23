@@ -940,9 +940,9 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum TupleSerializationFormat {
-  TUPLE_SERIALIZATION_NATIVE = 0,
-  TUPLE_SERIALIZATION_DR = 1
+enum class TupleSerializationFormat {
+  NATIVE = 0,
+  DR = 1
 };
 
 // ------------------------------------------------------------------
