@@ -130,7 +130,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
     }
   }
 
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode != LoggingType::INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
       // Wait for standby mode
@@ -286,7 +286,7 @@ bool PrepareLogFile() {
 
     case ASYNCHRONOUS_TYPE_DISABLED:
       // No logging
-      peloton_logging_mode = LOGGING_TYPE_INVALID;
+      peloton_logging_mode = LoggingType::INVALID;
       break;
     case ASYNCHRONOUS_TYPE_NO_WRITE:
       log_manager.SetNoWrite(true);
@@ -314,7 +314,7 @@ bool PrepareLogFile() {
     checkpoint_thread.join();
   }
   // Stop frontend logger if in a valid logging mode
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode != LoggingType::INVALID) {
     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
     if (log_manager.EndLogging()) {
       logging_thread.join();
@@ -371,7 +371,7 @@ void DoRecovery() {
   timer.Stop();
 
   // Synchronize and finish recovery
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
+  if (peloton_logging_mode != LoggingType::INVALID) {
     if (log_manager.EndLogging()) {
       thread.join();
     } else {

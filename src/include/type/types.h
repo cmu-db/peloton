@@ -776,24 +776,25 @@ std::ostream &operator<<(std::ostream &os, const SetOpType &type);
 // Logging + Recovery Types
 //===--------------------------------------------------------------------===//
 
-// LOGGING_TYPE_AAA_BBB
+// AAA_BBB
 // Data stored in AAA
 // Log stored in BBB
-enum LoggingType {
-  LOGGING_TYPE_INVALID = INVALID_TYPE_ID,
+enum class LoggingType {
+  INVALID = INVALID_TYPE_ID,
 
   // Based on write behind logging
-  LOGGING_TYPE_NVM_WBL = 1,
-  LOGGING_TYPE_SSD_WBL = 2,
-  LOGGING_TYPE_HDD_WBL = 3,
+  NVM_WBL = 1,
+  SSD_WBL = 2,
+  HDD_WBL = 3,
 
   // Based on write ahead logging
-  LOGGING_TYPE_NVM_WAL = 4,
-  LOGGING_TYPE_SSD_WAL = 5,
-  LOGGING_TYPE_HDD_WAL = 6,
+  NVM_WAL = 4,
+  SSD_WAL = 5,
+  HDD_WAL = 6,
 };
 std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {

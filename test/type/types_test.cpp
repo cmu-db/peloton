@@ -470,9 +470,9 @@ TEST_F(TypesTests, ConstraintTypeTest) {
 
 TEST_F(TypesTests, LoggingTypeTest) {
   std::vector<LoggingType> list = {
-      LOGGING_TYPE_INVALID, LOGGING_TYPE_NVM_WBL, LOGGING_TYPE_SSD_WBL,
-      LOGGING_TYPE_HDD_WBL, LOGGING_TYPE_NVM_WAL, LOGGING_TYPE_SSD_WAL,
-      LOGGING_TYPE_HDD_WAL,
+      LoggingType::INVALID, LoggingType::NVM_WBL, LoggingType::SSD_WBL,
+      LoggingType::HDD_WBL, LoggingType::NVM_WAL, LoggingType::SSD_WAL,
+      LoggingType::HDD_WAL,
   };
 
   // Make sure that ToString and FromString work
