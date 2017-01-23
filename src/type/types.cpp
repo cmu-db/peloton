@@ -1805,6 +1805,56 @@ std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
   return os;
 }
 
+//===--------------------------------------------------------------------===//
+// LoggerMappingStrategyType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type) {
+  switch (type) {
+    case LoggerMappingStrategyType::INVALID: {
+      return "INVALID";
+    }
+    case LoggerMappingStrategyType::ROUND_ROBIN: {
+      return "ROUND_ROBIN";
+    }
+    case LoggerMappingStrategyType::AFFINITY: {
+      return "AFFINITY";
+    }
+    case LoggerMappingStrategyType::MANUAL: {
+      return "MANUAL";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for LoggerMappingStrategyType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return LoggerMappingStrategyType::INVALID;
+  } else if (upper_str == "ROUND_ROBIN") {
+    return LoggerMappingStrategyType::ROUND_ROBIN;
+  } else if (upper_str == "AFFINITY") {
+    return LoggerMappingStrategyType::AFFINITY;
+  } else if (upper_str == "MANUAL") {
+    return LoggerMappingStrategyType::MANUAL;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No LoggerMappingStrategyType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return LoggerMappingStrategyType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LoggerMappingStrategyType& type) {
+  os << LoggerMappingStrategyTypeToString(type);
+  return os;
+}
+
 std::string LoggingStatusTypeToString(LoggingStatusType type) {
   switch (type) {
     case LOGGING_STATUS_TYPE_INVALID: {

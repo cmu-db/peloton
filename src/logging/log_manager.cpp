@@ -35,7 +35,7 @@ thread_local static BackendLogger *backend_logger = nullptr;
 
 LogManager::LogManager() {
   Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
-            LOGGER_MAPPING_TYPE_ROUND_ROBIN);
+            LoggerMappingStrategyType::ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -293,18 +293,18 @@ BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
-    PL_ASSERT(logger_mapping_strategy_ != LOGGER_MAPPING_TYPE_INVALID);
+    PL_ASSERT(logger_mapping_strategy_ != LoggerMappingStrategyType::INVALID);
     LOG_TRACE("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
 
     // round robin mapping
-    if (logger_mapping_strategy_ == LOGGER_MAPPING_TYPE_ROUND_ROBIN) {
+    if (logger_mapping_strategy_ == LoggerMappingStrategyType::ROUND_ROBIN) {
       frontend_loggers[i % num_frontend_loggers_].get()->AddBackendLogger(
           backend_logger);
       backend_logger->SetFrontendLoggerID(i % num_frontend_loggers_);
 
-    } else if (logger_mapping_strategy_ == LOGGER_MAPPING_TYPE_MANUAL) {
+    } else if (logger_mapping_strategy_ == LoggerMappingStrategyType::MANUAL) {
       // manual mapping with hint
       PL_ASSERT(hint_idx < frontend_loggers.size());
       frontend_loggers[hint_idx].get()->AddBackendLogger(backend_logger);

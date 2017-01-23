@@ -804,12 +804,15 @@ typedef enum LayoutType {
   LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
 } LayoutType;
 
-enum LoggerMappingStrategyType {
-  LOGGER_MAPPING_TYPE_INVALID = INVALID_TYPE_ID,
-  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
-  LOGGER_MAPPING_TYPE_AFFINITY = 2,
-  LOGGER_MAPPING_TYPE_MANUAL = 3
+enum class LoggerMappingStrategyType {
+  INVALID = INVALID_TYPE_ID,
+  ROUND_ROBIN = 1,
+  AFFINITY = 2,
+  MANUAL = 3
 };
+std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type);
+LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LoggerMappingStrategyType &type);
 
 enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = INVALID_TYPE_ID,
