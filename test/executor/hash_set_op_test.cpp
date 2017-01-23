@@ -59,7 +59,7 @@ void RunTest(executor::HashSetOpExecutor &executor,
 
 TEST_F(HashSetOptTests, ExceptTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_EXCEPT);
+  planner::SetOpPlan node(SetOpType::EXCEPT);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -129,7 +129,7 @@ TEST_F(HashSetOptTests, ExceptTest) {
 
 TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_EXCEPT_ALL);
+  planner::SetOpPlan node(SetOpType::EXCEPT_ALL);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -217,7 +217,7 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
 
 TEST_F(HashSetOptTests, IntersectTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_INTERSECT);
+  planner::SetOpPlan node(SetOpType::INTERSECT);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);
@@ -286,7 +286,7 @@ TEST_F(HashSetOptTests, IntersectTest) {
 
 TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create the plan node
-  planner::SetOpPlan node(SETOP_TYPE_INTERSECT_ALL);
+  planner::SetOpPlan node(SetOpType::INTERSECT_ALL);
 
   // Create and set up executor
   executor::HashSetOpExecutor executor(&node, nullptr);

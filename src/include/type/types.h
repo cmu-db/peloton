@@ -761,13 +761,16 @@ std::ostream &operator<<(std::ostream &os, const ConstraintType &type);
 //===--------------------------------------------------------------------===//
 // Set Operation Types
 //===--------------------------------------------------------------------===//
-enum SetOpType {
-  SETOP_TYPE_INVALID = INVALID_TYPE_ID,
-  SETOP_TYPE_INTERSECT = 1,
-  SETOP_TYPE_INTERSECT_ALL = 2,
-  SETOP_TYPE_EXCEPT = 3,
-  SETOP_TYPE_EXCEPT_ALL = 4
+enum class SetOpType {
+  INVALID = INVALID_TYPE_ID,
+  INTERSECT = 1,
+  INTERSECT_ALL = 2,
+  EXCEPT = 3,
+  EXCEPT_ALL = 4
 };
+std::string SetOpTypeToString(SetOpType type);
+SetOpType StringToSetOpType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const SetOpType &type);
 
 //===--------------------------------------------------------------------===//
 // Logging + Recovery Types
