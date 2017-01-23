@@ -80,7 +80,7 @@ class CheckpointManager {
   ~CheckpointManager() {}
 
   // static configurations for logging
-  CheckpointType checkpoint_type_ = CHECKPOINT_TYPE_INVALID;
+  CheckpointType checkpoint_type_ = CheckpointType::INVALID;
 
   // mainly used for testing
   bool disable_file_access_ = false;

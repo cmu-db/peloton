@@ -232,7 +232,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
-  state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
+  state.checkpoint_type = CheckpointType::INVALID;
 
   // YCSB Default Values
   ycsb::state.index = IndexType::BWTREE;
@@ -386,11 +386,11 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     }
   }
 
-  if (state.checkpoint_type == CHECKPOINT_TYPE_NORMAL &&
+  if (state.checkpoint_type == CheckpointType::NORMAL &&
       (state.logging_type == LoggingType::NVM_WAL ||
        state.logging_type == LoggingType::SSD_WAL ||
        state.logging_type == LoggingType::HDD_WAL)) {
-    peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
+    peloton_checkpoint_mode = CheckpointType::NORMAL;
   }
 
   // Print Logger configuration

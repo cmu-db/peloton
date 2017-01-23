@@ -89,7 +89,7 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.SetGlobalMaxFlushedCommitId(txn_manager.GetNextCommitId());
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, false, 1);
+  checkpoint_manager.Configure(CheckpointType::NORMAL, false, 1);
   checkpoint_manager.DestroyCheckpointers();
   checkpoint_manager.InitCheckpointers();
   auto checkpointer = checkpoint_manager.GetCheckpointer(0);
@@ -143,7 +143,7 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
 
   // create checkpoint
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+  checkpoint_manager.Configure(CheckpointType::NORMAL, true, 1);
   checkpoint_manager.DestroyCheckpointers();
   checkpoint_manager.InitCheckpointers();
   auto checkpointer = checkpoint_manager.GetCheckpointer(0);
@@ -212,7 +212,7 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
   checkpoint_manager.DestroyCheckpointers();
 
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+  checkpoint_manager.Configure(CheckpointType::NORMAL, true, 1);
 
   // launch checkpoint thread, wait for standby mode
   auto thread = std::thread(&logging::CheckpointManager::StartStandbyMode,

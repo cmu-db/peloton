@@ -814,10 +814,13 @@ std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type);
 LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LoggerMappingStrategyType &type);
 
-enum CheckpointType {
-  CHECKPOINT_TYPE_INVALID = INVALID_TYPE_ID,
-  CHECKPOINT_TYPE_NORMAL = 1,
+enum class CheckpointType {
+  INVALID = INVALID_TYPE_ID,
+  NORMAL = 1,
 };
+std::string CheckpointTypeToString(CheckpointType type);
+CheckpointType StringToCheckpointType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CheckpointType &type);
 
 enum ReplicationType {
   ASYNC_REPLICATION,
