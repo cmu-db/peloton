@@ -230,8 +230,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
             for (auto col : *select_stmt->select_list) {
               //Copy column for handling of unique_ptr
-              auto copyCol = col->Copy();
-              hash_keys.emplace_back(copyCol);
+              auto copy_col = col->Copy();
+              hash_keys.emplace_back(copy_col);
             }
             // Create hash plan node
             std::unique_ptr<planner::HashPlan> hash_plan_node(
