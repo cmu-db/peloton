@@ -1036,15 +1036,18 @@ typedef std::bitset<max_col_count> ColBitmap;
 // read-write set
 //===--------------------------------------------------------------------===//
 
-enum RWType {
-  RW_TYPE_INVALID,
-  RW_TYPE_READ,
-  RW_TYPE_READ_OWN,  // select for update
-  RW_TYPE_UPDATE,
-  RW_TYPE_INSERT,
-  RW_TYPE_DELETE,
-  RW_TYPE_INS_DEL,  // delete after insert.
+enum class RWType {
+  INVALID,
+  READ,
+  READ_OWN,  // select for update
+  UPDATE,
+  INSERT,
+  DELETE,
+  INS_DEL,  // delete after insert.
 };
+std::string RWTypeToString(RWType type);
+RWType StringToRWType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const RWType &type);
 
 // block -> offset -> type
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
