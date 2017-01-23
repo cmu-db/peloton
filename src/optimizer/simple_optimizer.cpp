@@ -224,6 +224,22 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           child_SelectPlan = std::move(child_ProjectPlan);
         }
 
+
+        //Workflow for DISTINCT
+        if (select_stmt->select_distinct){
+            std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+            for (auto col : *select_stmt->select_list) {
+              //Copy column for handling of unique_ptr
+              auto copyCol = col->Copy();
+              hash_keys.emplace_back(copyCol);
+            }
+            // Create hash plan node
+            std::unique_ptr<planner::HashPlan> hash_plan_node(
+                new planner::HashPlan(hash_keys));
+            hash_plan_node->AddChild(std::move(child_SelectPlan));
+            child_SelectPlan = std::move(hash_plan_node);
+        }
+        //Workflow for ORDER_BY and LIMIT
         if (select_stmt->order != NULL && select_stmt->limit != NULL) {
           LOG_TRACE("OrderBy + Limit query");
           auto schema_columns = target_table->GetSchema()->GetColumns();
