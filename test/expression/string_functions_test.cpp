@@ -1,0 +1,126 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// string_functions_test.cpp
+//
+// Identification: test/expression/string_functions_test.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#include <set>
+#include <string>
+#include <vector>
+
+#include "common/harness.h"
+
+#include "expression/string_functions.h"
+#include "expression/expression_util.h"
+#include "expression/function_expression.h"
+#include "type/types.h"
+#include "type/value.h"
+#include "type/value_factory.h"
+#include "util/string_util.h"
+
+using ::testing::NotNull;
+using ::testing::Return;
+
+namespace peloton {
+namespace test {
+
+class StringFunctionsTests : public PelotonTest {};
+
+TEST_F(StringFunctionsTests, AsciiTest) {
+  const char column_char = 'A';
+  for (int i = 0; i < 52; i++) {
+    int expected = (int)column_char + i;
+
+    std::ostringstream os;
+    os << static_cast<char>(expected);
+    std::vector<type::Value> args = {
+      type::ValueFactory::GetVarcharValue(os.str())
+    };
+
+    auto result = expression::StringFunctions::Ascii(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(expected, result.GetAs<int>());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
+  };
+  auto result = expression::StringFunctions::Ascii(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(StringFunctionsTests, ChrTest) {
+  const char column_char = 'A';
+  for (int i = 0; i < 52; i++) {
+    int char_int = (int)column_char + i;
+
+    std::ostringstream os;
+    os << static_cast<char>(char_int);
+    std::string expected = os.str();
+
+    std::vector<type::Value> args = {
+        type::ValueFactory::GetIntegerValue(char_int)
+    };
+
+    auto result = expression::StringFunctions::Chr(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(expected, result.ToString());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::Type::INTEGER)
+  };
+  auto result = expression::StringFunctions::Chr(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(StringFunctionsTests, CharLengthTest) {
+  const std::string str = "A";
+  for (int i = 0; i < 100; i++) {
+    std::string input = StringUtil::Repeat(str, i);
+    std::vector<type::Value> args = {
+      type::ValueFactory::GetVarcharValue(input)
+    };
+
+    auto result = expression::StringFunctions::CharLength(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(i, result.GetAs<int>());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
+  };
+  auto result = expression::StringFunctions::Ascii(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(StringFunctionsTests, RepeatTest) {
+  const std::string str = "A";
+  for (int i = 0; i < 100; i++) {
+    std::string expected = StringUtil::Repeat(str, i);
+    EXPECT_EQ(i, expected.size());
+    std::vector<type::Value> args = {
+        type::ValueFactory::GetVarcharValue(str),
+        type::ValueFactory::GetIntegerValue(i)
+    };
+
+    auto result = expression::StringFunctions::Repeat(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(expected, result.ToString());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
+  };
+  auto result = expression::StringFunctions::Ascii(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+}  // namespace test
+}  // namespace peloton
