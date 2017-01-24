@@ -517,7 +517,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                     "COL_" + std::to_string(col_cntr_id++),  // COL_A should be
                                                              // used only when
                                                              // there is no AS
-                    true);
+                    false);
 
                 output_schema_columns.push_back(column);
               }

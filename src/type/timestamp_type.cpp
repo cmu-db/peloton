@@ -65,6 +65,24 @@ CmpBool TimestampType::CompareGreaterThanEquals(const Value& left, const Value &
   return GetCmpBool(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
 }
 
+Value TimestampType::Min(const Value& left, const Value& right) const {
+  PL_ASSERT(left.CheckComparable(right));
+  if (left.IsNull() || right.IsNull())
+    return left.OperateNull(right);
+  if (left.CompareLessThan(right) == CMP_TRUE)
+      return left.Copy();
+  return right.Copy();
+}
+
+Value TimestampType::Max(const Value& left, const Value& right) const {
+    PL_ASSERT(left.CheckComparable(right));
+    if (left.IsNull() || right.IsNull())
+        return left.OperateNull(right);
+    if (left.CompareGreaterThan(right) == CMP_TRUE)
+        return left.Copy();
+    return right.Copy();
+}
+
 // Debug
 std::string TimestampType::ToString(const Value& val) const {
   if (val.IsNull())
