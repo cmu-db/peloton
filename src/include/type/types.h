@@ -1025,10 +1025,13 @@ enum RWType {
   RW_TYPE_INS_DEL,  // delete after insert.
 };
 
-enum GCSetType { GC_SET_TYPE_COMMITTED, GC_SET_TYPE_ABORTED };
-
+// block -> offset -> type
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
+
+// block -> offset -> is_index_deletion
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
+    GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
