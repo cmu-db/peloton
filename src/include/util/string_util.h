@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-
 namespace peloton {
 
 /**
@@ -58,21 +57,18 @@ class StringUtil {
   /**
    * Returns true if the needle string exists in the haystack
    */
-  static bool Contains(const std::string &haystack,
-                              const std::string &needle);
+  static bool Contains(const std::string &haystack, const std::string &needle);
 
   /**
    * Returns true if the target string starts with the given prefix
    */
-  static bool StartsWith(const std::string &str,
-                                const std::string &prefix);
+  static bool StartsWith(const std::string &str, const std::string &prefix);
 
   /**
    * Returns true if the target string <b>ends</b> with the given suffix.
    * http://stackoverflow.com/a/2072890
    */
-  static bool EndsWith(const std::string &str,
-                              const std::string &suffix);
+  static bool EndsWith(const std::string &str, const std::string &suffix);
 
   /**
    * Repeat a string multiple times
@@ -120,8 +116,8 @@ class StringUtil {
    * @param split
    * @return
    */
-  static std::vector<std::string> Split(const std::string& input,
-                                        const std::string& split);
+  static std::vector<std::string> Split(const std::string &input,
+                                        const std::string &split);
 };
 
 }  // END peloton

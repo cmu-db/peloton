@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <stdint.h>
-#include <vector>
-#include <string>
 #include <netinet/in.h>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace peloton {
 namespace networking {
