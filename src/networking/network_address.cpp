@@ -9,18 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
-#include "networking/tcp_address.h"
-
-#include "common/cast.h"
-#include "common/logger.h"
-#include "common/exception.h"
-#include "common/macros.h"
+#include "networking/network_address.h"
 
 #include <netdb.h>
-#include <cstdlib>
 #include <cstring>
+
+#include "common/cast.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace networking {
@@ -49,24 +46,30 @@ NetworkAddress::NetworkAddress(const sockaddr& addr) {
 NetworkAddress::NetworkAddress(const std::string& address) {
   bool re = Parse(address);
   if (re == false) {
-    LOG_ERROR("Could not parse address");
-    throw Exception("Could not parse address\n");
+    std::string msg =
+        StringUtil::Format("Could not parse address '%s'", address.c_str());
+    LOG_ERROR("%s", msg.c_str());
+    throw Exception(msg);
   }
 }
 
 // Returns true if the address is parsed successfully.
 bool NetworkAddress::Parse(const std::string& address) {
-  std::vector<std::string> parts = splitExcluding(address, ' ');
+  std::vector<std::string> parts = StringUtil::Split(address, " ");
   if (parts.size() == 1) {
     // Try splitting with a colon
-    parts = splitExcluding(address, ':');
+    parts = StringUtil::Split(address, ":");
   }
   if (parts.size() != 2) return false;
   if (parts[0].empty() || parts[1].empty()) return false;
 
   // Convert the first part from text to an IP address
-
   addrinfo* node = NULL;
+
+  // PAVLO: 2017-01-25
+  // There is a bug in 'getaddrinfo' that causes an invalid free.
+  // This will cause valgrind to report an error
+  // https://bugzilla.redhat.com/show_bug.cgi?id=754026
   int error = getaddrinfo(parts[0].c_str(), NULL, NULL, &node);
   if (error != 0) {
     return false;
@@ -103,8 +106,9 @@ bool NetworkAddress::operator==(const sockaddr_in& other) const {
   return true;
 }
 
-static const int MAX_PORT_STRING =
-    6;  // maximum length: 6 bytes (5 digits, 1 NUL)
+// maximum length: 6 bytes (5 digits, 1 NUL)
+static const int MAX_PORT_STRING = 6;
+
 static std::string callGetNameInfo(const NetworkAddress& address,
                                    char* port_string) {
   sockaddr_in addr;
@@ -119,7 +123,7 @@ static std::string callGetNameInfo(const NetworkAddress& address,
                           static_cast<socklen_t>(retval.size()), port_string,
                           MAX_PORT_STRING, NI_NUMERICHOST | NI_NUMERICSERV);
   if (error != 0) {
-    throw Exception("Could not get name info \n");
+    throw Exception("Could not get name info");
   }
   retval.resize(strlen(retval.data()));
 

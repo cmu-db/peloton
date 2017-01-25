@@ -10,13 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <stdint.h>
-#include <vector>
-#include <string>
 #include <netinet/in.h>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace peloton {
 namespace networking {
@@ -74,28 +73,6 @@ class NetworkAddress {
 // Make operator== for sockaddr_in bidirectional
 inline bool operator==(const sockaddr_in& a, const NetworkAddress& b) {
   return b == a;
-}
-
-inline std::vector<std::string> splitExcluding(const std::string& input,
-                                               char split) {
-  std::vector<std::string> splits;
-
-  size_t last = 0;
-  while (last <= input.size()) {
-    size_t next = input.find(split, last);
-    if (next == std::string::npos) {
-      next = input.size();
-    }
-
-    // Push the substring [last, next) on to splits
-    std::string substr = input.substr(last, next - last);
-    if (substr.size() > 0){
-    	splits.push_back(substr);
-    }
-    last = next + 1;
-  }
-
-  return splits;
 }
 
 // Returns a pointer to the raw array in a string.
