@@ -112,6 +112,16 @@ class StringUtil {
    * http://stackoverflow.com/a/8098080
    */
   static std::string Format(const std::string fmt_str, ...);
+
+  /**
+   * Split the input string into a vector of strings based on
+   * the split string given us
+   * @param input
+   * @param split
+   * @return
+   */
+  static std::vector<std::string> Split(const std::string& input,
+                                        const std::string& split);
 };
 
 }  // END peloton
