@@ -729,7 +729,7 @@ std::ostream &operator<<(std::ostream &os, const ResultType &type);
 //===--------------------------------------------------------------------===//
 
 enum class PostgresConstraintType {
-  NULL_TYPE, /* not standard SQL, but a lot of people * expect it */
+  NOT_NULL, /* not standard SQL, but a lot of people * expect it */
   NOTNULL,
   DEFAULT,
   CHECK,
@@ -745,7 +745,7 @@ enum class PostgresConstraintType {
 
 enum class ConstraintType {
   INVALID = INVALID_TYPE_ID,  // invalid
-  NULL_TYPE = 1,              // notnull
+  NOT_NULL = 1,               // notnull
   NOTNULL = 2,                // notnull
   DEFAULT = 3,                // default
   CHECK = 4,                  // check

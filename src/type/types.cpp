@@ -1623,8 +1623,8 @@ std::string ConstraintTypeToString(ConstraintType type) {
     case ConstraintType::INVALID: {
       return ("INVALID");
     }
-    case ConstraintType::NULL_TYPE: {
-      return ("NULL");
+    case ConstraintType::NOT_NULL: {
+      return ("NOT_NULL");
     }
     case ConstraintType::NOTNULL: {
       return ("NOTNULL");
@@ -1660,8 +1660,8 @@ ConstraintType StringToConstraintType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return ConstraintType::INVALID;
-  } else if (upper_str == "NULL") {
-    return ConstraintType::NULL_TYPE;
+  } else if (upper_str == "NOT_NULL") {
+    return ConstraintType::NOT_NULL;
   } else if (upper_str == "NOTNULL") {
     return ConstraintType::NOTNULL;
   } else if (upper_str == "DEFAULT") {
@@ -2255,8 +2255,8 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
   ConstraintType constraintType = ConstraintType::INVALID;
 
   switch (type) {
-    case PostgresConstraintType::NULL_TYPE:
-      constraintType = ConstraintType::NULL_TYPE;
+    case PostgresConstraintType::NOT_NULL:
+      constraintType = ConstraintType::NOT_NULL;
       break;
 
     case PostgresConstraintType::NOTNULL:

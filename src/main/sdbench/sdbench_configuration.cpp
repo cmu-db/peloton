@@ -173,7 +173,7 @@ static void ValidateScaleFactor(const configuration &state) {
 }
 
 static void ValidateLayout(const configuration &state) {
-  if (state.layout_mode < 1 || state.layout_mode > 3) {
+  if (static_cast<int>(state.layout_mode) < 1 || static_cast<int>(state.layout_mode) > 3) {
     LOG_ERROR("Invalid layout :: %d", state.layout_mode);
     exit(EXIT_FAILURE);
   } else {
