@@ -16,7 +16,7 @@
 #include "rpc_server.h"
 #include "rpc_channel.h"
 #include "rpc_controller.h"
-#include "tcp_address.h"
+#include "network_address.h"
 #include "common/logger.h"
 
 #include <event2/bufferevent.h>
