@@ -56,7 +56,7 @@ class Transaction : public Printable {
     is_written_ = false;
     declared_readonly_ = false;
     insert_count_ = 0;
-    gc_set_.reset(new ReadWriteSet());
+    gc_set_.reset(new GCSet());
   }
 
   //===--------------------------------------------------------------------===//
@@ -90,7 +90,9 @@ class Transaction : public Printable {
 
   inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
-  inline std::shared_ptr<ReadWriteSet> GetGCSetPtr() { return gc_set_; }
+  inline std::shared_ptr<GCSet> GetGCSetPtr() {
+    return gc_set_;
+  }
 
   inline bool IsGCSetEmpty() { return gc_set_->size() == 0; }
 
@@ -129,7 +131,7 @@ class Transaction : public Printable {
   ReadWriteSet rw_set_;
 
   // this set contains data location that needs to be gc'd in the transaction.
-  std::shared_ptr<ReadWriteSet> gc_set_;
+  std::shared_ptr<GCSet> gc_set_;
 
   // result of the transaction
   ResultType result_ = peloton::ResultType::SUCCESS;

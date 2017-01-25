@@ -130,17 +130,16 @@ void TimestampOrderingTransactionManager::EndTransaction(
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().RecycleTransaction(
-          current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId(),
-          GCSetType::COMMITTED);
+      gc::GCManagerFactory::GetInstance().
+          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId());
     }
     // Log the transaction's commit
     // For time stamp ordering, every transaction only has one timestamp
     log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
   } else {
     if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().RecycleTransaction(
-          current_txn->GetGCSetPtr(), GetNextCommitId(), GCSetType::ABORTED);
+      gc::GCManagerFactory::GetInstance().
+          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
     }
     log_manager.DoneLogging();
   }
@@ -821,7 +820,11 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](tile_group_id)[tuple_slot] = RWType::UPDATE;
+=======
+        gc_set->operator[](tile_group_id)[tuple_slot] = false;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
 
         // add to log manager
         log_manager.LogUpdate(
@@ -851,7 +854,16 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](tile_group_id)[tuple_slot] = RWType::DELETE;
+=======
+        // we need to recycle both old and new versions.
+        // we require the GC to delete tuple from index only once.
+        // recycle old version, delete from index
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+        // recycle new version (which is an empty version), do not delete from index
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
 
         // add to log manager
         log_manager.LogDelete(end_commit_id,
@@ -889,7 +901,11 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](tile_group_id)[tuple_slot] = RWType::INS_DEL;
+=======
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
 
         // no log is needed for this case
       }
@@ -997,8 +1013,12 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](new_version.block)[new_version.offset] =
             RWType::UPDATE;
+=======
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
 
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
@@ -1052,8 +1072,12 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](new_version.block)[new_version.offset] =
             RWType::DELETE;
+=======
+        gc_set->operator[](new_version.block)[new_version.offset] = false;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
 
       } else if (tuple_entry.second == RWType::INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1065,7 +1089,12 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](tile_group_id)[tuple_slot] = RWType::INSERT;
+=======
+        // delete from index
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -1077,7 +1106,11 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // add to gc set.
+<<<<<<< HEAD
         gc_set->operator[](tile_group_id)[tuple_slot] = RWType::INS_DEL;
+=======
+        gc_set->operator[](tile_group_id)[tuple_slot] = true;
+>>>>>>> f027c9223c74e111aead168c4d90048470816c1f
       }
     }
   }
