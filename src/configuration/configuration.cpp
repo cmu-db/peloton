@@ -107,7 +107,7 @@ DEFINE_bool(layout_tuner,
             "Enable layout tuner (default: false)");
 
 // Layout mode
-int peloton_layout_mode = static_cast<int>(peloton::LayoutType::ROW);
+int peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 
 // Logging mode
 peloton::LoggingType peloton_logging_mode = peloton::LoggingType::INVALID;

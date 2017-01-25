@@ -1623,8 +1623,8 @@ std::string ConstraintTypeToString(ConstraintType type) {
     case ConstraintType::INVALID: {
       return ("INVALID");
     }
-    case ConstraintType::NOT_NULL: {
-      return ("NOT_NULL");
+    case ConstraintType::NULL_TYPE: {
+      return ("NULL");
     }
     case ConstraintType::NOTNULL: {
       return ("NOTNULL");
@@ -1660,8 +1660,8 @@ ConstraintType StringToConstraintType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return ConstraintType::INVALID;
-  } else if (upper_str == "NOT_NULL") {
-    return ConstraintType::NOT_NULL;
+  } else if (upper_str == "NULL") {
+    return ConstraintType::NULL_TYPE;
   } else if (upper_str == "NOTNULL") {
     return ConstraintType::NOTNULL;
   } else if (upper_str == "DEFAULT") {
@@ -1802,56 +1802,6 @@ LoggingType StringToLoggingType(const std::string& str) {
 
 std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
   os << LoggingTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
-// LayoutType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string LayoutTypeToString(LayoutType type) {
-  switch (type) {
-    case LayoutType::INVALID: {
-      return "INVALID";
-    }
-    case LayoutType::ROW: {
-      return "ROW";
-    }
-    case LayoutType::COLUMN: {
-      return "COLUMN";
-    }
-    case LayoutType::HYBRID: {
-      return "HYBRID";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LayoutType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-LayoutType StringToLayoutType(const std::string& str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return LayoutType::INVALID;
-  } else if (upper_str == "ROW") {
-    return LayoutType::ROW;
-  } else if (upper_str == "COLUMN") {
-    return LayoutType::COLUMN;
-  } else if (upper_str == "HYBRID") {
-    return LayoutType::HYBRID;
-  } else {
-    throw ConversionException(
-        StringUtil::Format("No LayoutType conversion from string '%s'",
-                           upper_str.c_str()));
-  }
-  return LayoutType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const LayoutType& type) {
-  os << LayoutTypeToString(type);
   return os;
 }
 
@@ -2048,58 +1998,54 @@ std::ostream& operator<<(std::ostream& os, const LoggerType& type) {
   return os;
 }
 
-//===--------------------------------------------------------------------===//
-// LogRecordType - String Utilities
-//===--------------------------------------------------------------------===//
-
 std::string LogRecordTypeToString(LogRecordType type) {
   switch (type) {
-    case LogRecordType::INVALID: {
+    case LOGRECORD_TYPE_INVALID: {
       return "INVALID";
     }
-    case LogRecordType::TRANSACTION_BEGIN: {
+    case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
       return "TRANSACTION_BEGIN";
     }
-    case LogRecordType::TRANSACTION_COMMIT: {
+    case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
       return "TRANSACTION_COMMIT";
     }
-    case LogRecordType::TRANSACTION_END: {
+    case LOGRECORD_TYPE_TRANSACTION_END: {
       return "TRANSACTION_END";
     }
-    case LogRecordType::TRANSACTION_ABORT: {
+    case LOGRECORD_TYPE_TRANSACTION_ABORT: {
       return "TRANSACTION_ABORT";
     }
-    case LogRecordType::TRANSACTION_DONE: {
+    case LOGRECORD_TYPE_TRANSACTION_DONE: {
       return "TRANSACTION_DONE";
     }
-    case LogRecordType::TUPLE_INSERT: {
+    case LOGRECORD_TYPE_TUPLE_INSERT: {
       return "TUPLE_INSERT";
     }
-    case LogRecordType::TUPLE_DELETE: {
+    case LOGRECORD_TYPE_TUPLE_DELETE: {
       return "TUPLE_DELETE";
     }
-    case LogRecordType::TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_TUPLE_UPDATE: {
       return "TUPLE_UPDATE";
     }
-    case LogRecordType::WAL_TUPLE_INSERT: {
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
       return "WAL_TUPLE_INSERT";
     }
-    case LogRecordType::WAL_TUPLE_DELETE: {
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
       return "WAL_TUPLE_DELETE";
     }
-    case LogRecordType::WAL_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
       return "WAL_TUPLE_UPDATE";
     }
-    case LogRecordType::WBL_TUPLE_INSERT: {
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
       return "WBL_TUPLE_INSERT";
     }
-    case LogRecordType::WBL_TUPLE_DELETE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
       return "WBL_TUPLE_DELETE";
     }
-    case LogRecordType::WBL_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
       return "WBL_TUPLE_UPDATE";
     }
-    case LogRecordType::ITERATION_DELIMITER: {
+    case LOGRECORD_TYPE_ITERATION_DELIMITER: {
       return "ITERATION_DELIMITER";
     }
     default: {
@@ -2114,47 +2060,42 @@ std::string LogRecordTypeToString(LogRecordType type) {
 LogRecordType StringToLogRecordType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
-    return LogRecordType::INVALID;
+    return LOGRECORD_TYPE_INVALID;
   } else if (upper_str == "TRANSACTION_BEGIN") {
-    return LogRecordType::TRANSACTION_BEGIN;
+    return LOGRECORD_TYPE_TRANSACTION_BEGIN;
   } else if (upper_str == "TRANSACTION_COMMIT") {
-    return LogRecordType::TRANSACTION_COMMIT;
+    return LOGRECORD_TYPE_TRANSACTION_COMMIT;
   } else if (upper_str == "TRANSACTION_END") {
-    return LogRecordType::TRANSACTION_END;
+    return LOGRECORD_TYPE_TRANSACTION_END;
   } else if (upper_str == "TRANSACTION_ABORT") {
-    return LogRecordType::TRANSACTION_ABORT;
+    return LOGRECORD_TYPE_TRANSACTION_ABORT;
   } else if (upper_str == "TRANSACTION_DONE") {
-    return LogRecordType::TRANSACTION_DONE;
+    return LOGRECORD_TYPE_TRANSACTION_DONE;
   } else if (upper_str == "TUPLE_INSERT") {
-    return LogRecordType::TUPLE_INSERT;
+    return LOGRECORD_TYPE_TUPLE_INSERT;
   } else if (upper_str == "TUPLE_DELETE") {
-    return LogRecordType::TUPLE_DELETE;
+    return LOGRECORD_TYPE_TUPLE_DELETE;
   } else if (upper_str == "TUPLE_UPDATE") {
-    return LogRecordType::TUPLE_UPDATE;
+    return LOGRECORD_TYPE_TUPLE_UPDATE;
   } else if (upper_str == "WAL_TUPLE_INSERT") {
-    return LogRecordType::WAL_TUPLE_INSERT;
+    return LOGRECORD_TYPE_WAL_TUPLE_INSERT;
   } else if (upper_str == "WAL_TUPLE_DELETE") {
-    return LogRecordType::WAL_TUPLE_DELETE;
+    return LOGRECORD_TYPE_WAL_TUPLE_DELETE;
   } else if (upper_str == "WAL_TUPLE_UPDATE") {
-    return LogRecordType::WAL_TUPLE_UPDATE;
+    return LOGRECORD_TYPE_WAL_TUPLE_UPDATE;
   } else if (upper_str == "WBL_TUPLE_INSERT") {
-    return LogRecordType::WBL_TUPLE_INSERT;
+    return LOGRECORD_TYPE_WBL_TUPLE_INSERT;
   } else if (upper_str == "WBL_TUPLE_DELETE") {
-    return LogRecordType::WBL_TUPLE_DELETE;
+    return LOGRECORD_TYPE_WBL_TUPLE_DELETE;
   } else if (upper_str == "WBL_TUPLE_UPDATE") {
-    return LogRecordType::WBL_TUPLE_UPDATE;
+    return LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
   } else if (upper_str == "ITERATION_DELIMITER") {
-    return LogRecordType::ITERATION_DELIMITER;
+    return LOGRECORD_TYPE_ITERATION_DELIMITER;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LogRecordType conversion from string '%s'", upper_str.c_str()));
   }
-  return LogRecordType::INVALID;
-}
-
-std::ostream& operator<<(std::ostream& os, const LogRecordType& type) {
-  os << LogRecordTypeToString(type);
-  return os;
+  return LOGRECORD_TYPE_INVALID;
 }
 
 //===--------------------------------------------------------------------===//
@@ -2255,8 +2196,8 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
   ConstraintType constraintType = ConstraintType::INVALID;
 
   switch (type) {
-    case PostgresConstraintType::NOT_NULL:
-      constraintType = ConstraintType::NOT_NULL;
+    case PostgresConstraintType::NULL_TYPE:
+      constraintType = ConstraintType::NULL_TYPE;
       break;
 
     case PostgresConstraintType::NOTNULL:

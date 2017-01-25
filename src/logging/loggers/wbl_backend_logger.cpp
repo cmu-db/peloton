@@ -26,7 +26,7 @@ namespace logging {
 
 void WriteBehindBackendLogger::Log(LogRecord *record) {
   // if we are committing, sync all data before taking the lock
-  if (record->GetType() == LogRecordType::TRANSACTION_COMMIT) {
+  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
     auto &log_manager = LogManager::GetInstance();
     auto no_write = log_manager.GetNoWrite();
 
@@ -36,32 +36,32 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
   }
   log_buffer_lock.Lock();
   switch (record->GetType()) {
-    case LogRecordType::TRANSACTION_COMMIT:
+    case LOGRECORD_TYPE_TRANSACTION_COMMIT:
       highest_logged_commit_message = record->GetTransactionId();
       // fallthrough
-    case LogRecordType::TRANSACTION_ABORT:
-    case LogRecordType::TRANSACTION_BEGIN:
-    case LogRecordType::TRANSACTION_DONE:
-    case LogRecordType::TRANSACTION_END: {
+    case LOGRECORD_TYPE_TRANSACTION_ABORT:
+    case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+    case LOGRECORD_TYPE_TRANSACTION_DONE:
+    case LOGRECORD_TYPE_TRANSACTION_END: {
       if (logging_cid_lower_bound < record->GetTransactionId() - 1) {
         logging_cid_lower_bound = record->GetTransactionId() - 1;
       }
       break;
     }
-    case LogRecordType::WBL_TUPLE_DELETE:
-    case LogRecordType::WAL_TUPLE_DELETE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetDeleteLocation().block);
       break;
     }
-    case LogRecordType::WBL_TUPLE_INSERT:
-    case LogRecordType::WAL_TUPLE_INSERT: {
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetInsertLocation().block);
       break;
     }
-    case LogRecordType::WBL_TUPLE_UPDATE:
-    case LogRecordType::WAL_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetDeleteLocation().block);
       tile_groups_to_sync_.insert(
@@ -98,18 +98,18 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
   LogRecord *tuple_record;
 
   switch (log_record_type) {
-    case LogRecordType::TUPLE_INSERT: {
-      log_record_type = LogRecordType::WBL_TUPLE_INSERT;
+    case LOGRECORD_TYPE_TUPLE_INSERT: {
+      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_INSERT;
       break;
     }
 
-    case LogRecordType::TUPLE_DELETE: {
-      log_record_type = LogRecordType::WBL_TUPLE_DELETE;
+    case LOGRECORD_TYPE_TUPLE_DELETE: {
+      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_DELETE;
       break;
     }
 
-    case LogRecordType::TUPLE_UPDATE: {
-      log_record_type = LogRecordType::WBL_TUPLE_UPDATE;
+    case LOGRECORD_TYPE_TUPLE_UPDATE: {
+      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
       break;
     }
 

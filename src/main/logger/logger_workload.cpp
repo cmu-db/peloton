@@ -68,7 +68,7 @@ namespace logger {
 void WriteOutput() {
   std::ofstream out("outputfile-log.summary");
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %d %d %d %d", state.benchmark_type, static_cast<int>(state.logging_type),
+  LOG_INFO("%d %d %d %d %d %d", state.benchmark_type, state.logging_type,
            state.nvm_latency, state.pcommit_latency, state.flush_mode,
            state.asynchronous_mode);
 
