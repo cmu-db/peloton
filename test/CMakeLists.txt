@@ -61,8 +61,12 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
 # --[ Memcheck
 
 find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
-set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes
-    --soname-synonyms=somalloc=*jemalloc* --error-exitcode=1)
+set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes
+    --gen-suppressions=all
+    --leak-check=full
+    --track-origins=yes
+    --soname-synonyms=somalloc=*jemalloc*
+    --error-exitcode=1)
 set(MEMORYCHECK_SUPPRESSIONS_FILE ${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp)
 
 ##################################################################################
