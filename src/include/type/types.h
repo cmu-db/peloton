@@ -797,12 +797,15 @@ LoggingType StringToLoggingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_TYPE_INVALID = INVALID_TYPE_ID,
-  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
-  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
-  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
-} LayoutType;
+enum class LayoutType {
+  INVALID = INVALID_TYPE_ID,
+  ROW = 1,    /* Pure row layout */
+  COLUMN = 2, /* Pure column layout */
+  HYBRID = 3  /* Hybrid layout */
+};
+std::string LayoutTypeToString(LayoutType type);
+LayoutType StringToLayoutType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const LayoutType &type);
 
 enum class LoggerMappingStrategyType {
   INVALID = INVALID_TYPE_ID,

@@ -178,13 +178,13 @@ static void ValidateLayout(const configuration &state) {
     exit(EXIT_FAILURE);
   } else {
     switch (state.layout_mode) {
-      case LAYOUT_TYPE_ROW:
+      case LayoutType::ROW:
         LOG_INFO("%s : ROW", "layout ");
         break;
-      case LAYOUT_TYPE_COLUMN:
+      case LayoutType::COLUMN:
         LOG_INFO("%s : COLUMN", "layout ");
         break;
-      case LAYOUT_TYPE_HYBRID:
+      case LayoutType::HYBRID:
         LOG_INFO("%s : HYBRID", "layout ");
         break;
       default:
@@ -397,7 +397,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.projectivity = 0.01;
 
   // Layout parameter
-  state.layout_mode = LAYOUT_TYPE_ROW;
+  state.layout_mode = LayoutType::ROW;
 
   // Learning rate
   state.analyze_sample_count_threshold = 100;

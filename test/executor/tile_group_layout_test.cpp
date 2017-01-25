@@ -209,12 +209,12 @@ void ExecuteTileGroupTest() {
 }
 
 TEST_F(TileGroupLayoutTests, RowLayout) {
-  peloton_layout_mode = LAYOUT_TYPE_ROW;
+  peloton_layout_mode = LayoutType::ROW;
   ExecuteTileGroupTest();
 }
 
 TEST_F(TileGroupLayoutTests, ColumnLayout) {
-  peloton_layout_mode = LAYOUT_TYPE_COLUMN;
+  peloton_layout_mode = LayoutType::COLUMN;
   ExecuteTileGroupTest();
 }
 
