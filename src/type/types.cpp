@@ -1806,6 +1806,56 @@ std::ostream& operator<<(std::ostream& os, const LoggingType& type) {
 }
 
 //===--------------------------------------------------------------------===//
+// LayoutType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string LayoutTypeToString(LayoutType type) {
+  switch (type) {
+    case LayoutType::INVALID: {
+      return "INVALID";
+    }
+    case LayoutType::ROW: {
+      return "ROW";
+    }
+    case LayoutType::COLUMN: {
+      return "COLUMN";
+    }
+    case LayoutType::HYBRID: {
+      return "HYBRID";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for LayoutType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+LayoutType StringToLayoutType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return LayoutType::INVALID;
+  } else if (upper_str == "ROW") {
+    return LayoutType::ROW;
+  } else if (upper_str == "COLUMN") {
+    return LayoutType::COLUMN;
+  } else if (upper_str == "HYBRID") {
+    return LayoutType::HYBRID;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No LayoutType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return LayoutType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const LayoutType& type) {
+  os << LayoutTypeToString(type);
+  return os;
+}
+
+//===--------------------------------------------------------------------===//
 // LoggerMappingStrategyType - String Utilities
 //===--------------------------------------------------------------------===//
 

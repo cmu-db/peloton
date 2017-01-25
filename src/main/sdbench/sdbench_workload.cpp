@@ -1388,7 +1388,7 @@ void BenchmarkPrepare() {
   }
 
   // Start layout tuner
-  if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
+  if (state.layout_mode == LayoutType::HYBRID) {
     layout_tuner.AddTable(sdbench_table.get());
 
     // Start layout tuner
@@ -1406,7 +1406,7 @@ void BenchmarkCleanUp() {
     index_tuner.ClearTables();
   }
 
-  if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
+  if (state.layout_mode == LayoutType::HYBRID) {
     layout_tuner.Stop();
     layout_tuner.ClearTables();
   }

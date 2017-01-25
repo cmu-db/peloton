@@ -54,10 +54,10 @@ enum WriteComplexityType {
 
 // Copy from types.h for reference
 // typedef enum LayoutType {
-//   LAYOUT_TYPE_INVALID = 0,
-//   LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
-//   LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
-//   LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
+//   LayoutType::INVALID = 0,
+//   LayoutType::ROW = 1,    /* Pure row layout */
+//   LayoutType::COLUMN = 2, /* Pure column layout */
+//   LayoutType::HYBRID = 3  /* Hybrid layout */
 // } LayoutType;
 
 extern int orig_scale_factor;
