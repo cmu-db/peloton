@@ -28,7 +28,7 @@ bool TransactionRecord::Serialize(CopySerializeOutput &output) {
   output.Reset();
 
   // First, write out the log record type
-  output.WriteEnumInSingleByte(log_record_type);
+  output.WriteEnumInSingleByte(static_cast<int>(log_record_type));
 
   // Then reserve 4 bytes for the header size to be written later
   size_t start = output.Position();

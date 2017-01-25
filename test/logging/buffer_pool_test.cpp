@@ -45,7 +45,7 @@ void DequeueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
 void BackendThread(logging::WriteAheadBackendLogger *logger,
                    unsigned int count) {
   for (unsigned int i = 1; i <= count; i++) {
-    logging::TransactionRecord begin_record(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+    logging::TransactionRecord begin_record(LogRecordType::TRANSACTION_COMMIT,
                                             i);
     logger->Log(&begin_record);
   }
@@ -139,7 +139,7 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
                          std::string(1024 * 1024 * 20, 'e').c_str()),
                   testing_pool);
 
-  logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID,
+  logging::TupleRecord record(LogRecordType::WAL_TUPLE_INSERT, INITIAL_TXN_ID,
                               INVALID_OID, INVALID_ITEMPOINTER,
                               INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
   record.SetTuple(tuple.get());

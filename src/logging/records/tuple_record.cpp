@@ -32,20 +32,20 @@ bool TupleRecord::Serialize(CopySerializeOutput &output) {
 
   // Serialize other parts depends on type
   switch (GetType()) {
-    case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
+    case LogRecordType::WAL_TUPLE_INSERT:
+    case LogRecordType::WAL_TUPLE_UPDATE: {
       storage::Tuple *tuple = (storage::Tuple *)data;
       tuple->SerializeTo(output);
       break;
     }
 
-    case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+    case LogRecordType::WAL_TUPLE_DELETE:
       // Nothing to do here !
       break;
 
-    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
-    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
-    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
+    case LogRecordType::WBL_TUPLE_INSERT:
+    case LogRecordType::WBL_TUPLE_DELETE:
+    case LogRecordType::WBL_TUPLE_UPDATE:
       // Nothing to do here !
       break;
 
@@ -69,7 +69,7 @@ bool TupleRecord::Serialize(CopySerializeOutput &output) {
  */
 void TupleRecord::SerializeHeader(CopySerializeOutput &output) {
   // Record LogRecordType first
-  output.WriteEnumInSingleByte(log_record_type);
+  output.WriteEnumInSingleByte(static_cast<int>(log_record_type));
 
   size_t start = output.Position();
   // then reserve 4 bytes for the header size
