@@ -445,7 +445,7 @@ TEST_F(TypesTests, ResultTypeTest) {
 
 TEST_F(TypesTests, ConstraintTypeTest) {
   std::vector<ConstraintType> list = {
-      ConstraintType::INVALID,  ConstraintType::NULL_TYPE,
+      ConstraintType::INVALID,  ConstraintType::NOT_NULL,
       ConstraintType::NOTNULL,  ConstraintType::DEFAULT,
       ConstraintType::CHECK,    ConstraintType::PRIMARY,
       ConstraintType::UNIQUE,   ConstraintType::FOREIGN,
