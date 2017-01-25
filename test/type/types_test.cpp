@@ -445,7 +445,7 @@ TEST_F(TypesTests, ResultTypeTest) {
 
 TEST_F(TypesTests, ConstraintTypeTest) {
   std::vector<ConstraintType> list = {
-      ConstraintType::INVALID,  ConstraintType::NOT_NULL,
+      ConstraintType::INVALID,  ConstraintType::NULL_TYPE,
       ConstraintType::NOTNULL,  ConstraintType::DEFAULT,
       ConstraintType::CHECK,    ConstraintType::PRIMARY,
       ConstraintType::UNIQUE,   ConstraintType::FOREIGN,
@@ -536,22 +536,22 @@ TEST_F(TypesTests, LoggerTypeTest) {
 
 TEST_F(TypesTests, LogRecordTypeTest) {
   std::vector<LogRecordType> list = {
-      LogRecordType::INVALID,
-      LogRecordType::TRANSACTION_BEGIN,
-      LogRecordType::TRANSACTION_COMMIT,
-      LogRecordType::TRANSACTION_END,
-      LogRecordType::TRANSACTION_ABORT,
-      LogRecordType::TRANSACTION_DONE,
-      LogRecordType::TUPLE_INSERT,
-      LogRecordType::TUPLE_DELETE,
-      LogRecordType::TUPLE_UPDATE,
-      LogRecordType::WAL_TUPLE_INSERT,
-      LogRecordType::WAL_TUPLE_DELETE,
-      LogRecordType::WAL_TUPLE_UPDATE,
-      LogRecordType::WBL_TUPLE_INSERT,
-      LogRecordType::WBL_TUPLE_DELETE,
-      LogRecordType::WBL_TUPLE_UPDATE,
-      LogRecordType::ITERATION_DELIMITER,
+      LOGRECORD_TYPE_INVALID,
+      LOGRECORD_TYPE_TRANSACTION_BEGIN,
+      LOGRECORD_TYPE_TRANSACTION_COMMIT,
+      LOGRECORD_TYPE_TRANSACTION_END,
+      LOGRECORD_TYPE_TRANSACTION_ABORT,
+      LOGRECORD_TYPE_TRANSACTION_DONE,
+      LOGRECORD_TYPE_TUPLE_INSERT,
+      LOGRECORD_TYPE_TUPLE_DELETE,
+      LOGRECORD_TYPE_TUPLE_UPDATE,
+      LOGRECORD_TYPE_WAL_TUPLE_INSERT,
+      LOGRECORD_TYPE_WAL_TUPLE_DELETE,
+      LOGRECORD_TYPE_WAL_TUPLE_UPDATE,
+      LOGRECORD_TYPE_WBL_TUPLE_INSERT,
+      LOGRECORD_TYPE_WBL_TUPLE_DELETE,
+      LOGRECORD_TYPE_WBL_TUPLE_UPDATE,
+      LOGRECORD_TYPE_ITERATION_DELIMITER,
   };
 
   // Make sure that ToString and FromString work

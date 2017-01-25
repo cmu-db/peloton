@@ -131,7 +131,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     }
   }
 
-  TransactionRecord delimiter_rec(LogRecordType::ITERATION_DELIMITER,
+  TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                   this->max_collected_commit_id);
   delimiter_rec.Serialize(output_buffer);
 
@@ -251,9 +251,9 @@ void WriteAheadFrontendLogger::DoRecovery() {
     TupleRecord *tuple_record;
 
     switch (record_type) {
-      case LogRecordType::TRANSACTION_BEGIN:
-      case LogRecordType::TRANSACTION_COMMIT:
-      case LogRecordType::ITERATION_DELIMITER: {
+      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+      case LOGRECORD_TYPE_ITERATION_DELIMITER: {
         // Check for torn log write
         TransactionRecord txn_rec(record_type);
         if (LoggingUtil::ReadTransactionRecordHeader(
@@ -269,8 +269,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
         }
         break;
       }
-      case LogRecordType::WAL_TUPLE_INSERT:
-      case LogRecordType::WAL_TUPLE_UPDATE: {
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
@@ -304,7 +304,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         num_inserts++;
         break;
       }
-      case LogRecordType::WAL_TUPLE_DELETE: {
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
@@ -333,12 +333,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
     }
     if (!reached_end_of_log) {
       switch (record_type) {
-        case LogRecordType::TRANSACTION_BEGIN:
+        case LOGRECORD_TYPE_TRANSACTION_BEGIN:
           PL_ASSERT(log_id != INVALID_CID);
           StartTransactionRecovery(log_id);
           break;
 
-        case LogRecordType::TRANSACTION_COMMIT:
+        case LOGRECORD_TYPE_TRANSACTION_COMMIT:
           PL_ASSERT(log_id != INVALID_CID);
 
           // Now directly commit this transaction. This is safe because we
@@ -348,13 +348,13 @@ void WriteAheadFrontendLogger::DoRecovery() {
           CommitTransactionRecovery(log_id);
           break;
 
-        case LogRecordType::WAL_TUPLE_INSERT:
-        case LogRecordType::WAL_TUPLE_DELETE:
-        case LogRecordType::WAL_TUPLE_UPDATE:
+        case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+        case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+        case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
           recovery_txn_table[tuple_record->GetTransactionId()]
               .push_back(tuple_record);
           break;
-        case LogRecordType::ITERATION_DELIMITER: {
+        case LOGRECORD_TYPE_ITERATION_DELIMITER: {
           // Do nothing if we hit the delimiter, because the delimiters help
           // us only to find
           // the max persistent commit id, and should be ignored during actual
@@ -521,13 +521,13 @@ void WriteAheadFrontendLogger::CommitTransactionRecovery(cid_t commit_id) {
   for (auto it = tuple_records.begin(); it != tuple_records.end(); it++) {
     TupleRecord *curr = *it;
     switch (curr->GetType()) {
-      case LogRecordType::WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
         InsertTuple(curr);
         break;
-      case LogRecordType::WAL_TUPLE_UPDATE:
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
         UpdateTuple(curr);
         break;
-      case LogRecordType::WAL_TUPLE_DELETE:
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
         DeleteTuple(curr);
         break;
       default:
@@ -682,7 +682,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   int ret;
 
   if (cur_file_handle.file == nullptr || cur_file_handle.fd == -1)
-    return LogRecordType::INVALID;
+    return LOGRECORD_TYPE_INVALID;
 
   LOG_TRACE("Inside GetNextLogRecordForRecovery");
 
@@ -704,20 +704,20 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   if (is_truncated || ret <= 0) {
     LOG_TRACE("Call OpenNextLogFile");
     OpenNextLogFile();
-    if (cur_file_handle.fd == -1) return LogRecordType::INVALID;
+    if (cur_file_handle.fd == -1) return LOGRECORD_TYPE_INVALID;
 
     LOG_TRACE("Open succeeded. log_file_fd is %d", (int)cur_file_handle.fd);
 
     if (LoggingUtil::IsFileTruncated(cur_file_handle, 1)) {
       LOG_ERROR("Log file is truncated");
-      return LogRecordType::INVALID;
+      return LOGRECORD_TYPE_INVALID;
     }
 
     LOG_TRACE("File is not truncated.");
     ret = fread((void *)&buffer, 1, sizeof(char), cur_file_handle.file);
     if (ret <= 0) {
       LOG_ERROR("Could not read from log file");
-      return LogRecordType::INVALID;
+      return LOGRECORD_TYPE_INVALID;
     }
     LOG_TRACE("fread succeeded.");
   } else {
@@ -1109,9 +1109,9 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
     TupleRecord *tuple_record;
 
     switch (record_type) {
-      case LogRecordType::TRANSACTION_BEGIN:
-      case LogRecordType::TRANSACTION_COMMIT:
-      case LogRecordType::ITERATION_DELIMITER: {
+      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+      case LOGRECORD_TYPE_ITERATION_DELIMITER: {
         // Check for torn log write
         TransactionRecord txn_rec(record_type);
         if (LoggingUtil::ReadTransactionRecordHeader(txn_rec, file_handle) ==
@@ -1121,13 +1121,13 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
         commit_id = txn_rec.GetTransactionId();
         if (commit_id > max_log_id_so_far) max_log_id_so_far = commit_id;
 
-        if (record_type == LogRecordType::ITERATION_DELIMITER) {
+        if (record_type == LOGRECORD_TYPE_ITERATION_DELIMITER) {
           if (commit_id > max_delim_so_far) max_delim_so_far = commit_id;
         }
         break;
       }
-      case LogRecordType::WAL_TUPLE_INSERT:
-      case LogRecordType::WAL_TUPLE_UPDATE: {
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
         tuple_record = new TupleRecord(record_type);
 
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record, file_handle) ==
@@ -1156,7 +1156,7 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
 
         break;
       }
-      case LogRecordType::WAL_TUPLE_DELETE: {
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
         tuple_record = new TupleRecord(record_type);
 
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record, file_handle) ==
