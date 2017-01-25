@@ -268,12 +268,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         // Workflow for ORDER_BY and LIMIT
         if (select_stmt->order != NULL && select_stmt->limit != NULL &&
             !order_plan_added) {
-          auto OrderLimitPlan = CreateOrderByLimitPlan(
+          auto order_limit_plan = CreateOrderByLimitPlan(
             select_stmt, child_SelectPlan.get(), target_table->GetSchema(),
             column_ids, is_star);
-          OrderLimitPlan->GetChildren()[0]->AddChild(
+          order_limit_plan->GetChildren()[0]->AddChild(
             std::move(child_SelectPlan));
-            child_plan = std::move(OrderLimitPlan);
+            child_plan = std::move(order_limit_plan);
         }
         // Only order by statement (without limit)
         else if (select_stmt->order != NULL && !order_plan_added) {
