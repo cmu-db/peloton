@@ -9,18 +9,15 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
 #include "networking/network_address.h"
+
+#include <netdb.h>
+#include <cstring>
 
 #include "common/cast.h"
 #include "common/logger.h"
 #include "common/exception.h"
-#include "common/macros.h"
-
-#include <netdb.h>
-#include <cstdlib>
-#include <cstring>
+#include "util/string_util.h"
 
 namespace peloton {
 namespace networking {
@@ -56,10 +53,10 @@ NetworkAddress::NetworkAddress(const std::string& address) {
 
 // Returns true if the address is parsed successfully.
 bool NetworkAddress::Parse(const std::string& address) {
-  std::vector<std::string> parts = splitExcluding(address, ' ');
+  std::vector<std::string> parts = StringUtil::Split(address, " ");
   if (parts.size() == 1) {
     // Try splitting with a colon
-    parts = splitExcluding(address, ':');
+    parts = StringUtil::Split(address, ":");
   }
   if (parts.size() != 2) return false;
   if (parts[0].empty() || parts[1].empty()) return false;
