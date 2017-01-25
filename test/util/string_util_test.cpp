@@ -164,8 +164,11 @@ TEST_F(StringUtilTests, FormatFloatTest) {
 }
 
 TEST_F(StringUtilTests, SplitTest) {
+  // clang-format off
   std::vector<std::string> words = {
-      "Come", "on", "motherfuckers," "come", "on" };
+		  "Come", "on", "motherfuckers," "come", "on"};
+  // clang-format on
+
   std::string splitChar = "_";
   for (int i = 1; i <= 5; i++) {
     std::string split = StringUtil::Repeat(splitChar, i);
@@ -186,9 +189,8 @@ TEST_F(StringUtilTests, SplitTest) {
     std::vector<std::string> result1 = StringUtil::Split(os.str(), split);
     EXPECT_EQ(words.size(), result1.size());
     EXPECT_EQ(words, result1);
-  } // FOR
+  }  // FOR
 }
-
 
 }  // End test namespace
 }  // End peloton namespace

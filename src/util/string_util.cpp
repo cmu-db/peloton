@@ -12,28 +12,26 @@
 
 #include "util/string_util.h"
 
-#include <string>
+#include <stdarg.h>
+#include <string.h>
 #include <algorithm>
 #include <iomanip>
 #include <memory>
-#include <stdarg.h>
-#include <string.h>
 #include <sstream>
+#include <string>
 
 namespace peloton {
 
 bool StringUtil::Contains(const std::string &haystack,
-              const std::string &needle) {
+                          const std::string &needle) {
   return (haystack.find(needle) != std::string::npos);
 }
 
-bool StringUtil::StartsWith(const std::string &str,
-                       const std::string &prefix) {
+bool StringUtil::StartsWith(const std::string &str, const std::string &prefix) {
   return std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
-bool StringUtil::EndsWith(const std::string &str,
-                     const std::string &suffix) {
+bool StringUtil::EndsWith(const std::string &str, const std::string &suffix) {
   if (suffix.size() > str.size()) return (false);
   return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
 }
@@ -59,7 +57,8 @@ std::vector<std::string> StringUtil::Split(const std::string &str) {
   return (lines);
 }
 
-std::string StringUtil::Prefix(const std::string &str, const std::string &prefix) {
+std::string StringUtil::Prefix(const std::string &str,
+                               const std::string &prefix) {
   std::vector<std::string> lines = StringUtil::Split(str);
   if (lines.empty()) return ("");
 
@@ -129,7 +128,7 @@ std::string StringUtil::Format(const std::string fmt_str, ...) {
   return std::string(formatted.get());
 }
 
-std::vector<std::string> StringUtil::Split(const std::string& input,
+std::vector<std::string> StringUtil::Split(const std::string &input,
                                            const std::string &split) {
   std::vector<std::string> splits;
 
@@ -149,8 +148,6 @@ std::vector<std::string> StringUtil::Split(const std::string& input,
     }
     last = next + split_len;
   }
-
   return splits;
 }
-
 }

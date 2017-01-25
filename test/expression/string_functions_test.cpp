@@ -16,9 +16,9 @@
 
 #include "common/harness.h"
 
-#include "expression/string_functions.h"
 #include "expression/expression_util.h"
 #include "expression/function_expression.h"
+#include "expression/string_functions.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -40,8 +40,7 @@ TEST_F(StringFunctionsTests, AsciiTest) {
     std::ostringstream os;
     os << static_cast<char>(expected);
     std::vector<type::Value> args = {
-      type::ValueFactory::GetVarcharValue(os.str())
-    };
+        type::ValueFactory::GetVarcharValue(os.str())};
 
     auto result = expression::StringFunctions::Ascii(args);
     EXPECT_FALSE(result.IsNull());
@@ -49,8 +48,7 @@ TEST_F(StringFunctionsTests, AsciiTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
-  };
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)};
   auto result = expression::StringFunctions::Ascii(args);
   EXPECT_TRUE(result.IsNull());
 }
@@ -65,8 +63,7 @@ TEST_F(StringFunctionsTests, ChrTest) {
     std::string expected = os.str();
 
     std::vector<type::Value> args = {
-        type::ValueFactory::GetIntegerValue(char_int)
-    };
+        type::ValueFactory::GetIntegerValue(char_int)};
 
     auto result = expression::StringFunctions::Chr(args);
     EXPECT_FALSE(result.IsNull());
@@ -74,14 +71,13 @@ TEST_F(StringFunctionsTests, ChrTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::INTEGER)
-  };
+      type::ValueFactory::GetNullValueByType(type::Type::INTEGER)};
   auto result = expression::StringFunctions::Chr(args);
   EXPECT_TRUE(result.IsNull());
 }
 
 TEST_F(StringFunctionsTests, SubstrTest) {
-  std::vector<std::string> words = { "Fuck", "yo", "couch" };
+  std::vector<std::string> words = {"Fuck", "yo", "couch"};
   std::ostringstream os;
   for (auto w : words) {
     os << w;
@@ -100,7 +96,7 @@ TEST_F(StringFunctionsTests, SubstrTest) {
 
   // Use NULL for every argument and make sure that it always returns NULL.
   for (int i = 0; i < 3; i++) {
-    std::vector <type::Value> nullargs = {
+    std::vector<type::Value> nullargs = {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
         type::ValueFactory::GetVarcharValue("ccc"),
@@ -109,7 +105,6 @@ TEST_F(StringFunctionsTests, SubstrTest) {
     auto result = expression::StringFunctions::Substr(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
-
 }
 
 TEST_F(StringFunctionsTests, CharLengthTest) {
@@ -117,8 +112,7 @@ TEST_F(StringFunctionsTests, CharLengthTest) {
   for (int i = 0; i < 100; i++) {
     std::string input = StringUtil::Repeat(str, i);
     std::vector<type::Value> args = {
-      type::ValueFactory::GetVarcharValue(input)
-    };
+        type::ValueFactory::GetVarcharValue(input)};
 
     auto result = expression::StringFunctions::CharLength(args);
     EXPECT_FALSE(result.IsNull());
@@ -126,8 +120,7 @@ TEST_F(StringFunctionsTests, CharLengthTest) {
   }
   // NULL CHECK
   std::vector<type::Value> args = {
-      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)
-  };
+      type::ValueFactory::GetNullValueByType(type::Type::VARCHAR)};
   auto result = expression::StringFunctions::CharLength(args);
   EXPECT_TRUE(result.IsNull());
 }
@@ -137,10 +130,8 @@ TEST_F(StringFunctionsTests, RepeatTest) {
   for (int i = 0; i < 100; i++) {
     std::string expected = StringUtil::Repeat(str, i);
     EXPECT_EQ(i, expected.size());
-    std::vector<type::Value> args = {
-        type::ValueFactory::GetVarcharValue(str),
-        type::ValueFactory::GetIntegerValue(i)
-    };
+    std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str),
+                                     type::ValueFactory::GetIntegerValue(i)};
 
     auto result = expression::StringFunctions::Repeat(args);
     EXPECT_FALSE(result.IsNull());
@@ -161,15 +152,14 @@ TEST_F(StringFunctionsTests, ReplaceTest) {
   const std::string prefix = "**PAVLO**";
   for (int i = 0; i < 100; i++) {
     std::string expected = prefix + StringUtil::Repeat(origChar, i);
-    EXPECT_EQ(i + prefix.size(),  expected.size());
+    EXPECT_EQ(i + prefix.size(), expected.size());
     std::string input = prefix + StringUtil::Repeat(replaceChar, i);
-    EXPECT_EQ(i + prefix.size(),  expected.size());
+    EXPECT_EQ(i + prefix.size(), expected.size());
 
     std::vector<type::Value> args = {
         type::ValueFactory::GetVarcharValue(input),
         type::ValueFactory::GetVarcharValue(replaceChar),
-        type::ValueFactory::GetVarcharValue(origChar)
-    };
+        type::ValueFactory::GetVarcharValue(origChar)};
 
     auto result = expression::StringFunctions::Replace(args);
     EXPECT_FALSE(result.IsNull());
@@ -177,7 +167,7 @@ TEST_F(StringFunctionsTests, ReplaceTest) {
   }
   // Use NULL for every argument and make sure that it always returns NULL.
   for (int i = 0; i < 3; i++) {
-    std::vector <type::Value> args = {
+    std::vector<type::Value> args = {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
         type::ValueFactory::GetVarcharValue("ccc"),
@@ -193,17 +183,15 @@ TEST_F(StringFunctionsTests, LTrimTest) {
   const std::string spaces = "    ";
   const std::string origStr = spaces + message + spaces;
   const std::string expected = message + spaces;
-  std::vector<type::Value> args = {
-    type::ValueFactory::GetVarcharValue(origStr),
-    type::ValueFactory::GetVarcharValue(" ")
-  };
+  std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
+                                   type::ValueFactory::GetVarcharValue(" ")};
   auto result = expression::StringFunctions::LTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
   // Use NULL for every argument and make sure that it always returns NULL.
   for (int i = 0; i < 2; i++) {
-    std::vector <type::Value> nullargs = {
+    std::vector<type::Value> nullargs = {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
     };
@@ -218,17 +206,15 @@ TEST_F(StringFunctionsTests, RTrimTest) {
   const std::string spaces = "    ";
   const std::string origStr = spaces + message + spaces;
   const std::string expected = spaces + message;
-  std::vector<type::Value> args = {
-      type::ValueFactory::GetVarcharValue(origStr),
-      type::ValueFactory::GetVarcharValue(" ")
-  };
+  std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
+                                   type::ValueFactory::GetVarcharValue(" ")};
   auto result = expression::StringFunctions::RTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
   // Use NULL for every argument and make sure that it always returns NULL.
   for (int i = 0; i < 2; i++) {
-    std::vector <type::Value> nullargs = {
+    std::vector<type::Value> nullargs = {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
     };
@@ -243,17 +229,15 @@ TEST_F(StringFunctionsTests, BTrimTest) {
   const std::string spaces = "    ";
   const std::string origStr = spaces + message + spaces;
   const std::string expected = message;
-  std::vector<type::Value> args = {
-      type::ValueFactory::GetVarcharValue(origStr),
-      type::ValueFactory::GetVarcharValue(" ")
-  };
+  std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
+                                   type::ValueFactory::GetVarcharValue(" ")};
   auto result = expression::StringFunctions::BTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
   // Use NULL for every argument and make sure that it always returns NULL.
   for (int i = 0; i < 2; i++) {
-    std::vector <type::Value> nullargs = {
+    std::vector<type::Value> nullargs = {
         type::ValueFactory::GetVarcharValue("aaa"),
         type::ValueFactory::GetVarcharValue("bbb"),
     };
@@ -262,7 +246,6 @@ TEST_F(StringFunctionsTests, BTrimTest) {
     EXPECT_TRUE(result.IsNull());
   }
 }
-
 
 }  // namespace test
 }  // namespace peloton

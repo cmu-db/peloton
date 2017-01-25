@@ -29,6 +29,5 @@ TEST_F(NetworkAddressTests, ParseTest) {
   EXPECT_EQ(ip, handle.IpToString());
   EXPECT_EQ(port, handle.GetPort());
 }
-
 }
 }
