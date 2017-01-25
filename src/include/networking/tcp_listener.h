@@ -20,6 +20,7 @@
 namespace peloton {
 namespace networking {
 class Connection;
+
 class Listener {
  public:
   // This is the server port

@@ -17,7 +17,7 @@
 #include <iostream>
 #include <memory>
 
-#include "networking/tcp_address.h"
+#include "networking/network_address.h"
 #include "common/logger.h"
 #include "peloton/proto/abstract_service.pb.h"
 
