@@ -12,6 +12,7 @@
 
 #include "common/harness.h"
 
+#include "common/exception.h"
 #include "networking/network_address.h"
 #include "util/string_util.h"
 
@@ -21,13 +22,18 @@ namespace test {
 class NetworkAddressTests : public PelotonTest {};
 
 TEST_F(NetworkAddressTests, ParseTest) {
+  // Valid address
   std::string ip = "127.0.0.1";
   int port = 9999;
   std::string address = StringUtil::Format("%s:%d", ip.c_str(), port);
+  auto handle0 = networking::NetworkAddress(address);
+  EXPECT_EQ(ip, handle0.IpToString());
+  EXPECT_EQ(port, handle0.GetPort());
 
-  auto handle = networking::NetworkAddress(address);
-  EXPECT_EQ(ip, handle.IpToString());
-  EXPECT_EQ(port, handle.GetPort());
+  // Invalid address
+  ip = "The terrier has diarrhea";
+  address = StringUtil::Format("%s:%d", ip.c_str(), port);
+  ASSERT_THROW(new networking::NetworkAddress(address), peloton::Exception);
 }
 }
 }
