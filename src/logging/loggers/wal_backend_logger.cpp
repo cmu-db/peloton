@@ -35,18 +35,18 @@ LogRecord *WriteAheadBackendLogger::GetTupleRecord(
     const void *data) {
   // Build the log record
   switch (log_record_type) {
-    case LOGRECORD_TYPE_TUPLE_INSERT: {
-      log_record_type = LOGRECORD_TYPE_WAL_TUPLE_INSERT;
+    case LogRecordType::TUPLE_INSERT: {
+      log_record_type = LogRecordType::WAL_TUPLE_INSERT;
       break;
     }
 
-    case LOGRECORD_TYPE_TUPLE_DELETE: {
-      log_record_type = LOGRECORD_TYPE_WAL_TUPLE_DELETE;
+    case LogRecordType::TUPLE_DELETE: {
+      log_record_type = LogRecordType::WAL_TUPLE_DELETE;
       break;
     }
 
-    case LOGRECORD_TYPE_TUPLE_UPDATE: {
-      log_record_type = LOGRECORD_TYPE_WAL_TUPLE_UPDATE;
+    case LogRecordType::TUPLE_UPDATE: {
+      log_record_type = LogRecordType::WAL_TUPLE_UPDATE;
       break;
     }
 

@@ -169,7 +169,7 @@ void LogManager::DoneLogging() {
 void LogManager::LogBeginTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    TransactionRecord record(LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
+    TransactionRecord record(LogRecordType::TRANSACTION_BEGIN, commit_id);
     logger->Log(&record);
   }
 }
@@ -200,14 +200,14 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
         tuple->SetValue(col, val, logger->GetVarlenPool());
       }
       record.reset(
-          logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+          logger->GetTupleRecord(LogRecordType::TUPLE_UPDATE, commit_id,
                                  new_tuple_tile_group->GetTableId(),
                                  new_tuple_tile_group->GetDatabaseId(),
                                  new_version, old_version, tuple.get()));
     } else {
       // if wbl without replication, do not include tuple data
       record.reset(logger->GetTupleRecord(
-          LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+          LogRecordType::TUPLE_UPDATE, commit_id,
           new_tuple_tile_group->GetTableId(),
           new_tuple_tile_group->GetDatabaseId(), new_version, old_version));
     }
@@ -240,13 +240,13 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
       }
 
       record.reset(logger->GetTupleRecord(
-          LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
+          LogRecordType::TUPLE_INSERT, commit_id, tile_group->GetTableId(),
           new_tuple_tile_group->GetDatabaseId(), new_location,
           INVALID_ITEMPOINTER, tuple.get()));
 
     } else {
       // do not construct the tuple for the wbl case
-      record.reset(logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
+      record.reset(logger->GetTupleRecord(LogRecordType::TUPLE_INSERT,
                                           commit_id, tile_group->GetTableId(),
                                           new_tuple_tile_group->GetDatabaseId(),
                                           new_location, INVALID_ITEMPOINTER));
@@ -263,7 +263,7 @@ void LogManager::LogDelete(cid_t commit_id,
     auto tile_group = manager.GetTileGroup(delete_location.block);
 
     std::unique_ptr<LogRecord> record(logger->GetTupleRecord(
-        LOGRECORD_TYPE_TUPLE_DELETE, commit_id, tile_group->GetTableId(),
+        LogRecordType::TUPLE_DELETE, commit_id, tile_group->GetTableId(),
         tile_group->GetDatabaseId(), INVALID_ITEMPOINTER, delete_location));
 
     logger->Log(record.get());
@@ -273,7 +273,7 @@ void LogManager::LogDelete(cid_t commit_id,
 void LogManager::LogCommitTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    TransactionRecord record(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
+    TransactionRecord record(LogRecordType::TRANSACTION_COMMIT, commit_id);
     logger->Log(&record);
     if (syncronization_commit) {
       WaitForFlush(commit_id);
