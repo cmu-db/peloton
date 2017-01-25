@@ -44,7 +44,7 @@ type::Value StringFunctions::Chr(const std::vector<type::Value>& args) {
 //substring
 type::Value StringFunctions::Substr(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 3);
-  if (args[0].IsNull()) {
+  if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
   }
   std::string str = args[0].ToString();
@@ -100,6 +100,9 @@ type::Value StringFunctions::Repeat(const std::vector<type::Value>& args) {
 // Replace all occurrences in string of substring from with substring to
 type::Value StringFunctions::Replace(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 3);
+  if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  }
   std::string str = args[0].ToString();
   std::string from = args[1].ToString();
   std::string to = args[2].ToString();
@@ -115,6 +118,9 @@ type::Value StringFunctions::Replace(const std::vector<type::Value>& args) {
 // from the start of string
 type::Value StringFunctions::LTrim(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
+  if (args[0].IsNull() || args[1].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  }
   std::string str = args[0].ToString();
   std::string from = args[1].ToString();
   size_t pos = 0;
@@ -132,6 +138,9 @@ type::Value StringFunctions::LTrim(const std::vector<type::Value>& args) {
 // from the end of string
 type::Value StringFunctions::RTrim(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
+  if (args[0].IsNull() || args[1].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  }
   std::string str = args.at(0).ToString();
   std::string from = args.at(1).ToString();
   if (str.length() == 0)
@@ -151,6 +160,9 @@ type::Value StringFunctions::RTrim(const std::vector<type::Value>& args) {
 // from the start and end of string
 type::Value StringFunctions::BTrim(const std::vector<type::Value>& args) {
   PL_ASSERT(args.size() == 2);
+  if (args[0].IsNull() || args[1].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::VARCHAR);
+  }
   std::string str = args.at(0).ToString();
   std::string from = args.at(1).ToString();
   if (str.length() == 0)
