@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// bwtree_index.h
+// skiplist_index.h
 //
-// Identification: src/backend/index/bwtree_index.h
+// Identification: src/backend/index/skiplist_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -21,26 +21,41 @@
 #include "type/types.h"
 #include "index/index.h"
 
-#include "index/bwtree.h"
+#include "index/skiplist.h"
 
-#define BWTREE_INDEX_TYPE BWTreeIndex <KeyType, \
-                                       ValueType, \
-                                       KeyComparator, \
-                                       KeyEqualityChecker, \
-                                       KeyHashFunc, \
-                                       ValueEqualityChecker, \
-                                       ValueHashFunc>
+#define SKIPLIST_INDEX_TYPE SkipListIndex <KeyType, \
+                                           ValueType, \
+                                           KeyComparator, \
+                                           KeyEqualityChecker, \
+                                           KeyHashFunc, \
+                                           ValueEqualityChecker, \
+                                           ValueHashFunc>
 
 namespace peloton {
 namespace index {
   
+// class ItemPointerComparator {
+//  public:
+//   bool operator()(ItemPointer * const &p1, ItemPointer * const &p2) const {
+//     return (p1->block == p2->block) && (p1->offset == p2->offset);
+//   }
+//   
+//   ItemPointerComparator(const ItemPointerComparator&) {}
+//   ItemPointerComparator() {}
+// };
+// 
+// class ItemPointerHashFunc {
+//  public:
+//   size_t operator()(ItemPointer * const &p) const {
+//     return std::hash<oid_t>()(p->block) ^ std::hash<oid_t>()(p->offset);
+//   }
+//   
+//   ItemPointerHashFunc(const ItemPointerHashFunc&) {}
+//   ItemPointerHashFunc() {}
+// };
+
 /**
- * BW tree-based index implementation.
- *
- * NOTE: The template argument list has two more entries, since
- * BwTree is implemented as a multimap, potentially there could
- * be many values mapped by a single key, and we need to distinguish
- * between values.
+ * Skiplist-based index implementation.
  *
  * @see Index
  */
@@ -51,21 +66,23 @@ template <typename KeyType,
           typename KeyHashFunc,
           typename ValueEqualityChecker,
           typename ValueHashFunc>
-class BWTreeIndex : public Index {
+class SkipListIndex : public Index {
   friend class IndexFactory;
 
-  using MapType = BwTree<KeyType,
-                         ValueType,
-                         KeyComparator,
-                         KeyEqualityChecker,
-                         KeyHashFunc,
-                         ValueEqualityChecker,
-                         ValueHashFunc>;
+  typedef SkipList<KeyType, ValueType, KeyComparator, KeyEqualityChecker, KeyHashFunc, ValueEqualityChecker, ValueHashFunc> MapType;
+
+  // using MapType = SkipList<KeyType,
+  //                        ValueType,
+  //                        KeyComparator,
+  //                        KeyEqualityChecker,
+  //                        KeyHashFunc,
+  //                        ValueEqualityChecker,
+  //                        ValueHashFunc>;
 
  public:
-  BWTreeIndex(IndexMetadata *metadata);
+  SkipListIndex(IndexMetadata *metadata);
 
-  ~BWTreeIndex();
+  ~SkipListIndex();
 
   bool InsertEntry(const storage::Tuple *key, ItemPointer *value);
 
@@ -104,13 +121,13 @@ class BWTreeIndex : public Index {
   // TODO: Implement this
   size_t GetMemoryFootprint() { return 0; }
   
+  // TODO: Implement this
   bool NeedGC() {
-    return container.NeedGarbageCollection();
+    return false;
   }
 
+  // TODO: Implement this
   void PerformGC() {
-    container.PerformGarbageCollection();
-    
     return;
   }
 

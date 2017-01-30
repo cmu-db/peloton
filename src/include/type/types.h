@@ -428,7 +428,8 @@ std::ostream &operator<<(std::ostream &os, const BackendType &type);
 enum class IndexType {
   INVALID = INVALID_TYPE_ID,  // invalid index type
   BWTREE = 1,                 // bwtree
-  HASH = 2                    // hash
+  HASH = 2,                   // hash
+  SKIPLIST = 3                // skiplist
 };
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(const std::string &str);
