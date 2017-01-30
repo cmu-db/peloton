@@ -12,17 +12,6 @@
 
 # pragma once
 
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <cassert>
-#include <chrono>
-#include <thread>
-#include <unordered_set>
-// offsetof() is defined here
-#include <vector>
-#include <cstddef>
-
 namespace peloton {
 namespace index {
 
@@ -38,11 +27,11 @@ namespace index {
                                               typename ValueHashFunc>
 template <typename KeyType,
           typename ValueType,
-          typename KeyComparator = std::less<KeyType>,
-          typename KeyEqualityChecker = std::equal_to<KeyType>,
-          typename KeyHashFunc = std::hash<KeyType>,
-          typename ValueEqualityChecker = std::equal_to<ValueType>,
-          typename ValueHashFunc = std::hash<ValueType>>
+          typename KeyComparator,
+          typename KeyEqualityChecker,
+          typename KeyHashFunc,
+          typename ValueEqualityChecker,
+          typename ValueHashFunc>
 class SkipList {
 
   // Add your declarations here
