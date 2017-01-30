@@ -317,10 +317,10 @@ TEST_F(LoggingTests, InsertUpdateDeleteTest) {
 }
 
 TEST_F(LoggingTests, BasicLogManagerTest) {
-  peloton_logging_mode = LOGGING_TYPE_INVALID;
+  peloton_logging_mode = LoggingType::INVALID;
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.DropFrontendLoggers();
-  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  log_manager.SetLoggingStatus(LoggingStatusType::INVALID);
   // just start, write a few records and exit
   catalog::Schema *table_schema = new catalog::Schema(
       {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
@@ -343,14 +343,14 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   auto txn = txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(table, 5, true, false, false, txn);
   txn_manager.CommitTransaction(txn);
-  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
+  peloton_logging_mode = LoggingType::NVM_WAL;
 
   log_manager.SetSyncCommit(true);
   EXPECT_FALSE(log_manager.ContainsFrontendLogger());
   log_manager.StartStandbyMode();
   log_manager.GetFrontendLogger(0)->SetTestMode(true);
   log_manager.StartRecoveryMode();
-  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
+  log_manager.WaitForModeTransition(LoggingStatusType::LOGGING, true);
   EXPECT_TRUE(log_manager.ContainsFrontendLogger());
   log_manager.SetGlobalMaxFlushedCommitId(4);
   concurrency::Transaction test_txn;

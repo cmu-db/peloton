@@ -60,7 +60,7 @@ class Constraint : public Printable {
   //===--------------------------------------------------------------------===//
 
   // The type of constraint
-  ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
+  ConstraintType constraint_type = ConstraintType::INVALID;
 
   // Offsets into the Unique index and reference table lists in Table
   oid_t fk_list_offset = INVALID_OID;

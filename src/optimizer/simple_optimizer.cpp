@@ -1255,7 +1255,7 @@ std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
                                 "S_I_ID", 1);
 
   column.AddConstraint(
-      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
+      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   return std::shared_ptr<const peloton::catalog::Schema>(
       new catalog::Schema({column}));
 }

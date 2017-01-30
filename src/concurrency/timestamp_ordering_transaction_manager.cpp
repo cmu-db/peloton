@@ -210,7 +210,7 @@ bool TimestampOrderingTransactionManager::IsOccupied(
       PL_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
-    } else if (current_txn->GetRWType(position) == RW_TYPE_READ_OWN) {
+    } else if (current_txn->GetRWType(position) == RWType::READ_OWN) {
       // the ownership is from a select-for-update read operation
       return true;
     } else {
@@ -284,7 +284,7 @@ VisibilityType TimestampOrderingTransactionManager::IsVisible(
       // the only version that is visible is the newly inserted/updated one.
       return VisibilityType::OK;
     } else if (current_txn->GetRWType(ItemPointer(tile_group_id, tuple_id)) ==
-               RW_TYPE_READ_OWN) {
+               RWType::READ_OWN) {
       // the ownership is from a select-for-update read operation
       return VisibilityType::OK;
     } else if (tuple_end_cid == INVALID_CID) {
@@ -429,7 +429,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       // Can not acquire ownership
       return false;
     }
-    // Promote to RW_TYPE_READ_OWN
+    // Promote to RWType::READ_OWN
     current_txn->RecordReadOwn(location);
   }
 
@@ -787,12 +787,12 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_READ_OWN) {
+      if (tuple_entry.second == RWType::READ_OWN) {
         // A read operation has acquired ownership but hasn't done any further
         // update/delete yet
         // Yield the ownership
         YieldOwnership(current_txn, tile_group_id, tuple_slot);
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      } else if (tuple_entry.second == RWType::UPDATE) {
         // we must guarantee that, at any time point, only one version is
         // visible.
         ItemPointer new_version =
@@ -826,7 +826,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         log_manager.LogUpdate(
             end_commit_id, ItemPointer(tile_group_id, tuple_slot), new_version);
 
-      } else if (tuple_entry.second == RW_TYPE_DELETE) {
+      } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -861,7 +861,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         log_manager.LogDelete(end_commit_id,
                               ItemPointer(tile_group_id, tuple_slot));
 
-      } else if (tuple_entry.second == RW_TYPE_INSERT) {
+      } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
         // set the begin commit id to persist insert
@@ -879,7 +879,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         log_manager.LogInsert(end_commit_id,
                               ItemPointer(tile_group_id, tuple_slot));
 
-      } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
+      } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
 
@@ -940,12 +940,12 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_READ_OWN) {
+      if (tuple_entry.second == RWType::READ_OWN) {
         // A read operation has acquired ownership but hasn't done any further
         // update/delete yet
         // Yield the ownership
         YieldOwnership(current_txn, tile_group_id, tuple_slot);
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      } else if (tuple_entry.second == RWType::UPDATE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -1003,7 +1003,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         // add to gc set.
         gc_set->operator[](new_version.block)[new_version.offset] = false;
 
-      } else if (tuple_entry.second == RW_TYPE_DELETE) {
+      } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
@@ -1057,7 +1057,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         // add to gc set.
         gc_set->operator[](new_version.block)[new_version.offset] = false;
 
-      } else if (tuple_entry.second == RW_TYPE_INSERT) {
+      } else if (tuple_entry.second == RWType::INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
@@ -1070,7 +1070,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         // delete from index
         gc_set->operator[](tile_group_id)[tuple_slot] = true;
 
-      } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
+      } else if (tuple_entry.second == RWType::INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 

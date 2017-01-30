@@ -89,7 +89,7 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.SetGlobalMaxFlushedCommitId(txn_manager.GetNextCommitId());
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, false, 1);
+  checkpoint_manager.Configure(CheckpointType::NORMAL, false, 1);
   checkpoint_manager.DestroyCheckpointers();
   checkpoint_manager.InitCheckpointers();
   auto checkpointer = checkpoint_manager.GetCheckpointer(0);
@@ -143,7 +143,7 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
 
   // create checkpoint
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+  checkpoint_manager.Configure(CheckpointType::NORMAL, true, 1);
   checkpoint_manager.DestroyCheckpointers();
   checkpoint_manager.InitCheckpointers();
   auto checkpointer = checkpoint_manager.GetCheckpointer(0);
@@ -212,13 +212,13 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
   checkpoint_manager.DestroyCheckpointers();
 
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+  checkpoint_manager.Configure(CheckpointType::NORMAL, true, 1);
 
   // launch checkpoint thread, wait for standby mode
   auto thread = std::thread(&logging::CheckpointManager::StartStandbyMode,
                             &checkpoint_manager);
 
-  checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY,
+  checkpoint_manager.WaitForModeTransition(peloton::CheckpointStatus::STANDBY,
                                            true);
 
   // Clean up table tile state before recovery from checkpoint
@@ -228,18 +228,18 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   checkpoint_manager.StartRecoveryMode();
 
   // Wait for standby mode
-  checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_DONE_RECOVERY,
+  checkpoint_manager.WaitForModeTransition(CheckpointStatus::DONE_RECOVERY,
                                            true);
 
   // Now, enter CHECKPOINTING mode
-  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_CHECKPOINTING);
+  checkpoint_manager.SetCheckpointStatus(CheckpointStatus::CHECKPOINTING);
   auto checkpointer = checkpoint_manager.GetCheckpointer(0);
   while (checkpointer->GetCheckpointStatus() !=
-         CHECKPOINT_STATUS_CHECKPOINTING) {
+         CheckpointStatus::CHECKPOINTING) {
     std::chrono::milliseconds sleep_time(10);
     std::this_thread::sleep_for(sleep_time);
   }
-  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
+  checkpoint_manager.SetCheckpointStatus(CheckpointStatus::INVALID);
   thread.join();
 }
 

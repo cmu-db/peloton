@@ -59,7 +59,7 @@ class LogManager {
   void Configure(LoggingType logging_type, bool test_mode = false,
                  unsigned int num_frontend_loggers = 1,
                  LoggerMappingStrategyType logger_mapping_strategy =
-                     LOGGER_MAPPING_TYPE_ROUND_ROBIN) {
+                     LoggerMappingStrategyType::ROUND_ROBIN) {
     logging_type_ = logging_type;
     test_mode_ = test_mode;
     num_frontend_loggers_ = num_frontend_loggers;
@@ -76,7 +76,7 @@ class LogManager {
   // reset log status to invalid
   void ResetLogStatus() {
     this->recovery_to_logging_counter = 0;
-    SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+    SetLoggingStatus(LoggingStatusType::INVALID);
   }
 
   // Wait for the system to begin
@@ -88,7 +88,7 @@ class LogManager {
   // Check whether the frontend logger is in logging mode
   inline bool IsInLoggingMode() {
     // Check the logging status
-    auto is_in_logging_mode = (logging_status == LOGGING_STATUS_TYPE_LOGGING);
+    auto is_in_logging_mode = (logging_status == LoggingStatusType::LOGGING);
     return is_in_logging_mode;
   }
 
@@ -146,7 +146,7 @@ class LogManager {
   std::string GetLogDirectoryName(void);
 
   bool HasPelotonFrontendLogger() const {
-    return (peloton_logging_mode == LOGGING_TYPE_NVM_WBL);
+    return (peloton_logging_mode == LoggingType::NVM_WBL);
   }
 
   // Drop all default tiles for tables before recovery
@@ -249,7 +249,7 @@ class LogManager {
   //===--------------------------------------------------------------------===//
 
   // static configurations for logging
-  LoggingType logging_type_ = LOGGING_TYPE_INVALID;
+  LoggingType logging_type_ = LoggingType::INVALID;
 
   // test mode will not log to disk
   bool test_mode_ = false;
@@ -259,7 +259,7 @@ class LogManager {
 
   // set the strategy for mapping frontend loggers to worker threads
   LoggerMappingStrategyType logger_mapping_strategy_ =
-      LOGGER_MAPPING_TYPE_INVALID;
+      LoggerMappingStrategyType::INVALID;
 
   // default log file size
   size_t log_file_size_limit_ = LOG_FILE_LEN;
@@ -271,7 +271,7 @@ class LogManager {
   // either write ahead or write behind logging
   std::vector<std::unique_ptr<FrontendLogger>> frontend_loggers;
 
-  LoggingStatusType logging_status = LOGGING_STATUS_TYPE_INVALID;
+  LoggingStatusType logging_status = LoggingStatusType::INVALID;
 
   bool prepared_recovery_ = false;
 

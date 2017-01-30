@@ -49,7 +49,7 @@ size_t GetLogFileSize(int fd) {
  * @brief create NVM backed log pool
  */
 WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
-  logging_type = LOGGING_TYPE_NVM_WBL;
+  logging_type = LoggingType::NVM_WBL;
 
   // open log file and file descriptor
   // we open it in append + binary mode

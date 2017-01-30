@@ -35,7 +35,7 @@ thread_local static BackendLogger *backend_logger = nullptr;
 
 LogManager::LogManager() {
   Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
-            LOGGER_MAPPING_TYPE_ROUND_ROBIN);
+            LoggerMappingStrategyType::ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -69,7 +69,7 @@ void LogManager::StartStandbyMode() {
     frontend_loggers[0].get()->SetIsDistinguishedLogger(true);
 
   // Toggle status in log manager map
-  SetLoggingStatus(LOGGING_STATUS_TYPE_STANDBY);
+  SetLoggingStatus(LoggingStatusType::STANDBY);
 
   // Launch the frontend logger's main loop
   for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
@@ -97,16 +97,16 @@ void LogManager::StartStandbyMode() {
 void LogManager::StartRecoveryMode() {
   // Toggle the status after STANDBY
   LOG_TRACE("TRACKING: LogManager::StartRecoveryMode()");
-  SetLoggingStatus(LOGGING_STATUS_TYPE_RECOVERY);
+  SetLoggingStatus(LoggingStatusType::RECOVERY);
 }
 
 void LogManager::TerminateLoggingMode() {
   LOG_TRACE("TRACKING: LogManager::TerminateLoggingMode()");
-  SetLoggingStatus(LOGGING_STATUS_TYPE_TERMINATE);
+  SetLoggingStatus(LoggingStatusType::TERMINATE);
 
   // We set the frontend logger status to Terminate
   // And, then we wait for the transition to sleep mode
-  WaitForModeTransition(LOGGING_STATUS_TYPE_SLEEP, true);
+  WaitForModeTransition(LoggingStatusType::SLEEP, true);
 }
 
 void LogManager::WaitForModeTransition(LoggingStatusType logging_status_,
@@ -129,7 +129,7 @@ void LogManager::WaitForModeTransition(LoggingStatusType logging_status_,
 bool LogManager::EndLogging() {
   // Wait if current status is recovery
   LOG_TRACE("TRACKING: LogManager::EndLogging()");
-  WaitForModeTransition(LOGGING_STATUS_TYPE_RECOVERY, false);
+  WaitForModeTransition(LoggingStatusType::RECOVERY, false);
 
   LOG_TRACE("Wait until frontend logger escapes main loop..");
 
@@ -139,7 +139,7 @@ bool LogManager::EndLogging() {
   LOG_TRACE("Escaped from MainLoop");
 
   // Remove the frontend logger
-  SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  SetLoggingStatus(LoggingStatusType::INVALID);
   LOG_TRACE("Terminated successfully");
 
   return true;
@@ -293,18 +293,18 @@ BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
-    PL_ASSERT(logger_mapping_strategy_ != LOGGER_MAPPING_TYPE_INVALID);
+    PL_ASSERT(logger_mapping_strategy_ != LoggerMappingStrategyType::INVALID);
     LOG_TRACE("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
 
     // round robin mapping
-    if (logger_mapping_strategy_ == LOGGER_MAPPING_TYPE_ROUND_ROBIN) {
+    if (logger_mapping_strategy_ == LoggerMappingStrategyType::ROUND_ROBIN) {
       frontend_loggers[i % num_frontend_loggers_].get()->AddBackendLogger(
           backend_logger);
       backend_logger->SetFrontendLoggerID(i % num_frontend_loggers_);
 
-    } else if (logger_mapping_strategy_ == LOGGER_MAPPING_TYPE_MANUAL) {
+    } else if (logger_mapping_strategy_ == LoggerMappingStrategyType::MANUAL) {
       // manual mapping with hint
       PL_ASSERT(hint_idx < frontend_loggers.size());
       frontend_loggers[hint_idx].get()->AddBackendLogger(backend_logger);
@@ -507,7 +507,7 @@ void LogManager::NotifyRecoveryDone() {
     LOG_TRACE(
         "This was the last one! Recover Index and change to LOGGING mode.");
     frontend_loggers[0].get()->RecoverIndex();
-    SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+    SetLoggingStatus(LoggingStatusType::LOGGING);
   }
 }
 

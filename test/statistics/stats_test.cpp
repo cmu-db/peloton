@@ -126,7 +126,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   auto id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "dept_id", true);
-  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+  catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto name_column = catalog::Column(
       type::Type::VARCHAR, type::Type::GetTypeSize(type::Type::INTEGER),

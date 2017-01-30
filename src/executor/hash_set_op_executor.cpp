@@ -38,7 +38,7 @@ HashSetOpExecutor::HashSetOpExecutor(const planner::AbstractPlan *node,
 bool HashSetOpExecutor::DInit() {
   PL_ASSERT(children_.size() == 2);
   PL_ASSERT(!hash_done_);
-  PL_ASSERT(set_op_ == SETOP_TYPE_INVALID);
+  PL_ASSERT(set_op_ == SetOpType::INVALID);
 
   return true;
 }
@@ -69,7 +69,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
   // Grab data from plan node
   const planner::SetOpPlan &node = GetPlanNode<planner::SetOpPlan>();
   set_op_ = node.GetSetOp();
-  PL_ASSERT(set_op_ != SETOP_TYPE_INVALID);
+  PL_ASSERT(set_op_ != SetOpType::INVALID);
 
   // Extract all input from left child
   while (children_[0]->Execute()) {
@@ -102,19 +102,19 @@ bool HashSetOpExecutor::ExecuteHelper() {
 
   // Calculate the output number for each key
   switch (set_op_) {
-    case SETOP_TYPE_INTERSECT:
-      CalculateCopies<SETOP_TYPE_INTERSECT>(htable_);
+    case SetOpType::INTERSECT:
+      CalculateCopies<SetOpType::INTERSECT>(htable_);
       break;
-    case SETOP_TYPE_INTERSECT_ALL:
-      CalculateCopies<SETOP_TYPE_INTERSECT_ALL>(htable_);
+    case SetOpType::INTERSECT_ALL:
+      CalculateCopies<SetOpType::INTERSECT_ALL>(htable_);
       break;
-    case SETOP_TYPE_EXCEPT:
-      CalculateCopies<SETOP_TYPE_EXCEPT>(htable_);
+    case SetOpType::EXCEPT:
+      CalculateCopies<SetOpType::EXCEPT>(htable_);
       break;
-    case SETOP_TYPE_EXCEPT_ALL:
-      CalculateCopies<SETOP_TYPE_EXCEPT_ALL>(htable_);
+    case SetOpType::EXCEPT_ALL:
+      CalculateCopies<SetOpType::EXCEPT_ALL>(htable_);
       break;
-    case SETOP_TYPE_INVALID:
+    case SetOpType::INVALID:
       return false;
   }
 
@@ -167,16 +167,16 @@ template <SetOpType SETOP>
 bool HashSetOpExecutor::CalculateCopies(HashSetOpMapType &htable) {
   for (auto &item : htable) {
     switch (SETOP) {
-      case SETOP_TYPE_INTERSECT:
+      case SetOpType::INTERSECT:
         item.second.left = (item.second.right > 0) ? 1 : 0;
         break;
-      case SETOP_TYPE_INTERSECT_ALL:
+      case SetOpType::INTERSECT_ALL:
         item.second.left = std::min(item.second.left, item.second.right);
         break;
-      case SETOP_TYPE_EXCEPT:
+      case SetOpType::EXCEPT:
         item.second.left = (item.second.right > 0) ? 0 : 1;
         break;
-      case SETOP_TYPE_EXCEPT_ALL:
+      case SetOpType::EXCEPT_ALL:
         item.second.left = (item.second.left > item.second.right)
                                ? (item.second.left - item.second.right)
                                : 0;
