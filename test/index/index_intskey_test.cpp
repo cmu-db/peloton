@@ -35,6 +35,11 @@ catalog::Schema *tuple_schema = nullptr;
 // have duplicates for the TINYINT keys
 const int NUM_TUPLES = 128;
 
+// Since we need index type to determine the result
+// of the test, this needs to be made as a global static
+static IndexType index_type = IndexType::BWTREE;
+// static IndexType index_type = IndexType::SKIPLIST;
+
 /*
  * BuildIndex()
  */
@@ -189,7 +194,7 @@ void IndexIntsKeyTestHelper(IndexType index_type,
 //  IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
 //}
 
-TEST_F(IndexIntsKeyTests, BwTreeTest) {
+TEST_F(IndexIntsKeyTests, IndexIntsKeyTest) {
   std::vector<type::Type::TypeId> types = {
       type::Type::BIGINT, type::Type::INTEGER, type::Type::SMALLINT,
       type::Type::TINYINT};
@@ -197,13 +202,13 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
   // ONE COLUMN
   for (type::Type::TypeId type0 : types) {
     std::vector<type::Type::TypeId> col_types = {type0};
-    IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
+    IndexIntsKeyTestHelper(index_type, col_types);
   }
   // TWO COLUMNS
   for (type::Type::TypeId type0 : types) {
     for (type::Type::TypeId type1 : types) {
       std::vector<type::Type::TypeId> col_types = {type0, type1};
-      IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
+      IndexIntsKeyTestHelper(index_type, col_types);
     }
   }
   // THREE COLUMNS
@@ -211,7 +216,7 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
     for (type::Type::TypeId type1 : types) {
       for (type::Type::TypeId type2 : types) {
         std::vector<type::Type::TypeId> col_types = {type0, type1, type2};
-        IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
+        IndexIntsKeyTestHelper(index_type, col_types);
       }
     }
   }
@@ -222,7 +227,7 @@ TEST_F(IndexIntsKeyTests, BwTreeTest) {
         for (type::Type::TypeId type3 : types) {
           std::vector<type::Type::TypeId> col_types = {type0, type1, type2,
                                                        type3};
-          IndexIntsKeyTestHelper(IndexType::BWTREE, col_types);
+          IndexIntsKeyTestHelper(index_type, col_types);
         }
       }
     }
