@@ -39,6 +39,14 @@ class IndexFactory {
   static Index *GetBwTreeIntsKeyIndex(IndexMetadata *metadata);
 
   static Index *GetBwTreeGenericKeyIndex(IndexMetadata *metadata);
+
+  //===--------------------------------------------------------------------===//
+  // PELOTON::SKIPLIST
+  //===--------------------------------------------------------------------===//
+
+  static Index *GetSkipListIntsKeyIndex(IndexMetadata *metadata);
+
+  static Index *GetSkipListGenericKeyIndex(IndexMetadata *metadata);
 };
 
 }  // End index namespace

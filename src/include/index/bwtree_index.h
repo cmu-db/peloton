@@ -34,26 +34,6 @@
 namespace peloton {
 namespace index {
   
-class ItemPointerComparator {
- public:
-  bool operator()(ItemPointer * const &p1, ItemPointer * const &p2) const {
-    return (p1->block == p2->block) && (p1->offset == p2->offset);
-  }
-  
-  ItemPointerComparator(const ItemPointerComparator&) {}
-  ItemPointerComparator() {}
-};
-
-class ItemPointerHashFunc {
- public:
-  size_t operator()(ItemPointer * const &p) const {
-    return std::hash<oid_t>()(p->block) ^ std::hash<oid_t>()(p->offset);
-  }
-  
-  ItemPointerHashFunc(const ItemPointerHashFunc&) {}
-  ItemPointerHashFunc() {}
-};
-
 /**
  * BW tree-based index implementation.
  *

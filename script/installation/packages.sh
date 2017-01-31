@@ -28,7 +28,7 @@ function install_repo_package() {
         dpath=$(basename "$1")
     fi
     pushd $TMPDIR
-    wget -nc "$1"
+    wget -nc --no-check-certificate "$1"
     sudo yum install -y "$dpath"
     popd
     return 0
@@ -41,7 +41,7 @@ function install_package() {
     fi
 
     pushd $TMPDIR
-    wget -nc "$1"
+    wget -nc --no-check-certificate "$1"
     tpath=$(basename "$1")
     dpath=$(tar --exclude='*/*' -tf "$tpath")
     tar xzf $tpath
