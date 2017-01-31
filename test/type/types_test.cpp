@@ -251,7 +251,7 @@ TEST_F(TypesTests, ExpressionTypeTest) {
 
 TEST_F(TypesTests, IndexTypeTest) {
   std::vector<IndexType> list = {IndexType::INVALID, IndexType::BWTREE,
-                                 IndexType::HASH};
+                                 IndexType::HASH, IndexType::SKIPLIST};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-# pragma once
+#pragma once
 
 namespace peloton {
 namespace index {
@@ -18,24 +18,13 @@ namespace index {
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
  */
-#define SKIPLIST_TEMPLATE_ARGUMENTS template <typename KeyType, \
-                                              typename ValueType, \
-                                              typename KeyComparator, \
-                                              typename KeyEqualityChecker, \
-                                              typename KeyHashFunc, \
-                                              typename ValueEqualityChecker, \
-                                              typename ValueHashFunc>
-template <typename KeyType,
-          typename ValueType,
-          typename KeyComparator,
-          typename KeyEqualityChecker,
-          typename KeyHashFunc,
-          typename ValueEqualityChecker,
-          typename ValueHashFunc>
+#define SKIPLIST_TEMPLATE_ARGUMENTS                                       \
+  template <typename KeyType, typename ValueType, typename KeyComparator, \
+            typename KeyEqualityChecker, typename ValueEqualityChecker>
+template <typename KeyType, typename ValueType, typename KeyComparator,
+          typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
-
-  // Add your declarations here
-
+  // TODO: Add your declarations here
 };
 
 }  // End index namespace

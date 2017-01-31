@@ -27,15 +27,8 @@ SKIPLIST_INDEX_TYPE::SkipListIndex(IndexMetadata *metadata)
       // Key "less than" relation comparator
       comparator{},
       // Key equality checker
-      equals{},
-      // Key hash function
-      hash_func{} {
-      // NOTE: These two arguments need to be constructed in advance
-      // and do not have trivial constructor
-      //
-      // NOTE 2: We set the first parameter to false to disable automatic GC
-      //
-      //container{false, comparator, equals, hash_func} {
+      equals{} {
+  // TODO: Add your implementation here
   return;
 }
 
@@ -48,8 +41,9 @@ SKIPLIST_INDEX_TYPE::~SkipListIndex() {}
  * If the key value pair already exists in the map, just return false
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
-bool SKIPLIST_INDEX_TYPE::InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
-                                       UNUSED_ATTRIBUTE ItemPointer *value) {
+bool SKIPLIST_INDEX_TYPE::InsertEntry(
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE ItemPointer *value) {
   bool ret = false;
   // TODO: Add your implementation here
   return ret;
@@ -61,8 +55,9 @@ bool SKIPLIST_INDEX_TYPE::InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key
  * If the key-value pair does not exists yet in the map return false
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
-bool SKIPLIST_INDEX_TYPE::DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
-                                       UNUSED_ATTRIBUTE ItemPointer *value) {
+bool SKIPLIST_INDEX_TYPE::DeleteEntry(
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE ItemPointer *value) {
   bool ret = false;
   // TODO: Add your implementation here
   return ret;
@@ -81,9 +76,6 @@ bool SKIPLIST_INDEX_TYPE::CondInsertEntry(
 /*
  * Scan() - Scans a range inside the index using index scan optimizer
  *
- * The scan optimizer specifies whether a scan is point query, full scan
- * or interval scan. For all of these cases the corresponding functions from
- * the index is called, and all elements are returned in result vector
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
 void SKIPLIST_INDEX_TYPE::Scan(
@@ -100,11 +92,6 @@ void SKIPLIST_INDEX_TYPE::Scan(
 /*
  * ScanLimit() - Scan the index with predicate and limit/offset
  *
- * This function scans the index using the given index optimizer's low key and
- * high key. In addition to merely doing the scan, it checks scan direction
- * and uses either begin() or end() iterator to scan the index, and stops
- * after offset + limit elements are scanned, and limit elements are finally
- * returned
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
 void SKIPLIST_INDEX_TYPE::ScanLimit(
@@ -114,21 +101,22 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
     UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
     UNUSED_ATTRIBUTE std::vector<ValueType> &result,
     UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p,
-    UNUSED_ATTRIBUTE uint64_t limit,
-    UNUSED_ATTRIBUTE uint64_t offset) {
+    UNUSED_ATTRIBUTE uint64_t limit, UNUSED_ATTRIBUTE uint64_t offset) {
   // TODO: Add your implementation here
   return;
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-void SKIPLIST_INDEX_TYPE::ScanAllKeys(UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
+void SKIPLIST_INDEX_TYPE::ScanAllKeys(
+    UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
   // TODO: Add your implementation here
   return;
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-void SKIPLIST_INDEX_TYPE::ScanKey(UNUSED_ATTRIBUTE const storage::Tuple *key,
-                                  UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
+void SKIPLIST_INDEX_TYPE::ScanKey(
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
   // TODO: Add your implementation here
   return;
 }
@@ -138,49 +126,39 @@ std::string SKIPLIST_INDEX_TYPE::GetTypeName() const { return "SkipList"; }
 
 // IMPORTANT: Make sure you don't exceed CompactIntegerKey_MAX_SLOTS
 
-template class SkipListIndex<CompactIntsKey<1>, ItemPointer *,
-                           CompactIntsComparator<1>,
-                           CompactIntsEqualityChecker<1>, CompactIntsHasher<1>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class SkipListIndex<CompactIntsKey<2>, ItemPointer *,
-                           CompactIntsComparator<2>,
-                           CompactIntsEqualityChecker<2>, CompactIntsHasher<2>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class SkipListIndex<CompactIntsKey<3>, ItemPointer *,
-                           CompactIntsComparator<3>,
-                           CompactIntsEqualityChecker<3>, CompactIntsHasher<3>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class SkipListIndex<CompactIntsKey<4>, ItemPointer *,
-                           CompactIntsComparator<4>,
-                           CompactIntsEqualityChecker<4>, CompactIntsHasher<4>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
+template class SkipListIndex<
+    CompactIntsKey<1>, ItemPointer *, CompactIntsComparator<1>,
+    CompactIntsEqualityChecker<1>, ItemPointerComparator>;
+template class SkipListIndex<
+    CompactIntsKey<2>, ItemPointer *, CompactIntsComparator<2>,
+    CompactIntsEqualityChecker<2>, ItemPointerComparator>;
+template class SkipListIndex<
+    CompactIntsKey<3>, ItemPointer *, CompactIntsComparator<3>,
+    CompactIntsEqualityChecker<3>, ItemPointerComparator>;
+template class SkipListIndex<
+    CompactIntsKey<4>, ItemPointer *, CompactIntsComparator<4>,
+    CompactIntsEqualityChecker<4>, ItemPointerComparator>;
 
 // Generic key
 template class SkipListIndex<GenericKey<4>, ItemPointer *,
-                           FastGenericComparator<4>, GenericEqualityChecker<4>,
-                           GenericHasher<4>, ItemPointerComparator,
-                           ItemPointerHashFunc>;
+                             FastGenericComparator<4>,
+                             GenericEqualityChecker<4>, ItemPointerComparator>;
 template class SkipListIndex<GenericKey<8>, ItemPointer *,
-                           FastGenericComparator<8>, GenericEqualityChecker<8>,
-                           GenericHasher<8>, ItemPointerComparator,
-                           ItemPointerHashFunc>;
+                             FastGenericComparator<8>,
+                             GenericEqualityChecker<8>, ItemPointerComparator>;
 template class SkipListIndex<GenericKey<16>, ItemPointer *,
-                           FastGenericComparator<16>,
-                           GenericEqualityChecker<16>, GenericHasher<16>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
+                             FastGenericComparator<16>,
+                             GenericEqualityChecker<16>, ItemPointerComparator>;
 template class SkipListIndex<GenericKey<64>, ItemPointer *,
-                           FastGenericComparator<64>,
-                           GenericEqualityChecker<64>, GenericHasher<64>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
-template class SkipListIndex<GenericKey<256>, ItemPointer *,
-                           FastGenericComparator<256>,
-                           GenericEqualityChecker<256>, GenericHasher<256>,
-                           ItemPointerComparator, ItemPointerHashFunc>;
+                             FastGenericComparator<64>,
+                             GenericEqualityChecker<64>, ItemPointerComparator>;
+template class SkipListIndex<
+    GenericKey<256>, ItemPointer *, FastGenericComparator<256>,
+    GenericEqualityChecker<256>, ItemPointerComparator>;
 
 // Tuple key
 template class SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparator,
-                           TupleKeyEqualityChecker, TupleKeyHasher,
-                           ItemPointerComparator, ItemPointerHashFunc>;
+                             TupleKeyEqualityChecker, ItemPointerComparator>;
 
 }  // End index namespace
 }  // End peloton namespace

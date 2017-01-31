@@ -37,6 +37,8 @@ std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
 static IndexType index_type = IndexType::BWTREE;
+// static IndexType index_type = IndexType::SKIPLIST;
+
 
 /*
  * BuildIndex() - Builds an index with 4 columns, the first 2 being indexed
@@ -45,6 +47,8 @@ index::Index *BuildIndex(const bool unique_keys) {
   // Identify the index type to simplify things
   if (index_type == IndexType::BWTREE) {
     LOG_INFO("Build index type: peloton::index::BwTree");
+  } else if (index_type == IndexType::SKIPLIST) {
+    LOG_INFO("Build index type: peloton::index::SkipList");
   } else {
     LOG_INFO("Build index type: Other type");
   }
