@@ -1048,13 +1048,8 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 
 enum class GCSetType { COMMITTED, ABORTED };
 
-// block -> offset -> type
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
-
-// block -> offset -> is_index_deletion
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
