@@ -456,5 +456,128 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(OrderBySQLTests, OrderByWithProjectionTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("UPDATE test set b = b - 20 WHERE b = 11;",
+                        result, tuple_descriptor, rows_changed, error_message);
+  //Update must change 1 tuple
+  EXPECT_EQ(1, rows_changed);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT (b * -1) as val FROM test ORDER BY b;",
+                                result, tuple_descriptor, rows_changed, error_message);
+
+  // Check the return value
+  // Should be: 9, -22, -33
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("9", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("-22", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("-33", SQLTestsUtil::GetResultValueAsString(result, 2));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+TEST_F(OrderBySQLTests, OrderByWithProjectionDescTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("UPDATE test set b = b - 20 WHERE b = 11;",
+                        result, tuple_descriptor, rows_changed, error_message);
+  //Update must change 1 tuple
+  EXPECT_EQ(1, rows_changed);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT (b * -1) as val FROM test ORDER BY b DESC;",
+                                result, tuple_descriptor, rows_changed, error_message);
+
+  // Check the return value
+  // Should be: -33, -22, 9
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("-33", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("-22", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("9", SQLTestsUtil::GetResultValueAsString(result, 2));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+TEST_F(OrderBySQLTests, OrderByWithProjectionLimitTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("UPDATE test set b = b - 20 WHERE b = 11;",
+                        result, tuple_descriptor, rows_changed, error_message);
+  //Update must change 1 tuple
+  EXPECT_EQ(1, rows_changed);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT (b * -1) as val FROM test ORDER BY b LIMIT 2;",
+                                result, tuple_descriptor, rows_changed, error_message);
+
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
+  // Check the return value
+  // Should be: 9, -22, -33
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("9", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("-22", SQLTestsUtil::GetResultValueAsString(result, 1));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OrderBySQLTests, OrderByWithProjectionLimitDescTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  SQLTestsUtil::ExecuteSQLQuery("UPDATE test set b = b - 20 WHERE b = 11;",
+                        result, tuple_descriptor, rows_changed, error_message);
+  //Update must change 1 tuple
+  EXPECT_EQ(1, rows_changed);
+  SQLTestsUtil::ExecuteSQLQuery("SELECT (b * -1) as val FROM test ORDER BY b DESC LIMIT 2;",
+                                result, tuple_descriptor, rows_changed, error_message);
+
+  // Check if the correct amount of results is here
+  EXPECT_EQ(2, result.size() / tuple_descriptor.size());
+  // Check the return value
+  // Should be: -33, -22
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("-33", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("-22", SQLTestsUtil::GetResultValueAsString(result, 1));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
 }  // namespace test
 }  // namespace peloton
