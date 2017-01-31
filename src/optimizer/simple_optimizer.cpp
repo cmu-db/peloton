@@ -1432,58 +1432,9 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
     parser::SelectStatement* select_stmt, planner::AbstractPlan* child_plan,
     catalog::Schema* schema, std::vector<oid_t> column_ids, bool is_star) {
   LOG_TRACE("OrderBy + Limit query");
-  auto schema_columns = schema->GetColumns();
-  std::vector<oid_t> keys;
-  // Add all selected columns to the output
-  // We already generated the "real" physical output schema in the scan
-  // plan, so now we just need to directly copy all the columns.
-  // In the 'select *' case, they need to be copied manually.
-  if (is_star) {
-    for (size_t column_ctr = 0; column_ctr < schema_columns.size();
-         column_ctr++) {
-      keys.push_back(column_ctr);
-    }
-  } else {
-    for (size_t column_ctr = 0; column_ctr < select_stmt->select_list->size();
-         column_ctr++) {
-      keys.push_back(column_ctr);
-    }
-  }
-
-  LOG_TRACE("Get and set OrderBy descending");
-  std::vector<bool> flags;
-  if (select_stmt->order->type == 0) {
-    flags.push_back(false);
-  } else {
-    flags.push_back(true);
-  }
-  std::vector<oid_t> key;
-
-  LOG_TRACE("Set OrderBy expr");
-  std::string sort_col_name(
-      ((expression::TupleValueExpression*)select_stmt->order->expr)
-          ->GetColumnName());
-
-  for (size_t column_ctr = 0; column_ctr < schema_columns.size();
-       column_ctr++) {
-    std::string col_name(schema_columns.at(column_ctr).GetName());
-    if (col_name == sort_col_name) {
-      if (is_star) {
-        // The whole schema is already added, and column_ids
-        // don't represent faithfully the columns.
-        key.push_back(column_ctr);
-      } else {
-        // The column_ctr is not reliable anymore given that we are
-        // looking to the whole schema.
-        // Since the columns were added in the column_ids, it is
-        // safe to retrieve only those indexes.
-        auto iter = std::find(column_ids.begin(), column_ids.end(), column_ctr);
-        auto column_offset = std::distance(column_ids.begin(), iter);
-        key.push_back(column_offset);
-      }
-    }
-  }
-
+  auto abstract_plan = CreateOrderByPlan(select_stmt, child_plan, schema, column_ids, is_star);
+  //Cast needed for desired fields.
+  auto order_by_plan = static_cast<planner::OrderByPlan*>(abstract_plan.get());
   LOG_TRACE("Set order by offset");
   // Get offset
   int offset = select_stmt->limit->offset;
@@ -1495,18 +1446,16 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
   // limit operation speed. That is to say the limit flags are passed
   // to index, then index returns the tuples matched with the limit
   SetIndexScanFlag(child_plan, select_stmt->limit->limit, offset,
-                   flags.front());
-
-  // Create order_by_plan
-  std::unique_ptr<planner::OrderByPlan> order_by_plan(
-      new planner::OrderByPlan(key, flags, keys));
+                   order_by_plan->GetDescendFlags().front());
 
   // Whether underlying child's output has the same order
   // with the order_by clause
   LOG_TRACE("order by column id is %d",
-            target_table->GetSchema()->GetColumnID(sort_col_name));
-  if (UnderlyingSameOrder(child_plan, schema->GetColumnID(sort_col_name),
-                          flags.front()) == true) {
+            order_by_plan->GetSortKeys().front());
+  //This step has a little redundance with the order_by plan
+  //but changes more stuff inside.
+  if (UnderlyingSameOrder(child_plan, order_by_plan->GetSortKeys().front(),
+                          order_by_plan->GetDescendFlags().front()) == true) {
     LOG_TRACE(
         "Underlying plan has the same ordering output with"
         "order_by plan with limit");
@@ -1519,7 +1468,8 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
   // Create limit_plan
   std::unique_ptr<planner::LimitPlan> limit_plan(
       new planner::LimitPlan(select_stmt->limit->limit, offset));
-  limit_plan->AddChild(std::move(order_by_plan));
+  //Adding the unique_ptr
+  limit_plan->AddChild(std::move(abstract_plan));
   return std::move(limit_plan);
 }
 }  // namespace optimizer
