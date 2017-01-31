@@ -117,6 +117,14 @@ class SimpleOptimizer : public AbstractOptimizer {
   static bool UnderlyingSameOrder(planner::AbstractPlan *select_plan,
                                   oid_t orderby_column_id,
                                   bool order_by_descending);
+
+  std::unique_ptr<planner::AbstractPlan> CreateOrderByLimitPlan(
+      parser::SelectStatement *select_stmt, planner::AbstractPlan *child_plan,
+      catalog::Schema *schema, std::vector<oid_t> column_ids, bool is_star);
+
+  std::unique_ptr<planner::AbstractPlan> CreateOrderByPlan(
+      parser::SelectStatement *select_stmt, planner::AbstractPlan *child_plan,
+      catalog::Schema *schema, std::vector<oid_t> column_ids, bool is_star);
 };
 }  // namespace optimizer
 }  // namespace peloton
