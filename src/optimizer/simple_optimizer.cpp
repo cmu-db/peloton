@@ -577,6 +577,44 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           updateStmt->table->GetDatabaseName(),
           updateStmt->table->GetTableName());
 
+      auto update_clauses = updateStmt->updates;
+
+      for (auto clause : *update_clauses) {
+        auto clause_expr = clause->value;
+        auto columnID = target_table->GetSchema()->GetColumnID(clause->column);
+        auto column = target_table->GetSchema()->GetColumn(columnID);
+
+        if (clause_expr->GetExpressionType() ==
+            ExpressionType::VALUE_CONSTANT) {
+          auto value = static_cast<const expression::ConstantValueExpression*>(
+                           clause_expr)
+                           ->GetValue()
+                           .CastAs(column.GetType());
+          auto value_expression =
+              new expression::ConstantValueExpression(value);
+
+          delete clause->value;
+          clause->value = value_expression;
+
+        } else {
+          for (unsigned int child_index = 0;
+               child_index < clause_expr->GetChildrenSize(); child_index++) {
+            auto child = clause_expr->GetChild(child_index);
+
+            if (child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+              auto value =
+                  static_cast<const expression::ConstantValueExpression*>(child)
+                      ->GetValue()
+                      .CastAs(column.GetType());
+              auto value_expression =
+                  new expression::ConstantValueExpression(value);
+
+              clause_expr->SetChild(child_index, value_expression);
+            }
+          }
+        }
+      }
+
       if (CheckIndexSearchable(target_table, updateStmt->where, key_column_ids,
                                expr_types, values, index_id)) {
         // Remove redundant predicate that index can search
