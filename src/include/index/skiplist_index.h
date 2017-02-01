@@ -4,9 +4,9 @@
 //
 // skiplist_index.h
 //
-// Identification: src/backend/index/skiplist_index.h
+// Identification: src/index/skiplist_index.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
