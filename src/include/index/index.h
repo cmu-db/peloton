@@ -353,9 +353,6 @@ class Index : public Printable {
 
   type::AbstractPool *GetPool() const { return pool; }
 
-  // Garbage collect
-  virtual bool Cleanup() = 0;
-
   // Get the memory footprint
   virtual size_t GetMemoryFootprint() = 0;
 
