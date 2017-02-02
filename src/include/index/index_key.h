@@ -29,7 +29,7 @@ namespace index {
 }  // End index namespace
 }  // End peloton namespace
 
-#include "ints_key.h"
+#include "compact_ints_key.h"
 #include "generic_key.h" 
 #include "tuple_key.h" 
 
