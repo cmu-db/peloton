@@ -16,7 +16,7 @@
 #include "common/logger.h"
 #include "common/platform.h"
 #include "index/index_factory.h"
-#include "index/index_tests_util.h"
+#include "index/testing_index_util.h"
 #include "storage/tuple.h"
 
 namespace peloton {
@@ -31,10 +31,6 @@ class IndexTests : public PelotonTest {};
 // catalog::Schema *key_schema = nullptr;
 // catalog::Schema *tuple_schema = nullptr;
 
-std::shared_ptr<ItemPointer> item0(new ItemPointer(120, 5));
-std::shared_ptr<ItemPointer> item1(new ItemPointer(120, 7));
-std::shared_ptr<ItemPointer> item2(new ItemPointer(123, 19));
-
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
 static IndexType index_type = IndexType::BWTREE;
@@ -46,7 +42,7 @@ TEST_F(IndexTests, BasicTest) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -57,15 +53,15 @@ TEST_F(IndexTests, BasicTest) {
 
   // INSERT
 
-  index->InsertEntry(key0.get(), item0.get());
+  index->InsertEntry(key0.get(), TestingIndexUtil::item0.get());
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item0->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
   location_ptrs.clear();
 
   // DELETE
-  index->DeleteEntry(key0.get(), item0.get());
+  index->DeleteEntry(key0.get(), TestingIndexUtil::item0.get());
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
@@ -105,21 +101,21 @@ void DeleteTest(index::Index *index, type::AbstractPool *pool,
         pool);
 
     // DELETE
-    // key0 1 (100, a)   item0
+    // key0 1 (100, a)   TestingIndexUtil::item0
     // key1 5  (100, b)  item 0 1 2 (0 1 1 1 2)
     // key2 1 (100, c) item 1
     // key3 1 (400, d) item 1
     // key4 1  (500, eeeeee...) item 1
     // no keyonce (1000, f)
 
-    // item0 = 2
-    // item1 = 6
-    // item2 = 1
-    index->DeleteEntry(key0.get(), item0.get());
-    index->DeleteEntry(key1.get(), item1.get());
-    index->DeleteEntry(key2.get(), item2.get());
-    index->DeleteEntry(key3.get(), item1.get());
-    index->DeleteEntry(key4.get(), item1.get());
+    // TestingIndexUtil::item0 = 2
+    // TestingIndexUtil::item1 = 6
+    // TestingIndexUtil::item2 = 1
+    index->DeleteEntry(key0.get(), TestingIndexUtil::item0.get());
+    index->DeleteEntry(key1.get(), TestingIndexUtil::item1.get());
+    index->DeleteEntry(key2.get(), TestingIndexUtil::item2.get());
+    index->DeleteEntry(key3.get(), TestingIndexUtil::item1.get());
+    index->DeleteEntry(key4.get(), TestingIndexUtil::item1.get());
 
     // should be no key0
     // key1 item 0 1 2
@@ -135,12 +131,12 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
   size_t scale_factor = 1;
-  LaunchParallelTest(1, IndexTestsUtil::InsertTest, index.get(), pool,
+  LaunchParallelTest(1, TestingIndexUtil::InsertTest, index.get(), pool,
                      scale_factor);
 
   // Checks
@@ -170,23 +166,23 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
   index->ScanKey(key0.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item0->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
   location_ptrs.clear();
 }
 
-// #ifdef ALLOW_UNIQUE_KEY
+#ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyDeleteTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, true));
+      TestingIndexUtil::BuildIndex(index_type, true));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
   size_t scale_factor = 1;
-  LaunchParallelTest(1, IndexTestsUtil::InsertTest, index.get(), pool,
+  LaunchParallelTest(1, TestingIndexUtil::InsertTest, index.get(), pool,
                      scale_factor);
   LaunchParallelTest(1, DeleteTest, index.get(), pool, scale_factor);
 
@@ -212,10 +208,10 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
   location_ptrs.clear();
 }
-// #endif
+#endif
 
 TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
@@ -223,12 +219,12 @@ TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
   size_t scale_factor = 1;
-  LaunchParallelTest(1, IndexTestsUtil::InsertTest, index.get(), pool,
+  LaunchParallelTest(1, TestingIndexUtil::InsertTest, index.get(), pool,
                      scale_factor);
   LaunchParallelTest(1, DeleteTest, index.get(), pool, scale_factor);
 
@@ -254,7 +250,7 @@ TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
   location_ptrs.clear();
 }
 
@@ -264,14 +260,14 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
   size_t num_threads = 4;
   size_t scale_factor = 1;
-  LaunchParallelTest(num_threads, IndexTestsUtil::InsertTest, index.get(), pool,
-                     scale_factor);
+  LaunchParallelTest(num_threads, TestingIndexUtil::InsertTest, index.get(),
+                     pool, scale_factor);
 
   index->ScanAllKeys(location_ptrs);
 
@@ -309,25 +305,25 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
     EXPECT_EQ(location_ptrs.size(), num_threads);
   }
 
-  EXPECT_EQ(location_ptrs[0]->block, item0->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
   location_ptrs.clear();
 }
 
-//#ifdef ALLOW_UNIQUE_KEY
+#ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, true));
+      TestingIndexUtil::BuildIndex(index_type, true));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
   size_t num_threads = 4;
   size_t scale_factor = 1;
-  LaunchParallelTest(num_threads, IndexTestsUtil::InsertTest, index.get(), pool,
-                     scale_factor);
+  LaunchParallelTest(num_threads, TestingIndexUtil::InsertTest, index.get(),
+                     pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
   // Checks
@@ -359,7 +355,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   index->ScanKey(key2.get(), location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -393,18 +389,18 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 }
-//#endif
+#endif
 
-// key0 1 (100, a)   item0
-// key1 5  (100, b)  item1 2 1 1 0
+// key0 1 (100, a)   TestingIndexUtil::item0
+// key1 5  (100, b)  TestingIndexUtil::item1 2 1 1 0
 // key2 1 (100, c) item 1
 // key3 1 (400, d) item 1
 // key4 1  (500, eeeeee...) item 1
 // no keyonce (1000, f)
 
-// item0 = 2
-// item1 = 6
-// item2 = 1
+// TestingIndexUtil::item0 = 2
+// TestingIndexUtil::item1 = 6
+// TestingIndexUtil::item2 = 1
 
 // should be no key0
 // key1 item 0 2
@@ -418,14 +414,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
   size_t num_threads = 4;
   size_t scale_factor = 1;
-  LaunchParallelTest(num_threads, IndexTestsUtil::InsertTest, index.get(), pool,
-                     scale_factor);
+  LaunchParallelTest(num_threads, TestingIndexUtil::InsertTest, index.get(),
+                     pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
   // Checks
@@ -470,7 +466,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
     EXPECT_EQ(1 * num_threads, location_ptrs.size());
   }
 
-  EXPECT_EQ(item1->block, location_ptrs[0]->block);
+  EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -708,15 +704,15 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
   size_t num_threads = 4;
   size_t scale_factor = 3;
 
-  LaunchParallelTest(num_threads, IndexTestsUtil::InsertTest, index.get(), pool,
-                     scale_factor);
+  LaunchParallelTest(num_threads, TestingIndexUtil::InsertTest, index.get(),
+                     pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
   // Checks
@@ -757,7 +753,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
     EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
 
-  EXPECT_EQ(location_ptrs[0]->block, item1->block);
+  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
@@ -779,14 +775,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
 
   // INDEX
   std::unique_ptr<index::Index> index(
-      IndexTestsUtil::BuildIndex(index_type, false));
+      TestingIndexUtil::BuildIndex(index_type, false));
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
   size_t num_threads = 15;
   size_t scale_factor = 3;
-  LaunchParallelTest(num_threads, IndexTestsUtil::InsertTest, index.get(), pool,
-                     scale_factor);
+  LaunchParallelTest(num_threads, TestingIndexUtil::InsertTest, index.get(),
+                     pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
   index->ScanAllKeys(location_ptrs);

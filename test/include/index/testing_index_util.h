@@ -20,10 +20,10 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// IndexTestsUtil
+// TestingIndexUtil
 //===--------------------------------------------------------------------===//
 
-class IndexTestsUtil {
+class TestingIndexUtil {
  public:
   /*
    * Builds an index with 4 columns, the first 2 being indexed
@@ -37,6 +37,10 @@ class IndexTestsUtil {
   static void InsertTest(index::Index *index, type::AbstractPool *pool,
                          size_t scale_factor,
                          UNUSED_ATTRIBUTE uint64_t thread_itr);
+
+  static std::shared_ptr<ItemPointer> item0;
+  static std::shared_ptr<ItemPointer> item1;
+  static std::shared_ptr<ItemPointer> item2;
 };
 }  // namespace test
 }  // namespace peloton

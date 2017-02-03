@@ -10,18 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "index/index_tests_util.h"
+#include "index/testing_index_util.h"
 
-#include "common/harness.h"
 #include "gtest/gtest.h"
 
+#include "catalog/catalog.h"
+#include "common/item_pointer.h"
 #include "common/logger.h"
+#include "index/index.h"
+#include "storage/tuple.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace test {
 
-index::Index *IndexTestsUtil::BuildIndex(const IndexType index_type,
-                                         const bool unique_keys) {
+std::shared_ptr<ItemPointer> TestingIndexUtil::item0(new ItemPointer(120, 5));
+std::shared_ptr<ItemPointer> TestingIndexUtil::item1(new ItemPointer(120, 7));
+std::shared_ptr<ItemPointer> TestingIndexUtil::item2(new ItemPointer(123, 19));
+
+index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
+                                           const bool unique_keys) {
   LOG_DEBUG("Build index type: %s", IndexTypeToString(index_type).c_str());
 
   catalog::Schema *key_schema = nullptr;
@@ -101,9 +109,9 @@ index::Index *IndexTestsUtil::BuildIndex(const IndexType index_type,
   return index;
 }
 
-void IndexTestsUtil::InsertTest(index::Index *index, type::AbstractPool *pool,
-                                size_t scale_factor,
-                                UNUSED_ATTRIBUTE uint64_t thread_itr) {
+void TestingIndexUtil::InsertTest(index::Index *index, type::AbstractPool *pool,
+                                  size_t scale_factor,
+                                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Loop based on scale factor
