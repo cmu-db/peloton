@@ -12,7 +12,7 @@
 
 #include "planner/drop_plan.h"
 
-#include "../include/parser/drop_statement.h"
+#include "parser/drop_statement.h"
 #include "storage/data_table.h"
 #include "catalog/catalog.h"
 
