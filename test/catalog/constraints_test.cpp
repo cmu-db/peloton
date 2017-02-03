@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
+
+#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
 
 #include "catalog/schema.h"
@@ -26,7 +28,6 @@
 #include "index/index_factory.h"
 
 #include "catalog/constraints_tests_util.h"
-#include "concurrency/transaction_tests_util.h"
 
 #define NOTNULL_TEST
 #define PRIMARY_UNIQUEKEY_TEST

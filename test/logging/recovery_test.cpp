@@ -15,6 +15,8 @@
 #include <sys/mman.h>
 #include <dirent.h>
 
+#include "executor/testing_executor_util.h"
+#include "logging/testing_logging_util.h"
 #include "common/harness.h"
 #include "catalog/catalog.h"
 
@@ -29,10 +31,7 @@
 #include "storage/database.h"
 #include "storage/table_factory.h"
 
-#include "logging/logging_tests_util.h"
-
 #include "executor/mock_executor.h"
-#include "executor/executor_tests_util.h"
 
 #define DEFAULT_RECOVERY_CID 15
 
@@ -74,23 +73,23 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
     // First column is unique in this case
     tuple->SetValue(0,
                     type::ValueFactory::GetIntegerValue(
-                        ExecutorTestsUtil::PopulatedValue(populate_value, 0)),
+                        TestingExecutorUtil::PopulatedValue(populate_value, 0)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
     tuple->SetValue(
-        1, type::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
+        1, type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(
                random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
     tuple->SetValue(
-        2, type::ValueFactory::GetDecimalValue(ExecutorTestsUtil::PopulatedValue(
+        2, type::ValueFactory::GetDecimalValue(TestingExecutorUtil::PopulatedValue(
                random ? std::rand() : populate_value, 2)),
         testing_pool);
 
     // In case of random, make sure this column has duplicated values
     auto string_value = type::ValueFactory::GetVarcharValue(
-        std::to_string(ExecutorTestsUtil::PopulatedValue(
+        std::to_string(TestingExecutorUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);
     tuples.push_back(tuple);
@@ -102,7 +101,7 @@ TEST_F(RecoveryTests, RestartTest) {
   auto catalog = catalog::Catalog::GetInstance();
   LOG_TRACE("Finish creating catalog");
   LOG_TRACE("Creating recovery_table");
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  auto recovery_table = TestingExecutorUtil::CreateTable(1024);
   LOG_TRACE("Finish creating recovery_table");
 
   size_t tile_group_size = 5;
@@ -123,11 +122,11 @@ TEST_F(RecoveryTests, RestartTest) {
 
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
-      LoggingTestsUtil::BuildTuples(recovery_table, num_rows + 2, mutate,
+      TestingLoggingUtil::BuildTuples(recovery_table, num_rows + 2, mutate,
                                     random);
 
   std::vector<logging::TupleRecord> records =
-      LoggingTestsUtil::BuildTupleRecordsForRestartTest(
+      TestingLoggingUtil::BuildTupleRecordsForRestartTest(
           tuples, tile_group_size, table_tile_group_count, 1, 1);
 
   logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
@@ -278,7 +277,7 @@ TEST_F(RecoveryTests, RestartTest) {
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  auto recovery_table = TestingExecutorUtil::CreateTable(1024);
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database *db = new storage::Database(DEFAULT_DB_ID);
   catalog->AddDatabase(db);
@@ -328,7 +327,7 @@ TEST_F(RecoveryTests, BasicInsertTest) {
 
 TEST_F(RecoveryTests, BasicUpdateTest) {
   auto catalog = catalog::Catalog::GetInstance();
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  auto recovery_table = TestingExecutorUtil::CreateTable(1024);
   storage::Database *db = new storage::Database(DEFAULT_DB_ID);
   catalog->AddDatabase(db);
   db->AddTable(recovery_table);
@@ -406,7 +405,7 @@ TEST_F(RecoveryTests, BasicDeleteTest) {
 }*/
 
 TEST_F(RecoveryTests, OutOfOrderCommitTest) {
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  auto recovery_table = TestingExecutorUtil::CreateTable(1024);
   auto catalog = catalog::Catalog::GetInstance();
   storage::Database db(DEFAULT_DB_ID);
   catalog->AddDatabase(&db);

@@ -9,8 +9,6 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "sql/sql_tests_util.h"
-
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "executor/plan_executor.h"
@@ -21,6 +19,7 @@
 #include "tcop/tcop.h"
 
 #include <random>
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 
@@ -34,7 +33,7 @@ std::random_device rd;
 std::mt19937 rng(rd());
 
 // Create a uniform random number
-int SQLTestsUtil::GetRandomInteger(const int lower_bound,
+int TestingSQLUtil::GetRandomInteger(const int lower_bound,
                                    const int upper_bound) {
   std::uniform_int_distribution<> dist(lower_bound, upper_bound);
 
@@ -45,13 +44,13 @@ int SQLTestsUtil::GetRandomInteger(const int lower_bound,
 // Show the content in the specific table in the specific database
 // Note: In order to see the content from the command line, you have to
 // turn-on LOG_TRACE.
-void SQLTestsUtil::ShowTable(std::string database_name,
+void TestingSQLUtil::ShowTable(std::string database_name,
                              std::string table_name) {
   ExecuteSQLQuery("SELECT * FROM " + database_name + "." + table_name);
 }
 
 // Execute a SQL query end-to-end
-ResultType SQLTestsUtil::ExecuteSQLQuery(
+ResultType TestingSQLUtil::ExecuteSQLQuery(
     const std::string query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
@@ -64,7 +63,7 @@ ResultType SQLTestsUtil::ExecuteSQLQuery(
 }
 
 // Execute a SQL query end-to-end with the specific optimizer
-ResultType SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
+ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
@@ -93,7 +92,7 @@ ResultType SQLTestsUtil::ExecuteSQLQueryWithOptimizer(
   }
 }
 
-std::shared_ptr<planner::AbstractPlan> SQLTestsUtil::GeneratePlanWithOptimizer(
+std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query) {
   auto &peloton_parser = parser::Parser::GetInstance();
@@ -103,7 +102,7 @@ std::shared_ptr<planner::AbstractPlan> SQLTestsUtil::GeneratePlanWithOptimizer(
   return optimizer->BuildPelotonPlanTree(parsed_stmt);
 }
 
-ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query,
+ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
                                          std::vector<StatementResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
@@ -116,7 +115,7 @@ ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query,
   return status;
 }
 
-ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
+ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
@@ -129,7 +128,7 @@ ResultType SQLTestsUtil::ExecuteSQLQuery(const std::string query) {
   return status;
 }
 
-tcop::TrafficCop SQLTestsUtil::traffic_cop_;
+tcop::TrafficCop TestingSQLUtil::traffic_cop_;
 
 }  // namespace test
 }  // namespace peloton

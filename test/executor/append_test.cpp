@@ -13,6 +13,7 @@
 
 #include <vector>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "planner/append_plan.h"
@@ -24,7 +25,6 @@
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;
@@ -83,8 +83,8 @@ TEST_F(AppendTests, AppendTwoTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 10, false,
+      TestingExecutorUtil::CreateTable(tile_size));
+  TestingExecutorUtil::PopulateTable(data_table.get(), tile_size * 10, false,
                                    false, false, txn);
   txn_manager.CommitTransaction(txn);
 

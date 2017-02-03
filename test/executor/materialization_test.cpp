@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "planner/abstract_plan.h"
@@ -32,7 +33,6 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;
@@ -51,9 +51,9 @@ class MaterializationTests : public PelotonTest {};
 TEST_F(MaterializationTests, SingleBaseTileTest) {
   const int tuple_count = 9;
   std::shared_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(tuple_count));
+      TestingExecutorUtil::CreateTileGroup(tuple_count));
 
-  ExecutorTestsUtil::PopulateTiles(tile_group, tuple_count);
+  TestingExecutorUtil::PopulateTiles(tile_group, tuple_count);
 
   // Create logical tile from single base tile.
   auto source_base_tile = tile_group->GetTileReference(0);
@@ -65,7 +65,7 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(nullptr, nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
+      TestingExecutorUtil::ExecuteTile(&executor, source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->GetColumnCount();
@@ -80,10 +80,10 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
     type::Value val0 = (result_base_tile->GetValue(i, 0));
     type::Value val1 = (result_base_tile->GetValue(i, 1));
     type::CmpBool cmp = (val0.CompareEquals(
-      type::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0))));
+      type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(i, 0))));
     EXPECT_TRUE(cmp == type::CMP_TRUE);
     cmp = val1.CompareEquals(type::ValueFactory::GetIntegerValue(
-        ExecutorTestsUtil::PopulatedValue(i, 1)));
+        TestingExecutorUtil::PopulatedValue(i, 1)));
     EXPECT_TRUE(cmp == type::CMP_TRUE);
 
     // Double check that logical tile is functioning.
@@ -102,9 +102,9 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
 TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
   const int tuple_count = 9;
   std::shared_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(tuple_count));
+      TestingExecutorUtil::CreateTileGroup(tuple_count));
 
-  ExecutorTestsUtil::PopulateTiles(tile_group, tuple_count);
+  TestingExecutorUtil::PopulateTiles(tile_group, tuple_count);
 
   // Create logical tile from two base tiles.
   const std::vector<std::shared_ptr<storage::Tile> > source_base_tiles = {
@@ -136,7 +136,7 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node, nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
+      TestingExecutorUtil::ExecuteTile(&executor, source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->GetColumnCount();
@@ -153,17 +153,17 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
     type::Value val2(result_base_tile->GetValue(i, 2));
     // Output column 2.
     type::CmpBool cmp(val2.CompareEquals(
-      type::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0))));
+      type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(i, 0))));
     EXPECT_TRUE(cmp == type::CMP_TRUE);
 
     // Output column 1.
     cmp = (val1.CompareEquals(type::ValueFactory::GetIntegerValue(
-        ExecutorTestsUtil::PopulatedValue(i, 1))));
+        TestingExecutorUtil::PopulatedValue(i, 1))));
     EXPECT_TRUE(cmp == type::CMP_TRUE);
 
     // Output column 0.
     cmp = (val0.CompareEquals(type::ValueFactory::GetVarcharValue(
-        std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3)))));
+        std::to_string(TestingExecutorUtil::PopulatedValue(i, 3)))));
     EXPECT_TRUE(cmp == type::CMP_TRUE);
 
     // Double check that logical tile is functioning.

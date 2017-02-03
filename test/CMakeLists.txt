@@ -40,13 +40,13 @@ include_directories(SYSTEM ${GMOCK_DIR})
 # --[ Tests Common library
 
 set(HARNESS ${PROJECT_SOURCE_DIR}/test/common/harness.cpp)
-set(TESTING_UTIL_EXECUTOR ${PROJECT_SOURCE_DIR}/test/executor/executor_tests_util.cpp)
-set(TESTING_UTIL_LOGGING ${PROJECT_SOURCE_DIR}/test/logging/logging_tests_util.cpp)
-set(TESTING_UTIL_JOIN ${PROJECT_SOURCE_DIR}/test/executor/join_tests_util.cpp)
-set(TESTING_UTIL_TXN ${PROJECT_SOURCE_DIR}/test/concurrency/transaction_tests_util.cpp)
-set(TESTING_UTIL_STATS ${PROJECT_SOURCE_DIR}/test/statistics/stats_tests_util.cpp)
-set(TESTING_UTIL_SQL ${PROJECT_SOURCE_DIR}/test/sql/sql_tests_util.cpp)
-set(TESTING_UTIL_INDEX ${PROJECT_SOURCE_DIR}/test/index/testing_index_util.cpp)
+set(TESTING_UTIL_EXECUTOR   ${PROJECT_SOURCE_DIR}/test/executor/testing_executor_util.cpp)
+set(TESTING_UTIL_JOIN       ${PROJECT_SOURCE_DIR}/test/executor/testing_join_util.cpp)
+set(TESTING_UTIL_LOGGING    ${PROJECT_SOURCE_DIR}/test/logging/testing_logging_util.cpp)
+set(TESTING_UTIL_TXN        ${PROJECT_SOURCE_DIR}/test/concurrency/testing_transaction_util.cpp)
+set(TESTING_UTIL_STATS      ${PROJECT_SOURCE_DIR}/test/statistics/testing_stats_util.cpp)
+set(TESTING_UTIL_SQL        ${PROJECT_SOURCE_DIR}/test/sql/testing_sql_util.cpp)
+set(TESTING_UTIL_INDEX      ${PROJECT_SOURCE_DIR}/test/index/testing_index_util.cpp)
 
 add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
             ${TESTING_UTIL_EXECUTOR}

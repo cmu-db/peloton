@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
 
-#include "concurrency/transaction_tests_util.h"
 #include "gc/gc_manager_factory.h"
 
 namespace peloton {
@@ -37,7 +37,7 @@ TEST_F(MVCCTests, SingleThreadVersionChainTest) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+        TestingTransactionUtil::CreateTable());
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
@@ -100,7 +100,7 @@ TEST_F(MVCCTests, AbortVersionChainTest) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+        TestingTransactionUtil::CreateTable());
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 100);
@@ -137,7 +137,7 @@ TEST_F(MVCCTests, VersionChainTest) {
     srand(15721);
 
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable(num_key));
+        TestingTransactionUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);

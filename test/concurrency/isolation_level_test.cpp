@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/testing_transaction_util.h"
 #include "common/harness.h"
-#include "concurrency/transaction_tests_util.h"
 
 namespace peloton {
 
@@ -29,7 +29,7 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -131,7 +131,7 @@ void DirtyWriteTest() {
 void DirtyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -192,7 +192,7 @@ void DirtyReadTest() {
 void FuzzyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
 
   // The constraints are the value of 0 and 1 should be equal
   {
@@ -236,7 +236,7 @@ void FuzzyReadTest() {
 void PhantomTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -280,7 +280,7 @@ void PhantomTest() {
 void WriteSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
 
   {
     // Prepare
@@ -325,7 +325,7 @@ void WriteSkewTest() {
 void ReadSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
@@ -351,7 +351,7 @@ void ReadSkewTest() {
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TestingTransactionUtil::CreateTable());
   int current_batch_key = 10000;
   {
     TransactionScheduler scheduler(1, table.get(), &txn_manager);
@@ -413,7 +413,7 @@ TEST_F(IsolationLevelTests, StressTest) {
     concurrency::TransactionManagerFactory::Configure(
         test_type, IsolationLevelType::FULL);
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable(num_key));
+        TestingTransactionUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);

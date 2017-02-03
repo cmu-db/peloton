@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../concurrency/testing_transaction_util.h"
 #include "common/harness.h"
 #include "type/types.h"
 #include "type/value.h"
@@ -19,7 +20,6 @@
 #include "catalog/schema.h"
 #include "catalog/column.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "concurrency/transaction_tests_util.h"
 #include "concurrency/transaction_manager.h"
 #include "concurrency/transaction.h"
 #include "storage/tile_group_factory.h"
@@ -43,7 +43,7 @@
 namespace peloton {
 namespace test {
 
-class StatsTestsUtil {
+class TestingStatsUtil {
  public:
   static void ShowTable(std::string database_name, std::string table_name);
 

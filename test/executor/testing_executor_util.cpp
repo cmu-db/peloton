@@ -10,22 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "executor/executor_tests_util.h"
+#include "executor/testing_executor_util.h"
 
 #include <cstdlib>
 #include <ctime>
 #include <memory>
 #include <vector>
 
-#include "common/harness.h"
-
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/exception.h"
+#include "common/harness.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
+#include "executor/mock_executor.h"
 #include "index/index_factory.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
@@ -36,8 +36,6 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 
-#include "executor/mock_executor.h"
-
 using ::testing::IsNull;
 using ::testing::NotNull;
 using ::testing::Return;
@@ -45,7 +43,7 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-storage::Database *ExecutorTestsUtil::InitializeDatabase(
+storage::Database *TestingExecutorUtil::InitializeDatabase(
     const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto result = catalog->CreateDatabase(db_name, nullptr);
@@ -54,7 +52,7 @@ storage::Database *ExecutorTestsUtil::InitializeDatabase(
   return (database);
 }
 
-void ExecutorTestsUtil::DeleteDatabase(const std::string &db_name) {
+void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto result = catalog->DropDatabaseWithName(db_name, nullptr);
   EXPECT_EQ(ResultType::SUCCESS, result);
@@ -71,7 +69,7 @@ void ExecutorTestsUtil::DeleteDatabase(const std::string &db_name) {
  *
  * For other column IDs an exception will be thrown
  */
-catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
+catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
   std::string not_null_constraint_name = "not_null";
   catalog::Column dummy_column;
@@ -140,7 +138,7 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  *
  * @return Pointer to tile group.
  */
-std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(
+std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
     int tuple_count) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema> schemas;
@@ -179,9 +177,9 @@ std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
-                                      bool mutate, bool random, bool group_by,
-                                      concurrency::Transaction *current_txn) {
+void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
+                                        bool mutate, bool random, bool group_by,
+                                        concurrency::Transaction *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
 
@@ -244,7 +242,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
  * @param tile_group Tile-group to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTiles(
+void TestingExecutorUtil::PopulateTiles(
     std::shared_ptr<storage::TileGroup> tile_group, int num_rows) {
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
@@ -294,7 +292,7 @@ void ExecutorTestsUtil::PopulateTiles(
  *
  * @return Pointer to processed logical tile.
  */
-executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
+executor::LogicalTile *TestingExecutorUtil::ExecuteTile(
     executor::AbstractExecutor *executor,
     executor::LogicalTile *source_logical_tile) {
   MockExecutor child_executor;
@@ -321,7 +319,7 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   return result_logical_tile.release();
 }
 
-storage::DataTable *ExecutorTestsUtil::CreateTable(
+storage::DataTable *TestingExecutorUtil::CreateTable(
     int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
@@ -408,19 +406,19 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
  *
  * @return Table generated for test.
  */
-storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
+storage::DataTable *TestingExecutorUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-  storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
+  storage::DataTable *table = TestingExecutorUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT,
-                                   false, false, false, txn);
+  TestingExecutorUtil::PopulateTable(
+      table, tuple_count * DEFAULT_TILEGROUP_COUNT, false, false, false, txn);
   txn_manager.CommitTransaction(txn);
 
   return table;
 }
 
-std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
+std::unique_ptr<storage::Tuple> TestingExecutorUtil::GetTuple(
     storage::DataTable *table, oid_t tuple_id, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
@@ -436,7 +434,7 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
   return tuple;
 }
 
-std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
+std::unique_ptr<storage::Tuple> TestingExecutorUtil::GetNullTuple(
     storage::DataTable *table, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table->GetSchema(), true));
@@ -452,7 +450,7 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
   return tuple;
 }
 
-std::string ExecutorTestsUtil::GetTileVectorInfo(
+std::string TestingExecutorUtil::GetTileVectorInfo(
     std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
   std::ostringstream os;
   bool first = true;

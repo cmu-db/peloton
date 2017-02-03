@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "logging/logging_tests_util.h"
+#include "logging/testing_logging_util.h"
 
 #define DEFAULT_RECOVERY_CID 15
 
@@ -21,17 +21,18 @@ namespace test {
 // LoggingTests Util
 //===--------------------------------------------------------------------===//
 
-std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecords(
-    std::vector<std::shared_ptr<storage::Tuple>> &tuples, size_t tile_group_size,
-    size_t table_tile_group_count) {
+std::vector<logging::TupleRecord> TestingLoggingUtil::BuildTupleRecords(
+    std::vector<std::shared_ptr<storage::Tuple>> &tuples,
+    size_t tile_group_size, size_t table_tile_group_count) {
   std::vector<logging::TupleRecord> records;
   for (size_t block = 1; block <= table_tile_group_count; ++block) {
     for (size_t offset = 0; offset < tile_group_size; ++offset) {
       ItemPointer location(block, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
       PL_ASSERT(tuple->GetSchema());
-      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID, INVALID_OID,
-                                  location, INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
+      logging::TupleRecord record(
+          LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID, INVALID_OID,
+          location, INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
       record.SetTuple(tuple.get());
       records.push_back(record);
     }
@@ -40,37 +41,45 @@ std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecords(
   return records;
 }
 
-std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecordsForRestartTest(
-    std::vector<std::shared_ptr<storage::Tuple>> &tuples, size_t tile_group_size,
-    size_t table_tile_group_count, int out_of_range_tuples, int delete_tuples) {
-  auto tile_group_start_oid = catalog::Manager::GetInstance().GetNextTileGroupId();
+std::vector<logging::TupleRecord>
+TestingLoggingUtil::BuildTupleRecordsForRestartTest(
+    std::vector<std::shared_ptr<storage::Tuple>> &tuples,
+    size_t tile_group_size, size_t table_tile_group_count,
+    int out_of_range_tuples, int delete_tuples) {
+  auto tile_group_start_oid =
+      catalog::Manager::GetInstance().GetNextTileGroupId();
   std::vector<logging::TupleRecord> records;
   for (size_t block = 1; block <= table_tile_group_count; ++block) {
     for (size_t offset = 0; offset < tile_group_size; ++offset) {
       ItemPointer location(block + tile_group_start_oid, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
       PL_ASSERT(tuple->GetSchema());
-      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block + 1, INVALID_OID, location,
-                                  INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
+      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block + 1,
+                                  INVALID_OID, location, INVALID_ITEMPOINTER,
+                                  tuple.get(), DEFAULT_DB_ID);
       record.SetTuple(tuple.get());
       records.push_back(record);
     }
   }
   for (int i = 0; i < out_of_range_tuples; i++) {
-    ItemPointer location(tile_group_size + tile_group_start_oid, table_tile_group_count + i);
+    ItemPointer location(tile_group_size + tile_group_start_oid,
+                         table_tile_group_count + i);
     auto &tuple = tuples[tile_group_size * table_tile_group_count + i];
     PL_ASSERT(tuple->GetSchema());
-    logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, 1000, INVALID_OID, location,
-                                INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
+    logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, 1000,
+                                INVALID_OID, location, INVALID_ITEMPOINTER,
+                                tuple.get(), DEFAULT_DB_ID);
     record.SetTuple(tuple.get());
     records.push_back(record);
   }
   for (int i = 0; i < delete_tuples; i++) {
     ItemPointer location(tile_group_start_oid + 1, 0);
-    auto &tuple = tuples[tile_group_size * table_tile_group_count + out_of_range_tuples + i];
+    auto &tuple = tuples[tile_group_size * table_tile_group_count +
+                         out_of_range_tuples + i];
     PL_ASSERT(tuple->GetSchema());
     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4, INVALID_OID,
-                                INVALID_ITEMPOINTER, location, nullptr, DEFAULT_DB_ID);
+                                INVALID_ITEMPOINTER, location, nullptr,
+                                DEFAULT_DB_ID);
     record.SetTuple(tuple.get());
     records.push_back(record);
   }
@@ -79,7 +88,7 @@ std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecordsForRestartT
   return records;
 }
 
-std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
+std::vector<std::shared_ptr<storage::Tuple>> TestingLoggingUtil::BuildTuples(
     storage::DataTable *table, int num_rows, bool mutate, bool random) {
   std::vector<std::shared_ptr<storage::Tuple>> tuples;
   LOG_TRACE("build a vector of %d tuples", num_rows);
@@ -101,22 +110,26 @@ std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
     std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema, allocate));
 
     // First column is unique in this case
-    tuple->SetValue(0, type::ValueFactory::GetIntegerValue(
-                           ExecutorTestsUtil::PopulatedValue(populate_value, 0)),
+    tuple->SetValue(0,
+                    type::ValueFactory::GetIntegerValue(
+                        TestingExecutorUtil::PopulatedValue(populate_value, 0)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    tuple->SetValue(1, type::ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
-                           random ? std::rand() % (num_rows / 3) : populate_value, 1)),
-                    testing_pool);
+    tuple->SetValue(
+        1,
+        type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(
+            random ? std::rand() % (num_rows / 3) : populate_value, 1)),
+        testing_pool);
 
-    tuple->SetValue(2, type::ValueFactory::GetDecimalValue(ExecutorTestsUtil::PopulatedValue(
-                           random ? std::rand() : populate_value, 2)),
+    tuple->SetValue(2, type::ValueFactory::GetDecimalValue(
+                           TestingExecutorUtil::PopulatedValue(
+                               random ? std::rand() : populate_value, 2)),
                     testing_pool);
 
     // In case of random, make sure this column has duplicated values
-    auto string_value =
-        type::ValueFactory::GetVarcharValue(std::to_string(ExecutorTestsUtil::PopulatedValue(
+    auto string_value = type::ValueFactory::GetVarcharValue(
+        std::to_string(TestingExecutorUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);
     PL_ASSERT(tuple->GetSchema());
@@ -186,8 +199,8 @@ void FrontendLoggingThread::ExecuteNext() {
 }
 
 void BackendLoggingThread::RunLoop() {
-  backend_logger =
-      reinterpret_cast<logging::WriteAheadBackendLogger *>(log_manager->GetBackendLogger());
+  backend_logger = reinterpret_cast<logging::WriteAheadBackendLogger *>(
+      log_manager->GetBackendLogger());
 
   MainLoop();
 }
@@ -213,30 +226,33 @@ void BackendLoggingThread::ExecuteNext() {
     }
     case LOGGING_OP_INSERT: {
       LOG_TRACE("Execute Insert txn %d", (int)cid);
-      auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
+      auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false, false)[0];
       std::unique_ptr<logging::LogRecord> tuple_record(
-          backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, cid, 1, DEFAULT_DB_ID,
-                                         INVALID_ITEMPOINTER, INVALID_ITEMPOINTER, tuple.get()));
+          backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, cid, 1,
+                                         DEFAULT_DB_ID, INVALID_ITEMPOINTER,
+                                         INVALID_ITEMPOINTER, tuple.get()));
       backend_logger->Log(tuple_record.get());
       tuple.reset();
       break;
     }
     case LOGGING_OP_UPDATE: {
       LOG_TRACE("Execute Update txn %d", (int)cid);
-      auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
+      auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false, false)[0];
       std::unique_ptr<logging::LogRecord> tuple_record(
-          backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, cid, 1, DEFAULT_DB_ID,
-                                         INVALID_ITEMPOINTER, INVALID_ITEMPOINTER, tuple.get()));
+          backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, cid, 1,
+                                         DEFAULT_DB_ID, INVALID_ITEMPOINTER,
+                                         INVALID_ITEMPOINTER, tuple.get()));
       backend_logger->Log(tuple_record.get());
       tuple.reset();
       break;
     }
     case LOGGING_OP_DELETE: {
       LOG_TRACE("Execute Delete txn %d", (int)cid);
-      auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
+      auto tuple = TestingLoggingUtil::BuildTuples(table, 1, false, false)[0];
       std::unique_ptr<logging::LogRecord> tuple_record(
-          backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, cid, 1, DEFAULT_DB_ID,
-                                         INVALID_ITEMPOINTER, INVALID_ITEMPOINTER, tuple.get()));
+          backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, cid, 1,
+                                         DEFAULT_DB_ID, INVALID_ITEMPOINTER,
+                                         INVALID_ITEMPOINTER, tuple.get()));
       backend_logger->Log(tuple_record.get());
       tuple.reset();
       break;
@@ -248,16 +264,16 @@ void BackendLoggingThread::ExecuteNext() {
     }
     case LOGGING_OP_COMMIT: {
       LOG_TRACE("Execute Commit txn %d", (int)cid);
-      std::unique_ptr<logging::LogRecord> record(
-          new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, cid));
+      std::unique_ptr<logging::LogRecord> record(new logging::TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_COMMIT, cid));
       PL_ASSERT(backend_logger);
       backend_logger->Log(record.get());
       break;
     }
     case LOGGING_OP_ABORT: {
       LOG_TRACE("Execute Abort txn %d", (int)cid);
-      std::unique_ptr<logging::LogRecord> record(
-          new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT, cid));
+      std::unique_ptr<logging::LogRecord> record(new logging::TransactionRecord(
+          LOGRECORD_TYPE_TRANSACTION_ABORT, cid));
       PL_ASSERT(backend_logger);
       backend_logger->Log(record.get());
       break;
@@ -306,15 +322,18 @@ void LoggingScheduler::Run() {
 }
 
 void LoggingScheduler::Init() {
-  logging::LogManager::GetInstance().Configure(LoggingType::NVM_WAL, true, num_frontend_logger,
-                                               LoggerMappingStrategyType::MANUAL);
+  logging::LogManager::GetInstance().Configure(
+      LoggingType::NVM_WAL, true, num_frontend_logger,
+      LoggerMappingStrategyType::MANUAL);
   log_manager->SetLoggingStatus(LoggingStatusType::LOGGING);
   log_manager->InitFrontendLoggers();
 
   for (unsigned int i = 0; i < num_frontend_logger; i++) {
-    frontend_threads.emplace_back(&frontend_schedules[i], log_manager, i, table);
+    frontend_threads.emplace_back(&frontend_schedules[i], log_manager, i,
+                                  table);
   }
-  for (unsigned int i = 0; i < num_frontend_logger * num_backend_logger_per_frontend; i++) {
+  for (unsigned int i = 0;
+       i < num_frontend_logger * num_backend_logger_per_frontend; i++) {
     backend_threads.emplace_back(&backend_schedules[i], log_manager, i, table,
                                  i % num_backend_logger_per_frontend);
   }

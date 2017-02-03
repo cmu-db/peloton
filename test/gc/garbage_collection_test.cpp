@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "concurrency/testing_transaction_util.h"
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
-#include "concurrency/transaction_tests_util.h"
 #include "gc/gc_manager.h"
 #include "gc/gc_manager_factory.h"
 #include "concurrency/epoch_manager.h"
@@ -22,7 +23,6 @@
 #include "storage/tile_group.h"
 #include "storage/database.h"
 
-#include "executor/executor_tests_util.h"
 
 namespace peloton {
 namespace test {
@@ -129,14 +129,14 @@ TEST_F(GarbageCollectionTests, SimpleTest) {
   
   auto catalog = catalog::Catalog::GetInstance();
   // create database
-  auto database = ExecutorTestsUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  auto database = TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(catalog->HasDatabase(db_id));
 
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
-    TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", db_id, INVALID_OID, 1234, true));
+    TestingTransactionUtil::CreateTable(num_key, "TEST_TABLE", db_id, INVALID_OID, 1234, true));
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
@@ -185,7 +185,7 @@ TEST_F(GarbageCollectionTests, SimpleTest) {
   table.release();
   
   // DROP!
-  ExecutorTestsUtil::DeleteDatabase(DEFAULT_DB_NAME);
+  TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
   EXPECT_FALSE(catalog->HasDatabase(db_id));
 
   gc::GCManagerFactory::Configure(0);

@@ -10,22 +10,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "concurrency/transaction_tests_util.h"
-#include "planner/index_scan_plan.h"
-#include "executor/executor_context.h"
-#include "executor/delete_executor.h"
-#include "executor/insert_executor.h"
-#include "executor/seq_scan_executor.h"
-#include "executor/index_scan_executor.h"
-#include "executor/update_executor.h"
-#include "executor/logical_tile_factory.h"
-#include "expression/expression_util.h"
-#include "executor/mock_executor.h"
-#include "planner/delete_plan.h"
-#include "planner/insert_plan.h"
-#include "storage/tile.h"
-#include "storage/database.h"
+#include "concurrency/testing_transaction_util.h"
+
 #include "catalog/catalog.h"
+#include "executor/delete_executor.h"
+#include "executor/executor_context.h"
+#include "executor/index_scan_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/mock_executor.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/update_executor.h"
+#include "expression/expression_util.h"
+#include "planner/delete_plan.h"
+#include "planner/index_scan_plan.h"
+#include "planner/insert_plan.h"
+#include "storage/database.h"
+#include "storage/tile.h"
 
 namespace peloton {
 namespace executor {
@@ -37,13 +38,15 @@ class ProjectInfo;
 }
 namespace test {
 
-storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "value", true);
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "value", true);
   value_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
 
@@ -84,13 +87,15 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   return table;
 }
 
-storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "value", true);
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "value", true);
 
   // Create the table
   catalog::Schema *table_schema =
@@ -145,13 +150,15 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   return table;
 }
 
-storage::DataTable *TransactionTestsUtil::CreateTable(
+storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
     oid_t index_oid, bool need_primary_index) {
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
   auto value_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "value", true);
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "value", true);
 
   // Create the table
   catalog::Schema *table_schema =
@@ -185,8 +192,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
   try {
     storage::Database *db = catalog->GetDatabaseWithOid(database_id);
     db->AddTable(table);
-  }
-  catch (CatalogException &e) {
+  } catch (CatalogException &e) {
   }
 
   // Insert tuple
@@ -201,7 +207,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
 }
 
 std::unique_ptr<const planner::ProjectInfo>
-TransactionTestsUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
+TestingTransactionUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   TargetList target_list;
   DirectMapList direct_map_list;
 
@@ -215,7 +221,7 @@ TransactionTestsUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
       std::move(target_list), std::move(direct_map_list)));
 }
 
-bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
+bool TestingTransactionUtil::ExecuteInsert(concurrency::Transaction *transaction,
                                          storage::DataTable *table, int id,
                                          int value) {
   std::unique_ptr<executor::ExecutorContext> context(
@@ -236,8 +242,7 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   return executor.Execute();
 }
 
-expression::ComparisonExpression *
-TransactionTestsUtil::MakePredicate(int id) {
+expression::ComparisonExpression *TestingTransactionUtil::MakePredicate(int id) {
   auto tup_val_exp =
       new expression::TupleValueExpression(type::Type::INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
@@ -265,7 +270,7 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
       index, key_column_ids, expr_types, values, runtime_keys);
 }
 
-bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
+bool TestingTransactionUtil::ExecuteRead(concurrency::Transaction *transaction,
                                        storage::DataTable *table, int id,
                                        int &result, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
@@ -273,8 +278,8 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
 
   // index scan
   std::vector<oid_t> column_ids = {0, 1};
-  planner::IndexScanPlan idx_scan_node(table, nullptr, column_ids,
-                                       MakeIndexDesc(table, id), select_for_update);
+  planner::IndexScanPlan idx_scan_node(
+      table, nullptr, column_ids, MakeIndexDesc(table, id), select_for_update);
   executor::IndexScanExecutor idx_scan_executor(&idx_scan_node, context.get());
 
   EXPECT_TRUE(idx_scan_executor.Init());
@@ -297,8 +302,9 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
 
   return true;
 }
-bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
-                                         storage::DataTable *table, int id, bool select_for_update) {
+bool TestingTransactionUtil::ExecuteDelete(concurrency::Transaction *transaction,
+                                         storage::DataTable *table, int id,
+                                         bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -310,8 +316,8 @@ bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
 
   // Scan
   std::vector<oid_t> column_ids = {0};
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(table, predicate, column_ids, select_for_update));
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(new planner::SeqScanPlan(
+      table, predicate, column_ids, select_for_update));
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
                                               context.get());
 
@@ -322,7 +328,7 @@ bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
 
   return delete_executor.Execute();
 }
-bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
+bool TestingTransactionUtil::ExecuteUpdate(concurrency::Transaction *transaction,
                                          storage::DataTable *table, int id,
                                          int value, bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
@@ -360,9 +366,10 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   return update_executor.Execute();
 }
 
-bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
+bool TestingTransactionUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
                                                 storage::DataTable *table,
-                                                int old_value, int new_value, bool select_for_update) {
+                                                int old_value, int new_value,
+                                                bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -393,8 +400,8 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(table, predicate, column_ids, select_for_update));
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(new planner::SeqScanPlan(
+      table, predicate, column_ids, select_for_update));
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
                                               context.get());
 
@@ -405,9 +412,10 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   return update_executor.Execute();
 }
 
-bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
+bool TestingTransactionUtil::ExecuteScan(concurrency::Transaction *transaction,
                                        std::vector<int> &results,
-                                       storage::DataTable *table, int id, bool select_for_update) {
+                                       storage::DataTable *table, int id,
+                                       bool select_for_update) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -422,7 +430,8 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids, select_for_update);
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids,
+                                     select_for_update);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   EXPECT_TRUE(seq_scan_executor.Init());
