@@ -17,6 +17,7 @@
 #include <iostream>
 #include <ctime>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "planner/abstract_plan.h"
@@ -46,7 +47,6 @@
 #include "storage/tuple.h"
 #include "index/index_factory.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;

@@ -21,8 +21,8 @@
 #include "logging/records/transaction_record.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"
-#include "executor/executor_tests_util.h"
 #include <climits>
+#include "../executor/testing_executor_util.h"
 
 #define INVALID_LOGGER_IDX UINT_MAX
 
@@ -45,7 +45,7 @@ enum logging_op_type {
   LOGGING_OP_FLUSH,
 };
 
-class LoggingTestsUtil {
+class TestingLoggingUtil {
  public:
   static std::vector<logging::TupleRecord> BuildTupleRecords(
       std::vector<std::shared_ptr<storage::Tuple>> &tuples,

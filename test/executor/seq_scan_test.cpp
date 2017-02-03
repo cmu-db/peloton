@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "catalog/schema.h"
@@ -35,7 +36,6 @@
 #include "storage/tile_group_factory.h"
 
 #include "common/harness.h"
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 using ::testing::NotNull;
@@ -60,21 +60,21 @@ const std::set<oid_t> g_tuple_ids({0, 3});
  */
 storage::DataTable *CreateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable());
 
   // Schema for first tile group. Vertical partition is 2, 2.
   std::vector<catalog::Schema> schemas1(
-      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
-                        ExecutorTestsUtil::GetColumnInfo(1)}),
-       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+      {catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                        TestingExecutorUtil::GetColumnInfo(1)}),
+       catalog::Schema({TestingExecutorUtil::GetColumnInfo(2),
+                        TestingExecutorUtil::GetColumnInfo(3)})});
 
   // Schema for second tile group. Vertical partition is 1, 3.
   std::vector<catalog::Schema> schemas2(
-      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0)}),
-       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                        ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+      {catalog::Schema({TestingExecutorUtil::GetColumnInfo(0)}),
+       catalog::Schema({TestingExecutorUtil::GetColumnInfo(1),
+                        TestingExecutorUtil::GetColumnInfo(2),
+                        TestingExecutorUtil::GetColumnInfo(3)})});
 
   TestingHarness::GetInstance().GetNextTileGroupId();
 
@@ -103,9 +103,9 @@ storage::DataTable *CreateTable() {
           TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
           schemas2, column_map2, tuple_count)));
 
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
+  TestingExecutorUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
+  TestingExecutorUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
+  TestingExecutorUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
 
   return table.release();
 }
@@ -149,12 +149,12 @@ expression::AbstractExpression *CreatePredicate(
     expression::AbstractExpression *constant_value_expr;
     if (even) {
       auto constant_value = type::ValueFactory::GetIntegerValue(
-          ExecutorTestsUtil::PopulatedValue(tuple_id, 0));
+          TestingExecutorUtil::PopulatedValue(tuple_id, 0));
       constant_value_expr =
           expression::ExpressionUtil::ConstantValueFactory(constant_value);
     } else {
       auto constant_value = type::ValueFactory::GetVarcharValue(
-          std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
+          std::to_string(TestingExecutorUtil::PopulatedValue(tuple_id, 3)));
       constant_value_expr =
           expression::ExpressionUtil::ConstantValueFactory(constant_value);
     }
@@ -224,10 +224,10 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
-      int val1 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1);
+      int val1 = TestingExecutorUtil::PopulatedValue(old_tuple_id, 1);
       type::Value value2 = (result_tiles[i]->GetValue(new_tuple_id, 1));
       EXPECT_EQ(val1, value2.GetAs<int32_t>());
-      int val2 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3);
+      int val2 = TestingExecutorUtil::PopulatedValue(old_tuple_id, 3);
 
       // expected_num_cols - 1 is a hacky way to ensure that
       // we are always getting the last column in the original table.

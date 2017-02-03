@@ -10,23 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "executor/testing_join_util.h"
 
-#include "executor/join_tests_util.h"
-
-#include "type/types.h"
 #include "expression/abstract_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace test {
 
 // Create join predicate
-expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
+expression::AbstractExpression *TestingJoinUtil::CreateJoinPredicate() {
   expression::AbstractExpression *predicate = nullptr;
 
   // LEFT.1 == RIGHT.1
@@ -42,7 +41,8 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   return predicate;
 }
 
-std::unique_ptr<const planner::ProjectInfo> JoinTestsUtil::CreateProjection() {
+std::unique_ptr<const planner::ProjectInfo>
+TestingJoinUtil::CreateProjection() {
   // Create the plan node
   TargetList target_list;
   DirectMapList direct_map_list;
@@ -68,7 +68,7 @@ std::unique_ptr<const planner::ProjectInfo> JoinTestsUtil::CreateProjection() {
 
 // Create complicated join predicate
 expression::AbstractExpression *
-JoinTestsUtil::CreateComplicatedJoinPredicate() {
+TestingJoinUtil::CreateComplicatedJoinPredicate() {
   expression::AbstractExpression *predicate = nullptr;
 
   // LEFT.1 == RIGHT.1
@@ -90,8 +90,8 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
       new expression::ConstantValueExpression(
           type::ValueFactory::GetDecimalValue(50.0));
   expression::ComparisonExpression *comp_b =
-      new expression::ComparisonExpression(
-          ExpressionType::COMPARE_GREATERTHAN, left_table_attr_3, const_val_1);
+      new expression::ComparisonExpression(ExpressionType::COMPARE_GREATERTHAN,
+                                           left_table_attr_3, const_val_1);
 
   predicate = new expression::ConjunctionExpression(
       ExpressionType::CONJUNCTION_AND, comp_a, comp_b);

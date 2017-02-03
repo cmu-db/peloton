@@ -50,7 +50,7 @@ class Database;
 
 namespace test {
 
-class ExecutorTestsUtil {
+class TestingExecutorUtil {
  public:
   /**
    * @brief Intializes the catalog with a new database with the give name.

@@ -16,6 +16,7 @@
 #include <vector>
 #include <atomic>
 
+#include "executor/testing_executor_util.h"
 #include "executor/drop_executor.h"
 #include "common/harness.h"
 
@@ -38,7 +39,6 @@
 #include "storage/table_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 #include "planner/drop_plan.h"
@@ -70,7 +70,7 @@ void InsertTuple(storage::DataTable *table, type::AbstractPool *pool,
       new executor::ExecutorContext(txn));
 
   for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
-    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
+    auto tuple = TestingExecutorUtil::GetTuple(table, ++tuple_id, pool);
 
     planner::InsertPlan node(table, std::move(tuple));
     executor::InsertExecutor executor(&node, context.get());
@@ -188,7 +188,7 @@ TEST_F(MutateTests, StressTests) {
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Create insert node for this test.
-  storage::DataTable *table = ExecutorTestsUtil::CreateTable();
+  storage::DataTable *table = TestingExecutorUtil::CreateTable();
 
   // Pass through insert executor.
   /*
@@ -205,7 +205,7 @@ TEST_F(MutateTests, StressTests) {
   */
 
   auto non_empty_tuple =
-      ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
+      TestingExecutorUtil::GetTuple(table, ++tuple_id, testing_pool);
   planner::InsertPlan node2(table, std::move(non_empty_tuple));
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
@@ -236,7 +236,7 @@ TEST_F(MutateTests, StressTests) {
   // PRIMARY KEY
   std::vector<catalog::Column> columns;
 
-  columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
+  columns.push_back(TestingExecutorUtil::GetColumnInfo(0));
   catalog::Schema *key_schema = new catalog::Schema(columns);
   storage::Tuple *key1 = new storage::Tuple(key_schema, true);
   storage::Tuple *key2 = new storage::Tuple(key_schema, true);
@@ -250,8 +250,8 @@ TEST_F(MutateTests, StressTests) {
 
   // SEC KEY
   columns.clear();
-  columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
-  columns.push_back(ExecutorTestsUtil::GetColumnInfo(1));
+  columns.push_back(TestingExecutorUtil::GetColumnInfo(0));
+  columns.push_back(TestingExecutorUtil::GetColumnInfo(1));
   key_schema = new catalog::Schema(columns);
 
   storage::Tuple *key3 = new storage::Tuple(key_schema, true);
@@ -275,9 +275,9 @@ TEST_F(MutateTests, InsertTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(
-      ExecutorTestsUtil::CreateAndPopulateTable());
+      TestingExecutorUtil::CreateAndPopulateTable());
   std::unique_ptr<storage::DataTable> dest_data_table(
-      ExecutorTestsUtil::CreateTable());
+      TestingExecutorUtil::CreateTable());
   const std::vector<storage::Tuple *> tuples;
 
   EXPECT_EQ(source_data_table->GetTileGroupCount(), 4);
@@ -328,7 +328,7 @@ TEST_F(MutateTests, InsertTest) {
 TEST_F(MutateTests, DeleteTest) {
   // We are going to insert a tile group into a table in this test
 
-  storage::DataTable *table = ExecutorTestsUtil::CreateTable();
+  storage::DataTable *table = TestingExecutorUtil::CreateTable();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
@@ -383,7 +383,7 @@ static int SeqScanCount(storage::DataTable *table,
 
 TEST_F(MutateTests, UpdateTest) {
   // We are going to insert a tile group into a table in this test
-  storage::DataTable *table = ExecutorTestsUtil::CreateTable();
+  storage::DataTable *table = TestingExecutorUtil::CreateTable();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   LaunchParallelTest(1, InsertTuple, table, testing_pool);

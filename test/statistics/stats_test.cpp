@@ -18,13 +18,13 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <include/tcop/tcop.h>
+#include "executor/testing_executor_util.h"
+#include "statistics/testing_stats_util.h"
 
 #include "executor/executor_context.h"
-#include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
-#include "statistics/stats_tests_util.h"
 #include "tcop/tcop.h"
 
 #define NUM_ITERATION 50
@@ -70,7 +70,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto index_metadata = table->GetIndex(0)->GetMetadata();
   auto db_oid = database->GetOid();
   auto context = stats::BackendStatsContext::GetInstance();
-  auto stmt = StatsTestsUtil::GetInsertStmt();
+  auto stmt = TestingStatsUtil::GetInsertStmt();
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
     context->InitQueryMetric(stmt, nullptr);
@@ -208,7 +208,7 @@ TEST_F(StatsTests, PerThreadStatsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tups_per_tile_group, true));
+      TestingExecutorUtil::CreateTable(tups_per_tile_group, true));
 
   // Ensure that the tile group is as expected.
   const catalog::Schema *schema = data_table->GetSchema();
@@ -220,14 +220,14 @@ TEST_F(StatsTests, PerThreadStatsTest) {
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
 
-    storage::Tuple tuple = StatsTestsUtil::PopulateTuple(
-        schema, ExecutorTestsUtil::PopulatedValue(populate_value, 0),
-        ExecutorTestsUtil::PopulatedValue(populate_value, 1),
-        ExecutorTestsUtil::PopulatedValue(populate_value, 2),
-        ExecutorTestsUtil::PopulatedValue(populate_value, 3));
+    storage::Tuple tuple = TestingStatsUtil::PopulateTuple(
+        schema, TestingExecutorUtil::PopulatedValue(populate_value, 0),
+        TestingExecutorUtil::PopulatedValue(populate_value, 1),
+        TestingExecutorUtil::PopulatedValue(populate_value, 2),
+        TestingExecutorUtil::PopulatedValue(populate_value, 3));
 
     std::unique_ptr<const planner::ProjectInfo> project_info{
-        TransactionTestsUtil::MakeProjectInfoFromTuple(&tuple)};
+        TestingTransactionUtil::MakeProjectInfoFromTuple(&tuple)};
 
     // Insert
     planner::InsertPlan node(data_table.get(), std::move(project_info));
@@ -256,8 +256,8 @@ TEST_F(StatsTests, PerThreadStatsTest) {
   txn = txn_manager.BeginTransaction();
   for (int i = 0; i < num_rows; i += 2) {
     int result;
-    TransactionTestsUtil::ExecuteRead(
-        txn, data_table.get(), ExecutorTestsUtil::PopulatedValue(i, 0), result);
+    TestingTransactionUtil::ExecuteRead(
+        txn, data_table.get(), TestingExecutorUtil::PopulatedValue(i, 0), result);
   }
   txn_manager.CommitTransaction(txn);
 
@@ -281,8 +281,8 @@ TEST_F(StatsTests, PerThreadStatsTest) {
   // Do a single read and abort
   txn = txn_manager.BeginTransaction();
   int result;
-  TransactionTestsUtil::ExecuteRead(
-      txn, data_table.get(), ExecutorTestsUtil::PopulatedValue(0, 0), result);
+  TestingTransactionUtil::ExecuteRead(
+      txn, data_table.get(), TestingExecutorUtil::PopulatedValue(0, 0), result);
   txn_manager.AbortTransaction(txn);
 
   // Check: # txns committed = 2, # txns aborted = 1, # reads = 6
@@ -304,7 +304,7 @@ TEST_F(StatsTests, PerThreadStatsTest) {
 
   // Read and update the first tuple
   txn = txn_manager.BeginTransaction();
-  TransactionTestsUtil::ExecuteUpdate(txn, data_table.get(), 0, 2);
+  TestingTransactionUtil::ExecuteUpdate(txn, data_table.get(), 0, 2);
   txn_manager.CommitTransaction(txn);
 
   // Check: # txns committed = 3, # updates = 1, # reads = 7
@@ -326,11 +326,11 @@ TEST_F(StatsTests, PerThreadStatsTest) {
 
   // Delete the 6th tuple and read the 1st tuple
   txn = txn_manager.BeginTransaction();
-  TransactionTestsUtil::ExecuteDelete(txn, data_table.get(),
-                                      ExecutorTestsUtil::PopulatedValue(5, 0));
+  TestingTransactionUtil::ExecuteDelete(txn, data_table.get(),
+                                      TestingExecutorUtil::PopulatedValue(5, 0));
   LOG_TRACE("before read");
-  TransactionTestsUtil::ExecuteRead(
-      txn, data_table.get(), ExecutorTestsUtil::PopulatedValue(1, 0), result);
+  TestingTransactionUtil::ExecuteRead(
+      txn, data_table.get(), TestingExecutorUtil::PopulatedValue(1, 0), result);
   txn_manager.CommitTransaction(txn);
 
   // Check: # txns committed = 4, # deletes = 1, # reads = 8
@@ -362,7 +362,7 @@ TEST_F(StatsTests, PerQueryStatsTest) {
   // Create a table first
   auto catalog = catalog::Catalog::GetInstance();
   catalog->CreateDatabase("emp_db", nullptr);
-  StatsTestsUtil::CreateTable();
+  TestingStatsUtil::CreateTable();
 
   // Default database should include 4 metrics tables and the test table
   EXPECT_EQ(catalog::Catalog::GetInstance()
@@ -377,10 +377,10 @@ TEST_F(StatsTests, PerQueryStatsTest) {
   std::shared_ptr<uchar> format_buf;
   std::shared_ptr<uchar> val_buf;
   auto query_params =
-      StatsTestsUtil::GetQueryParams(type_buf, format_buf, val_buf);
+      TestingStatsUtil::GetQueryParams(type_buf, format_buf, val_buf);
 
   // Inserting a tuple end-to-end
-  auto statement = StatsTestsUtil::GetInsertStmt();
+  auto statement = TestingStatsUtil::GetInsertStmt();
   // Initialize the query metric, with prep stmt parameters
   backend_context->InitQueryMetric(statement, query_params);
 
@@ -395,7 +395,7 @@ TEST_F(StatsTests, PerQueryStatsTest) {
   LOG_TRACE("Tuple inserted!");
 
   // Now Updating end-to-end
-  statement = StatsTestsUtil::GetUpdateStmt();
+  statement = TestingStatsUtil::GetUpdateStmt();
   // Initialize the query metric
   backend_context->InitQueryMetric(statement, nullptr);
 
@@ -411,7 +411,7 @@ TEST_F(StatsTests, PerQueryStatsTest) {
   LOG_TRACE("Tuple updated!");
 
   // Deleting end-to-end
-  statement = std::move(StatsTestsUtil::GetDeleteStmt());
+  statement = std::move(TestingStatsUtil::GetDeleteStmt());
   // Initialize the query metric
   backend_context->InitQueryMetric(statement, nullptr);
 

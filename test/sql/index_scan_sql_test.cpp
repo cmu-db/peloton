@@ -12,12 +12,12 @@
 
 #include <memory>
 
+#include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
 #include "planner/create_plan.h"
 
-#include "sql/sql_tests_util.h"
 
 namespace peloton {
 namespace test {
@@ -32,7 +32,7 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   // Create a table first
   LOG_INFO("Creating a table...");
 
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, dept_name "
       "VARCHAR);");
   LOG_INFO("Table created!");
@@ -40,110 +40,110 @@ TEST_F(IndexScanSQLTests, SQLTest) {
   std::vector<StatementResult> result;
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');",
       result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Inserting a tuple...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (2, 'hello_2');",
       result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Inserting a tuple...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');",
       result);
   LOG_INFO("Tuple inserted!");
 
   LOG_INFO("Select a tuple...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT * FROM department_table WHERE dept_id = 1;", result);
-  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("hello_1", SQLTestsUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("hello_1", TestingSQLUtil::GetResultValueAsString(result, 1));
   LOG_INFO("Tuple selected");
 
   LOG_INFO("Select a column...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT dept_name FROM department_table WHERE dept_id = 2;", result);
-  EXPECT_EQ("hello_2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("hello_2", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Column selected");
 
   LOG_INFO("Select COUNT(*)...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;", result);
-  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Aggregation selected");
 
   LOG_INFO("Select COUNT(*)...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id > 1;", result);
-  EXPECT_EQ("2", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Aggregation selected");
 
   LOG_INFO("Select COUNT(*)...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id < 3 and dept_id > "
       "1;",
       result);
-  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Aggregation selected");
 
   LOG_INFO("Select COUNT(*)...");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id < 3 and dept_id > "
       "2;",
       result);
-  EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Aggregation selected");
 
   LOG_INFO("Select COUNT(*)... with removable predicate");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name "
       "= 'hello_2';",
       result);
-  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Removable preciate selected");
 
   LOG_INFO("Select COUNT(*)... with complex removable predicate");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name = "
       "'hello_2' and dept_name = 'hello_2';",
       result);
-  EXPECT_EQ("1", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Complex removable preciate selected");
 
   LOG_INFO("Select COUNT(*)... with complex removable predicate");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 1 and dept_name = "
       "'hello_2' and dept_name = 'hello_2';",
       result);
-  EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Complex removable preciate selected");
 
   LOG_INFO("Select COUNT(*)... with complex removable predicate");
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "SELECT COUNT(*) FROM department_table WHERE dept_id = 2 and dept_name = "
       "'hello_1' and dept_name = 'hello_2';",
       result);
-  EXPECT_EQ("0", SQLTestsUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
   LOG_INFO("Complex removable preciate selected");
 
   // Those are checking update with removable predicates. Should move to other
   // place later.
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2 and "
       "dept_name = "
       "'hello_2' and dept_name = 'hello_2';",
       result);
 
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2 and "
       " dept_name = 'hello_2';",
       result);
 
-  SQLTestsUtil::ExecuteSQLQuery(
+  TestingSQLUtil::ExecuteSQLQuery(
       "UPDATE department_table set dept_name = 'hahaha' WHERE dept_id = 2;",
       result);
 

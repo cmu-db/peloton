@@ -17,8 +17,9 @@
 
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
-#include "executor/executor_tests_util.h"
 #include "storage/tile_group_iterator.h"
+
+#include "executor/testing_executor_util.h"
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
@@ -40,8 +41,8 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false, false,
+      TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false));
+  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false, false,
                                    true, txn);
   txn_manager.CommitTransaction(txn);
 

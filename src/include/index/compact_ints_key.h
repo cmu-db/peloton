@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// ints_key.h
+// compact_ints_key.h
 //
-// Identification: src/include/index/ints_key.h
+// Identification: src/include/index/compact_ints_key.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,7 +24,7 @@ namespace index {
 #define INTSKEY_MAX_SLOTS 4
 
 /*
- * class CompactIntegerKey - Compact representation of multifield integers
+ * class CompactIntsKey - Compact representation of multifield integers
  *
  * This class is used for storing multiple integral fields into a compact
  * array representation. This class is largely used as a static object,
@@ -39,7 +39,7 @@ namespace index {
  * For details of how and why integers must be stored in a big-endian and
  * sign-magnitude format, please refer to adaptive radix tree's key format
  *
- * Note: CompactIntegerKey should always be aligned to 64 bit boundaries; There
+ * Note: CompactIntsKey should always be aligned to 64 bit boundaries; There
  * are static assertion to enforce this rule
  */
 template <size_t KeySize>
@@ -324,7 +324,7 @@ class CompactIntsKey {
    */
   std::string GetInfo() const {
     std::ostringstream os;
-    os << "CompactIntegerKey<" << KeySize << "> - " << key_size_byte << " bytes"
+    os << "CompactIntsKey<" << KeySize << "> - " << key_size_byte << " bytes"
        << std::endl;
 
     // This is the current offset we are on printing the key
@@ -612,7 +612,7 @@ class CompactIntsHasher {
   // Make sure there is no other field
   static_assert(sizeof(CompactIntsKey<KeySize>) ==
                     CompactIntsKey<KeySize>::key_size_byte,
-                "Extra fields detected in class CompactIntegerKey");
+                "Extra fields detected in class CompactIntsKey");
 
   CompactIntsHasher(){};
   CompactIntsHasher(const CompactIntsHasher &) {}
@@ -629,8 +629,7 @@ class CompactIntsHasher {
 
     // For every 8 byte word just combine it with the current seed
     for (size_t i = 0;
-         i < (CompactIntsKey<KeySize>::key_size_byte / sizeof(uint64_t));
-         i++) {
+         i < (CompactIntsKey<KeySize>::key_size_byte / sizeof(uint64_t)); i++) {
       boost::hash_combine(seed, ptr[i]);
     }
 

@@ -21,10 +21,10 @@
 #include "optimizer/simple_optimizer.h"
 #include "parser/parser.h"
 #include "planner/seq_scan_plan.h"
-#include "statistics/stats_tests_util.h"
 #include "tcop/tcop.h"
 
 #include "gtest/gtest.h"
+#include "statistics/testing_stats_util.h"
 
 namespace peloton {
 namespace test {
@@ -44,7 +44,7 @@ TEST_F(CopyTests, Copying) {
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   // Create a table without primary key
-  StatsTestsUtil::CreateTable(false);
+  TestingStatsUtil::CreateTable(false);
   auto txn = txn_manager.BeginTransaction();
   std::string short_string = "eeeeeeeeee";
   std::string long_string =
@@ -76,7 +76,7 @@ TEST_F(CopyTests, Copying) {
         insert_str.length() + integer_len + default_delimiter_len;
 
     // Execute insert
-    auto statement = StatsTestsUtil::GetInsertStmt(12345, insert_str);
+    auto statement = TestingStatsUtil::GetInsertStmt(12345, insert_str);
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
     std::vector<StatementResult> result;

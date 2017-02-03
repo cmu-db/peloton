@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// transaction_tests_util.h
+// testing_transaction_util.h
 //
-// Identification: test/include/concurrency/transaction_tests_util.h
+// Identification: test/include/concurrency/testing_transaction_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -55,19 +55,19 @@
  * See isolation_level_test.cpp for examples.
  */
 
-#include "common/harness.h"
 #include "catalog/schema.h"
-#include "storage/tile_group_factory.h"
-#include "storage/table_factory.h"
-#include "storage/tuple.h"
-#include "storage/tile_group_header.h"
+#include "common/harness.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "expression/comparison_expression.h"
 #include "index/index.h"
 #include "index/index_factory.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "concurrency/transaction_manager.h"
-#include "concurrency/transaction.h"
+#include "storage/table_factory.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tile_group_header.h"
+#include "storage/tuple.h"
 #include "type/types.h"
-#include "expression/comparison_expression.h"
 
 #pragma once
 
@@ -112,7 +112,7 @@ enum txn_op_t {
 
 #define TXN_STORED_VALUE -10000
 
-class TransactionTestsUtil {
+class TestingTransactionUtil {
  public:
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
@@ -134,22 +134,25 @@ class TransactionTestsUtil {
   static bool ExecuteInsert(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteRead(concurrency::Transaction *txn,
-                          storage::DataTable *table, int id, int &result, bool select_for_update = false);
+                          storage::DataTable *table, int id, int &result,
+                          bool select_for_update = false);
   static bool ExecuteDelete(concurrency::Transaction *txn,
-                            storage::DataTable *table, int id, bool select_for_update = false);
+                            storage::DataTable *table, int id,
+                            bool select_for_update = false);
   static bool ExecuteUpdate(concurrency::Transaction *txn,
-                            storage::DataTable *table, int id, int value, bool select_for_update = false);
+                            storage::DataTable *table, int id, int value,
+                            bool select_for_update = false);
   static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
                                    storage::DataTable *table, int old_value,
-                                   int new_value, bool select_for_update = false);
+                                   int new_value,
+                                   bool select_for_update = false);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id, bool select_for_update = false);
 
   static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       const storage::Tuple *tuple);
-  static expression::ComparisonExpression *MakePredicate(
-      int id);
+  static expression::ComparisonExpression *MakePredicate(int id);
 };
 
 struct TransactionOperation {
@@ -162,8 +165,9 @@ struct TransactionOperation {
   // Whether the read is declared as select_for_update
   bool is_for_update;
 
-  TransactionOperation(txn_op_t op_, int id_, int value_, bool is_for_udpate_ = false)
-      : op(op_), id(id_), value(value_), is_for_update(is_for_udpate_) {};
+  TransactionOperation(txn_op_t op_, int id_, int value_,
+                       bool is_for_udpate_ = false)
+      : op(op_), id(id_), value(value_), is_for_update(is_for_udpate_){};
 };
 
 // The schedule for transaction execution
@@ -256,39 +260,40 @@ class TransactionThread {
       case TXN_OP_INSERT: {
         LOG_TRACE("Execute Insert");
         execute_result =
-            TransactionTestsUtil::ExecuteInsert(txn, table, id, value);
+            TestingTransactionUtil::ExecuteInsert(txn, table, id, value);
         break;
       }
       case TXN_OP_READ: {
         LOG_TRACE("Execute Read");
         int result;
-        execute_result =
-            TransactionTestsUtil::ExecuteRead(txn, table, id, result, is_for_update);
+        execute_result = TestingTransactionUtil::ExecuteRead(
+            txn, table, id, result, is_for_update);
         schedule->results.push_back(result);
         break;
       }
       case TXN_OP_DELETE: {
         LOG_TRACE("Execute Delete");
-        execute_result = TransactionTestsUtil::ExecuteDelete(txn, table, id, is_for_update);
+        execute_result =
+            TestingTransactionUtil::ExecuteDelete(txn, table, id, is_for_update);
         break;
       }
       case TXN_OP_UPDATE: {
-        execute_result =
-            TransactionTestsUtil::ExecuteUpdate(txn, table, id, value, is_for_update);
+        execute_result = TestingTransactionUtil::ExecuteUpdate(
+            txn, table, id, value, is_for_update);
         LOG_INFO("Txn %d Update %d's value to %d, %d", schedule->schedule_id,
                  id, value, execute_result);
         break;
       }
       case TXN_OP_SCAN: {
         LOG_TRACE("Execute Scan");
-        execute_result = TransactionTestsUtil::ExecuteScan(
+        execute_result = TestingTransactionUtil::ExecuteScan(
             txn, schedule->results, table, id, is_for_update);
         break;
       }
       case TXN_OP_UPDATE_BY_VALUE: {
         int old_value = id;
         int new_value = value;
-        execute_result = TransactionTestsUtil::ExecuteUpdateByValue(
+        execute_result = TestingTransactionUtil::ExecuteUpdateByValue(
             txn, table, old_value, new_value, is_for_update);
         break;
       }
@@ -302,15 +307,16 @@ class TransactionThread {
       }
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction(txn);
-        LOG_INFO("Txn %d commits: %s", schedule->schedule_id,
-                 schedule->txn_result == ResultType::SUCCESS ? "Success" : "Fail");
+        LOG_INFO(
+            "Txn %d commits: %s", schedule->schedule_id,
+            schedule->txn_result == ResultType::SUCCESS ? "Success" : "Fail");
         txn = NULL;
         break;
       }
       case TXN_OP_READ_STORE: {
         int result;
-        execute_result =
-            TransactionTestsUtil::ExecuteRead(txn, table, id, result, is_for_update);
+        execute_result = TestingTransactionUtil::ExecuteRead(
+            txn, table, id, result, is_for_update);
         schedule->results.push_back(result);
         LOG_INFO(
             "Txn %d READ_STORE, key: %d, read: %d, modify and stored as: %d",
@@ -395,23 +401,28 @@ class TransactionScheduler {
   }
 
   void Insert(int id, int value, bool is_for_update = false) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_INSERT, id, value, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_INSERT, id, value,
+                                                  is_for_update);
     sequence[time++] = cur_txn_id;
   }
   void Read(int id, bool is_for_update = false) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ, id, 0, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ, id, 0,
+                                                  is_for_update);
     sequence[time++] = cur_txn_id;
   }
   void Delete(int id, bool is_for_update = false) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_DELETE, id, 0, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_DELETE, id, 0,
+                                                  is_for_update);
     sequence[time++] = cur_txn_id;
   }
   void Update(int id, int value, bool is_for_update = false) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE, id, value, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE, id, value,
+                                                  is_for_update);
     sequence[time++] = cur_txn_id;
   }
   void Scan(int id, bool is_for_update = false) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_SCAN, id, 0, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_SCAN, id, 0,
+                                                  is_for_update);
     sequence[time++] = cur_txn_id;
   }
   void Abort() {
@@ -423,16 +434,16 @@ class TransactionScheduler {
     sequence[time++] = cur_txn_id;
   }
   void UpdateByValue(int old_value, int new_value, bool is_for_update = false) {
-    schedules[cur_txn_id]
-        .operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(
+        TXN_OP_UPDATE_BY_VALUE, old_value, new_value, is_for_update);
     sequence[time++] = cur_txn_id;
   }
   // ReadStore will store the (result of read + modify) to the schedule, the
   // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
   // to a schedule. See usage in isolation_level_test SIAnomalyTest.
   void ReadStore(int id, int modify, bool is_for_update = false) {
-    schedules[cur_txn_id]
-        .operations.emplace_back(TXN_OP_READ_STORE, id, modify, is_for_update);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id, modify,
+                                                  is_for_update);
     sequence[time++] = cur_txn_id;
   }
 

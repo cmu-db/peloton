@@ -12,13 +12,13 @@
 
 #include <memory>
 
+#include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "executor/create_executor.h"
 #include "optimizer/simple_optimizer.h"
 #include "planner/create_plan.h"
 
-#include "sql/sql_tests_util.h"
 
 namespace peloton {
 namespace test {
@@ -29,7 +29,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
   // Create a table first
-  SQLTestsUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT);");
 
   // Check the table in catalog
   storage::DataTable *table;
@@ -47,19 +47,19 @@ TEST_F(DropSQLTests, DropTableTest) {
   int rows_affected;
 
   // Insert and query from that table
-  SQLTestsUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10);", result,
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10);", result,
                                 tuple_descriptor, rows_affected, error_message);
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
                                 rows_affected, error_message);
   EXPECT_EQ(result[0].second[0], '1');
 
   // Drop the table
-  EXPECT_EQ(SQLTestsUtil::ExecuteSQLQuery("DROP TABLE test;"),
+  EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery("DROP TABLE test;"),
             ResultType::SUCCESS);
 
   // Query from the dropped table
   result.clear();
-  SQLTestsUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
+  TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result, tuple_descriptor,
                                 rows_affected, error_message);
   EXPECT_EQ(result.empty(), true);
 

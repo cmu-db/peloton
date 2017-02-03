@@ -35,7 +35,7 @@ class Tuple;
 
 namespace test {
 
-class JoinTestsUtil {
+class TestingJoinUtil {
  public:
   // Create join predicate
   static expression::AbstractExpression *CreateJoinPredicate();

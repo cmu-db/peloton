@@ -31,7 +31,7 @@ class AbstractOptimizer;
 
 namespace test {
 
-class SQLTestsUtil {
+class TestingSQLUtil {
  public:
   // Show the content in the specific table in the specific database
   // Note: In order to see the content from the command line, you have to

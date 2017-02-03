@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "executor/testing_executor_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "gc/gc_manager_factory.h"
@@ -19,7 +20,6 @@
 #include "storage/tile_group.h"
 #include "storage/database.h"
 
-#include "executor/executor_tests_util.h"
 
 namespace peloton {
 
@@ -57,13 +57,13 @@ TEST_F(TransactionLevelGCManagerTests, RegisterTableTest) {
   gc::GCManagerFactory::Configure(1);
   auto catalog = catalog::Catalog::GetInstance();
   // create database
-  auto database = ExecutorTestsUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  auto database = TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(catalog->HasDatabase(db_id));
 
   // create table
   std::unique_ptr<storage::DataTable> data_table(
-      ExecutorTestsUtil::CreateTable(TESTS_TUPLES_PER_TILEGROUP, false));
+      TestingExecutorUtil::CreateTable(TESTS_TUPLES_PER_TILEGROUP, false));
 
   // add table into database
   int table_oid = data_table->GetOid();
@@ -79,7 +79,7 @@ TEST_F(TransactionLevelGCManagerTests, RegisterTableTest) {
   data_table.release();
 
   // DROP!
-  ExecutorTestsUtil::DeleteDatabase(DEFAULT_DB_NAME);
+  TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
   EXPECT_FALSE(catalog->HasDatabase(db_id));
 
   gc::GCManagerFactory::Configure(0);

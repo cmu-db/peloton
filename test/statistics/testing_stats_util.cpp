@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "statistics/stats_tests_util.h"
+#include "statistics/testing_stats_util.h"
+
+#include "executor/testing_executor_util.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
-#include "executor/executor_tests_util.h"
 #include "executor/insert_executor.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/mock_executor.h"
@@ -29,7 +30,7 @@
 namespace peloton {
 namespace test {
 
-void StatsTestsUtil::ShowTable(std::string database_name,
+void TestingStatsUtil::ShowTable(std::string database_name,
                                std::string table_name) {
   catalog::Catalog::GetInstance()->GetTableWithName(database_name, table_name);
   std::unique_ptr<Statement> statement;
@@ -50,7 +51,7 @@ void StatsTestsUtil::ShowTable(std::string database_name,
                                    result, result_format);
 }
 
-storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
+storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
                                              int first_col_val,
                                              int second_col_val,
                                              int third_col_val,
@@ -72,7 +73,7 @@ storage::Tuple StatsTestsUtil::PopulateTuple(const catalog::Schema *schema,
   return tuple;
 }
 
-std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
+std::shared_ptr<stats::QueryMetric::QueryParams> TestingStatsUtil::GetQueryParams(
     std::shared_ptr<uchar> &type_buf, std::shared_ptr<uchar> &format_buf,
     std::shared_ptr<uchar> &val_buf) {
   // Type
@@ -99,7 +100,7 @@ std::shared_ptr<stats::QueryMetric::QueryParams> StatsTestsUtil::GetQueryParams(
   return query_params;
 }
 
-void StatsTestsUtil::CreateTable(bool has_primary_key) {
+void TestingStatsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");
 
   auto id_column = catalog::Column(type::Type::INTEGER,
@@ -118,15 +119,14 @@ void StatsTestsUtil::CreateTable(bool has_primary_key) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
   planner::CreatePlan node("department_table", "emp_db",
-                           std::move(table_schema),
-                           CreateType::TABLE);
+                           std::move(table_schema), CreateType::TABLE);
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
   txn_manager.CommitTransaction(txn);
 }
 
-std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt(int id,
+std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
                                                          std::string val) {
   std::shared_ptr<Statement> statement;
   std::string sql =
@@ -139,7 +139,7 @@ std::shared_ptr<Statement> StatsTestsUtil::GetInsertStmt(int id,
   return statement;
 }
 
-std::shared_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
+std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
   std::shared_ptr<Statement> statement;
   std::string sql = "DELETE FROM EMP_DB.department_table";
   LOG_INFO("Query: %s", sql.c_str());
@@ -148,7 +148,7 @@ std::shared_ptr<Statement> StatsTestsUtil::GetDeleteStmt() {
   return statement;
 }
 
-std::shared_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
+std::shared_ptr<Statement> TestingStatsUtil::GetUpdateStmt() {
   std::shared_ptr<Statement> statement;
   std::string sql =
       "UPDATE EMP_DB.department_table SET dept_name = 'CS' WHERE dept_id = 1";
@@ -158,7 +158,7 @@ std::shared_ptr<Statement> StatsTestsUtil::GetUpdateStmt() {
   return statement;
 }
 
-void StatsTestsUtil::ParseAndPlan(Statement *statement, std::string sql) {
+void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto &peloton_parser = parser::Parser::GetInstance();
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "parser/table_ref.h"
-#include "../include/parser/select_statement.h"
+#include "parser/select_statement.h"
 
 namespace peloton {
 namespace parser {

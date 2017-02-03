@@ -1,10 +1,10 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // skiplist.h
 //
-// Identification: src/index/skiplist.h
+// Identification: src/include/index/skiplist.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
