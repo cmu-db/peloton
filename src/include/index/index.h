@@ -82,11 +82,17 @@ class IndexMetadata : public Printable {
   }
 
   /*
-   * GetKeySchama() - Returns a schema object pointer that represents
-   *                  the schema of indexed columns, from leading column
-   *                  to the least important columns
+   * Returns a schema object pointer that represents
+   * the schema of indexed columns, from leading column
+   * to the least important columns
    */
   inline const catalog::Schema *GetKeySchema() const { return key_schema; }
+
+  /*
+   * Returns a schema object pointer that represents
+   * the schema of the underlying table
+   */
+  inline const catalog::Schema *GetTupleSchema() const { return tuple_schema; }
 
   // Return the number of columns inside index key (not in tuple key)
   //

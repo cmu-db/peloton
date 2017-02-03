@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "common/macros.h"
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 #include "type/types.h"
@@ -34,7 +35,14 @@ class TestingIndexUtil {
   /**
    * Insert helper function
    */
-  static void InsertTest(index::Index *index, type::AbstractPool *pool,
+  static void InsertHelper(index::Index *index, type::AbstractPool *pool,
+                         size_t scale_factor,
+                         UNUSED_ATTRIBUTE uint64_t thread_itr);
+
+  /**
+   * Delete helper function
+   */
+  static void DeleteHelper(index::Index *index, type::AbstractPool *pool,
                          size_t scale_factor,
                          UNUSED_ATTRIBUTE uint64_t thread_itr);
 

@@ -109,7 +109,7 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   return index;
 }
 
-void TestingIndexUtil::InsertTest(index::Index *index, type::AbstractPool *pool,
+void TestingIndexUtil::InsertHelper(index::Index *index, type::AbstractPool *pool,
                                   size_t scale_factor,
                                   UNUSED_ATTRIBUTE uint64_t thread_itr) {
   const catalog::Schema *key_schema = index->GetKeySchema();
@@ -167,6 +167,64 @@ void TestingIndexUtil::InsertTest(index::Index *index, type::AbstractPool *pool,
     index->InsertEntry(key2.get(), item1.get());
     index->InsertEntry(key3.get(), item1.get());
     index->InsertEntry(key4.get(), item1.get());
+  }
+}
+
+// DELETE HELPER FUNCTION
+void TestingIndexUtil::DeleteHelper(index::Index *index, type::AbstractPool *pool,
+                                  size_t scale_factor,
+                                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
+  const catalog::Schema *key_schema = index->GetKeySchema();
+
+  // Loop based on scale factor
+  for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
+    // Delete a bunch of keys based on scale itr
+    std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
+    std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
+    std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
+    std::unique_ptr<storage::Tuple> key3(new storage::Tuple(key_schema, true));
+    std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema, true));
+
+    key0->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
+    key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
+    key1->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
+    key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
+    key2->SetValue(0, type::ValueFactory::GetIntegerValue(100 * scale_itr),
+                   pool);
+    key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
+    key3->SetValue(0, type::ValueFactory::GetIntegerValue(400 * scale_itr),
+                   pool);
+    key3->SetValue(1, type::ValueFactory::GetVarcharValue("d"), pool);
+    key4->SetValue(0, type::ValueFactory::GetIntegerValue(500 * scale_itr),
+                   pool);
+    key4->SetValue(
+        1, type::ValueFactory::GetVarcharValue(StringUtil::Repeat("e", 1000)),
+        pool);
+
+    // DELETE
+    // key0 1 (100, a)   TestingIndexUtil::item0
+    // key1 5  (100, b)  item 0 1 2 (0 1 1 1 2)
+    // key2 1 (100, c) item 1
+    // key3 1 (400, d) item 1
+    // key4 1  (500, eeeeee...) item 1
+    // no keyonce (1000, f)
+
+    // TestingIndexUtil::item0 = 2
+    // TestingIndexUtil::item1 = 6
+    // TestingIndexUtil::item2 = 1
+    index->DeleteEntry(key0.get(), TestingIndexUtil::item0.get());
+    index->DeleteEntry(key1.get(), TestingIndexUtil::item1.get());
+    index->DeleteEntry(key2.get(), TestingIndexUtil::item2.get());
+    index->DeleteEntry(key3.get(), TestingIndexUtil::item1.get());
+    index->DeleteEntry(key4.get(), TestingIndexUtil::item1.get());
+
+    // should be no key0
+    // key1 item 0 1 2
+    // key2 item 1
+    // no key3
+    // no key4
   }
 }
 
