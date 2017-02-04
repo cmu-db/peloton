@@ -31,9 +31,12 @@ configuration state;
 // Main Entry Point
 void RunBenchmark() {
 
-  if (state.gc_mode == true) {
+  if (state.gc_mode == false) {
+    gc::GCManagerFactory::Configure(0);
+  } else {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
+
   
   std::unique_ptr<std::thread> epoch_thread;
   std::vector<std::unique_ptr<std::thread>> gc_threads;

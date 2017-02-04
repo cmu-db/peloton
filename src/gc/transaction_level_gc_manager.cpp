@@ -49,13 +49,11 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 void TransactionLevelGCManager::Running(const int &thread_id) {
   PL_ASSERT(is_running_ == true);
   uint32_t backoff_shifts = 0;
-
   while (true) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
 
     PL_ASSERT(max_cid != MAX_CID);
-
     int reclaimed_count = Reclaim(thread_id, max_cid);
 
     int unlinked_count = Unlink(thread_id, max_cid);
@@ -63,7 +61,6 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     if (is_running_ == false) {
       return;
     }
-
     if (reclaimed_count == 0 && unlinked_count == 0) {
       // sleep at most 0.8192 s
       if (backoff_shifts < 13) {
@@ -80,7 +77,6 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 
 
 void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) {
-
   // Add the garbage context to the lock-free queue
   std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp));
   unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
@@ -171,13 +167,12 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_ci
 
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(std::shared_ptr<GarbageContext> garbage_ctx) {
-  
   for (auto &entry : *(garbage_ctx->gc_set_.get())) {
 
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
 
-    // During the resetting, a table may deconstruct because of the DROP TABLE request
+    // During the resetting, a table may be deconstructed because of the DROP TABLE request
     if (tile_group == nullptr) {
       return;
     }
@@ -216,7 +211,6 @@ ItemPointer TransactionLevelGCManager::ReturnFreeSlot(const oid_t &table_id) {
   if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
     return INVALID_ITEMPOINTER;
   }
-
   ItemPointer location;
   PL_ASSERT(recycle_queue_map_.find(table_id) != recycle_queue_map_.end());
   auto recycle_queue = recycle_queue_map_[table_id];

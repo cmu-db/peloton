@@ -162,7 +162,7 @@ private:
     
     PL_ASSERT(is_running_ == true);
     
-    while (!is_running_) {
+    while (is_running_ == true) {
       // the epoch advances every EPOCH_LENGTH milliseconds.
       std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
 

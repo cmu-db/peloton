@@ -31,7 +31,9 @@ configuration state;
 // Main Entry Point
 void RunBenchmark() {
 
-  if (state.gc_mode == true) {
+  if (state.gc_mode == false) {
+    gc::GCManagerFactory::Configure(0);
+  } else {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
 
@@ -40,7 +42,7 @@ void RunBenchmark() {
 
   concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
   gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
-
+ 
   // start epoch.
   epoch_manager.StartEpoch(epoch_thread);
   
