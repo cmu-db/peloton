@@ -27,7 +27,7 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : ycsb <options> \n"
           "   -h --help              :  print help message \n"
-          "   -i --index             :  index type: bwtree (default) or btree\n"
+          "   -i --index             :  index type: bwtree (default) \n"
           "   -k --scale_factor      :  # of K tuples \n"
           "   -d --duration          :  execution duration \n"
           "   -p --profile_duration  :  profile duration \n"

@@ -21,6 +21,7 @@
 #include "benchmark/tpcc/tpcc_workload.h"
 
 #include "gc/gc_manager_factory.h"
+#include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -34,9 +35,19 @@ void RunBenchmark() {
   if (state.gc_mode == true) {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
+
+  std::unique_ptr<std::thread> epoch_thread;
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
+
+  // start epoch.
+  epoch_manager.StartEpoch();
   
-  gc::GCManagerFactory::GetInstance().StartGC();
-  
+  // start GC.
+  gc_manager.StartGC();
+
   // Create the database
   CreateTPCCDatabase();
 
@@ -46,7 +57,11 @@ void RunBenchmark() {
   // Run the workload
   RunWorkload();
   
-  gc::GCManagerFactory::GetInstance().StopGC();
+  // stop GC.
+  gc_manager.StopGC();
+
+  // stop epoch.
+  epoch_manager.StopEpoch();
 
   // Emit throughput
   WriteOutput();

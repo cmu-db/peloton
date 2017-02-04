@@ -20,6 +20,7 @@
 #include "benchmark/ycsb/ycsb_workload.h"
 
 #include "gc/gc_manager_factory.h"
+#include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
@@ -33,7 +34,17 @@ void RunBenchmark() {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
   
-  gc::GCManagerFactory::GetInstance().StartGC();
+  std::unique_ptr<std::thread> epoch_thread;
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
+
+  // start epoch.
+  // epoch_manager.StartEpoch();
+  
+  // start GC.
+  gc_manager.StartGC();
 
   // Create the database
   CreateYCSBDatabase();
@@ -44,7 +55,11 @@ void RunBenchmark() {
   // Run the workload
   RunWorkload();
   
-  gc::GCManagerFactory::GetInstance().StopGC();
+  // stop GC.
+  gc_manager.StopGC();
+
+  // stop epoch.
+  // epoch_manager.StopEpoch();
 
   // Emit throughput
   WriteOutput();

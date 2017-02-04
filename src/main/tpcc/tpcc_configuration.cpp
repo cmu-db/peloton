@@ -26,7 +26,7 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : tpcc <options> \n"
           "   -h --help              :  print help message \n"
-          "   -i --index             :  index type: bwtree (default) or btree\n"
+          "   -i --index             :  index type: bwtree (default) \n"
           "   -k --scale_factor      :  scale factor \n"
           "   -d --duration          :  execution duration \n"
           "   -p --profile_duration  :  profile duration \n"
