@@ -18,6 +18,7 @@
 
 #include "common/macros.h"
 #include "type/types.h"
+#include "common/logger.h"
 #include "common/platform.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
@@ -77,20 +78,21 @@ public:
       reclaim_tail_token_(true),
       max_cid_ro_(READ_ONLY_START_CID), 
       max_cid_gc_(0), 
-      finish_(false) {
-  }
+      is_running_(false) {}
 
   void Reset(const size_t &current_epoch) {
     current_epoch_ = current_epoch;
   }
 
   void StartEpoch() {
-    finish_ = false;
-    thread_pool.SubmitDedicatedTask(&EpochManager::Start, this);
+    LOG_TRACE("Starting epoch");
+    this->is_running_ = true;
+    thread_pool.SubmitDedicatedTask(&EpochManager::Running, this);
   }
 
   void StopEpoch() {
-    finish_ = true;
+    LOG_TRACE("Stopping epoch");
+    this->is_running_ = false;
   }
 
   size_t EnterReadOnlyEpoch(cid_t begin_cid) {
@@ -149,8 +151,11 @@ public:
   }
 
 private:
-  void Start() {
-    while (!finish_) {
+  void Running() {
+    
+    PL_ASSERT(is_running_ == true);
+    
+    while (!is_running_) {
       // the epoch advances every EPOCH_LENGTH milliseconds.
       std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
 
@@ -283,7 +288,7 @@ private:
   std::atomic<bool> reclaim_tail_token_;
   cid_t max_cid_ro_;
   cid_t max_cid_gc_;
-  bool finish_;
+  bool is_running_;
 };
 
 

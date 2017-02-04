@@ -21,14 +21,6 @@
 namespace peloton {
 namespace gc {
 
-void TransactionLevelGCManager::StartGC(int thread_id) {
-  gc_threads_[thread_id].reset(new std::thread(&TransactionLevelGCManager::Running, this, thread_id));
-}
-
-void TransactionLevelGCManager::StopGC(int thread_id) {
-  this->gc_threads_[thread_id]->join();
-  ClearGarbage(thread_id);
-}
 
 bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
@@ -55,7 +47,7 @@ bool TransactionLevelGCManager::ResetTuple(const ItemPointer &location) {
 }
 
 void TransactionLevelGCManager::Running(const int &thread_id) {
-
+  PL_ASSERT(is_running_ == true);
   uint32_t backoff_shifts = 0;
 
   while (true) {
