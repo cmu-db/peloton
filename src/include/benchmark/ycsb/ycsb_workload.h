@@ -41,6 +41,7 @@ std::vector<std::vector<type::Value>> ExecuteRead(executor::AbstractExecutor* ex
 
 void ExecuteUpdate(executor::AbstractExecutor* executor);
 
+void PinToCore(size_t core);
 
 }  // namespace ycsb
 }  // namespace benchmark
