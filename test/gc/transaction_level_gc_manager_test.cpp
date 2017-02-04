@@ -40,17 +40,24 @@ TEST_F(TransactionLevelGCManagerTests, EnableTest) {
 }
 
 TEST_F(TransactionLevelGCManagerTests, StartGC) {
+
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
   gc::GCManagerFactory::Configure(1);
 
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   
-  gc_manager.StartGC();
+  gc_manager.StartGC(gc_threads);
   EXPECT_TRUE(gc_manager.GetStatus() == true);
 
   gc_manager.StopGC();
   EXPECT_TRUE(gc_manager.GetStatus() == false);
 
   gc::GCManagerFactory::Configure(0);
+  
+  for (auto &gc_thread : gc_threads) {
+    gc_thread->join();
+  }
 }
 
 TEST_F(TransactionLevelGCManagerTests, RegisterTableTest) {
