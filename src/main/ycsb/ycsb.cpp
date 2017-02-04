@@ -27,6 +27,7 @@ namespace benchmark {
 namespace ycsb {
 
 configuration state;
+
 // Main Entry Point
 void RunBenchmark() {
 

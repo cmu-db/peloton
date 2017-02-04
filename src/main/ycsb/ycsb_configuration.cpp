@@ -40,6 +40,7 @@ void Usage(FILE *out) {
           "   -m --string_mode       :  store strings \n"
           "   -g --gc_mode           :  enable garbage collection \n"
           "   -n --gc_backend_count  :  # of gc backends \n"
+          "   -l --loader_count      :  # of loaders \n"
   );
 }
 
@@ -57,6 +58,7 @@ static struct option opts[] = {
     { "string_mode", no_argument, NULL, 'm' },
     { "gc_mode", no_argument, NULL, 'g' },
     { "gc_backend_count", optional_argument, NULL, 'n' },
+    { "loader_count", optional_argument, NULL, 'n' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -163,11 +165,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.string_mode = false;
   state.gc_mode = false;
   state.gc_backend_count = 1;
+  state.loader_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hemgi:k:d:p:b:c:o:u:z:n:", opts, &idx);
+    int c = getopt_long(argc, argv, "hemgi:k:d:p:b:c:o:u:z:n:l:", opts, &idx);
 
     if (c == -1) break;
 
@@ -182,6 +185,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         }
         break;
       }
+      case 'l':
+        state.loader_count = atoi(optarg);
+        break;
       case 'k':
         state.scale_factor = atoi(optarg);
         break;
