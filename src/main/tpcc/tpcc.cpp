@@ -43,10 +43,10 @@ void RunBenchmark() {
   gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
 
   // start epoch.
-  epoch_manager.StartEpoch();
+  epoch_manager.StartEpoch(epoch_thread);
   
   // start GC.
-  gc_manager.StartGC();
+  gc_manager.StartGC(gc_threads);
 
   // Create the database
   CreateTPCCDatabase();
@@ -62,6 +62,17 @@ void RunBenchmark() {
 
   // stop epoch.
   epoch_manager.StopEpoch();
+
+  // join all gc threads
+  for (auto &gc_thread : gc_threads) {
+    PL_ASSERT(gc_thread != nullptr);
+    gc_thread->join();
+  }
+
+  // join epoch thread
+  PL_ASSERT(epoch_thread != nullptr);
+  epoch_thread->join();
+
 
   // Emit throughput
   WriteOutput();
