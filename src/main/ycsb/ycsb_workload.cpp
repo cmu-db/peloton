@@ -108,15 +108,12 @@ void RunBackend(oid_t thread_id) {
       execution_count_ref++;
       // backoff
       if (state.exp_backoff) {
-        if (backoff_shifts < 63) {
+        if (backoff_shifts < 13) {
           ++backoff_shifts;
         }
-        uint64_t spins = 1UL << backoff_shifts;
-        spins *= 100;
-        while (spins) {
-          _mm_pause();
-          --spins;
-        }
+        uint64_t sleep_duration = 1UL << backoff_shifts;
+        sleep_duration *= 100;
+        std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
       }
     }
     backoff_shifts >>= 1;
