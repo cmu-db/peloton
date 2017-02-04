@@ -84,6 +84,13 @@ public:
     current_epoch_ = current_epoch;
   }
 
+  void StartEpoch(std::unique_ptr<std::thread> &epoch_thread) {
+    LOG_TRACE("Starting epoch");
+    this->is_running_ = true;
+    epoch_thread.reset(new std::thread(&EpochManager::Running, this));
+
+  }
+
   void StartEpoch() {
     LOG_TRACE("Starting epoch");
     this->is_running_ = true;

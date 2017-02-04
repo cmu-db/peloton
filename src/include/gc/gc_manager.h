@@ -13,6 +13,8 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <thread>
 
 #include "common/item_pointer.h"
 #include "common/logger.h"
@@ -51,6 +53,8 @@ class GCManager {
 
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }
+
+  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
 
   virtual void StartGC() {}
 

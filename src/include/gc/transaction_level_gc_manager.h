@@ -68,6 +68,16 @@ public:
     return gc_manager;
   }
 
+  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> &gc_threads) {
+    LOG_TRACE("Starting GC");
+    this->is_running_ = true;
+    gc_threads.resize(gc_thread_count_);
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
+
+    }
+  }
+
   virtual void StartGC() override {
     LOG_TRACE("Starting GC");
     this->is_running_ = true;
