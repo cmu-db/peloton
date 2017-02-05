@@ -90,7 +90,9 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 
   txn_id_t txn_id = GetNextTransactionId();
   cid_t begin_cid = GetNextCommitId();
-  Transaction *txn = new Transaction(txn_id, begin_cid);
+  
+  Transaction *txn = new Transaction(txn_id);
+  txn->Init(begin_cid);
 
   auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
   txn->SetEpochId(eid);
@@ -105,11 +107,14 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
-  txn_id_t txn_id = READONLY_TXN_ID;
+  
   auto &epoch_manager = EpochManagerFactory::GetInstance();
 
+  txn_id_t txn_id = READONLY_TXN_ID;
   cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-  Transaction *txn = new Transaction(txn_id, begin_cid, true);
+  
+  Transaction *txn = new Transaction(txn_id);
+  txn->Init(begin_cid, true);
 
   auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
   txn->SetEpochId(eid);

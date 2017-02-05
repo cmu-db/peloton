@@ -27,15 +27,20 @@ class TransactionPoolTests : public PelotonTest {};
 
 TEST_F(TransactionPoolTests, ConstructionTest) {
   
-  concurrency::TransactionPool txn_pool(10);
+  concurrency::TransactionPool::Configure(5);
+  auto &txn_pool = concurrency::TransactionPool::GetInstance();
 
-  EXPECT_TRUE(true);
+  size_t pool_size = txn_pool.GetMaxConcurrency();
+
+  EXPECT_TRUE(pool_size == 5);
 }
 
 
 TEST_F(TransactionPoolTests, AcquireTest) {
   
-  concurrency::TransactionPool txn_pool(3);
+  concurrency::TransactionPool::Configure(3);
+
+  auto &txn_pool = concurrency::TransactionPool::GetInstance();
 
   concurrency::Transaction *txn1 = nullptr;
   txn_pool.AcquireTransaction(txn1);

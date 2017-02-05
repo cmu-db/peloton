@@ -26,22 +26,32 @@ class TransactionPool {
   TransactionPool(TransactionPool const &) = delete;
 
  public:
-  TransactionPool(const size_t &max_concurrency) 
-    : max_concurrency_(max_concurrency),
-      transactions_(max_concurrency) { 
+  TransactionPool() : transactions_(max_concurrency_) { 
 
-    for (size_t i = 0; i < max_concurrency; ++i) {
-      transactions_.Enqueue(new Transaction());
+    // initiate all the transactions
+    for (size_t i = 0; i < max_concurrency_; ++i) {
+      transactions_.Enqueue(new Transaction(i));
     }
+
   }
 
   ~TransactionPool() {
+    // deconstruct all the transactions
     for (size_t i = 0; i < max_concurrency_; ++i) {
       Transaction *txn;
       transactions_.Dequeue(txn);
       delete txn;
       txn = nullptr;
     }
+  }
+
+  static TransactionPool &GetInstance() {
+    static TransactionPool transaction_pool;
+    return transaction_pool;
+  }
+
+  static void Configure(const size_t max_concurrency) {
+    max_concurrency_ = max_concurrency;
   }
 
   void AcquireTransaction(Transaction *txn) {
@@ -61,10 +71,11 @@ class TransactionPool {
   }
 
  private:
-  size_t max_concurrency_;
+  static size_t max_concurrency_;
   peloton::LockFreeQueue<Transaction*> transactions_;
 
 };
+
 
 }  // End concurrency namespace
 }  // End peloton namespace

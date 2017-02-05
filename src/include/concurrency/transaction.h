@@ -34,27 +34,34 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  Transaction() { Init(INVALID_TXN_ID, INVALID_CID); }
-
-  Transaction(const txn_id_t &txn_id) { Init(txn_id, INVALID_CID); }
-
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) {
-    Init(txn_id, begin_cid);
+  
+  // Deprecated
+  Transaction() : txn_id_(INVALID_TXN_ID) { 
+    Init(INVALID_CID); 
   }
 
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid, bool ro) {
-    Init(txn_id, begin_cid);
-    declared_readonly_ = ro;
+  Transaction(const txn_id_t &txn_id) : txn_id_(txn_id) { 
+    Init(INVALID_CID); 
+  }
+
+  // Deprecated
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) : txn_id_(txn_id) {
+    Init(begin_cid);
+  }
+
+  // Deprecated
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid, bool ro) : txn_id_(txn_id) {
+    Init(begin_cid, ro);
   }
 
   ~Transaction() {}
 
-  void Init(const txn_id_t &txn_id, const cid_t &begin_cid) {
-    txn_id_ = txn_id;
+  void Init(const cid_t &begin_cid, const bool readonly = false) {
     begin_cid_ = begin_cid;
+    declared_readonly_ = readonly;
+
     end_cid_ = MAX_CID;
     is_written_ = false;
-    declared_readonly_ = false;
     insert_count_ = 0;
     gc_set_.reset(new GCSet());
   }
