@@ -13,6 +13,7 @@
 #pragma once
 
 #include "container/lock_free_queue.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace concurrency {
@@ -25,15 +26,17 @@ class TransactionPool {
   TransactionPool(TransactionPool const &) = delete;
 
  public:
-  TransactionPool(const size_t &max_concurrency) { 
-    transactions_.resize(max_concurrency);
+  TransactionPool(const size_t &max_concurrency) 
+    : max_concurrency_(max_concurrency),
+      transactions_(max_concurrency) { 
+
     for (size_t i = 0; i < max_concurrency; ++i) {
       transactions_.Enqueue(new Transaction());
     }
   }
 
   ~TransactionPool() {
-    for (size_t i = 0; i < max_concurrency; ++i) {
+    for (size_t i = 0; i < max_concurrency_; ++i) {
       Transaction *txn;
       transactions_.Dequeue(txn);
       delete txn;
@@ -41,9 +44,12 @@ class TransactionPool {
     }
   }
 
-  void AcquireTransaction() {
-    Transaction *txn = nullptr;
-    while (Dequeue(txn) == false);
+  void AcquireTransaction(Transaction *txn) {
+    while (transactions_.Dequeue(txn) == false);
+  }
+
+  bool TryAcquireTransaction(Transaction *txn) {
+      return transactions_.Dequeue(txn);
   }
 
   void ReleaseTransaction(Transaction *txn) {
