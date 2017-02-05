@@ -17,5 +17,7 @@ namespace concurrency {
 
 size_t TransactionPool::max_concurrency_ = 10;
 
+size_t TransactionPool::scalability_hint_ = 1;
+
 }  // End concurrency namespace
 }  // End peloton namespace

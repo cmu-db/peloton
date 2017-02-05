@@ -78,9 +78,13 @@ class Transaction : public Printable {
 
   inline size_t GetEpochId() const { return epoch_id_; }
 
+  inline size_t GetPoolHint() const { return pool_hint_; }
+
   inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
 
   inline void SetEpochId(const size_t eid) { epoch_id_ = eid; }
+
+  inline void SetPoolHint(const size_t hint) { pool_hint_ = hint; }
 
   void RecordRead(const ItemPointer &);
 
@@ -147,6 +151,8 @@ class Transaction : public Printable {
   size_t insert_count_;
 
   bool declared_readonly_;
+
+  size_t pool_hint_;
 };
 
 }  // End concurrency namespace

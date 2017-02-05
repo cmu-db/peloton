@@ -85,19 +85,15 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
+  PL_ASSERT(is_from_transaction_pool_ == false);
+
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.PrepareLogging();
 
   txn_id_t txn_id = GetNextTransactionId();
   cid_t begin_cid = GetNextCommitId();
   
-  Transaction *txn = nullptr;
-
-  if (is_from_transaction_pool_ == true) {
-    TransactionPool::GetInstance().AcquireTransaction(txn);
-  } else {
-    txn = new Transaction(txn_id);
-  }
+  Transaction *txn = new Transaction(txn_id);
 
   txn->Init(begin_cid);
 
@@ -114,19 +110,67 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
+  PL_ASSERT(is_from_transaction_pool_ == false);
   
   auto &epoch_manager = EpochManagerFactory::GetInstance();
 
   txn_id_t txn_id = READONLY_TXN_ID;
   cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
   
+  Transaction *txn = new Transaction(txn_id);
+
+  txn->Init(begin_cid, true);
+
+  auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
+  txn->SetEpochId(eid);
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()
+        ->GetTxnLatencyMetric()
+        .StartTimer();
+  }
+
+  return txn;
+}
+
+// begin transaction from thread pool
+Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t hint) {
+  PL_ASSERT(is_from_transaction_pool_ == true);
+
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.PrepareLogging();
+
+  cid_t begin_cid = GetNextCommitId();
+  
   Transaction *txn = nullptr;
 
-  if (is_from_transaction_pool_ == true) {
-    TransactionPool::GetInstance().AcquireTransaction(txn);
-  } else {
-    txn = new Transaction(txn_id);
+  TransactionPool::GetInstance().AcquireTransaction(txn, hint);
+  
+  txn->Init(begin_cid);
+
+  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+  txn->SetEpochId(eid);
+
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()
+        ->GetTxnLatencyMetric()
+        .StartTimer();
   }
+
+  return txn;
+}
+
+// begin transaction from thread pool
+Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t hint) {
+  PL_ASSERT(is_from_transaction_pool_ == true);
+
+  auto &epoch_manager = EpochManagerFactory::GetInstance();
+
+  cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
+  
+  Transaction *txn = nullptr;
+
+  TransactionPool::GetInstance().AcquireTransaction(txn, hint);
 
   txn->Init(begin_cid, true);
 

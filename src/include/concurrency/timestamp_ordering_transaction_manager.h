@@ -104,6 +104,10 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual Transaction *BeginReadonlyTransaction();
 
+  virtual Transaction *BeginTransaction(const size_t hint);
+
+  virtual Transaction *BeginReadonlyTransaction(const size_t hint);
+
   virtual void EndTransaction(Transaction *current_txn);
 
   virtual void EndReadonlyTransaction(Transaction *current_txn);

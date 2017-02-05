@@ -21,6 +21,7 @@
 
 #include "gc/gc_manager_factory.h"
 #include "concurrency/epoch_manager_factory.h"
+#include "concurrency/transaction_pool.h"
 
 namespace peloton {
 namespace benchmark {

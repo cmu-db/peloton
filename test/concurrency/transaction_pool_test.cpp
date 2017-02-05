@@ -25,45 +25,42 @@ namespace test {
 
 class TransactionPoolTests : public PelotonTest {};
 
-TEST_F(TransactionPoolTests, ConstructionTest) {
+
+TEST_F(TransactionPoolTests, Test) {
   
-  concurrency::TransactionPool::Configure(5);
-  auto &txn_pool = concurrency::TransactionPool::GetInstance();
-
-  size_t pool_size = txn_pool.GetMaxConcurrency();
-
-  EXPECT_TRUE(pool_size == 5);
-}
-
-
-TEST_F(TransactionPoolTests, AcquireTest) {
-  
-  concurrency::TransactionPool::Configure(3);
+  concurrency::TransactionPool::Configure(4, 2);
 
   auto &txn_pool = concurrency::TransactionPool::GetInstance();
 
   concurrency::Transaction *txn1 = nullptr;
-  txn_pool.AcquireTransaction(txn1);
-
+  txn_pool.AcquireTransaction(txn1, 0);
+  EXPECT_EQ(txn1->GetTransactionId(), 0);
+  
   concurrency::Transaction *txn2 = nullptr;
-  txn_pool.AcquireTransaction(txn2);
+  txn_pool.AcquireTransaction(txn2, 0);
+  EXPECT_EQ(txn2->GetTransactionId(), 1);
 
   concurrency::Transaction *txn3 = nullptr;
-  txn_pool.AcquireTransaction(txn3);
+  txn_pool.AcquireTransaction(txn3, 1);
+  EXPECT_EQ(txn3->GetTransactionId(), 2);
 
   concurrency::Transaction *txn4 = nullptr;
-  bool rt = txn_pool.TryAcquireTransaction(txn4);
-  EXPECT_TRUE(rt == false);
+  txn_pool.AcquireTransaction(txn4, 1);
+  EXPECT_EQ(txn4->GetTransactionId(), 3);
+  
+  concurrency::Transaction *txn5 = nullptr;
+  bool rt = txn_pool.TryAcquireTransaction(txn5, 0);
+  EXPECT_EQ(rt, false);
 
   txn_pool.ReleaseTransaction(txn1);
   txn_pool.ReleaseTransaction(txn2);
   txn_pool.ReleaseTransaction(txn3);
-
-  rt = txn_pool.TryAcquireTransaction(txn4);
-  EXPECT_TRUE(rt == true);
   txn_pool.ReleaseTransaction(txn4);
 
-  EXPECT_TRUE(true);
+  rt = txn_pool.TryAcquireTransaction(txn5, 0);
+  EXPECT_EQ(rt, true);
+  
+  txn_pool.ReleaseTransaction(txn5);
 }
 
 

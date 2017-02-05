@@ -90,8 +90,7 @@ class TransactionManager {
   virtual bool IsWritten(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id
-  ) = 0;
+    const oid_t &tuple_id) = 0;
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
@@ -147,6 +146,10 @@ class TransactionManager {
   virtual Transaction *BeginTransaction() = 0;
 
   virtual Transaction *BeginReadonlyTransaction() = 0;
+
+  virtual Transaction *BeginTransaction(const size_t hint) = 0;
+
+  virtual Transaction *BeginReadonlyTransaction(const size_t hint) = 0;
 
   virtual void EndTransaction(Transaction *current_txn) = 0;
 
