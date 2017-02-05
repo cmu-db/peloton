@@ -191,6 +191,9 @@ class configuration {
   // number of gc threads
   bool gc_backend_count;
 
+  // number of loaders
+  int loader_count;
+
   // throughput
   double throughput = 0;
 

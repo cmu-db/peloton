@@ -20,20 +20,35 @@
 #include "benchmark/ycsb/ycsb_workload.h"
 
 #include "gc/gc_manager_factory.h"
+#include "concurrency/epoch_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
 configuration state;
+
 // Main Entry Point
 void RunBenchmark() {
 
-  if (state.gc_mode == true) {
+  if (state.gc_mode == false) {
+    gc::GCManagerFactory::Configure(0);
+  } else {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
+
   
-  gc::GCManagerFactory::GetInstance().StartGC();
+  std::unique_ptr<std::thread> epoch_thread;
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
+  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+  gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
+
+  // start epoch.
+  epoch_manager.StartEpoch(epoch_thread);
+  
+  // start GC.
+  gc_manager.StartGC(gc_threads);
 
   // Create the database
   CreateYCSBDatabase();
@@ -44,7 +59,21 @@ void RunBenchmark() {
   // Run the workload
   RunWorkload();
   
-  gc::GCManagerFactory::GetInstance().StopGC();
+  // stop GC.
+  gc_manager.StopGC();
+
+  // stop epoch.
+  epoch_manager.StopEpoch();
+
+  // join all gc threads
+  for (auto &gc_thread : gc_threads) {
+    PL_ASSERT(gc_thread != nullptr);
+    gc_thread->join();
+  }
+
+  // join epoch thread
+  PL_ASSERT(epoch_thread != nullptr);
+  epoch_thread->join();
 
   // Emit throughput
   WriteOutput();

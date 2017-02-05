@@ -121,6 +121,8 @@ int RecycledNum(storage::DataTable *table) {
 
 TEST_F(GarbageCollectionTests, SimpleTest) {
 
+  std::vector<std::unique_ptr<std::thread>> gc_threads;
+
   gc::GCManagerFactory::Configure(1);
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
 
@@ -140,7 +142,7 @@ TEST_F(GarbageCollectionTests, SimpleTest) {
 
   EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
-  gc_manager.StartGC();
+  gc_manager.StartGC(gc_threads);
 
   // update this key 1 times, using only one thread
   const int scale = 1;
@@ -190,6 +192,9 @@ TEST_F(GarbageCollectionTests, SimpleTest) {
 
   gc::GCManagerFactory::Configure(0);
 
+  for (auto &gc_thread : gc_threads) {
+    gc_thread->join();
+  }
 }
 
 

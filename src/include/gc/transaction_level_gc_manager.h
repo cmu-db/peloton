@@ -20,6 +20,8 @@
 
 #include "type/types.h"
 #include "common/logger.h"
+#include "common/init.h"
+#include "common/thread_pool.h"
 #include "gc/gc_manager.h"
 
 #include "container/lock_free_queue.h"
@@ -47,7 +49,6 @@ class TransactionLevelGCManager : public GCManager {
 public:
   TransactionLevelGCManager(int thread_count) 
     : gc_thread_count_(thread_count),
-      gc_threads_(thread_count),
       reclaim_maps_(thread_count) {
 
     unlink_queues_.reserve(thread_count);
@@ -67,20 +68,27 @@ public:
     return gc_manager;
   }
 
+  virtual void StartGC(std::vector<std::unique_ptr<std::thread>> &gc_threads) {
+    LOG_TRACE("Starting GC");
+    this->is_running_ = true;
+    gc_threads.resize(gc_thread_count_);
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      gc_threads[i].reset(new std::thread(&TransactionLevelGCManager::Running, this, i));
+
+    }
+  }
+
   virtual void StartGC() override {
     LOG_TRACE("Starting GC");
     this->is_running_ = true;
     for (int i = 0; i < gc_thread_count_; ++i) {
-      StartGC(i);
+      thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this, std::move(i));
     }
   };
 
   virtual void StopGC() override {
     LOG_TRACE("Stopping GC");
     this->is_running_ = false;
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      StopGC(i);
-    }
   }
 
   virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) override;
@@ -107,9 +115,6 @@ public:
   }
 
 private:
-  void StartGC(int thread_id);
-
-  void StopGC(int thread_id);
 
   inline unsigned int HashToThread(const cid_t &ts) {
     return (unsigned int)ts % gc_thread_count_;
@@ -137,8 +142,6 @@ private:
   //===--------------------------------------------------------------------===//
 
   int gc_thread_count_;
-
-  std::vector<std::unique_ptr<std::thread>> gc_threads_;
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads

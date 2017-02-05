@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <thread>
 
+#include "common/platform.h"
+
 namespace peloton {
 namespace benchmark {
 
@@ -112,8 +114,11 @@ class ZipfDistribution {
   FastRandom rand_generator;
 };
 
-
-// void PinToCore(size_t core);
+struct PadInt {
+  PadInt() { data = 0; }
+  uint64_t data;
+  uint32_t padding[CACHELINE_SIZE - sizeof(uint64_t)];
+};
 
 }  // namespace benchmark
 }  // namespace peloton
