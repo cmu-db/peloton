@@ -20,7 +20,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// TransactionPool Tests
 //===--------------------------------------------------------------------===//
 
 class TransactionPoolTests : public PelotonTest {};

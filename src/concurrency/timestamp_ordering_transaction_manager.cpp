@@ -91,7 +91,14 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
   txn_id_t txn_id = GetNextTransactionId();
   cid_t begin_cid = GetNextCommitId();
   
-  Transaction *txn = new Transaction(txn_id);
+  Transaction *txn = nullptr;
+
+  if (is_from_transaction_pool_ == true) {
+    TransactionPool::GetInstance().AcquireTransaction(txn);
+  } else {
+    txn = new Transaction(txn_id);
+  }
+
   txn->Init(begin_cid);
 
   auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
@@ -113,7 +120,14 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
   txn_id_t txn_id = READONLY_TXN_ID;
   cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
   
-  Transaction *txn = new Transaction(txn_id);
+  Transaction *txn = nullptr;
+
+  if (is_from_transaction_pool_ == true) {
+    TransactionPool::GetInstance().AcquireTransaction(txn);
+  } else {
+    txn = new Transaction(txn_id);
+  }
+
   txn->Init(begin_cid, true);
 
   auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
@@ -149,9 +163,13 @@ void TimestampOrderingTransactionManager::EndTransaction(
     log_manager.DoneLogging();
   }
 
-  delete current_txn;
-  current_txn = nullptr;
-
+  if (is_from_transaction_pool_ == true) {
+    TransactionPool::GetInstance().ReleaseTransaction(current_txn);
+  } else {
+    delete current_txn;
+    current_txn = nullptr;
+  }
+  
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
@@ -165,9 +183,13 @@ void TimestampOrderingTransactionManager::EndReadonlyTransaction(
   EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(
       current_txn->GetEpochId());
 
-  delete current_txn;
-  current_txn = nullptr;
-
+  if (is_from_transaction_pool_ == true) {
+    TransactionPool::GetInstance().ReleaseTransaction(current_txn);
+  } else {
+    delete current_txn;
+    current_txn = nullptr;
+  }
+  
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
