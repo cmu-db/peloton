@@ -15,6 +15,7 @@
 
 #include "common/exception.h"
 #include "storage/tuple.h"
+#include "type/serializeio.h"
 #include "type/type.h"
 
 namespace peloton {
@@ -53,9 +54,11 @@ TEST_F(TypeTests, InvalidTypeTest) {
   EXPECT_THROW(t->CompareEquals(v0, v1), peloton::NotImplementedException);
   EXPECT_THROW(t->CompareNotEquals(v0, v1), peloton::NotImplementedException);
   EXPECT_THROW(t->CompareLessThan(v0, v1), peloton::NotImplementedException);
-  EXPECT_THROW(t->CompareLessThanEquals(v0, v1), peloton::NotImplementedException);
+  EXPECT_THROW(t->CompareLessThanEquals(v0, v1),
+               peloton::NotImplementedException);
   EXPECT_THROW(t->CompareGreaterThan(v0, v1), peloton::NotImplementedException);
-  EXPECT_THROW(t->CompareGreaterThanEquals(v0, v1), peloton::NotImplementedException);
+  EXPECT_THROW(t->CompareGreaterThanEquals(v0, v1),
+               peloton::NotImplementedException);
 
   // Same with all of the math functions
   EXPECT_THROW(t->Add(v0, v1), peloton::NotImplementedException);
@@ -68,20 +71,33 @@ TEST_F(TypeTests, InvalidTypeTest) {
   EXPECT_THROW(t->OperateNull(v0, v1), peloton::NotImplementedException);
 
   // Single argument methods. Same thing. They all drop exception bombs
+  EXPECT_THROW(t->Sqrt(v0), peloton::NotImplementedException);
   EXPECT_THROW(t->IsZero(v0), peloton::NotImplementedException);
   EXPECT_THROW(t->IsInlined(v0), peloton::NotImplementedException);
   EXPECT_THROW(t->ToString(v0), peloton::NotImplementedException);
   EXPECT_THROW(t->Hash(v0), peloton::NotImplementedException);
   EXPECT_THROW(t->Copy(v0), peloton::NotImplementedException);
   EXPECT_THROW(t->GetData(v0), peloton::NotImplementedException);
+  EXPECT_THROW(t->GetData(nullptr), peloton::NotImplementedException);
   EXPECT_THROW(t->GetLength(v0), peloton::NotImplementedException);
+
+  // Serialization stuff
+  peloton::CopySerializeOutput out;
+  peloton::CopySerializeInput in(out.Data(), out.Size());
+  EXPECT_THROW(t->SerializeTo(v0, nullptr, false, nullptr),
+               peloton::NotImplementedException);
+  EXPECT_THROW(t->SerializeTo(v0, out), peloton::NotImplementedException);
+  EXPECT_THROW(t->DeserializeFrom(nullptr, false, nullptr),
+               peloton::NotImplementedException);
+  EXPECT_THROW(t->DeserializeFrom(in, nullptr),
+               peloton::NotImplementedException);
 
   // Ok here are the last ones
   size_t size = static_cast<size_t>(123);
   EXPECT_THROW(t->HashCombine(v0, size), peloton::NotImplementedException);
   EXPECT_THROW(t->GetElementAt(v0, 0), peloton::NotImplementedException);
   EXPECT_THROW(t->CastAs(v0, type_id), peloton::NotImplementedException);
-
+  EXPECT_THROW(t->InList(v0, v1), peloton::NotImplementedException);
 }
 
 TEST_F(TypeTests, GetInstanceTest) {
