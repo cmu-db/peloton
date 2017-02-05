@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// index_test.cpp
+// bwtree_index_test.cpp
 //
 // Identification: test/index/index_test.cpp
 //
@@ -13,11 +13,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 
-#include "common/logger.h"
-#include "common/platform.h"
-#include "index/index_factory.h"
 #include "index/testing_index_util.h"
-#include "storage/tuple.h"
 
 namespace peloton {
 namespace test {

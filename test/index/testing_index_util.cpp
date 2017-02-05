@@ -77,15 +77,7 @@ void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
 
   // Checks
   index->ScanAllKeys(location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 7);
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(location_ptrs.size(), 7);
-  } else {
-    EXPECT_EQ(location_ptrs.size(), 9);
-  }
-
+  EXPECT_EQ(location_ptrs.size(), 7);
   location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -212,15 +204,7 @@ void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
                      pool, scale_factor);
 
   index->ScanAllKeys(location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 7);
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(location_ptrs.size(), 7);
-  } else {
-    EXPECT_EQ(location_ptrs.size(), 9 * num_threads);
-  }
-
+  EXPECT_EQ(location_ptrs.size(), 7);
   location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -238,15 +222,7 @@ void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
   location_ptrs.clear();
 
   index->ScanKey(key0.get(), location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 1);
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(location_ptrs.size(), 1);
-  } else {
-    EXPECT_EQ(location_ptrs.size(), num_threads);
-  }
-
+  EXPECT_EQ(location_ptrs.size(), 1);
   EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
   location_ptrs.clear();
 
@@ -399,14 +375,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   // FORWARD SCAN
@@ -420,28 +389,14 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
   type::Value key4_val1 = (key4->GetValue(1));
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
                   ScanDirectionType::FORWARD, location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
-
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       ScanDirectionType::FORWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(2, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(2, location_ptrs.size());
-  } else {
-    EXPECT_EQ(2 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(2, location_ptrs.size());
   location_ptrs.clear();
 
   // PAVLO: 2016-12-29
@@ -452,13 +407,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
       ScanDirectionType::FORWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   // PAVLO: 2016-12-29
@@ -480,13 +429,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
       {key2_val0, key2_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       ScanDirectionType::FORWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   // PAVLO: 2016-12-29
@@ -498,13 +441,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       ScanDirectionType::FORWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanTest({key0_val0, key0_val1, key4_val0, key4_val1}, {0, 1, 0, 1},
@@ -513,38 +450,20 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
                    ExpressionType::COMPARE_LESSTHANOREQUALTO,
                    ExpressionType::COMPARE_LESSTHAN},
                   ScanDirectionType::FORWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   // REVERSE SCAN
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
                   ScanDirectionType::BACKWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       ScanDirectionType::BACKWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(2, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(2, location_ptrs.size());
-  } else {
-    EXPECT_EQ(2 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(2, location_ptrs.size());
   location_ptrs.clear();
 
   // PAVLO: 2016-12-29
@@ -555,13 +474,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
       ScanDirectionType::BACKWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   // PAVLO: 2016-12-29
@@ -583,13 +496,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
       {key2_val0, key2_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       ScanDirectionType::BACKWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   // PAVLO: 2016-12-29
@@ -601,13 +508,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_LESSTHAN},
       ScanDirectionType::BACKWARD, location_ptrs);
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanTest({key0_val0, key0_val1, key4_val0, key4_val1}, {0, 1, 0, 1},
@@ -616,14 +517,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
                    ExpressionType::COMPARE_LESSTHANOREQUALTO,
                    ExpressionType::COMPARE_LESSTHAN},
                   ScanDirectionType::BACKWARD, location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(3, location_ptrs.size());
-  } else {
-    EXPECT_EQ(3 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
   delete index->GetMetadata()->GetTupleSchema();
@@ -664,40 +558,16 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(const IndexType index
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 2);
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(location_ptrs.size(), 2);
-  } else {
-    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
-  }
-
+  EXPECT_EQ(location_ptrs.size(), 2);
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 1);
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(location_ptrs.size(), 1);
-  } else {
-    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
-  }
-
+  EXPECT_EQ(location_ptrs.size(), 1);
   EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
-  } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads * scale_factor);
-  }
-
+  EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
   location_ptrs.clear();
 
   delete index->GetMetadata()->GetTupleSchema();
@@ -722,23 +592,10 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
 
   index->ScanAllKeys(location_ptrs);
   if (index->HasUniqueKeys()) {
-    if (index_type == IndexType::BWTREE) {
-      EXPECT_EQ(location_ptrs.size(), scale_factor);
-    } else if (index_type == IndexType::SKIPLIST) {
-      EXPECT_EQ(location_ptrs.size(), scale_factor);
-    } else {
-      EXPECT_EQ(location_ptrs.size(), scale_factor);
-    }
+    EXPECT_EQ(location_ptrs.size(), scale_factor);
   } else {
-    if (index_type == IndexType::BWTREE) {
-      EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
-    } else if (index_type == IndexType::SKIPLIST) {
-      EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
-    } else {
-      EXPECT_EQ(location_ptrs.size(), 3 * scale_factor * num_threads);
-    }
+    EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
   }
-
   location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
@@ -753,13 +610,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
   if (index->HasUniqueKeys()) {
     EXPECT_EQ(location_ptrs.size(), 0);
   } else {
-    if (index_type == IndexType::BWTREE) {
-      EXPECT_EQ(location_ptrs.size(), 2);
-    } else if (index_type == IndexType::SKIPLIST) {
-      EXPECT_EQ(location_ptrs.size(), 2);
-    } else {
-      EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
-    }
+    EXPECT_EQ(location_ptrs.size(), 2);
   }
   location_ptrs.clear();
 
@@ -767,13 +618,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
   if (index->HasUniqueKeys()) {
     EXPECT_EQ(location_ptrs.size(), num_threads);
   } else {
-    if (index_type == IndexType::BWTREE) {
-      EXPECT_EQ(location_ptrs.size(), 1);
-    } else if (index_type == IndexType::SKIPLIST) {
-      EXPECT_EQ(location_ptrs.size(), 1);
-    } else {
-      EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
-    }
+    EXPECT_EQ(location_ptrs.size(), 1);
   }
 
   location_ptrs.clear();
@@ -814,22 +659,18 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
                           true);
 
   // Use the first two columns to build key schema
-
   column_list.push_back(column1);
   column_list.push_back(column2);
 
   // This will be copied into the key schema as well as into the IndexMetadata
   // object to identify indexed columns
   std::vector<oid_t> key_attrs = {0, 1};
-
   key_schema = new catalog::Schema(column_list);
   key_schema->SetIndexedColumns(key_attrs);
 
   // Use all four columns to build tuple schema
-
   column_list.push_back(column3);
   column_list.push_back(column4);
-
   tuple_schema = new catalog::Schema(column_list);
 
   // Build index metadata
