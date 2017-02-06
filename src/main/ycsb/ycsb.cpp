@@ -38,6 +38,8 @@ void RunBenchmark() {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
 
+
+  
   
   std::unique_ptr<std::thread> epoch_thread;
   std::vector<std::unique_ptr<std::thread>> gc_threads;

@@ -226,9 +226,7 @@ void RunWorkload() {
   total_commit_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
     total_commit_count += commit_counts_profiles[profile_round - 1][i].data;
-    printf("%lu ", commit_counts_profiles[profile_round - 1][i].data);
   }
-  printf("\n");
 
   total_abort_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
