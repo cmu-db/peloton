@@ -146,7 +146,7 @@ class ConjunctionScanPredicate {
     // scanner does not know that we will do a table scan so in the case
     // of multiple disjunctive predicates there might be multiple scan
     // which is wasteful since a single index full scan should cover all cases
-    full_index_scan_ = HasNonOptimizablePredicate(expr_list);
+    full_index_scan_ = IndexUtil::HasNonOptimizablePredicate(expr_list);
 
     // Only construct the two keys when full table scan is unnecessary
     if (full_index_scan_ == false) {
@@ -384,7 +384,7 @@ class ConjunctionScanPredicate {
 
     // This function will modify value_index_list, but value_index_list
     // should have capacity 0 to avoid further problems
-    is_point_query_ = FindValueIndex(metadata_p, tuple_column_id_list,
+    is_point_query_ = IndexUtil::FindValueIndex(metadata_p, tuple_column_id_list,
                                      expr_list, value_index_list_);
 
     // value_index_list should be of the same length as the index key
