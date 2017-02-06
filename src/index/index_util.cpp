@@ -347,7 +347,20 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
           type::Type::GetMinValue(k_v.second.second.GetTypeId());
     }
   }
-};
+}
+
+std::string IndexUtil::Debug(Index *index) {
+  std::vector<ItemPointer *> location_ptrs;
+  index->ScanAllKeys(location_ptrs);
+
+  std::ostringstream os;
+  int i = 0;
+  for (auto ptr : location_ptrs) {
+    os << StringUtil::Format("%03d: {%d, %d}\n", i, ptr->block, ptr->offset);
+    i += 1;
+  }
+  return (os.str());
+}
 
 }  // End index namespace
 }  // End peloton namespace

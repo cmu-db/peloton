@@ -12,13 +12,14 @@
 
 #include "index/testing_index_util.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "common/harness.h"
 #include "catalog/catalog.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "index/index.h"
+#include "index/index_util.h"
 #include "storage/tuple.h"
 #include "type/types.h"
 
@@ -100,6 +101,32 @@ void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
   delete index->GetMetadata()->GetTupleSchema();
 }
 
+void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
+  auto pool = TestingHarness::GetInstance().GetTestingPool();
+  std::vector<ItemPointer *> location_ptrs;
+
+  // INDEX
+  std::unique_ptr<index::Index> index(
+      TestingIndexUtil::BuildIndex(index_type, false));
+  const catalog::Schema *key_schema = index->GetKeySchema();
+
+  // Single threaded test
+  size_t scale_factor = 1;
+  LaunchParallelTest(1, TestingIndexUtil::InsertHelper, index.get(), pool,
+                     scale_factor);
+
+  // Checks
+  std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
+  key0->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
+  key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
+
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(1, location_ptrs.size());
+  location_ptrs.clear();
+
+  delete index->GetMetadata()->GetTupleSchema();
+}
+
 void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer *> location_ptrs;
@@ -129,17 +156,19 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
+
+  LOG_INFO("INDEX:\n%s", index->GetInfo().c_str());
 
   delete index->GetMetadata()->GetTupleSchema();
 }
@@ -351,26 +380,11 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(2, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(2, location_ptrs.size());
-  } else {
-    EXPECT_EQ(2 * num_threads, location_ptrs.size());
-  }
+  EXPECT_EQ(2, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
-
-  if (index_type == IndexType::BWTREE) {
-    EXPECT_EQ(1, location_ptrs.size());
-  } else if (index_type == IndexType::SKIPLIST) {
-    EXPECT_EQ(1, location_ptrs.size());
-  } else {
-    EXPECT_EQ(1 * num_threads, location_ptrs.size());
-  }
-
+  EXPECT_EQ(1, location_ptrs.size());
   EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
 
@@ -700,6 +714,7 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   // would be raised (maybe out of memory would result in a nullptr? Anyway
   // leave it here)
   EXPECT_TRUE(index != NULL);
+  EXPECT_EQ(unique_keys, index->HasUniqueKeys());
 
   return index;
 }
@@ -742,11 +757,11 @@ void TestingIndexUtil::InsertHelper(index::Index *index, type::AbstractPool *poo
     keynonce->SetValue(1, type::ValueFactory::GetVarcharValue("f"), pool);
 
     // INSERT
-    // key0 1 (100, a)   item0
-    // key1 5  (100, b)  item1 2 1 1 0
-    // key2 1 (100, c) item 1
-    // key3 1 (400, d) item 1
-    // key4 1  (500, eeeeee...) item 1
+    // key0 1x (100, a)      -> item0
+    // key1 5x (100, b)      -> item1 2 1 1 0
+    // key2 1x (100, c)      -> item 1
+    // key3 1x (400, d)      -> item 1
+    // key4 1x (500, eee...) -> item 1
     // no keyonce (1000, f)
 
     // item0 = 2

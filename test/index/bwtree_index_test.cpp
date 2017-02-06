@@ -32,6 +32,10 @@ TEST_F(IndexTests, MultiMapInsertTest) {
   TestingIndexUtil::MultiMapInsertTest(IndexType::BWTREE);
 }
 
+TEST_F(IndexTests, UniqueKeyInsertTest) {
+  TestingIndexUtil::UniqueKeyInsertTest(IndexType::BWTREE);
+}
+
 //TEST_F(IndexTests, UniqueKeyDeleteTest) {
 //  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::BWTREE);
 //}

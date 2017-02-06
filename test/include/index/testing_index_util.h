@@ -34,6 +34,8 @@ class TestingIndexUtil {
 
   static void MultiMapInsertTest(const IndexType index_type);
 
+  static void UniqueKeyInsertTest(const IndexType index_type);
+
   static void UniqueKeyDeleteTest(const IndexType index_type);
 
   static void NonUniqueKeyDeleteTest(const IndexType index_type);
