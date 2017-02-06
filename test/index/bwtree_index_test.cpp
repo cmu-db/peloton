@@ -4,7 +4,7 @@
 //
 // bwtree_index_test.cpp
 //
-// Identification: test/index/index_test.cpp
+// Identification: test/index/bwtree_index_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,53 +14,54 @@
 #include "gtest/gtest.h"
 
 #include "index/testing_index_util.h"
+#include "index/testing_index_util.h"
 
 namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Index Tests
+// BwTree Index Tests
 //===--------------------------------------------------------------------===//
 
-class IndexTests : public PelotonTest {};
+class BwTreeIndexTests : public PelotonTest {};
 
-TEST_F(IndexTests, BasicTest) {
+TEST_F(BwTreeIndexTests, BasicTest) {
   TestingIndexUtil::BasicTest(IndexType::BWTREE);
 }
 
-TEST_F(IndexTests, MultiMapInsertTest) {
+TEST_F(BwTreeIndexTests, MultiMapInsertTest) {
   TestingIndexUtil::MultiMapInsertTest(IndexType::BWTREE);
 }
 
-TEST_F(IndexTests, UniqueKeyInsertTest) {
+TEST_F(BwTreeIndexTests, UniqueKeyInsertTest) {
   TestingIndexUtil::UniqueKeyInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(IndexTests, UniqueKeyDeleteTest) {
+//TEST_F(BwTreeIndexTests, UniqueKeyDeleteTest) {
 //  TestingIndexUtil::UniqueKeyDeleteTest(IndexType::BWTREE);
 //}
 
-TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
+TEST_F(BwTreeIndexTests, NonUniqueKeyDeleteTest) {
   TestingIndexUtil::NonUniqueKeyDeleteTest(IndexType::BWTREE);
 }
 
-TEST_F(IndexTests, MultiThreadedInsertTest) {
+TEST_F(BwTreeIndexTests, MultiThreadedInsertTest) {
   TestingIndexUtil::MultiThreadedInsertTest(IndexType::BWTREE);
 }
 
-//TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
+//TEST_F(BwTreeIndexTests, UniqueKeyMultiThreadedTest) {
 //  TestingIndexUtil::UniqueKeyMultiThreadedTest(IndexType::BWTREE);
 //}
 
-TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
+TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedTest) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedTest(IndexType::BWTREE);
 }
 
-TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
+TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedStressTest) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(IndexType::BWTREE);
 }
 
-TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
+TEST_F(BwTreeIndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(IndexType::BWTREE);
 }
 
