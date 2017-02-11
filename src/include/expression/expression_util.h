@@ -365,7 +365,7 @@ class ExpressionUtil {
   /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective objects given a
-   * set of schemas. This function
+   * set of schemas.
    */
   static void TransformExpression(std::vector<const catalog::Schema *> &schemas,
                                   AbstractExpression *expr) {

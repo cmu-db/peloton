@@ -13,12 +13,14 @@
 #pragma once
 
 #include <map>
+#include <set>
 
 #include "optimizer/column.h"
 
 namespace peloton {
 namespace optimizer {
 
+// TODO: Refactor
 class ColumnManager {
  public:
   ColumnManager();
@@ -34,12 +36,24 @@ class ColumnManager {
   Column *AddExprColumn(type::Type::TypeId type, int size, std::string name,
                         bool inlined);
 
+  void AddTable(oid_t db_id, oid_t table_id, const parser::TableRef* table_ref);
+
+  Column* BindColumnRefToColumn(expression::TupleValueExpression* col_expr);
+
+
  private:
   ColumnID next_column_id = 0;
+
 
   std::vector<Column *> columns;
   std::map<std::tuple<oid_t, oid_t>, Column *> table_col_index_to_column;
   std::map<ColumnID, Column *> id_to_column;
+
+  // Set of the table ids in the current query context
+  std::set<std::tuple<oid_t, oid_t>> table_id_tuples;
+
+  // When alias is not set, its table name
+  std::map<std::string, std::tuple<oid_t, oid_t>> table_alias_to_id_tuple;
 };
 
 } /* namespace optimizer */

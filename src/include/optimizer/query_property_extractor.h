@@ -13,6 +13,7 @@
 #include "optimizer/column_manager.h"
 #include "optimizer/property_set.h"
 #include "optimizer/query_node_visitor.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 
@@ -36,6 +37,8 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
   // We only assume the statement is selecting from one table for now
   void Visit(const parser::SelectStatement *) override;
 
+  void Visit(const parser::TableRef *) override;
+  void Visit(const parser::JoinDefinition *) override;
   void Visit(const parser::GroupByDescription *) override;
   void Visit(const parser::OrderDescription *) override;
   void Visit(const parser::LimitDescription *) override;
@@ -49,6 +52,10 @@ class QueryPropertyExtractor : public QueryNodeVisitor {
   void Visit(const parser::TransactionStatement *) override;
   void Visit(const parser::UpdateStatement *) override;
   void Visit(const parser::CopyStatement *) override;
+
+  void GetColumnsFromSelecrElements(expression::AbstractExpression* expr,
+                      std::vector<Column *>* columns,
+                      bool& need_projection);
 
  private:
   ColumnManager &manager_;

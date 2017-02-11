@@ -88,6 +88,15 @@ Operator LogicalOuterJoin::make() {
   LogicalOuterJoin *join = new LogicalOuterJoin;
   return Operator(join);
 }
+
+//===--------------------------------------------------------------------===//
+// OuterJoin
+//===--------------------------------------------------------------------===//
+Operator LogicalSemiJoin::make() {
+  LogicalSemiJoin *join = new LogicalSemiJoin;
+  return Operator(join);
+}
+
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//

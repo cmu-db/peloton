@@ -17,7 +17,7 @@
 
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
-
+#include "optimizer/query_node_visitor.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -57,7 +57,7 @@ struct TableRef {
   inline bool HasSchema() { return schema != NULL; }
 
   // Get the name of the database of this table
-  inline const char* GetDatabaseName() {
+  inline const char* GetDatabaseName() const {
     if (table_info_ == nullptr || table_info_->database_name == nullptr) {
       return DEFAULT_DB_NAME;
     }
@@ -65,12 +65,14 @@ struct TableRef {
   }
 
   // Get the name of the table
-  inline const char* GetTableName() {
+  inline const char* GetTableName() const {
     if (alias != NULL)
       return alias;
     else
       return table_info_->table_name;
   }
+
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
 };
 
 // Definition of a join table
@@ -89,6 +91,8 @@ struct JoinDefinition {
   expression::AbstractExpression* condition;
 
   JoinType type;
+
+  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
 };
 
 }  // End parser namespace
