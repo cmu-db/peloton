@@ -16,6 +16,8 @@
 #include <set>
 
 #include "optimizer/column.h"
+#include "parser/table_ref.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace optimizer {

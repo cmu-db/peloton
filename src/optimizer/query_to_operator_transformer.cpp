@@ -75,6 +75,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef* node) {
 
     // Get the columns required by the result
     auto table_oid = target_table->GetOid();
+    auto db_oid = target_table->GetDatabaseOid();
     auto schema = target_table->GetSchema();
     auto schema_cols = schema->GetColumns();
     for (size_t col_id = 0; col_id < schema_cols.size(); col_id++) {
@@ -86,7 +87,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef* node) {
                                  table_oid, col_id);
       }
     }
-    manager_.AddTable(table_oid, node);
+    manager_.AddTable(db_oid, table_oid, node);
   }
 
 }
@@ -118,6 +119,9 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition* node) {
       join_expr = std::make_shared<OperatorExpression>(LogicalSemiJoin::make());
       break;
     }
+    default:
+      throw Exception("Join type invalid");
+      break;
   }
   join_expr->PushChild(left_expr);
   join_expr->PushChild(right_expr);

@@ -105,7 +105,7 @@ Column* ColumnManager::BindColumnRefToColumn(expression::TupleValueExpression* c
       auto schema = catalog::Catalog::GetInstance()->
           GetTableWithOid(std::get<0>(id_tuple), std::get<1>(id_tuple))->
           GetSchema();
-      schema_col_id = schema->GetColumnID(col_expr->GetColumnName();
+      schema_col_id = schema->GetColumnID(col_expr->GetColumnName());
       if (schema_col_id != (oid_t) -1) {
         table_id = std::get<1>(id_tuple);
         break;
@@ -120,7 +120,7 @@ Column* ColumnManager::BindColumnRefToColumn(expression::TupleValueExpression* c
           GetTableWithOid(std::get<0>(id_tuple), std::get<1>(id_tuple))->
           GetSchema();
       table_id = std::get<0>(id_tuple);
-      schema_col_id = schema->GetColumnID(col_expr->GetColumnName();
+      schema_col_id = schema->GetColumnID(col_expr->GetColumnName());
     }
   }
 
