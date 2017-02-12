@@ -47,15 +47,12 @@ class TableCatalogObject : public AbstractCatalogObject {
  public:
   TableCatalogObject(std::string table_name, oid_t table_oid,
                      oid_t database_oid, Schema *tuple_schema, bool own_schema)
-      : AbstractCatalogObject(table_oid),
+      : AbstractCatalogObject(table_name, table_oid),
         database_oid(database_oid),
         schema_(tuple_schema),
-      	name_(table_name),
       	own_schema_(own_schema) {}
 
   ~TableCatalogObject();
-
-  const std::string &GetName() const { return name_; }
 
   inline oid_t GetDatabaseOid() { return database_oid; }
 
@@ -70,12 +67,10 @@ class TableCatalogObject : public AbstractCatalogObject {
   // IndexCatalog Data Member Definition
   ///////////////////////////////////////////////////////////////////
  private:
-  oid_t oid_;
   oid_t database_oid;
 
   // schema of the table
   Schema *schema_;
-  std::string name_;
   bool own_schema_;
 };
 
@@ -93,26 +88,14 @@ class DatabaseCatalogObject : public AbstractCatalogObject {
 
  public:
   DatabaseCatalogObject(std::string database_name, oid_t database_oid)
-      : AbstractCatalogObject(database_oid),
-      	name_(database_name) {}
+      : AbstractCatalogObject(database_name, database_oid) {}
 
   ~DatabaseCatalogObject();
-
-  const std::string &GetName() const { return name_; }
 
   /*
    * GetInfo() - Get a string representation for debugging
    */
   const std::string GetInfo() const;
-
-  ///////////////////////////////////////////////////////////////////
-  // DatabaseCatalog Data Member Definition
-  ///////////////////////////////////////////////////////////////////
- private:
-  oid_t oid_;
-
-  // schema of the table
-  std::string name_;
 };
 }  // end of namespace catalog
 }  // end of namespace Peloton
