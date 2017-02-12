@@ -30,12 +30,15 @@ namespace catalog {
 
 class AbstractCatalogObject : public Printable {
 protected:
-  AbstractCatalogObject(oid_t oid) : oid_(oid) {};
+  AbstractCatalogObject(std::string name, oid_t oid) : name_(name), oid_(oid) {};
 
 public:
   inline oid_t GetOid() const { return oid_; }
 
-private:
+  const std::string &GetName() const { return name_; }
+
+protected:
+  std::string name_;
   oid_t oid_;
 };
 }
