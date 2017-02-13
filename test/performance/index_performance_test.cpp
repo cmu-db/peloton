@@ -69,14 +69,14 @@ index::Index *BuildIndex(const bool unique_keys, const IndexType index_type) {
   // TABLE SCHEMA -- {column1, column2, column3, column4}
   tuple_schema = new catalog::Schema(columns);
 
-  // Build index metadata
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+  // Build index index_catalog_object
+  catalog::IndexCatalogObject *index_catalog_object = new catalog::IndexCatalogObject(
       "test_index", 125, INVALID_OID, INVALID_OID, index_type,
       IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
       unique_keys);
 
   // Build index
-  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_catalog_object);
   EXPECT_TRUE(index != NULL);
 
   return index;

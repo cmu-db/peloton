@@ -59,7 +59,7 @@ void TestingIndexUtil::BasicTest(const IndexType index_type) {
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
@@ -98,7 +98,7 @@ void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
   EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
@@ -124,7 +124,7 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
@@ -170,7 +170,7 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
 
   LOG_INFO("INDEX:\n%s", index->GetInfo().c_str());
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
@@ -214,7 +214,7 @@ void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
   EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
@@ -255,7 +255,7 @@ void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
   EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
@@ -338,7 +338,7 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type) {
@@ -534,7 +534,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
   EXPECT_EQ(3, location_ptrs.size());
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(const IndexType index_type) {
@@ -584,7 +584,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(const IndexType index
   EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type) {
@@ -637,7 +637,7 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
 
   location_ptrs.clear();
 
-  delete index->GetMetadata()->GetTupleSchema();
+  delete index->GetIndexCatalogObject()->GetTupleSchema();
 }
 
 
@@ -676,7 +676,7 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   column_list.push_back(column1);
   column_list.push_back(column2);
 
-  // This will be copied into the key schema as well as into the IndexMetadata
+  // This will be copied into the key schema as well as into the catalog::IndexCatalogObject
   // object to identify indexed columns
   std::vector<oid_t> key_attrs = {0, 1};
   key_schema = new catalog::Schema(column_list);
@@ -687,14 +687,14 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   column_list.push_back(column4);
   tuple_schema = new catalog::Schema(column_list);
 
-  // Build index metadata
+  // Build index index_catalog_object
   //
   // NOTE: Since here we use a relatively small key (size = 12)
   // so index_test is only testing with a certain kind of key
   // (most likely, GenericKey)
   //
   // For testing IntsKey and TupleKey we need more test cases
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+  catalog::IndexCatalogObject *index_catalog_object = new catalog::IndexCatalogObject(
       "test_index", 125,  // Index oid
       INVALID_OID, INVALID_OID, index_type, IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique_keys);
@@ -708,7 +708,7 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   // and transforms into the correct index key format, so the caller
   // do not need to worry about the actual implementation of the index
   // key, and only passing tuple key suffices
-  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_catalog_object);
 
   // Actually this will never be hit since if index creation fails an exception
   // would be raised (maybe out of memory would result in a nullptr? Anyway

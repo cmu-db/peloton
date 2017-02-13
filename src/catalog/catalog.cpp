@@ -193,7 +193,7 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
 
     std::vector<oid_t> key_attrs;
     catalog::Schema *key_schema = nullptr;
-    index::IndexMetadata *index_metadata = nullptr;
+    catalog::IndexCatalogObject *index_catalog_object = nullptr;
     auto schema = table->GetSchema();
 
     // Find primary index attributes
@@ -213,14 +213,14 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
 
     bool unique_keys = true;
 
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         StringUtil::Upper(index_name), GetNextOid(),
         table->GetOid(), database->GetOid(), IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, schema, key_schema, key_attrs,
         unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(pkey_index);
 
     LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
@@ -247,7 +247,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
     std::vector<oid_t> key_attrs;
     catalog::Schema *key_schema = nullptr;
-    index::IndexMetadata *index_metadata = nullptr;
+    catalog::IndexCatalogObject *index_catalog_object = nullptr;
     auto schema = table->GetSchema();
 
     // check if index attributes are in table
@@ -272,18 +272,18 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
     // Check if unique index or not
     if (unique == false) {
-      index_metadata = new index::IndexMetadata(index_name.c_str(),
+      index_catalog_object = new catalog::IndexCatalogObject(index_name.c_str(),
           GetNextOid(), table->GetOid(), database->GetOid(), index_type,
           IndexConstraintType::DEFAULT, schema, key_schema, key_attrs, true);
     } else {
-      index_metadata = new index::IndexMetadata(index_name.c_str(),
+      index_catalog_object = new catalog::IndexCatalogObject(index_name.c_str(),
           GetNextOid(), table->GetOid(), database->GetOid(), index_type,
           IndexConstraintType::UNIQUE, schema, key_schema, key_attrs, true);
     }
 
     // Add index to table
     std::shared_ptr<index::Index> key_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(key_index);
 
     LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());

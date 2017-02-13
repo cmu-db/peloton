@@ -97,7 +97,7 @@ void ExecuteTileGroupTest() {
 
     auto tuple_schema = table->GetSchema();
     catalog::Schema *key_schema;
-    index::IndexMetadata *index_metadata;
+    catalog::IndexCatalogObject *index_catalog_object;
     bool unique;
 
     key_attrs = {0};
@@ -106,13 +106,13 @@ void ExecuteTileGroupTest() {
 
     unique = true;
 
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         "primary_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(pkey_index);
   }
 

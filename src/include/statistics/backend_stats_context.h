@@ -34,8 +34,8 @@ class Statement;
 
 namespace peloton {
 
-namespace index {
-class IndexMetadata;
+namespace catalog {
+class IndexCatalogObject;
 }
 
 namespace stats {
@@ -93,17 +93,17 @@ class BackendStatsContext {
   void IncrementTableDeletes(oid_t tile_group_id);
 
   // Increment the read stat for given index by read_count
-  void IncrementIndexReads(size_t read_count, index::IndexMetadata* metadata);
+  void IncrementIndexReads(size_t read_count, catalog::IndexCatalogObject* index_catalog_object);
 
   // Increment the insert stat for index
-  void IncrementIndexInserts(index::IndexMetadata* metadata);
+  void IncrementIndexInserts(catalog::IndexCatalogObject* index_catalog_object);
 
   // Increment the update stat for index
-  void IncrementIndexUpdates(index::IndexMetadata* metadata);
+  void IncrementIndexUpdates(catalog::IndexCatalogObject* index_catalog_object);
 
   // Increment the delete stat for index
   void IncrementIndexDeletes(size_t delete_count,
-                             index::IndexMetadata* metadata);
+                             catalog::IndexCatalogObject* index_catalog_object);
 
   // Increment the commit stat for given database
   void IncrementTxnCommitted(oid_t database_id);

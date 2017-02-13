@@ -164,40 +164,40 @@ void BackendStatsContext::IncrementTableDeletes(oid_t tile_group_id) {
 }
 
 void BackendStatsContext::IncrementIndexReads(size_t read_count,
-                                              index::IndexMetadata* metadata) {
-  oid_t index_id = metadata->GetOid();
-  oid_t table_id = metadata->GetTableOid();
-  oid_t database_id = metadata->GetDatabaseOid();
+                                              catalog::IndexCatalogObject* index_catalog_object) {
+  oid_t index_id = index_catalog_object->GetOid();
+  oid_t table_id = index_catalog_object->GetTableOid();
+  oid_t database_id = index_catalog_object->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
   PL_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementReads(read_count);
 }
 
 void BackendStatsContext::IncrementIndexInserts(
-    index::IndexMetadata* metadata) {
-  oid_t index_id = metadata->GetOid();
-  oid_t table_id = metadata->GetTableOid();
-  oid_t database_id = metadata->GetDatabaseOid();
+    catalog::IndexCatalogObject* index_catalog_object) {
+  oid_t index_id = index_catalog_object->GetOid();
+  oid_t table_id = index_catalog_object->GetTableOid();
+  oid_t database_id = index_catalog_object->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
   PL_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementInserts();
 }
 
 void BackendStatsContext::IncrementIndexUpdates(
-    index::IndexMetadata* metadata) {
-  oid_t index_id = metadata->GetOid();
-  oid_t table_id = metadata->GetTableOid();
-  oid_t database_id = metadata->GetDatabaseOid();
+    catalog::IndexCatalogObject* index_catalog_object) {
+  oid_t index_id = index_catalog_object->GetOid();
+  oid_t table_id = index_catalog_object->GetTableOid();
+  oid_t database_id = index_catalog_object->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
   PL_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementUpdates();
 }
 
 void BackendStatsContext::IncrementIndexDeletes(
-    size_t delete_count, index::IndexMetadata* metadata) {
-  oid_t index_id = metadata->GetOid();
-  oid_t table_id = metadata->GetTableOid();
-  oid_t database_id = metadata->GetDatabaseOid();
+    size_t delete_count, catalog::IndexCatalogObject* index_catalog_object) {
+  oid_t index_id = index_catalog_object->GetOid();
+  oid_t table_id = index_catalog_object->GetTableOid();
+  oid_t database_id = index_catalog_object->GetDatabaseOid();
   auto index_metric = GetIndexMetric(database_id, table_id, index_id);
   PL_ASSERT(index_metric != nullptr);
   index_metric->GetIndexAccess().IncrementDeletes(delete_count);
