@@ -67,7 +67,7 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
                      UNUSED_ATTRIBUTE uint64_t thread_itr) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
   auto tile_group_id = table->GetTileGroup(0)->GetTileGroupId();
-  auto index_metadata = table->GetIndex(0)->GetMetadata();
+  auto index_catalog_object = table->GetIndex(0)->GetIndexCatalogObject();
   auto db_oid = database->GetOid();
   auto context = stats::BackendStatsContext::GetInstance();
   auto stmt = TestingStatsUtil::GetInsertStmt();
@@ -95,10 +95,10 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
     }
 
     // Record index stat
-    context->IncrementIndexReads(NUM_INDEX_READ, index_metadata);
-    context->IncrementIndexDeletes(NUM_INDEX_DELETE, index_metadata);
+    context->IncrementIndexReads(NUM_INDEX_READ, index_catalog_object);
+    context->IncrementIndexDeletes(NUM_INDEX_DELETE, index_catalog_object);
     for (int i = 0; i < NUM_INDEX_INSERT; i++) {
-      context->IncrementIndexInserts(index_metadata);
+      context->IncrementIndexInserts(index_catalog_object);
     }
 
     // Record database stat
