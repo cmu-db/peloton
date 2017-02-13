@@ -779,7 +779,7 @@ bool SimpleOptimizer::CheckIndexSearchable(
 
   // Check whether the index is visible
   // This is for the IndexTuner demo
-  if (index->GetMetadata()->GetVisibility() == false) {
+  if (index->GetIndexCatalogObject()->GetVisibility() == false) {
     LOG_DEBUG("Index '%s.%s' is not visible. Skipping...",
               target_table->GetName().c_str(), index->GetName().c_str());
     return (false);
@@ -1382,13 +1382,13 @@ bool SimpleOptimizer::UnderlyingSameOrder(planner::AbstractPlan* select_plan,
 
   // Get the index_id following key column ids
   if (size >=
-      index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs().size()) {
+      index_scan_plan->GetIndex()->GetIndexCatalogObject()->GetKeyAttrs().size()) {
     LOG_TRACE("size of index scan key ids is larger or eqaul than index ids");
     return false;
   }
 
   oid_t physical_column_id =
-      index_scan_plan->GetIndex()->GetMetadata()->GetKeyAttrs()[size];
+      index_scan_plan->GetIndex()->GetIndexCatalogObject()->GetKeyAttrs()[size];
 
   // Whether the order by id is the same with the following index id
   if (physical_column_id != orderby_column_id) {
