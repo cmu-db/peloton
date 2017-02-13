@@ -21,7 +21,6 @@
 namespace peloton {
 namespace index {
 
-class IndexMetadata;
 class Index;
 
 class IndexUtil {
@@ -70,7 +69,7 @@ class IndexUtil {
 
   static bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types);
 
-  static bool FindValueIndex(const IndexMetadata *metadata_p,
+  static bool FindValueIndex(const catalog::IndexCatalogObject *index_catalog_object_p,
                       const std::vector<oid_t> &tuple_column_id_list,
                       const std::vector<ExpressionType> &expr_list,
                       std::vector<std::pair<oid_t, oid_t>> &value_index_list);
