@@ -62,6 +62,7 @@ static void AddIndex(storage::DataTable* table,
 
   auto index_count = table->GetIndexCount();
   auto index_oid = index_count + 1;
+  //LOG_DEBUG("index_oid is %d", (int)index_oid);
 
   auto tuple_schema = table->GetSchema();
   catalog::Schema* key_schema;

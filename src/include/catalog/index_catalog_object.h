@@ -56,8 +56,8 @@ class IndexCatalogObject : public AbstractCatalogObject {
 
   ~IndexCatalogObject();
 
-  const std::string &GetName() const { return name_; }
-  inline oid_t GetOid() { return index_oid; }
+  //const std::string &GetName() const { return name_; }
+  //inline oid_t GetOid() { return index_oid; }
   inline oid_t GetTableOid() { return table_oid; }
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline IndexType GetIndexType() { return index_type_; }
