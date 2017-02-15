@@ -13,7 +13,7 @@
 #pragma once
 
 #include "expression/abstract_expression.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
 
@@ -72,7 +72,7 @@ struct UpdateStatement : SQLStatement {
     if (where != NULL) delete where;
   }
 
-  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 

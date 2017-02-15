@@ -14,6 +14,7 @@
 #pragma once
 
 #include "expression/abstract_expression.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace expression {

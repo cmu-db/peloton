@@ -4,15 +4,18 @@
 //
 // query_node_visitor.h
 //
-// Identification: src/include/binder/sql_node_visitor.h
+// Identification: src/include/common/sql_node_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
+
 namespace peloton {
+
 
 namespace parser {
 class SelectStatement;
@@ -33,7 +36,20 @@ class OrderDescription;
 class LimitDescription;
 }
 
-namespace binder {
+namespace expression {
+class AbstractExpression;
+class ComparisonExpression;
+class AggregateExpression;
+class ConjunctionExpression;
+class ConstantValueExpression;
+class OperatorExpression;
+class ParameterValueExpression;
+class StarExpression;
+class TupleValueExpression;
+class FunctionExpression;
+}
+
+
 
 //===--------------------------------------------------------------------===//
 // Query Node Visitor
@@ -61,7 +77,17 @@ class SqlNodeVisitor {
   virtual void Visit(const parser::TransactionStatement *) = 0;
   virtual void Visit(const parser::UpdateStatement *) = 0;
   virtual void Visit(const parser::CopyStatement *) = 0;
+
+  virtual void Visit(expression::ComparisonExpression* expr);
+  virtual void Visit(expression::AggregateExpression* expr);
+  virtual void Visit(expression::ConjunctionExpression* expr);
+  virtual void Visit(expression::ConstantValueExpression* expr);
+  virtual void Visit(expression::FunctionExpression* expr);
+  virtual void Visit(expression::OperatorExpression* expr);
+  virtual void Visit(expression::ParameterValueExpression* expr);
+  virtual void Visit(expression::StarExpression* expr);
+  virtual void Visit(expression::TupleValueExpression* expr);
+
 };
 
-} /* namespace optimizer */
 } /* namespace peloton */

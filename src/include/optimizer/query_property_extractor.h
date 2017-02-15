@@ -12,7 +12,7 @@
 
 #include "optimizer/column_manager.h"
 #include "optimizer/property_set.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "catalog/schema.h"
 
 namespace peloton {
@@ -28,7 +28,7 @@ namespace optimizer {
  * Physical properties are those fields that can be directly added to the plan,
  * and don't need to perform transformations on.
  */
-class QueryPropertyExtractor : public QueryNodeVisitor {
+class QueryPropertyExtractor : public SqlNodeVisitor {
  public:
   QueryPropertyExtractor(ColumnManager &manager) : manager_(manager) {}
 

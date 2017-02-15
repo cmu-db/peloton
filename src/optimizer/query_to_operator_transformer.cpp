@@ -18,7 +18,7 @@
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/column_manager.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "optimizer/query_to_operator_transformer.h"
 
 #include "planner/order_by_plan.h"
@@ -39,8 +39,8 @@ QueryToOperatorTransformer::QueryToOperatorTransformer(ColumnManager &manager)
 
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
-  op->Accept(this);
   output_expr = nullptr;
+  op->Accept(this);
   return output_expr;
 }
 

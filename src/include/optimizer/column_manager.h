@@ -54,7 +54,7 @@ class ColumnManager {
   // Set of the table ids in the current query context
   std::set<std::tuple<oid_t, oid_t>> table_id_tuples;
 
-  // When alias is not set, its table name
+  // When alias is not set, set its table name
   std::map<std::string, std::tuple<oid_t, oid_t>> table_alias_to_id_tuple;
 };
 

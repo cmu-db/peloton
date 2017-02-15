@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
@@ -26,7 +26,7 @@ class ColumnManager;
 namespace optimizer {
 
 // Transform a query from parsed statement to operator expressions.
-class QueryToOperatorTransformer : public QueryNodeVisitor {
+class QueryToOperatorTransformer : public SqlNodeVisitor {
  public:
   QueryToOperatorTransformer(ColumnManager &manager);
 

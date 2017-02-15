@@ -15,6 +15,7 @@
 
 #include "expression/abstract_expression.h"
 #include "executor/executor_context.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace expression {

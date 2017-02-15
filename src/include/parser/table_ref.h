@@ -17,7 +17,7 @@
 
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -65,14 +65,19 @@ struct TableRef {
   }
 
   // Get the name of the table
-  inline const char* GetTableName() const {
+  inline const char* GetTableAlias() const {
     if (alias != NULL)
       return alias;
     else
       return table_info_->table_name;
   }
 
-  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+  inline const char* GetTableName() const {
+      return table_info_->table_name;
+  }
+
+
+    void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };
 
 // Definition of a join table
@@ -92,7 +97,7 @@ struct JoinDefinition {
 
   JoinType type;
 
-  void Accept(optimizer::QueryNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };
 
 }  // End parser namespace

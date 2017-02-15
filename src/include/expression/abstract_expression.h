@@ -20,6 +20,7 @@
 #include "type/serializeio.h"
 #include "type/types.h"
 #include "type/value_factory.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
@@ -118,7 +119,7 @@ class AbstractExpression : public Printable {
 
   // virtual bool SerializeTo(SerializeOutput &output) const {}
 
-  // virtual bool DeserializeFrom(SerializeInput &input) const {}
+  // virtual bool DeserializeFrom(SerializeInput &input) const {
 
   virtual int SerializeSize() { return 0; }
 
@@ -131,6 +132,20 @@ class AbstractExpression : public Printable {
   std::string alias;
 
   bool distinct_ = false;
+
+  // Binder stuff
+  bool IsObjectSet = false;
+  std::tuple<oid_t, oid_t, oid_t> BoundObjectId;
+
+  void SetBoundObjectId(oid_t db_id, oid_t table_id, oid_t col_offset) {
+    BoundObjectId = std::make_tuple(db_id, table_id, col_offset);
+  }
+
+  virtual void Accept(SqlNodeVisitor* v) {
+    for (auto& child : children_) {
+      child->Accept(v);
+    }
+  }
 
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}

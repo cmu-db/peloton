@@ -87,7 +87,7 @@ void ColumnManager::AddTable(oid_t db_id, oid_t table_id, const parser::TableRef
   }
 
   if (table_alias_to_id_tuple.find(alias) != table_alias_to_id_tuple.end()) {
-    throw Exception("Duplicate alias");
+    throw Exception("Ambiguous alias");
   }
   table_alias_to_id_tuple[alias] = id_tuple;
 
