@@ -132,9 +132,6 @@ class IndexCatalogObject : public AbstractCatalogObject {
   // IndexCatalogObject Data Member Definition
   ///////////////////////////////////////////////////////////////////
 
-  std::string name_;
-
-  oid_t index_oid;
   oid_t table_oid;
   oid_t database_oid;
 

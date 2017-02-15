@@ -108,7 +108,7 @@ const std::string IndexCatalogObject::GetInfo() const {
   std::stringstream os;
 
   os << "IndexCatalogObject["
-     << "Oid=" << index_oid << ", "
+     << "Oid=" << oid_ << ", "
      << "Name=" << name_ << ", "
      << "Type=" << IndexTypeToString(index_type_) << ", "
      << "ConstraintType=" << IndexConstraintTypeToString(index_constraint_type_)
