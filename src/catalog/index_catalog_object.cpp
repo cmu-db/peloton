@@ -56,8 +56,7 @@ IndexCatalogObject::IndexCatalogObject(
     const Schema *tuple_schema,
     const Schema *key_schema,
     const std::vector<oid_t> &key_attrs, bool unique_keys)
-    : name_(index_name),
-      index_oid(index_oid),
+    : AbstractCatalogObject(index_name, index_oid),
       table_oid(table_oid),
       database_oid(database_oid),
       index_type_(index_type),

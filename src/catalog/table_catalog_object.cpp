@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog_objects.h"
+#include "catalog/table_catalog_object.h"
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/exception.h"
@@ -39,16 +39,6 @@ const std::string TableCatalogObject::GetInfo() const {
      << "Name=" << name_ << ", ";
 
   os << " -> " << schema_->GetInfo();
-
-  return os.str();
-}
-
-const std::string DatabaseCatalogObject::GetInfo() const {
-  std::stringstream os;
-
-  os << "DatabaseCatalogObject["
-     << "Oid=" << oid_ << ", "
-     << "Name=" << name_ << ", ";
 
   return os.str();
 }

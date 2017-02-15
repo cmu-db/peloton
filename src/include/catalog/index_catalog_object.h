@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "catalog/abstract_catalog_object.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/printable.h"
@@ -42,7 +43,7 @@ namespace catalog {
  * the index key, so it is the index's responsibility to maintain such a
  * mapping relation and does the conversion between tuple key and index key
  */
-class IndexCatalogObject : public Printable {
+class IndexCatalogObject : public AbstractCatalogObject {
   IndexCatalogObject() = delete;
 
  public:
