@@ -52,7 +52,7 @@ void PelotonInit::Initialize() {
   // start index tuner
   if (FLAGS_index_tuner == true) {
     // Set the default visibility flag for all indexes to false
-    index::IndexMetadata::SetDefaultVisibleFlag(false);
+    catalog::IndexCatalogObject::SetDefaultVisibleFlag(false);
     auto& index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Start();
   }

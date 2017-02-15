@@ -63,7 +63,7 @@ class BWTreeIndex : public Index {
                          ValueHashFunc>;
 
  public:
-  BWTreeIndex(IndexMetadata *metadata);
+  BWTreeIndex(catalog::IndexCatalogObject *index_catalog_object);
 
   ~BWTreeIndex();
 

@@ -136,7 +136,7 @@ class ConjunctionScanPredicate {
                            const std::vector<oid_t> &tuple_column_id_list,
                            const std::vector<ExpressionType> &expr_list) {
     // It contains a pointer to the index key schema
-    IndexMetadata *metadata_p = index_p->GetMetadata();
+    catalog::IndexCatalogObject *index_catalog_object_p = index_p->GetIndexCatalogObject();
 
     // If there are expressions that result in full index scan
     // then this flag is set, and we do not construct lower bound
@@ -156,8 +156,8 @@ class ConjunctionScanPredicate {
       // memory for holding fields inside the tuple
       //
       // The schema will not be freed by tuple, but its internal data array will
-      low_key_p_ = new storage::Tuple(metadata_p->GetKeySchema(), true);
-      high_key_p_ = new storage::Tuple(metadata_p->GetKeySchema(), true);
+      low_key_p_ = new storage::Tuple(index_catalog_object_p->GetKeySchema(), true);
+      high_key_p_ = new storage::Tuple(index_catalog_object_p->GetKeySchema(), true);
 
       // This further initializes is_point_query flag, and then
       // fill the high key and low key with boundary values
@@ -380,16 +380,16 @@ class ConjunctionScanPredicate {
     PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
 
     // We need to check index key schema
-    const IndexMetadata *metadata_p = index_p->GetMetadata();
+    const catalog::IndexCatalogObject *index_catalog_object_p = index_p->GetIndexCatalogObject();
 
     // This function will modify value_index_list, but value_index_list
     // should have capacity 0 to avoid further problems
-    is_point_query_ = IndexUtil::FindValueIndex(metadata_p, tuple_column_id_list,
+    is_point_query_ = IndexUtil::FindValueIndex(index_catalog_object_p, tuple_column_id_list,
                                      expr_list, value_index_list_);
 
     // value_index_list should be of the same length as the index key
     // schema, since it maps index key column to indices inside value_list
-    PL_ASSERT(metadata_p->GetColumnCount() == value_index_list_.size());
+    PL_ASSERT(index_catalog_object_p->GetColumnCount() == value_index_list_.size());
 
     LOG_TRACE("Constructing scan interval. Point query = %d", is_point_query_);
 
@@ -402,7 +402,7 @@ class ConjunctionScanPredicate {
       // We use the type of the current index key column to get the
       // +Inf, -Inf and/or casted type for Value object
       type::Type::TypeId index_key_column_type =
-          metadata_p->GetKeySchema()->GetType(i);
+          index_catalog_object_p->GetKeySchema()->GetType(i);
 
       // If the lower bound of this column is not specified by the predicate
       // then we fill it with the minimum

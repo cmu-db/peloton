@@ -26,27 +26,27 @@ namespace index {
 class IndexFactory {
  public:
   // Get an index with required attributes
-  static Index *GetIndex(IndexMetadata *metadata);
+  static Index *GetIndex(catalog::IndexCatalogObject *index_catalog_object);
 
  private:
-  static std::string GetInfo(IndexMetadata *metadata,
+  static std::string GetInfo(catalog::IndexCatalogObject *index_catalog_object,
                              std::string comparatorType);
 
   //===--------------------------------------------------------------------===//
   // PELOTON::BWTREE
   //===--------------------------------------------------------------------===//
 
-  static Index *GetBwTreeIntsKeyIndex(IndexMetadata *metadata);
+  static Index *GetBwTreeIntsKeyIndex(catalog::IndexCatalogObject *index_catalog_object);
 
-  static Index *GetBwTreeGenericKeyIndex(IndexMetadata *metadata);
+  static Index *GetBwTreeGenericKeyIndex(catalog::IndexCatalogObject *index_catalog_object);
 
   //===--------------------------------------------------------------------===//
   // PELOTON::SKIPLIST
   //===--------------------------------------------------------------------===//
 
-  static Index *GetSkipListIntsKeyIndex(IndexMetadata *metadata);
+  static Index *GetSkipListIntsKeyIndex(catalog::IndexCatalogObject *index_catalog_object);
 
-  static Index *GetSkipListGenericKeyIndex(IndexMetadata *metadata);
+  static Index *GetSkipListGenericKeyIndex(catalog::IndexCatalogObject *index_catalog_object);
 };
 
 }  // End index namespace

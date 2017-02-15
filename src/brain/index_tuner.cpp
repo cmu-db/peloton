@@ -55,7 +55,7 @@ void IndexTuner::Start() {
 // Add an ad-hoc index
 static void AddIndex(storage::DataTable* table,
                      std::set<oid_t> suggested_index_attrs) {
-  // Construct index metadata
+  // Construct index index_catalog_object
   std::vector<oid_t> key_attrs(suggested_index_attrs.size());
   std::copy(suggested_index_attrs.begin(), suggested_index_attrs.end(),
             key_attrs.begin());
@@ -65,7 +65,7 @@ static void AddIndex(storage::DataTable* table,
 
   auto tuple_schema = table->GetSchema();
   catalog::Schema* key_schema;
-  index::IndexMetadata* index_metadata;
+  catalog::IndexCatalogObject* index_catalog_object;
   bool unique;
 
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
@@ -73,7 +73,7 @@ static void AddIndex(storage::DataTable* table,
 
   unique = true;
 
-  index_metadata = new index::IndexMetadata(
+  index_catalog_object = new catalog::IndexCatalogObject(
       "adhoc_index_" + std::to_string(index_oid), index_oid, table->GetOid(),
       table->GetDatabaseOid(), IndexType::BWTREE,
       IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
@@ -81,15 +81,15 @@ static void AddIndex(storage::DataTable* table,
 
   // Set initial utility ratio
   double intial_utility_ratio = 0.5;
-  index_metadata->SetUtility(intial_utility_ratio);
+  index_catalog_object->SetUtility(intial_utility_ratio);
 
   std::shared_ptr<index::Index> adhoc_index(
-      index::IndexFactory::GetIndex(index_metadata));
+      index::IndexFactory::GetIndex(index_catalog_object));
 
   // Add index
   table->AddIndex(adhoc_index);
 
-  LOG_DEBUG("Creating index : %s", index_metadata->GetInfo().c_str());
+  LOG_DEBUG("Creating index : %s", index_catalog_object->GetInfo().c_str());
 }
 
 void IndexTuner::BuildIndex(storage::DataTable* table,
@@ -308,12 +308,12 @@ void IndexTuner::DropIndexes(storage::DataTable* table) {
       continue;
     }
 
-    // auto average_index_utility = index_metadata->GetUtility();
+    // auto average_index_utility = index_catalog_object->GetUtility();
     auto index_oid = index->GetOid();
 
     // Check if index utility below threshold and drop if needed
     // if (average_index_utility < index_utility_threshold) {
-    LOG_DEBUG("Dropping index : %s", index->GetMetadata()->GetInfo().c_str());
+    LOG_DEBUG("Dropping index : %s", index->GetIndexCatalogObject()->GetInfo().c_str());
 
     table->DropIndexWithOid(index_oid);
 
@@ -374,12 +374,12 @@ void IndexTuner::AddIndexes(
 
       // Make it visible if it already isn't
       auto index = table->GetIndex(index_itr);
-      auto index_metadata = index->GetMetadata();
+      auto index_catalog_object = index->GetIndexCatalogObject();
 
-      auto index_is_visible = index_metadata->GetVisibility();
+      auto index_is_visible = index_catalog_object->GetVisibility();
       if (index_is_visible == false) {
-        LOG_INFO("Enabling index : %s", index_metadata->GetName().c_str());
-        index_metadata->SetVisibility(true);
+        LOG_INFO("Enabling index : %s", index_catalog_object->GetName().c_str());
+        index_catalog_object->SetVisibility(true);
 
         // BARON VON PAVLO'S HACK ATTACK!
         // Tell all our PacketManagers back up in the front-end that they need
@@ -388,7 +388,7 @@ void IndexTuner::AddIndexes(
         // the PacketManager and into some more sane that doesn't require us
         // to start up the networking layer to test...
         for (auto pm : wire::PacketManager::GetPacketManagers()) {
-          pm->InvalidatePreparedStatements(index->GetMetadata()->GetTableOid());
+          pm->InvalidatePreparedStatements(index->GetIndexCatalogObject()->GetTableOid());
         }  // FOR
       }
     }
@@ -406,15 +406,15 @@ void UpdateIndexUtility(storage::DataTable* table,
       continue;
     }
 
-    auto index_metadata = index->GetMetadata();
-    auto index_key_attrs = index_metadata->GetKeyAttrs();
+    auto index_catalog_object = index->GetIndexCatalogObject();
+    auto index_key_attrs = index_catalog_object->GetKeyAttrs();
 
     std::set<oid_t> index_set(index_key_attrs.begin(), index_key_attrs.end());
 
     // Get current index utility
     auto current_index_utility = GetCurrentIndexUtility(index_set, list);
 
-    auto average_index_utility = index_metadata->GetUtility();
+    auto average_index_utility = index_catalog_object->GetUtility();
 
     LOG_TRACE("Average index utility %5.2lf", average_index_utility);
     LOG_TRACE("Current index utility %5.2lf", current_index_utility);
@@ -426,10 +426,10 @@ void UpdateIndexUtility(storage::DataTable* table,
     auto updated_average_index_utility =
         alpha * current_index_utility + (1 - alpha) * average_index_utility;
 
-    index_metadata->SetUtility(updated_average_index_utility);
+    index_catalog_object->SetUtility(updated_average_index_utility);
 
     LOG_TRACE("Updated index utility %5.2lf :: %s",
-              updated_average_index_utility, index_metadata->GetInfo().c_str());
+              updated_average_index_utility, index_catalog_object->GetInfo().c_str());
   }
 }
 
@@ -456,7 +456,7 @@ void PrintIndexInformation(storage::DataTable* table) {
       fraction *= 100;
     }
 
-    LOG_DEBUG("%s %.1f%%", index->GetMetadata()->GetInfo().c_str(), fraction);
+    LOG_DEBUG("%s %.1f%%", index->GetIndexCatalogObject()->GetInfo().c_str(), fraction);
   }
 }
 

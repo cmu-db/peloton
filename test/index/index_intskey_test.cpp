@@ -64,8 +64,8 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   key_schema->SetIndexedColumns(key_attrs);
   tuple_schema = new catalog::Schema(column_list);
 
-  // Build index metadata
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+  // Build index index_catalog_object
+  catalog::IndexCatalogObject *index_catalog_object = new catalog::IndexCatalogObject(
       "MAGIC_TEST_INDEX", 125,  // Index oid
       INVALID_OID, INVALID_OID, index_type, IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique_keys);
@@ -73,7 +73,7 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   // Build index
   // The type of index key has been chosen inside this function, but we are
   // unable to know the exact type of key it has chosen
-  index::Index *index = index::IndexFactory::GetIndex(index_metadata);
+  index::Index *index = index::IndexFactory::GetIndex(index_catalog_object);
 
   // TODO: I don't think there is an easy way to check what kind of key we got.
   // It would be nice if we could check for an CompactIntsKey
