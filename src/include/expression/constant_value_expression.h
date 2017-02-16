@@ -44,6 +44,8 @@ class ConstantValueExpression : public AbstractExpression {
     return new ConstantValueExpression(*this);
   }
 
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
  protected:
   ConstantValueExpression(const ConstantValueExpression& other) : AbstractExpression(other), value_(other.value_){}
 

@@ -47,6 +47,7 @@ class ParameterValueExpression;
 class StarExpression;
 class TupleValueExpression;
 class FunctionExpression;
+class OperatorUnaryMinusExpression;
 }
 
 
@@ -78,13 +79,13 @@ class SqlNodeVisitor {
   virtual void Visit(const parser::UpdateStatement *) = 0;
   virtual void Visit(const parser::CopyStatement *) = 0;
 
-  virtual void Visit(expression::AbstractExpression* expr);
   virtual void Visit(expression::ComparisonExpression* expr);
   virtual void Visit(expression::AggregateExpression* expr);
   virtual void Visit(expression::ConjunctionExpression* expr);
   virtual void Visit(expression::ConstantValueExpression* expr);
   virtual void Visit(expression::FunctionExpression* expr);
   virtual void Visit(expression::OperatorExpression* expr);
+  virtual void Visit(expression::OperatorUnaryMinusExpression* expr);
   virtual void Visit(expression::ParameterValueExpression* expr);
   virtual void Visit(expression::StarExpression* expr);
   virtual void Visit(expression::TupleValueExpression* expr);

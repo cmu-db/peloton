@@ -78,7 +78,10 @@ public:
 
   std::string func_name_;
 
-protected:
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
+
+ protected:
   FunctionExpression(const FunctionExpression& other) :
       AbstractExpression(other), func_name_(other.func_name_), func_ptr_(
           other.func_ptr_) {

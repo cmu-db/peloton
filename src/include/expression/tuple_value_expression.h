@@ -87,6 +87,9 @@ class TupleValueExpression : public AbstractExpression {
     BoundObjectId = col_pos_tuple;
   }
 
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
+
  protected:
   TupleValueExpression(const TupleValueExpression &other)
       : AbstractExpression(other),

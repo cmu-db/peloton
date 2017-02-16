@@ -38,7 +38,10 @@ public:
     return new StarExpression(*this);
   }
 
-protected:
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
+
+ protected:
   StarExpression(const FunctionExpression& other) :
       AbstractExpression(other) {
   }

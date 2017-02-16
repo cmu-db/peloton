@@ -93,7 +93,10 @@ public:
     }
   }
 
-protected:
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
+
+ protected:
   AggregateExpression(const AggregateExpression& other) :
       AbstractExpression(other){
   }

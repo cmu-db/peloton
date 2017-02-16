@@ -79,6 +79,9 @@ class OperatorExpression : public AbstractExpression {
     return new OperatorExpression(*this);
   }
 
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
+
  protected:
   OperatorExpression(const OperatorExpression &other)
       : AbstractExpression(other) {}
@@ -101,6 +104,9 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   AbstractExpression *Copy() const override {
     return new OperatorUnaryMinusExpression(*this);
   }
+
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
 
  protected:
   OperatorUnaryMinusExpression(const OperatorUnaryMinusExpression &other)

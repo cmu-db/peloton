@@ -133,9 +133,7 @@ class AbstractExpression : public Printable {
 
   bool distinct_ = false;
 
-  virtual void Accept(SqlNodeVisitor* v) {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor*) = 0;
 
   virtual void AcceptChildren(SqlNodeVisitor* v) {
     for (auto& child : children_) {

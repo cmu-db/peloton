@@ -61,6 +61,8 @@ class ConjunctionExpression : public AbstractExpression {
     return new ConjunctionExpression(*this);
   }
 
+  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+
  protected:
   ConjunctionExpression(const ConjunctionExpression &other)
       : AbstractExpression(other) {}

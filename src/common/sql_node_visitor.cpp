@@ -24,9 +24,6 @@
 #include "expression/constant_value_expression.h"
 
 namespace peloton {
-void SqlNodeVisitor::Visit(expression::AbstractExpression *expr) {
-  expr->AcceptChildren(this);
-}
 void SqlNodeVisitor::Visit(expression::ComparisonExpression *expr) {
   expr->AcceptChildren(this);
 }
@@ -43,6 +40,9 @@ void SqlNodeVisitor::Visit(expression::FunctionExpression *expr) {
   expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::OperatorExpression *expr) {
+  expr->AcceptChildren(this);
+}
+void SqlNodeVisitor::Visit(expression::OperatorUnaryMinusExpression* expr) {
   expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::ParameterValueExpression *expr) {
