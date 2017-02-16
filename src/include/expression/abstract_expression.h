@@ -134,7 +134,7 @@ class AbstractExpression : public Printable {
   bool distinct_ = false;
 
   // Binder stuff
-  bool IsObjectSet = false;
+  bool isObjectBound = false;
   std::tuple<oid_t, oid_t, oid_t> BoundObjectId;
 
   void SetBoundObjectId(oid_t db_id, oid_t table_id, oid_t col_offset) {

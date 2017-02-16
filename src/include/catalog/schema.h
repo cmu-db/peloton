@@ -16,6 +16,7 @@
 #include "catalog/column.h"
 #include "common/printable.h"
 #include "type/type.h"
+#include "boost/algorithm/string.hpp"
 
 namespace peloton {
 namespace catalog {
@@ -127,7 +128,7 @@ class Schema : public Printable {
   inline oid_t GetColumnID(std::string col_name) const {
     oid_t index = -1;
     for (oid_t i = 0; i < columns.size(); ++i) {
-      if (columns[i].GetName() == col_name) {
+      if (strcasecmp(columns[i].GetName().c_str(), col_name.c_str()) == 0) {
         index = i;
         break;
       }

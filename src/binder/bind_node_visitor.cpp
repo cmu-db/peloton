@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/parser/select_statement.h>
+#include "parser/select_statement.h"
 #include "binder/bind_node_visitor.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace binder {
@@ -27,9 +28,10 @@ namespace binder {
 
   void BindNodeVisitor::Visit(const parser::SelectStatement * node) {
     // Save the upper level context
-    context_->upper_context = context_;
+    auto pre_context = context_;
+    context_ = std::make_shared<BinderContext>();
+    context_->upper_context = pre_context;
 
-    context_ = std::make_shared(new BinderContext());
     if (node->from_table != nullptr)
       node->from_table->Accept(this);
     if (node->where_clause != nullptr)
@@ -101,15 +103,29 @@ namespace binder {
 //  void BindNodeVisitor::Visit(expression::ParameterValueExpression* expr) {}
 //  void BindNodeVisitor::Visit(expression::StarExpression* expr) {}
   void BindNodeVisitor::Visit(expression::TupleValueExpression* expr) {
-    if (!expr->IsObjectSet) {
-      std::tuple<oid_t, oid_t> id_tuple_ptr;
-      if (!context_->GetTableIdTuple(expr->GetTableName(), &id_tuple_ptr))
-        throw Exception("Invalid name "+expr->GetTableName());
-      storage::DataTable *target_table =
-          catalog::Catalog::GetInstance()->GetTableWithName(
-              expr->GetDatabaseName(),
-              expr->GetTableName());
-      expr->SetBoundObjectId()
+    if (!expr->isObjectBound) {
+      std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
+      std::tuple<oid_t, oid_t> table_id_tuple;
+
+      std::string table_name = expr->GetTableName();
+      std::string col_name = expr->GetColumnName();
+
+      // Table name not specified in the expression
+      if (table_name.empty()) {
+        if (!BinderContext::GetColumnPosTuple(context_, col_name, &col_pos_tuple))
+          throw Exception("Cannot find column "+col_name);
+      }
+      // Table name is present
+      else if (!BinderContext::GetTableIdTuple(context_, table_name, &table_id_tuple)) {
+          throw Exception("Invalid table reference "+expr->GetTableName());
+      }
+      else {
+        if (!BinderContext::GetColumnPosTuple(table_name, table_id_tuple, &col_pos_tuple))
+          throw Exception("Cannot find column "+col_name);
+      }
+
+      expr->isObjectBound = true;
+
     }
   }
 
