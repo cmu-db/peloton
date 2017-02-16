@@ -78,6 +78,7 @@ class SqlNodeVisitor {
   virtual void Visit(const parser::UpdateStatement *) = 0;
   virtual void Visit(const parser::CopyStatement *) = 0;
 
+  virtual void Visit(expression::AbstractExpression* expr);
   virtual void Visit(expression::ComparisonExpression* expr);
   virtual void Visit(expression::AggregateExpression* expr);
   virtual void Visit(expression::ConjunctionExpression* expr);

@@ -42,6 +42,9 @@ namespace binder {
       node->limit->Accept(this);
     if (node->group_by != nullptr)
       node->group_by->Accept(this);
+    for (auto select_element : *(node->select_list)) {
+      select_element->Accept(this);
+    }
 
     // Restore the upper level context
     context_ = context_->upper_context;
@@ -50,8 +53,11 @@ namespace binder {
 
   // Some sub query nodes inside SelectStatement
   void BindNodeVisitor::Visit(const parser::JoinDefinition *node) {
+    // The columns in join condition can only bind to the join tables
+    context_ = std::make_shared<BinderContext>();
     node->left->Accept(this);
     node->right->Accept(this);
+    node->condition->Accept(this);
   }
   void BindNodeVisitor::Visit(const parser::TableRef * node) {
     // Nested select. Not supported in the current executors
@@ -94,14 +100,6 @@ namespace binder {
   void BindNodeVisitor::Visit(const parser::UpdateStatement *) {}
   void BindNodeVisitor::Visit(const parser::CopyStatement *) {}
 
-//  void BindNodeVisitor::Visit(expression::ComparisonExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::AggregateExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::ConjunctionExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::ConstantValueExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::FunctionExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::OperatorExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::ParameterValueExpression* expr) {}
-//  void BindNodeVisitor::Visit(expression::StarExpression* expr) {}
   void BindNodeVisitor::Visit(expression::TupleValueExpression* expr) {
     if (!expr->isObjectBound) {
       std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
@@ -124,6 +122,7 @@ namespace binder {
           throw Exception("Cannot find column "+col_name);
       }
 
+      expr->SetBoundObjectId(col_pos_tuple);
       expr->isObjectBound = true;
 
     }

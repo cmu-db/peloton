@@ -24,32 +24,35 @@
 #include "expression/constant_value_expression.h"
 
 namespace peloton {
+void SqlNodeVisitor::Visit(expression::AbstractExpression *expr) {
+  expr->AcceptChildren(this);
+}
 void SqlNodeVisitor::Visit(expression::ComparisonExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::AggregateExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::ConjunctionExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::ConstantValueExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::FunctionExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::OperatorExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::ParameterValueExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::StarExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::TupleValueExpression *expr) {
-  expr->Accept(this);
+  expr->AcceptChildren(this);
 }
 
 } //peloton

@@ -79,6 +79,14 @@ class TupleValueExpression : public AbstractExpression {
 
   std::string GetColumnName() const { return col_name_; }
 
+  // Binder stuff
+  bool isObjectBound = false;
+  std::tuple<oid_t, oid_t, oid_t> BoundObjectId;
+
+  void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple) {
+    BoundObjectId = col_pos_tuple;
+  }
+
  protected:
   TupleValueExpression(const TupleValueExpression &other)
       : AbstractExpression(other),
