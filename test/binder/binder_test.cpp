@@ -19,6 +19,8 @@
 #include "optimizer/simple_optimizer.h"
 #include "tcop/tcop.h"
 
+#include <memory>
+
 using std::string;
 using std::unique_ptr;
 using std::vector;
@@ -45,59 +47,63 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
                                   "CREATE TABLE b(B1 int, b2 varchar)"};
   auto txn = txn_manager.BeginTransaction();
   for (auto& sql : createTableSQLs) {
-    LOG_INFO("Creating test table");
+    LOG_INFO("%s", sql.c_str());
     vector<type::Value> params;
     vector<StatementResult> result;
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
     statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree));
-    auto status = traffic_cop.ExecuteStatementPlan(parse_tree->GetStatements().at(0), params, result, result_format);
+    auto status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(), params, result, result_format);
     LOG_INFO("Table create result: %s", ResultTypeToString(status.m_result).c_str());
   }
   txn_manager.CommitTransaction(txn);
   
   // Test regular table name
-  auto binder = std::make_unique<binder::BindNodeVisitor>();
-  string selectSQL = "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1
-                     "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50
-                     "ORDER BY a1;";
-  parser::SelectStatement* selectStmt = parser.BuildParseTree(selectSQL)->GetStatements()->at(0);
+  LOG_INFO("Parsing sql query");
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor());
+  string selectSQL = "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
+                     "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
+                     "ORDER BY a1";
+
+  auto selectStmt = dynamic_cast<parser::SelectStatement*>(parser.BuildParseTree(selectSQL)->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
   
   oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();
-  oid_t tableA_oid = catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "A")->GetOid();
-  oid_t tableB_oid = catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "B")->GetOid();
+  oid_t tableA_oid = catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "a")->GetOid();
+  oid_t tableB_oid = catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b")->GetOid();
   
   // Check select_list
-  oids = (expression::TupleValueExpression*)(selectStmt->select_list[0])->BoundObjectId;
-  EXPECT_EQ(oids, make_tuple(db_oid, tableA_oid, 0)); // A.a1
-  oids = (expression::TupleValueExpression*)(selectStmt->select_list[1])->BoundObjectId;
-  EXPECT_EQ(oids, make_tuple(db_oid, tableB_oid, 1)); // B.b2
+  LOG_INFO("Checking select list");
+  auto tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[0];
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // A.a1
+  tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[1];
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableB_oid, 1)); // B.b2
 
 
   // Check join condition
-  auto condition = (expression::ComparisonExpression*)(selectStmt->from_table->join->condition)
-  auto oids = (expression::TupleValueExpression*)(condition->left)->BoundObjectId;
-  EXPECT_EQ(oids, make_tuple(db_oid, tableA_oid, 0)); // a.a1
-  oids = (expression::TupleValueExpression*)(condition->left)->BoundObjectId;
-  EXPEXT_EQ(oids, make_tuple(db_oid, tableB_oid, 0)); // b.b1
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->from_table->join->
+    condition->GetChild(0);
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a.a1
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->from_table->join->
+    condition->GetChild(1);
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableB_oid, 0)); // b.b1
   
   // Check Where clause
-  oids = (expression::TupleValueExpression*)(selectStmt->group_by->children_[0])->BoundObjectId;
-  EXPECT_EQ(oids, make_tuple(db_oid, tableA_oid, 0)); // a1
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(0);
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
   
   // Check Group By and Having
-  oids = (expression::TupleValueExpression*)(selectStmt->group_by->columns[0])->BoundObjectId;
-  EXPEXT_EQ(oids, make_tuple(db_oid, tableA_oid, 0)); // A.a1
-  oids = (expression::TupleValueExpression*)(selectStmt->group_by->columns[1])->BoundObjectId;
-  EXPEXT_EQ(oids, make_tuple(db_oid, tableB_oid, 1)); // B.b2
-  oids = (expression::TupleValueExpression*)(selectStmt->group_by.having)->BoundObjectId;
-  EXPECT_EQ(oids, make_tuple(db_oid, tableA_oid, 0)); // a1
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->columns->at(0);
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // A.a1
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->columns->at(1);
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableB_oid, 1)); // B.b2
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->having;
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
 
   // Check Order By
-  oids = (expression::TupleValueExpression*)(selectStmt->order->expr)->BoundObjectId;
-  EXPECT_EQ(oids, make_tuple(db_oid, tableA_oid, 0)); // a1
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->order->expr;
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
   
   // TODO: Test alias ambiguous
   // TODO: Test alias and select_list
