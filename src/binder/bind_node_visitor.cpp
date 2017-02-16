@@ -108,17 +108,22 @@ namespace binder {
       std::string table_name = expr->GetTableName();
       std::string col_name = expr->GetColumnName();
 
+      std::transform(table_name.begin(), table_name.end(), table_name.begin(), ::tolower);
+      std::transform(col_name.begin(), col_name.end(), col_name.begin(), ::tolower);
+
       // Table name not specified in the expression
       if (table_name.empty()) {
-        if (!BinderContext::GetColumnPosTuple(context_, col_name, &col_pos_tuple))
+        if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple, table_name))
           throw Exception("Cannot find column "+col_name);
+        else
+          expr->SetTableName(table_name);
       }
       // Table name is present
       else if (!BinderContext::GetTableIdTuple(context_, table_name, &table_id_tuple)) {
           throw Exception("Invalid table reference "+expr->GetTableName());
       }
       else {
-        if (!BinderContext::GetColumnPosTuple(table_name, table_id_tuple, &col_pos_tuple))
+        if (!BinderContext::GetColumnPosTuple(col_name, table_id_tuple, col_pos_tuple))
           throw Exception("Cannot find column "+col_name);
       }
 

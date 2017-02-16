@@ -50,7 +50,7 @@ class BinderContext {
   // the context.
   static bool GetColumnPosTuple(std::string& col_name,
                          std::tuple<oid_t, oid_t>& table_id_tuple,
-                         std::tuple<oid_t, oid_t, oid_t>* col_pos_tuple) {
+                         std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple) {
     auto db_id = std::get<0>(table_id_tuple);
     auto table_id = std::get<1>(table_id_tuple);
     auto schema = catalog::Catalog::GetInstance()->
@@ -58,7 +58,7 @@ class BinderContext {
     auto col_pos = schema->GetColumnID(col_name);
     if (col_pos == (oid_t)-1)
       return false;
-    *col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
+    col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
     return true;
   }
 
@@ -67,15 +67,21 @@ class BinderContext {
   // TupleValueExpression
   static bool GetColumnPosTuple(std::shared_ptr<BinderContext> current_context,
                                 std::string& col_name,
-                                std::tuple<oid_t, oid_t, oid_t>* col_pos_tuple) {
+                                std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
+                                std::string& table_alias) {
     bool find_matched = false;
     while (current_context != nullptr && !find_matched) {
       for (auto entry: current_context->table_alias_map) {
         bool get_matched = GetColumnPosTuple(col_name, entry.second, col_pos_tuple);
-        if (!find_matched) {
-          find_matched = get_matched;
-        } else if (get_matched)
-          throw Exception("Ambiguous column name " + col_name);
+        if (get_matched) {
+          if (!find_matched) {
+            find_matched = true;
+            table_alias = entry.first;
+          }
+          else {
+            throw Exception("Ambiguous column name " + col_name);
+          }
+        }
       }
       current_context = current_context->upper_context;
     }
@@ -99,6 +105,11 @@ class BinderContext {
 
 
  private:
+//  struct comp {
+//    bool operator() (const std::string& lhs, const std::string& rhs) const {
+//      return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
+//    }
+//  };
   // When alias is not set, set its table name
   std::unordered_map<std::string, std::tuple<oid_t, oid_t>> table_alias_map;
 };

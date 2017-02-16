@@ -83,6 +83,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
 
   // Check join condition
+  LOG_INFO("Checking join condition");
   tupleExpr = (expression::TupleValueExpression*)selectStmt->from_table->join->
     condition->GetChild(0);
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a.a1
@@ -91,18 +92,21 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableB_oid, 0)); // b.b1
   
   // Check Where clause
+  LOG_INFO("Checking where clause");
   tupleExpr = (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(0);
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
   
   // Check Group By and Having
+  LOG_INFO("Checking group by");
   tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->columns->at(0);
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // A.a1
   tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->columns->at(1);
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableB_oid, 1)); // B.b2
-  tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->having;
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->group_by->having->GetChild(0);
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
 
   // Check Order By
+  LOG_INFO("Checking order by");
   tupleExpr = (expression::TupleValueExpression*)selectStmt->order->expr;
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
   
