@@ -3,9 +3,9 @@
 //
 //                         Peloton
 //
-// TableCatalogObject.cpp
+// database_catalog_object.cpp
 //
-// Identification: src/catalog/catalog_objects.cpp
+// Identification: src/catalog/database_catalog_object.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

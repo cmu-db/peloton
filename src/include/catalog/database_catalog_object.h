@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// index_catalog.h
+// database_catalog_object.h
 //
-// Identification: src/include/catalog_objects.h
+// Identification: src/include/database_catalog_object.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

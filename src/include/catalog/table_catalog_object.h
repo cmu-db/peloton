@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// index_catalog.h
+// table_catalog_object.h
 //
-// Identification: src/include/catalog_objects.h
+// Identification: src/include/table_catalog_object.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -64,7 +64,7 @@ class TableCatalogObject : public AbstractCatalogObject {
   const std::string GetInfo() const;
 
   ///////////////////////////////////////////////////////////////////
-  // IndexCatalog Data Member Definition
+  // TableCatalog Data Member Definition
   ///////////////////////////////////////////////////////////////////
  private:
   oid_t database_oid;
