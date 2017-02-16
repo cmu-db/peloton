@@ -66,7 +66,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
                      "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
                      "ORDER BY a1";
 
-  auto selectStmt = dynamic_cast<parser::SelectStatement*>(parser.BuildParseTree(selectSQL)->GetStatements().at(0));
+  auto parser_tree = parser.BuildParseTree(selectSQL);
+  auto selectStmt = dynamic_cast<parser::SelectStatement*>(parser_tree->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
   
   oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();
