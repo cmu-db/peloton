@@ -26,17 +26,17 @@ set(SQLScanner_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
 
 # Skip rebuilding parser if it is already built
 if(EXISTS ${SQLParser_SOURCE})
-	message("-- Found peloton parser")
+    message("-- Found peloton parser")
 else()
-  	message("-- Building peloton parser")
-	BISON_TARGET(SQLParser ${SQLParser_BISON} ${SQLParser_SOURCE})
-	FLEX_TARGET(SQLScanner ${SQLScanner_FLEX} ${SQLScanner_SOURCE})
-	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
+    message("-- Building peloton parser")
+    BISON_TARGET(SQLParser ${SQLParser_BISON} ${SQLParser_SOURCE})
+    FLEX_TARGET(SQLScanner ${SQLScanner_FLEX} ${SQLScanner_SOURCE})
+    ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
 endif()
 
 # Check if the parser is built
 add_custom_target(peloton-parser-check
-	COMMAND sed -i -e 's/Parser/Parser/g' ${PROJECT_SOURCE_DIR}/src/CMakeLists.txt
+    COMMAND sed -i -e 's/Parser/Parser/g' ${PROJECT_SOURCE_DIR}/src/CMakeLists.txt
 )
 
 set(PARSER_FLAGS "-w -Wno-error -fpermissive -Wno-sign-compare")
@@ -53,11 +53,11 @@ peloton_default_properties(peloton-parser)
 
 # --[ Libpg_query library
 
-ADD_CUSTOM_TARGET(
-  libpg_query.a ALL
-  COMMAND ${CMAKE_MAKE_PROGRAM}
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
-  COMMENT "Original libpg makefile target" )
+add_custom_target(libpg_query ALL
+                  COMMAND ${CMAKE_MAKE_PROGRAM}
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
+                  COMMENT "Original libpg makefile target")
+add_dependencies(peloton-parser libpg_query)
 
 ##################################################################################
 
@@ -68,7 +68,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
