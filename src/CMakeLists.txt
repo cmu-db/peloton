@@ -56,8 +56,8 @@ peloton_default_properties(peloton-parser)
 ADD_CUSTOM_TARGET(
   libpg_query.a ALL
   COMMAND ${CMAKE_MAKE_PROGRAM}
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query
-  COMMENT "Original scintilla makefile target" )
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
+  COMMENT "Original libpg makefile target" )
 
 ##################################################################################
 
