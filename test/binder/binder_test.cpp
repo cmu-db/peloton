@@ -66,8 +66,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
                      "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
                      "ORDER BY a1";
 
-  auto parser_tree = parser.BuildParseTree(selectSQL);
-  auto selectStmt = dynamic_cast<parser::SelectStatement*>(parser_tree->GetStatements().at(0));
+  auto parse_tree = parser.BuildParseTree(selectSQL);
+  auto selectStmt = dynamic_cast<parser::SelectStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
   
   oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();
@@ -110,8 +110,30 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   tupleExpr = (expression::TupleValueExpression*)selectStmt->order->expr;
   EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0)); // a1
   
-  // TODO: Test alias ambiguous
-  // TODO: Test alias and select_list
+  // Check alias ambiguous
+  LOG_INFO("Checking duplicate alias and table name.");
+  binder.reset(new binder::BindNodeVisitor());
+  selectSQL = "SELECT * FROM A, B as A";
+  parse_tree = parser.BuildParseTree(selectSQL);
+  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
+  try {
+    binder->BindNameToNode(selectStmt);
+    EXPECT_TRUE(false);
+  } catch (Exception& e){
+    LOG_INFO("Correct! Exception(%s) catched", e.what());
+  }
+  
+  // Test alias and select_list
+  LOG_INFO("Checking select_list and table alias binding");
+  binder.reset(new binder::BindNodeVisitor());
+  selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
+  parse_tree = parser.BuildParseTree(selectSQL);
+  selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
+  binder->BindNameToNode(selectStmt);
+  tupleExpr = (expression::TupleValueExpression*)(selectStmt->select_list->at(0));
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableA_oid, 0));
+  tupleExpr = (expression::TupleValueExpression*)(selectStmt->select_list->at(1));
+  EXPECT_EQ(tupleExpr->BoundObjectId, make_tuple(db_oid, tableB_oid, 1));
   
   // Delete the test database
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, nullptr);
