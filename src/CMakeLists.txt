@@ -51,6 +51,16 @@ peloton_default_properties(peloton-parser)
 
 ##################################################################################
 
+# --[ Libpg_query library
+
+ADD_CUSTOM_TARGET(
+  libpg_query.a ALL
+  COMMAND ${CMAKE_MAKE_PROGRAM}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query
+  COMMENT "Original scintilla makefile target" )
+
+##################################################################################
+
 # --[ Peloton library
 
 # creates 'srcs' lists
@@ -58,7 +68,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
