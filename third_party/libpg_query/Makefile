@@ -36,7 +36,7 @@ ECHO = echo
 
 CC ?= cc
 
-all: examples test build
+all: build
 
 build: $(ARLIB)
 
