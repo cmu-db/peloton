@@ -1,0 +1,8 @@
+language: c
+script: make examples
+compiler:
+  - clang
+  - gcc
+env:
+  - JSON_OUTPUT_V2=1
+  - JSON_OUTPUT_V2=0

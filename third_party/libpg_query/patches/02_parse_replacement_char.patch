@@ -1,0 +1,370 @@
+diff --git a/src/backend/parser/gram.y b/src/backend/parser/gram.y
+index 0282dce..fe90840 100644
+--- a/src/backend/parser/gram.y
++++ b/src/backend/parser/gram.y
+@@ -136,6 +136,9 @@ static Node *makeBitStringConst(char *str, int location);
+ static Node *makeNullAConst(int location);
+ static Node *makeAConst(Value *v, int location);
+ static Node *makeBoolAConst(bool state, int location);
++static Node *makeParamRef(int number, int location);
++static Node *makeParamRefCast(int number, int location, TypeName *typename);
++static Node *makeInterval_or_AExprOp(Node *lexpr, Node *rexpr, int location);
+ static void check_qualified_name(List *names, core_yyscan_t yyscanner);
+ static List *check_func_name(List *names, core_yyscan_t yyscanner);
+ static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
+@@ -461,6 +464,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
+ %type <str>		ColId ColLabel var_name type_function_name param_name
+ %type <str>		NonReservedWord NonReservedWord_or_Sconst
+ %type <node>	var_value zone_value
++%type <node>   Iconst_or_Normalized Sconst_or_Normalized NonReservedWord_or_Sconst_or_Normalized
+ 
+ %type <keyword> unreserved_keyword type_func_name_keyword
+ %type <keyword> col_name_keyword reserved_keyword
+@@ -663,6 +667,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
+ %left		'+' '-'
+ %left		'*' '/' '%'
+ %left		'^'
++%left   '?'
+ /* Unary Operators */
+ %left		AT				/* sets precedence for AT TIME ZONE */
+ %left		COLLATE
+@@ -1399,12 +1404,12 @@ set_rest_more:	/* Generic SET syntaxes: */
+ 							 parser_errposition(@2)));
+ 					$$ = NULL; /*not reached*/
+ 				}
+-			| SCHEMA Sconst
++			| SCHEMA Sconst_or_Normalized
+ 				{
+ 					VariableSetStmt *n = makeNode(VariableSetStmt);
+ 					n->kind = VAR_SET_VALUE;
+ 					n->name = "search_path";
+-					n->args = list_make1(makeStringConst($2, @2));
++					n->args = list_make1($2);
+ 					$$ = n;
+ 				}
+ 			| NAMES opt_encoding
+@@ -1418,20 +1423,20 @@ set_rest_more:	/* Generic SET syntaxes: */
+ 						n->kind = VAR_SET_DEFAULT;
+ 					$$ = n;
+ 				}
+-			| ROLE NonReservedWord_or_Sconst
++			| ROLE NonReservedWord_or_Sconst_or_Normalized
+ 				{
+ 					VariableSetStmt *n = makeNode(VariableSetStmt);
+ 					n->kind = VAR_SET_VALUE;
+ 					n->name = "role";
+-					n->args = list_make1(makeStringConst($2, @2));
++					n->args = list_make1($2);
+ 					$$ = n;
+ 				}
+-			| SESSION AUTHORIZATION NonReservedWord_or_Sconst
++			| SESSION AUTHORIZATION NonReservedWord_or_Sconst_or_Normalized
+ 				{
+ 					VariableSetStmt *n = makeNode(VariableSetStmt);
+ 					n->kind = VAR_SET_VALUE;
+ 					n->name = "session_authorization";
+-					n->args = list_make1(makeStringConst($3, @3));
++					n->args = list_make1($3);
+ 					$$ = n;
+ 				}
+ 			| SESSION AUTHORIZATION DEFAULT
+@@ -1473,6 +1478,8 @@ var_value:	opt_boolean_or_string
+ 				{ $$ = makeStringConst($1, @1); }
+ 			| NumericOnly
+ 				{ $$ = makeAConst($1, @1); }
++			| '?'
++				{ $$ = makeStringConst("?", @1); }
+ 		;
+ 
+ iso_level:	READ UNCOMMITTED						{ $$ = "read uncommitted"; }
+@@ -1502,9 +1509,9 @@ opt_boolean_or_string:
+  * so use IDENT (meaning we reject anything that is a key word).
+  */
+ zone_value:
+-			Sconst
++			Sconst_or_Normalized
+ 				{
+-					$$ = makeStringConst($1, @1);
++					$$ = $1;
+ 				}
+ 			| IDENT
+ 				{
+@@ -10580,13 +10587,13 @@ ConstCharacter:  CharacterWithLength
+ 				}
+ 		;
+ 
+-CharacterWithLength:  character '(' Iconst ')' opt_charset
++CharacterWithLength:  character '(' Iconst_or_Normalized ')' opt_charset
+ 				{
+ 					if (($5 != NULL) && (strcmp($5, "sql_text") != 0))
+ 						$1 = psprintf("%s_%s", $1, $5);
+ 
+ 					$$ = SystemTypeName($1);
+-					$$->typmods = list_make1(makeIntConst($3, @3));
++					$$->typmods = list_make1($3);
+ 					$$->location = @1;
+ 				}
+ 		;
+@@ -10827,6 +10834,13 @@ a_expr:		c_expr									{ $$ = $1; }
+ 			| a_expr '=' a_expr
+ 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, $3, @2); }
+ 
++			| a_expr '?' a_expr                     %prec Op
++				{ $$ = makeInterval_or_AExprOp($1, $3, @2); }
++			/*| '?' a_expr                          %prec Op
++				{ $$ = makeInterval_or_AExprOp(NULL, $2, @1); }*/
++			| a_expr '?'                            %prec POSTFIXOP
++				{ $$ = makeInterval_or_AExprOp($1, NULL, @2); }
++
+ 			| a_expr qual_Op a_expr				%prec Op
+ 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
+ 			| qual_Op a_expr					%prec Op
+@@ -11190,6 +11204,14 @@ b_expr:		c_expr
+ 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $3, @2); }
+ 			| b_expr '=' b_expr
+ 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, $3, @2); }
++
++			| b_expr '?' b_expr                     %prec Op
++				{ $$ = makeInterval_or_AExprOp($1, $3, @2); }
++			/*| '?' b_expr                          %prec Op
++				{ $$ = makeInterval_or_AExprOp(NULL, $2, @1); }*/
++			| b_expr '?'                            %prec POSTFIXOP
++				{ $$ = makeInterval_or_AExprOp($1, NULL, @2); }
++
+ 			| b_expr qual_Op b_expr				%prec Op
+ 				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
+ 			| qual_Op b_expr					%prec Op
+@@ -11237,6 +11259,18 @@ b_expr:		c_expr
+  */
+ c_expr:		columnref								{ $$ = $1; }
+ 			| AexprConst							{ $$ = $1; }
++			| '?' opt_indirection
++				{
++					if ($2)
++					{
++						A_Indirection *n = makeNode(A_Indirection);
++						n->arg = makeParamRef(0, @1);
++						n->indirection = check_indirection($2, yyscanner);
++						$$ = (Node *) n;
++					}
++					else
++						$$ = makeParamRef(0, @1);
++				}
+ 			| PARAM opt_indirection
+ 				{
+ 					ParamRef *p = makeNode(ParamRef);
+@@ -12105,6 +12139,7 @@ MathOp:		 '+'									{ $$ = "+"; }
+ 			| '<'									{ $$ = "<"; }
+ 			| '>'									{ $$ = ">"; }
+ 			| '='									{ $$ = "="; }
++			| '?'									{ $$ = "?"; }
+ 		;
+ 
+ qual_Op:	Op
+@@ -12207,6 +12242,10 @@ extract_list:
+ 				{
+ 					$$ = list_make2(makeStringConst($1, @1), $3);
+ 				}
++			| '?' FROM a_expr
++				{
++					$$ = list_make2(makeParamRef(0, @1), $3);
++				}
+ 			| /*EMPTY*/								{ $$ = NIL; }
+ 		;
+ 
+@@ -12694,6 +12733,19 @@ AexprConst: Iconst
+ 												makeIntConst($3, @3));
+ 					$$ = makeStringConstCast($5, @5, t);
+ 				}
++			/* Version without () is handled in a_expr/b_expr logic due to ? mis-parsing as operator */
++			| ConstInterval '(' '?' ')' '?' opt_interval
++				{
++					TypeName *t = $1;
++					if ($6 != NIL)
++					{
++						t->typmods = lappend($6, makeParamRef(0, @3));
++					}
++					else
++						t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
++												makeParamRef(0, @3));
++					$$ = makeParamRefCast(0, @5, t);
++				}
+ 			| TRUE_P
+ 				{
+ 					$$ = makeBoolAConst(TRUE, @1);
+@@ -12723,6 +12775,21 @@ SignedIconst: Iconst								{ $$ = $1; }
+ 			| '-' Iconst							{ $$ = - $2; }
+ 		;
+ 
++/* Const that would be replaced by ? if run through pg_stat_statements
++	 Note: This reduces to a node and returns a ParamRef if its ? */
++
++Iconst_or_Normalized: Iconst  																			{ $$ = makeIntConst($1, @1); }
++			| '?'																												{ $$ = makeParamRef( 0, @1); }
++		;
++
++Sconst_or_Normalized: Sconst  																	 		{ $$ = makeStringConst($1, @1); }
++			| '?'																												{ $$ = makeParamRef( 0, @1); }
++		;
++
++NonReservedWord_or_Sconst_or_Normalized: NonReservedWord_or_Sconst	{ $$ = makeStringConst($1, @1); }
++			| '?'																												{ $$ = makeParamRef( 0, @1); }
++		;
++
+ /*
+  * Name classification hierarchy.
+  *
+@@ -13406,6 +13473,49 @@ makeBoolAConst(bool state, int location)
+ 	return makeTypeCast((Node *)n, SystemTypeName("bool"), -1);
+ }
+ 
++/* makeParamRef
++ * Creates a new ParamRef node
++ */
++static Node* makeParamRef(int number, int location)
++{
++	ParamRef *p = makeNode(ParamRef);
++	p->number = number;
++	p->location = location;
++	return (Node *) p;
++}
++
++static Node *
++makeParamRefCast(int number, int location, TypeName *typename)
++{
++	Node *p = makeParamRef(number, location);
++	return makeTypeCast(p, typename, -1);
++}
++
++/*
++ * Makes INTERVAL-like nodes for "INTERVAL ? typemod", otherwise treat as A_EXPR
++ */
++static Node *
++makeInterval_or_AExprOp(Node *lexpr, Node *rexpr, int location)
++{
++	if (lexpr && IsA(lexpr, ColumnRef)) {
++		ColumnRef *c = (ColumnRef *) lexpr;
++		if (strcmp(strVal(linitial(c->fields)), "interval") == 0 ) {
++			TypeName *t = SystemTypeName("interval");
++			t->location = c->location;
++
++			/* Its too difficult to tell the parser to give us the right typemod,
++			 * just use a dummy one if present
++			 */
++			if (rexpr)
++				t->typmods = list_make1(makeIntConst(0, -1));
++
++			return makeParamRefCast(0, location, t);
++		}
++	}
++
++	return (Node *) makeA_Expr(AEXPR_OP, list_make1(makeString("?")), lexpr, rexpr, location);
++}
++
+ /* check_qualified_name --- check the result of qualified_name production
+  *
+  * It's easiest to let the grammar production for qualified_name allow
+diff --git a/src/backend/parser/scan.l b/src/backend/parser/scan.l
+index 146ae3d..3962623 100644
+--- a/src/backend/parser/scan.l
++++ b/src/backend/parser/scan.l
+@@ -253,6 +253,9 @@ xehexesc		[\\]x[0-9A-Fa-f]{1,2}
+ xeunicode		[\\](u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})
+ xeunicodefail	[\\](u[0-9A-Fa-f]{0,3}|U[0-9A-Fa-f]{0,7})
+ 
++/* Normalized escaped string */
++xe_normalized  [eE]\?
++
+ /* Extended quote
+  * xqdouble implements embedded quote, ''''
+  */
+@@ -328,8 +331,9 @@ xcinside		[^*/]+
+ digit			[0-9]
+ ident_start		[A-Za-z\200-\377_]
+ ident_cont		[A-Za-z\200-\377_0-9\$]
++ident_end     [\?]
+ 
+-identifier		{ident_start}{ident_cont}*
++identifier		{ident_start}{ident_cont}*{ident_end}*
+ 
+ typecast		"::"
+ dot_dot			\.\.
+@@ -345,7 +349,7 @@ colon_equals	":="
+  * If you change either set, adjust the character lists appearing in the
+  * rule for "operator"!
+  */
+-self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=]
++self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=\?]
+ op_chars		[\~\!\@\#\^\&\|\`\?\+\-\*\/\%\<\>\=]
+ operator		{op_chars}+
+ 
+@@ -793,6 +797,11 @@ other			.
+ 					return IDENT;
+ 				}
+ 
++{xe_normalized} {
++          /* ignore E */
++          return yytext[1];
++        }
++
+ {typecast}		{
+ 					SET_YYLLOC();
+ 					return TYPECAST;
+@@ -859,6 +868,25 @@ other			.
+ 						nchars--; /* else remove the +/-, and check again */
+ 					}
+ 
++          /* We don't accept leading ? in any multi-character operators
++           * except for those in use by hstore, JSON and geometric operators.
++           *
++           * We don't accept contained or trailing ? in any
++           * multi-character operators.
++           *
++           * This is necessary in order to support normalized queries without
++           * spacing between ? as a substition character and a simple operator (e.g. "?=?")
++           */
++          if (yytext[0] == '?' &&
++              strcmp(yytext, "?|") != 0 && strcmp(yytext, "?&") != 0 &&
++              strcmp(yytext, "?#") != 0 && strcmp(yytext, "?-") != 0 &&
++              strcmp(yytext, "?-|") != 0 && strcmp(yytext, "?||") != 0)
++            nchars = 1;
++
++          if (yytext[0] != '?' && strchr(yytext, '?'))
++            /* Lex up to just before the ? character */
++            nchars = strchr(yytext, '?') - yytext;
++
+ 					SET_YYLLOC();
+ 
+ 					if (nchars < yyleng)
+@@ -872,7 +900,7 @@ other			.
+ 						 * that the "self" rule would have.
+ 						 */
+ 						if (nchars == 1 &&
+-							strchr(",()[].;:+-*/%^<>=", yytext[0]))
++							strchr(",()[].;:+-*/%^<>=?", yytext[0]))
+ 							return yytext[0];
+ 					}
+ 
+@@ -943,15 +971,21 @@ other			.
+ {identifier}	{
+ 					const ScanKeyword *keyword;
+ 					char		   *ident;
++          char       *keyword_text = pstrdup(yytext);
+ 
+ 					SET_YYLLOC();
+ 
+ 					/* Is it a keyword? */
+-					keyword = ScanKeywordLookup(yytext,
++          if (yytext[yyleng - 1] == '?')
++            keyword_text[yyleng - 1] = '\0';
++
++					keyword = ScanKeywordLookup(keyword_text,
+ 												yyextra->keywords,
+ 												yyextra->num_keywords);
+ 					if (keyword != NULL)
+ 					{
++            if (keyword_text[yyleng - 1] == '\0')
++              yyless(yyleng - 1);
+ 						yylval->keyword = keyword->name;
+ 						return keyword->value;
+ 					}

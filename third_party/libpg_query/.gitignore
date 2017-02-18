@@ -1,0 +1,8 @@
+postgres/*
+postgres.tar.bz2
+
+*.o
+*.a
+
+examples/*
+!examples/*.c
