@@ -45,7 +45,7 @@ struct TableRef {
   char* schema;
 
   // Expression of database name and table name
-  TableInfo *table_info_ = nullptr;
+  TableInfo* table_info_ = nullptr;
 
   char* alias;
 
@@ -72,12 +72,9 @@ struct TableRef {
       return table_info_->table_name;
   }
 
-  inline const char* GetTableName() const {
-      return table_info_->table_name;
-  }
+  inline const char* GetTableName() const { return table_info_->table_name; }
 
-
-    void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 };
 
 // Definition of a join table

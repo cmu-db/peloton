@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// query_node_visitor.h
+// sql_node_visitor.h
 //
 // Identification: src/include/common/sql_node_visitor.h
 //
@@ -10,12 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-
 namespace peloton {
-
 
 namespace parser {
 class SelectStatement;
@@ -50,8 +47,6 @@ class FunctionExpression;
 class OperatorUnaryMinusExpression;
 }
 
-
-
 //===--------------------------------------------------------------------===//
 // Query Node Visitor
 //===--------------------------------------------------------------------===//
@@ -79,17 +74,16 @@ class SqlNodeVisitor {
   virtual void Visit(const parser::UpdateStatement *) = 0;
   virtual void Visit(const parser::CopyStatement *) = 0;
 
-  virtual void Visit(expression::ComparisonExpression* expr);
-  virtual void Visit(expression::AggregateExpression* expr);
-  virtual void Visit(expression::ConjunctionExpression* expr);
-  virtual void Visit(expression::ConstantValueExpression* expr);
-  virtual void Visit(expression::FunctionExpression* expr);
-  virtual void Visit(expression::OperatorExpression* expr);
-  virtual void Visit(expression::OperatorUnaryMinusExpression* expr);
-  virtual void Visit(expression::ParameterValueExpression* expr);
-  virtual void Visit(expression::StarExpression* expr);
-  virtual void Visit(expression::TupleValueExpression* expr);
-
+  virtual void Visit(expression::ComparisonExpression *expr);
+  virtual void Visit(expression::AggregateExpression *expr);
+  virtual void Visit(expression::ConjunctionExpression *expr);
+  virtual void Visit(expression::ConstantValueExpression *expr);
+  virtual void Visit(expression::FunctionExpression *expr);
+  virtual void Visit(expression::OperatorExpression *expr);
+  virtual void Visit(expression::OperatorUnaryMinusExpression *expr);
+  virtual void Visit(expression::ParameterValueExpression *expr);
+  virtual void Visit(expression::StarExpression *expr);
+  virtual void Visit(expression::TupleValueExpression *expr);
 };
 
 } /* namespace peloton */

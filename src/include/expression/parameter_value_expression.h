@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -27,14 +26,15 @@ namespace expression {
 class ParameterValueExpression : public AbstractExpression {
  public:
   ParameterValueExpression(int value_idx)
-    : AbstractExpression(ExpressionType::VALUE_PARAMETER, type::Type::PARAMETER_OFFSET),
-      value_idx_(value_idx){}
+      : AbstractExpression(ExpressionType::VALUE_PARAMETER,
+                           type::Type::PARAMETER_OFFSET),
+        value_idx_(value_idx) {}
 
   int GetValueIdx() const { return value_idx_; }
 
   type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-      UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-      executor::ExecutorContext *context) const override {
+                       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+                       executor::ExecutorContext *context) const override {
     return context->GetParams().at(value_idx_);
   }
 
@@ -42,15 +42,13 @@ class ParameterValueExpression : public AbstractExpression {
     return new ParameterValueExpression(value_idx_);
   }
 
-  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
-
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
   int value_idx_;
 
-  ParameterValueExpression(const ParameterValueExpression& other) : AbstractExpression(other), value_idx_(other.value_idx_){
-
-  }
+  ParameterValueExpression(const ParameterValueExpression &other)
+      : AbstractExpression(other), value_idx_(other.value_idx_) {}
 };
 
 }  // End expression namespace

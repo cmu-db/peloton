@@ -2,15 +2,13 @@
 //
 //                         Peloton
 //
-// query_node_visitor.h
+// sql_node_visitor.h
 //
 // Identification: src/common/sql_node_visitor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-
 
 #include "common/sql_node_visitor.h"
 #include "expression/comparison_expression.h"
@@ -42,7 +40,7 @@ void SqlNodeVisitor::Visit(expression::FunctionExpression *expr) {
 void SqlNodeVisitor::Visit(expression::OperatorExpression *expr) {
   expr->AcceptChildren(this);
 }
-void SqlNodeVisitor::Visit(expression::OperatorUnaryMinusExpression* expr) {
+void SqlNodeVisitor::Visit(expression::OperatorUnaryMinusExpression *expr) {
   expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::ParameterValueExpression *expr) {
@@ -55,4 +53,4 @@ void SqlNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   expr->AcceptChildren(this);
 }
 
-} //peloton
+}  // peloton

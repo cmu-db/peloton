@@ -66,10 +66,10 @@ class TableRefStatement : public SQLStatement {
 
   virtual ~TableRefStatement() { delete table_info_; }
 
-  virtual inline std::string GetTableName() { return table_info_->table_name; }
+  virtual inline std::string GetTableName() const { return table_info_->table_name; }
 
   // Get the name of the database of this table
-  virtual inline std::string GetDatabaseName() {
+  virtual inline std::string GetDatabaseName() const {
     if (table_info_->database_name == nullptr) {
       return DEFAULT_DB_NAME;
     }

@@ -85,12 +85,11 @@ class TupleValueExpression : public AbstractExpression {
   bool isObjectBound = false;
   std::tuple<oid_t, oid_t, oid_t> BoundObjectId;
 
-  void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple) {
+  void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple) {
     BoundObjectId = col_pos_tuple;
   }
 
-  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
-
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
   TupleValueExpression(const TupleValueExpression &other)

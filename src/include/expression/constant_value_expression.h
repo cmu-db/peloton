@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -27,16 +26,17 @@ namespace expression {
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const type::Value &value)
-    : AbstractExpression(ExpressionType::VALUE_CONSTANT,
-                         value.GetTypeId()), value_(value.Copy()) {}
-  
-  type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+      : AbstractExpression(ExpressionType::VALUE_CONSTANT, value.GetTypeId()),
+        value_(value.Copy()) {}
+
+  type::Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
       UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     return value_;
   }
 
-  type::Value GetValue() const { return value_;}
+  type::Value GetValue() const { return value_; }
 
   bool HasParameter() const override { return false; }
 
@@ -44,10 +44,11 @@ class ConstantValueExpression : public AbstractExpression {
     return new ConstantValueExpression(*this);
   }
 
-  virtual void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
-  ConstantValueExpression(const ConstantValueExpression& other) : AbstractExpression(other), value_(other.value_){}
+  ConstantValueExpression(const ConstantValueExpression &other)
+      : AbstractExpression(other), value_(other.value_) {}
 
   type::Value value_;
 };
