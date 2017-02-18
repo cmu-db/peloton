@@ -39,7 +39,10 @@ LibeventMasterThread::LibeventMasterThread(const int num_threads,
     : LibeventThread(MASTER_THREAD_ID, libevent_base),
       num_threads_(num_threads),
       next_thread_id_(0) {
+  
   auto &threads = GetWorkerThreads();
+
+  // create worker threads.
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
     threads.push_back(std::shared_ptr<LibeventWorkerThread>(
         new LibeventWorkerThread(thread_id)));

@@ -81,14 +81,8 @@ void EventHandler(evutil_socket_t connfd, short ev_flags, void *arg);
 
 /* Helpers */
 
-/* Helper used by master thread to dispatch new connection to worker thread */
-void DispatchConnection(int new_conn_fd, short event_flags);
-
 /* Runs the state machine for the protocol. Invoked by event handler callback */
 void StateMachine(LibeventSocket *conn);
-
-// Update event
-void UpdateEvent(LibeventSocket *conn, short flags);
 
 /* Set the socket to non-blocking mode */
 inline void SetNonBlocking(evutil_socket_t fd) {

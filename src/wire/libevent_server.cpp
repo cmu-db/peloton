@@ -68,7 +68,7 @@ LibeventServer::LibeventServer() {
   evstop = evsignal_new(base, SIGHUP, Signal_Callback, base);
   evsignal_add(evstop, NULL);
 
-  // TODO: Make pool size a global
+  // a master thread is responsible for coordinating worker threads.
   std::shared_ptr<LibeventThread> master_thread(
       new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
 
