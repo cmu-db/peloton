@@ -20,18 +20,18 @@ namespace peloton {
 namespace index {
 
 // This is the maximum number of 8-byte slots that we will pack into a single
-// IntsKey template. You should not instantiate anything with more than this
+// CompactIntsKey template. You should not instantiate anything with more than this
 #define INTSKEY_MAX_SLOTS 4
 
 /*
- * class CompactIntsKey - Compact representation of multifield integers
+ * CompactIntsKey - Compact representation of multifield integers
  *
  * This class is used for storing multiple integral fields into a compact
  * array representation. This class is largely used as a static object,
  * because special storage format is used to ensure a fast comparison
  * implementation.
  *
- * Integers are stored in a big-endian and sign-magnitute format. Big-endian
+ * Integers are stored in a big-endian and sign-magnitude format. Big-endian
  * favors comparison since we could always start comparison using the first few
  * bytes. This gives the compiler opportunities to optimize comparison
  * using advanced techniques such as SIMD or loop unrolling.

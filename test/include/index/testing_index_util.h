@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// sql_tests_util.h
+// testing_index_util.h
 //
-// Identification: test/include/sql/sql_tests_util.h
+// Identification: test/include/index/testing_index_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,7 +26,35 @@ namespace test {
 
 class TestingIndexUtil {
  public:
-  /*
+  //===--------------------------------------------------------------------===//
+  // Test Cases
+  //===--------------------------------------------------------------------===//
+
+  static void BasicTest(const IndexType index_type);
+
+  static void MultiMapInsertTest(const IndexType index_type);
+
+  static void UniqueKeyInsertTest(const IndexType index_type);
+
+  static void UniqueKeyDeleteTest(const IndexType index_type);
+
+  static void NonUniqueKeyDeleteTest(const IndexType index_type);
+
+  static void MultiThreadedInsertTest(const IndexType index_type);
+
+  static void UniqueKeyMultiThreadedTest(const IndexType index_type);
+
+  static void NonUniqueKeyMultiThreadedTest(const IndexType index_type);
+
+  static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
+
+  static void NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type);
+
+  //===--------------------------------------------------------------------===//
+  // Utility Methods
+  //===--------------------------------------------------------------------===//
+
+  /**
    * Builds an index with 4 columns, the first 2 being indexed
    */
   static index::Index *BuildIndex(const IndexType index_type,
