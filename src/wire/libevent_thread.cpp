@@ -37,7 +37,8 @@ std::vector<std::shared_ptr<LibeventWorkerThread>>
 LibeventMasterThread::LibeventMasterThread(const int num_threads,
                                            struct event_base *libevent_base)
     : LibeventThread(MASTER_THREAD_ID, libevent_base),
-      num_threads_(num_threads) {
+      num_threads_(num_threads),
+      next_thread_id_(0) {
   auto &threads = GetWorkerThreads();
   for (int thread_id = 0; thread_id < num_threads; thread_id++) {
     threads.push_back(std::shared_ptr<LibeventWorkerThread>(

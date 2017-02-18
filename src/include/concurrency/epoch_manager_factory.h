@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "concurrency/epoch_manager.h"
+#include "concurrency/centralized_epoch_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -21,7 +21,7 @@ namespace concurrency {
 class EpochManagerFactory {
  public:
   static EpochManager& GetInstance() {
-    static EpochManager epoch_manager;
+    static CentralizedEpochManager epoch_manager;
     return epoch_manager;
   }
 };
