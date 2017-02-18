@@ -142,6 +142,12 @@ struct NewConnQueueItem {
         init_state(init_state) {}
 };
 
+
+struct ConnectionContext {
+  int thread_id_;
+  int connection_id_;
+};
+
 /*
  * SocketManager - Wrapper for managing socket.
  * 	B is the STL container type used as the protocol's buffer.
@@ -158,6 +164,8 @@ class LibeventSocket {
   InputPacket rpkt;                // Used for reading a single Postgres packet
 
  private:
+  ConnectionContext connection_context_;
+
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
@@ -226,7 +234,7 @@ struct LibeventServer {
 
   uint64_t port_;           // port number
   size_t max_connections_;  // maximum number of connections
-
+  
  public:
   LibeventServer();
   static LibeventSocket *GetConn(const int &connfd);

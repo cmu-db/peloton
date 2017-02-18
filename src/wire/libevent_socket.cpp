@@ -25,6 +25,12 @@ void LibeventSocket::Init(short event_flags, LibeventThread *thread,
   this->thread = thread;
   this->state = init_state;
 
+
+  // these two variables will be used for epoch-based transaction processing.
+  this->connection_context_.thread_id_ = thread->GetThreadID();
+  this->connection_context_.connection_id_ = sock_fd;
+
+
   // clear out packet
   rpkt.Reset();
   if (event == nullptr) {
