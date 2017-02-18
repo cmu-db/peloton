@@ -27,52 +27,45 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
   return property_set_;
 }
 
-void QueryPropertyExtractor::GetColumnsFromSelecrElements(expression::AbstractExpression* expr,
-                                                          std::vector<Column *>* columns,
-                                                          bool& needs_projection) {
-  if (expr == nullptr) {
-    return;
-  }
-
-  size_t num_children = expr->GetChildrenSize();
-  for (size_t child = 0; child < num_children; child++)
-    GetColumnsFromSelecrElements(expr->GetModifiableChild(child), columns, needs_projection);
-
-  if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
-      expr->GetValueType() == type::Type::INVALID) {
-    auto col = manager_.BindColumnRefToColumn((expression::TupleValueExpression *)expr);
-    if (col != nullptr)
-      columns->push_back(col);
-  }
-  else if (expr->GetExpressionType() != ExpressionType::STAR) {
-    needs_projection = true;
-  }
-
-}
-
-// Extract the properties that are required in the final output.
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   std::vector<Column *> columns = {};
 
-  if (select_stmt->from_table != nullptr) {
-    select_stmt->from_table->Accept(this);
-  }
+  // Get table pointer, id, and schema.
+  storage::DataTable *target_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          select_stmt->from_table->GetDatabaseName(),
+          select_stmt->from_table->GetTableName());
+  auto &schema = *target_table->GetSchema();
 
   // Add predicate property
   auto predicate = select_stmt->where_clause;
   if (predicate != nullptr) {
+    expression::ExpressionUtil::TransformExpression(&schema, predicate);
     property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
         new PropertyPredicate(predicate->Copy())));
   }
 
+  std::unordered_map<oid_t, oid_t> column_mapping;
   std::vector<oid_t> column_ids;
   bool needs_projection = false;
 
   // Transform output expressions
   for (auto col : *select_stmt->select_list) {
-    GetColumnsFromSelecrElements(col, &columns, needs_projection);
+    expression::ExpressionUtil::TransformExpression(column_ids, col, schema, needs_projection);
   }
 
+  // Get the columns required by the result
+  auto table_oid = target_table->GetOid();
+  for (oid_t col_id : column_ids) {
+    catalog::Column schema_col = schema.GetColumn(col_id);
+    Column *col = manager_.LookupColumn(table_oid, col_id);
+    if (col == nullptr) {
+      col = manager_.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
+                                   schema_col.GetName(), schema_col.IsInlined(),
+                                   table_oid, col_id);
+    }
+    columns.push_back(col);
+  }
 
   property_set_.AddProperty(
       std::shared_ptr<PropertyColumns>(new PropertyColumns(columns)));
@@ -88,13 +81,9 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     property_set_.AddProperty(std::shared_ptr<PropertyProjection>(
         new PropertyProjection(std::move(output_expressions))));
   }
-
-  if (select_stmt->order!=nullptr)
-    select_stmt->order->Accept(this);
 };
-
-void QueryPropertyExtractor::Visit(const parser::TableRef* ) {}
-void QueryPropertyExtractor::Visit(const parser::JoinDefinition* ) {}
+void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
+void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}

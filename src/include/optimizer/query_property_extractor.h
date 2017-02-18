@@ -53,9 +53,6 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   void Visit(const parser::UpdateStatement *) override;
   void Visit(const parser::CopyStatement *) override;
 
-  void GetColumnsFromSelecrElements(expression::AbstractExpression* expr,
-                      std::vector<Column *>* columns,
-                      bool& need_projection);
 
  private:
   ColumnManager &manager_;
