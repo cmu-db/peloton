@@ -37,13 +37,11 @@
 #ifndef PG_LIST_H
 #define PG_LIST_H
 
-#include "nodes/nodes.h"
-
-typedef char bool;
-
-typedef unsigned int Oid;
+#include "nodes.h"
 
 typedef struct ListCell ListCell;
+
+typedef unsigned int Oid;
 
 typedef struct List
 {

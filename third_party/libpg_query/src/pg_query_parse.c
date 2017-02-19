@@ -83,34 +83,18 @@ PgQueryInternalParsetreeAndError pg_query_raw_parse(const char* input)
 	return result;
 }
 
-PgQueryParseResult pg_query_parse(const char* input)
+PgQueryInternalParsetreeAndError pg_query_parse(const char* input)
 {
 	MemoryContext ctx = NULL;
 	PgQueryInternalParsetreeAndError parsetree_and_error;
-	PgQueryParseResult result = {0};
 
 	ctx = pg_query_enter_memory_context("pg_query_parse");
 
 	parsetree_and_error = pg_query_raw_parse(input);
 
-	// These are all malloc-ed and will survive exiting the memory context, the caller is responsible to free them now
-	result.stderr_buffer = parsetree_and_error.stderr_buffer;
-	result.error = parsetree_and_error.error;
-
-	if (parsetree_and_error.tree != NULL) {
-		char *tree_json;
-
-		tree_json = pg_query_nodes_to_json(parsetree_and_error.tree);
-
-		result.parse_tree = strdup(tree_json);
-		pfree(tree_json);
-	} else {
-		result.parse_tree = strdup("[]");
-	}
-
 	pg_query_exit_memory_context(ctx);
 
-	return result;
+	return parsetree_and_error;
 }
 
 void pg_query_free_parse_result(PgQueryParseResult result)

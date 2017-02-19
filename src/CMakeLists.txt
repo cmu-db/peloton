@@ -57,7 +57,7 @@ add_custom_target(libpg_query ALL
                   COMMAND ${CMAKE_MAKE_PROGRAM}
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
                   COMMENT "Original libpg makefile target")
-add_dependencies(peloton-parser libpg_query)
+
 
 ##################################################################################
 
@@ -68,7 +68,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto peloton-parser ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES

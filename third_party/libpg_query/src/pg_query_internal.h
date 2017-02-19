@@ -4,15 +4,10 @@
 #include "postgres.h"
 #include "utils/memutils.h"
 #include "nodes/pg_list.h"
+#include "pg_query.h"
 
 #define STDERR_BUFFER_LEN 4096
 #define DEBUG
-
-typedef struct {
-  List *tree;
-  char* stderr_buffer;
-  PgQueryError* error;
-} PgQueryInternalParsetreeAndError;
 
 PgQueryInternalParsetreeAndError pg_query_raw_parse(const char* input);
 
