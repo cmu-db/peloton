@@ -143,13 +143,9 @@ class TransactionManager {
 
   void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
-  virtual Transaction *BeginTransaction() = 0;
+  virtual Transaction *BeginTransaction(const size_t thread_id = 0) = 0;
 
-  virtual Transaction *BeginReadonlyTransaction() = 0;
-
-  virtual Transaction *BeginTransaction(const size_t hint) = 0;
-
-  virtual Transaction *BeginReadonlyTransaction(const size_t hint) = 0;
+  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0) = 0;
 
   virtual void EndTransaction(Transaction *current_txn) = 0;
 

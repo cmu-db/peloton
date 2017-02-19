@@ -148,6 +148,7 @@ struct NewConnQueueItem {
  */
 class LibeventSocket {
  public:
+  int thread_id;
   int sock_fd;                    // socket file descriptor
   struct event *event = nullptr;  // libevent handle
   short event_flags;              // event flags mask

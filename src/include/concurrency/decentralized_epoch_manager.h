@@ -95,37 +95,37 @@ public:
     this->is_running_ = false;
   }
 
-  void RegisterLocalEpochContext(const size_t epoch_context_id) {
+  void RegisterLocalEpochContext(const size_t thread_id) {
     local_epoch_context_lock_.Lock();
 
-    local_epoch_contexts_[epoch_context_id].reset(new LocalEpochContext());
+    local_epoch_contexts_[thread_id].reset(new LocalEpochContext());
 
     local_epoch_context_lock_.Unlock();
   }
 
-  void DeregisterLocalEpochContext(const size_t epoch_context_id) {
+  void DeregisterLocalEpochContext(const size_t thread_id) {
     local_epoch_context_lock_.Lock();
 
-    local_epoch_contexts_.erase(epoch_context_id);
+    local_epoch_contexts_.erase(thread_id);
 
     local_epoch_context_lock_.Unlock();
   }
 
 
   // enter epoch with epoch context id (essentially an identifier of the corresponding thread)
-  cid_t EnterEpoch(const size_t epoch_context_id) {
+  cid_t EnterEpoch(const size_t thread_id) {
     uint64_t epoch_id = GetCurrentGlobalEpoch();
     uint32_t next_txn_id = GetNextTransactionId();
 
-    PL_ASSERT(local_epoch_contexts_.find(epoch_context_id) != local_epoch_contexts_.end());
+    PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
 
     // enter the corresponding local epoch.
-    local_epoch_contexts_.at(epoch_context_id)->ExitEpoch();
+    local_epoch_contexts_.at(thread_id)->ExitEpoch();
 
     return (epoch_id << 32) | next_txn_id;
   }
 
-  void ExitEpoch(const size_t epoch_context_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) {
+  void ExitEpoch(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) {
     
   }
 
