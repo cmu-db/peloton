@@ -25,6 +25,8 @@
 namespace peloton{
 namespace task{
 
+class WorkerPool;
+
 //task to submit to the queue
 class Task {
   friend class WorkerThread;
@@ -43,10 +45,10 @@ private:
 class WorkerThread{
 public:
 
-  void StartThread();
+  void StartThread(WorkerPool* worker_pool);
 
   // poll work queue, until exiting
-  static void PollForWork(WorkerThread* current_thread);
+  static void PollForWork(WorkerThread* current_thread, WorkerPool* current_pool);
 
   // wait for the current task to complete and shutdown the thread;
   void Shutdown();
@@ -70,13 +72,13 @@ public:
 
   void Shutdown();
 
-private:
-  WorkerPool(size_t num_threads, size_t task_queue_size);
 
+  WorkerPool(size_t num_threads, size_t task_queue_size);
+private:
   //TODO: use Bili's work stealing queues?
   peloton::LockFreeQueue<Task> task_queue_;
 
-  std::vector<WorkerThread> worker_threads_;
+  std::vector<std::unique_ptr<WorkerThread>> worker_threads_;
 
 };
 

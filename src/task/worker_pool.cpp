@@ -16,17 +16,17 @@
 namespace peloton{
 namespace task{
 
-void WorkerThread::StartThread(){
+void WorkerThread::StartThread(WorkerPool* current_pool){
   shutdown_thread_ = false;
-  worker_thread_ = std::thread(WorkerThread::PollForWork, this);
+  worker_thread_ = std::thread(WorkerThread::PollForWork, this, current_pool);
 }
 
-void WorkerThread::PollForWork(WorkerThread* current_thread){
+void WorkerThread::PollForWork(WorkerThread* current_thread, WorkerPool* current_pool){
   size_t empty_count = 0;
   Task t;
-  while(!current_thread->shutdown_thread_){
+  while(!current_thread->shutdown_thread_ || !current_pool->task_queue_.IsEmpty()){
     // poll the queue
-    if(!WorkerPool::GetInstance().task_queue_.Dequeue(t)){
+    if(!current_pool->task_queue_.Dequeue(t)){
       empty_count++;
       if (empty_count == 10){
         empty_count = 0;
@@ -49,8 +49,8 @@ WorkerPool::WorkerPool(size_t num_threads, size_t task_queue_size) :
         task_queue_(task_queue_size){
   for (size_t thread_id = 0; thread_id < num_threads; thread_id++){
     // start thread on construction
-    WorkerThread worker = WorkerThread();
-    worker.StartThread();
+    std::unique_ptr<WorkerThread> worker(new WorkerThread());
+    worker->StartThread(this);
     worker_threads_.push_back(std::move(worker));
   }
 }
@@ -66,8 +66,9 @@ void WorkerPool::SubmitTask(void(*func_ptr)(void *), void *func_args) {
 
 void WorkerPool::Shutdown() {
   for (auto& thread : worker_threads_){
-    thread.Shutdown();
+    thread->Shutdown();
   }
+  worker_threads_.clear();
   return;
 }
 
