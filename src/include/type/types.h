@@ -385,6 +385,16 @@ enum class ConcurrencyType {
 };
 
 //===--------------------------------------------------------------------===//
+// Epoch Types
+//===--------------------------------------------------------------------===//
+
+enum class EpochType {
+  INVALID = INVALID_TYPE_ID,
+  CENTRALIZED_EPOCH = 1,   // centralized epoch manager
+  DECENTRALIZED_EPOCH = 2  // decentralized epoch manager
+};
+
+//===--------------------------------------------------------------------===//
 // Visibility Types
 //===--------------------------------------------------------------------===//
 

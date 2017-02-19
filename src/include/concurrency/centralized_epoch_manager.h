@@ -81,6 +81,12 @@ public:
       max_cid_gc_(0), 
       is_running_(false) {}
 
+
+  static CentralizedEpochManager &GetInstance() {
+    static CentralizedEpochManager epoch_manager;
+    return epoch_manager;
+  }
+
   virtual void Reset(const size_t &current_epoch) override {
     current_epoch_ = current_epoch;
   }
