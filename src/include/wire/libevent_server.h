@@ -245,7 +245,7 @@ struct LibeventServer {
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */
-  static std::vector<std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> &GetGlobalSocketList();
 };
 }
 }

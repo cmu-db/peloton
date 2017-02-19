@@ -63,9 +63,6 @@ private:
 class DecentralizedEpochManager : public EpochManager {
   DecentralizedEpochManager(const DecentralizedEpochManager&) = delete;
 
-  size_t local_epoch_context_id_;
-  Spinlock local_epoch_context_lock_;
-
 public:
   DecentralizedEpochManager() : 
     local_epoch_context_id_(0), 
@@ -93,11 +90,11 @@ public:
     this->is_running_ = false;
   }
 
-  size_t RegisterEpochContext(std::shared_ptr<LocalEpochContext> &epoch_context) {
+  size_t RegisterLocalEpochContext(const size_t epoch_context_id) {
     local_epoch_context_lock_.Lock();
 
     // push back to context vector.
-    local_epoch_contexts_.emplace_back(epoch_context);
+    local_epoch_contexts_[epoch_context_id].reset(new LocalEpochContext());
     local_epoch_context_id_++;
 
     local_epoch_context_lock_.Unlock();
@@ -107,10 +104,20 @@ public:
 
 
   // enter epoch with epoch context id (essentially an identifier of the corresponding thread)
-  cid_t EnterEpoch(const size_t epoch_context_id) {
+  cid_t EnterEpoch(const size_t epoch_context_id, const size_t epoch_id) {
     uint32_t epoch_id = GetCurrentGlobalEpoch();
     uint32_t transaction_id = GetCurrentTransactionId();
+
+    PL_ASSERT(local_epoch_contexts_.find(epoch_context_id) != local_epoch_contexts_.end());
+
+    // enter the corresponding local epoch.
+    local_epoch_contexts_.at(epoch_context_id)->ExitEpoch();
+
     return (epoch_id << 32) | transaction_id;
+  }
+
+  void ExitEpoch(const size_t epoch_context_id) {
+    
   }
 
   cid_t GetMaxDeadEpochId() {
@@ -148,7 +155,7 @@ private:
   // each (logical) thread holds a pointer to a local epoch context.
   // it updates the local epoch context to report their local time.
   Spinlock local_epoch_context_lock_;
-  std::vector<std::shared_ptr<LocalEpochContext>> local_epoch_contexts_;
+  std::unordered_map<int, std::unique_ptr<LocalEpochContext>> local_epoch_contexts_;
   size_t local_epoch_context_id_;
   
   // the global epoch reflects the true time of the system.

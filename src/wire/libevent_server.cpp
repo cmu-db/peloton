@@ -24,23 +24,30 @@
 namespace peloton {
 namespace wire {
 
-std::vector<std::unique_ptr<LibeventSocket>>
+std::unordered_map<int, std::unique_ptr<LibeventSocket>>
     &LibeventServer::GetGlobalSocketList() {
-  static std::vector<std::unique_ptr<LibeventSocket>>
-      // 2 fd's per thread for pipe and 1 listening socket
-      global_socket_list(FLAGS_max_connections + CONNECTION_THREAD_COUNT * 2 + 1);
+  // mapping from socket id to socket object.
+  static std::unordered_map<int, std::unique_ptr<LibeventSocket>> global_socket_list;
+
   return global_socket_list;
 }
 
 LibeventSocket *LibeventServer::GetConn(const int &connfd) {
   auto &global_socket_list = GetGlobalSocketList();
-  return global_socket_list[connfd].get();
+  if (global_socket_list.find(connfd) != global_socket_list.end()) {
+    return global_socket_list.at(connfd).get();
+  } else {
+    return nullptr;
+  }
 }
 
 void LibeventServer::CreateNewConn(const int &connfd, short ev_flags,
                                    LibeventThread *thread,
                                    ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
+  if (global_socket_list.find(connfd) == global_socket_list.end()) {
+    printf("create new connection... id = %d\n", connfd);
+  }
   global_socket_list[connfd].reset(
       new LibeventSocket(connfd, ev_flags, thread, init_state));
 }
