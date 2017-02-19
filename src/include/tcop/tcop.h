@@ -61,14 +61,14 @@ class TrafficCop {
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<StatementResult> &result,
       int &rows_change, std::string &error_message,
-      const size_t thread_id);
+      const size_t thread_id = 0);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
   bridge::peloton_status ExecuteStatementPlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<StatementResult> &result, const std::vector<int> &result_format,
-      const size_t thread_id);
+      const size_t thread_id = 0);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
