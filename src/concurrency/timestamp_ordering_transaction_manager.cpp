@@ -89,12 +89,27 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.PrepareLogging();
 
-  cid_t begin_cid = GetNextCommitId();
-  
-  Transaction *txn = new Transaction(begin_cid, thread_id);
+  Transaction *txn = nullptr;
 
-  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  EpochType epoch_type = EpochManagerFactory::GetEpochType();
+
+  // transaction processing with centralized epoch manager
+  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
+
+    cid_t begin_cid = GetNextCommitId();
+    
+    txn = new Transaction(begin_cid, thread_id);
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
+  } else {
+
+    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochD(thread_id);
+
+    txn = new Transaction(begin_cid, thread_id);
+  }
+
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -107,14 +122,30 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t 
 
 Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t thread_id) {
   
-  auto &epoch_manager = EpochManagerFactory::GetInstance();
+  Transaction *txn = nullptr;
 
-  cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-  
-  Transaction *txn = new Transaction(begin_cid, thread_id, true);
+  EpochType epoch_type = EpochManagerFactory::GetEpochType();
 
-  auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  // transaction processing with centralized epoch manager
+  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
+
+    auto &epoch_manager = EpochManagerFactory::GetInstance();
+
+    cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
+    
+    txn = new Transaction(begin_cid, thread_id, true);
+
+    auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
+
+  } else {
+
+    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterReadOnlyEpochD(thread_id);
+
+    txn = new Transaction(begin_cid, thread_id);
+
+  }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()

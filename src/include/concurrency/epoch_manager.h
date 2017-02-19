@@ -35,7 +35,24 @@ public:
 
   virtual void StopEpoch() = 0;
 
+  //====================================================
+  // designed for decentralized epoch manager
+  //====================================================
+  virtual void RegisterLocalEpochContext(const size_t thread_id UNUSED_ATTRIBUTE) { }
 
+  virtual void DeregisterLocalEpochContext(const size_t thread_id UNUSED_ATTRIBUTE) { }
+
+  virtual cid_t EnterReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
+
+  virtual cid_t EnterEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
+
+  virtual void ExitReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) { }
+
+  virtual void ExitEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) { }
+
+  //====================================================
+  // designed for centralized epoch manager
+  //====================================================
   virtual size_t EnterReadOnlyEpoch(cid_t begin_cid UNUSED_ATTRIBUTE) { return 0; }
 
   virtual size_t EnterEpoch(cid_t begin_cid UNUSED_ATTRIBUTE) { return 0; }
@@ -44,6 +61,7 @@ public:
 
   virtual void ExitEpoch(size_t epoch UNUSED_ATTRIBUTE) {}
 
+  //****************************************************
 
   virtual cid_t GetMaxDeadTxnCid() { return 0; }
 

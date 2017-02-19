@@ -41,6 +41,10 @@ class EpochManagerFactory {
     epoch_ = epoch;
   }
 
+  static EpochType GetEpochType() {
+    return epoch_;
+  }
+
  private:
   static EpochType epoch_;
 

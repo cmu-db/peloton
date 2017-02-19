@@ -43,14 +43,11 @@ class Transaction;
 class TransactionManager {
  public:
   TransactionManager() {
-    next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
     maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
   }
 
   virtual ~TransactionManager() {}
-
-  txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
   cid_t GetNextCommitId() {
     cid_t temp_cid = next_cid_++;
@@ -148,7 +145,6 @@ class TransactionManager {
   virtual ResultType AbortTransaction(Transaction *const current_txn) = 0;
 
   void ResetStates() {
-    next_txn_id_ = START_TXN_ID;
     next_cid_ = START_CID;
   }
 
@@ -173,7 +169,6 @@ class TransactionManager {
       std::make_pair(INVALID_CID, INVALID_CID);
 
  private:
-  std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
   std::atomic<cid_t> maximum_grant_cid_;
 

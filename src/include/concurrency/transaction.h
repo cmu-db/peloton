@@ -51,7 +51,6 @@ class Transaction : public Printable {
     txn_id_ = begin_cid;
     begin_cid_ = begin_cid;
     thread_id_ = thread_id;
-    printf("thread id = %d\n", (int)thread_id);
     
     declared_readonly_ = readonly;
 

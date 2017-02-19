@@ -95,7 +95,7 @@ public:
     this->is_running_ = false;
   }
 
-  void RegisterLocalEpochContext(const size_t thread_id) {
+  virtual void RegisterLocalEpochContext(const size_t thread_id) override {
     local_epoch_context_lock_.Lock();
 
     local_epoch_contexts_[thread_id].reset(new LocalEpochContext());
@@ -103,7 +103,7 @@ public:
     local_epoch_context_lock_.Unlock();
   }
 
-  void DeregisterLocalEpochContext(const size_t thread_id) {
+  virtual void DeregisterLocalEpochContext(const size_t thread_id) override {
     local_epoch_context_lock_.Lock();
 
     local_epoch_contexts_.erase(thread_id);
@@ -111,9 +111,8 @@ public:
     local_epoch_context_lock_.Unlock();
   }
 
-
-  // enter epoch with epoch context id (essentially an identifier of the corresponding thread)
-  cid_t EnterEpoch(const size_t thread_id) {
+  // enter epoch with thread id
+  virtual cid_t EnterEpochD(const size_t thread_id) override {
     uint64_t epoch_id = GetCurrentGlobalEpoch();
     uint32_t next_txn_id = GetNextTransactionId();
 
@@ -125,9 +124,11 @@ public:
     return (epoch_id << 32) | next_txn_id;
   }
 
-  void ExitEpoch(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) {
-    
-  }
+  virtual void ExitEpochD(
+      const size_t thread_id UNUSED_ATTRIBUTE, 
+      const size_t epoch_id UNUSED_ATTRIBUTE) override { }
+
+
 
   cid_t GetMaxDeadEpochId() {
     uint32_t min_epoch_id = std::numeric_limits<uint32_t>::max();
@@ -165,7 +166,7 @@ private:
 
 private:
     
-  // each (logical) thread holds a pointer to a local epoch context.
+  // each thread holds a pointer to a local epoch context.
   // it updates the local epoch context to report their local time.
   Spinlock local_epoch_context_lock_;
   std::unordered_map<int, std::unique_ptr<LocalEpochContext>> local_epoch_contexts_;
