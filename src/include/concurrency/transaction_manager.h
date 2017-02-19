@@ -20,7 +20,6 @@
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction.h"
-#include "concurrency/transaction_pool.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
 
@@ -47,16 +46,9 @@ class TransactionManager {
     next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
     maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
-    is_from_transaction_pool_ = false;
   }
 
   virtual ~TransactionManager() {}
-
-  void SetTransactionPool() {
-    is_from_transaction_pool_ = true;
-
-    TransactionPool::GetInstance();
-  }
 
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
@@ -179,8 +171,6 @@ class TransactionManager {
   // first value is exclusive, last value is inclusive
   std::pair<cid_t, cid_t> dirty_range_ =
       std::make_pair(INVALID_CID, INVALID_CID);
-  
-  bool is_from_transaction_pool_;
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
