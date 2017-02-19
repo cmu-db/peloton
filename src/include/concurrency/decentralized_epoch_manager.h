@@ -51,15 +51,56 @@ struct Epoch {
 
 struct LocalEpochContext {
 
-  LocalEpochContext() : current_epoch_(0) {}
+  LocalEpochContext() : 
+    epoch_buffer_(epoch_buffer_size_),
+    init_epoch_(UINT64_MAX),
+    max_dead_epoch_(UINT64_MAX) {}
 
-  void EnterEpoch() {}
+  void EnterLocalEpoch(const uint64_t epoch_id) {
+    // if not initiated
+    if (init_epoch_ == UINT64_MAX) {
+      init_epoch_ = epoch_id - epoch_id % epoch_buffer_size_;
+    } 
+    
+    PL_ASSERT(epoch_id - init_epoch_ < epoch_buffer_size_);
 
-  void ExitEpoch() {}
+    size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
+    epoch_buffer_[epoch_idx].read_write_count_++;
+  }
 
-  uint64_t current_epoch_;
+  void EnterLocalReadOnlyEpoch(const uint64_t epoch_id) {
+    // if not initiated
+    if (init_epoch_ == UINT64_MAX) {
+      init_epoch_ = epoch_id - epoch_id % epoch_buffer_size_;
+    } 
+    
+    PL_ASSERT(epoch_id - init_epoch_ < epoch_buffer_size_);
 
+    size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
+    epoch_buffer_[epoch_idx].read_only_count_++;
+  }
+
+  void ExitLocalEpoch(const uint64_t epoch_id) {
+    PL_ASSERT(init_epoch_ != UINT64_MAX);
+
+    size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
+    epoch_buffer_[epoch_idx].read_write_count_--;
+
+  }
+
+  void ExitLocalReadOnlyEpoch(const uint64_t epoch_id) {
+    PL_ASSERT(init_epoch_ != UINT64_MAX);
+
+    size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
+    epoch_buffer_[epoch_idx].read_only_count_--;
+  }
+
+  // queue size
+  static const size_t epoch_buffer_size_ = 4096;
   std::vector<Epoch> epoch_buffer_;
+
+  uint64_t init_epoch_;
+  uint64_t max_dead_epoch_;
 };
 
 public:
@@ -113,29 +154,36 @@ public:
 
   // enter epoch with thread id
   virtual cid_t EnterEpochD(const size_t thread_id) override {
+
     uint64_t epoch_id = GetCurrentGlobalEpoch();
     uint32_t next_txn_id = GetNextTransactionId();
 
     PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
 
     // enter the corresponding local epoch.
-    local_epoch_contexts_.at(thread_id)->ExitEpoch();
+    local_epoch_contexts_.at(thread_id)->EnterLocalEpoch(epoch_id);
 
     return (epoch_id << 32) | next_txn_id;
   }
 
-  virtual void ExitEpochD(
-      const size_t thread_id UNUSED_ATTRIBUTE, 
-      const size_t epoch_id UNUSED_ATTRIBUTE) override { }
+  virtual void ExitEpochD(const size_t thread_id, const size_t begin_cid) override {
 
+    uint64_t epoch_id = ExtractEpochId(begin_cid);
+
+    PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
+
+    // enter the corresponding local epoch.
+    local_epoch_contexts_.at(thread_id)->ExitLocalEpoch(epoch_id);
+ 
+  }
 
 
   cid_t GetMaxDeadEpochId() {
     uint32_t min_epoch_id = std::numeric_limits<uint32_t>::max();
     
     for (auto &local_epoch_context : local_epoch_contexts_) {
-      if (local_epoch_context.second->current_epoch_ < min_epoch_id) {
-        min_epoch_id = local_epoch_context.second->current_epoch_;
+      if (local_epoch_context.second->max_dead_epoch_ < min_epoch_id) {
+        min_epoch_id = local_epoch_context.second->max_dead_epoch_;
       }
     }
 
@@ -143,6 +191,10 @@ public:
   }
 
 private:
+
+  inline uint64_t ExtractEpochId(const cid_t cid) {
+    return (cid >> 32);
+  }
 
   inline uint64_t GetCurrentGlobalEpoch() {
     return current_global_epoch_.load();
@@ -165,7 +217,7 @@ private:
   }
 
 private:
-    
+
   // each thread holds a pointer to a local epoch context.
   // it updates the local epoch context to report their local time.
   Spinlock local_epoch_context_lock_;

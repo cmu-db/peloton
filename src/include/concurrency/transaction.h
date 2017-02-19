@@ -66,6 +66,8 @@ class Transaction : public Printable {
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
 
+  inline size_t GetThreadId() const { return thread_id_; }
+
   inline txn_id_t GetTransactionId() const { return txn_id_; }
 
   inline cid_t GetBeginCommitId() const { return begin_cid_; }

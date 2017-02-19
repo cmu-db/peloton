@@ -158,7 +158,22 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const
 
 void TimestampOrderingTransactionManager::EndTransaction(
     Transaction *current_txn) {
-  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+  
+  EpochType epoch_type = EpochManagerFactory::GetEpochType();
+
+  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
+  } else {
+
+    EpochManagerFactory::GetInstance().ExitEpochD(
+      current_txn->GetThreadId(), 
+      current_txn->GetBeginCommitId());
+  }
+
+
+  // logging logic
   auto &log_manager = logging::LogManager::GetInstance();
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
@@ -189,10 +204,23 @@ void TimestampOrderingTransactionManager::EndTransaction(
 
 void TimestampOrderingTransactionManager::EndReadonlyTransaction(
     Transaction *current_txn) {
-  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
-  EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(
-      current_txn->GetEpochId());
 
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
+  
+  EpochType epoch_type = EpochManagerFactory::GetEpochType();
+
+  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+    
+  } else {
+
+    EpochManagerFactory::GetInstance().ExitReadOnlyEpochD(
+      current_txn->GetThreadId(), 
+      current_txn->GetBeginCommitId());
+  }
+
+  
   delete current_txn;
   current_txn = nullptr;
   
