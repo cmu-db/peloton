@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <include/parser/statements.h>
+#include <include/expression/tuple_value_expression.h>
 #include "parser/select_statement.h"
 #include "binder/bind_node_visitor.h"
 #include "type/types.h"
@@ -109,7 +110,7 @@ void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
-  if (!expr->isObjectBound) {
+  if (!expr->is_bound) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
     std::tuple<oid_t, oid_t> table_id_tuple;
 
@@ -141,7 +142,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     }
 
     expr->SetBoundObjectId(col_pos_tuple);
-    expr->isObjectBound = true;
+    expr->is_bound = true;
   }
 }
 

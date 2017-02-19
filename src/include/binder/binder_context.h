@@ -12,14 +12,21 @@
 
 #include <unordered_map>
 #include <string>
-#include "catalog/catalog.h"
 #include "type/types.h"
+
+namespace parser {
+struct TableRef;
+}
 
 namespace peloton {
 namespace binder {
 
 class BinderContext;
 
+// Store the visible table alias and the corresponding <db_id, table_id> tuple.
+// Also record the upper level context when traversing into the nested query.
+// This context keep track of all the table alias that the column in the current level
+// can bind to.
 class BinderContext {
  public:
   std::shared_ptr<BinderContext> upper_context;
@@ -27,38 +34,10 @@ class BinderContext {
   BinderContext() { upper_context = nullptr; }
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(const parser::TableRef* table_ref) {
-    storage::DataTable* table =
-        catalog::Catalog::GetInstance()->GetTableWithName(
-            table_ref->GetDatabaseName(), table_ref->GetTableName());
-
-    auto id_tuple = std::make_tuple(table->GetDatabaseOid(), table->GetOid());
-
-    std::string alias = table_ref->GetTableAlias();
-    if (table_ref->alias != nullptr) {
-      alias = table_ref->alias;
-    } else {
-      alias = table_ref->GetTableName();
-    }
-
-    if (table_alias_map.find(alias) != table_alias_map.end()) {
-      throw Exception("Duplicate alias " + alias);
-    }
-    table_alias_map[alias] = id_tuple;
-  }
+  void AddTable(const parser::TableRef* table_ref);
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(const std::string db_name, const std::string table_name) {
-    storage::DataTable* table =
-        catalog::Catalog::GetInstance()->GetTableWithName(db_name, table_name);
-
-    auto id_tuple = std::make_tuple(table->GetDatabaseOid(), table->GetOid());
-
-    if (table_alias_map.find(table_name) != table_alias_map.end()) {
-      throw Exception("Duplicate alias " + table_name);
-    }
-    table_alias_map[table_name] = id_tuple;
-  }
+  void AddTable(const std::string db_name, const std::string table_name);
 
   // Construct the column position tuple given column name and the
   // corresponding tabld id tuple.
@@ -66,17 +45,7 @@ class BinderContext {
   // the context.
   static bool GetColumnPosTuple(
       std::string& col_name, std::tuple<oid_t, oid_t>& table_id_tuple,
-      std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple) {
-    auto db_id = std::get<0>(table_id_tuple);
-    auto table_id = std::get<1>(table_id_tuple);
-    auto schema = catalog::Catalog::GetInstance()
-                      ->GetTableWithOid(db_id, table_id)
-                      ->GetSchema();
-    auto col_pos = schema->GetColumnID(col_name);
-    if (col_pos == (oid_t)-1) return false;
-    col_pos_tuple = std::make_tuple(db_id, table_id, col_pos);
-    return true;
-  }
+      std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple);
 
   // Construct the column position tuple given only the column name and the
   // context.
@@ -85,49 +54,15 @@ class BinderContext {
   static bool GetColumnPosTuple(std::shared_ptr<BinderContext> current_context,
                                 std::string& col_name,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
-                                std::string& table_alias) {
-    bool find_matched = false;
-    while (current_context != nullptr && !find_matched) {
-      for (auto entry : current_context->table_alias_map) {
-        bool get_matched =
-            GetColumnPosTuple(col_name, entry.second, col_pos_tuple);
-        if (get_matched) {
-          if (!find_matched) {
-            find_matched = true;
-            table_alias = entry.first;
-          } else {
-            throw Exception("Ambiguous column name " + col_name);
-          }
-        }
-      }
-      current_context = current_context->upper_context;
-    }
-    return find_matched;
-  }
+                                std::string& table_alias);
 
   // Construct the table id tuple given the table alias
   static bool GetTableIdTuple(std::shared_ptr<BinderContext> current_context,
                               std::string& alias,
-                              std::tuple<oid_t, oid_t>* id_tuple_ptr) {
-    while (current_context != nullptr) {
-      auto iter = current_context->table_alias_map.find(alias);
-      if (iter != current_context->table_alias_map.end()) {
-        *id_tuple_ptr = iter->second;
-        return true;
-      }
-      current_context = current_context->upper_context;
-    }
-    return false;
-  }
+                              std::tuple<oid_t, oid_t>* id_tuple_ptr);
 
  private:
-  //  struct comp {
-  //    bool operator() (const std::string& lhs, const std::string& rhs) const {
-  //      return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
-  //    }
-  //  };
-  // When alias is not set, set its table name
   std::unordered_map<std::string, std::tuple<oid_t, oid_t>> table_alias_map;
 };
-}
-}
+} // binder
+} // peloton

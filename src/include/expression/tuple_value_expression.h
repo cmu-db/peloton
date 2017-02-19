@@ -82,11 +82,11 @@ class TupleValueExpression : public AbstractExpression {
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
 
   // Binder stuff
-  bool isObjectBound = false;
-  std::tuple<oid_t, oid_t, oid_t> BoundObjectId;
+  bool is_bound = false;
+  std::tuple<oid_t, oid_t, oid_t> bound_obj_id;
 
   void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple) {
-    BoundObjectId = col_pos_tuple;
+    bound_obj_id = col_pos_tuple;
   }
 
   virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
