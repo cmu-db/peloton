@@ -84,17 +84,14 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
   *(cid_t *)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
-Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t thread_id UNUSED_ATTRIBUTE) {
+Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t thread_id) {
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.PrepareLogging();
 
-  txn_id_t txn_id = GetNextTransactionId();
   cid_t begin_cid = GetNextCommitId();
   
-  Transaction *txn = new Transaction(txn_id);
-
-  txn->Init(begin_cid);
+  Transaction *txn = new Transaction(begin_cid, thread_id);
 
   auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
   txn->SetEpochId(eid);
@@ -108,16 +105,13 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t 
   return txn;
 }
 
-Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t thread_id UNUSED_ATTRIBUTE) {
+Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t thread_id) {
   
   auto &epoch_manager = EpochManagerFactory::GetInstance();
 
-  txn_id_t txn_id = READONLY_TXN_ID;
   cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
   
-  Transaction *txn = new Transaction(txn_id);
-
-  txn->Init(begin_cid, true);
+  Transaction *txn = new Transaction(begin_cid, thread_id, true);
 
   auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
   txn->SetEpochId(eid);

@@ -35,29 +35,24 @@ class Transaction : public Printable {
 
  public:
   
-  // Deprecated
-  Transaction() : txn_id_(INVALID_TXN_ID) { 
-    Init(INVALID_CID); 
+  Transaction() { 
+    Init(INVALID_CID, 0, false); 
   }
 
-  Transaction(const txn_id_t &txn_id) : txn_id_(txn_id) { 
-    Init(INVALID_CID); 
-  }
-
-  // Deprecated
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid) : txn_id_(txn_id) {
-    Init(begin_cid);
-  }
-
-  // Deprecated
-  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid, bool ro) : txn_id_(txn_id) {
-    Init(begin_cid, ro);
+  Transaction(const cid_t &begin_cid, const size_t thread_id, bool ro = false) {
+    Init(begin_cid, thread_id, ro);
   }
 
   ~Transaction() {}
 
-  void Init(const cid_t &begin_cid, const bool readonly = false) {
+ private:
+
+  void Init(const cid_t &begin_cid, const size_t thread_id, const bool readonly) {
+    txn_id_ = begin_cid;
     begin_cid_ = begin_cid;
+    thread_id_ = thread_id;
+    printf("thread id = %d\n", (int)thread_id);
+    
     declared_readonly_ = readonly;
 
     end_cid_ = MAX_CID;
@@ -66,6 +61,8 @@ class Transaction : public Printable {
     gc_set_.reset(new GCSet());
   }
 
+
+ public:
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
@@ -122,6 +119,7 @@ class Transaction : public Printable {
 
   inline bool IsDeclaredReadOnly() const { return declared_readonly_; }
 
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -129,6 +127,9 @@ class Transaction : public Printable {
 
   // transaction id
   txn_id_t txn_id_;
+
+  // thread id
+  size_t thread_id_;
 
   // start commit id
   cid_t begin_cid_;
