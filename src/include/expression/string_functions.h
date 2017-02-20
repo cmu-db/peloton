@@ -20,14 +20,14 @@ namespace peloton {
 namespace expression {
 
 class StringFunctions {
-public:
+ public:
   // ASCII code of the first character of the argument.
   static type::Value Ascii(const std::vector<type::Value>& args);
 
   // Get Character from integer
   static type::Value Chr(const std::vector<type::Value>& args);
 
-  //substring
+  // substring
   static type::Value Substr(const std::vector<type::Value>& args);
 
   // Number of characters in string

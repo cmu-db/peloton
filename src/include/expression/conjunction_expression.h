@@ -13,6 +13,7 @@
 #pragma once
 
 #include "expression/abstract_expression.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace expression {
@@ -59,6 +60,8 @@ class ConjunctionExpression : public AbstractExpression {
   AbstractExpression *Copy() const override {
     return new ConjunctionExpression(*this);
   }
+
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
   ConjunctionExpression(const ConjunctionExpression &other)

@@ -88,6 +88,15 @@ Operator LogicalOuterJoin::make() {
   LogicalOuterJoin *join = new LogicalOuterJoin;
   return Operator(join);
 }
+
+//===--------------------------------------------------------------------===//
+// OuterJoin
+//===--------------------------------------------------------------------===//
+Operator LogicalSemiJoin::make() {
+  LogicalSemiJoin *join = new LogicalSemiJoin;
+  return Operator(join);
+}
+
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
@@ -242,6 +251,9 @@ void OperatorNode<LogicalAggregate>::Accept(
 template <>
 void OperatorNode<LogicalLimit>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
+void OperatorNode<LogicalSemiJoin>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -258,6 +270,8 @@ template <>
 std::string OperatorNode<LogicalRightJoin>::name_ = "LogicalRightJoin";
 template <>
 std::string OperatorNode<LogicalOuterJoin>::name_ = "LogicalOuterJoin";
+template <>
+std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
 template <>
@@ -303,6 +317,8 @@ template <>
 OpType OperatorNode<LogicalRightJoin>::type_ = OpType::RightJoin;
 template <>
 OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
+template <>
+OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
 OpType OperatorNode<LogicalAggregate>::type_ = OpType::Aggregate;
 template <>

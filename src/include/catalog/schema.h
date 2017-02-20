@@ -16,6 +16,7 @@
 #include "catalog/column.h"
 #include "common/printable.h"
 #include "type/type.h"
+#include "boost/algorithm/string.hpp"
 
 namespace peloton {
 namespace catalog {

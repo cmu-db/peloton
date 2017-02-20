@@ -13,7 +13,7 @@
 #pragma once
 
 #include "expression/parameter_value_expression.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "parser/select_statement.h"
 #include "parser/sql_statement.h"
 
@@ -62,7 +62,7 @@ struct PrepareStatement : SQLStatement {
     for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival_ = i;
   }
 
-  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
