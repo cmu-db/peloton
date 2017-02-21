@@ -38,9 +38,9 @@ public:
   //====================================================
   // designed for decentralized epoch manager
   //====================================================
-  virtual void RegisterLocalEpochContext(const size_t thread_id UNUSED_ATTRIBUTE) { }
+  virtual void RegisterThread(const size_t thread_id UNUSED_ATTRIBUTE) { }
 
-  virtual void DeregisterLocalEpochContext(const size_t thread_id UNUSED_ATTRIBUTE) { }
+  virtual void DeregisterThread(const size_t thread_id UNUSED_ATTRIBUTE) { }
 
   virtual cid_t EnterReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
 
@@ -49,6 +49,8 @@ public:
   virtual void ExitReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) { }
 
   virtual void ExitEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) { }
+
+  virtual uint64_t GetTailEpochId() { return 0; }
 
   //====================================================
   // designed for centralized epoch manager
