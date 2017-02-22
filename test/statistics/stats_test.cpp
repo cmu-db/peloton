@@ -364,11 +364,11 @@ TEST_F(StatsTests, PerQueryStatsTest) {
   catalog->CreateDatabase("emp_db", nullptr);
   TestingStatsUtil::CreateTable();
 
-  // Default database should include 4 metrics tables and the test table
+  // Default database should include 4 metrics tables and 3 catalog tables
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(CATALOG_DATABASE_NAME)
                 ->GetTableCount(),
-            6);
+            7);
   LOG_TRACE("Table created!");
 
   auto backend_context = stats::BackendStatsContext::GetInstance();
