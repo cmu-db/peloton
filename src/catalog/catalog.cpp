@@ -90,7 +90,7 @@ ResultType Catalog::CreateDatabase(std::string database_name,
       return ResultType::FAILURE;
     }
   }
-  oid_t database_id = GetNextOid();
+  oid_t database_id = (GetNextOid() || type::CatalogObjectType::DATABASE);
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
   databases_.push_back(database);
@@ -136,7 +136,7 @@ ResultType Catalog::CreateTable(std::string database_name, std::string table_nam
 
   bool own_schema = true;
   bool adapt_table = false;
-  oid_t table_id = GetNextOid();
+  oid_t table_id = (GetNextOid() || type::CatalogObjectType::TABLE);
   try {
     storage::Database *database = GetDatabaseWithName(database_name);
     try {
@@ -146,6 +146,11 @@ ResultType Catalog::CreateTable(std::string database_name, std::string table_nam
     } catch (CatalogException &e) {
       // Table doesn't exist, now create it
       oid_t database_id = database->GetOid();
+      // Table doesn't exist, create table catalog object.
+      AbstractCatalogObject *object = new catalog::TableCatalogObject(
+              table_name, table_id, database_id, schema.release(), own_schema);
+      objects_[table_id] = object;
+
       storage::DataTable *table = storage::TableFactory::GetDataTable(
           database_id, table_id, schema.release(), table_name,
           DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
@@ -214,7 +219,7 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     bool unique_keys = true;
 
     index_catalog_object = new catalog::IndexCatalogObject(
-        StringUtil::Upper(index_name), GetNextOid(),
+        StringUtil::Upper(index_name), (GetNextOid() || type::CatalogObjectType::INDEX),
         table->GetOid(), database->GetOid(), IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, schema, key_schema, key_attrs,
         unique_keys);
@@ -273,11 +278,12 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     // Check if unique index or not
     if (unique == false) {
       index_catalog_object = new catalog::IndexCatalogObject(index_name.c_str(),
-          GetNextOid(), table->GetOid(), database->GetOid(), index_type,
-          IndexConstraintType::DEFAULT, schema, key_schema, key_attrs, true);
+          (GetNextOid() || type::CatalogObjectType::INDEX), table->GetOid(),
+          database->GetOid(), index_type, IndexConstraintType::DEFAULT, schema,
+          key_schema, key_attrs, true);
     } else {
       index_catalog_object = new catalog::IndexCatalogObject(index_name.c_str(),
-          GetNextOid(), table->GetOid(), database->GetOid(), index_type,
+          (GetNextOid() || type::CatalogObjectType::INDEX), table->GetOid(), database->GetOid(), index_type,
           IndexConstraintType::UNIQUE, schema, key_schema, key_attrs, true);
     }
 
@@ -470,6 +476,7 @@ storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
 }
 
 // Create Table for pg_class
+// you don't need to create TableCatalogObject for pg_class
 std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
     oid_t database_id, std::string table_name) {
   bool own_schema = true;
@@ -479,8 +486,10 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
 
   catalog::Schema *schema = table_schema.release();
   std::unique_ptr<storage::DataTable> table(
-      storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
+      storage::TableFactory::GetDataTable(database_id,
+        (GetNextOid()|| type::CatalogObjectType::TABLE), schema,
+        table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
+        is_catalog));
   return table;
 }
 
@@ -495,7 +504,8 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   catalog::Schema *schema = database_schema.release();
 
   std::unique_ptr<storage::DataTable> table(
-      storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
+      storage::TableFactory::GetDataTable(database_id,
+          (GetNextOid()||type::CatalogObjectType::TABLE), schema,
           database_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema,
           adapt_table, is_catalog));
 
@@ -522,8 +532,9 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   }
 
   std::unique_ptr<storage::DataTable> table(
-      storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
+      storage::TableFactory::GetDataTable(database_id,
+          (GetNextOid() || type::CatalogObjectType::TABLE), schema, table_name,
+          DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
 
   return table;
 }
