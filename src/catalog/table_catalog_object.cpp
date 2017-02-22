@@ -25,6 +25,13 @@
 namespace peloton {
 namespace catalog {
 
+TableCatalogObject::TableCatalogObject(std::string table_name, oid_t table_oid, oid_t database_oid,
+                   Schema *tuple_schema, bool own_schema)
+    : AbstractCatalogObject(table_name, table_oid),
+      database_oid(database_oid),
+      schema_(tuple_schema),
+      own_schema_(own_schema) {}
+
 TableCatalogObject::~TableCatalogObject() {
   // clean up tuple schema
   delete schema_;

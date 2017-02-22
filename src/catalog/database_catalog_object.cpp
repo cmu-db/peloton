@@ -25,6 +25,11 @@
 namespace peloton {
 namespace catalog {
 
+DatabaseCatalogObject::DatabaseCatalogObject(std::string database_name, oid_t database_oid)
+: AbstractCatalogObject(database_name, database_oid) {}
+
+DatabaseCatalogObject::~DatabaseCatalogObject() {}
+
 const std::string DatabaseCatalogObject::GetInfo() const {
   std::stringstream os;
 

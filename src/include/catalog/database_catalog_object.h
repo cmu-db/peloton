@@ -40,8 +40,7 @@ class DatabaseCatalogObject : public AbstractCatalogObject {
   DatabaseCatalogObject() = delete;
 
  public:
-  DatabaseCatalogObject(std::string database_name, oid_t database_oid)
-      : AbstractCatalogObject(database_name, database_oid) {}
+  DatabaseCatalogObject(std::string database_name, oid_t database_oid);
 
   ~DatabaseCatalogObject();
 
