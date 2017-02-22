@@ -355,6 +355,8 @@ ResultType Catalog::DropDatabaseWithName(std::string database_name,
 
     LOG_TRACE("Found database!");
     LOG_TRACE("Deleting tuple from catalog");
+    // TODO:
+    objects_.erase(database->GetOid());
     catalog::DeleteTuple(
         GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(
             DATABASE_CATALOG_NAME), database->GetOid(), txn);
@@ -385,6 +387,8 @@ void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
     GetDatabaseWithOid(database_oid);
     LOG_TRACE("Found database!");
     LOG_TRACE("Deleting tuple from catalog");
+    // TODO:
+    objects_.erase(database_oid);
     catalog::DeleteTuple(
         GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(
             DATABASE_CATALOG_NAME), database_oid, nullptr);
@@ -420,10 +424,11 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
       LOG_TRACE("Found table!");
       oid_t table_id = table->GetOid();
       LOG_TRACE("Deleting tuple from catalog!");
+      // TODO:
+      objects_.erase(table_id);
       catalog::DeleteTuple(
           GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(
               TABLE_CATALOG_NAME), table_id, txn);
-      // TODO: Delete the catalog table object
       LOG_TRACE("Deleting table!");
       database->DropTableWithOid(table_id);
       return ResultType::SUCCESS;
