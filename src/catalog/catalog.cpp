@@ -90,10 +90,13 @@ ResultType Catalog::CreateDatabase(std::string database_name,
       return ResultType::FAILURE;
     }
   }
-  oid_t database_id = GetNextOid();
+  oid_t database_id = GetNextOid() || type::CatalogObjectType::Database;
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
   databases_.push_back(database);
+
+  AbstractCatalogObject *object = new DatabaseCatalogObject(database_name, database_oid);
+  objects_[database_oid] = object;
 
   InsertDatabaseIntoCatalogDatabase(database_id, database_name, txn);
 

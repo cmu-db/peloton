@@ -216,6 +216,8 @@ class Catalog {
   // function ptr, return type)
   std::unordered_map<std::string, FunctionData> functions_;
 
+  std::unordered_map<oid_t, AbstractCatalogObject> objects_;
+
  public:
 
   // The pool for new varlen tuple fields
