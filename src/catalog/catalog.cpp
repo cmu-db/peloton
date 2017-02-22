@@ -648,22 +648,25 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexesSchema() {
                                    "index_id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
                                      "index_name", true);
   name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   auto table_id_column = catalog::Column(type::Type::INTEGER,
                                          type::Type::GetTypeSize(type::Type::INTEGER),
                                          "table_id", true);
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
   auto database_id_column = catalog::Column(type::Type::INTEGER,
                                             type::Type::GetTypeSize(type::Type::INTEGER),
                                             "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema( {
-      id_column, name_column }));
+      id_column, name_column, table_id_column , database_id_column }));
   return index_schema;
 }
 
