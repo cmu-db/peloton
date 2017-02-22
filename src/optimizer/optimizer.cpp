@@ -30,6 +30,7 @@
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "binder/bind_node_visitor.h"
 
 namespace peloton {
 namespace optimizer {
@@ -56,6 +57,10 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   auto parse_tree = parse_tree_list->GetStatements().at(0);
+
+  // Run binder
+  auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>();
+  bind_node_visitor->BindNameToNode(parse_tree);
 
   // Generate initial operator tree from query tree
   std::shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree);

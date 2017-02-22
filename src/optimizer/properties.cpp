@@ -17,8 +17,8 @@
 namespace peloton {
 namespace optimizer {
 
-PropertyColumns::PropertyColumns(std::vector<Column *> columns)
-    : columns_(std::move(columns)) {
+PropertyColumns::PropertyColumns(std::vector<expression::TupleValueExpression *> column_exprs)
+    : column_exprs_(std::move(column_exprs)) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
 
@@ -32,10 +32,11 @@ bool PropertyColumns::operator>=(const Property &r) const {
 
   // check that every column in the right hand side property exists in the left
   // hand side property
-  for (auto column : columns_) {
+  for (auto column : column_exprs_) {
     bool has_column = false;
-    for (auto r_column : r_columns.columns_) {
-      if (column->ID() == r_column->ID()) {
+    for (auto r_column : r_columns.column_exprs_) {
+      // TODO: Do not compare ptr directly
+      if (column == r_column) {
         has_column = true;
         break;
       }
@@ -50,9 +51,9 @@ hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
 
-  // hash columns
-  for (Column *col : columns_) {
-    hash = util::CombineHashes(hash, col->Hash());
+  for (auto col: column_exprs_) {
+    hash = util::CombineHashes(
+        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t >>(&col->bound_obj_id));
   }
   return hash;
 }

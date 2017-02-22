@@ -47,13 +47,14 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table);
+  static Operator make(storage::DataTable *table, std::string alias);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
   storage::DataTable *table;
+  std::string table_alias;
 };
 
 //===--------------------------------------------------------------------===//
@@ -69,7 +70,9 @@ class LogicalFilter : public OperatorNode<LogicalFilter> {
 //===--------------------------------------------------------------------===//
 class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression* condition = nullptr);
+
+  expression::AbstractExpression* condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -77,7 +80,9 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression* condition = nullptr);
+
+  expression::AbstractExpression* condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -85,7 +90,9 @@ class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression* condition = nullptr);
+
+  expression::AbstractExpression* condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -93,7 +100,9 @@ class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression* condition = nullptr);
+
+  expression::AbstractExpression* condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -101,7 +110,9 @@ class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
  public:
-  static Operator make();
+  static Operator make(expression::AbstractExpression* condition = nullptr);
+
+  expression::AbstractExpression* condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -109,7 +120,11 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalAggregate : public OperatorNode<LogicalAggregate> {
  public:
-  static Operator make();
+  static Operator make(std::vector<expression::AbstractExpression *> *columns,
+                       expression::AbstractExpression *having);
+
+  std::vector<expression::AbstractExpression *> *columns;
+  expression::AbstractExpression *having;
 };
 
 //===--------------------------------------------------------------------===//
@@ -117,7 +132,10 @@ class LogicalAggregate : public OperatorNode<LogicalAggregate> {
 //===--------------------------------------------------------------------===//
 class LogicalLimit : public OperatorNode<LogicalLimit> {
  public:
-  static Operator make();
+  static Operator make(int64_t limit, int64_t offset);
+
+  int64_t limit;
+  int64_t offset;
 };
 
 //===--------------------------------------------------------------------===//

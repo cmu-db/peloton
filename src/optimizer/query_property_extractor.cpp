@@ -28,7 +28,6 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 }
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
-  std::vector<Column *> columns = {};
 
   // Get table pointer, id, and schema.
   storage::DataTable *target_table =
@@ -45,30 +44,20 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         new PropertyPredicate(predicate->Copy())));
   }
 
-  std::unordered_map<oid_t, oid_t> column_mapping;
   std::vector<oid_t> column_ids;
   bool needs_projection = false;
+
+  std::vector<expression::TupleValueExpression*> column_exprs;
 
   // Transform output expressions
   for (auto col : *select_stmt->select_list) {
     expression::ExpressionUtil::TransformExpression(column_ids, col, schema, needs_projection);
-  }
-
-  // Get the columns required by the result
-  auto table_oid = target_table->GetOid();
-  for (oid_t col_id : column_ids) {
-    catalog::Column schema_col = schema.GetColumn(col_id);
-    Column *col = manager_.LookupColumn(table_oid, col_id);
-    if (col == nullptr) {
-      col = manager_.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
-                                   schema_col.GetName(), schema_col.IsInlined(),
-                                   table_oid, col_id);
-    }
-    columns.push_back(col);
+    if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      column_exprs.emplace_back(reinterpret_cast<expression::TupleValueExpression*>(col));
   }
 
   property_set_.AddProperty(
-      std::shared_ptr<PropertyColumns>(new PropertyColumns(columns)));
+      std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
 
   if (needs_projection) {
     auto output_expressions =

@@ -28,18 +28,21 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(storage::DataTable *table) {
+Operator LogicalGet::make(storage::DataTable *table, std::string alias) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
+  get->table_alias = alias;
+  util::to_lower_string(get->table_alias);
   return Operator(get);
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Get) return false;
   const LogicalGet &r = *static_cast<const LogicalGet *>(&node);
-  if (table->GetOid() != r.table->GetOid()) return false;
-
-  return true;
+//  if (table->GetOid() != r.table->GetOid()) return false;
+//
+//  return true;
+  return table_alias == r.table_alias;
 }
 
 hash_t LogicalGet::Hash() const {
@@ -60,56 +63,66 @@ Operator LogicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalInnerJoin::make() {
+Operator LogicalInnerJoin::make(expression::AbstractExpression* condition) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // LeftJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalLeftJoin::make() {
+Operator LogicalLeftJoin::make(expression::AbstractExpression* condition) {
   LogicalLeftJoin *join = new LogicalLeftJoin;
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // RightJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalRightJoin::make() {
+Operator LogicalRightJoin::make(expression::AbstractExpression* condition) {
   LogicalRightJoin *join = new LogicalRightJoin;
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalOuterJoin::make() {
+Operator LogicalOuterJoin::make(expression::AbstractExpression* condition) {
   LogicalOuterJoin *join = new LogicalOuterJoin;
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalSemiJoin::make() {
+Operator LogicalSemiJoin::make(expression::AbstractExpression* condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
+  join->condition = condition;
   return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalAggregate::make() {
+Operator LogicalAggregate::make(std::vector<expression::AbstractExpression *> *columns,
+                                     expression::AbstractExpression *having) {
   LogicalAggregate *agg = new LogicalAggregate;
+  agg->columns = columns;
+  agg->having = having;
   return Operator(agg);
 }
 
 //===--------------------------------------------------------------------===//
 // Limit
 //===--------------------------------------------------------------------===//
-Operator LogicalLimit::make() {
+Operator LogicalLimit::make(int64_t limit, int64_t offset) {
   LogicalLimit *limit_op = new LogicalLimit;
+  limit_op->limit = limit;
+  limit_op->offset = offset;
   return Operator(limit_op);
 }
 

@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
+
 #include "optimizer/column.h"
-#include "optimizer/property.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -22,8 +22,7 @@ namespace optimizer {
 // Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
-  PropertyColumns(std::vector<Column *> columns);
-
+  PropertyColumns(std::vector<expression::TupleValueExpression *> column_exprs);
   PropertyType Type() const override;
 
   hash_t Hash() const override;
@@ -32,12 +31,12 @@ class PropertyColumns : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
-  inline Column *GetColumn(int idx) const { return columns_[idx]; }
+  inline expression::TupleValueExpression *GetColumn(int idx) const { return column_exprs_[idx]; }
 
-  inline size_t GetSize() const { return columns_.size(); }
+  inline size_t GetSize() const { return column_exprs_.size(); }
 
  private:
-  std::vector<Column *> columns_;
+  std::vector<expression::TupleValueExpression *> column_exprs_;
 };
 
 // Specifies the output expressions of the query

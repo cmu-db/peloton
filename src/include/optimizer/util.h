@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <algorithm>
 
 namespace peloton {
 namespace optimizer {
@@ -49,6 +50,10 @@ inline hash_t Hash(const T *ptr) {
 template <typename T>
 inline hash_t HashPtr(const T *ptr) {
   return HashBytes((char *)&ptr, sizeof(void *));
+}
+
+inline void to_lower_string(std::string& str) {
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
 
 } /* namespace util */

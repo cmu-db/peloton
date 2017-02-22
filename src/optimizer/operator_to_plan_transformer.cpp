@@ -19,6 +19,7 @@
 #include "planner/nested_loop_join_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include <tuple>
 
 namespace peloton {
 namespace optimizer {
@@ -54,9 +55,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 
   for (size_t column_idx = 0; column_idx < column_prop->GetSize();
        column_idx++) {
-    column_ids.push_back(column_prop->GetColumn(column_idx)
-                             ->As<TableColumn>()
-                             ->ColumnIndexOid());
+    auto col = column_prop->GetColumn(column_idx);
+    oid_t id = std::get<2>(col->bound_obj_id);
+    column_ids.push_back(id);
   }
 
   output_plan_.reset(
