@@ -26,6 +26,7 @@
 #define CATALOG_DATABASE_NAME "catalog_db"
 #define DATABASE_CATALOG_NAME "database_catalog"
 #define TABLE_CATALOG_NAME "table_catalog"
+#define INDEX_CATALOG_NAME "index_catalog"
 
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"
@@ -139,15 +140,22 @@ class Catalog {
   std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
       oid_t database_id, std::string table_name);
 
+  // Create Table for pg_index
+  std::unique_ptr<storage::DataTable> CreateIndexCatalog(
+      oid_t database_id, std::string table_name);
+
   // Create Table for metrics tables
   std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
       oid_t database_id, std::string table_name);
 
   // Initialize the schema of the database catalog
-  std::unique_ptr<Schema> InitializeDatabaseSchema();
+  std::unique_ptr<Schema> InitializeDatabasesSchema();
 
   // Initialize the schema of the table catalog
   std::unique_ptr<Schema> InitializeTablesSchema();
+
+  // Initialize the schema of the index catalog
+  std::unique_ptr<Schema> InitializeIndexesSchema();
 
   // Initialize the schema of the database metrics table
   std::unique_ptr<Schema> InitializeDatabaseMetricsSchema();
@@ -216,7 +224,7 @@ class Catalog {
   // function ptr, return type)
   std::unordered_map<std::string, FunctionData> functions_;
 
-  std::unordered_map<oid_t, AbstractCatalogObject> objects_;
+  std::unordered_map<oid_t, std::shared_ptr<AbstractCatalogObject>> objects_;
 
  public:
 

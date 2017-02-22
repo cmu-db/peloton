@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+#include "catalog/table_catalog_object.h"
+#include "catalog/database_catalog_object.h"
 #include "catalog/manager.h"
 #include "common/exception.h"
 #include "common/macros.h"
@@ -69,13 +71,20 @@ void Catalog::CreateMetricsCatalog() {
 void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
+  // pg_database
   auto database_catalog = CreateDatabaseCatalog(START_OID,
       DATABASE_CATALOG_NAME);
   storage::DataTable *databases_table = database_catalog.release();
   database->AddTable(databases_table, true);
+  // pg_table
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table, true);
+  // pg_index
+  auto index_catalog = CreateIndexCatalog(START_OID, INDEX_CATALOG_NAME);
+  storage::DataTable *indexes_table = index_catalog.release();
+  database->AddTable(indexes_table, true);
+
   databases_.push_back(database);
   LOG_TRACE("Catalog database created");
 }
@@ -91,14 +100,14 @@ ResultType Catalog::CreateDatabase(std::string database_name,
     }
   }
 
-  oid_t database_id = (GetNextOid() || type::CatalogObjectType::DATABASE);
-  
+  oid_t database_id = (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::DATABASE));
+
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
   databases_.push_back(database);
 
-  AbstractCatalogObject *object = new DatabaseCatalogObject(database_name, database_oid);
-  objects_[database_oid] = object;
+  auto object = new catalog::DatabaseCatalogObject(database_name, database_id);
+  objects_[database_id] = std::shared_ptr<AbstractCatalogObject>(object);
 
   InsertDatabaseIntoCatalogDatabase(database_id, database_name, txn);
 
@@ -141,7 +150,7 @@ ResultType Catalog::CreateTable(std::string database_name, std::string table_nam
 
   bool own_schema = true;
   bool adapt_table = false;
-  oid_t table_id = (GetNextOid() || type::CatalogObjectType::TABLE);
+  oid_t table_id = (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::TABLE));
   try {
     storage::Database *database = GetDatabaseWithName(database_name);
     try {
@@ -152,9 +161,10 @@ ResultType Catalog::CreateTable(std::string database_name, std::string table_nam
       // Table doesn't exist, now create it
       oid_t database_id = database->GetOid();
       // Table doesn't exist, create table catalog object.
-      AbstractCatalogObject *object = new catalog::TableCatalogObject(
-              table_name, table_id, database_id, schema.release(), own_schema);
-      objects_[table_id] = object;
+      // TODO: This is a hack, should deal with schema sharing between real data table and table catalog object
+      auto object = new catalog::TableCatalogObject(
+              table_name, table_id, database_id, Schema::CopySchema(schema.get()), own_schema);
+      objects_[table_id] = std::shared_ptr<AbstractCatalogObject>(object);
 
       storage::DataTable *table = storage::TableFactory::GetDataTable(
           database_id, table_id, schema.release(), table_name,
@@ -224,7 +234,7 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     bool unique_keys = true;
 
     index_catalog_object = new catalog::IndexCatalogObject(
-        StringUtil::Upper(index_name), (GetNextOid() || type::CatalogObjectType::INDEX),
+        StringUtil::Upper(index_name), (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::INDEX)),
         table->GetOid(), database->GetOid(), IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, schema, key_schema, key_attrs,
         unique_keys);
@@ -232,6 +242,15 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     std::shared_ptr<index::Index> pkey_index(
         index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(pkey_index);
+
+    // Update catalog_index with this index info
+    auto tuple =
+        GetIndexCatalogTuple(
+            databases_[START_OID]->GetTableWithName(INDEX_CATALOG_NAME)->GetSchema(),
+            index_catalog_object, pool_);
+    catalog::InsertTuple(
+        databases_[START_OID]->GetTableWithName(INDEX_CATALOG_NAME),
+        std::move(tuple), nullptr);
 
     LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
               pkey_index->GetName().c_str(), table->GetName().c_str());
@@ -283,12 +302,12 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     // Check if unique index or not
     if (unique == false) {
       index_catalog_object = new catalog::IndexCatalogObject(index_name.c_str(),
-          (GetNextOid() || type::CatalogObjectType::INDEX), table->GetOid(),
+          (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::INDEX)), table->GetOid(),
           database->GetOid(), index_type, IndexConstraintType::DEFAULT, schema,
           key_schema, key_attrs, true);
     } else {
       index_catalog_object = new catalog::IndexCatalogObject(index_name.c_str(),
-          (GetNextOid() || type::CatalogObjectType::INDEX), table->GetOid(), database->GetOid(), index_type,
+          (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::INDEX)), table->GetOid(), database->GetOid(), index_type,
           IndexConstraintType::UNIQUE, schema, key_schema, key_attrs, true);
     }
 
@@ -296,6 +315,15 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     std::shared_ptr<index::Index> key_index(
         index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(key_index);
+
+    // Update catalog_index with this index info
+    auto tuple =
+        GetIndexCatalogTuple(
+            databases_[START_OID]->GetTableWithName(INDEX_CATALOG_NAME)->GetSchema(),
+            index_catalog_object, pool_);
+    catalog::InsertTuple(
+        databases_[START_OID]->GetTableWithName(INDEX_CATALOG_NAME),
+        std::move(tuple), nullptr);
 
     LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
     return ResultType::SUCCESS;
@@ -395,6 +423,7 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
       catalog::DeleteTuple(
           GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(
               TABLE_CATALOG_NAME), table_id, txn);
+      // TODO: Delete the catalog table object
       LOG_TRACE("Deleting table!");
       database->DropTableWithOid(table_id);
       return ResultType::SUCCESS;
@@ -492,7 +521,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
   catalog::Schema *schema = table_schema.release();
   std::unique_ptr<storage::DataTable> table(
       storage::TableFactory::GetDataTable(database_id,
-        (GetNextOid()|| type::CatalogObjectType::TABLE), schema,
+        (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::TABLE)), schema,
         table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
         is_catalog));
   return table;
@@ -504,16 +533,32 @@ std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
   bool own_schema = true;
   bool adapt_table = false;
   bool is_catalog = true;
-  auto database_schema = InitializeDatabaseSchema();
+  auto database_schema = InitializeDatabasesSchema();
 
   catalog::Schema *schema = database_schema.release();
 
   std::unique_ptr<storage::DataTable> table(
       storage::TableFactory::GetDataTable(database_id,
-          (GetNextOid()||type::CatalogObjectType::TABLE), schema,
+          (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::TABLE)), schema,
           database_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema,
           adapt_table, is_catalog));
 
+  return table;
+}
+
+// Create Table for pg_index
+std::unique_ptr<storage::DataTable> Catalog::CreateIndexCatalog(
+    oid_t database_id, std::string index_name) {
+  bool own_schema = true;
+  bool adapt_table = false;
+  bool is_catalog = true;
+  auto index_schema = InitializeIndexesSchema();
+
+  catalog::Schema *schema = index_schema.release();
+  std::unique_ptr<storage::DataTable> table(
+      storage::TableFactory::GetDataTable(database_id,
+          (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::TABLE)), schema,
+          index_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
   return table;
 }
 
@@ -538,7 +583,7 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
 
   std::unique_ptr<storage::DataTable> table(
       storage::TableFactory::GetDataTable(database_id,
-          (GetNextOid() || type::CatalogObjectType::TABLE), schema, table_name,
+          (GetNextOid() | static_cast<oid_t>(type::CatalogObjectType::TABLE)), schema, table_name,
           DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
 
   return table;
@@ -576,7 +621,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
 }
 
 // Initialize database catalog schema
-std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
+std::unique_ptr<catalog::Schema> Catalog::InitializeDatabasesSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(type::Type::INTEGER,
@@ -594,7 +639,35 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   return database_schema;
 }
 
-// Initialize database catalog schema
+// Initialize index catalog schema
+std::unique_ptr<catalog::Schema> Catalog::InitializeIndexesSchema() {
+  const std::string not_null_constraint_name = "not_null";
+
+  auto id_column = catalog::Column(type::Type::INTEGER,
+                                   type::Type::GetTypeSize(type::Type::INTEGER),
+                                   "index_id", true);
+  id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
+                                     "index_name", true);
+  name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  auto table_id_column = catalog::Column(type::Type::INTEGER,
+                                         type::Type::GetTypeSize(type::Type::INTEGER),
+                                         "table_id", true);
+  table_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  auto database_id_column = catalog::Column(type::Type::INTEGER,
+                                            type::Type::GetTypeSize(type::Type::INTEGER),
+                                            "database_id", true);
+  database_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema( {
+      id_column, name_column }));
+  return index_schema;
+}
+
+// Initialize database metrics schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -621,7 +694,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   return database_schema;
 }
 
-// Initialize table catalog schema
+// Initialize table metrics schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -660,7 +733,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   return database_schema;
 }
 
-// Initialize index catalog schema
+// Initialize index metrics schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -698,7 +771,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   return database_schema;
 }
 
-// Initialize query catalog schema
+// Initialize query metrics schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
