@@ -70,11 +70,27 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     property_set_.AddProperty(std::shared_ptr<PropertyProjection>(
         new PropertyProjection(std::move(output_expressions))));
   }
+
+  if (select_stmt->order != nullptr) {
+    select_stmt->order->Accept(this);
+  }
 };
 void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
-void QueryPropertyExtractor::Visit(const parser::OrderDescription *) {}
+void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
+ // TODO: the parser node only support order by one column
+  bool sort_ascending;
+  if (node->type == parser::kOrderAsc)
+    sort_ascending = true;
+  else if (node->type == parser::kOrderDesc)
+    sort_ascending = false;
+
+  auto sort_column_expr = (expression::TupleValueExpression*) node->expr;
+  property_set_.AddProperty(std::shared_ptr<PropertySort>(
+      new PropertySort({sort_column_expr}, {sort_ascending})));
+
+}
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
 
 void QueryPropertyExtractor::Visit(

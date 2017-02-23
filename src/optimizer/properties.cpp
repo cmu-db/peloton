@@ -62,7 +62,7 @@ void PropertyColumns::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyColumns *)this);
 }
 
-PropertySort::PropertySort(std::vector<Column *> sort_columns,
+PropertySort::PropertySort(std::vector<expression::TupleValueExpression *> sort_columns,
                            std::vector<bool> sort_ascending)
     : sort_columns(sort_columns), sort_ascending(sort_ascending) {}
 
@@ -77,7 +77,8 @@ bool PropertySort::operator>=(const Property &r) const {
   size_t num_sort_columns = r_sort.sort_columns.size();
   PL_ASSERT(num_sort_columns == r_sort.sort_ascending.size());
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    if (sort_columns[i]->ID() != r_sort.sort_columns[i]->ID()) return false;
+    // TODO: Do not compare ptr directly
+    if (sort_columns[i] != r_sort.sort_columns[i]) return false;
     if (sort_ascending[i] != r_sort.sort_ascending[i]) return false;
   }
 
@@ -91,7 +92,8 @@ hash_t PropertySort::Hash() const {
   // hash sorting columns
   size_t num_sort_columns = sort_columns.size();
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    hash = util::CombineHashes(hash, sort_columns[i]->Hash());
+    hash = util::CombineHashes(
+        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t >>(&(sort_columns[i]->bound_obj_id)));
     hash = util::CombineHashes(hash, sort_ascending[i]);
   }
   return hash;

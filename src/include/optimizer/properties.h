@@ -66,7 +66,7 @@ class PropertyProjection : public Property {
 // Specifies the required sorting order of the query
 class PropertySort : public Property {
  public:
-  PropertySort(std::vector<Column *> sort_columns,
+  PropertySort(std::vector<expression::TupleValueExpression*> sort_columns,
                std::vector<bool> sort_ascending);
 
   PropertyType Type() const override;
@@ -77,8 +77,16 @@ class PropertySort : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
+  inline size_t GetSortColumnSize() const { return sort_columns.size(); }
+
+  inline expression::TupleValueExpression* GetSortColumn(int idx) const {
+    return sort_columns[idx];
+  }
+
+  inline bool GetSortAscending(int idx) const { return sort_columns[idx]; }
+
  private:
-  std::vector<Column *> sort_columns;
+  std::vector<expression::TupleValueExpression*> sort_columns;
   std::vector<bool> sort_ascending;
 };
 
