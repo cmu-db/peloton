@@ -76,7 +76,7 @@ void Catalog::CreateCatalogDatabase() {
       DATABASE_CATALOG_NAME);
   storage::DataTable *databases_table = database_catalog.release();
   database->AddTable(databases_table, true);
-  // pg_table
+  // pg_class
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
   storage::DataTable *tables_table = table_catalog.release();
   database->AddTable(tables_table, true);
@@ -132,7 +132,7 @@ void Catalog::AddDatabase(std::string database_name,
 
 void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
     std::string &database_name, concurrency::Transaction *txn) {
-  // Update catalog_db with this database info
+  // Update pg_database with this database info
   auto tuple =
       GetDatabaseCatalogTuple(
           databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
@@ -243,6 +243,9 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
         index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(pkey_index);
 
+    //add index catalog object along with its oid into map
+    objects_[index_catalog_object->GetOid()] = std::shared_ptr<AbstractCatalogObject>(index_catalog_object);
+
     // Update catalog_index with this index info
     auto tuple =
         GetIndexCatalogTuple(
@@ -315,6 +318,9 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     std::shared_ptr<index::Index> key_index(
         index::IndexFactory::GetIndex(index_catalog_object));
     table->AddIndex(key_index);
+
+    //add index catalog object along with its oid into map
+    objects_[index_catalog_object->GetOid()] = std::shared_ptr<AbstractCatalogObject>(index_catalog_object);
 
     // Update catalog_index with this index info
     auto tuple =
@@ -515,6 +521,8 @@ storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
 }
 
 // Create Table for pg_class
+// TODO: it's not like the pg_class in postgres, this table can only store info
+// about table. not supportive of index, view, etc. 
 // you don't need to create TableCatalogObject for pg_class
 std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
     oid_t database_id, std::string table_name) {
@@ -670,8 +678,12 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexesSchema() {
                                             "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  auto unique_key = catalog::Column(type::Type::BOOLEAN,
+                                            type::Type::GetTypeSize(type::Type::BOOLEAN),
+                                            "unique_key", true);
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema( {
-      id_column, name_column, table_id_column , database_id_column }));
+      id_column, name_column, table_id_column , database_id_column, unique_key}));
   return index_schema;
 }
 
