@@ -51,7 +51,7 @@ public:
   virtual void ExitEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const size_t epoch_id UNUSED_ATTRIBUTE) { }
 
   virtual uint64_t GetTailEpochId() { return 0; }
-
+  
   //====================================================
   // designed for centralized epoch manager
   //====================================================
@@ -63,11 +63,11 @@ public:
 
   virtual void ExitEpoch(size_t epoch UNUSED_ATTRIBUTE) {}
 
+  virtual cid_t GetReadOnlyTxnCid() { return 0; }
+
   //****************************************************
 
-  virtual cid_t GetMaxDeadTxnCid() { return 0; }
-
-  virtual cid_t GetReadOnlyTxnCid() { return 0; }
+  virtual cid_t GetMaxCommittedCid() { return 0; }
 
 };
 

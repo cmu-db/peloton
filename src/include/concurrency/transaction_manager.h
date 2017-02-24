@@ -152,7 +152,7 @@ class TransactionManager {
   // please note that this function only returns a "safe" value instead of a
   // precise value.
   cid_t GetMaxCommittedCid() {
-    return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
+    return EpochManagerFactory::GetInstance().GetMaxCommittedCid();
   }
 
   void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {

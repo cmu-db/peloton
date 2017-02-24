@@ -176,6 +176,8 @@ struct LocalEpochContext {
   }
 
   // queue size
+  // TODO: it is possible that the transaction length is longer than 4986 * EPOCH_LENGTH
+  // we should refactor it in the future.
   static const size_t epoch_buffer_size_ = 4096;
   std::vector<Epoch> epoch_buffer_;
 
@@ -235,53 +237,20 @@ public:
   }
 
   // enter epoch with thread id
-  virtual cid_t EnterEpochD(const size_t thread_id) override {
+  virtual cid_t EnterEpochD(const size_t thread_id) override;
 
-    PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
+  virtual void ExitEpochD(const size_t thread_id, const size_t begin_cid) override;
 
-    while (true) {
-      uint64_t epoch_id = GetCurrentGlobalEpoch();
 
-      // enter the corresponding local epoch.
-      bool rt = local_epoch_contexts_.at(thread_id)->EnterLocalEpoch(epoch_id);
-      // if successfully enter local epoch
-      if (rt == true) {
-    
-        uint32_t next_txn_id = GetNextTransactionId();
-
-        return (epoch_id << 32) | next_txn_id;
-      }
-    }
+  virtual cid_t GetMaxCommittedCid() override {
+    uint64_t tail_epoch_id = GetTailEpochId();
+    return (tail_epoch_id << 32) | 0xFFFFFFFF;
   }
 
-  virtual void ExitEpochD(const size_t thread_id, const size_t begin_cid) override {
-
-    PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
-
-    uint64_t epoch_id = ExtractEpochId(begin_cid);
-
-    // enter the corresponding local epoch.
-    local_epoch_contexts_.at(thread_id)->ExitLocalEpoch(epoch_id);
- 
-  }
-
-
-  virtual uint64_t GetTailEpochId() override {
-    uint64_t min_epoch_id = std::numeric_limits<uint64_t>::max();
-    
-    for (auto &local_epoch_context : local_epoch_contexts_) {
-      
-      uint64_t local_epoch_id = local_epoch_context.second->GetTailEpochId(current_global_epoch_);
-      
-      if (local_epoch_id < min_epoch_id) {
-        min_epoch_id = local_epoch_context.second->tail_epoch_id_;
-      }
-    }
-
-    return min_epoch_id;
-  }
+  virtual uint64_t GetTailEpochId() override;
 
 private:
+
 
   inline uint64_t ExtractEpochId(const cid_t cid) {
     return (cid >> 32);
