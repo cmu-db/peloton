@@ -37,18 +37,25 @@ void RunBenchmark() {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
 
-
-  
+  concurrency::EpochManagerFactory::Configure(state.epoch);
   
   std::unique_ptr<std::thread> epoch_thread;
   std::vector<std::unique_ptr<std::thread>> gc_threads;
 
   concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-  gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
+  
+  if (concurrency::EpochManagerFactory::GetEpochType() == EpochType::DECENTRALIZED_EPOCH) {
+    for (size_t i = 0; i < (size_t) state.backend_count; ++i) {
+      // register thread to epoch manager
+      epoch_manager.RegisterThread(i);
+    }
+  }
 
   // start epoch.
   epoch_manager.StartEpoch(epoch_thread);
-  
+
+  gc::GCManager &gc_manager = gc::GCManagerFactory::GetInstance();
+
   // start GC.
   gc_manager.StartGC(gc_threads);
 

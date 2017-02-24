@@ -41,6 +41,7 @@
 
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "concurrency/epoch_manager_factory.h"
 
 #include "executor/executor_context.h"
 #include "executor/abstract_executor.h"
@@ -119,6 +120,12 @@ void PinToCore(size_t core) {
 void RunBackend(const size_t thread_id) {
   
   PinToCore(thread_id);
+
+  if (concurrency::EpochManagerFactory::GetEpochType() == EpochType::DECENTRALIZED_EPOCH) {
+    // register thread to epoch manager
+    auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+    epoch_manager.RegisterThread(thread_id);
+  }
 
   PadInt &execution_count_ref = abort_counts[thread_id];
   PadInt &transaction_count_ref = commit_counts[thread_id];

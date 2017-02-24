@@ -109,7 +109,7 @@ void RunBackend(const size_t thread_id) {
     if (is_running == false) {
       break;
     }
-    while (RunMixed(zipf, rng) == false) {
+    while (RunMixed(thread_id, zipf, rng) == false) {
       if (is_running == false) {
         break;
       }

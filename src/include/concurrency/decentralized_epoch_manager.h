@@ -51,10 +51,11 @@ struct Epoch {
 
 struct LocalEpochContext {
 
-  LocalEpochContext() : 
+  LocalEpochContext(const size_t thread_id) : 
     epoch_buffer_(epoch_buffer_size_),
     head_epoch_id_(0),
-    tail_epoch_id_(UINT64_MAX) {}
+    tail_epoch_id_(UINT64_MAX),
+    thread_id_(thread_id) {}
 
   bool EnterLocalEpoch(const uint64_t epoch_id) {
     // if not initiated
@@ -137,7 +138,9 @@ struct LocalEpochContext {
     IncreaseTailEpochId();
   }
 
+  // this function can be invoked by both the epoch thread and the local worker thread.
   void IncreaseTailEpochId() {
+    lock_.Lock();
     // in the best case, tail_epoch_id can be increased to (head_epoch_id - 1)
     while (tail_epoch_id_ < head_epoch_id_ - 1) {
       size_t epoch_idx = (size_t) (tail_epoch_id_ + 1) % epoch_buffer_size_;
@@ -147,6 +150,7 @@ struct LocalEpochContext {
         break;
       }
     }
+    lock_.Unlock();
   }
 
   // increase tail epoch id using the current epoch id obtained from
@@ -183,6 +187,9 @@ struct LocalEpochContext {
 
   uint64_t head_epoch_id_; // point to the latest epoch that the thread is aware of.
   uint64_t tail_epoch_id_; // point to the oldest epoch that we can reclaim.
+
+  size_t thread_id_;
+  Spinlock lock_;
 };
 
 /////////////////////////////////////////////////////////////////
@@ -223,7 +230,7 @@ public:
   virtual void RegisterThread(const size_t thread_id) override {
     local_epoch_context_lock_.Lock();
 
-    local_epoch_contexts_[thread_id].reset(new LocalEpochContext());
+    local_epoch_contexts_[thread_id].reset(new LocalEpochContext(thread_id));
 
     local_epoch_context_lock_.Unlock();
   }
@@ -272,7 +279,7 @@ private:
     while (is_running_ == true) {
       // the epoch advances every EPOCH_LENGTH milliseconds.
       std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
-
+      current_global_epoch_.fetch_add(1);
     }
   }
 

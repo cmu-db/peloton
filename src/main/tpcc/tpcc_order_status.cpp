@@ -94,7 +94,7 @@ bool RunOrderStatus(const size_t &thread_id){
    */
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction(thread_id);
 
   std::unique_ptr<executor::ExecutorContext> context(
     new executor::ExecutorContext(txn));

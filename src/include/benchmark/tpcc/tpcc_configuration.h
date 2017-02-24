@@ -155,6 +155,9 @@ class configuration {
   // index type
   IndexType index;
 
+  // epoch type
+  EpochType epoch;
+
   // scale factor
   double scale_factor;
 
