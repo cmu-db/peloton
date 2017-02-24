@@ -13,7 +13,7 @@
 #pragma once
 
 #include "type/types.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 
 namespace peloton {
@@ -176,7 +176,7 @@ struct CreateStatement : TableRefStatement {
     free(database_name);
   }
 
-  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 

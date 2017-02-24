@@ -20,6 +20,7 @@
 #include "type/serializeio.h"
 #include "type/types.h"
 #include "type/value_factory.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
@@ -49,8 +50,8 @@ namespace expression {
 class AbstractExpression : public Printable {
  public:
   virtual type::Value Evaluate(const AbstractTuple *tuple1,
-                         const AbstractTuple *tuple2,
-                         executor::ExecutorContext *context) const = 0;
+                               const AbstractTuple *tuple2,
+                               executor::ExecutorContext *context) const = 0;
 
   /**
    * Return true if this expression or any descendent has a value that should be
@@ -98,8 +99,9 @@ class AbstractExpression : public Printable {
 
     os << "\tExpression :: "
        << " expression type = " << GetExpressionType() << ","
-       << " value type = " << type::Type::GetInstance(GetValueType())->ToString()
-       << "," << std::endl;
+       << " value type = "
+       << type::Type::GetInstance(GetValueType())->ToString() << ","
+       << std::endl;
 
     return os.str();
   }
@@ -118,7 +120,7 @@ class AbstractExpression : public Printable {
 
   // virtual bool SerializeTo(SerializeOutput &output) const {}
 
-  // virtual bool DeserializeFrom(SerializeInput &input) const {}
+  // virtual bool DeserializeFrom(SerializeInput &input) const {
 
   virtual int SerializeSize() { return 0; }
 
@@ -132,11 +134,21 @@ class AbstractExpression : public Printable {
 
   bool distinct_ = false;
 
+  virtual void Accept(SqlNodeVisitor *) = 0;
+
+  virtual void AcceptChildren(SqlNodeVisitor *v) {
+    for (auto &child : children_) {
+      child->Accept(v);
+    }
+  }
+
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
-  AbstractExpression(ExpressionType exp_type, type::Type::TypeId return_value_type)
+  AbstractExpression(ExpressionType exp_type,
+                     type::Type::TypeId return_value_type)
       : exp_type_(exp_type), return_value_type_(return_value_type) {}
-  AbstractExpression(ExpressionType exp_type, type::Type::TypeId return_value_type,
+  AbstractExpression(ExpressionType exp_type,
+                     type::Type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right)
       : exp_type_(exp_type), return_value_type_(return_value_type) {
     // Order of these is important!

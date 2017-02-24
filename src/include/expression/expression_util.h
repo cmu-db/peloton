@@ -365,7 +365,7 @@ class ExpressionUtil {
   /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective objects given a
-   * set of schemas. This function
+   * set of schemas.
    */
   static void TransformExpression(std::vector<const catalog::Schema *> &schemas,
                                   AbstractExpression *expr) {
@@ -485,7 +485,7 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       auto catalog = catalog::Catalog::GetInstance();
-      const catalog::FunctionData& func_data =
+      const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->func_name_);
       func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
                                                  func_data.return_type_,

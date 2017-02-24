@@ -32,7 +32,7 @@ namespace peloton {
 namespace optimizer {
 
 QueryToOperatorTransformer::QueryToOperatorTransformer(ColumnManager &manager)
-    : manager(manager) {}
+    : manager_(manager) {}
 
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
@@ -51,7 +51,8 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
 
   output_expr = get_expr;
 }
-
+void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *) {}
+void QueryToOperatorTransformer::Visit(const parser::TableRef *) {}
 void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}

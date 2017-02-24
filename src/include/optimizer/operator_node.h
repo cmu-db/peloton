@@ -33,6 +33,7 @@ enum class OpType {
   LeftJoin,
   RightJoin,
   OuterJoin,
+  SemiJoin,
   Aggregate,
   Limit,
   // Separate between logical and physical ops

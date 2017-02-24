@@ -14,6 +14,7 @@
 
 #include "common/abstract_tuple.h"
 #include "expression/abstract_expression.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace expression {
@@ -77,6 +78,18 @@ class TupleValueExpression : public AbstractExpression {
   std::string GetTableName() const { return table_name_; }
 
   std::string GetColumnName() const { return col_name_; }
+
+  void SetTableName(std::string table_alias) { table_name_ = table_alias; }
+
+  // Binder stuff
+  bool is_bound = false;
+  std::tuple<oid_t, oid_t, oid_t> bound_obj_id;
+
+  void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple) {
+    bound_obj_id = col_pos_tuple;
+  }
+
+  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
   TupleValueExpression(const TupleValueExpression &other)
