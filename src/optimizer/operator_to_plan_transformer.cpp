@@ -76,7 +76,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
          column_idx++) {
       auto col = sort_prop->GetSortColumn(column_idx);
       sort_col_ids.emplace_back(std::get<2>(col->bound_obj_id));
-      sort_flags.emplace_back(sort_prop->GetSortAscending(column_idx));
+      sort_flags.push_back(sort_prop->GetSortAscending(column_idx));
     }
     auto order_by_plan = new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids);
     order_by_plan->AddChild(std::move(output_plan_));
