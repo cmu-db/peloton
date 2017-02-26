@@ -233,7 +233,9 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new child input is the old output
   auto child_input_properties = std::vector<PropertySet>();
   child_input_properties.push_back(output_properties);
-
+  if (property->Type() == PropertyType::SORT) {
+    LOG_DEBUG("enforcing order by\n");
+  }  
   auto child_stats = std::vector<std::shared_ptr<Stats>>();
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = std::vector<double>();

@@ -39,7 +39,8 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
       std::make_pair(std::move(provided_property), std::vector<PropertySet>()));
 };
 
-void ChildPropertyGenerator::Visit(const PhysicalProject *) {}
+void ChildPropertyGenerator::Visit(const PhysicalProject *) {};
+void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
 void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};

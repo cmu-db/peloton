@@ -41,6 +41,7 @@ enum class OpType {
   // Physical ops
   Scan,
   Project,
+  OrderBy,
   ComputeExprs,
   Filter,
   InnerNLJoin,

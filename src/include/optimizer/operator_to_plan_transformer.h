@@ -42,6 +42,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalProject *) override;
 
+  void Visit(const PhysicalOrderBy *) override;
+
   void Visit(const PhysicalFilter *) override;
 
   void Visit(const PhysicalInnerNLJoin *) override;

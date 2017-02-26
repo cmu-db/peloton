@@ -39,9 +39,9 @@ Operator LogicalGet::make(storage::DataTable *table, std::string alias) {
 bool LogicalGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Get) return false;
   const LogicalGet &r = *static_cast<const LogicalGet *>(&node);
-//  if (table->GetOid() != r.table->GetOid()) return false;
-//
-//  return true;
+  //  if (table->GetOid() != r.table->GetOid()) return false;
+  //
+  //  return true;
   return table_alias == r.table_alias;
 }
 
@@ -63,7 +63,7 @@ Operator LogicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalInnerJoin::make(expression::AbstractExpression* condition) {
+Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   join->condition = condition;
   return Operator(join);
@@ -72,7 +72,7 @@ Operator LogicalInnerJoin::make(expression::AbstractExpression* condition) {
 //===--------------------------------------------------------------------===//
 // LeftJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalLeftJoin::make(expression::AbstractExpression* condition) {
+Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
   LogicalLeftJoin *join = new LogicalLeftJoin;
   join->condition = condition;
   return Operator(join);
@@ -81,7 +81,7 @@ Operator LogicalLeftJoin::make(expression::AbstractExpression* condition) {
 //===--------------------------------------------------------------------===//
 // RightJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalRightJoin::make(expression::AbstractExpression* condition) {
+Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
   LogicalRightJoin *join = new LogicalRightJoin;
   join->condition = condition;
   return Operator(join);
@@ -90,7 +90,7 @@ Operator LogicalRightJoin::make(expression::AbstractExpression* condition) {
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalOuterJoin::make(expression::AbstractExpression* condition) {
+Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
   LogicalOuterJoin *join = new LogicalOuterJoin;
   join->condition = condition;
   return Operator(join);
@@ -99,7 +99,7 @@ Operator LogicalOuterJoin::make(expression::AbstractExpression* condition) {
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalSemiJoin::make(expression::AbstractExpression* condition) {
+Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
   join->condition = condition;
   return Operator(join);
@@ -108,8 +108,9 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression* condition) {
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalAggregate::make(std::vector<expression::AbstractExpression *> *columns,
-                                     expression::AbstractExpression *having) {
+Operator LogicalAggregate::make(
+    std::vector<expression::AbstractExpression *> *columns,
+    expression::AbstractExpression *having) {
   LogicalAggregate *agg = new LogicalAggregate;
   agg->columns = columns;
   agg->having = having;
@@ -155,6 +156,15 @@ hash_t PhysicalScan::Hash() const {
 Operator PhysicalProject::make() {
   PhysicalProject *project = new PhysicalProject;
   return Operator(project);
+}
+
+//===--------------------------------------------------------------------===//
+// OrderBy
+//===--------------------------------------------------------------------===//
+Operator PhysicalOrderBy::make(const PropertySort *property) {
+  PhysicalOrderBy *order_by = new PhysicalOrderBy;
+  order_by->property_sort = property;  
+  return Operator(order_by);
 }
 
 //===--------------------------------------------------------------------===//
@@ -294,6 +304,8 @@ std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
 template <>
 std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
 template <>
+std::string OperatorNode<PhysicalOrderBy>::name_ = "PhysicalOrderBy";
+template <>
 std::string OperatorNode<PhysicalFilter>::name_ = "PhysicalFilter";
 template <>
 std::string OperatorNode<PhysicalInnerNLJoin>::name_ = "PhysicalInnerNLJoin";
@@ -340,6 +352,8 @@ template <>
 OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
 template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
+template <>
+OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
 template <>
 OpType OperatorNode<PhysicalFilter>::type_ = OpType::Filter;
 template <>

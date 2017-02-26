@@ -66,22 +66,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   output_plan_.reset(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
 
-  // Order by
-  auto sort_prop = requirements_
-      ->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
-  if (sort_prop != nullptr) {
-    std::vector<oid_t> sort_col_ids;
-    std::vector<bool> sort_flags;
-    for (size_t column_idx = 0; column_idx < sort_prop->GetSortColumnSize();
-         column_idx++) {
-      auto col = sort_prop->GetSortColumn(column_idx);
-      sort_col_ids.emplace_back(std::get<2>(col->bound_obj_id));
-      sort_flags.push_back(sort_prop->GetSortAscending(column_idx));
-    }
-    auto order_by_plan = new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids);
-    order_by_plan->AddChild(std::move(output_plan_));
-    output_plan_.reset(order_by_plan);
-  }
+
 
 
 }
@@ -131,6 +116,25 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   output_plan_ = std::move(project_plan);
 }
 
+void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
+  // Order by
+  PL_ASSERT(output_plan_->GetPlanNodeType() == PlanNodeType::SEQSCAN || output_plan_->GetPlanNodeType() == PlanNodeType::INDEXSCAN);
+  auto child_scan_plan = static_cast<planner::AbstractScan *>(output_plan_.get());
+
+  auto sort_prop = op->property_sort;
+  std::vector<oid_t> sort_col_ids;
+  std::vector<bool> sort_flags;
+  for (size_t column_idx = 0; column_idx < sort_prop->GetSortColumnSize();
+       column_idx++) {
+    auto col = sort_prop->GetSortColumn(column_idx);
+    sort_col_ids.emplace_back(std::get<2>(col->bound_obj_id));
+    sort_flags.push_back(sort_prop->GetSortAscending(column_idx));
+  }
+  auto order_by_plan = new planner::OrderByPlan(sort_col_ids, sort_flags, child_scan_plan->GetColumnIds());
+  order_by_plan->AddChild(std::move(output_plan_));
+  output_plan_.reset(order_by_plan);
+
+}
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {}

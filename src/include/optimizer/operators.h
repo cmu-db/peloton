@@ -31,7 +31,7 @@ class DataTable;
 }
 
 namespace optimizer {
-
+class PropertySort;
 //===--------------------------------------------------------------------===//
 // Leaf
 //===--------------------------------------------------------------------===//
@@ -158,6 +158,16 @@ class PhysicalScan : public OperatorNode<PhysicalScan> {
 class PhysicalProject : public OperatorNode<PhysicalProject> {
  public:
   static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalOrderBy
+//===--------------------------------------------------------------------===//
+class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
+ public:
+  static Operator make(const PropertySort *property);
+  
+  const PropertySort *property_sort; 
 };
 
 //===--------------------------------------------------------------------===//
