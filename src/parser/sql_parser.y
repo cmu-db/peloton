@@ -373,7 +373,7 @@ create_statement:
 			$$->index_name = $4;
 			$$->table_info_ = $6;
 			$$->index_attrs = $8;
-			$$->index_type = peloton::StringToIndexType(CharsToStringDestructive($11));
+			$$->index_type = (peloton::IndexType)$11;
 		}
 	;
 
