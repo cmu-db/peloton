@@ -524,6 +524,7 @@ enum class PlanNodeType {
   // DDL Nodes
   DROP = 33,
   CREATE = 34,
+  POPULATE_INDEX = 35,
 
   // Communication Nodes
   SEND = 40,

@@ -1031,6 +1031,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PlanNodeType::MOCK: {
       return ("MOCK");
     }
+    case PlanNodeType::POPULATE_INDEX: {
+      return ("POPULATE_INDEX");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for PlanNodeType value '%d'",

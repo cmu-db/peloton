@@ -90,6 +90,12 @@ class PlanUtil {
         table_ids.insert(insert_node->GetTable()->GetOid());
         break;
       }
+      /*case PlanNodeType::POPULATE_INDEX: {
+        const planner::PopulateIndexPlan *populate_index_node =
+                reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
+        table_ids.insert(populate_index_node->GetTable()->GetOid());
+        break;
+      }*/
       default: {
         // Nothing to do, nothing to see...
         break;
