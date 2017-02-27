@@ -569,20 +569,22 @@ void TimestampOrderingTransactionManager::PerformUpdate(
     ItemPointer *index_entry_ptr =
         tile_group_header->GetIndirection(old_location.offset);
 
-    PL_ASSERT(index_entry_ptr != nullptr);
+    if (index_entry_ptr != nullptr) {
 
-    new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
+      new_tile_group_header->SetIndirection(new_location.offset,
+                                            index_entry_ptr);
 
-    // Set the index header in an atomic way.
-    // We do it atomically because we don't want any one to see a half-done
-    // pointer.
-    // In case of contention, no one can update this pointer when we are
-    // updating it
-    // because we are holding the write lock. This update should success in its
-    // first trial.
-    UNUSED_ATTRIBUTE auto res =
-        AtomicUpdateItemPointer(index_entry_ptr, new_location);
-    PL_ASSERT(res == true);
+      // Set the index header in an atomic way.
+      // We do it atomically because we don't want any one to see a half-done
+      // pointer.
+      // In case of contention, no one can update this pointer when we are
+      // updating it
+      // because we are holding the write lock. This update should success in
+      // its first trial.
+      UNUSED_ATTRIBUTE auto res =
+          AtomicUpdateItemPointer(index_entry_ptr, new_location);
+      PL_ASSERT(res == true);
+    }
   }
 
   // Add the old tuple into the update set
