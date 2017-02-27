@@ -37,7 +37,39 @@ namespace concurrency {
     }
   }
 
-  void DecentralizedEpochManager::ExitEpochD(const size_t thread_id, const size_t begin_cid) {
+  void DecentralizedEpochManager::ExitEpochD(const size_t thread_id, const cid_t begin_cid) {
+
+    PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
+
+    uint64_t epoch_id = ExtractEpochId(begin_cid);
+
+    // enter the corresponding local epoch.
+    local_epoch_contexts_.at(thread_id)->ExitLocalEpoch(epoch_id);
+ 
+  }
+
+
+    // enter epoch with thread id
+  cid_t DecentralizedEpochManager::EnterReadOnlyEpochD(const size_t thread_id) {
+
+    PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
+
+    while (true) {
+      uint64_t epoch_id = GetCurrentGlobalEpoch();
+
+      // enter the corresponding local epoch.
+      bool rt = local_epoch_contexts_.at(thread_id)->EnterLocalEpoch(epoch_id);
+      // if successfully enter local epoch
+      if (rt == true) {
+    
+        uint32_t next_txn_id = GetNextTransactionId();
+
+        return (epoch_id << 32) | next_txn_id;
+      }
+    }
+  }
+
+  void DecentralizedEpochManager::ExitReadOnlyEpochD(const size_t thread_id, const cid_t begin_cid) {
 
     PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
 

@@ -211,7 +211,7 @@ void TimestampOrderingTransactionManager::EndReadonlyTransaction(
 
   if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
 
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+    EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(current_txn->GetEpochId());
     
   } else {
 

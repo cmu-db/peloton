@@ -32,20 +32,15 @@ class DecentralizedEpochManager : public EpochManager {
   DecentralizedEpochManager(const DecentralizedEpochManager&) = delete;
 
 struct Epoch {
-  std::atomic<size_t> read_only_count_;
-  std::atomic<size_t> read_write_count_;
+  std::atomic<size_t> txn_count_;
 
-  Epoch(): 
-    read_only_count_(0), 
-    read_write_count_(0) {}
+  Epoch(): txn_count_(0) {}
 
   Epoch(const Epoch &epoch): 
-    read_only_count_(epoch.read_only_count_.load()), 
-    read_write_count_(epoch.read_write_count_.load()) {}
+    txn_count_(epoch.txn_count_.load()) {}
 
   void Init() {
-    read_only_count_ = 0;
-    read_write_count_ = 0;
+    txn_count_ = 0;
   }
 };
 
@@ -81,7 +76,7 @@ struct LocalEpochContext {
     PL_ASSERT(epoch_id - tail_epoch_id_ <= epoch_buffer_size_);
 
     size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-    epoch_buffer_[epoch_idx].read_write_count_++;
+    epoch_buffer_[epoch_idx].txn_count_++;
 
     return true;
   }
@@ -108,7 +103,7 @@ struct LocalEpochContext {
     PL_ASSERT(epoch_id - tail_epoch_id_ <= epoch_buffer_size_);
 
     size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-    epoch_buffer_[epoch_idx].read_only_count_++;
+    epoch_buffer_[epoch_idx].txn_count_++;
 
     return true;
   }
@@ -119,7 +114,7 @@ struct LocalEpochContext {
     PL_ASSERT(epoch_id > tail_epoch_id_);
 
     size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-    epoch_buffer_[epoch_idx].read_write_count_--;
+    epoch_buffer_[epoch_idx].txn_count_--;
 
     // when exiting a local epoch, we must check whether it can be reclaimed.
     IncreaseTailEpochId();
@@ -132,7 +127,7 @@ struct LocalEpochContext {
     PL_ASSERT(epoch_id > tail_epoch_id_);
 
     size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-    epoch_buffer_[epoch_idx].read_only_count_--;
+    epoch_buffer_[epoch_idx].txn_count_--;
 
     // when exiting a local epoch, we must check whether it can be reclaimed.
     IncreaseTailEpochId();
@@ -144,7 +139,7 @@ struct LocalEpochContext {
     // in the best case, tail_epoch_id can be increased to (head_epoch_id - 1)
     while (tail_epoch_id_ < head_epoch_id_ - 1) {
       size_t epoch_idx = (size_t) (tail_epoch_id_ + 1) % epoch_buffer_size_;
-      if (epoch_buffer_[epoch_idx].read_write_count_ == 0) {
+      if (epoch_buffer_[epoch_idx].txn_count_ == 0) {
         tail_epoch_id_++;
       } else {
         break;
@@ -243,10 +238,15 @@ public:
     local_epoch_context_lock_.Unlock();
   }
 
-  // enter epoch with thread id
+  // a transaction enters epoch with thread id
   virtual cid_t EnterEpochD(const size_t thread_id) override;
 
-  virtual void ExitEpochD(const size_t thread_id, const size_t begin_cid) override;
+  virtual void ExitEpochD(const size_t thread_id, const cid_t begin_cid) override;
+
+  // a read-only transaction enters epoch with thread id
+  virtual cid_t EnterReadOnlyEpochD(const size_t thread_id) override;
+
+  virtual void ExitReadOnlyEpochD(const size_t thread_id, const cid_t begin_cid) override;
 
 
   virtual cid_t GetMaxCommittedCid() override {
@@ -257,7 +257,6 @@ public:
   virtual uint64_t GetTailEpochId() override;
 
 private:
-
 
   inline uint64_t ExtractEpochId(const cid_t cid) {
     return (cid >> 32);
