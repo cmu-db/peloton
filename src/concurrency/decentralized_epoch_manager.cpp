@@ -54,19 +54,11 @@ namespace concurrency {
 
     PL_ASSERT(local_epoch_contexts_.find(thread_id) != local_epoch_contexts_.end());
 
-    while (true) {
-      uint64_t epoch_id = GetCurrentGlobalEpoch();
+    uint64_t epoch_id = GetCurrentGlobalEpoch();
 
-      // enter the corresponding local epoch.
-      bool rt = local_epoch_contexts_.at(thread_id)->EnterLocalEpoch(epoch_id);
-      // if successfully enter local epoch
-      if (rt == true) {
-    
-        uint32_t next_txn_id = GetNextTransactionId();
+    epoch_id = local_epoch_contexts_.at(thread_id)->EnterLocalReadOnlyEpoch(epoch_id);
 
-        return (epoch_id << 32) | next_txn_id;
-      }
-    }
+    return (epoch_id << 32) | 0x0;
   }
 
   void DecentralizedEpochManager::ExitReadOnlyEpochD(const size_t thread_id, const cid_t begin_cid) {
