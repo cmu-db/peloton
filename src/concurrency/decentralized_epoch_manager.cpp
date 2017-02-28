@@ -42,7 +42,7 @@ namespace concurrency {
 
     PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
-    local_epochs_.at(thread_id)->EnterEpochReadOnly(min_epoch_id_);
+    local_epochs_.at(thread_id)->EnterEpochRO(min_epoch_id_);
 
     return (min_epoch_id_ << 32) | 0x0;
   }

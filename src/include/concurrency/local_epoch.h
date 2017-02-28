@@ -20,10 +20,10 @@
 #include <functional>
 #include <cstdint>
 
+#include "common/platform.h"
+
 namespace peloton {
 namespace concurrency {
-
-class LocalEpoch {
 
 struct Epoch {
   Epoch(const uint64_t epoch_id, const size_t txn_count):
@@ -41,9 +41,11 @@ struct Epoch {
 
 struct EpochCompare {
   bool operator()(const std::shared_ptr<Epoch> &lhs, const std::shared_ptr<Epoch> &rhs) {
-    return lhs->epoch_id_ < rhs->epoch_id_;
+    return lhs->epoch_id_ > rhs->epoch_id_;
   }
 };
+
+class LocalEpoch {
 
 public:
   LocalEpoch(const size_t thread_id) : 
@@ -52,7 +54,7 @@ public:
 
   bool EnterEpoch(const uint64_t epoch_id);
 
-  void EnterEpochReadOnly(const uint64_t epoch_id);
+  void EnterEpochRO(const uint64_t epoch_id);
 
   void ExitEpoch(const uint64_t epoch_id) {
     ExitEpochHelper(epoch_id);

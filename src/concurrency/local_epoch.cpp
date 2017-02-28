@@ -44,7 +44,7 @@ namespace concurrency {
   }
   
   // the input parameter is the global read-only epoch id.
-  void LocalEpoch::EnterEpochReadOnly(const uint64_t epoch_id) {
+  void LocalEpoch::EnterEpochRO(const uint64_t epoch_id) {
     epoch_lock_.Lock();
     // if this thread is never used or GC'd
     if (epoch_lower_bound_ == UINT64_MAX) {
