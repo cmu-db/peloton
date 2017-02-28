@@ -62,7 +62,7 @@ public:
     ExitEpochHelper(epoch_id);
   }
   
-  uint64_t GetTailEpochId(const uint64_t current_epoch_id);
+  uint64_t GetMaxCommittedEpochId(const uint64_t current_epoch_id);
 
 private:
 

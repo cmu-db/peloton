@@ -190,9 +190,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       }
       case 'y': {
         char *epoch = optarg;
-        if (strcmp(epoch, "centralized") == 0) {
-          state.epoch = EpochType::CENTRALIZED_EPOCH;
-        } else if (strcmp(epoch, "decentralized") == 0) {
+        if (strcmp(epoch, "decentralized") == 0) {
           state.epoch = EpochType::DECENTRALIZED_EPOCH;
         } else {
           LOG_ERROR("Unknown epoch: %s", epoch);

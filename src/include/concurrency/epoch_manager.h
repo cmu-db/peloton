@@ -39,35 +39,20 @@ public:
   //====================================================
   // designed for decentralized epoch manager
   //====================================================
-  virtual void RegisterThread(const size_t thread_id UNUSED_ATTRIBUTE) { }
+  virtual void RegisterThread(const size_t thread_id) = 0;
 
-  virtual void DeregisterThread(const size_t thread_id UNUSED_ATTRIBUTE) { }
+  virtual void DeregisterThread(const size_t thread_id) = 0;
 
-  virtual cid_t EnterEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
+  virtual cid_t EnterEpoch(const size_t thread_id) = 0;
 
-  virtual cid_t EnterReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
+  virtual cid_t EnterEpochRO(const size_t thread_id) = 0;
 
-  virtual void ExitEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const cid_t begin_cid UNUSED_ATTRIBUTE) { }
+  virtual void ExitEpoch(const size_t thread_id, const cid_t begin_cid) = 0;
 
+  virtual cid_t GetMaxCommittedCid() = 0;
 
-  virtual uint64_t GetTailEpochId() { return 0; }
-  
-  //====================================================
-  // designed for centralized epoch manager
-  //====================================================
-  virtual size_t EnterReadOnlyEpoch(cid_t begin_cid UNUSED_ATTRIBUTE) { return 0; }
-
-  virtual size_t EnterEpoch(cid_t begin_cid UNUSED_ATTRIBUTE) { return 0; }
-
-  virtual void ExitReadOnlyEpoch(size_t epoch UNUSED_ATTRIBUTE) {}
-
-  virtual void ExitEpoch(size_t epoch UNUSED_ATTRIBUTE) {}
-
-  virtual cid_t GetReadOnlyTxnCid() { return 0; }
-
-  //****************************************************
-
-  virtual cid_t GetMaxCommittedCid() { return 0; }
+private:
+  virtual uint64_t GetMaxCommittedEpochId() = 0;
 
 };
 

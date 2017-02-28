@@ -84,20 +84,20 @@ public:
   }
 
   // a transaction enters epoch with thread id
-  virtual cid_t EnterEpochD(const size_t thread_id) override;
+  virtual cid_t EnterEpoch(const size_t thread_id) override;
 
   // a read-only transaction enters epoch with thread id
-  virtual cid_t EnterReadOnlyEpochD(const size_t thread_id) override;
+  virtual cid_t EnterEpochRO(const size_t thread_id) override;
 
-  virtual void ExitEpochD(const size_t thread_id, const cid_t begin_cid) override;
+  virtual void ExitEpoch(const size_t thread_id, const cid_t begin_cid) override;
 
 
   virtual cid_t GetMaxCommittedCid() override {
-    uint64_t tail_epoch_id = GetTailEpochId();
+    uint64_t tail_epoch_id = GetMaxCommittedEpochId();
     return (tail_epoch_id << 32) | 0xFFFFFFFF;
   }
 
-  virtual uint64_t GetTailEpochId() override;
+  virtual uint64_t GetMaxCommittedEpochId() override;
 
 private:
 

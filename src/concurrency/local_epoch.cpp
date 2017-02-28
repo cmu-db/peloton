@@ -89,7 +89,7 @@ namespace concurrency {
     epoch_lock_.Unlock();
   }
 
-  uint64_t LocalEpoch::GetTailEpochId(const uint64_t epoch_id) {
+  uint64_t LocalEpoch::GetMaxCommittedEpochId(const uint64_t epoch_id) {
     epoch_lock_.Lock();
     // there's no epoch in this thread.
     // which indicates that this thread is used or GC'd for some time.

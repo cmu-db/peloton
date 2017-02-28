@@ -91,25 +91,9 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t 
 
   Transaction *txn = nullptr;
 
-  EpochType epoch_type = EpochManagerFactory::GetEpochType();
-
   // transaction processing with centralized epoch manager
-  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
-
-    cid_t begin_cid = GetNextCommitId();
-    
-    txn = new Transaction(begin_cid, thread_id);
-
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-    txn->SetEpochId(eid);
-
-  } else {
-
-    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochD(thread_id);
-
-    txn = new Transaction(begin_cid, thread_id);
-  }
-
+  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id);
+  txn = new Transaction(begin_cid, thread_id);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -124,28 +108,9 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const
   
   Transaction *txn = nullptr;
 
-  EpochType epoch_type = EpochManagerFactory::GetEpochType();
-
   // transaction processing with centralized epoch manager
-  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
-
-    auto &epoch_manager = EpochManagerFactory::GetInstance();
-
-    cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-    
-    txn = new Transaction(begin_cid, thread_id, true);
-
-    auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
-    txn->SetEpochId(eid);
-
-
-  } else {
-
-    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterReadOnlyEpochD(thread_id);
-
-    txn = new Transaction(begin_cid, thread_id);
-
-  }
+  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
+  txn = new Transaction(begin_cid, thread_id);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -159,18 +124,9 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const
 void TimestampOrderingTransactionManager::EndTransaction(
     Transaction *current_txn) {
   
-  EpochType epoch_type = EpochManagerFactory::GetEpochType();
-
-  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
-
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
-
-  } else {
-
-    EpochManagerFactory::GetInstance().ExitEpochD(
-      current_txn->GetThreadId(), 
-      current_txn->GetBeginCommitId());
-  }
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
 
 
   // logging logic
@@ -207,19 +163,9 @@ void TimestampOrderingTransactionManager::EndReadonlyTransaction(
 
   PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
   
-  EpochType epoch_type = EpochManagerFactory::GetEpochType();
-
-  if (epoch_type == EpochType::CENTRALIZED_EPOCH) {
-
-    EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(current_txn->GetEpochId());
-    
-  } else {
-
-    EpochManagerFactory::GetInstance().ExitEpochD(
-      current_txn->GetThreadId(), 
-      current_txn->GetBeginCommitId());
-  }
-
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
   
   delete current_txn;
   current_txn = nullptr;

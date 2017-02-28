@@ -18,7 +18,7 @@ namespace concurrency {
 
 
   // enter epoch with thread id
-  cid_t DecentralizedEpochManager::EnterEpochD(const size_t thread_id) {
+  cid_t DecentralizedEpochManager::EnterEpoch(const size_t thread_id) {
 
     PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
@@ -38,7 +38,7 @@ namespace concurrency {
   }
 
   // enter epoch with thread id
-  cid_t DecentralizedEpochManager::EnterReadOnlyEpochD(const size_t thread_id) {
+  cid_t DecentralizedEpochManager::EnterEpochRO(const size_t thread_id) {
 
     PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
@@ -47,7 +47,7 @@ namespace concurrency {
     return (min_epoch_id_ << 32) | 0x0;
   }
 
-  void DecentralizedEpochManager::ExitEpochD(const size_t thread_id, const cid_t begin_cid) {
+  void DecentralizedEpochManager::ExitEpoch(const size_t thread_id, const cid_t begin_cid) {
 
     PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
@@ -59,13 +59,13 @@ namespace concurrency {
   }
 
 
-  uint64_t DecentralizedEpochManager::GetTailEpochId() {
+  uint64_t DecentralizedEpochManager::GetMaxCommittedEpochId() {
     uint64_t min_epoch_id = std::numeric_limits<uint64_t>::max();
     
     // for all the local epoch contexts, obtain the minimum epoch id.
     for (auto &local_epoch : local_epochs_) {
       
-      uint64_t local_epoch_id = local_epoch.second->GetTailEpochId(current_global_epoch_);
+      uint64_t local_epoch_id = local_epoch.second->GetMaxCommittedEpochId(current_global_epoch_);
       
       if (local_epoch_id < min_epoch_id) {
         min_epoch_id = local_epoch_id;

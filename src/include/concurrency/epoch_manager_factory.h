@@ -24,17 +24,12 @@ class EpochManagerFactory {
   static EpochManager& GetInstance() {
     switch (epoch_) {
 
-      case EpochType::CENTRALIZED_EPOCH:
-        return CentralizedEpochManager::GetInstance();
-
       case EpochType::DECENTRALIZED_EPOCH:
         return DecentralizedEpochManager::GetInstance();
 
       default:
         return CentralizedEpochManager::GetInstance();
-
     }
-
   }
 
   static void Configure(EpochType epoch) {

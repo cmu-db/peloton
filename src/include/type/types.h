@@ -390,8 +390,7 @@ enum class ConcurrencyType {
 
 enum class EpochType {
   INVALID = INVALID_TYPE_ID,
-  CENTRALIZED_EPOCH = 1,   // centralized epoch manager
-  DECENTRALIZED_EPOCH = 2  // decentralized epoch manager
+  DECENTRALIZED_EPOCH = 1  // decentralized epoch manager
 };
 
 //===--------------------------------------------------------------------===//
