@@ -16,7 +16,7 @@
 namespace peloton {
 namespace concurrency {
 
-EpochType EpochManagerFactory::epoch_ = EpochType::CENTRALIZED_EPOCH;
+EpochType EpochManagerFactory::epoch_ = EpochType::DECENTRALIZED_EPOCH;
 
 }
 }

@@ -53,7 +53,10 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
 
-    PL_ASSERT(max_cid != MAX_CID);
+    if (max_cid == MAX_CID) {
+      continue;
+    }
+
     int reclaimed_count = Reclaim(thread_id, max_cid);
 
     int unlinked_count = Unlink(thread_id, max_cid);

@@ -36,8 +36,10 @@ public:
     current_global_epoch_(1), 
     next_txn_id_(0),
     min_epoch_id_(UINT64_MAX),
-    is_running_(false) {}
-
+    is_running_(false) {
+      // register a default thread for handling catalog stuffs.
+      RegisterThread(0);
+    }
 
   static DecentralizedEpochManager &GetInstance() {
     static DecentralizedEpochManager epoch_manager;
