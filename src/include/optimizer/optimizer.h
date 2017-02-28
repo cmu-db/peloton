@@ -82,7 +82,8 @@ class Optimizer : public AbstractOptimizer {
    */
   std::unique_ptr<planner::AbstractPlan> OptimizerPlanToPlannerPlan(
       std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
-      std::vector<PropertySet> &required_input_props);
+      std::vector<PropertySet> &required_input_props,
+      std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans);
 
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties

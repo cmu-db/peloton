@@ -125,6 +125,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
 
+  // Something wrong with column property.
   std::string query("SELECT a from test order by b");
 
   // check for plan node type

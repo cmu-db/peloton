@@ -109,10 +109,11 @@ PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
 
 std::unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
     std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
-    std::vector<PropertySet> &required_input_props) {
+    std::vector<PropertySet> &required_input_props,
+    std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans) {
   OperatorToPlanTransformer transformer;
   return transformer.ConvertOpExpression(plan, &requirements,
-                                         &required_input_props);
+                                         &required_input_props, children_plans);
 }
 
 std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
@@ -123,24 +124,30 @@ std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   std::shared_ptr<GroupExpression> gexpr =
       group->GetBestExpression(requirements);
 
-  LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
+  LOG_DEBUG("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   std::vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   std::vector<PropertySet> required_input_props =
       std::move(gexpr->GetInputProperties(requirements));
   PL_ASSERT(required_input_props.size() == child_groups.size());
-
+  
+  // Derive chidren plans first
+  // Because they may be useful 
+  // in the derivation of root plan
+  std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans;
+  for (size_t i = 0; i < child_groups.size(); ++i) {
+    children_plans.push_back(ChooseBestPlan(child_groups[i], 
+                                            required_input_props[i]));
+  }
+  
+  // Derive root plan
   std::shared_ptr<OperatorExpression> op =
       std::make_shared<OperatorExpression>(gexpr->Op());
 
   auto plan =
-      OptimizerPlanToPlannerPlan(op, requirements, required_input_props);
-
-  for (size_t i = 0; i < child_groups.size(); ++i) {
-    auto child_plan = ChooseBestPlan(child_groups[i], required_input_props[i]);
-    plan->AddChild(std::move(child_plan));
-  }
+      OptimizerPlanToPlannerPlan(op, requirements, required_input_props, 
+                                 children_plans);
 
   return plan;
 }
@@ -233,9 +240,7 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   // new child input is the old output
   auto child_input_properties = std::vector<PropertySet>();
   child_input_properties.push_back(output_properties);
-  if (property->Type() == PropertyType::SORT) {
-    LOG_DEBUG("enforcing order by\n");
-  }  
+
   auto child_stats = std::vector<std::shared_ptr<Stats>>();
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = std::vector<double>();
@@ -248,7 +253,6 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   std::shared_ptr<GroupExpression> enforced_gexpr;
   RecordTransformedExpression(enforced_expr, enforced_gexpr,
                               gexpr->GetGroupID());
-
   // new output property would have the enforced Property
   output_properties.AddProperty(std::shared_ptr<Property>(property));
 
@@ -398,7 +402,6 @@ std::vector<GroupID> Optimizer::MemoTransformedChildren(
   for (std::shared_ptr<OperatorExpression> child : expr->Children()) {
     child_groups.push_back(MemoTransformedExpression(child));
   }
-
   return child_groups;
 }
 

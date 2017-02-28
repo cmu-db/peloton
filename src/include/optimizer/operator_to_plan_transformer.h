@@ -36,7 +36,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   std::unique_ptr<planner::AbstractPlan> ConvertOpExpression(
       std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
-      std::vector<PropertySet> *required_input_props);
+      std::vector<PropertySet> *required_input_props,
+      std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans);
 
   void Visit(const PhysicalScan *op) override;
 
@@ -66,7 +67,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
-
+  std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;
   PropertySet *requirements_;
   std::vector<PropertySet> *required_input_props_;
 };
