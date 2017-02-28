@@ -80,8 +80,6 @@ class Transaction : public Printable {
 
   inline void SetEpochId(const size_t eid) { epoch_id_ = eid; }
 
-  inline void SetPoolHint(const size_t hint) { pool_hint_ = hint; }
-
   void RecordRead(const ItemPointer &);
 
   void RecordReadOwn(const ItemPointer &);
