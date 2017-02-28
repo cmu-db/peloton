@@ -51,7 +51,6 @@ public:
 
   virtual cid_t GetMaxCommittedCid() = 0;
 
-private:
   virtual uint64_t GetMaxCommittedEpochId() = 0;
 
 };
