@@ -4,7 +4,7 @@
 //
 // centralized_epoch_manager.cpp
 //
-// Identification: src/concurrency/centralized_epoch_manager.cpp
+// Identification: src/concurrency/local_epoch.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,158 +16,102 @@
 namespace peloton {
 namespace concurrency {
 
-  bool LocalEpoch::EnterEpoch(const uint64_t epoch_id) {    
-    // ***critical sections for updating tail_epoch_id.
-    tail_lock_.Lock();
-    // if not initiated
-    if (tail_epoch_id_ == UINT64_MAX) {
-      tail_epoch_id_ = epoch_id - 1;
-    }
-    tail_lock_.Unlock();
-    // ************************************************
-
-    // ideally, epoch_id should never be smaller than head_epoch id.
-    // however, as we force updating head_epoch_id in GetTailEpochId() function,
-    // it is possible that we find that epoch_id is smaller than head_epoch_id.
-    // in this case, we should reject entering local epoch.
-    // this is essentially a validation scheme.
-
-    // ***critical sections for updating head_epoch_id.
-    head_lock_.Lock();
-    if (epoch_id < head_epoch_id_) {
-      head_lock_.Unlock();
+  bool LocalEpoch::EnterEpoch(const uint64_t epoch_id) {
+    epoch_lock_.Lock();
+    // if this thread is never used or GC'd
+    if (epoch_lower_bound_ == UINT64_MAX) {
+      epoch_lower_bound_ = epoch_id - 1;
+    } else if (epoch_lower_bound_ >= epoch_id) {
+    // epoch_lower_bound_ has already been updated by the GC.
+    // have to grab a newer epoch_id.
+      epoch_lock_.Unlock();
       return false;
-    } else {
-      PL_ASSERT(epoch_id >= head_epoch_id_);
-      
-      // insert to epoch buffer prior to releasing lock.
-      PL_ASSERT(epoch_id - tail_epoch_id_ <= epoch_buffer_size_);
-
-      size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-      epoch_buffer_[epoch_idx]++;
-
-      // update head epoch id.
-      head_epoch_id_ = epoch_id;
-      head_lock_.Unlock();
-      return true;
-    }
-    // ************************************************
-  }
-
-  void LocalEpoch::ExitEpoch(const uint64_t epoch_id) {
-    PL_ASSERT(tail_epoch_id_ != UINT64_MAX);
-
-    PL_ASSERT(epoch_id > tail_epoch_id_);
-
-    size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-    epoch_buffer_[epoch_idx]--;
-
-    // when exiting a local epoch, we must check whether it can be reclaimed.
-    IncreaseTailEpochId();
-  }
-
-  
-  uint64_t LocalEpoch::EnterEpochReadOnly(const uint64_t epoch_id) {
-    // ***critical sections for updating tail_epoch_id.
-    tail_lock_.Lock();
-    // if not initiated
-    if (tail_epoch_id_ == UINT64_MAX) {
-      tail_epoch_id_ = epoch_id - 1;
     } 
-    tail_lock_.Unlock();
-    // ************************************************
+    // check whether the corresponding epoch exists.
+    if (epoch_map_.find(epoch_id) == epoch_map_.end()) {
 
-    // ideally, epoch_id should never be smaller than head_epoch id.
-    // however, as we force updating head_epoch_id in GetTailEpochId() function,
-    // it is possible that we find that epoch_id is smaller than head_epoch_id.
-    // in this case, we should reject entering local epoch.
-    // this is essentially a validation scheme.
+      std::shared_ptr<Epoch> epoch_ptr(new Epoch(epoch_id, 1));
 
-    // ***critical sections for updating head_epoch_id.
-    head_lock_.Lock();
-    if (epoch_id < head_epoch_id_) {
-      head_lock_.Unlock();
-      return false;
+      epoch_queue_.push(epoch_ptr);
+      epoch_map_[epoch_id] = epoch_ptr;
+
     } else {
-      PL_ASSERT(epoch_id >= head_epoch_id_);
-      
-      // insert to epoch buffer prior to releasing lock.
-      PL_ASSERT(epoch_id - tail_epoch_id_ <= epoch_buffer_size_);
-
-      size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-      epoch_buffer_[epoch_idx]++;
-
-      // update head epoch id.
-      head_epoch_id_ = epoch_id;
-      head_lock_.Unlock();
-      return true;
+      epoch_map_.at(epoch_id)->txn_count_++;
     }
-    // ************************************************
+
+    epoch_lock_.Unlock();
+    return true;
+  }
+  
+  // the input parameter is the global read-only epoch id.
+  void LocalEpoch::EnterEpochReadOnly(const uint64_t epoch_id) {
+    epoch_lock_.Lock();
+    // if this thread is never used or GC'd
+    if (epoch_lower_bound_ == UINT64_MAX) {
+      epoch_lower_bound_ = epoch_id - 1;
+    } else if (epoch_lower_bound_ >= epoch_id) {
+      epoch_lower_bound_ = epoch_id - 1;
+    }
+
+    if (epoch_map_.find(epoch_id) == epoch_map_.end()) {
+
+      std::shared_ptr<Epoch> epoch_ptr(new Epoch(epoch_id, 1));
+
+      epoch_queue_.push(epoch_ptr);
+      epoch_map_[epoch_id] = epoch_ptr;
+
+    } else {
+      epoch_map_.at(epoch_id)->txn_count_++;
+    }
+
+    epoch_lock_.Unlock();
   }
 
-  // for now, we do not support read-only transactions
-  void LocalEpoch::ExitEpochReadOnly(const uint64_t epoch_id) {
-    PL_ASSERT(tail_epoch_id_ != UINT64_MAX);
 
-    PL_ASSERT(epoch_id > tail_epoch_id_);
+  void LocalEpoch::ExitEpochHelper(const uint64_t epoch_id) {
+    epoch_lock_.Lock();
 
-    size_t epoch_idx = (size_t) epoch_id % epoch_buffer_size_;
-    epoch_buffer_[epoch_idx]--;
+    PL_ASSERT(epoch_map_.find(epoch_id) != epoch_map_.end());
+    epoch_map_.at(epoch_id)->txn_count_--;
 
-    // when exiting a local epoch, we must check whether it can be reclaimed.
-    IncreaseTailEpochId();
-  }
-
-  // this function can be invoked by both the epoch thread and the local worker thread.
-  void LocalEpoch::IncreaseTailEpochId() {
-    tail_lock_.Lock();
-    // in the best case, tail_epoch_id can be increased to (head_epoch_id - 1)
-    while (tail_epoch_id_ < head_epoch_id_ - 1) {
-      size_t epoch_idx = (size_t) (tail_epoch_id_ + 1) % epoch_buffer_size_;
-      if (epoch_buffer_[epoch_idx] == 0) {
-        tail_epoch_id_++;
+    while (epoch_queue_.size() != 0) {
+      auto &epoch_ptr = epoch_queue_.top();
+      if (epoch_ptr->txn_count_ == 0) {
+        epoch_map_.erase(epoch_ptr->epoch_id_);
+        epoch_queue_.pop();
       } else {
+        PL_ASSERT(epoch_ptr->epoch_id_ > epoch_lower_bound_);
+        epoch_lower_bound_ = epoch_ptr->epoch_id_ - 1;
         break;
       }
     }
-    tail_lock_.Unlock();
+
+    epoch_lock_.Unlock();
   }
 
-  // this function is periodically invoked.
-  // the centralized epoch thread must check the status of each local epoch.
-  // the centralized epoch thread should also tell each local epoch the latest time.
-  uint64_t LocalEpoch::GetTailEpochId(const uint64_t current_epoch_id) {
-    // ***critical sections for updating head_epoch_id.
-    head_lock_.Lock();
-    if (current_epoch_id > head_epoch_id_) {
-      head_epoch_id_ = current_epoch_id;
-    } 
-    head_lock_.Unlock();
-    // ************************************************
-
-    // ***critical sections for updating tail_epoch_id.
-    tail_lock_.Lock();
-    // this thread never started executing transactions.
-    if (tail_epoch_id_ == UINT64_MAX) {
-      // force updating tail epoch id to head_epoch_id - 1.
-      // it is ok if this operation fails.
-      // if fails, then if means that the local thread started a new transaction.
-      tail_epoch_id_ = head_epoch_id_ - 1;
+  uint64_t LocalEpoch::GetTailEpochId(const uint64_t epoch_id) {
+    epoch_lock_.Lock();
+    // there's no epoch in this thread.
+    // which indicates that this thread is used or GC'd for some time.
+    if (epoch_queue_.size() == 0) {
+      epoch_lower_bound_ = epoch_id - 1;
     } else {
-      // in the best case, tail_epoch_id can be increased to (head_epoch_id - 1)
-      while (tail_epoch_id_ < head_epoch_id_ - 1) {
-        size_t epoch_idx = (size_t) (tail_epoch_id_ + 1) % epoch_buffer_size_;
-        if (epoch_buffer_[epoch_idx] == 0) {
-          tail_epoch_id_++;
+      while (epoch_queue_.size() != 0) {
+        auto &epoch_ptr = epoch_queue_.top();
+        if (epoch_ptr->txn_count_ == 0) {
+          epoch_map_.erase(epoch_ptr->epoch_id_);
+          epoch_queue_.pop();
         } else {
+          PL_ASSERT(epoch_ptr->epoch_id_ > epoch_lower_bound_);
+          epoch_lower_bound_ = epoch_ptr->epoch_id_ - 1;
           break;
         }
       }
     }
-    tail_lock_.Unlock();
-    // ************************************************
-
-    return tail_epoch_id_;
+    uint64_t ret = epoch_lower_bound_;
+    
+    epoch_lock_.Unlock();
+    return ret;
   }
 
 }

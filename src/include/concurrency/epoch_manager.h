@@ -44,12 +44,10 @@ public:
 
   virtual cid_t EnterEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
 
-  virtual void ExitEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const cid_t begin_cid UNUSED_ATTRIBUTE) { }
-
-
   virtual cid_t EnterReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE) { return 0; }
 
-  virtual void ExitReadOnlyEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const cid_t begin_cid UNUSED_ATTRIBUTE) { }
+  virtual void ExitEpochD(const size_t thread_id UNUSED_ATTRIBUTE, const cid_t begin_cid UNUSED_ATTRIBUTE) { }
+
 
   virtual uint64_t GetTailEpochId() { return 0; }
   

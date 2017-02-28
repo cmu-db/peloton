@@ -67,7 +67,6 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
 
   // deregister a thread.
   epoch_manager.DeregisterThread(0);
-
 }
 
 

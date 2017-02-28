@@ -215,7 +215,7 @@ void TimestampOrderingTransactionManager::EndReadonlyTransaction(
     
   } else {
 
-    EpochManagerFactory::GetInstance().ExitReadOnlyEpochD(
+    EpochManagerFactory::GetInstance().ExitEpochD(
       current_txn->GetThreadId(), 
       current_txn->GetBeginCommitId());
   }

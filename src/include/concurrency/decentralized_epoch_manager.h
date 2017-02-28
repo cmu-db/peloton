@@ -35,6 +35,7 @@ public:
   DecentralizedEpochManager() : 
     current_global_epoch_(1), 
     next_txn_id_(0),
+    min_epoch_id_(UINT64_MAX),
     is_running_(false) {}
 
 
@@ -83,12 +84,10 @@ public:
   // a transaction enters epoch with thread id
   virtual cid_t EnterEpochD(const size_t thread_id) override;
 
-  virtual void ExitEpochD(const size_t thread_id, const cid_t begin_cid) override;
-
   // a read-only transaction enters epoch with thread id
   virtual cid_t EnterReadOnlyEpochD(const size_t thread_id) override;
 
-  virtual void ExitReadOnlyEpochD(const size_t thread_id, const cid_t begin_cid) override;
+  virtual void ExitEpochD(const size_t thread_id, const cid_t begin_cid) override;
 
 
   virtual cid_t GetMaxCommittedCid() override {
@@ -135,6 +134,8 @@ private:
   std::atomic<uint64_t> current_global_epoch_;
   std::atomic<uint32_t> next_txn_id_;
   
+  uint64_t min_epoch_id_;
+
   bool is_running_;
 
 };
