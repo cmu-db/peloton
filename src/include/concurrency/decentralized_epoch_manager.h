@@ -47,6 +47,8 @@ public:
   }
 
   virtual void Reset(const size_t &current_epoch) override {
+    // epoch should be always larger than 0
+    PL_ASSERT(current_epoch != 0);
     current_global_epoch_ = (uint64_t) current_epoch;
   }
 
