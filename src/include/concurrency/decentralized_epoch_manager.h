@@ -35,7 +35,7 @@ public:
   DecentralizedEpochManager() : 
     current_global_epoch_(1), 
     next_txn_id_(0),
-    min_epoch_id_(UINT64_MAX),
+    current_global_epoch_ro_(1),
     is_running_(false) {
       // register a default thread for handling catalog stuffs.
       RegisterThread(0);
@@ -95,8 +95,8 @@ public:
 
 
   virtual cid_t GetMaxCommittedCid() override {
-    uint64_t tail_epoch_id = GetMaxCommittedEpochId();
-    return (tail_epoch_id << 32) | 0xFFFFFFFF;
+    uint64_t max_committed_eid = GetMaxCommittedEpochId();
+    return (max_committed_eid << 32) | 0xFFFFFFFF;
   }
 
   virtual uint64_t GetMaxCommittedEpochId() override;
@@ -138,7 +138,7 @@ private:
   std::atomic<uint64_t> current_global_epoch_;
   std::atomic<uint32_t> next_txn_id_;
   
-  uint64_t min_epoch_id_;
+  uint64_t current_global_epoch_ro_;
 
   bool is_running_;
 

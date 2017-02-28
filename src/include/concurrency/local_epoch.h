@@ -56,19 +56,9 @@ public:
 
   void EnterEpochRO(const uint64_t epoch_id);
 
-  void ExitEpoch(const uint64_t epoch_id) {
-    ExitEpochHelper(epoch_id);
-  }
-
-  void ExitEpochReadOnly(const uint64_t epoch_id) {
-    ExitEpochHelper(epoch_id);
-  }
+  void ExitEpoch(const uint64_t epoch_id);
   
   uint64_t GetMaxCommittedEpochId(const uint64_t current_epoch_id);
-
-private:
-
-  void ExitEpochHelper(const uint64_t epoch_id);
 
 private:
   Spinlock epoch_lock_;
