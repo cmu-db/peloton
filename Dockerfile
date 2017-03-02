@@ -14,6 +14,6 @@ RUN cd /peloton/build && make -j4 && make install
 ENV PATH=$(BUILD_DIR)/bin:$PATH
 ENV LD_LIBRARY_PATH=$(BUILD_DIR)/lib:$LD_LIBRARY_PATH
 
-EXPOSE 5432
+EXPOSE 15721
 
 ENTRYPOINT ["./peloton/build/bin/peloton"]
