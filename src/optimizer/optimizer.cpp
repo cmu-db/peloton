@@ -77,6 +77,8 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   if (best_plan == nullptr) return nullptr;
 
+
+//  return std::shared_ptr<planner::AbstractPlan>(best_plan.release());
   return std::move(best_plan);
 }
 

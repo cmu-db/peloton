@@ -45,13 +45,13 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         new PropertyPredicate(predicate->Copy())));
   }
 
+  std::unordered_map<oid_t, oid_t> column_mapping;
   std::vector<oid_t> column_ids;
   bool needs_projection = false;
 
   // Transform output expressions
   for (auto col : *select_stmt->select_list) {
-    expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
-                                                    needs_projection);
+    expression::ExpressionUtil::TransformExpression(column_ids, col, schema, needs_projection);
   }
 
   // Get the columns required by the result
@@ -82,7 +82,8 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
         new PropertyProjection(std::move(output_expressions))));
   }
 };
-
+void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
+void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}

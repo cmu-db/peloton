@@ -97,6 +97,14 @@ class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
 };
 
 //===--------------------------------------------------------------------===//
+// SemiJoin
+//===--------------------------------------------------------------------===//
+class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
 class LogicalAggregate : public OperatorNode<LogicalAggregate> {

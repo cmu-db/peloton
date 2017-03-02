@@ -45,7 +45,7 @@ Column *ColumnManager::AddBaseColumn(type::Type::TypeId type, int size, std::str
                                      oid_t column_index) {
   LOG_TRACE(
       "Adding base column: %s, type %d, size %d, inlined %s, "
-      "table %u, col %u",
+          "table %u, col %u",
       name.c_str(), type, size,
       inlined ? "yes" : "no", base_table, column_index);
   Column *col = new TableColumn(next_column_id++, type, size, name, inlined,

@@ -13,7 +13,7 @@
 #pragma once
 
 #include "parser/sql_statement.h"
-#include "optimizer/query_node_visitor.h"
+#include "common/sql_node_visitor.h"
 
 namespace peloton {
 namespace parser {
@@ -41,7 +41,7 @@ struct DropStatement : TableRefStatement {
     free(prep_stmt);
   }
 
-  virtual void Accept(optimizer::QueryNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 

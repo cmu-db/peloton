@@ -2,43 +2,30 @@
 //
 //                         Peloton
 //
-// convert_query_to_op.cpp
+// bind_node_visitor.h
 //
-// Identification: src/include/optimizer/query_property_extractor.h
+// Identification: src/include/binder/binder_node_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/column_manager.h"
-#include "optimizer/property_set.h"
+#include "binder/binder_context.h"
 #include "common/sql_node_visitor.h"
-#include "catalog/schema.h"
 
 namespace peloton {
+namespace binder {
 
-namespace parser {
-class SQLStatement;
-}
-
-namespace optimizer {
-
-/*
- * Extract physical properties from the parsed query.
- * Physical properties are those fields that can be directly added to the plan,
- * and don't need to perform transformations on.
- */
-class QueryPropertyExtractor : public SqlNodeVisitor {
+class BindNodeVisitor : public SqlNodeVisitor {
  public:
-  QueryPropertyExtractor(ColumnManager &manager) : manager_(manager) {}
+  BindNodeVisitor();
 
-  PropertySet GetProperties(parser::SQLStatement *tree);
-
-  // We only assume the statement is selecting from one table for now
+  void BindNameToNode(parser::SQLStatement *tree);
   void Visit(const parser::SelectStatement *) override;
 
-  void Visit(const parser::TableRef *) override;
+  // Some sub query nodes inside SelectStatement
   void Visit(const parser::JoinDefinition *) override;
+  void Visit(const parser::TableRef *) override;
   void Visit(const parser::GroupByDescription *) override;
   void Visit(const parser::OrderDescription *) override;
   void Visit(const parser::LimitDescription *) override;
@@ -53,13 +40,19 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   void Visit(const parser::UpdateStatement *) override;
   void Visit(const parser::CopyStatement *) override;
 
+  //  void Visit(expression::ComparisonExpression* expr) override;
+  //  void Visit(expression::AggregateExpression* expr) override;
+  //  void Visit(expression::ConjunctionExpression* expr) override;
+  //  void Visit(expression::ConstantValueExpression* expr) override;
+  //  void Visit(expression::FunctionExpression* expr) override;
+  //  void Visit(expression::OperatorExpression* expr) override;
+  //  void Visit(expression::ParameterValueExpression* expr) override;
+  //  void Visit(expression::StarExpression* expr) override;
+  void Visit(expression::TupleValueExpression *expr) override;
 
  private:
-  ColumnManager &manager_;
-
-  // Required properties by the visitor
-  PropertySet property_set_;
+  std::shared_ptr<BinderContext> context_;
 };
 
-} /* namespace optimizer */
-} /* namespace peloton */
+}  // binder
+}  // peloton

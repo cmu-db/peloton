@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// query_node_visitor.h
+// sql_node_visitor.h
 //
-// Identification: src/include/optimizer/query_node_visitor.h
+// Identification: src/include/common/sql_node_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -33,15 +33,27 @@ class OrderDescription;
 class LimitDescription;
 }
 
-namespace optimizer {
+namespace expression {
+class AbstractExpression;
+class ComparisonExpression;
+class AggregateExpression;
+class ConjunctionExpression;
+class ConstantValueExpression;
+class OperatorExpression;
+class ParameterValueExpression;
+class StarExpression;
+class TupleValueExpression;
+class FunctionExpression;
+class OperatorUnaryMinusExpression;
+}
 
 //===--------------------------------------------------------------------===//
 // Query Node Visitor
 //===--------------------------------------------------------------------===//
 
-class QueryNodeVisitor {
+class SqlNodeVisitor {
  public:
-  virtual ~QueryNodeVisitor(){};
+  virtual ~SqlNodeVisitor(){};
 
   virtual void Visit(const parser::SelectStatement *) = 0;
 
@@ -61,7 +73,17 @@ class QueryNodeVisitor {
   virtual void Visit(const parser::TransactionStatement *) = 0;
   virtual void Visit(const parser::UpdateStatement *) = 0;
   virtual void Visit(const parser::CopyStatement *) = 0;
+
+  virtual void Visit(expression::ComparisonExpression *expr);
+  virtual void Visit(expression::AggregateExpression *expr);
+  virtual void Visit(expression::ConjunctionExpression *expr);
+  virtual void Visit(expression::ConstantValueExpression *expr);
+  virtual void Visit(expression::FunctionExpression *expr);
+  virtual void Visit(expression::OperatorExpression *expr);
+  virtual void Visit(expression::OperatorUnaryMinusExpression *expr);
+  virtual void Visit(expression::ParameterValueExpression *expr);
+  virtual void Visit(expression::StarExpression *expr);
+  virtual void Visit(expression::TupleValueExpression *expr);
 };
 
-} /* namespace optimizer */
 } /* namespace peloton */
