@@ -21,7 +21,6 @@
 #include "executor/logical_tile_factory.h"
 #include "planner/copy_plan.h"
 #include "storage/table_factory.h"
-#include "logging/logging_util.h"
 #include "common/exception.h"
 #include "common/macros.h"
 #include <sys/stat.h>
@@ -50,15 +49,15 @@ bool CopyExecutor::DInit() {
   // Grab info from plan node and check it
   const planner::CopyPlan &node = GetPlanNode<planner::CopyPlan>();
 
-  bool success = logging::LoggingUtil::InitFileHandle(node.file_path.c_str(),
-                                                      file_handle_, "w");
+  // bool success = logging::LoggingUtil::InitFileHandle(node.file_path.c_str(),
+  //                                                     file_handle_, "w");
 
-  if (success == false) {
-    throw ExecutorException("Failed to create file " + node.file_path +
-                            ". Try absolute path and make sure you have the "
-                            "permission to access this file.");
-    return false;
-  }
+  // if (success == false) {
+  //   throw ExecutorException("Failed to create file " + node.file_path +
+  //                           ". Try absolute path and make sure you have the "
+  //                           "permission to access this file.");
+  //   return false;
+  // }
   LOG_DEBUG("Created target copy output file: %s", node.file_path.c_str());
 
   // Whether we're copying the parameters which require deserialization
@@ -259,7 +258,7 @@ bool CopyExecutor::DExecute() {
   }
   LOG_INFO("Done copying all logical tiles");
   FlushBuffer();
-  logging::LoggingUtil::FFlushFsync(file_handle_);
+  // logging::LoggingUtil::FFlushFsync(file_handle_);
   // Sync and close
   fclose(file_handle_.file);
 

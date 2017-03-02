@@ -39,9 +39,10 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header
-  auto &storage_manager = storage::StorageManager::GetInstance();
-  data = reinterpret_cast<char *>(
-      storage_manager.Allocate(backend_type, header_size));
+  // auto &storage_manager = storage::StorageManager::GetInstance();
+  // data = reinterpret_cast<char *>(
+      // storage_manager.Allocate(backend_type, header_size));
+  data = new char[header_size];
   PL_ASSERT(data != nullptr);
 
   // zero out the data
@@ -60,9 +61,9 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
 
 TileGroupHeader::~TileGroupHeader() {
   // reclaim the space
-  auto &storage_manager = storage::StorageManager::GetInstance();
-  storage_manager.Release(backend_type, data);
-
+  // auto &storage_manager = storage::StorageManager::GetInstance();
+  // storage_manager.Release(backend_type, data);
+  delete[] data;
   data = nullptr;
 }
 
@@ -161,8 +162,8 @@ const std::string TileGroupHeader::GetInfo() const {
 
 void TileGroupHeader::Sync() {
   // Sync the tile group data
-  auto &storage_manager = storage::StorageManager::GetInstance();
-  storage_manager.Sync(backend_type, data, header_size);
+  // auto &storage_manager = storage::StorageManager::GetInstance();
+  // storage_manager.Sync(backend_type, data, header_size);
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
