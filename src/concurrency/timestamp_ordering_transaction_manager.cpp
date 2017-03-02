@@ -105,12 +105,11 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t 
 }
 
 Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t thread_id) {
-  
   Transaction *txn = nullptr;
 
   // transaction processing with centralized epoch manager
   cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
-  txn = new Transaction(begin_cid, thread_id);
+  txn = new Transaction(begin_cid, thread_id, true);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()

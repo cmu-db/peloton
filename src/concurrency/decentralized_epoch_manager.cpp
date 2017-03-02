@@ -42,9 +42,9 @@ namespace concurrency {
 
     PL_ASSERT(local_epochs_.find(thread_id) != local_epochs_.end());
 
-    local_epochs_.at(thread_id)->EnterEpochRO(min_epoch_id_);
+    local_epochs_.at(thread_id)->EnterEpochRO(current_global_epoch_ro_);
 
-    return (min_epoch_id_ << 32) | 0x0;
+    return (current_global_epoch_ro_ << 32) | 0x0;
   }
 
   void DecentralizedEpochManager::ExitEpoch(const size_t thread_id, const cid_t begin_cid) {
@@ -60,23 +60,24 @@ namespace concurrency {
 
 
   uint64_t DecentralizedEpochManager::GetMaxCommittedEpochId() {
-    uint64_t min_epoch_id = std::numeric_limits<uint64_t>::max();
+    uint64_t global_max_committed_eid = UINT64_MAX;
     
-    // for all the local epoch contexts, obtain the minimum epoch id.
+    // for all the local epoch contexts, obtain the minimum max committed epoch id.
     for (auto &local_epoch : local_epochs_) {
       
-      uint64_t local_epoch_id = local_epoch.second->GetMaxCommittedEpochId(current_global_epoch_);
+      uint64_t local_max_committed_eid = local_epoch.second->GetMaxCommittedEpochId(current_global_epoch_);
       
-      if (local_epoch_id < min_epoch_id) {
-        min_epoch_id = local_epoch_id;
+      if (local_max_committed_eid < global_max_committed_eid) {
+        global_max_committed_eid = local_max_committed_eid;
       }
     }
 
-    if (min_epoch_id > min_epoch_id_) {
-      min_epoch_id_ = min_epoch_id;
+    if (global_max_committed_eid != UINT64_MAX && 
+        global_max_committed_eid >= current_global_epoch_ro_) {
+      current_global_epoch_ro_ = global_max_committed_eid + 1;
     }
 
-    return min_epoch_id;
+    return global_max_committed_eid;
   }
 
 }

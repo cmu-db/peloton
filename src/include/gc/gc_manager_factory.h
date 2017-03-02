@@ -33,7 +33,7 @@ class GCManagerFactory {
     }
   }
 
-  static void Configure(int thread_count = 1) { 
+  static void Configure(const int thread_count = 1) { 
     if (thread_count == 0) {
       gc_type_ = GarbageCollectionType::OFF;
     } else {

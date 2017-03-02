@@ -68,7 +68,7 @@ namespace concurrency {
   }
 
 
-  void LocalEpoch::ExitEpochHelper(const uint64_t epoch_id) {
+  void LocalEpoch::ExitEpoch(const uint64_t epoch_id) {
     epoch_lock_.Lock();
 
     PL_ASSERT(epoch_map_.find(epoch_id) != epoch_map_.end());
