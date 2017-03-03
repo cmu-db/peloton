@@ -32,11 +32,11 @@ bool PropertyColumns::operator>=(const Property &r) const {
 
   // check that every column in the right hand side property exists in the left
   // hand side property
-  for (auto column : column_exprs_) {
+  for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
-    for (auto r_column : r_columns.column_exprs_) {
+    for (auto column : column_exprs_) {
       // TODO: Do not compare ptr directly
-      if (column == r_column) {
+      if (std::get<2>(column->bound_obj_id) == std::get<2>(r_column->bound_obj_id)) {
         has_column = true;
         break;
       }

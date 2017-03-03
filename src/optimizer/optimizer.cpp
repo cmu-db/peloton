@@ -124,7 +124,7 @@ std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   std::shared_ptr<GroupExpression> gexpr =
       group->GetBestExpression(requirements);
 
-  LOG_DEBUG("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
+  LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   std::vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
@@ -216,11 +216,11 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     // Add to group as potential best cost
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                              output_properties);
-
+  
     // enforce missing properties
     for (auto property : requirements.Properties()) {
       if (output_properties.HasProperty(*property) == false) {
-        gexpr = EnforceProperty(gexpr, output_properties, property);
+        gexpr = EnforceProperty(gexpr, output_properties, property, requirements);
         group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                                  output_properties);
       }
@@ -236,7 +236,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
 
 std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
     std::shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
-    const std::shared_ptr<Property> property) {
+    const std::shared_ptr<Property> property, PropertySet &requirements) {
   // new child input is the old output
   auto child_input_properties = std::vector<PropertySet>();
   child_input_properties.push_back(output_properties);
@@ -245,7 +245,11 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   child_stats.push_back(gexpr->GetStats(output_properties));
   auto child_costs = std::vector<double>();
   child_costs.push_back(gexpr->GetCost(output_properties));
-
+  
+  //if (property->Type() == PropertyType::SORT) {
+  //  LOG_DEBUG("Enforcing Sort");
+  //}
+  
   PropertyEnforcer enforcer(column_manager_);
   auto enforced_expr =
       enforcer.EnforceProperty(gexpr, &output_properties, property);
@@ -253,11 +257,20 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   std::shared_ptr<GroupExpression> enforced_gexpr;
   RecordTransformedExpression(enforced_expr, enforced_gexpr,
                               gexpr->GetGroupID());
+  //LOG_DEBUG("Leaving Enforce");
   // new output property would have the enforced Property
   output_properties.AddProperty(std::shared_ptr<Property>(property));
 
   DeriveCostAndStats(enforced_gexpr, output_properties, child_input_properties,
                      child_stats, child_costs);
+
+  // If requirements is fulfilled
+  // set cost and stats for it
+  if (output_properties >= requirements) {
+    DeriveCostAndStats(enforced_gexpr, requirements, child_input_properties,
+                       child_stats, child_costs);
+  }
+  
   return enforced_gexpr;
 }
 

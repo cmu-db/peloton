@@ -149,7 +149,7 @@ class Optimizer : public AbstractOptimizer {
    */
   std::shared_ptr<GroupExpression> EnforceProperty(
       std::shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
-      const std::shared_ptr<Property> property);
+      const std::shared_ptr<Property> property, PropertySet &requirements);
 
   /* ExploreGroup - exploration equivalent of OptimizeGroup.
    *
