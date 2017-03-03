@@ -85,9 +85,9 @@
 //  * intrinsic functions are not always available.  The intrinsic
 //  * functions are defined here in terms of asm statements for now.
 //  */
-// #define _mm_clflushopt(addr) \
+// #define _mm_clflushopt(addr) 
 //   asm volatile(".byte 0x66; clflush %0" : "+m"(*(volatile char *)addr));
-// #define _mm_clwb(addr) \
+// #define _mm_clwb(addr) 
 //   asm volatile(".byte 0x66; xsaveopt %0" : "+m"(*(volatile char *)addr));
 // #define _mm_pcommit() asm volatile(".byte 0x66, 0x0f, 0xae, 0xf8");
 
