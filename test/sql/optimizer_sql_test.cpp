@@ -126,7 +126,7 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
       new optimizer::Optimizer());
 
   // Something wrong with column property.
-  std::string query("SELECT a from test order by b");
+  std::string query("SELECT b from test order by c");
 
   // check for plan node type
   auto select_plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
@@ -138,9 +138,9 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
   // Check the return value
-  // Should be: 2, 1
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 1));
+  // Should be: 11, 22
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

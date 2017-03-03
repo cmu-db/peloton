@@ -63,8 +63,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
         bool found = false;
         if (columns_prop != nullptr) {
           for (auto &col : column_exprs) {
-            if (std::get<2>(sort_col->bound_obj_id) ==
-                std::get<2>(col->bound_obj_id)) {
+            if (sort_col->bound_obj_id == col->bound_obj_id) {
               found = true;
               break;
             }

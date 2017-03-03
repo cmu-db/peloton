@@ -20,7 +20,7 @@
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
-#include <tuple>
+//#include <tuple>
 
 namespace peloton {
 namespace optimizer {
@@ -31,18 +31,22 @@ std::unique_ptr<planner::AbstractPlan>
 OperatorToPlanTransformer::ConvertOpExpression(
     std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
     std::vector<PropertySet> *required_input_props,
-    std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans) {
-  
+    std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
+    std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
+        children_output_columns,
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns) {
   requirements_ = requirements;
   required_input_props_ = required_input_props;
-  children_plans_ = std::move(children_plans); 
+  children_plans_ = std::move(children_plans);
+  children_output_columns_ = std::move(children_output_columns);
+  output_columns_ = output_columns;
   VisitOpExpression(plan);
   return std::move(output_plan_);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   std::vector<oid_t> column_ids;
-  //LOG_DEBUG("PhysicalScan");
+  // LOG_DEBUG("PhysicalScan");
   // Scan predicates
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
@@ -64,17 +68,17 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     auto col = column_prop->GetColumn(column_idx);
     oid_t id = std::get<2>(col->bound_obj_id);
     column_ids.push_back(id);
+
+    // record output column mapping
+    if (output_columns_ != nullptr) 
+      output_columns_->emplace_back(col->bound_obj_id);
   }
-  
-  //for (auto &col : column_ids) {
+
+  // for (auto &col : column_ids) {
   //  LOG_DEBUG("Output Col : %u", col);
-  //} 
+  //}
   output_plan_.reset(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
-
-
-
-
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
@@ -82,7 +86,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
                           ->As<PropertyProjection>();
   (void)project_prop;
   size_t project_list_size = project_prop->GetProjectionListSize();
-  //LOG_DEBUG("PhysicalProject");
+  // LOG_DEBUG("PhysicalProject");
 
   // expressions to evaluate
   TargetList tl = TargetList();
@@ -112,7 +116,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
         column_name));
   }
-  
+
   // build the projection plan node and insert aboce the scan
   std::unique_ptr<planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(std::move(tl), std::move(dml)));
@@ -127,9 +131,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
-  //LOG_DEBUG("PhysicalOrderBy");
+  // LOG_DEBUG("PhysicalOrderBy");
 
-  //Get child plan
+  // Get child plan
   PL_ASSERT(children_plans_.size() == 1);
 
   auto sort_prop = op->property_sort;
@@ -138,17 +142,27 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   for (size_t column_idx = 0; column_idx < sort_prop->GetSortColumnSize();
        column_idx++) {
     auto col = sort_prop->GetSortColumn(column_idx);
-    sort_col_ids.emplace_back(std::get<2>(col->bound_obj_id));
+    // Check which column
+    // in the table produced
+    // by the child operator
+    // is the sort column
+    for (oid_t child_col_id = 0; child_col_id < children_output_columns_[0].size(); 
+         ++child_col_id) { 
+      if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
+        sort_col_ids.emplace_back(child_col_id);
+        break;
+      }
+    }
+    
     // Planner use desc flag
     sort_flags.push_back(sort_prop->GetSortAscending(column_idx) ^ 1);
-    //if (sort_prop->GetSortAscending(column_idx))
-    //  LOG_DEBUG("Sort Order : ASC"); 
+    // if (sort_prop->GetSortAscending(column_idx))
+    //  LOG_DEBUG("Sort Order : ASC");
   }
-  //for (auto &sort_col : sort_col_ids) { 
+  // for (auto &sort_col : sort_col_ids) {
   //  LOG_DEBUG("Sort Col : %u", sort_col);
   //}
-  
-  
+
   std::vector<oid_t> column_ids;
   // Get output columns
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
@@ -159,19 +173,29 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   for (size_t column_idx = 0; column_idx < column_prop->GetSize();
        column_idx++) {
     auto col = column_prop->GetColumn(column_idx);
-    oid_t id = std::get<2>(col->bound_obj_id);
-    column_ids.push_back(id);
+    // transform global column 
+    // to column offset
+    for (oid_t child_col_id = 0; child_col_id < children_output_columns_[0].size(); 
+         ++child_col_id) {
+      if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
+        column_ids.emplace_back(child_col_id);
+        // record output column mapping
+        if (output_columns_ != nullptr) 
+          output_columns_->emplace_back(col->bound_obj_id);
+        break;
+      }
+    }
+
   }
-  //for (auto &col : column_ids) {
+  // for (auto &col : column_ids) {
   //  LOG_DEBUG("Output Col : %u", col);
   //}
-  std::unique_ptr<planner::AbstractPlan> order_by_plan(new planner::OrderByPlan(
-      sort_col_ids, sort_flags, column_ids)); 
-  
+  std::unique_ptr<planner::AbstractPlan> order_by_plan(
+      new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
+
   // Add child
   order_by_plan->AddChild(std::move(children_plans_[0]));
   output_plan_ = std::move(order_by_plan);
-
 }
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 

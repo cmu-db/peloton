@@ -35,8 +35,7 @@ bool PropertyColumns::operator>=(const Property &r) const {
   for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
     for (auto column : column_exprs_) {
-      // TODO: Do not compare ptr directly
-      if (std::get<2>(column->bound_obj_id) == std::get<2>(r_column->bound_obj_id)) {
+      if (column->bound_obj_id == r_column->bound_obj_id) {
         has_column = true;
         break;
       }
