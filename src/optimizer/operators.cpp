@@ -163,10 +163,10 @@ Operator PhysicalProject::make() {
 //===--------------------------------------------------------------------===//
 Operator PhysicalOrderBy::make(const PropertySort *property) {
   PhysicalOrderBy *order_by = new PhysicalOrderBy;
-  order_by->property_sort = property;  
+  order_by->property_sort = property;
   return Operator(order_by);
 }
-  
+
 //===--------------------------------------------------------------------===//
 // Physical Limit
 //===--------------------------------------------------------------------===//
@@ -366,8 +366,8 @@ template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
 OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
-  template <>
-  OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
+template <>
+OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
 template <>
 OpType OperatorNode<PhysicalFilter>::type_ = OpType::Filter;
 template <>

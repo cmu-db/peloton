@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/operator_node.h"
@@ -81,7 +80,8 @@ class ItemBindingIterator : public BindingIterator {
   bool first;
   bool has_next;
   std::shared_ptr<OperatorExpression> current_binding;
-  std::vector<std::vector<std::shared_ptr<OperatorExpression>>> children_bindings;
+  std::vector<std::vector<std::shared_ptr<OperatorExpression>>>
+      children_bindings;
   std::vector<size_t> children_bindings_pos;
 };
 

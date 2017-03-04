@@ -37,8 +37,8 @@ void PropertyEnforcer::Visit(const PropertyProjection *) {
   output_expr_ = project_expr;
 }
 void PropertyEnforcer::Visit(const PropertySort *property) {
-  auto order_by_expr = std::make_shared<OperatorExpression>(
-      PhysicalOrderBy::make(property));
+  auto order_by_expr =
+      std::make_shared<OperatorExpression>(PhysicalOrderBy::make(property));
 
   order_by_expr->PushChild(
       std::make_shared<OperatorExpression>(input_gexpr_->Op()));

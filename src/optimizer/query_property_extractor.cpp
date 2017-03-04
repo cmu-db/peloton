@@ -28,7 +28,6 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 }
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
-
   // Get table pointer, id, and schema.
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
@@ -47,13 +46,15 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   std::vector<oid_t> column_ids;
   bool needs_projection = false;
 
-  std::vector<expression::TupleValueExpression*> column_exprs;
+  std::vector<expression::TupleValueExpression *> column_exprs;
 
   // Transform output expressions
   for (auto col : *select_stmt->select_list) {
-    expression::ExpressionUtil::TransformExpression(column_ids, col, schema, needs_projection);
+    expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
+                                                    needs_projection);
     if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      column_exprs.emplace_back(reinterpret_cast<expression::TupleValueExpression*>(col));
+      column_exprs.emplace_back(
+          reinterpret_cast<expression::TupleValueExpression *>(col));
   }
 
   property_set_.AddProperty(
@@ -79,15 +80,13 @@ void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
- // TODO: the parser node only support order by one column
+  // TODO: the parser node only support order by one column
   bool sort_ascending = false;
-  if (node->type == parser::kOrderAsc)
-    sort_ascending = true;
+  if (node->type == parser::kOrderAsc) sort_ascending = true;
 
-  auto sort_column_expr = (expression::TupleValueExpression*) node->expr;
+  auto sort_column_expr = (expression::TupleValueExpression *)node->expr;
   property_set_.AddProperty(std::shared_ptr<PropertySort>(
       new PropertySort({sort_column_expr}, {sort_ascending})));
-
 }
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
 

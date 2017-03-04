@@ -70,9 +70,9 @@ class LogicalFilter : public OperatorNode<LogicalFilter> {
 //===--------------------------------------------------------------------===//
 class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
-  static Operator make(expression::AbstractExpression* condition = nullptr);
+  static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression* condition;
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -80,9 +80,9 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
  public:
-  static Operator make(expression::AbstractExpression* condition = nullptr);
+  static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression* condition;
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -90,9 +90,9 @@ class LogicalLeftJoin : public OperatorNode<LogicalLeftJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
  public:
-  static Operator make(expression::AbstractExpression* condition = nullptr);
+  static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression* condition;
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -100,9 +100,9 @@ class LogicalRightJoin : public OperatorNode<LogicalRightJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
  public:
-  static Operator make(expression::AbstractExpression* condition = nullptr);
+  static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression* condition;
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -110,9 +110,9 @@ class LogicalOuterJoin : public OperatorNode<LogicalOuterJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
  public:
-  static Operator make(expression::AbstractExpression* condition = nullptr);
+  static Operator make(expression::AbstractExpression *condition = nullptr);
 
-  expression::AbstractExpression* condition;
+  expression::AbstractExpression *condition;
 };
 
 //===--------------------------------------------------------------------===//
@@ -166,17 +166,17 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
  public:
   static Operator make(const PropertySort *property);
-  
-  const PropertySort *property_sort; 
+
+  const PropertySort *property_sort;
 };
-  
+
 //===--------------------------------------------------------------------===//
 // PhysicalLimit
 //===--------------------------------------------------------------------===//
 class PhysicalLimit : public OperatorNode<PhysicalLimit> {
-public:
+ public:
   static Operator make(int64_t limit, int64_t offset);
-  
+
   int64_t limit;
   int64_t offset;
 };

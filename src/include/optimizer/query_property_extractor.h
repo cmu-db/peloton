@@ -53,7 +53,6 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   void Visit(const parser::UpdateStatement *) override;
   void Visit(const parser::CopyStatement *) override;
 
-
  private:
   ColumnManager &manager_;
 

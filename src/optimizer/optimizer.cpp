@@ -115,9 +115,9 @@ std::unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
         children_output_columns,
     std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns) {
   OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(plan, &requirements,
-                                         &required_input_props, children_plans,
-                                         children_output_columns, output_columns);
+  return transformer.ConvertOpExpression(
+      plan, &requirements, &required_input_props, children_plans,
+      children_output_columns, output_columns);
 }
 
 std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(

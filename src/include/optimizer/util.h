@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdlib>
@@ -41,7 +40,6 @@ inline hash_t CombineHashes(hash_t l, hash_t r) {
   return HashBytes((char *)both, sizeof(hash_t) * 2);
 }
 
-
 template <typename T>
 inline hash_t Hash(const T *ptr) {
   return HashBytes((char *)ptr, sizeof(T));
@@ -52,7 +50,7 @@ inline hash_t HashPtr(const T *ptr) {
   return HashBytes((char *)&ptr, sizeof(void *));
 }
 
-inline void to_lower_string(std::string& str) {
+inline void to_lower_string(std::string &str) {
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
 

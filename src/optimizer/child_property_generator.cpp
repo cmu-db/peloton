@@ -31,7 +31,8 @@ ChildPropertyGenerator::GetProperties(std::shared_ptr<GroupExpression> gexpr,
 void ChildPropertyGenerator::Visit(const PhysicalLimit *) {
   // Let child fulfil all the required properties
   std::vector<PropertySet> child_input_properties{requirements_};
-  output_.push_back(std::make_pair(requirements_, std::move(child_input_properties)));
+  output_.push_back(
+      std::make_pair(requirements_, std::move(child_input_properties)));
 }
 
 void ChildPropertyGenerator::Visit(const PhysicalScan *) {
@@ -42,7 +43,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
       provided_property.AddProperty(property);
     }
   }*/
-  //LOG_DEBUG("Deriving Child Properties");
+  // LOG_DEBUG("Deriving Child Properties");
   auto predicate_prop =
       requirements_.GetPropertyOfType(PropertyType::PREDICATE);
 
@@ -61,7 +62,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
     // Add sort column to output property if needed
     auto sort_prop =
         requirements_.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
-    // column_exprs.empty() if 
+    // column_exprs.empty() if
     // the sql is 'SELECT *'
     if (sort_prop != nullptr && !column_exprs.empty()) {
       for (size_t i = 0; i < sort_prop->GetSortColumnSize(); ++i) {
@@ -79,7 +80,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
         if (!found) column_exprs.push_back(sort_col);
       }
     }
-    //for (auto &column_expr : column_exprs) {
+    // for (auto &column_expr : column_exprs) {
     //  oid_t id = std::get<2>(column_expr->bound_obj_id);
     //  LOG_DEBUG("output column %u", id);
     //}

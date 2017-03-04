@@ -35,7 +35,7 @@ OperatorToPlanTransformer::ConvertOpExpression(
     std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
     std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
         children_output_columns,
-    std::vector<std::tuple<oid_t, oid_t, oid_t>>* output_columns) {
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns) {
   requirements_ = requirements;
   required_input_props_ = required_input_props;
   children_plans_ = std::move(children_plans);
@@ -133,12 +133,13 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
   PL_ASSERT(children_plans_.size() == 1);
-  
+
   // Limit Operator does not change the column mapping
   if (output_columns_ != nullptr)
     *output_columns_ = children_output_columns_[0];
-  
-  std::unique_ptr<planner::AbstractPlan> limit_plan(new planner::LimitPlan(op->limit, op->offset));
+
+  std::unique_ptr<planner::AbstractPlan> limit_plan(
+      new planner::LimitPlan(op->limit, op->offset));
   limit_plan->AddChild(std::move(children_plans_[0]));
   output_plan_ = std::move(limit_plan);
 }
@@ -159,14 +160,14 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     // in the table produced
     // by the child operator
     // is the sort column
-    for (oid_t child_col_id = 0; child_col_id < children_output_columns_[0].size(); 
-         ++child_col_id) { 
+    for (oid_t child_col_id = 0;
+         child_col_id < children_output_columns_[0].size(); ++child_col_id) {
       if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
         sort_col_ids.emplace_back(child_col_id);
         break;
       }
     }
-    
+
     // Planner use desc flag
     sort_flags.push_back(sort_prop->GetSortAscending(column_idx) ^ 1);
     // if (sort_prop->GetSortAscending(column_idx))
@@ -186,10 +187,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   for (size_t column_idx = 0; column_idx < column_prop->GetSize();
        column_idx++) {
     auto col = column_prop->GetColumn(column_idx);
-    // transform global column 
+    // transform global column
     // to column offset
-    for (oid_t child_col_id = 0; child_col_id < children_output_columns_[0].size(); 
-         ++child_col_id) {
+    for (oid_t child_col_id = 0;
+         child_col_id < children_output_columns_[0].size(); ++child_col_id) {
       if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
         column_ids.emplace_back(child_col_id);
         // record output column mapping
@@ -198,7 +199,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
         break;
       }
     }
-
   }
   // for (auto &col : column_ids) {
   //  LOG_DEBUG("Output Col : %u", col);

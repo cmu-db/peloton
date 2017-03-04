@@ -43,17 +43,16 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 
 void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
-  if (op->from_table != nullptr)
-    op->from_table->Accept(this);
+  if (op->from_table != nullptr) op->from_table->Accept(this);
   if (op->group_by != nullptr) {
-    auto aggregate = std::make_shared<OperatorExpression>(LogicalAggregate::make(
-        op->group_by->columns, op->group_by->having));
+    auto aggregate = std::make_shared<OperatorExpression>(
+        LogicalAggregate::make(op->group_by->columns, op->group_by->having));
     aggregate->PushChild(output_expr);
     output_expr = aggregate;
   }
   if (op->limit != nullptr) {
-    auto limit = std::make_shared<OperatorExpression>(LogicalLimit::make(
-        op->limit->limit, op->limit->offset));
+    auto limit = std::make_shared<OperatorExpression>(
+        LogicalLimit::make(op->limit->limit, op->limit->offset));
     limit->PushChild(output_expr);
     output_expr = limit;
   }
@@ -63,7 +62,6 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     upper_expr->PushChild(output_expr);
     output_expr = upper_expr;
   }
-
 }
 void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
   // Get left operator
@@ -78,26 +76,32 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
   std::shared_ptr<OperatorExpression> join_expr;
   switch (node->type) {
     case JoinType::INNER: {
-      join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(node->condition));
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalInnerJoin::make(node->condition));
       break;
     }
     case JoinType::OUTER: {
-      join_expr = std::make_shared<OperatorExpression>(LogicalOuterJoin::make(node->condition));
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalOuterJoin::make(node->condition));
       break;
     }
     case JoinType::LEFT: {
-      join_expr = std::make_shared<OperatorExpression>(LogicalLeftJoin::make(node->condition));
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalLeftJoin::make(node->condition));
       break;
     }
     case JoinType::RIGHT: {
-      join_expr = std::make_shared<OperatorExpression>(LogicalRightJoin::make(node->condition));
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalRightJoin::make(node->condition));
       break;
     }
     case JoinType::SEMI: {
-      join_expr = std::make_shared<OperatorExpression>(LogicalSemiJoin::make(node->condition));
+      join_expr = std::make_shared<OperatorExpression>(
+          LogicalSemiJoin::make(node->condition));
       break;
     }
-    default:throw Exception("Join type invalid");
+    default:
+      throw Exception("Join type invalid");
   }
 
   join_expr->PushChild(left_expr);
@@ -107,25 +111,23 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
 }
 void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   // Nested select. Not supported in the current executors
-  if (node->select != nullptr)
-    node->select->Accept(this);
-    // Join
+  if (node->select != nullptr) node->select->Accept(this);
+  // Join
   else if (node->join != nullptr)
     node->join->Accept(this);
-    // Multiple tables
+  // Multiple tables
   else if (node->list != nullptr && node->list->size() > 1) {
     std::shared_ptr<OperatorExpression> join_expr = nullptr;
     std::shared_ptr<OperatorExpression> next_join_expr = nullptr;
 
     // Construct join sequences with Cartesian products
-    for (parser::TableRef* table:*(node->list)) {
+    for (parser::TableRef *table : *(node->list)) {
       if (join_expr == nullptr) {
-        join_expr = std::make_shared<OperatorExpression>(
-            LogicalInnerJoin::make());
-      }
-      else {
-        next_join_expr =  std::make_shared<OperatorExpression>(
-            LogicalInnerJoin::make());
+        join_expr =
+            std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      } else {
+        next_join_expr =
+            std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
         next_join_expr->PushChild(join_expr);
         join_expr = next_join_expr;
       }
@@ -134,22 +136,19 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
     }
     output_expr = join_expr;
   }
-    // Single table
+  // Single table
   else {
     if (node->list != nullptr && node->list->size() == 1)
       node = node->list->at(0);
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
-            node->GetDatabaseName(),
-            node->GetTableName());
+            node->GetDatabaseName(), node->GetTableName());
     // Construct logical operator
-    auto get_expr =
-        std::make_shared<OperatorExpression>(
-            LogicalGet::make(target_table, node->GetTableAlias()));
+    auto get_expr = std::make_shared<OperatorExpression>(
+        LogicalGet::make(target_table, node->GetTableAlias()));
     output_expr = get_expr;
   }
 }
-
 
 // Not support ORDER BY in sub-queries
 void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
