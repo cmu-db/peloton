@@ -20,6 +20,7 @@
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
+#include "planner/limit_plan.h"
 //#include <tuple>
 
 namespace peloton {
@@ -34,7 +35,7 @@ OperatorToPlanTransformer::ConvertOpExpression(
     std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
     std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
         children_output_columns,
-    std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns) {
+    std::vector<std::tuple<oid_t, oid_t, oid_t>>* output_columns) {
   requirements_ = requirements;
   required_input_props_ = required_input_props;
   children_plans_ = std::move(children_plans);
@@ -70,7 +71,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     column_ids.push_back(id);
 
     // record output column mapping
-    if (output_columns_ != nullptr) 
+    if (output_columns_ != nullptr)
       output_columns_->emplace_back(col->bound_obj_id);
   }
 
@@ -130,6 +131,18 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   output_plan_ = std::move(project_plan);
 }
 
+void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
+  PL_ASSERT(children_plans_.size() == 1);
+  
+  // Limit Operator does not change the column mapping
+  if (output_columns_ != nullptr)
+    *output_columns_ = children_output_columns_[0];
+  
+  std::unique_ptr<planner::AbstractPlan> limit_plan(new planner::LimitPlan(op->limit, op->offset));
+  limit_plan->AddChild(std::move(children_plans_[0]));
+  output_plan_ = std::move(limit_plan);
+}
+
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   // LOG_DEBUG("PhysicalOrderBy");
 
@@ -180,7 +193,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
       if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
         column_ids.emplace_back(child_col_id);
         // record output column mapping
-        if (output_columns_ != nullptr) 
+        if (output_columns_ != nullptr)
           output_columns_->emplace_back(col->bound_obj_id);
         break;
       }

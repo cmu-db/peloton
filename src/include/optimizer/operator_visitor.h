@@ -28,6 +28,7 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalScan *) = 0;
   virtual void Visit(const PhysicalProject *) = 0;
   virtual void Visit(const PhysicalOrderBy *) = 0;
+  virtual void Visit(const PhysicalLimit *) = 0;
   virtual void Visit(const PhysicalFilter *) = 0;
   virtual void Visit(const PhysicalInnerNLJoin *) = 0;
   virtual void Visit(const PhysicalLeftNLJoin *) = 0;

@@ -166,6 +166,16 @@ Operator PhysicalOrderBy::make(const PropertySort *property) {
   order_by->property_sort = property;  
   return Operator(order_by);
 }
+  
+//===--------------------------------------------------------------------===//
+// Physical Limit
+//===--------------------------------------------------------------------===//
+Operator PhysicalLimit::make(int64_t limit, int64_t offset) {
+  PhysicalLimit *limit_op = new PhysicalLimit;
+  limit_op->limit = limit;
+  limit_op->offset = offset;
+  return Operator(limit_op);
+}
 
 //===--------------------------------------------------------------------===//
 // Filter
@@ -306,6 +316,8 @@ std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
 template <>
 std::string OperatorNode<PhysicalOrderBy>::name_ = "PhysicalOrderBy";
 template <>
+std::string OperatorNode<PhysicalLimit>::name_ = "PhysicalLimit";
+template <>
 std::string OperatorNode<PhysicalFilter>::name_ = "PhysicalFilter";
 template <>
 std::string OperatorNode<PhysicalInnerNLJoin>::name_ = "PhysicalInnerNLJoin";
@@ -354,6 +366,8 @@ template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
 OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
+  template <>
+  OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
 template <>
 OpType OperatorNode<PhysicalFilter>::type_ = OpType::Filter;
 template <>

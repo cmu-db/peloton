@@ -28,6 +28,12 @@ ChildPropertyGenerator::GetProperties(std::shared_ptr<GroupExpression> gexpr,
   return std::move(output_);
 }
 
+void ChildPropertyGenerator::Visit(const PhysicalLimit *) {
+  // Let child fulfil all the required properties
+  std::vector<PropertySet> child_input_properties{requirements_};
+  output_.push_back(std::make_pair(requirements_, std::move(child_input_properties)));
+}
+
 void ChildPropertyGenerator::Visit(const PhysicalScan *) {
   PropertySet provided_property;
   /*for (auto &property : requirements_.Properties()) {

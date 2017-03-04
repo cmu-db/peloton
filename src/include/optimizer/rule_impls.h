@@ -57,7 +57,20 @@ class LogicalFilterToPhysical : public Rule {
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed)
       const override;
 };
-
+  
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalLimitToPhysical
+class LogicalLimitToPhysical : public Rule {
+public:
+  LogicalLimitToPhysical();
+  
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+  
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+  const override;
+};
+  
 ///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 class InnerJoinToInnerNLJoin : public Rule {

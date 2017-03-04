@@ -169,6 +169,17 @@ class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
   
   const PropertySort *property_sort; 
 };
+  
+//===--------------------------------------------------------------------===//
+// PhysicalLimit
+//===--------------------------------------------------------------------===//
+class PhysicalLimit : public OperatorNode<PhysicalLimit> {
+public:
+  static Operator make(int64_t limit, int64_t offset);
+  
+  int64_t limit;
+  int64_t offset;
+};
 
 //===--------------------------------------------------------------------===//
 // Filter
