@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/parser/statements.h>
 #include "optimizer/query_property_extractor.h"
 
 #include "catalog/catalog.h"
@@ -95,7 +96,16 @@ void QueryPropertyExtractor::Visit(
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::InsertStatement *op) {}
 void QueryPropertyExtractor::Visit(
-    UNUSED_ATTRIBUTE const parser::DeleteStatement *op) {}
+    const parser::DeleteStatement *op) {
+  if (op->expr != nullptr) {  
+    property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
+        new PropertyPredicate(op->expr->Copy())));
+  }
+  property_set_.AddProperty(
+      std::shared_ptr<PropertyColumns>(
+          new PropertyColumns(std::vector<expression::TupleValueExpression *>())));
+
+}
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}
 void QueryPropertyExtractor::Visit(

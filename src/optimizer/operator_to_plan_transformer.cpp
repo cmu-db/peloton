@@ -227,6 +227,24 @@ void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalInsert *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
+  auto scan_plan = (planner::AbstractScan*)children_plans_[0].get();
+  PL_ASSERT(scan_plan != nullptr);
+
+  // Add predicates
+  expression::AbstractExpression* predicates =
+      (scan_plan->GetPredicate() == nullptr
+       ? nullptr
+       : scan_plan->GetPredicate()->Copy());
+  std::unique_ptr<planner::AbstractPlan> delete_plan(
+      new planner::DeletePlan(op->target_table, predicates));
+
+  // Add child
+  delete_plan->AddChild(std::move(children_plans_[0]));
+  output_plan_ = std::move(delete_plan);
+}
+void OperatorToPlanTransformer::Visit(const PhysicalUpdate *) {}
 
 void OperatorToPlanTransformer::VisitOpExpression(
     std::shared_ptr<OperatorExpression> op) {

@@ -158,9 +158,37 @@ void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::InsertStatement *op) {}
+    const parser::InsertStatement *op) {
+  storage::DataTable* target_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(
+          op->GetDatabaseName(), op->GetTableName());
+
+  auto insert_expr =
+      std::make_shared<OperatorExpression>(
+          LogicalInsert::make(target_table, op->columns, op->insert_values));
+
+  output_expr = insert_expr;
+}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::DeleteStatement *op) {}
+    const parser::DeleteStatement *op) {
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+      op->GetDatabaseName(), op->GetTableName());
+  auto table_scan =
+      std::make_shared<OperatorExpression>(
+          LogicalGet::make(target_table, op->table_info_->table_name));
+  auto delete_expr =
+      std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
+  delete_expr->PushChild(table_scan);
+
+  // Fills in information about columns and functions i
+  // n their respective objects given a set of schemas.
+  // Otherwise tuple_idx will equals to -1 for scan plan, causing error.
+  if (op->expr != nullptr) {
+    expression::ExpressionUtil::TransformExpression(target_table->GetSchema(), op->expr);
+  }
+
+  output_expr = delete_expr;
+}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}
 void QueryToOperatorTransformer::Visit(
@@ -170,7 +198,13 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::UpdateStatement *op) {}
+    const parser::UpdateStatement *op) {
+  auto update_expr =
+      std::make_shared<OperatorExpression>(
+          LogicalUpdate::make(op));
+
+  output_expr = update_expr;
+}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CopyStatement *op) {}
 

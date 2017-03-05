@@ -44,15 +44,16 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
     }
   }*/
   // LOG_DEBUG("Deriving Child Properties");
+
+
+  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
+                          ->As<PropertyColumns>();
   auto predicate_prop =
       requirements_.GetPropertyOfType(PropertyType::PREDICATE);
 
   if (predicate_prop != nullptr) {
     provided_property.AddProperty(predicate_prop);
   }
-
-  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
-                          ->As<PropertyColumns>();
 
   if (columns_prop != nullptr) {
     std::vector<expression::TupleValueExpression *> column_exprs;
@@ -103,6 +104,15 @@ void ChildPropertyGenerator::Visit(const PhysicalInnerHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
+void ChildPropertyGenerator::Visit(const PhysicalInsert *){};
+void ChildPropertyGenerator::Visit(const PhysicalUpdate *){};
+void ChildPropertyGenerator::Visit(const PhysicalDelete *){
+  // Let child fulfil all the required properties
+  std::vector<PropertySet> child_input_properties{requirements_};
+
+  output_.push_back(
+      std::make_pair(requirements_, std::move(child_input_properties)));
+};
 
 } /* namespace optimizer */
 } /* namespace peloton */

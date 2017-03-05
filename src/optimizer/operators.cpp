@@ -128,6 +128,38 @@ Operator LogicalLimit::make(int64_t limit, int64_t offset) {
 }
 
 //===--------------------------------------------------------------------===//
+// Insert
+//===--------------------------------------------------------------------===//
+Operator LogicalInsert::make(
+    storage::DataTable* target_table,
+    std::vector<char*>* columns,
+    std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values) {
+  LogicalInsert *insert_op = new LogicalInsert;
+  insert_op->target_table = target_table;
+  insert_op->columns = columns;
+  insert_op->values = values;
+  return Operator(insert_op);
+}
+
+//===--------------------------------------------------------------------===//
+// Delete
+//===--------------------------------------------------------------------===//
+Operator LogicalDelete::make(storage::DataTable* target_table) {
+  LogicalDelete* delete_op = new LogicalDelete;
+  delete_op->target_table = target_table;
+  return Operator(delete_op);
+}
+
+//===--------------------------------------------------------------------===//
+// Update
+//===--------------------------------------------------------------------===//
+Operator LogicalUpdate::make(const parser::UpdateStatement* update_stmt) {
+  LogicalUpdate* update_op = new LogicalUpdate;
+  update_op->update_stmt = update_stmt;
+  return Operator(update_op);
+}
+
+//===--------------------------------------------------------------------===//
 // Scan
 //===--------------------------------------------------------------------===//
 Operator PhysicalScan::make(storage::DataTable *table) {
@@ -250,6 +282,31 @@ Operator PhysicalOuterHashJoin::make() {
 }
 
 //===--------------------------------------------------------------------===//
+// PhysicalInsert
+//===--------------------------------------------------------------------===//
+Operator PhysicalInsert::make() {
+  PhysicalInsert *insert = new PhysicalInsert;
+  return Operator(insert);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalDelete
+//===--------------------------------------------------------------------===//
+Operator PhysicalDelete::make(storage::DataTable* target_table) {
+  PhysicalDelete *delete_op = new PhysicalDelete;
+  delete_op->target_table = target_table;
+  return Operator(delete_op);
+}
+
+//===--------------------------------------------------------------------===//
+// PhysicalUpdate
+//===--------------------------------------------------------------------===//
+Operator PhysicalUpdate::make() {
+  PhysicalUpdate *update = new PhysicalUpdate;
+  return Operator(update);
+}
+
+//===--------------------------------------------------------------------===//
 template <typename T>
 void OperatorNode<T>::Accept(OperatorVisitor *v) const {
   v->Visit((const T *)this);
@@ -287,6 +344,16 @@ void OperatorNode<LogicalLimit>::Accept(
 template <>
 void OperatorNode<LogicalSemiJoin>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
+void OperatorNode<LogicalInsert>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
+void OperatorNode<LogicalDelete>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+template <>
+void OperatorNode<LogicalUpdate>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -309,6 +376,12 @@ template <>
 std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
 template <>
 std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
+template <>
+std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
+template <>
+std::string OperatorNode<LogicalUpdate>::name_ = "LogicalUpdate";
+template <>
+std::string OperatorNode<LogicalDelete>::name_ = "LogicalDelete";
 template <>
 std::string OperatorNode<PhysicalScan>::name_ = "PhysicalScan";
 template <>
@@ -338,6 +411,15 @@ std::string OperatorNode<PhysicalRightHashJoin>::name_ =
 template <>
 std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
     "PhysicalOuterHashJoin";
+template <>
+std::string OperatorNode<PhysicalInsert>::name_ =
+    "PhysicalInsert";
+template <>
+std::string OperatorNode<PhysicalDelete>::name_ =
+    "PhysicalDelete";
+template <>
+std::string OperatorNode<PhysicalUpdate>::name_ =
+    "PhysicalUpdate";
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -360,6 +442,12 @@ template <>
 OpType OperatorNode<LogicalAggregate>::type_ = OpType::Aggregate;
 template <>
 OpType OperatorNode<LogicalLimit>::type_ = OpType::Limit;
+template <>
+OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
+template <>
+OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
+template <>
+OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
 template <>
 OpType OperatorNode<PhysicalScan>::type_ = OpType::Scan;
 template <>
@@ -386,6 +474,12 @@ template <>
 OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
 template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
+template <>
+OpType OperatorNode<PhysicalInsert>::type_ = OpType::Insert;
+template <>
+OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
+template <>
+OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
 
 //===--------------------------------------------------------------------===//
 template <typename T>

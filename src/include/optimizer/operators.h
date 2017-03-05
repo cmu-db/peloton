@@ -139,6 +139,42 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 };
 
 //===--------------------------------------------------------------------===//
+// Insert
+//===--------------------------------------------------------------------===//
+class LogicalInsert: public OperatorNode<LogicalInsert> {
+ public:
+  static Operator make(
+      storage::DataTable* target_table,
+      std::vector<char*>* columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values);
+
+  storage::DataTable* target_table;
+  std::vector<char*>* columns;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values;
+};
+
+//===--------------------------------------------------------------------===//
+// Delete
+//===--------------------------------------------------------------------===//
+class LogicalDelete: public OperatorNode<LogicalDelete> {
+ public:
+  static Operator make(storage::DataTable* target_table);
+
+  storage::DataTable* target_table;
+};
+
+//===--------------------------------------------------------------------===//
+// Update
+//===--------------------------------------------------------------------===//
+class LogicalUpdate: public OperatorNode<LogicalUpdate> {
+ public:
+  static Operator make(const parser::UpdateStatement* update_stmt);
+
+  const parser::UpdateStatement* update_stmt;
+};
+
+
+//===--------------------------------------------------------------------===//
 // Scan
 //===--------------------------------------------------------------------===//
 class PhysicalScan : public OperatorNode<PhysicalScan> {
@@ -253,5 +289,30 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
   static Operator make();
 };
 
+//===--------------------------------------------------------------------===//
+// PhysicalInsert
+//===--------------------------------------------------------------------===//
+class PhysicalInsert : public OperatorNode<PhysicalInsert> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalDelete
+//===--------------------------------------------------------------------===//
+class PhysicalDelete : public OperatorNode<PhysicalDelete> {
+ public:
+  static Operator make(storage::DataTable* target_table);
+  storage::DataTable* target_table;
+
+};
+
+//===--------------------------------------------------------------------===//
+// PhysicalUpdate
+//===--------------------------------------------------------------------===//
+class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
+ public:
+  static Operator make();
+};
 } /* namespace optimizer */
 } /* namespace peloton */

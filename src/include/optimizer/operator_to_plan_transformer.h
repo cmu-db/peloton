@@ -68,6 +68,14 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalOuterHashJoin *) override;
 
+  void Visit(const PhysicalInsert *) override;
+
+  void Visit(const PhysicalDelete *) override;
+
+  void Visit(const PhysicalUpdate *) override;
+
+
+
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 

@@ -72,6 +72,19 @@ class LogicalLimitToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalDeleteToPhysical
+class LogicalDeleteToPhysical : public Rule {
+ public:
+  LogicalDeleteToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+  const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 class InnerJoinToInnerNLJoin : public Rule {
  public:

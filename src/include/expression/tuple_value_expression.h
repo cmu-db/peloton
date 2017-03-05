@@ -94,6 +94,8 @@ class TupleValueExpression : public AbstractExpression {
  protected:
   TupleValueExpression(const TupleValueExpression &other)
       : AbstractExpression(other),
+        is_bound(other.is_bound),
+        bound_obj_id(other.bound_obj_id),
         value_idx_(other.value_idx_),
         tuple_idx_(other.tuple_idx_),
         table_name_(other.table_name_),

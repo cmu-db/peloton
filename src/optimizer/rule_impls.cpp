@@ -136,6 +136,33 @@ void LogicalLimitToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalLimitToPhysical
+LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
+  physical = true;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalDelete);
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(child);
+}
+
+bool LogicalDeleteToPhysical::Check(
+    std::shared_ptr<OperatorExpression> plan) const {
+  (void)plan;
+  return true;
+}
+
+void LogicalDeleteToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalDelete *delete_op = input->Op().As<LogicalDelete>();
+  auto result = std::make_shared<OperatorExpression>(
+      PhysicalDelete::make(delete_op->target_table));
+  PL_ASSERT(input->Children().size() == 1);
+  result->PushChild(input->Children().at(0));
+  transformed.push_back(result);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
   physical = true;
