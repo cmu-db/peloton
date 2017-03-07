@@ -50,6 +50,20 @@ class HashJoinPlan : public AbstractJoinPlan {
     return outer_column_ids_;
   }
 
+  void GetLeftHashKeys(
+      std::vector<const expression::AbstractExpression *> &keys) const {
+    for (const auto &left_key : left_hash_keys_) {
+      keys.push_back(left_key.get());
+    }
+  }
+
+  void GetRightHashKeys(
+      std::vector<const expression::AbstractExpression *> &keys) const {
+    for (const auto &right_key : right_hash_keys_) {
+      keys.push_back(right_key.get());
+    }
+  }
+
   std::unique_ptr<AbstractPlan> Copy() const {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         GetPredicate()->Copy());
@@ -63,6 +77,11 @@ class HashJoinPlan : public AbstractJoinPlan {
 
  private:
   std::vector<oid_t> outer_column_ids_;
+
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      left_hash_keys_;
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      right_hash_keys_;
 };
 
 }  // namespace planner

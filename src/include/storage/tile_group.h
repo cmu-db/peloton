@@ -164,7 +164,7 @@ class TileGroup : public Printable {
   // Sets the tile id and column id w.r.t that tile corresponding to
   // the specified tile group column id.
   inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                                  oid_t &tile_column_offset) {
+                                  oid_t &tile_column_offset) const {
     PL_ASSERT(column_map.count(column_offset) != 0);
     // get the entry in the column map
     auto entry = column_map.at(column_offset);

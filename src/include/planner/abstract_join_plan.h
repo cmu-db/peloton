@@ -19,9 +19,10 @@
 #include <vector>
 
 #include "abstract_plan.h"
-#include "type/types.h"
 #include "expression/abstract_expression.h"
+#include "planner/attribute_info.h"
 #include "planner/project_info.h"
+#include "type/types.h"
 
 namespace peloton {
 namespace planner {
@@ -60,6 +61,14 @@ class AbstractJoinPlan : public AbstractPlan {
     return predicate_.get();
   }
 
+  const std::vector<const AttributeInfo *> &GetLeftAttributes() const {
+    return left_attributes_;
+  }
+
+  const std::vector<const AttributeInfo *> &GetRightAttributes() const {
+    return right_attributes_;
+  }
+
   const ProjectInfo *GetProjInfo() const { return proj_info_.get(); }
 
   const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
@@ -78,6 +87,9 @@ class AbstractJoinPlan : public AbstractPlan {
 
   /** @brief Projection schema */
   std::shared_ptr<const catalog::Schema> proj_schema_;
+
+  std::vector<const AttributeInfo *> left_attributes_;
+  std::vector<const AttributeInfo *> right_attributes_;
 };
 
 }  // namespace planner

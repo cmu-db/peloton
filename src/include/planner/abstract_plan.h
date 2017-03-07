@@ -66,6 +66,8 @@ class AbstractPlan : public Printable {
 
   const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
+  const AbstractPlan *GetChild(uint32_t child_index) const;
+
   const AbstractPlan *GetParent();
 
   //===--------------------------------------------------------------------===//
