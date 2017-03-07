@@ -26,11 +26,6 @@ namespace planner {
 
 class AggregatePlan : public AbstractPlan {
  public:
-  AggregatePlan() = delete;
-  AggregatePlan(const AggregatePlan &) = delete;
-  AggregatePlan &operator=(const AggregatePlan &) = delete;
-  AggregatePlan(AggregatePlan &&) = delete;
-
   class AggTerm {
    public:
     ExpressionType aggtype;
@@ -62,6 +57,19 @@ class AggregatePlan : public AbstractPlan {
         output_schema_(output_schema),
         agg_strategy_(aggregate_strategy) {}
 
+  ~AggregatePlan() {
+    for (auto term : unique_agg_terms_) {
+      delete term.expression;
+    }
+  }
+
+  // Bindings
+  void PerformBinding(BindingContext &binding_context) override;
+
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+
   const std::vector<oid_t> &GetGroupbyColIds() const {
     return groupby_col_ids_;
   }
@@ -90,16 +98,6 @@ class AggregatePlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::AGGREGATE_V2;
-  }
-
-  ~AggregatePlan() {
-    for (auto term : unique_agg_terms_) {
-      delete term.expression;
-    }
-  }
-
-  void SetColumnIds(const std::vector<oid_t> &column_ids) {
-    column_ids_ = column_ids;
   }
 
   const std::string GetInfo() const { return "AggregatePlan"; }
@@ -146,6 +144,10 @@ class AggregatePlan : public AbstractPlan {
 
   /** @brief Columns involved */
   std::vector<oid_t> column_ids_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(AggregatePlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

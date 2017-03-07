@@ -148,7 +148,7 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
   oid_t columnid_count = input.ReadInt();
   for (oid_t it = 0; it < columnid_count; it++) {
     oid_t column_id = input.ReadInt();
-    SetColumnId(column_id);
+    AddColumnId(column_id);
   }
 
   // Read the type
@@ -226,11 +226,11 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
 int SeqScanPlan::SerializeSize() {
   // Fixed size. see the detail above
   int size_fix = sizeof(int) * 4 + 3;
-  int size_columnids = ColumnIds().size() * sizeof(int);
-  int size = size_fix + size_columnids;
+  int size_column_ids = GetColumnIds().size() * sizeof(int);
+  int size = size_fix + size_column_ids;
 
-  if (Predicate()) {
-    size = size + Predicate()->SerializeSize();
+  if (GetPredicate() != nullptr) {
+    size = size + GetPredicate()->SerializeSize();
   }
   if (Parent()) {
     size = size + Parent()->SerializeSize();

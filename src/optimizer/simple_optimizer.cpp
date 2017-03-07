@@ -203,9 +203,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               dml.push_back(
                   DirectMap(i, std::make_pair(0, tup_expr->GetColumnId())));
             }
-            // otherwise we need to evaluat the expression
+            // otherwise we need to evaluate the expression
             else {
-              tl.push_back(Target(i, expr->Copy()));
+              planner::DerivedAttribute attribute;
+              attribute.expr = expr->Copy();
+              attribute.attribute_info.type = attribute.expr->GetValueType();
+              tl.push_back(Target(i, attribute));
               columns.push_back(
                   catalog::Column(expr->GetValueType(),
                                   type::Type::GetTypeSize(expr->GetValueType()),
@@ -1259,7 +1262,10 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
       }
       // Function Ref
       else {
-        tl.push_back(Target(i, expr->Copy()));
+        planner::DerivedAttribute attribute;
+        attribute.expr = expr->Copy();
+        attribute.attribute_info.type = attribute.expr->GetValueType();
+        tl.push_back(Target(i, attribute));
         output_table_columns.push_back(catalog::Column(
             expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
             "expr" + std::to_string(i)));

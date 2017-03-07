@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 
-#include "type/value_peeker.h"
+#include "type/value_factory.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/values_runtime_proxy.h"
 
@@ -20,15 +20,15 @@ namespace peloton {
 namespace test {
 
 expression::ConstantValueExpression *
-CodegenTestUtils::CreateConstantIntExpression(int64_t val) {
+CodegenTestUtils::ConstIntExpression(int64_t val) {
   return new expression::ConstantValueExpression(
-      ValueFactory::GetIntegerValue(val));
+      type::ValueFactory::GetIntegerValue(val));
 }
 
 //===----------------------------------------------------------------------===//
 // Buffer the tuple into the output buffer in the state
 //===----------------------------------------------------------------------===//
-void BufferingConsumer::BufferTuple(char *state, Value *vals,
+void BufferingConsumer::BufferTuple(char *state, type::Value *vals,
                                     uint32_t num_vals) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
   buffer_state->output->emplace_back(vals, num_vals);
@@ -84,39 +84,39 @@ void BufferingConsumer::ConsumeResult(codegen::ConsumerContext &ctx,
   for (size_t i = 0; i < ais_.size(); i++) {
     codegen::Value val = row.GetAttribute(codegen, ais_[i]);
     switch (val.GetType()) {
-      case VALUE_TYPE_TINYINT: {
+      case type::Type::TypeId::TINYINT: {
         codegen.CallFunc(
             codegen::ValuesRuntimeProxy::_outputTinyInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case VALUE_TYPE_SMALLINT: {
+      case type::Type::TypeId::SMALLINT: {
         codegen.CallFunc(
             codegen::ValuesRuntimeProxy::_outputSmallInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case VALUE_TYPE_DATE:
-      case VALUE_TYPE_INTEGER: {
+      case type::Type::TypeId::DATE:
+      case type::Type::TypeId::INTEGER: {
         codegen.CallFunc(
             codegen::ValuesRuntimeProxy::_outputInteger::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case VALUE_TYPE_TIMESTAMP:
-      case VALUE_TYPE_BIGINT: {
+      case type::Type::TypeId::TIMESTAMP:
+      case type::Type::TypeId::BIGINT: {
         codegen.CallFunc(
             codegen::ValuesRuntimeProxy::_outputBigInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case VALUE_TYPE_DOUBLE: {
+      case type::Type::TypeId::DECIMAL: {
         codegen.CallFunc(
             codegen::ValuesRuntimeProxy::_outputDouble::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
-      case VALUE_TYPE_VARCHAR: {
+      case type::Type::TypeId::VARCHAR: {
         codegen.CallFunc(
             codegen::ValuesRuntimeProxy::_outputVarchar::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue(),
@@ -125,7 +125,7 @@ void BufferingConsumer::ConsumeResult(codegen::ConsumerContext &ctx,
       }
       default: {
         throw Exception{"Can't serialize type " +
-                        ValueTypeToString(val.GetType()) + " at position " +
+                        TypeIdToString(val.GetType()) + " at position " +
                         std::to_string(i)};
       }
     }
@@ -155,26 +155,26 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
     }
     first = false;
     codegen::Value val = row.GetAttribute(codegen, ai);
-    assert(val.GetType() != VALUE_TYPE_INVALID);
+    assert(val.GetType() != type::Type::TypeId::INVALID);
     switch (val.GetType()) {
-      case VALUE_TYPE_BOOLEAN:
-      case VALUE_TYPE_TINYINT:
-      case VALUE_TYPE_SMALLINT:
-      case VALUE_TYPE_DATE:
-      case VALUE_TYPE_INTEGER: {
+      case type::Type::TypeId::BOOLEAN:
+      case type::Type::TypeId::TINYINT:
+      case type::Type::TypeId::SMALLINT:
+      case type::Type::TypeId::DATE:
+      case type::Type::TypeId::INTEGER: {
         format.append("%d");
         break;
       }
-      case VALUE_TYPE_TIMESTAMP:
-      case VALUE_TYPE_BIGINT: {
+      case type::Type::TypeId::TIMESTAMP:
+      case type::Type::TypeId::BIGINT: {
         format.append("%ld");
         break;
       }
-      case VALUE_TYPE_DOUBLE: {
+      case type::Type::TypeId::DECIMAL: {
         format.append("%lf");
         break;
       }
-      case VALUE_TYPE_VARCHAR: {
+      case type::Type::TypeId::VARCHAR: {
         cols.push_back(val.GetLength());
         format.append("'%.*s'");
         break;

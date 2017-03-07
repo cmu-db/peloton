@@ -25,7 +25,7 @@
 #include "planner/aggregate_plan.h"
 #include "storage/table_factory.h"
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 
 namespace peloton {
 namespace test {

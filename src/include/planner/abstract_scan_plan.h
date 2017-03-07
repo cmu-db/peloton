@@ -30,11 +30,6 @@ namespace planner {
 
 class AbstractScan : public AbstractPlan {
  public:
-  AbstractScan(const AbstractScan &) = delete;
-  AbstractScan &operator=(const AbstractScan &) = delete;
-  AbstractScan(AbstractScan &&) = delete;
-  AbstractScan &operator=(AbstractScan &&) = delete;
-
   AbstractScan(storage::DataTable *table,
                expression::AbstractExpression *predicate,
                const std::vector<oid_t> &column_ids)
@@ -72,15 +67,13 @@ class AbstractScan : public AbstractPlan {
     return false;
   }
 
+  // Attribute binding
+  void PerformBinding(BindingContext &binding_context) override;
+
  protected:
-  // These methods only used by its derived classes (when deserialization)
-  expression::AbstractExpression *Predicate() { return predicate_.get(); }
-
-  std::vector<oid_t> &ColumnIds() { return column_ids_; }
-
   void SetTargetTable(storage::DataTable *table) { target_table_ = table; }
 
-  void SetColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
+  void AddColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
 
   void SetPredicate(expression::AbstractExpression *predicate) {
     predicate_ = std::unique_ptr<expression::AbstractExpression>(predicate);
@@ -103,6 +96,9 @@ class AbstractScan : public AbstractPlan {
 
   // "For Update" Flag
   bool is_for_update = false;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(AbstractScan);
 };
 
 }  // namespace planner

@@ -19,7 +19,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/seq_scan_plan.h"
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 #include "executor/executor_tests_util.h"
 
 namespace peloton {
@@ -294,7 +294,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
 
   // 5) The predicate on the average aggregate
   auto* x_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* const_50 = CodegenTestUtils::CreateConstantIntExpression(50);
+  auto* const_50 = CodegenTestUtils::ConstIntExpression(50);
   std::unique_ptr<expression::AbstractExpression> x_gt_50{
       new expression::ComparisonExpression<expression::CmpGt>(
           EXPRESSION_TYPE_COMPARE_GREATERTHAN, x_exp, const_50)};
@@ -361,7 +361,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
 
   // 6) The predicate on the grouping column
   auto* a_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_50 = CodegenTestUtils::CreateConstantIntExpression(50);
+  auto* const_50 = CodegenTestUtils::ConstIntExpression(50);
   auto* a_gt_50 = new expression::ComparisonExpression<expression::CmpGt>(
       EXPRESSION_TYPE_COMPARE_GREATERTHAN, a_exp, const_50);
 

@@ -19,7 +19,7 @@
 #include "expression/tuple_value_expression.h"
 #include "planner/seq_scan_plan.h"
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 #include "executor/executor_tests_util.h"
 
 namespace peloton {
@@ -88,7 +88,7 @@ void DivideByZeroTest(ExpressionType exp_type, storage::DataTable* table) {
 
   auto* a_col_exp =
       new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_0_exp = CodegenTestUtils::CreateConstantIntExpression(0);
+  auto* const_0_exp = CodegenTestUtils::ConstIntExpression(0);
 
   expression::AbstractExpression* a_op_0 = nullptr;
   switch (exp_type) {
@@ -147,7 +147,7 @@ void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
     case EXPRESSION_TYPE_OPERATOR_PLUS: {
       // a + INT32_MAX
       auto* const_max_exp =
-          CodegenTestUtils::CreateConstantIntExpression(INT32_MAX);
+          CodegenTestUtils::ConstIntExpression(INT32_MAX);
       a_op_lim = new expression::OperatorExpression<expression::OpPlus>(
           exp_type, a_col_exp, const_max_exp);
       break;
@@ -155,7 +155,7 @@ void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
     case EXPRESSION_TYPE_OPERATOR_MINUS: {
       // a - INT32_MIN
       auto* const_min_exp =
-          CodegenTestUtils::CreateConstantIntExpression(INT32_MIN);
+          CodegenTestUtils::ConstIntExpression(INT32_MIN);
       a_op_lim = new expression::OperatorExpression<expression::OpMinus>(
           exp_type, a_col_exp, const_min_exp);
       break;
@@ -163,7 +163,7 @@ void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
     case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
       // a * INT32_MAX
       auto* const_max_exp =
-          CodegenTestUtils::CreateConstantIntExpression(INT32_MAX);
+          CodegenTestUtils::ConstIntExpression(INT32_MAX);
       a_op_lim = new expression::OperatorExpression<expression::OpMultiply>(
           exp_type, a_col_exp, const_max_exp);
       break;
@@ -173,8 +173,8 @@ void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
       // (a - 1) --> this makes a[0] = -1
       // INT64_MIN / (a - 1)
       auto* const_min_exp =
-          CodegenTestUtils::CreateConstantIntExpression(INT32_MIN);
-      auto* const_one_exp = CodegenTestUtils::CreateConstantIntExpression(1);
+          CodegenTestUtils::ConstIntExpression(INT32_MIN);
+      auto* const_one_exp = CodegenTestUtils::ConstIntExpression(1);
       auto* a_sub_one = new expression::OperatorExpression<expression::OpMinus>(
           EXPRESSION_TYPE_OPERATOR_MINUS, a_col_exp, const_one_exp);
       a_op_lim = new expression::OperatorExpression<expression::OpDivide>(

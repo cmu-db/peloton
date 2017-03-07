@@ -12,6 +12,7 @@
 
 #include <immintrin.h>
 
+#include "catalog/manager.h"
 #include "codegen/data_table_proxy.h"
 #include "codegen/if.h"
 #include "codegen/loop.h"
@@ -24,11 +25,10 @@
 #include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
-#include "storage/data_table.h"
 #include "planner/seq_scan_plan.h"
 
-#include "codegen/codegen_test_utils.h"
-#include "executor/executor_tests_util.h"
+#include "codegen/codegen_test_util.h"
+#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -50,48 +50,31 @@ namespace test {
 
 class TableScanTranslatorTest : public PelotonTest {
  public:
-  TableScanTranslatorTest() : num_rows_to_insert(64) {
-    peloton_layout_mode = LAYOUT_COLUMN;
-    CreateDatabase();
-    CreateTestTable();
+  TableScanTranslatorTest()
+      : test_table(CreateTestTable()), num_rows_to_insert(64) {
     LoadTestTable(num_rows_to_insert);
   }
 
-  ~TableScanTranslatorTest() override {
-    catalog::Manager::GetInstance().DropDatabaseWithOid(database->GetOid());
-  }
-
-  void CreateDatabase() {
-    database = new storage::Database(INVALID_OID);
-    catalog::Manager::GetInstance().AddDatabase(database);
-  }
-
-  void CreateTestTable() {
+  storage::DataTable* CreateTestTable() {
     const int tuples_per_tilegroup = 32;
-    auto* data_table =
-        ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false);
-    GetDatabase().AddTable(data_table);
+    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false);
   }
 
   void LoadTestTable(uint32_t num_rows) {
-    auto& data_table = GetTestTable();
     auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    txn_manager.BeginTransaction();
-    ExecutorTestsUtil::PopulateTable(&data_table, num_rows, false, false,
-                                     false);
-    txn_manager.CommitTransaction();
+    auto* txn = txn_manager.BeginTransaction();
+
+    TestingExecutorUtil::PopulateTable(test_table.get(), num_rows, false, false,
+                                       false, txn);
+    txn_manager.CommitTransaction(txn);
   }
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  storage::Database& GetDatabase() { return *database; }
-
-  storage::DataTable& GetTestTable() {
-    return *GetDatabase().GetTableWithOid(INVALID_OID);
-  }
+  storage::DataTable& GetTestTable() { return *test_table; }
 
  private:
-  storage::Database* database;
+  std::unique_ptr<storage::DataTable> test_table;
   uint32_t num_rows_to_insert = 64;
 };
 
@@ -128,11 +111,10 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
 
   // Setup the predicate
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_20_exp = new expression::ConstantValueExpression(
-      ValueFactory::GetIntegerValue(20));
-  auto* a_gt_20 = new expression::ComparisonExpression<expression::CmpGte>(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
+  auto* a_gt_20 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), a_gt_20, {0, 1, 2}};
@@ -162,10 +144,10 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
 
   // 1) Setup the predicate
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_40_exp = CodegenTestUtils::CreateConstantIntExpression(40);
-  auto* a_gt_40 = new expression::ComparisonExpression<expression::CmpGte>(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_40_exp = CodegenTestUtils::ConstIntExpression(40);
+  auto* a_gt_40 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
 
   // 2) Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), a_gt_40, {0, 1}};
@@ -197,22 +179,21 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
 
   // a >= 20
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_20_exp = CodegenTestUtils::CreateConstantIntExpression(20);
-  auto* a_gt_20 = new expression::ComparisonExpression<expression::CmpGte>(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_20_exp = CodegenTestUtils::ConstIntExpression(20);
+  auto* a_gt_20 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
   // b = 21
   auto* b_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* const_21_exp = CodegenTestUtils::CreateConstantIntExpression(21);
-  auto* b_eq_21 = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, b_col_exp, const_21_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* const_21_exp = CodegenTestUtils::ConstIntExpression(21);
+  auto* b_eq_21 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_col_exp, const_21_exp);
 
   // a >= 20 AND b = 21
-  auto* conj_eq =
-      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
-          EXPRESSION_TYPE_CONJUNCTION_AND, b_eq_21, a_gt_20);
+  auto* conj_eq = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
 
   // 2) Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), conj_eq, {0, 1, 2}};
@@ -233,14 +214,10 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // Check output results
   const auto& results = buffer.GetOutputTuples();
   ASSERT_EQ(results.size(), 1);
-  EXPECT_TRUE(results[0]
-                  .GetValue(0)
-                  .OpEquals(ValueFactory::GetIntegerValue(20))
-                  .IsTrue());
-  EXPECT_TRUE(results[0]
-                  .GetValue(1)
-                  .OpEquals(ValueFactory::GetIntegerValue(21))
-                  .IsTrue());
+  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(20)));
+  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(21)));
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
@@ -254,16 +231,17 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
 
   // a + 1
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_1_exp = CodegenTestUtils::CreateConstantIntExpression(1);
-  auto* a_plus_1 = new expression::OperatorExpression<expression::OpPlus>(
-      EXPRESSION_TYPE_OPERATOR_PLUS, a_col_exp, const_1_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* a_plus_1 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
+      const_1_exp);
 
   // b = a + 1
   auto* b_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* b_eq_a_plus_1 = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, b_col_exp, a_plus_1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* b_eq_a_plus_1 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_1);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), b_eq_a_plus_1, {0, 1}};
@@ -296,17 +274,18 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
 
   // a + b
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* b_rhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* a_plus_b = new expression::OperatorExpression<expression::OpPlus>(
-      EXPRESSION_TYPE_OPERATOR_PLUS, a_col_exp, b_rhs_col_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* a_plus_b = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_PLUS, type::Type::TypeId::INTEGER, a_col_exp,
+      b_rhs_col_exp);
 
   // b = a + b
   auto* b_lhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* b_eq_a_plus_b = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, b_lhs_col_exp, a_plus_b);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* b_eq_a_plus_b = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, a_plus_b);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), b_eq_a_plus_b, {0, 1}};
@@ -339,17 +318,17 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
 
   // b - 1
   auto* b_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* const_1_exp = CodegenTestUtils::CreateConstantIntExpression(1);
-  auto* b_minus_1 = new expression::OperatorExpression<expression::OpMinus>(
-      EXPRESSION_TYPE_OPERATOR_MINUS, b_col_exp, const_1_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* b_minus_1 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER, b_col_exp,
+      const_1_exp);
 
   // a = b - 1
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* a_eq_b_minus_1 =
-      new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQUAL, a_col_exp, b_minus_1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* a_eq_b_minus_1 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, a_col_exp, b_minus_1);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), a_eq_b_minus_1, {0, 1}};
@@ -382,18 +361,18 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
 
   // b - a
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* b_rhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* b_minus_a = new expression::OperatorExpression<expression::OpMinus>(
-      EXPRESSION_TYPE_OPERATOR_MINUS, b_rhs_col_exp, a_col_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* b_minus_a = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MINUS, type::Type::TypeId::INTEGER,
+      b_rhs_col_exp, a_col_exp);
 
   // b = b - a
   auto* b_lhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* b_eq_b_minus_a =
-      new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQUAL, b_lhs_col_exp, b_minus_a);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* b_eq_b_minus_a = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, b_minus_a);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), b_eq_b_minus_a, {0, 1}};
@@ -426,16 +405,17 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
 
   // a / 1
   auto* a_rhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* const_1_exp = CodegenTestUtils::CreateConstantIntExpression(1);
-  auto* a_div_1 = new expression::OperatorExpression<expression::OpDivide>(
-      EXPRESSION_TYPE_OPERATOR_DIVIDE, a_rhs_col_exp, const_1_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* a_div_1 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_DIVIDE, type::Type::TypeId::DECIMAL,
+      a_rhs_col_exp, const_1_exp);
 
   // a = a / 1
   auto* a_lhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* a_eq_a_div_1 = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, a_lhs_col_exp, a_div_1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* a_eq_a_div_1 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_div_1);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), a_eq_a_div_1, {0, 1, 2}};
@@ -468,17 +448,18 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
 
   // a * b
   auto* a_rhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* b_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* a_mul_b = new expression::OperatorExpression<expression::OpMultiply>(
-      EXPRESSION_TYPE_OPERATOR_MULTIPLY, a_rhs_col_exp, b_col_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* a_mul_b = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::BIGINT,
+      a_rhs_col_exp, b_col_exp);
 
   // a = a * b
   auto* a_lhs_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* a_eq_a_mul_b = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, a_lhs_col_exp, a_mul_b);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* a_eq_a_mul_b = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_mul_b);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), a_eq_a_mul_b, {0, 1, 2}};
@@ -511,16 +492,17 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
 
   // b % 1
   auto* b_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto* const_1_exp = CodegenTestUtils::CreateConstantIntExpression(1);
-  auto* b_mod_1 = new expression::OperatorExpression<expression::OpMod>(
-      EXPRESSION_TYPE_OPERATOR_MOD, b_col_exp, const_1_exp);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 1);
+  auto* const_1_exp = CodegenTestUtils::ConstIntExpression(1);
+  auto* b_mod_1 = new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MOD, type::Type::TypeId::DECIMAL, b_col_exp,
+      const_1_exp);
 
   // a = b % 1
   auto* a_col_exp =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto* a_eq_b_mod_1 = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, a_col_exp, b_mod_1);
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  auto* a_eq_b_mod_1 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_1);
 
   // Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(), a_eq_b_mod_1, {0, 1, 2}};
@@ -540,14 +522,10 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   // Check output results
   const auto& results = buffer.GetOutputTuples();
   ASSERT_EQ(results.size(), 1);
-  EXPECT_TRUE(results[0]
-                  .GetValue(0)
-                  .OpEquals(ValueFactory::GetIntegerValue(0))
-                  .IsTrue());
-  EXPECT_TRUE(results[0]
-                  .GetValue(1)
-                  .OpEquals(ValueFactory::GetIntegerValue(1))
-                  .IsTrue());
+  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(1)));
 }
 
 }  // namespace test

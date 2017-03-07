@@ -28,13 +28,35 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class GlobalGroupByTranslator : public OperatorTranslator {
  public:
+  // Constructor
+  GlobalGroupByTranslator(const planner::AggregatePlan &plan,
+                          CompilationContext &context, Pipeline &pipeline);
+
+  // Nothing to initialize
+  void InitializeState() override {}
+
+  // No helper functions
+  void DefineFunctions() override {}
+
+  // Produce!
+  void Produce() const override;
+
+  // Consume!
+  void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
+
+  // No state to tear down
+  void TearDownState() override {}
+
+  std::string GetName() const override;
+
+ private:
   //===--------------------------------------------------------------------===//
   // An accessor into a single tuple stored in buffered state
   //===--------------------------------------------------------------------===//
   class BufferAttributeAccess : public RowBatch::AttributeAccess {
    public:
     // Constructor
-    BufferAttributeAccess(const std::vector<Value> &aggregate_vals,
+    BufferAttributeAccess(const std::vector<codegen::Value> &aggregate_vals,
                           uint32_t agg_index)
         : aggregate_vals_(aggregate_vals), agg_index_(agg_index) {}
 
@@ -45,25 +67,10 @@ class GlobalGroupByTranslator : public OperatorTranslator {
    private:
     // All the vals
     const std::vector<codegen::Value> &aggregate_vals_;
+
     // The value this accessor is for
     uint32_t agg_index_;
   };
-
-  // Constructor
-  GlobalGroupByTranslator(const planner::AggregatePlan &plan,
-                          CompilationContext &context, Pipeline &pipeline);
-
-  void InitializeState() override {}
-
-  void DefineFunctions() override {}
-
-  void Produce() const override;
-
-  void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
-
-  void TearDownState() override {}
-
-  std::string GetName() const override;
 
  private:
   // The aggregation plan
