@@ -57,6 +57,9 @@ Optimizer::Optimizer() {
 
 std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList> &parse_tree_list) {
+
+  LOG_DEBUG("Enter new optimizer...");
+
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -97,6 +100,8 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   // Reset memo after finishing the optimization
   Reset();
+
+  LOG_DEBUG("Exit new optimizer...");
 
   //  return std::shared_ptr<planner::AbstractPlan>(best_plan.release());
   return std::move(best_plan);
