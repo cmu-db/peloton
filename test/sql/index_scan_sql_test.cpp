@@ -53,10 +53,37 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
                                 tuple_descriptor, rows_changed, error_message);
 
   // Check the return value
-  // Should be: 3, 1, 2
+  // Should be: 22, 33
   EXPECT_EQ(0, rows_changed);
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 1));
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX i1 ON test(b, c);", result,
+                                tuple_descriptor, rows_changed, error_message);
+
+  TestingSQLUtil::ExecuteSQLQuery("SELECT a FROM test WHERE b < 33 AND c > 100 ORDER BY a;", result,
+                                tuple_descriptor, rows_changed, error_message);
+
+  // Check the return value
+  // Should be: 1, 3
+  EXPECT_EQ(0, rows_changed);
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
