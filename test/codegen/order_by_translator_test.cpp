@@ -17,7 +17,7 @@
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 #include "executor/executor_tests_util.h"
 
 namespace peloton {

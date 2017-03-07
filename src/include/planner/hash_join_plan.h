@@ -40,6 +40,10 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::shared_ptr<const catalog::Schema> &proj_schema,
       const std::vector<oid_t> &outer_hashkeys);
 
+  void HandleSubplanBinding(bool is_left,
+                            const BindingContext &context) override;
+
+
   inline PlanNodeType GetPlanNodeType() const {
     return PlanNodeType::HASHJOIN;
   }

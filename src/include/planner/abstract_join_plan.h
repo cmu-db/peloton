@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdint>
@@ -33,11 +32,6 @@ namespace planner {
 
 class AbstractJoinPlan : public AbstractPlan {
  public:
-  AbstractJoinPlan(const AbstractJoinPlan &) = delete;
-  AbstractJoinPlan &operator=(const AbstractJoinPlan &) = delete;
-  AbstractJoinPlan(AbstractJoinPlan &&) = delete;
-  AbstractJoinPlan &operator=(AbstractJoinPlan &&) = delete;
-
   AbstractJoinPlan(
       JoinType joinType,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
@@ -50,6 +44,8 @@ class AbstractJoinPlan : public AbstractPlan {
         proj_schema_(proj_schema) {
     // Fuck off!
   }
+
+  void PerformBinding(BindingContext &context) override;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -73,7 +69,12 @@ class AbstractJoinPlan : public AbstractPlan {
 
   const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
 
-  std::unique_ptr<AbstractPlan> Copy() const = 0;
+ protected:
+  // For joins, attributes arrive from both the left and right side of the join
+  // This method enables this merging by properly identifying each side's
+  // attributes in separate contexts.
+  virtual void HandleSubplanBinding(bool from_left,
+                                    const BindingContext &context) = 0;
 
  private:
   /** @brief The type of join that we're going to perform */
@@ -90,6 +91,9 @@ class AbstractJoinPlan : public AbstractPlan {
 
   std::vector<const AttributeInfo *> left_attributes_;
   std::vector<const AttributeInfo *> right_attributes_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(AbstractJoinPlan);
 };
 
 }  // namespace planner

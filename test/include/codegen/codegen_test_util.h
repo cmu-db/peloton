@@ -15,8 +15,8 @@
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
+#include "common/container_tuple.h"
 #include "expression/constant_value_expression.h"
-#include "expression/container_tuple.h"
 #include "planner/binding_context.h"
 
 #include <vector>
@@ -29,8 +29,7 @@ namespace test {
 //===----------------------------------------------------------------------===//
 class CodegenTestUtils {
  public:
-  static expression::ConstantValueExpression *CreateConstantIntExpression(
-      int64_t val);
+  static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
 };
 
 //===----------------------------------------------------------------------===//
@@ -60,38 +59,25 @@ class Printer : public codegen::QueryResultConsumer {
 //===----------------------------------------------------------------------===//
 // A query consumer that buffers tuples into a local buffer
 //===----------------------------------------------------------------------===//
-/*
-class WrappedTuple : AbstractTuple {
- public:
-  WrappedTuple(Value* vals, uint32_t num_vals) : vals_(vals, vals + num_vals) {}
-  WrappedTuple(std::vector<Value> vals) : vals_(vals) {}
-
-  Value GetValue(oid_t col_id) const override { return vals_[col_id]; }
-
-  char* GetData() const { return (char*)vals_.data(); }
-
- private:
-  std::vector<Value> vals_;
-};
- */
-
-class WrappedTuple : public expression::ContainerTuple<std::vector<Value>> {
+class WrappedTuple
+    : public expression::ContainerTuple<std::vector<type::Value>> {
  public:
   // Basic
-  WrappedTuple(Value *vals, uint32_t num_vals)
-      : ContainerTuple(&vals_), vals_(vals, vals + num_vals) {}
+  WrappedTuple(type::Value *vals, uint32_t num_vals)
+      : ContainerTuple(&tuple_), tuple_(vals, vals + num_vals) {}
 
   // Copy
   WrappedTuple(const WrappedTuple &o)
-      : ContainerTuple(&vals_), vals_(o.vals_) {}
+      : ContainerTuple(&tuple_), tuple_(o.tuple_) {}
   WrappedTuple &operator=(const WrappedTuple &o) {
-    expression::ContainerTuple<std::vector<Value>>::operator=(o);
-    vals_ = o.vals_;
+    expression::ContainerTuple<std::vector<type::Value>>::operator=(o);
+    tuple_ = o.tuple_;
     return *this;
   }
 
  private:
-  std::vector<Value> vals_;
+  // The tuple
+  std::vector<type::Value> tuple_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -128,7 +114,7 @@ class BufferingConsumer : public codegen::QueryResultConsumer {
   };
 
   // Called from query plan to buffer the tuple
-  static void BufferTuple(char *state, Value *vals, uint32_t num_vals);
+  static void BufferTuple(char *state, type::Value *vals, uint32_t num_vals);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS

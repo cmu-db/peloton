@@ -13,7 +13,7 @@
 #include <cstdlib>
 
 #include "common/harness.h"
-#include "common/stop_watch.h"
+#include "common/timer.h"
 #include "codegen/utils/sorter.h"
 
 namespace peloton {
@@ -48,7 +48,8 @@ class SorterTest : public PelotonTest {
 
   void TestSort(uint64_t num_tuples_to_insert = 10) {
     // Time this stuff
-    common::StopWatch sw{true};
+    Timer<std::ratio<1,1000>> timer;
+    timer.Start();
 
     // Insert TestTuples
     for (uint32_t i = 0; i < num_tuples_to_insert; i++) {
@@ -59,14 +60,18 @@ class SorterTest : public PelotonTest {
       tuple->col_d = rand() % 100000;
     }
 
+    timer.Stop();
     LOG_INFO("Loading %lu tuples into sort took %.2f ms", num_tuples_to_insert,
-             sw.elapsedMillis(true));
+             timer.GetDuration());
+    timer.Reset();
+    timer.Start();
 
     // Sort
     sorter.Sort();
 
+    timer.Stop();
     LOG_INFO("Sorting %lu tuples took %.2f ms", num_tuples_to_insert,
-             sw.elapsedMillis(true));
+             timer.GetDuration());
 
     // Check sorted results
     uint64_t res_tuples = 0;

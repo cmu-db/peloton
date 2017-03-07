@@ -24,14 +24,15 @@ namespace planner {
 
 class OrderByPlan : public AbstractPlan {
  public:
-  OrderByPlan(const OrderByPlan &) = delete;
-  OrderByPlan &operator=(const OrderByPlan &) = delete;
-  OrderByPlan(const OrderByPlan &&) = delete;
-  OrderByPlan &operator=(const OrderByPlan &&) = delete;
-
   OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids);
+
+  void PerformBinding(BindingContext &binding_context) override;
+
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
@@ -100,6 +101,10 @@ class OrderByPlan : public AbstractPlan {
 
   // The point denoted by limit clause
   uint64_t limit_offset_ = 0;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(OrderByPlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

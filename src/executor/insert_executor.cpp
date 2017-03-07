@@ -147,7 +147,7 @@ bool InsertExecutor::DExecute() {
 
       for (auto target : project_info->GetTargetList()) {
         auto value =
-            target.second->Evaluate(nullptr, nullptr, executor_context_);
+            target.second.expr->Evaluate(nullptr, nullptr, executor_context_);
         project_tuple->SetValue(target.first, value, executor_pool);
       }
 

@@ -17,7 +17,7 @@
 #include "codegen/loop.h"
 #include "codegen/runtime_functions_proxy.h"
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 
 namespace peloton {
 namespace test {

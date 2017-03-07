@@ -26,13 +26,10 @@ class CreateStatement;
 }
 
 namespace planner {
+
 class CreatePlan : public AbstractPlan {
  public:
   CreatePlan() = delete;
-  CreatePlan(const CreatePlan &) = delete;
-  CreatePlan &operator=(const CreatePlan &) = delete;
-  CreatePlan(CreatePlan &&) = delete;
-  CreatePlan &operator=(CreatePlan &&) = delete;
 
   explicit CreatePlan(storage::DataTable *table);
 
@@ -93,6 +90,10 @@ class CreatePlan : public AbstractPlan {
 
   // UNIQUE INDEX flag
   bool unique;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(CreatePlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

@@ -21,7 +21,7 @@
 #include "backend/expression/conjunction_expression.h"
 #include "backend/storage/table_factory.h"
 
-#include "codegen/codegen_test_utils.h"
+#include "codegen/codegen_test_util.h"
 
 namespace peloton {
 namespace test {
