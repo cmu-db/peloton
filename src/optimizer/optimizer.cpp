@@ -30,6 +30,8 @@
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/create_plan.h"
+#include "planner/drop_plan.h"
 #include "binder/bind_node_visitor.h"
 
 namespace peloton {
@@ -42,6 +44,8 @@ Optimizer::Optimizer() {
   logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
   physical_implementation_rules_.emplace_back(new LogicalLimitToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
@@ -59,6 +63,13 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   auto parse_tree = parse_tree_list->GetStatements().at(0);
+
+  // Handle ddl statement
+  bool is_ddl_stmt;
+  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt);
+  if (is_ddl_stmt) {
+    return std::move(ddl_plan);
+  }
 
   // Run binder
   auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>();
@@ -84,6 +95,9 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   if (best_plan == nullptr) return nullptr;
 
+  // Reset memo after finishing the optimization
+  Reset();
+
   //  return std::shared_ptr<planner::AbstractPlan>(best_plan.release());
   return std::move(best_plan);
 }
@@ -91,6 +105,34 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 void Optimizer::Reset() {
   memo_ = std::move(Memo());
   column_manager_ = std::move(ColumnManager());
+}
+
+std::unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
+    parser::SQLStatement *tree, bool& is_ddl_stmt) {
+  std::unique_ptr<planner::AbstractPlan> ddl_plan;
+  is_ddl_stmt = true;
+  auto stmt_type = tree->GetType();
+  switch (stmt_type) {
+    case StatementType::DROP: {
+      LOG_TRACE("Adding Drop plan...");
+      std::unique_ptr<planner::AbstractPlan> drop_plan(
+          new planner::DropPlan((parser::DropStatement *) tree));
+      ddl_plan = std::move(drop_plan);
+    }
+      break;
+
+    case StatementType::CREATE: {
+      LOG_TRACE("Adding Create plan...");
+      std::unique_ptr<planner::AbstractPlan> create_plan(
+          new planner::CreatePlan((parser::CreateStatement *) tree));
+      ddl_plan = std::move(create_plan);
+    }
+      break;
+    default:is_ddl_stmt = false;
+  }
+
+  return std::move(ddl_plan);
+
 }
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(

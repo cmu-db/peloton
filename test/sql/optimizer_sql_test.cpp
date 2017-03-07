@@ -299,5 +299,146 @@ TEST_F(OptimizerSQLTests, DeleteSqlTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+
+TEST_F(OptimizerSQLTests, UpdateSqlTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  std::string query("UPDATE test SET c = -333 WHERE a = 1");
+
+  // check for plan node type
+  auto update_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(update_plan->GetPlanNodeType(), PlanNodeType::UPDATE);
+
+  optimizer->Reset();
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+
+  EXPECT_EQ(1, rows_changed);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT c FROM test WHERE a=1", result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ("-333", TestingSQLUtil::GetResultValueAsString(result, 0));
+
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+
+TEST_F(OptimizerSQLTests, InsertSqlTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  std::string query("INSERT INTO test VALUES (5, 55, 555);");
+
+  // check for plan node type
+  auto plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+
+  optimizer->Reset();
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+
+  EXPECT_EQ(1, rows_changed);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test WHERE a=5", result, tuple_descriptor, rows_changed, error_message);
+  EXPECT_EQ(3, result.size());
+  EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+
+TEST_F(OptimizerSQLTests, DDLSqlTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  std::string query("CREATE TABLE test2(a INT PRIMARY KEY, b INT, c INT);");
+
+  // check for plan node type
+  auto plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::CREATE);
+
+
+  optimizer->Reset();
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2");
+  EXPECT_NE(nullptr, table);
+  auto cols = table->GetSchema()->GetColumns();
+  EXPECT_EQ(3, cols.size());
+  EXPECT_EQ("a", cols[0].column_name);
+  EXPECT_EQ(true, cols[0].is_primary_);
+  EXPECT_EQ(type::Type::INTEGER, cols[0].GetType());
+  EXPECT_EQ("b", cols[1].column_name);
+  EXPECT_EQ(type::Type::INTEGER, cols[1].GetType());
+  EXPECT_EQ("c", cols[2].column_name);
+  EXPECT_EQ(type::Type::INTEGER, cols[2].GetType());
+
+  query = "DROP TABLE test2";
+  plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::DROP);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  try {
+    catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME, "test2");
+    EXPECT_TRUE(false);
+  } catch (Exception& e) {
+    LOG_INFO("Correct! Exception(%s) catched", e.what());
+  }
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+
 }  // namespace test
 }  // namespace peloton

@@ -25,6 +25,11 @@ ChildPropertyGenerator::GetProperties(std::shared_ptr<GroupExpression> gexpr,
 
   gexpr->Op().Accept(this);
 
+  if (output_.empty()) {
+    output_.push_back(
+        std::make_pair(requirements_, std::vector<PropertySet>()));
+  }
+
   return std::move(output_);
 }
 

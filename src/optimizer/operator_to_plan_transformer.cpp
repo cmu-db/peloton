@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "planner/update_plan.h"
 #include "expression/expression_util.h"
 
 #include "optimizer/operator_expression.h"
@@ -227,8 +228,14 @@ void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
-void OperatorToPlanTransformer::Visit(const PhysicalInsert *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
+  std::unique_ptr<planner::AbstractPlan> insert_plan(
+      new planner::InsertPlan(op->target_table, op->columns,
+                              op->values));
+  output_plan_ = std::move(insert_plan);
+}
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
+  // TODO: Support index scan
   auto scan_plan = (planner::AbstractScan*)children_plans_[0].get();
   PL_ASSERT(scan_plan != nullptr);
 
@@ -244,7 +251,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   delete_plan->AddChild(std::move(children_plans_[0]));
   output_plan_ = std::move(delete_plan);
 }
-void OperatorToPlanTransformer::Visit(const PhysicalUpdate *) {}
+void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
+  // TODO: Support index scan
+  std::unique_ptr<planner::AbstractPlan> update_plan(
+      new planner::UpdatePlan(op->update_stmt));
+  output_plan_ = std::move(update_plan);
+}
 
 void OperatorToPlanTransformer::VisitOpExpression(
     std::shared_ptr<OperatorExpression> op) {

@@ -85,6 +85,32 @@ class LogicalDeleteToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalUpdateToPhysical
+class LogicalUpdateToPhysical : public Rule {
+ public:
+  LogicalUpdateToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+  const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalInsertToPhysical
+class LogicalInsertToPhysical : public Rule {
+ public:
+  LogicalInsertToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+  const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 class InnerJoinToInnerNLJoin : public Rule {
  public:

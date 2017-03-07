@@ -294,7 +294,14 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
-  static Operator make();
+  static Operator make(
+      storage::DataTable* target_table,
+      std::vector<char*>* columns,
+      std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values);
+
+  storage::DataTable* target_table;
+  std::vector<char*>* columns;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values;
 };
 
 //===--------------------------------------------------------------------===//
@@ -312,7 +319,9 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 //===--------------------------------------------------------------------===//
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
-  static Operator make();
+  static Operator make(const parser::UpdateStatement* update_stmt);
+
+  const parser::UpdateStatement* update_stmt;
 };
 } /* namespace optimizer */
 } /* namespace peloton */

@@ -284,9 +284,14 @@ Operator PhysicalOuterHashJoin::make() {
 //===--------------------------------------------------------------------===//
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
-Operator PhysicalInsert::make() {
-  PhysicalInsert *insert = new PhysicalInsert;
-  return Operator(insert);
+Operator PhysicalInsert::make(storage::DataTable* target_table,
+                              std::vector<char*>* columns,
+                              std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values) {
+  PhysicalInsert *insert_op = new PhysicalInsert;
+  insert_op->target_table = target_table;
+  insert_op->columns = columns;
+  insert_op->values = values;
+  return Operator(insert_op);
 }
 
 //===--------------------------------------------------------------------===//
@@ -301,8 +306,9 @@ Operator PhysicalDelete::make(storage::DataTable* target_table) {
 //===--------------------------------------------------------------------===//
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
-Operator PhysicalUpdate::make() {
+Operator PhysicalUpdate::make(const parser::UpdateStatement* update_stmt) {
   PhysicalUpdate *update = new PhysicalUpdate;
+  update->update_stmt = update_stmt;
   return Operator(update);
 }
 

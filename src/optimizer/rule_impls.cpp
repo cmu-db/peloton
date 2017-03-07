@@ -136,7 +136,7 @@ void LogicalLimitToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalLimitToPhysical
+/// LogicalDeleteToPhysical
 LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
   physical = true;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalDelete);
@@ -161,6 +161,57 @@ void LogicalDeleteToPhysical::Transform(
   transformed.push_back(result);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalUpdateToPhysical
+LogicalUpdateToPhysical::LogicalUpdateToPhysical() {
+  physical = true;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalUpdate);
+//  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
+//  match_pattern->AddChild(child);
+}
+
+bool LogicalUpdateToPhysical::Check(
+    std::shared_ptr<OperatorExpression> plan) const {
+  (void)plan;
+  return true;
+}
+
+void LogicalUpdateToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalUpdate *update_op = input->Op().As<LogicalUpdate>();
+  auto result = std::make_shared<OperatorExpression>(
+      PhysicalUpdate::make(update_op->update_stmt));
+  PL_ASSERT(input->Children().size() == 0);
+//  result->PushChild(input->Children().at(0));
+  transformed.push_back(result);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// LogicalInsertToPhysical
+LogicalInsertToPhysical::LogicalInsertToPhysical() {
+  physical = true;
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalInsert);
+//  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
+//  match_pattern->AddChild(child);
+}
+
+bool LogicalInsertToPhysical::Check(
+    std::shared_ptr<OperatorExpression> plan) const {
+  (void)plan;
+  return true;
+}
+
+void LogicalInsertToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+  const LogicalInsert *insert_op = input->Op().As<LogicalInsert>();
+  auto result = std::make_shared<OperatorExpression>(
+      PhysicalInsert::make(insert_op->target_table, insert_op->columns, insert_op->values));
+  PL_ASSERT(input->Children().size() == 0);
+//  result->PushChild(input->Children().at(0));
+  transformed.push_back(result);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin

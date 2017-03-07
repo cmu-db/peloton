@@ -55,9 +55,20 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree) override;
 
+
   void Reset() override;
 
  private:
+
+  /* HandleDDLStatement - Check and handle DDL statment (currently only support CREATE), set
+   * is_ddl_stmt to false if there is no DDL statement.
+   *
+   * tree: a peloton query tree representing a select query
+   * return: the DDL plan if it is a DDL statement
+   */
+  std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(parser::SQLStatement *tree,
+                                                            bool& is_ddl_stmt);
+
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
    *
