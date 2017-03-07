@@ -17,10 +17,11 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/printable.h"
+#include "common/sql_node_visitor.h"
+#include "planner/attribute_info.h"
 #include "type/serializeio.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
@@ -91,6 +92,24 @@ class AbstractExpression : public Printable {
   ExpressionType GetExpressionType() const { return exp_type_; }
 
   type::Type::TypeId GetValueType() const { return return_value_type_; }
+
+  // Is this expression computable using SIMD instructions?
+  virtual bool IsSIMDable() const {
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      if (!children_[i]->IsSIMDable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Get all the attributes this expression uses
+  virtual void GetUsedAttributes(
+      std::unordered_set<const planner::AttributeInfo*> &attributes) const {
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      children_[i]->GetUsedAttributes(attributes);
+    }
+  }
 
   virtual void DeduceExpressionType() {}
 

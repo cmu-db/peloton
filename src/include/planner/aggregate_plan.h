@@ -36,6 +36,8 @@ class AggregatePlan : public AbstractPlan {
     ExpressionType aggtype;
     const expression::AbstractExpression *expression;
     bool distinct;
+    // The attribute information and ID for this aggregate
+    AttributeInfo agg_ai;
 
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
             bool distinct = false)
@@ -62,6 +64,10 @@ class AggregatePlan : public AbstractPlan {
 
   const std::vector<oid_t> &GetGroupbyColIds() const {
     return groupby_col_ids_;
+  }
+
+  const std::vector<const AttributeInfo *> &GetGroupbyAIs() const {
+    return groupby_ais_;
   }
 
   const expression::AbstractExpression *GetPredicate() const {
@@ -130,6 +136,7 @@ class AggregatePlan : public AbstractPlan {
 
   /* Group-by Keys */
   const std::vector<oid_t> groupby_col_ids_;
+  std::vector<const AttributeInfo *> groupby_ais_;
 
   /* Output schema */
   std::shared_ptr<const catalog::Schema> output_schema_;

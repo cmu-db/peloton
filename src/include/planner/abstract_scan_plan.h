@@ -57,23 +57,35 @@ class AbstractScan : public AbstractPlan {
 
   inline storage::DataTable *GetTable() const { return target_table_; }
 
+  void GetAttributes(std::vector<const AttributeInfo *> &ais) const {
+    for (const auto &ai : attributes_) {
+      ais.push_back(&ai);
+    }
+  }
+
   inline bool IsForUpdate() const {
     // return is_for_update;
 
     // TODO: Manually disable the select_for_update feature.
-    // There is some bug with the current select_for_update logic, we need to fix it later -- Jiexi
+    // There is some bug with the current select_for_update logic, we need to
+    // fix it later -- Jiexi
     return false;
   }
 
  protected:
   // These methods only used by its derived classes (when deserialization)
   expression::AbstractExpression *Predicate() { return predicate_.get(); }
+
   std::vector<oid_t> &ColumnIds() { return column_ids_; }
+
   void SetTargetTable(storage::DataTable *table) { target_table_ = table; }
+
   void SetColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
+
   void SetPredicate(expression::AbstractExpression *predicate) {
     predicate_ = std::unique_ptr<expression::AbstractExpression>(predicate);
   }
+
   void SetForUpdateFlag(bool flag) { is_for_update = flag; }
 
  private:
@@ -86,6 +98,8 @@ class AbstractScan : public AbstractPlan {
 
   /** @brief Columns from tile group to be added to logical tile output. */
   std::vector<oid_t> column_ids_;
+
+  std::vector<AttributeInfo> attributes_;
 
   // "For Update" Flag
   bool is_for_update = false;

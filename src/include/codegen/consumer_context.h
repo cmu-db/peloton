@@ -1,0 +1,70 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// consumer_context.h
+//
+// Identification: src/include/codegen/consumer_context.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include "codegen/pipeline.h"
+#include "codegen/row_batch.h"
+#include "codegen/runtime_state.h"
+#include "codegen/value.h"
+#include "expression/abstract_expression.h"
+#include "planner/attribute_info.h"
+
+#include <set>
+#include <unordered_map>
+
+namespace peloton {
+namespace codegen {
+
+// Forward declare
+class CompilationContext;
+
+//===----------------------------------------------------------------------===//
+// This class tracks all the attributes that are available/accessible in the
+// current scope/context of code.
+//===----------------------------------------------------------------------===//
+class ConsumerContext {
+ public:
+  // Constructor
+  ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline);
+
+  // Derive the value of the given expression on the given row
+  codegen::Value DeriveValue(const expression::AbstractExpression &expression,
+                             RowBatch::Row &row);
+
+  // Pass this consumer context to the parent of the caller of consume()
+  void Consume(RowBatch &batch);
+  void Consume(RowBatch::Row &row);
+
+  // Get the code generator instance
+  CodeGen &GetCodeGen() const;
+
+  // Get the runtime state
+  RuntimeState &GetRuntimeState() const;
+
+  // Get the pipeline
+  const Pipeline &GetPipeline() const { return pipeline_; }
+
+ private:
+  // The compilation context
+  CompilationContext &compilation_context_;
+
+  // The pipeline of operators that this context passes through
+  Pipeline &pipeline_;
+
+ private:
+  // This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(ConsumerContext);
+};
+
+}  // namespace codegen
+}  // namespace peloton

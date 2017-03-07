@@ -1,0 +1,138 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// table_scan_translator.h
+//
+// Identification: src/include/codegen/table_scan_translator.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include "codegen/compilation_context.h"
+#include "codegen/consumer_context.h"
+#include "codegen/operator_translator.h"
+#include "codegen/scan_consumer.h"
+#include "codegen/table.h"
+#include "planner/seq_scan_plan.h"
+#include "storage/data_table.h"
+
+namespace peloton {
+namespace codegen {
+
+//===----------------------------------------------------------------------===//
+// A translator for table scans
+//===----------------------------------------------------------------------===//
+class TableScanTranslator : public OperatorTranslator {
+ public:
+  // Constructor
+  TableScanTranslator(const planner::SeqScanPlan &scan,
+                      CompilationContext &context, Pipeline &pipeline);
+
+  void InitializeState() override {}
+
+  // Table scans don't rely on any auxiliary functions
+  void DefineFunctions() override {}
+
+  // The method that produces new tuples
+  void Produce() const override;
+
+  // Scans are leaves in the query plan and, hence, do not consume tuples
+  void Consume(ConsumerContext &, RowBatch &) const override {}
+  void Consume(ConsumerContext &, RowBatch::Row &) const override {}
+
+  // Similar to InitializeState(), table scans don't have any state
+  void TearDownState() override {}
+
+  // Get a stringified version of this translator
+  std::string GetName() const override;
+
+ private:
+  //===--------------------------------------------------------------------===//
+  // An attribute accessor that uses the backing tile group to access columns
+  //===--------------------------------------------------------------------===//
+  class AttributeAccess : public RowBatch::AttributeAccess {
+   public:
+    // Constructor
+    AttributeAccess(const TileGroup::TileGroupAccess &access,
+                    const planner::AttributeInfo *ai);
+
+    // Access an attribute in the given row
+    codegen::Value Access(CodeGen &codegen, RowBatch::Row &row) override;
+
+    const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
+
+   private:
+    // The accessor we use to load column values
+    const TileGroup::TileGroupAccess &tile_group_access_;
+    // The attribute we will access
+    const planner::AttributeInfo *ai_;
+  };
+
+  //===--------------------------------------------------------------------===//
+  // The class responsible for generating vectorized scan code over tile groups
+  //===--------------------------------------------------------------------===//
+  class ScanConsumer : public codegen::ScanConsumer {
+   public:
+    // Constructor
+    ScanConsumer(const TableScanTranslator &translator,
+                 Vector &selection_vector);
+
+    // The callback when starting iteration over a new tile group
+    void TileGroupStart(CodeGen &, llvm::Value *) override {}
+
+    // The code that forms the body of the scan loop
+    void ScanBody(CodeGen &codegen, llvm::Value *tid_start,
+                  llvm::Value *tid_end,
+                  TileGroup::TileGroupAccess &tile_group_access) override;
+
+    // The callback when finishing iteration over a tile group
+    void TileGroupFinish(CodeGen &, llvm::Value *) override {}
+
+   private:
+    // Get the predicate, if one exists
+    const expression::AbstractExpression *GetPredicate() const;
+
+    void SetupRowBatch(RowBatch &batch,
+                       TileGroup::TileGroupAccess &tile_group_access,
+                       std::vector<AttributeAccess> &access) const;
+
+    // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
+    // store their TIDs in the output TID selection vector
+    void FilterRows(const TileGroup::TileGroupAccess &access,
+                    llvm::Value *tid_start, llvm::Value *tid_end,
+                    Vector &selection_vector) const;
+
+    llvm::Value *SIMDFilterRows(RowBatch &batch,
+                                const TileGroup::TileGroupAccess &access) const;
+
+   private:
+    // The translator instance the consumer is generating code for
+    const TableScanTranslator &translator_;
+
+    // The selection vector used for vectorized scans
+    Vector &selection_vector_;
+  };
+
+  // Plan accessor
+  const planner::SeqScanPlan &GetScanPlan() const { return scan_; }
+
+  // Table accessor
+  const storage::DataTable &GetTable() const { return *scan_.GetTable(); }
+
+ private:
+  // The scan
+  const planner::SeqScanPlan &scan_;
+
+  // The ID of the selection vector in runtime state
+  RuntimeState::StateID selection_vector_id_;
+
+  // The code-generating table instance
+  codegen::Table table_;
+};
+
+}  // namespace codegen
+}  // namespace peloton

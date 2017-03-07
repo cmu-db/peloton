@@ -71,6 +71,8 @@ class TupleValueExpression : public AbstractExpression {
     return new TupleValueExpression(*this);
   }
 
+  const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
+
   int GetColumnId() const { return value_idx_; }
 
   int GetTupleId() const { return tuple_idx_; }
@@ -103,6 +105,8 @@ class TupleValueExpression : public AbstractExpression {
   int tuple_idx_;
   std::string table_name_;
   std::string col_name_;
+
+  const planner::AttributeInfo *ai_;
 };
 
 }  // End expression namespace

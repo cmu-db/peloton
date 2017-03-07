@@ -13,6 +13,7 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "planner/attribute_info.h"
 
 namespace peloton {
 namespace planner {
@@ -38,6 +39,10 @@ class OrderByPlan : public AbstractPlan {
 
   const std::vector<oid_t> &GetOutputColumnIds() const {
     return output_column_ids_;
+  }
+
+  const std::vector<const planner::AttributeInfo *> &GetOutputColumns() const {
+    return output_ais_;
   }
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ORDERBY; }
@@ -79,6 +84,8 @@ class OrderByPlan : public AbstractPlan {
    * Now we just output the same schema as input tiles.
    */
   const std::vector<oid_t> output_column_ids_;
+
+  std::vector<const AttributeInfo *> output_ais_;
 
   // Used to show that whether the output is has the same ordering with order by
   // expression. If the so, we can directly used the output result without any
