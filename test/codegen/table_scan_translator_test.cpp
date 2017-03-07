@@ -12,7 +12,7 @@
 
 #include <immintrin.h>
 
-#include "catalog/manager.h"
+#include "catalog/catalog.h"
 #include "codegen/data_table_proxy.h"
 #include "codegen/if.h"
 #include "codegen/loop.h"
@@ -51,30 +51,46 @@ namespace test {
 class TableScanTranslatorTest : public PelotonTest {
  public:
   TableScanTranslatorTest()
-      : test_table(CreateTestTable()), num_rows_to_insert(64) {
+      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)),
+        num_rows_to_insert(64) {
+    // Create test table
+    auto* test_table = CreateTestTable();
+
+    // Add table to test DB
+    test_db->AddTable(test_table, false);
+
+    // Add DB to catalog
+    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
+
+    // Load test table
     LoadTestTable(num_rows_to_insert);
   }
 
   storage::DataTable* CreateTestTable() {
     const int tuples_per_tilegroup = 32;
-    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false);
+    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false,
+                                            CodegenTestUtils::kTestTable1Oid);
   }
 
   void LoadTestTable(uint32_t num_rows) {
+    auto& test_table = GetTestTable();
+
     auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto* txn = txn_manager.BeginTransaction();
 
-    TestingExecutorUtil::PopulateTable(test_table.get(), num_rows, false, false,
+    TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false,
                                        false, txn);
     txn_manager.CommitTransaction(txn);
   }
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  storage::DataTable& GetTestTable() { return *test_table; }
+  storage::DataTable& GetTestTable() {
+    return *test_db->GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
+  }
 
  private:
-  std::unique_ptr<storage::DataTable> test_table;
+  std::unique_ptr<storage::Database> test_db;
   uint32_t num_rows_to_insert = 64;
 };
 
@@ -96,7 +112,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check that we got all the results
@@ -129,7 +145,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
@@ -162,7 +178,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   // 4) COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
@@ -208,7 +224,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // 4) COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
@@ -224,8 +240,6 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   //
   // SELECT a, b FROM table where b = a + 1;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -256,7 +270,8 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -267,8 +282,6 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   //
   // SELECT a, b FROM table where b = a + b;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -300,7 +313,8 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -311,8 +325,6 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   //
   // SELECT a, b FROM table where a = b - 1;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -343,7 +355,8 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -354,8 +367,6 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   //
   // SELECT a, b FROM table where b = b - a;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -387,7 +398,8 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -398,8 +410,6 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   //
   //   SELECT a, b, c FROM table where a = a / 1;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -430,7 +440,8 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -441,8 +452,6 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   //
   // SELECT a, b, c FROM table where a = a * b;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -474,7 +483,8 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -485,8 +495,6 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   //
   // SELECT a, b, c FROM table where a = b % 1;
   //
-
-  auto& manager = catalog::Manager::GetInstance();
 
   // Construct the components of the predicate
 
@@ -517,7 +525,8 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(manager, reinterpret_cast<char*>(buffer.GetState()));
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
+                           reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();

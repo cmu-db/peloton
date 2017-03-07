@@ -12,7 +12,7 @@
 
 #include "codegen/compilation_context.h"
 
-#include "codegen/manager_proxy.h"
+#include "codegen/catalog_proxy.h"
 #include "common/timer.h"
 
 namespace peloton {
@@ -28,9 +28,9 @@ CompilationContext::CompilationContext(CodeContext &code_context,
       runtime_state_(runtime_state),
       translator_factory_(factory),
       result_consumer_(result_consumer) {
-  // Allocate a manager instance in the runtime state
-  auto *manager_ptr_type = ManagerProxy::GetType(codegen_)->getPointerTo();
-  manager_state_id_ = runtime_state_.RegisterState("manager", manager_ptr_type);
+  // Allocate a catalog instance in the runtime state
+  auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
+  catalog_state_id_ = runtime_state_.RegisterState("catalog", catalog_ptr_type);
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -121,9 +121,9 @@ void CompilationContext::GenerateHelperFunctions() {
   }
 }
 
-// Get the manager pointer from the runtime state
-llvm::Value *CompilationContext::GetManagerPtr() {
-  return runtime_state_.GetStateValue(codegen_, manager_state_id_);
+// Get the catalog pointer from the runtime state
+llvm::Value *CompilationContext::GetCatalogPtr() {
+  return runtime_state_.GetStateValue(codegen_, catalog_state_id_);
 }
 
 // Generate code for the init() function of the query. All that happens is the

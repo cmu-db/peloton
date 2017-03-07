@@ -19,6 +19,12 @@
 namespace peloton {
 namespace test {
 
+const uint32_t CodegenTestUtils::kTestDbOid = INVALID_OID;
+const uint32_t CodegenTestUtils::kTestTable1Oid = 45;
+const uint32_t CodegenTestUtils::kTestTable2Oid = 45;
+const uint32_t CodegenTestUtils::kTestTable3Oid = 46;
+const uint32_t CodegenTestUtils::kTestTable4Oid = 47;
+
 expression::ConstantValueExpression *
 CodegenTestUtils::ConstIntExpression(int64_t val) {
   return new expression::ConstantValueExpression(
@@ -41,9 +47,9 @@ llvm::Function *BufferingConsumer::_BufferTupleProxy::GetFunction(
     codegen::CodeGen &codegen) {
   const std::string &fn_name =
 #ifdef __APPLE__
-      "_ZN7peloton4test17BufferingConsumer11bufferTupleEPcPNS_5ValueEj";
+      "_ZN7peloton4test17BufferingConsumer11BufferTupleEPcPNS_4type5ValueEj";
 #else
-      "_ZN7peloton4test17BufferingConsumer11BufferTupleEPcPNS_5ValueEj";
+      "_ZN7peloton4test17BufferingConsumer11BufferTupleEPcPNS_4type5ValueEj";
 #endif
 
   // Has the function already been registered?

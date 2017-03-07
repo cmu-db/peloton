@@ -29,6 +29,11 @@ namespace test {
 //===----------------------------------------------------------------------===//
 class CodegenTestUtils {
  public:
+  static const uint32_t kTestDbOid;
+  static const uint32_t kTestTable1Oid;
+  static const uint32_t kTestTable2Oid;
+  static const uint32_t kTestTable3Oid;
+  static const uint32_t kTestTable4Oid;
   static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
 };
 

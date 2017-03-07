@@ -16,6 +16,7 @@
 
 #include "common/logger.h"
 #include "common/timer.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -28,8 +29,7 @@ Sorter::Sorter()
       buffer_pos_(nullptr),
       buffer_end_(nullptr),
       tuple_size_(std::numeric_limits<uint32_t>::max()),
-      cmp_func_(nullptr),
-      storage_manager_(storage::StorageManager::GetInstance()) {}
+      cmp_func_(nullptr) {}
 
 // Destruction calls the destroy method to clean up the resources.
 Sorter::~Sorter() { Destroy(); }
@@ -42,8 +42,10 @@ void Sorter::Init(ComparisonFunction func, uint32_t tuple_size) {
   tuple_size_ = tuple_size;
   cmp_func_ = func;
 
+  auto &storage_manager = storage::StorageManager::GetInstance();
+
   buffer_start_ = reinterpret_cast<char *>(
-      storage_manager_.Allocate(BackendType::MM, kInitialBufferSize));
+      storage_manager.Allocate(BackendType::MM, kInitialBufferSize));
   buffer_pos_ = buffer_start_;
   buffer_end_ = buffer_start_ + kInitialBufferSize;
 
@@ -88,7 +90,8 @@ void Sorter::Sort() {
 // Release any memory we allocated from the storage manager.
 void Sorter::Destroy() {
   if (buffer_start_ != nullptr) {
-    storage_manager_.Release(BackendType::MM, buffer_start_);
+    auto &storage_manager = storage::StorageManager::GetInstance();
+    storage_manager.Release(BackendType::MM, buffer_start_);
   }
   buffer_start_ = buffer_pos_ = buffer_end_ = nullptr;
 }
@@ -112,8 +115,10 @@ void Sorter::Resize() {
   LOG_DEBUG("Resizing sorter from %lu bytes to %lu bytes ...", curr_alloc_size,
             next_alloc_size);
 
+  auto &storage_manager = storage::StorageManager::GetInstance();
+
   char *new_buffer_start = reinterpret_cast<char *>(
-      storage_manager_.Allocate(BackendType::MM, next_alloc_size));
+      storage_manager.Allocate(BackendType::MM, next_alloc_size));
 
   // Now copy the previous buffer into the new area. Note that we only need
   // to copy over the USED space into the new space.
@@ -126,7 +131,7 @@ void Sorter::Resize() {
   buffer_end_ = buffer_start_ + next_alloc_size;
 
   // Release old buffer
-  storage_manager_.Release(BackendType::MM, old_buffer_start);
+  storage_manager.Release(BackendType::MM, old_buffer_start);
 }
 
 //===----------------------------------------------------------------------===//
@@ -146,9 +151,7 @@ bool Sorter::Iterator::operator!=(const Sorter::Iterator &rhs) const {
   return !(*this == rhs);
 }
 
-const char *Sorter::Iterator::operator*() {
-  return curr_pos_;
-}
+const char *Sorter::Iterator::operator*() { return curr_pos_; }
 
 Sorter::Iterator Sorter::begin() {
   return Sorter::Iterator{buffer_start_, tuple_size_};

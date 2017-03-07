@@ -13,7 +13,7 @@
 #include "codegen/table_scan_translator.h"
 
 #include "codegen/if.h"
-#include "codegen/manager_proxy.h"
+#include "codegen/catalog_proxy.h"
 //#include "common/simd_util.h"
 
 namespace peloton {
@@ -63,10 +63,10 @@ void TableScanTranslator::Produce() const {
   LOG_DEBUG("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
   // Get the table instance from the database
-  llvm::Value *manager_ptr = GetManagerPtr();
+  llvm::Value *catalog_ptr = GetCatalogPtr();
   llvm::Value *table_ptr =
-      codegen.CallFunc(ManagerProxy::_GetTableWithOid::GetFunction(codegen),
-                       {manager_ptr, codegen.Const32(table.GetDatabaseOid()),
+      codegen.CallFunc(CatalogProxy::_GetTableWithOid::GetFunction(codegen),
+                       {catalog_ptr, codegen.Const32(table.GetDatabaseOid()),
                         codegen.Const32(table.GetOid())});
 
   // The output buffer for the scan
