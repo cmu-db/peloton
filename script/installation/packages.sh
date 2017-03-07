@@ -79,6 +79,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libjemalloc-dev \
         valgrind \
         lcov \
+        llvm-3.7 \
         postgresql-client
 ## ------------------------------------------------
 ## FEDORA
@@ -96,6 +97,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         jemalloc-devel \
         valgrind \
         lcov \
+        llvm-3.7 \
         postgresql
 ## ------------------------------------------------
 ## REDHAT
@@ -130,6 +132,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         m4 \
         doxygen \
         graphviz \
+        llvm-3.7 \
         postgresql93
 
     # Manually download some packages to guarantee
