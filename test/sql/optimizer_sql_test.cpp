@@ -176,23 +176,35 @@ TEST_F(OptimizerSQLTests, SelectLimitTest) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
 
-  std::string query("SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2");
-
-  // check for plan node type
+  // Test limit without offset
+  std::string query("SELECT b FROM test ORDER BY b LIMIT 3");
+  
   auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::LIMIT);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::ORDERBY);
   EXPECT_EQ(select_plan->GetChildren()[0]->GetChildren()[0]->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
-
+  
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-
+                                               optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  
+  EXPECT_EQ(3, result.size());
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 2));
+  
+  
+  // Test limit with offset
+  query = "SELECT b FROM test ORDER BY b LIMIT 2 OFFSET 2";
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+                                               optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  
   EXPECT_EQ(2, result.size());
   EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 1));
+
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

@@ -51,6 +51,9 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     output_expr = aggregate;
   }
   if (op->limit != nullptr) {
+    // When offset is not specified in the query, parser will set offset to -1
+    if (op->limit->offset == -1)
+      op->limit->offset = 0;
     auto limit = std::make_shared<OperatorExpression>(
         LogicalLimit::make(op->limit->limit, op->limit->offset));
     limit->PushChild(output_expr);
