@@ -31,15 +31,16 @@ namespace peloton {
 ThreadPool thread_pool;
 
 void PelotonInit::Initialize() {
-  QUERY_THREAD_COUNT = std::thread::hardware_concurrency();
+  CONNECTION_THREAD_COUNT = std::thread::hardware_concurrency();
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
   EPOCH_THREAD_COUNT = 1;
+  MAX_CONCURRENCY = 10;
 
   // set max thread number.
   thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
 
-  int parallelism = (std::thread::hardware_concurrency() + 1) / 2;
+  int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
 

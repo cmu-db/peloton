@@ -21,6 +21,7 @@
 
 #include "gc/gc_manager_factory.h"
 #include "concurrency/epoch_manager_factory.h"
+#include "concurrency/transaction_pool.h"
 
 namespace peloton {
 namespace benchmark {
@@ -37,6 +38,8 @@ void RunBenchmark() {
     gc::GCManagerFactory::Configure(state.gc_backend_count);
   }
 
+
+  
   
   std::unique_ptr<std::thread> epoch_thread;
   std::vector<std::unique_ptr<std::thread>> gc_threads;

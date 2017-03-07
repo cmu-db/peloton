@@ -20,6 +20,7 @@
 
 #include "storage/tile_group_header.h"
 #include "concurrency/transaction.h"
+#include "concurrency/transaction_pool.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
 
@@ -46,9 +47,16 @@ class TransactionManager {
     next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
     maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
+    is_from_transaction_pool_ = false;
   }
 
   virtual ~TransactionManager() {}
+
+  void SetTransactionPool() {
+    is_from_transaction_pool_ = true;
+
+    TransactionPool::GetInstance();
+  }
 
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
@@ -82,8 +90,7 @@ class TransactionManager {
   virtual bool IsWritten(
     Transaction *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id
-  ) = 0;
+    const oid_t &tuple_id) = 0;
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
@@ -140,6 +147,10 @@ class TransactionManager {
 
   virtual Transaction *BeginReadonlyTransaction() = 0;
 
+  virtual Transaction *BeginTransaction(const size_t hint) = 0;
+
+  virtual Transaction *BeginReadonlyTransaction(const size_t hint) = 0;
+
   virtual void EndTransaction(Transaction *current_txn) = 0;
 
   virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
@@ -172,11 +183,14 @@ class TransactionManager {
   // first value is exclusive, last value is inclusive
   std::pair<cid_t, cid_t> dirty_range_ =
       std::make_pair(INVALID_CID, INVALID_CID);
+  
+  bool is_from_transaction_pool_;
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
   std::atomic<cid_t> maximum_grant_cid_;
+
 };
 }  // End storage namespace
 }  // End peloton namespace

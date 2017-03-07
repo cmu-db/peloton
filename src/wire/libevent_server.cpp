@@ -28,7 +28,7 @@ std::vector<std::unique_ptr<LibeventSocket>>
     &LibeventServer::GetGlobalSocketList() {
   static std::vector<std::unique_ptr<LibeventSocket>>
       // 2 fd's per thread for pipe and 1 listening socket
-      global_socket_list(FLAGS_max_connections + QUERY_THREAD_COUNT * 2 + 1);
+      global_socket_list(FLAGS_max_connections + CONNECTION_THREAD_COUNT * 2 + 1);
   return global_socket_list;
 }
 
@@ -70,7 +70,7 @@ LibeventServer::LibeventServer() {
 
   // TODO: Make pool size a global
   std::shared_ptr<LibeventThread> master_thread(
-      new LibeventMasterThread(QUERY_THREAD_COUNT, base));
+      new LibeventMasterThread(CONNECTION_THREAD_COUNT, base));
 
   port_ = FLAGS_port;
   max_connections_ = FLAGS_max_connections;

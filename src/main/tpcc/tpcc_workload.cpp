@@ -116,7 +116,7 @@ void PinToCore(size_t core) {
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }
 
-void RunBackend(oid_t thread_id) {
+void RunBackend(const size_t thread_id) {
   
   PinToCore(thread_id);
 
@@ -227,7 +227,7 @@ void RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
-  oid_t num_threads = state.backend_count;
+  size_t num_threads = state.backend_count;
   
   abort_counts = new PadInt[num_threads];
   PL_MEMSET(abort_counts, 0, sizeof(PadInt) * num_threads);
@@ -247,7 +247,7 @@ void RunWorkload() {
     commit_counts_profiles[round_id] = new PadInt[num_threads];
   }
 
-  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+  for (size_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));
   }
 
@@ -275,17 +275,17 @@ void RunWorkload() {
   is_running = false;
 
   // Join the threads with the main thread
-  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+  for (size_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
 
   // calculate the throughput and abort rate for the first round.
-  oid_t total_commit_count = 0;
+  uint64_t total_commit_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
     total_commit_count += commit_counts_profiles[0][i].data;
   }
 
-  oid_t total_abort_count = 0;
+  uint64_t total_abort_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
     total_abort_count += abort_counts_profiles[0][i].data;
   }
