@@ -133,7 +133,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
@@ -196,7 +196,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
@@ -258,7 +258,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
@@ -320,7 +320,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
@@ -381,7 +381,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results. We expect four because the "A" col increases by 10 for each
@@ -436,7 +436,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
@@ -496,7 +496,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // There should only be a single output row

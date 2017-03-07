@@ -192,7 +192,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   // COMPILE
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*hj_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results

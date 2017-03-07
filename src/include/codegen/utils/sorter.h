@@ -15,8 +15,6 @@
 #include <cstdint>
 #include <vector>
 
-#include "storage/storage_manager.h"
-
 namespace peloton {
 namespace codegen {
 namespace utils {
@@ -124,9 +122,6 @@ class Sorter {
 
   // The comparison function
   ComparisonFunction cmp_func_;
-
-  // The storage manager (where we get our memory from)
-  storage::StorageManager &storage_manager_;
 };
 
 }  // namespace utils

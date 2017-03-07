@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog.h"
 #include "codegen/code_context.h"
 #include "planner/abstract_plan.h"
 #include "storage/database.h"
@@ -45,7 +46,7 @@ class QueryStatement {
 
   // Execute the query given the catalog manager and runtime/consumer state
   // that is passed along to the query execution code.
-  void Execute(catalog::Manager &manager, char *consumer_arg,
+  void Execute(catalog::Catalog &catalog, char *consumer_arg,
                RuntimeStats *stats = nullptr) const;
 
   // Return the query plan

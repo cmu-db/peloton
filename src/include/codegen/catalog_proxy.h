@@ -18,9 +18,9 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// A proxy to some of the methods in catalog::Manager
+// A proxy to some of the methods in catalog::Catalog
 //===----------------------------------------------------------------------===//
-class ManagerProxy {
+class CatalogProxy {
  public:
   // Return the LLVM type that matches the memory layout of our Manager class
   static llvm::Type *GetType(CodeGen &codegen);

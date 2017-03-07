@@ -37,16 +37,21 @@ llvm::Type *SorterProxy::GetType(CodeGen &codegen) {
       "version. Did you forget to update codegen/sorter_proxy.h?");
   */
 
-  // Sorter type doesn't exist in module, construct it now
-  auto *byte_array = llvm::ArrayType::get(
-      codegen.Int8Type(), sizeof(utils::Sorter::ComparisonFunction) +
-                              sizeof(storage::StorageManager &));
-  sorter_type = llvm::StructType::create(
-      codegen.GetContext(),
-      {codegen.CharPtrType(), codegen.CharPtrType(), codegen.CharPtrType(),
-       codegen.Int32Type(), byte_array},
-      kSorterTypeName);
+  // Ensure function pointers work
+  static_assert(
+      sizeof(codegen::utils::Sorter::ComparisonFunction) == sizeof(char *),
+      "Function pointer size is messed up.");
 
+  // Sorter type doesn't exist in module, construct it now
+  std::vector<llvm::Type *> sorter_fields = {
+      codegen.CharPtrType(),  // buffer start
+      codegen.CharPtrType(),  // buffer position
+      codegen.CharPtrType(),  // buffer end
+      codegen.Int32Type(),    // tuple size
+      codegen.CharPtrType()   // comparison function pointer
+  };
+  sorter_type = llvm::StructType::create(codegen.GetContext(), sorter_fields,
+                                         kSorterTypeName);
   return sorter_type;
 }
 

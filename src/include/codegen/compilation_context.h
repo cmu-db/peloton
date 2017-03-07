@@ -70,7 +70,7 @@ class CompilationContext {
     return result_consumer_;
   }
 
-  llvm::Value *GetManagerPtr();
+  llvm::Value *GetCatalogPtr();
 
  private:
   // Generate any helper functions that the query needs (i.e. any auxillary
@@ -108,7 +108,7 @@ class CompilationContext {
   QueryResultConsumer &result_consumer_;
 
   // The ID for the database/manager instance in the runtime state
-  RuntimeState::StateID manager_state_id_;
+  RuntimeState::StateID catalog_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

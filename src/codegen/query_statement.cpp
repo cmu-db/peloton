@@ -12,9 +12,6 @@
 
 #include "codegen/query_statement.h"
 
-#include "catalog/manager.h"
-#include "common/timer.h"
-
 namespace peloton {
 namespace codegen {
 
@@ -26,14 +23,14 @@ QueryStatement::QueryStatement(const planner::AbstractPlan &query_plan)
 // This really involves calling the init(), plan() and tearDown() functions, in
 // that order. We also need to correctly handle cases where _any_ of those
 // functions throw exceptions.
-void QueryStatement::Execute(catalog::Manager &manager, char *consumer_arg,
+void QueryStatement::Execute(catalog::Catalog &catalog, char *consumer_arg,
                              RuntimeStats *stats) const {
   // Create clean memory space for the parameters
   char param_data[param_size_];
   memset(param_data, 0, param_size_);
 
   // Set the first parameter as the database pointer
-  *reinterpret_cast<catalog::Manager **>(param_data) = &manager;
+  *reinterpret_cast<catalog::Catalog **>(param_data) = &catalog;
 
   // Set the second parameter as the runtime state pointer
   char *state_pos = param_data + sizeof(char *);

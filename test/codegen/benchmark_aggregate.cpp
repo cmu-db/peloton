@@ -33,7 +33,7 @@ namespace test {
 enum AggregateComplexity { SIMPLE, MODERATE, COMPLEX, WTF };
 
 struct TestConfig {
-  LayoutType layout = LAYOUT_ROW;
+  LayoutType layout = LayoutType::LAYOUT_TYPE_ROW;
   uint32_t column_count = 8;
   uint32_t tuples_per_tilegroup = 20000;
   uint32_t scale_factor = 20;
@@ -291,7 +291,7 @@ class BenchmarkAggregateTest : public PelotonTest {
       auto query_statement = compiler.Compile(*scan, buffer, &compile_stats);
 
       codegen::QueryStatement::RuntimeStats runtime_stats;
-      query_statement->Execute(catalog::Manager::GetInstance(),
+      query_statement->Execute(*catalog::Catalog::GetInstance(),
                                reinterpret_cast<char *>(buffer.GetState()),
                                &runtime_stats);
 

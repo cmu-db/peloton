@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -18,7 +17,7 @@
 #include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/executor_tests_util.h"
+#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -36,47 +35,44 @@ namespace test {
 
 class OrderByTranslatorTest : public PelotonTest {
  public:
-  OrderByTranslatorTest() {
-    CreateDatabase();
-    CreateTestTable();
-    // LoadTestTable();
+  OrderByTranslatorTest()
+      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)) {
+    // Create test table
+    auto *test_table = CreateTestTable();
+
+    // Add table to test DB
+    test_db->AddTable(test_table, false);
+
+    // Add DB to catalog
+    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
   }
 
-  ~OrderByTranslatorTest() override {
-    catalog::Manager::GetInstance().DropDatabaseWithOid(database->GetOid());
+  storage::DataTable *CreateTestTable() {
+    const int tuples_per_tilegroup = 32;
+    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false,
+                                            CodegenTestUtils::kTestTable1Oid);
   }
 
-  void CreateDatabase() {
-    database = new storage::Database(INVALID_OID);
-    catalog::Manager::GetInstance().AddDatabase(database);
-  }
+  void LoadTestTable(uint32_t num_rows) {
+    auto &test_table = GetTestTable();
 
-  void CreateTestTable() {
-    const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-    auto *data_table = ExecutorTestsUtil::CreateTable(tuple_count, false);
-    GetDatabase().AddTable(data_table);
-  }
-
-  void LoadTestTable(uint32_t num_rows = 10) {
-    auto &data_table = GetTestTable();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    txn_manager.BeginTransaction();
-    ExecutorTestsUtil::PopulateTable(&data_table, num_rows, false, true,
-                                     false);
-    txn_manager.CommitTransaction();
-  }
+    auto *txn = txn_manager.BeginTransaction();
 
-  storage::Database &GetDatabase() { return *database; }
+    TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false,
+                                       false, txn);
+    txn_manager.CommitTransaction(txn);
+  }
 
   storage::DataTable &GetTestTable() {
-    return *GetDatabase().GetTableWithOid(INVALID_OID);
+    return *test_db->GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
   }
 
  private:
-  storage::Database *database;
+  std::unique_ptr<storage::Database> test_db;
 };
 
-TEST_F(OrderByTranslatorTest, SortAscInt) {
+TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
   //
   // SELECT * FROM test_table ORDER BY a;
   //
@@ -102,7 +98,7 @@ TEST_F(OrderByTranslatorTest, SortAscInt) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in ascending order
@@ -111,11 +107,12 @@ TEST_F(OrderByTranslatorTest, SortAscInt) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const WrappedTuple &t1, const WrappedTuple &t2) {
-        return t1.GetValue(0).OpLessThanOrEqual(t2.GetValue(0)).IsTrue();
+        auto is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
+        return is_lte == type::CMP_TRUE;
       }));
 }
 
-TEST_F(OrderByTranslatorTest, SortDescInt) {
+TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
   //
   // SELECT * FROM test_table ORDER BY a DESC;
   //
@@ -141,22 +138,23 @@ TEST_F(OrderByTranslatorTest, SortDescInt) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char *>(buffer.GetState()));
 
-  // The results should be sorted in ascending order
+  // The results should be sorted in descending order
   auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(results.size(), num_test_rows);
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const WrappedTuple &t1, const WrappedTuple &t2) {
-        return t1.GetValue(0).OpGreaterThanOrEqual(t2.GetValue(0)).IsTrue();
+        auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
+        return is_gte == type::CMP_TRUE;
       }));
 }
 
-TEST_F(OrderByTranslatorTest, SortAllAscInt) {
+TEST_F(OrderByTranslatorTest, MultiIntColDescTest) {
   //
-  // SELECT * FROM test_table ORDER BY a DESC;
+  // SELECT * FROM test_table ORDER BY b, a DESC;
   //
 
   // Load table with 20 rows
@@ -180,38 +178,36 @@ TEST_F(OrderByTranslatorTest, SortAllAscInt) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(results.size(), num_test_rows);
 
-  for (const auto& t : results) {
+  for (const auto &t : results) {
     auto v0 = t.GetValue(0);
     auto v1 = t.GetValue(1);
     std::stringstream ss;
-    ss << "[" << ValuePeeker::PeekInteger(v0);
-    ss << " (" << ValueTypeToString(v0.GetValueType()) << "), ";
-    ss << "[" << ValuePeeker::PeekInteger(v1);
-    ss << " (" << ValueTypeToString(v1.GetValueType()) << ")]";
+    ss << "[" << type::ValuePeeker::PeekInteger(v0);
+    ss << " (" << TypeIdToString(v0.GetTypeId()) << "), ";
+    ss << "[" << type::ValuePeeker::PeekInteger(v1);
+    ss << " (" << TypeIdToString(v1.GetTypeId()) << ")]";
     std::cerr << ss.str() << std::endl;
   }
 
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const WrappedTuple &t1, const WrappedTuple &t2) {
-        if (t1.GetValue(1).OpEquals(t2.GetValue(1)).IsTrue()) {
-          return t1.GetValue(0).OpLessThanOrEqual(t2.GetValue(0)).IsTrue();
-        } else {
-          return t1.GetValue(1).OpLessThan(t2.GetValue(1)).IsTrue();
-        }
+        auto b_is_lte = t1.GetValue(1).CompareLessThanEquals(t2.GetValue(1));
+        auto a_is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
+        return b_is_lte == type::CMP_TRUE && a_is_lte == type::CMP_TRUE;
       }));
 }
 
-TEST_F(OrderByTranslatorTest, SortAscIntDescInt) {
+TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   //
-  // SELECT * FROM test_table ORDER BY a DESC;
+  // SELECT * FROM test_table ORDER BY b DESC a ASC;
   //
 
   // Load table with 20 rows
@@ -235,7 +231,7 @@ TEST_F(OrderByTranslatorTest, SortAscIntDescInt) {
   // COMPILE and execute
   codegen::QueryCompiler compiler;
   auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(catalog::Manager::GetInstance(),
+  query_statement->Execute(*catalog::Catalog::GetInstance(),
                            reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in ascending order
@@ -245,11 +241,9 @@ TEST_F(OrderByTranslatorTest, SortAscIntDescInt) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const WrappedTuple &t1, const WrappedTuple &t2) {
-        if (t1.GetValue(1).OpEquals(t2.GetValue(1)).IsTrue()) {
-          return t1.GetValue(0).OpGreaterThanOrEqual(t2.GetValue(0)).IsTrue();
-        } else {
-          return t1.GetValue(1).OpLessThan(t2.GetValue(1)).IsTrue();
-        }
+        auto b_is_lte = t1.GetValue(1).CompareLessThanEquals(t2.GetValue(1));
+        auto a_is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
+        return b_is_lte == type::CMP_TRUE && a_is_gte == type::CMP_TRUE;
       }));
 }
 
