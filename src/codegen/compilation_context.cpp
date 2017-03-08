@@ -168,9 +168,6 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
       {{"runtimeState",
         runtime_state_.ConstructType(codegen_)->getPointerTo()}}};
 
-  // Let the result consumer prepare any state before the generation of the plan
-  result_consumer_.PrepareResult(*this);
-
   // Create all local state
   runtime_state_.CreateLocalState(codegen_);
 
