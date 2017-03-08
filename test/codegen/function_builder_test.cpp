@@ -28,18 +28,18 @@ TEST_F(FunctionHelperTest, ConstructSingleFunction) {
   //   return 44;
   // }
 
-  codegen::CodeContext container;
-  codegen::CodeGen cg{container};
-  codegen::FunctionBuilder func{container, "Test", cg.Int32Type(), {}};
+  codegen::CodeContext code_context;
+  codegen::CodeGen cg{code_context};
+  codegen::FunctionBuilder func{code_context, "Test", cg.Int32Type(), {}};
   {
     cg.CallPrintf("Hello, world!\n", {});
     func.ReturnAndFinish(cg.Const32(44));
   }
 
-  ASSERT_TRUE(container.Compile());
+  ASSERT_TRUE(code_context.Compile());
 
   typedef int (*func_t)(void);
-  func_t fn = (func_t)container.GetFunctionPointer(func.GetFunction());
+  func_t fn = (func_t)code_context.GetFunctionPointer(func.GetFunction());
   ASSERT_EQ(fn(), 44);
 }
 
@@ -58,26 +58,26 @@ TEST_F(FunctionHelperTest, ConstructNestedFunction) {
   // testing that this nesting is able to restore appropriate insertion points
   // in the IRBuilder.
 
-  codegen::CodeContext container;
-  codegen::CodeGen cg{container};
-  codegen::FunctionBuilder main{container, "main", cg.Int32Type(), {}};
+  codegen::CodeContext code_context;
+  codegen::CodeGen cg{code_context};
+  codegen::FunctionBuilder main{code_context, "main", cg.Int32Type(), {}};
   {
-    codegen::FunctionBuilder test{container, "test", cg.VoidType(), {}};
+    codegen::FunctionBuilder test{code_context, "test", cg.VoidType(), {}};
     {
       cg.CallPrintf("Hello, world!\n", {});
       test.ReturnAndFinish();
     }
 
     // Now call the @test function that was we just constructed, then return 44
-    cg.CallFunc(container.GetFunction("test"), {});
+    cg.CallFunc(code_context.GetFunction("test"), {});
     main.ReturnAndFinish(cg.Const32(44));
   }
 
   // Make sure we can compile everything
-  ASSERT_TRUE(container.Compile());
+  ASSERT_TRUE(code_context.Compile());
 
   typedef int (*func_t)(void);
-  func_t fn = (func_t)container.GetFunctionPointer(main.GetFunction());
+  func_t fn = (func_t)code_context.GetFunctionPointer(main.GetFunction());
   ASSERT_EQ(fn(), 44);
 }
 

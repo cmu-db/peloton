@@ -36,32 +36,32 @@ TEST_F(IfTest, TestIfOnly) {
   //   }
   // }
 
-  codegen::CodeContext container;
-  codegen::CodeGen cg{container};
+  codegen::CodeContext code_context;
+  codegen::CodeGen cg{code_context};
   codegen::FunctionBuilder func{
-      container, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
+      code_context, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
 
-    codegen::Value va(VALUE_TYPE_INTEGER);
-    codegen::Value vb(VALUE_TYPE_INTEGER);
+    codegen::Value va(type::Type::TypeId::INTEGER);
+    codegen::Value vb(type::Type::TypeId::INTEGER);
     codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
-      va = {VALUE_TYPE_INTEGER, cg.Const32(1)};
+      va = {type::Type::TypeId::INTEGER, cg.Const32(1)};
     }
     cond.ElseBlock();
     {
-      vb = {VALUE_TYPE_INTEGER, cg.Const32(0)};
+      vb = {type::Type::TypeId::INTEGER, cg.Const32(0)};
     }
     cond.EndIf();
     func.ReturnAndFinish(cond.BuildPHI(va, vb).GetValue());
   }
 
-  ASSERT_TRUE(container.Compile());
+  ASSERT_TRUE(code_context.Compile());
 
   typedef int (*ftype)(int);
 
-  ftype f = (ftype)container.GetFunctionPointer(func.GetFunction());
+  ftype f = (ftype)code_context.GetFunctionPointer(func.GetFunction());
 
   ASSERT_TRUE(f != nullptr);
 
@@ -74,8 +74,8 @@ TEST_F(IfTest, TestIfOnly) {
 
 TEST_F(IfTest, TestIfInsideLoop) {
   const std::string func_name = "TestIfInsideLoop";
-  codegen::CodeContext container;
-  codegen::CodeGen cg{container};
+  codegen::CodeContext code_context;
+  codegen::CodeGen cg{code_context};
 
   // Create a function that resembles:
   // Generate a function like so:
@@ -90,7 +90,7 @@ TEST_F(IfTest, TestIfInsideLoop) {
   // test, but it's a quick check to see if BB insertions work.
 
   codegen::FunctionBuilder func{
-      container, func_name, cg.VoidType(), {{"a", cg.Int32Type()}}};
+      code_context, func_name, cg.VoidType(), {{"a", cg.Int32Type()}}};
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
     llvm::Value *i = cg.Const32(0);
@@ -112,11 +112,11 @@ TEST_F(IfTest, TestIfInsideLoop) {
     func.ReturnAndFinish();
   }
 
-  ASSERT_TRUE(container.Compile());
+  ASSERT_TRUE(code_context.Compile());
 
   typedef void (*ftype)(int);
 
-  ftype f = (ftype)container.GetFunctionPointer(func.GetFunction());
+  ftype f = (ftype)code_context.GetFunctionPointer(func.GetFunction());
   f(10);
 }
 
@@ -136,43 +136,43 @@ TEST_F(IfTest, ComplexNestedIf) {
   //   }
   // }
 
-  codegen::CodeContext container;
-  codegen::CodeGen cg{container};
+  codegen::CodeContext code_context;
+  codegen::CodeGen cg{code_context};
   codegen::FunctionBuilder func{
-      container, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
+      code_context, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
   {
     llvm::Value *param_a = func.GetArgumentByName("a");
 
-    codegen::Value vab(VALUE_TYPE_INTEGER);
-    codegen::Value vc(VALUE_TYPE_INTEGER);
+    codegen::Value vab(type::Type::TypeId::INTEGER);
+    codegen::Value vc(type::Type::TypeId::INTEGER);
     codegen::If cond{cg, cg->CreateICmpSLT(param_a, cg.Const32(10))};
     {
-      codegen::Value va(VALUE_TYPE_INTEGER);
-      codegen::Value vb(VALUE_TYPE_INTEGER);
+      codegen::Value va(type::Type::TypeId::INTEGER);
+      codegen::Value vb(type::Type::TypeId::INTEGER);
       codegen::If cond2{cg, cg->CreateICmpSLT(param_a, cg.Const32(5))};
       {
-        va = {VALUE_TYPE_INTEGER, cg.Const32(-1)};
+        va = {type::Type::TypeId::INTEGER, cg.Const32(-1)};
       }
       cond2.ElseBlock();
       {
-        vb = {VALUE_TYPE_INTEGER, cg.Const32(0)};
+        vb = {type::Type::TypeId::INTEGER, cg.Const32(0)};
       }
       cond2.EndIf();
       vab = cond2.BuildPHI(va, vb);
     }
     cond.ElseBlock();
     {
-      vc = {VALUE_TYPE_INTEGER, cg.Const32(1)};
+      vc = {type::Type::TypeId::INTEGER, cg.Const32(1)};
     }
     cond.EndIf();
     func.ReturnAndFinish(cond.BuildPHI(vab, vc).GetValue());
   }
 
-  ASSERT_TRUE(container.Compile());
+  ASSERT_TRUE(code_context.Compile());
 
   typedef int (*ftype)(int);
 
-  ftype f = (ftype)container.GetFunctionPointer(func.GetFunction());
+  ftype f = (ftype)code_context.GetFunctionPointer(func.GetFunction());
 
   ASSERT_TRUE(f != nullptr);
 
