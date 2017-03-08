@@ -110,27 +110,30 @@ TEST_F(OAHashTableTest, CanIterate) {
     Insert({1, i}, v);
   }
 
+  auto &hashtable = GetHashTable();
+
   // Check that we find them all
   uint32_t i = 0;
-  for (auto iter = GetHashTable().begin(), end = GetHashTable().end();
-       iter != end; ++iter) {
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
     i++;
   }
 
   EXPECT_EQ(to_insert, i);
 
   // Insert two duplicate keys to make sure iteration catches it
+  Key key_dup{1, 0};
   Value vdup1 = {6, 5, 4, 3}, vdup2{4, 4, 4, 4};
 
-  Insert({1, 0}, vdup1);
-  Insert({1, 0}, vdup2);
+  Insert(key_dup, vdup1);
+  Insert(key_dup, vdup2);
 
   i = 0;
   uint32_t dup_count = 0;
-  for (auto iter = GetHashTable().begin(), end = GetHashTable().end();
+  for (auto iter = hashtable.begin(), end = hashtable.end();
        iter != end; ++iter) {
     const Key *iter_key = reinterpret_cast<const Key *>(iter.Key());
-    if (*iter_key == Key{1, 0}) {
+    if (*iter_key == key_dup) {
       dup_count++;
       const Value *iter_val = reinterpret_cast<const Value *>(iter.Value());
       EXPECT_TRUE(*iter_val == v || *iter_val == vdup1 || *iter_val == vdup2);
