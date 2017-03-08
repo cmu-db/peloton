@@ -111,7 +111,7 @@ class CodeGen {
   }
 
   // Get the runtime state function argument
-  llvm::Value *GetState() const { return GetFunction()->arg_begin(); }
+  llvm::Value *GetState() const { return &*GetFunction()->arg_begin(); }
 
   // Get the LLVM context
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }

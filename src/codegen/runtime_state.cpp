@@ -16,8 +16,12 @@
 namespace peloton {
 namespace codegen {
 
+// Constructor
 RuntimeState::RuntimeState() : constructed_type_(nullptr) {}
 
+// Register some state of the given type and with the given name. The last
+// argument indicates whether this state is local (i.e., lives on the stack) or
+// whether the requesting operator wants to manage the memory.
 RuntimeState::StateID RuntimeState::RegisterState(std::string name,
                                                   llvm::Type *type,
                                                   bool is_on_stack) {

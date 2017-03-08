@@ -13,8 +13,6 @@
 #pragma once
 
 #include <functional>
-#include <cstdint>
-#include <cassert>
 
 namespace peloton {
 namespace codegen {
