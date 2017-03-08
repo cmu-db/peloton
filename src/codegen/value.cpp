@@ -429,8 +429,7 @@ Value::OpPromotionMetadata Value::PromoteOperands(CodeGen &codegen,
   Value::OpPromotionMetadata op_metadata;
 
   // TODO: Fix me
-  op_metadata.value_type = lhs.GetType();
-      //peloton::Value::PromoteForOp(lhs.GetType(), rhs.GetType());
+  op_metadata.value_type = std::max(lhs.GetType(), rhs.GetType());
   op_metadata.llvm_type = NumericType(codegen, op_metadata.value_type);
 
   // Promote LHS if necessary
