@@ -21,9 +21,9 @@ namespace test {
 
 const uint32_t CodegenTestUtils::kTestDbOid = INVALID_OID;
 const uint32_t CodegenTestUtils::kTestTable1Oid = 45;
-const uint32_t CodegenTestUtils::kTestTable2Oid = 45;
-const uint32_t CodegenTestUtils::kTestTable3Oid = 46;
-const uint32_t CodegenTestUtils::kTestTable4Oid = 47;
+const uint32_t CodegenTestUtils::kTestTable2Oid = 46;
+const uint32_t CodegenTestUtils::kTestTable3Oid = 47;
+const uint32_t CodegenTestUtils::kTestTable4Oid = 48;
 
 expression::ConstantValueExpression *
 CodegenTestUtils::ConstIntExpression(int64_t val) {

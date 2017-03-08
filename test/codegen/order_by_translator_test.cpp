@@ -152,9 +152,9 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
       }));
 }
 
-TEST_F(OrderByTranslatorTest, MultiIntColDescTest) {
+TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   //
-  // SELECT * FROM test_table ORDER BY b, a DESC;
+  // SELECT * FROM test_table ORDER BY b, a ASC;
   //
 
   // Load table with 20 rows
@@ -185,23 +185,18 @@ TEST_F(OrderByTranslatorTest, MultiIntColDescTest) {
   auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(results.size(), num_test_rows);
 
-  for (const auto &t : results) {
-    auto v0 = t.GetValue(0);
-    auto v1 = t.GetValue(1);
-    std::stringstream ss;
-    ss << "[" << type::ValuePeeker::PeekInteger(v0);
-    ss << " (" << TypeIdToString(v0.GetTypeId()) << "), ";
-    ss << "[" << type::ValuePeeker::PeekInteger(v1);
-    ss << " (" << TypeIdToString(v1.GetTypeId()) << ")]";
-    std::cerr << ss.str() << std::endl;
-  }
-
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const WrappedTuple &t1, const WrappedTuple &t2) {
-        auto b_is_lte = t1.GetValue(1).CompareLessThanEquals(t2.GetValue(1));
-        auto a_is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
-        return b_is_lte == type::CMP_TRUE && a_is_lte == type::CMP_TRUE;
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) == type::CMP_TRUE) {
+          // t1.b == t2.b => t1.a <= t2.a
+          return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
+                 type::CMP_TRUE;
+        } else {
+          // t1.b != t2.b => t1.b < t2.b
+          return t1.GetValue(1).CompareLessThan(t2.GetValue(1)) ==
+                 type::CMP_TRUE;
+        }
       }));
 }
 
@@ -215,7 +210,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   LoadTestTable(num_test_rows);
 
   std::unique_ptr<planner::OrderByPlan> order_by_plan{
-      new planner::OrderByPlan({1, 0}, {false, true}, {0, 1, 2, 3})};
+      new planner::OrderByPlan({1, 0}, {true, false}, {0, 1, 2, 3})};
   std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{
       new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1, 2, 3})};
 
@@ -241,9 +236,15 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const WrappedTuple &t1, const WrappedTuple &t2) {
-        auto b_is_lte = t1.GetValue(1).CompareLessThanEquals(t2.GetValue(1));
-        auto a_is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
-        return b_is_lte == type::CMP_TRUE && a_is_gte == type::CMP_TRUE;
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) == type::CMP_TRUE) {
+          // t1.b == t2.b => t1.a <= t2.a
+          return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
+                 type::CMP_TRUE;
+        } else {
+          // t1.b != t2.b => t1.b > t2.b
+          return t1.GetValue(1).CompareGreaterThan(t2.GetValue(1)) ==
+                 type::CMP_TRUE;
+        }
       }));
 }
 

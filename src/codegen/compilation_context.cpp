@@ -69,7 +69,7 @@ void CompilationContext::GeneratePlan(QueryStatement &query,
   Pipeline pipeline;
   Prepare(query.GetPlan(), pipeline);
 
-  if (stats) {
+  if (stats != nullptr) {
     timer.Stop();
     stats->setup_ms = timer.GetDuration();
     timer.Reset();

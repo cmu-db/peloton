@@ -21,7 +21,7 @@
 #include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/executor_tests_util.h"
+#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -48,76 +48,78 @@ class HashJoinTranslatorTest : public PelotonTest {
  public:
   typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
 
-  HashJoinTranslatorTest() {
-    CreateDatabase();
+  HashJoinTranslatorTest()
+      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)) {
     CreateTestTables();
+
+    // Add DB to catalog
+    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
+
+    // Load the test table
     LoadTestTables();
   }
 
-  ~HashJoinTranslatorTest() override {
-    catalog::Manager::GetInstance().DropDatabaseWithOid(database->GetOid());
-  }
-
-  storage::Database& GetDatabase() const { return *database; }
+  storage::Database& GetDatabase() const { return *test_db; }
 
   storage::DataTable& GetLeftTable() const {
-    return *GetDatabase().GetTableWithOid(0);
+    return *GetDatabase().GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
   }
   storage::DataTable& GetRightTable() const {
-    return *GetDatabase().GetTableWithOid(1);
+    return *GetDatabase().GetTableWithOid(CodegenTestUtils::kTestTable2Oid);
   }
 
  private:
-  void CreateDatabase() {
-    database = new storage::Database(0);
-    catalog::Manager::GetInstance().AddDatabase(database);
-  }
-
   void CreateTestTables() {
     const int tuples_per_tilegroup_count = 5;
     const bool adapt_table = false;
     const bool own_schema = true;
 
     auto* left_table_schema =
-        new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
-                             ExecutorTestsUtil::GetColumnInfo(1),
-                             ExecutorTestsUtil::GetColumnInfo(2),
-                             ExecutorTestsUtil::GetColumnInfo(3)});
+        new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                             TestingExecutorUtil::GetColumnInfo(1),
+                             TestingExecutorUtil::GetColumnInfo(2),
+                             TestingExecutorUtil::GetColumnInfo(3)});
     auto* left_table = storage::TableFactory::GetDataTable(
-        GetDatabase().GetOid(), 0, left_table_schema, "left-table",
-        tuples_per_tilegroup_count, own_schema, adapt_table);
+        GetDatabase().GetOid(), CodegenTestUtils::kTestTable1Oid,
+        left_table_schema, "left-table", tuples_per_tilegroup_count, own_schema,
+        adapt_table);
 
     auto* right_table_schema =
-        new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
-                             ExecutorTestsUtil::GetColumnInfo(1),
-                             ExecutorTestsUtil::GetColumnInfo(2),
-                             ExecutorTestsUtil::GetColumnInfo(3)});
+        new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                             TestingExecutorUtil::GetColumnInfo(1),
+                             TestingExecutorUtil::GetColumnInfo(2),
+                             TestingExecutorUtil::GetColumnInfo(3)});
     auto* right_table = storage::TableFactory::GetDataTable(
-        GetDatabase().GetOid(), 1, right_table_schema, "right-table",
-        tuples_per_tilegroup_count, own_schema, adapt_table);
+        GetDatabase().GetOid(), CodegenTestUtils::kTestTable2Oid,
+        right_table_schema, "right-table", tuples_per_tilegroup_count,
+        own_schema, adapt_table);
 
-    GetDatabase().AddTable(left_table);
-    GetDatabase().AddTable(right_table);
+    GetDatabase().AddTable(left_table, false);
+    GetDatabase().AddTable(right_table, false);
   }
 
   void LoadTestTables(uint32_t num_rows = 10) {
     auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    txn_manager.BeginTransaction();
+    auto* txn = txn_manager.BeginTransaction();
+
     // Load left
-    auto* left_table = GetDatabase().GetTableWithOid(0);
-    ExecutorTestsUtil::PopulateTable(left_table, 2 * num_rows, false,
-                                     false, false);
+    TestingExecutorUtil::PopulateTable(&GetLeftTable(), 2 * num_rows, false,
+                                       false, false, txn);
+    std::cout << GetLeftTable().GetTupleCount() << std::endl;
+    std::cout << GetLeftTable().GetName() << std::endl;
 
     // Load right
-    auto* right_table = GetDatabase().GetTableWithOid(1);
-    ExecutorTestsUtil::PopulateTable(right_table, 8 * num_rows, false,
-                                     false, false);
+    TestingExecutorUtil::PopulateTable(&GetRightTable(), 8 * num_rows, false,
+                                       false, false, txn);
 
-    txn_manager.CommitTransaction();
+    std::cout << GetRightTable().GetTupleCount() << std::endl;
+    std::cout << GetRightTable().GetName() << std::endl;
+
+    txn_manager.CommitTransaction(txn);
   }
 
  private:
-  storage::Database *database;
+  std::unique_ptr<storage::Database> test_db;
 };
 
 TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
@@ -131,44 +133,45 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   //
 
   // Construct join predicate: left_table.a = right_table.a
-  auto* left_a = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+  auto* left_a =
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
   auto* right_a =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  AbstractExprPtr left_a_eq_right_a{
-      new expression::ComparisonExpression<expression::CmpEq>(
-          EXPRESSION_TYPE_COMPARE_EQUAL, left_a, right_a)};
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
+  AbstractExprPtr left_a_eq_right_a{new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, left_a, right_a)};
 
   // Projection:  [left_table.a, right_table.a, left_table.b, right_table.c]
-  planner::ProjectInfo::DirectMap dm1 = std::make_pair(0, std::make_pair(0, 0));
-  planner::ProjectInfo::DirectMap dm2 = std::make_pair(1, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap dm3 = std::make_pair(2, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap dm4 = std::make_pair(3, std::make_pair(1, 2));
-  planner::ProjectInfo::DirectMapList direct_map_list = {dm1, dm2, dm3, dm4};
-  std::unique_ptr<planner::ProjectInfo> projection{new planner::ProjectInfo(
-      planner::ProjectInfo::TargetList{}, std::move(direct_map_list))};
+  DirectMap dm1 = std::make_pair(0, std::make_pair(0, 0));
+  DirectMap dm2 = std::make_pair(1, std::make_pair(1, 0));
+  DirectMap dm3 = std::make_pair(2, std::make_pair(0, 1));
+  DirectMap dm4 = std::make_pair(3, std::make_pair(1, 2));
+  DirectMapList direct_map_list = {dm1, dm2, dm3, dm4};
+  std::unique_ptr<planner::ProjectInfo> projection{
+      new planner::ProjectInfo(TargetList{}, std::move(direct_map_list))};
 
   // Output schema
-  auto schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(0),
-       ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(2)}));
+  auto schema = std::shared_ptr<const catalog::Schema>(
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2)}));
 
   // Left and right hash keys
   std::vector<AbstractExprPtr> left_hash_keys;
   left_hash_keys.emplace_back(
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0));
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0));
 
   std::vector<AbstractExprPtr> right_hash_keys;
   right_hash_keys.emplace_back(
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 0));
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
 
   std::vector<AbstractExprPtr> hash_keys;
   hash_keys.emplace_back(
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 0));
+      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
 
   // Finally, the fucking join node
   std::unique_ptr<planner::HashJoinPlan> hj_plan{new planner::HashJoinPlan(
-      JOIN_TYPE_INNER, std::move(left_a_eq_right_a), std::move(projection),
+      JoinType::INNER, std::move(left_a_eq_right_a), std::move(projection),
       schema, left_hash_keys, right_hash_keys)};
   std::unique_ptr<planner::HashPlan> hash_plan{
       new planner::HashPlan(hash_keys)};
@@ -196,14 +199,15 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
                            reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
-  const auto& results = buffer.GetOutputTuples();
+  const auto &results = buffer.GetOutputTuples();
   // The left table has 20 columns, the right has 80, all of them match
-  EXPECT_EQ(results.size(), 20);
+  EXPECT_EQ(20, results.size());
   // The output has the join columns (that should match) in positions 0 and 1
   for (const auto& tuple : results) {
-    Value v0 = tuple.GetValue(0);
-    EXPECT_EQ(v0.GetValueType(), VALUE_TYPE_INTEGER);
-    //EXPECT_TRUE(tuple.GetValue(0).OpEquals(tuple.GetValue(1)).IsTrue());
+    type::Value v0 = tuple.GetValue(0);
+    EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
+    EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
+              type::CMP_TRUE);
   }
 }
 

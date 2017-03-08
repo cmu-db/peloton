@@ -22,11 +22,6 @@ namespace planner {
 
 class HashJoinPlan : public AbstractJoinPlan {
  public:
-  HashJoinPlan(const HashJoinPlan &) = delete;
-  HashJoinPlan &operator=(const HashJoinPlan &) = delete;
-  HashJoinPlan(HashJoinPlan &&) = delete;
-  HashJoinPlan &operator=(HashJoinPlan &&) = delete;
-
   HashJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
@@ -40,13 +35,24 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::shared_ptr<const catalog::Schema> &proj_schema,
       const std::vector<oid_t> &outer_hashkeys);
 
+  HashJoinPlan(
+      JoinType join_type,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &left_hash_keys,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &right_hash_keys)
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
+                         proj_schema),
+        left_hash_keys_(std::move(left_hash_keys)),
+        right_hash_keys_(std::move(right_hash_keys)) {}
+
   void HandleSubplanBinding(bool is_left,
                             const BindingContext &context) override;
 
-
-  inline PlanNodeType GetPlanNodeType() const {
-    return PlanNodeType::HASHJOIN;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASHJOIN; }
 
   const std::string GetInfo() const { return "HashJoin"; }
 
@@ -86,6 +92,9 @@ class HashJoinPlan : public AbstractJoinPlan {
       left_hash_keys_;
   std::vector<std::unique_ptr<const expression::AbstractExpression>>
       right_hash_keys_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(HashJoinPlan);
 };
 
 }  // namespace planner
