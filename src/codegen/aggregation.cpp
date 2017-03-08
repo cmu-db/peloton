@@ -28,7 +28,7 @@ void Aggregation::Setup(
   for (uint32_t i = 0; i < aggregates.size(); i++) {
     const auto agg_term = aggregates[i];
     // Defense > Offense ?
-    assert(agg_term.agg_ai.type != type::Type::TypeId::INVALID);
+    PL_ASSERT(agg_term.agg_ai.type != type::Type::TypeId::INVALID);
 
     needs_group_count |= agg_term.aggtype == ExpressionType::AGGREGATE_AVG;
     tracks_group_count |=
@@ -97,7 +97,7 @@ void Aggregation::Setup(
         // count(*)'s are always stored in the first slot, reference that here
         // NOTE: We've already added the count(*) to the storage format above,
         //       don't do it here
-        assert(tracks_group_count);
+        PL_ASSERT(tracks_group_count);
         AggregateInfo count_agg{agg_term.aggtype, type::Type::TypeId::BIGINT,
                                 source_index, 0, false};
         aggregate_infos_.push_back(count_agg);
@@ -175,21 +175,21 @@ void Aggregation::AdvanceValues(
     codegen::Value next;
     switch (aggregate_info.aggregate_type) {
       case ExpressionType::AGGREGATE_SUM: {
-        assert(source < std::numeric_limits<uint32_t>::max());
+        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
         auto curr =
             storage_.Get(codegen, storage_space, aggregate_info.storage_index);
         next = curr.Add(codegen, next_vals[source]);
         break;
       }
       case ExpressionType::AGGREGATE_MIN: {
-        assert(source < std::numeric_limits<uint32_t>::max());
+        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
         auto curr =
             storage_.Get(codegen, storage_space, aggregate_info.storage_index);
         next = curr.Min(codegen, next_vals[source]);
         break;
       }
       case ExpressionType::AGGREGATE_MAX: {
-        assert(source < std::numeric_limits<uint32_t>::max());
+        PL_ASSERT(source < std::numeric_limits<uint32_t>::max());
         auto curr =
             storage_.Get(codegen, storage_space, aggregate_info.storage_index);
         next = curr.Max(codegen, next_vals[source]);
@@ -229,7 +229,7 @@ void Aggregation::AdvanceValues(
     }
 
     // Store the next value in the appropriate slot
-    assert(next.GetType() != type::Type::TypeId::INVALID);
+    PL_ASSERT(next.GetType() != type::Type::TypeId::INVALID);
     storage_.Set(codegen, storage_space, aggregate_info.storage_index, next);
   }
 }
@@ -277,11 +277,11 @@ void Aggregation::FinalizeValues(
       }
       case ExpressionType::AGGREGATE_COUNT_STAR: {
         if (source != std::numeric_limits<uint32_t>::max()) {
-          assert(!aggregate_info.is_internal);
+          PL_ASSERT(!aggregate_info.is_internal);
           uint32_t count_source = std::numeric_limits<uint32_t>::max();
           final_vals.push_back(vals[std::make_pair(count_source, agg_type)]);
         } else {
-          assert(aggregate_info.is_internal);
+          PL_ASSERT(aggregate_info.is_internal);
           codegen::Value final_val = storage_.Get(codegen, storage_space,
                                                   aggregate_info.storage_index);
           vals[std::make_pair(source, agg_type)] = final_val;

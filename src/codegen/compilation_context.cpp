@@ -54,7 +54,7 @@ void CompilationContext::Produce(const planner::AbstractPlan &op) {
   // Get the appropriate translator for the operator, then get it to produce
   // tuples dammit!
   auto *translator = GetTranslator(op);
-  assert(translator != nullptr);
+  PL_ASSERT(translator != nullptr);
   translator->Produce();
 }
 

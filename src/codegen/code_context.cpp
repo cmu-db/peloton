@@ -58,7 +58,7 @@ CodeContext::CodeContext()
                         .setMCPU(llvm::sys::getHostCPUName())
                         .setErrorStr(&err_str_)
                         .create());
-  assert(jit_engine_ != nullptr);
+  PL_ASSERT(jit_engine_ != nullptr);
 
 #if LLVM_VERSION_MINOR == 6
   // LLVM 3.6

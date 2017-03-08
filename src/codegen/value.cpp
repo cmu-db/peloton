@@ -127,8 +127,8 @@ Value Value::CompareForSort(CodeGen &codegen, const codegen::Value &o) const {
 // Mathematical addition with overflow checking
 //===----------------------------------------------------------------------===//
 Value Value::Add(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
   //  // If the input types are different, promote to the largest type
   //  OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
@@ -137,7 +137,7 @@ Value Value::Add(CodeGen &codegen, const Value &o) const {
   //  llvm::Function *sadd_func = llvm::Intrinsic::getDeclaration(
   //      &codegen.GetModule(), llvm::Intrinsic::sadd_with_overflow,
   //      op_md.llvm_type);
-  //  assert(sadd_func != nullptr);
+  //  PL_ASSERT(sadd_func != nullptr);
   //
   //  // returns a struct: { addition_result, overflow bit}
   //  llvm::Value *result_struct =
@@ -156,8 +156,8 @@ Value Value::Add(CodeGen &codegen, const Value &o) const {
 // Mathematical subtraction with overflow checking
 //===----------------------------------------------------------------------===//
 Value Value::Sub(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
   //  // If the input types are different, promote to the largest type
   //  OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
@@ -166,7 +166,7 @@ Value Value::Sub(CodeGen &codegen, const Value &o) const {
   //  llvm::Function *ssub_func = llvm::Intrinsic::getDeclaration(
   //      &codegen.GetModule(), llvm::Intrinsic::ssub_with_overflow,
   //      op_md.llvm_type);
-  //  assert(ssub_func != nullptr);
+  //  PL_ASSERT(ssub_func != nullptr);
   //
   //  // returns a struct: { subtraction_result, overflow bit}
   //  llvm::Value *result_struct =
@@ -185,8 +185,8 @@ Value Value::Sub(CodeGen &codegen, const Value &o) const {
 // Mathematical multiplication with overflow checking
 //===----------------------------------------------------------------------===//
 Value Value::Mul(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
   // If the input types are different, promote to the largest type
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
@@ -195,7 +195,7 @@ Value Value::Mul(CodeGen &codegen, const Value &o) const {
   //  llvm::Function *smul_func = llvm::Intrinsic::getDeclaration(
   //      &codegen.GetModule(), llvm::Intrinsic::smul_with_overflow,
   //      op_md.llvm_type);
-  //  assert(smul_func != nullptr);
+  //  PL_ASSERT(smul_func != nullptr);
   //
   //  // returns a struct: { multiplication_result, overflow bit}
   //  llvm::Value *result_struct =
@@ -214,8 +214,8 @@ Value Value::Mul(CodeGen &codegen, const Value &o) const {
 // Mathematical division
 //===----------------------------------------------------------------------===//
 Value Value::Div(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
   //  // Throw an exception if the divisor is zero
   //  CreateCheckDivideByZeroException(codegen, o);
@@ -260,8 +260,8 @@ Value Value::Div(CodeGen &codegen, const Value &o) const {
 // Mathematical modulus
 //===----------------------------------------------------------------------===//
 Value Value::Mod(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
   //  // Throw an exception if the divisor is zero
   //  CreateCheckDivideByZeroException(codegen, o);
@@ -279,9 +279,9 @@ Value Value::Mod(CodeGen &codegen, const Value &o) const {
 // Mathematical minimum
 //===----------------------------------------------------------------------===//
 Value Value::Min(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
-  assert(GetType() == o.GetType());
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() == o.GetType());
 
   llvm::Value *comparison = codegen->CreateICmpSLT(GetValue(), o.GetValue());
   return Value{GetType(),
@@ -292,9 +292,9 @@ Value Value::Min(CodeGen &codegen, const Value &o) const {
 // Mathematical maximum
 //===----------------------------------------------------------------------===//
 Value Value::Max(CodeGen &codegen, const Value &o) const {
-  assert(GetType() != type::Type::TypeId::INVALID);
-  assert(GetType() != type::Type::TypeId::VARCHAR);
-  assert(GetType() == o.GetType());
+  PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
+  PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
+  PL_ASSERT(GetType() == o.GetType());
 
   llvm::Value *comparison = codegen->CreateICmpSLT(GetValue(), o.GetValue());
   return Value{GetType(),
@@ -305,8 +305,8 @@ Value Value::Max(CodeGen &codegen, const Value &o) const {
 // Logical AND
 //===----------------------------------------------------------------------===//
 Value Value::LogicalAnd(CodeGen &codegen, const Value &o) const {
-  assert(GetType() == type::Type::TypeId::BOOLEAN);
-  assert(GetType() == o.GetType());
+  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  PL_ASSERT(GetType() == o.GetType());
 
   llvm::Value *land = codegen->CreateAnd(GetValue(), o.GetValue());
   return Value{GetType(), land};
@@ -316,8 +316,8 @@ Value Value::LogicalAnd(CodeGen &codegen, const Value &o) const {
 // Logical OR
 //===----------------------------------------------------------------------===//
 Value Value::LogicalOr(CodeGen &codegen, const Value &o) const {
-  assert(GetType() == type::Type::TypeId::BOOLEAN);
-  assert(GetType() == o.GetType());
+  PL_ASSERT(GetType() == type::Type::TypeId::BOOLEAN);
+  PL_ASSERT(GetType() == o.GetType());
 
   llvm::Value *lor = codegen->CreateOr(GetValue(), o.GetValue());
   return Value{GetType(), lor};
@@ -343,7 +343,7 @@ void Value::ValuesForHash(__attribute((unused)) CodeGen &codegen,
 void Value::ValuesForMaterialization(__attribute((unused)) CodeGen &codegen,
                                      llvm::Value *&val,
                                      llvm::Value *&len) const {
-  assert(type_ != type::Type::TypeId::INVALID);
+  PL_ASSERT(type_ != type::Type::TypeId::INVALID);
   val = GetValue();
   len = GetType() == type::Type::TypeId::VARCHAR ? GetLength() : nullptr;
 }
@@ -356,7 +356,7 @@ void Value::TypeForMaterialization(CodeGen &codegen,
                                    type::Type::TypeId value_type,
                                    llvm::Type *&val_type,
                                    llvm::Type *&len_type) {
-  assert(value_type != type::Type::TypeId::INVALID);
+  PL_ASSERT(value_type != type::Type::TypeId::INVALID);
   switch (value_type) {
     case type::Type::TypeId::BOOLEAN:
       val_type = codegen.BoolType();
@@ -394,7 +394,7 @@ void Value::TypeForMaterialization(CodeGen &codegen,
 Value Value::ValueFromMaterialization(__attribute((unused)) CodeGen &codegen,
                                       type::Type::TypeId type,
                                       llvm::Value *&val, llvm::Value *&len) {
-  assert(type != type::Type::TypeId::INVALID);
+  PL_ASSERT(type != type::Type::TypeId::INVALID);
   return Value{type, val, type == type::Type::TypeId::VARCHAR ? len : nullptr};
 }
 
@@ -455,7 +455,7 @@ Value::OpPromotionMetadata Value::PromoteOperands(CodeGen &codegen,
 Value Value::BuildPHI(
     CodeGen &codegen,
     const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals) {
-  assert(vals.size() > 0);
+  PL_ASSERT(vals.size() > 0);
   auto type = vals[0].first.GetType();
   if (type == type::Type::TypeId::VARCHAR ||
       type == type::Type::TypeId::VARBINARY) {

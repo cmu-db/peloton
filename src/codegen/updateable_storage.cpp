@@ -61,8 +61,8 @@ llvm::Type* UpdateableStorage::Finalize(CodeGen& codegen) {
 // Get the value at a specific index into the storage area
 codegen::Value UpdateableStorage::Get(CodeGen& codegen, llvm::Value* area_start,
                                       uint64_t index) const {
-  assert(storage_type_ != nullptr);
-  assert(index < types_.size());
+  PL_ASSERT(storage_type_ != nullptr);
+  PL_ASSERT(index < types_.size());
   int val_idx = -1, len_idx = -1;
   for (uint64_t i = 0; i < storage_format_.size(); i++) {
     if (storage_format_[i].index == index) {
@@ -73,7 +73,7 @@ codegen::Value UpdateableStorage::Get(CodeGen& codegen, llvm::Value* area_start,
       }
     }
   }
-  assert(val_idx >= 0);
+  PL_ASSERT(val_idx >= 0);
   llvm::Value* typed_ptr =
       codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
   llvm::Value* val = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(

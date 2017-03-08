@@ -208,7 +208,7 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
   if (length != nullptr) {
     length->setName(column.GetName() + "_len");
   }
-  assert(val != nullptr);
+  PL_ASSERT(val != nullptr);
   val->setName(column.GetName());
 
   // We're done

@@ -114,7 +114,7 @@ void OrderByTranslator::DefineFunctions() {
   // TODO: FIX ME
   auto &sort_keys = plan_.GetSortKeys();
   auto &descend_flags = plan_.GetDescendFlags();
-  assert(!sort_keys.empty());
+  PL_ASSERT(!sort_keys.empty());
 
   // First pull out all the values from materialized state
   std::vector<codegen::Value> left_vals;

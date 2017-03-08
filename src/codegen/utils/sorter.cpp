@@ -108,7 +108,7 @@ void Sorter::Resize() {
   uint64_t curr_used_size = GetUsedSpace();
 
   // Ensure the current size is a power of two
-  assert(curr_alloc_size % 2 == 0);
+  PL_ASSERT(curr_alloc_size % 2 == 0);
 
   // Allocate double the buffer room
   uint64_t next_alloc_size = curr_alloc_size << 1;

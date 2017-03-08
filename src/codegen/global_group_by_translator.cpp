@@ -70,7 +70,7 @@ void GlobalGroupByTranslator::Produce() const {
   std::vector<BufferAttributeAccess> buffer_accessors;
 
   const auto &agg_terms = plan_.GetUniqueAggTerms();
-  assert(agg_terms.size() == aggregate_vals.size());
+  PL_ASSERT(agg_terms.size() == aggregate_vals.size());
   for (size_t i = 0; i < agg_terms.size(); i++) {
     buffer_accessors.emplace_back(aggregate_vals, i);
   }

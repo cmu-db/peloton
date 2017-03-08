@@ -27,8 +27,8 @@ class Varlen {
   // Get the length and the pointer to the variable length object
   std::pair<llvm::Value *, llvm::Value *> GetObjectAndLength(CodeGen &codegen) {
     auto *varlen_type = VarlenProxy::GetType(codegen);
-    assert(varlen_ptr_->getType()->isPointerTy() &&
-           varlen_ptr_->getType()->getContainedType(0) == varlen_type);
+    PL_ASSERT(varlen_ptr_->getType()->isPointerTy() &&
+              varlen_ptr_->getType()->getContainedType(0) == varlen_type);
 
     auto *len_ptr =
         codegen->CreateConstInBoundsGEP2_32(varlen_type, varlen_ptr_, 0, 0);
