@@ -51,7 +51,7 @@ void OAHashTable::Init(uint64_t key_size, uint64_t value_size,
   bucket_mask_ = num_buckets_ - 1;
 
   // Sanity check
-  assert((num_buckets_ & bucket_mask_) == 0);
+  PL_ASSERT((num_buckets_ & bucket_mask_) == 0);
 
   // No elements in the table right now
   num_entries_ = num_valid_buckets_ = 0;
@@ -84,7 +84,7 @@ char *OAHashTable::StoreToKeyValueList(KeyValueList **kv_list_p_p) {
   KeyValueList *kv_list_p = *kv_list_p_p;
 
   // Size always <= capacity
-  assert(kv_list_p->capacity >= kv_list_p->size);
+  PL_ASSERT(kv_list_p->capacity >= kv_list_p->size);
 
   // We always need this to compute something
   uint32_t size = kv_list_p->size;
@@ -110,7 +110,7 @@ char *OAHashTable::StoreToKeyValueList(KeyValueList **kv_list_p_p) {
     uint64_t new_kv_list_length = GetCurrentKeyValueListSize(new_capacity);
 
     kv_list_p = static_cast<KeyValueList *>(malloc(new_kv_list_length));
-    assert(kv_list_p != nullptr);
+    PL_ASSERT(kv_list_p != nullptr);
 
     // Copy from the old memory chunk to the new chunk
     memcpy(kv_list_p, *kv_list_p_p, current_length);
@@ -158,7 +158,7 @@ OAHashTable::HashEntry *OAHashTable::FindNextFreeEntry(uint64_t hash_value) {
     }
   }
 
-  assert(false);
+  PL_ASSERT(false);
   return nullptr;
 }
 
@@ -217,8 +217,8 @@ char *OAHashTable::StoreTuple(HashEntry *entry, uint64_t hash) {
     entry->kv_list = static_cast<KeyValueList *>(malloc(
         GetCurrentKeyValueListSize(OAHashTable::kInitialKVListCapacity)));
 
-    assert(entry->kv_list != nullptr);
-    assert(entry->HasKeyValueList());
+    PL_ASSERT(entry->kv_list != nullptr);
+    PL_ASSERT(entry->HasKeyValueList());
 
     // Initialize members - also copy the current data into the kv list
     // to simplify iterating over the hash table
@@ -272,7 +272,7 @@ void OAHashTable::InitializeArray(HashEntry *entries) {
 //===----------------------------------------------------------------------===//
 void OAHashTable::Resize(HashEntry **entry_p_p) {
   // Make it an assertion to prevent potential bugs
-  assert(NeedsResize());
+  PL_ASSERT(NeedsResize());
 
   LOG_DEBUG("Resizing hash-table from %lu buckets to %lu", num_buckets_,
             num_buckets_ << 1);

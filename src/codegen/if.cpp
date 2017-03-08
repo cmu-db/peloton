@@ -83,7 +83,7 @@ codegen::Value If::BuildPHI(codegen::Value v1, codegen::Value v2) {
     // The if hasn't been ended, end it now
     EndIf();
   }
-  assert(v1.GetType() == v2.GetType());
+  PL_ASSERT(v1.GetType() == v2.GetType());
   std::vector<std::pair<codegen::Value, llvm::BasicBlock *>> vals = {
       {v1, last_bb_in_then_},
       {v2,
@@ -92,7 +92,7 @@ codegen::Value If::BuildPHI(codegen::Value v1, codegen::Value v2) {
 }
 
 llvm::Value *If::BuildPHI(llvm::Value *v1, llvm::Value *v2) {
-  assert(v1->getType() == v2->getType());
+  PL_ASSERT(v1->getType() == v2->getType());
   llvm::PHINode *phi = cg_->CreatePHI(v1->getType(), 2);
   phi->addIncoming(v1, last_bb_in_then_);
   phi->addIncoming(v2, last_bb_in_else_ != nullptr ? last_bb_in_else_

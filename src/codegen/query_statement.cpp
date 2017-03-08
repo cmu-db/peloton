@@ -89,7 +89,7 @@ void QueryStatement::Execute(catalog::Catalog &catalog, char *consumer_arg,
 bool QueryStatement::Setup(uint64_t param_size, llvm::Function *init_func,
                            llvm::Function *plan_func,
                            llvm::Function *tear_down_func) {
-  assert(param_size % 8 == 0);
+  PL_ASSERT(param_size % 8 == 0);
   param_size_ = param_size;
 
   LOG_TRACE("Going to JIT the query ...");
@@ -103,14 +103,14 @@ bool QueryStatement::Setup(uint64_t param_size, llvm::Function *init_func,
 
   // Get pointers to the JITed functions
   init_func_ = (compiled_function_t)code_context_.GetFunctionPointer(init_func);
-  assert(init_func_ != nullptr);
+  PL_ASSERT(init_func_ != nullptr);
 
   plan_func_ = (compiled_function_t)code_context_.GetFunctionPointer(plan_func);
-  assert(plan_func_ != nullptr);
+  PL_ASSERT(plan_func_ != nullptr);
 
   tear_down_func_ =
       (compiled_function_t)code_context_.GetFunctionPointer(tear_down_func);
-  assert(tear_down_func_ != nullptr);
+  PL_ASSERT(tear_down_func_ != nullptr);
 
   LOG_TRACE("QueryStatement has been setup ...");
 

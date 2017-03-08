@@ -55,8 +55,8 @@ llvm::Type *CompactStorage::Finalize(CodeGen &codegen) {
 llvm::Value *CompactStorage::Pack(
     CodeGen &codegen, llvm::Value *ptr,
     const std::vector<codegen::Value> &to_pack) const {
-  assert(storage_type_ != nullptr);
-  assert(to_pack.size() == types_.size());
+  PL_ASSERT(storage_type_ != nullptr);
+  PL_ASSERT(to_pack.size() == types_.size());
 
   std::vector<llvm::Value *> vals, lengths;
   vals.resize(types_.size());

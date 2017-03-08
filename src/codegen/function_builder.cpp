@@ -72,12 +72,12 @@ llvm::Value *FunctionBuilder::GetArgumentByName(std::string name) {
       return &arg;
     }
   }
-  assert(false);
+  PL_ASSERT(false);
   return nullptr;
 }
 
 llvm::Value *FunctionBuilder::GetArgumentByPosition(uint32_t index) {
-  assert(index < func_->arg_size());
+  PL_ASSERT(index < func_->arg_size());
   uint32_t pos = 0;
   for (auto arg = func_->arg_begin(), end = func_->arg_end(); arg != end;
        ++arg) {
@@ -85,7 +85,7 @@ llvm::Value *FunctionBuilder::GetArgumentByPosition(uint32_t index) {
       return arg;
     }
   }
-  assert(false);
+  PL_ASSERT(false);
   return nullptr;
 }
 
@@ -100,7 +100,7 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
 
     // Restore previous function construction state in the code context
     if (previous_insert_point_ != nullptr) {
-      assert(previous_function_ != nullptr);
+      PL_ASSERT(previous_function_ != nullptr);
       code_context_.GetBuilder().SetInsertPoint(previous_insert_point_);
       code_context_.SetCurrentFunction(previous_function_);
     }

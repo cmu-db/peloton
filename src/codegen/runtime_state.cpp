@@ -35,12 +35,12 @@ llvm::Value *RuntimeState::GetStatePtr(CodeGen &codegen,
   // At this point, the runtime state type must have been finalized. Otherwise,
   // it'd be impossible for us to index into it because the type would be
   // incomplete.
-  assert(constructed_type_ != nullptr);
-  assert(state_id < state_slots_.size());
+  PL_ASSERT(constructed_type_ != nullptr);
+  PL_ASSERT(state_id < state_slots_.size());
 
   auto &state_info = state_slots_[state_id];
 
-  assert(!state_info.local);
+  PL_ASSERT(!state_info.local);
 
   // We index into the runtime state to get a pointer to the state
   std::string ptr_name{state_info.name + "Ptr"};
@@ -60,12 +60,12 @@ llvm::Value *RuntimeState::GetStateValue(CodeGen &codegen,
   llvm::Value *state_ptr = GetStatePtr(codegen, state_id);
   llvm::Value *state = codegen->CreateLoad(state_ptr);
 #ifndef NDEBUG
-  assert(state->getType() == state_info.type);
+  PL_ASSERT(state->getType() == state_info.type);
   if (state->getType()->isStructTy()) {
-    assert(state_info.type->isStructTy());
+    PL_ASSERT(state_info.type->isStructTy());
     auto *our_type = llvm::cast<llvm::StructType>(state_info.type);
     auto *ret_type = llvm::cast<llvm::StructType>(state->getType());
-    assert(ret_type->isLayoutIdentical(our_type));
+    PL_ASSERT(ret_type->isLayoutIdentical(our_type));
   }
 #endif
   return state;
