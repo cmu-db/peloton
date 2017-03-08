@@ -60,10 +60,15 @@ class TableScanTranslatorTest : public PelotonTest {
     test_db->AddTable(test_table, false);
 
     // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
+    catalog::Catalog::GetInstance()->AddDatabase(test_db);
 
     // Load test table
     LoadTestTable(num_rows_to_insert);
+  }
+
+  ~TableScanTranslatorTest() {
+    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
+        CodegenTestUtils::kTestDbOid);
   }
 
   storage::DataTable* CreateTestTable() {
@@ -90,7 +95,7 @@ class TableScanTranslatorTest : public PelotonTest {
   }
 
  private:
-  std::unique_ptr<storage::Database> test_db;
+  storage::Database* test_db;
   uint32_t num_rows_to_insert = 64;
 };
 

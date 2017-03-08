@@ -55,10 +55,15 @@ class GroupByTranslatorTest : public PelotonTest {
     test_db->AddTable(test_table, false);
 
     // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
+    catalog::Catalog::GetInstance()->AddDatabase(test_db);
 
     // Load the test table
     LoadTestTable();
+  }
+
+  ~GroupByTranslatorTest() {
+    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
+        CodegenTestUtils::kTestDbOid);
   }
 
   storage::DataTable* CreateTestTable() {
@@ -83,7 +88,7 @@ class GroupByTranslatorTest : public PelotonTest {
   }
 
  private:
-  std::unique_ptr<storage::Database> test_db;
+  storage::Database *test_db;
 };
 
 TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {

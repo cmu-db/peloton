@@ -44,7 +44,12 @@ class OrderByTranslatorTest : public PelotonTest {
     test_db->AddTable(test_table, false);
 
     // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
+    catalog::Catalog::GetInstance()->AddDatabase(test_db);
+  }
+
+  ~OrderByTranslatorTest() {
+    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
+        CodegenTestUtils::kTestDbOid);
   }
 
   storage::DataTable *CreateTestTable() {
@@ -69,7 +74,7 @@ class OrderByTranslatorTest : public PelotonTest {
   }
 
  private:
-  std::unique_ptr<storage::Database> test_db;
+  storage::Database *test_db;
 };
 
 TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {

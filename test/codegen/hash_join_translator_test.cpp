@@ -53,10 +53,15 @@ class HashJoinTranslatorTest : public PelotonTest {
     CreateTestTables();
 
     // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
+    catalog::Catalog::GetInstance()->AddDatabase(test_db);
 
     // Load the test table
     LoadTestTables();
+  }
+
+  ~HashJoinTranslatorTest() {
+    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
+        CodegenTestUtils::kTestDbOid);
   }
 
   storage::Database& GetDatabase() const { return *test_db; }
@@ -119,7 +124,7 @@ class HashJoinTranslatorTest : public PelotonTest {
   }
 
  private:
-  std::unique_ptr<storage::Database> test_db;
+  storage::Database *test_db;
 };
 
 TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
