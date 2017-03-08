@@ -25,8 +25,8 @@ const uint32_t CodegenTestUtils::kTestTable2Oid = 46;
 const uint32_t CodegenTestUtils::kTestTable3Oid = 47;
 const uint32_t CodegenTestUtils::kTestTable4Oid = 48;
 
-expression::ConstantValueExpression *
-CodegenTestUtils::ConstIntExpression(int64_t val) {
+expression::ConstantValueExpression *CodegenTestUtils::ConstIntExpression(
+    int64_t val) {
   return new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(val));
 }
@@ -69,16 +69,23 @@ llvm::Function *BufferingConsumer::_BufferTupleProxy::GetFunction(
 void BufferingConsumer::Prepare(codegen::CompilationContext &ctx) {
   auto &codegen = ctx.GetCodeGen();
   auto &runtime_state = ctx.GetRuntimeState();
-  consumer_state_id_ =
-      runtime_state.RegisterState("consumerState", codegen.CharPtrType());
+
+  // Introduce the consumer state as global
+  consumer_state_id_ = runtime_state.RegisterState(
+      "consumerState", codegen.CharPtrType(), false);
+
+  // Introduce our output tuple buffer as local (on stack)
+  auto *value_type = codegen::ValuesRuntimeProxy::GetType(codegen);
+  tuple_output_state_id_ = runtime_state.RegisterState(
+      "output", codegen.VectorType(value_type, ais_.size()), true);
 }
 
-void BufferingConsumer::PrepareResult(codegen::CompilationContext &ctx) {
-  auto &codegen = ctx.GetCodeGen();
-  tuple_buffer_ =
-      codegen->CreateAlloca(codegen::ValuesRuntimeProxy::GetType(codegen),
-                            codegen.Const32(ais_.size()));
-}
+// void BufferingConsumer::PrepareResult(codegen::CompilationContext &ctx) {
+//  auto &codegen = ctx.GetCodeGen();
+//  tuple_buffer_ =
+//      codegen->CreateAlloca(codegen::ValuesRuntimeProxy::GetType(codegen),
+//                            codegen.Const32(ais_.size()));
+//}
 
 //===----------------------------------------------------------------------===//
 // Here we construct/stitch the tuple, then call
@@ -87,6 +94,8 @@ void BufferingConsumer::PrepareResult(codegen::CompilationContext &ctx) {
 void BufferingConsumer::ConsumeResult(codegen::ConsumerContext &ctx,
                                       codegen::RowBatch::Row &row) const {
   auto &codegen = ctx.GetCodeGen();
+  auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
+
   for (size_t i = 0; i < ais_.size(); i++) {
     codegen::Value val = row.GetAttribute(codegen, ais_[i]);
     switch (val.GetType()) {
@@ -137,10 +146,11 @@ void BufferingConsumer::ConsumeResult(codegen::ConsumerContext &ctx,
     }
   }
 
-  // Append the tuple to the output buffer
-  codegen.CallFunc(
-      _BufferTupleProxy::GetFunction(codegen),
-      {GetConsumerState(ctx), tuple_buffer_, codegen.Const32(ais_.size())});
+  // Append the tuple to the output buffer (by calling BufferTuple(...))
+  std::vector<llvm::Value *> args = {GetStateValue(ctx, consumer_state_id_),
+                                     tuple_buffer_,
+                                     codegen.Const32(ais_.size())};
+  codegen.CallFunc(_BufferTupleProxy::GetFunction(codegen), args);
 }
 
 //===----------------------------------------------------------------------===//

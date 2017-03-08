@@ -20,6 +20,7 @@ namespace codegen {
 
 class VarlenProxy {
  public:
+  // Get the LLVM type of a Peloton varchar data field
   static llvm::Type *GetType(CodeGen &codegen) {
     static const std::string kVarlenTypeName = "peloton::Varlen";
     auto *llvm_type = codegen.LookupTypeByName(kVarlenTypeName);
@@ -27,17 +28,12 @@ class VarlenProxy {
       return llvm_type;
     }
 
-    // Sanity check
-//    static_assert(
-//        sizeof(type::VarlenType) == 24,
-//        "The LLVM memory layout of Varlen doesn't match the pre-compiled "
-//        "version. Did you forget to update codegen/varlen_proxy.cpp?");
-
     // Not registered in module, construct it now
-    std::vector<llvm::Type *> parts = {codegen.Int64Type(), codegen.Int64Type(),
-                                       codegen.CharPtrType()};
-    auto *varlen_type =
-        llvm::StructType::create(codegen.GetContext(), parts, kVarlenTypeName);
+
+    // A varlen is just a length-prefixed string, using 4-byte for the length
+    auto *varlen_type = llvm::StructType::create(
+        codegen.GetContext(), {codegen.Int32Type(), codegen.CharPtrType()},
+        kVarlenTypeName);
     return varlen_type;
   }
 };

@@ -50,7 +50,6 @@ class Printer : public codegen::QueryResultConsumer {
 
   // None of these are used, except ConsumeResult()
   void Prepare(codegen::CompilationContext &) override {}
-  void PrepareResult(codegen::CompilationContext &) override {}
   void InitializeState(codegen::CompilationContext &) override {}
   void TearDownState(codegen::CompilationContext &) override {}
   // Use
@@ -103,15 +102,15 @@ class BufferingConsumer : public codegen::QueryResultConsumer {
   }
 
   void Prepare(codegen::CompilationContext &compilation_context) override;
-  void PrepareResult(codegen::CompilationContext &ctx) override;
   void InitializeState(codegen::CompilationContext &) override {}
   void TearDownState(codegen::CompilationContext &) override {}
   void ConsumeResult(codegen::ConsumerContext &ctx,
                      codegen::RowBatch::Row &row) const override;
 
-  llvm::Value *GetConsumerState(codegen::ConsumerContext &ctx) const {
+  llvm::Value *GetStateValue(codegen::ConsumerContext &ctx,
+                             const codegen::RuntimeState::StateID &id) const {
     auto &runtime_state = ctx.GetRuntimeState();
-    return runtime_state.GetStateValue(ctx.GetCodeGen(), consumer_state_id_);
+    return runtime_state.GetStateValue(ctx.GetCodeGen(), id);
   }
 
   struct _BufferTupleProxy {
@@ -135,11 +134,13 @@ class BufferingConsumer : public codegen::QueryResultConsumer {
   // Buffered output tuples
   std::vector<WrappedTuple> tuples_;
   // Tuple space
-  llvm::Value *tuple_buffer_;
+//  llvm::Value *tuple_buffer_;
   // Running buffering state
   BufferingState state;
-  // The slot in the runtime state to find our state context
+  // The ID of our consumer state
   codegen::RuntimeState::StateID consumer_state_id_;
+  // The ID of our output tuple buffer state
+  codegen::RuntimeState::StateID tuple_output_state_id_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -148,7 +149,6 @@ class BufferingConsumer : public codegen::QueryResultConsumer {
 class CountingConsumer : public codegen::QueryResultConsumer {
  public:
   void Prepare(codegen::CompilationContext &compilation_context) override;
-  void PrepareResult(codegen::CompilationContext &) override {}
   void InitializeState(codegen::CompilationContext &context) override;
   void ConsumeResult(codegen::ConsumerContext &context,
                      codegen::RowBatch::Row &row) const override;

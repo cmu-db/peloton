@@ -18,17 +18,15 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-//
+// The main interface for consumers of query results.
 //===----------------------------------------------------------------------===//
 class QueryResultConsumer {
  public:
   // Destructor
   virtual ~QueryResultConsumer() {}
 
+  // Let the consumer perform any initialization or state declarations here
   virtual void Prepare(CompilationContext &compilation_context) = 0;
-
-  // Called before plan begins to allow the consumer to prepare any state
-  virtual void PrepareResult(CompilationContext &compilation_context) = 0;
 
   // Called to generate any initialization code the consumer needs
   virtual void InitializeState(CompilationContext &compilation_context) = 0;
