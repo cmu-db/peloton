@@ -19,7 +19,7 @@
 namespace peloton {
 namespace codegen {
 
-std::atomic<bool> HashGroupByTranslator::kUsePrefetch{true};
+std::atomic<bool> HashGroupByTranslator::kUsePrefetch{false};
 
 //===----------------------------------------------------------------------===//
 // HASH GROUP BY TRANSLATOR

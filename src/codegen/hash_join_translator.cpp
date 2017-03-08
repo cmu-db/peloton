@@ -19,7 +19,7 @@
 namespace peloton {
 namespace codegen {
 
-std::atomic<bool> HashJoinTranslator::kUsePrefetch{true};
+std::atomic<bool> HashJoinTranslator::kUsePrefetch{false};
 
 //===----------------------------------------------------------------------===//
 // HASH JOIN TRANSLATOR
