@@ -42,6 +42,9 @@ class ConsumerContext {
   codegen::Value DeriveValue(const expression::AbstractExpression &expression,
                              RowBatch::Row &row);
 
+  codegen::Value DeriveValue(const planner::AttributeInfo *ai,
+                             RowBatch::Row &row);
+
   // Pass this consumer context to the parent of the caller of consume()
   void Consume(RowBatch &batch);
   void Consume(RowBatch::Row &row);
