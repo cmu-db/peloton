@@ -33,10 +33,11 @@ int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
 int TEST_TUPLES_PER_TILEGROUP = 5;
 
 // For threads
-size_t QUERY_THREAD_COUNT = 1;
+size_t CONNECTION_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
+size_t MAX_CONCURRENCY = 10;
 
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities

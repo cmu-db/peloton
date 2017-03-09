@@ -84,16 +84,16 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
   *(cid_t *)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
-Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
+Transaction *TimestampOrderingTransactionManager::BeginTransaction(const size_t thread_id) {
+
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.PrepareLogging();
 
-  txn_id_t txn_id = GetNextTransactionId();
-  cid_t begin_cid = GetNextCommitId();
-  Transaction *txn = new Transaction(txn_id, begin_cid);
+  Transaction *txn = nullptr;
 
-  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  // transaction processing with centralized epoch manager
+  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id);
+  txn = new Transaction(begin_cid, thread_id);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -104,15 +104,12 @@ Transaction *TimestampOrderingTransactionManager::BeginTransaction() {
   return txn;
 }
 
-Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
-  txn_id_t txn_id = READONLY_TXN_ID;
-  auto &epoch_manager = EpochManagerFactory::GetInstance();
+Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction(const size_t thread_id) {
+  Transaction *txn = nullptr;
 
-  cid_t begin_cid = epoch_manager.GetReadOnlyTxnCid();
-  Transaction *txn = new Transaction(txn_id, begin_cid, true);
-
-  auto eid = epoch_manager.EnterReadOnlyEpoch(begin_cid);
-  txn->SetEpochId(eid);
+  // transaction processing with centralized epoch manager
+  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
+  txn = new Transaction(begin_cid, thread_id, true);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
@@ -125,7 +122,13 @@ Transaction *TimestampOrderingTransactionManager::BeginReadonlyTransaction() {
 
 void TimestampOrderingTransactionManager::EndTransaction(
     Transaction *current_txn) {
-  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+  
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
+
+
+  // logging logic
   auto &log_manager = logging::LogManager::GetInstance();
 
   if (current_txn->GetResult() == ResultType::SUCCESS) {
@@ -146,7 +149,7 @@ void TimestampOrderingTransactionManager::EndTransaction(
 
   delete current_txn;
   current_txn = nullptr;
-
+  
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
@@ -156,13 +159,16 @@ void TimestampOrderingTransactionManager::EndTransaction(
 
 void TimestampOrderingTransactionManager::EndReadonlyTransaction(
     Transaction *current_txn) {
-  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
-  EpochManagerFactory::GetInstance().ExitReadOnlyEpoch(
-      current_txn->GetEpochId());
 
+  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
+  
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
+  
   delete current_txn;
   current_txn = nullptr;
-
+  
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()

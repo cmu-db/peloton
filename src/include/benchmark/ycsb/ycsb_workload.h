@@ -33,7 +33,7 @@ extern storage::DataTable* user_table;
 
 void RunWorkload();
 
-bool RunMixed(ZipfDistribution &zipf, FastRandom &rng);
+bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng);
 
 /////////////////////////////////////////////////////////
 

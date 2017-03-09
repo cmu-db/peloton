@@ -343,7 +343,7 @@ class TransactionThread {
   concurrency::Transaction *txn;
 };
 
-// Transaction scheduler, to make life easier writting txn test
+// Transaction scheduler, to make life easier for writing txn test
 class TransactionScheduler {
  public:
   TransactionScheduler(size_t num_txn, storage::DataTable *datatable_,
@@ -390,7 +390,7 @@ class TransactionScheduler {
       for (auto &thread : threads) {
         thread.join();
       }
-      LOG_TRACE("Done conccurent transaction schedule");
+      LOG_TRACE("Done concurrent transaction schedule");
     }
   }
 

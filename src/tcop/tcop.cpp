@@ -80,9 +80,9 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   return tcop_txn_state_.top();
 }
 
-ResultType TrafficCop::BeginQueryHelper() {
+ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction(thread_id);
 
   // this shouldn't happen
   if (txn == nullptr) {
@@ -132,7 +132,8 @@ ResultType TrafficCop::AbortQueryHelper() {
 ResultType TrafficCop::ExecuteStatement(
     const std::string &query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
-    std::string &error_message) {
+    std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
@@ -149,7 +150,7 @@ ResultType TrafficCop::ExecuteStatement(
   std::vector<type::Value> params;
   auto status =
       ExecuteStatement(statement, params, unnamed, nullptr, result_format,
-                       result, rows_changed, error_message);
+                       result, rows_changed, error_message, thread_id);
 
   if (status == ResultType::SUCCESS) {
     LOG_TRACE("Execution succeeded!");
@@ -166,7 +167,8 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
+    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
@@ -180,14 +182,15 @@ ResultType TrafficCop::ExecuteStatement(
 
   try {
     if (statement->GetQueryType() == "BEGIN")
-      return BeginQueryHelper();
+      return BeginQueryHelper(thread_id);
     else if (statement->GetQueryType() == "COMMIT")
       return CommitQueryHelper();
     else if (statement->GetQueryType() == "ROLLBACK")
       return AbortQueryHelper();
     else {
       auto status = ExecuteStatementPlan(statement->GetPlanTree().get(), params,
-                                         result, result_format);
+                                         result, result_format,
+                                         thread_id);
       LOG_TRACE("Statement executed. Result: %s",
                 ResultTypeToString(status.m_result).c_str());
       rows_changed = status.m_processed;
@@ -201,7 +204,8 @@ ResultType TrafficCop::ExecuteStatement(
 
 bridge::peloton_status TrafficCop::ExecuteStatementPlan(
     const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result, const std::vector<int> &result_format) {
+    std::vector<StatementResult> &result, const std::vector<int> &result_format,
+    const size_t thread_id) {
   concurrency::Transaction *txn;
   bool single_statement_txn = false, init_failure = false;
   bridge::peloton_status p_status;
@@ -212,7 +216,7 @@ bridge::peloton_status TrafficCop::ExecuteStatementPlan(
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
     curr_state.second = ResultType::SUCCESS;
-    txn = txn_manager.BeginTransaction();
+    txn = txn_manager.BeginTransaction(thread_id);
     single_statement_txn = true;
   } else {
     // get ptr to current active txn

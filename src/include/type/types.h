@@ -385,6 +385,15 @@ enum class ConcurrencyType {
 };
 
 //===--------------------------------------------------------------------===//
+// Epoch Types
+//===--------------------------------------------------------------------===//
+
+enum class EpochType {
+  INVALID = INVALID_TYPE_ID,
+  DECENTRALIZED_EPOCH = 1  // decentralized epoch manager
+};
+
+//===--------------------------------------------------------------------===//
 // Visibility Types
 //===--------------------------------------------------------------------===//
 
@@ -1008,10 +1017,11 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 static const size_t EPOCH_LENGTH = 40;
 
 // For threads
-extern size_t QUERY_THREAD_COUNT;
+extern size_t CONNECTION_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;
 extern size_t GC_THREAD_COUNT;
 extern size_t EPOCH_THREAD_COUNT;
+extern size_t MAX_CONCURRENCY;
 
 //===--------------------------------------------------------------------===//
 // TupleMetadata

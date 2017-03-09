@@ -52,8 +52,13 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
   while (true) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
+    
+    // When the DBMS has started working but it never processes any transaction,
+    // we may see max_cid == MAX_CID.
+    if (max_cid == MAX_CID) {
+      continue;
+    }
 
-    PL_ASSERT(max_cid != MAX_CID);
     int reclaimed_count = Reclaim(thread_id, max_cid);
 
     int unlinked_count = Unlink(thread_id, max_cid);
