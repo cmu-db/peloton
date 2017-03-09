@@ -27,41 +27,54 @@ ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
 codegen::Value ConsumerContext::DeriveValue(
     const expression::AbstractExpression &expression, RowBatch::Row &row) {
   auto *exp_translator = compilation_context_.GetTranslator(expression);
-  if (exp_translator == nullptr) {
-    throw Exception{"No translator found"};
-  }
+  PL_ASSERT(exp_translator != nullptr);
   return exp_translator->DeriveValue(*this, row);
 }
 
-// Pass this consumer context to the parent of the caller of consume()
+codegen::Value ConsumerContext::DeriveValue(const planner::AttributeInfo *ai,
+                                            RowBatch::Row &row) {
+  return row.GetAttribute(GetCodeGen(), ai);
+}
+
+// Pass the row batch to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch &batch) {
   auto *translator = pipeline_.NextStep();
-  if (translator != nullptr) {
-    translator->Consume(*this, batch);
-  } else {
+  if (translator == nullptr) {
     // We're at the end of the query pipeline, we now send the output tuples
     // to the result consumer configured in the compilation context
     auto &consumer = compilation_context_.GetQueryResultConsumer();
     consumer.ConsumeResult(*this, batch);
+  } else {
+    do {
+      translator->Consume(*this, batch);
+    } while ((translator = pipeline_.NextStep()) != nullptr);
   }
 }
 
+// Pass this row to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch::Row &row) {
+
+  // If we're at a stage boundary in the pipeline, it means the next operator
+  // in the pipeline wants to operate on a batch of rows. To facilitate this,
+  // we mark the given row as valid in this batch and return immediately.
   if (pipeline_.AtStageBoundary()) {
     auto &codegen = GetCodeGen();
     row.SetValidity(codegen, codegen.ConstBool(true));
     return;
   }
 
+  // Otherwise, we move along to the next operator in the pipeline and deliver
+  // the row there.
   auto *translator = pipeline_.NextStep();
   if (translator != nullptr) {
     translator->Consume(*this, row);
-  } else {
-    // We're at the end of the query pipeline, we now send the output tuples
-    // to the result consumer configured in the compilation context
-    auto &consumer = compilation_context_.GetQueryResultConsumer();
-    consumer.ConsumeResult(*this, row);
+    return;
   }
+
+  // We're at the end of the query pipeline, we now send the output tuples
+  // to the result consumer configured in the compilation context
+  auto &consumer = compilation_context_.GetQueryResultConsumer();
+  consumer.ConsumeResult(*this, row);
 }
 
 CodeGen &ConsumerContext::GetCodeGen() const {

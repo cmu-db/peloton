@@ -66,8 +66,7 @@ void CompilationContext::GeneratePlan(QueryStatement &query,
   timer.Start();
 
   // First we prepare the translators for all the operators in the tree
-  Pipeline pipeline;
-  Prepare(query.GetPlan(), pipeline);
+  Prepare(query.GetPlan(), main_pipeline_);
 
   if (stats != nullptr) {
     timer.Stop();
@@ -76,7 +75,7 @@ void CompilationContext::GeneratePlan(QueryStatement &query,
     timer.Start();
   }
 
-  LOG_DEBUG("Main pipeline: %s", pipeline.GetInfo().c_str());
+  LOG_DEBUG("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
 
   // Generate the helper functions the query needs
   GenerateHelperFunctions();

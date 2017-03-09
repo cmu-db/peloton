@@ -29,8 +29,9 @@ namespace codegen {
 class CompilationContext;
 
 //===----------------------------------------------------------------------===//
-// This class tracks all the attributes that are available/accessible in the
-// current scope/context of code.
+// This is just a glue class that manages the given pipeline and provides access
+// to the compilation context. In the future, we need to modify this class to
+// track parallel state since parallelism will be based on pipelines.
 //===----------------------------------------------------------------------===//
 class ConsumerContext {
  public:

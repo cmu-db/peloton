@@ -98,6 +98,9 @@ class CompilationContext {
   // The code generator
   CodeGen codegen_;
 
+  // The main pipeline
+  Pipeline main_pipeline_;
+
   // The runtime state
   RuntimeState &runtime_state_;
 
