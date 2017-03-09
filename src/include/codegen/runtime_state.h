@@ -21,23 +21,25 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// RuntimeState captures all the state that a query plans' operator translators
-// need at _query_ runtime. As we create the translator tree for the query, we
-// pass around a single instance of this RuntimeState. Translators Allocate()
-// to describe the variables they'll need at runtime (e.g., a hash-join will
-// need a hash-table). When done, RuntimeState is a struct type whose contents
-// are defined by the query. This structure becomes the only argument to each
-// of the init(), plan() and tearDown() functions in the generated query.
+// This class captures all the state that a query plans' operators need. During
+// the compilation process, we pass this class around so that translators can
+// register operator-specific state. An example of state would be a hash-join
+// which requires a hash-table. State can be either global or local (i.e., on
+// the stack).
 //
-// Components of RuntimeState are initialized in the query's init(...) function,
-// and cleaned up in the query's tearDown(...) function.
+// In the end, all global state is combined into a dynamic struct type. This
+// struct is the only function argument to each of the three component functions
+// for the query. Operators must initialize any global state in the init()
+// function and must clean up and global state in the tearDown() function.
 //
-// In the final code, all functions will have a single argument whose type
-// is a struct that contains all the states that each operator will need. We do
-// this for two reasons:
+// Local state is guaranteed to be allocated once at the start of the plan()
+// function. All access to _any_ query state must go through this class.
 //
-// (1) The LLVM API is verbose, clumping all the state into a single class makes
-//     constructing the function type much easier.
+// For note, the reason we construct a single struct type as the only function
+// argument to generated query functions is:
+//
+// (1) The LLVM API is verbose. Clumping all the state into a single struct
+//     makes constructing the function type much easier.
 // (2) We don't want to worry about potentially reaching some system-specific
 //     limit on the number of arguments a function can accept.
 //
@@ -50,7 +52,8 @@ class RuntimeState {
   // Constructor
   RuntimeState();
 
-  // Allocate a parameter with the given name and type in this state
+  // Register a parameter with the given name and type in this state. Callers
+  // can specify whether the state is local (i.e., on the stack) or global.
   RuntimeState::StateID RegisterState(std::string name, llvm::Type *type,
                                       bool is_on_stack = false);
 
