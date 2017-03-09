@@ -133,8 +133,6 @@ class BufferingConsumer : public codegen::QueryResultConsumer {
   std::vector<const planner::AttributeInfo *> ais_;
   // Buffered output tuples
   std::vector<WrappedTuple> tuples_;
-  // Tuple space
-//  llvm::Value *tuple_buffer_;
   // Running buffering state
   BufferingState state;
   // The ID of our consumer state
