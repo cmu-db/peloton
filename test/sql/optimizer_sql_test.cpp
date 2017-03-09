@@ -457,14 +457,6 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
 
   std::string query("CREATE TABLE test2(a INT PRIMARY KEY, b INT, c INT);");
 
-  // check for plan node type
-  auto plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::CREATE);
-
-
-  optimizer->Reset();
-
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
@@ -481,7 +473,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   EXPECT_EQ(type::Type::INTEGER, cols[2].GetType());
 
   query = "DROP TABLE test2";
-  plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::DROP);
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(

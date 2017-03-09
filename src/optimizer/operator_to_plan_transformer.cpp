@@ -263,10 +263,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   PL_ASSERT(scan_plan != nullptr);
 
   // Add predicates
-  expression::AbstractExpression* predicates =
-      (scan_plan->GetPredicate() == nullptr
-       ? nullptr
-       : scan_plan->GetPredicate()->Copy());
+  const expression::AbstractExpression* predicates = scan_plan->GetPredicate();
   std::unique_ptr<planner::AbstractPlan> delete_plan(
       new planner::DeletePlan(op->target_table, predicates));
 
