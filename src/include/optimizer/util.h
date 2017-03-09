@@ -14,6 +14,7 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <string>
 
 namespace peloton {
 namespace optimizer {
