@@ -15,6 +15,7 @@
 #include "type/value_factory.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/values_runtime_proxy.h"
+#include "codegen/value_proxy.h"
 
 namespace peloton {
 namespace test {
@@ -60,7 +61,7 @@ llvm::Function *BufferingConsumer::_BufferTupleProxy::GetFunction(
 
   std::vector<llvm::Type *> args = {
       codegen.CharPtrType(),
-      codegen::ValuesRuntimeProxy::GetType(codegen)->getPointerTo(),
+      codegen::ValueProxy::GetType(codegen)->getPointerTo(),
       codegen.Int32Type()};
   auto *fn_type = llvm::FunctionType::get(codegen.VoidType(), args, false);
   return codegen.RegisterFunction(fn_name, fn_type);
@@ -75,17 +76,10 @@ void BufferingConsumer::Prepare(codegen::CompilationContext &ctx) {
       "consumerState", codegen.CharPtrType(), false);
 
   // Introduce our output tuple buffer as local (on stack)
-  auto *value_type = codegen::ValuesRuntimeProxy::GetType(codegen);
+  auto *value_type = codegen::ValueProxy::GetType(codegen);
   tuple_output_state_id_ = runtime_state.RegisterState(
       "output", codegen.VectorType(value_type, ais_.size()), true);
 }
-
-// void BufferingConsumer::PrepareResult(codegen::CompilationContext &ctx) {
-//  auto &codegen = ctx.GetCodeGen();
-//  tuple_buffer_ =
-//      codegen->CreateAlloca(codegen::ValuesRuntimeProxy::GetType(codegen),
-//                            codegen.Const32(ais_.size()));
-//}
 
 //===----------------------------------------------------------------------===//
 // Here we construct/stitch the tuple, then call
@@ -101,39 +95,39 @@ void BufferingConsumer::ConsumeResult(codegen::ConsumerContext &ctx,
     switch (val.GetType()) {
       case type::Type::TypeId::TINYINT: {
         codegen.CallFunc(
-            codegen::ValuesRuntimeProxy::_outputTinyInt::GetFunction(codegen),
+            codegen::ValuesRuntimeProxy::_OutputTinyInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
       case type::Type::TypeId::SMALLINT: {
         codegen.CallFunc(
-            codegen::ValuesRuntimeProxy::_outputSmallInt::GetFunction(codegen),
+            codegen::ValuesRuntimeProxy::_OutputSmallInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
       case type::Type::TypeId::DATE:
       case type::Type::TypeId::INTEGER: {
         codegen.CallFunc(
-            codegen::ValuesRuntimeProxy::_outputInteger::GetFunction(codegen),
+            codegen::ValuesRuntimeProxy::_OutputInteger::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
       case type::Type::TypeId::TIMESTAMP:
       case type::Type::TypeId::BIGINT: {
         codegen.CallFunc(
-            codegen::ValuesRuntimeProxy::_outputBigInt::GetFunction(codegen),
+            codegen::ValuesRuntimeProxy::_OutputBigInt::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
       case type::Type::TypeId::DECIMAL: {
         codegen.CallFunc(
-            codegen::ValuesRuntimeProxy::_outputDouble::GetFunction(codegen),
+            codegen::ValuesRuntimeProxy::_OutputDouble::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue()});
         break;
       }
       case type::Type::TypeId::VARCHAR: {
         codegen.CallFunc(
-            codegen::ValuesRuntimeProxy::_outputVarchar::GetFunction(codegen),
+            codegen::ValuesRuntimeProxy::_OutputVarchar::GetFunction(codegen),
             {tuple_buffer_, codegen.Const64(i), val.GetValue(),
              val.GetLength()});
         break;
