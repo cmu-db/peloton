@@ -110,15 +110,10 @@ class HashJoinTranslatorTest : public PelotonTest {
     // Load left
     TestingExecutorUtil::PopulateTable(&GetLeftTable(), 2 * num_rows, false,
                                        false, false, txn);
-    std::cout << GetLeftTable().GetTupleCount() << std::endl;
-    std::cout << GetLeftTable().GetName() << std::endl;
 
     // Load right
     TestingExecutorUtil::PopulateTable(&GetRightTable(), 8 * num_rows, false,
                                        false, false, txn);
-
-    std::cout << GetRightTable().GetTupleCount() << std::endl;
-    std::cout << GetRightTable().GetName() << std::endl;
 
     txn_manager.CommitTransaction(txn);
   }
