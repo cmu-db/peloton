@@ -65,15 +65,28 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 
   PL_ASSERT(column_prop != nullptr);
 
-  for (size_t column_idx = 0; column_idx < column_prop->GetSize();
-       column_idx++) {
-    auto col = column_prop->GetColumn(column_idx);
-    oid_t id = std::get<2>(col->bound_obj_id);
-    column_ids.push_back(id);
+  // Add col_ids for SELECT *
+  if (column_prop->IsStarExpressionInColumn()) {
+    size_t col_num = op->table_->GetSchema()->GetColumnCount();
+    auto db_id = op->table_->GetDatabaseOid();
+    oid_t table_id = op->table_->GetOid();
+    for (oid_t i = 0; i < col_num; ++i) {
+      column_ids.push_back(i);
+      if (output_columns_ != nullptr)
+        output_columns_->emplace_back(std::make_tuple(db_id, table_id, i));
+    }
+  }
+  else {
+    for (size_t column_idx = 0; column_idx < column_prop->GetSize();
+         column_idx++) {
+      auto col = column_prop->GetColumn(column_idx);
+      oid_t id = std::get<2>(col->bound_obj_id);
+      column_ids.push_back(id);
 
-    // record output column mapping
-    if (output_columns_ != nullptr)
-      output_columns_->emplace_back(col->bound_obj_id);
+      // record output column mapping
+      if (output_columns_ != nullptr)
+        output_columns_->emplace_back(col->bound_obj_id);
+    }
   }
 
   // for (auto &col : column_ids) {
@@ -185,19 +198,29 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
 
   PL_ASSERT(column_prop != nullptr);
 
-  for (size_t column_idx = 0; column_idx < column_prop->GetSize();
-       column_idx++) {
-    auto col = column_prop->GetColumn(column_idx);
-    // transform global column
-    // to column offset
+  if (column_prop->IsStarExpressionInColumn()) {
     for (oid_t child_col_id = 0;
          child_col_id < children_output_columns_[0].size(); ++child_col_id) {
-      if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
-        column_ids.emplace_back(child_col_id);
-        // record output column mapping
-        if (output_columns_ != nullptr)
-          output_columns_->emplace_back(col->bound_obj_id);
-        break;
+      column_ids.emplace_back(child_col_id);
+      if (output_columns_ != nullptr)
+        output_columns_->emplace_back(children_output_columns_[0][child_col_id]);
+    }
+  }
+  else {
+    for (size_t column_idx = 0; column_idx < column_prop->GetSize();
+         column_idx++) {
+      auto col = column_prop->GetColumn(column_idx);
+      // transform global column
+      // to column offset
+      for (oid_t child_col_id = 0;
+           child_col_id < children_output_columns_[0].size(); ++child_col_id) {
+        if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
+          column_ids.emplace_back(child_col_id);
+          // record output column mapping
+          if (output_columns_ != nullptr)
+            output_columns_->emplace_back(col->bound_obj_id);
+          break;
+        }
       }
     }
   }

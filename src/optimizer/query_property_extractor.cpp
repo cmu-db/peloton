@@ -47,19 +47,27 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
   std::vector<oid_t> column_ids;
   bool needs_projection = false;
 
-  std::vector<expression::TupleValueExpression *> column_exprs;
-
-  // Transform output expressions
-  for (auto col : *select_stmt->select_list) {
-    expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
-                                                    needs_projection);
-    if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      column_exprs.emplace_back(
-          reinterpret_cast<expression::TupleValueExpression *>(col));
+  // TODO: Support combination of STAR expr and other cols expr.
+  // Only support single STAR expression
+  if ((*select_stmt->getSelectList())[0]->GetExpressionType() ==
+      ExpressionType::STAR) {
+    property_set_.AddProperty(
+        std::shared_ptr<PropertyColumns>(new PropertyColumns(true)));
   }
+  else {
+    std::vector<expression::TupleValueExpression *> column_exprs;
 
-  property_set_.AddProperty(
-      std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
+    // Transform output expressions
+    for (auto col : *select_stmt->select_list) {
+      expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
+                                                      needs_projection);
+      if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+        column_exprs.emplace_back(
+            reinterpret_cast<expression::TupleValueExpression *>(col));
+    }
+    property_set_.AddProperty(
+        std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
+  }
 
   if (needs_projection) {
     auto output_expressions =

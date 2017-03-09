@@ -22,6 +22,8 @@ namespace optimizer {
 class PropertyColumns : public Property {
  public:
   PropertyColumns(std::vector<expression::TupleValueExpression *> column_exprs);
+  PropertyColumns(bool is_star_expr);
+
   PropertyType Type() const override;
 
   hash_t Hash() const override;
@@ -35,9 +37,11 @@ class PropertyColumns : public Property {
   }
 
   inline size_t GetSize() const { return column_exprs_.size(); }
+  inline bool IsStarExpressionInColumn() const { return is_star; }
 
  private:
   std::vector<expression::TupleValueExpression *> column_exprs_;
+  bool is_star;
 };
 
 // Specifies the output expressions of the query
@@ -84,7 +88,7 @@ class PropertySort : public Property {
     return sort_columns[idx];
   }
 
-  inline bool GetSortAscending(int idx) const { return sort_columns[idx]; }
+  inline bool GetSortAscending(int idx) const { return sort_ascending[idx]; }
 
  private:
   std::vector<expression::TupleValueExpression *> sort_columns;

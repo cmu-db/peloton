@@ -19,9 +19,11 @@ namespace optimizer {
 
 PropertyColumns::PropertyColumns(
     std::vector<expression::TupleValueExpression *> column_exprs)
-    : column_exprs_(std::move(column_exprs)) {
+    : column_exprs_(std::move(column_exprs)), is_star(false) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
+
+PropertyColumns::PropertyColumns(bool is_star_expr) : is_star(is_star_expr) {}
 
 PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
@@ -30,6 +32,8 @@ bool PropertyColumns::operator>=(const Property &r) const {
   if (r.Type() != PropertyType::COLUMNS) return false;
   const PropertyColumns &r_columns =
       *reinterpret_cast<const PropertyColumns *>(&r);
+
+  if (is_star != r_columns.is_star) return false;
 
   // check that every column in the right hand side property exists in the left
   // hand side property
@@ -50,7 +54,7 @@ bool PropertyColumns::operator>=(const Property &r) const {
 hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
-
+  hash = util::CombineHashes(hash, util::Hash<bool>(&is_star));
   for (auto col : column_exprs_) {
     hash = util::CombineHashes(
         hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&col->bound_obj_id));

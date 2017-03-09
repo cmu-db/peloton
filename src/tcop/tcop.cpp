@@ -37,7 +37,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#define NEW_OPTIMIZER
+// #define NEW_OPTIMIZER
 
 namespace peloton {
 namespace tcop {
