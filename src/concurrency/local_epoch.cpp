@@ -27,8 +27,10 @@ namespace concurrency {
       epoch_lock_.Unlock();
       return false;
     } 
+
+    auto epoch_map_itr = epoch_map_.find(epoch_id);
     // check whether the corresponding epoch exists.
-    if (epoch_map_.find(epoch_id) == epoch_map_.end()) {
+    if (epoch_map_itr == epoch_map_.end()) {
 
       std::shared_ptr<Epoch> epoch_ptr(new Epoch(epoch_id, 1));
 
@@ -36,7 +38,7 @@ namespace concurrency {
       epoch_map_[epoch_id] = epoch_ptr;
 
     } else {
-      epoch_map_.at(epoch_id)->txn_count_++;
+      epoch_map_itr->second->txn_count_++;
     }
 
     epoch_lock_.Unlock();

@@ -63,15 +63,18 @@ namespace concurrency {
     uint64_t global_max_committed_eid = UINT64_MAX;
     
     // for all the local epoch contexts, obtain the minimum max committed epoch id.
-    for (auto &local_epoch : local_epochs_) {
+    for (auto &local_epoch_itr : local_epochs_) {
       
-      uint64_t local_max_committed_eid = local_epoch.second->GetMaxCommittedEpochId(current_global_epoch_);
+      uint64_t local_max_committed_eid = local_epoch_itr.second->GetMaxCommittedEpochId(current_global_epoch_);
       
       if (local_max_committed_eid < global_max_committed_eid) {
         global_max_committed_eid = local_max_committed_eid;
       }
     }
 
+    // if we observe that thte global_max_committed_eid is larger than current_global_epoch_ro,
+    // then it means the current thread's progress is too slow.
+    // we should directly update it to global_max_committed_eid + 1.
     if (global_max_committed_eid != UINT64_MAX && 
         global_max_committed_eid >= current_global_epoch_ro_) {
       current_global_epoch_ro_ = global_max_committed_eid + 1;
