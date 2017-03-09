@@ -47,7 +47,7 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table, std::string alias);
+  static Operator make(storage::DataTable *table = nullptr, std::string alias = "");
 
   bool operator==(const BaseOperatorNode &r) override;
 
