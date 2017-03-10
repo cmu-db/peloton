@@ -28,15 +28,11 @@ class ConsumerContext;
 // The base class of all operator translators.
 //
 // Translators implement the push-based data-flow model by implementing the
-// Produce() and Consume() methods.  The former generates code that produces new
-// tuples and the latter generates code to operate on available attributes in
-// the provided ConsumerContext parameter argument.
-//
-// Translators are given the chance to introduce state into execution by calling
-// into the RuntimeState object. Operators request slots in the execution
-// state for arbitrary pieces of state, and can initialize their state in the
-// InitializeState() method. Similarly, the TearDownState() method can be used
-// to clean up and destroy any allocated state.
+// Produce() and Consume() methods. State is managed through the RuntimeState
+// object found in the compilation context. State can either be global (i.e.
+// external) or local (i.e., on the stack and automatically cleaned up). All
+// external state should be initialized in InitializeState() and cleaned up in
+// TearDownState().
 //
 // Translators are also allowed to declare helper functions. These functions
 // must be defined and implemented in the DefineFunctions() method, which is
