@@ -12,39 +12,24 @@
 
 #include "codegen/values_runtime_proxy.h"
 
+#include "codegen/value_proxy.h"
 #include "type/value.h"
 
 namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// Get the LLVM type for peloton::Value
+// OUTPUT TINYINT
 //===----------------------------------------------------------------------===//
-llvm::Type* ValuesRuntimeProxy::GetType(CodeGen& codegen) {
-  static const std::string kValueTypeName = "peloton::Value";
-  auto* value_type = codegen.LookupTypeByName(kValueTypeName);
-  if (value_type != nullptr) {
-    return value_type;
-  }
 
-  // Type isnt cached, create it
-  auto* byte_array =
-      llvm::ArrayType::get(codegen.Int8Type(), sizeof(type::Value));
-  value_type = llvm::StructType::create(codegen.GetContext(), {byte_array},
-                                        kValueTypeName);
-  return value_type;
-}
-
-//===----------------------------------------------------------------------===//
 // Get the symbol name for ValuesRuntime::outputTinyInt()
-//===----------------------------------------------------------------------===//
-const std::string& ValuesRuntimeProxy::_outputTinyInt::GetFunctionName() {
+const std::string& ValuesRuntimeProxy::_OutputTinyInt::GetFunctionName() {
   static const std::string kOutputTinyIntFnName =
       "_ZN7peloton7codegen13ValuesRuntime13outputTinyIntEPcja";
   return kOutputTinyIntFnName;
 }
 
-llvm::Function* ValuesRuntimeProxy::_outputTinyInt::GetFunction(
+llvm::Function* ValuesRuntimeProxy::_OutputTinyInt::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
@@ -54,7 +39,7 @@ llvm::Function* ValuesRuntimeProxy::_outputTinyInt::GetFunction(
     return llvm_fn;
   }
 
-  auto* value_type = ValuesRuntimeProxy::GetType(codegen);
+  auto* value_type = ValueProxy::GetType(codegen);
   auto* fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
       {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int16Type()},
@@ -63,15 +48,16 @@ llvm::Function* ValuesRuntimeProxy::_outputTinyInt::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
-// Get the symbol name for ValuesRuntime::outputSmallInt()
+// OUTPUT SMALLINT
 //===----------------------------------------------------------------------===//
-const std::string& ValuesRuntimeProxy::_outputSmallInt::GetFunctionName() {
+
+const std::string& ValuesRuntimeProxy::_OutputSmallInt::GetFunctionName() {
   static const std::string kOutputSmallIntFnName =
       "_ZN7peloton7codegen13ValuesRuntime14outputSmallIntEPcjs";
   return kOutputSmallIntFnName;
 }
 
-llvm::Function* ValuesRuntimeProxy::_outputSmallInt::GetFunction(
+llvm::Function* ValuesRuntimeProxy::_OutputSmallInt::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
@@ -81,7 +67,7 @@ llvm::Function* ValuesRuntimeProxy::_outputSmallInt::GetFunction(
     return llvm_fn;
   }
 
-  auto* value_type = ValuesRuntimeProxy::GetType(codegen);
+  auto* value_type = ValueProxy::GetType(codegen);
   auto* fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
       {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int16Type()},
@@ -90,15 +76,16 @@ llvm::Function* ValuesRuntimeProxy::_outputSmallInt::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
-// Get the symbol name and LLVM function for ValuesRuntime::outputInteger()
+// OUTPUT INTEGER
 //===----------------------------------------------------------------------===//
-const std::string& ValuesRuntimeProxy::_outputInteger::GetFunctionName() {
+
+const std::string& ValuesRuntimeProxy::_OutputInteger::GetFunctionName() {
   static const std::string kOutputIntegerFnName =
       "_ZN7peloton7codegen13ValuesRuntime13outputIntegerEPcji";
   return kOutputIntegerFnName;
 }
 
-llvm::Function* ValuesRuntimeProxy::_outputInteger::GetFunction(
+llvm::Function* ValuesRuntimeProxy::_OutputInteger::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
@@ -108,7 +95,7 @@ llvm::Function* ValuesRuntimeProxy::_outputInteger::GetFunction(
     return llvm_fn;
   }
 
-  auto* value_type = ValuesRuntimeProxy::GetType(codegen);
+  auto* value_type = ValueProxy::GetType(codegen);
   auto* fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
       {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int32Type()},
@@ -117,15 +104,16 @@ llvm::Function* ValuesRuntimeProxy::_outputInteger::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
-// Get the symbol name and LLVM function for ValuesRuntime::outputIntegerBatch()
+// OUTPUT BIGINT
 //===----------------------------------------------------------------------===//
-const std::string& ValuesRuntimeProxy::_outputBigInt::GetFunctionName() {
+
+const std::string& ValuesRuntimeProxy::_OutputBigInt::GetFunctionName() {
   static const std::string kOutputBigIntFnName =
       "_ZN7peloton7codegen13ValuesRuntime12outputBigIntEPcjl";
   return kOutputBigIntFnName;
 }
 
-llvm::Function* ValuesRuntimeProxy::_outputBigInt::GetFunction(
+llvm::Function* ValuesRuntimeProxy::_OutputBigInt::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
@@ -135,7 +123,7 @@ llvm::Function* ValuesRuntimeProxy::_outputBigInt::GetFunction(
     return llvm_fn;
   }
 
-  auto* value_type = ValuesRuntimeProxy::GetType(codegen);
+  auto* value_type = ValueProxy::GetType(codegen);
   auto* fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
       {value_type->getPointerTo(), codegen.Int64Type(), codegen.Int64Type()},
@@ -144,15 +132,16 @@ llvm::Function* ValuesRuntimeProxy::_outputBigInt::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
-// Get the symbol name and LLVM function proxy for ValuesRuntime::outputDouble()
+// OUTPUT DOUBLE
 //===----------------------------------------------------------------------===//
-const std::string& ValuesRuntimeProxy::_outputDouble::GetFunctionName() {
+
+const std::string& ValuesRuntimeProxy::_OutputDouble::GetFunctionName() {
   static const std::string kOutputDoubleFnName =
       "_ZN7peloton7codegen13ValuesRuntime12outputDoubleEPcjd";
   return kOutputDoubleFnName;
 }
 
-llvm::Function* ValuesRuntimeProxy::_outputDouble::GetFunction(
+llvm::Function* ValuesRuntimeProxy::_OutputDouble::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
@@ -162,7 +151,7 @@ llvm::Function* ValuesRuntimeProxy::_outputDouble::GetFunction(
     return llvm_fn;
   }
 
-  auto* value_type = ValuesRuntimeProxy::GetType(codegen);
+  auto* value_type = ValueProxy::GetType(codegen);
   auto* fn_type = llvm::FunctionType::get(
       codegen.VoidType(),
       {value_type->getPointerTo(), codegen.Int64Type(), codegen.DoubleType()},
@@ -171,10 +160,10 @@ llvm::Function* ValuesRuntimeProxy::_outputDouble::GetFunction(
 }
 
 //===----------------------------------------------------------------------===//
-// Get the symbol name and LLVM function proxy for
-// ValuesRuntime::outputVarchar()
+// OUTPUT VARCHAR
 //===----------------------------------------------------------------------===//
-const std::string& ValuesRuntimeProxy::_outputVarchar::GetFunctionName() {
+
+const std::string& ValuesRuntimeProxy::_OutputVarchar::GetFunctionName() {
   static const std::string kOutputVarcharFnName =
 #ifdef __APPLE__
       "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
@@ -184,7 +173,7 @@ const std::string& ValuesRuntimeProxy::_outputVarchar::GetFunctionName() {
   return kOutputVarcharFnName;
 }
 
-llvm::Function* ValuesRuntimeProxy::_outputVarchar::GetFunction(
+llvm::Function* ValuesRuntimeProxy::_OutputVarchar::GetFunction(
     CodeGen& codegen) {
   const std::string& fn_name = GetFunctionName();
 
@@ -194,7 +183,7 @@ llvm::Function* ValuesRuntimeProxy::_outputVarchar::GetFunction(
     return llvm_fn;
   }
 
-  auto* value_type = ValuesRuntimeProxy::GetType(codegen);
+  auto* value_type = ValueProxy::GetType(codegen);
   std::vector<llvm::Type*> arg_types = {
       value_type->getPointerTo(), codegen.Int64Type(), codegen.CharPtrType(),
       codegen.Int32Type()};

@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/query_compiler.h"
-#include "codegen/runtime_functions_proxy.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/comparison_expression.h"
@@ -21,7 +20,6 @@
 #include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -44,87 +42,28 @@ namespace test {
 // through the LoadTestTables() method that individual tests can invoke.
 //===----------------------------------------------------------------------===//
 
-class HashJoinTranslatorTest : public PelotonTest {
+typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
+
+class HashJoinTranslatorTest : public PelotonCodeGenTest {
  public:
-  typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
-
-  HashJoinTranslatorTest()
-      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)) {
-    CreateTestTables();
-
-    // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db);
-
+  HashJoinTranslatorTest() : PelotonCodeGenTest() {
     // Load the test table
-    LoadTestTables();
+    uint32_t num_rows = 10;
+    LoadTestTable(LeftTableId(), 2 * num_rows);
+    LoadTestTable(RightTableId(), 8 * num_rows);
   }
 
-  ~HashJoinTranslatorTest() {
-    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
-        CodegenTestUtils::kTestDbOid);
-  }
+  uint32_t LeftTableId() const { return test_table1_id; }
 
-  storage::Database& GetDatabase() const { return *test_db; }
+  uint32_t RightTableId() const { return test_table2_id; }
 
   storage::DataTable& GetLeftTable() const {
-    return *GetDatabase().GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
+    return GetTestTable(LeftTableId());
   }
+
   storage::DataTable& GetRightTable() const {
-    return *GetDatabase().GetTableWithOid(CodegenTestUtils::kTestTable2Oid);
+    return GetTestTable(RightTableId());
   }
-
- private:
-  void CreateTestTables() {
-    const int tuples_per_tilegroup_count = 5;
-    const bool adapt_table = false;
-    const bool own_schema = true;
-
-    auto* left_table_schema =
-        new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                             TestingExecutorUtil::GetColumnInfo(1),
-                             TestingExecutorUtil::GetColumnInfo(2),
-                             TestingExecutorUtil::GetColumnInfo(3)});
-    auto* left_table = storage::TableFactory::GetDataTable(
-        GetDatabase().GetOid(), CodegenTestUtils::kTestTable1Oid,
-        left_table_schema, "left-table", tuples_per_tilegroup_count, own_schema,
-        adapt_table);
-
-    auto* right_table_schema =
-        new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                             TestingExecutorUtil::GetColumnInfo(1),
-                             TestingExecutorUtil::GetColumnInfo(2),
-                             TestingExecutorUtil::GetColumnInfo(3)});
-    auto* right_table = storage::TableFactory::GetDataTable(
-        GetDatabase().GetOid(), CodegenTestUtils::kTestTable2Oid,
-        right_table_schema, "right-table", tuples_per_tilegroup_count,
-        own_schema, adapt_table);
-
-    GetDatabase().AddTable(left_table, false);
-    GetDatabase().AddTable(right_table, false);
-  }
-
-  void LoadTestTables(uint32_t num_rows = 10) {
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto* txn = txn_manager.BeginTransaction();
-
-    // Load left
-    TestingExecutorUtil::PopulateTable(&GetLeftTable(), 2 * num_rows, false,
-                                       false, false, txn);
-    std::cout << GetLeftTable().GetTupleCount() << std::endl;
-    std::cout << GetLeftTable().GetName() << std::endl;
-
-    // Load right
-    TestingExecutorUtil::PopulateTable(&GetRightTable(), 8 * num_rows, false,
-                                       false, false, txn);
-
-    std::cout << GetRightTable().GetTupleCount() << std::endl;
-    std::cout << GetRightTable().GetName() << std::endl;
-
-    txn_manager.CommitTransaction(txn);
-  }
-
- private:
-  storage::Database *test_db;
 };
 
 TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
@@ -197,20 +136,20 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
-  // COMPILE
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*hj_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // COMPILE and run
+  CompileAndExecute(*hj_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
-  const auto &results = buffer.GetOutputTuples();
+  const auto& results = buffer.GetOutputTuples();
   // The left table has 20 columns, the right has 80, all of them match
   EXPECT_EQ(20, results.size());
   // The output has the join columns (that should match) in positions 0 and 1
   for (const auto& tuple : results) {
     type::Value v0 = tuple.GetValue(0);
     EXPECT_EQ(v0.GetTypeId(), type::Type::TypeId::INTEGER);
+
+    // Check that the joins keys are actually equal
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
               type::CMP_TRUE);
   }

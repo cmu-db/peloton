@@ -14,6 +14,7 @@
 
 #include "codegen/catalog_proxy.h"
 #include "common/timer.h"
+#include "codegen/transaction_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -28,7 +29,10 @@ CompilationContext::CompilationContext(CodeContext &code_context,
       runtime_state_(runtime_state),
       translator_factory_(factory),
       result_consumer_(result_consumer) {
-  // Allocate a catalog instance in the runtime state
+  // Allocate a catalog and transaction instance in the runtime state
+  auto *txn_type = TransactionProxy::GetType(codegen_)->getPointerTo();
+  txn_state_id_ = runtime_state_.RegisterState("transaction", txn_type);
+
   auto *catalog_ptr_type = CatalogProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state_.RegisterState("catalog", catalog_ptr_type);
 

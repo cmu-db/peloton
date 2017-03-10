@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog.h"
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
@@ -21,6 +22,10 @@
 
 #include <vector>
 
+#include "common/harness.h"
+#include "executor/testing_executor_util.h"
+#include "codegen/buffering_consumer.h"
+
 namespace peloton {
 namespace test {
 
@@ -29,12 +34,43 @@ namespace test {
 //===----------------------------------------------------------------------===//
 class CodegenTestUtils {
  public:
-  static const uint32_t kTestDbOid;
-  static const uint32_t kTestTable1Oid;
-  static const uint32_t kTestTable2Oid;
-  static const uint32_t kTestTable3Oid;
-  static const uint32_t kTestTable4Oid;
   static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
+};
+
+//===----------------------------------------------------------------------===//
+// Common base class for all codegen tests
+//===----------------------------------------------------------------------===//
+class PelotonCodeGenTest : public PelotonTest {
+ public:
+  const uint32_t test_db_id = INVALID_OID;
+  const uint32_t test_table1_id = 44;
+  const uint32_t test_table2_id = 45;
+  const uint32_t test_table3_id = 46;
+  const uint32_t test_table4_id = 47;
+
+  PelotonCodeGenTest();
+
+  virtual ~PelotonCodeGenTest();
+
+  storage::Database &GetDatabase() const { return *test_db; }
+  storage::DataTable &GetTestTable(uint32_t table_id) const {
+    PL_ASSERT(table_id >= test_table1_id && table_id <= test_table4_id);
+    return *GetDatabase().GetTableWithOid(table_id);
+  }
+
+  // Create the test tables
+  void CreateTestTables();
+
+  // Load the given table with the given number of rows
+  void LoadTestTable(uint32_t table_id, uint32_t num_rows);
+
+  // Compile and execute the given plan
+  codegen::QueryCompiler::CompileStats CompileAndExecute(
+      const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+      char *consumer_state);
+
+ private:
+  storage::Database *test_db;
 };
 
 //===----------------------------------------------------------------------===//
@@ -58,89 +94,6 @@ class Printer : public codegen::QueryResultConsumer {
 
  private:
   std::vector<const planner::AttributeInfo *> ais_;
-};
-
-//===----------------------------------------------------------------------===//
-// A query consumer that buffers tuples into a local buffer
-//===----------------------------------------------------------------------===//
-class WrappedTuple
-    : public expression::ContainerTuple<std::vector<type::Value>> {
- public:
-  // Basic
-  WrappedTuple(type::Value *vals, uint32_t num_vals)
-      : ContainerTuple(&tuple_), tuple_(vals, vals + num_vals) {}
-
-  // Copy
-  WrappedTuple(const WrappedTuple &o)
-      : ContainerTuple(&tuple_), tuple_(o.tuple_) {}
-  WrappedTuple &operator=(const WrappedTuple &o) {
-    expression::ContainerTuple<std::vector<type::Value>>::operator=(o);
-    tuple_ = o.tuple_;
-    return *this;
-  }
-
- private:
-  // The tuple
-  std::vector<type::Value> tuple_;
-};
-
-//===----------------------------------------------------------------------===//
-// A query consumer that buffers tuples into a local buffer
-//===----------------------------------------------------------------------===//
-class BufferingConsumer : public codegen::QueryResultConsumer {
- public:
-  struct BufferingState {
-    std::vector<WrappedTuple> *output;
-  };
-
-  // Constructor
-  BufferingConsumer(std::vector<oid_t> cols, planner::BindingContext &context) {
-    for (oid_t col_id : cols) {
-      ais_.push_back(context.Find(col_id));
-    }
-    state.output = &tuples_;
-  }
-
-  void Prepare(codegen::CompilationContext &compilation_context) override;
-  void InitializeState(codegen::CompilationContext &) override {}
-  void TearDownState(codegen::CompilationContext &) override {}
-  void ConsumeResult(codegen::ConsumerContext &ctx,
-                     codegen::RowBatch::Row &row) const override;
-
-  llvm::Value *GetStateValue(codegen::ConsumerContext &ctx,
-                             const codegen::RuntimeState::StateID &id) const {
-    auto &runtime_state = ctx.GetRuntimeState();
-    return runtime_state.GetStateValue(ctx.GetCodeGen(), id);
-  }
-
-  struct _BufferTupleProxy {
-    static llvm::Function *GetFunction(codegen::CodeGen &codegen);
-  };
-
-  // Called from query plan to buffer the tuple
-  static void BufferTuple(char *state, type::Value *vals, uint32_t num_vals);
-
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
-
-  BufferingState *GetState() { return &state; }
-
-  const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
-
- private:
-  //
-  std::vector<const planner::AttributeInfo *> ais_;
-  // Buffered output tuples
-  std::vector<WrappedTuple> tuples_;
-  // Tuple space
-//  llvm::Value *tuple_buffer_;
-  // Running buffering state
-  BufferingState state;
-  // The ID of our consumer state
-  codegen::RuntimeState::StateID consumer_state_id_;
-  // The ID of our output tuple buffer state
-  codegen::RuntimeState::StateID tuple_output_state_id_;
 };
 
 //===----------------------------------------------------------------------===//

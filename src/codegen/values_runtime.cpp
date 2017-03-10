@@ -39,7 +39,6 @@ void ValuesRuntime::outputInteger(char *values, uint32_t idx, int32_t val) {
 
 void ValuesRuntime::outputBigInt(char *values, uint32_t idx, int64_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
-  LOG_DEBUG("Got big integer: %ld", val);
   vals[idx] = type::ValueFactory::GetBigIntValue(val);
 }
 

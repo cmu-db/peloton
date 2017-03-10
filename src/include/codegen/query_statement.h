@@ -12,12 +12,18 @@
 
 #pragma once
 
-#include "catalog/catalog.h"
 #include "codegen/code_context.h"
-#include "planner/abstract_plan.h"
-#include "storage/database.h"
 
 namespace peloton {
+
+namespace concurrency {
+class Transaction;
+}  // namespace concurrency
+
+namespace planner {
+class AbstractPlan;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -44,9 +50,9 @@ class QueryStatement {
   bool Setup(uint64_t param_size, llvm::Function *init_func,
              llvm::Function *plan_func, llvm::Function *tear_down_func);
 
-  // Execute the query given the catalog manager and runtime/consumer state
+  // Execute th e query given the catalog manager and runtime/consumer state
   // that is passed along to the query execution code.
-  void Execute(catalog::Catalog &catalog, char *consumer_arg,
+  void Execute(concurrency::Transaction &txn, char *consumer_arg,
                RuntimeStats *stats = nullptr) const;
 
   // Return the query plan

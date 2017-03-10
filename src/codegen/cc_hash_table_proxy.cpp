@@ -12,8 +12,6 @@
 
 #include "codegen/cc_hash_table_proxy.h"
 
-#include "codegen/cc_hash_table.h"
-
 namespace peloton {
 namespace codegen {
 

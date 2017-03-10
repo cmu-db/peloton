@@ -12,8 +12,6 @@
 
 #include "codegen/code_context.h"
 
-#include <iostream>
-
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/Verifier.h"

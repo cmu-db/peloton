@@ -13,8 +13,6 @@
 #include "codegen/consumer_context.h"
 
 #include "codegen/compilation_context.h"
-#include "codegen/expression_translator.h"
-#include "codegen/operator_translator.h"
 
 namespace peloton {
 namespace codegen {
