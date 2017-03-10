@@ -13,8 +13,8 @@
 #include "codegen/hash_join_translator.h"
 
 #include "codegen/oa_hash_table_proxy.h"
+#include "codegen/tuple_value_translator.h"
 #include "codegen/vectorized_loop.h"
-#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace codegen {
@@ -389,8 +389,8 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   context_.Consume(row_);
 }
 
-// Handle the logic to perform the match of a tuple from the right with one
-// from the left
+// Handle the logic to perform the match of a tuple from the right with one from
+// the left
 void HashJoinTranslator::ProbeRight::CreateRightMatch() {
   auto &join_plan = join_translator_.join_;
   auto &codegen = join_translator_.GetCodeGen();

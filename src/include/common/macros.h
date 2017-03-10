@@ -32,6 +32,7 @@ namespace peloton {
 #define NEVER_INLINE __attribute__((noinline))
 #define ALWAYS_INLINE __attribute__((always_inline))
 #define UNUSED_ATTRIBUTE __attribute__((unused))
+#define PACKED __attribute__((packed))
 
 //===--------------------------------------------------------------------===//
 // memfuncs

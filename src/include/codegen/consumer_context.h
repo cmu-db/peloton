@@ -19,9 +19,6 @@
 #include "expression/abstract_expression.h"
 #include "planner/attribute_info.h"
 
-#include <set>
-#include <unordered_map>
-
 namespace peloton {
 namespace codegen {
 

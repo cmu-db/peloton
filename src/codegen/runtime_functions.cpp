@@ -16,6 +16,7 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
+#include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
 

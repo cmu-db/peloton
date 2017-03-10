@@ -12,12 +12,10 @@
 
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -33,48 +31,11 @@ namespace test {
 // Each test may choose to sort on a different column.
 //===----------------------------------------------------------------------===//
 
-class OrderByTranslatorTest : public PelotonTest {
+class OrderByTranslatorTest : public PelotonCodeGenTest {
  public:
-  OrderByTranslatorTest()
-      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)) {
-    // Create test table
-    auto *test_table = CreateTestTable();
+  OrderByTranslatorTest() : PelotonCodeGenTest() {}
 
-    // Add table to test DB
-    test_db->AddTable(test_table, false);
-
-    // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db);
-  }
-
-  ~OrderByTranslatorTest() {
-    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
-        CodegenTestUtils::kTestDbOid);
-  }
-
-  storage::DataTable *CreateTestTable() {
-    const int tuples_per_tilegroup = 32;
-    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false,
-                                            CodegenTestUtils::kTestTable1Oid);
-  }
-
-  void LoadTestTable(uint32_t num_rows) {
-    auto &test_table = GetTestTable();
-
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto *txn = txn_manager.BeginTransaction();
-
-    TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false,
-                                       false, txn);
-    txn_manager.CommitTransaction(txn);
-  }
-
-  storage::DataTable &GetTestTable() {
-    return *test_db->GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
-  }
-
- private:
-  storage::Database *test_db;
+  uint32_t TestTableId() { return test_table1_id; }
 };
 
 TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
@@ -84,12 +45,12 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
 
   // Load table with 20 rows
   uint32_t num_test_rows = 20;
-  LoadTestTable(num_test_rows);
+  LoadTestTable(TestTableId(), num_test_rows);
 
   std::unique_ptr<planner::OrderByPlan> order_by_plan{
       new planner::OrderByPlan({0}, {false}, {0, 1, 2, 3})};
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1, 2, 3})};
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
 
   order_by_plan->AddChild(std::move(seq_scan_plan));
 
@@ -101,10 +62,8 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer,
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -124,12 +83,12 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
 
   // Load table with 20 rows
   uint32_t num_test_rows = 20;
-  LoadTestTable(num_test_rows);
+  LoadTestTable(TestTableId(), num_test_rows);
 
   std::unique_ptr<planner::OrderByPlan> order_by_plan{
       new planner::OrderByPlan({0}, {true}, {0, 1, 2, 3})};
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1, 2, 3})};
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
 
   order_by_plan->AddChild(std::move(seq_scan_plan));
 
@@ -141,10 +100,8 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer,
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in descending order
   auto &results = buffer.GetOutputTuples();
@@ -164,12 +121,12 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
 
   // Load table with 20 rows
   uint32_t num_test_rows = 20;
-  LoadTestTable(num_test_rows);
+  LoadTestTable(TestTableId(), num_test_rows);
 
   std::unique_ptr<planner::OrderByPlan> order_by_plan{
       new planner::OrderByPlan({1, 0}, {false, false}, {0, 1, 2, 3})};
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1, 2, 3})};
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
 
   order_by_plan->AddChild(std::move(seq_scan_plan));
 
@@ -181,10 +138,8 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer,
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -212,12 +167,12 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
 
   // Load table with 20 rows
   uint32_t num_test_rows = 20;
-  LoadTestTable(num_test_rows);
+  LoadTestTable(TestTableId(), num_test_rows);
 
   std::unique_ptr<planner::OrderByPlan> order_by_plan{
       new planner::OrderByPlan({1, 0}, {true, false}, {0, 1, 2, 3})};
-  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1, 2, 3})};
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan{new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3})};
 
   order_by_plan->AddChild(std::move(seq_scan_plan));
 
@@ -229,10 +184,8 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*order_by_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer,
+                    reinterpret_cast<char *>(buffer.GetState()));
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();

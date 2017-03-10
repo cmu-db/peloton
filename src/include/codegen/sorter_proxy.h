@@ -57,4 +57,3 @@ class SorterProxy {
 
 }  // namespace codegen
 }  // namespace peloton
-

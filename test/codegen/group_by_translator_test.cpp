@@ -10,17 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/catalog.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "planner/aggregate_plan.h"
-#include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -44,51 +41,14 @@ namespace test {
 // By default, the table is loaded with 10 rows of random values.
 //===----------------------------------------------------------------------===//
 
-class GroupByTranslatorTest : public PelotonTest {
+class GroupByTranslatorTest : public PelotonCodeGenTest {
  public:
-  GroupByTranslatorTest()
-      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)) {
-    // Create test table
-    auto* test_table = CreateTestTable();
-
-    // Add table to test DB
-    test_db->AddTable(test_table, false);
-
-    // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db);
-
-    // Load the test table
-    LoadTestTable();
+  GroupByTranslatorTest() : PelotonCodeGenTest() {
+    uint32_t num_rows = 10;
+    LoadTestTable(test_table1_id, num_rows);
   }
 
-  ~GroupByTranslatorTest() {
-    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
-        CodegenTestUtils::kTestDbOid);
-  }
-
-  storage::DataTable* CreateTestTable() {
-    const int tuples_per_tilegroup = 32;
-    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false,
-                                            CodegenTestUtils::kTestTable1Oid);
-  }
-
-  void LoadTestTable(uint32_t num_rows = 10) {
-    auto& test_table = GetTestTable();
-
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto* txn = txn_manager.BeginTransaction();
-
-    TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false,
-                                       false, txn);
-    txn_manager.CommitTransaction(txn);
-  }
-
-  storage::DataTable& GetTestTable() {
-    return *test_db->GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
-  }
-
- private:
-  storage::Database *test_db;
+  uint32_t TestTableOid() const { return test_table1_id; }
 };
 
 TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
@@ -124,7 +84,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -135,11 +95,9 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile and run
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
   const auto& results = buffer.GetOutputTuples();
@@ -186,7 +144,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -197,11 +155,9 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1, 2}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile it all
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
   const auto& results = buffer.GetOutputTuples();
@@ -247,7 +203,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -258,11 +214,9 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile it all
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
   const auto& results = buffer.GetOutputTuples();
@@ -309,7 +263,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
 
   // 7) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -320,11 +274,9 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile it all
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
   const auto& results = buffer.GetOutputTuples();
@@ -370,7 +322,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
 
   // 7) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), a_gt_50, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), a_gt_50, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -381,11 +333,9 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile it all
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results. We expect four because the "A" col increases by 10 for each
   // row. For 10 rows, the four rows with A = 60, 70, 80, 90 are valid.
@@ -425,7 +375,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -436,11 +386,9 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile it all
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // Check results
   const auto& results = buffer.GetOutputTuples();
@@ -485,7 +433,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
 
   // 6) The scan that feeds the aggregation
   std::unique_ptr<planner::AbstractPlan> scan_plan{
-      new planner::SeqScanPlan(&GetTestTable(), nullptr, {0, 1})};
+      new planner::SeqScanPlan(&GetTestTable(TestTableOid()), nullptr, {0, 1})};
 
   agg_plan->AddChild(std::move(scan_plan));
 
@@ -496,11 +444,9 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1}, context};
 
-  // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(*agg_plan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // Compile it all
+  CompileAndExecute(*agg_plan, buffer,
+                    reinterpret_cast<char*>(buffer.GetState()));
 
   // There should only be a single output row
   const auto& results = buffer.GetOutputTuples();

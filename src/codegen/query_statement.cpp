@@ -12,6 +12,9 @@
 
 #include "codegen/query_statement.h"
 
+#include "catalog/catalog.h"
+#include "common/macros.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -23,29 +26,41 @@ QueryStatement::QueryStatement(const planner::AbstractPlan &query_plan)
 // This really involves calling the init(), plan() and tearDown() functions, in
 // that order. We also need to correctly handle cases where _any_ of those
 // functions throw exceptions.
-void QueryStatement::Execute(catalog::Catalog &catalog, char *consumer_arg,
+void QueryStatement::Execute(concurrency::Transaction &txn, char *consumer_arg,
                              RuntimeStats *stats) const {
-  // Create clean memory space for the parameters
-  char param_data[param_size_];
-  memset(param_data, 0, param_size_);
+  // Allocate some space for the function arguments
+  std::unique_ptr<char> param_data{new char[param_size_]};
 
-  // Set the first parameter as the database pointer
-  *reinterpret_cast<catalog::Catalog **>(param_data) = &catalog;
+  // Grab an non-owning pointer to the space
+  char *param = param_data.get();
 
-  // Set the second parameter as the runtime state pointer
-  char *state_pos = param_data + sizeof(char *);
-  *reinterpret_cast<char **>(state_pos) = consumer_arg;
+  // Clean the space
+  memset(param, 0, param_size_);
 
-  // Time
+  // We use this handy class to avoid complex casting and pointer manipulation
+  struct FunctionArguments {
+    concurrency::Transaction *txn;
+    catalog::Catalog *catalog;
+    char *consumer_arg;
+    char rest[0];
+  } PACKED;
+
+  // Set up the function arguments
+  auto *func_args = reinterpret_cast<FunctionArguments*>(param_data.get());
+  func_args->txn = &txn;
+  func_args->catalog = catalog::Catalog::GetInstance();
+  func_args->consumer_arg = consumer_arg;
+
+  // Timer
   Timer<std::ratio<1, 1000>> timer;
 
   // Call init
   LOG_DEBUG("Calling query's init() ...");
   try {
-    init_func_(param_data);
+    init_func_(param);
   } catch (...) {
     // Cleanup if an exception is encountered
-    tear_down_func_(param_data);
+    tear_down_func_(param);
     throw;
   }
 
@@ -60,10 +75,10 @@ void QueryStatement::Execute(catalog::Catalog &catalog, char *consumer_arg,
   // Execute the query!
   LOG_DEBUG("Calling query's plan() ...");
   try {
-    plan_func_(param_data);
+    plan_func_(param);
   } catch (...) {
     // Cleanup if an exception is encountered
-    tear_down_func_(param_data);
+    tear_down_func_(param);
     throw;
   }
 
@@ -77,7 +92,7 @@ void QueryStatement::Execute(catalog::Catalog &catalog, char *consumer_arg,
 
   // Clean up
   LOG_DEBUG("Calling query's tearDown() ...");
-  tear_down_func_(param_data);
+  tear_down_func_(param);
 
   // No need to cleanup if we get an exception while cleaning up...
   if (stats != nullptr) {

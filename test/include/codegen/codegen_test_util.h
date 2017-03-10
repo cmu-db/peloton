@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog.h"
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
@@ -21,6 +22,9 @@
 
 #include <vector>
 
+#include "common/harness.h"
+#include "executor/testing_executor_util.h"
+
 namespace peloton {
 namespace test {
 
@@ -29,12 +33,43 @@ namespace test {
 //===----------------------------------------------------------------------===//
 class CodegenTestUtils {
  public:
-  static const uint32_t kTestDbOid;
-  static const uint32_t kTestTable1Oid;
-  static const uint32_t kTestTable2Oid;
-  static const uint32_t kTestTable3Oid;
-  static const uint32_t kTestTable4Oid;
   static expression::ConstantValueExpression *ConstIntExpression(int64_t val);
+};
+
+//===----------------------------------------------------------------------===//
+// Common base class for all codegen tests
+//===----------------------------------------------------------------------===//
+class PelotonCodeGenTest : public PelotonTest {
+ public:
+  const uint32_t test_db_id = INVALID_OID;
+  const uint32_t test_table1_id = 44;
+  const uint32_t test_table2_id = 45;
+  const uint32_t test_table3_id = 46;
+  const uint32_t test_table4_id = 47;
+
+  PelotonCodeGenTest();
+
+  virtual ~PelotonCodeGenTest();
+
+  storage::Database &GetDatabase() const { return *test_db; }
+  storage::DataTable &GetTestTable(uint32_t table_id) const {
+    PL_ASSERT(table_id >= test_table1_id && table_id <= test_table4_id);
+    return *GetDatabase().GetTableWithOid(table_id);
+  }
+
+  // Create the test tables
+  void CreateTestTables();
+
+  // Load the given table with the given number of rows
+  void LoadTestTable(uint32_t table_id, uint32_t num_rows);
+
+  // Compile and execute the given plan
+  codegen::QueryCompiler::CompileStats CompileAndExecute(
+      const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+      char *consumer_state);
+
+ private:
+  storage::Database *test_db;
 };
 
 //===----------------------------------------------------------------------===//
@@ -61,7 +96,7 @@ class Printer : public codegen::QueryResultConsumer {
 };
 
 //===----------------------------------------------------------------------===//
-// A query consumer that buffers tuples into a local buffer
+// A wrapper around a vector of values that looks like a proper tuple
 //===----------------------------------------------------------------------===//
 class WrappedTuple
     : public expression::ContainerTuple<std::vector<type::Value>> {

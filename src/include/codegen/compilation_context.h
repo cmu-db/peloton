@@ -110,7 +110,8 @@ class CompilationContext {
   // The consumer of the results of the query
   QueryResultConsumer &result_consumer_;
 
-  // The ID for the database/manager instance in the runtime state
+  // The ID for the catalog and transaction state
+  RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID catalog_state_id_;
 
   // The mapping of an operator in the tree to its translator

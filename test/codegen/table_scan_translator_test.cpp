@@ -10,25 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <immintrin.h>
-
 #include "catalog/catalog.h"
-#include "codegen/data_table_proxy.h"
-#include "codegen/if.h"
-#include "codegen/loop.h"
 #include "codegen/query_compiler.h"
-#include "codegen/runtime_functions_proxy.h"
 #include "common/harness.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
-#include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "planner/seq_scan_plan.h"
 
 #include "codegen/codegen_test_util.h"
-#include "executor/testing_executor_util.h"
 
 namespace peloton {
 namespace test {
@@ -48,54 +37,18 @@ namespace test {
 // By default, the table is loaded with 64 rows of random values.
 //===----------------------------------------------------------------------===//
 
-class TableScanTranslatorTest : public PelotonTest {
+class TableScanTranslatorTest : public PelotonCodeGenTest {
  public:
-  TableScanTranslatorTest()
-      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)),
-        num_rows_to_insert(64) {
-    // Create test table
-    auto* test_table = CreateTestTable();
-
-    // Add table to test DB
-    test_db->AddTable(test_table, false);
-
-    // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db);
-
+  TableScanTranslatorTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
     // Load test table
-    LoadTestTable(num_rows_to_insert);
-  }
-
-  ~TableScanTranslatorTest() {
-    catalog::Catalog::GetInstance()->DropDatabaseWithOid(
-        CodegenTestUtils::kTestDbOid);
-  }
-
-  storage::DataTable* CreateTestTable() {
-    const int tuples_per_tilegroup = 32;
-    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false,
-                                            CodegenTestUtils::kTestTable1Oid);
-  }
-
-  void LoadTestTable(uint32_t num_rows) {
-    auto& test_table = GetTestTable();
-
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto* txn = txn_manager.BeginTransaction();
-
-    TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false,
-                                       false, txn);
-    txn_manager.CommitTransaction(txn);
+    LoadTestTable(TestTableId(), num_rows_to_insert);
   }
 
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
 
-  storage::DataTable& GetTestTable() {
-    return *test_db->GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
-  }
+  uint32_t TestTableId() { return test_table1_id; }
 
  private:
-  storage::Database* test_db;
   uint32_t num_rows_to_insert = 64;
 };
 
@@ -105,7 +58,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   //
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), nullptr, {0, 1, 2}};
+  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -115,10 +68,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check that we got all the results
   const auto& results = buffer.GetOutputTuples();
@@ -138,7 +88,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
       ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_20_exp);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), a_gt_20, {0, 1, 2}};
+  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_20, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -148,10 +98,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -171,7 +118,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
       ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp, const_40_exp);
 
   // 2) Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), a_gt_40, {0, 1}};
+  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), a_gt_40, {0, 1}};
 
   // 3) Do binding
   planner::BindingContext context;
@@ -180,11 +127,8 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0}, context};
 
-  // 4) COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -217,7 +161,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
       ExpressionType::CONJUNCTION_AND, b_eq_21, a_gt_20);
 
   // 2) Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), conj_eq, {0, 1, 2}};
+  planner::SeqScanPlan scan{&GetTestTable(TestTableId()), conj_eq, {0, 1, 2}};
 
   // 3) Do binding
   planner::BindingContext context;
@@ -226,11 +170,8 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // We collect the results of the query into an in-memory buffer
   BufferingConsumer buffer{{0, 1, 2}, context};
 
-  // 4) COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -263,7 +204,8 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
       ExpressionType::COMPARE_EQUAL, b_col_exp, a_plus_1);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), b_eq_a_plus_1, {0, 1}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), b_eq_a_plus_1, {0, 1}};
 
   // Do binding
   planner::BindingContext context;
@@ -273,10 +215,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -306,7 +245,8 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
       ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, a_plus_b);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), b_eq_a_plus_b, {0, 1}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), b_eq_a_plus_b, {0, 1}};
 
   // Do binding
   planner::BindingContext context;
@@ -316,10 +256,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -348,7 +285,8 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
       ExpressionType::COMPARE_EQUAL, a_col_exp, b_minus_1);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), a_eq_b_minus_1, {0, 1}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), a_eq_b_minus_1, {0, 1}};
 
   // Do binding
   planner::BindingContext context;
@@ -358,10 +296,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -391,7 +326,8 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
       ExpressionType::COMPARE_EQUAL, b_lhs_col_exp, b_minus_a);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), b_eq_b_minus_a, {0, 1}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), b_eq_b_minus_a, {0, 1}};
 
   // Do binding
   planner::BindingContext context;
@@ -401,10 +337,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -433,7 +366,8 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
       ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_div_1);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), a_eq_a_div_1, {0, 1, 2}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), a_eq_a_div_1, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -443,10 +377,8 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -476,7 +408,8 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
       ExpressionType::COMPARE_EQUAL, a_lhs_col_exp, a_mul_b);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), a_eq_a_mul_b, {0, 1, 2}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), a_eq_a_mul_b, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -486,10 +419,7 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();
@@ -518,7 +448,8 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
       ExpressionType::COMPARE_EQUAL, a_col_exp, b_mod_1);
 
   // Setup the scan plan node
-  planner::SeqScanPlan scan{&GetTestTable(), a_eq_b_mod_1, {0, 1, 2}};
+  planner::SeqScanPlan scan{
+      &GetTestTable(TestTableId()), a_eq_b_mod_1, {0, 1, 2}};
 
   // Do binding
   planner::BindingContext context;
@@ -528,10 +459,7 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
-  query_statement->Execute(*catalog::Catalog::GetInstance(),
-                           reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
 
   // Check output results
   const auto& results = buffer.GetOutputTuples();

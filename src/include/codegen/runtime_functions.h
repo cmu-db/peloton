@@ -14,9 +14,15 @@
 
 #include <stdint.h>
 
-#include "storage/data_table.h"
+#include "type/types.h"
 
 namespace peloton {
+
+namespace storage {
+class DataTable;
+class TileGroup;
+}  // namespace storage
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
