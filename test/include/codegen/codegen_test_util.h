@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "catalog/catalog.h"
 #include "codegen/compilation_context.h"
 #include "codegen/query_result_consumer.h"
@@ -19,8 +21,6 @@
 #include "common/container_tuple.h"
 #include "expression/constant_value_expression.h"
 #include "planner/binding_context.h"
-
-#include <vector>
 
 #include "common/harness.h"
 #include "executor/testing_executor_util.h"
