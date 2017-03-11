@@ -69,12 +69,12 @@ void Catalog::CreateMetricsCatalog() {
 void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
-  auto database_catalog = CreateDatabaseCatalog(START_OID,
+  auto pg_database = CreateDatabaseCatalog(START_OID,
       DATABASE_CATALOG_NAME);
-  storage::DataTable *databases_table = database_catalog.release();
+  storage::DataTable *databases_table = pg_database.release();
   database->AddTable(databases_table, true);
-  auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
-  storage::DataTable *tables_table = table_catalog.release();
+  auto pg_table = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
+  storage::DataTable *tables_table = pg_table.release();
   database->AddTable(tables_table, true);
   databases_.push_back(database);
   LOG_TRACE("Catalog database created");
@@ -118,7 +118,7 @@ void Catalog::AddDatabase(std::string database_name,
 
 void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
     std::string &database_name, concurrency::Transaction *txn) {
-  // Update catalog_db with this database info
+  // Update pg_catalog with this database info
   auto tuple =
       GetDatabaseCatalogTuple(
           databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
