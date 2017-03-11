@@ -23,9 +23,11 @@
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
 
-#define CATALOG_DATABASE_NAME "catalog_db"
-#define DATABASE_CATALOG_NAME "database_catalog"
-#define TABLE_CATALOG_NAME "table_catalog"
+#define CATALOG_DATABASE_NAME "pg_catalog"
+#define DATABASE_CATALOG_NAME "pg_database"
+#define TABLE_CATALOG_NAME "pg_table"
+#define INDEX_CATALOG_NAME "pg_index"
+#define COLUMN_CATALOG_NAME "pg_column"
 
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"

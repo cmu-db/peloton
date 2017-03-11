@@ -17,10 +17,6 @@
 #include "common/logger.h"
 #include "catalog/catalog.h"
 
-#define CATALOG_DATABASE_NAME "catalog_db"
-#define DATABASE_CATALOG_NAME "database_catalog"
-#define TABLE_CATALOG_NAME "table_catalog"
-
 namespace peloton {
 namespace test {
 
@@ -84,13 +80,13 @@ TEST_F(CatalogTests, CreatingTable) {
                 .GetName(),
             "name");
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("catalog_db")
-                ->GetTableWithName("table_catalog")
+                ->GetDatabaseWithName("pg_catalog")
+                ->GetTableWithName("pg_table")
                 ->GetTupleCount(),
             3);
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName("catalog_db")
-                ->GetTableWithName("table_catalog")
+                ->GetDatabaseWithName("pg_catalog")
+                ->GetTableWithName("pg_table")
                 ->GetSchema()
                 ->GetLength(),
             72);
