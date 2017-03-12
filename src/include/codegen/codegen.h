@@ -137,7 +137,7 @@ class CodeGen {
 
  private:
   // Get the LLVM IR Builder (also accessible through the -> operator overload)
-  llvm::IRBuilder<> GetBuilder() const { return code_context_.GetBuilder(); }
+  llvm::IRBuilder<> &GetBuilder() const { return code_context_.GetBuilder(); }
 
  private:
   // The context/module where all the code this class produces goes
