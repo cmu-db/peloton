@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "type/date_type.h"
+
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -77,9 +78,6 @@ std::string DateType::ToString(const Value& val) const {
   if (val.IsNull()) return "date_null";
   uint32_t tm = val.value_.date;
   tm /= 1000000;
-  uint32_t second = tm % 100000;
-  second /= 60;
-  second /= 60;
   tm /= 100000;
   uint16_t year = tm % 10000;
   tm /= 10000;
@@ -104,21 +102,21 @@ std::string DateType::ToString(const Value& val) const {
 
 // Compute a hash value
 size_t DateType::Hash(const Value& val) const {
-  return std::hash<uint64_t>{}(val.value_.date);
+  return std::hash<uint32_t>{}(val.value_.date);
 }
 
 void DateType::HashCombine(const Value& val, size_t& seed) const {
-  val.hash_combine<int64_t>(seed, val.value_.date);
+  val.hash_combine<uint32_t>(seed, val.value_.date);
 }
 
 void DateType::SerializeTo(const Value& val, SerializeOutput& out) const {
-  out.WriteLong(val.value_.date);
+  out.WriteInt(val.value_.date);
 }
 
 void DateType::SerializeTo(const Value& val, char* storage,
                            bool inlined UNUSED_ATTRIBUTE,
                            AbstractPool* pool UNUSED_ATTRIBUTE) const {
-  *reinterpret_cast<uint64_t*>(storage) = val.value_.date;
+  *reinterpret_cast<uint32_t*>(storage) = val.value_.date;
 }
 
 // Deserialize a value of the given type from the given storage space.
@@ -130,7 +128,7 @@ Value DateType::DeserializeFrom(const char* storage,
 }
 Value DateType::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
                                 AbstractPool* pool UNUSED_ATTRIBUTE) const {
-  return Value(type_id_, in.ReadLong());
+  return Value(type_id_, in.ReadInt());
 }
 
 // Create a copy of this value

@@ -102,6 +102,9 @@ class TPCHDatabase {
   // Dictionary codes
   Dictionary l_shipinstruct_dict_;
   Dictionary l_shipmode_dict_;
+  Dictionary p_brand_dict_;
+  Dictionary p_container_dict_;
+  Dictionary c_mktsegment_dict_;
 };
 
 }  // namespace tpch
