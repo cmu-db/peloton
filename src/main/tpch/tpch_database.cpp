@@ -14,9 +14,6 @@
 
 #include "benchmark/tpch/tpch_workload.h"
 #include "catalog/catalog.h"
-#include "storage/database.h"
-#include "storage/data_table.h"
-#include "catalog/catalog.h"
 
 namespace peloton {
 namespace benchmark {
@@ -24,18 +21,6 @@ namespace tpch {
 
 // The TPCH database ID and each of the tables it owns
 static constexpr oid_t kTPCHDatabaseId = 44;
-
-// The size of a SQL integer
-static const uint32_t kIntSize =
-    static_cast<uint32_t>(type::Type::GetTypeSize(type::Type::TypeId::INTEGER));
-
-// The size of a SQL double
-static const uint32_t kDecimalSize =
-    static_cast<uint32_t>(type::Type::GetTypeSize(type::Type::TypeId::DECIMAL));
-
-// The size of a SQL date type
-static const uint32_t kDateSize =
-    static_cast<uint32_t>(type::Type::GetTypeSize(type::Type::TypeId::DATE));
 
 //===----------------------------------------------------------------------===//
 // Utility function to run a function over every line in the given file
@@ -199,51 +184,35 @@ void TPCHDatabase::CreateCustomerTable() const {
 
 void TPCHDatabase::CreateLineitemTable() const {
   // Define columns
-  catalog::Column l_orderkey = {type::Type::TypeId::INTEGER, kIntSize,
-                                "l_orderkey", true};
-  catalog::Column l_partkey = {type::Type::TypeId::INTEGER, kIntSize,
-                               "l_partkey", true};
-  catalog::Column l_suppkey = {type::Type::TypeId::INTEGER, kIntSize,
-                               "l_suppkey", true};
-  catalog::Column l_linenumber = {type::Type::TypeId::INTEGER, kIntSize,
-                                  "l_linenumber", true};
-  catalog::Column l_quantity = {type::Type::TypeId::INTEGER, kIntSize,
-                                "l_quantity", true};
-  catalog::Column l_extendedprice = {type::Type::TypeId::DECIMAL, kDecimalSize,
-                                     "l_extendedprice", true};
-  catalog::Column l_discount = {type::Type::TypeId::DECIMAL, kDecimalSize,
-                                "l_discount", true};
-  catalog::Column l_tax = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_tax",
-                           true};
+  catalog::Column l_orderkey = {type::Type::TypeId::INTEGER, kIntSize, "l_orderkey"};
+  catalog::Column l_partkey = {type::Type::TypeId::INTEGER, kIntSize, "l_partkey"};
+  catalog::Column l_suppkey = {type::Type::TypeId::INTEGER, kIntSize, "l_suppkey"};
+  catalog::Column l_linenumber = {type::Type::TypeId::INTEGER, kIntSize, "l_linenumber"};
+  catalog::Column l_quantity = {type::Type::TypeId::INTEGER, kIntSize, "l_quantity"};
+  catalog::Column l_extendedprice = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_extendedprice"};
+  catalog::Column l_discount = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_discount"};
+  catalog::Column l_tax = {type::Type::TypeId::DECIMAL, kDecimalSize, "l_tax"};
 
   catalog::Column l_returnflag;
   if (config_.dictionary_encode) {
-    l_returnflag = {type::Type::TypeId::INTEGER, kIntSize, "l_returnflag",
-                    true};
+    l_returnflag = {type::Type::TypeId::INTEGER, kIntSize, "l_returnflag"};
   } else {
-    l_returnflag = {type::Type::TypeId::VARCHAR, 1, "l_returnflag", true};
+    l_returnflag = {type::Type::TypeId::VARCHAR, 1, "l_returnflag"};
   };
 
   catalog::Column l_linestatus;
   if (config_.dictionary_encode) {
-    l_linestatus = {type::Type::TypeId::INTEGER, kIntSize, "l_linestatus",
-                    true};
+    l_linestatus = {type::Type::TypeId::INTEGER, kIntSize, "l_linestatus"};
   } else {
-    l_linestatus = {type::Type::TypeId::VARCHAR, 1, "l_returnflag", true};
+    l_linestatus = {type::Type::TypeId::VARCHAR, 1, "l_returnflag"};
   }
 
-  catalog::Column l_shipdate = {type::Type::TypeId::DATE, kDateSize,
-                                "l_shipdate", true};
-  catalog::Column l_commitdate = {type::Type::TypeId::DATE, kDateSize,
-                                  "l_commitdate", true};
-  catalog::Column l_receiptdate = {type::Type::TypeId::DATE, kDateSize,
-                                   "l_receiptdate", true};
-  catalog::Column l_shipinstruct = {type::Type::TypeId::INTEGER, kIntSize,
-                                    "l_shipinstruct", true};
-  catalog::Column l_shipmode = {type::Type::TypeId::INTEGER, kIntSize,
-                                "l_shipmode", true};
-  catalog::Column l_comment = {type::Type::TypeId::VARCHAR, 44, "l_comment",
-                               true};
+  catalog::Column l_shipdate = {type::Type::TypeId::DATE, kDateSize, "l_shipdate"};
+  catalog::Column l_commitdate = {type::Type::TypeId::DATE, kDateSize, "l_commitdate"};
+  catalog::Column l_receiptdate = {type::Type::TypeId::DATE, kDateSize, "l_receiptdate"};
+  catalog::Column l_shipinstruct = {type::Type::TypeId::INTEGER, kIntSize, "l_shipinstruct"};
+  catalog::Column l_shipmode = {type::Type::TypeId::INTEGER, kIntSize, "l_shipmode"};
+  catalog::Column l_comment = {type::Type::TypeId::VARCHAR, 44, "l_comment"};
 
   auto lineitem_cols = {
       l_orderkey,    l_partkey,       l_suppkey,  l_linenumber,
@@ -382,6 +351,19 @@ void TPCHDatabase::CreateSupplierTable() const {}
 //===----------------------------------------------------------------------===//
 // TABLE LOADERS
 //===----------------------------------------------------------------------===//
+
+void TPCHDatabase::LoadTable(TableId table_id) {
+  switch (table_id) {
+    case TableId::Customer: LoadCustomerTable(); break;
+    case TableId::Lineitem: LoadLineitemTable(); break;
+    case TableId::Nation:   LoadNationTable(); break;
+    case TableId::Orders:   LoadOrdersTable(); break;
+    case TableId::Part:     LoadPartTable(); break;
+    case TableId::PartSupp: LoadPartSupplierTable(); break;
+    case TableId::Region:   LoadRegionTable(); break;
+    case TableId::Supplier: LoadSupplierTable(); break;
+  }
+}
 
 void TPCHDatabase::LoadPartTable() {
   if (TableIsLoaded(TableId::Part)) {

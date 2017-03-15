@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <unordered_map>
 
+#include "benchmark/tpch/tpch_configuration.h"
+
 namespace peloton {
 
 namespace storage {
@@ -25,8 +27,12 @@ class DataTable;
 namespace benchmark {
 namespace tpch {
 
-class Configuration;
-
+//===----------------------------------------------------------------------===//
+// The TPCH Database. This class is responsible for access to all table in the
+// DB. Tables are created on instantiation. Individual tables can be loaded
+// from files based on the benchmark configuration parameters. Loading supports
+// dictionary encoding string values.
+//===----------------------------------------------------------------------===//
 class TPCHDatabase {
  public:
   typedef std::unordered_map<std::string, uint32_t> Dictionary;
@@ -35,28 +41,15 @@ class TPCHDatabase {
 
   ~TPCHDatabase();
 
-  enum class TableId : uint32_t {
-    Part = 44,
-    Supplier = 45,
-    PartSupp = 46,
-    Customer = 47,
-    Nation = 48,
-    Lineitem = 49,
-    Region = 50,
-    Orders = 51,
-  };
-
   storage::Database &GetDatabase() const;
 
   // Table accessors
   storage::DataTable &GetTable(TableId table_id) const;
 
-  // Dictionary accessors
-  const Dictionary &GetShipinstructDict() const { return l_shipinstruct_dict_; }
-  const Dictionary &GetShipmodeDict() const { return l_shipmode_dict_; }
-
   // Create all tables
   void CreateTables() const;
+
+  void LoadTable(TableId table_id);
 
   // Load individual tables
   void LoadCustomerTable();

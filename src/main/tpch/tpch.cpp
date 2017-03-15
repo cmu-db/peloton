@@ -11,15 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
-#include <cstring>
 #include <getopt.h>
 #include <string>
-#include <sys/types.h>
-#include <sys/stat.h>
 
+#include "benchmark/tpch/tpch_configuration.h"
 #include "benchmark/tpch/tpch_database.h"
 #include "benchmark/tpch/tpch_workload.h"
-#include "common/logger.h"
 
 namespace peloton {
 namespace benchmark {
@@ -40,31 +37,6 @@ static struct option opts[] = {
     {"dict-encode", optional_argument, NULL, 'd'},
     {"queries", optional_argument, NULL, 'q'},
     {NULL, 0, NULL, 0}};
-
-bool ValidateConfig(const Configuration &config) {
-  struct stat info;
-  if (stat(config.data_dir.c_str(), &info) != 0) {
-    LOG_ERROR("Data directory [%s] isn't accessible", config.data_dir.c_str());
-    return false;
-  } else if ((info.st_mode & S_IFDIR) == 0) {
-    LOG_ERROR("Data directory [%s] isn't a directory", config.data_dir.c_str());
-    return false;
-  }
-  auto inputs = {config.GetCustomerPath(), config.GetLineitemPath(),
-                 config.GetNationPath(),   config.GetOrdersPath(),
-                 config.GetPartSuppPath(), config.GetPartPath(),
-                 config.GetSupplierPath(), config.GetRegionPath()};
-  for (const auto &input : inputs) {
-    struct stat info;
-    if (stat(input.c_str(), &info) != 0) {
-      LOG_ERROR("Input file [%s] isn't accessible", input.c_str());
-      return false;
-    }
-  }
-
-  // All good
-  return true;
-}
 
 void ParseArguments(int argc, char **argv, Configuration &config) {
   config.suffix = "tbl";
@@ -104,7 +76,7 @@ void ParseArguments(int argc, char **argv, Configuration &config) {
   }
 
   // Validate everything
-  if (!ValidateConfig(config)) {
+  if (!config.IsValid()) {
     exit(EXIT_FAILURE);
   }
 

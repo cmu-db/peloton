@@ -12,174 +12,122 @@
 
 #include "benchmark/tpch/tpch_workload.h"
 
-#include "benchmark/tpch/tpch_database.h"
-#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace benchmark {
 namespace tpch {
 
 TPCHBenchmark::TPCHBenchmark(const Configuration &config, TPCHDatabase &db)
-    : config_(config), db_(db) {}
+    : config_(config), db_(db) {
+  query_configs_ = {
+      {"Q1", QueryId::Q1, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q2", QueryId::Q2, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q3", QueryId::Q3, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q4", QueryId::Q4, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q5", QueryId::Q5, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q6", QueryId::Q6, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q7", QueryId::Q7, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q8", QueryId::Q8, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q9", QueryId::Q9, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q10", QueryId::Q10, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q11", QueryId::Q11, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q12", QueryId::Q12, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q13", QueryId::Q13, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q14", QueryId::Q14, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q15", QueryId::Q15, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q16", QueryId::Q16, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q17", QueryId::Q17, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q18", QueryId::Q18, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q19", QueryId::Q19, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q20", QueryId::Q20, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q21", QueryId::Q21, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+      {"Q22", QueryId::Q22, {TableId::Lineitem}, [&](){return ConstructQ1Plan();}},
+  };
+}
 
 void TPCHBenchmark::RunBenchmark() {
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q1)) {
-    RunQ1();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q2)) {
-    RunQ2();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q3)) {
-    RunQ3();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q4)) {
-    RunQ4();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q5)) {
-    RunQ5();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q6)) {
-    RunQ6();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q7)) {
-    RunQ7();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q8)) {
-    RunQ8();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q9)) {
-    RunQ9();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q10)) {
-    RunQ10();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q11)) {
-    RunQ11();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q12)) {
-    RunQ12();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q13)) {
-    RunQ13();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q14)) {
-    RunQ14();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q15)) {
-    RunQ15();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q16)) {
-    RunQ16();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q17)) {
-    RunQ17();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q18)) {
-    RunQ18();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q19)) {
-    RunQ19();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q20)) {
-    RunQ20();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q21)) {
-    RunQ21();
-  }
-  if (config_.ShouldRunQuery(Configuration::QueryId::Q22)) {
-    RunQ22();
+  for (uint32_t i = 0; i < 22; i++) {
+    const auto &query_config = query_configs_[i];
+    if (config_.ShouldRunQuery(query_config.query_id)) {
+      RunQuery(query_config);
+    }
   }
 }
 
-void TPCHBenchmark::RunQ1() {
-  LOG_INFO("Running TPCH Q1");
+void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
+  LOG_INFO("Running TPCH %s", query_config.query_name.c_str());
 
-  // Load the lineitem table
-  db_.LoadLineitemTable();
+  // Load all the necessary tables
+  for (auto tid : query_config.required_tables) {
+    db_.LoadTable(tid);
+  }
+
+  // Construct the plan for Q1
+  std::unique_ptr<planner::AbstractPlan> plan = query_config.PlanConstructor();
+
+  // Do attribute binding
+  planner::BindingContext binding_context;
+  plan->PerformBinding(binding_context);
+
+  // The consumer
+  CountingConsumer counter;
+
+  // Compile
+  codegen::QueryCompiler::CompileStats compile_stats;
+  codegen::QueryCompiler compiler;
+  auto compiled_query = compiler.Compile(*plan, counter, &compile_stats);
+
+  // Execute the query
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+
+  codegen::QueryStatement::RuntimeStats runtime_stats;
+  compiled_query->Execute(*txn, nullptr, &runtime_stats);
+
+  txn_manager.CommitTransaction(txn);
+
+  LOG_INFO("%s: ==============================================",
+           query_config.query_name.c_str());
+  LOG_INFO("Setup: %.2lf, IR Gen: %.2lf, Compile: %.2lf",
+           compile_stats.setup_ms, compile_stats.ir_gen_ms,
+           compile_stats.jit_ms);
+  LOG_INFO("Init: %.2lf ms, Plan: %.2lf ms, TearDown: %.2lf ms",
+           runtime_stats.init_ms, runtime_stats.plan_ms,
+           runtime_stats.tear_down_ms);
 }
 
-void TPCHBenchmark::RunQ2() {
-  LOG_INFO("Running TPCH Q2");
+//===----------------------------------------------------------------------===//
+// COUNTING CONSUMER
+//===----------------------------------------------------------------------===//
+
+void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
+  auto &codegen = ctx.GetCodeGen();
+  auto &runtime_state = ctx.GetRuntimeState();
+  counter_state_id_ =
+      runtime_state.RegisterState("consumerState", codegen.Int64Type());
 }
 
-void TPCHBenchmark::RunQ3() {
-  LOG_INFO("Running TPCH Q3");
+void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
+  auto &codegen = context.GetCodeGen();
+  auto *state_ptr = GetCounterState(codegen, context.GetRuntimeState());
+  codegen->CreateStore(codegen.Const64(0), state_ptr);
 }
 
-void TPCHBenchmark::RunQ4() {
-  LOG_INFO("Running TPCH Q4");
+// Increment the counter
+void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
+                                     codegen::RowBatch::Row &) const {
+  auto &codegen = context.GetCodeGen();
+
+  auto *counter_ptr = GetCounterState(codegen, context.GetRuntimeState());
+  auto *new_count =
+      codegen->CreateAdd(codegen->CreateLoad(counter_ptr), codegen.Const64(1));
+  codegen->CreateStore(new_count, counter_ptr);
 }
 
-void TPCHBenchmark::RunQ5() {
-  LOG_INFO("Running TPCH Q5");
-}
-
-void TPCHBenchmark::RunQ6() {
-  LOG_INFO("Running TPCH Q6");
-}
-
-void TPCHBenchmark::RunQ7() {
-  LOG_INFO("Running TPCH Q7");
-}
-
-void TPCHBenchmark::RunQ8() {
-  LOG_INFO("Running TPCH Q8");
-}
-
-void TPCHBenchmark::RunQ9() {
-  LOG_INFO("Running TPCH Q9");
-}
-
-void TPCHBenchmark::RunQ10() {
-  LOG_INFO("Running TPCH Q10");
-}
-
-void TPCHBenchmark::RunQ11() {
-  LOG_INFO("Running TPCH Q11");
-}
-
-void TPCHBenchmark::RunQ12() {
-  LOG_INFO("Running TPCH Q12");
-}
-
-void TPCHBenchmark::RunQ13() {
-  LOG_INFO("Running TPCH Q13");
-}
-
-void TPCHBenchmark::RunQ14() {
-  LOG_INFO("Running TPCH Q14");
-}
-
-void TPCHBenchmark::RunQ15() {
-  LOG_INFO("Running TPCH Q15");
-}
-
-void TPCHBenchmark::RunQ16() {
-  LOG_INFO("Running TPCH Q16");
-}
-
-void TPCHBenchmark::RunQ17() {
-  LOG_INFO("Running TPCH Q17");
-}
-
-void TPCHBenchmark::RunQ18() {
-  LOG_INFO("Running TPCH Q18");
-}
-
-void TPCHBenchmark::RunQ19() {
-  LOG_INFO("Running TPCH Q19");
-}
-
-void TPCHBenchmark::RunQ20() {
-  LOG_INFO("Running TPCH Q20");
-}
-
-void TPCHBenchmark::RunQ21() {
-  LOG_INFO("Running TPCH Q21");
-}
-
-void TPCHBenchmark::RunQ22() {
-  LOG_INFO("Running TPCH Q22");
+llvm::Value *CountingConsumer::GetCounterState(
+    codegen::CodeGen &codegen, codegen::RuntimeState &runtime_state) const {
+  return runtime_state.GetStatePtr(codegen, counter_state_id_);
 }
 
 }  // namespace tpch
