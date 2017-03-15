@@ -28,11 +28,16 @@ class DatabaseCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE); }
 
-  void DeleteTuple(oid_t id, concurrency::Transaction *txn);
-
   std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
-    oid_t database_id, std::string database_name,
+    oid_t database_id, std::string &database_name,
     type::AbstractPool *pool);
+
+  // Read-only API
+  std::string GetNameByOid(oid_t id, concurrency::Transaction *txn);
+  oid_t GetOidByName(std::string &name, concurrency::Transaction *txn);
+
+  // Write related API
+  void DeleteTuple(oid_t id, concurrency::Transaction *txn);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeDatabaseCatalogSchema();

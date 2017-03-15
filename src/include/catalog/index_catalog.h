@@ -28,12 +28,19 @@ class IndexCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE); }
 
-  void DeleteTuple(oid_t id, concurrency::Transaction *txn);
-
   std::unique_ptr<storage::Tuple> GetIndexCatalogTuple(
     oid_t index_id, std::string index_name,
     oid_t table_id, oid_t database_id, bool unique_keys
     type::AbstractPool *pool)
+
+  // Read-only API
+  std::string GetNameByOid(oid_t id, concurrency::Transaction *txn);
+  oid_t GetTableidByOid(oid_t id, concurrency::Transaction *txn);
+  oid_t GetDatabaseidByOid(oid_t id, concurrency::Transaction *txn);
+  bool GetUniquekeysByOid(oid_t id, concurrency::Transaction *txn);
+
+  // Write related API
+  void DeleteTuple(oid_t id, concurrency::Transaction *txn);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeIndexCatalogSchema();
