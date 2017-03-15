@@ -22,17 +22,7 @@
 #include "storage/database.h"
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
-
-// System Catalogs imitating Postgres (https://www.postgresql.org/docs/9.6/static/catalogs.html)
-// Differences are:
-// 1. pg_catalog is a catalog schema in each database in Postgres, while it is a seperate catalog database in Peloton
-// 2. pg_class contains everything similar to a table in Postgres, while Peloton uses pg_table only for the table catalog
-
-#define CATALOG_DATABASE_NAME "pg_catalog"
-#define DATABASE_CATALOG_NAME "pg_database"
-#define TABLE_CATALOG_NAME "pg_table"
-#define INDEX_CATALOG_NAME "pg_index"
-#define COLUMN_CATALOG_NAME "pg_attribute"
+#include "type/catalog_type.h"
 
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"

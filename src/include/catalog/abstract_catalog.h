@@ -63,9 +63,9 @@ class AbstractCatalog {
 
   // The id variable that get assigned to objects. Initialized with (START_OID +
   // 1) because START_OID is assigned to the catalog database.
-  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
+  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);
 
-  storage::DataTable *catalog_table_;
+  std::shared_ptr<storage::DataTable> catalog_table_;
 };
 
 }  // End catalog namespace
