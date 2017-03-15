@@ -22,8 +22,9 @@ TableCatalog *TableCatalog::GetInstance(void) {
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog() :
-  AbstractCatalog(GetNextOid(), TABLE_CATALOG_NAME, InitializeTableCatalogSchema().release()) {}
+TableCatalog::TableCatalog()
+    : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
+                      InitializeTableCatalogSchema().release()) {}
 
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeTableCatalogSchema() {
   const std::string primary_key_constraint_name = "primary_key";
@@ -32,8 +33,8 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeTableCatalogSchema() {
   auto table_id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "table_id", true);
-  table_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::PRIMARY, primary_key_constraint_name));
+  table_id_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 

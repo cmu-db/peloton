@@ -18,13 +18,14 @@ namespace catalog {
 AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
                                  std::string catalog_table_name,
                                  catalog::Schema *catalog_table_schema) {
-  catalog_table_ = storage::TableFactory::GetDataTable(
-      START_OID, catalog_table_id, catalog_table_schema, catalog_table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, true, false, true);
+  catalog_table_ =
+      std::shared_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
+          START_OID, catalog_table_id, catalog_table_schema, catalog_table_name,
+          DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
 
   // Add catalog_table_ into pg_catalog
   auto pg_catalog = catalog::Catalog::GetInstance()->GetCatalogDB();
-  pg_catalog->AddTable(catalog_table_);
+  pg_catalog->AddTable(catalog_table_.get());
 
   // Create primary index for catalog_table_
   std::vector<oid_t> key_attrs;
@@ -49,10 +50,9 @@ void AbstractCatalog::CreateIndex(std::vector<oid_t> key_attrs) {
   bool unique_keys = true;
 
   index_metadata = new index::IndexMetadata(
-      StringUtil::Upper(index_name), GetNextOid(),
-      table->GetOid(), database->GetOid(), IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, catalog_table_schema, key_schema, key_attrs,
-      unique_keys);
+      StringUtil::Upper(index_name), GetNextOid(), table->GetOid(),
+      database->GetOid(), IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
+      catalog_table_schema, key_schema, key_attrs, unique_keys);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetIndex(index_metadata));
