@@ -30,6 +30,10 @@ class DatabaseCatalog : public AbstractCatalog {
 
   void DeleteTuple(oid_t id, concurrency::Transaction *txn);
 
+  std::unique_ptr<storage::Tuple> DatabaseCatalog::GetDatabaseCatalogTuple(
+    oid_t database_id, std::string database_name,
+    type::AbstractPool *pool);
+
  private:
   std::unique_ptr<catalog::Schema> InitializeDatabaseCatalogSchema();
 };
