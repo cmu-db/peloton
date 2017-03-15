@@ -36,9 +36,9 @@ class QueryStatement {
 
  public:
   struct RuntimeStats {
-    double init_ms;
-    double plan_ms;
-    double tear_down_ms;
+    double init_ms = 0.0;
+    double plan_ms = 0.0;
+    double tear_down_ms = 0.0;
   };
 
   // Constructor

@@ -103,6 +103,7 @@ void UpdateableStorage::Set(CodeGen& codegen, llvm::Value* area_start,
       }
     }
   }
+  PL_ASSERT(value.GetValue()->getType() == storage_format_[val_idx].type);
   llvm::Value* typed_ptr =
       codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
   // Store the value and len at the appropriate slots

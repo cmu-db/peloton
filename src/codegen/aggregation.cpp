@@ -49,11 +49,11 @@ void Aggregation::Setup(
        source_index++) {
     const auto agg_term = aggregates[source_index];
     switch (agg_term.aggtype) {
-      // TODO: Fix count
       case ExpressionType::AGGREGATE_COUNT: {
-        uint32_t storage_pos = storage_.Add(type::Type::TypeId::BIGINT);
-        AggregateInfo aggregate_info{agg_term.aggtype,
-                                     type::Type::TypeId::BIGINT, source_index,
+        // We're counting instances ... use BIGINT for the count
+        auto count_type = type::Type::TypeId::BIGINT;
+        uint32_t storage_pos = storage_.Add(count_type);
+        AggregateInfo aggregate_info{agg_term.aggtype, count_type, source_index,
                                      storage_pos, false};
         aggregate_infos_.push_back(aggregate_info);
         break;
@@ -70,15 +70,17 @@ void Aggregation::Setup(
         break;
       }
       case ExpressionType::AGGREGATE_AVG: {
-        // Decompose avg(c) into count(c) and sum(c)
-        // SUM()
+        // We decompose averages (i.e., AVG(c)) into COUNT(c) and SUM(c)
+
+        // SUM() - the type must match the type of the expression
+        PL_ASSERT(agg_term.expression != nullptr);
         type::Type::TypeId sum_type = agg_term.expression->GetValueType();
         uint32_t sum_storage_pos = storage_.Add(sum_type);
         AggregateInfo sum_agg{ExpressionType::AGGREGATE_SUM, sum_type,
                               source_index, sum_storage_pos, true};
         aggregate_infos_.push_back(sum_agg);
 
-        // COUNT()
+        // COUNT() - can use big integer since we're counting instances
         uint32_t count_storage_pos = storage_.Add(type::Type::TypeId::BIGINT);
         AggregateInfo count_agg{ExpressionType::AGGREGATE_COUNT,
                                 type::Type::TypeId::BIGINT, source_index,

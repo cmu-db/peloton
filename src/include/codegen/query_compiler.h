@@ -33,13 +33,13 @@ class QueryCompiler {
   //===--------------------------------------------------------------------===//
   struct CompileStats {
     // The time taken to setup the compilation context
-    double setup_ms;
+    double setup_ms = 0.0;
 
     // The time taken to generate all the IR for the plan
-    double ir_gen_ms;
+    double ir_gen_ms = 0.0;
 
     // The time taken to perform JIT compilation
-    double jit_ms;
+    double jit_ms = 0.0;
   };
 
   // Constructor

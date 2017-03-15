@@ -18,16 +18,12 @@
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
 // Constructor
-//===----------------------------------------------------------------------===//
 ConstantTranslator::ConstantTranslator(
     const expression::ConstantValueExpression &exp, CompilationContext &ctx)
     : ExpressionTranslator(ctx), exp_(exp) {}
 
-//===----------------------------------------------------------------------===//
-// Produce the value that is the result of codegen-ing the expression
-//===----------------------------------------------------------------------===//
+// Return an LLVM value for our constant (i.e., a compile-time constant)
 codegen::Value ConstantTranslator::DeriveValue(ConsumerContext &context,
                                                RowBatch::Row &) const {
   auto &codegen = context.GetCodeGen();
@@ -49,6 +45,18 @@ codegen::Value ConstantTranslator::DeriveValue(ConsumerContext &context,
     }
     case type::Type::TypeId::BIGINT: {
       val = codegen.Const64(type::ValuePeeker::PeekBigInt(constant));
+      break;
+    }
+    case type::Type::TypeId::DECIMAL: {
+      val = codegen.ConstDouble(type::ValuePeeker::PeekDouble(constant));
+      break;
+    }
+    case type::Type::TypeId::DATE: {
+      val = codegen.Const32(type::ValuePeeker::PeekDate(constant));
+      break;
+    }
+    case type::Type::TypeId::TIMESTAMP: {
+      val = codegen.Const64(type::ValuePeeker::PeekTimestamp(constant));
       break;
     }
     case type::Type::TypeId::VARCHAR: {

@@ -42,46 +42,11 @@ namespace test {
 // By default, the table is loaded with 10 rows of random values.
 //===----------------------------------------------------------------------===//
 
-class ValueIntegrityTest : public PelotonTest {
+class ValueIntegrityTest : public PelotonCodeGenTest {
  public:
-  ValueIntegrityTest()
-      : test_db(new storage::Database(CodegenTestUtils::kTestDbOid)) {
-    // Create test table
-    auto* test_table = CreateTestTable();
-
-    // Add table to test DB
-    test_db->AddTable(test_table, false);
-
-    // Add DB to catalog
-    catalog::Catalog::GetInstance()->AddDatabase(test_db.get());
-
-    // Load test table
-    LoadTestTable();
+  ValueIntegrityTest() : PelotonCodeGenTest() {
+    LoadTestTable(test_table1_id, 10);
   }
-
-  storage::DataTable* CreateTestTable() {
-    const int tuples_per_tilegroup = 32;
-    return TestingExecutorUtil::CreateTable(tuples_per_tilegroup, false,
-                                            CodegenTestUtils::kTestTable1Oid);
-  }
-
-  void LoadTestTable(uint32_t num_rows = 10) {
-    auto& test_table = GetTestTable();
-
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto* txn = txn_manager.BeginTransaction();
-
-    TestingExecutorUtil::PopulateTable(&test_table, num_rows, false, false,
-                                       false, txn);
-    txn_manager.CommitTransaction(txn);
-  }
-
-  storage::DataTable& GetTestTable() {
-    return *test_db->GetTableWithOid(CodegenTestUtils::kTestTable1Oid);
-  }
-
- private:
-  std::unique_ptr<storage::Database> test_db;
 };
 
 void DivideByZeroTest(ExpressionType exp_type, storage::DataTable* table) {
@@ -121,15 +86,17 @@ void DivideByZeroTest(ExpressionType exp_type, storage::DataTable* table) {
 
   // COMPILE and execute
   codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
+  auto compiled_query = compiler.Compile(scan, buffer);
 
-  // Arguments
-  auto* catalog = catalog::Catalog::GetInstance();
-  char* state = reinterpret_cast<char*>(buffer.GetState());
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto* txn = txn_manager.BeginTransaction();
 
-  // Expect a divide by zero exception
-  EXPECT_THROW(query_statement->Execute(*catalog, state),
-               DivideByZeroException);
+  // Run
+  EXPECT_THROW(
+      compiled_query->Execute(*txn, reinterpret_cast<char*>(buffer.GetState())),
+      DivideByZeroException);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
@@ -192,15 +159,17 @@ void OverflowTest(ExpressionType exp_type, storage::DataTable* table) {
 
   // COMPILE and execute
   codegen::QueryCompiler compiler;
-  auto query_statement = compiler.Compile(scan, buffer);
+  auto compiled_query = compiler.Compile(scan, buffer);
 
-  // Arguments
-  auto* catalog = catalog::Catalog::GetInstance();
-  char* state = reinterpret_cast<char*>(buffer.GetState());
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto* txn = txn_manager.BeginTransaction();
 
-  // Expect a divide by zero exception
-  EXPECT_THROW(query_statement->Execute(*catalog, state),
-               std::overflow_error);
+  // Run
+  EXPECT_THROW(
+      compiled_query->Execute(*txn, reinterpret_cast<char*>(buffer.GetState())),
+      std::overflow_error);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 // Commented out until we fix the new type system ...

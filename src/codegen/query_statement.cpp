@@ -53,6 +53,7 @@ void QueryStatement::Execute(concurrency::Transaction &txn, char *consumer_arg,
 
   // Timer
   Timer<std::ratio<1, 1000>> timer;
+  timer.Start();
 
   // Call init
   LOG_DEBUG("Calling query's init() ...");

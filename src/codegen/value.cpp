@@ -130,6 +130,16 @@ Value Value::Add(CodeGen &codegen, const Value &o) const {
   PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
   PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
+  // If the input types are different, promote to the largest type
+  OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
+
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFAdd(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateAdd(op_md.lhs_val, op_md.rhs_val);
+  }
+
   //  // If the input types are different, promote to the largest type
   //  OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
   //
@@ -149,7 +159,8 @@ Value Value::Add(CodeGen &codegen, const Value &o) const {
   //  CreateCheckOverflowException(codegen, overflow_bit);
   //
   //  return Value{op_md.value_type, add_res};
-  return Value{GetType(), codegen->CreateAdd(GetValue(), o.GetValue())};
+  // return Value{GetType(), codegen->CreateAdd(GetValue(), o.GetValue())};
+  return Value{op_md.value_type, res};
 }
 
 //===----------------------------------------------------------------------===//
@@ -159,8 +170,16 @@ Value Value::Sub(CodeGen &codegen, const Value &o) const {
   PL_ASSERT(GetType() != type::Type::TypeId::INVALID);
   PL_ASSERT(GetType() != type::Type::TypeId::VARCHAR);
 
-  //  // If the input types are different, promote to the largest type
-  //  OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
+  // If the input types are different, promote to the largest type
+  OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
+
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFSub(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateSub(op_md.lhs_val, op_md.rhs_val);
+  }
+
   //
   //  // Use the intrinsic ssub function so that we can check for overflow
   //  llvm::Function *ssub_func = llvm::Intrinsic::getDeclaration(
@@ -178,7 +197,8 @@ Value Value::Sub(CodeGen &codegen, const Value &o) const {
   //  CreateCheckOverflowException(codegen, overflow_bit);
   //
   //  return Value{op_md.value_type, sub_res};
-  return Value{GetType(), codegen->CreateSub(GetValue(), o.GetValue())};
+  //  return Value{GetType(), codegen->CreateSub(GetValue(), o.GetValue())};
+  return Value{op_md.value_type, res};
 }
 
 //===----------------------------------------------------------------------===//
@@ -190,6 +210,14 @@ Value Value::Mul(CodeGen &codegen, const Value &o) const {
 
   // If the input types are different, promote to the largest type
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
+
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFMul(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateMul(op_md.lhs_val, op_md.rhs_val);
+  }
+
   //
   //  // Use the intrinsic smul function so that we can check for overflow
   //  llvm::Function *smul_func = llvm::Intrinsic::getDeclaration(
@@ -207,7 +235,8 @@ Value Value::Mul(CodeGen &codegen, const Value &o) const {
   //  CreateCheckOverflowException(codegen, overflow_bit);
   //
   //  return Value{op_md.value_type, mul_res};
-  return Value{GetType(), codegen->CreateMul(op_md.lhs_val, op_md.rhs_val)};
+  //  return Value{GetType(), codegen->CreateMul(op_md.lhs_val, op_md.rhs_val)};
+  return Value{op_md.value_type, res};
 }
 
 //===----------------------------------------------------------------------===//
@@ -222,6 +251,14 @@ Value Value::Div(CodeGen &codegen, const Value &o) const {
   //
   // If the input types are different, promote to the largest type
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
+
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFDiv(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateSDiv(op_md.lhs_val, op_md.rhs_val);
+  }
+
   //
   //  // Check for overflow. There is no intrinsic function to do this
   //  // (like there is for add/sub/mul) so we do it manually.
@@ -251,9 +288,10 @@ Value Value::Div(CodeGen &codegen, const Value &o) const {
   //  has_overflow.EndIf();
   //
   //  // Do the division
-  return Value{op_md.value_type,
-               codegen->CreateSDiv(op_md.lhs_val, op_md.rhs_val)};
+  //  return Value{op_md.value_type,
+  //               codegen->CreateSDiv(op_md.lhs_val, op_md.rhs_val)};
   //  return Value{GetType(), codegen->CreateSDiv(GetValue(), o.GetValue())};
+  return Value{op_md.value_type, res};
 }
 
 //===----------------------------------------------------------------------===//
@@ -409,8 +447,10 @@ llvm::Type *Value::NumericType(CodeGen &codegen, type::Type::TypeId type) {
       return codegen.Int8Type();
     case type::Type::TypeId::SMALLINT:
       return codegen.Int16Type();
+    case type::Type::TypeId::DATE:
     case type::Type::TypeId::INTEGER:
       return codegen.Int32Type();
+    case type::Type::TypeId::TIMESTAMP:
     case type::Type::TypeId::BIGINT:
       return codegen.Int64Type();
     case type::Type::TypeId::DECIMAL:
