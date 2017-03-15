@@ -35,6 +35,7 @@
 #include "planner/limit_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
+#include "planner/populate_index_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
@@ -80,9 +81,32 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
-      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
-          new planner::CreatePlan((parser::CreateStatement*)parse_tree2));
+
+      auto create_plan =
+          new planner::CreatePlan((parser::CreateStatement*)parse_tree2);
+      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       child_plan = std::move(child_CreatePlan);
+      //If creating index, populate with existing data first.
+      if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
+        auto create_stmt = (parser::CreateStatement*)parse_tree2;
+        auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName());
+        std::vector<oid_t> column_ids;
+        auto schema = target_table->GetSchema();
+        for (auto column_name : create_plan->GetIndexAttributes()) {
+          column_ids.push_back(schema->GetColumnID(column_name));
+        }
+        //Create a plan to retrieve data
+        std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan =
+            CreateScanPlan(target_table, column_ids, nullptr, false);
+        child_SeqScanPlan->AddChild(std::move(child_plan));
+        child_plan = std::move(child_SeqScanPlan);
+        //Create a plan to add data to index
+        std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
+            new planner::PopulateIndexPlan(target_table, column_ids));
+        child_PopulateIndexPlan->AddChild(std::move(child_plan));
+        child_plan = std::move(child_PopulateIndexPlan);
+      }
     } break;
 
     case StatementType::SELECT: {
@@ -269,11 +293,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         if (select_stmt->order != NULL && select_stmt->limit != NULL &&
             !order_plan_added) {
           auto order_limit_plan = CreateOrderByLimitPlan(
-            select_stmt, child_SelectPlan.get(), target_table->GetSchema(),
-            column_ids, is_star);
+              select_stmt, child_SelectPlan.get(), target_table->GetSchema(),
+              column_ids, is_star);
           order_limit_plan->GetChildren()[0]->AddChild(
-            std::move(child_SelectPlan));
-            child_plan = std::move(order_limit_plan);
+              std::move(child_SelectPlan));
+          child_plan = std::move(order_limit_plan);
         }
         // Only order by statement (without limit)
         else if (select_stmt->order != NULL && !order_plan_added) {
@@ -1470,8 +1494,9 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
     parser::SelectStatement* select_stmt, planner::AbstractPlan* child_plan,
     catalog::Schema* schema, std::vector<oid_t> column_ids, bool is_star) {
   LOG_TRACE("OrderBy + Limit query");
-  auto abstract_plan = CreateOrderByPlan(select_stmt, child_plan, schema, column_ids, is_star);
-  //Cast needed for desired fields.
+  auto abstract_plan =
+      CreateOrderByPlan(select_stmt, child_plan, schema, column_ids, is_star);
+  // Cast needed for desired fields.
   auto order_by_plan = static_cast<planner::OrderByPlan*>(abstract_plan.get());
   LOG_TRACE("Set order by offset");
   // Get offset
@@ -1488,10 +1513,9 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
 
   // Whether underlying child's output has the same order
   // with the order_by clause
-  LOG_TRACE("order by column id is %d",
-            order_by_plan->GetSortKeys().front());
-  //This step has a little redundance with the order_by plan
-  //but changes more stuff inside.
+  LOG_TRACE("order by column id is %d", order_by_plan->GetSortKeys().front());
+  // This step has a little redundance with the order_by plan
+  // but changes more stuff inside.
   if (UnderlyingSameOrder(child_plan, order_by_plan->GetSortKeys().front(),
                           order_by_plan->GetDescendFlags().front()) == true) {
     LOG_TRACE(
@@ -1506,7 +1530,7 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByLimitPlan(
   // Create limit_plan
   std::unique_ptr<planner::LimitPlan> limit_plan(
       new planner::LimitPlan(select_stmt->limit->limit, offset));
-  //Adding the unique_ptr
+  // Adding the unique_ptr
   limit_plan->AddChild(std::move(abstract_plan));
   return std::move(limit_plan);
 }
