@@ -27,6 +27,7 @@ void Usage(FILE *out) {
           "Command line options : tpch <options> \n"
           "   -h --help              :  print help message \n"
           "   -i --input-dir         :  location of data \n"
+          "   -n --num-runs          :  the number of runs to execute for each query \n"
           "   -s --suffix            :  input file suffix \n"
           "   -d --dict-encode       :  dictionary encode \n"
           "   -q --queries           :  comma-separated list of queries to run (i.g., 1,14 for Q1 and Q14) \n");
@@ -44,7 +45,7 @@ void ParseArguments(int argc, char **argv, Configuration &config) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hi:sdq:", opts, &idx);
+    int c = getopt_long(argc, argv, "hi:nsdq:", opts, &idx);
 
     if (c == -1) break;
 
@@ -53,6 +54,10 @@ void ParseArguments(int argc, char **argv, Configuration &config) {
         char *input = optarg;
         config.data_dir = input;
         break;
+      }
+      case 'n': {
+        char *input = optarg;
+        config.num_runs = static_cast<uint32_t>(std::atoi(input));
       }
       case 'd': {
         config.dictionary_encode = true;

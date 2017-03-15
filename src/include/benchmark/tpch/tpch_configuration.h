@@ -82,6 +82,9 @@ struct Configuration {
   // The scale factor of the benchmark
   double scale_factor = 1;
 
+  // The number of runs to average over
+  uint32_t num_runs = 10;
+
   // The directory where all the data files are
   std::string data_dir;
 

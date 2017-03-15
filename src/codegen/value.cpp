@@ -39,7 +39,13 @@ Value Value::CompareEq(CodeGen &codegen, const Value &o) const {
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
   // Do the comparison
-  llvm::Value *res = codegen->CreateICmpEQ(op_md.lhs_val, op_md.rhs_val);
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFCmpUEQ(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateICmpEQ(op_md.lhs_val, op_md.rhs_val);
+  }
+
   return Value{type::Type::TypeId::BOOLEAN, res};
 }
 
@@ -51,7 +57,14 @@ Value Value::CompareNe(CodeGen &codegen, const Value &o) const {
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
   // Do the comparison
-  llvm::Value *res = codegen->CreateICmpNE(op_md.lhs_val, op_md.rhs_val);
+  // Do the comparison
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFCmpUNE(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateICmpNE(op_md.lhs_val, op_md.rhs_val);
+  }
+
   return Value{type::Type::TypeId::BOOLEAN, res};
 }
 
@@ -63,7 +76,13 @@ Value Value::CompareLt(CodeGen &codegen, const Value &o) const {
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
   // Do the comparison
-  llvm::Value *res = codegen->CreateICmpSLT(op_md.lhs_val, op_md.rhs_val);
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFCmpULT(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateICmpSLT(op_md.lhs_val, op_md.rhs_val);
+  }
+
   return Value{type::Type::TypeId::BOOLEAN, res};
 }
 
@@ -75,7 +94,13 @@ Value Value::CompareLte(CodeGen &codegen, const Value &o) const {
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
   // Do the comparison
-  llvm::Value *res = codegen->CreateICmpSLE(op_md.lhs_val, op_md.rhs_val);
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFCmpULE(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateICmpSLE(op_md.lhs_val, op_md.rhs_val);
+  }
+
   return Value{type::Type::TypeId::BOOLEAN, res};
 }
 
@@ -87,7 +112,13 @@ Value Value::CompareGt(CodeGen &codegen, const Value &o) const {
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
   // Do the comparison
-  llvm::Value *res = codegen->CreateICmpSGT(op_md.lhs_val, op_md.rhs_val);
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFCmpUGT(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateICmpSGT(op_md.lhs_val, op_md.rhs_val);
+  }
+
   return Value{type::Type::TypeId::BOOLEAN, res};
 }
 
@@ -100,7 +131,13 @@ Value Value::CompareGte(CodeGen &codegen, const Value &o) const {
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
   // Do the comparison
-  llvm::Value *res = codegen->CreateICmpSGE(op_md.lhs_val, op_md.rhs_val);
+  llvm::Value *res = nullptr;
+  if (op_md.value_type == type::Type::TypeId::DECIMAL) {
+    res = codegen->CreateFCmpUGE(op_md.lhs_val, op_md.rhs_val);
+  } else {
+    res = codegen->CreateICmpSGE(op_md.lhs_val, op_md.rhs_val);
+  }
+
   return Value{type::Type::TypeId::BOOLEAN, res};
 }
 
