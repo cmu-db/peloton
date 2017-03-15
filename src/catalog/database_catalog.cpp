@@ -38,13 +38,13 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeDatabaseCatalogSchem
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
+  auto database_name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
                                      "database_name", true);
-  name_column.AddConstraint(
+  database_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> database_catalog_schema(
-      new catalog::Schema({database_id_column, name_column}));
+      new catalog::Schema({database_id_column, database_name_column}));
   return database_catalog_schema;
 }
 
