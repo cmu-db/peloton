@@ -79,6 +79,9 @@ class Catalog {
 
   Catalog();
 
+  // TODO:
+  storage::Database *GetCatalogDB() const;
+
   // Creates the catalog database
   void CreateCatalogDatabase(void);
 
