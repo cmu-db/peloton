@@ -99,9 +99,38 @@ std::unique_ptr<planner::AbstractPlan> TPCHBenchmark::ConstructQ6Plan() const {
 
   // Lineitem scan
   auto lineitem_scan = std::unique_ptr<planner::AbstractPlan>{
-      new planner::SeqScanPlan(&lineitem, lineitem_pred.release(), {4,6,10})};
+      new planner::SeqScanPlan(&lineitem, lineitem_pred.release(), {5,6})};
 
-  return lineitem_scan;
+  //////////////////////////////////////////////////////////////////////////////
+  /// THE GLOBAL AGGREGATION
+  //////////////////////////////////////////////////////////////////////////////
+
+  // sum(l_extendedprice * l_discount) as revenue
+  planner::AggregatePlan::AggTerm revenue_agg{
+      ExpressionType::AGGREGATE_SUM,
+      new expression::OperatorExpression(
+          ExpressionType::OPERATOR_MULTIPLY, type::Type::TypeId::DECIMAL,
+          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 0),
+          new expression::TupleValueExpression(type::Type::TypeId::DECIMAL, 0, 1))};
+  revenue_agg.agg_ai.type = type::Type::TypeId::DECIMAL;
+
+  auto output_schema =
+      std::shared_ptr<const catalog::Schema>{new catalog::Schema(
+          {{type::Type::TypeId::DECIMAL, kDecimalSize, "revenue"}})};
+
+  DirectMapList dml = {{0, {1, 0}}};
+
+  std::unique_ptr<const planner::ProjectInfo> agg_project{
+      new planner::ProjectInfo(TargetList{}, std::move(dml))};
+  auto agg_terms = {revenue_agg};
+  auto aggregation_plan = std::unique_ptr<planner::AbstractPlan>{
+      new planner::AggregatePlan(std::move(agg_project), nullptr,
+                                 std::move(agg_terms), {}, output_schema,
+                                 AggregateType::HASH)};
+
+  aggregation_plan->AddChild(std::move(lineitem_scan));
+
+  return aggregation_plan;
 }
 
 }  // namespace tpch
