@@ -33,7 +33,7 @@ TableCatalog::TableCatalog() : AbstractCatalog(GetNextOid(), TABLE_CATALOG_NAME,
   InsertTuple()
 }
 
-std::unique_ptr<catalog::Schema> TableCatalog::TableCatalogSchema() {
+std::unique_ptr<catalog::Schema> TableCatalog::InitializeTableCatalogSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
 
@@ -68,7 +68,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::TableCatalogSchema() {
   return table_catalog_schema;
 }
 
-std::unique_ptr<storage::Tuple> TableCatalog::TableCatalogTuple(
+std::unique_ptr<storage::Tuple> TableCatalog::GetTableCatalogTuple(
     oid_t table_id, std::string table_name, oid_t database_id,
     std::string database_name, type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
