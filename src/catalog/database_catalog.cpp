@@ -23,23 +23,31 @@ DatabaseCatalog *DatabaseCatalog::GetInstance(void) {
   return database_catalog.get();
 }
 
-DatabaseCatalog::DatabaseCatalog() {
-  bool own_schema = true;
-  bool adapt_table = false;
-  bool is_catalog = true;
-  auto database_schema = DatabaseCatalogSchema().release();
-  oid_t database_id = START_OID;
-  std::string database_name = DATABASE_CATALOG_NAME;
 
-  // TODO:
+std::unique_ptr<storage::Tuple> DatabaseCatalog::GetDatabaseCatalogTuple(
+    oid_t table_id, std::string table_name, oid_t database_id,
+    std::string database_name, type::AbstractPool *pool) {
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  catalog_table_ =
-      std::unique_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
-          database_id, GetNextOid(), database_schema, database_name,
-          DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
+  auto val1 = type::ValueFactory::GetIntegerValue(table_id);
+  auto val2 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
+  auto val3 = type::ValueFactory::GetIntegerValue(database_id);
+  auto val4 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
+
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
+  tuple->SetValue(2, val3, pool);
+  tuple->SetValue(3, val4, pool);
+
+  return std::move(tuple);
 }
 
-std::unique_ptr<catalog::Schema> DatabaseCatalog::DatabaseCatalogSchema() {
+
+DatabaseCatalog::DatabaseCatalog() :
+  AbstractCatalog(GetNextOid(), TABLE_CATALOG_NAME, InitializeTableCatalogSchema().release()) {}
+
+std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeDatabaseCatalogSchema() {
   const std::string not_null_constraint_name = "not_null";
 
   auto id_column = catalog::Column(type::Type::INTEGER,

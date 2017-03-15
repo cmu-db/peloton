@@ -22,16 +22,8 @@ TableCatalog *TableCatalog::GetInstance(void) {
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog() : AbstractCatalog(GetNextOid(), TABLE_CATALOG_NAME, TableCatalogSchema().release()) {
-
-
-  // Insert catalog_table_ into pg_table
-  TableCatalogTuple(catalog_table_->GetOid(), TABLE_CATALOG_NAME, catalog_table_->GetDatabaseOid(), CATALOG_DATABASE_NAME);
-
-
-  TableCatalogTuple()
-  InsertTuple()
-}
+TableCatalog::TableCatalog() :
+  AbstractCatalog(GetNextOid(), TABLE_CATALOG_NAME, InitializeTableCatalogSchema().release()) {}
 
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeTableCatalogSchema() {
   const std::string primary_key_constraint_name = "primary_key";
