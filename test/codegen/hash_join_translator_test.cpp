@@ -134,7 +134,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   hj_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2, 3}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and run
   CompileAndExecute(*hj_plan, buffer,

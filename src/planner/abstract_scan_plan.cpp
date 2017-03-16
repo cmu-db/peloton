@@ -11,6 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/abstract_scan_plan.h"
+
+#include <numeric>
+
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -65,7 +68,6 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
     predicate->PerformBinding(all_cols_context);
   }
 }
-
 
 }  // namespace planner
 }  // namespace peloton

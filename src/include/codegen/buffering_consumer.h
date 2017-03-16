@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// codegen_test_utils.h
+// buffering_consumer.h
 //
-// Identification: test/include/codegen/codegen_test_utils.h
+// Identification: src/include/codegen/buffering_consumer.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -30,55 +30,45 @@ namespace codegen {
 class WrappedTuple
     : public expression::ContainerTuple<std::vector<type::Value>> {
  public:
-  // Basic
-  WrappedTuple(type::Value *vals, uint32_t num_vals)
-      : ContainerTuple(&tuple_), tuple_(vals, vals + num_vals) {}
+  // Basic Constructor
+  WrappedTuple(type::Value *vals, uint32_t num_vals);
 
-  // Copy
-  WrappedTuple(const WrappedTuple &o)
-      : ContainerTuple(&tuple_), tuple_(o.tuple_) {}
-  WrappedTuple &operator=(const WrappedTuple &o) {
-    expression::ContainerTuple<std::vector<type::Value>>::operator=(o);
-    tuple_ = o.tuple_;
-    return *this;
-  }
+  // Copy Constructor
+  WrappedTuple(const WrappedTuple &o);
+
+  // Assignment
+  WrappedTuple &operator=(const WrappedTuple &o);
 
   // The tuple
   std::vector<type::Value> tuple_;
- private:
 };
 
 //===----------------------------------------------------------------------===//
 // A query consumer that buffers tuples into a local memory location
 //===----------------------------------------------------------------------===//
-class CodegenConsumer : public codegen::QueryResultConsumer {
+class BufferingConsumer : public QueryResultConsumer {
  public:
   struct BufferingState {
     std::vector<WrappedTuple> *output;
   };
 
   // Constructor
-  CodegenConsumer(std::vector<oid_t> cols, planner::BindingContext &context) {
-    for (oid_t col_id : cols) {
-      ais_.push_back(context.Find(col_id));
-    }
-    state.output = &tuples_;
-  }
+  BufferingConsumer(std::vector<oid_t> cols, planner::BindingContext &context);
 
-  void Prepare(codegen::CompilationContext &compilation_context) override;
-  void InitializeState(codegen::CompilationContext &) override {}
-  void TearDownState(codegen::CompilationContext &) override {}
-  void ConsumeResult(codegen::ConsumerContext &ctx,
-                     codegen::RowBatch::Row &row) const override;
+  void Prepare(CompilationContext &compilation_context) override;
+  void InitializeState(CompilationContext &) override {}
+  void TearDownState(CompilationContext &) override {}
+  void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
 
-  llvm::Value *GetStateValue(codegen::ConsumerContext &ctx,
-                             const codegen::RuntimeState::StateID &id) const {
+  llvm::Value *GetStateValue(ConsumerContext &ctx,
+                             const RuntimeState::StateID &id) const {
     auto &runtime_state = ctx.GetRuntimeState();
     return runtime_state.GetStateValue(ctx.GetCodeGen(), id);
   }
-  
+
+  // A proxy to BufferTuple(...)
   struct _BufferTupleProxy {
-    static llvm::Function *GetFunction(codegen::CodeGen &codegen);
+    static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
   // Called from query plan to buffer the tuple
@@ -93,18 +83,20 @@ class CodegenConsumer : public codegen::QueryResultConsumer {
   const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
 
  private:
-  //
-  std::vector<const planner::AttributeInfo *> ais_;
+  // The attributes we want to output
+  std::vector<const planner::AttributeInfo *> output_ais_;
+
   // Buffered output tuples
   std::vector<WrappedTuple> tuples_;
-  // Tuple space
-  llvm::Value *tuple_buffer_;
+
   // Running buffering state
   BufferingState state;
+
   // The slot in the runtime state to find our state context
-  codegen::RuntimeState::StateID consumer_state_id_;
+  RuntimeState::StateID consumer_state_id_;
+
   // The ID of our output tuple buffer state
-  codegen::RuntimeState::StateID tuple_output_state_id_;
+  RuntimeState::StateID tuple_output_state_id_;
 };
 
 }  // namespace test

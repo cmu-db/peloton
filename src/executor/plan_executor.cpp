@@ -9,19 +9,17 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "executor/plan_executor.h"
 
-#include <vector>
-
+#include "codegen/buffering_consumer.h"
+#include "codegen/query_compiler.h"
+#include "codegen/query_statement.h"
 #include "common/logger.h"
 #include "executor/executor_context.h"
 #include "executor/executors.h"
 #include "optimizer/util.h"
 #include "storage/tuple_iterator.h"
-
-#include "codegen/query_compiler.h"
-#include "codegen/query_statement.h"
-#include "codegen/codegen_consumer.h"
 
 namespace peloton {
 namespace bridge {
@@ -137,7 +135,7 @@ peloton_status PlanExecutor::ExecutePlan(
     std::vector<oid_t> columns;
     //PrepareOutputColumns(plan, columns);
     plan->GetOutputColumns(columns);
-    codegen::CodegenConsumer consumer{columns, context};
+    codegen::BufferingConsumer consumer{columns, context};
 
     auto compiled = compiler.Compile(*plan, consumer);
     compiled->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));

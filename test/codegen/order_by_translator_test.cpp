@@ -59,7 +59,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
   order_by_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(*order_by_plan, buffer,
@@ -70,7 +70,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
   EXPECT_EQ(results.size(), num_test_rows);
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
-      [](const WrappedTuple &t1, const WrappedTuple &t2) {
+      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
         return is_lte == type::CMP_TRUE;
       }));
@@ -97,7 +97,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
   order_by_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(*order_by_plan, buffer,
@@ -108,7 +108,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
   EXPECT_EQ(results.size(), num_test_rows);
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
-      [](const WrappedTuple &t1, const WrappedTuple &t2) {
+      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
         return is_gte == type::CMP_TRUE;
       }));
@@ -135,7 +135,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   order_by_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(*order_by_plan, buffer,
@@ -147,7 +147,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
 
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
-      [](const WrappedTuple &t1, const WrappedTuple &t2) {
+      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) == type::CMP_TRUE) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
@@ -181,7 +181,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   order_by_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(*order_by_plan, buffer,
@@ -193,7 +193,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
 
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
-      [](const WrappedTuple &t1, const WrappedTuple &t2) {
+      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) == type::CMP_TRUE) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==

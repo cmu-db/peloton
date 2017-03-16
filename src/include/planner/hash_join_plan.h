@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <numeric>
+
 #include "planner/abstract_join_plan.h"
 
 namespace peloton {

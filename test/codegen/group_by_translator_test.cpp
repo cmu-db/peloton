@@ -93,7 +93,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile and run
   CompileAndExecute(*agg_plan, buffer,
@@ -153,7 +153,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
@@ -212,7 +212,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
@@ -272,7 +272,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithPredicate) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
@@ -331,7 +331,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
@@ -384,7 +384,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0}, context};
+  codegen::BufferingConsumer buffer{{0}, context};
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,
@@ -442,7 +442,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   agg_plan->PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
   CompileAndExecute(*agg_plan, buffer,

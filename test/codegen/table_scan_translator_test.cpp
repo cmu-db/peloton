@@ -65,7 +65,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   scan.PerformBinding(context);
 
   // Printing consumer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -95,7 +95,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -125,7 +125,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0}, context};
+  codegen::BufferingConsumer buffer{{0}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -168,7 +168,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -212,7 +212,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -253,7 +253,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -293,7 +293,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -334,7 +334,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1}, context};
+  codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -374,7 +374,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
   // COMPILE and execute
@@ -416,7 +416,7 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
@@ -456,7 +456,7 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   scan.PerformBinding(context);
 
   // We collect the results of the query into an in-memory buffer
-  BufferingConsumer buffer{{0, 1, 2}, context};
+  codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
   CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
