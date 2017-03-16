@@ -18,8 +18,8 @@
 namespace peloton {
 namespace codegen {
 
-const std::string Hash::kHashMethodStrings[4] =
-    {"Crc32", "Murmur3", "CityHash", "Multiplicative"};
+const std::string Hash::kHashMethodStrings[4] = {"Crc32", "Murmur3", "CityHash",
+                                                 "Multiplicative"};
 
 //===----------------------------------------------------------------------===//
 // Generate the code to compute the hash of all the given values
@@ -133,12 +133,9 @@ llvm::Value *Hash::HashValues(CodeGen &codegen,
       return ComputeCRC32Hash(codegen, longs, buffers);
     case Hash::HashMethod::Murmur3:
       return ComputeMurmur3Hash(codegen, longs, buffers);
-    case Hash::HashMethod::City:
-    case Hash::HashMethod::Multiplicative:
     default:
-      std::string message = "We currently don't support hash method: " +
-          kHashMethodStrings[method];
-      throw std::runtime_error{message};
+      throw Exception{"We currently don't support hash method: " +
+                      kHashMethodStrings[static_cast<uint32_t>(method)]};
   }
 }
 

@@ -19,8 +19,8 @@ namespace codegen {
 
 //===----------------------------------------------------------------------===//
 // A utility class that serves as a helper to proxy most of the methods in
-// peloton::HashTable. It significantly reduces the pain in calling methods
-// on HashTable instances from LLVM code.
+// peloton::utils::CCHashTable. It significantly reduces the pain in calling
+// methods on HashTable instances from LLVM code.
 //===----------------------------------------------------------------------===//
 class CCHashTableProxy {
  public:
@@ -28,7 +28,7 @@ class CCHashTableProxy {
   static llvm::Type *GetType(CodeGen &codegen);
 
   //===--------------------------------------------------------------------===//
-  // The proxy for HashTable::Init()
+  // The proxy for CCHashTable::Init()
   //===--------------------------------------------------------------------===//
   struct _Init {
     static const std::string &GetFunctionName();
@@ -36,7 +36,7 @@ class CCHashTableProxy {
   };
 
   //===--------------------------------------------------------------------===//
-  // The proxy for HashTable::Destroy()
+  // The proxy for CCHashTable::Destroy()
   //===--------------------------------------------------------------------===//
   struct _Destroy {
     static const std::string &GetFunctionName();
@@ -44,7 +44,7 @@ class CCHashTableProxy {
   };
 
   //===--------------------------------------------------------------------===//
-  // The proxy for HashTable::StoreTuple()
+  // The proxy for CCHashTable::StoreTuple()
   //===--------------------------------------------------------------------===//
   struct _StoreTuple {
     static const std::string &GetFunctionName();
@@ -54,7 +54,7 @@ class CCHashTableProxy {
 
 //===----------------------------------------------------------------------===//
 // A utility class that serves as a helper to proxy the precompiled
-// HashTable::HashEntry methods and types.
+// CCHashTable::HashEntry methods and types.
 //===----------------------------------------------------------------------===//
 class HashEntryProxy {
  public:

@@ -44,11 +44,7 @@ OAHashTable::OAHashTable(CodeGen &codegen,
                          const std::vector<type::Type::TypeId> &key_type,
                          uint64_t value_size)
     : value_size_(value_size) {
-  // Configure the key storage format
-  for (const auto &type : key_type) {
-    key_storage_.Add(type);
-  }
-  key_storage_.Finalize(codegen);
+  key_storage_.Setup(codegen, key_type);
 
   // Configure the size of each HashEntry
   hash_entry_size_ = sizeof(utils::OAHashTable::HashEntry) +

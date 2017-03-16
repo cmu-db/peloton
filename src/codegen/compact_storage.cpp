@@ -16,9 +16,13 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// Finalize
+// Setup
 //===----------------------------------------------------------------------===//
-llvm::Type *CompactStorage::Finalize(CodeGen &codegen) {
+llvm::Type *CompactStorage::Setup(
+    CodeGen &codegen, const std::vector<type::Type::TypeId> &types) {
+  // Copy over the types for convenience
+  types_ = types;
+
   // Return the constructed type if we've already been finalized
   if (storage_type_ != nullptr) {
     return storage_type_;
@@ -30,20 +34,24 @@ llvm::Type *CompactStorage::Finalize(CodeGen &codegen) {
     llvm::Type *len_type = nullptr;
     codegen::Value::TypeForMaterialization(codegen, types_[i], val_type,
                                            len_type);
-    // Create an entry for the value and add the type to the struct type we're
-    // constructing
+    // Create an slot metadata entry for the value
     uint32_t val_type_size = codegen.SizeOf(val_type);
     storage_format_.emplace_back(EntryInfo{val_type, i, false, val_type_size});
+
+    // Add the LLVM type of the value into the structure type we're creating
     llvm_types.push_back(val_type);
+
     // If there is a length component, add that too
     if (len_type != nullptr) {
-      // Create an entry for the value and add the type to the struct type we're
-      // constructing
+      // Create an entry for the length
       uint32_t len_type_size = codegen.SizeOf(len_type);
       storage_format_.emplace_back(EntryInfo{len_type, i, true, len_type_size});
+
+      // Add the LLVM type of the length into the structure type we're creating
       llvm_types.push_back(len_type);
     }
   }
+
   // Construct the finalized types
   storage_type_ = llvm::StructType::get(codegen.GetContext(), llvm_types, true);
   return storage_type_;

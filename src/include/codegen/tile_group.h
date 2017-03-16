@@ -24,7 +24,6 @@ class Schema;
 namespace codegen {
 
 class ScanConsumer;
-class ScanRestriction;
 
 //===----------------------------------------------------------------------===//
 // Like codegen::Table, this class is the main entry point for code generation

@@ -28,7 +28,7 @@ class DataTableProxy {
   static llvm::Type *GetType(CodeGen &codegen);
 
   //===--------------------------------------------------------------------===//
-  // The proxy for DataTable.GetTileGroupCount()
+  // The proxy for DataTable::GetTileGroupCount()
   //===--------------------------------------------------------------------===//
   struct _GetTileGroupCount {
     // Return the symbol for the DataTable.GetTileGroupCount() function

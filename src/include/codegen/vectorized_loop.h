@@ -17,6 +17,15 @@
 namespace peloton {
 namespace codegen {
 
+//===----------------------------------------------------------------------===//
+// A convenience class for generating vectorized loops. This class behaves like
+// a regular loop, except callers are responsible for generating inner loops
+// based on the current vector range - the current range is acquired through a
+// call to GetCurrentRange(...). This class generates a _single_ vectorized loop
+// where the last loop iteration _may_ contain a non-full vector. Since we don't
+// generated a secondary peeled loop, this reduces the size of generated code
+// since we don't duplicate loop body code.
+//===----------------------------------------------------------------------===//
 class VectorizedLoop {
  public:
   struct Range {

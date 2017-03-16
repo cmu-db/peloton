@@ -100,10 +100,11 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Construct the format of the left side
+  std::vector<type::Type::TypeId> left_value_types;
   for (const auto *left_val_ai : left_val_ais_) {
-    left_value_storage_.Add(left_val_ai->type);
+    left_value_types.push_back(left_val_ai->type);
   }
-  left_value_storage_.Finalize(codegen);
+  left_value_storage_.Setup(codegen, left_value_types);
 
   // Check if the join needs an output vector to store saved probes
   if (pipeline.GetTranslatorStage(this) != 0) {

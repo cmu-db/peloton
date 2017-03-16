@@ -22,32 +22,32 @@
 namespace peloton {
 namespace codegen {
 
-void ValuesRuntime::outputTinyInt(char *values, uint32_t idx, int8_t val) {
+void ValuesRuntime::OutputTinyInt(char *values, uint32_t idx, int8_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetTinyIntValue(val);
 }
 
-void ValuesRuntime::outputSmallInt(char *values, uint32_t idx, int16_t val) {
+void ValuesRuntime::OutputSmallInt(char *values, uint32_t idx, int16_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetSmallIntValue(val);
 }
 
-void ValuesRuntime::outputInteger(char *values, uint32_t idx, int32_t val) {
+void ValuesRuntime::OutputInteger(char *values, uint32_t idx, int32_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetIntegerValue(val);
 }
 
-void ValuesRuntime::outputBigInt(char *values, uint32_t idx, int64_t val) {
+void ValuesRuntime::OutputBigInt(char *values, uint32_t idx, int64_t val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetBigIntValue(val);
 }
 
-void ValuesRuntime::outputDouble(char *values, uint32_t idx, double val) {
+void ValuesRuntime::OutputDecimal(char *values, uint32_t idx, double val) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   vals[idx] = type::ValueFactory::GetDecimalValue(val);
 }
 
-void ValuesRuntime::outputVarchar(char *values, uint32_t idx, char *str,
+void ValuesRuntime::OutputVarchar(char *values, uint32_t idx, char *str,
                                   uint32_t len) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   std::string string_val{str, len};

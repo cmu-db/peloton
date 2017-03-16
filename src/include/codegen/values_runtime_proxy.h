@@ -19,37 +19,37 @@ namespace codegen {
 
 class ValuesRuntimeProxy {
  public:
-  // The proxy around ValuesRuntime::outputTinyInt()
+  // The proxy around ValuesRuntime::OutputTinyInt()
   struct _OutputTinyInt {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // The proxy around ValuesRuntime::outputSmallInt()
+  // The proxy around ValuesRuntime::OutputSmallInt()
   struct _OutputSmallInt {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // The proxy around ValuesRuntime::outputInteger()
+  // The proxy around ValuesRuntime::OutputInteger()
   struct _OutputInteger {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // The proxy around ValuesRuntime::outputBigInt()
+  // The proxy around ValuesRuntime::OutputBigInt()
   struct _OutputBigInt {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // The proxy around ValuesRuntime::outputDouble()
+  // The proxy around ValuesRuntime::OutputDecimal()
   struct _OutputDouble {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // The proxy around ValuesRuntime::outputVarchar()
+  // The proxy around ValuesRuntime::OutputVarchar()
   struct _OutputVarchar {
     static const std::string &GetFunctionName();
     static llvm::Function *GetFunction(CodeGen &codegen);

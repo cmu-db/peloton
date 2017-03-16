@@ -26,7 +26,7 @@ class CatalogProxy {
   static llvm::Type *GetType(CodeGen &codegen);
 
   //===--------------------------------------------------------------------===//
-  // A structure that proxies the Manager.GetTableWithOid() function
+  // A structure that proxies Catalog::GetTableWithOid()
   //===--------------------------------------------------------------------===//
   struct _GetTableWithOid {
     // Return the symbol for the Manager.GetTableWithOid() function

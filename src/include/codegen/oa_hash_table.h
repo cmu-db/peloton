@@ -25,7 +25,7 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// Our interface to the hashtable data structure.
+// Our interface to the open-addressing hash-table data structure.
 //===----------------------------------------------------------------------===//
 class OAHashTable : public HashTable {
  public:

@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <vector>
+
 #include "codegen/codegen.h"
 #include "codegen/updateable_storage.h"
 #include "codegen/value.h"
 #include "planner/aggregate_plan.h"
-
-#include <vector>
 
 namespace peloton {
 namespace codegen {

@@ -141,7 +141,7 @@ class HashGroupByTranslator : public OperatorTranslator {
    private:
     // The aggregator
     Aggregation aggregation_;
-    // The hash-table accesor
+    // The hash-table accessor
     HashTable::HashTableAccess &hash_table_access_;
     // Whether the aggregate has been finalized and the results
     bool finalized_;

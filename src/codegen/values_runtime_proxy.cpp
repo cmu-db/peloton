@@ -22,10 +22,10 @@ namespace codegen {
 // OUTPUT TINYINT
 //===----------------------------------------------------------------------===//
 
-// Get the symbol name for ValuesRuntime::outputTinyInt()
+// Get the symbol name for ValuesRuntime::OutputTinyInt()
 const std::string& ValuesRuntimeProxy::_OutputTinyInt::GetFunctionName() {
   static const std::string kOutputTinyIntFnName =
-      "_ZN7peloton7codegen13ValuesRuntime13outputTinyIntEPcja";
+      "_ZN7peloton7codegen13ValuesRuntime13OutputTinyIntEPcja";
   return kOutputTinyIntFnName;
 }
 
@@ -53,7 +53,7 @@ llvm::Function* ValuesRuntimeProxy::_OutputTinyInt::GetFunction(
 
 const std::string& ValuesRuntimeProxy::_OutputSmallInt::GetFunctionName() {
   static const std::string kOutputSmallIntFnName =
-      "_ZN7peloton7codegen13ValuesRuntime14outputSmallIntEPcjs";
+      "_ZN7peloton7codegen13ValuesRuntime14OutputSmallIntEPcjs";
   return kOutputSmallIntFnName;
 }
 
@@ -81,7 +81,7 @@ llvm::Function* ValuesRuntimeProxy::_OutputSmallInt::GetFunction(
 
 const std::string& ValuesRuntimeProxy::_OutputInteger::GetFunctionName() {
   static const std::string kOutputIntegerFnName =
-      "_ZN7peloton7codegen13ValuesRuntime13outputIntegerEPcji";
+      "_ZN7peloton7codegen13ValuesRuntime13OutputIntegerEPcji";
   return kOutputIntegerFnName;
 }
 
@@ -109,7 +109,7 @@ llvm::Function* ValuesRuntimeProxy::_OutputInteger::GetFunction(
 
 const std::string& ValuesRuntimeProxy::_OutputBigInt::GetFunctionName() {
   static const std::string kOutputBigIntFnName =
-      "_ZN7peloton7codegen13ValuesRuntime12outputBigIntEPcjl";
+      "_ZN7peloton7codegen13ValuesRuntime12OutputBigIntEPcjl";
   return kOutputBigIntFnName;
 }
 
@@ -137,7 +137,7 @@ llvm::Function* ValuesRuntimeProxy::_OutputBigInt::GetFunction(
 
 const std::string& ValuesRuntimeProxy::_OutputDouble::GetFunctionName() {
   static const std::string kOutputDoubleFnName =
-      "_ZN7peloton7codegen13ValuesRuntime12outputDoubleEPcjd";
+      "_ZN7peloton7codegen13ValuesRuntime13OutputDecimalEPcjd";
   return kOutputDoubleFnName;
 }
 
@@ -168,7 +168,7 @@ const std::string& ValuesRuntimeProxy::_OutputVarchar::GetFunctionName() {
 #ifdef __APPLE__
       "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
 #else
-      "_ZN7peloton7codegen13ValuesRuntime13outputVarcharEPcjS2_j";
+      "_ZN7peloton7codegen13ValuesRuntime13OutputVarcharEPcjS2_j";
 #endif
   return kOutputVarcharFnName;
 }

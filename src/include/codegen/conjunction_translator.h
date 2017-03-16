@@ -21,7 +21,7 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-/// A translator for conjunction expressions
+// A translator for conjunction expressions
 //===----------------------------------------------------------------------===//
 class ConjunctionTranslator : public ExpressionTranslator {
  public:

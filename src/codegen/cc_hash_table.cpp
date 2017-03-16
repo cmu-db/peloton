@@ -37,10 +37,7 @@ CCHashTable::CCHashTable() {
 //===----------------------------------------------------------------------===//
 CCHashTable::CCHashTable(CodeGen &codegen,
                          const std::vector<type::Type::TypeId> &key_type) {
-  for (const auto &type : key_type) {
-    key_storage_.Add(type);
-  }
-  key_storage_.Finalize(codegen);
+  key_storage_.Setup(codegen, key_type);
 }
 
 void CCHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {

@@ -38,7 +38,7 @@ class Hash {
   //===--------------------------------------------------------------------===//
   // The hash methods we currently support
   //===--------------------------------------------------------------------===//
-  enum HashMethod { Crc32, Murmur3, City, Multiplicative };
+  enum class HashMethod : uint32_t { Crc32, Murmur3, City, Multiplicative };
   static const std::string kHashMethodStrings[4];
 
   // Given a collection of values, produce a single hash value
