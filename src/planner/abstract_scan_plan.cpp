@@ -28,6 +28,12 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
   } else {
     // We're scanning a table
 
+    // Fill up the column IDs if empty
+    if (GetColumnIds().size() == 0) {
+      column_ids_.resize(target_table_->GetSchema()->GetColumnCount());
+      std::iota(column_ids_.begin(), column_ids_.end(), 0);
+    }
+
     // Collect _all_ table columns
     const auto *schema = GetTable()->GetSchema();
     for (oid_t col_id = 0; col_id < schema->GetColumnCount(); col_id++) {

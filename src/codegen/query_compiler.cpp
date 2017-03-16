@@ -42,5 +42,20 @@ std::unique_ptr<QueryStatement> QueryCompiler::Compile(
   return query;
 }
 
+bool QueryCompiler::IsSupported(const planner::AbstractPlan *plan) {
+
+  switch (plan->GetPlanNodeType()) {
+    case PlanNodeType::SEQSCAN:
+    case PlanNodeType::ORDERBY:
+    case PlanNodeType::AGGREGATE_V2:
+    case PlanNodeType::HASHJOIN: {
+      return true;
+    }
+    default: {
+      return false;
+    }
+  }
+}
+
 }  // namespace codegen
 }  // namespace peloton
