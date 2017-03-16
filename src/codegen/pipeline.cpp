@@ -12,8 +12,6 @@
 
 #include "codegen/pipeline.h"
 
-#include <cassert>
-
 #include "codegen/operator_translator.h"
 
 namespace peloton {
