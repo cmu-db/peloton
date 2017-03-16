@@ -44,25 +44,21 @@ namespace catalog {
 
 class AbstractCatalog {
  public:
+  virtual oid_t GetNextOid() = 0;
+
+ protected:
   AbstractCatalog(oid_t catalog_table_id, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema);
 
   virtual ~AbstractCatalog() {}
 
-  virtual oid_t GetNextOid() = 0;
-
- protected:
   void InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                    concurrency::Transaction *txn);
 
-  void DeleteTuple(oid_t id, concurrency::Transaction *txn) = 0;
-
- private:
   // Maximum column name size for catalog schemas
   const size_t max_name_size = 32;
 
-  // The id variable that get assigned to objects. Initialized with (START_OID +
-  // 1) because START_OID is assigned to the catalog database.
+  // Local oid (without catalog type mask) starts from START_OID + OID_OFFSET
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);
 
   std::shared_ptr<storage::DataTable> catalog_table_;
