@@ -14,12 +14,16 @@
 
 #include "codegen/query_result_consumer.h"
 #include "codegen/query_statement.h"
-#include "planner/abstract_plan.h"
 
 #include <atomic>
 #include <memory>
 
 namespace peloton {
+
+namespace planner {
+class AbstractPlan;
+}  // namespace plan
+
 namespace codegen {
 
 // The primary interface to JIT compile queries

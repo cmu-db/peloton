@@ -20,6 +20,7 @@
 #include "codegen/global_group_by_translator.h"
 #include "codegen/hash_group_by_translator.h"
 #include "codegen/hash_join_translator.h"
+#include "codegen/negation_translator.h"
 #include "codegen/order_by_translator.h"
 #include "codegen/table_scan_translator.h"
 #include "codegen/tuple_value_translator.h"
@@ -120,6 +121,12 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
       auto &arithmetic_exp =
           static_cast<const expression::OperatorExpression &>(exp);
       translator = new ArithmeticTranslator(arithmetic_exp, context);
+      break;
+    }
+    case ExpressionType::OPERATOR_UNARY_MINUS: {
+      auto &negation_expr =
+          static_cast<const expression::OperatorUnaryMinusExpression &>(exp);
+      translator = new NegationTranslator(negation_expr, context);
       break;
     }
     /*

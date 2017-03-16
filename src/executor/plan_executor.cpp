@@ -126,6 +126,7 @@ peloton_status PlanExecutor::ExecutePlan(
     CleanExecutorTree(executor_tree.get());
 
   } else {
+    LOG_TRACE("Compiling and executing query ...");
 
     // Bind: casting const should be removed with later refactoring executor
     planner::AbstractPlan *planp = const_cast<planner::AbstractPlan *>(plan);
@@ -133,16 +134,15 @@ peloton_status PlanExecutor::ExecutePlan(
     planp->PerformBinding(context);
 
     std::vector<oid_t> columns;
-    //PrepareOutputColumns(plan, columns);
     plan->GetOutputColumns(columns);
     codegen::BufferingConsumer consumer{columns, context};
 
     auto compiled = compiler.Compile(*plan, consumer);
     compiled->Execute(*txn, reinterpret_cast<char *>(consumer.GetState()));
-    const auto& results = consumer.GetOutputTuples();
+    const auto &results = consumer.GetOutputTuples();
 
     for (auto &tuple : results) {
-      for (unsigned int i=0; i<tuple.tuple_.size(); i++) {
+      for (unsigned int i = 0; i < tuple.tuple_.size(); i++) {
         auto res = StatementResult();
         PlanExecutor::copyFromTo(tuple.tuple_[i].ToString(), res.second);
         LOG_TRACE("column content: %s", tuple.tuple_[i].ToString().c_str());

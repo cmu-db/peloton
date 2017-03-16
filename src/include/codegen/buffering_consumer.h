@@ -16,12 +16,15 @@
 #include "codegen/query_result_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
-#include "expression/constant_value_expression.h"
-#include "planner/binding_context.h"
 
 #include <vector>
 
 namespace peloton {
+
+namespace planner {
+class BindingContext;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -71,7 +74,7 @@ class BufferingConsumer : public QueryResultConsumer {
     static llvm::Function *GetFunction(CodeGen &codegen);
   };
 
-  // Called from query plan to buffer the tuple
+  // Called from compiled query code to buffer the tuple
   static void BufferTuple(char *state, type::Value *vals, uint32_t num_vals);
 
   //===--------------------------------------------------------------------===//
@@ -99,5 +102,5 @@ class BufferingConsumer : public QueryResultConsumer {
   RuntimeState::StateID tuple_output_state_id_;
 };
 
-}  // namespace test
+}  // namespace codegen
 }  // namespace peloton

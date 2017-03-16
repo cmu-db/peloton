@@ -42,13 +42,19 @@ std::unique_ptr<QueryStatement> QueryCompiler::Compile(
   return query;
 }
 
+// Check if the given query can be compiled. This search is not exhaustive ...
 bool QueryCompiler::IsSupported(const planner::AbstractPlan *plan) {
-
   switch (plan->GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
     case PlanNodeType::ORDERBY:
     case PlanNodeType::AGGREGATE_V2:
     case PlanNodeType::HASHJOIN: {
+      // Make sure the all children of this node are also supported
+      for (const auto &child : plan->GetChildren()) {
+        if (!IsSupported(child.get())) {
+          return false;
+        }
+      }
       return true;
     }
     default: {
