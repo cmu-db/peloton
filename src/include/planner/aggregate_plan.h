@@ -102,6 +102,11 @@ class AggregatePlan : public AbstractPlan {
     return PlanNodeType::AGGREGATE_V2;
   }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const {
+    columns.resize(GetOutputSchema()->GetColumnCount());
+    std::iota(columns.begin(), columns.end(), 0);
+  }
+
   const std::string GetInfo() const { return "AggregatePlan"; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }

@@ -56,6 +56,8 @@ class QueryCompiler {
   // Get the next available query plan ID
   uint64_t NextId() { return next_id_++; }
 
+  bool IsSupported(const planner::AbstractPlan *plan);
+
  private:
   // Counter we use to ID the queries we compiled
   std::atomic<uint64_t> next_id_;

@@ -54,6 +54,11 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::HASHJOIN; }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const {
+    columns.resize(GetSchema()->GetColumnCount());
+    std::iota(columns.begin(), columns.end(), 0);
+  }
+
   const std::string GetInfo() const { return "HashJoin"; }
 
   const std::vector<oid_t> &GetOuterHashIds() const {

@@ -1182,13 +1182,12 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   auto right_schema = right_table->GetSchema();
 
   // Get the key column name based on the join condition
-  auto right_key_col_name =
+  auto left_key_col_name =
       static_cast<expression::TupleValueExpression*>(
           join_condition->GetModifiableChild(0))->GetColumnName();
-  if (right_schema->GetColumnID(right_key_col_name) == (oid_t)-1)
-    right_key_col_name =
-        static_cast<expression::TupleValueExpression*>(
-            join_condition->GetModifiableChild(1))->GetColumnName();
+  auto right_key_col_name =
+      static_cast<expression::TupleValueExpression*>(
+          join_condition->GetModifiableChild(1))->GetColumnName();
   // Generate hash for right table
   auto right_key = expression::ExpressionUtil::ConvertToTupleValueExpression(
       right_schema, right_key_col_name);
@@ -1208,6 +1207,10 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   auto& select_list = *select_stmt->getSelectList();
   int i = 0;
   std::vector<const catalog::Schema*> schemas = {left_schema, right_schema};
+  // This is introduced to check the name of the table while building dml
+  std::vector<std::pair<const std::string, const catalog::Schema*>> schemas_ps =
+      {{left_table->GetName(), left_schema},
+       {right_table->GetName(), right_schema}};
 
   // SELECT * FROM A JOIN B
   if (select_list[0]->GetExpressionType() == ExpressionType::STAR) {
@@ -1239,10 +1242,11 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
         catalog::Column column;
 
         for (int schema_index = 0; schema_index < 2; schema_index++) {
-          auto& schema = schemas[schema_index];
-          old_col_id = schema->GetColumnID(tup_expr->GetColumnName());
-          if (old_col_id != (oid_t)-1) {
-            column = schema->GetColumn(old_col_id);
+          auto& schema = schemas_ps[schema_index];
+          old_col_id = schema.second->GetColumnID(tup_expr->GetColumnName());
+          if (old_col_id != (oid_t)-1 &&
+              schema.first == tup_expr->GetTableName()) {
+            column = schema.second->GetColumn(old_col_id);
             output_table_columns.push_back(column);
             dml.push_back(
                 DirectMap(i, std::make_pair(schema_index, old_col_id)));
@@ -1286,11 +1290,23 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateJoinPlan(
   if (select_stmt->where_clause != nullptr)
     predicates = std::unique_ptr<const peloton::expression::AbstractExpression>(
         select_stmt->where_clause->Copy());
+
+  auto left_hash_key = peloton::expression::ExpressionUtil::
+      ConvertToTupleValueExpression(left_schema, left_key_col_name);
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> lhash_keys;
+  lhash_keys.emplace_back(left_hash_key);
+
+  auto right_hash_key = peloton::expression::ExpressionUtil::
+      ConvertToTupleValueExpression(right_schema, right_key_col_name);
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> rhash_keys;
+  rhash_keys.emplace_back(right_hash_key);
+
   std::unique_ptr<planner::HashJoinPlan> hash_join_plan_node(
       new planner::HashJoinPlan(join_type, std::move(predicates),
-                                std::move(proj_info), schema));
-  // index only works on comparison with a constant
+                                std::move(proj_info), schema, lhash_keys,
+                                rhash_keys));
 
+  // index only works on comparison with a constant
   hash_join_plan_node->AddChild(std::move(left_SelectPlan));
   hash_join_plan_node->AddChild(std::move(hash_plan_node));
   return std::move(hash_join_plan_node);

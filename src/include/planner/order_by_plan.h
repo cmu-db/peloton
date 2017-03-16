@@ -48,6 +48,10 @@ class OrderByPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ORDERBY; }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const {
+    columns = GetOutputColumnIds();
+  }
+
   const std::string GetInfo() const { return "OrderBy"; }
 
   void SetUnderlyingOrder(bool same_order) { underling_ordered_ = same_order; }

@@ -91,6 +91,8 @@ class AbstractPlan : public Printable {
     }
   }
 
+  virtual void GetOutputColumns(std::vector<oid_t> &columns UNUSED_ATTRIBUTE)
+      const { return; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;

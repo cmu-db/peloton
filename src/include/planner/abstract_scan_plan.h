@@ -48,6 +48,10 @@ class AbstractScan : public AbstractPlan {
     return PlanNodeType::ABSTRACT_SCAN;
   }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const {
+    columns = GetColumnIds();
+  }
+
   inline const std::string GetInfo() const { return "AbstractScan"; }
 
   inline storage::DataTable *GetTable() const { return target_table_; }
