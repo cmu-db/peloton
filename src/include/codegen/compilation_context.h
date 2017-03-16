@@ -23,10 +23,17 @@
 #include "codegen/query_compiler.h"
 #include "codegen/query_statement.h"
 #include "codegen/translator_factory.h"
-#include "expression/abstract_expression.h"
-#include "planner/abstract_plan.h"
 
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}  // namespace expression
+
+namespace planner {
+class AbstractPlan;
+}  // namespace planner
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -69,11 +76,14 @@ class CompilationContext {
     return result_consumer_;
   }
 
+  // Get a pointer to the catalog object from the runtime state
   llvm::Value *GetCatalogPtr();
 
+  // Get a pointer to the transaction object from runtime state
+  llvm::Value *GetTransactionPtr();
+
  private:
-  // Generate any helper functions that the query needs (i.e. any auxillary
-  // functions)
+  // Generate any auxiliary helper functions that the query needs
   void GenerateHelperFunctions();
 
   // Generate the init() function of the query

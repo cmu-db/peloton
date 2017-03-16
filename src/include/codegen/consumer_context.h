@@ -16,10 +16,14 @@
 #include "codegen/row_batch.h"
 #include "codegen/runtime_state.h"
 #include "codegen/value.h"
-#include "expression/abstract_expression.h"
 #include "planner/attribute_info.h"
 
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}  // namespace expression
+
 namespace codegen {
 
 // Forward declare

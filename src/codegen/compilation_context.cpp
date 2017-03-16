@@ -129,6 +129,11 @@ llvm::Value *CompilationContext::GetCatalogPtr() {
   return runtime_state_.GetStateValue(codegen_, catalog_state_id_);
 }
 
+// Get the transaction pointer from the runtime state
+llvm::Value *CompilationContext::GetTransactionPtr() {
+  return runtime_state_.GetStateValue(codegen_, txn_state_id_);
+}
+
 // Generate code for the init() function of the query. All that happens is the
 // creation of the function definition whose body is the concatenation of each
 // of the translators' InitializeState() calls.
