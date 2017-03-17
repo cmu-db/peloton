@@ -273,7 +273,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
  * @return Table generated for test.
  */
 
-storage::DataTable* ConstraintsTestsUtil::CreateAndPopulateTable() {
+storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ConstraintsTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -283,7 +283,8 @@ storage::DataTable* ConstraintsTestsUtil::CreateAndPopulateTable() {
   txn_manager.CommitTransaction(txn);
 
   return table;
-}/
+}
+/
 
 }  // namespace test
 }  // namespace peloton
