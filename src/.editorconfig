@@ -1,0 +1,4 @@
+# C/C++
+[*.{cpp,hpp,cc,cxx,c,h}]
+indent_style = space
+indent_size = 2

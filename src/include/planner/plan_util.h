@@ -17,6 +17,7 @@
 #include <string>
 
 #include "planner/abstract_plan.h"
+#include "planner/populate_index_plan.h"
 #include "util/string_util.h"
 
 namespace peloton {
@@ -88,6 +89,12 @@ class PlanUtil {
         const planner::InsertPlan *insert_node =
             reinterpret_cast<const planner::InsertPlan *>(plan);
         table_ids.insert(insert_node->GetTable()->GetOid());
+        break;
+      }
+      case PlanNodeType::POPULATE_INDEX: {
+        const planner::PopulateIndexPlan *populate_index_node =
+                reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
+        table_ids.insert(populate_index_node->GetTable()->GetOid());
         break;
       }
       default: {

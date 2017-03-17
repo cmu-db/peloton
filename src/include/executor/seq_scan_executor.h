@@ -50,6 +50,8 @@ class SeqScanExecutor : public AbstractScanExecutor {
   // Plan Info
   //===--------------------------------------------------------------------===//
 
+  bool index_done_ = false;
+
   /** @brief Pointer to table to scan from. */
   storage::DataTable *target_table_ = nullptr;
 };
