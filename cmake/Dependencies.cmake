@@ -45,7 +45,7 @@ set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
 set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp")
 
 # --[ LLVM 3.7+
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM 3.7 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 llvm_map_components_to_libnames(LLVM_LIBRARIES core mcjit nativecodegen native)
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
