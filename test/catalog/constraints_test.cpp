@@ -74,7 +74,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  140           141   142     "143"
   ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
-     ConstraintsTestsUtil::CreateAndPopulateTable());
+      ConstraintsTestsUtil::CreateAndPopulateTable());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -133,67 +133,24 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // begin this transaction
   // Test1: insert a tuple with column  meet the unique requirment
   bool hasException = false;
-  hasException = false;
-  try {
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, table, type::ValueFactory::GetIntegerValue(10));
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_FALSE(hasException);
 
-  // commit this transaction
-  txn_manager.CommitTransaction(txn);
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
-  txn_manager.CommitTransaction(txn);
-}
-#endif
+  /*
 
-#ifdef MULTI_NOTNULL_TEST
-TEST_F(ConstraintsTests, MULTINOTNULLTest) {
-  auto column1 = catalog::Column(type::Type::INTEGER,
-                                 type::Type::GetTypeSize(type::Type::INTEGER),
-                                 "A", false, 0);
-  auto column2 = catalog::Column(type::Type::VARCHAR, 25, "B", false, 1);
+    try {
+      ConstraintsTestsUtil::ExecuteInsert(
+          txn, data_table.get(), type::ValueFactory::GetNullValue(),
+          type::ValueFactory::GetIntegerValue(
+              ConstraintsTestsUtil::PopulatedValue(15, 1)),
+          type::ValueFactory::GetIntegerValue(
+              ConstraintsTestsUtil::PopulatedValue(15, 2)),
+          type::ValueFactory::GetVarcharValue(
+              std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
 
-  std::vector<oid_t> cols;
-  cols.push_back(0);
-  cols.push_back(1);
-
-  std::vector<catalog::Column> columns;
-  columns.push_back(column1);
-  columns.push_back(column2);
-
-  auto mc = catalog::MultiConstraint(ConstraintType::NOTNULL, "c1", cols);
-  std::cout << "**** MULTI CONSTRAINTS ****" << mc.GetInfo() << std::endl;
-  catalog::Schema *table_schema = new catalog::Schema(columns);
-  table_schema->AddMultiConstraints(mc);
-  std::string table_name("TEST_TABLE");
-  bool own_schema = true;
-  bool adapt_table = false;
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name,
-      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-  std::unique_ptr<storage::DataTable> data_table(table);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  // begin this transaction
-  auto txn = txn_manager.BeginTransaction();
-
-  // two columns are both NULL
-  bool hasException = false;
-  try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
+    } catch (ConstraintException e) {
+      hasException = true;
+    }
+    EXPECT_TRUE(hasException);
+  */
 
   // one column is NULL
   hasException = false;
@@ -244,84 +201,6 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
-
-  // commit this transaction
-  txn_manager.CommitTransaction(txn);
-  delete data_table.release();
-}
-#endif
-
-#ifdef MULTI_NOTNULL_TEST
-TEST_F(ConstraintsTests, MULTINOTNULLTest) {
-  auto column1 = catalog::Column(type::Type::INTEGER,
-                                 type::Type::GetTypeSize(type::Type::INTEGER),
-                                 "A", false, 0);
-  auto column2 = catalog::Column(type::Type::VARCHAR, 25, "B", false, 1);
-  // std::cout << "xxxxxx column idx " << column1.GetOffset() << std::endl;
-  // std::cout << "xxxxxx column idx " << column2.GetOffset() << std::endl;
-
-  std::vector<oid_t> cols;
-  cols.push_back(0);
-  cols.push_back(1);
-
-  std::vector<catalog::Column> columns;
-  columns.push_back(column1);
-  columns.push_back(column2);
-
-  auto mc = catalog::MultiConstraint(ConstraintType::NOTNULL, "c1", cols);
-  std::cout << "**** MULTI CONSTRAINTS ****" << mc.GetInfo() << std::endl;
-  catalog::Schema *table_schema = new catalog::Schema(columns);
-  table_schema->AddMultiConstraints(mc);
-  std::string table_name("TEST_TABLE");
-  bool own_schema = true;
-  bool adapt_table = false;
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name,
-      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-  std::unique_ptr<storage::DataTable> data_table(table);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  // begin this transaction
-  auto txn = txn_manager.BeginTransaction();
-
-  // two columns are both NULL
-  bool hasException = false;
-  try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
-  // one column is NULL
-  hasException = false;
-  try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
-  // two columns are not NULL
-  hasException = false;
-  try {
-    std::vector<type::Value> ccs;
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
-
-    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_FALSE(hasException);
 
   // commit this transaction
   txn_manager.CommitTransaction(txn);
