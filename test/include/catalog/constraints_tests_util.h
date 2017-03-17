@@ -94,7 +94,7 @@ class ConstraintsTestsUtil {
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       bool indexes = true) {std::cout << tuples_per_tilegroup_count << indexes;
   return NULL;};
-*/
+    */
 
   static storage::DataTable *CreateTable(
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
