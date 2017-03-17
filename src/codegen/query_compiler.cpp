@@ -48,6 +48,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan *plan) {
     case PlanNodeType::SEQSCAN:
     case PlanNodeType::ORDERBY:
     case PlanNodeType::AGGREGATE_V2:
+    case PlanNodeType::HASH:
     case PlanNodeType::HASHJOIN: {
       // Make sure the all children of this node are also supported
       for (const auto &child : plan->GetChildren()) {
