@@ -77,7 +77,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // Bootstrap
   ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
-     ConstraintsTestsUtil::CreateAndPopulateTable());
+      ConstraintsTestsUtil::CreateAndPopulateTable());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -435,7 +435,6 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
 
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
-
 }
 
 #ifdef UNIQUE_TEST
