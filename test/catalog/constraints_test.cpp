@@ -77,7 +77,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  140           141   142     "143"
   ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
-     ConstraintsTestsUtil::CreateAndPopulateTable());
+      ConstraintsTestsUtil::CreateAndPopulateTable());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -136,32 +136,24 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // begin this transaction
   // Test1: insert a tuple with column  meet the unique requirment
   bool hasException = false;
-/*
 
-  try {
-    // bool result = true;
-    // result =
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, table, type::ValueFactory::GetIntegerValue(10));
-    // if (result == false) hasException = true;
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_FALSE(hasException);
+  /*
 
-  // Test2: insert not a valid column violate the constraint
-  hasException = false;
-  try {
-    // bool result = true;
-    // result =
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, table, type::ValueFactory::GetIntegerValue(10));
-    // if (result == false) hasException = true;
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-*/
+    try {
+      ConstraintsTestsUtil::ExecuteInsert(
+          txn, data_table.get(), type::ValueFactory::GetNullValue(),
+          type::ValueFactory::GetIntegerValue(
+              ConstraintsTestsUtil::PopulatedValue(15, 1)),
+          type::ValueFactory::GetIntegerValue(
+              ConstraintsTestsUtil::PopulatedValue(15, 2)),
+          type::ValueFactory::GetVarcharValue(
+              std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
+
+    } catch (ConstraintException e) {
+      hasException = true;
+    }
+    EXPECT_TRUE(hasException);
+  */
 
   hasException = false;
   try {
@@ -636,39 +628,6 @@ TEST_F(ConstraintsTests, CHECKTest) {
   EXPECT_TRUE(hasException);
 
   // commit this transaction
-  txn_manager.CommitTransaction(txn);
-  delete data_table.release();
-}
-#endif
-
-TEST_F(ConstraintsTests, DEFAULTTEST) {
-  std::unique_ptr<storage::DataTable> data_table(
-    ConstraintsTestsUtil::CreateAndPopulateTable());
-
-  auto schema = data_table->GetSchema();
-
-  catalog::Constraint constraint(ConstraintType::DEFAULT, "Default Constraint");
-  auto v = type::ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1));
-  constraint.addDefaultValue(v);
-  schema->AddConstraint(1, constraint);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  // begin this transaction
-  auto txn = txn_manager.BeginTransaction();
-
-  ConstraintsTestsUtil::ExecuteInsert(
-    txn, data_table.get(),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 0)),
-    type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 2)),
-    type::ValueFactory::GetVarcharValue(
-      std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-
-
-
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
 }
