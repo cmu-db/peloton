@@ -26,11 +26,11 @@ class TableCatalog : public AbstractCatalog {
     return oid_++ | static_cast<oid_t>(type::CatalogType::TABLE);
   }
 
-  ResultType Insert(oid_t table_id, std::string table_name, oid_t database_id,
-                    std::string database_name, type::AbstractPool *pool,
-                    concurrency::Transaction *txn);
+  bool Insert(oid_t table_id, std::string table_name, oid_t database_id,
+              std::string database_name, type::AbstractPool *pool,
+              concurrency::Transaction *txn);
 
-  ResultType DeleteByOid(oid_t id, concurrency::Transaction *txn);
+  bool DeleteByOid(oid_t id, concurrency::Transaction *txn);
 
   // Read-only
   std::string GetTableNameByOid(oid_t id, concurrency::Transaction *txn);
@@ -44,10 +44,6 @@ class TableCatalog : public AbstractCatalog {
   ~TableCatalog();
 
   std::unique_ptr<catalog::Schema> InitializeTableCatalogSchema();
-
-  std::unique_ptr<storage::Tuple> CreateTableCatalogTuple(
-      oid_t table_id, std::string table_name, oid_t database_id,
-      std::string database_name, type::AbstractPool *pool);
 };
 
 }  // End catalog namespace

@@ -52,7 +52,7 @@ class AbstractCatalog {
 
   virtual ~AbstractCatalog() {}
 
-  void InsertTuple(std::unique_ptr<storage::Tuple> tuple,
+  bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                    concurrency::Transaction *txn);
 
   // Maximum column name size for catalog schemas
