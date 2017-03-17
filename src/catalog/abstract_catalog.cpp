@@ -28,7 +28,7 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
   pg_catalog->AddTable(catalog_table_.get());
 }
 
-void AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
+bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                                   concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
@@ -43,11 +43,12 @@ void AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   planner::InsertPlan node(catalog_table_.get(), std::move(tuple));
   executor::InsertExecutor executor(&node, context.get());
   executor.Init();
-  executor.Execute();
+  bool status = executor.Execute();
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
   }
+  return status;
 }
 
 }  // End catalog namespace

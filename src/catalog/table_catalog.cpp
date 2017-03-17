@@ -61,9 +61,10 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeTableCatalogSchema() {
   return table_catalog_schema;
 }
 
-std::unique_ptr<storage::Tuple> TableCatalog::GetTableCatalogTuple(
-    oid_t table_id, std::string table_name, oid_t database_id,
-    std::string database_name, type::AbstractPool *pool) {
+bool TableCatalog::Insert(oid_t table_id, std::string table_name, oid_t database_id,
+            std::string database_name, type::AbstractPool *pool,
+            concurrency::Transaction *txn) {
+  // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -77,8 +78,10 @@ std::unique_ptr<storage::Tuple> TableCatalog::GetTableCatalogTuple(
   tuple->SetValue(2, val3, pool);
   tuple->SetValue(3, val4, pool);
 
-  return std::move(tuple);
+  // Insert the tuple
+  return InsertTuple(std::move(tuple), txn);
 }
+
 
 }  // End catalog namespace
 }  // End peloton namespace
