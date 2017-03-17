@@ -25,7 +25,8 @@ matrix:
 
 before_script:
     # setup environment
-    - sudo apt-get -y -qq remove llvm-3.5
+    - sudo apt-get -y -qq remove clang llvm llvm-runtime
+    - sudo apt-get purge llvm clang llvm llvm-runtime
     - sudo apt-get autoremove
     - ./script/installation/packages.sh
     - pip install --user cpp-coveralls
