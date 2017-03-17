@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// parsenodes.h
+//
+// Identification: src/include/parser/parsenodes.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "nodes.h"
 #include "pg_list.h"
 
