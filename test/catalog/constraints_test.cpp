@@ -72,12 +72,9 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  20            21    22      "23"
   //  .....
   //  140           141   142     "143"
-  // ConstraintsTestsUtil::CreateAndPopulateTable();
-
-  // Bootstrap
   ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
-      ConstraintsTestsUtil::CreateAndPopulateTable());
+     ConstraintsTestsUtil::CreateAndPopulateTable());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -136,23 +133,6 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // begin this transaction
   // Test1: insert a tuple with column  meet the unique requirment
   bool hasException = false;
-
-  try {
-    ConstraintsTestsUtil::ExecuteInsert(
-        txn, data_table.get(),
-        type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(15, 1)),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(15, 2)),
-        type::ValueFactory::GetVarcharValue(
-            std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
   hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
