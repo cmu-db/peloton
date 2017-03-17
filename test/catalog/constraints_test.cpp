@@ -26,7 +26,6 @@
 #include "storage/table_factory.h"
 #include "storage/database.h"
 #include "index/index_factory.h"
-
 #include "catalog/constraints_tests_util.h"
 
 #define NOTNULL_TEST
@@ -44,8 +43,7 @@ class ConstraintsTests : public PelotonTest {};
 
 // FIXME: see the explanation rpc_client_test and rpc_server_test
 TEST_F(ConstraintsTests, BlankTest) {}
-/*
-#ifdef NOTNULL_TEST
+//#ifdef NOTNULL_TEST
 TEST_F(ConstraintsTests, NOTNULLTest) {
   // First, generate the table with index
   // this table has 15 rows:
@@ -55,9 +53,9 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  20            21    22      "23"
   //  .....
   //  140           141   142     "143"
-
+  ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
-      ConstraintsTestsUtil::CreateAndPopulateTable());
+     ConstraintsTestsUtil::CreateAndPopulateTable());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -66,6 +64,8 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // Test1: insert a tuple with column 1 = null
   bool hasException = false;
+/*
+
   try {
     ConstraintsTestsUtil::ExecuteInsert(
         txn, data_table.get(), type::ValueFactory::GetNullValue(),
@@ -80,6 +80,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
+*/
 
   // Test2: insert a legal tuple
   hasException = false;
@@ -99,10 +100,12 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   EXPECT_FALSE(hasException);
 
   // commit this transaction
-  txn_manager.CommitTransaction();
-}
-#endif
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
 
+}
+/*
+//#endif
 #ifdef PRIMARY_UNIQUEKEY_TEST
 TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
   // First, generate the table with index
@@ -261,6 +264,5 @@ TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
 }
 #endif
 */
-
 }  // End test namespace
 }  // End peloton namespace
