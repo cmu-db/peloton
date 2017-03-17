@@ -161,6 +161,8 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
 
   // two columns are both NULL
   bool hasException = false;
+/*
+
   try {
     std::vector<type::Value> ccs;
     ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
@@ -171,6 +173,7 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
+*/
 
   // one column is NULL
   hasException = false;
