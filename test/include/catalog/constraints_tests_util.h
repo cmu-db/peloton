@@ -371,6 +371,10 @@ class ConstraintsTestsUtil {
 
         column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                  not_null_constraint_name));
+        
+        // column.AddConstraint(catalog::Constraint(ConstraintType::UNIQUE,
+        //                                         unique_constraint_name));
+        
         return column;
       } break;
 
