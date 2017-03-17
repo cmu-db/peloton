@@ -60,9 +60,9 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
   switch (index) {
     case 0: {
-      auto column =
-          catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "COL_A", is_inlined);
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
@@ -70,9 +70,9 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 1: {
-      auto column =
-          catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-                          "COL_B", is_inlined);
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
@@ -80,9 +80,9 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 2: {
-      auto column =
-          catalog::Column(type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
-                          "COL_C", is_inlined);
+      auto column = catalog::Column(
+          type::Type::DECIMAL, type::Type::GetTypeSize(type::Type::DECIMAL),
+          "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
                                                not_null_constraint_name));
@@ -127,12 +127,15 @@ void ConstraintsTestsUtil::PopulateTable(concurrency::Transaction *transaction,
     int populate_value = rowid;
 
     // First column is unique in this case
-    auto col1 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
+    auto col1 =
+        type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
 
     // In case of random, make sure this column has duplicated values
-    auto col2 = type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
+    auto col2 =
+        type::ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    auto col3 = type::ValueFactory::GetDecimalValue(PopulatedValue(populate_value, 2));
+    auto col3 =
+        type::ValueFactory::GetDecimalValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
     auto col4 = type::ValueFactory::GetVarcharValue(
@@ -261,7 +264,7 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
  * @return Table generated for test.
  */
 
-storage::DataTable* ConstraintsTestsUtil::CreateAndPopulateTable() {
+storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ConstraintsTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -271,7 +274,8 @@ storage::DataTable* ConstraintsTestsUtil::CreateAndPopulateTable() {
   txn_manager.CommitTransaction(txn);
 
   return table;
-}/
+}
+/
 
 }  // namespace test
 }  // namespace peloton
