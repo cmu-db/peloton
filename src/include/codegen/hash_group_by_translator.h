@@ -29,7 +29,7 @@ namespace codegen {
 class HashGroupByTranslator : public OperatorTranslator {
  public:
   // Global/configurable variable controlling whether hash aggregations prefetch
-  static std::atomic<bool> kUsePrefetch ;
+  static std::atomic<bool> kUsePrefetch;
 
   // Constructor
   HashGroupByTranslator(const planner::AggregatePlan &group_by,
@@ -61,9 +61,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ProduceResults : public HashTable::VectorizedIterateCallback {
    public:
     // Constructor
-    ProduceResults(const planner::AggregatePlan &gb,
-                   const Aggregation &aggregation, CompilationContext &context,
-                   Pipeline &pipeline);
+    ProduceResults(const HashGroupByTranslator &translator);
 
     // The callback
     void ProcessEntries(CodeGen &codegen, llvm::Value *start, llvm::Value *end,
@@ -72,13 +70,7 @@ class HashGroupByTranslator : public OperatorTranslator {
 
    private:
     // The plan details
-    const planner::AggregatePlan &group_by_;
-    // The storage format of the values in the hash table
-    const Aggregation &aggregation_;
-    // The context we populate
-    CompilationContext &compilation_ctx_;
-    // The pipeline the group by is a part of
-    Pipeline &pipeline_;
+    const HashGroupByTranslator &translator_;
   };
 
   //===--------------------------------------------------------------------===//
@@ -165,7 +157,7 @@ class HashGroupByTranslator : public OperatorTranslator {
     uint32_t agg_index_;
   };
 
-  void CollectHashKeys(ConsumerContext &context, RowBatch::Row &row,
+  void CollectHashKeys(RowBatch::Row &row,
                        std::vector<codegen::Value> &key) const;
 
   // Estimate the size of the constructed hash table
@@ -173,6 +165,10 @@ class HashGroupByTranslator : public OperatorTranslator {
 
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
+
+  const planner::AggregatePlan &GetAggregatePlan() const { return group_by_; }
+
+  const Aggregation &GetAggregation() const { return aggregation_; }
 
  private:
   // The group-by plan

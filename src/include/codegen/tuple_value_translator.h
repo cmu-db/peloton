@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "codegen/consumer_context.h"
 #include "codegen/expression_translator.h"
 #include "expression/tuple_value_expression.h"
 
@@ -25,20 +24,18 @@ namespace codegen {
 class TupleValueTranslator : public ExpressionTranslator {
  public:
   // Constructor
-  TupleValueTranslator(const expression::TupleValueExpression &tve_exp,
+  TupleValueTranslator(const expression::TupleValueExpression &tve_expr,
                        CompilationContext &context)
-      : ExpressionTranslator(context), tve_exp_(tve_exp) {}
-
-  // Produce the value that is the result of codegening the expression
-  codegen::Value DeriveValue(ConsumerContext &context,
-                             RowBatch::Row &row) const override {
-    PL_ASSERT(tve_exp_.GetAttributeRef() != nullptr);
-    return row.GetAttribute(context.GetCodeGen(), tve_exp_.GetAttributeRef());
+      : ExpressionTranslator(tve_expr, context) {
+    PL_ASSERT(tve_expr.GetAttributeRef() != nullptr);
   }
 
- private:
-  // The expression
-  const expression::TupleValueExpression &tve_exp_;
+  // Produce the value that is the result of codegening the expression
+  codegen::Value DeriveValue(CodeGen &codegen,
+                             RowBatch::Row &row) const override {
+    const auto &tve_expr = GetExpressionAs<expression::TupleValueExpression>();
+    return row.DeriveValue(codegen, tve_expr.GetAttributeRef());
+  }
 };
 
 }  // namespace codegen

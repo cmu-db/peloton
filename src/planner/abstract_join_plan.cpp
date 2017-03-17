@@ -34,9 +34,8 @@ void AbstractJoinPlan::PerformBinding(BindingContext &context) {
   GetProjInfo()->PerformRebinding(context, input_contexts);
 
   // Now we pull out all the attributes coming from each of the joins children
-  std::vector<std::vector<oid_t>> input_cols;
+  std::vector<std::vector<oid_t>> input_cols = {{},{}};
   GetProjInfo()->PartitionInputs(input_cols);
-  PL_ASSERT(input_cols.size() == 2);
 
   // Pull out the left and right non-key attributes
   const auto &left_inputs = input_cols[0];

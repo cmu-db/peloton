@@ -61,6 +61,8 @@ class TPCHDatabase {
   void LoadRegionTable();
   void LoadSupplierTable();
 
+  uint32_t CodeForMktSegment(const std::string mktsegment) const;
+
  private:
   uint32_t DictionaryEncode(Dictionary &dict, const std::string &val);
 

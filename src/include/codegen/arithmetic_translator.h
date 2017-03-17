@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "codegen/consumer_context.h"
 #include "codegen/expression_translator.h"
 #include "expression/operator_expression.h"
 
@@ -28,22 +27,18 @@ class ArithmeticTranslator : public ExpressionTranslator {
   // Constructor
   ArithmeticTranslator(const expression::OperatorExpression &arithmetic,
                        CompilationContext &context)
-      : ExpressionTranslator(context), arithmetic_(arithmetic) {
-    PL_ASSERT(arithmetic_.GetChildrenSize() == 2);
-
-    // Prepare translators for the left and right expressions
-    context.Prepare(*arithmetic_.GetChild(0));
-    context.Prepare(*arithmetic_.GetChild(1));
+      : ExpressionTranslator(arithmetic, context) {
+    PL_ASSERT(arithmetic.GetChildrenSize() == 2);
   }
 
   // Produce the value that is the result of codegening the expression
-  codegen::Value DeriveValue(ConsumerContext &context,
+  codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override {
-    auto &codegen = GetCodeGen();
-    codegen::Value left = context.DeriveValue(*arithmetic_.GetChild(0), row);
-    codegen::Value right = context.DeriveValue(*arithmetic_.GetChild(1), row);
+    const auto &arithmetic = GetExpressionAs<expression::OperatorExpression>();
+    codegen::Value left = row.DeriveValue(codegen, *arithmetic.GetChild(0));
+    codegen::Value right = row.DeriveValue(codegen, *arithmetic.GetChild(1));
 
-    switch (arithmetic_.GetExpressionType()) {
+    switch (arithmetic.GetExpressionType()) {
       case ExpressionType::OPERATOR_PLUS:
         return left.Add(codegen, right);
       case ExpressionType::OPERATOR_MINUS:
@@ -56,15 +51,11 @@ class ArithmeticTranslator : public ExpressionTranslator {
         return left.Mod(codegen, right);
       default: {
         throw Exception(
-            "Invalid expression type for translation " +
-            ExpressionTypeToString(arithmetic_.GetExpressionType()));
+            "Arithmetic expression has invalid type for translation: " +
+            ExpressionTypeToString(arithmetic.GetExpressionType()));
       }
     }
   }
-
- private:
-  // The expression
-  const expression::OperatorExpression &arithmetic_;
 };
 
 }  // namespace codegen

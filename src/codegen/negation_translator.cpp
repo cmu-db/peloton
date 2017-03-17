@@ -20,18 +20,22 @@ namespace codegen {
 
 // Constructor
 NegationTranslator::NegationTranslator(
-    const expression::OperatorUnaryMinusExpression &expr,
+    const expression::OperatorUnaryMinusExpression &unary_minus_expression,
     CompilationContext &ctx)
-    : ExpressionTranslator(ctx), expr_(expr) {
-  PL_ASSERT(expr_.GetChildrenSize() == 1);
-  ctx.Prepare(*expr_.GetChild(0));
+    : ExpressionTranslator(unary_minus_expression, ctx) {
+  PL_ASSERT(unary_minus_expression.GetChildrenSize() == 1);
 }
 
-Value NegationTranslator::DeriveValue(ConsumerContext &context,
+Value NegationTranslator::DeriveValue(CodeGen &codegen,
                                       RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
-  codegen::Value child_value = context.DeriveValue(*expr_.GetChild(0), row);
+  const auto &negation_expr =
+      GetExpressionAs<expression::OperatorUnaryMinusExpression>();
+
+  codegen::Value child_value =
+      row.DeriveValue(codegen, *negation_expr.GetChild(0));
+
   codegen::Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
+
   return zero.Sub(codegen, child_value);
 }
 

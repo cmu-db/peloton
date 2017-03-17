@@ -25,14 +25,10 @@ namespace codegen {
 class NegationTranslator : public ExpressionTranslator {
  public:
   // Constructor
-  NegationTranslator(const expression::OperatorUnaryMinusExpression &expr,
+  NegationTranslator(const expression::OperatorUnaryMinusExpression &unary_minus_expression,
                      CompilationContext &ctx);
 
-  Value DeriveValue(ConsumerContext &context,
-                    RowBatch::Row &row) const override;
-
- private:
-  const expression::OperatorUnaryMinusExpression &expr_;
+  Value DeriveValue(CodeGen &codegen, RowBatch::Row &row) const override;
 };
 
 }  // namespace codegen

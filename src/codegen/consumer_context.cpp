@@ -22,18 +22,6 @@ ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
                                  Pipeline &pipeline)
     : compilation_context_(compilation_context), pipeline_(pipeline) {}
 
-codegen::Value ConsumerContext::DeriveValue(
-    const expression::AbstractExpression &expression, RowBatch::Row &row) {
-  auto *exp_translator = compilation_context_.GetTranslator(expression);
-  PL_ASSERT(exp_translator != nullptr);
-  return exp_translator->DeriveValue(*this, row);
-}
-
-codegen::Value ConsumerContext::DeriveValue(const planner::AttributeInfo *ai,
-                                            RowBatch::Row &row) {
-  return row.GetAttribute(GetCodeGen(), ai);
-}
-
 // Pass the row batch to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch &batch) {
   auto *translator = pipeline_.NextStep();

@@ -139,6 +139,11 @@ uint32_t TPCHDatabase::DictionaryEncode(Dictionary &dict,
   }
 }
 
+uint32_t TPCHDatabase::CodeForMktSegment(const std::string mktsegment) const {
+  auto iter = c_mktsegment_dict_.find(mktsegment);
+  return iter != c_mktsegment_dict_.end() ? iter->second : 0;
+}
+
 //===----------------------------------------------------------------------===//
 // TABLE CREATORS
 //===----------------------------------------------------------------------===//

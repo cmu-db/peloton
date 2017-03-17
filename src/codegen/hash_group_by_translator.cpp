@@ -111,7 +111,7 @@ void HashGroupByTranslator::Produce() const {
   // Iterate over the hash table, sending tuples up the tree
   Vector selection_vec{GetStateValue(output_vector_id_),
                        Vector::kDefaultVectorSize, GetCodeGen().Int32Type()};
-  ProduceResults producer{group_by_, aggregation_, comp_ctx, GetPipeline()};
+  ProduceResults producer{*this};
   hash_table_.VectorizedIterate(GetCodeGen(), GetStatePtr(hash_table_id_),
                                 selection_vec, producer);
 }
@@ -146,7 +146,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
 
       // Collect keys
       std::vector<codegen::Value> key;
-      CollectHashKeys(context, row, key);
+      CollectHashKeys(row, key);
 
       // Hash the key and store in prefetch vector
       llvm::Value *hash_val = hash_table_.HashKey(codegen, key);
@@ -200,28 +200,29 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
 }
 
 // Consume the tuples from the context, grouping them into the hash table
-void HashGroupByTranslator::Consume(ConsumerContext &context,
+void HashGroupByTranslator::Consume(ConsumerContext &,
                                     RowBatch::Row &row) const {
   LOG_DEBUG("HashGroupBy consuming results ...");
 
   auto &codegen = GetCodeGen();
+
   // Collect the keys we use to probe the hash table
   std::vector<codegen::Value> key;
-  CollectHashKeys(context, row, key);
+  CollectHashKeys(row, key);
 
   // Collect the values of the expressions
   std::vector<codegen::Value> vals;
   auto &aggregates = group_by_.GetUniqueAggTerms();
   for (const auto &agg_term : aggregates) {
     if (agg_term.expression != nullptr) {
-      vals.push_back(context.DeriveValue(*agg_term.expression, row));
+      vals.push_back(row.DeriveValue(codegen, *agg_term.expression));
     }
   }
 
   // If the hash value is available, use it
   llvm::Value *hash = nullptr;
   if (row.HasAttribute(&OAHashTable::kHashAI)) {
-    codegen::Value hash_val = row.GetAttribute(codegen, &OAHashTable::kHashAI);
+    codegen::Value hash_val = row.DeriveValue(codegen, &OAHashTable::kHashAI);
     hash = hash_val.GetValue();
   }
 
@@ -253,11 +254,10 @@ bool HashGroupByTranslator::UsePrefetching() const {
 }
 
 void HashGroupByTranslator::CollectHashKeys(
-    ConsumerContext &context, RowBatch::Row &row,
-    std::vector<codegen::Value> &key) const {
-  auto &codegen = context.GetCodeGen();
+    RowBatch::Row &row, std::vector<codegen::Value> &key) const {
+  auto &codegen = GetCodeGen();
   for (const auto *gb_ai : group_by_.GetGroupbyAIs()) {
-    key.push_back(row.GetAttribute(codegen, gb_ai));
+    key.push_back(row.DeriveValue(codegen, gb_ai));
   }
 }
 
@@ -309,22 +309,20 @@ codegen::Value HashGroupByTranslator::AggregateAccess::Access(
 //===----------------------------------------------------------------------===//
 
 HashGroupByTranslator::ProduceResults::ProduceResults(
-    const planner::AggregatePlan &gb, const Aggregation &aggregation,
-    CompilationContext &context, Pipeline &pipeline)
-    : group_by_(gb),
-      aggregation_(aggregation),
-      compilation_ctx_(context),
-      pipeline_(pipeline) {}
+    const HashGroupByTranslator &translator)
+    : translator_(translator) {}
 
 void HashGroupByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start, llvm::Value *end, Vector &selection_vector,
     HashTable::HashTableAccess &access) const {
-  RowBatch batch{start, end, selection_vector, true};
+  RowBatch batch{translator_.GetCompilationContext(), start, end,
+                 selection_vector, true};
 
-  AggregateFinalizer finalizer{aggregation_, access};
+  AggregateFinalizer finalizer{translator_.GetAggregation(), access};
 
-  auto &grouping_ais = group_by_.GetGroupbyAIs();
-  auto &aggregates = group_by_.GetUniqueAggTerms();
+  const auto &group_by = translator_.GetAggregatePlan();
+  auto &grouping_ais = group_by.GetGroupbyAIs();
+  auto &aggregates = group_by.GetUniqueAggTerms();
 
   std::vector<AggregateAccess> accessors;
 
@@ -347,18 +345,21 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
   }
 
   // Row batch is set up, send it up
-  ConsumerContext context{compilation_ctx_, pipeline_};
+  ConsumerContext context{translator_.GetCompilationContext(),
+                          translator_.GetPipeline()};
 
-  auto *predicate = group_by_.GetPredicate();
+  auto *predicate = group_by.GetPredicate();
   if (predicate != nullptr) {
     // There is a predicate that must be checked
-    auto &codegen = context.GetCodeGen();
+    auto &codegen = translator_.GetCodeGen();
 
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
-      codegen::Value valid_row = context.DeriveValue(*predicate, row);
+      codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
       If is_valid_row{codegen, valid_row.GetValue()};
-      { context.Consume(row); }
+      {
+        context.Consume(row);
+      }
       is_valid_row.EndIf();
     });
 

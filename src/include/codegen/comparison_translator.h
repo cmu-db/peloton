@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "codegen/consumer_context.h"
 #include "codegen/expression_translator.h"
 #include "expression/comparison_expression.h"
 
@@ -28,22 +27,20 @@ class ComparisonTranslator : public ExpressionTranslator {
   // Constructor
   ComparisonTranslator(const expression::ComparisonExpression &comparison,
                        CompilationContext &context)
-      : ExpressionTranslator(context), comparison_(comparison) {
-    PL_ASSERT(comparison_.GetChildrenSize() == 2);
-
-    // Prepare translators for the left and right expressions
-    context.Prepare(*comparison_.GetChild(0));
-    context.Prepare(*comparison_.GetChild(1));
+      : ExpressionTranslator(comparison, context) {
+    PL_ASSERT(comparison.GetChildrenSize() == 2);
   }
 
   // Produce the result of performing the comparison of left and right values
-  codegen::Value DeriveValue(ConsumerContext &context,
+  codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override {
-    auto &codegen = GetCodeGen();
-    codegen::Value left = context.DeriveValue(*comparison_.GetChild(0), row);
-    codegen::Value right = context.DeriveValue(*comparison_.GetChild(1), row);
+    const auto &comparison =
+        GetExpressionAs<expression::ComparisonExpression>();
 
-    switch (comparison_.GetExpressionType()) {
+    codegen::Value left = row.DeriveValue(codegen, *comparison.GetChild(0));
+    codegen::Value right = row.DeriveValue(codegen, *comparison.GetChild(1));
+
+    switch (comparison.GetExpressionType()) {
       case ExpressionType::COMPARE_EQUAL:
         return left.CompareEq(codegen, right);
       case ExpressionType::COMPARE_NOTEQUAL:
@@ -59,14 +56,10 @@ class ComparisonTranslator : public ExpressionTranslator {
       default: {
         throw Exception{
             "Invalid expression type for translation " +
-            ExpressionTypeToString(comparison_.GetExpressionType())};
+            ExpressionTypeToString(comparison.GetExpressionType())};
       }
     }
   }
-
- private:
-  // The expression
-  const expression::ComparisonExpression &comparison_;
 };
 
 }  // namespace codegen

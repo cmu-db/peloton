@@ -45,6 +45,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class CompilationContext {
   friend class ConsumerContext;
+  friend class RowBatch;
 
  public:
   // Constructor

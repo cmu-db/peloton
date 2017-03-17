@@ -12,6 +12,7 @@
 
 #include "codegen/hash_join_translator.h"
 
+#include "codegen/if.h"
 #include "codegen/oa_hash_table_proxy.h"
 #include "codegen/tuple_value_translator.h"
 #include "codegen/vectorized_loop.h"
@@ -79,10 +80,16 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
     right_key_type.push_back(right_key->GetValueType());
   }
 
+  // Prepare the predicate
+  auto *predicate = join_.GetPredicate();
+  if (predicate != nullptr) {
+    context.Prepare(*predicate);
+  }
+
   // Make sure the key types are equal
   PL_ASSERT(left_key_type.size() == right_key_type.size());
   PL_ASSERT(std::equal(left_key_type.begin(), left_key_type.end(),
-                    right_key_type.begin()));
+                       right_key_type.begin()));
 
   // Collect (unique) attributes that are stored in hash-table
   std::unordered_set<const planner::AttributeInfo *> left_key_ais;
@@ -170,9 +177,9 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
       // Collect keys
       std::vector<codegen::Value> key;
       if (IsFromLeftChild(context)) {
-        CollectKeys(context, row, left_key_exprs_, key);
+        CollectKeys(row, left_key_exprs_, key);
       } else {
-        CollectKeys(context, row, right_key_exprs_, key);
+        CollectKeys(row, right_key_exprs_, key);
       }
 
       // Hash the key and store in prefetch vector
@@ -237,21 +244,21 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
 }
 
 // The given row is coming from the left child. Insert into hash table
-void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &context,
+void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &,
                                          RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
 
   // Collect all the attributes we need for the join (including keys and vals)
   std::vector<codegen::Value> key;
-  CollectKeys(context, row, left_key_exprs_, key);
+  CollectKeys(row, left_key_exprs_, key);
 
   std::vector<codegen::Value> vals;
-  CollectValues(context, row, left_val_ais_, vals);
+  CollectValues(row, left_val_ais_, vals);
 
   // If the hash value is available, use it
   llvm::Value *hash = nullptr;
   if (row.HasAttribute(&OAHashTable::kHashAI)) {
-    codegen::Value hash_val = row.GetAttribute(codegen, &OAHashTable::kHashAI);
+    codegen::Value hash_val = row.DeriveValue(codegen, &OAHashTable::kHashAI);
     hash = hash_val.GetValue();
   }
 
@@ -266,11 +273,17 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
                                           RowBatch::Row &row) const {
   // Pull out the values of the keys we probe the hash-table with
   std::vector<codegen::Value> key;
-  CollectKeys(context, row, right_key_exprs_, key);
+  CollectKeys(row, right_key_exprs_, key);
 
-  // Probe the hash table
-  ProbeRight probe_right{*this, context, row, key};
-  probe_right.CreateRightMatch();
+  const auto &join_plan = GetJoinPlan();
+
+  // Check the join type
+  if (join_plan.GetJoinType() == JoinType::INNER) {
+    // For inner joins, find all join partners
+    ProbeRight probe_right{*this, context, row, key};
+    hash_table_.FindAll(GetCodeGen(), GetStatePtr(hash_table_id_), key,
+                        probe_right);
+  }
 }
 
 // Cleanup by destroying the hash-table instance
@@ -321,21 +334,19 @@ bool HashJoinTranslator::UsePrefetching() const {
 }
 
 void HashJoinTranslator::CollectKeys(
-    ConsumerContext &context, RowBatch::Row &row,
+    RowBatch::Row &row,
     const std::vector<const expression::AbstractExpression *> &key,
     std::vector<codegen::Value> &key_values) const {
   for (const auto *exp : key) {
-    key_values.push_back(context.DeriveValue(*exp, row));
+    key_values.push_back(row.DeriveValue(GetCodeGen(), *exp));
   }
 }
 
 void HashJoinTranslator::CollectValues(
-    ConsumerContext &context, RowBatch::Row &row,
-    const std::vector<const planner::AttributeInfo *> &ais,
+    RowBatch::Row &row, const std::vector<const planner::AttributeInfo *> &ais,
     std::vector<codegen::Value> &values) const {
-  auto &codegen = context.GetCodeGen();
   for (const auto *ai : ais) {
-    values.push_back(row.GetAttribute(codegen, ai));
+    values.push_back(row.DeriveValue(GetCodeGen(), ai));
   }
 }
 
@@ -386,20 +397,20 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
     }
   }
 
-  // Send the row up to the parent
-  context_.Consume(row_);
-}
-
-// Handle the logic to perform the match of a tuple from the right with one from
-// the left
-void HashJoinTranslator::ProbeRight::CreateRightMatch() {
-  auto &join_plan = join_translator_.join_;
-  auto &codegen = join_translator_.GetCodeGen();
-  llvm::Value *ht_ptr =
-      join_translator_.GetStatePtr(join_translator_.hash_table_id_);
-  if (join_plan.GetJoinType() == JoinType::INNER) {
-    const OAHashTable &hash_table = join_translator_.hash_table_;
-    hash_table.FindAll(codegen, ht_ptr, right_key_, *this);
+  // Check predicate if one exists
+  auto *predicate = join_translator_.GetJoinPlan().GetPredicate();
+  if (predicate != nullptr) {
+    // Vectorize of TaaT filter?
+    auto valid_rod = row_.DeriveValue(codegen, *predicate);
+    If is_valid_row{codegen, valid_rod.GetValue()};
+    {
+      // Send row up to the parent
+      context_.Consume(row_);
+    }
+    is_valid_row.EndIf();
+  } else {
+    // Send the row up to the parent
+    context_.Consume(row_);
   }
 }
 

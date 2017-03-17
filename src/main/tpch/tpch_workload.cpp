@@ -33,8 +33,8 @@ TPCHBenchmark::TPCHBenchmark(const Configuration &config, TPCHDatabase &db)
 
       {"Q3",
        QueryId::Q3,
-       {TableId::Lineitem},
-       [&]() { return ConstructQ1Plan(); }},
+       {TableId::Lineitem, TableId::Customer, TableId::Orders},
+       [&]() { return ConstructQ3Plan(); }},
 
       {"Q4",
        QueryId::Q4,

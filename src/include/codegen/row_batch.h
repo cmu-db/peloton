@@ -23,6 +23,8 @@
 namespace peloton {
 namespace codegen {
 
+class CompilationContext;
+
 class RowBatch {
  public:
   class AttributeAccess;
@@ -68,8 +70,11 @@ class RowBatch {
     bool HasAttribute(const planner::AttributeInfo *ai) const;
 
     // Derive the value of the given attribute from this row
-    codegen::Value GetAttribute(CodeGen &codegen,
-                                const planner::AttributeInfo *ai);
+    codegen::Value DeriveValue(CodeGen &codegen,
+                               const planner::AttributeInfo *ai);
+
+    codegen::Value DeriveValue(CodeGen &codegen,
+                               const expression::AbstractExpression &expr);
 
     // Register the temporary availability of an attribute in this row
     void RegisterAttributeValue(const planner::AttributeInfo *ai,
@@ -87,8 +92,32 @@ class RowBatch {
 
     // The attributes of this row
     const AttributeMap &accessors_;
-    // A cache of the calculated/derived attributes
-    std::unordered_map<const planner::AttributeInfo *, codegen::Value> cache_;
+
+    class CacheKey {
+     public:
+      CacheKey(const planner::AttributeInfo *ai) : ai_(ai), expr_(nullptr) {}
+      CacheKey(const expression::AbstractExpression *expr)
+          : ai_(nullptr), expr_(expr) {}
+      bool operator==(const CacheKey &other) const {
+        return ai_ == other.ai_ || expr_ == other.expr_;
+      }
+
+      struct Hasher {
+        size_t operator()(const CacheKey &k) const {
+          if (k.ai_ != nullptr) {
+            return std::hash<const planner::AttributeInfo *>{}(k.ai_);
+          } else {
+            return std::hash<const expression::AbstractExpression *>{}(k.expr_);
+          }
+        }
+      };
+     private:
+      const planner::AttributeInfo *ai_;
+      const expression::AbstractExpression *expr_;
+    };
+
+    // A cache of the calculated/derived attributes and expressions
+    std::unordered_map<CacheKey, codegen::Value, CacheKey::Hasher> cache_;
 
     // The class that tracks which slot in the output this row belongs to
     OutputTracker *output_tracker_;
@@ -155,8 +184,8 @@ class RowBatch {
 
  public:
   // Constructor
-  RowBatch(llvm::Value *tid_start, llvm::Value *tid_end,
-           Vector &selection_vector, bool filtered);
+  RowBatch(CompilationContext &ctx, llvm::Value *tid_start,
+           llvm::Value *tid_end, Vector &selection_vector, bool filtered);
 
   // Add an attribute to batch
   void AddAttribute(const planner::AttributeInfo *ai, AttributeAccess *access);
@@ -200,6 +229,7 @@ class RowBatch {
  private:
   // A batch either captures _all_ rows between two physical positions or all
   // rows whose positions are stored in the selection vector
+  CompilationContext &context_;
 
   // The range of TIDs this batch covers
   llvm::Value *tid_start_;

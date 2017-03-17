@@ -50,21 +50,24 @@ class ConsumerContext;
 class ExpressionTranslator {
  public:
   // Constructor
-  ExpressionTranslator(CompilationContext &ctx);
+  ExpressionTranslator(const expression::AbstractExpression &expression,
+                       CompilationContext &ctx);
 
   // Destructor
   virtual ~ExpressionTranslator() {}
 
   // Compute this expression
-  virtual codegen::Value DeriveValue(ConsumerContext &context,
+  virtual codegen::Value DeriveValue(CodeGen &codegen,
                                      RowBatch::Row &row) const = 0;
 
-  // Get the code generator
-  CodeGen &GetCodeGen() const;
+  template <typename T>
+  const T &GetExpressionAs() const {
+    return static_cast<const T &>(expression_);
+  }
 
  private:
-  // The compilation context state
-  CompilationContext &ctx_;
+  // The expression
+  const expression::AbstractExpression &expression_;
 };
 
 }  // namespace codegen

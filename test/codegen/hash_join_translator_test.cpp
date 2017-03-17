@@ -76,14 +76,6 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   //   right_table ON left_table.a = right_table.a
   //
 
-  // Construct join predicate: left_table.a = right_table.a
-  auto* left_a =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  auto* right_a =
-      new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 0, 0);
-  AbstractExprPtr left_a_eq_right_a{new expression::ComparisonExpression(
-      ExpressionType::COMPARE_EQUAL, left_a, right_a)};
-
   // Projection:  [left_table.a, right_table.a, left_table.b, right_table.c]
   DirectMap dm1 = std::make_pair(0, std::make_pair(0, 0));
   DirectMap dm2 = std::make_pair(1, std::make_pair(1, 0));
@@ -114,9 +106,9 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
       new expression::TupleValueExpression(type::Type::TypeId::INTEGER, 1, 0));
 
   // Finally, the fucking join node
-  std::unique_ptr<planner::HashJoinPlan> hj_plan{new planner::HashJoinPlan(
-      JoinType::INNER, std::move(left_a_eq_right_a), std::move(projection),
-      schema, left_hash_keys, right_hash_keys)};
+  std::unique_ptr<planner::HashJoinPlan> hj_plan{
+      new planner::HashJoinPlan(JoinType::INNER, nullptr, std::move(projection),
+                                schema, left_hash_keys, right_hash_keys)};
   std::unique_ptr<planner::HashPlan> hash_plan{
       new planner::HashPlan(hash_keys)};
 

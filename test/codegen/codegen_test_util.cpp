@@ -140,7 +140,7 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
       format.append(", ");
     }
     first = false;
-    codegen::Value val = row.GetAttribute(codegen, ai);
+    codegen::Value val = row.DeriveValue(codegen, ai);
     assert(val.GetType() != type::Type::TypeId::INVALID);
     switch (val.GetType()) {
       case type::Type::TypeId::BOOLEAN:

@@ -28,12 +28,8 @@ class ConstantTranslator : public ExpressionTranslator {
                      CompilationContext &ctx);
 
   // Produce the value that is the result of codegen-ing the expression
-  codegen::Value DeriveValue(ConsumerContext &context,
+  codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
-
- private:
-  // The constant expression we codegen
-  const expression::ConstantValueExpression &exp_;
 };
 
 }  // namespace codegen

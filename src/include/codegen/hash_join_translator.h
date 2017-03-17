@@ -61,20 +61,21 @@ class HashJoinTranslator : public OperatorTranslator {
   }
 
   void CollectKeys(
-      ConsumerContext &context, RowBatch::Row &row,
+      RowBatch::Row &row,
       const std::vector<const expression::AbstractExpression *> &key,
       std::vector<codegen::Value> &key_values) const;
 
-  void CollectValues(
-      ConsumerContext &context, RowBatch::Row &row,
-      const std::vector<const planner::AttributeInfo *> &ais,
-      std::vector<codegen::Value> &values) const;
+  void CollectValues(RowBatch::Row &row,
+                     const std::vector<const planner::AttributeInfo *> &ais,
+                     std::vector<codegen::Value> &values) const;
 
   // Estimate the size of the constructed hash table
   uint64_t EstimateHashTableSize() const;
 
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
+
+  const planner::HashJoinPlan &GetJoinPlan() const { return join_; }
 
   //===--------------------------------------------------------------------===//
   // The callback used when we probe the hash table with right-side tuples
@@ -86,12 +87,10 @@ class HashJoinTranslator : public OperatorTranslator {
     ProbeRight(const HashJoinTranslator &join_translator,
                ConsumerContext &context, RowBatch::Row &row,
                const std::vector<codegen::Value> &right_key);
+
     // Process the given key and associated data area
     void ProcessEntry(CodeGen &codegen, const std::vector<codegen::Value> &key,
                       llvm::Value *data_area) const override;
-    // Handle the logic to perform the match of a tuple from the right with one
-    // from the left
-    void CreateRightMatch();
 
    private:
     // The translator (we need lots of its state)

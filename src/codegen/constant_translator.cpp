@@ -12,7 +12,6 @@
 
 #include "codegen/constant_translator.h"
 
-#include "codegen/consumer_context.h"
 #include "type/value_peeker.h"
 
 namespace peloton {
@@ -21,13 +20,16 @@ namespace codegen {
 // Constructor
 ConstantTranslator::ConstantTranslator(
     const expression::ConstantValueExpression &exp, CompilationContext &ctx)
-    : ExpressionTranslator(ctx), exp_(exp) {}
+    : ExpressionTranslator(exp, ctx) {}
 
 // Return an LLVM value for our constant (i.e., a compile-time constant)
-codegen::Value ConstantTranslator::DeriveValue(ConsumerContext &context,
+codegen::Value ConstantTranslator::DeriveValue(CodeGen &codegen,
                                                RowBatch::Row &) const {
-  auto &codegen = context.GetCodeGen();
-  const type::Value &constant = exp_.GetValue();
+  // Pull out the constant from the expression
+  const type::Value &constant =
+      GetExpressionAs<expression::ConstantValueExpression>().GetValue();
+
+  // Convert the value into an LLVM compile-time constant
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
   switch (constant.GetTypeId()) {
@@ -67,7 +69,7 @@ codegen::Value ConstantTranslator::DeriveValue(ConsumerContext &context,
     }
     default: {
       throw Exception{"Unknown constant value type " +
-          TypeIdToString(constant.GetTypeId())};
+                      TypeIdToString(constant.GetTypeId())};
     }
   }
   return codegen::Value{constant.GetTypeId(), val, len};

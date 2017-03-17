@@ -30,7 +30,7 @@ DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
-CLANG_FORMAT = "clang-format-3.6"
+CLANG_FORMAT = "clang-format-3.7"
 
 ## ==============================================
 ## 			HEADER CONFIGURATION
@@ -84,7 +84,7 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 
 	with open(file_path, "r+") as fd:
 		file_data = fd.read()
-
+		print add_header
 		if add_header:
 			header_comment_2 = header_comment_line_3 + file_name + "\n"
 			header_comment_4 = header_comment_line_5 + rel_path_from_peloton_dir + "\n"
@@ -118,7 +118,7 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 			fd.truncate()
 			fd.write(new_file_data)
 
-		elif clang_format_code:
+		if clang_format_code:
 			formatting_command = CLANG_FORMAT + " -style=file " + " -i " + file_path
 			LOG.info(formatting_command)
 			os.system(formatting_command)

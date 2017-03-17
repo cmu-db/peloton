@@ -78,7 +78,8 @@ void GlobalGroupByTranslator::Produce() const {
   auto &codegen = GetCodeGen();
 
   Vector v{GetStateValue(output_vector_id_), 1, codegen.Int32Type()};
-  RowBatch batch{codegen.Const32(0), codegen.Const32(1), v, false};
+  RowBatch batch{GetCompilationContext(), codegen.Const32(0),
+                 codegen.Const32(1), v, false};
 
   for (size_t i = 0; i < agg_terms.size(); i++) {
     batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);
@@ -90,17 +91,18 @@ void GlobalGroupByTranslator::Produce() const {
   context.Consume(batch);
 }
 
-void GlobalGroupByTranslator::Consume(ConsumerContext &context,
+void GlobalGroupByTranslator::Consume(ConsumerContext &,
                                       RowBatch::Row &row) const {
+  auto &codegen = GetCodeGen();
+
   // Get the attributes we'll need to advance the aggregates
   std::vector<codegen::Value> vals;
   for (const auto &agg_term : plan_.GetUniqueAggTerms()) {
     if (agg_term.expression != nullptr) {
-      vals.push_back(context.DeriveValue(*agg_term.expression, row));
+      vals.push_back(row.DeriveValue(codegen, *agg_term.expression));
     }
   }
 
-  auto &codegen = GetCodeGen();
   auto *mat_buffer = GetStatePtr(mat_buffer_id_);
   auto *mat_buffer_type = codegen.LookupTypeByName(kMatBufferTypeName);
 

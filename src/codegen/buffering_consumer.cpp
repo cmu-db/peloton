@@ -102,7 +102,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
 
   for (size_t i = 0; i < output_ais_.size(); i++) {
-    Value val = row.GetAttribute(codegen, output_ais_[i]);
+    Value val = row.DeriveValue(codegen, output_ais_[i]);
     switch (val.GetType()) {
       case type::Type::TypeId::TINYINT: {
         codegen.CallFunc(

@@ -207,7 +207,7 @@ void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   std::vector<codegen::Value> tuple;
   const auto &output_cols = plan_.GetOutputColumns();
   for (const auto *ai : output_cols) {
-    tuple.push_back(row.GetAttribute(codegen, ai));
+    tuple.push_back(row.DeriveValue(codegen, ai));
   }
 
   // Append the tuple into the sorter
@@ -232,7 +232,9 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
     Sorter::SorterAccess &access) const {
   // Construct the row batch we're producing
-  RowBatch batch{start_index, end_index, selection_vector_, false};
+  auto &compilation_context = translator_.GetCompilationContext();
+  RowBatch batch{compilation_context, start_index, end_index, selection_vector_,
+                 false};
 
   // Add the attribute accessors for rows in this batch
   std::vector<SorterAttributeAccess> accessors;

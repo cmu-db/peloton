@@ -12,6 +12,7 @@
 
 #include "codegen/row_batch.h"
 
+#include "codegen/compilation_context.h"
 #include "codegen/if.h"
 #include "codegen/vectorized_loop.h"
 #include "common/exception.h"
@@ -79,8 +80,8 @@ bool RowBatch::Row::HasAttribute(const planner::AttributeInfo *ai) const {
          accessors_.find(ai) != accessors_.end();
 }
 
-codegen::Value RowBatch::Row::GetAttribute(CodeGen &codegen,
-                                           const planner::AttributeInfo *ai) {
+codegen::Value RowBatch::Row::DeriveValue(CodeGen &codegen,
+                                          const planner::AttributeInfo *ai) {
   // First check cache
   auto cache_iter = cache_.find(ai);
   if (cache_iter != cache_.end()) {
@@ -98,6 +99,22 @@ codegen::Value RowBatch::Row::GetAttribute(CodeGen &codegen,
 
   // Not in cache, not an attribute in this row ... crap out
   throw Exception{"Attribute '" + ai->name + "' is not an available attribute"};
+}
+
+codegen::Value RowBatch::Row::DeriveValue(CodeGen &codegen,
+    const expression::AbstractExpression &expr) {
+  // First check cache
+  auto cache_iter = cache_.find(&expr);
+  if (cache_iter != cache_.end()) {
+    return cache_iter->second;
+  }
+
+  // Not in cache, derive using expression translator
+  auto *translator = batch_.context_.GetTranslator(expr);
+  PL_ASSERT(translator != nullptr);
+  auto ret = translator->DeriveValue(codegen, *this);
+  cache_.insert(std::make_pair(&expr, ret));
+  return ret;
 }
 
 void RowBatch::Row::RegisterAttributeValue(const planner::AttributeInfo *ai,
@@ -165,9 +182,11 @@ llvm::Value *RowBatch::OutputTracker::GetFinalOutputPos() const {
 // ROW BATCH
 //===----------------------------------------------------------------------===//
 
-RowBatch::RowBatch(llvm::Value *tid_start, llvm::Value *tid_end,
-                   Vector &selection_vector, bool filtered)
-    : tid_start_(tid_start),
+RowBatch::RowBatch(CompilationContext &ctx, llvm::Value *tid_start,
+                   llvm::Value *tid_end, Vector &selection_vector,
+                   bool filtered)
+    : context_(ctx),
+      tid_start_(tid_start),
       tid_end_(tid_end),
       num_rows_(nullptr),
       selection_vector_(selection_vector),

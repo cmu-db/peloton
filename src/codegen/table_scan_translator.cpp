@@ -112,7 +112,9 @@ void TableScanTranslator::ScanConsumer::ScanBody(
   }
 
   // 2. Setup the row batch
-  RowBatch batch{tid_start, tid_end, selection_vector_, predicate != nullptr};
+  RowBatch batch{translator_.GetCompilationContext(), tid_start, tid_end,
+                 selection_vector_, predicate != nullptr};
+
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
 
@@ -158,7 +160,8 @@ void TableScanTranslator::ScanConsumer::FilterRows(
   auto &codegen = translator_.GetCodeGen();
 
   // The batch we're filtering
-  RowBatch batch{tid_start, tid_end, selection_vector, false};
+  auto &compilation_ctx = translator_.GetCompilationContext();
+  RowBatch batch{compilation_ctx, tid_start, tid_end, selection_vector, false};
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();
@@ -187,11 +190,8 @@ void TableScanTranslator::ScanConsumer::FilterRows(
 
   // Iterate over the batch using a scalar loop
   batch.Iterate(codegen, [&](RowBatch::Row &row) {
-    ConsumerContext ctx{translator_.GetCompilationContext(),
-                        translator_.GetPipeline()};
-
     // Evaluate the predicate to determine row validity
-    codegen::Value valid_row = ctx.DeriveValue(*predicate, row);
+    codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
     // Set the validity of the row
     row.SetValidity(codegen, valid_row.GetValue());

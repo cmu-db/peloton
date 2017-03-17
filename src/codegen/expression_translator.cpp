@@ -17,16 +17,13 @@
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// Constructor
-//===----------------------------------------------------------------------===//
-ExpressionTranslator::ExpressionTranslator(CompilationContext &ctx)
-    : ctx_(ctx) {}
-
-//===----------------------------------------------------------------------===//
-// Get the code generator
-//===----------------------------------------------------------------------===//
-CodeGen &ExpressionTranslator::GetCodeGen() const { return ctx_.GetCodeGen(); }
+ExpressionTranslator::ExpressionTranslator(
+    const expression::AbstractExpression &expression, CompilationContext &ctx)
+    : expression_(expression) {
+  for (uint32_t i = 0; i < expression_.GetChildrenSize(); i++) {
+    ctx.Prepare(*expression_.GetChild(i));
+  }
+}
 
 }  // namespace codegen
 }  // namespace peloton

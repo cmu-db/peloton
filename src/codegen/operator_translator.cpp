@@ -45,7 +45,7 @@ llvm::Value *OperatorTranslator::GetStateValue(
 
 void OperatorTranslator::Consume(ConsumerContext &context,
                                  RowBatch &batch) const {
-  batch.Iterate(context.GetCodeGen(), [this, &context](RowBatch::Row &row) {
+  batch.Iterate(GetCodeGen(), [this, &context](RowBatch::Row &row) {
     Consume(context, row);
   });
 }

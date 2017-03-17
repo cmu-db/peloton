@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/compilation_context.h"
-#include "codegen/consumer_context.h"
 #include "codegen/expression_translator.h"
 #include "expression/conjunction_expression.h"
 
@@ -28,22 +27,19 @@ class ConjunctionTranslator : public ExpressionTranslator {
   // Constructor
   ConjunctionTranslator(const expression::ConjunctionExpression &conjunction,
                         CompilationContext &context)
-      : ExpressionTranslator(context), conjunction_(conjunction) {
-    PL_ASSERT(conjunction_.GetChildrenSize() == 2);
-
-    // Prepare translators for the left and right expressions
-    context.Prepare(*conjunction_.GetChild(0));
-    context.Prepare(*conjunction_.GetChild(1));
+      : ExpressionTranslator(conjunction, context) {
+    PL_ASSERT(conjunction.GetChildrenSize() == 2);
   }
 
   // Produce the value that is the result of codegening the expression
-  codegen::Value DeriveValue(ConsumerContext &context,
+  codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override {
-    auto &codegen = GetCodeGen();
-    codegen::Value left = context.DeriveValue(*conjunction_.GetChild(0), row);
-    codegen::Value right = context.DeriveValue(*conjunction_.GetChild(1), row);
+    const auto &conjunction =
+        GetExpressionAs<expression::ConjunctionExpression>();
+    codegen::Value left = row.DeriveValue(codegen, *conjunction.GetChild(0));
+    codegen::Value right = row.DeriveValue(codegen, *conjunction.GetChild(1));
 
-    switch (conjunction_.GetExpressionType()) {
+    switch (conjunction.GetExpressionType()) {
       case ExpressionType::CONJUNCTION_AND:
         return left.LogicalAnd(codegen, right);
       case ExpressionType::CONJUNCTION_OR:
@@ -51,13 +47,9 @@ class ConjunctionTranslator : public ExpressionTranslator {
       default:
         throw Exception{
             "Received a non-conjunction expression type: " +
-            ExpressionTypeToString(conjunction_.GetExpressionType())};
+            ExpressionTypeToString(conjunction.GetExpressionType())};
     }
   }
-
- private:
-  // The expression
-  const expression::ConjunctionExpression &conjunction_;
 };
 
 }  // namespace codegen

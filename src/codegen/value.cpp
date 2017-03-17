@@ -111,6 +111,9 @@ Value Value::CompareGt(CodeGen &codegen, const Value &o) const {
   // If the input types are different, promote to the largest type
   OpPromotionMetadata op_md = Value::PromoteOperands(codegen, *this, o);
 
+  op_md.lhs_val->dump();
+  op_md.rhs_val->dump();
+
   // Do the comparison
   llvm::Value *res = nullptr;
   if (op_md.value_type == type::Type::TypeId::DECIMAL) {
