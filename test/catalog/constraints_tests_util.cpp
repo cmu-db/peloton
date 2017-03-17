@@ -295,7 +295,6 @@ storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
 
   return table;
 }
-/
 
 }  // namespace test
 }  // namespace peloton
