@@ -61,9 +61,10 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeTableCatalogSchema() {
   return table_catalog_schema;
 }
 
-bool TableCatalog::Insert(oid_t table_id, std::string table_name, oid_t database_id,
-            std::string database_name, type::AbstractPool *pool,
-            concurrency::Transaction *txn) {
+bool TableCatalog::Insert(oid_t table_id, std::string table_name,
+                          oid_t database_id, std::string database_name,
+                          type::AbstractPool *pool,
+                          concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -82,6 +83,222 @@ bool TableCatalog::Insert(oid_t table_id, std::string table_name, oid_t database
   return InsertTuple(std::move(tuple), txn);
 }
 
+bool TableCatalog::DeleteByOid(oid_t id, concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Delete node
+  planner::DeletePlan delete_node(table, false);
+  executor::DeleteExecutor delete_executor(&delete_node, context.get());
+
+  // Index scan as child node
+  std::vector<oid_t> column_ids;  // No projection
+  auto index = catalog_table_->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(id).Copy());
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
+                                         column_ids, index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  // Parent-Child relationship
+  delete_node.AddChild(std::move(index_scan_node));
+  delete_executor.AddChild(&index_scan_executor);
+  delete_executor.Init();
+  bool status = delete_executor.Execute();
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return status;
+}
+
+std::string TableCatalog::GetTableNameByOid(oid_t id,
+                                            concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Index scan
+  std::vector<oid_t> column_ids({1});  // table_name
+  auto index = catalog_table_->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(id).Copy());
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
+                                         column_ids, index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  // Execute
+  std::string table_name = nullptr;
+  index_scan_executor.Init();
+
+  if (index_scan_executor.Execute()) {
+    auto result = index_scan_executor.GetOutput();
+    PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
+    if (result->GetTupleCount() != 0) {
+      table_name = result->GetValue(
+          0, 0);  // TODO: Not sure after projection it is column 0 or not
+    }
+  }
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return table_name;
+}
+
+std::string TableCatalog::GetDatabaseNameByOid(oid_t id,
+                                               concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Index scan
+  std::vector<oid_t> column_ids({2});  // database_name
+  auto index = catalog_table_->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(id).Copy());
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
+                                         column_ids, index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  // Execute
+  std::string database_name = nullptr;
+  index_scan_executor.Init();
+
+  if (index_scan_executor.Execute()) {
+    auto result = index_scan_executor.GetOutput();
+    PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
+    if (result->GetTupleCount() != 0) {
+      database_name = result->GetValue(
+          0, 0);  // TODO: Not sure after projection it is column 0 or not
+    }
+  }
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return database_name;
+}
+
+oid_t TableCatalog::GetOidByName(std::string &table_name,
+                                 std::string &database_name,
+                                 concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
+
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Index scan
+  std::vector<oid_t> column_ids({0});  // table_id
+  auto index = catalog_table_->GetIndex(1);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(1);
+  key_column_ids.push_back(2);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(table_name).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_name).Copy());
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
+                                         column_ids, index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  // Execute
+  oid_t oid = INVALID_OID;
+  index_scan_executor.Init();
+
+  if (index_scan_executor.Execute()) {
+    auto result = index_scan_executor.GetOutput();
+    PL_ASSERT(result->GetTupleCount() <=
+              1);  // table_name + database_name is unique identifier
+    if (result->GetTupleCount() != 0) {
+      oid = result->GetValue(
+          0, 0);  // TODO: Not sure after projection it is column 0 or not
+    }
+  }
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return oid;
+}
 
 }  // End catalog namespace
 }  // End peloton namespace
