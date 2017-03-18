@@ -176,7 +176,7 @@ std::string TableCatalog::GetTableNameByOid(oid_t id,
     PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
     if (result->GetTupleCount() != 0) {
       table_name = result->GetValue(
-          0, 0);  // TODO: Not sure after projection it is column 0 or not
+          0, 0);  // After projection left 1 column
     }
   }
 
@@ -230,7 +230,7 @@ std::string TableCatalog::GetDatabaseNameByOid(oid_t id,
     PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
     if (result->GetTupleCount() != 0) {
       database_name = result->GetValue(
-          0, 0);  // TODO: Not sure after projection it is column 0 or not
+          0, 0);  // After projection left 1 column
     }
   }
 
@@ -289,7 +289,7 @@ oid_t TableCatalog::GetOidByName(std::string &table_name,
               1);  // table_name + database_name is unique identifier
     if (result->GetTupleCount() != 0) {
       oid = result->GetValue(
-          0, 0);  // TODO: Not sure after projection it is column 0 or not
+          0, 0);  // After projection left 1 column
     }
   }
 
