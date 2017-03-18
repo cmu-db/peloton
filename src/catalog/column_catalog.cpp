@@ -26,21 +26,26 @@ ColumnCatalog::ColumnCatalog()
     : AbstractCatalog(GetNextOid(), COLUMN_CATALOG_NAME,
                       InitializeColumnCatalogSchema().release()) {}
 
+// column_catalog table
+// table_id--name--type--offset--isPrimar--hasConstrain
+// table_id+name is primary key pair
 std::unique_ptr<catalog::Schema>
 ColumnCatalog::InitializeColumnCatalogSchema() {
-  // const std::string primary_key_constraint_name = "primary_key";
+  const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
 
   auto table_id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "table_id", true);
-  // table_id_column.AddConstraint(catalog::Constraint(
-  //     ConstraintType::PRIMARY, primary_key_constraint_name));
+  table_id_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_name_column =
       catalog::Column(type::Type::VARCHAR, max_name_size, "column_name", true);
+  column_name_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
   column_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
@@ -98,6 +103,60 @@ std::unique_ptr<storage::Tuple> ColumnCatalog::GetColumnCatalogTuple(
   tuple->SetValue(5, val6, pool);
 
   return std::move(tuple);
+}
+
+// delete tuple in column_catalog table using table_id + name
+
+void DeleteTuple(oid_t id, concurrency::Transaction *txn) {}
+
+// return column offset(3) with table_id(0) and column_name(1)
+//===------------------------<
+// 70--------------------------------------------===//
+// ATTR 0 == table_id & ATTR 1 == name
+//===--------------------------------------------------------------------===//
+oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
+                          concurrency::Transaction *txn) {
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids({3});
+  // column_catalog only support one primary key (table_id + name)
+  auto index = column_catalog->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+  // only return one record
+  std::unique_ptr<executor::LogicalTile> result_tile;
+
+  key_column_ids.push_back(0);
+  key_column_ids.push_back(1);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy());
+
+  // Create index scan desc
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Create plan node.
+  planner::IndexScanPlan node(column_catalog.get(), predicate, column_ids,
+                              index_scan_desc);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Run the executor
+  executor::IndexScanExecutor executor(&node, context.get());
+  executor.Init();
+
+  executor.Execute());
+  result_tile = executor.GetOutput();
+
+  return result_tile.GetValue(0, 0);
 }
 
 }  // End catalog namespace
