@@ -14,6 +14,10 @@
 
 #include "catalog/catalog_util.h"
 #include "catalog/schema.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/column_catalog.h"
 #include "type/types.h"
 #include "type/value_factory.h"
 #include "type/abstract_pool.h"
