@@ -16,19 +16,19 @@
 #include "common/harness.h"
 #include "common/macros.h"
 #include "common/logger.h"
-#include "parser/pg_parser.h"
+#include "parser/postgresparser.h"
 #include "parser/parser.h"
 
 namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Parser Tests
+// PostgresParser Tests
 //===--------------------------------------------------------------------===//
 
-class PgParserTests : public PelotonTest {};
+class PostgresParserTests : public PelotonTest {};
 
-TEST_F(PgParserTests, BasicTest) {
+TEST_F(PostgresParserTests, BasicTest) {
   std::vector<std::string> queries;
 
   // SELECT statement
@@ -52,7 +52,7 @@ TEST_F(PgParserTests, BasicTest) {
   // queries.push_back("SELECT * FROM foo WHERE id > 3 AND value < 10 OR id < 3 AND value > 10;");
 
 
-  auto parser = pgparser::Pg_Parser::GetInstance();
+  auto parser = parser::PostgresParser::GetInstance();
   // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;

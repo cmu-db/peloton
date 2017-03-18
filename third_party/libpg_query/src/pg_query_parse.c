@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define PARSE_STRING 1
+#define PARSE_STRING 0
 
 PgQueryInternalParsetreeAndError pg_query_raw_parse(const char* input)
 {
@@ -94,7 +94,9 @@ PgQueryInternalParsetreeAndError pg_query_parse(const char* input)
 
 	parsetree_and_error = pg_query_raw_parse(input);
 
+#if PARSE_STRING == 1
 	printf("%s\n", pg_query_nodes_to_json(parsetree_and_error.tree));
+#endif
 
 	// pg_query_exit_memory_context(ctx);
 

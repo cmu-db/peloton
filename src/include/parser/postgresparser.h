@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// pg_parser.h
+// postgresparser.h
 //
-// Identification: src/include/parser/pg_parser.h
+// Identification: src/include/parser/postgresparser.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,14 +18,14 @@
 #include "parser/parsenodes.h"
 
 namespace peloton {
-namespace pgparser {
+namespace parser {
 
 //===--------------------------------------------------------------------===//
-// Pg_Parser
-// 
-// This is the parser that gets a Postgres parse tree first and then 
+// PostgresParser
+//
+// This is the parser that gets a Postgres parse tree first and then
 // transform into a Peloton parse tree.
-// To start working on Pg_Parser:
+// To start working on PostgresParser:
 // First get familiar with List and ListCell structures defined in
 // pg_list.h, then take a look at the Postgres types defined in nodes.h.
 //
@@ -38,19 +38,22 @@ namespace pgparser {
 //
 //===--------------------------------------------------------------------===//
 
-class Pg_Parser {
-public:  
-  Pg_Parser();
-  ~Pg_Parser();
- 
+class PostgresParser {
+ public:
+  PostgresParser();
+  ~PostgresParser();
+
   // Parse a given query
   static PgQueryInternalParsetreeAndError ParseSQLString(const char* sql);
-  static PgQueryInternalParsetreeAndError ParseSQLString(const std::string& sql);
+  static PgQueryInternalParsetreeAndError ParseSQLString(
+      const std::string& sql);
 
-  static Pg_Parser &GetInstance();
+  static PostgresParser& GetInstance();
 
-  std::unique_ptr<parser::SQLStatementList> BuildParseTree(const std::string& query_string);
-private:
+  std::unique_ptr<parser::SQLStatementList> BuildParseTree(
+      const std::string& query_string);
+
+ private:
   // transform helper for Alias parsenodes
   char* AliasTransform(Alias* root);
 
