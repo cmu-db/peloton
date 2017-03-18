@@ -87,7 +87,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // Test1: insert a tuple with column 1 = null
   bool hasException = false;
 /*
-
   try {
     ConstraintsTestsUtil::ExecuteInsert(
         txn, data_table.get(),
