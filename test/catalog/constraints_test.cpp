@@ -64,23 +64,21 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // Test1: insert a tuple with column 1 = null
   bool hasException = false;
-  /*
+  try {
+    ConstraintsTestsUtil::ExecuteInsert(
+        txn, data_table.get(),
+        type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 1)),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 2)),
+        type::ValueFactory::GetVarcharValue(
+            std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
 
-    try {
-      ConstraintsTestsUtil::ExecuteInsert(
-          txn, data_table.get(), type::ValueFactory::GetNullValue(),
-          type::ValueFactory::GetIntegerValue(
-              ConstraintsTestsUtil::PopulatedValue(15, 1)),
-          type::ValueFactory::GetIntegerValue(
-              ConstraintsTestsUtil::PopulatedValue(15, 2)),
-          type::ValueFactory::GetVarcharValue(
-              std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-
-    } catch (ConstraintException e) {
-      hasException = true;
-    }
-    EXPECT_TRUE(hasException);
-  */
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
 
   // Test2: insert a legal tuple
   hasException = false;

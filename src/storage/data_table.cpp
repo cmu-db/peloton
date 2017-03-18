@@ -167,7 +167,11 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // in-place update at executor level.
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
+                                         bool check_constraint) {
+  assert(tuple);
+  if (check_constraint && CheckConstraints(tuple) == false)
+    return INVALID_ITEMPOINTER;
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -495,8 +499,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(
-    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
+                                               UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -815,7 +819,6 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 }
 
 void DataTable::DropIndexes() {
-
   // TODO: iterate over all indexes, and actually drop them
 
   indexes_.Clear(nullptr);
@@ -1084,10 +1087,9 @@ void DataTable::SetDefaultLayout(const column_map_type &layout) {
   default_partition_ = layout;
 }
 
-column_map_type DataTable::GetDefaultLayout() const{
+column_map_type DataTable::GetDefaultLayout() const {
   return default_partition_;
 }
-
 
 }  // End storage namespace
 }  // End peloton namespace
