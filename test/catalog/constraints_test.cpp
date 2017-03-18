@@ -137,23 +137,21 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // Test1: insert a tuple with column  meet the unique requirment
   bool hasException = false;
 
-  /*
+  try {
+    ConstraintsTestsUtil::ExecuteInsert(
+        txn, data_table.get(),
+        type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 1)),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 2)),
+        type::ValueFactory::GetVarcharValue(
+            std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
 
-    try {
-      ConstraintsTestsUtil::ExecuteInsert(
-          txn, data_table.get(), type::ValueFactory::GetNullValue(),
-          type::ValueFactory::GetIntegerValue(
-              ConstraintsTestsUtil::PopulatedValue(15, 1)),
-          type::ValueFactory::GetIntegerValue(
-              ConstraintsTestsUtil::PopulatedValue(15, 2)),
-          type::ValueFactory::GetVarcharValue(
-              std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-
-    } catch (ConstraintException e) {
-      hasException = true;
-    }
-    EXPECT_TRUE(hasException);
-  */
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
 
   hasException = false;
   try {
