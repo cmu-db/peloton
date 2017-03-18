@@ -10,6 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// pg_table
+//
+// Schema: (column: column_name)
+// 0: table_id (pkey), 1: table_name, 2: database_id, 3: database_name
+//
+// Indexes: (index offset: indexed columns)
+// 0: table_id
+// 1: table_name & database_name
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "catalog/abstract_catalog.h"
@@ -34,7 +46,9 @@ class TableCatalog : public AbstractCatalog {
 
   // Read-only
   std::string GetTableNameByOid(oid_t id, concurrency::Transaction *txn);
+
   std::string GetDatabaseNameByOid(oid_t id, concurrency::Transaction *txn);
+
   oid_t GetOidByName(std::string &table_name, std::string &database_name,
                      concurrency::Transaction *txn);
 
