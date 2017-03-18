@@ -44,6 +44,7 @@ class TableCatalog : public AbstractCatalog {
 
   bool DeleteByOid(oid_t id, concurrency::Transaction *txn);
 
+  // TODO: combine all readonly functions with helper
   // Read-only
   std::string GetTableNameByOid(oid_t id, concurrency::Transaction *txn);
 

@@ -30,7 +30,12 @@ Catalog *Catalog::GetInstance(void) {
   return global_catalog.get();
 }
 
-Catalog::Catalog() {
+Catalog::Catalog() {  // CHANGING
+  // This should be the initialization of catalog tables, including:
+  // 1) construct catalogs (create tables, add to pg_catalog database)
+  // 2) create necessary indexes
+  // 3) add tuples into these catalogs
+
   CreateCatalogDatabase();
 
   // Create metrics table in default database
@@ -128,15 +133,12 @@ void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
       std::move(tuple), txn);
 }
 
-// Create a table in a database
+// Create a table in a database - CHANGING
 ResultType Catalog::CreateTable(std::string database_name, std::string table_name,
-    std::unique_ptr<catalog::Schema> schema, concurrency::Transaction *txn) {
+                                std::unique_ptr<catalog::Schema> schema, concurrency::Transaction *txn) {
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
-      database_name.c_str());
+            database_name.c_str());
 
-  bool own_schema = true;
-  bool adapt_table = false;
-  oid_t table_id = GetNextOid();
   try {
     storage::Database *database = GetDatabaseWithName(database_name);
     try {
@@ -145,16 +147,25 @@ ResultType Catalog::CreateTable(std::string database_name, std::string table_nam
       return ResultType::FAILURE;
     } catch (CatalogException &e) {
       // Table doesn't exist, now create it
+      bool own_schema = true;
+      bool adapt_table = false;
       oid_t database_id = database->GetOid();
+      oid_t table_id = TableCatalog::GetInstance()->GetNextOid();
       storage::DataTable *table = storage::TableFactory::GetDataTable(
           database_id, table_id, schema.release(), table_name,
           DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-      GetDatabaseWithOid(database_id)->AddTable(table);
+      database->AddTable(table);
+
+      // Update pg_table with this table info
+      TableCatalog::GetInstance()->Insert(table_id, table_name, database_id,
+                                          database_name, pool_, txn);
 
       // Create the primary key index for that table if there's primary key
+      // Update pg_index, pg_column at the same time
       bool has_primary_key = false;
       auto &schema_columns = table->GetSchema()->GetColumns();
       for (auto &column : schema_columns)
+        ColumnCatalog::GetInstance()->Insert();  // TODO:
         if (column.IsPrimary()) {
           has_primary_key = true;
           break;
@@ -162,15 +173,6 @@ ResultType Catalog::CreateTable(std::string database_name, std::string table_nam
       if (has_primary_key == true)
         CreatePrimaryIndex(database_name, table_name);
 
-      // Update catalog_table with this table info
-      auto tuple =
-          GetTableCatalogTuple(
-              databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
-              table_id, table_name, database_id, database->GetDBName(), pool_);
-      // Another way of insertion using transaction manager
-      catalog::InsertTuple(
-          databases_[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
-          std::move(tuple), txn);
       return ResultType::SUCCESS;
     }
   } catch (CatalogException &e) {
