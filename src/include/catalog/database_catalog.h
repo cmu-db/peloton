@@ -28,19 +28,21 @@ class DatabaseCatalog : public AbstractCatalog {
 
   inline oid_t GetNextOid() { return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE); }
 
-  std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(
+  // Write related API
+  void DeleteByOid(oid_t id, concurrency::Transaction *txn);
+  bool Insert(
     oid_t database_id, std::string &database_name,
-    type::AbstractPool *pool);
+    type::AbstractPool *pool, concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetNameByOid(oid_t id, concurrency::Transaction *txn);
   oid_t GetOidByName(std::string &name, concurrency::Transaction *txn);
 
-  // Write related API
-  void DeleteTuple(oid_t id, concurrency::Transaction *txn);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeDatabaseCatalogSchema();
+  executor::LogicalTile *GetXByOid(oid_t id, int idx, concurrency::Transaction *txn);
+  executor::LogicalTile *GetXByName(std::string &name, int idx, concurrency::Transaction *txn);
 };
 
 }  // End catalog namespace
