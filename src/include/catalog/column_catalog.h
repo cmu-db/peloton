@@ -38,11 +38,13 @@ class ColumnCatalog : public AbstractCatalog {
   oid_t GetOffsetByOid_Name(std::string &name, concurrency::Transaction *txn);
 
   // Write related API
-  void DeleteTuple(oid_t id, std::string &column_name,
-                   concurrency::Transaction *txn);
+  void DeleteByOid_Name(oid_t table_id, std::string &name,
+                        concurrency::Transaction *txn);
 
-  std::unique_ptr<storage::Tuple> GetColumnCatalogTuple(
-      oid_t table_id, std::string column_name, type::AbstractPool *pool);
+  bool Insert(oid_t table_id, std::string column_name, type::TypeId column_type,
+              oid_t column_offset, bool column_isPrimary,
+              bool column_hasConstrain, type::AbstractPool *pool,
+              concurrency::Transaction *txn);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeColumnCatalogSchema();

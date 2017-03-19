@@ -8,6 +8,9 @@
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
+// column_catalog table
+// table_id--name--type--offset--isPrimar--hasConstrain
+// table_id+name is primary key pair
 //===----------------------------------------------------------------------===//
 
 #pragma once
@@ -81,37 +84,61 @@ ColumnCatalog::InitializeColumnCatalogSchema() {
   return column_catalog_schema;
 }
 
-std::unique_ptr<storage::Tuple> ColumnCatalog::GetColumnCatalogTuple(
-    oid_t table_id, std::string column_name, oid_t column_type,
-    oid_t column_offset, bool column_isPrimary, bool column_hasConstrain,
-    type::AbstractPool *pool) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table->GetSchema(), true));
+// delete tuple with table_id(0) and column_name(1)
+//===------------------------<
+// --------------------------------------------===//
+// ATTR 0 == table_id & ATTR 1 == name
+//===--------------------------------------------------------------------===//
+void DeleteByOid_Name(oid_t table_id, std::string &name,
+                      concurrency::Transaction *txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool single_statement_txn = false;
 
-  auto val1 = type::ValueFactory::GetIntegerValue(table_id);
-  auto val2 = type::ValueFactory::GetVarcharValue(column_name, nullptr);
-  auto val3 = type::ValueFactory::GetIntegerValue(column_type);
-  auto val4 = type::ValueFactory::GetIntegerValue(column_offset);
-  auto val5 = type::ValueFactory::GetBooleanValue(column_isPrimary);
-  auto val6 = type::ValueFactory::GetBooleanValue(column_hasConstrain);
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
 
-  tuple->SetValue(0, val1, pool);
-  tuple->SetValue(1, val2, pool);
-  tuple->SetValue(2, val3, pool);
-  tuple->SetValue(3, val4, pool);
-  tuple->SetValue(4, val5, pool);
-  tuple->SetValue(5, val6, pool);
+  // Index scan as child node
+  std::vector<oid_t> column_ids;  // No projection
+  auto index = catalog_table_->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
 
-  return std::move(tuple);
+  key_column_ids.push_back(0);
+  key_column_ids.push_back(1);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy());
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
+                                         column_ids, index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  // Parent-Child relationship
+  delete_node.AddChild(std::move(index_scan_node));
+  delete_executor.AddChild(&index_scan_executor);
+  delete_executor.Init();
+  bool status = delete_executor.Execute();
+
+  if (single_statement_txn) {
+    txn_manager.CommitTransaction(txn);
+  }
+
+  return status;
 }
-
-// delete tuple in column_catalog table using table_id + name
-
-void DeleteTuple(oid_t id, concurrency::Transaction *txn) {}
 
 // return column offset(3) with table_id(0) and column_name(1)
 //===------------------------<
-// 70--------------------------------------------===//
+// --------------------------------------------===//
 // ATTR 0 == table_id & ATTR 1 == name
 //===--------------------------------------------------------------------===//
 oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
@@ -119,7 +146,7 @@ oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids({3});
   // column_catalog only support one primary key (table_id + name)
-  auto index = column_catalog->GetIndex(0);
+  auto index = catalog_table_->GetIndex(0);
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<type::Value> values;
@@ -141,7 +168,7 @@ oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanPlan node(column_catalog.get(), predicate, column_ids,
+  planner::IndexScanPlan node(catalog_table_.get(), predicate, column_ids,
                               index_scan_desc);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -159,5 +186,78 @@ oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
   return result_tile.GetValue(0, 0);
 }
 
+// return column type(2) with table_id(0) and column_name(1)
+//===------------------------<
+// --------------------------------------------===//
+// ATTR 0 == table_id & ATTR 1 == name
+//===--------------------------------------------------------------------===//
+type::TypeId GetTypeByOid_Name(oid_t id, concurrency::Transaction *txn) {
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids({2});
+  // column_catalog only support one primary key (table_id + name)
+  auto index = catalog_table_->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+  // only return one record
+  std::unique_ptr<executor::LogicalTile> result_tile;
+
+  key_column_ids.push_back(0);
+  key_column_ids.push_back(1);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy());
+
+  // Create index scan desc
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Create plan node.
+  planner::IndexScanPlan node(catalog_table_.get(), predicate, column_ids,
+                              index_scan_desc);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Run the executor
+  executor::IndexScanExecutor executor(&node, context.get());
+  executor.Init();
+
+  executor.Execute());
+  result_tile = executor.GetOutput();
+
+  return result_tile.GetValue(0, 0);
+}
+
+bool ColumnCatalog::Insert(oid_t table_id, std::string column_name,
+                           type::TypeId column_type, oid_t column_offset,
+                           bool column_isPrimary, bool column_hasConstrain,
+                           type::AbstractPool *pool,
+                           concurrency::Transaction *txn) {
+  // Create the tuple first
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(catalog_table_->GetSchema(), true));
+
+  auto val1 = type::ValueFactory::GetIntegerValue(table_id);
+  auto val2 = type::ValueFactory::GetVarcharValue(column_name, nullptr);
+  auto val3 = type::ValueFactory::GetIntegerValue(column_type);
+  auto val4 = type::ValueFactory::GetIntegerValue(column_offset);
+  auto val5 = type::ValueFactory::GetBooleanValue(column_isPrimary);
+  auto val6 = type::ValueFactory::GetBooleanValue(column_hasConstrain);
+
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
+  tuple->SetValue(2, val3, pool);
+  tuple->SetValue(3, val4, pool);
+  tuple->SetValue(4, val5, pool);
+  tuple->SetValue(5, val6, pool);
+  // Insert the tuple
+  return InsertTuple(std::move(tuple), txn);
 }  // End catalog namespace
 }  // End peloton namespace
