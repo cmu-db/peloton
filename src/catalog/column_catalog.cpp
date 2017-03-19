@@ -112,7 +112,7 @@ void DeleteByOid_Name(oid_t table_id, std::string &name,
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy(), nullptr);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
@@ -159,7 +159,7 @@ oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(name).Copy(), nullptr);
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
@@ -180,10 +180,16 @@ oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
   executor::IndexScanExecutor executor(&node, context.get());
   executor.Init();
 
-  executor.Execute());
+  executor.Execute();
   result_tile = executor.GetOutput();
 
-  return result_tile.GetValue(0, 0);
+  PL_ASSERT(result_tile->GetTupleCount() <= 1);
+  if (result_tile->GetTupleCount() != 0) {
+    oid_t offset =
+        result_tile->GetValue(0, 0);  // After projection left 1 column
+  }
+
+  return offset;
 }
 
 // return column type(2) with table_id(0) and column_name(1)
@@ -191,7 +197,8 @@ oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
 // --------------------------------------------===//
 // ATTR 0 == table_id & ATTR 1 == name
 //===--------------------------------------------------------------------===//
-type::TypeId GetTypeByOid_Name(oid_t id, concurrency::Transaction *txn) {
+type::TypeId GetTypeByOid_Name(oid_t table_id, std::string &name,
+                               concurrency::Transaction *txn) {
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids({2});
   // column_catalog only support one primary key (table_id + name)
@@ -229,10 +236,15 @@ type::TypeId GetTypeByOid_Name(oid_t id, concurrency::Transaction *txn) {
   executor::IndexScanExecutor executor(&node, context.get());
   executor.Init();
 
-  executor.Execute());
+  executor.Execute();
   result_tile = executor.GetOutput();
 
-  return result_tile.GetValue(0, 0);
+  PL_ASSERT(result_tile->GetTupleCount() <= 1);
+  if (result_tile->GetTupleCount() != 0) {
+    auto type = result_tile->GetValue(0, 0);  // After projection left 1 column
+  }
+
+  return type;
 }
 
 bool ColumnCatalog::Insert(oid_t table_id, std::string column_name,
@@ -259,5 +271,6 @@ bool ColumnCatalog::Insert(oid_t table_id, std::string column_name,
   tuple->SetValue(5, val6, pool);
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
+}
 }  // End catalog namespace
 }  // End peloton namespace

@@ -31,11 +31,14 @@ class ColumnCatalog : public AbstractCatalog {
   }
 
   // Read-only API
-  type::TypeId GetTypeByOid_Name(oid_t id, concurrency::Transaction *txn);
-  type::TypeId GetTypeByOid_Offset(std::string &name,
+  type::TypeId GetTypeByOid_Name(oid_t table_id, std::string name,
+                                 concurrency::Transaction *txn);
+  type::TypeId GetTypeByOid_Offset(oid_t table_id, oid_t offset,
                                    concurrency::Transaction *txn);
-  std::string GetNameByOid_Offset(oid_t id, concurrency::Transaction *txn);
-  oid_t GetOffsetByOid_Name(std::string &name, concurrency::Transaction *txn);
+  std::string GetNameByOid_Offset(oid_t table_id, oid_t offset,
+                                  concurrency::Transaction *txn);
+  oid_t GetOffsetByOid_Name(oid_t table_id, std::string &name,
+                            concurrency::Transaction *txn);
 
   // Write related API
   void DeleteByOid_Name(oid_t table_id, std::string &name,
