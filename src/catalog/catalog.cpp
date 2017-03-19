@@ -38,10 +38,15 @@ Catalog::Catalog() {  // CHANGING
 
   CreateCatalogDatabase();
 
+
   // Create metrics table in default database
   CreateMetricsCatalog();
 
   InitializeFunctions();
+}
+
+storage::Database *GetCatalogDB() {
+  return databases_[START_OID];
 }
 
 void Catalog::CreateMetricsCatalog() {
@@ -74,13 +79,13 @@ void Catalog::CreateMetricsCatalog() {
 void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
-  auto pg_database = CreateDatabaseCatalog(START_OID,
-      DATABASE_CATALOG_NAME);
-  storage::DataTable *databases_table = pg_database.release();
-  database->AddTable(databases_table, true);
-  auto pg_table = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
-  storage::DataTable *tables_table = pg_table.release();
-  database->AddTable(tables_table, true);
+  // auto pg_database = CreateDatabaseCatalog(START_OID,
+  //     DATABASE_CATALOG_NAME);
+  // storage::DataTable *databases_table = pg_database.release();
+  // database->AddTable(databases_table, true);
+  // auto pg_table = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
+  // storage::DataTable *tables_table = pg_table.release();
+  // database->AddTable(tables_table, true);
   databases_.push_back(database);
   LOG_TRACE("Catalog database created");
 }
@@ -471,38 +476,38 @@ storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-// Create Table for pg_class
-std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
-    oid_t database_id, std::string table_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
-  bool is_catalog = true;
-  auto table_schema = InitializeTablesSchema();
+// // Create Table for pg_class
+// std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
+//     oid_t database_id, std::string table_name) {
+//   bool own_schema = true;
+//   bool adapt_table = false;
+//   bool is_catalog = true;
+//   auto table_schema = InitializeTablesSchema();
 
-  catalog::Schema *schema = table_schema.release();
-  std::unique_ptr<storage::DataTable> table(
-      storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-          table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
-  return table;
-}
+//   catalog::Schema *schema = table_schema.release();
+//   std::unique_ptr<storage::DataTable> table(
+//       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
+//           table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
+//   return table;
+// }
 
-// Create Table for pg_database
-std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
-    oid_t database_id, std::string database_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
-  bool is_catalog = true;
-  auto database_schema = InitializeDatabaseSchema();
+// // Create Table for pg_database
+// std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
+//     oid_t database_id, std::string database_name) {
+//   bool own_schema = true;
+//   bool adapt_table = false;
+//   bool is_catalog = true;
+//   auto database_schema = InitializeDatabaseSchema();
 
-  catalog::Schema *schema = database_schema.release();
+//   catalog::Schema *schema = database_schema.release();
 
-  std::unique_ptr<storage::DataTable> table(
-      storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-          database_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema,
-          adapt_table, is_catalog));
+//   std::unique_ptr<storage::DataTable> table(
+//       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
+//           database_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema,
+//           adapt_table, is_catalog));
 
-  return table;
-}
+//   return table;
+// }
 
 // Create table for metrics tables
 std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
@@ -530,55 +535,55 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   return table;
 }
 
-// Initialize tables catalog schema
-std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
-  const std::string not_null_constraint_name = "not_null";
+// // Initialize tables catalog schema
+// std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
+//   const std::string not_null_constraint_name = "not_null";
 
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
-                                   "table_id", true);
-  id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+//   auto id_column = catalog::Column(type::Type::INTEGER,
+//                                    type::Type::GetTypeSize(type::Type::INTEGER),
+//                                    "table_id", true);
+//   id_column.AddConstraint(
+//       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
-      "table_name", true);
-  name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+//   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
+//       "table_name", true);
+//   name_column.AddConstraint(
+//       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto database_id_column = catalog::Column(type::Type::INTEGER,
-      type::Type::GetTypeSize(type::Type::INTEGER), "database_id", true);
-  database_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+//   auto database_id_column = catalog::Column(type::Type::INTEGER,
+//       type::Type::GetTypeSize(type::Type::INTEGER), "database_id", true);
+//   database_id_column.AddConstraint(
+//       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto database_name_column = catalog::Column(type::Type::VARCHAR,
-      max_name_size, "database_name", true);
-  database_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+//   auto database_name_column = catalog::Column(type::Type::VARCHAR,
+//       max_name_size, "database_name", true);
+//   database_name_column.AddConstraint(
+//       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema( {
-      id_column, name_column, database_id_column, database_name_column }));
+//   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema( {
+//       id_column, name_column, database_id_column, database_name_column }));
 
-  return table_schema;
-}
+//   return table_schema;
+// }
 
-// Initialize database catalog schema
-std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
-  const std::string not_null_constraint_name = "not_null";
+// // Initialize database catalog schema
+// std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
+//   const std::string not_null_constraint_name = "not_null";
 
-  auto id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
-                                   "database_id", true);
-  id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
-      "database_name", true);
-  name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+//   auto id_column = catalog::Column(type::Type::INTEGER,
+//                                    type::Type::GetTypeSize(type::Type::INTEGER),
+//                                    "database_id", true);
+//   id_column.AddConstraint(
+//       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+//   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
+//       "database_name", true);
+//   name_column.AddConstraint(
+//       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema( {
-      id_column, name_column }));
-  return database_schema;
-}
+//   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema( {
+//       id_column, name_column }));
+//   return database_schema;
+// }
 
 // Initialize database catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
