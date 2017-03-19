@@ -22,12 +22,8 @@ class ColumnCatalog : public AbstractCatalog {
   // Global Singleton
   static ColumnCatalog *GetInstance(void);
 
-  ColumnCatalog();
-
-  ~ColumnCatalog();
-
   inline oid_t GetNextOid() {
-    return oid_++ | static_cast<oid_t>(type::CatalogType::TABLE);
+    return oid_++ | static_cast<oid_t>(type::CatalogType::COLUMN);
   }
 
   // Read-only API
@@ -50,6 +46,10 @@ class ColumnCatalog : public AbstractCatalog {
               concurrency::Transaction *txn);
 
  private:
+  ColumnCatalog();
+
+  ~ColumnCatalog();
+
   std::unique_ptr<catalog::Schema> InitializeColumnCatalogSchema();
 };
 

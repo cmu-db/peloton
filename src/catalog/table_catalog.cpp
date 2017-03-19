@@ -96,7 +96,7 @@ bool TableCatalog::DeleteByOid(oid_t id, concurrency::Transaction *txn) {
       new executor::ExecutorContext(txn));
 
   // Delete node
-  planner::DeletePlan delete_node(table, false);
+  planner::DeletePlan delete_node(catalog_table_.get(), false);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Index scan as child node
@@ -168,7 +168,7 @@ std::string TableCatalog::GetTableNameByOid(oid_t id,
                                                   context.get());
 
   // Execute
-  std::string table_name = nullptr;
+  std::string table_name;
   index_scan_executor.Init();
 
   if (index_scan_executor.Execute()) {
@@ -222,7 +222,7 @@ std::string TableCatalog::GetDatabaseNameByOid(oid_t id,
                                                   context.get());
 
   // Execute
-  std::string database_name = nullptr;
+  std::string database_name;
   index_scan_executor.Init();
 
   if (index_scan_executor.Execute()) {
@@ -267,8 +267,8 @@ oid_t TableCatalog::GetOidByName(std::string &table_name,
   key_column_ids.push_back(2);
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   expr_types.push_back(ExpressionType::COMPARE_EQUAL);
-  values.push_back(type::ValueFactory::GetIntegerValue(table_name).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_name).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
