@@ -38,6 +38,7 @@ class TableCatalog : public AbstractCatalog {
     return oid_++ | static_cast<oid_t>(type::CatalogType::TABLE);
   }
 
+  // Write-related
   bool Insert(oid_t table_id, std::string table_name, oid_t database_id,
               std::string database_name, type::AbstractPool *pool,
               concurrency::Transaction *txn);
