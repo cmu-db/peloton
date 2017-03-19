@@ -73,7 +73,6 @@ class Catalog {
 
   Catalog();
 
-  // TODO:
   storage::Database *GetCatalogDB() const;
 
   // Creates the catalog database
@@ -135,23 +134,23 @@ class Catalog {
   // Find a database using vector offset
   storage::Database *GetDatabaseWithOffset(const oid_t database_offset) const;
 
-  // Create Table for pg_class
-  std::unique_ptr<storage::DataTable> CreateTableCatalog(
-      oid_t database_id, std::string table_name);
+  // // Create Table for pg_class
+  // std::unique_ptr<storage::DataTable> CreateTableCatalog(
+  //     oid_t database_id, std::string table_name);
 
-  // Create Table for pg_database
-  std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
-      oid_t database_id, std::string table_name);
+  // // Create Table for pg_database
+  // std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
+  //     oid_t database_id, std::string table_name);
 
   // Create Table for metrics tables
   std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
       oid_t database_id, std::string table_name);
 
-  // Initialize the schema of the database catalog
-  std::unique_ptr<Schema> InitializeDatabaseSchema();
+  // // Initialize the schema of the database catalog
+  // std::unique_ptr<Schema> InitializeDatabaseSchema();
 
-  // Initialize the schema of the table catalog
-  std::unique_ptr<Schema> InitializeTablesSchema();
+  // // Initialize the schema of the table catalog
+  // std::unique_ptr<Schema> InitializeTablesSchema();
 
   // Initialize the schema of the database metrics table
   std::unique_ptr<Schema> InitializeDatabaseMetricsSchema();
