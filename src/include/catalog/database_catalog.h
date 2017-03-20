@@ -41,11 +41,11 @@ class DatabaseCatalog : public AbstractCatalog {
   // Write related API
   bool Insert(oid_t database_id, const std::string &database_name,
               concurrency::Transaction *txn);
-  void DeleteByOid(oid_t id, concurrency::Transaction *txn);
+  void DeleteByOid(oid_t database_id, concurrency::Transaction *txn);
 
   // Read-only API
-  std::string GetNameByOid(oid_t oid, concurrency::Transaction *txn);
-  oid_t GetOidByName(std::string &database_name, concurrency::Transaction *txn);
+  std::string GetNameByOid(oid_t database_id, concurrency::Transaction *txn);
+  oid_t GetOidByName(const std::string &database_name, concurrency::Transaction *txn);
 
  private:
   DatabaseCatalog();

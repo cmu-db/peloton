@@ -40,7 +40,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   // Insert into pg_attribute
   ColumnCatalog::GetInstance()->Insert(
-      DATABASE_CATALOG_OID, 0, "database_id", type::Type::INTEGER, true,
+      DATABASE_CATALOG_OID, "database_id", 0, type::Type::INTEGER, true,
       database_id_column.GetConstraints(), nullptr);
 
   auto database_name_column = catalog::Column(
@@ -49,7 +49,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   // Insert into pg_attribute
   ColumnCatalog::GetInstance()->Insert(
-      DATABASE_CATALOG_OID, 1, "database_name", type::Type::VARCHAR, true,
+      DATABASE_CATALOG_OID, "database_name", 1, type::Type::VARCHAR, true,
       database_name_column.GetConstraints(), nullptr);
 
   std::unique_ptr<catalog::Schema> database_catalog_schema(
@@ -63,43 +63,43 @@ bool DatabaseCatalog::Insert(oid_t database_id,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val1 = type::ValueFactory::GetIntegerValue(database_id);
-  auto val2 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
+  auto val0 = type::ValueFactory::GetIntegerValue(database_id);
+  auto val1 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
 
-  tuple->SetValue(0, val1, Catalog::pool_);
-  tuple->SetValue(1, val2, Catalog::pool_);
+  tuple->SetValue(0, val0, Catalog::pool_);
+  tuple->SetValue(1, val1, Catalog::pool_);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool DatabaseCatalog::DeleteByOid(oid_t oid, concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of oid
+bool DatabaseCatalog::DeleteByOid(oid_t database_id, concurrency::Transaction *txn) {
+  oid_t index_offset = 0;  // Index of database_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string DatabaseCatalog::GetNameByOid(oid_t oid,
+std::string DatabaseCatalog::GetNameByOid(oid_t database_id,
                                           concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // database_name
-  oid_t index_offset = 0;              // Index of oid
+  oid_t index_offset = 0;              // Index of database_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
 
   auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
-  PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
+  PL_ASSERT(result->GetTupleCount() <= 1);  // database_id is unique
   if (result->GetTupleCount() != 0) {
-    database_name = result->GetValue(0, 0);  // After projection left 1 column
+    database_name = result->GetValue(0, 0).GetAs<std::string>();  // After projection left 1 column
   }
 
   return database_name;
 }
 
-oid_t DatabaseCatalog::GetOidByName(std::string &database_name,
+oid_t DatabaseCatalog::GetOidByName(const std::string &database_name,
                                     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // database_id
   oid_t index_offset = 1;              // Index of database_name
@@ -109,14 +109,14 @@ oid_t DatabaseCatalog::GetOidByName(std::string &database_name,
 
   auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
 
-  oid_t oid = INVALID_OID;
+  oid_t database_id = INVALID_OID;
   PL_ASSERT(result->GetTupleCount() <=
             1);  // table_name + database_name is unique
   if (result->GetTupleCount() != 0) {
-    oid = result->GetValue(0, 0);  // After projection left 1 column
+    database_id = result->GetValue(0, 0).GetAs<oid_t>();  // After projection left 1 column
   }
 
-  return oid;
+  return database_id;
 }
 
 }  // End catalog namespace

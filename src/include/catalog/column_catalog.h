@@ -10,6 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// pg_attribute
+//
+// Schema: (column: column_name)
+// 0: table_id (pkey), 1: column_name (pkey), 2: column_offset, 3: column_type,
+// 4: is_inlined, 5: is_primary, 6: is_not_null
+//
+// Indexes: (index offset: indexed columns)
+// 0: table_id & column_name
+// 1: table_id & column_offset
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "catalog/abstract_catalog.h"
@@ -27,31 +40,30 @@ class ColumnCatalog : public AbstractCatalog {
   }
 
   // Write related API
-  void DeleteByOid_Name(oid_t table_id, std::string &name,
-                        concurrency::Transaction *txn);
-
-  // TODO: api change
-  bool Insert(oid_t table_id, oid_t column_offset, std::string column_name,
-              type::TypeId column_type, bool is_inlined,
-              std::vector<ConstraintType> constraints,
+  bool Insert(oid_t table_id, const std::string &column_name,
+              oid_t column_offset, type::Type::TypeId column_type,
+              bool is_inlined, std::vector<ConstraintType> constraints,
               concurrency::Transaction *txn);
 
+  bool DeleteByOidWithName(oid_t table_id, const std::string &column_name,
+                           concurrency::Transaction *txn);
 
   // Read-only API
-  type::TypeId GetTypeByOidWithName(oid_t table_id, std::string name,
-                                 concurrency::Transaction *txn);
-  type::TypeId GetTypeByOidWithOffset(oid_t table_id, oid_t offset,
-                                   concurrency::Transaction *txn);
-  std::string GetNameByOidWithOffset(oid_t table_id, oid_t offset,
-                                  concurrency::Transaction *txn);
-  oid_t GetOffsetByOidWithName(oid_t table_id, std::string &name,
-                            concurrency::Transaction *txn);
+  oid_t GetOffsetByOidWithName(oid_t table_id, const std::string &column_name,
+                               concurrency::Transaction *txn);
+  std::string GetNameByOidWithOffset(oid_t table_id, oid_t column_offset,
+                                     concurrency::Transaction *txn);
+  type::TypeId GetTypeByOidWithName(oid_t table_id, std::string column_name,
+                                    concurrency::Transaction *txn);
+  type::TypeId GetTypeByOidWithOffset(oid_t table_id, oid_t column_offset,
+                                      concurrency::Transaction *txn);
 
  private:
   ColumnCatalog();
 
   ~ColumnCatalog();
 
+  // Construct pg_attribute schema
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
 

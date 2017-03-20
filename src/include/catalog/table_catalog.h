@@ -39,17 +39,18 @@ class TableCatalog : public AbstractCatalog {
   }
 
   // Write related API
-  bool Insert(oid_t table_id, std::string table_name, oid_t database_id,
-              std::string database_name, concurrency::Transaction *txn);
+  bool Insert(oid_t table_id, const std::string &table_name, oid_t database_id,
+              const std::string &database_name, concurrency::Transaction *txn);
 
-  bool DeleteByOid(oid_t oid, concurrency::Transaction *txn);
+  bool DeleteByOid(oid_t table_id, concurrency::Transaction *txn);
 
   // Read-only API
-  std::string GetTableNameByOid(oid_t oid, concurrency::Transaction *txn);
+  std::string GetTableNameByOid(oid_t table_id, concurrency::Transaction *txn);
 
-  std::string GetDatabaseNameByOid(oid_t oid, concurrency::Transaction *txn);
+  std::string GetDatabaseNameByOid(oid_t table_id, concurrency::Transaction *txn);
 
-  oid_t GetOidByName(std::string &table_name, std::string &database_name,
+  oid_t GetOidByName(const std::string &table_name,
+                     const std::string &database_name,
                      concurrency::Transaction *txn);
 
  private:
