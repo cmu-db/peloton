@@ -46,10 +46,11 @@ char* PostgresParser::AliasTransform(Alias* root) {
 // BoolExprTransform.
 parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   parser::JoinDefinition* result = NULL;
-  if ((root->jointype > 3) || (root->isNatural)) {
+  // Natrual join is not supported
+  if ((root->jointype > 4) || (root->isNatural)) {
     return NULL;
   }
-  LOG_INFO("Join type is %d\n", root->jointype);
+  LOG_TRACE("Join type is %d\n", root->jointype);
   result = new parser::JoinDefinition();
   switch (root->jointype) {
     case JOIN_INNER: {
@@ -78,6 +79,8 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
       return NULL;
     }
   }
+
+  // Check the type of left arg and right arg before transform
   if (root->larg->type == T_RangeVar) {
     result->left = RangeVarTransform((RangeVar*)(root->larg));
   } else {
@@ -93,6 +96,7 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
     return NULL;
   }
 
+  // transform the quals, depends on AExprTranform and BoolExprTransform
   switch (root->quals->type) {
     case T_A_Expr: {
       result->condition = AExprTransform((A_Expr*)(root->quals));
@@ -120,6 +124,7 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
     result->schema = strdup(root->schemaname);
   }
 
+  // parse alias
   result->alias = AliasTransform(root->alias);
 
   result->table_info_ = new parser::TableInfo();
@@ -136,9 +141,9 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
 
 // This fucntion takes in fromClause of a Postgres SelectStmt and transfers
 // into a Peloton TableRef object.
-// TODO: support select from multiple table, nested queries, various joins
+// TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(List* root) {
-  // now support select from only one table
+  // now support select from only one sources
   parser::TableRef* result = NULL;
   if (root->length > 1) {
     LOG_ERROR("Multiple from not handled yet\n");
@@ -229,6 +234,8 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
       default: { LOG_ERROR("Group By type %d not supported...", temp->type); }
     }
   }
+
+  // having clauses not implemented yet, depends on AExprTransform
   if (having != NULL) {
     LOG_ERROR("HAVING not implemented yet...\n");
   }
@@ -313,7 +320,6 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
   expression::AbstractExpression* result = NULL;
 
   if (root->agg_star) {
-    // expression::AbstractExpression* temp = new expression::StarExpression();
     std::vector<expression::AbstractExpression*> children;
     result = new expression::FunctionExpression(
         ((value*)(root->funcname->head->data.ptr_value))->val.str, children);
@@ -361,21 +367,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   expression::AbstractExpression* left = NULL;
   expression::AbstractExpression* right = NULL;
   LOG_TRACE("BoolExpr arg length %d\n", root->args->length);
-  Node* node = (Node*)(root->args->head->data.ptr_value);
-  switch (node->type) {
-    case T_BoolExpr: {
-      left = BoolExprTransform((BoolExpr*)node);
-      break;
-    }
-    case T_A_Expr: {
-      left = AExprTransform((A_Expr*)node);
-      break;
-    }
-    default: {
-      LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
-    }
-  }
-  node = (Node*)(root->args->head->next->data.ptr_value);
+  Node* node = (Node*)(root->args->head->next->data.ptr_value);
   switch (node->type) {
     case T_BoolExpr: {
       right = BoolExprTransform((BoolExpr*)node);
@@ -387,6 +379,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
     }
     default: {
       LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
+      return NULL;
     }
   }
   switch (root->boolop) {
