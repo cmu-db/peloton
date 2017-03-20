@@ -26,14 +26,13 @@ ColumnCatalog *ColumnCatalog::GetInstance(void) {
 }
 
 ColumnCatalog::ColumnCatalog()
-    : AbstractCatalog(GetNextOid(), COLUMN_CATALOG_NAME,
-                      InitializeColumnCatalogSchema().release()) {}
+    : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
+                      InitializeSchema().release()) {}
 
 // column_catalog table
 // table_id--name--type--offset--isPrimar--hasConstrain
 // table_id+name is primary key pair
-std::unique_ptr<catalog::Schema>
-ColumnCatalog::InitializeColumnCatalogSchema() {
+std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
 

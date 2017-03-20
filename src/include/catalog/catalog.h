@@ -222,7 +222,7 @@ class Catalog {
  public:
 
   // The pool for new varlen tuple fields
-  type::AbstractPool *pool_ = new type::EphemeralPool();
+  static type::AbstractPool *pool_ = new type::EphemeralPool();
 };
 
 }

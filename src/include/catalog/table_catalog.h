@@ -38,18 +38,16 @@ class TableCatalog : public AbstractCatalog {
     return oid_++ | static_cast<oid_t>(type::CatalogType::TABLE);
   }
 
-  // Write-related
+  // Write related API
   bool Insert(oid_t table_id, std::string table_name, oid_t database_id,
-              std::string database_name, type::AbstractPool *pool,
-              concurrency::Transaction *txn);
+              std::string database_name, concurrency::Transaction *txn);
 
-  bool DeleteByOid(oid_t id, concurrency::Transaction *txn);
+  bool DeleteByOid(oid_t oid, concurrency::Transaction *txn);
 
-  // TODO: combine all readonly functions with helper
-  // Read-only
-  std::string GetTableNameByOid(oid_t id, concurrency::Transaction *txn);
+  // Read-only API
+  std::string GetTableNameByOid(oid_t oid, concurrency::Transaction *txn);
 
-  std::string GetDatabaseNameByOid(oid_t id, concurrency::Transaction *txn);
+  std::string GetDatabaseNameByOid(oid_t oid, concurrency::Transaction *txn);
 
   oid_t GetOidByName(std::string &table_name, std::string &database_name,
                      concurrency::Transaction *txn);
@@ -59,7 +57,8 @@ class TableCatalog : public AbstractCatalog {
 
   ~TableCatalog();
 
-  std::unique_ptr<catalog::Schema> InitializeTableCatalogSchema();
+  // Construct pg_table schema, insert columns into pg_attribute
+  std::unique_ptr<catalog::Schema> InitializeSchema();
 };
 
 }  // End catalog namespace
