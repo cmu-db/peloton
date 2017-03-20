@@ -18,16 +18,16 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/delete_executor.h"
 #include "executor/executor_context.h"
+#include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
-#include "executor/index_scan_executor.h"
 #include "expression/comparison_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/delete_plan.h"
+#include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
-#include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
 #include "storage/data_table.h"
 #include "storage/data_table.h"
@@ -54,8 +54,21 @@ class AbstractCatalog {
 
   virtual ~AbstractCatalog() {}
 
+  // Construct catalog_table_ schema, insert columns into pg_attribute (except
+  // for pg_attribute, which is done in its constructor)
+  virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
+
+  // Helper functions for catalogs
   bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                    concurrency::Transaction *txn);
+
+  bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
+                           concurrency::Transaction *txn);
+
+  executor::LogicalTile *GetWithIndexScan(std::vector<oid_t> column_ids,
+                                          oid_t index_offset,
+                                          std::vector<type::Value> values,
+                                          concurrency::Transaction *txn);
 
   // Maximum column name size for catalog schemas
   const size_t max_name_size = 32;

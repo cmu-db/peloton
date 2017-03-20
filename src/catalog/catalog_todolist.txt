@@ -1,0 +1,7 @@
+This is a long term todolist for metadata management and alter table
+1. Remove redundant information from IndexMetadata, e.g. tuple_schema
+2.
+
+
+Persistent issues:
+1. after logging works, we should also remember the local oid count before system down

@@ -10,6 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// pg_database
+//
+// Schema: (column: column_name)
+// 0: database_id (pkey), 1: database_name
+//
+// Indexes: (index offset: indexed columns)
+// 0: database_id
+// 1: database_name
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "catalog/abstract_catalog.h"
@@ -22,27 +34,25 @@ class DatabaseCatalog : public AbstractCatalog {
   // Global Singleton
   static DatabaseCatalog *GetInstance(void);
 
+  inline oid_t GetNextOid() {
+    return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE);
+  }
+
+  // Write related API
+  bool Insert(oid_t database_id, const std::string &database_name,
+              concurrency::Transaction *txn);
+  void DeleteByOid(oid_t id, concurrency::Transaction *txn);
+
+  // Read-only API
+  std::string GetNameByOid(oid_t oid, concurrency::Transaction *txn);
+  oid_t GetOidByName(std::string &database_name, concurrency::Transaction *txn);
+
+ private:
   DatabaseCatalog();
 
   ~DatabaseCatalog();
 
-  inline oid_t GetNextOid() { return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE); }
-
-  // Write related API
-  void DeleteByOid(oid_t id, concurrency::Transaction *txn);
-  bool Insert(
-    oid_t database_id, std::string &database_name,
-    type::AbstractPool *pool, concurrency::Transaction *txn);
-
-  // Read-only API
-  std::string GetNameByOid(oid_t id, concurrency::Transaction *txn);
-  oid_t GetOidByName(std::string &name, concurrency::Transaction *txn);
-
-
- private:
-  std::unique_ptr<catalog::Schema> InitializeDatabaseCatalogSchema();
-  executor::LogicalTile *GetXByOid(oid_t id, int idx, concurrency::Transaction *txn);
-  executor::LogicalTile *GetXByName(std::string &name, int idx, concurrency::Transaction *txn);
+  std::unique_ptr<catalog::Schema> InitializeSchema();
 };
 
 }  // End catalog namespace
