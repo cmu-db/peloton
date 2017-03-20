@@ -39,7 +39,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   // Insert into pg_attribute
   ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, 0, "table_id", type::Type::INTEGER, true,
+      TABLE_CATALOG_OID, "table_id", 0, type::Type::INTEGER, true,
       table_id_column.GetConstraints(), nullptr);
 
   auto table_name_column =
@@ -48,7 +48,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   // Insert into pg_attribute
   ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, 1, "table_name", type::Type::VARCHAR, true,
+      TABLE_CATALOG_OID, "table_name", 1, type::Type::VARCHAR, true,
       table_name_column.GetConstraints(), nullptr);
 
   auto database_id_column = catalog::Column(
@@ -58,7 +58,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   // Insert into pg_attribute
   ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, 2, "database_id", type::Type::INTEGER, true,
+      TABLE_CATALOG_OID, "database_id", 2, type::Type::INTEGER, true,
       database_id_column.GetConstraints(), nullptr);
 
   auto database_name_column = catalog::Column(
@@ -67,7 +67,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   // Insert into pg_attribute
   ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, 3, "database_name", type::Type::VARCHAR, true,
+      TABLE_CATALOG_OID, "database_name", 3, type::Type::VARCHAR, true,
       database_name_column.GetConstraints(), nullptr);
 
   std::unique_ptr<catalog::Schema> table_catalog_schema(
@@ -77,76 +77,76 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   return table_catalog_schema;
 }
 
-bool TableCatalog::Insert(oid_t table_id, std::string table_name,
-                          oid_t database_id, std::string database_name,
+bool TableCatalog::Insert(oid_t table_id, const std::string &table_name,
+                          oid_t database_id, const std::string &database_name,
                           concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val1 = type::ValueFactory::GetIntegerValue(table_id);
-  auto val2 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
-  auto val3 = type::ValueFactory::GetIntegerValue(database_id);
-  auto val4 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
+  auto val0 = type::ValueFactory::GetIntegerValue(table_id);
+  auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
+  auto val2 = type::ValueFactory::GetIntegerValue(database_id);
+  auto val3 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
 
-  tuple->SetValue(0, val1, Catalog::pool_);
-  tuple->SetValue(1, val2, Catalog::pool_);
-  tuple->SetValue(2, val3, Catalog::pool_);
-  tuple->SetValue(3, val4, Catalog::pool_);
+  tuple->SetValue(0, val0, Catalog::pool_);
+  tuple->SetValue(1, val1, Catalog::pool_);
+  tuple->SetValue(2, val2, Catalog::pool_);
+  tuple->SetValue(3, val3, Catalog::pool_);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool TableCatalog::DeleteByOid(oid_t oid, concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of oid
+bool TableCatalog::DeleteByOid(oid_t table_id, concurrency::Transaction *txn) {
+  oid_t index_offset = 0;  // Index of table_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string TableCatalog::GetTableNameByOid(oid_t oid,
+std::string TableCatalog::GetTableNameByOid(oid_t table_id,
                                             concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_name
-  oid_t index_offset = 0;              // Index of oid
+  oid_t index_offset = 0;              // Index of table_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
   auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string table_name;
-  PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
+  PL_ASSERT(result->GetTupleCount() <= 1);  // table_id is unique
   if (result->GetTupleCount() != 0) {
-    table_name = result->GetValue(0, 0);  // After projection left 1 column
+    table_name = result->GetValue(0, 0).GetAs<std::string>();  // After projection left 1 column
   }
 
   return table_name;
 }
 
-std::string TableCatalog::GetDatabaseNameByOid(oid_t oid,
+std::string TableCatalog::GetDatabaseNameByOid(oid_t table_id,
                                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // database_name
-  oid_t index_offset = 0;              // Index of oid
+  oid_t index_offset = 0;              // Index of table_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
   auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
-  PL_ASSERT(result->GetTupleCount() <= 1);  // Oid is unique
+  PL_ASSERT(result->GetTupleCount() <= 1);  // table_id is unique
   if (result->GetTupleCount() != 0) {
-    database_name = result->GetValue(0, 0);  // After projection left 1 column
+    database_name = result->GetValue(0, 0).GetAs<std::string>();  // After projection left 1 column
   }
 
   return database_name;
 }
 
-oid_t TableCatalog::GetOidByName(std::string &table_name,
-                                 std::string &database_name,
+oid_t TableCatalog::GetOidByName(const std::string &table_name,
+                                 const std::string &database_name,
                                  concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_id
-  oid_t index_offset = 1;              // Index of table_name + database_name
+  oid_t index_offset = 1;              // Index of table_name & database_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
@@ -155,14 +155,14 @@ oid_t TableCatalog::GetOidByName(std::string &table_name,
 
   auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
 
-  oid_t oid = INVALID_OID;
+  oid_t table_id = INVALID_OID;
   PL_ASSERT(result->GetTupleCount() <=
-            1);  // table_name + database_name is unique
+            1);  // table_name & database_name is unique
   if (result->GetTupleCount() != 0) {
-    oid = result->GetValue(0, 0);  // After projection left 1 column
+    table_id = result->GetValue(0, 0).GetAs<oid_t>();  // After projection left 1 column
   }
 
-  return oid;
+  return table_id;
 }
 
 }  // End catalog namespace
