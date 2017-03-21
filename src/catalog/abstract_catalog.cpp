@@ -15,17 +15,29 @@
 namespace peloton {
 namespace catalog {
 
-AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
+AbstractCatalog::AbstractCatalog(storage::Database *pg_catalog,
+                                 oid_t catalog_table_id,
                                  std::string catalog_table_name,
                                  catalog::Schema *catalog_table_schema) {
+  // Create catalog_table_
   catalog_table_ =
       std::shared_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
           START_OID, catalog_table_id, catalog_table_schema, catalog_table_name,
           DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
 
-  // Add catalog_table_ into pg_catalog
-  auto pg_catalog = catalog::Catalog::GetInstance()->GetCatalogDB();
+  // Add catalog_table_ into pg_catalog database
   pg_catalog->AddTable(catalog_table_.get());
+
+  // Insert columns into pg_attribute, note that insertion does not require
+  // indexes on pg_attribute
+  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
+    ColumnCatalog::GetInstance()->Insert(
+        catalog_table_id, column.GetName(), column.GetOffset(),
+        column.GetType(), true, column.GetConstraints(), nullptr);
+  }
+
+  // Index construction and adding contents of pg_database, pg_table, pg_index
+  // should leave to catalog's constructor
 }
 
 bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,

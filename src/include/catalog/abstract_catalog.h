@@ -49,7 +49,8 @@ class AbstractCatalog {
   virtual oid_t GetNextOid() = 0;
 
  protected:
-  AbstractCatalog(oid_t catalog_table_id, std::string catalog_table_name,
+  AbstractCatalog(storage::Database *pg_catalog, oid_t catalog_table_id,
+                  std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema);
 
   virtual ~AbstractCatalog() {}

@@ -54,7 +54,7 @@ class TableCatalog : public AbstractCatalog {
                      concurrency::Transaction *txn);
 
  private:
-  TableCatalog();
+  TableCatalog(storage::Database *pg_catalog);
 
   ~TableCatalog();
 
