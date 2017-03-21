@@ -388,8 +388,6 @@ bool Catalog::HasDatabase(const oid_t db_oid) const {
 storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
   for (auto database : databases_)
     if (database->GetOid() == db_oid) return database;
-  throw CatalogException("Database with oid = " + std::to_string(db_oid) +
-                         " is not found");
   return nullptr;
 }
 
@@ -400,7 +398,6 @@ storage::Database *Catalog::GetDatabaseWithName(
     if (database != nullptr && database->GetDBName() == database_name)
       return database;
   }
-  throw CatalogException("Database " + database_name + " is not found");
   return nullptr;
 }
 

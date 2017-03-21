@@ -189,11 +189,9 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
 
   // add this table to current database
   auto catalog = catalog::Catalog::GetInstance();
-  try {
-    storage::Database *db = catalog->GetDatabaseWithOid(database_id);
-    db->AddTable(table);
-  } catch (CatalogException &e) {
-  }
+  storage::Database *db = catalog->GetDatabaseWithOid(database_id);
+  PL_ASSERT(db);
+  db->AddTable(table);
 
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
