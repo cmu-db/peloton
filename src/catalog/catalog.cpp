@@ -314,64 +314,46 @@ index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-// Drop a database
-ResultType Catalog::DropDatabaseWithName(std::string database_name,
+// Drop a database, only for test purposes
+ResultType Catalog::DropDatabaseWithName(std::string &database_name,
     concurrency::Transaction *txn) {
-  LOG_TRACE("Dropping database %s", database_name.c_str());
-  try {
-    storage::Database *database = GetDatabaseWithName(database_name);
-
-    LOG_TRACE("Found database!");
-    LOG_TRACE("Deleting tuple from catalog");
-    catalog::DeleteTuple(
-        GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(
-            DATABASE_CATALOG_NAME), database->GetOid(), txn);
-    oid_t database_offset = 0;
-    for (auto database : databases_) {
-      if (database->GetDBName() == database_name) {
-        LOG_TRACE("Deleting database object in database vector");
-        delete database;
-        break;
-      }
-      database_offset++;
-    }
-    PL_ASSERT(database_offset < databases_.size());
-    // Drop the database
-    LOG_TRACE("Deleting database from database vector");
-    databases_.erase(databases_.begin() + database_offset);
-  } catch (CatalogException &e) {
+  oid_t database_oid = catalog::DatabaseCatalog::GetInstance()
+                          .GetOidByName(database_name, txn);
+  if (database_oid == INVALID_OID) {
     LOG_TRACE("Database is not found!");
     return ResultType::FAILURE;
   }
-  return ResultType::SUCCESS;
+  return DropDatabaseWithOid(database_oid, txn);
 }
 
 // Drop a database with its oid
-void Catalog::DropDatabaseWithOid(const oid_t database_oid) {
+ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
+    concurrency::Transaction *txn) {
+  // Drop actual database. TODO: We should move this logic out of catalog
   LOG_TRACE("Dropping database with oid: %d", database_oid);
-  try {
-    GetDatabaseWithOid(database_oid);
-    LOG_TRACE("Found database!");
-    LOG_TRACE("Deleting tuple from catalog");
-    catalog::DeleteTuple(
-        GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(
-            DATABASE_CATALOG_NAME), database_oid, nullptr);
-    oid_t database_offset = 0;
-    for (auto database : databases_) {
-      if (database->GetOid() == database_oid) {
-        LOG_TRACE("Deleting database object in database vector");
-        delete database;
-        break;
-      }
-      database_offset++;
+  bool found_database = false;
+  for (auto it = databases_.begin(); it != databases_.end(); ++it) {
+    if (it->GetOid() == database_oid) {
+      LOG_TRACE("Deleting database object in database vector");
+      delete (*it);
+      databases_.erase(database);
+      found_database = true;
+      break;
     }
-    PL_ASSERT(database_offset < databases_.size());
-    // Drop the database
-    LOG_TRACE("Deleting database from database vector");
-    databases_.erase(databases_.begin() + database_offset);
-  } catch (CatalogException &e) {
-    LOG_TRACE("Database is not found!");
   }
+  if (!found_database) {
+    LOG_TRACE("Database is not found!");
+    return ResultType::FAILURE;
+  }
+
+  // Drop database record in catalog
+  LOG_TRACE("Deleting tuple from catalog");
+  if (!catalog::DatabaseCatalog::GetInstance()
+                .DeleteByOid(database_oid, txn)) {
+    LOG_TRACE("Database tuple is not found!");
+    return ResultType::FAILURE;
+  }
+  return ResultType::SUCCESS;
 }
 
 // Drop a table

@@ -273,7 +273,7 @@ TEST_F(RecoveryTests, RestartTest) {
   status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
   EXPECT_EQ(status, true);
 
-  catalog->DropDatabaseWithOid(DEFAULT_DB_ID);
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, nullptr);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
@@ -322,7 +322,7 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   EXPECT_EQ(recovery_table->GetTupleCount(), 1);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 
-  catalog->DropDatabaseWithOid(DEFAULT_DB_ID);
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, nullptr);
 }
 
 TEST_F(RecoveryTests, BasicUpdateTest) {
@@ -373,7 +373,7 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 
-  catalog->DropDatabaseWithOid(DEFAULT_DB_ID);
+  catalog->DropDatabaseWithOid(DEFAULT_DB_ID, nullptr);
 }
 
 /* (From Joy) TODO FIX this
