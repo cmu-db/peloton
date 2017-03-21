@@ -59,7 +59,7 @@ class ColumnCatalog : public AbstractCatalog {
                                       concurrency::Transaction *txn);
 
  private:
-  ColumnCatalog(storage::Database *pg_catalog);
+  ColumnCatalog();
 
   ~ColumnCatalog();
 

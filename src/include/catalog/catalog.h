@@ -67,6 +67,7 @@ struct FunctionData {
 };
 
 class Catalog {
+  friend class AbstractCatalog;
  public:
   // Global Singleton
   static Catalog *GetInstance(void);
@@ -201,6 +202,8 @@ class Catalog {
  private:
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
+
+  static std::shared_ptr<storage::Database> pg_catalog;
 
   // The id variable that get assigned to objects. Initialized with (START_OID
   // +

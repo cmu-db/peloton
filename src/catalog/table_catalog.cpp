@@ -22,8 +22,8 @@ TableCatalog *TableCatalog::GetInstance(void) {
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog(storage::Database *pg_catalog)
-    : AbstractCatalog(pg_catalog, TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
+TableCatalog::TableCatalog()
+    : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release()) {}
 
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
