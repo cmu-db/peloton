@@ -108,11 +108,12 @@ class Catalog {
   index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
                                 const oid_t index_oid) const;
   // Drop a database
-  ResultType DropDatabaseWithName(std::string database_name,
+  ResultType DropDatabaseWithName(std::string &database_name,
                               concurrency::Transaction *txn);
 
   // Drop a database with its oid
-  void DropDatabaseWithOid(const oid_t database_oid);
+  ResultType DropDatabaseWithOid(const oid_t database_oid,
+                           concurrency::Transaction *txn);
 
   // Drop a table
   ResultType DropTable(std::string database_name, std::string table_name,
