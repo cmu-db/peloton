@@ -48,8 +48,6 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
   cid_t *ts_ptr = (cid_t *)(tile_group_header->GetReservedFieldRef(tuple_id) +
                             LAST_READER_OFFSET);
 
-  // cid_t current_cid = current_txn->GetBeginCommitId();
-
   GetSpinlockField(tile_group_header, tuple_id)->Lock();
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
