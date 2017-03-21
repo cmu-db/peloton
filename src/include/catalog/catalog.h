@@ -80,15 +80,11 @@ class Catalog {
   void CreateMetricsCatalog();
 
   // Create a database
-  ResultType CreateDatabase(std::string database_name,
+  ResultType CreateDatabase(std::string &database_name,
                         concurrency::Transaction *txn);
 
   // Add a database
   void AddDatabase(storage::Database *database);
-
-  // Add a database with name
-  void AddDatabase(std::string database_name,
-                   storage::Database *database);
 
   // Create a table in a database
   ResultType CreateTable(std::string database_name, std::string table_name,
@@ -199,10 +195,6 @@ class Catalog {
   ~Catalog();
 
  private:
-  void InsertDatabaseIntoCatalogDatabase(oid_t database_id,
-                                         std::string &database_name,
-                                         concurrency::Transaction *txn);
-
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
 

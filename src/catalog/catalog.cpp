@@ -88,52 +88,38 @@ void Catalog::CreateCatalogDatabase() {
 }
 
 // Create a database
-ResultType Catalog::CreateDatabase(std::string database_name,
+ResultType Catalog::CreateDatabase(std::string &database_name,
                                    concurrency::Transaction *txn) {
   // Check if a database with the same name exists
-  for (auto database : databases_) {
-    if (database->GetDBName() == database_name) {
-      LOG_TRACE("Database already exists. Returning ResultType::FAILURE.");
-      return ResultType::FAILURE;
-    }
+  oid_t database_oid = catalog::DatabaseCatalog::GetInstance()
+                                  .GetOidByName(database_name);
+  if (database_oid != INVALID_OID) {
+    LOG_TRACE("Database already exists. Returning ResultType::FAILURE.");
+    return ResultType::FAILURE;
   }
-  oid_t database_id = GetNextOid();
+
+  // Create actual database
+  database_oid = catalog::DatabaseCatalog::GetInstance().GetNextOid();
+
   storage::Database *database = new storage::Database(database_id);
-  database->setDBName(database_name);
   databases_.push_back(database);
 
-  InsertDatabaseIntoCatalogDatabase(database_id, database_name, txn);
+  // TODO: This should be deprecated
+  database->setDBName(database_name);
+
+  // Insert database tuple
+  catalog::DatabaseCatalog::GetInstance().Insert(database_oid, database_name, txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return ResultType::SUCCESS;
 }
 
+// This should be deprecated! this can screw up the database oid system
 void Catalog::AddDatabase(storage::Database *database) {
   databases_.push_back(database);
   std::string database_name;
-  InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
-}
-
-void Catalog::AddDatabase(std::string database_name,
-                          storage::Database *database) {
-  database->setDBName(database_name);
-  databases_.push_back(database);
-  LOG_DEBUG("Added database with name: %s", database_name.c_str());
-  InsertDatabaseIntoCatalogDatabase(database->GetOid(), database_name, nullptr);
-}
-
-void Catalog::InsertDatabaseIntoCatalogDatabase(oid_t database_id,
-                                                std::string &database_name,
-                                                concurrency::Transaction *txn) {
-  // Update pg_catalog with this database info
-  auto tuple =
-      GetDatabaseCatalogTuple(databases_[START_OID]
-                                  ->GetTableWithName(DATABASE_CATALOG_NAME)
-                                  ->GetSchema(),
-                              database_id, database_name, pool_);
-  catalog::InsertTuple(
-      databases_[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
-      std::move(tuple), txn);
+  catalog::DatabaseCatalog::GetInstance().Insert(
+    database->GetOid() | static_cast<oid_t>(type::CatalogType::DATABASE), database_name, nullptr);
 }
 
 // Create a table in a database - CHANGING
