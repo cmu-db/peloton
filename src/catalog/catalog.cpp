@@ -388,6 +388,7 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
   return ResultType::SUCCESS;
 }
 
+// Only used for testing
 bool Catalog::HasDatabase(const oid_t db_oid) const {
   return (GetDatabaseWithOid(db_oid) != nullptr);
 }
@@ -399,7 +400,7 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
   return nullptr;
 }
 
-// Find a database using its name
+// Find a database using its name. TODO: This should be deprecated
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string database_name) const {
   oid_t database_oid = catalog::DatabaseCatalog::GetInstance().GetOidByName();
