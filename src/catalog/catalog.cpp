@@ -44,7 +44,6 @@ Catalog::Catalog() {  // CHANGING
   InitializeFunctions();
 }
 
-
 void Catalog::CreateMetricsCatalog() {
   auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
   auto default_db_oid = default_db->GetOid();
@@ -161,7 +160,7 @@ void Catalog::AddDatabase(storage::Database *database) {
       database_name, nullptr);
 }
 
-// Create a table in a database - CHANGING
+// Create a table in a database 
 ResultType Catalog::CreateTable(std::string database_name,
                                 std::string table_name,
                                 std::unique_ptr<catalog::Schema> schema,
@@ -170,12 +169,16 @@ ResultType Catalog::CreateTable(std::string database_name,
             database_name.c_str());
 
   storage::Database *database = GetDatabaseWithName(database_name);
-  storage::Database *table = database->GetTableWithName(table_name);
-  if(table != nullptr) {
-    LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
+  if (database == nullptr) {
+    LOG_TRACE("Can't found database. Returning RESULT_FAILURE");
     return ResultType::FAILURE;
   }
-  else {
+
+  storage::Database *table = database->GetTableWithName(table_name);
+  if (table != nullptr) {
+    LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
+    return ResultType::FAILURE;
+  } else {
     // Table doesn't exist, now create it
     bool own_schema = true;
     bool adapt_table = false;
@@ -195,17 +198,20 @@ ResultType Catalog::CreateTable(std::string database_name,
     bool has_primary_key = false;
     auto &schema_columns = table->GetSchema()->GetColumns();
 
-    for (auto &column : schema_columns){
-      ColumnCatalog::GetInstance()->Insert();  // TODO:
+    for (auto &column : schema_columns) {
+      ColumnCatalog::GetInstance()->Insert(
+          table_id, column.GetName(), column.GetOffset(), column.GetType(),
+          column.IsInlined(), column.GetConstraints(), txn);
+
       if (column.IsPrimary()) {
         has_primary_key = true;
-        break;
       }
     }
 
-    if (has_primary_key == true)
-        CreatePrimaryIndex(database_name, table_name);
-    return ResultType::SUCCESS;
+    if (has_primary_key == true) 
+      auto result = CreatePrimaryIndex(database_name, table_name);
+    // if createPrimaryKey succeed, then return success
+    return result;
   }
 }
 
@@ -398,10 +404,14 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
             database_name.c_str());
 
   storage::Database *database = GetDatabaseWithName(database_name);
-  storage::DataTable *table = database->GetTableWithName(table_name);
+  if (database == nullptr) {
+    LOG_TRACE("Can't Found database!");
+    return ResultType::FAILURE;
+  }
 
-  if(database == nullptr || table == nullptr){
-    LOG_TRACE("Can't Found database or Table!");
+  storage::DataTable *table = database->GetTableWithName(table_name);
+  if (database == nullptr) {
+    LOG_TRACE("Can't Found Table!");
     return ResultType::FAILURE;
   }
 
