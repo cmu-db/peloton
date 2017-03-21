@@ -91,8 +91,8 @@ void Catalog::CreateCatalogDatabase() {
 ResultType Catalog::CreateDatabase(std::string &database_name,
                                    concurrency::Transaction *txn) {
   // Check if a database with the same name exists
-  oid_t database_oid = catalog::DatabaseCatalog::GetInstance()
-                                  .GetOidByName(database_name);
+  oid_t database_oid =
+      catalog::DatabaseCatalog::GetInstance().GetOidByName(database_name);
   if (database_oid != INVALID_OID) {
     LOG_TRACE("Database already exists. Returning ResultType::FAILURE.");
     return ResultType::FAILURE;
@@ -108,7 +108,8 @@ ResultType Catalog::CreateDatabase(std::string &database_name,
   database->setDBName(database_name);
 
   // Insert database tuple
-  catalog::DatabaseCatalog::GetInstance().Insert(database_oid, database_name, txn);
+  catalog::DatabaseCatalog::GetInstance().Insert(database_oid, database_name,
+                                                 txn);
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return ResultType::SUCCESS;
@@ -119,7 +120,8 @@ void Catalog::AddDatabase(storage::Database *database) {
   databases_.push_back(database);
   std::string database_name;
   catalog::DatabaseCatalog::GetInstance().Insert(
-    database->GetOid() | static_cast<oid_t>(type::CatalogType::DATABASE), database_name, nullptr);
+      database->GetOid() | static_cast<oid_t>(type::CatalogType::DATABASE),
+      database_name, nullptr);
 }
 
 // Create a table in a database - CHANGING
@@ -312,6 +314,35 @@ ResultType Catalog::DropDatabaseWithName(std::string &database_name,
   oid_t database_oid =
       catalog::DatabaseCatalog::GetInstance().GetOidByName(database_name, txn);
   if (database_oid == INVALID_OID) {
+    LOG_TRACE("Database is not found!");
+    return ResultType::FAILURE;
+  }
+
+  // Drop database record in catalog
+  LOG_TRACE("Deleting tuple from catalog");
+  if (!catalog::DatabaseCatalog::GetInstance().DeleteByOid(database_oid, txn)) {
+    LOG_TRACE("Database tuple is not found!");
+    return ResultType::FAILURE;
+  }
+  return ResultType::SUCCESS;
+}
+
+// Drop a database with its oid
+ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
+                                        concurrency::Transaction *txn) {
+  // Drop actual database. TODO: We should move this logic out of catalog
+  LOG_TRACE("Dropping database with oid: %d", database_oid);
+  bool found_database = false;
+  for (auto it = databases_.begin(); it != databases_.end(); ++it) {
+    if (it->GetOid() == database_oid) {
+      LOG_TRACE("Deleting database object in database vector");
+      delete (*it);
+      databases_.erase(database);
+      found_database = true;
+      break;
+    }
+  }
+  if (!found_database) {
     LOG_TRACE("Database is not found!");
     return ResultType::FAILURE;
   }
