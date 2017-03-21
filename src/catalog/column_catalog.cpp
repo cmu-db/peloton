@@ -22,8 +22,8 @@ ColumnCatalog *ColumnCatalog::GetInstance(void) {
   return column_catalog.get();
 }
 
-ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog)
-    : AbstractCatalog(pg_catalog, COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
+ColumnCatalog::ColumnCatalog()
+    : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release()) {}
 
 // This only constructs pg_attribute schema, it leaves the insertion job to the
