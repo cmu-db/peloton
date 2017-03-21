@@ -12,15 +12,17 @@
 
 #include <iostream>
 #include <string>
+#include <include/parser/pg_list.h>
 
 #include "parser/postgresparser.h"
-#include "parser/select_statement.h"
 #include "common/exception.h"
 #include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
+#include "expression/aggregate_expression.h"
 #include "expression/conjunction_expression.h"
+#include "expression/comparison_expression.h"
 #include "type/types.h"
 #include "type/value_factory.h"
 
@@ -165,10 +167,11 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
       }
       break;
     }
-    case T_SelectStmt: {
+    case T_RangeSubselect: {
       result = new parser::TableRef(StringToTableReferenceType("select"));
       result->select =
-          (parser::SelectStatement*)SelectTransform((SelectStmt*)node);
+          (parser::SelectStatement*)SelectTransform((SelectStmt*)(((RangeSubselect*)node)->subquery));
+      result->alias = AliasTransform(((RangeSubselect*)node)->alias);
       if (result->select == NULL) {
         delete result;
         result = NULL;
@@ -296,7 +299,7 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
   switch (root->val.type) {
     case T_Integer: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetIntegerValue((int64_t)root->val.val.ival));
+          type::ValueFactory::GetIntegerValue((int32_t)root->val.val.ival));
       break;
     }
     case T_String: {
@@ -318,13 +321,23 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = NULL;
+  std::string type_string = ((value*)(root->funcname->head->data.ptr_value))->val.str;
+  type_string = "AGGREGATE_" + type_string;
 
   if (root->agg_star) {
-    std::vector<expression::AbstractExpression*> children;
-    result = new expression::FunctionExpression(
-        ((value*)(root->funcname->head->data.ptr_value))->val.str, children);
+    expression::AbstractExpression* children = new expression::StarExpression();
+    result = new expression::AggregateExpression(
+        StringToExpressionType(type_string), false, children);
   } else {
-    LOG_ERROR("Aggregation over certain column not supported yet...\n");
+    if (root->args->length < 2) {
+      ColumnRef* temp = (ColumnRef*)root->args->head->data.ptr_value;
+      expression::AbstractExpression* children = ColumnRefTransform(temp);
+      result = new expression::AggregateExpression(
+        StringToExpressionType(type_string), root->agg_distinct, children);
+    } else {
+      LOG_ERROR("Aggregation over multiple columns not supported yet...\n");
+      return NULL;
+    }
   }
   return result;
 }
@@ -367,7 +380,24 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   expression::AbstractExpression* left = NULL;
   expression::AbstractExpression* right = NULL;
   LOG_TRACE("BoolExpr arg length %d\n", root->args->length);
-  Node* node = (Node*)(root->args->head->next->data.ptr_value);
+  // transform the left argument
+  Node* node = (Node*)(root->args->head->data.ptr_value);
+  switch (node->type) {
+    case T_BoolExpr: {
+      left = BoolExprTransform((BoolExpr*)node);
+      break;
+    }
+    case T_A_Expr: {
+      left = AExprTransform((A_Expr*)node);
+      break;
+    }
+    default: {
+      LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
+      return NULL;
+    }
+  }
+  // transform the right argument
+  node = (Node*)(root->args->head->next->data.ptr_value);
   switch (node->type) {
     case T_BoolExpr: {
       right = BoolExprTransform((BoolExpr*)node);
@@ -409,8 +439,61 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   if (root == NULL) {
     return NULL;
   }
+
   LOG_TRACE("A_Expr type: %d\n", root->type);
-  return NULL;
+
+  UNUSED_ATTRIBUTE expression::AbstractExpression* result = NULL;
+  UNUSED_ATTRIBUTE ExpressionType target_type;
+  const char* name = ((value*)(root->name->head->data.ptr_value))->val.str;
+  if (strcmp(name, "=") == 0) {
+    target_type = StringToExpressionType("COMPARE_EQUAL");
+  } else if ((strcmp(name, "!=") == 0) || (strcmp(name, "<>") == 0)) {
+    target_type = StringToExpressionType("COMPARE_NOTEQUAL");
+  } else if (strcmp(name, "<") == 0) {
+    target_type = StringToExpressionType("COMPARE_LESSTHAN");
+  } else if (strcmp(name, ">") == 0) {
+    target_type = StringToExpressionType("COMPARE_GREATERTHAN");
+  } else if (strcmp(name, "<=") == 0) {
+    target_type = StringToExpressionType("COMPARE_LESSTHANOREQUALTO");
+  } else if (strcmp(name, ">=") == 0) {
+    target_type = StringToExpressionType("COMPARE_GREATERTHANOREQUALTO");
+  } else {
+    LOG_ERROR("COMPARE type %s not supported yet...\n", name);
+    return NULL;
+  }
+  expression::AbstractExpression* left_expr = NULL;
+  switch (root->lexpr->type) {
+    case T_ColumnRef: {
+      left_expr = ColumnRefTransform((ColumnRef*)(root->lexpr));
+      break;
+    }
+    case T_A_Const: {
+      left_expr = ConstTransform((A_Const*)(root->lexpr));
+      break;
+    }
+    default: {
+      LOG_ERROR("Left expr of type %d not supported yet...\n", root->lexpr->type);
+      return NULL;
+    }
+  }
+  expression::AbstractExpression* right_expr = NULL;
+  switch (root->rexpr->type) {
+    case T_ColumnRef: {
+      right_expr = ColumnRefTransform((ColumnRef*)(root->rexpr));
+      break;
+    }
+    case T_A_Const: {
+      right_expr = ConstTransform((A_Const*)(root->rexpr));
+      break;
+    }
+    default: {
+      LOG_ERROR("Left expr of type %d not supported yet...\n", root->rexpr->type);
+      return NULL;
+    }
+  }
+
+  result = new expression::ComparisonExpression(target_type, left_expr, right_expr);
+  return result;
 }
 
 // This function takes in the whereClause part of a Postgres SelectStmt

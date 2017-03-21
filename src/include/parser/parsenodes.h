@@ -82,6 +82,14 @@ typedef struct JoinExpr {
   int rtindex;       /* RT index assigned for join, or 0 */
 } JoinExpr;
 
+typedef struct RangeSubselect
+{
+NodeTag		type;
+bool		lateral;		/* does it have LATERAL prefix? */
+Node	   *subquery;		/* the untransformed sub-select clause */
+Alias	   *alias;			/* table alias & optional column aliases */
+} RangeSubselect;
+
 typedef struct RangeVar {
   NodeTag type;
   char *catalogname;   /* the catalog (database) name, or NULL */
