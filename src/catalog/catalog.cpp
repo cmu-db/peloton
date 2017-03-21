@@ -31,12 +31,12 @@ Catalog *Catalog::GetInstance(void) {
 }
 
 Catalog::Catalog() {  // CHANGING
-  // Initialization of pg_catalog database, including:
+  // Initialization of catalog, including:
   // 1) create pg_catalog database, create catalog tables, add them into
   // pg_catalog database, add columns into pg_attribute
-  // 2) create necessary indexes, insert into pg_index
-  // 3) add tuples into pg_database, pg_table catalogs
-  CreateCatalogDatabase();
+  // 2) add tuples into pg_database, pg_table catalogs
+  // 3) create necessary indexes, insert into pg_index
+  InitializeCatalog();
 
   // Create metrics table in default database
   CreateMetricsCatalog();
@@ -71,20 +71,58 @@ void Catalog::CreateMetricsCatalog() {
   LOG_TRACE("Metrics tables created");
 }
 
-// Creates the catalog database
-void Catalog::CreateCatalogDatabase() {
+void Catalog::InitializeCatalog() {
+  // Create pg_catalog database
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
-  // auto pg_database = CreateDatabaseCatalog(START_OID,
-  //     DATABASE_CATALOG_NAME);
-  // storage::DataTable *databases_table = pg_database.release();
-  // database->AddTable(databases_table, true);
-  // auto pg_table = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
-  // storage::DataTable *tables_table = pg_table.release();
-  // database->AddTable(tables_table, true);
   databases_.push_back(database);
-  LOG_TRACE("Catalog database created");
+
+  // Create catalog tables, add into pg_catalog database, insert columns into
+  // pg_attribute
+  DatabaseCatalog::GetInstance();
+  TableCatalog::GetInstance();
+  IndexCatalog::GetInstance();
+  //  ColumnCatalog::GetInstance();  // Called implicitly
+
+  // Insert pg_catalog database into pg_database
+  DatabaseCatalog::GetInstance()->Insert(START_OID, CATALOG_DATABASE_NAME,
+                                         nullptr);
+
+  // Insert catalog tables into pg_table
+  TableCatalog::GetInstance()->Insert(DATABASE_CATALOG_OID,
+                                      DATABASE_CATALOG_NAME, START_OID,
+                                      CATALOG_DATABASE_NAME, nullptr);
+  TableCatalog::GetInstance()->Insert(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
+                                      START_OID, CATALOG_DATABASE_NAME,
+                                      nullptr);
+  TableCatalog::GetInstance()->Insert(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
+                                      START_OID, CATALOG_DATABASE_NAME,
+                                      nullptr);
+  TableCatalog::GetInstance()->Insert(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
+                                      START_OID, CATALOG_DATABASE_NAME,
+                                      nullptr);
+
+  // Create indexes on catalog tables, insert them into pg_index
+  // TODO: This should be hash index rather than tree index
+  CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
+  CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
+              std::vector<std::string>({1}), DATABASE_CATALOG_NAME + "_SKEY",
+              true, IndexType::BWTREE);
+
+  CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
+  CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
+              std::vector<std::string>({1, 3}), TABLE_CATALOG_NAME + "_SKEY",
+              true, IndexType::BWTREE);
+
+  CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
+  // TODO: index secondary indexes??
+
+  CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
+  CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
+              std::vector<std::string>({0, 2}), COLUMN_CATALOG_NAME + "_SKEY",
+              true, IndexType::BWTREE);
 }
+
 
 // Create a database
 ResultType Catalog::CreateDatabase(std::string &database_name,
