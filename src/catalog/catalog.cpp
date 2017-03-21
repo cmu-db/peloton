@@ -44,7 +44,6 @@ Catalog::Catalog() {  // CHANGING
   InitializeFunctions();
 }
 
-storage::Database *GetCatalogDB() { return databases_[START_OID]; }
 
 void Catalog::CreateMetricsCatalog() {
   auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
@@ -159,45 +158,43 @@ ResultType Catalog::CreateTable(std::string database_name,
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
             database_name.c_str());
 
-  try {
-    storage::Database *database = GetDatabaseWithName(database_name);
-    try {
-      database->GetTableWithName(table_name);
-      LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
-      return ResultType::FAILURE;
-    } catch (CatalogException &e) {
-      // Table doesn't exist, now create it
-      bool own_schema = true;
-      bool adapt_table = false;
-      oid_t database_id = database->GetOid();
-      oid_t table_id = TableCatalog::GetInstance()->GetNextOid();
-      storage::DataTable *table = storage::TableFactory::GetDataTable(
-          database_id, table_id, schema.release(), table_name,
-          DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-      database->AddTable(table);
+  storage::Database *database = GetDatabaseWithName(database_name);
+  storage::Database *table = database->GetTableWithName(table_name);
+  if(table != nullptr) {
+    LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
+    return ResultType::FAILURE;
+  }
+  else {
+    // Table doesn't exist, now create it
+    bool own_schema = true;
+    bool adapt_table = false;
+    oid_t database_id = database->GetOid();
+    oid_t table_id = TableCatalog::GetInstance()->GetNextOid();
+    storage::DataTable *table = storage::TableFactory::GetDataTable(
+        database_id, table_id, schema.release(), table_name,
+        DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+    database->AddTable(table);
 
-      // Update pg_table with this table info
-      TableCatalog::GetInstance()->Insert(table_id, table_name, database_id,
-                                          database_name, pool_, txn);
+    // Update pg_table with this table info
+    TableCatalog::GetInstance()->Insert(table_id, table_name, database_id,
+                                        database_name, pool_, txn);
 
-      // Create the primary key index for that table if there's primary key
-      // Update pg_index, pg_attribute at the same time
-      bool has_primary_key = false;
-      auto &schema_columns = table->GetSchema()->GetColumns();
-      for (auto &column : schema_columns)
-        ColumnCatalog::GetInstance()->Insert();  // TODO:
+    // Create the primary key index for that table if there's primary key
+    // Update pg_index, pg_attribute at the same time
+    bool has_primary_key = false;
+    auto &schema_columns = table->GetSchema()->GetColumns();
+
+    for (auto &column : schema_columns){
+      ColumnCatalog::GetInstance()->Insert();  // TODO:
       if (column.IsPrimary()) {
         has_primary_key = true;
         break;
       }
-      if (has_primary_key == true)
-        CreatePrimaryIndex(database_name, table_name);
-
-      return ResultType::SUCCESS;
     }
-  } catch (CatalogException &e) {
-    LOG_ERROR("Could not find a database with name %s", database_name.c_str());
-    return ResultType::FAILURE;
+
+    if (has_primary_key == true)
+        CreatePrimaryIndex(database_name, table_name);
+    return ResultType::SUCCESS;
   }
 }
 
@@ -388,38 +385,34 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
                               concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
             database_name.c_str());
-  try {
-    storage::Database *database = GetDatabaseWithName(database_name);
-    LOG_TRACE("Found database!");
-    storage::DataTable *table = database->GetTableWithName(table_name);
 
-    if (table) {
-      LOG_TRACE("Found table!");
-      oid_t table_id = table->GetOid();
-      // drop actual data table
-      LOG_TRACE("Deleting table!");
-      database->DropTableWithOid(table_id);
+  storage::Database *database = GetDatabaseWithName(database_name);
+  storage::DataTable *table = database->GetTableWithName(table_name);
 
-      // change metadata
-      LOG_TRACE("Deleting tuple from catalog!");
-      // delete record in pg_table
-      TableCatalog::GetInstance()->DeleteByOid(table_id, txn);
-      // delete records in pg_attribute
-      auto &schema_columns = table->GetSchema()->GetColumns();
-      for (auto &column : schema_columns) {
-        std::string column_name = column.GetName();
-        ColumnCatalog::GetInstance()->DeleteByOidWithName(table_id, column_name,
-                                                          txn);
-      }
-      return ResultType::SUCCESS;
-    } else {
-      LOG_TRACE("Could not find table");
-      return ResultType::FAILURE;
-    }
-  } catch (CatalogException &e) {
-    LOG_TRACE("Could not find database");
+  if(database == nullptr || table == nullptr){
+    LOG_TRACE("Can't Found database or Table!");
     return ResultType::FAILURE;
   }
+
+  LOG_TRACE("Found table!");
+  oid_t table_id = table->GetOid();
+
+  // drop actual data table
+  LOG_TRACE("Deleting table!");
+  database->DropTableWithOid(table_id);
+
+  // change metadata
+  LOG_TRACE("Deleting tuple from catalog!");
+  // delete record in pg_table
+  TableCatalog::GetInstance()->DeleteByOid(table_id, txn);
+  // delete records in pg_attribute
+  auto &schema_columns = table->GetSchema()->GetColumns();
+  for (auto &column : schema_columns) {
+    std::string column_name = column.GetName();
+    ColumnCatalog::GetInstance()->DeleteByOidWithName(table_id, column_name,
+                                                      txn);
+  }
+  return ResultType::SUCCESS;
 }
 
 bool Catalog::HasDatabase(const oid_t db_oid) const {
