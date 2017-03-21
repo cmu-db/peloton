@@ -84,33 +84,6 @@ void Catalog::CreateCatalogDatabase() {
   // database->AddTable(tables_table, true);
   databases_.push_back(database);
   LOG_TRACE("Catalog database created");
-
-  // create column_catalog, index_catalog, database_catalog, table_catalog
-  // don't call Catalog::GetInstance() within
-  auto column_catalog = ColumnCatalog::GetInstance();
-  auto index_catalog = IndexCatalog::GetInstance();
-  // auto = DatabaseCatalog::GetInstance();
-  // auto = TableCatalog::GetInstance();
-
-  // add pg_database into pg_database
-  DatabaseCatalog::GetInstance()->Insert(START_OID, CATALOG_DATABASE_NAME,
-                                         nullptr);
-  // add all the catalog tables into pg_tables, GetOid()???
-  TableCatalog::GetInstance()->Insert(table_id, DATABASE_CATALOG_NAME,
-                                      START_OID, CATALOG_DATABASE_NAME,
-                                      nullptr);
-  TableCatalog::GetInstance()->Insert(table_id, TABLE_CATALOG_NAME, START_OID,
-                                      CATALOG_DATABASE_NAME, nullptr);
-  TableCatalog::GetInstance()->Insert(table_id, INDEX_CATALOG_NAME, START_OID,
-                                      CATALOG_DATABASE_NAME, nullptr);
-  TableCatalog::GetInstance()->Insert(table_id, COLUMN_CATALOG_NAME, START_OID,
-                                      CATALOG_DATABASE_NAME, nullptr);
-  // add all the columns of catalog tabls into pg_attribute
-  // how about column_catalog's columns?
-
-  // add all the index
-  // if you can add columns in initialization, you can add indexes too?
-  // how about index_catalog's indexes?
 }
 
 // Create a database
