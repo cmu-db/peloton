@@ -46,7 +46,9 @@ namespace catalog {
 
 class AbstractCatalog {
  public:
-  virtual oid_t GetNextOid() = 0;
+  virtual static AbstractCatalog *GetInstance(void) = 0;
+
+  virtual oid_t GetNextOid(void) = 0;
 
  protected:
   AbstractCatalog(storage::Database *pg_catalog, oid_t catalog_table_id,

@@ -73,8 +73,7 @@ class Catalog {
 
   Catalog();
 
-  // Creates the catalog database
-  void CreateCatalogDatabase(void);
+  void InitializeCatalog(void);
 
   // Creates the metric tables for statistics
   void CreateMetricsCatalog();
@@ -99,6 +98,11 @@ class Catalog {
                      const std::string &table_name,
                      std::vector<std::string> index_attr,
                      std::string index_name, bool unique, IndexType index_type);
+
+  ResultType CreateIndex(const std::string &database_name,
+                         const std::string &table_name,
+                         std::vector<oid_t> index_attr,
+                         std::string index_name, bool unique, IndexType index_type);
 
   // Get a index with the oids of index, table, and database.
   index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
