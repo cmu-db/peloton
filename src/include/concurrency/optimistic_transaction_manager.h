@@ -2,10 +2,10 @@
 //
 //                         Peloton
 //
-// timestamp_ordering_transaction_manager.h
+// optimistic_transaction_manager.h
 //
 // Identification:
-// src/include/concurrency/timestamp_ordering_transaction_manager.h
+// src/include/concurrency/optimistic_transaction_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,24 +13,24 @@
 
 #pragma once
 
-#include "concurrency/transaction_manager.h"
-#include "storage/tile_group.h"
+#include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/tile_group.h"
 #include "statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
-// timestamp ordering
+// optimistic concurrency control
 //===--------------------------------------------------------------------===//
 
-class TimestampOrderingTransactionManager : public TransactionManager {
- public:
-  TimestampOrderingTransactionManager() {}
+class OptimisticTransactionManager : public TransactionManager {
+public:
+  OptimisticTransactionManager() {}
 
-  virtual ~TimestampOrderingTransactionManager() {}
+  virtual ~OptimisticTransactionManager() {}
 
-  static TimestampOrderingTransactionManager &GetInstance();
+  static OptimisticTransactionManager &GetInstance();
 
   // This method is used for avoiding concurrent inserts.
   virtual bool IsOccupied(
@@ -38,9 +38,9 @@ class TimestampOrderingTransactionManager : public TransactionManager {
       const void *position);
 
   virtual VisibilityType IsVisible(
-      Transaction *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id);
 
   // This method tests whether the current transaction is the owner of a tuple.
   virtual bool IsOwner(Transaction *const current_txn,
@@ -55,15 +55,15 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
-      Transaction *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id);
 
   // This method is used to acquire the ownership of a tuple for a transaction.
   virtual bool AcquireOwnership(
-      Transaction *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
+    Transaction *const current_txn,
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id);
 
   // This method is used by executor to yield ownership after the acquired
   // ownership.
@@ -107,26 +107,6 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   virtual void EndReadonlyTransaction(Transaction *current_txn);
 
-private:
-  static const int LOCK_OFFSET = 0;
-  static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
-
-  Spinlock *GetSpinlockField(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
-
-  cid_t GetLastReaderCommitId(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
-
-  bool SetLastReaderCommitId(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &current_cid);
-
-  // Initiate reserved area of a tuple
-  void InitTupleReserved(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t tuple_id);
 };
 }
 }

@@ -78,15 +78,6 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-enum class GarbageCollectionType {
-  INVALID = INVALID_TYPE_ID,
-  OFF = 1,  // turn off GC
-  ON = 2    // turn on GC
-};
 
 //===--------------------------------------------------------------------===//
 // Postgres Value Types
@@ -420,13 +411,25 @@ enum class VisibilityType {
 
 enum class IsolationLevelType {
   INVALID = INVALID_TYPE_ID,
-  FULL = 1,            // full serializability
-  SNAPSHOT = 2,        // snapshot isolation
-  REPEATABLE_READ = 3  // repeatable read
+  SERIALIZABLE = 1,     // serializable
+  SNAPSHOT = 2,         // snapshot isolation
+  REPEATABLE_READS = 2, // repeatable reads
+  READ_COMMITTED = 3,   // read committed
+  READ_UNCOMMITTED = 4  // read uncommitted
 };
 
 //===--------------------------------------------------------------------===//
 // Garbage Collection Types
+//===--------------------------------------------------------------------===//
+
+enum class GarbageCollectionType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
+};
+
+//===--------------------------------------------------------------------===//
+// Backend Types
 //===--------------------------------------------------------------------===//
 
 enum class BackendType {
