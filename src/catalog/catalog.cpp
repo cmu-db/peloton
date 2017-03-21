@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/catalog.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 #include "catalog/catalog.h"
@@ -31,11 +31,11 @@ Catalog *Catalog::GetInstance(void) {
 }
 
 Catalog::Catalog() {  // CHANGING
-  // This should be the initialization of catalog tables, including:
-  // 1) construct catalogs (create tables, add to pg_catalog database)
-  // 2) create necessary indexes
-  // 3) add tuples into these catalogs
-
+  // Initialization of pg_catalog database, including:
+  // 1) create pg_catalog database, create catalog tables, add them into
+  // pg_catalog database, add columns into pg_attribute
+  // 2) create necessary indexes, insert into pg_index
+  // 3) add tuples into pg_database, pg_table catalogs
   CreateCatalogDatabase();
 
   // Create metrics table in default database

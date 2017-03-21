@@ -30,10 +30,13 @@ AbstractCatalog::AbstractCatalog(storage::Database *pg_catalog,
 
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
+  auto pg_attribute = catalog_table_id == TABLE_CATALOG_OID
+                          ? this
+                          : ColumnCatalog::GetInstance();
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    ColumnCatalog::GetInstance()->Insert(
-        catalog_table_id, column.GetName(), column.GetOffset(),
-        column.GetType(), true, column.GetConstraints(), nullptr);
+    pg_attribute->Insert(catalog_table_id, column.GetName(), column.GetOffset(),
+                         column.GetType(), true, column.GetConstraints(),
+                         nullptr);
   }
 
   // Index construction and adding contents of pg_database, pg_table, pg_index
