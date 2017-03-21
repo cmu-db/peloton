@@ -389,9 +389,7 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
 }
 
 bool Catalog::HasDatabase(const oid_t db_oid) const {
-  for (auto database : databases_)
-    if (database->GetOid() == db_oid) return (true);
-  return (false);
+  return (GetDatabaseWithOid(db_oid) != nullptr);
 }
 
 // Find a database using its id
@@ -404,11 +402,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 // Find a database using its name
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string database_name) const {
-  for (auto database : databases_) {
-    if (database != nullptr && database->GetDBName() == database_name)
-      return database;
-  }
-  return nullptr;
+  oid_t database_oid = catalog::DatabaseCatalog::GetInstance().GetOidByName();
+  return GetDatabaseWithOid(database_oid);
 }
 
 storage::Database *Catalog::GetDatabaseWithOffset(
