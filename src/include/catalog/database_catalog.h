@@ -48,7 +48,7 @@ class DatabaseCatalog : public AbstractCatalog {
   oid_t GetOidByName(const std::string &database_name, concurrency::Transaction *txn);
 
  private:
-  DatabaseCatalog();
+  DatabaseCatalog(storage::Database *pg_catalog);
 
   ~DatabaseCatalog();
 

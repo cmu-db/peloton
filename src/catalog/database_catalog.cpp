@@ -23,8 +23,8 @@ DatabaseCatalog *DatabaseCatalog::GetInstance(void) {
   return database_catalog.get();
 }
 
-DatabaseCatalog::DatabaseCatalog()
-    : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
+DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog)
+    : AbstractCatalog(pg_catalog, DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
                       InitializeSchema().release()) {}
 
 std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
@@ -38,19 +38,11 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
       ConstraintType::PRIMARY, primary_key_constraint_name));
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  // Insert into pg_attribute
-  ColumnCatalog::GetInstance()->Insert(
-      DATABASE_CATALOG_OID, "database_id", 0, type::Type::INTEGER, true,
-      database_id_column.GetConstraints(), nullptr);
 
   auto database_name_column = catalog::Column(
       type::Type::VARCHAR, max_name_size, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  // Insert into pg_attribute
-  ColumnCatalog::GetInstance()->Insert(
-      DATABASE_CATALOG_OID, "database_name", 1, type::Type::VARCHAR, true,
-      database_name_column.GetConstraints(), nullptr);
 
   std::unique_ptr<catalog::Schema> database_catalog_schema(
       new catalog::Schema({database_id_column, database_name_column}));

@@ -22,8 +22,8 @@ TableCatalog *TableCatalog::GetInstance(void) {
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog()
-    : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
+TableCatalog::TableCatalog(storage::Database *pg_catalog)
+    : AbstractCatalog(pg_catalog, TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release()) {}
 
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
@@ -37,38 +37,22 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       ConstraintType::PRIMARY, primary_key_constraint_name));
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  // Insert into pg_attribute
-  ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, "table_id", 0, type::Type::INTEGER, true,
-      table_id_column.GetConstraints(), nullptr);
 
   auto table_name_column =
       catalog::Column(type::Type::VARCHAR, max_name_size, "table_name", true);
   table_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  // Insert into pg_attribute
-  ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, "table_name", 1, type::Type::VARCHAR, true,
-      table_name_column.GetConstraints(), nullptr);
 
   auto database_id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
       "database_id", true);
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  // Insert into pg_attribute
-  ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, "database_id", 2, type::Type::INTEGER, true,
-      database_id_column.GetConstraints(), nullptr);
 
   auto database_name_column = catalog::Column(
       type::Type::VARCHAR, max_name_size, "database_name", true);
   database_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-  // Insert into pg_attribute
-  ColumnCatalog::GetInstance()->Insert(
-      TABLE_CATALOG_OID, "database_name", 3, type::Type::VARCHAR, true,
-      database_name_column.GetConstraints(), nullptr);
 
   std::unique_ptr<catalog::Schema> table_catalog_schema(
       new catalog::Schema({table_id_column, table_name_column,
@@ -118,7 +102,8 @@ std::string TableCatalog::GetTableNameByOid(oid_t table_id,
   std::string table_name;
   PL_ASSERT(result->GetTupleCount() <= 1);  // table_id is unique
   if (result->GetTupleCount() != 0) {
-    table_name = result->GetValue(0, 0).GetAs<std::string>();  // After projection left 1 column
+    table_name = result->GetValue(0, 0)
+                     .GetAs<std::string>();  // After projection left 1 column
   }
 
   return table_name;
@@ -136,7 +121,9 @@ std::string TableCatalog::GetDatabaseNameByOid(oid_t table_id,
   std::string database_name;
   PL_ASSERT(result->GetTupleCount() <= 1);  // table_id is unique
   if (result->GetTupleCount() != 0) {
-    database_name = result->GetValue(0, 0).GetAs<std::string>();  // After projection left 1 column
+    database_name =
+        result->GetValue(0, 0)
+            .GetAs<std::string>();  // After projection left 1 column
   }
 
   return database_name;
@@ -159,7 +146,8 @@ oid_t TableCatalog::GetOidByName(const std::string &table_name,
   PL_ASSERT(result->GetTupleCount() <=
             1);  // table_name & database_name is unique
   if (result->GetTupleCount() != 0) {
-    table_id = result->GetValue(0, 0).GetAs<oid_t>();  // After projection left 1 column
+    table_id = result->GetValue(0, 0)
+                   .GetAs<oid_t>();  // After projection left 1 column
   }
 
   return table_id;
