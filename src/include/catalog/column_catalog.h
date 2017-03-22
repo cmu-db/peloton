@@ -33,18 +33,16 @@ namespace catalog {
 class ColumnCatalog : public AbstractCatalog {
  public:
   // Global Singleton
-  static ColumnCatalog *GetInstance(void);
+  static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
+                                    type::AbstractPool *pool = nullptr);
 
-  inline oid_t GetNextOid() {
-    return oid_++ | static_cast<oid_t>(type::CatalogType::COLUMN);
-  }
+  inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
   // Write related API
   bool Insert(oid_t table_id, const std::string &column_name,
               oid_t column_offset, type::Type::TypeId column_type,
               bool is_inlined, std::vector<ConstraintType> constraints,
-              concurrency::Transaction *txn);
-
+              type::AbstractPool *pool, concurrency::Transaction *txn);
   bool DeleteByOidWithName(oid_t table_id, const std::string &column_name,
                            concurrency::Transaction *txn);
 
@@ -59,11 +57,10 @@ class ColumnCatalog : public AbstractCatalog {
                                       concurrency::Transaction *txn);
 
  private:
-  ColumnCatalog();
+  ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   ~ColumnCatalog();
 
-  // Construct pg_attribute schema
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
 

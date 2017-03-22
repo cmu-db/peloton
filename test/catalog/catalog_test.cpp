@@ -101,7 +101,7 @@ TEST_F(CatalogTests, DroppingTable) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
   txn_manager.CommitTransaction(txn);
-  catalog::Catalog::GetInstance()->PrintCatalogs();
+//  catalog::Catalog::GetInstance()->PrintCatalogs();
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("EMP_DB")
                 ->GetTableCount(),

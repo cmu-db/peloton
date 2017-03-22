@@ -33,12 +33,14 @@ Catalog *Catalog::GetInstance(void) {
 Catalog::Catalog() {  // CHANGING
   // Initialization of catalog, including:
   // 1) create pg_catalog database, create catalog tables, add them into
-  // pg_catalog database, add columns into pg_attribute
-  // 2) add tuples into pg_database, pg_table catalogs
+  // pg_catalog database, insert columns into pg_attribute
+  // 2) insert pg_catalog into pg_database, catalog tables into pg_table
   // 3) create necessary indexes, insert into pg_index
+  // when logging is enabled, this should be changed
   InitializeCatalog();
 
   // Create metrics table in default database
+  // TODO: stats?
   CreateMetricsCatalog();
 
   InitializeFunctions();
@@ -72,29 +74,29 @@ void Catalog::CreateMetricsCatalog() {
 
 void Catalog::InitializeCatalog() {
   // Create pg_catalog database
-  pg_catalog = std::shared_ptr<storage::Database>(new storage::Database(START_OID));
+  auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
   pg_catalog->setDBName(CATALOG_DATABASE_NAME);
-  databases_.push_back(pg_catalog.get());
+  databases_.push_back(pg_catalog);
 
   // Create catalog tables, add into pg_catalog database, insert columns into
   // pg_attribute
-  auto pg_database = DatabaseCatalog::GetInstance();
-  auto pg_table = TableCatalog::GetInstance();
-  IndexCatalog::GetInstance();
+  auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get());
+  auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get());
+  IndexCatalog::GetInstance(pg_catalog, pool_.get());
   //  ColumnCatalog::GetInstance();  // Called implicitly
 
   // Insert pg_catalog database into pg_database
-  pg_database->Insert(START_OID, CATALOG_DATABASE_NAME, nullptr);
+  pg_database->Insert(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, nullptr);
 
   // Insert catalog tables into pg_table
-  pg_table->Insert(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, START_OID,
+  pg_table->Insert(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
+                   CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, nullptr);
+  pg_table->Insert(TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_DATABASE_OID,
                    CATALOG_DATABASE_NAME, nullptr);
-  pg_table->Insert(TABLE_CATALOG_OID, TABLE_CATALOG_NAME, START_OID,
+  pg_table->Insert(INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_DATABASE_OID,
                    CATALOG_DATABASE_NAME, nullptr);
-  pg_table->Insert(INDEX_CATALOG_OID, INDEX_CATALOG_NAME, START_OID,
-                   CATALOG_DATABASE_NAME, nullptr);
-  pg_table->Insert(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, START_OID,
-                   CATALOG_DATABASE_NAME, nullptr);
+  pg_table->Insert(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
+                   CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, nullptr);
 
   // Create indexes on catalog tables, insert them into pg_index
   // TODO: This should be hash index rather than tree index
@@ -776,11 +778,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   return database_schema;
 }
 
-void Catalog::PrintCatalogs() {}
-
 oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
-
-oid_t Catalog::GetNextOid() { return oid_++; }
 
 Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
@@ -788,7 +786,14 @@ Catalog::~Catalog() {
   delete pool_;
 }
 
-// add amd get methods for UDFs
+//===--------------------------------------------------------------------===//
+// METRIC
+//===--------------------------------------------------------------------===//
+
+//===--------------------------------------------------------------------===//
+// FUNCTION
+//===--------------------------------------------------------------------===//
+
 void Catalog::AddFunction(
     const std::string &name,
     const std::vector<type::Type::TypeId> &argument_types,

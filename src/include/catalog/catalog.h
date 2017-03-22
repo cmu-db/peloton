@@ -13,20 +13,20 @@
 #pragma once
 
 #include "catalog/catalog_util.h"
-#include "catalog/schema.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
-#include "type/types.h"
-#include "type/value_factory.h"
-#include "type/abstract_pool.h"
-#include "type/ephemeral_pool.h"
+#include "catalog/database_catalog.h"
+#include "catalog/index_catalog.h"
+#include "catalog/schema.h"
+#include "catalog/table_catalog.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
 #include "storage/tuple.h"
+#include "type/abstract_pool.h"
 #include "type/catalog_type.h"
+#include "type/ephemeral_pool.h"
+#include "type/types.h"
+#include "type/value_factory.h"
 
 #define DATABASE_METRIC_NAME "database_metric"
 #define TABLE_METRIC_NAME "table_metric"
@@ -67,7 +67,6 @@ struct FunctionData {
 };
 
 class Catalog {
-  friend class AbstractCatalog;
  public:
   // Global Singleton
   static Catalog *GetInstance(void);
@@ -81,44 +80,45 @@ class Catalog {
 
   // Create a database
   ResultType CreateDatabase(std::string &database_name,
-                        concurrency::Transaction *txn);
+                            concurrency::Transaction *txn);
 
   // Add a database
   void AddDatabase(storage::Database *database);
 
   // Create a table in a database
   ResultType CreateTable(std::string database_name, std::string table_name,
-                     std::unique_ptr<catalog::Schema>,
-                     concurrency::Transaction *txn);
+                         std::unique_ptr<catalog::Schema>,
+                         concurrency::Transaction *txn);
 
   // Create the primary key index for a table
   ResultType CreatePrimaryIndex(const std::string &database_name,
-                            const std::string &table_name);
-
-  ResultType CreateIndex(const std::string &database_name,
-                     const std::string &table_name,
-                     std::vector<std::string> index_attr,
-                     std::string index_name, bool unique, IndexType index_type);
+                                const std::string &table_name);
 
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
-                         std::vector<oid_t> index_attr,
-                         std::string index_name, bool unique, IndexType index_type);
+                         std::vector<std::string> index_attr,
+                         std::string index_name, bool unique,
+                         IndexType index_type);
+
+  ResultType CreateIndex(const std::string &database_name,
+                         const std::string &table_name,
+                         std::vector<oid_t> index_attr, std::string index_name,
+                         bool unique, IndexType index_type);
 
   // Get a index with the oids of index, table, and database.
   index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
                                 const oid_t index_oid) const;
   // Drop a database
   ResultType DropDatabaseWithName(std::string &database_name,
-                              concurrency::Transaction *txn);
+                                  concurrency::Transaction *txn);
 
   // Drop a database with its oid
   ResultType DropDatabaseWithOid(const oid_t database_oid,
-                           concurrency::Transaction *txn);
+                                 concurrency::Transaction *txn);
 
   // Drop a table
   ResultType DropTable(std::string database_name, std::string table_name,
-                   concurrency::Transaction *txn);
+                       concurrency::Transaction *txn);
 
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(const oid_t db_oid) const;
@@ -175,53 +175,34 @@ class Catalog {
   // Get the number of databases currently in the catalog
   oid_t GetDatabaseCount();
 
-  void PrintCatalogs();
-
-  // Get a new id for database, table, etc.
-  oid_t GetNextOid();
+  //===--------------------------------------------------------------------===//
+  // FUNCTION
+  //===--------------------------------------------------------------------===//
 
   void InitializeFunctions();
 
-  //===--------------------------------------------------------------------===//
-  // FUNCTION ACCESS
-  //===--------------------------------------------------------------------===//
-
-  // add and get methods for functions
-  void AddFunction(
-      const std::string &name, const std::vector<type::Type::TypeId>& argument_types,
-      const type::Type::TypeId return_type,
-      type::Value (*func_ptr)(const std::vector<type::Value> &));
+  void AddFunction(const std::string &name,
+                   const std::vector<type::Type::TypeId> &argument_types,
+                   const type::Type::TypeId return_type,
+                   type::Value (*func_ptr)(const std::vector<type::Value> &));
 
   const FunctionData GetFunction(const std::string &name);
 
   void RemoveFunction(const std::string &name);
 
-  // Deconstruct the catalog database when destroy the catalog.
+ private:
+  // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
 
- private:
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
 
-  static std::shared_ptr<storage::Database> pg_catalog;
-
-  // The id variable that get assigned to objects. Initialized with (START_OID
-  // +
-  // 1) because START_OID is assigned to the catalog database.
-  std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + 1);
-
-  // Maximum Column Size for Catalog Schemas
-  const size_t max_name_size = 32;
-
-  // map of function names to data about functions (number of arguments,
+  // Map of function names to data about functions (number of arguments,
   // function ptr, return type)
   std::unordered_map<std::string, FunctionData> functions_;
 
- public:
-
   // The pool for new varlen tuple fields
-  static type::AbstractPool *pool_ = new type::EphemeralPool();
+  std::unique_ptr<type::AbstractPool> pool_(new type::EphemeralPool());
 };
-
 }
 }

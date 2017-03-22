@@ -32,33 +32,30 @@ namespace catalog {
 class TableCatalog : public AbstractCatalog {
  public:
   // Global Singleton
-  static TableCatalog *GetInstance(void);
+  static TableCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
+                                   type::AbstractPool *pool = nullptr);
 
-  inline oid_t GetNextOid() {
-    return oid_++ | static_cast<oid_t>(type::CatalogType::TABLE);
-  }
+  inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
   // Write related API
   bool Insert(oid_t table_id, const std::string &table_name, oid_t database_id,
-              const std::string &database_name, concurrency::Transaction *txn);
-
+              const std::string &database_name, type::AbstractPool *pool,
+              concurrency::Transaction *txn);
   bool DeleteByOid(oid_t table_id, concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetTableNameByOid(oid_t table_id, concurrency::Transaction *txn);
-
-  std::string GetDatabaseNameByOid(oid_t table_id, concurrency::Transaction *txn);
-
+  std::string GetDatabaseNameByOid(oid_t table_id,
+                                   concurrency::Transaction *txn);
   oid_t GetOidByName(const std::string &table_name,
                      const std::string &database_name,
                      concurrency::Transaction *txn);
 
  private:
-  TableCatalog();
+  TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   ~TableCatalog();
 
-  // Construct pg_table schema, insert columns into pg_attribute
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
 
