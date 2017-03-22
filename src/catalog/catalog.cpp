@@ -416,7 +416,13 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
   oid_t table_id = table->GetOid();
 
   // drop actual data table
+  // requires lock in DropTableWithOid() methods
+  // cleanup schema, foreign keys, tile_groups, also delete Indexes that belong
+  // to the table
   LOG_TRACE("Deleting table!");
+  // TODO: data_table has DropIndexes(), but indexTuner also has
+  // DropIndexes(table), do we need mutex lock when droping index??
+  table->DropIndexes();
   database->DropTableWithOid(table_id);
 
   // change metadata
@@ -426,10 +432,12 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
   // delete records in pg_attribute
   auto &schema_columns = table->GetSchema()->GetColumns();
   for (auto &column : schema_columns) {
-    std::string column_name = column.GetName();
-    ColumnCatalog::GetInstance()->DeleteByOidWithName(table_id, column_name,
-                                                      txn);
+    // std::string column_name = column.GetName();
+    ColumnCatalog::GetInstance()->DeleteByOidWithName(table_id,
+                                                      column.GetName(), txn);
   }
+  // TODO: delete records in pg_index
+
   return ResultType::SUCCESS;
 }
 
