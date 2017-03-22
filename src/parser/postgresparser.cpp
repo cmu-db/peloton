@@ -106,6 +106,7 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
     }
     case T_BoolExpr: {
       result->condition = BoolExprTransform((BoolExpr*)(root->quals));
+      break;
     }
     default: {
       LOG_ERROR("Join quals type %d not supported yet...\n", root->larg->type);
@@ -269,7 +270,8 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
       SortBy* sort = (SortBy*)temp;
       Node* target = sort->node;
       if (target->type == T_ColumnRef) {
-        if (sort->sortby_dir == SORTBY_ASC) {
+        if ((sort->sortby_dir == SORTBY_ASC) ||
+            (sort->sortby_dir == SORTBY_DEFAULT)) {
           // result->push_back(parser::OrderDescription(
           //                     parser::OrderType::kOrderAsc,
           //                     ColumnRefTransform((ColumnRef *)target)));

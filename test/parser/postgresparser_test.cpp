@@ -35,12 +35,10 @@ TEST_F(PostgresParserTests, BasicTest) {
   queries.push_back("SELECT * FROM foo;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -48,9 +46,7 @@ TEST_F(PostgresParserTests, BasicTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -64,12 +60,10 @@ TEST_F(PostgresParserTests, AggTest) {
   queries.push_back("SELECT MIN(*) FROM foo;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -77,9 +71,7 @@ TEST_F(PostgresParserTests, AggTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -90,12 +82,10 @@ TEST_F(PostgresParserTests, GroupByTest) {
   queries.push_back("SELECT * FROM foo GROUP BY id, name;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -103,9 +93,7 @@ TEST_F(PostgresParserTests, GroupByTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -116,15 +104,13 @@ TEST_F(PostgresParserTests, OrderByTest) {
   queries.push_back("SELECT * FROM foo ORDER BY id;");
   queries.push_back("SELECT * FROM foo ORDER BY id ASC;");
   queries.push_back("SELECT * FROM foo ORDER BY id DESC;");
-//  queries.push_back("SELECT * FROM foo ORDER BY id, name;");
+  // queries.push_back("SELECT * FROM foo ORDER BY id, name;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -132,9 +118,7 @@ TEST_F(PostgresParserTests, OrderByTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -145,12 +129,10 @@ TEST_F(PostgresParserTests, ConstTest) {
   queries.push_back("SELECT 'str', 1 FROM foo;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -158,9 +140,7 @@ TEST_F(PostgresParserTests, ConstTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -168,15 +148,17 @@ TEST_F(PostgresParserTests, JoinTest) {
   std::vector<std::string> queries;
 
   // Select with join
-  queries.push_back("SELECT * FROM foo INNER JOIN bar ON foo.id=bar.id;");
+  queries.push_back("SELECT * FROM foo INNER JOIN bar ON foo.id=bar.id AND foo.val > bar.val;");
+  queries.push_back("SELECT * FROM foo LEFT JOIN bar ON foo.id=bar.id;");
+  queries.push_back("SELECT * FROM foo RIGHT JOIN bar ON foo.id=bar.id AND foo.val > bar.val;");
+  queries.push_back("SELECT * FROM foo SEMI JOIN bar ON foo.id=bar.id;");
+  queries.push_back("SELECT * FROM foo FULL OUTER JOIN bar ON foo.id=bar.id AND foo.val > bar.val;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -184,9 +166,7 @@ TEST_F(PostgresParserTests, JoinTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -197,12 +177,10 @@ TEST_F(PostgresParserTests, NestedQueryTest) {
   queries.push_back("SELECT * FROM (SELECT * FROM foo) as t;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -210,9 +188,7 @@ TEST_F(PostgresParserTests, NestedQueryTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -223,12 +199,10 @@ TEST_F(PostgresParserTests, MultiTableTest) {
   queries.push_back("SELECT foo.name FROM foo, bar WHERE foo.id = bar.id;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -236,9 +210,7 @@ TEST_F(PostgresParserTests, MultiTableTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
@@ -248,14 +220,11 @@ TEST_F(PostgresParserTests, ExprTest) {
   // Select with complicated where, tests both BoolExpr and AExpr
   queries.push_back("SELECT * FROM foo WHERE id > 3 AND value < 10 OR id < 3 AND value > 10;");
 
-
   auto parser = parser::PostgresParser::GetInstance();
-  // auto ref_parser = parser::Parser::GetInstance();
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
-    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -263,9 +232,7 @@ TEST_F(PostgresParserTests, ExprTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
     delete stmt_list;
-    // delete ref_stmt_list;
   }
 }
 
