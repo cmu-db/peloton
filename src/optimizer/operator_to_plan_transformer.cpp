@@ -96,6 +96,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   auto project_prop = requirements_->GetPropertyOfType(PropertyType::PROJECT)
                           ->As<PropertyProjection>();
   (void)project_prop;
+
   size_t project_list_size = project_prop->GetProjectionListSize();
 
   // expressions to evaluate
@@ -120,7 +121,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
     // otherwise we need to evaluat the expression
     else {
       column_name = "expr" + std::to_string(project_idx);
-      tl.push_back(Target(project_idx, expr->Copy()));
+      planner::DerivedAttribute attribute;
+      attribute.expr = expr->Copy();
+      attribute.attribute_info.type = attribute.expr->GetValueType();
+      tl.push_back(Target(project_idx, attribute));
     }
     columns.push_back(catalog::Column(
         expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),

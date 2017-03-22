@@ -20,9 +20,9 @@
 namespace peloton {
 namespace executor {
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Plan Executor
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 typedef struct ExecuteResult {
   peloton::ResultType m_result;
@@ -47,11 +47,6 @@ typedef struct ExecuteResult {
 
 class PlanExecutor {
  public:
-  PlanExecutor(const PlanExecutor &) = delete;
-  PlanExecutor &operator=(const PlanExecutor &) = delete;
-  PlanExecutor(PlanExecutor &&) = delete;
-  PlanExecutor &operator=(PlanExecutor &&) = delete;
-
   PlanExecutor(){};
 
   // Copy From
@@ -92,6 +87,9 @@ class PlanExecutor {
   static int ExecutePlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
+
+ private:
+  DISALLOW_COPY_AND_MOVE(PlanExecutor);
 };
 
 }  // namespace executor

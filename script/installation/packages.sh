@@ -81,6 +81,9 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         lcov \
         postgresql-client \
         libpqxx-dev
+        llvm-3.7 \
+        libedit-dev \
+        postgresql-client
 ## ------------------------------------------------
 ## FEDORA
 ## ------------------------------------------------
@@ -100,6 +103,9 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         postgresql \
         libpqxx-devel \
         libpqxx
+        llvm3.7 \
+        libedit-devel \
+        postgresql
 ## ------------------------------------------------
 ## REDHAT
 ## ------------------------------------------------
@@ -135,6 +141,9 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         graphviz \
         postgresql93 \
         libpqxx-devel
+        llvm3.7 \
+        libedit-devel \
+        postgresql93
 
     # Manually download some packages to guarantee
     # version compatibility

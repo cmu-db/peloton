@@ -13,8 +13,9 @@
 #pragma once
 
 #include "common/abstract_tuple.h"
-#include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
+#include "planner/binding_context.h"
 
 namespace peloton {
 namespace expression {
@@ -28,23 +29,24 @@ class TupleValueExpression : public AbstractExpression {
   TupleValueExpression(std::string &&col_name)
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
-        tuple_idx_(-1) {
-    col_name_ = col_name;
-  }
+        tuple_idx_(-1),
+        col_name_(col_name),
+        ai_(nullptr) {}
 
   TupleValueExpression(std::string &&col_name, std::string &&table_name)
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type::Type::INVALID),
         value_idx_(-1),
-        tuple_idx_(-1) {
-    table_name_ = table_name;
-    col_name_ = col_name;
-  }
+        tuple_idx_(-1),
+        table_name_(table_name),
+        col_name_ (col_name),
+        ai_(nullptr) { }
 
   TupleValueExpression(type::Type::TypeId type_id, const int tuple_idx,
                        const int value_idx)
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type_id),
         value_idx_(value_idx),
-        tuple_idx_(tuple_idx) {}
+        tuple_idx_(tuple_idx),
+        ai_(nullptr) {}
 
   ~TupleValueExpression() {}
 
@@ -67,9 +69,25 @@ class TupleValueExpression : public AbstractExpression {
     tuple_idx_ = tuple_idx;
   }
 
+  // Attribute binding
+  void PerformBinding(const planner::BindingContext &binding_context) override {
+    ai_ = binding_context.Find(GetColumnId());
+    LOG_DEBUG("TVE Column ID %u binds to AI %p", GetColumnId(), ai_);
+    PL_ASSERT(ai_ != nullptr);
+  }
+
+  // Return the attributes this expression uses
+  void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *>
+                         &attributes) const override {
+    PL_ASSERT(GetAttributeRef() != nullptr);
+    attributes.insert(GetAttributeRef());
+  }
+
   AbstractExpression *Copy() const override {
     return new TupleValueExpression(*this);
   }
+
+  const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 
   int GetColumnId() const { return value_idx_; }
 
@@ -114,7 +132,9 @@ class TupleValueExpression : public AbstractExpression {
   int tuple_idx_;
   std::string table_name_;
   std::string col_name_;
+
+  const planner::AttributeInfo *ai_;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

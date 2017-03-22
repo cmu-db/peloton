@@ -19,6 +19,8 @@
 #include <pthread.h>
 #include <immintrin.h>
 
+#include "common/macros.h"
+
 //===--------------------------------------------------------------------===//
 // Synchronization utilities
 //===--------------------------------------------------------------------===//
@@ -140,5 +142,34 @@ class Spinlock {
    * instruction*/
   std::atomic<LockState> spin_lock_state;
 };
+
+//===--------------------------------------------------------------------===//
+// Count the number of leading zeroes in a given 64-bit unsigned number
+//===--------------------------------------------------------------------===//
+static inline uint64_t CountLeadingZeroes(uint64_t i) {
+#if defined __GNUC__ || defined __clang__
+  return __builtin_clzl(i);
+#else
+#error get a better compiler
+#endif
+}
+
+//===--------------------------------------------------------------------===//
+// Find the next power of two higher than the provided value
+//===--------------------------------------------------------------------===//
+static inline uint64_t NextPowerOf2(uint64_t n) {
+#if defined __GNUC__ || defined __clang__
+  PL_ASSERT(n > 0);
+  return 1ul << (64 - CountLeadingZeroes(n - 1));
+#else
+  n--;
+  n |= n >> 1;
+  n |= n >> 2;
+  n |= n >> 4;
+  n |= n >> 8;
+  n |= n >> 16;
+  return ++n;
+#endif
+}
 
 }  // End peloton namespace

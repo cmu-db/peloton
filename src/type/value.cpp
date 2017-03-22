@@ -169,11 +169,16 @@ Value::Value(Type::TypeId type, int32_t i) : Value(type) {
       size_.len =
           (value_.bigint == PELOTON_INT64_NULL ? PELOTON_VALUE_NULL : 0);
       break;
+    case Type::DATE:
+      value_.date = i;
+      size_.len = (value_.date == PELOTON_DATE_NULL ? PELOTON_VALUE_NULL : 0);
+      break;
     case Type::TIMESTAMP:
       value_.timestamp = i;
       size_.len =
           (value_.timestamp == PELOTON_TIMESTAMP_NULL ? PELOTON_VALUE_NULL : 0);
       break;
+
     default: {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for 4-byte Value constructor",
