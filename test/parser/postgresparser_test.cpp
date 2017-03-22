@@ -83,6 +83,61 @@ TEST_F(PostgresParserTests, AggTest) {
   }
 }
 
+TEST_F(PostgresParserTests, GroupByTest) {
+  std::vector<std::string> queries;
+
+  // Select with group by clause
+  queries.push_back("SELECT * FROM foo GROUP BY id, name;");
+
+  auto parser = parser::PostgresParser::GetInstance();
+  // auto ref_parser = parser::Parser::GetInstance();
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    auto stmt_list = parser.BuildParseTree(query).release();
+    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+    // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
+    delete stmt_list;
+    // delete ref_stmt_list;
+  }
+}
+
+TEST_F(PostgresParserTests, OrderByTest) {
+  std::vector<std::string> queries;
+
+  // Select with order by clause
+  queries.push_back("SELECT * FROM foo ORDER BY id;");
+  queries.push_back("SELECT * FROM foo ORDER BY id ASC;");
+  queries.push_back("SELECT * FROM foo ORDER BY id DESC;");
+//  queries.push_back("SELECT * FROM foo ORDER BY id, name;");
+
+  auto parser = parser::PostgresParser::GetInstance();
+  // auto ref_parser = parser::Parser::GetInstance();
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    auto stmt_list = parser.BuildParseTree(query).release();
+    // auto ref_stmt_list = ref_parser.BuildParseTree(query).release();
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+    // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    // LOG_INFO("%d : %s", ++ii, ref_stmt_list->GetInfo().c_str());
+    delete stmt_list;
+    // delete ref_stmt_list;
+  }
+}
+
 TEST_F(PostgresParserTests, ConstTest) {
   std::vector<std::string> queries;
 

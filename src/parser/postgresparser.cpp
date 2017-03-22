@@ -169,8 +169,8 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
     }
     case T_RangeSubselect: {
       result = new parser::TableRef(StringToTableReferenceType("select"));
-      result->select =
-          (parser::SelectStatement*)SelectTransform((SelectStmt*)(((RangeSubselect*)node)->subquery));
+      result->select = (parser::SelectStatement*)SelectTransform(
+          (SelectStmt*)(((RangeSubselect*)node)->subquery));
       result->alias = AliasTransform(((RangeSubselect*)node)->alias);
       if (result->select == NULL) {
         delete result;
@@ -254,6 +254,10 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
     return NULL;
   }
 
+  if (order->length > 1) {
+    throw NotImplementedException(
+        "Order by multiple keys not supported yet...\n");
+  }
   // std::vector<parser::OrderDescription>* result =
   //   new std::vector<parser::OrderDescription>();
 
@@ -321,7 +325,8 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = NULL;
-  std::string type_string = ((value*)(root->funcname->head->data.ptr_value))->val.str;
+  std::string type_string =
+      ((value*)(root->funcname->head->data.ptr_value))->val.str;
   type_string = "AGGREGATE_" + type_string;
 
   if (root->agg_star) {
@@ -333,7 +338,7 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
       ColumnRef* temp = (ColumnRef*)root->args->head->data.ptr_value;
       expression::AbstractExpression* children = ColumnRefTransform(temp);
       result = new expression::AggregateExpression(
-        StringToExpressionType(type_string), root->agg_distinct, children);
+          StringToExpressionType(type_string), root->agg_distinct, children);
     } else {
       LOG_ERROR("Aggregation over multiple columns not supported yet...\n");
       return NULL;
@@ -472,7 +477,8 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       break;
     }
     default: {
-      LOG_ERROR("Left expr of type %d not supported yet...\n", root->lexpr->type);
+      LOG_ERROR("Left expr of type %d not supported yet...\n",
+                root->lexpr->type);
       return NULL;
     }
   }
@@ -487,12 +493,14 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       break;
     }
     default: {
-      LOG_ERROR("Left expr of type %d not supported yet...\n", root->rexpr->type);
+      LOG_ERROR("Left expr of type %d not supported yet...\n",
+                root->rexpr->type);
       return NULL;
     }
   }
 
-  result = new expression::ComparisonExpression(target_type, left_expr, right_expr);
+  result =
+      new expression::ComparisonExpression(target_type, left_expr, right_expr);
   return result;
 }
 
