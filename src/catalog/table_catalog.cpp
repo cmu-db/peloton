@@ -17,14 +17,19 @@
 namespace peloton {
 namespace catalog {
 
-TableCatalog *TableCatalog::GetInstance(void) {
-  static std::unique_ptr<TableCatalog> table_catalog(new TableCatalog());
+TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
+                                        type::AbstractPool *pool) {
+  static std::unique_ptr<TableCatalog> table_catalog(
+      new TableCatalog(pg_catalog, pool));
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog()
+TableCatalog::TableCatalog(storage::Database *pg_catalog,
+                           type::AbstractPool *pool)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                      InitializeSchema().release()) {}
+                      InitializeSchema().release(), pg_catalog, pool) {}
+
+TableCatalog::~TableCatalog() {}
 
 std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
@@ -63,6 +68,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
 
 bool TableCatalog::Insert(oid_t table_id, const std::string &table_name,
                           oid_t database_id, const std::string &database_name,
+                          type::AbstractPool *pool,
                           concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -73,10 +79,10 @@ bool TableCatalog::Insert(oid_t table_id, const std::string &table_name,
   auto val2 = type::ValueFactory::GetIntegerValue(database_id);
   auto val3 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
 
-  tuple->SetValue(0, val0, Catalog::pool_);
-  tuple->SetValue(1, val1, Catalog::pool_);
-  tuple->SetValue(2, val2, Catalog::pool_);
-  tuple->SetValue(3, val3, Catalog::pool_);
+  tuple->SetValue(0, val0, pool);
+  tuple->SetValue(1, val1, pool);
+  tuple->SetValue(2, val2, pool);
+  tuple->SetValue(3, val3, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -97,7 +103,7 @@ std::string TableCatalog::GetTableNameByOid(oid_t table_id,
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string table_name;
   PL_ASSERT(result->GetTupleCount() <= 1);  // table_id is unique
@@ -116,7 +122,7 @@ std::string TableCatalog::GetDatabaseNameByOid(oid_t table_id,
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
   PL_ASSERT(result->GetTupleCount() <= 1);  // table_id is unique
@@ -140,7 +146,7 @@ oid_t TableCatalog::GetOidByName(const std::string &table_name,
   values.push_back(
       type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_id = INVALID_OID;
   PL_ASSERT(result->GetTupleCount() <=

@@ -17,17 +17,20 @@
 namespace peloton {
 namespace catalog {
 
-ColumnCatalog *ColumnCatalog::GetInstance(void) {
-  static std::unique_ptr<ColumnCatalog> column_catalog(new ColumnCatalog());
+ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
+                                          type::AbstractPool *pool) {
+  static std::unique_ptr<ColumnCatalog> column_catalog(
+      new ColumnCatalog(pg_catalog, pool));
   return column_catalog.get();
 }
 
-ColumnCatalog::ColumnCatalog()
+ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
+                             type::AbstractPool *pool)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                      InitializeSchema().release()) {}
+                      InitializeSchema().release(), pg_catalog, pool) {}
 
-// This only constructs pg_attribute schema, it leaves the insertion job to the
-// constructor
+ColumnCatalog::~ColumnCatalog {}
+
 std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
   const std::string not_null_constraint_name = "not_null";
@@ -88,6 +91,7 @@ bool ColumnCatalog::Insert(oid_t table_id, const std::string &column_name,
                            oid_t column_offset, type::Type::TypeId column_type,
                            bool is_inlined,
                            std::vector<ConstraintType> constraints,
+                           type::AbstractPool *pool,
                            concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -111,13 +115,13 @@ bool ColumnCatalog::Insert(oid_t table_id, const std::string &column_name,
   auto val5 = type::ValueFactory::GetBooleanValue(is_primary);
   auto val6 = type::ValueFactory::GetBooleanValue(is_not_null);
 
-  tuple->SetValue(0, val0, Catalog::pool_);
-  tuple->SetValue(1, val1, Catalog::pool_);
-  tuple->SetValue(2, val2, Catalog::pool_);
-  tuple->SetValue(3, val3, Catalog::pool_);
-  tuple->SetValue(4, val4, Catalog::pool_);
-  tuple->SetValue(5, val5, Catalog::pool_);
-  tuple->SetValue(6, val6, Catalog::pool_);
+  tuple->SetValue(0, val0, pool);
+  tuple->SetValue(1, val1, pool);
+  tuple->SetValue(2, val2, pool);
+  tuple->SetValue(3, val3, pool);
+  tuple->SetValue(4, val4, pool);
+  tuple->SetValue(5, val5, pool);
+  tuple->SetValue(6, val6, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -145,7 +149,7 @@ oid_t ColumnCatalog::GetOffsetByOidWithName(oid_t table_id,
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t column_offset = INVALID_OID;
   PL_ASSERT(result->GetTupleCount() <= 1);  // table_id & column_name is unique
@@ -165,7 +169,7 @@ std::string ColumnCatalog::GetNameByOidWithOffset(
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_offset).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string column_name;
   PL_ASSERT(result->GetTupleCount() <=
@@ -187,7 +191,7 @@ type::Type::TypeId ColumnCatalog::GetTypeByOidWithName(
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
   PL_ASSERT(result->GetTupleCount() <= 1);  // table_id & column_name is unique
@@ -208,7 +212,7 @@ type::Type::TypeId ColumnCatalog::GetTypeByOidWithOffset(
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_offset).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
   PL_ASSERT(result->GetTupleCount() <=

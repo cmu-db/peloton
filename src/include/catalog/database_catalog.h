@@ -32,23 +32,23 @@ namespace catalog {
 class DatabaseCatalog : public AbstractCatalog {
  public:
   // Global Singleton
-  static DatabaseCatalog *GetInstance(void);
+  static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
+                                      type::AbstractPool *pool = nullptr);
 
-  inline oid_t GetNextOid() {
-    return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE);
-  }
+  inline oid_t GetNextOid() { return oid_++ | COLUMN_OID_MASK; }
 
   // Write related API
   bool Insert(oid_t database_id, const std::string &database_name,
-              concurrency::Transaction *txn);
+              type::AbstractPool *pool, concurrency::Transaction *txn);
   void DeleteByOid(oid_t database_id, concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetNameByOid(oid_t database_id, concurrency::Transaction *txn);
-  oid_t GetOidByName(const std::string &database_name, concurrency::Transaction *txn);
+  oid_t GetOidByName(const std::string &database_name,
+                     concurrency::Transaction *txn);
 
  private:
-  DatabaseCatalog();
+  DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   ~DatabaseCatalog();
 

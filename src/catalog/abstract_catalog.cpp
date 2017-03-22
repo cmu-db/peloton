@@ -17,29 +17,32 @@ namespace catalog {
 
 AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
                                  std::string catalog_table_name,
-                                 catalog::Schema *catalog_table_schema) {
+                                 catalog::Schema *catalog_table_schema,
+                                 storage::Database *pg_catalog,
+                                 type::AbstractPool *pool) {
   // Create catalog_table_
   catalog_table_ =
       std::shared_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
-          START_OID, catalog_table_id, catalog_table_schema, catalog_table_name,
-          DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
+          CATALOG_DATABASE_OID, catalog_table_id, catalog_table_schema,
+          catalog_table_name, DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
 
   // Add catalog_table_ into pg_catalog database
-  Catalog::pg_catalog->AddTable(catalog_table_.get());
+  pg_catalog->AddTable(catalog_table_.get());
 
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
-  auto pg_attribute = catalog_table_id == COLUMN_CATALOG_OID
-                          ? this
-                          : ColumnCatalog::GetInstance();
+  ColumnCatalog *pg_attribute =
+      catalog_table_id == COLUMN_CATALOG_OID
+          ? this
+          : ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->Insert(catalog_table_id, column.GetName(), column.GetOffset(),
-                         column.GetType(), true, column.GetConstraints(),
+                         column.GetType(), true, column.GetConstraints(), pool,
                          nullptr);
   }
 
-  // Index construction and adding contents of pg_database, pg_table, pg_index
-  // should leave to catalog's constructor
+  // Index construction and inserting contents of pg_database, pg_table,
+  // pg_index should leave to catalog's constructor
 }
 
 bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
@@ -126,7 +129,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 // @param   values        Values for search
 // @param   txn           Transaction
 // @return  Result of executor
-executor::LogicalTile *AbstractCatalog::GetWithIndexScan(
+executor::LogicalTile *AbstractCatalog::GetResultWithIndexScan(
     std::vector<oid_t> column_ids, oid_t index_offset,
     std::vector<type::Value> values, concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

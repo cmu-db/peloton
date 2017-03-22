@@ -46,18 +46,20 @@ namespace catalog {
 
 class AbstractCatalog {
  public:
-  virtual static AbstractCatalog *GetInstance(void) = 0;
+  virtual static AbstractCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr) = 0;
 
   virtual oid_t GetNextOid(void) = 0;
 
  protected:
   AbstractCatalog(oid_t catalog_table_id, std::string catalog_table_name,
-                  catalog::Schema *catalog_table_schema);
+                  catalog::Schema *catalog_table_schema,
+                  storage::Database *pg_catalog, type::AbstractPool *pool);
 
   virtual ~AbstractCatalog() {}
 
-  // Construct catalog_table_ schema, insert columns into pg_attribute (except
-  // for pg_attribute, which is done in its constructor)
+  // Construct catalog_table_ schema
   virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
 
   // Helper functions for catalogs
@@ -67,10 +69,10 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::Transaction *txn);
 
-  executor::LogicalTile *GetWithIndexScan(std::vector<oid_t> column_ids,
-                                          oid_t index_offset,
-                                          std::vector<type::Value> values,
-                                          concurrency::Transaction *txn);
+  executor::LogicalTile *GetResultWithIndexScan(std::vector<oid_t> column_ids,
+                                                oid_t index_offset,
+                                                std::vector<type::Value> values,
+                                                concurrency::Transaction *txn);
 
   // Maximum column name size for catalog schemas
   const size_t max_name_size = 32;
