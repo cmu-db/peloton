@@ -27,13 +27,10 @@ class CopyStatement;
 }
 
 namespace planner {
+
 class CopyPlan : public AbstractPlan {
  public:
   CopyPlan() = delete;
-  CopyPlan(const CopyPlan &) = delete;
-  CopyPlan &operator=(const CopyPlan &) = delete;
-  CopyPlan(CopyPlan &&) = delete;
-  CopyPlan &operator=(CopyPlan &&) = delete;
 
   explicit CopyPlan(char *file_path, bool deserialize_parameters)
       : file_path(file_path), deserialize_parameters(deserialize_parameters) {
@@ -52,6 +49,9 @@ class CopyPlan : public AbstractPlan {
 
   // Whether the copying requires deserialization of parameters
   bool deserialize_parameters = false;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(CopyPlan);
 };
 
 }  // namespace planner

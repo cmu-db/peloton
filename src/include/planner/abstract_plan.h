@@ -21,6 +21,7 @@
 
 #include "catalog/schema.h"
 #include "common/printable.h"
+#include "planner/binding_context.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
 #include "type/types.h"
@@ -49,11 +50,6 @@ namespace planner {
 
 class AbstractPlan : public Printable {
  public:
-  AbstractPlan(const AbstractPlan &) = delete;
-  AbstractPlan &operator=(const AbstractPlan &) = delete;
-  AbstractPlan(AbstractPlan &&) = delete;
-  AbstractPlan &operator=(AbstractPlan &&) = delete;
-
   AbstractPlan();
 
   virtual ~AbstractPlan();
@@ -65,6 +61,8 @@ class AbstractPlan : public Printable {
   void AddChild(std::unique_ptr<AbstractPlan> &&child);
 
   const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
+
+  const AbstractPlan *GetChild(uint32_t child_index) const;
 
   const AbstractPlan *GetParent();
 
@@ -82,6 +80,19 @@ class AbstractPlan : public Printable {
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
+
+  // Binding allows a plan to track the source of an attribute/column regardless
+  // of its position in a tuple.  This binding allows a plan to know the types
+  // of all the attributes it uses *before* execution. This is primarily used
+  // by the codegen component since attributes are not positional.
+  virtual void PerformBinding(BindingContext &binding_context) {
+    for (auto &child : GetChildren()) {
+      child->PerformBinding(binding_context);
+    }
+  }
+
+  virtual void GetOutputColumns(std::vector<oid_t> &columns UNUSED_ATTRIBUTE)
+      const { return; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -116,6 +127,9 @@ class AbstractPlan : public Printable {
   std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(AbstractPlan);
 };
 
 }  // namespace planner

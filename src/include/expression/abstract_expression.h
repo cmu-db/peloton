@@ -17,15 +17,20 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/printable.h"
+#include "common/sql_node_visitor.h"
+#include "planner/attribute_info.h"
 #include "type/serializeio.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-#include "common/sql_node_visitor.h"
 
 namespace peloton {
 
 class Printable;
 class AbstractTuple;
+
+namespace planner {
+class BindingContext;
+}
 
 namespace executor {
 class ExecutorContext;
@@ -92,6 +97,33 @@ class AbstractExpression : public Printable {
 
   type::Type::TypeId GetValueType() const { return return_value_type_; }
 
+  // Attribute binding
+  virtual void PerformBinding(const planner::BindingContext &binding_context) {
+    // Most expressions don't need attribute binding, except for those
+    // that actually reference table attributes (i.e., TVE)
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      children_[i]->PerformBinding(binding_context);
+    }
+  }
+
+  // Is this expression computable using SIMD instructions?
+  virtual bool IsSIMDable() const {
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      if (!children_[i]->IsSIMDable()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Get all the attributes this expression uses
+  virtual void GetUsedAttributes(
+      std::unordered_set<const planner::AttributeInfo*> &attributes) const {
+    for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+      children_[i]->GetUsedAttributes(attributes);
+    }
+  }
+
   virtual void DeduceExpressionType() {}
 
   const std::string GetInfo() const {
@@ -122,7 +154,7 @@ class AbstractExpression : public Printable {
 
   // virtual bool DeserializeFrom(SerializeInput &input) const {
 
-  virtual int SerializeSize() { return 0; }
+  virtual int SerializeSize() const { return 0; }
 
   const char *GetExpressionName() const { return expr_name_.c_str(); }
 

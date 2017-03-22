@@ -17,6 +17,7 @@
 #include "type/array_type.h"
 #include "type/bigint_type.h"
 #include "type/boolean_type.h"
+#include "type/date_type.h"
 #include "type/decimal_type.h"
 #include "type/integer_type.h"
 #include "type/numeric_type.h"
@@ -39,7 +40,7 @@ Type* Type::kTypes[] = {
     new BigintType(),
     new DecimalType(),
     new TimestampType(),
-    new Type(Type::DATE),  // not yet implemented
+    new DateType(),  // not yet implemented
     new VarlenType(Type::VARCHAR),
     new VarlenType(Type::VARBINARY),
     new ArrayType(),
@@ -56,6 +57,7 @@ uint64_t Type::GetTypeSize(const TypeId type_id) {
       return 2;
     case INTEGER:
     case PARAMETER_OFFSET:
+    case DATE:
       return 4;
     case BIGINT:
       return 8;
@@ -97,6 +99,8 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
           return false;
       }
       break;
+    case DATE:
+      return (type_id == DATE || type_id == VARCHAR);
     case TIMESTAMP:
       return (type_id == VARCHAR || type_id == TIMESTAMP);
     case VARCHAR:
@@ -135,6 +139,7 @@ Value Type::GetMinValue(TypeId type_id) {
       return Value(type_id, (int64_t)PELOTON_INT64_MIN);
     case DECIMAL:
       return Value(type_id, PELOTON_DECIMAL_MIN);
+    case DATE:
     case TIMESTAMP:
       return Value(type_id, 0);
     case VARCHAR:
@@ -155,6 +160,7 @@ Value Type::GetMaxValue(TypeId type_id) {
       return Value(type_id, (int8_t)PELOTON_INT8_MAX);
     case SMALLINT:
       return Value(type_id, (int16_t)PELOTON_INT16_MAX);
+    case DATE:
     case INTEGER:
       return Value(type_id, (int32_t)PELOTON_INT32_MAX);
     case BIGINT:
