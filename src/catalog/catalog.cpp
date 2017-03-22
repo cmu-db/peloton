@@ -86,17 +86,18 @@ void Catalog::InitializeCatalog() {
   //  ColumnCatalog::GetInstance();  // Called implicitly
 
   // Insert pg_catalog database into pg_database
-  pg_database->Insert(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, nullptr);
+  pg_database->Insert(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_,
+                      nullptr);
 
   // Insert catalog tables into pg_table
   pg_table->Insert(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                   CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, nullptr);
+                   CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_, nullptr);
   pg_table->Insert(TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_DATABASE_OID,
-                   CATALOG_DATABASE_NAME, nullptr);
+                   CATALOG_DATABASE_NAME, pool_, nullptr);
   pg_table->Insert(INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_DATABASE_OID,
-                   CATALOG_DATABASE_NAME, nullptr);
+                   CATALOG_DATABASE_NAME, pool_, nullptr);
   pg_table->Insert(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                   CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, nullptr);
+                   CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_, nullptr);
 
   // Create indexes on catalog tables, insert them into pg_index
   // TODO: This should be hash index rather than tree index
