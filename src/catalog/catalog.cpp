@@ -369,7 +369,9 @@ ResultType Catalog::DropDatabaseWithName(std::string &database_name,
 ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
                                         concurrency::Transaction *txn) {
   // Drop tables in the database
-  auto table_oids = catalog::DatabaseCatalog::GetInstance().GetTableOidByDatabaseOid(database_oid, txn);
+  auto table_oids =
+      catalog::DatabaseCatalog::GetInstance().GetTableOidByDatabaseOid(
+          database_oid, txn);
   for (auto table_oid : table_oids) {
     DropTable(database_oid, table_oid, txn);
   }
