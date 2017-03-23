@@ -418,6 +418,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
       return false;
     }
   }
+
   return true;
 }
 
@@ -530,7 +531,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
         return false;
       }
     }
-		return true;
+    return true;
 }
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
@@ -645,7 +646,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
       }
     }
 
-		return true;
+    return true;
 }
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
@@ -753,7 +754,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
         return false;
       }
     }
-		return true;
+    return true;
 }
 
 
@@ -883,21 +884,21 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-		if (schema->AllowNull(column_itr) == false) {
-			if (CheckNulls(tuple, column_itr)) {
-						LOG_TRACE("Not NULL constraint violated");
-						throw ConstraintException("Not NULL constraint violated : " +
-																			std::string(tuple->GetInfo()));
-						return false;
-				}
-			}
-			if (CheckExp(tuple, column_itr) == false) {
-						LOG_TRACE("CHECK EXPRESSION constraint violated");
-						throw ConstraintException("CHECK EXPRESSION constraint violated : " +
-																			std::string(tuple->GetInfo()));
-						return false;
-			}
-		}
+    if (schema->AllowNull(column_itr) == false) {
+      if (CheckNulls(tuple, column_itr)) {
+        LOG_TRACE("Not NULL constraint violated");
+        throw ConstraintException("Not NULL constraint violated : " +
+                                  std::string(tuple->GetInfo()));
+        return false;
+      }
+    }
+    if (CheckExp(tuple, column_itr) == false) {
+      LOG_TRACE("CHECK EXPRESSION constraint violated");
+      throw ConstraintException("CHECK EXPRESSION constraint violated : " +
+                                std::string(tuple->GetInfo()));
+      return false;
+    }
+  }
   return true;
 }
 

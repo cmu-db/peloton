@@ -190,7 +190,7 @@ class ConstraintsTestsUtil {
         std::move(target_list), std::move(direct_map_list)));
   };
 
-  /** @brief Insert a tupl with 4 columns' value specified */
+  /** @brief Insert a tuple with 4 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
                             storage::DataTable *table, const type::Value &col1,
                             const type::Value &col2, const type::Value &col3,
@@ -264,6 +264,8 @@ class ConstraintsTestsUtil {
     std::string unique_constraint_name = "unique";
     catalog::Column dummy_column;
 
+    // Todo: index types
+    // Todo: addDefaultValue() here
     switch (index) {
       case 0: {
         auto column = catalog::Column(

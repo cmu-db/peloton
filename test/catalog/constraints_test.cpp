@@ -75,8 +75,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  20            21    22      "23"
   //  .....
   //  140           141   142     "143"
-
-  ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
       ConstraintsTestsUtil::CreateAndPopulateTable());
 
@@ -216,6 +214,40 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 
 }
 #endif
+
+TEST_F(ConstraintsTests, DEFAULTTEST) {
+  std::unique_ptr<storage::DataTable> data_table(
+    ConstraintsTestsUtil::CreateAndPopulateTable());
+
+  auto schema = data_table->GetSchema();
+
+  catalog::Constraint constraint(ConstraintType::DEFAULT, "Default Constraint");
+  auto v = type::ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1));
+  constraint.addDefaultValue(v);
+  schema->AddConstraint(1, constraint);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // begin this transaction
+  auto txn = txn_manager.BeginTransaction();
+
+  ConstraintsTestsUtil::ExecuteInsert(
+    txn, data_table.get(),
+    type::ValueFactory::GetIntegerValue(
+      ConstraintsTestsUtil::PopulatedValue(15, 0)),
+    type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
+    type::ValueFactory::GetIntegerValue(
+      ConstraintsTestsUtil::PopulatedValue(15, 2)),
+    type::ValueFactory::GetVarcharValue(
+      std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
+
+
+
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
+
+}
+
 /*
 #ifdef PRIMARY_UNIQUEKEY_TEST
 TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
