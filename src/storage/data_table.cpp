@@ -260,6 +260,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
       return false;
     }
   }
+
   return true;
 }
 
@@ -376,6 +377,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
     }
 
   }
+
   return true;
 }
 
