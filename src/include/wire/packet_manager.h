@@ -45,7 +45,7 @@ class PacketManager {
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  bool ProcessPacket(InputPacket* pkt, const size_t thread_id);
+  bool ProcessPacket(LibeventSocket * conn);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
@@ -97,6 +97,11 @@ class PacketManager {
   ResponseBuffer responses;
 
  private:
+
+  // conn is a pointer to wire::LibeventSocket
+  static void ExecQueryMessageAsync(void * conn);
+  // conn is a pointer to wire::LibeventSocket
+  static void ExecExecuteMessageAsync(void * conn);
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
   //===--------------------------------------------------------------------===//

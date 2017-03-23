@@ -53,6 +53,7 @@ enum ConnState {
   CONN_WRITE,      // State the writes data to the network
   CONN_WAIT,       // State for waiting for some event to happen
   CONN_PROCESS,    // State that runs the wire protocol on received data
+  CONN_EXECUTING,  // State when work is executing in the background
   CONN_CLOSING,    // State for closing the client connection
   CONN_CLOSED,     // State for closed connection
   CONN_INVALID,    // Invalid STate
@@ -157,6 +158,7 @@ class LibeventSocket {
   PacketManager pkt_manager;       // Stores state for this socket
   ConnState state = CONN_INVALID;  // Initial state of connection
   InputPacket rpkt;                // Used for reading a single Postgres packet
+  bool worker_executing;           // true when a worker is executing in the background
 
  private:
 

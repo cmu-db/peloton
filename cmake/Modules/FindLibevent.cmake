@@ -17,10 +17,13 @@ endforeach()
 find_path(LIBEVENT_INCLUDE_DIRS event.h PATHS ${LibEvent_INCLUDE_PATHS})
 # "lib" prefix is needed on Windows
 find_library(LIBEVENT_LIBRARIES NAMES event libevent PATHS ${LibEvent_LIBRARIES_PATHS})
+find_library(LIBEVENT_PTHREAD_LIBRARIES NAMES libevent_pthreads event_pthreads PATHS ${LibEvent_LIBRARIES_PATHS})
 
-if (LIBEVENT_LIBRARIES AND LIBEVENT_INCLUDE_DIRS)
+if (LIBEVENT_LIBRARIES AND LIBEVENT_INCLUDE_DIRS AND LIBEVENT_PTHREAD_LIBRARIES)
   set(Libevent_FOUND TRUE)
   set(LIBEVENT_LIBRARIES ${LIBEVENT_LIBRARIES})
+  set(LIBEVENT_PTHREAD_LIBRARIES ${LIBEVENT_PTHREAD_LIBRARIES})
+  message(STATUS "Found libevent pthread (include: ${LIBEVENT_INCLUDE_DIRS}, library: ${LIBEVENT_PTHREAD_LIBRARIES})")
 else ()
   set(Libevent_FOUND FALSE)
 endif ()
@@ -38,5 +41,6 @@ endif ()
 
 mark_as_advanced(
     LIBEVENT_LIBRARIES
+    LIBEVENT_PTHREAD_LIBRARIES
     LIBEVENT_INCLUDE_DIRS
   )

@@ -152,14 +152,26 @@ void StateMachine(LibeventSocket *conn) {
           conn->pkt_manager.is_started = true;
         } else {
           // Process all other packets
-          status = conn->pkt_manager.ProcessPacket(&conn->rpkt, (size_t)conn->thread_id);
+          status = conn->pkt_manager.ProcessPacket(conn);
         }
-
-        if (status == false) {
+        if (conn->worker_executing){
+          // work is executing in the background
+          conn->TransitState(CONN_EXECUTING);
+          // wait until done executing
+          done = true;
+        }else if (status == false) {
           // packet processing can't proceed further
           conn->TransitState(CONN_CLOSING);
         } else {
           // We should have responses ready to send
+          conn->TransitState(CONN_WRITE);
+        }
+        break;
+      }
+      case CONN_EXECUTING: {
+
+        if (!conn->worker_executing){
+          // if we are done executing, we should write the results out to the connection
           conn->TransitState(CONN_WRITE);
         }
         break;

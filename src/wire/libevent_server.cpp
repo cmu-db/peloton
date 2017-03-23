@@ -12,6 +12,9 @@
 
 #include "wire/libevent_server.h"
 
+
+#include "event2/thread.h"
+
 #include <fcntl.h>
 #include <inttypes.h>
 #include <sys/socket.h>
@@ -63,7 +66,9 @@ void Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
 }
 
 LibeventServer::LibeventServer() {
+  evthread_use_pthreads();
   struct event_base *base = event_base_new();
+  evthread_make_base_notifiable(base);
   struct event *evstop;
 
   // Create our event base

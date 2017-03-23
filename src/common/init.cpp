@@ -25,6 +25,7 @@
 #include <google/protobuf/stubs/common.h>
 
 #include <thread>
+#include <include/task/worker_pool.h>
 
 namespace peloton {
 
@@ -43,6 +44,10 @@ void PelotonInit::Initialize() {
   int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
   storage::DataTable::SetActiveIndirectionArrayCount(parallelism);
+
+  // start worker thread pool
+  // TODO: this will have to be tuned
+  task::WorkerPool::GetInstance();
 
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();

@@ -22,6 +22,7 @@ include(cmake/ProtoBuf.cmake)
 find_package(Libevent REQUIRED)
 include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${LIBEVENT_LIBRARIES})
+list(APPEND Peloton_LINKER_LIBS ${LIBEVENT_PTHREAD_LIBRARIES})
 
 # ---[ Doxygen
 if(BUILD_docs)
