@@ -34,7 +34,6 @@ class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
-  
   Transaction() { 
     Init(INVALID_CID, 0, IsolationLevelType::SERIALIZABLE); 
   }

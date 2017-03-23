@@ -101,7 +101,8 @@ class TransactionManager {
   // This method is used by executor to yield ownership after the acquired ownership.
   virtual void YieldOwnership(
       Transaction *const current_txn, 
-      const oid_t &tile_group_id, 
+      // const oid_t &tile_group_id, 
+      const storage::TileGroupHeader *const tile_group_header, 
       const oid_t &tuple_id) = 0;
 
   // The index_entry_ptr is the address of the head node of the version chain, 

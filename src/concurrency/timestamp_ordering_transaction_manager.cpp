@@ -160,10 +160,11 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
 // It should not be called if the tuple is in the write set as commit and abort
 // will release the write lock anyway.
 void TimestampOrderingTransactionManager::YieldOwnership(
-    UNUSED_ATTRIBUTE Transaction *const current_txn, const oid_t &tile_group_id,
+    UNUSED_ATTRIBUTE Transaction *const current_txn, 
+    const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  // auto &manager = catalog::Manager::GetInstance();
+  // auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id));
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
@@ -174,6 +175,11 @@ bool TimestampOrderingTransactionManager::PerformRead(
   if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
     // Ignore read validation for all read-only transactions
     return true;
+  }
+
+  // TODO: implement snapshot isolation.
+  if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
+
   }
 
   oid_t tile_group_id = location.block;
@@ -559,7 +565,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // A read operation has acquired ownership but hasn't done any further
         // update/delete yet
         // Yield the ownership
-        YieldOwnership(current_txn, tile_group_id, tuple_slot);
+        YieldOwnership(current_txn, tile_group_header, tuple_slot);
       } else if (tuple_entry.second == RWType::UPDATE) {
         // we must guarantee that, at any time point, only one version is
         // visible.
@@ -700,7 +706,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
         // A read operation has acquired ownership but hasn't done any further
         // update/delete yet
         // Yield the ownership
-        YieldOwnership(current_txn, tile_group_id, tuple_slot);
+        YieldOwnership(current_txn, tile_group_header, tuple_slot);
       } else if (tuple_entry.second == RWType::UPDATE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);

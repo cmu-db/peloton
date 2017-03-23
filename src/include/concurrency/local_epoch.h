@@ -52,9 +52,7 @@ public:
     epoch_lower_bound_(UINT64_MAX), 
     thread_id_(thread_id) {}
 
-  bool EnterEpoch(const uint64_t epoch_id);
-
-  void EnterEpochRO(const uint64_t epoch_id);
+  bool EnterEpoch(const uint64_t epoch_id, const bool is_snapshot_read);
 
   void ExitEpoch(const uint64_t epoch_id);
   
