@@ -263,6 +263,7 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
       return false;
     }
   }
+
   return true;
 }
 
