@@ -56,7 +56,7 @@ TEST_F(TransactionTests, TransactionTest) {
   }
 }
 
-TEST_F(TransactionTests, ReadonlyTransactionTest) {
+TEST_F(TransactionTests, ReadOnlyTransactionTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
