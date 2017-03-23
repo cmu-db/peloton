@@ -51,6 +51,9 @@ class TableCatalog : public AbstractCatalog {
                      const std::string &database_name,
                      concurrency::Transaction *txn);
 
+  //TODO: Also add index for database oid?
+  std::vector<oid_t> GetTableOidByDatabaseOid(oid_t database_id, concurrency::Transaction *txn);
+
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
