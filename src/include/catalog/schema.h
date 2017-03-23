@@ -171,6 +171,27 @@ class Schema : public Printable {
     return true;
   }
 
+  inline bool AllowDefault(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Get the default value for the column
+  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+    for (auto constraint : columns[column_id].GetConstraints()) {
+      if (constraint.GetType() == ConstraintType::DEFAULT) {
+        return constraint.getDefaultValue();
+      }
+    }
+
+    return nullptr;
+  }
+
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,
                             const catalog::Constraint &constraint) {
