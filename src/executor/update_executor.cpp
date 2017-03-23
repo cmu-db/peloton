@@ -108,9 +108,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
       target_table_->InsertTuple(&new_tuple, current_txn, &index_entry_ptr);
 
   // it is possible that some concurrent transactions have inserted the
-  // same
-  // tuple.
-  // in this case, abort the transaction.
+  // same tuple. In this case, abort the transaction.
   if (location.block == INVALID_OID) {
     transaction_manager.SetTransactionResult(current_txn,
                                              peloton::ResultType::FAILURE);
@@ -121,6 +119,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
 
   return true;
 }
+
 /**
  * @brief updates a set of columns
  * @return true on success, false otherwise.
@@ -202,8 +201,7 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
     }
-    // if we have already got the
-    // ownership
+    // if we have already obtained the ownership
     else {
       // Skip the IsOwnable and AcquireOwnership if we have already got the
       // ownership
@@ -260,8 +258,7 @@ bool UpdateExecutor::DExecute() {
 
           // perform projection from old version to new version.
           // this triggers in-place update, and we do not need to allocate
-          // another
-          // version.
+          // another version.
           project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
                                   executor_context_);
 

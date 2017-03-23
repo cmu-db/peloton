@@ -60,14 +60,14 @@ class TransactionManager {
   cid_t GetCurrentCommitId() { return next_cid_.load(); }
 
   // This method is used for avoiding concurrent inserts.
-  virtual bool IsOccupied(
+  bool IsOccupied(
       Transaction *const current_txn, 
-      const void *position_ptr) = 0;
+      const void *position_ptr);
 
-  virtual VisibilityType IsVisible(
+  VisibilityType IsVisible(
       Transaction *const current_txn, 
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id) = 0;
+      const oid_t &tuple_id);
 
   // This method test whether the current transaction is the owner of a tuple.
   virtual bool IsOwner(
@@ -132,13 +132,13 @@ class TransactionManager {
 
   void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
-  virtual Transaction *BeginTransaction(const size_t thread_id = 0) = 0;
+  Transaction *BeginTransaction(const size_t thread_id = 0);
 
-  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0) = 0;
+  Transaction *BeginReadonlyTransaction(const size_t thread_id = 0);
 
-  virtual void EndTransaction(Transaction *current_txn) = 0;
+  void EndTransaction(Transaction *current_txn);
 
-  virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
+  void EndReadonlyTransaction(Transaction *current_txn);
 
   virtual ResultType CommitTransaction(Transaction *const current_txn) = 0;
 
