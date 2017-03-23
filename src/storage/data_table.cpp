@@ -376,6 +376,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
       }
     }
   }
+
   return true;
 }
 
