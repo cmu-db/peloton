@@ -159,24 +159,41 @@ oid_t TableCatalog::GetOidByName(const std::string &table_name,
   return table_id;
 }
 
-std::vector<oid_t> GetTableOidByDatabaseOid(oid_t database_id, concurrency::Transaction *txn) {
+std::vector<oid_t> GetTableOidByDatabaseOid(oid_t database_id,
+                                            concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_id
   oid_t index_offset = 3;              // Index of table_name & database_name
   std::vector<type::Value> values;
-  values.push_back(
-      type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
 
-  vector<oid_t> table_ids;
+  std::vector<oid_t> table_ids;
   int result_count = result->GetTupleCount();
-  for (int i=0; i<result_count; i++) {
+  for (int i = 0; i < result_count; i++) {
     table_ids.emplace_back(result->GetValue(i, 0).GetAs<oid_t>());
   }
 
-  return table_id;
+  return table_ids;
 }
 
+std::vector<std::string> GetTableNameByDatabaseOid(oid_t database_id,
+                                            concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({1});  // table_id
+  oid_t index_offset = 3;              // Index of table_name & database_name
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+
+  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+
+  std::vector<std::string> table_names;
+  int result_count = result->GetTupleCount();
+  for (int i = 0; i < result_count; i++) {
+    table_names.emplace_back(result->GetValue(i, 0).GetAs<std::string>());
+  }
+
+  return table_names;
+}
 
 }  // End catalog namespace
 }  // End peloton namespace

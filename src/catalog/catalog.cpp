@@ -368,7 +368,15 @@ ResultType Catalog::DropDatabaseWithName(std::string &database_name,
 // Drop a database with its oid
 ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
                                         concurrency::Transaction *txn) {
-  // Drop actual database. TODO: We should move this logic out of catalog
+  // Drop database record in catalog
+  LOG_TRACE("Deleting tuple from catalog");
+  if (!catalog::DatabaseCatalog::GetInstance().DeleteByOid(database_oid, txn)) {
+    LOG_TRACE("Database tuple is not found!");
+    return ResultType::FAILURE;
+  }
+
+  auto table_oids = catalog::DatabaseCatalog::GetInstance().GetTableOidByDatabaseOid(database_oid, txn);
+
   LOG_TRACE("Dropping database with oid: %d", database_oid);
   bool found_database = false;
   for (auto it = databases_.begin(); it != databases_.end(); ++it) {
