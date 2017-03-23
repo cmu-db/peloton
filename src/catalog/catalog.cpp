@@ -46,32 +46,6 @@ Catalog::Catalog() {  // CHANGING
   InitializeFunctions();
 }
 
-void Catalog::CreateMetricsCatalog() {
-  auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
-  auto default_db_oid = default_db->GetOid();
-
-  // Create table for database metrics
-  auto database_metrics_catalog =
-      CreateMetricsCatalog(default_db_oid, DATABASE_METRIC_NAME);
-  default_db->AddTable(database_metrics_catalog.release(), true);
-
-  // Create table for index metrics
-  auto index_metrics_catalog =
-      CreateMetricsCatalog(default_db_oid, INDEX_METRIC_NAME);
-  default_db->AddTable(index_metrics_catalog.release(), true);
-
-  // Create table for table metrics
-  auto table_metrics_catalog =
-      CreateMetricsCatalog(default_db_oid, TABLE_METRIC_NAME);
-  default_db->AddTable(table_metrics_catalog.release(), true);
-
-  // Create table for query metrics
-  auto query_metrics_catalog =
-      CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
-  default_db->AddTable(query_metrics_catalog.release(), true);
-  LOG_TRACE("Metrics tables created");
-}
-
 void Catalog::InitializeCatalog() {
   // Create pg_catalog database
   auto pg_catalog = new storage::Database(CATALOG_DATABASE_OID);
@@ -512,39 +486,43 @@ storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-// // Create Table for pg_class
-// std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(
-//     oid_t database_id, std::string table_name) {
-//   bool own_schema = true;
-//   bool adapt_table = false;
-//   bool is_catalog = true;
-//   auto table_schema = InitializeTablesSchema();
+oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
-//   catalog::Schema *schema = table_schema.release();
-//   std::unique_ptr<storage::DataTable> table(
-//       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-//           table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
-//           is_catalog));
-//   return table;
-// }
+Catalog::~Catalog() {
+  delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
-// // Create Table for pg_database
-// std::unique_ptr<storage::DataTable> Catalog::CreateDatabaseCatalog(
-//     oid_t database_id, std::string database_name) {
-//   bool own_schema = true;
-//   bool adapt_table = false;
-//   bool is_catalog = true;
-//   auto database_schema = InitializeDatabaseSchema();
+  delete pool_;
+}
 
-//   catalog::Schema *schema = database_schema.release();
+//===--------------------------------------------------------------------===//
+// METRIC
+//===--------------------------------------------------------------------===//
 
-//   std::unique_ptr<storage::DataTable> table(
-//       storage::TableFactory::GetDataTable(database_id, GetNextOid(), schema,
-//           database_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema,
-//           adapt_table, is_catalog));
+void Catalog::CreateMetricsCatalog() {
+  auto default_db = GetDatabaseWithName(CATALOG_DATABASE_NAME);
+  auto default_db_oid = default_db->GetOid();
 
-//   return table;
-// }
+  // Create table for database metrics
+  auto database_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, DATABASE_METRIC_NAME);
+  default_db->AddTable(database_metrics_catalog.release(), true);
+
+  // Create table for index metrics
+  auto index_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, INDEX_METRIC_NAME);
+  default_db->AddTable(index_metrics_catalog.release(), true);
+
+  // Create table for table metrics
+  auto table_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, TABLE_METRIC_NAME);
+  default_db->AddTable(table_metrics_catalog.release(), true);
+
+  // Create table for query metrics
+  auto query_metrics_catalog =
+      CreateMetricsCatalog(default_db_oid, QUERY_METRIC_NAME);
+  default_db->AddTable(query_metrics_catalog.release(), true);
+  LOG_TRACE("Metrics tables created");
+}
 
 // Create table for metrics tables
 std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
@@ -572,63 +550,6 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   return table;
 }
 
-// // Initialize tables catalog schema
-// std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
-//   const std::string not_null_constraint_name = "not_null";
-
-//   auto id_column = catalog::Column(type::Type::INTEGER,
-//                                    type::Type::GetTypeSize(type::Type::INTEGER),
-//                                    "table_id", true);
-//   id_column.AddConstraint(
-//       catalog::Constraint(ConstraintType::NOTNULL,
-//       not_null_constraint_name));
-
-//   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
-//       "table_name", true);
-//   name_column.AddConstraint(
-//       catalog::Constraint(ConstraintType::NOTNULL,
-//       not_null_constraint_name));
-
-//   auto database_id_column = catalog::Column(type::Type::INTEGER,
-//       type::Type::GetTypeSize(type::Type::INTEGER), "database_id", true);
-//   database_id_column.AddConstraint(
-//       catalog::Constraint(ConstraintType::NOTNULL,
-//       not_null_constraint_name));
-
-//   auto database_name_column = catalog::Column(type::Type::VARCHAR,
-//       max_name_size, "database_name", true);
-//   database_name_column.AddConstraint(
-//       catalog::Constraint(ConstraintType::NOTNULL,
-//       not_null_constraint_name));
-
-//   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema( {
-//       id_column, name_column, database_id_column, database_name_column }));
-
-//   return table_schema;
-// }
-
-// // Initialize database catalog schema
-// std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
-//   const std::string not_null_constraint_name = "not_null";
-
-//   auto id_column = catalog::Column(type::Type::INTEGER,
-//                                    type::Type::GetTypeSize(type::Type::INTEGER),
-//                                    "database_id", true);
-//   id_column.AddConstraint(
-//       catalog::Constraint(ConstraintType::NOTNULL,
-//       not_null_constraint_name));
-//   auto name_column = catalog::Column(type::Type::VARCHAR, max_name_size,
-//       "database_name", true);
-//   name_column.AddConstraint(
-//       catalog::Constraint(ConstraintType::NOTNULL,
-//       not_null_constraint_name));
-
-//   std::unique_ptr<catalog::Schema> database_schema(new catalog::Schema( {
-//       id_column, name_column }));
-//   return database_schema;
-// }
-
-// Initialize database catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -655,7 +576,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseMetricsSchema() {
   return database_schema;
 }
 
-// Initialize table catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -694,7 +614,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTableMetricsSchema() {
   return database_schema;
 }
 
-// Initialize index catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -732,7 +651,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeIndexMetricsSchema() {
   return database_schema;
 }
 
-// Initialize query catalog schema
 std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
   const std::string not_null_constraint_name = "not_null";
   catalog::Constraint not_null_constraint(ConstraintType::NOTNULL,
@@ -794,18 +712,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeQueryMetricsSchema() {
        timestamp_column}));
   return database_schema;
 }
-
-oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
-
-Catalog::~Catalog() {
-  delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
-
-  delete pool_;
-}
-
-//===--------------------------------------------------------------------===//
-// METRIC
-//===--------------------------------------------------------------------===//
 
 //===--------------------------------------------------------------------===//
 // FUNCTION

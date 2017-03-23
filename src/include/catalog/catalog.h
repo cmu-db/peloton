@@ -75,9 +75,6 @@ class Catalog {
 
   void InitializeCatalog(void);
 
-  // Creates the metric tables for statistics
-  void CreateMetricsCatalog();
-
   // Create a database
   ResultType CreateDatabase(std::string &database_name,
                             concurrency::Transaction *txn);
@@ -134,23 +131,27 @@ class Catalog {
   // Find a database using vector offset
   storage::Database *GetDatabaseWithOffset(const oid_t database_offset) const;
 
-  // // Create Table for pg_class
-  // std::unique_ptr<storage::DataTable> CreateTableCatalog(
-  //     oid_t database_id, std::string table_name);
+  // Get table from a database with its name
+  storage::DataTable *GetTableWithName(std::string database_name,
+                                       std::string table_name);
 
-  // // Create Table for pg_database
-  // std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
-  //     oid_t database_id, std::string table_name);
+  // Get table from a database with its oid
+  storage::DataTable *GetTableWithOid(const oid_t database_oid,
+                                      const oid_t table_oid) const;
+
+  // Get the number of databases currently in the catalog
+  oid_t GetDatabaseCount();
+
+  //===--------------------------------------------------------------------===//
+  // METRIC
+  //===--------------------------------------------------------------------===//
+
+  // Creates the metric tables for statistics
+  void CreateMetricsCatalog();
 
   // Create Table for metrics tables
   std::unique_ptr<storage::DataTable> CreateMetricsCatalog(
       oid_t database_id, std::string table_name);
-
-  // // Initialize the schema of the database catalog
-  // std::unique_ptr<Schema> InitializeDatabaseSchema();
-
-  // // Initialize the schema of the table catalog
-  // std::unique_ptr<Schema> InitializeTablesSchema();
 
   // Initialize the schema of the database metrics table
   std::unique_ptr<Schema> InitializeDatabaseMetricsSchema();
@@ -163,17 +164,6 @@ class Catalog {
 
   // Initialize the schema of the query metrics table
   std::unique_ptr<catalog::Schema> InitializeQueryMetricsSchema();
-
-  // Get table from a database with its name
-  storage::DataTable *GetTableWithName(std::string database_name,
-                                       std::string table_name);
-
-  // Get table from a database with its oid
-  storage::DataTable *GetTableWithOid(const oid_t database_oid,
-                                      const oid_t table_oid) const;
-
-  // Get the number of databases currently in the catalog
-  oid_t GetDatabaseCount();
 
   //===--------------------------------------------------------------------===//
   // FUNCTION
