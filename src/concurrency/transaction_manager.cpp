@@ -30,64 +30,51 @@ ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
 
 Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const IsolationLevelType type) {
   
+  Transaction *txn = nullptr;
+  
+  cid_t begin_cid = INVALID_CID;
+
   if (type == IsolationLevelType::READ_ONLY) {
 
-    Transaction *txn = nullptr;
+    // transaction processing with decentralized epoch manager
+    begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
+  
+  } else if (type == IsolationLevelType::SNAPSHOT) {
+    
+    auto &log_manager = logging::LogManager::GetInstance();
+    log_manager.PrepareLogging();
 
     // transaction processing with decentralized epoch manager
-    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
-    txn = new Transaction(begin_cid, thread_id, type);
-
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
-          ->GetTxnLatencyMetric()
-          .StartTimer();
-    }
-
-    return txn;
+    begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
 
   } else {
 
     auto &log_manager = logging::LogManager::GetInstance();
     log_manager.PrepareLogging();
 
-    Transaction *txn = nullptr;
-
     // transaction processing with decentralized epoch manager
-    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id);
-    txn = new Transaction(begin_cid, thread_id, type);
-
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
-          ->GetTxnLatencyMetric()
-          .StartTimer();
-    }
-
-    return txn;
+    begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, false);
+    
   }
+  
+  txn = new Transaction(begin_cid, thread_id, type);
+  
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()
+        ->GetTxnLatencyMetric()
+        .StartTimer();
+  }
+
+  return txn;
 }
 
 void TransactionManager::EndTransaction(Transaction *current_txn) {
+
+  EpochManagerFactory::GetInstance().ExitEpoch(
+    current_txn->GetThreadId(), 
+    current_txn->GetBeginCommitId());
   
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
-
-    EpochManagerFactory::GetInstance().ExitEpoch(
-      current_txn->GetThreadId(), 
-      current_txn->GetBeginCommitId());
-    
-    delete current_txn;
-    current_txn = nullptr;
-    
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
-          ->GetTxnLatencyMetric()
-          .RecordLatency();
-    }
-  } else {
-
-    EpochManagerFactory::GetInstance().ExitEpoch(
-      current_txn->GetThreadId(), 
-      current_txn->GetBeginCommitId());
+  if (current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
 
     // logging logic
     auto &log_manager = logging::LogManager::GetInstance();
@@ -107,15 +94,15 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
       }
       log_manager.DoneLogging();
     }
+  }
 
-    delete current_txn;
-    current_txn = nullptr;
-    
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()
-          ->GetTxnLatencyMetric()
-          .RecordLatency();
-    }
+  delete current_txn;
+  current_txn = nullptr;
+  
+  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()
+        ->GetTxnLatencyMetric()
+        .RecordLatency();
   }
 }
 

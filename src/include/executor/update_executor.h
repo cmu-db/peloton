@@ -19,6 +19,12 @@
 #include "planner/update_plan.h"
 
 namespace peloton {
+
+namespace storage {
+class TileGroup;
+class TileGroupHeader;
+}
+
 namespace executor {
 
 class UpdateExecutor : public AbstractExecutor {
@@ -29,11 +35,12 @@ class UpdateExecutor : public AbstractExecutor {
   explicit UpdateExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
- protected:
-  bool PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
+ private:
+  bool PerformUpdatePrimaryKey(bool is_owner, 
+                               storage::TileGroup *tile_group,
+                               storage::TileGroupHeader *tile_group_header, 
                                oid_t physical_tuple_id,
-                               ItemPointer &old_location,
-                               storage::TileGroup *tile_group);
+                               ItemPointer &old_location);
 
   bool DInit();
 
