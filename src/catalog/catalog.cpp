@@ -423,6 +423,51 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
   return ResultType::SUCCESS;
 }
 
+// Drop a table, CHANGING
+ResultType Catalog::DropTableWithOid(oid_t database_id, oid_t table_id,
+                                     concurrency::Transaction *txn) {
+  LOG_TRACE("Dropping table %d from database %d", database_id, table_id);
+
+  storage::Database *database = GetDatabaseWithOid(database_id);
+  if (database == nullptr) {
+    LOG_TRACE("Can't Found database!");
+    return ResultType::FAILURE;
+  }
+
+  storage::DataTable *table = database->GetTableWithOid(table_id);
+  if (database == nullptr) {
+    LOG_TRACE("Can't Found Table!");
+    return ResultType::FAILURE;
+  }
+
+  LOG_TRACE("Found table!");
+
+  // drop actual data table
+  // requires lock in DropTableWithOid() methods
+  // cleanup schema, foreign keys, tile_groups, also delete Indexes that belong
+  // to the table
+  LOG_TRACE("Deleting table!");
+  // TODO: data_table has DropIndexes(), but indexTuner also has
+  // DropIndexes(table), do we need mutex lock when droping index??
+  table->DropIndexes();
+  database->DropTableWithOid(table_id);
+
+  // change metadata
+  LOG_TRACE("Deleting tuple from catalog!");
+  // delete record in pg_table
+  TableCatalog::GetInstance()->DeleteByOid(table_id, txn);
+  // delete records in pg_attribute
+  auto &schema_columns = table->GetSchema()->GetColumns();
+  for (auto &column : schema_columns) {
+    // std::string column_name = column.GetName();
+    ColumnCatalog::GetInstance()->DeleteByOidWithName(table_id,
+                                                      column.GetName(), txn);
+  }
+  // TODO: delete records in pg_index
+
+  return ResultType::SUCCESS;
+}
+
 // Only used for testing
 bool Catalog::HasDatabase(const oid_t db_oid) const {
   return (GetDatabaseWithOid(db_oid) != nullptr);
@@ -436,6 +481,7 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 }
 
 // Find a database using its name. TODO: This should be deprecated
+// GetOidByName(string database_name, Transaction *txn)
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string database_name) const {
   oid_t database_oid = catalog::DatabaseCatalog::GetInstance().GetOidByName();
