@@ -368,6 +368,12 @@ ResultType Catalog::DropDatabaseWithName(std::string &database_name,
 // Drop a database with its oid
 ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
                                         concurrency::Transaction *txn) {
+  // Drop tables in the database
+  auto table_oids = catalog::DatabaseCatalog::GetInstance().GetTableOidByDatabaseOid(database_oid, txn);
+  for (auto table_oid : table_oids) {
+    DropTable(database_oid, table_oid, txn);
+  }
+
   // Drop database record in catalog
   LOG_TRACE("Deleting tuple from catalog");
   if (!catalog::DatabaseCatalog::GetInstance().DeleteByOid(database_oid, txn)) {
@@ -375,8 +381,7 @@ ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
     return ResultType::FAILURE;
   }
 
-  auto table_oids = catalog::DatabaseCatalog::GetInstance().GetTableOidByDatabaseOid(database_oid, txn);
-
+  // Drop actual database object
   LOG_TRACE("Dropping database with oid: %d", database_oid);
   bool found_database = false;
   for (auto it = databases_.begin(); it != databases_.end(); ++it) {
@@ -390,13 +395,6 @@ ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
   }
   if (!found_database) {
     LOG_TRACE("Database is not found!");
-    return ResultType::FAILURE;
-  }
-
-  // Drop database record in catalog
-  LOG_TRACE("Deleting tuple from catalog");
-  if (!catalog::DatabaseCatalog::GetInstance().DeleteByOid(database_oid, txn)) {
-    LOG_TRACE("Database tuple is not found!");
     return ResultType::FAILURE;
   }
   return ResultType::SUCCESS;
