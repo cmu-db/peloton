@@ -415,7 +415,18 @@ enum class IsolationLevelType {
   SNAPSHOT = 2,         // snapshot isolation
   REPEATABLE_READS = 2, // repeatable reads
   READ_COMMITTED = 3,   // read committed
-  READ_UNCOMMITTED = 4  // read uncommitted
+  READ_UNCOMMITTED = 4, // read uncommitted
+  READ_ONLY = 5         // read only
+};
+
+//===--------------------------------------------------------------------===//
+// Conflict Avoidance types
+//===--------------------------------------------------------------------===//
+
+enum class ConflictAvoidanceType {
+  INVALID = INVALID_TYPE_ID,
+  WAIT = 1,     // wait-based
+  ABORT = 2,    // abort-based
 };
 
 //===--------------------------------------------------------------------===//

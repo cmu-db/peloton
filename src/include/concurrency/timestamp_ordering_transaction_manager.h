@@ -26,22 +26,28 @@ namespace concurrency {
 
 class TimestampOrderingTransactionManager : public TransactionManager {
  public:
-  TimestampOrderingTransactionManager() {}
+  TimestampOrderingTransactionManager(
+      const IsolationLevelType level, 
+      const ConflictAvoidanceType conflict) :
+    TransactionManager(level, conflict) {}
 
   virtual ~TimestampOrderingTransactionManager() {}
 
-  static TimestampOrderingTransactionManager &GetInstance();
+  static TimestampOrderingTransactionManager &GetInstance(
+      const IsolationLevelType level, 
+      const ConflictAvoidanceType conflict);
 
   // This method tests whether the current transaction is the owner of a tuple.
-  virtual bool IsOwner(Transaction *const current_txn,
-                       const storage::TileGroupHeader *const tile_group_header,
-                       const oid_t &tuple_id);
+  virtual bool IsOwner(
+      Transaction *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   // This method tests whether the current transaction has created this version of the tuple
   virtual bool IsWritten(
-    Transaction *const current_txn,
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id);
+      Transaction *const current_txn,
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
@@ -57,9 +63,10 @@ class TimestampOrderingTransactionManager : public TransactionManager {
 
   // This method is used by executor to yield ownership after the acquired
   // ownership.
-  virtual void YieldOwnership(Transaction *const current_txn,
-                              const oid_t &tile_group_id,
-                              const oid_t &tuple_id);
+  virtual void YieldOwnership(
+      Transaction *const current_txn,
+      const oid_t &tile_group_id,
+      const oid_t &tuple_id);
 
   // The index_entry_ptr is the address of the head node of the version chain,
   // which is directly pointed by the primary index.

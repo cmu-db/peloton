@@ -240,7 +240,7 @@ class TransactionThread {
 
     if (cur_seq == 0) {
       if (schedule->declared_ro == true) {
-        txn = txn_manager->BeginReadonlyTransaction();
+        txn = txn_manager->BeginReadOnlyTransaction();
       } else {
         txn = txn_manager->BeginTransaction();
       }

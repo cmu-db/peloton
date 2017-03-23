@@ -100,7 +100,7 @@
 //   Transaction *const current_txn, const ItemPointer &location,
 //   bool acquire_ownership) {
 //   if (current_txn->IsDeclaredReadOnly() == true) {
-//     // Ignore read validation for all readonly transactions
+//     // Ignore read validation for all read-only transactions
 //     return true;
 //   }
 
@@ -516,7 +516,7 @@
 
 // Result OptimisticTransactionManager::AbortTransaction(
 //     Transaction *const current_txn) {
-//   // It's impossible that a pre-declared readonly transaction aborts
+//   // It's impossible that a pre-declared read-only transaction aborts
 //   PL_ASSERT(current_txn->IsDeclaredReadOnly() == false);
 
 //   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());

@@ -338,7 +338,7 @@ void ReadSkewTest() {
 }
 
 // Look at the SSI paper (http://drkp.net/papers/ssi-vldb12.pdf).
-// This is an anomaly involving three transactions (one of them is a readonly
+// This is an anomaly involving three transactions (one of them is a read-only
 // transaction).
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
