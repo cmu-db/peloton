@@ -76,6 +76,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // Bootstrap
   ConstraintsTestsUtil::CreateAndPopulateTable();
+
   std::unique_ptr<storage::DataTable> data_table(
       ConstraintsTestsUtil::CreateAndPopulateTable());
 
