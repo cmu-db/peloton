@@ -308,6 +308,23 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   return true;
 }
 
+// Set the default values for corresponding columns
+
+bool DataTable::SetDefaults(storage::Tuple *tuple) {
+  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
+
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    if (tuple->IsNull(column_itr) && schema->AllowDefault(column_itr)) {
+      auto default_value = schema->GetDefaultValue(column_itr);
+      tuple->SetValue(column_itr, *default_value);
+      return true;
+    }
+  }
+
+  return true;
+}
+
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
