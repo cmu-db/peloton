@@ -18,6 +18,6 @@ namespace concurrency {
 ConcurrencyType TransactionManagerFactory::protocol_ =
     ConcurrencyType::TIMESTAMP_ORDERING;
 IsolationLevelType TransactionManagerFactory::isolation_level_ =
-    IsolationLevelType::FULL;
+    IsolationLevelType::SERIALIZABLE;
 }
 }

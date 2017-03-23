@@ -32,16 +32,6 @@ public:
 
   static OptimisticTransactionManager &GetInstance();
 
-  // This method is used for avoiding concurrent inserts.
-  virtual bool IsOccupied(
-      Transaction *const current_txn, 
-      const void *position);
-
-  virtual VisibilityType IsVisible(
-    Transaction *const current_txn,
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id);
-
   // This method tests whether the current transaction is the owner of a tuple.
   virtual bool IsOwner(Transaction *const current_txn,
                        const storage::TileGroupHeader *const tile_group_header,
@@ -98,14 +88,6 @@ public:
   virtual ResultType CommitTransaction(Transaction *const current_txn);
 
   virtual ResultType AbortTransaction(Transaction *const current_txn);
-
-  virtual Transaction *BeginTransaction(const size_t thread_id = 0);
-
-  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0);
-
-  virtual void EndTransaction(Transaction *current_txn);
-
-  virtual void EndReadonlyTransaction(Transaction *current_txn);
 
 };
 }
