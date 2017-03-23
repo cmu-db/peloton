@@ -23,96 +23,101 @@
 namespace peloton {
 namespace concurrency {
 
-Transaction *TransactionManager::BeginTransaction(const size_t thread_id) {
+IsolationLevelType TransactionManager::default_isolation_level_ =
+    IsolationLevelType::SERIALIZABLE;
+ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
+    ConflictAvoidanceType::ABORT;
+
+Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const IsolationLevelType type) {
   
-  auto &log_manager = logging::LogManager::GetInstance();
-  log_manager.PrepareLogging();
+  if (type == IsolationLevelType::READ_ONLY) {
 
-  Transaction *txn = nullptr;
+    Transaction *txn = nullptr;
 
-  // transaction processing with decentralized epoch manager
-  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id);
-  txn = new Transaction(begin_cid, thread_id);
+    // transaction processing with decentralized epoch manager
+    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
+    txn = new Transaction(begin_cid, thread_id, type);
 
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .StartTimer();
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance()
+          ->GetTxnLatencyMetric()
+          .StartTimer();
+    }
+
+    return txn;
+
+  } else {
+
+    auto &log_manager = logging::LogManager::GetInstance();
+    log_manager.PrepareLogging();
+
+    Transaction *txn = nullptr;
+
+    // transaction processing with decentralized epoch manager
+    cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id);
+    txn = new Transaction(begin_cid, thread_id, type);
+
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance()
+          ->GetTxnLatencyMetric()
+          .StartTimer();
+    }
+
+    return txn;
   }
-
-  return txn;
-}
-
-
-Transaction *TransactionManager::BeginReadonlyTransaction(const size_t thread_id) {
-  Transaction *txn = nullptr;
-
-  // transaction processing with decentralized epoch manager
-  cid_t begin_cid = EpochManagerFactory::GetInstance().EnterEpochRO(thread_id);
-  txn = new Transaction(begin_cid, thread_id, true);
-
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .StartTimer();
-  }
-
-  return txn;
 }
 
 void TransactionManager::EndTransaction(Transaction *current_txn) {
   
-  EpochManagerFactory::GetInstance().ExitEpoch(
-    current_txn->GetThreadId(), 
-    current_txn->GetBeginCommitId());
+  if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
 
-  // logging logic
-  auto &log_manager = logging::LogManager::GetInstance();
-
-  if (current_txn->GetResult() == ResultType::SUCCESS) {
-    if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId());
+    EpochManagerFactory::GetInstance().ExitEpoch(
+      current_txn->GetThreadId(), 
+      current_txn->GetBeginCommitId());
+    
+    delete current_txn;
+    current_txn = nullptr;
+    
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance()
+          ->GetTxnLatencyMetric()
+          .RecordLatency();
     }
-    // Log the transaction's commit
-    // For time stamp ordering, every transaction only has one timestamp
-    log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
   } else {
-    if (current_txn->IsGCSetEmpty() != true) {
-      gc::GCManagerFactory::GetInstance().
-          RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
+
+    EpochManagerFactory::GetInstance().ExitEpoch(
+      current_txn->GetThreadId(), 
+      current_txn->GetBeginCommitId());
+
+    // logging logic
+    auto &log_manager = logging::LogManager::GetInstance();
+
+    if (current_txn->GetResult() == ResultType::SUCCESS) {
+      if (current_txn->IsGCSetEmpty() != true) {
+        gc::GCManagerFactory::GetInstance().
+            RecycleTransaction(current_txn->GetGCSetPtr(), current_txn->GetBeginCommitId());
+      }
+      // Log the transaction's commit
+      // For time stamp ordering, every transaction only has one timestamp
+      log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
+    } else {
+      if (current_txn->IsGCSetEmpty() != true) {
+        gc::GCManagerFactory::GetInstance().
+            RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
+      }
+      log_manager.DoneLogging();
     }
-    log_manager.DoneLogging();
-  }
 
-  delete current_txn;
-  current_txn = nullptr;
-  
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .RecordLatency();
-  }
-}
-
-void TransactionManager::EndReadonlyTransaction(Transaction *current_txn) {
-
-  PL_ASSERT(current_txn->IsDeclaredReadOnly() == true);
-  
-  EpochManagerFactory::GetInstance().ExitEpoch(
-    current_txn->GetThreadId(), 
-    current_txn->GetBeginCommitId());
-  
-  delete current_txn;
-  current_txn = nullptr;
-  
-  if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()
-        ->GetTxnLatencyMetric()
-        .RecordLatency();
+    delete current_txn;
+    current_txn = nullptr;
+    
+    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance()
+          ->GetTxnLatencyMetric()
+          .RecordLatency();
+    }
   }
 }
-
 
 // this function checks whether a concurrent transaction is inserting the same
 // tuple

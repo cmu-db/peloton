@@ -36,27 +36,34 @@ class Transaction : public Printable {
  public:
   
   Transaction() { 
-    Init(INVALID_CID, 0, false); 
+    Init(INVALID_CID, 0, IsolationLevelType::SERIALIZABLE); 
   }
 
-  Transaction(const cid_t &begin_cid, const size_t thread_id, bool ro = false) {
-    Init(begin_cid, thread_id, ro);
+  Transaction(const cid_t &begin_cid, 
+              const size_t thread_id,
+              const IsolationLevelType isolation) {
+    Init(begin_cid, thread_id, isolation);
   }
 
   ~Transaction() {}
 
  private:
 
-  void Init(const cid_t &begin_cid, const size_t thread_id, const bool readonly) {
+  void Init(const cid_t &begin_cid, 
+            const size_t thread_id,
+            const IsolationLevelType isolation) {
     txn_id_ = begin_cid;
-    begin_cid_ = begin_cid;
-    thread_id_ = thread_id;
     
-    declared_readonly_ = readonly;
-
+    begin_cid_ = begin_cid;
     end_cid_ = MAX_CID;
+    
+    thread_id_ = thread_id;
+
+    isolation_level_ = isolation;
+
     is_written_ = false;
     insert_count_ = 0;
+    
     gc_set_.reset(new GCSet());
   }
 
@@ -110,8 +117,9 @@ class Transaction : public Printable {
     return is_written_ == false && insert_count_ == 0;
   }
 
-  inline bool IsDeclaredReadOnly() const { return declared_readonly_; }
-
+  inline IsolationLevelType GetIsolationLevel() const {
+    return isolation_level_;
+  }
 
  private:
   //===--------------------------------------------------------------------===//
@@ -136,12 +144,13 @@ class Transaction : public Printable {
   std::shared_ptr<GCSet> gc_set_;
 
   // result of the transaction
-  ResultType result_ = peloton::ResultType::SUCCESS;
+  ResultType result_ = ResultType::SUCCESS;
 
   bool is_written_;
   size_t insert_count_;
 
-  bool declared_readonly_;
+  IsolationLevelType isolation_level_;
+
 };
 
 }  // End concurrency namespace

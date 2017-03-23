@@ -42,9 +42,14 @@ class Transaction;
 
 class TransactionManager {
  public:
-  TransactionManager() {
+  TransactionManager(
+      const IsolationLevelType level, 
+      const ConflictAvoidanceType conflict) {
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
     maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
+
+    default_isolation_level_ = level;
+    conflict_avoidance_ = conflict;
   }
 
   virtual ~TransactionManager() {}
@@ -132,13 +137,14 @@ class TransactionManager {
 
   void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
-  Transaction *BeginTransaction(const size_t thread_id = 0);
+  Transaction *BeginTransaction(const IsolationLevelType type) {
+    return BeginTransaction(0, type);
+  }
 
-  Transaction *BeginReadonlyTransaction(const size_t thread_id = 0);
+  Transaction *BeginTransaction(const size_t thread_id = 0, 
+                                const IsolationLevelType type = default_isolation_level_);
 
   void EndTransaction(Transaction *current_txn);
-
-  void EndReadonlyTransaction(Transaction *current_txn);
 
   virtual ResultType CommitTransaction(Transaction *const current_txn) = 0;
 
@@ -167,6 +173,10 @@ class TransactionManager {
   // first value is exclusive, last value is inclusive
   std::pair<cid_t, cid_t> dirty_range_ =
       std::make_pair(INVALID_CID, INVALID_CID);
+
+ protected:
+  static IsolationLevelType default_isolation_level_;
+  static ConflictAvoidanceType conflict_avoidance_;
 
  private:
   std::atomic<cid_t> next_cid_;
