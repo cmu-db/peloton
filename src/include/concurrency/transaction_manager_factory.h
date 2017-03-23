@@ -31,7 +31,7 @@ class TransactionManagerFactory {
   }
 
   static void Configure(ConcurrencyType protocol,
-                        IsolationLevelType level = IsolationLevelType::FULL) {
+                        IsolationLevelType level = IsolationLevelType::SERIALIZABLE) {
     protocol_ = protocol;
     isolation_level_ = level;
   }

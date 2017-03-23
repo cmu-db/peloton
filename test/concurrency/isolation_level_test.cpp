@@ -381,8 +381,8 @@ void SIAnomalyTest1() {
 
 TEST_F(IsolationLevelTests, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type,
-                                                      IsolationLevelType::FULL);
+    concurrency::TransactionManagerFactory::Configure(
+        test_type, IsolationLevelType::SERIALIZABLE);
     DirtyWriteTest();
     DirtyReadTest();
     FuzzyReadTest();
@@ -400,9 +400,10 @@ TEST_F(IsolationLevelTests, StressTest) {
   srand(15721);
 
   for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(test_type,
-                                                      IsolationLevelType::FULL);
-    storage::DataTable *table = TestingTransactionUtil::CreateTable(num_key);
+    concurrency::TransactionManagerFactory::Configure(
+        test_type, IsolationLevelType::SERIALIZABLE);
+    std::unique_ptr<storage::DataTable> table(
+        TestingTransactionUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     TransactionScheduler scheduler(num_txn, table, &txn_manager);
