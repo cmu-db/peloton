@@ -141,6 +141,23 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   return true;
 }
 
+// Set the default values for corresponding columns
+
+bool DataTable::SetDefaults(storage::Tuple *tuple) {
+  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
+
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    if (tuple->IsNull(column_itr) && schema->AllowDefault(column_itr)) {
+      auto default_value = schema->GetDefaultValue(column_itr);
+      tuple->SetValue(column_itr, *default_value);
+      return true;
+    }
+  }
+
+  return true;
+}
+
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
@@ -149,6 +166,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
                               std::string(tuple->GetInfo()));
     return false;
   }
+
   return true;
 }
 
@@ -169,8 +187,12 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
   assert(tuple);
-  if (check_constraint && CheckConstraints(tuple) == false)
-    return INVALID_ITEMPOINTER;
+  if (check_constraint) {
+    //SetDefaults(tuple);
+
+    if (CheckConstraints(tuple) == false)
+      return INVALID_ITEMPOINTER;
+  }
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();

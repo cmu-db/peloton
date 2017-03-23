@@ -270,6 +270,8 @@ class DataTable : public AbstractTable {
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
+  bool SetDefaults(storage::Tuple *tuple);
+
   // Claim a tuple slot in a tile group
   ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
                                 bool check_constraint = true);

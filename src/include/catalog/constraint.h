@@ -17,7 +17,9 @@
 #include <vector>
 
 #include "common/printable.h"
+#include "type/type.h"
 #include "type/types.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace catalog {
@@ -54,6 +56,20 @@ class Constraint : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // Todo: default union data structure,
+  // For default constraint
+  void addDefaultValue(const type::Value &value) {
+    if (constraint_type != ConstraintType::DEFAULT || default_value != nullptr) {
+      return;
+    }
+
+    default_value = new peloton::type::Value(value);
+  }
+
+  type::Value* getDefaultValue() {
+    return default_value;
+  }
+
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -68,6 +84,8 @@ class Constraint : public Printable {
   oid_t unique_index_list_offset = INVALID_OID;
 
   std::string constraint_name;
+
+  type::Value *default_value = nullptr;
 
 };
 

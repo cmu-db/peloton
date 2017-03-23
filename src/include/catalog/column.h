@@ -89,6 +89,7 @@ class Column : public Printable {
     }
   }
 
+  // Todo: constraints list
   const std::vector<Constraint> &GetConstraints() const { return constraints; }
 
   // Compare two column objects

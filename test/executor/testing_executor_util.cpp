@@ -121,7 +121,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
     } break;
 	
 	case 4: {
-		auto column = catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER, "COL_E", is_inlined);
+		auto column = catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "COL_E", is_inlined);
 		column.AddConstraint(catalog::Constraint(ConstraintType::DEFAULT, not_null_constraint_name));
 	} break;
     
