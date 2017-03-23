@@ -35,11 +35,11 @@ public:
   DecentralizedEpochManager() : 
     current_global_epoch_(1), 
     next_txn_id_(0),
-    current_global_epoch_ro_(1),
+    current_global_epoch_snapshot_(1),
     is_running_(false) {
       // register a default thread for handling catalog stuffs.
       RegisterThread(0);
-    }
+  }
 
   static DecentralizedEpochManager &GetInstance() {
     static DecentralizedEpochManager epoch_manager;
@@ -86,10 +86,7 @@ public:
   }
 
   // a transaction enters epoch with thread id
-  virtual cid_t EnterEpoch(const size_t thread_id) override;
-
-  // a read-only transaction enters epoch with thread id
-  virtual cid_t EnterEpochRO(const size_t thread_id) override;
+  virtual cid_t EnterEpoch(const size_t thread_id, const bool is_snapshot_read) override;
 
   virtual void ExitEpoch(const size_t thread_id, const cid_t begin_cid) override;
 
@@ -138,7 +135,7 @@ private:
   std::atomic<uint64_t> current_global_epoch_;
   std::atomic<uint32_t> next_txn_id_;
   
-  uint64_t current_global_epoch_ro_;
+  uint64_t current_global_epoch_snapshot_;
 
   bool is_running_;
 

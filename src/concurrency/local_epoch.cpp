@@ -16,17 +16,29 @@
 namespace peloton {
 namespace concurrency {
 
-  bool LocalEpoch::EnterEpoch(const uint64_t epoch_id) {
+  bool LocalEpoch::EnterEpoch(const uint64_t epoch_id, const bool is_snapshot_read) {
+
     epoch_lock_.Lock();
+
     // if this thread is never used or GC'd
     if (epoch_lower_bound_ == UINT64_MAX) {
+
       epoch_lower_bound_ = epoch_id - 1;
+    
     } else if (epoch_lower_bound_ >= epoch_id) {
-    // epoch_lower_bound_ has already been updated by the GC.
-    // have to grab a newer epoch_id.
-      epoch_lock_.Unlock();
-      return false;
-    } 
+    
+      if (is_snapshot_read == true) {
+    
+        epoch_lower_bound_ = epoch_id - 1;
+    
+      } else {
+        // epoch_lower_bound_ has already been updated by the GC.
+        // have to grab a newer epoch_id.
+        epoch_lock_.Unlock();
+
+        return false;
+      }
+    }
 
     auto epoch_map_itr = epoch_map_.find(epoch_id);
     // check whether the corresponding epoch exists.
@@ -42,33 +54,9 @@ namespace concurrency {
     }
 
     epoch_lock_.Unlock();
+
     return true;
   }
-  
-  // the input parameter is the global read-only epoch id.
-  void LocalEpoch::EnterEpochRO(const uint64_t epoch_id) {
-    epoch_lock_.Lock();
-    // if this thread is never used or GC'd
-    if (epoch_lower_bound_ == UINT64_MAX) {
-      epoch_lower_bound_ = epoch_id - 1;
-    } else if (epoch_lower_bound_ >= epoch_id) {
-      epoch_lower_bound_ = epoch_id - 1;
-    }
-
-    if (epoch_map_.find(epoch_id) == epoch_map_.end()) {
-
-      std::shared_ptr<Epoch> epoch_ptr(new Epoch(epoch_id, 1));
-
-      epoch_queue_.push(epoch_ptr);
-      epoch_map_[epoch_id] = epoch_ptr;
-
-    } else {
-      epoch_map_.at(epoch_id)->txn_count_++;
-    }
-
-    epoch_lock_.Unlock();
-  }
-
 
   void LocalEpoch::ExitEpoch(const uint64_t epoch_id) {
     epoch_lock_.Lock();

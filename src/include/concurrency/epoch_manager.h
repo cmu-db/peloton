@@ -43,9 +43,7 @@ public:
 
   virtual void DeregisterThread(const size_t thread_id) = 0;
 
-  virtual cid_t EnterEpoch(const size_t thread_id) = 0;
-
-  virtual cid_t EnterEpochRO(const size_t thread_id) = 0;
+  virtual cid_t EnterEpoch(const size_t thread_id, const bool is_snapshot_read) = 0;
 
   virtual void ExitEpoch(const size_t thread_id, const cid_t begin_cid) = 0;
 

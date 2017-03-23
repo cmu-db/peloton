@@ -144,7 +144,7 @@ bool DeleteExecutor::DExecute() {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           if (is_owner == false) {
             // If the ownership is acquire inside this update executor, we release it here
-            transaction_manager.YieldOwnership(current_txn, tile_group_id, physical_tuple_id);
+            transaction_manager.YieldOwnership(current_txn, tile_group_header, physical_tuple_id);
           }
           transaction_manager.SetTransactionResult(current_txn, ResultType::FAILURE);
           return false;
