@@ -308,25 +308,37 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 ResultType Catalog::DropIndex(const oid_t database_oid, const oid_t index_oid) {
   auto database = GetDatabaseWithOid(database_oid);
   if (database != nullptr) {
-    // find table_oid by looking up pg_index using index_oid
-    // txn is nullptr, one sentence Transaction
-    IndexCatalog::GetInstance()->getTableNameWithId(index_oid, nullptr);
-    auto table = database->GetTableWithOid(table_oid);
-    if (table == nullptr) {
-      LOG_TRACE(
-          "Cannot find the table to create the primary key index. Return "
-          "RESULT_FAILURE.");
-      return ResultType::FAILURE;
-    }
-    // drop index in actual table
-    table->DropIndexWithOid(index_oid);
-    // TODO: delete corresponding records from pg_index
-
-    LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
-    return ResultType::SUCCESS;
+    LOG_TRACE("Cannot find database");
+    return ResultType::FAILURE;
   }
 
-  return ResultType::FAILURE;
+  // find table_oid by looking up pg_index using index_oid
+  // txn is nullptr, one sentence Transaction
+  oid_t table_oid = IndexCatalog::GetInstance()->GetTableidByOid(index_oid, nullptr);
+  if (table_oid == INVALID_OID) {
+    LOG_TRACE(
+        "Cannot find the table to create the primary key index. Return "
+        "RESULT_FAILURE.");
+    return ResultType::FAILURE;
+  }
+
+  auto table = database->GetTableWithOid(table_oid);
+  if (table == nullptr) {
+    LOG_TRACE(
+        "Cannot find the table to create the primary key index. Return "
+        "RESULT_FAILURE.");
+    return ResultType::FAILURE;
+  }
+  // drop index in actual table
+  table->DropIndexWithOid(index_oid);
+  // TODO: delete corresponding records from pg_index
+
+  // drop tuple in index catalog
+  IndexCatalog::GetInstance()->DeleteByOid(index_oid, nullptr);
+
+  LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
+  return ResultType::SUCCESS;
+
 }
 
 index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
