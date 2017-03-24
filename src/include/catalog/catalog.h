@@ -184,6 +184,9 @@ class Catalog {
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
 
+  // A mutex to protect databases_ vector
+  std::mutex databases_mutex;
+
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;
 
