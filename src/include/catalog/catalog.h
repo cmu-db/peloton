@@ -71,12 +71,8 @@ class Catalog {
   // Global Singleton
   static Catalog *GetInstance(void);
 
-  Catalog();
-
-  void InitializeCatalog(void);
-
   // Create a database
-  ResultType CreateDatabase(std::string &database_name,
+  ResultType CreateDatabase(const std::string &database_name,
                             concurrency::Transaction *txn);
 
   // Add a database
@@ -186,6 +182,10 @@ class Catalog {
   void RemoveFunction(const std::string &name);
 
  private:
+  Catalog();
+
+  void InitializeCatalog(void);
+
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
 
@@ -201,6 +201,8 @@ class Catalog {
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_ = new type::EphemeralPool();
+
+  std::mutex catalog_mutex;
 };
 }
 }

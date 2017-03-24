@@ -15,7 +15,7 @@
 namespace peloton {
 namespace catalog {
 
-AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
+AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
                                  std::string catalog_table_name,
                                  catalog::Schema *catalog_table_schema,
                                  storage::Database *pg_catalog,
@@ -23,7 +23,7 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
   // Create catalog_table_
   catalog_table_ =
       std::shared_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
-          CATALOG_DATABASE_OID, catalog_table_id, catalog_table_schema,
+          CATALOG_DATABASE_OID, catalog_table_oid, catalog_table_schema,
           catalog_table_name, DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
 
   // Add catalog_table_ into pg_catalog database
@@ -32,13 +32,13 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   ColumnCatalog *pg_attribute =
-      catalog_table_id == COLUMN_CATALOG_OID
+      catalog_table_oid == COLUMN_CATALOG_OID
           ? this
           : ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(catalog_table_id, column.GetName(), column.GetOffset(),
-                               column.GetType(), true, column.GetConstraints(), pool,
-                               nullptr);
+    pg_attribute->InsertColumn(catalog_table_oid, column.GetName(),
+                               column.GetOffset(), column.GetType(), true,
+                               column.GetConstraints(), pool, nullptr);
   }
 
   // Index construction and inserting contents of pg_database, pg_table,
@@ -92,20 +92,20 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Index scan as child node
-  std::vector<oid_t> column_ids;  // No projection
+  std::vector<oid_t> column_offsets;  // No projection
   auto index = catalog_table_->GetIndex(index_offset);
-  std::vector<oid_t> key_column_ids =
+  std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
-  PL_ASSERT(values.size() == key_column_ids.size());
+  PL_ASSERT(values.size() == key_column_offsets.size());
   std::vector<ExpressionType> expr_types(values.size(),
                                          ExpressionType::COMPARE_EQUAL);
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_offsets, expr_types, values, runtime_keys);
 
   planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
-                                         column_ids, index_scan_desc);
+                                         column_offsets, index_scan_desc);
 
   executor::IndexScanExecutor index_scan_executor(&index_scan_node,
                                                   context.get());
@@ -124,13 +124,13 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 }
 
 // @brief   Index scan helper function
-// @param   column_ids    Column ids for search (projection)
+// @param   column_offsets    Column ids for search (projection)
 // @param   index_offset  Offset of index for scan
 // @param   values        Values for search
 // @param   txn           Transaction
 // @return  Vector of logical tiles
 std::vector<std::unique_ptr<executor::LogicalTile>> const &
-AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_ids,
+AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
                                         concurrency::Transaction *txn) {
@@ -147,18 +147,18 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_ids,
       new executor::ExecutorContext(txn));
 
   auto index = catalog_table_->GetIndex(index_offset);
-  std::vector<oid_t> key_column_ids =
+  std::vector<oid_t> key_column_offsets =
       index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
-  PL_ASSERT(values.size() == key_column_ids.size());
+  PL_ASSERT(values.size() == key_column_offsets.size());
   std::vector<ExpressionType> expr_types(values.size(),
                                          ExpressionType::COMPARE_EQUAL);
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_offsets, expr_types, values, runtime_keys);
 
   planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
-                                         column_ids, index_scan_desc);
+                                         column_offsets, index_scan_desc);
 
   executor::IndexScanExecutor index_scan_executor(&index_scan_node,
                                                   context.get());
