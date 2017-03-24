@@ -160,16 +160,18 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
       node = reinterpret_cast<Node*>(cell->data.ptr_value);
       switch (node->type) {
         case T_RangeVar: {
-          result->list->push_back(RangeVarTransform(reinterpret_cast<RangeVar*>(node)));
+          result->list->push_back(
+              RangeVarTransform(reinterpret_cast<RangeVar*>(node)));
           break;
         }
         case T_RangeSubselect: {
-          parser::TableRef* temp = new parser::TableRef(StringToTableReferenceType("select"));
+          parser::TableRef* temp =
+              new parser::TableRef(StringToTableReferenceType("select"));
           temp->select = reinterpret_cast<parser::SelectStatement*>(
-          SelectTransform(reinterpret_cast<SelectStmt*>(
-                          (reinterpret_cast<RangeSubselect*>(node))->subquery)));
+              SelectTransform(reinterpret_cast<SelectStmt*>(
+                  (reinterpret_cast<RangeSubselect*>(node))->subquery)));
           temp->alias =
-          AliasTransform((reinterpret_cast<RangeSubselect*>(node))->alias);
+              AliasTransform((reinterpret_cast<RangeSubselect*>(node))->alias);
           if (temp->select == nullptr) {
             delete temp;
             temp = nullptr;
@@ -363,7 +365,8 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
     }
     case T_Float: {
       result = new expression::ConstantValueExpression(
-      type::ValueFactory::GetDecimalValue(std::stod(std::string(root->val.val.str))));
+          type::ValueFactory::GetDecimalValue(
+              std::stod(std::string(root->val.val.str))));
       break;
     }
     default: {
