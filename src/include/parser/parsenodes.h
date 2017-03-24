@@ -32,9 +32,15 @@ typedef enum InhOption {
   INH_DEFAULT /* Use current SQL_inheritance option */
 } InhOption;
 
-typedef enum BoolExprType { AND_EXPR, OR_EXPR, NOT_EXPR } BoolExprType;
+typedef enum BoolExprType {
+  AND_EXPR,
+  OR_EXPR,
+  NOT_EXPR
+} BoolExprType;
 
-typedef struct Expr { NodeTag type; } Expr;
+typedef struct Expr {
+  NodeTag type;
+} Expr;
 
 typedef struct BoolExpr {
   Expr xpr;
@@ -82,21 +88,20 @@ typedef struct JoinExpr {
   int rtindex;       /* RT index assigned for join, or 0 */
 } JoinExpr;
 
-typedef struct RangeSubselect
-{
-NodeTag		type;
-bool		lateral;		/* does it have LATERAL prefix? */
-Node	   *subquery;		/* the untransformed sub-select clause */
-Alias	   *alias;			/* table alias & optional column aliases */
+typedef struct RangeSubselect {
+  NodeTag type;
+  bool lateral;   /* does it have LATERAL prefix? */
+  Node *subquery; /* the untransformed sub-select clause */
+  Alias *alias;   /* table alias & optional column aliases */
 } RangeSubselect;
 
 typedef struct RangeVar {
   NodeTag type;
-  char *catalogname;   /* the catalog (database) name, or NULL */
-  char *schemaname;    /* the schema name, or NULL */
-  char *relname;       /* the relation/sequence name */
-  InhOption inhOpt;    /* expand rel by inheritance? recursively act
-                * on children? */
+  char *catalogname; /* the catalog (database) name, or NULL */
+  char *schemaname;  /* the schema name, or NULL */
+  char *relname;     /* the relation/sequence name */
+  InhOption inhOpt;  /* expand rel by inheritance? recursively act
+        * on children? */
   char relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
   Alias *alias;        /* table alias & optional column aliases */
   int location;        /* token location, or -1 if unknown */
@@ -150,14 +155,41 @@ typedef struct SortBy {
   int location;             /* operator location, or -1 if none/unknown */
 } SortBy;
 
+typedef struct InferClause {
+  NodeTag type;
+  List *indexElems;  /* IndexElems to infer unique index */
+  Node *whereClause; /* qualification (partial-index predicate) */
+  char *conname;     /* Constraint name, or NULL if unnamed */
+  int location;      /* token location, or -1 if unknown */
+} InferClause;
+
+typedef struct OnConflictClause {
+  NodeTag type;
+  OnConflictAction action; /* DO NOTHING or UPDATE? */
+  InferClause *infer;      /* Optional index inference clause */
+  List *targetList;        /* the target list (of ResTarget) */
+  Node *whereClause;       /* qualifications */
+  int location;            /* token location, or -1 if unknown */
+} OnConflictClause;
+
+typedef struct InsertStmt {
+  NodeTag type;
+  RangeVar *relation; /* relation to insert into */
+  List *cols;         /* optional: names of the target columns */
+  Node *selectStmt;   /* the source SELECT/VALUES, or NULL */
+  OnConflictClause *onConflictClause; /* ON CONFLICT clause */
+  List *returningList;                /* list of expressions to return */
+  WithClause *withClause;             /* WITH clause */
+} InsertStmt;
+
 typedef struct SelectStmt {
   NodeTag type;
 
   /*
    * These fields are used only in "leaf" SelectStmts.
    */
-  List *distinctClause;   /* NULL, list of DISTINCT ON exprs, or
-               * lcons(NIL,NIL) for all (SELECT DISTINCT) */
+  List *distinctClause; /* NULL, list of DISTINCT ON exprs, or
+             * lcons(NIL,NIL) for all (SELECT DISTINCT) */
   IntoClause *intoClause; /* target for SELECT INTO */
   List *targetList;       /* the target list (of ResTarget) */
   List *fromClause;       /* the FROM clause */

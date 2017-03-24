@@ -93,6 +93,9 @@ class PostgresParser {
   // transform helper for order by clauses
   parser::OrderDescription* OrderByTransform(List* order);
 
+  // transform helper for insert statements
+  parser::SQLStatement* InsertTransform(InsertStmt* root);
+
   // transform helper for select statements
   parser::SQLStatement* SelectTransform(SelectStmt* root);
 
