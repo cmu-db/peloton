@@ -488,7 +488,13 @@ TEST_F(PostgresParserTests, InsertTest) {
   EXPECT_EQ("foo", insert_stmt->GetTableName());
   EXPECT_TRUE(insert_stmt->insert_values != nullptr);
   EXPECT_EQ(2, insert_stmt->insert_values->size());
-  EXPECT_EQ("bar", insert_stmt->select->from_table->GetTableName());
+
+  type::Value five = type::ValueFactory::GetIntegerValue(5);
+  type::CmpBool res = five.CompareEquals(
+      ((expression::ConstantValueExpression *)insert_stmt->insert_values->at(1)
+           ->at(1))
+          ->GetValue());
+  EXPECT_EQ(1, res);
 
   // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
   LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
