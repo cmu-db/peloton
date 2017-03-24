@@ -35,7 +35,7 @@ llvm::Function *RuntimeFunctionsProxy::_CRC64Hash::GetFunction(
     return hash_func;
   }
 
-  // Register the RuntimeFunction::hashCrc64() function
+  // Register the RuntimeFunction::HashCrc64() function
   auto &context = codegen.GetContext();
   auto *func_type =
       llvm::TypeBuilder<uint64_t(const char *, uint64_t, uint64_t), false>::get(

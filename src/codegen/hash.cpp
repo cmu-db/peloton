@@ -32,7 +32,7 @@ llvm::Value *Hash::HashValues(CodeGen &codegen,
   // lists holding byte-types, short-types, integer-types, long-types and
   // variable-length strings.
   std::vector<llvm::Value *> bytes, shorts, ints, longs;
-  std::vector<Hash::Buffer> buffers;
+  std::vector<Hash::Varlen> varlens;
 
   for (const auto &value : vals) {
     llvm::Value *val = nullptr;
@@ -52,7 +52,7 @@ llvm::Value *Hash::HashValues(CodeGen &codegen,
     } else if (val_type == codegen.Int64Type()) {
       longs.push_back(val);
     } else if (val_type == codegen.CharPtrType()) {
-      buffers.emplace_back(val, value.GetLength());
+      varlens.emplace_back(val, value.GetLength());
     }
   }
 
@@ -130,9 +130,9 @@ llvm::Value *Hash::HashValues(CodeGen &codegen,
   // 'buffers' based on the chosen hash method.
   switch (method) {
     case Hash::HashMethod::Crc32:
-      return ComputeCRC32Hash(codegen, longs, buffers);
+      return ComputeCRC32Hash(codegen, longs, varlens);
     case Hash::HashMethod::Murmur3:
-      return ComputeMurmur3Hash(codegen, longs, buffers);
+      return ComputeMurmur3Hash(codegen, longs, varlens);
     default:
       throw Exception{"We currently don't support hash method: " +
                       kHashMethodStrings[static_cast<uint32_t>(method)]};
@@ -144,7 +144,7 @@ llvm::Value *Hash::HashValues(CodeGen &codegen,
 //===----------------------------------------------------------------------===//
 llvm::Value *Hash::ComputeCRC32Hash(CodeGen &codegen,
                                     const std::vector<llvm::Value *> &numerics,
-                                    const std::vector<Hash::Buffer> &buffers) {
+                                    const std::vector<Hash::Varlen> &varlens) {
   // The CRC32 generator polynomial
   static constexpr uint32_t kCrc32Generator = 0x04C11DB7;
 
@@ -168,8 +168,8 @@ llvm::Value *Hash::ComputeCRC32Hash(CodeGen &codegen,
   llvm::Function *crc64_func =
       RuntimeFunctionsProxy::_CRC64Hash::GetFunction(codegen);
   PL_ASSERT(crc64_func != nullptr);
-  for (auto &buffer : buffers) {
-    crc = codegen.CallFunc(crc64_func, {buffer.val, buffer.len, crc});
+  for (auto &varlen : varlens) {
+    crc = codegen.CallFunc(crc64_func, {varlen.val, varlen.len, crc});
   }
 
   ///
@@ -180,7 +180,7 @@ llvm::Value *Hash::ComputeCRC32Hash(CodeGen &codegen,
 // single value
 llvm::Value *Hash::ComputeMurmur3Hash(
     CodeGen &codegen, const std::vector<llvm::Value *> &numerics,
-    const std::vector<Hash::Buffer> &varlen_buffers) {
+    const std::vector<Hash::Varlen> &varlen_buffers) {
   // The magic constants used in Murmur3's final 64-bit avalanche mix
   static constexpr uint64_t kMurmur3C1 = 0xff51afd7ed558ccdLLU;
   static constexpr uint64_t kMurmur3C2 = 0xc4ceb9fe1a85ec53LLU;
