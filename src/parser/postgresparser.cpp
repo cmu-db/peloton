@@ -649,7 +649,27 @@ std::vector<parser::UpdateClause*> PostgresParser::UpdateTargetTransform(List *r
     ResTarget *target = (ResTarget *) (cell->data.ptr_value);
     update_clause->column = target->name;
     switch (target->val->type) {
+      case T_ColumnRef: {
+        update_clause->value = ColumnRefTransform((ColumnRef*)(target->val));
+        break;
+      }
+      case T_A_Const: {
+        update_clause->value = ConstTransform((A_Const*)(target->val));
+        break;
+      }
+      case T_FuncCall: {
+        update_clause->value = FuncCallTransform((FuncCall*)(target->val));
+        break;
+      }
+      case T_A_Expr: {
+        update_clause->value = AExprTransform((A_Expr*)(target->val));
+        break;
+      }
+      default: {
+        LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
+      }
     }
+    result.push_back(update_clause);
   }
   return result;
 }
@@ -659,8 +679,8 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(UpdateStmt *update_stmt
   auto result = new parser::UpdateStatement();
   result->table = RangeVarTransform(update_stmt->relation);
   result->where = WhereTransform(update_stmt->whereClause);
-
-
+  result->updates = UpdateTargetTransform(update_stmt->targetList);
+  return result;
 }
 
 PgQueryInternalParsetreeAndError PostgresParser::ParseSQLString(
