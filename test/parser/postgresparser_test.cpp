@@ -151,7 +151,6 @@ TEST_F(PostgresParserTests, JoinTest) {
   queries.push_back("SELECT * FROM foo INNER JOIN bar ON foo.id=bar.id AND foo.val > bar.val;");
   queries.push_back("SELECT * FROM foo LEFT JOIN bar ON foo.id=bar.id;");
   queries.push_back("SELECT * FROM foo RIGHT JOIN bar ON foo.id=bar.id AND foo.val > bar.val;");
-  queries.push_back("SELECT * FROM foo SEMI JOIN bar ON foo.id=bar.id;");
   queries.push_back("SELECT * FROM foo FULL OUTER JOIN bar ON foo.id=bar.id AND foo.val > bar.val;");
 
   auto parser = parser::PostgresParser::GetInstance();
@@ -235,6 +234,7 @@ TEST_F(PostgresParserTests, ExprTest) {
     delete stmt_list;
   }
 }
+
 
 }  // End test namespace
 }  // End peloton namespace
