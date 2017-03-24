@@ -597,6 +597,7 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
   parser::InsertStatement* result = new parser::InsertStatement();
+  result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
   //  result->select_list = TargetTransform(root->targetList);
   //  result->from_table = FromTransform(root->fromClause);
   //  result->group_by = GroupByTransform(root->groupClause,

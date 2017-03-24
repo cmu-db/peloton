@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
 #include "common/sql_node_visitor.h"
+#include "parser/sql_statement.h"
 #include "select_statement.h"
 
 namespace peloton {
@@ -33,7 +33,6 @@ struct InsertStatement : SQLStatement {
         select(NULL) {}
 
   virtual ~InsertStatement() {
-
     if (columns) {
       for (auto col : *columns) free(col);
       delete columns;
@@ -62,6 +61,9 @@ struct InsertStatement : SQLStatement {
   SelectStatement* select;
 
   TableInfo* table_info_ = nullptr;
+
+  // Which table are we inserting into
+  TableRef* table_ref_;
 };
 
 }  // End parser namespace
