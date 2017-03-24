@@ -279,7 +279,7 @@ TEST_F(PostgresParserTests, ColumnUpdateTest) {
   }
 }
   
-TEST_F(PostgresParserTests, UpdateTest0) {
+TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   std::string query = "UPDATE STOCK SET S_QUANTITY = 48.0 , S_YTD = S_YTD + 1 "
       "WHERE S_I_ID = 68999 AND S_W_ID = 4";
   auto& parser = parser::PostgresParser::GetInstance();
@@ -288,7 +288,8 @@ TEST_F(PostgresParserTests, UpdateTest0) {
   
   auto update_stmt = (parser::UpdateStatement*)stmt_list->GetStatements()[0];
   EXPECT_EQ(std::string(update_stmt->table->table_info_->table_name), "stock");
-  
+
+  // TODO: Uncomment when the AExpressionTransfrom supports operator expression
   // Test First Set Condition
 //  EXPECT_EQ(std::string(update_stmt->updates->at(0)->column), "s_quantity");
 //  auto constant = (expression::ConstantValueExpression*)update_stmt->updates->at(0)->value;
@@ -309,7 +310,7 @@ TEST_F(PostgresParserTests, UpdateTest0) {
   EXPECT_EQ(cond1->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
   auto column = (expression::TupleValueExpression*)cond1->GetChild(0);
   EXPECT_EQ(column->GetColumnName(), "s_i_id");
-  constant = (expression::ConstantValueExpression*)cond1->GetChild(1);
+  auto constant = (expression::ConstantValueExpression*)cond1->GetChild(1);
   EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(68999)));
   auto cond2 = (expression::OperatorExpression*)where->GetChild(1);
   EXPECT_EQ(cond2->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
@@ -319,7 +320,7 @@ TEST_F(PostgresParserTests, UpdateTest0) {
   EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(4)));
 }
 
-TEST_F(PostgresParserTests, UpdateTest1) {
+TEST_F(PostgresParserTests, StringUpdateTest) {
   std::vector<std::string> queries;
 
   // Select with complicated where, tests both BoolExpr and AExpr
