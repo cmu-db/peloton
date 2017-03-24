@@ -79,13 +79,15 @@ TEST_F(PostgresParserTests, GroupByTest) {
   std::vector<std::string> queries;
 
   // Select with group by clause
-  queries.push_back("SELECT * FROM foo GROUP BY id, name;");
+  queries.push_back("SELECT * FROM foo GROUP BY id, name HAVING id > 10;");
 
   auto parser = parser::PostgresParser::GetInstance();
+
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
+
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -93,6 +95,7 @@ TEST_F(PostgresParserTests, GroupByTest) {
     }
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+
     delete stmt_list;
   }
 }
@@ -195,7 +198,7 @@ TEST_F(PostgresParserTests, MultiTableTest) {
   std::vector<std::string> queries;
 
   // Select from multiple tables
-  queries.push_back("SELECT foo.name FROM foo, bar WHERE foo.id = bar.id;");
+  queries.push_back("SELECT foo.name FROM (SELECT * FROM bar) as b, foo, bar WHERE foo.id = b.id;");
 
   auto parser = parser::PostgresParser::GetInstance();
   // Parsing
@@ -234,7 +237,6 @@ TEST_F(PostgresParserTests, ExprTest) {
     delete stmt_list;
   }
 }
-
 
 }  // End test namespace
 }  // End peloton namespace
