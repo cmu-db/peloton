@@ -414,21 +414,6 @@ TEST_F(PostgresParserTests, StringUpdateTest) {
   delete stmt_list;
 }
 
-TEST_F(PostgresParserTests, InsertTest) {
-  std::vector<std::string> queries;
-
-  // Select with complicated where, tests both BoolExpr and AExpr
-  queries.push_back("INSERT INTO foo VALUES(1, 2, 3) WHERE id = 5;");
-  if (stmt_list->is_valid == false) {
-    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
-              stmt_list->error_line, stmt_list->error_col);
-  }
-  // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-  LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-  delete stmt_list;
-}
-}
-
 TEST_F(PostgresParserTests, DeleteTest) {
   std::vector<std::string> queries;
 
@@ -461,13 +446,8 @@ TEST_F(PostgresParserTests, DeleteTest) {
 TEST_F(PostgresParserTests, DeleteTestWithPredicate) {
   std::vector<std::string> queries;
 
-<<<<<<< c5209a2bd4443a1e4d481ed440aa327fceea42ca
   // Delete with a predicate
   queries.push_back("DELETE FROM foo WHERE id=3;");
-=======
-  // Select with complicated where, tests both BoolExpr and AExpr
-  queries.push_back("INSERT INTO foo (1, 2, 3), (4, 5, 6);");
->>>>>>> Add test case for insert into select.
 
   auto parser = parser::PostgresParser::GetInstance();
   // Parsing
@@ -490,6 +470,20 @@ TEST_F(PostgresParserTests, DeleteTestWithPredicate) {
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }
+}
+
+TEST_F(PostgresParserTests, InsertTest) {
+  std::vector<std::string> queries;
+
+  // Select with complicated where, tests both BoolExpr and AExpr
+  queries.push_back("INSERT INTO foo VALUES (1,2,3), (4,5,6);");
+  if (stmt_list->is_valid == false) {
+    LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+              stmt_list->error_line, stmt_list->error_col);
+  }
+  // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+  LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+  delete stmt_list;
 }
 
 TEST_F(PostgresParserTests, InsertIntoSelectTest) {

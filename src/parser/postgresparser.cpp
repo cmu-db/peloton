@@ -604,6 +604,27 @@ std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
   return result;
 }
 
+std::vector<std::vector<expression::AbstractExpression*>*>*
+PostgresParser::ValueListsTransform(List* root) {
+  std::vector<std::vector<expression::AbstractExpression*>*>* result =
+      new std::vector<std::vector<expression::AbstractExpression*>*>();
+
+  for (auto value_list = root->head; value_list != NULL;
+       value_list = value_list->next) {
+
+    std::vector<expression::AbstractExpression*>* cur_result =
+        new std::vector<expression::AbstractExpression*>();
+
+    List* target = (List*)(value_list->data.ptr_value);
+    for (auto cell = target->head; cell != NULL; cell = cell->next) {
+      cur_result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
+    }
+
+    result->push_back(cur_result);
+  }
+
+  return result;
+}
 // This function takes in a Postgres InsertStmt parsenode
 // and transfers into a Peloton InsertStatement.
 // Please refer to parser/parsenode.h for the definition of
@@ -617,21 +638,20 @@ parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
   parser::InsertStatement* result = nullptr;
   if (select_stmt->fromClause != NULL) {
     result = new parser::InsertStatement(InsertType::SELECT);
+
     result->select = reinterpret_cast<parser::SelectStatement*>(
         SelectTransform(select_stmt));
+
   } else {
     result = new parser::InsertStatement(InsertType::VALUES);
   }
 
+  PL_ASSERT(select_stmt->valuesLists != NULL);
+  result->insert_values = ValueListsTransform(select_stmt->valuesLists);
+
   result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
 
   result->columns = ColumnNameTransform(root->cols);
-  //  result->select_list = TargetTransform(root->targetList);
-  //  result->from_table = FromTransform(root->fromClause);
-  //  result->group_by = GroupByTransform(root->groupClause,
-  // root->havingClause);
-  //  result->order = OrderByTransform(root->sortClause);
-  //  result->where_clause = WhereTransform(root->whereClause);
   return (parser::SQLStatement*)result;
 }
 

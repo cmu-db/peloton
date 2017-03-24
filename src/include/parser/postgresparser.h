@@ -96,6 +96,10 @@ class PostgresParser {
   // transform helper for column name (for insert statement)
   std::vector<char*>* ColumnNameTransform(List* root);
 
+  // transform helper for ListsTransform (insert multiple rows)
+  std::vector<std::vector<expression::AbstractExpression*>*>*
+      ValueListsTransform(List* root);
+
   // transform helper for insert statements
   parser::SQLStatement* InsertTransform(InsertStmt* root);
 
