@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "parser/postgresparser.h"
 #include "parser/parser.h"
+#include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 
 namespace peloton {
@@ -277,8 +278,48 @@ TEST_F(PostgresParserTests, ColumnUpdateTest) {
     //delete stmt_list;
   }
 }
-
+  
 TEST_F(PostgresParserTests, UpdateTest0) {
+  std::string query = "UPDATE STOCK SET S_QUANTITY = 48.0 , S_YTD = S_YTD + 1 "
+      "WHERE S_I_ID = 68999 AND S_W_ID = 4";
+  auto& parser = parser::PostgresParser::GetInstance();
+  parser::SQLStatementList* stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  
+  auto update_stmt = (parser::UpdateStatement*)stmt_list->GetStatements()[0];
+  EXPECT_EQ(std::string(update_stmt->table->table_info_->table_name), "stock");
+  
+  // Test First Set Condition
+//  EXPECT_EQ(std::string(update_stmt->updates->at(0)->column), "s_quantity");
+//  auto constant = (expression::ConstantValueExpression*)update_stmt->updates->at(0)->value;
+//  EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetDecimalValue(48)));
+  
+  // Test Second Set Condition
+//  EXPECT_EQ(std::string(update_stmt->updates->at(1)->column), "s_ytd");
+//  auto op_expr = (expression::OperatorExpression*)update_stmt->updates->at(1)->value;
+//  auto child1 = (expression::TupleValueExpression*)op_expr->GetChild(0);
+//  EXPECT_EQ(child1->GetColumnName(), "s_ytd");
+//  auto child2 = (expression::ConstantValueExpression*)op_expr->GetChild(1);
+//  EXPECT_TRUE(child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  
+  // Test Where clause
+  auto where = (expression::OperatorExpression*)update_stmt->where;
+  EXPECT_EQ(where->GetExpressionType(), ExpressionType::CONJUNCTION_AND);
+  auto cond1 = (expression::OperatorExpression*)where->GetChild(0);
+  EXPECT_EQ(cond1->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
+  auto column = (expression::TupleValueExpression*)cond1->GetChild(0);
+  EXPECT_EQ(column->GetColumnName(), "s_i_id");
+  constant = (expression::ConstantValueExpression*)cond1->GetChild(1);
+  EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(68999)));
+  auto cond2 = (expression::OperatorExpression*)where->GetChild(1);
+  EXPECT_EQ(cond2->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
+  column = (expression::TupleValueExpression*)cond2->GetChild(0);
+  EXPECT_EQ(column->GetColumnName(), "s_w_id");
+  constant = (expression::ConstantValueExpression*)cond2->GetChild(1);
+  EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(4)));
+}
+
+TEST_F(PostgresParserTests, UpdateTest1) {
   std::vector<std::string> queries;
 
   // Select with complicated where, tests both BoolExpr and AExpr
