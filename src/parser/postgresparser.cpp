@@ -598,9 +598,13 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
 parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
   PL_ASSERT(root->selectStmt != NULL);
 
+  auto select_stmt = reinterpret_cast<SelectStmt*>(root->selectStmt);
+
   parser::InsertStatement* result = nullptr;
-  if (root->selectStmt)
-    result = new parser::InsertStatement(InsertType::INVALID);
+  if (select_stmt->fromClause != NULL)
+    result = new parser::InsertStatement(InsertType::SELECT);
+  else
+    result = new parser::InsertStatement(InsertType::VALUES);
 
   result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
 
