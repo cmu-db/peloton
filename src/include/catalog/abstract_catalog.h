@@ -69,10 +69,9 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::Transaction *txn);
 
-  executor::LogicalTile *GetResultWithIndexScan(std::vector<oid_t> column_ids,
-                                                oid_t index_offset,
-                                                std::vector<type::Value> values,
-                                                concurrency::Transaction *txn);
+  std::vector<executor::LogicalTile *> const &GetResultWithIndexScan(
+      std::vector<oid_t> column_ids, oid_t index_offset,
+      std::vector<type::Value> values, concurrency::Transaction *txn);
 
   // Maximum column name size for catalog schemas
   const size_t max_name_size = 32;

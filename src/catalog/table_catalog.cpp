@@ -159,37 +159,45 @@ oid_t TableCatalog::GetOidByName(const std::string &table_name,
   return table_id;
 }
 
-std::vector<oid_t> GetTableOidByDatabaseOid(oid_t database_id,
-                                            concurrency::Transaction *txn) {
+std::vector<oid_t> TableCatalog::GetTableIdByDatabaseId(
+    oid_t database_id, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_id
-  oid_t index_offset = 3;              // Index of table_name & database_name
+  oid_t index_offset = 2;              // Index of database_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<oid_t> table_ids;
-  int result_count = result->GetTupleCount();
-  for (int i = 0; i < result_count; i++) {
-    table_ids.emplace_back(result->GetValue(i, 0).GetAs<oid_t>());
+  for (auto tile : result_tiles) {
+    for (auto tuple_id : *tile) {
+      table_ids.emplace_back(
+          tile->GetValue(tuple_id, 0)
+              .GetAs<oid_t>());  // After projection left 1 column
+    }
   }
 
   return table_ids;
 }
 
-std::vector<std::string> GetTableNameByDatabaseOid(oid_t database_id,
-                                            concurrency::Transaction *txn) {
+std::vector<std::string> TableCatalog::GetTableNameByDatabaseId(
+    oid_t database_id, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_id
-  oid_t index_offset = 3;              // Index of table_name & database_name
+  oid_t index_offset = 2;              // Index of database_id
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
 
-  auto result = GetWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<std::string> table_names;
-  int result_count = result->GetTupleCount();
-  for (int i = 0; i < result_count; i++) {
-    table_names.emplace_back(result->GetValue(i, 0).GetAs<std::string>());
+  for (auto tile : result_tiles) {
+    for (auto tuple_id : *tile) {
+      table_ids.emplace_back(
+          tile->GetValue(tuple_id, 0)
+              .GetAs<std::string>());  // After projection left 1 column
+    }
   }
 
   return table_names;
