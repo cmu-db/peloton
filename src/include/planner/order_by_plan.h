@@ -13,6 +13,7 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "planner/attribute_info.h"
 
 namespace peloton {
 namespace planner {
@@ -23,14 +24,15 @@ namespace planner {
 
 class OrderByPlan : public AbstractPlan {
  public:
-  OrderByPlan(const OrderByPlan &) = delete;
-  OrderByPlan &operator=(const OrderByPlan &) = delete;
-  OrderByPlan(const OrderByPlan &&) = delete;
-  OrderByPlan &operator=(const OrderByPlan &&) = delete;
-
   OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids);
+
+  void PerformBinding(BindingContext &binding_context) override;
+
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
@@ -40,7 +42,15 @@ class OrderByPlan : public AbstractPlan {
     return output_column_ids_;
   }
 
+  const std::vector<const planner::AttributeInfo *> &GetOutputColumns() const {
+    return output_ais_;
+  }
+
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ORDERBY; }
+
+  void GetOutputColumns(std::vector<oid_t> &columns) const {
+    columns = GetOutputColumnIds();
+  }
 
   const std::string GetInfo() const { return "OrderBy"; }
 
@@ -80,6 +90,8 @@ class OrderByPlan : public AbstractPlan {
    */
   const std::vector<oid_t> output_column_ids_;
 
+  std::vector<const AttributeInfo *> output_ais_;
+
   // Used to show that whether the output is has the same ordering with order by
   // expression. If the so, we can directly used the output result without any
   // additional sorting operation
@@ -93,6 +105,10 @@ class OrderByPlan : public AbstractPlan {
 
   // The point denoted by limit clause
   uint64_t limit_offset_ = 0;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(OrderByPlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

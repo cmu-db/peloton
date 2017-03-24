@@ -33,9 +33,9 @@ Database::~Database() {
   LOG_TRACE("Finish deleting tables from database");
 }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // TABLE
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 void Database::AddTable(storage::DataTable *table, bool is_catalog) {
   {
@@ -52,13 +52,20 @@ void Database::AddTable(storage::DataTable *table, bool is_catalog) {
 }
 
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
-  for (auto table : tables)
-    if (table->GetOid() == table_oid) return table;
-  throw CatalogException("Table with oid = " + std::to_string(table_oid) + " is not found");
+  for (auto *table : tables) {
+    if (table->GetOid() == table_oid) {
+      return table;
+    }
+  }
+
+  // Table now found
+  throw CatalogException("Table with oid = " + std::to_string(table_oid) +
+                         " is not found");
   return nullptr;
 }
 
-storage::DataTable *Database::GetTableWithName(const std::string table_name) const {
+storage::DataTable *Database::GetTableWithName(
+    const std::string table_name) const {
   for (auto table : tables)
     if (table->GetName() == table_name) return table;
   throw CatalogException("Table '" + table_name + "' does not exist");
@@ -66,7 +73,6 @@ storage::DataTable *Database::GetTableWithName(const std::string table_name) con
 }
 
 void Database::DropTableWithOid(const oid_t table_oid) {
-
   {
     std::lock_guard<std::mutex> lock(database_mutex);
 
@@ -98,9 +104,9 @@ storage::DataTable *Database::GetTable(const oid_t table_offset) const {
 
 oid_t Database::GetTableCount() const { return tables.size(); }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // UTILITIES
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 // Get a string representation for debugging
 const std::string Database::GetInfo() const {
@@ -116,7 +122,8 @@ const std::string Database::GetInfo() const {
   for (auto table : tables) {
     if (table != nullptr) {
       os << "(" << ++table_itr << "/" << table_count << ") "
-         << "Table Name(" << table->GetOid() << ") : " << table->GetName() << std::endl;
+         << "Table Name(" << table->GetOid() << ") : " << table->GetName()
+         << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 
@@ -145,7 +152,8 @@ const std::string Database::GetInfo() const {
         os << "foreign tables \n";
 
         oid_t foreign_key_count = table->GetForeignKeyCount();
-        for (oid_t foreign_key_itr = 0; foreign_key_itr < foreign_key_count; foreign_key_itr++) {
+        for (oid_t foreign_key_itr = 0; foreign_key_itr < foreign_key_count;
+             foreign_key_itr++) {
           auto foreign_key = table->GetForeignKey(foreign_key_itr);
 
           auto sink_table_oid = foreign_key->GetSinkTableOid();

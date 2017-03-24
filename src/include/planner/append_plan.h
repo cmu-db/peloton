@@ -23,11 +23,6 @@ namespace planner {
  */
 class AppendPlan : public AbstractPlan {
  public:
-  AppendPlan(const AppendPlan &) = delete;
-  AppendPlan &operator=(const AppendPlan &) = delete;
-  AppendPlan(const AppendPlan &&) = delete;
-  AppendPlan &operator=(const AppendPlan &&) = delete;
-
   AppendPlan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::APPEND; }
@@ -39,7 +34,8 @@ class AppendPlan : public AbstractPlan {
   }
 
  private:
-  // nothing
+  DISALLOW_COPY_AND_MOVE(AppendPlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton
