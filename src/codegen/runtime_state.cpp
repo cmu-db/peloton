@@ -25,6 +25,7 @@ RuntimeState::RuntimeState() : constructed_type_(nullptr) {}
 RuntimeState::StateID RuntimeState::RegisterState(std::string name,
                                                   llvm::Type *type,
                                                   bool is_on_stack) {
+  PL_ASSERT(constructed_type_ == nullptr);
   RuntimeState::StateID state_id = state_slots_.size();
   RuntimeState::StateInfo state_info;
   state_info.name = name;
