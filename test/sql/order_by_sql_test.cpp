@@ -69,7 +69,6 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
-  optimizer::SimpleOptimizer optimizer;
 
   std::chrono::system_clock::time_point start_time =
       std::chrono::system_clock::now();
