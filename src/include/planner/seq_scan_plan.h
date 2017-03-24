@@ -35,11 +35,6 @@ namespace planner {
 
 class SeqScanPlan : public AbstractScan {
  public:
-  SeqScanPlan(const SeqScanPlan &) = delete;
-  SeqScanPlan &operator=(const SeqScanPlan &) = delete;
-  SeqScanPlan(SeqScanPlan &&) = delete;
-  SeqScanPlan &operator=(SeqScanPlan &&) = delete;
-
   SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids, bool is_for_update = false)
@@ -75,6 +70,7 @@ class SeqScanPlan : public AbstractScan {
   }
 
  private:
+  DISALLOW_COPY_AND_MOVE(SeqScanPlan);
 };
 
 }  // namespace planner

@@ -131,7 +131,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
       // For more complex expression, we need to do evaluation in Executor
       expression::ExpressionUtil::EvaluateExpression(child_expr_map,
                                                      expr.get());
-      tl.emplace_back(curr_col_offset, expr->Copy());
+      planner::DerivedAttribute attribute;
+      attribute.expr = expr->Copy();
+      attribute.attribute_info.type = attribute.expr->GetValueType();
+      tl.emplace_back(curr_col_offset, attribute);
     }
     (*output_expr_map_)[expr] = curr_col_offset++;
     columns.push_back(catalog::Column(
@@ -336,7 +339,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
     update_col_ids.insert(col_id);
     expression::ExpressionUtil::EvaluateExpression(table_expr_map,
                                                    update->value);
-    tl.emplace_back(col_id, update->value->Copy());
+    planner::DerivedAttribute attribute;
+    attribute.expr = update->value->Copy();
+    attribute.attribute_info.type = attribute.expr->GetValueType();
+    tl.emplace_back(col_id, attribute);
   }
 
   // Add other columns to direct map
@@ -412,7 +418,10 @@ std::unique_ptr<planner::AggregatePlan> OperatorToPlanTransformer::GenerateAggre
       dml.emplace_back(col_pos, make_pair(0, child_expr_map[expr]));
     } else {
       // For other exprs such as OperatorExpr, use target list
-      tl.emplace_back(col_pos, expr->Copy());
+      planner::DerivedAttribute attribute;
+      attribute.expr = expr->Copy();
+      attribute.attribute_info.type = attribute.expr->GetValueType();
+      tl.emplace_back(col_pos, attribute);
     }
 
     (*output_expr_map_)[expr] = col_pos;

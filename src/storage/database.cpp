@@ -35,9 +35,9 @@ Database::~Database() {
   LOG_TRACE("Finish deleting tables from database");
 }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // TABLE
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 void Database::AddTable(storage::DataTable *table, bool is_catalog) {
   {
@@ -54,10 +54,15 @@ void Database::AddTable(storage::DataTable *table, bool is_catalog) {
 }
 
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
-  for (auto table : tables)
-    if (table->GetOid() == table_oid) return table;
+  for (auto *table : tables) {
+    if (table->GetOid() == table_oid) {
+      return table;
+    }
+  }
+
+  // Table now found
   throw CatalogException("Table with oid = " + std::to_string(table_oid) +
-                         "is not found");
+                         " is not found");
   return nullptr;
 }
 
@@ -101,9 +106,9 @@ storage::DataTable *Database::GetTable(const oid_t table_offset) const {
 
 oid_t Database::GetTableCount() const { return tables.size(); }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // UTILITIES
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 // Get a string representation for debugging
 const std::string Database::GetInfo() const {

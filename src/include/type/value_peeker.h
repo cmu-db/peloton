@@ -63,6 +63,11 @@ class ValuePeeker {
     return value.GetAs<double>();
   }
 
+  static inline int32_t PeekDate(const Value &value) {
+    PL_ASSERT(value.GetTypeId() == Type::DATE);
+    return value.GetAs<uint32_t>();
+  }
+
   static inline uint64_t PeekTimestamp(const Value &value) {
     PL_ASSERT(value.GetTypeId() == Type::TIMESTAMP);
     return value.GetAs<uint64_t>();

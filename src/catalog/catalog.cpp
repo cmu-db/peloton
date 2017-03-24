@@ -904,5 +904,6 @@ void Catalog::InitializeFunctions() {
   AddFunction("extract", {type::Type::INTEGER, type::Type::TIMESTAMP},
               type::Type::DECIMAL, expression::DateFunctions::Extract);
 }
-}
-}
+
+}  // namespace catalog
+}  // namespace peloton

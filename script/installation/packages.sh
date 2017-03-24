@@ -79,8 +79,11 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libjemalloc-dev \
         valgrind \
         lcov \
-        postgresql-client \
-        libpqxx-dev
+        libpqxx-dev \
+        llvm-3.7 \
+        libedit-dev \
+        postgresql-client
+
 ## ------------------------------------------------
 ## FEDORA
 ## ------------------------------------------------
@@ -97,9 +100,12 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         jemalloc-devel \
         valgrind \
         lcov \
-        postgresql \
         libpqxx-devel \
-        libpqxx
+        libpqxx \
+        llvm3.7 \
+        libedit-devel \
+        postgresql
+
 ## ------------------------------------------------
 ## REDHAT
 ## ------------------------------------------------
@@ -134,7 +140,10 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         doxygen \
         graphviz \
         postgresql93 \
-        libpqxx-devel
+        libpqxx-devel \
+        llvm3.7 \
+        libedit-devel \
+        postgresql93
 
     # Manually download some packages to guarantee
     # version compatibility
