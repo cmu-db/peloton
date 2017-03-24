@@ -100,7 +100,7 @@ class PostgresParser {
   parser::SQLStatement* NodeTransform(ListCell* stmt);
 
   // transform helper for the whole parse list
-  parser::SQLStatementList* ListTransform(List* root);
+  std::unique_ptr<parser::SQLStatementList> ListTransform(List* root);
 };
 
 }  // End parser namespace
