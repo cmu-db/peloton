@@ -251,6 +251,11 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   }
 }
 
+void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent) {
+   stmt = stmt;
+   num_indent = num_indent;
+}
+
 std::string CharsToStringDestructive(char * str) {
   // this should not make an extra copy because of the return value optimization
   // ..hopefully

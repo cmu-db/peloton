@@ -96,6 +96,9 @@ class PostgresParser {
   // transform helper for select statements
   parser::SQLStatement* SelectTransform(SelectStmt* root);
 
+  // transform helper for delete statements
+  parser::SQLStatement* DeleteTransform(DeleteStmt* root);
+
   // transform helper for single node in parse list
   parser::SQLStatement* NodeTransform(ListCell* stmt);
 

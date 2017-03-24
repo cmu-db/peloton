@@ -25,19 +25,27 @@ namespace parser {
  *
  * If expr == NULL => delete all rows (truncate)
  */
-struct DeleteStatement : TableRefStatement {
+struct DeleteStatement : SQLStatement {
   DeleteStatement()
-      : TableRefStatement(StatementType::DELETE), expr(NULL) {};
+      : SQLStatement(StatementType::DELETE), table_ref(nullptr) , expr(nullptr) {};
 
   virtual ~DeleteStatement() {
+    delete table_ref;
     delete expr;
+  }
+
+  std::string GetTableName() const { return table_ref->GetTableName(); }
+
+  std::string GetDatabaseName() const {
+    return table_ref->GetDatabaseName();
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
-  expression::AbstractExpression* expr = nullptr;
+  parser::TableRef* table_ref;
+  expression::AbstractExpression* expr;
 };
 
 }  // End parser namespace
