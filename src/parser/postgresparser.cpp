@@ -591,8 +591,8 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
   return result;
 }
 
-// This function takes in a Postgres SelectStmt parsenode
-// and transfers into a Peloton SelectStatement parsenode.
+// This function takes in a Postgres InsertStmt parsenode
+// and transfers into a Peloton InsertStatement.
 // Please refer to parser/parsenode.h for the definition of
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {

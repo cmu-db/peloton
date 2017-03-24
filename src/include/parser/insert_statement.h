@@ -24,7 +24,7 @@ namespace parser {
  * @brief Represents "INSERT INTO students VALUES ('Max', 1112233,
  * 'Musterhausen', 2.3)"
  */
-struct InsertStatement : TableRefStatement {
+struct InsertStatement : SQLStatement {
   InsertStatement(InsertType type)
       : TableRefStatement(StatementType::INSERT),
         type(type),
@@ -41,7 +41,7 @@ struct InsertStatement : TableRefStatement {
 
     if (insert_values) {
       for (auto tuple : *insert_values) {
-        for( auto expr : *tuple){
+        for (auto expr : *tuple) {
           if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
             delete expr;
         }
@@ -53,15 +53,15 @@ struct InsertStatement : TableRefStatement {
     delete select;
   }
 
-
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   InsertType type;
   std::vector<char*>* columns;
-  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* insert_values;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
+      insert_values;
   SelectStatement* select;
+
+  TableInfo* table_info_ = nullptr;
 };
 
 }  // End parser namespace
