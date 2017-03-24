@@ -616,6 +616,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
           SelectTransform(reinterpret_cast<SelectStmt*>(stmt->data.ptr_value));
       break;
     }
+    case T_UpdateStmt: {
+      result = UpdateTransform((UpdateStmt*)stmt->data.ptr_value);
+    }
     default:
       break;
   }
@@ -637,6 +640,27 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(
   }
 
   return std::move(std::unique_ptr<parser::SQLStatementList>(result));
+}
+
+std::vector<parser::UpdateClause*> PostgresParser::UpdateTargetTransform(List *root) {
+  auto result = std::vector<parser::UpdateClause*>();
+  for (auto cell = root->head; cell != NULL; cell = cell->next) {
+    auto update_clause = new UpdateClause();
+    ResTarget *target = (ResTarget *) (cell->data.ptr_value);
+    update_clause->column = target->name;
+    switch (target->val->type) {
+    }
+  }
+  return result;
+}
+
+// TODO: Not support with clause, from clause and returning list in update statement in peloton
+parser::UpdateStatement* PostgresParser::UpdateTransform(UpdateStmt *update_stmt) {
+  auto result = new parser::UpdateStatement();
+  result->table = RangeVarTransform(update_stmt->relation);
+  result->where = WhereTransform(update_stmt->whereClause);
+
+
 }
 
 PgQueryInternalParsetreeAndError PostgresParser::ParseSQLString(
