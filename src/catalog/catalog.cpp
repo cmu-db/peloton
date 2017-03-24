@@ -109,7 +109,10 @@ ResultType Catalog::CreateDatabase(std::string &database_name,
   database_oid = catalog::DatabaseCatalog::GetInstance().GetNextOid();
 
   storage::Database *database = new storage::Database(database_id);
-  databases_.push_back(database);
+  {
+    std::lock_guard<std::mutex> lock(database_mutex);
+    databases_.push_back(database);
+  }
 
   // TODO: This should be deprecated
   database->setDBName(database_name);
@@ -124,6 +127,7 @@ ResultType Catalog::CreateDatabase(std::string &database_name,
 
 // This should be deprecated! this can screw up the database oid system
 void Catalog::AddDatabase(storage::Database *database) {
+  std::lock_guard<std::mutex> lock(database_mutex);
   databases_.push_back(database);
   std::string database_name;
   catalog::DatabaseCatalog::GetInstance().Insert(
@@ -360,6 +364,7 @@ ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
   // Drop actual database object
   LOG_TRACE("Dropping database with oid: %d", database_oid);
   bool found_database = false;
+  std::lock_guard<std::mutex> lock(database_mutex);
   for (auto it = databases_.begin(); it != databases_.end(); ++it) {
     if (it->GetOid() == database_oid) {
       LOG_TRACE("Deleting database object in database vector");
