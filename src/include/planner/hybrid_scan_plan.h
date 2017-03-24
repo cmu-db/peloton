@@ -30,19 +30,13 @@ namespace planner {
 
 class HybridScanPlan : public AbstractScan {
  public:
-  HybridScanPlan(const HybridScanPlan &) = delete;
-  HybridScanPlan &operator=(const HybridScanPlan &) = delete;
-  HybridScanPlan(HybridScanPlan &&) = delete;
-  HybridScanPlan &operator=(HybridScanPlan &&) = delete;
-
   HybridScanPlan(storage::DataTable *table,
                  expression::AbstractExpression *predicate,
                  const std::vector<oid_t> &column_ids,
                  const IndexScanPlan::IndexScanDesc &index_scan_desc,
                  HybridScanType hybrid_scan_type);
 
-  ~HybridScanPlan() {
-  }
+  ~HybridScanPlan() {}
 
   std::shared_ptr<index::Index> GetDataIndex() const { return index_; }
 
@@ -90,6 +84,9 @@ class HybridScanPlan : public AbstractScan {
   std::shared_ptr<index::Index> index_;
 
   index::IndexScanPredicate index_predicate_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(HybridScanPlan);
 };
 
 }  // namespace planner

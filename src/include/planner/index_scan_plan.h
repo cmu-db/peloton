@@ -100,11 +100,6 @@ class IndexScanPlan : public AbstractScan {
   // Members of IndexScanPlan
   ///////////////////////////////////////////////////////////////////
 
-  IndexScanPlan(const IndexScanPlan &) = delete;
-  IndexScanPlan &operator=(const IndexScanPlan &) = delete;
-  IndexScanPlan(IndexScanPlan &&) = delete;
-  IndexScanPlan &operator=(IndexScanPlan &&) = delete;
-
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
@@ -232,6 +227,9 @@ class IndexScanPlan : public AbstractScan {
 
   // whether order by is descending
   bool descend_ = false;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(IndexScanPlan);
 };
 
 }  // namespace planner

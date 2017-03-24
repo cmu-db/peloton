@@ -27,11 +27,6 @@ namespace planner {
  */
 class SetOpPlan : public AbstractPlan {
  public:
-  SetOpPlan(const SetOpPlan &) = delete;
-  SetOpPlan &operator=(const SetOpPlan &) = delete;
-  SetOpPlan(const SetOpPlan &&) = delete;
-  SetOpPlan &operator=(const SetOpPlan &&) = delete;
-
   SetOpPlan(SetOpType set_op) : set_op_(set_op) {}
 
   SetOpType GetSetOp() const { return set_op_; }
@@ -47,6 +42,10 @@ class SetOpPlan : public AbstractPlan {
  private:
   /** @brief Set Operation of this node */
   SetOpType set_op_;
+
+ private:
+  DISALLOW_COPY_AND_MOVE(SetOpPlan);
 };
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

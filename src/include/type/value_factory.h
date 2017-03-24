@@ -46,6 +46,10 @@ class ValueFactory {
     return Value(Type::BIGINT, value);
   }
 
+  static inline Value GetDateValue(uint32_t value) {
+    return Value(Type::DATE, static_cast<int32_t>(value));
+  }
+
   static inline Value GetTimestampValue(int64_t value) {
     return Value(Type::TIMESTAMP, value);
   }
