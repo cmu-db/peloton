@@ -26,7 +26,6 @@
 namespace peloton {
 namespace codegen {
 
-
 // TileGroup constructor
 TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 
@@ -52,7 +51,7 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
 
     // Call the consumer to generate the body of the scan loop
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ScanBody(codegen, tid, num_tuples, tile_group_access);
+    consumer.ProcessTuples(codegen, tid, num_tuples, tile_group_access);
 
     // Move to next tuple in the tile group
     tid = codegen->CreateAdd(tid, codegen.Const32(1));
@@ -77,8 +76,8 @@ void TileGroup::GenerateVectorizedTidScan(CodeGen &codegen,
 
     // Pass the vector to the consumer
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ScanBody(codegen, curr_range.start, curr_range.end,
-                      tile_group_access);
+    consumer.ProcessTuples(codegen, curr_range.start, curr_range.end,
+                           tile_group_access);
 
     loop.LoopEnd(codegen, {});
   }
