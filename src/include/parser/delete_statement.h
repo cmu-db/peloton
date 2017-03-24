@@ -27,7 +27,8 @@ namespace parser {
  */
 struct DeleteStatement : SQLStatement {
   DeleteStatement()
-      : SQLStatement(StatementType::DELETE), table_ref(nullptr) , expr(nullptr) {};
+      : SQLStatement(StatementType::DELETE),
+        table_ref(nullptr), expr(nullptr) {};
 
   virtual ~DeleteStatement() {
     delete table_ref;
