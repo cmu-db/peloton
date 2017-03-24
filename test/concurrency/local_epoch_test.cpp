@@ -43,14 +43,14 @@ TEST_F(LocalEpochTests, TransactionTest) {
   concurrency::LocalEpoch local_epoch(0);
   
   // a transaction enters epoch 10
-  bool rt = local_epoch.EnterEpoch(10);
+  bool rt = local_epoch.EnterEpoch(10, false);
   EXPECT_EQ(rt, true);
 
   uint64_t max_eid = local_epoch.GetMaxCommittedEpochId(11);
   EXPECT_EQ(max_eid, 9);
   
   // a transaction enters epoch 15
-  rt = local_epoch.EnterEpoch(15);
+  rt = local_epoch.EnterEpoch(15, false);
   EXPECT_EQ(rt, true);
   
   max_eid = local_epoch.GetMaxCommittedEpochId(18);
@@ -64,11 +64,11 @@ TEST_F(LocalEpochTests, TransactionTest) {
 
   // now the lower bound is 14.
   // a transaction at epoch 12 must be rejected.
-  rt = local_epoch.EnterEpoch(12);
+  rt = local_epoch.EnterEpoch(12, false);
   EXPECT_EQ(rt, false);
 
   // a read-only transaction can always succeed.
-  local_epoch.EnterEpochRO(12);
+  local_epoch.EnterEpoch(12, true);
   
   // consequently, the lower bound is dropped.
   max_eid = local_epoch.GetMaxCommittedEpochId(20);
