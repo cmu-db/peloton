@@ -642,8 +642,8 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(
   return std::move(std::unique_ptr<parser::SQLStatementList>(result));
 }
 
-std::vector<parser::UpdateClause*> PostgresParser::UpdateTargetTransform(List *root) {
-  auto result = std::vector<parser::UpdateClause*>();
+std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(List *root) {
+  auto result = new std::vector<parser::UpdateClause*>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();
     ResTarget *target = (ResTarget *) (cell->data.ptr_value);
@@ -669,7 +669,7 @@ std::vector<parser::UpdateClause*> PostgresParser::UpdateTargetTransform(List *r
         LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
       }
     }
-    result.push_back(update_clause);
+    result->push_back(update_clause);
   }
   return result;
 }

@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "parser/postgresparser.h"
 #include "parser/parser.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace test {
@@ -236,6 +237,53 @@ TEST_F(PostgresParserTests, ExprTest) {
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }
+}
+
+TEST_F(PostgresParserTests, UpdateTest0) {
+  std::vector<std::string> queries;
+
+  // Select with complicated where, tests both BoolExpr and AExpr
+  queries.push_back(
+      "UPDATE ORDER_LINE SET OL_DELIVERY_D = '2016-11-15 15:07:37' WHERE OL_O_ID = 2101 AND OL_D_ID = 2");
+
+  auto parser = parser::PostgresParser::GetInstance();
+  // Parsing
+  auto stmt_list = parser.BuildParseTree(queries[0]).release();
+  auto stmt = stmt_list->GetStatement(0);
+
+  // Check root type
+  EXPECT_EQ(stmt->GetType(), StatementType::UPDATE);
+  auto update = (parser::UpdateStatement*)stmt;
+
+  // Check table name
+  auto table_ref = update->table;
+  EXPECT_EQ(std::string(table_ref->table_info_->table_name), "order_line");
+
+  // Check where expression
+  auto where = update->where;
+  EXPECT_EQ(where->GetExpressionType(), ExpressionType::CONJUNCTION_AND);
+  EXPECT_EQ(where->GetChildrenSize(), 2);
+  EXPECT_EQ(where->GetChild(0)->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
+  EXPECT_EQ(where->GetChild(1)->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
+  EXPECT_EQ(where->GetChild(0)->GetChildrenSize(), 2);
+  EXPECT_EQ(where->GetChild(1)->GetChildrenSize(), 2);
+  EXPECT_EQ(where->GetChild(0)->GetChild(0)->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(where->GetChild(1)->GetChild(0)->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)(where->GetChild(0)->GetChild(0)))->GetColumnName(), "ol_o_id");
+  EXPECT_EQ(((expression::TupleValueExpression*)(where->GetChild(1)->GetChild(0)))->GetColumnName(), "ol_d_id");
+  EXPECT_EQ(where->GetChild(0)->GetChild(1)->GetExpressionType(), ExpressionType::VALUE_CONSTANT);
+  EXPECT_EQ(where->GetChild(1)->GetChild(1)->GetExpressionType(), ExpressionType::VALUE_CONSTANT);
+  EXPECT_EQ(((expression::ConstantValueExpression*)(where->GetChild(0)->GetChild(1)))->GetValue().ToString(), "2101");
+  EXPECT_EQ(((expression::ConstantValueExpression*)(where->GetChild(1)->GetChild(1)))->GetValue().ToString(), "2");
+
+  // Check update clause
+  auto update_clause = update->updates->at(0);
+  EXPECT_EQ(std::string(update_clause->column), "ol_delivery_d");
+  auto value = update_clause->value;
+  EXPECT_EQ(value->GetExpressionType(), ExpressionType::VALUE_CONSTANT);
+  EXPECT_EQ(((expression::ConstantValueExpression*)value)->GetValue().ToString(), "2016-11-15 15:07:37");
+  EXPECT_EQ(((expression::ConstantValueExpression*)value)->GetValueType(), type::Type::TypeId::VARCHAR);
+
 }
 
 }  // End test namespace

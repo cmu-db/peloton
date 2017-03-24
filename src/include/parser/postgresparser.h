@@ -106,7 +106,7 @@ class PostgresParser {
   parser::UpdateStatement* UpdateTransform(UpdateStmt* update_stmt);
 
   // transform helper for update statement
-  std::vector<parser::UpdateClause*> UpdateTargetTransform(List* root);
+  std::vector<parser::UpdateClause*>* UpdateTargetTransform(List* root);
 };
 
 }  // End parser namespace
