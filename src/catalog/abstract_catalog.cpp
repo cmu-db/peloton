@@ -36,9 +36,9 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_id,
           ? this
           : ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->Insert(catalog_table_id, column.GetName(), column.GetOffset(),
-                         column.GetType(), true, column.GetConstraints(), pool,
-                         nullptr);
+    pg_attribute->InsertColumn(catalog_table_id, column.GetName(), column.GetOffset(),
+                               column.GetType(), true, column.GetConstraints(), pool,
+                               nullptr);
   }
 
   // Index construction and inserting contents of pg_database, pg_table,

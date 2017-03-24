@@ -53,10 +53,10 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
   return database_catalog_schema;
 }
 
-bool DatabaseCatalog::Insert(oid_t database_id,
-                             const std::string &database_name,
-                             type::AbstractPool *pool,
-                             concurrency::Transaction *txn) {
+bool DatabaseCatalog::InsertDatabase(oid_t database_id,
+                                     const std::string &database_name,
+                                     type::AbstractPool *pool,
+                                     concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -70,8 +70,8 @@ bool DatabaseCatalog::Insert(oid_t database_id,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool DatabaseCatalog::DeleteByOid(oid_t database_id,
-                                  concurrency::Transaction *txn) {
+bool DatabaseCatalog::DeleteDatabase(oid_t database_id,
+                                     concurrency::Transaction *txn) {
   oid_t index_offset = 0;  // Index of database_id
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
@@ -79,42 +79,51 @@ bool DatabaseCatalog::DeleteByOid(oid_t database_id,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string DatabaseCatalog::GetNameByOid(oid_t database_id,
-                                          concurrency::Transaction *txn) {
+std::string DatabaseCatalog::GetDatabaseName(oid_t database_id,
+                                             concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // database_name
   oid_t index_offset = 0;              // Index of database_id
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
 
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
-  PL_ASSERT(result->GetTupleCount() <= 1);  // database_id is unique
-  if (result->GetTupleCount() != 0) {
-    database_name =
-        result->GetValue(0, 0)
-            .GetAs<std::string>();  // After projection left 1 column
+  PL_ASSERT(result_tiles.size() <= 1);  // database_id is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      database_name =
+          result_tiles[0]
+              ->GetValue(0, 0)
+              .GetAs<std::string>();  // After projection left 1 column
+    }
   }
 
   return database_name;
 }
 
-oid_t DatabaseCatalog::GetOidByName(const std::string &database_name,
-                                    concurrency::Transaction *txn) {
+oid_t DatabaseCatalog::GetDatabaseId(const std::string &database_name,
+                                     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // database_id
   oid_t index_offset = 1;              // Index of database_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
 
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t database_id = INVALID_OID;
-  PL_ASSERT(result->GetTupleCount() <=
-            1);  // table_name + database_name is unique
-  if (result->GetTupleCount() != 0) {
-    database_id = result->GetValue(0, 0)
-                      .GetAs<oid_t>();  // After projection left 1 column
+  PL_ASSERT(result_tiles.size() <= 1);  // database_name is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      database_id = result_tiles[0]
+                        ->GetValue(0, 0)
+                        .GetAs<oid_t>();  // After projection left 1 column
+    }
   }
 
   return database_id;

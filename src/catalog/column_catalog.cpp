@@ -29,7 +29,7 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog, pool) {}
 
-ColumnCatalog::~ColumnCatalog {}
+ColumnCatalog::~ColumnCatalog() {}
 
 std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   const std::string primary_key_constraint_name = "primary_key";
@@ -87,12 +87,13 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   return column_catalog_schema;
 }
 
-bool ColumnCatalog::Insert(oid_t table_id, const std::string &column_name,
-                           oid_t column_offset, type::Type::TypeId column_type,
-                           bool is_inlined,
-                           std::vector<ConstraintType> constraints,
-                           type::AbstractPool *pool,
-                           concurrency::Transaction *txn) {
+bool ColumnCatalog::InsertColumn(oid_t table_id, const std::string &column_name,
+                                 oid_t column_offset,
+                                 type::Type::TypeId column_type,
+                                 bool is_inlined,
+                                 std::vector<ConstraintType> constraints,
+                                 type::AbstractPool *pool,
+                                 concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -127,9 +128,8 @@ bool ColumnCatalog::Insert(oid_t table_id, const std::string &column_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool ColumnCatalog::DeleteByOidWithName(oid_t table_id,
-                                        const std::string &column_name,
-                                        concurrency::Transaction *txn) {
+bool ColumnCatalog::DeleteColumn(oid_t table_id, const std::string &column_name,
+                                 concurrency::Transaction *txn) {
   oid_t index_offset = 0;  // Index of table_id & column_name
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
@@ -139,9 +139,18 @@ bool ColumnCatalog::DeleteByOidWithName(oid_t table_id,
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-oid_t ColumnCatalog::GetOffsetByOidWithName(oid_t table_id,
-                                            const std::string &column_name,
-                                            concurrency::Transaction *txn) {
+bool ColumnCatalog::DeleteColumns(oid_t table_id,
+                                  concurrency::Transaction *txn) {
+  oid_t index_offset = 2;  // Index of table_id
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+
+  return DeleteWithIndexScan(index_offset, values, txn);
+}
+
+oid_t ColumnCatalog::GetColumnOffset(oid_t table_id,
+                                     const std::string &column_name,
+                                     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // column_offset
   oid_t index_offset = 0;              // Index of table_id & column_name
   std::vector<type::Value> values;
@@ -149,41 +158,52 @@ oid_t ColumnCatalog::GetOffsetByOidWithName(oid_t table_id,
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t column_offset = INVALID_OID;
-  PL_ASSERT(result->GetTupleCount() <= 1);  // table_id & column_name is unique
-  if (result->GetTupleCount() != 0) {
-    column_offset = result->GetValue(0, 0)
-                        .GetAs<oid_t>();  // After projection left 1 column
+  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_name is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      column_offset = result_tiles[0]
+                          ->GetValue(0, 0)
+                          .GetAs<oid_t>();  // After projection left 1 column
+    }
   }
 
   return column_offset;
 }
 
-std::string ColumnCatalog::GetNameByOidWithOffset(
-    oid_t table_id, oid_t column_offset, concurrency::Transaction *txn) {
+std::string ColumnCatalog::GetColumnName(oid_t table_id, oid_t column_offset,
+                                         concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // column_name
   oid_t index_offset = 1;              // Index of table_id & column_offset
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_offset).Copy());
 
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string column_name;
-  PL_ASSERT(result->GetTupleCount() <=
-            1);  // table_id & column_offset is unique
-  if (result->GetTupleCount() != 0) {
-    column_name = result->GetValue(0, 0)
-                      .GetAs<std::string>();  // After projection left 1 column
+  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_offset is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      column_name =
+          result_tiles[0]
+              ->GetValue(0, 0)
+              .GetAs<std::string>();  // After projection left 1 column
+    }
   }
 
   return column_name;
 }
 
-type::Type::TypeId ColumnCatalog::GetTypeByOidWithName(
-    oid_t table_id, std::string column_name, concurrency::Transaction *txn) {
+type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_id,
+                                                std::string column_name,
+                                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({3});  // column_type
   oid_t index_offset = 0;              // Index of table_id & column_name
   std::vector<type::Value> values;
@@ -191,36 +211,46 @@ type::Type::TypeId ColumnCatalog::GetTypeByOidWithName(
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result->GetTupleCount() <= 1);  // table_id & column_name is unique
-  if (result->GetTupleCount() != 0) {
-    column_type =
-        result->GetValue(0, 0)
-            .GetAs<type::Type::TypeId>();  // After projection left 1 column
+  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_name is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      column_type =
+          result_tiles[0]
+              ->GetValue(0, 0)
+              .GetAs<type::Type::TypeId>();  // After projection left 1 column
+    }
   }
 
   return column_type;
 }
 
-type::Type::TypeId ColumnCatalog::GetTypeByOidWithOffset(
-    oid_t table_id, oid_t column_offset, concurrency::Transaction *txn) {
+type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_id,
+                                                oid_t column_offset,
+                                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({3});  // column_type
   oid_t index_offset = 1;              // Index of table_id & column_offset
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_offset).Copy());
 
-  auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result->GetTupleCount() <=
-            1);  // table_id & column_offset is unique
-  if (result->GetTupleCount() != 0) {
-    column_type =
-        result->GetValue(0, 0)
-            .GetAs<type::Type::TypeId>();  // After projection left 1 column
+  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_offset is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      column_type =
+          result_tiles[0]
+              ->GetValue(0, 0)
+              .GetAs<type::Type::TypeId>();  // After projection left 1 column
+    }
   }
 
   return column_type;
