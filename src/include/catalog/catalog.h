@@ -116,6 +116,11 @@ class Catalog {
   // Drop a table
   ResultType DropTable(std::string database_name, std::string table_name,
                        concurrency::Transaction *txn);
+  // Drop a table, use this one in the future
+  ResultType DropTableWithOid(oid_t database_oid, oid_t table_oid,
+                              concurrency::Transaction *txn);
+  // Drop an index, using its index_oid
+  ResultType DropIndex(const oid_t database_oid, const oid_t index_oid);
 
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(const oid_t db_oid) const;
