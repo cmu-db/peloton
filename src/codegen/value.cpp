@@ -255,6 +255,7 @@ Value Value::ValueFromMaterialization(type::Type::TypeId type, llvm::Value *val,
 }
 
 // Get the LLVM type that matches the numeric type provided
+// TODO: This needs to move to type system
 llvm::Type *Value::NumericType(CodeGen &codegen, type::Type::TypeId type) {
   switch (type) {
     case type::Type::TypeId::BOOLEAN:
@@ -308,9 +309,8 @@ Value Value::BuildPHI(
 void Value::CreateCheckDivideByZeroException(CodeGen &codegen,
                                              const codegen::Value &divisor) {
   // Check if divisor is zero
-  llvm::Constant *zero =
-      llvm::ConstantInt::get(NumericType(codegen, divisor.GetType()), 0, true);
-  If val_is_zero{codegen, codegen->CreateICmpEQ(divisor.GetValue(), zero)};
+  Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
+  If val_is_zero{codegen, zero.CompareEq(codegen, divisor).GetValue()};
   {
     // Throw DivideByZeroException
     codegen.CallFunc(
