@@ -163,8 +163,6 @@ void TimestampOrderingTransactionManager::YieldOwnership(
     UNUSED_ATTRIBUTE Transaction *const current_txn, 
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  // auto &manager = catalog::Manager::GetInstance();
-  // auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id));
   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
 }
@@ -172,70 +170,164 @@ void TimestampOrderingTransactionManager::YieldOwnership(
 bool TimestampOrderingTransactionManager::PerformRead(
     Transaction *const current_txn, const ItemPointer &location,
     bool acquire_ownership) {
+  //////////////////////////////////////////////////////////
+  //// handle READ_ONLY
+  //////////////////////////////////////////////////////////
   if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
     // Ignore read validation for all read-only transactions
     return true;
-  }
+  } // end READ ONLY
 
-  // TODO: implement snapshot isolation.
-  if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
+  //////////////////////////////////////////////////////////
+  //// handle SNAPSHOT
+  //////////////////////////////////////////////////////////
+  else if (current_txn->GetIsolationLevel() == IsolationLevelType::SNAPSHOT) {
+    // Check if it's select for update before we check the ownership 
+    // and modify the last reader tid
+    if (acquire_ownership == true) {
+    
+      oid_t tile_group_id = location.block;
+      oid_t tuple_id = location.offset;
 
-  }
+      LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
+      auto &manager = catalog::Manager::GetInstance();
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      auto tile_group_header = tile_group->GetHeader();
 
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
-
-  LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-  auto tile_group_header = tile_group->GetHeader();
-
-  // Check if it's select for update before we check the ownership 
-  // and modify the last reader tid
-  if (acquire_ownership == true &&
-      IsOwner(current_txn, tile_group_header, tuple_id) == false) {
-    // Acquire ownership if we haven't
-    if (IsOwnable(current_txn, tile_group_header, tuple_id) == false) {
-      // Cannot own
-      return false;
+      if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
+        // Acquire ownership if we haven't
+        if (IsOwnable(current_txn, tile_group_header, tuple_id) == false) {
+          // Cannot own
+          return false;
+        }
+        if (AcquireOwnership(current_txn, tile_group_header, tuple_id) == false) {
+          // Cannot acquire ownership
+          return false;
+        }
+        // Promote to RWType::READ_OWN
+        current_txn->RecordReadOwn(location);
+      }
+      // if the ownership has already been acquired, 
+      // then no need to update read/write set.
+      return true;
+    
+    } else {
+      // if it's not select for update, then directly return true.
+      // no need to update read/write set.
+      return true;
     }
-    if (AcquireOwnership(current_txn, tile_group_header, tuple_id) == false) {
-      // Cannot acquire ownership
-      return false;
-    }
-    // Promote to RWType::READ_OWN
-    current_txn->RecordReadOwn(location);
-  }
 
-  // if the current transaction has already owned this tuple, then perform read
-  // directly.
-  if (IsOwner(current_txn, tile_group_header, tuple_id) == true) {
-    PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <=
-              current_txn->GetBeginCommitId());
-    // Increment table read op stats
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-          location.block);
+  } // end SNAPSHOT
+
+  //////////////////////////////////////////////////////////
+  //// handle SERIALIZABLE
+  //////////////////////////////////////////////////////////
+  else if (current_txn->GetIsolationLevel() == IsolationLevelType::SERIALIZABLE || 
+           current_txn->GetIsolationLevel() == IsolationLevelType::REPEATABLE_READS) {
+
+    oid_t tile_group_id = location.block;
+    oid_t tuple_id = location.offset;
+
+    LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+
+    // Check if it's select for update before we check the ownership 
+    // and modify the last reader tid.
+    if (acquire_ownership == true) {
+
+      if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
+
+        // if the current transaction does not own this tuple, 
+        // then attempt to set last reader cid.
+        if (SetLastReaderCommitId(tile_group_header, tuple_id,
+                                  current_txn->GetBeginCommitId()) == true) {
+          current_txn->RecordRead(location);
+          // Increment table read op stats
+          if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+            stats::BackendStatsContext::GetInstance()->IncrementTableReads(
+                location.block);
+          }
+          return true;
+        } else {
+          // if the tuple has been owned by some concurrent transactions, 
+          // then read fails.
+          LOG_TRACE("Transaction read failed");
+          return false;
+        }
+
+        // Acquire ownership if we haven't
+        if (IsOwnable(current_txn, tile_group_header, tuple_id) == false) {
+          // Cannot own
+          return false;
+        }
+        if (AcquireOwnership(current_txn, tile_group_header, tuple_id) == false) {
+          // Cannot acquire ownership
+          return false;
+        }
+        // Promote to RWType::READ_OWN
+        current_txn->RecordReadOwn(location);
+      }
+
+      // if the ownership has already been acquired, 
+      // then no need to update read/write set.
+
+      PL_ASSERT(IsOwner(current_txn, tile_group_header, tuple_id) == true);
+      PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <=
+                current_txn->GetBeginCommitId());
+      // Increment table read op stats
+      if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+        stats::BackendStatsContext::GetInstance()->IncrementTableReads(
+            location.block);
+      }
+      return true;
+
+    } else {
+
+      if (IsOwner(current_txn, tile_group_header, tuple_id) == false) {
+
+        // if the current transaction does not own this tuple, 
+        // then attempt to set last reader cid.
+        if (SetLastReaderCommitId(tile_group_header, tuple_id,
+                                  current_txn->GetBeginCommitId()) == true) {
+          
+          // update read set.
+          current_txn->RecordRead(location);
+          
+          // Increment table read op stats
+          if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+            stats::BackendStatsContext::GetInstance()->IncrementTableReads(
+                location.block);
+          }
+          return true;
+        } else {
+          // if the tuple has been owned by some concurrent transactions, 
+          // then read fails.
+          LOG_TRACE("Transaction read failed");
+          return false;
+        }
+
+      } else {
+
+        // if the current transaction has already owned this tuple, 
+        // then perform read directly.
+        PL_ASSERT(GetLastReaderCommitId(tile_group_header, tuple_id) <=
+                  current_txn->GetBeginCommitId());
+
+        // Increment table read op stats
+        if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
+          stats::BackendStatsContext::GetInstance()->IncrementTableReads(
+              location.block);
+        }
+        return true;
+      }
     }
-    return true;
-  }
-  // if the current transaction does not own this tuple, then attempt to set last
-  // reader cid.
-  if (SetLastReaderCommitId(tile_group_header, tuple_id,
-                            current_txn->GetBeginCommitId()) == true) {
-    current_txn->RecordRead(location);
-    // Increment table read op stats
-    if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()->IncrementTableReads(
-          location.block);
-    }
-    return true;
-  } else {
-    // if the tuple has been owned by some concurrent transactions, then read
-    // fails.
-    LOG_TRACE("Transaction read failed");
-    return false;
-  }
+
+  } // end SERIALIZABLE
+
+  // TODO: currently, we only support READ_ONLY, SERIALIZABLE, and SNAPSHOT.
+  return false;
 }
 
 void TimestampOrderingTransactionManager::PerformInsert(
@@ -529,10 +621,18 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     Transaction *const current_txn) {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
+  //////////////////////////////////////////////////////////
+  //// handle READ_ONLY
+  //////////////////////////////////////////////////////////
   if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
     EndTransaction(current_txn);
     return ResultType::SUCCESS;
   }
+
+  //////////////////////////////////////////////////////////
+  //// handle other isolation levels
+  //////////////////////////////////////////////////////////
+
 
   auto &manager = catalog::Manager::GetInstance();
   
