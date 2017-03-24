@@ -39,22 +39,22 @@ class TableCatalog : public AbstractCatalog {
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
   // Write related API
-  bool Insert(oid_t table_id, const std::string &table_name, oid_t database_id,
-              const std::string &database_name, type::AbstractPool *pool,
-              concurrency::Transaction *txn);
-  bool DeleteByOid(oid_t table_id, concurrency::Transaction *txn);
+  bool InsertTable(oid_t table_id, const std::string &table_name,
+                   oid_t database_id, const std::string &database_name,
+                   type::AbstractPool *pool, concurrency::Transaction *txn);
+  bool DeleteTable(oid_t table_id, concurrency::Transaction *txn);
+  bool DeleteTables(oid_t database_id, concurrency::Transaction *txn);
 
   // Read-only API
-  std::string GetTableNameByOid(oid_t table_id, concurrency::Transaction *txn);
-  std::string GetDatabaseNameByOid(oid_t table_id,
-                                   concurrency::Transaction *txn);
-  oid_t GetOidByName(const std::string &table_name,
-                     const std::string &database_name,
-                     concurrency::Transaction *txn);
-  std::vector<oid_t> GetTableIdByDatabaseId(oid_t database_id,
-                                            concurrency::Transaction *txn);
-  std::vector<std::string> GetTableNameByDatabaseId(
-      oid_t database_id, concurrency::Transaction *txn);
+  std::string GetTableName(oid_t table_id, concurrency::Transaction *txn);
+  std::string GetDatabaseName(oid_t table_id, concurrency::Transaction *txn);
+  oid_t GetTableId(const std::string &table_name,
+                   const std::string &database_name,
+                   concurrency::Transaction *txn);
+  std::vector<oid_t> GetTableIds(oid_t database_id,
+                                 concurrency::Transaction *txn);
+  std::vector<std::string> GetTableNames(oid_t database_id,
+                                         concurrency::Transaction *txn);
 
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);

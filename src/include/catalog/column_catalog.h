@@ -18,8 +18,9 @@
 // 4: is_inlined, 5: is_primary, 6: is_not_null
 //
 // Indexes: (index offset: indexed columns)
-// 0: table_id & column_name
-// 1: table_id & column_offset
+// 0: table_id & column_name (unique)
+// 1: table_id & column_offset (unique)
+// 2: table_id (non-unique)
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,22 +40,23 @@ class ColumnCatalog : public AbstractCatalog {
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
   // Write related API
-  bool Insert(oid_t table_id, const std::string &column_name,
-              oid_t column_offset, type::Type::TypeId column_type,
-              bool is_inlined, std::vector<ConstraintType> constraints,
-              type::AbstractPool *pool, concurrency::Transaction *txn);
-  bool DeleteByOidWithName(oid_t table_id, const std::string &column_name,
-                           concurrency::Transaction *txn);
+  bool InsertColumn(oid_t table_id, const std::string &column_name,
+                    oid_t column_offset, type::Type::TypeId column_type,
+                    bool is_inlined, std::vector<ConstraintType> constraints,
+                    type::AbstractPool *pool, concurrency::Transaction *txn);
+  bool DeleteColumn(oid_t table_id, const std::string &column_name,
+                    concurrency::Transaction *txn);
+  bool DeleteColumns(oid_t table_id, concurrency::Transaction *txn);
 
   // Read-only API
-  oid_t GetOffsetByOidWithName(oid_t table_id, const std::string &column_name,
-                               concurrency::Transaction *txn);
-  std::string GetNameByOidWithOffset(oid_t table_id, oid_t column_offset,
-                                     concurrency::Transaction *txn);
-  type::TypeId GetTypeByOidWithName(oid_t table_id, std::string column_name,
-                                    concurrency::Transaction *txn);
-  type::TypeId GetTypeByOidWithOffset(oid_t table_id, oid_t column_offset,
-                                      concurrency::Transaction *txn);
+  oid_t GetColumnOffset(oid_t table_id, const std::string &column_name,
+                        concurrency::Transaction *txn);
+  std::string GetColumnName(oid_t table_id, oid_t column_offset,
+                            concurrency::Transaction *txn);
+  type::TypeId GetColumnType(oid_t table_id, std::string column_name,
+                             concurrency::Transaction *txn);
+  type::TypeId GetColumnType(oid_t table_id, oid_t column_offset,
+                             concurrency::Transaction *txn);
 
  private:
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
