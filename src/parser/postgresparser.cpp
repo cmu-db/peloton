@@ -601,10 +601,13 @@ parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
   auto select_stmt = reinterpret_cast<SelectStmt*>(root->selectStmt);
 
   parser::InsertStatement* result = nullptr;
-  if (select_stmt->fromClause != NULL)
+  if (select_stmt->fromClause != NULL) {
     result = new parser::InsertStatement(InsertType::SELECT);
-  else
+    result->select = reinterpret_cast<parser::SelectStatement*>(
+        SelectTransform(select_stmt));
+  } else {
     result = new parser::InsertStatement(InsertType::VALUES);
+  }
 
   result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
 
