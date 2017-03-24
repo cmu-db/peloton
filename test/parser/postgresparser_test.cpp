@@ -217,11 +217,13 @@ TEST_F(PostgresParserTests, MultiTableTest) {
   }
 }
 
-TEST_F(PostgresParserTests, ExprTest) {
+TEST_F(PostgresParserTests, ColumnUpdateTest) {
   std::vector<std::string> queries;
 
   // Select with complicated where, tests both BoolExpr and AExpr
-  queries.push_back("SELECT * FROM foo WHERE id > 3 AND value < 10 OR id < 3 AND value > 10;");
+  queries.push_back(
+      "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE, C_DELIVERY_CNT = "
+      "C_DELIVERY_CNT WHERE C_W_ID = 2");
 
   auto parser = parser::PostgresParser::GetInstance();
   // Parsing
@@ -229,13 +231,50 @@ TEST_F(PostgresParserTests, ExprTest) {
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
     EXPECT_TRUE(stmt_list->is_valid);
-    if (stmt_list->is_valid == false) {
-      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
-                stmt_list->error_line, stmt_list->error_col);
-    }
-    // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    delete stmt_list;
+
+    EXPECT_EQ(stmt_list->statements.size(), 1);
+    auto sql_stmt = stmt_list->statements[0];
+
+    EXPECT_EQ(sql_stmt->GetType(), StatementType::UPDATE);
+    auto update_stmt = (parser::UpdateStatement*)(sql_stmt);
+    auto table = update_stmt->table;
+    auto updates = update_stmt->updates;
+    auto where_clause = update_stmt->where;
+    
+    EXPECT_NE(table, nullptr);
+    EXPECT_NE(table->table_info_, nullptr);
+    EXPECT_NE(table->table_info_->table_name, nullptr);
+    EXPECT_EQ(std::string(table->table_info_->table_name), std::string("customer"));
+    
+    EXPECT_NE(updates, nullptr);
+    EXPECT_EQ(updates->size(), 2);
+    EXPECT_EQ(std::string((*updates)[0]->column), std::string("c_balance"));
+    EXPECT_EQ((*updates)[0]->value->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+    expression::TupleValueExpression *column_value_0 = (expression::TupleValueExpression *)((*updates)[0]->value);
+    EXPECT_EQ(column_value_0->GetColumnName(), std::string("c_balance"));
+
+    EXPECT_EQ(std::string((*updates)[1]->column), std::string("c_delivery_cnt"));
+    EXPECT_EQ((*updates)[1]->value->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+    expression::TupleValueExpression *column_value_1 = (expression::TupleValueExpression *)((*updates)[1]->value);
+    EXPECT_EQ(column_value_1->GetColumnName(), std::string("c_delivery_cnt"));
+
+    EXPECT_NE(where_clause, nullptr);
+    EXPECT_EQ(where_clause->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
+    // auto eq_expr = static_cast<express::ComparisonExpression> (where_clause);
+    auto left_child = where_clause->GetChild(0);
+    auto right_child = where_clause->GetChild(1);
+    EXPECT_EQ(left_child->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+    auto left_tuple = (expression::TupleValueExpression *)(left_child);
+    EXPECT_EQ(left_tuple->GetColumnName(), std::string("c_w_id"));
+
+    EXPECT_EQ(right_child->GetExpressionType(), ExpressionType::VALUE_CONSTANT);
+    auto right_const = (expression::ConstantValueExpression *)(right_child);
+
+    EXPECT_EQ(right_const->GetValue().ToString(), std::string("2"));
+
+
+    //delete stmt_list;
   }
 }
 
