@@ -20,12 +20,11 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// An interface for consumers of table scans. Anytime a client wishes to
-// generate code for a table scan, they must implement an instance of this
-// interface. Various callback hooks are provided for when the scanner begins
-// iterating over a new tile group, and when iteration over a tile group
-// completes. In between these calls, ScanBody() will be called to allow the
-// client to generate code that goes into the body/loop of the table scan.
+// An interface for clients to scan a data table. Various callback hooks are
+// provided for when the scanner begins iterating over a new tile group, and
+// when iteration over a tile group completes. In between these calls,
+// ProcessTuples() will be called to allow the client to handle processing of
+// all tuples in the provided range of TIDs.
 //===----------------------------------------------------------------------===//
 class ScanConsumer {
  public:
@@ -37,10 +36,10 @@ class ScanConsumer {
   virtual void TileGroupStart(CodeGen &codegen,
                               llvm::Value *tile_group_ptr) = 0;
 
-  // Callback to generate the body of the scan loop
-  virtual void ScanBody(CodeGen &codegen, llvm::Value *tid_start,
-                        llvm::Value *tid_end,
-                        TileGroup::TileGroupAccess &tile_group_access) = 0;
+  // Callback to process the tuples with the provided range
+  virtual void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
+                             llvm::Value *tid_end,
+                             TileGroup::TileGroupAccess &tile_group_access) = 0;
 
   // Callback for when iteration over the given tile group has completed
   virtual void TileGroupFinish(CodeGen &codegen,

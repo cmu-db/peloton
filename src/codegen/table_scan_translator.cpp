@@ -102,13 +102,14 @@ TableScanTranslator::ScanConsumer::ScanConsumer(
     : translator_(translator), selection_vector_(selection_vector) {}
 
 // Generate the body of the vectorized scan
-void TableScanTranslator::ScanConsumer::ScanBody(
-    CodeGen &, llvm::Value *tid_start, llvm::Value *tid_end,
+void TableScanTranslator::ScanConsumer::ProcessTuples(
+    CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     TileGroup::TileGroupAccess &tile_group_access) {
   auto *predicate = GetPredicate();
   if (predicate != nullptr) {
     // First perform a vectorized filter, putting TIDs into the selection vector
-    FilterRows(tile_group_access, tid_start, tid_end, selection_vector_);
+    FilterRows(codegen, tile_group_access, tid_start, tid_end,
+               selection_vector_);
   }
 
   // 2. Setup the row batch
@@ -155,10 +156,9 @@ TableScanTranslator::ScanConsumer::GetPredicate() const {
 }
 
 void TableScanTranslator::ScanConsumer::FilterRows(
-    const TileGroup::TileGroupAccess &access, llvm::Value *tid_start,
-    llvm::Value *tid_end, Vector &selection_vector) const {
-  auto &codegen = translator_.GetCodeGen();
-
+    CodeGen &codegen, const TileGroup::TileGroupAccess &access,
+    llvm::Value *tid_start, llvm::Value *tid_end,
+    Vector &selection_vector) const {
   // The batch we're filtering
   auto &compilation_ctx = translator_.GetCompilationContext();
   RowBatch batch{compilation_ctx, tid_start, tid_end, selection_vector, false};

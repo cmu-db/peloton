@@ -20,6 +20,7 @@ namespace codegen {
 // can be found it (i.e., which index to pass into Get() to get the value)
 //===----------------------------------------------------------------------===//
 uint32_t UpdateableStorage::AddType(type::Type::TypeId type) {
+  PL_ASSERT(storage_type_ == nullptr);
   types_.push_back(type);
   return types_.size() - 1;
 }
@@ -120,7 +121,7 @@ void UpdateableStorage::SetValueAt(CodeGen &codegen, llvm::Value *area_start,
 
   llvm::Value *typed_ptr =
       codegen->CreateBitCast(area_start, storage_type_->getPointerTo());
-  // StoreValue the value and len at the appropriate slots
+  // Store the value and len at the appropriate slots
   codegen->CreateStore(val, codegen->CreateConstInBoundsGEP2_32(
                                 storage_type_, typed_ptr, 0, val_idx));
 
