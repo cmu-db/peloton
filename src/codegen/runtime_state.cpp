@@ -55,8 +55,8 @@ llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
   return state_ptr;
 }
 
-llvm::Value *RuntimeState::LoadStateValue(CodeGen &codegen,
-                                          RuntimeState::StateID state_id) const {
+llvm::Value *RuntimeState::LoadStateValue(
+    CodeGen &codegen, RuntimeState::StateID state_id) const {
   auto &state_info = state_slots_[state_id];
   if (state_info.local) {
     return state_info.val;
