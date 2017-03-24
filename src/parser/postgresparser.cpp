@@ -604,6 +604,10 @@ std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
   return result;
 }
 
+// This function takes in the valuesLists of a Postgres InsertStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+// This is a vector pointer of vector pointers because one InsertStmt can insert
+// multiple tuples.
 std::vector<std::vector<expression::AbstractExpression*>*>*
 PostgresParser::ValueListsTransform(List* root) {
   std::vector<std::vector<expression::AbstractExpression*>*>* result =
@@ -611,7 +615,6 @@ PostgresParser::ValueListsTransform(List* root) {
 
   for (auto value_list = root->head; value_list != NULL;
        value_list = value_list->next) {
-
     std::vector<expression::AbstractExpression*>* cur_result =
         new std::vector<expression::AbstractExpression*>();
 
@@ -625,32 +628,38 @@ PostgresParser::ValueListsTransform(List* root) {
 
   return result;
 }
+
 // This function takes in a Postgres InsertStmt parsenode
 // and transfers into a Peloton InsertStatement.
 // Please refer to parser/parsenode.h for the definition of
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
-
+  // selectStmt must exist. It would either select from table or directly select
+  // some values
   PL_ASSERT(root->selectStmt != NULL);
 
   auto select_stmt = reinterpret_cast<SelectStmt*>(root->selectStmt);
 
   parser::InsertStatement* result = nullptr;
   if (select_stmt->fromClause != NULL) {
+    // if select from a table to insert
     result = new parser::InsertStatement(InsertType::SELECT);
 
     result->select = reinterpret_cast<parser::SelectStatement*>(
         SelectTransform(select_stmt));
 
   } else {
+    // Directly insert some values
     result = new parser::InsertStatement(InsertType::VALUES);
 
     PL_ASSERT(select_stmt->valuesLists != NULL);
     result->insert_values = ValueListsTransform(select_stmt->valuesLists);
   }
 
+  // The table to insert into
   result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
 
+  // The columns to insert into
   result->columns = ColumnNameTransform(root->cols);
   return (parser::SQLStatement*)result;
 }

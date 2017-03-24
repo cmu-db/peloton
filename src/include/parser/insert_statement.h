@@ -66,6 +66,8 @@ struct InsertStatement : SQLStatement {
       insert_values;
   SelectStatement* select;
 
+  // FIXME: This is here for compilation purpose. Need to remove after the
+  // Hyrise parser is removed!!!
   TableInfo* table_info_ = nullptr;
 
   // Which table are we inserting into
