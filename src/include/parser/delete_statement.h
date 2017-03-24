@@ -46,6 +46,7 @@ struct DeleteStatement : SQLStatement {
   }
 
   parser::TableRef* table_ref;
+  parser::TableInfo* table_info_;
   expression::AbstractExpression* expr;
 };
 
