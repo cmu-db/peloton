@@ -501,7 +501,7 @@ TEST_F(PostgresParserTests, InsertTest) {
 TEST_F(PostgresParserTests, InsertIntoSelectTest) {
   std::vector<std::string> queries;
 
-  // Select with complicated where, tests both BoolExpr and AExpr
+  // insert into a table with select sub-query
   queries.push_back("INSERT INTO foo select * from bar where id = 5;");
 
   auto parser = parser::PostgresParser::GetInstance();
@@ -521,8 +521,8 @@ TEST_F(PostgresParserTests, InsertIntoSelectTest) {
     EXPECT_EQ("foo", insert_stmt->GetTableName());
     EXPECT_TRUE(insert_stmt->insert_values == nullptr);
     EXPECT_TRUE(insert_stmt->select->GetType() == StatementType::SELECT);
-    LOG_ERROR(insert_stmt->select->from_table->GetTableName());
-    EXPECT_EQ("bar", insert_stmt->select->from_table->GetTableName());
+    EXPECT_EQ("bar",
+              std::string(insert_stmt->select->from_table->GetTableName()));
 
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
