@@ -596,8 +596,14 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
 // Please refer to parser/parsenode.h for the definition of
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
-  parser::InsertStatement* result = new parser::InsertStatement();
+  PL_ASSERT(root->selectStmt != NULL);
+
+  parser::InsertStatement* result = nullptr;
+  if (root->selectStmt)
+    result = new parser::InsertStatement(InsertType::INVALID);
+
   result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
+
   //  result->select_list = TargetTransform(root->targetList);
   //  result->from_table = FromTransform(root->fromClause);
   //  result->group_by = GroupByTransform(root->groupClause,

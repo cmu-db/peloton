@@ -26,11 +26,12 @@ namespace parser {
  */
 struct InsertStatement : SQLStatement {
   InsertStatement(InsertType type)
-      : TableRefStatement(StatementType::INSERT),
+      : SQLStatement(StatementType::INSERT),
         type(type),
         columns(NULL),
         insert_values(NULL),
-        select(NULL) {}
+        select(NULL),
+        table_ref_(nullptr) {}
 
   virtual ~InsertStatement() {
     if (columns) {
@@ -53,6 +54,11 @@ struct InsertStatement : SQLStatement {
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
+
+  inline std::string GetTableName() const { return table_ref_->GetTableName(); }
+  inline std::string GetDatabaseName() const {
+    return table_ref_->GetDatabaseName();
+  }
 
   InsertType type;
   std::vector<char*>* columns;
