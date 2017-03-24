@@ -591,11 +591,25 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
   return result;
 }
 
+std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
+  if (root == nullptr) return nullptr;
+
+  std::vector<char*>* result = new std::vector<char*>();
+
+  for (auto cell = root->head; cell != NULL; cell = cell->next) {
+    ResTarget* target = (ResTarget*)(cell->data.ptr_value);
+    result->push_back(target->name);
+  }
+
+  return result;
+}
+
 // This function takes in a Postgres InsertStmt parsenode
 // and transfers into a Peloton InsertStatement.
 // Please refer to parser/parsenode.h for the definition of
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
+
   PL_ASSERT(root->selectStmt != NULL);
 
   auto select_stmt = reinterpret_cast<SelectStmt*>(root->selectStmt);
@@ -611,6 +625,7 @@ parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
 
   result->table_ref_ = RangeVarTransform((RangeVar*)(root->relation));
 
+  result->columns = ColumnNameTransform(root->cols);
   //  result->select_list = TargetTransform(root->targetList);
   //  result->from_table = FromTransform(root->fromClause);
   //  result->group_by = GroupByTransform(root->groupClause,

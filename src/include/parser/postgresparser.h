@@ -93,6 +93,9 @@ class PostgresParser {
   // transform helper for order by clauses
   parser::OrderDescription* OrderByTransform(List* order);
 
+  // transform helper for column name (for insert statement)
+  std::vector<char*>* PostgresParser::ColumnNameTransform(List* root);
+
   // transform helper for insert statements
   parser::SQLStatement* InsertTransform(InsertStmt* root);
 
