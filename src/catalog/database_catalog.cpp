@@ -37,7 +37,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
 
   auto database_id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "database_id", true);
+      "database_oid", true);
   database_id_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
   database_id_column.AddConstraint(
@@ -53,14 +53,14 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
   return database_catalog_schema;
 }
 
-bool DatabaseCatalog::InsertDatabase(oid_t database_id,
+bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
                                      const std::string &database_name,
                                      type::AbstractPool *pool,
                                      concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetIntegerValue(database_id);
+  auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
 
   tuple->SetValue(0, val0, pool);
@@ -70,27 +70,27 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_id,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool DatabaseCatalog::DeleteDatabase(oid_t database_id,
+bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
                                      concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of database_id
+  oid_t index_offset = 0;  // Index of database_oid
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string DatabaseCatalog::GetDatabaseName(oid_t database_id,
+std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,
                                              concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // database_name
-  oid_t index_offset = 0;              // Index of database_id
+  oid_t index_offset = 0;              // Index of database_oid
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // database_id is unique
+  PL_ASSERT(result_tiles.size() <= 1);  // database_oid is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
@@ -104,9 +104,9 @@ std::string DatabaseCatalog::GetDatabaseName(oid_t database_id,
   return database_name;
 }
 
-oid_t DatabaseCatalog::GetDatabaseId(const std::string &database_name,
-                                     concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({0});  // database_id
+oid_t DatabaseCatalog::GetDatabaseOid(const std::string &database_name,
+                                      concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({0});  // database_oid
   oid_t index_offset = 1;              // Index of database_name
   std::vector<type::Value> values;
   values.push_back(
@@ -115,18 +115,18 @@ oid_t DatabaseCatalog::GetDatabaseId(const std::string &database_name,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  oid_t database_id = INVALID_OID;
+  oid_t database_oid = INVALID_OID;
   PL_ASSERT(result_tiles.size() <= 1);  // database_name is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
-      database_id = result_tiles[0]
-                        ->GetValue(0, 0)
-                        .GetAs<oid_t>();  // After projection left 1 column
+      database_oid = result_tiles[0]
+                         ->GetValue(0, 0)
+                         .GetAs<oid_t>();  // After projection left 1 column
     }
   }
 
-  return database_id;
+  return database_oid;
 }
 
 }  // End catalog namespace

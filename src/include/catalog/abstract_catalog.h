@@ -53,7 +53,7 @@ class AbstractCatalog {
   virtual oid_t GetNextOid(void) = 0;
 
  protected:
-  AbstractCatalog(oid_t catalog_table_id, std::string catalog_table_name,
+  AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema,
                   storage::Database *pg_catalog, type::AbstractPool *pool);
 
@@ -70,7 +70,7 @@ class AbstractCatalog {
                            concurrency::Transaction *txn);
 
   std::vector<executor::LogicalTile *> const &GetResultWithIndexScan(
-      std::vector<oid_t> column_ids, oid_t index_offset,
+      std::vector<oid_t> column_offsets, oid_t index_offset,
       std::vector<type::Value> values, concurrency::Transaction *txn);
 
   // Maximum column name size for catalog schemas

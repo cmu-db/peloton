@@ -29,8 +29,8 @@ class IndexCatalog : public AbstractCatalog {
   inline oid_t GetNextOid() { return oid_++ | static_cast<oid_t>(type::CatalogType::DATABASE); }
 
   std::unique_ptr<storage::Tuple> GetIndexCatalogTuple(
-    oid_t index_id, std::string index_name,
-    oid_t table_id, oid_t database_id, bool unique_keys
+    oid_t index_oid, std::string index_name,
+    oid_t table_oid, oid_t database_oid, bool unique_keys
     type::AbstractPool *pool)
 
   // Read-only API

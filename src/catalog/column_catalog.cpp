@@ -37,7 +37,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
 
   auto table_id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "table_id", true);
+      "table_oid", true);
   table_id_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
   table_id_column.AddConstraint(
@@ -87,18 +87,16 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   return column_catalog_schema;
 }
 
-bool ColumnCatalog::InsertColumn(oid_t table_id, const std::string &column_name,
-                                 oid_t column_offset,
-                                 type::Type::TypeId column_type,
-                                 bool is_inlined,
-                                 std::vector<ConstraintType> constraints,
-                                 type::AbstractPool *pool,
-                                 concurrency::Transaction *txn) {
+bool ColumnCatalog::InsertColumn(
+    oid_t table_oid, const std::string &column_name, oid_t column_offset,
+    type::Type::TypeId column_type, bool is_inlined,
+    std::vector<ConstraintType> constraints, type::AbstractPool *pool,
+    concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val0 = type::ValueFactory::GetIntegerValue(table_id);
+  auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(column_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(column_offset);
   auto val3 =
@@ -128,33 +126,34 @@ bool ColumnCatalog::InsertColumn(oid_t table_id, const std::string &column_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool ColumnCatalog::DeleteColumn(oid_t table_id, const std::string &column_name,
+bool ColumnCatalog::DeleteColumn(oid_t table_oid,
+                                 const std::string &column_name,
                                  concurrency::Transaction *txn) {
-  oid_t index_offset = 0;  // Index of table_id & column_name
+  oid_t index_offset = 0;  // Index of table_oid & column_name
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-bool ColumnCatalog::DeleteColumns(oid_t table_id,
+bool ColumnCatalog::DeleteColumns(oid_t table_oid,
                                   concurrency::Transaction *txn) {
-  oid_t index_offset = 2;  // Index of table_id
+  oid_t index_offset = 2;  // Index of table_oid
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-oid_t ColumnCatalog::GetColumnOffset(oid_t table_id,
+oid_t ColumnCatalog::GetColumnOffset(oid_t table_oid,
                                      const std::string &column_name,
                                      concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // column_offset
-  oid_t index_offset = 0;              // Index of table_id & column_name
+  oid_t index_offset = 0;              // Index of table_oid & column_name
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
@@ -162,7 +161,7 @@ oid_t ColumnCatalog::GetColumnOffset(oid_t table_id,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t column_offset = INVALID_OID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_name is unique
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_name is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
@@ -175,19 +174,19 @@ oid_t ColumnCatalog::GetColumnOffset(oid_t table_id,
   return column_offset;
 }
 
-std::string ColumnCatalog::GetColumnName(oid_t table_id, oid_t column_offset,
+std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_offset,
                                          concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // column_name
-  oid_t index_offset = 1;              // Index of table_id & column_offset
+  oid_t index_offset = 1;              // Index of table_oid & column_offset
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_offset).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string column_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_offset is unique
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_offset is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
@@ -201,13 +200,13 @@ std::string ColumnCatalog::GetColumnName(oid_t table_id, oid_t column_offset,
   return column_name;
 }
 
-type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_id,
+type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
                                                 std::string column_name,
                                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({3});  // column_type
-  oid_t index_offset = 0;              // Index of table_id & column_name
+  oid_t index_offset = 0;              // Index of table_oid & column_name
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
@@ -215,7 +214,7 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_id,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_name is unique
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_name is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
@@ -229,20 +228,20 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_id,
   return column_type;
 }
 
-type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_id,
+type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
                                                 oid_t column_offset,
                                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({3});  // column_type
-  oid_t index_offset = 1;              // Index of table_id & column_offset
+  oid_t index_offset = 1;              // Index of table_oid & column_offset
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_offset).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_id & column_offset is unique
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_offset is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
