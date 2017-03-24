@@ -17,8 +17,9 @@
 // 0: table_id (pkey), 1: table_name, 2: database_id, 3: database_name
 //
 // Indexes: (index offset: indexed columns)
-// 0: table_id
-// 1: table_name & database_name
+// 0: table_id (unique)
+// 1: table_name & database_name (unique)
+// 2: database_id (non-unique)
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,12 +51,10 @@ class TableCatalog : public AbstractCatalog {
   oid_t GetOidByName(const std::string &table_name,
                      const std::string &database_name,
                      concurrency::Transaction *txn);
-
-  // TODO: Also add index for database oid?
-  std::vector<oid_t> GetTableOidByDatabaseOid(oid_t database_id,
-                                              concurrency::Transaction *txn);
-  std::vector<std::string> GetTableNameByDatabaseOid(oid_t database_id,
-                                              concurrency::Transaction *txn);
+  std::vector<oid_t> GetTableIdByDatabaseId(oid_t database_id,
+                                            concurrency::Transaction *txn);
+  std::vector<std::string> GetTableNameByDatabaseId(
+      oid_t database_id, concurrency::Transaction *txn);
 
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);

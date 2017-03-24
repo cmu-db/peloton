@@ -128,10 +128,12 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 // @param   index_offset  Offset of index for scan
 // @param   values        Values for search
 // @param   txn           Transaction
-// @return  Result of executor
-executor::LogicalTile *AbstractCatalog::GetResultWithIndexScan(
-    std::vector<oid_t> column_ids, oid_t index_offset,
-    std::vector<type::Value> values, concurrency::Transaction *txn) {
+// @return  Vector of logical tiles
+std::vector<std::unique_ptr<executor::LogicalTile>> const &
+AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_ids,
+                                        oid_t index_offset,
+                                        std::vector<type::Value> values,
+                                        concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
 
@@ -163,14 +165,17 @@ executor::LogicalTile *AbstractCatalog::GetResultWithIndexScan(
 
   // Execute
   index_scan_executor.Init();
-  index_scan_executor.Execute();
-  auto result = index_scan_executor.GetOutput();
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+  while (index_scan_executor.Execute()) {
+    result_tiles.emplace_back(index_scan_executor.GetOutput());
+  }
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
   }
 
-  return result;
+  return result_tiles;
 }
 
 }  // End catalog namespace
