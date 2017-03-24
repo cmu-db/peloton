@@ -23,6 +23,7 @@
 #include "expression/aggregate_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/comparison_expression.h"
+#include "expression/operator_expression.h"
 #include "type/types.h"
 #include "type/value_factory.h"
 
@@ -76,9 +77,9 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
       break;
     }
     default: {
-      LOG_ERROR("Join type %d not supported yet...", root->jointype);
       delete result;
-      return nullptr;
+      LOG_ERROR("Join type %d not supported yet...\n", root->jointype);
+      throw NotImplementedException("...");
     }
   }
 
@@ -88,13 +89,14 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   } else {
     LOG_ERROR("Join arg type %d not supported yet...\n", root->larg->type);
     delete result;
-    return nullptr;
+    throw NotImplementedException("...");
   }
   if (root->rarg->type == T_RangeVar) {
     result->right = RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg));
   } else {
     LOG_ERROR("Join arg type %d not supported yet...\n", root->larg->type);
     delete result;
+    throw NotImplementedException("...");
     return nullptr;
   }
 
@@ -113,7 +115,7 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
     default: {
       LOG_ERROR("Join quals type %d not supported yet...\n", root->larg->type);
       delete result;
-      return nullptr;
+      throw NotImplementedException("...");
     }
   }
   return result;
@@ -150,12 +152,40 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
 parser::TableRef* PostgresParser::FromTransform(List* root) {
   // now support select from only one sources
   parser::TableRef* result = nullptr;
+  Node* node;
   if (root->length > 1) {
-    LOG_ERROR("Multiple from not handled yet\n");
+    result = new TableRef(StringToTableReferenceType("CROSS_PRODUCT"));
+    result->list = new std::vector<TableRef*>();
+    for (auto cell = root->head; cell != nullptr; cell = cell->next) {
+      node = reinterpret_cast<Node*>(cell->data.ptr_value);
+      switch (node->type) {
+        case T_RangeVar: {
+          result->list->push_back(
+              RangeVarTransform(reinterpret_cast<RangeVar*>(node)));
+          break;
+        }
+        case T_RangeSubselect: {
+          parser::TableRef* temp =
+              new parser::TableRef(StringToTableReferenceType("select"));
+          temp->select = reinterpret_cast<parser::SelectStatement*>(
+              SelectTransform(reinterpret_cast<SelectStmt*>(
+                  (reinterpret_cast<RangeSubselect*>(node))->subquery)));
+          temp->alias =
+              AliasTransform((reinterpret_cast<RangeSubselect*>(node))->alias);
+          if (temp->select == nullptr) {
+            delete temp;
+            temp = nullptr;
+          }
+          result->list->push_back(temp);
+          break;
+        }
+        default: { LOG_ERROR("From Type %d not supported yet...", node->type); }
+      }
+    }
     return result;
   }
 
-  Node* node = reinterpret_cast<Node*>(root->head->data.ptr_value);
+  node = reinterpret_cast<Node*>(root->head->data.ptr_value);
   switch (node->type) {
     case T_RangeVar: {
       result = RangeVarTransform(reinterpret_cast<RangeVar*>(node));
@@ -247,7 +277,21 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
 
   // having clauses not implemented yet, depends on AExprTransform
   if (having != nullptr) {
-    LOG_ERROR("HAVING not implemented yet...\n");
+    switch (having->type) {
+      case T_A_Expr: {
+        result->having = AExprTransform(reinterpret_cast<A_Expr*>(having));
+        break;
+      }
+      case T_BoolExpr: {
+        result->having = BoolExprTransform(reinterpret_cast<BoolExpr*>(having));
+        break;
+      }
+      default: {
+        LOG_ERROR("HAVING of type %d not supported yet...", having->type);
+        delete result;
+        throw NotImplementedException("...");
+      }
+    }
   }
   return result;
 }
@@ -315,9 +359,14 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
       break;
     }
     case T_String: {
-      ;
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetVarcharValue(std::string(root->val.val.str)));
+      break;
+    }
+    case T_Float: {
+      result = new expression::ConstantValueExpression(
+          type::ValueFactory::GetDecimalValue(
+              std::stod(std::string(root->val.val.str))));
       break;
     }
     default: {
@@ -360,6 +409,7 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
+// TODO: Add support for CaseExpr.
 std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
     List* root) {
   std::vector<expression::AbstractExpression*>* result =
@@ -380,6 +430,11 @@ std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
       case T_FuncCall: {
         result->push_back(
             FuncCallTransform(reinterpret_cast<FuncCall*>(target->val)));
+        break;
+      }
+      case T_A_Expr: {
+        result->push_back(
+            AExprTransform(reinterpret_cast<A_Expr*>(target->val)));
         break;
       }
       default: {
@@ -464,19 +519,8 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
   UNUSED_ATTRIBUTE ExpressionType target_type;
   const char* name =
       (reinterpret_cast<value*>(root->name->head->data.ptr_value))->val.str;
-  if (strcmp(name, "=") == 0) {
-    target_type = StringToExpressionType("COMPARE_EQUAL");
-  } else if ((strcmp(name, "!=") == 0) || (strcmp(name, "<>") == 0)) {
-    target_type = StringToExpressionType("COMPARE_NOTEQUAL");
-  } else if (strcmp(name, "<") == 0) {
-    target_type = StringToExpressionType("COMPARE_LESSTHAN");
-  } else if (strcmp(name, ">") == 0) {
-    target_type = StringToExpressionType("COMPARE_GREATERTHAN");
-  } else if (strcmp(name, "<=") == 0) {
-    target_type = StringToExpressionType("COMPARE_LESSTHANOREQUALTO");
-  } else if (strcmp(name, ">=") == 0) {
-    target_type = StringToExpressionType("COMPARE_GREATERTHANOREQUALTO");
-  } else {
+  target_type = StringToExpressionType(std::string(name));
+  if (target_type == ExpressionType::INVALID) {
     LOG_ERROR("COMPARE type %s not supported yet...\n", name);
     return nullptr;
   }
@@ -514,8 +558,14 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     }
   }
 
-  result =
-      new expression::ComparisonExpression(target_type, left_expr, right_expr);
+  int type_id = static_cast<int>(target_type);
+  if (type_id <= 4) {
+    result = new expression::OperatorExpression(
+        target_type, StringToTypeId("INVALID"), left_expr, right_expr);
+  } else if ((10 <= type_id) && (type_id <= 17)) {
+    result = new expression::ComparisonExpression(target_type, left_expr,
+                                                  right_expr);
+  }
   return result;
 }
 
@@ -575,7 +625,8 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(List* root) {
+std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(
+    List* root) {
   auto result = new parser::SQLStatementList();
   if (root == nullptr) {
     return nullptr;
