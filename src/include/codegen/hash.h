@@ -24,14 +24,14 @@ namespace codegen {
 class Hash {
  private:
   //===--------------------------------------------------------------------===//
-  // A buffer is a private struct that serves as a convenience container for a
-  // variable length buffer and its length.  It isn't different than a std::pair
+  // A varlen is a private struct that serves as a convenience container for a
+  // variable length value and its length.  It isn't different than a std::pair
   // but the ordering is clear.
   //===--------------------------------------------------------------------===//
-  struct Buffer {
+  struct Varlen {
     llvm::Value *val;
     llvm::Value *len;
-    Buffer(llvm::Value *_val, llvm::Value *_len) : val(_val), len(_len) {}
+    Varlen(llvm::Value *_val, llvm::Value *_len) : val(_val), len(_len) {}
   };
 
  public:
@@ -50,11 +50,11 @@ class Hash {
   // Generate the calculation of a CRC64 hash for the given values
   static llvm::Value *ComputeCRC32Hash(
       CodeGen &codegen, const std::vector<llvm::Value *> &numerics,
-      const std::vector<Hash::Buffer> &buffers);
+      const std::vector<Hash::Varlen> &buffers);
 
   static llvm::Value *ComputeMurmur3Hash(
       CodeGen &codegen, const std::vector<llvm::Value *> &numerics,
-      const std::vector<Hash::Buffer> &varlen_buffers);
+      const std::vector<Hash::Varlen> &varlen_buffers);
 };
 
 }  // namespace codegen
