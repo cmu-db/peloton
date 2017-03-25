@@ -604,6 +604,18 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
 
+// This function takes in a Postgres DeleteStmt parsenode
+// and transfers into a Peloton DeleteStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// DeleteStmt parsenodes.
+parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
+
+  parser::DeleteStatement* result = new parser::DeleteStatement();
+  result->table_ref = RangeVarTransform(root->relation);
+  result->expr = WhereTransform(root->whereClause);
+  return (parser::SQLStatement*)result;
+}
+
 // This function transfers a single Postgres statement into
 // a Peloton SQLStatement object. It checks the type of
 // Postgres parsenode of the input and call the corresponding
@@ -618,6 +630,11 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
     }
     case T_UpdateStmt: {
       result = UpdateTransform((UpdateStmt*)stmt->data.ptr_value);
+      break;
+      
+    case T_DeleteStmt: {
+      result = DeleteTransform((DeleteStmt*)stmt->data.ptr_value);
+      break;
     }
     default:
       break;

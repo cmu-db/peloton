@@ -372,5 +372,63 @@ TEST_F(PostgresParserTests, StringUpdateTest) {
 
 }
 
+TEST_F(PostgresParserTests, DeleteTest) {
+  std::vector<std::string> queries;
+
+  // Simple delete
+  queries.push_back("DELETE FROM foo;");
+
+  auto parser = parser::PostgresParser::GetInstance();
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    auto stmt_list = parser.BuildParseTree(query).release();
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+
+    EXPECT_TRUE(stmt_list->GetNumStatements() == 1);
+    EXPECT_TRUE(stmt_list->GetStatement(0)->GetType() == StatementType::DELETE);
+    auto delstmt = (parser::DeleteStatement *)stmt_list->GetStatement(0);
+    EXPECT_EQ(delstmt->GetTableName(), "foo");
+    EXPECT_TRUE(delstmt->expr == nullptr);
+
+    // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    delete stmt_list;
+  }
+}
+
+TEST_F(PostgresParserTests, DeleteTestWithPredicate) {
+  std::vector<std::string> queries;
+
+  // Delete with a predicate
+  queries.push_back("DELETE FROM foo WHERE id=3;");
+
+  auto parser = parser::PostgresParser::GetInstance();
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    auto stmt_list = parser.BuildParseTree(query).release();
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+
+    EXPECT_TRUE(stmt_list->GetNumStatements() == 1);
+    EXPECT_TRUE(stmt_list->GetStatement(0)->GetType() == StatementType::DELETE);
+    auto delstmt = (parser::DeleteStatement *)stmt_list->GetStatement(0);
+    EXPECT_EQ(delstmt->GetTableName(), "foo");
+    EXPECT_TRUE(delstmt->expr != nullptr);
+
+    // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    delete stmt_list;
+  }
+}
+
 }  // End test namespace
 }  // End peloton namespace
