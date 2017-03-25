@@ -57,7 +57,8 @@ void Catalog::InitializeCatalog() {
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get());
   auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get());
   IndexCatalog::GetInstance(pg_catalog, pool_.get());
-  //  ColumnCatalog::GetInstance();  // Called implicitly
+  //  ColumnCatalog::GetInstance();
+  // Called implicitly
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
@@ -110,14 +111,14 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
                                    concurrency::Transaction *txn) {
   auto pg_database = DatabaseCatalog::GetInstance();
   // Check if a database with the same name exists
-  oid_t database_oid = pg_database->GetDatabaseOid(database_name);
+  oid_t database_oid = pg_database->GetDatabaseOid(database_name, txn);
   if (database_oid != INVALID_OID) {
     LOG_TRACE("Database already exists. Returning ResultType::FAILURE.");
     return ResultType::FAILURE;
   }
 
   // Create actual database
-  database_oid = DatabaseCatalog::GetInstance()->GetNextOid();
+  database_oid = pg_database->GetNextOid();
 
   storage::Database *database = new storage::Database(database_oid);
 
@@ -261,7 +262,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
                                 std::string index_name, bool unique_keys,
                                 IndexType index_type) {
   oid_t database_oid =
-      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name);
+      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, nullptr);
   if (database_oid == INVALID_OID) {
     LOG_TRACE(
         "Cannot find the database to create the primary key index. Return "
@@ -269,7 +270,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  oid_t table_oid = TableCatalog::GetInstance()->GetTableOid(table_name);
+  oid_t table_oid =
+      TableCatalog::GetInstance()->GetTableOid(table_name, nullptr);
   if (table_oid == INVALID_OID) {
     LOG_TRACE(
         "Cannot find the table to create the primary key index. Return "
@@ -360,21 +362,18 @@ ResultType Catalog::DropIndex(const oid_t database_oid, const oid_t index_oid) {
       IndexCatalog::GetInstance()->GetTableidByOid(index_oid, nullptr);
   if (table_oid == INVALID_OID) {
     LOG_TRACE(
-        "Cannot find the table to create the primary key index. Return "
-        "RESULT_FAILURE.");
+        "Cannot find the table to create the index. Return RESULT_FAILURE.");
     return ResultType::FAILURE;
   }
 
   auto table = database->GetTableWithOid(table_oid);
   if (table == nullptr) {
     LOG_TRACE(
-        "Cannot find the table to create the primary key index. Return "
-        "RESULT_FAILURE.");
+        "Cannot find the table to create the index. Return RESULT_FAILURE.");
     return ResultType::FAILURE;
   }
   // drop index in actual table
   table->DropIndexWithOid(index_oid);
-  // TODO: delete corresponding records from pg_index
 
   // drop tuple in index catalog
   IndexCatalog::GetInstance()->DeleteByOid(index_oid, nullptr);
@@ -420,9 +419,9 @@ ResultType Catalog::DropDatabaseWithName(std::string &database_name,
 // Drop a database with its oid
 ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
                                         concurrency::Transaction *txn) {
-  // Drop tables in the database
-  auto table_oids = DatabaseCatalog::GetInstance()->GetTableOidByDatabaseOid(
-      database_oid, txn);
+  // Drop actual tables in the database
+  auto table_oids =
+      TableCatalog::GetInstance()->GetTableOids(database_oid, txn);
   for (auto table_oid : table_oids) {
     DropTableWithOid(database_oid, table_oid, txn);
   }
@@ -563,7 +562,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 // GetOidByName(string database_name, Transaction *txn)
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string database_name) const {
-  oid_t database_oid = DatabaseCatalog::GetInstance()->GetDatabaseOid();
+  oid_t database_oid =
+      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, nullptr);
   return GetDatabaseWithOid(database_oid);
 }
 

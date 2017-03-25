@@ -209,7 +209,7 @@ std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
 
 std::vector<std::string> TableCatalog::GetTableNames(
     oid_t database_oid, concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({1});  // table_oid
+  std::vector<oid_t> column_ids({1});  // table_name
   oid_t index_offset = 2;              // Index of database_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
