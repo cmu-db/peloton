@@ -628,6 +628,10 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
           SelectTransform(reinterpret_cast<SelectStmt*>(stmt->data.ptr_value));
       break;
     }
+    case T_UpdateStmt: {
+      result = UpdateTransform((UpdateStmt*)stmt->data.ptr_value);
+      break;
+    }
     case T_DeleteStmt: {
       result = DeleteTransform((DeleteStmt*)stmt->data.ptr_value);
       break;
@@ -653,6 +657,47 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(
   }
 
   return std::move(std::unique_ptr<parser::SQLStatementList>(result));
+}
+
+std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(List *root) {
+  auto result = new std::vector<parser::UpdateClause*>();
+  for (auto cell = root->head; cell != NULL; cell = cell->next) {
+    auto update_clause = new UpdateClause();
+    ResTarget *target = (ResTarget *) (cell->data.ptr_value);
+    update_clause->column = strdup(target->name);
+    switch (target->val->type) {
+      case T_ColumnRef: {
+        update_clause->value = ColumnRefTransform(reinterpret_cast<ColumnRef*>(target->val));
+        break;
+      }
+      case T_A_Const: {
+        update_clause->value = ConstTransform(reinterpret_cast<A_Const*>(target->val));
+        break;
+      }
+      case T_FuncCall: {
+        update_clause->value = FuncCallTransform(reinterpret_cast<FuncCall*>(target->val));
+        break;
+      }
+      case T_A_Expr: {
+        update_clause->value = AExprTransform(reinterpret_cast<A_Expr*>(target->val));
+        break;
+      }
+      default: {
+        LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
+      }
+    }
+    result->push_back(update_clause);
+  }
+  return result;
+}
+
+// TODO: Not support with clause, from clause and returning list in update statement in peloton
+parser::UpdateStatement* PostgresParser::UpdateTransform(UpdateStmt *update_stmt) {
+  auto result = new parser::UpdateStatement();
+  result->table = RangeVarTransform(update_stmt->relation);
+  result->where = WhereTransform(update_stmt->whereClause);
+  result->updates = UpdateTargetTransform(update_stmt->targetList);
+  return result;
 }
 
 PgQueryInternalParsetreeAndError PostgresParser::ParseSQLString(
