@@ -196,6 +196,7 @@ typedef struct SelectStmt {
   /* Eventually add fields for CORRESPONDING spec here */
 } SelectStmt;
 
+<<<<<<< HEAD
 typedef struct TypeName
 {
   NodeTag   type;
@@ -243,6 +244,16 @@ typedef struct CreateStmt
   bool    if_not_exists;  /* just do nothing if it already exists? */
 } CreateStmt;
 
+typedef struct DeleteStmt
+{
+    NodeTag     type;
+    RangeVar   *relation;       /* relation to delete from */
+    List       *usingClause;    /* optional using clause for more tables */
+    Node       *whereClause;    /* qualifications */
+    List       *returningList;  /* list of expressions to return */
+    WithClause *withClause;     /* WITH clause */
+} DeleteStmt;
+
 typedef struct ResTarget {
   NodeTag type;
   char *name;        /* column name or NULL */
@@ -288,3 +299,14 @@ typedef struct FuncCall {
   struct WindowDef *over; /* OVER clause, if any */
   int location;           /* token location, or -1 if unknown */
 } FuncCall;
+
+typedef struct UpdateStmt
+{
+  NodeTag		type;
+  RangeVar   *relation;		/* relation to update */
+  List	   *targetList;		/* the target list (of ResTarget) */
+  Node	   *whereClause;	/* qualifications */
+  List	   *fromClause;		/* optional from clause for more tables */
+  List	   *returningList;	/* list of expressions to return */
+  WithClause *withClause;		/* WITH clause */
+} UpdateStmt;
