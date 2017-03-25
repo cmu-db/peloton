@@ -291,17 +291,17 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
 
   // TODO: Uncomment when the AExpressionTransfrom supports operator expression
   // Test First Set Condition
-//  EXPECT_EQ(std::string(update_stmt->updates->at(0)->column), "s_quantity");
-//  auto constant = (expression::ConstantValueExpression*)update_stmt->updates->at(0)->value;
-//  EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetDecimalValue(48)));
+  EXPECT_EQ(std::string(update_stmt->updates->at(0)->column), "s_quantity");
+  auto constant = (expression::ConstantValueExpression*)update_stmt->updates->at(0)->value;
+  EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetDecimalValue(48)));
   
   // Test Second Set Condition
-//  EXPECT_EQ(std::string(update_stmt->updates->at(1)->column), "s_ytd");
-//  auto op_expr = (expression::OperatorExpression*)update_stmt->updates->at(1)->value;
-//  auto child1 = (expression::TupleValueExpression*)op_expr->GetChild(0);
-//  EXPECT_EQ(child1->GetColumnName(), "s_ytd");
-//  auto child2 = (expression::ConstantValueExpression*)op_expr->GetChild(1);
-//  EXPECT_TRUE(child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(std::string(update_stmt->updates->at(1)->column), "s_ytd");
+  auto op_expr = (expression::OperatorExpression*)update_stmt->updates->at(1)->value;
+  auto child1 = (expression::TupleValueExpression*)op_expr->GetChild(0);
+  EXPECT_EQ(child1->GetColumnName(), "s_ytd");
+  auto child2 = (expression::ConstantValueExpression*)op_expr->GetChild(1);
+  EXPECT_TRUE(child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
   
   // Test Where clause
   auto where = (expression::OperatorExpression*)update_stmt->where;
@@ -310,7 +310,7 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   EXPECT_EQ(cond1->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
   auto column = (expression::TupleValueExpression*)cond1->GetChild(0);
   EXPECT_EQ(column->GetColumnName(), "s_i_id");
-  auto constant = (expression::ConstantValueExpression*)cond1->GetChild(1);
+  constant = (expression::ConstantValueExpression*)cond1->GetChild(1);
   EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(68999)));
   auto cond2 = (expression::OperatorExpression*)where->GetChild(1);
   EXPECT_EQ(cond2->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
