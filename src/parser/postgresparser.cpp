@@ -591,6 +591,104 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
   return result;
 }
 
+// This helper function takes in a Postgres ColumnDef object and transforms
+// it into a Peloton ColumnDefinition object
+parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
+  parser::ColumnDefinition::DataType data_type;
+  TypeName* type_name = root->typeName;
+  char* name = (reinterpret_cast<value*>(type_name->names->tail->data.ptr_value)
+                    ->val.str);
+  parser::ColumnDefinition* result = nullptr;
+
+  if ((strcmp(name, "int") == 0) || (strcmp(name, "int4") == 0)) {
+    data_type = ColumnDefinition::DataType::INT;
+  } else if (strcmp(name, "varchar") == 0) {
+    data_type = ColumnDefinition::DataType::VARCHAR;
+  } else if (strcmp(name, "int8") == 0) {
+    data_type = ColumnDefinition::DataType::BIGINT;
+  } else if (strcmp(name, "int2") == 0) {
+    data_type = ColumnDefinition::DataType::SMALLINT;
+  } else if (strcmp(name, "timestamp") == 0) {
+    data_type = ColumnDefinition::DataType::TIMESTAMP;
+  } else if (strcmp(name, "bool") == 0) {
+    data_type = ColumnDefinition::DataType::BOOLEAN;
+  } else if (strcmp(name, "bpchar") == 0) {
+    data_type = ColumnDefinition::DataType::CHAR;
+  } else if ((strcmp(name, "double") == 0) || (strcmp(name, "float8") == 0)) {
+    data_type = ColumnDefinition::DataType::DOUBLE;
+  } else if ((strcmp(name, "real") == 0) || (strcmp(name, "float4") == 0)) {
+    data_type = ColumnDefinition::DataType::FLOAT;
+  } else {
+    LOG_ERROR("Column DataType %s not supported yet...\n", name);
+    throw NotImplementedException("...");
+  }
+
+  result = new ColumnDefinition(strdup(root->colname), data_type);
+  if (type_name->typmods) {
+    Node* node =
+        reinterpret_cast<Node*>(type_name->typmods->head->data.ptr_value);
+    if (node->type == T_A_Const) {
+      if (reinterpret_cast<A_Const*>(node)->val.type != T_Integer) {
+        LOG_ERROR("typmods of type %d not supported yet...\n",
+                  reinterpret_cast<A_Const*>(node)->val.type);
+        delete result;
+        throw NotImplementedException("...");
+      }
+      result->varlen =
+          static_cast<size_t>(reinterpret_cast<A_Const*>(node)->val.val.ival);
+    } else {
+      LOG_ERROR("typmods of type %d not supported yet...\n", node->type);
+      delete result;
+      throw NotImplementedException("...");
+    }
+  }
+  return result;
+}
+
+// This function takes in a Postgres CreateStmt parsenode
+// and transfers into a Peloton CreateStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// CreateStmt parsenodes.
+parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
+  UNUSED_ATTRIBUTE CreateStmt* temp = root;
+  parser::CreateStatement* result =
+      new CreateStatement(CreateStatement::CreateType::kTable);
+  RangeVar* relation = root->relation;
+  result->table_info_ = new parser::TableInfo();
+
+  if (relation->relname) {
+    result->table_info_->table_name = strdup(relation->relname);
+  }
+  if (relation->catalogname) {
+    result->table_info_->database_name = strdup(relation->catalogname);
+  };
+
+  if (root->tableElts->length > 0) {
+    result->columns = new std::vector<ColumnDefinition*>();
+  }
+  for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
+    Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
+    if ((node->type) == T_ColumnDef) {
+      ColumnDefinition* temp =
+          ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
+      temp->table_info_ = new parser::TableInfo();
+      if (relation->relname) {
+        temp->table_info_->table_name = strdup(relation->relname);
+      }
+      if (relation->catalogname) {
+        temp->table_info_->database_name = strdup(relation->catalogname);
+      };
+      result->columns->push_back(temp);
+    } else {
+      LOG_ERROR("tableElt of type %d not supported yet...", node->type);
+      delete result->table_info_;
+      delete result;
+      throw NotImplementedException(".");
+    }
+  }
+  return reinterpret_cast<parser::SQLStatement*>(result);
+}
+
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
   if (root == nullptr) return nullptr;
 
@@ -701,6 +799,11 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
           SelectTransform(reinterpret_cast<SelectStmt*>(stmt->data.ptr_value));
       break;
     }
+    case T_CreateStmt: {
+      result =
+          CreateTransform(reinterpret_cast<CreateStmt*>(stmt->data.ptr_value));
+      break;
+    }
     case T_UpdateStmt: {
       result = UpdateTransform((UpdateStmt*)stmt->data.ptr_value);
       break;
@@ -713,8 +816,11 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
       result = InsertTransform((InsertStmt*)stmt->data.ptr_value);
       break;
     }
-    default:
-      break;
+    default: {
+      LOG_ERROR("Statement of type %d not supported yet...\n",
+                (reinterpret_cast<List*>(stmt->data.ptr_value))->type);
+      throw NotImplementedException("...");
+    }
   }
   return result;
 }

@@ -93,6 +93,12 @@ class PostgresParser {
   // transform helper for order by clauses
   parser::OrderDescription* OrderByTransform(List* order);
 
+  // transform helper for table column definitions
+  parser::ColumnDefinition* ColumnDefTransform(ColumnDef *root);
+
+  // transform helper for create statements
+  parser::SQLStatement* CreateTransform(CreateStmt* root);
+
   // transform helper for column name (for insert statement)
   std::vector<char*>* ColumnNameTransform(List* root);
 

@@ -509,6 +509,28 @@ TEST_F(PostgresParserTests, InsertTest) {
   }
 }
 
+TEST_F(PostgresParserTests, CreateTest) {
+  std::vector<std::string> queries;
+
+  // Select with complicated where, tests both BoolExpr and AExpr
+  queries.push_back("CREATE TABLE Persons ("
+                     "PersonID int, LastName varchar(255));");
+//  queries.push_back("CREATE INDEX idx_pname ON Persons (LastName, FirstName);");
+  auto parser = parser::PostgresParser::GetInstance();
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    auto stmt_list = parser.BuildParseTree(query).release();
+    EXPECT_TRUE(stmt_list->is_valid);
+    if (stmt_list->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
+                stmt_list->error_line, stmt_list->error_col);
+    }
+    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
+    delete stmt_list;
+  }
+}
+
 TEST_F(PostgresParserTests, InsertIntoSelectTest) {
   std::vector<std::string> queries;
 
@@ -534,7 +556,6 @@ TEST_F(PostgresParserTests, InsertIntoSelectTest) {
     EXPECT_TRUE(insert_stmt->select->GetType() == StatementType::SELECT);
     EXPECT_EQ("bar",
               std::string(insert_stmt->select->from_table->GetTableName()));
-
     LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
     delete stmt_list;
   }

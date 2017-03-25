@@ -228,6 +228,53 @@ typedef struct SelectStmt {
   /* Eventually add fields for CORRESPONDING spec here */
 } SelectStmt;
 
+typedef struct TypeName
+{
+  NodeTag   type;
+  List     *names;      /* qualified name (list of Value strings) */
+  Oid     typeOid;    /* type identified by OID */
+  bool    setof;      /* is a set? */
+  bool    pct_type;   /* %TYPE specified? */
+  List     *typmods;    /* type modifier expression(s) */
+  int   typemod;    /* prespecified type modifier */
+  List     *arrayBounds;  /* array bounds */
+  int     location;   /* token location, or -1 if unknown */
+} TypeName;
+
+typedef struct ColumnDef
+{
+NodeTag		type;
+char	   *colname;		/* name of column */
+TypeName   *typeName;		/* type of column */
+int			inhcount;		/* number of times column is inherited */
+bool		is_local;		/* column has local (non-inherited) def'n */
+bool		is_not_null;	/* NOT NULL constraint specified? */
+bool		is_from_type;	/* column definition came from table type */
+char		storage;		/* attstorage setting, or 0 for default */
+Node	   *raw_default;	/* default value (untransformed parse tree) */
+Node	   *cooked_default; /* default value (transformed expr tree) */
+Node *collClause;	/* untransformed COLLATE spec, if any */
+Oid			collOid;		/* collation OID (InvalidOid if not set) */
+List	   *constraints;	/* other constraints on column */
+List	   *fdwoptions;		/* per-column FDW options */
+int			location;		/* parse location, or -1 if none/unknown */
+} ColumnDef;
+
+typedef struct CreateStmt
+{
+  NodeTag   type;
+  RangeVar   *relation;   /* relation to create */
+  List     *tableElts;    /* column definitions (list of ColumnDef) */
+  List     *inhRelations; /* relations to inherit from (list of
+                 * inhRelation) */
+  TypeName   *ofTypename;   /* OF typename */
+  List     *constraints;  /* constraints (list of Constraint nodes) */
+  List     *options;    /* options from WITH clause */
+  OnCommitAction oncommit;  /* what do we do at COMMIT? */
+  char     *tablespacename; /* table space to use, or NULL */
+  bool    if_not_exists;  /* just do nothing if it already exists? */
+} CreateStmt;
+
 typedef struct DeleteStmt
 {
     NodeTag     type;
