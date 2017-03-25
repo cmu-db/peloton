@@ -55,6 +55,8 @@ struct InsertStatement : SQLStatement {
     delete table_info_;
 
     delete select;
+
+    delete table_ref_;
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
