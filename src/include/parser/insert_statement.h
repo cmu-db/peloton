@@ -50,6 +50,10 @@ struct InsertStatement : SQLStatement {
       delete insert_values;
     }
 
+    // FIXME: This is here for compilation purpose. Need to remove after the
+    // Hyrise parser is removed!!!
+    delete table_info_;
+
     delete select;
   }
 
