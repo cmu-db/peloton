@@ -275,7 +275,7 @@ TEST_F(PostgresParserTests, ColumnUpdateTest) {
     EXPECT_EQ(right_const->GetValue().ToString(), std::string("2"));
 
 
-    //delete stmt_list;
+    delete stmt_list;
   }
 }
   
@@ -318,6 +318,9 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   EXPECT_EQ(column->GetColumnName(), "s_w_id");
   constant = (expression::ConstantValueExpression*)cond2->GetChild(1);
   EXPECT_TRUE(constant->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(4)));
+
+  delete stmt_list;
+
 }
 
 TEST_F(PostgresParserTests, StringUpdateTest) {
@@ -364,6 +367,8 @@ TEST_F(PostgresParserTests, StringUpdateTest) {
   EXPECT_EQ(value->GetExpressionType(), ExpressionType::VALUE_CONSTANT);
   EXPECT_EQ(((expression::ConstantValueExpression*)value)->GetValue().ToString(), "2016-11-15 15:07:37");
   EXPECT_EQ(((expression::ConstantValueExpression*)value)->GetValueType(), type::Type::TypeId::VARCHAR);
+
+  delete stmt_list;
 
 }
 

@@ -647,22 +647,22 @@ std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(List *
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();
     ResTarget *target = (ResTarget *) (cell->data.ptr_value);
-    update_clause->column = target->name;
+    update_clause->column = strdup(target->name);
     switch (target->val->type) {
       case T_ColumnRef: {
-        update_clause->value = ColumnRefTransform((ColumnRef*)(target->val));
+        update_clause->value = ColumnRefTransform(reinterpret_cast<ColumnRef*>(target->val));
         break;
       }
       case T_A_Const: {
-        update_clause->value = ConstTransform((A_Const*)(target->val));
+        update_clause->value = ConstTransform(reinterpret_cast<A_Const*>(target->val));
         break;
       }
       case T_FuncCall: {
-        update_clause->value = FuncCallTransform((FuncCall*)(target->val));
+        update_clause->value = FuncCallTransform(reinterpret_cast<FuncCall*>(target->val));
         break;
       }
       case T_A_Expr: {
-        update_clause->value = AExprTransform((A_Expr*)(target->val));
+        update_clause->value = AExprTransform(reinterpret_cast<A_Expr*>(target->val));
         break;
       }
       default: {
