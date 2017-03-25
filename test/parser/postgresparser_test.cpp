@@ -476,6 +476,7 @@ TEST_F(PostgresParserTests, InsertTest) {
   // Insert multiple tuples into the table
   queries.push_back("INSERT INTO foo VALUES (1, 2, 3), (4, 5, 6);");
 
+  auto parser = parser::PostgresParser::GetInstance();
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
     auto stmt_list = parser.BuildParseTree(query).release();
