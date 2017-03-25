@@ -174,7 +174,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
   //// handle READ_ONLY
   //////////////////////////////////////////////////////////
   if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY) {
-    // Ignore read validation for all read-only transactions
+    // do not update read set for read-only transactions.
     return true;
   } // end READ ONLY
 
@@ -220,10 +220,21 @@ bool TimestampOrderingTransactionManager::PerformRead(
   } // end SNAPSHOT
 
   //////////////////////////////////////////////////////////
-  //// handle SERIALIZABLE
+  //// handle READ_COMMITTED and READ_UNCOMMITTED
   //////////////////////////////////////////////////////////
-  else if (current_txn->GetIsolationLevel() == IsolationLevelType::SERIALIZABLE || 
-           current_txn->GetIsolationLevel() == IsolationLevelType::REPEATABLE_READS) {
+  else if (current_txn->GetIsolationLevel() == IsolationLevelType::READ_COMMITTED || 
+           current_txn->GetIsolationLevel() == IsolationLevelType::READ_UNCOMMITTED) {
+    // do not update read set for READ_COMMITTED or READ_UNCOMMITTED.
+
+    return true;
+  } // end READ_COMMITTED || READ_UNCOMMITTED
+
+  //////////////////////////////////////////////////////////
+  //// handle SERIALIZABLE and REPEATABLE_READS
+  //////////////////////////////////////////////////////////
+  else { 
+    PL_ASSERT(current_txn->GetIsolationLevel() == IsolationLevelType::SERIALIZABLE || 
+              current_txn->GetIsolationLevel() == IsolationLevelType::REPEATABLE_READS);
 
     oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
@@ -324,10 +335,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
       }
     }
 
-  } // end SERIALIZABLE
-
-  // TODO: currently, we only support READ_ONLY, SERIALIZABLE, and SNAPSHOT.
-  return false;
+  } // end SERIALIZABLE || REPEATABLE_READS
 }
 
 void TimestampOrderingTransactionManager::PerformInsert(
