@@ -59,9 +59,20 @@ struct InsertStatement : SQLStatement {
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
-  inline std::string GetTableName() const { return table_ref_->GetTableName(); }
+  inline std::string GetTableName() const {
+    if (table_info_ != nullptr)
+      return table_info_->table_name;
+    else
+      return table_ref_->GetTableName();
+  }
   inline std::string GetDatabaseName() const {
-    return table_ref_->GetDatabaseName();
+    if (table_info_ != nullptr) {
+      if (table_info_->database_name == nullptr) {
+        return DEFAULT_DB_NAME;
+      }
+      return table_info_->database_name;
+    } else
+      return table_ref_->GetDatabaseName();
   }
 
   InsertType type;
