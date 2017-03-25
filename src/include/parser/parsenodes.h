@@ -196,6 +196,16 @@ typedef struct SelectStmt {
   /* Eventually add fields for CORRESPONDING spec here */
 } SelectStmt;
 
+typedef struct DeleteStmt
+{
+    NodeTag     type;
+    RangeVar   *relation;       /* relation to delete from */
+    List       *usingClause;    /* optional using clause for more tables */
+    Node       *whereClause;    /* qualifications */
+    List       *returningList;  /* list of expressions to return */
+    WithClause *withClause;     /* WITH clause */
+} DeleteStmt;
+
 typedef struct ResTarget {
   NodeTag type;
   char *name;        /* column name or NULL */
