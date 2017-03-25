@@ -48,7 +48,13 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
 
   } else {
-
+    
+    // if the isolation level is set to: 
+    // - SERIALIZABLE, or 
+    // - REPEATABLE_READS, or
+    // - READ_COMMITTED, or
+    // - READ_UNCOMMITTED.
+  
     auto &log_manager = logging::LogManager::GetInstance();
     log_manager.PrepareLogging();
 
