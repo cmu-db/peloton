@@ -631,7 +631,7 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
     case T_UpdateStmt: {
       result = UpdateTransform((UpdateStmt*)stmt->data.ptr_value);
       break;
-      
+    }
     case T_DeleteStmt: {
       result = DeleteTransform((DeleteStmt*)stmt->data.ptr_value);
       break;
