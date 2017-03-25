@@ -196,7 +196,6 @@ typedef struct SelectStmt {
   /* Eventually add fields for CORRESPONDING spec here */
 } SelectStmt;
 
-<<<<<<< HEAD
 typedef struct TypeName
 {
   NodeTag   type;
