@@ -32,6 +32,7 @@ struct DeleteStatement : SQLStatement {
 
   virtual ~DeleteStatement() {
     delete table_ref;
+    delete table_info_;
     delete expr;
   }
 
@@ -46,7 +47,7 @@ struct DeleteStatement : SQLStatement {
   }
 
   parser::TableRef* table_ref;
-  parser::TableInfo* table_info_;
+  parser::TableInfo* table_info_ = nullptr;
   expression::AbstractExpression* expr;
 };
 
