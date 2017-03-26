@@ -300,10 +300,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   }
 
   // check if table already has index with same name
-  auto search = IndexCatalog::GetInstance()->GetIndexOid(
-      index_name, table->GetOid(), nullptr);
-
-  if (search != nullptr) {
+  auto pg_index = IndexCatalog::GetInstance();
+  if (pg_index->GetIndexOid(index_name, table->GetOid(), nullptr) != nullptr) {
     LOG_TRACE(
         "Cannot create index on same table with same name Return "
         "RESULT_FAILURE.");
@@ -316,8 +314,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   // check if index attributes are in table
   auto &columns = schema->GetColumns();
-  for (auto attr : index_attr) {
-    for (uint i = 0; i < columns.size(); ++i) {
+  for (auto &attr : index_attr) {
+    for (oid_t i = 0; i < columns.size(); ++i) {
       if (attr == columns[i].column_name) {
         key_attrs.push_back(i);
       }
@@ -333,7 +331,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
-  oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
+  oid_t index_oid = pg_index->GetNextOid();
 
   // Check if unique index or not
   if (unique_keys == false) {
@@ -353,7 +351,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
       index::IndexFactory::GetIndex(index_metadata));
   table->AddIndex(key_index);
 
-  // insert index record into index_catalog(pg_index) table
+  // Insert index record into pg_index table
   IndexCatalog::GetInstance()->InsertIndex(index_oid, index_name.c_str(),
                                            table->GetOid(), index_type,
                                            IndexConstraintType::DEFAULT, true);
