@@ -46,9 +46,6 @@ namespace catalog {
 
 class AbstractCatalog {
  public:
-  virtual AbstractCatalog *GetInstance(
-      storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr) = 0;
 
   virtual oid_t GetNextOid(void) = 0;
 
