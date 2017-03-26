@@ -12,10 +12,10 @@
 
 #include <cstdio>
 
-#include "gtest/gtest.h"
+#include "catalog/catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
-#include "catalog/catalog.h"
+#include "gtest/gtest.h"
 
 namespace peloton {
 namespace test {
@@ -52,9 +52,11 @@ TEST_F(CatalogTests, CreatingDatabase) {
 TEST_F(CatalogTests, CreatingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto id_column = catalog::Column(
-      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
-      "id", true);
+  auto id_column =
+      catalog::Column(type::Type::INTEGER,
+                      type::Type::GetTypeSize(type::Type::INTEGER), "id", true);
+  id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::PRIMARY, "primary_key"));
   auto name_column = catalog::Column(type::Type::VARCHAR, 32, "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(
@@ -79,17 +81,36 @@ TEST_F(CatalogTests, CreatingTable) {
                 ->GetColumn(1)
                 .GetName(),
             "name");
+  // 3 + 4
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
                 ->GetTableWithName("pg_table")
                 ->GetTupleCount(),
-            3);
+            7);
+  // 6 + pg_database(2) + pg_table(3) + pg_attribute(7) + pg_index(6)
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("pg_catalog")
-                ->GetTableWithName("pg_table")
-                ->GetSchema()
-                ->GetLength(),
-            72);
+                ->GetTableWithName("pg_attribute")
+                ->GetTupleCount(),
+            24);
+  // pg_catalog + EMP_DB
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName("pg_catalog")
+                ->GetTableWithName("pg_database")
+                ->GetTupleCount(),
+            2);
+  // 3 + pg_index(3) + pg_attribute(3) + pg_table(3) + pg_database(2)
+  EXPECT_EQ(catalog::Catalog::GetInstance()
+                ->GetDatabaseWithName("pg_catalog")
+                ->GetTableWithName("pg_index")
+                ->GetTupleCount(),
+            14);
+  // EXPECT_EQ(catalog::Catalog::GetInstance()
+  //               ->GetDatabaseWithName("pg_catalog")
+  //               ->GetTableWithName("pg_table")
+  //               ->GetSchema()
+  //               ->GetLength(),
+  //           72);
 }
 
 TEST_F(CatalogTests, DroppingTable) {
@@ -101,7 +122,7 @@ TEST_F(CatalogTests, DroppingTable) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
   txn_manager.CommitTransaction(txn);
-//  catalog::Catalog::GetInstance()->PrintCatalogs();
+  //  catalog::Catalog::GetInstance()->PrintCatalogs();
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("EMP_DB")
                 ->GetTableCount(),
