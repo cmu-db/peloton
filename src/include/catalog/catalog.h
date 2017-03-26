@@ -79,7 +79,7 @@ class Catalog {
   void AddDatabase(storage::Database *database);
 
   // Create a table in a database
-  ResultType CreateTable(std::string database_name, std::string table_name,
+  ResultType CreateTable(const std::string &database_name, const std::string &table_name,
                          std::unique_ptr<catalog::Schema>,
                          concurrency::Transaction *txn);
 
