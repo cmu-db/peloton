@@ -53,9 +53,9 @@ class ColumnCatalog : public AbstractCatalog {
                         concurrency::Transaction *txn);
   std::string GetColumnName(oid_t table_oid, oid_t column_offset,
                             concurrency::Transaction *txn);
-  type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
+  type::Type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
                              concurrency::Transaction *txn);
-  type::TypeId GetColumnType(oid_t table_oid, oid_t column_offset,
+  type::Type::TypeId GetColumnType(oid_t table_oid, oid_t column_offset,
                              concurrency::Transaction *txn);
 
  private:
