@@ -496,3 +496,12 @@ typedef struct ExecuteStmt
   List	   *params;			/* Values to assign to parameters */
 } ExecuteStmt;
 
+typedef struct PrepareStmt
+{
+  NodeTag		type;
+  char	   *name;			/* Name of plan, arbitrary */
+  List	   *argtypes;		/* Types of parameters (List of TypeName) */
+  Node	   *query;			/* The query itself (as a raw parsetree) */
+} PrepareStmt;
+
+

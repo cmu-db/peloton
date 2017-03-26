@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
+#include <include/parser/pg_query.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -761,7 +762,7 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     res->missing = root->missing_ok;
     auto table_info = new TableInfo{};
-    table_info->table_name = reinterpret_cast<value*>(cell->data.ptr_value)->val.str;
+    table_info->table_name = strdup(reinterpret_cast<value*>(cell->data.ptr_value)->val.str);
     res->table_info_ = table_info;
     break;
   }
@@ -783,6 +784,16 @@ parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt *root) {
   if (root->params != nullptr)
     result->parameters = ParamListTransform(root->params);
   return result;
+}
+
+parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt *root) {
+  auto res = new PrepareStatement();
+  res->name = strdup(root->name);
+  auto stmt_list = new SQLStatementList();
+  stmt_list->statements.emplace_back(NodeTransform(root->query));
+  res->query = stmt_list;
+  return res;
+
 }
 
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
@@ -930,43 +941,46 @@ parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
 // a Peloton SQLStatement object. It checks the type of
 // Postgres parsenode of the input and call the corresponding
 // helper function.
-parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
+parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
   parser::SQLStatement* result = nullptr;
-  switch ((reinterpret_cast<List*>(stmt->data.ptr_value))->type) {
+  switch (stmt->type) {
     case T_SelectStmt: {
       result =
-          SelectTransform(reinterpret_cast<SelectStmt*>(stmt->data.ptr_value));
+          SelectTransform(reinterpret_cast<SelectStmt*>(stmt));
       break;
     }
     case T_CreateStmt: {
       result =
-          CreateTransform(reinterpret_cast<CreateStmt*>(stmt->data.ptr_value));
+          CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
       break;
     }
     case T_UpdateStmt: {
-      result = UpdateTransform((UpdateStmt*)stmt->data.ptr_value);
+      result = UpdateTransform((UpdateStmt*)stmt);
       break;
     }
     case T_DeleteStmt: {
-      result = DeleteTransform((DeleteStmt*)stmt->data.ptr_value);
+      result = DeleteTransform((DeleteStmt*)stmt);
       break;
     }
     case T_InsertStmt: {
-      result = InsertTransform((InsertStmt*)stmt->data.ptr_value);
+      result = InsertTransform((InsertStmt*)stmt);
       break;
     }
     case T_DropStmt:
-      result = DropTransform((DropStmt*)stmt->data.ptr_value);
+      result = DropTransform((DropStmt*)stmt);
       break;
     case T_TruncateStmt:
-      result = TruncateTransform((TruncateStmt*)stmt->data.ptr_value);
+      result = TruncateTransform((TruncateStmt*)stmt);
       break;
     case T_ExecuteStmt:
-      result = ExecuteTransform((ExecuteStmt*)stmt->data.ptr_value);
+      result = ExecuteTransform((ExecuteStmt*)stmt);
+      break;
+    case T_PrepareStmt:
+      result = PrepareTransform((PrepareStmt*)stmt);
       break;
     default: {
       LOG_ERROR("Statement of type %d not supported yet...\n",
-                (reinterpret_cast<List*>(stmt->data.ptr_value))->type);
+                stmt->type);
       throw NotImplementedException("...");
     }
   }
@@ -984,7 +998,7 @@ parser::SQLStatementList* PostgresParser::ListTransform(
   }
   LOG_TRACE("%d statements in total\n", (root->length));
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
-    result->AddStatement(NodeTransform(cell));
+    result->AddStatement(NodeTransform((Node*) cell->data.ptr_value));
   }
 
   return result;

@@ -122,7 +122,7 @@ class PostgresParser {
   static parser::SQLStatement* DeleteTransform(DeleteStmt* root);
 
   // transform helper for single node in parse list
-  static parser::SQLStatement* NodeTransform(ListCell* stmt);
+  static parser::SQLStatement* NodeTransform(Node* stmt);
 
   // transform helper for the whole parse list
   static parser::SQLStatementList* ListTransform(List* root);
@@ -146,6 +146,9 @@ class PostgresParser {
   static expression::AbstractExpression* ValueTransform(value val);
 
   static std::vector<expression::AbstractExpression*>* ParamListTransform(List* root);
+
+  // transform helper for execute statement
+  static parser::PrepareStatement* PrepareTransform(PrepareStmt* root);
 
 };
 
