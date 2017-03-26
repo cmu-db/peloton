@@ -36,7 +36,7 @@ Catalog::Catalog() {
   // pg_catalog database, insert columns into pg_attribute
   // 2) insert pg_catalog into pg_database, catalog tables into pg_table
   // 3) create necessary indexes, insert into pg_index
-  // when logging is enabled, this should be changed
+  // When logging is enabled, this should be changed
   InitializeCatalog();
 
   // Create metrics table in default database
@@ -78,11 +78,11 @@ void Catalog::InitializeCatalog() {
                         pool_.get(), nullptr);
 
   // Create indexes on catalog tables, insert them into pg_index
-  // TODO: This should be hash index rather than tree index?? (postgres use
+  // TODO: This should be hash index rather than tree index?? (but postgres use
   // btree!!)
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
-              std::vector<std::string>({1}), DATABASE_CATALOG_NAME + "_skey",
+              std::vector<std::string>({1}), DATABASE_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
@@ -110,7 +110,10 @@ void Catalog::InitializeCatalog() {
               false, IndexType::BWTREE);
 }
 
-// Create a database
+//===----------------------------------------------------------------------===//
+// CREATE
+//===----------------------------------------------------------------------===//
+
 ResultType Catalog::CreateDatabase(const std::string &database_name,
                                    concurrency::Transaction *txn) {
   auto pg_database = DatabaseCatalog::GetInstance();
@@ -141,16 +144,6 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   return ResultType::SUCCESS;
 }
 
-// This should be deprecated! this can screw up the database oid system
-void Catalog::AddDatabase(storage::Database *database) {
-  std::lock_guard<std::mutex> lock(catalog_mutex);
-  databases_.push_back(database);
-  DatabaseCatalog::GetInstance()->InsertDatabase(
-      database->GetOid(), database->GetDBName(), pool_.get(),
-      nullptr);  // I guess this can pass tests
-}
-
-// Create a table in a database
 ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
@@ -222,6 +215,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
                                        const std::string &table_name) {
   LOG_TRACE("Trying to create primary index for table %s", table_name.c_str());
+
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
     auto table = database->GetTableWithName(table_name);
@@ -278,7 +272,6 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
   }
 }
 
-// Function to add non-primary Key index
 ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::string &table_name,
                                 std::vector<std::string> index_attr,
@@ -380,6 +373,10 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
   return ResultType::SUCCESS;
 }
+
+//===----------------------------------------------------------------------===//
+// DROP
+//===----------------------------------------------------------------------===//
 
 ResultType Catalog::DropIndex(oid_t index_oid) {
   // find table_oid by looking up pg_index using index_oid
@@ -642,6 +639,19 @@ Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
   delete pool_;
+}
+
+//===--------------------------------------------------------------------===//
+// DEPRECATED
+//===--------------------------------------------------------------------===//
+
+// This should be deprecated! this can screw up the database oid system
+void Catalog::AddDatabase(storage::Database *database) {
+  std::lock_guard<std::mutex> lock(catalog_mutex);
+  databases_.push_back(database);
+  DatabaseCatalog::GetInstance()->InsertDatabase(
+      database->GetOid(), database->GetDBName(), pool_.get(),
+      nullptr);  // I guess this can pass tests
 }
 
 //===--------------------------------------------------------------------===//
