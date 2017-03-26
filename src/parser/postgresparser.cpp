@@ -786,6 +786,13 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
       result->group_by = GroupByTransform(root->groupClause, root->havingClause);
       result->order = OrderByTransform(root->sortClause);
       result->where_clause = WhereTransform(root->whereClause);
+      if (root->limitCount != nullptr) {
+        int64_t limit = reinterpret_cast<A_Const*>(root->limitCount)->val.val.ival;
+        int64_t offset = 0;
+        if (root->limitOffset != nullptr)
+          offset = reinterpret_cast<A_Const*>(root->limitOffset)->val.val.ival;
+        result->limit = new LimitDescription(limit, offset);
+      }
       break;
     case SETOP_UNION:
       result = reinterpret_cast<parser::SelectStatement*>(SelectTransform(root->larg));
