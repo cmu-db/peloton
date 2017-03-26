@@ -139,6 +139,14 @@ class PostgresParser {
   // transform helper for truncate statement
   static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
 
+  // transform helper for execute statement
+  static parser::ExecuteStatement* ExecuteTransform(ExecuteStmt* root);
+
+  // transform helper for constant values
+  static expression::AbstractExpression* ValueTransform(value val);
+
+  static std::vector<expression::AbstractExpression*>* ParamListTransform(List* root);
+
 };
 
 }  // End parser namespace

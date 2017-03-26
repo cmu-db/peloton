@@ -414,3 +414,10 @@ typedef struct TruncateStmt
   DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } TruncateStmt;
 
+typedef struct ExecuteStmt
+{
+  NodeTag		type;
+  char	   *name;			/* The name of the plan to execute */
+  List	   *params;			/* Values to assign to parameters */
+} ExecuteStmt;
+

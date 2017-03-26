@@ -348,34 +348,38 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
   }
   return result;
 }
-
-// This function takes in a Posgres A_Const parsenode and transfers it into
+// This function takes in a Posgres value parsenode and transfers it into
 // a Peloton constant value expression.
-expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
+expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   expression::AbstractExpression* result = nullptr;
-  switch (root->val.type) {
+  switch (val.type) {
     case T_Integer: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetIntegerValue((int32_t)root->val.val.ival));
+          type::ValueFactory::GetIntegerValue((int32_t)val.val.ival));
       break;
     }
     case T_String: {
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetVarcharValue(std::string(root->val.val.str)));
+          type::ValueFactory::GetVarcharValue(std::string(val.val.str)));
       break;
     }
     case T_Float: {
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetDecimalValue(
-              std::stod(std::string(root->val.val.str))));
+              std::stod(std::string(val.val.str))));
       break;
     }
     default: {
-      LOG_ERROR("A_Const type %d not supported yet...\n", root->type);
+      LOG_ERROR("Value type %d not supported yet...\n", val.type);
     }
   }
-
   return result;
+}
+
+// This function takes in a Posgres A_Const parsenode and transfers it into
+// a Peloton constant value expression.
+expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
+  return ValueTransform(root->val);
 }
 
 // This function takes in a Postgres FuncCall parsenode and transfers it into
@@ -735,6 +739,14 @@ parser::DeleteStatement* PostgresParser::TruncateTransform(TruncateStmt *root) {
   return result;
 }
 
+parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt *root) {
+  auto result = new ExecuteStatement();
+  result->name = strdup(root->name);
+  if (root->params != nullptr)
+    result->parameters = ParamListTransform(root->params);
+  return result;
+}
+
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
   if (root == nullptr) return nullptr;
 
@@ -772,6 +784,24 @@ PostgresParser::ValueListsTransform(List* root) {
 
   return result;
 }
+
+// This function takes in the paramlist of a Postgres ExecuteStmt
+// parsenode and transfers it into Peloton AbstractExpression.
+
+std::vector<expression::AbstractExpression*>*
+PostgresParser::ParamListTransform(List* root) {
+  std::vector<expression::AbstractExpression*>* result =
+      new std::vector<expression::AbstractExpression*>();
+
+
+  for (auto cell = root->head; cell != NULL; cell = cell->next) {
+    result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
+  }
+
+
+  return result;
+}
+
 
 // This function takes in a Postgres InsertStmt parsenode
 // and transfers into a Peloton InsertStatement.
@@ -892,6 +922,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
       break;
     case T_TruncateStmt:
       result = TruncateTransform((TruncateStmt*)stmt->data.ptr_value);
+      break;
+    case T_ExecuteStmt:
+      result = ExecuteTransform((ExecuteStmt*)stmt->data.ptr_value);
       break;
     default: {
       LOG_ERROR("Statement of type %d not supported yet...\n",
