@@ -151,65 +151,53 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
             database_name.c_str());
 
-  storage::Database *database = GetDatabaseWithName(database_name);
+  auto database = GetDatabaseWithName(database_name);
   if (database == nullptr) {
     LOG_TRACE("Can't found database. Return RESULT_FAILURE");
     return ResultType::FAILURE;
   }
 
-  storage::Database *table = database->GetTableWithName(table_name);
+  auto table = database->GetTableWithName(table_name);
   if (table != nullptr) {
     LOG_TRACE("Found a table with the same name. Return RESULT_FAILURE");
     return ResultType::FAILURE;
-  } else {
-    // Table doesn't exist, now check whether has repeat columns name
-    std::set<std::string> column_names;
-    std::vector<Column> &schema_columns = schema.release()->GetColumns();
-
-    for (auto &column : schema_columns) {
-      auto search = column_names.find(column.GetName());
-      if (search != column_names.end()) {
-        LOG_TRACE("Found a column with the same name. Return RESULT_FAILURE");
-        return ResultType::FAILURE;
-      }
-      // if can't find the column with same name, then insert into name set
-      auto result = schema_names.insert(column.GetName());
-      PL_ASSERT(result.first != column_names.end());
-    }
-
-    // pass column names check, now create actual table
-    bool own_schema = true;
-    bool adapt_table = false;
-    oid_t database_oid = database->GetOid();
-    oid_t table_oid = TableCatalog::GetInstance()->GetNextOid();
-    storage::DataTable *table = storage::TableFactory::GetDataTable(
-        database_oid, table_oid, schema.release(), table_name,
-        DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-    database->AddTable(table);
-
-    // Update pg_table with this table info
-    TableCatalog::GetInstance()->InsertTable(table_oid, table_name,
-                                             database_oid, pool_.get(), txn);
-
-    // Create the primary key index for that table if there's primary key
-    // Update pg_index, pg_attribute at the same time
-    bool has_primary_key = false;
-
-    for (auto &column : schema_columns) {
-      ColumnCatalog::GetInstance()->InsertColumn(
-          table_oid, column.GetName(), column.GetOffset(), column.GetType(),
-          column.IsInlined(), column.GetConstraints(), pool_.get(), txn);
-
-      if (column.IsPrimary()) {
-        has_primary_key = true;
-      }
-    }
-
-    if (has_primary_key == true)
-      auto result = CreatePrimaryIndex(database_name, table_name);
-    // if createPrimaryKey succeed, then return success
-    return result;
   }
+
+  // Check duplicate column names
+  std::set<std::string> column_names;
+  auto columns = schema.get()->GetColumns();
+
+  for (auto column : columns) {
+    auto column_name = column.GetName();
+    if (column_names.count(column_name) == 1) {
+      LOG_TRACE("Found a column with the same name. Return RESULT_FAILURE");
+      return ResultType::FAILURE;
+    }
+    column_names.insert(column_name);
+  }
+
+  // Create actual table
+  auto pg_table = TableCatalog::GetInstance();
+  bool own_schema = true;
+  bool adapt_table = false;
+  oid_t database_oid = database->GetOid();
+  oid_t table_oid = pg_table->GetNextOid();
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      database_oid, table_oid, schema.release(), table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+  database->AddTable(table);
+
+  // Update pg_table with this table info
+  pg_table->InsertTable(table_oid, table_name, database_oid, pool_.get(), txn);
+
+  for (auto column : table->GetSchema()->GetColumns()) {
+    ColumnCatalog::GetInstance()->InsertColumn(
+        table_oid, column.GetName(), column.GetOffset(), column.GetType(),
+        column.IsInlined(), column.GetConstraints(), pool_.get(), txn);
+  }
+
+  CreatePrimaryIndex(database_name, table_name);
+  return ResultType::SUCCESS;
 }
 
 ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
