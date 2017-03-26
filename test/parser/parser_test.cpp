@@ -72,14 +72,19 @@ TEST_F(ParserTests, BasicTest) {
 
   // INSERT
   queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test');");
-  queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test'), (2, 3, 'test2');");
-  queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test'), (2, 3, 'test2'), (3, 4, 'test3');");
+  queries.push_back(
+      "INSERT INTO test_table VALUES (1, 2, 'test'), (2, 3, 'test2');");
+  queries.push_back(
+      "INSERT INTO test_table VALUES (1, 2, 'test'), (2, 3, 'test2'), (3, 4, "
+      "'test3');");
   queries.push_back(
       "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test');");
   queries.push_back(
-        "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test'), (2, 3, 'test2');");
+      "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test'), (2, 3, "
+      "'test2');");
   queries.push_back(
-          "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test'), (2, 3, 'test2'), (3, 4, 'test3');");
+      "INSERT INTO test_table (id, value, name) VALUES (1, 2, 'test'), (2, 3, "
+      "'test2'), (3, 4, 'test3');");
   queries.push_back("INSERT INTO test_table SELECT * FROM students;");
 
   // DELETE

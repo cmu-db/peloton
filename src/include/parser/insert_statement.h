@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "parser/sql_statement.h"
 #include "common/sql_node_visitor.h"
+#include "parser/sql_statement.h"
 #include "select_statement.h"
 
 namespace peloton {
@@ -24,16 +24,16 @@ namespace parser {
  * @brief Represents "INSERT INTO students VALUES ('Max', 1112233,
  * 'Musterhausen', 2.3)"
  */
-struct InsertStatement : TableRefStatement {
+struct InsertStatement : SQLStatement {
   InsertStatement(InsertType type)
-      : TableRefStatement(StatementType::INSERT),
+      : SQLStatement(StatementType::INSERT),
         type(type),
         columns(NULL),
         insert_values(NULL),
-        select(NULL) {}
+        select(NULL),
+        table_ref_(nullptr) {}
 
   virtual ~InsertStatement() {
-
     if (columns) {
       for (auto col : *columns) free(col);
       delete columns;
@@ -41,7 +41,7 @@ struct InsertStatement : TableRefStatement {
 
     if (insert_values) {
       for (auto tuple : *insert_values) {
-        for( auto expr : *tuple){
+        for (auto expr : *tuple) {
           if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
             delete expr;
         }
@@ -50,18 +50,45 @@ struct InsertStatement : TableRefStatement {
       delete insert_values;
     }
 
+    // FIXME: This is here for compilation purpose. Need to remove after the
+    // Hyrise parser is removed!!!
+    delete table_info_;
+
     delete select;
+
+    delete table_ref_;
   }
 
+  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
-    v->Visit(this);
+  inline std::string GetTableName() const {
+    if (table_info_ != nullptr)
+      return table_info_->table_name;
+    else
+      return table_ref_->GetTableName();
+  }
+  inline std::string GetDatabaseName() const {
+    if (table_info_ != nullptr) {
+      if (table_info_->database_name == nullptr) {
+        return DEFAULT_DB_NAME;
+      }
+      return table_info_->database_name;
+    } else
+      return table_ref_->GetDatabaseName();
   }
 
   InsertType type;
   std::vector<char*>* columns;
-  std::vector<std::vector<peloton::expression::AbstractExpression*>*>* insert_values;
+  std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
+      insert_values;
   SelectStatement* select;
+
+  // FIXME: This is here for compilation purpose. Need to remove after the
+  // Hyrise parser is removed!!!
+  TableInfo* table_info_ = nullptr;
+
+  // Which table are we inserting into
+  TableRef* table_ref_;
 };
 
 }  // End parser namespace

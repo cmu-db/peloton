@@ -38,7 +38,7 @@ class StarExpression : public AbstractExpression {
   virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
  protected:
-  StarExpression(const FunctionExpression &other) : AbstractExpression(other) {}
+  StarExpression(const AbstractExpression &other) : AbstractExpression(other) {}
 
  private:
 };

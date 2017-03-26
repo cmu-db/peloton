@@ -14,6 +14,7 @@
 #include "type/types.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "expression/tuple_value_expression.h"
 
 #include <stdio.h>
 #include <string>
@@ -25,7 +26,6 @@ namespace parser {
 std::string indent(uint num_indent) { return std::string(num_indent, '\t'); }
 
 void inprint(UNUSED_ATTRIBUTE int64_t val, UNUSED_ATTRIBUTE uint num_indent) {
-  // indent(num_indent)
   LOG_TRACE("%lu", val);
 }
 
@@ -110,21 +110,22 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
     case ExpressionType::STAR:
       inprint("*", num_indent);
       break;
-    case ExpressionType::COLUMN_REF:
-      // TODO: Fix this
-      inprint((expr)->GetExpressionName(), num_indent);
-      //if (expr->GetColumn() != NULL) inprint((expr)->GetColumn(), num_indent);
+    case ExpressionType::VALUE_TUPLE:
+      inprint((expr)->GetInfo().data(), num_indent);
+      inprint(((expression::TupleValueExpression*)expr)->GetTableName().data(), num_indent);
+      inprint(((expression::TupleValueExpression*)expr)->GetColumnName().data(), num_indent);
+      break;
+    case ExpressionType::COMPARE_GREATERTHAN:
+      inprint((expr)->GetInfo().data(), num_indent);
+      for (size_t i = 0; i < (expr)->GetChildrenSize(); ++i) {
+        inprint(((expr)->GetChild(i))->GetInfo().data(), num_indent);
+      }
       break;
     case ExpressionType::VALUE_CONSTANT:
-      // TODO: Fix this
-      // ((expression::ConstantValueExpression*)expr)->Evaluate(nullptr,
-      // nullptr, nullptr);
-      printf("\n");
+      inprint((expr)->GetInfo().data(), num_indent);
       break;
     case ExpressionType::FUNCTION_REF:
-      // TODO: Fix this
-      // inprint(expr->GetName(), num_indent);
-      // inprint(expr->GetExpression()->GetName(), num_indent);
+      inprint(expr->GetInfo().data(), num_indent);
       break;
     default:
       PrintOperatorExpression(expr, num_indent);
@@ -144,7 +145,9 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
     GetExpressionInfo(expr, num_indent + 2);
 
   inprint("-> Sources:", num_indent + 1);
-  PrintTableRefInfo(stmt->from_table, num_indent + 2);
+  if (stmt->from_table != NULL) {
+    PrintTableRefInfo(stmt->from_table, num_indent + 2);
+  }
 
   if (stmt->where_clause != NULL) {
     inprint("-> Search Conditions:", num_indent + 1);
@@ -163,6 +166,16 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
       inprint("ascending", num_indent + 2);
     else
       inprint("descending", num_indent + 2);
+  }
+
+  if (stmt->group_by != NULL) {
+    inprint("-> GroupBy:", num_indent + 1);
+    for (auto column : *(stmt->group_by->columns)) {
+      inprint(column->GetInfo().data(), num_indent + 2);
+    }
+    if (stmt->group_by->having) {
+      inprint(stmt->group_by->having->GetInfo().data(), num_indent + 2);
+    }
   }
 
   if (stmt->limit != NULL) {
@@ -236,6 +249,11 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
     default:
       break;
   }
+}
+
+void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent) {
+   stmt = stmt;
+   num_indent = num_indent;
 }
 
 std::string CharsToStringDestructive(char * str) {

@@ -13,10 +13,11 @@
 #include <iostream>
 #include <fstream>
 
-#include "benchmark/sdbench/sdbench_configuration.h"
 #include "common/logger.h"
+#include "benchmark/sdbench/sdbench_configuration.h"
 #include "benchmark/sdbench/sdbench_workload.h"
 #include "benchmark/sdbench/sdbench_loader.h"
+#include "concurrency/epoch_manager_factory.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -29,6 +30,16 @@ configuration state;
 // Main Entry Point
 void RunBenchmark() {
 
+  concurrency::EpochManagerFactory::Configure(EpochType::DECENTRALIZED_EPOCH);
+
+  std::unique_ptr<std::thread> epoch_thread;
+
+  concurrency::EpochManager &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+
+  epoch_manager.RegisterThread(0);
+
+  epoch_manager.StartEpoch(epoch_thread);
+
   if (state.multi_stage) {
     // Run holistic indexing comparison benchmark
     RunMultiStageBenchmark();
@@ -37,6 +48,9 @@ void RunBenchmark() {
     RunSDBenchTest();
   }
 
+  epoch_manager.StopEpoch();
+
+  epoch_thread->join();
 }
 
 }  // namespace sdbench

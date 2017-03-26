@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define PARSE_STRING 1
+
 PgQueryInternalParsetreeAndError pg_query_raw_parse(const char* input)
 {
 	PgQueryInternalParsetreeAndError result = {0};
@@ -92,7 +94,13 @@ PgQueryInternalParsetreeAndError pg_query_parse(const char* input)
 
 	parsetree_and_error = pg_query_raw_parse(input);
 
-	pg_query_exit_memory_context(ctx);
+// If you want to enable the reference for Postgres parse tree,
+// set the PARSE_STRING flag above to be 1.
+#if PARSE_STRING == 1
+	printf("%s\n", pg_query_nodes_to_json(parsetree_and_error.tree));
+#endif
+
+	// pg_query_exit_memory_context(ctx);
 
 	return parsetree_and_error;
 }
