@@ -134,13 +134,14 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
 }
 
 oid_t TableCatalog::GetTableOid(const std::string &table_name,
-                                const std::string &database_oid,
+                                oid_t database_oid,
                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_oid
   oid_t index_offset = 1;              // Index of table_name & database_oid
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
@@ -196,7 +197,7 @@ std::vector<std::string> TableCatalog::GetTableNames(
   std::vector<std::string> table_names;
   for (auto tile : result_tiles) {
     for (auto tuple_id : *tile) {
-      table_ids.emplace_back(
+      table_names.emplace_back(
           tile->GetValue(tuple_id, 0)
               .GetAs<std::string>());  // After projection left 1 column
     }
