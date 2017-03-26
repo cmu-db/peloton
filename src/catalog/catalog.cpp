@@ -82,31 +82,31 @@ void Catalog::InitializeCatalog() {
   // btree!!)
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
-              std::vector<std::string>({1}), DATABASE_CATALOG_NAME + "_skey0",
+              std::vector<oid_t>({1}), DATABASE_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({1, 2}), TABLE_CATALOG_NAME + "_skey0",
+              std::vector<oid_t>({1, 2}), TABLE_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({2}), TABLE_CATALOG_NAME + "_skey1",
+              std::vector<oid_t>({2}), TABLE_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
-              std::vector<std::string>({1, 2, 3}),
+              std::vector<oid_t>({1, 2}),
               INDEX_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
-              std::vector<std::string>({2, 3}), INDEX_CATALOG_NAME + "_skey1",
+              std::vector<oid_t>({2}), INDEX_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<std::string>({0, 2}), COLUMN_CATALOG_NAME + "_skey0",
+              std::vector<oid_t>({0, 2}), COLUMN_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<std::string>({0}), COLUMN_CATALOG_NAME + "_skey1",
+              std::vector<oid_t>({0}), COLUMN_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 }
 
@@ -416,9 +416,9 @@ ResultType Catalog::DropIndex(oid_t index_oid) {
   return ResultType::SUCCESS;
 }
 
-index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
-                                       const oid_t table_oid,
-                                       const oid_t index_oid) const {
+index::Index *Catalog::GetIndexWithOid(oid_t database_oid,
+                                       oid_t table_oid,
+                                       oid_t index_oid) const {
   // Lookup table
   auto table = GetTableWithOid(database_oid, table_oid);
 
@@ -432,7 +432,7 @@ index::Index *Catalog::GetIndexWithOid(const oid_t database_oid,
 }
 
 // Drop a database, only for test purposes
-ResultType Catalog::DropDatabaseWithName(std::string &database_name,
+ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
                                          concurrency::Transaction *txn) {
   oid_t database_oid =
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
@@ -451,7 +451,7 @@ ResultType Catalog::DropDatabaseWithName(std::string &database_name,
 }
 
 // Drop a database with its oid
-ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
+ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
                                         concurrency::Transaction *txn) {
   // Drop actual tables in the database
   auto table_oids =
@@ -488,48 +488,25 @@ ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
 }
 
 // Drop a table, CHANGING
-ResultType Catalog::DropTable(std::string database_name, std::string table_name,
+ResultType Catalog::DropTable(const std::string &database_name, const std::string &table_name,
                               concurrency::Transaction *txn) {
-  LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
-            database_name.c_str());
-
-  storage::Database *database = GetDatabaseWithName(database_name);
-  if (database == nullptr) {
+  // Checking if statement is valid
+  oid_t database_oid = DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name);
+  if (database_oid == INVALID_OID) {
     LOG_TRACE("Can't Found database!");
     return ResultType::FAILURE;
   }
 
-  storage::DataTable *table = database->GetTableWithName(table_name);
-  if (database == nullptr) {
+  oid_t table_oid = TableCatalog::GetInstance()->GetTableOid(table_name, database_oid);
+  if (table_oid == INVALID_OID) {
     LOG_TRACE("Can't Found Table!");
     return ResultType::FAILURE;
   }
-
-  LOG_TRACE("Found table!");
-  oid_t table_oid = table->GetOid();
-
-  // 1. drop all the indexes on actual table, and drop index records in pg_index
-  // 2. drop all the columns records in pg_attribute
-  // 3. drop table record in pg_table
-  // 4. delete actual table(storage level), cleanup schema, foreign keys,
-  // tile_groups
-  LOG_TRACE("Deleting table!");
-  // STEP 1, read index_oids from pg_index, and iterate through
-  auto index_oids = IndexCatalog::GetInstance()->GetIndexOids(table_oid, txn);
-  for (oid_t index_oid : index_oids) DropIndex(index_oid);
-
-  // STEP 2
-  ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
-  // STEP 3
-  TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // STEP 4
-  database->DropTableWithOid(table_oid);
-
-  return ResultType::SUCCESS;
+  return DropTable(database_oid, table_oid, txn);
 }
 
 // Drop a table, using database_oid and table_oid
-ResultType Catalog::DropTable(const oid_t database_oid, const oid_t table_oid,
+ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
                               concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
 
@@ -569,12 +546,12 @@ ResultType Catalog::DropTable(const oid_t database_oid, const oid_t table_oid,
 }
 
 // Only used for testing
-bool Catalog::HasDatabase(const oid_t db_oid) const {
+bool Catalog::HasDatabase(oid_t db_oid) const {
   return (GetDatabaseWithOid(db_oid) != nullptr);
 }
 
 // Find a database using its id
-storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
+storage::Database *Catalog::GetDatabaseWithOid(oid_t db_oid) const {
   for (auto database : databases_)
     if (database->GetOid() == db_oid) return database;
   return nullptr;
@@ -590,15 +567,15 @@ storage::Database *Catalog::GetDatabaseWithName(
 }
 
 storage::Database *Catalog::GetDatabaseWithOffset(
-    const oid_t database_offset) const {
+    oid_t database_offset) const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
 }
 
 // Get table from a database
-storage::DataTable *Catalog::GetTableWithName(std::string database_name,
-                                              std::string table_name) {
+storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
+                                              const std::string &table_name) {
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
@@ -617,8 +594,8 @@ storage::DataTable *Catalog::GetTableWithName(std::string database_name,
   }
 }
 
-storage::DataTable *Catalog::GetTableWithOid(const oid_t database_oid,
-                                             const oid_t table_oid) const {
+storage::DataTable *Catalog::GetTableWithOid(oid_t database_oid,
+                                             oid_t table_oid) const {
   LOG_TRACE("Getting table with oid %d from database with oid %d", database_oid,
             table_oid);
   // Lookup DB
