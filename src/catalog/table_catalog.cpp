@@ -122,6 +122,30 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
   return table_name;
 }
 
+oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
+                                       concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({2});  // database_oid
+  oid_t index_offset = 0;              // Index of table_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  oid_t database_oid;
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      database_oid = result_tiles[0]
+                       ->GetValue(0, 0)
+                       .GetAs<oid_t>();  // After projection left 1 column
+    }
+  }
+
+  return database_oid;
+}
+
 oid_t TableCatalog::GetTableOid(const std::string &table_name,
                                 const std::string &database_oid,
                                 concurrency::Transaction *txn) {
