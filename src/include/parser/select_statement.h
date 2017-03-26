@@ -28,6 +28,7 @@ namespace parser {
 typedef enum { kOrderAsc, kOrderDesc } OrderType;
 
 struct OrderDescription {
+  OrderDescription() {}
   OrderDescription(OrderType type, expression::AbstractExpression* expr)
       : type(type), expr(expr) {}
 

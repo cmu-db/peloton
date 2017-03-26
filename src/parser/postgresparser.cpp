@@ -313,34 +313,27 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
   // std::vector<parser::OrderDescription>* result =
   //   new std::vector<parser::OrderDescription>();
 
-  parser::OrderDescription* result = nullptr;
+  parser::OrderDescription* result = new OrderDescription();
 
   for (auto cell = order->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
     if (temp->type == T_SortBy) {
-      SortBy* sort = reinterpret_cast<SortBy*>(temp);
-      Node* target = sort->node;
-      if (target->type == T_ColumnRef) {
-        if ((sort->sortby_dir == SORTBY_ASC) ||
-            (sort->sortby_dir == SORTBY_DEFAULT)) {
-          // result->push_back(parser::OrderDescription(
-          //                     parser::OrderType::kOrderAsc,
-          //                     ColumnRefTransform((ColumnRef *)target)));
-          result = new parser::OrderDescription(
-              parser::OrderType::kOrderAsc,
-              ColumnRefTransform(reinterpret_cast<ColumnRef*>(target)));
-        } else if (sort->sortby_dir == SORTBY_DESC) {
-          // result->push_back(parser::OrderDescription(
-          //                     parser::OrderType::kOrderDesc,
-          //                     ColumnRefTransform((ColumnRef *)target)));
-          result = new parser::OrderDescription(
-              parser::OrderType::kOrderDesc,
-              ColumnRefTransform(reinterpret_cast<ColumnRef*>(target)));
-        }
-
-      } else {
-        LOG_ERROR("SortBy type %d not supported...", target->type);
+      SortBy *sort = reinterpret_cast<SortBy *>(temp);
+      Node *target = sort->node;
+      result->type = parser::OrderType::kOrderAsc;
+      if (sort->sortby_dir == SORTBY_DESC)
+        result->type = parser::OrderType::kOrderDesc;
+      switch (target->type) {
+        case T_ColumnRef:result->expr = ColumnRefTransform(reinterpret_cast<ColumnRef *>(target));
+          break;
+        case T_FuncCall:result->expr = FuncCallTransform(reinterpret_cast<FuncCall *>(target));
+          break;
+        case T_A_Expr:result->expr = AExprTransform(reinterpret_cast<A_Expr *>(target));
+          break;
+        default:LOG_ERROR("SortBy type %d not supported...", target->type);
+          throw new NotImplementedException("...");
       }
+
     } else {
       LOG_ERROR("ORDER BY list member type %d\n", temp->type);
     }
