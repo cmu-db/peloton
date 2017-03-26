@@ -607,7 +607,7 @@ oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
 
-  delete pool_;
+  pool_.release();
 }
 
 //===--------------------------------------------------------------------===//
