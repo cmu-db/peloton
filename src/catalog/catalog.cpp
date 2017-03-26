@@ -82,26 +82,31 @@ void Catalog::InitializeCatalog() {
   // btree!!)
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
-              std::vector<std::string>({1}), DATABASE_CATALOG_NAME + "_SKEY",
+              std::vector<std::string>({1}), DATABASE_CATALOG_NAME + "_skey",
               true, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({1, 2}), TABLE_CATALOG_NAME + "_SKEY",
+              std::vector<std::string>({1, 2}), TABLE_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({2}), TABLE_CATALOG_NAME + "_SKEY",
+              std::vector<std::string>({2}), TABLE_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
-  // TODO: index secondary indexes??
+  CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
+              std::vector<std::string>({1, 2, 3}), INDEX_CATALOG_NAME + "_skey0",
+              true, IndexType::BWTREE);
+  CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
+              std::vector<std::string>({2, 3}), INDEX_CATALOG_NAME + "_skey1",
+              false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<std::string>({0, 2}), COLUMN_CATALOG_NAME + "_SKEY",
+              std::vector<std::string>({0, 2}), COLUMN_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<std::string>({0}), COLUMN_CATALOG_NAME + "_SKEY",
+              std::vector<std::string>({0}), COLUMN_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 }
 
