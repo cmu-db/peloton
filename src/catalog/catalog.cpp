@@ -157,16 +157,31 @@ ResultType Catalog::CreateTable(std::string database_name,
 
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database == nullptr) {
-    LOG_TRACE("Can't found database. Returning RESULT_FAILURE");
+    LOG_TRACE("Can't found database. Return RESULT_FAILURE");
     return ResultType::FAILURE;
   }
 
   storage::Database *table = database->GetTableWithName(table_name);
   if (table != nullptr) {
-    LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
+    LOG_TRACE("Found a table with the same name. Return RESULT_FAILURE");
     return ResultType::FAILURE;
   } else {
-    // Table doesn't exist, now create it
+    // Table doesn't exist, now check whether has repeat columns name
+    std::set<std::string> column_names;
+    std::vector<Column> &schema_columns = schema.release()->GetColumns();
+
+    for (auto &column : schema_columns) {
+      auto search = column_names.find(column.GetName());
+      if (search != column_names.end()) {
+        LOG_TRACE("Found a column with the same name. Return RESULT_FAILURE");
+        return ResultType::FAILURE;
+      }
+      // if can't find the column with same name, then insert into name set
+      auto result = schema_names.insert(column.GetName());
+      PL_ASSERT(result.first != column_names.end());
+    }
+
+    // pass column names check, now create actual table
     bool own_schema = true;
     bool adapt_table = false;
     oid_t database_oid = database->GetOid();
@@ -181,9 +196,8 @@ ResultType Catalog::CreateTable(std::string database_name,
         table_oid, table_name, database_oid, database_name, pool_.get(), txn);
 
     // Create the primary key index for that table if there's primary key
-    // Update pg_index, pg_attribute at the same time
+    // TODO:Update pg_index, pg_attribute at the same time
     bool has_primary_key = false;
-    auto &schema_columns = table->GetSchema()->GetColumns();
 
     for (auto &column : schema_columns) {
       ColumnCatalog::GetInstance()->InsertColumn(
@@ -375,8 +389,8 @@ ResultType Catalog::DropIndex(const oid_t database_oid, const oid_t index_oid) {
   // drop index in actual table
   table->DropIndexWithOid(index_oid);
 
-  // drop tuple in index catalog
-  IndexCatalog::GetInstance()->DeleteByOid(index_oid, nullptr);
+  // TODO:drop tuple in index catalog
+  // IndexCatalog::GetInstance()->DeleteByOid(index_oid, nullptr);
 
   LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
   return ResultType::SUCCESS;
