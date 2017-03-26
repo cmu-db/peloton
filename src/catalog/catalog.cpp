@@ -82,32 +82,32 @@ void Catalog::InitializeCatalog() {
   // btree!!)
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
-              std::vector<std::string>({"database_name"}), DATABASE_CATALOG_NAME + "_skey0",
-              true, IndexType::BWTREE);
+              std::vector<std::string>({"database_name"}),
+              DATABASE_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({"table_name", "database_oid"}), TABLE_CATALOG_NAME + "_skey0",
-              true, IndexType::BWTREE);
+              std::vector<std::string>({"table_name", "database_oid"}),
+              TABLE_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({"database_oid"}), TABLE_CATALOG_NAME + "_skey1",
-              false, IndexType::BWTREE);
+              std::vector<std::string>({"database_oid"}),
+              TABLE_CATALOG_NAME + "_skey1", false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
               std::vector<std::string>({"index_name", "table_oid"}),
               INDEX_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
-              std::vector<std::string>({"table_oid"}), INDEX_CATALOG_NAME + "_skey1",
-              false, IndexType::BWTREE);
+              std::vector<std::string>({"table_oid"}),
+              INDEX_CATALOG_NAME + "_skey1", false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<std::string>({"table_oid", "column_offset"}), COLUMN_CATALOG_NAME + "_skey0",
-              true, IndexType::BWTREE);
+              std::vector<std::string>({"table_oid", "column_offset"}),
+              COLUMN_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<std::string>({"table_oid"}), COLUMN_CATALOG_NAME + "_skey1",
-              false, IndexType::BWTREE);
+              std::vector<std::string>({"table_oid"}),
+              COLUMN_CATALOG_NAME + "_skey1", false, IndexType::BWTREE);
 }
 
 //===----------------------------------------------------------------------===//
@@ -274,8 +274,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  oid_t table_oid =
-      TableCatalog::GetInstance()->GetTableOid(table_name, nullptr);
+  oid_t table_oid = TableCatalog::GetInstance()->GetTableOid(
+      table_name, database_oid, nullptr);
   if (table_oid == INVALID_OID) {
     LOG_TRACE(
         "Cannot find the table to create the primary key index. Return "
@@ -421,16 +421,19 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
 }
 
 // Drop a table, CHANGING
-ResultType Catalog::DropTable(const std::string &database_name, const std::string &table_name,
+ResultType Catalog::DropTable(const std::string &database_name,
+                              const std::string &table_name,
                               concurrency::Transaction *txn) {
   // Checking if statement is valid
-  oid_t database_oid = DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name);
+  oid_t database_oid =
+      DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, nullptr);
   if (database_oid == INVALID_OID) {
     LOG_TRACE("Can't Found database!");
     return ResultType::FAILURE;
   }
 
-  oid_t table_oid = TableCatalog::GetInstance()->GetTableOid(table_name, database_oid);
+  oid_t table_oid = TableCatalog::GetInstance()->GetTableOid(
+      table_name, database_oid, nullptr);
   if (table_oid == INVALID_OID) {
     LOG_TRACE("Can't Found Table!");
     return ResultType::FAILURE;
@@ -541,8 +544,7 @@ storage::Database *Catalog::GetDatabaseWithName(
   return GetDatabaseWithOid(database_oid);
 }
 
-storage::Database *Catalog::GetDatabaseWithOffset(
-    oid_t database_offset) const {
+storage::Database *Catalog::GetDatabaseWithOffset(oid_t database_offset) const {
   PL_ASSERT(database_offset < databases_.size());
   auto database = databases_.at(database_offset);
   return database;
@@ -585,8 +587,7 @@ storage::DataTable *Catalog::GetTableWithOid(oid_t database_oid,
   return nullptr;
 }
 
-index::Index *Catalog::GetIndexWithOid(oid_t database_oid,
-                                       oid_t table_oid,
+index::Index *Catalog::GetIndexWithOid(oid_t database_oid, oid_t table_oid,
                                        oid_t index_oid) const {
   // Lookup table
   auto table = GetTableWithOid(database_oid, table_oid);
