@@ -63,6 +63,9 @@ class PostgresParser {
   // transform helper for RangeVar parsenodes
   static parser::TableRef* RangeVarTransform(RangeVar* root);
 
+  // transform helper for RangeSubselect parsenodes
+  static parser::TableRef* RangeSubselectTransform(RangeSubselect* root);
+
   // transform helper for JoinExpr parsenodes
   static parser::JoinDefinition* JoinTransform(JoinExpr* root);
 
@@ -129,6 +132,7 @@ class PostgresParser {
 
   // transform helper for update statement
   static std::vector<parser::UpdateClause*>* UpdateTargetTransform(List* root);
+
 };
 
 }  // End parser namespace

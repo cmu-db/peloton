@@ -49,6 +49,8 @@ char* PostgresParser::AliasTransform(Alias* root) {
 // BoolExprTransform.
 parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   parser::JoinDefinition* result = nullptr;
+  LOG_INFO("Tranfrom JOIN");
+
   // Natrual join is not supported
   if ((root->jointype > 4) || (root->isNatural)) {
     return nullptr;
@@ -86,6 +88,8 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   // Check the type of left arg and right arg before transform
   if (root->larg->type == T_RangeVar) {
     result->left = RangeVarTransform(reinterpret_cast<RangeVar*>(root->larg));
+  } else if (root->larg->type == T_RangeSubselect) {
+    result->left = RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg));
   } else {
     LOG_ERROR("Join arg type %d not supported yet...\n", root->larg->type);
     delete result;
@@ -93,6 +97,8 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   }
   if (root->rarg->type == T_RangeVar) {
     result->right = RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg));
+  } else if (root->rarg->type == T_RangeSubselect) {
+    result->right = RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg));
   } else {
     LOG_ERROR("Join arg type %d not supported yet...\n", root->larg->type);
     delete result;
@@ -118,6 +124,8 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
       throw NotImplementedException("...");
     }
   }
+  LOG_INFO("Tranfrom JOIN finishes");
+
   return result;
 }
 
@@ -146,11 +154,28 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
   return result;
 }
 
+// This function takes in a single Postgres RangeVar parsenode and transfer
+// it into a Peloton TableRef object.
+parser::TableRef* PostgresParser::RangeSubselectTransform(RangeSubselect *root) {
+  auto result = new parser::TableRef(StringToTableReferenceType("select"));
+  result->select = reinterpret_cast<parser::SelectStatement*>(
+      SelectTransform(reinterpret_cast<SelectStmt*>(root->subquery)));
+  result->alias =
+      AliasTransform(root->alias);
+  if (result->select == nullptr) {
+    delete result;
+    result = nullptr;
+  }
+
+  return result;
+}
+
 // This fucntion takes in fromClause of a Postgres SelectStmt and transfers
 // into a Peloton TableRef object.
 // TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(List* root) {
   // now support select from only one sources
+  LOG_INFO("Tranfrom FROM");
   parser::TableRef* result = nullptr;
   Node* node;
   if (root->length > 1) {
@@ -165,18 +190,8 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
           break;
         }
         case T_RangeSubselect: {
-          parser::TableRef* temp =
-              new parser::TableRef(StringToTableReferenceType("select"));
-          temp->select = reinterpret_cast<parser::SelectStatement*>(
-              SelectTransform(reinterpret_cast<SelectStmt*>(
-                  (reinterpret_cast<RangeSubselect*>(node))->subquery)));
-          temp->alias =
-              AliasTransform((reinterpret_cast<RangeSubselect*>(node))->alias);
-          if (temp->select == nullptr) {
-            delete temp;
-            temp = nullptr;
-          }
-          result->list->push_back(temp);
+          result->list->push_back(
+              RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node)));
           break;
         }
         default: { LOG_ERROR("From Type %d not supported yet...", node->type); }
@@ -201,20 +216,12 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
       break;
     }
     case T_RangeSubselect: {
-      result = new parser::TableRef(StringToTableReferenceType("select"));
-      result->select = reinterpret_cast<parser::SelectStatement*>(
-          SelectTransform(reinterpret_cast<SelectStmt*>(
-              (reinterpret_cast<RangeSubselect*>(node))->subquery)));
-      result->alias =
-          AliasTransform((reinterpret_cast<RangeSubselect*>(node))->alias);
-      if (result->select == nullptr) {
-        delete result;
-        result = nullptr;
-      }
+      result = RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node));
       break;
     }
     default: { LOG_ERROR("From Type %d not supported yet...", node->type); }
   }
+  LOG_INFO("Tranfrom FROM finishes");
 
   return result;
 }
