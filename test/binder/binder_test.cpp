@@ -15,7 +15,8 @@
 #include "common/statement.h"
 #include "expression/tuple_value_expression.h"
 #include "binder/bind_node_visitor.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
+
 #include "optimizer/simple_optimizer.h"
 #include "tcop/tcop.h"
 
@@ -37,7 +38,7 @@ void SetupTables() {
   LOG_INFO("Default database created!");
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto& parser = parser::Parser::GetInstance();
+  auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   optimizer::SimpleOptimizer optimizer;
 
@@ -62,7 +63,7 @@ void SetupTables() {
 
 TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   SetupTables();
-  auto& parser = parser::Parser::GetInstance();
+  auto& parser = parser::PostgresParser::GetInstance();
   catalog::Catalog* catalog_ptr = catalog::Catalog::GetInstance();
 
   // Test regular table name
@@ -182,7 +183,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
 TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   SetupTables();
-  auto& parser = parser::Parser::GetInstance();
+  auto& parser = parser::PostgresParser::GetInstance();
   catalog::Catalog* catalog_ptr = catalog::Catalog::GetInstance();
 
   oid_t db_oid = catalog_ptr->GetDatabaseWithName(DEFAULT_DB_NAME)->GetOid();

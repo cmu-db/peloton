@@ -14,7 +14,7 @@
 #include "executor/plan_executor.h"
 #include "optimizer/rule.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "tcop/tcop.h"
 
@@ -68,7 +68,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     const std::string query, std::vector<StatementResult> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
-  auto &peloton_parser = parser::Parser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
   std::vector<type::Value> params;
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
@@ -95,7 +95,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 std::shared_ptr<planner::AbstractPlan> TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
     const std::string query) {
-  auto &peloton_parser = parser::Parser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
 

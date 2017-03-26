@@ -453,7 +453,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   expression::AbstractExpression* result = nullptr;
   expression::AbstractExpression* left = nullptr;
   expression::AbstractExpression* right = nullptr;
-  LOG_TRACE("BoolExpr arg length %d\n", root->args->length);
+  LOG_INFO("BoolExpr arg length %d\n", root->args->length);
   // transform the left argument
   Node* node = reinterpret_cast<Node*>(root->args->head->data.ptr_value);
   switch (node->type) {
@@ -465,25 +465,35 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
       left = AExprTransform(reinterpret_cast<A_Expr*>(node));
       break;
     }
+    case T_ColumnRef: {
+      left = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
+      break;
+    }
     default: {
       LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
       return nullptr;
     }
   }
-  // transform the right argument
-  node = reinterpret_cast<Node*>(root->args->head->next->data.ptr_value);
-  switch (node->type) {
-    case T_BoolExpr: {
-      right = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
-      break;
-    }
-    case T_A_Expr: {
-      right = AExprTransform(reinterpret_cast<A_Expr*>(node));
-      break;
-    }
-    default: {
-      LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
-      return nullptr;
+  if (root->args->length > 1) {
+    // transform the right argument
+    node = reinterpret_cast<Node *>(root->args->head->next->data.ptr_value);
+    switch (node->type) {
+      case T_BoolExpr: {
+        right = BoolExprTransform(reinterpret_cast<BoolExpr *>(node));
+        break;
+      }
+      case T_A_Expr: {
+        right = AExprTransform(reinterpret_cast<A_Expr *>(node));
+        break;
+      }
+      case T_ColumnRef: {
+        left = ColumnRefTransform(reinterpret_cast<ColumnRef *>(node));
+        break;
+      }
+      default: {
+        LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
+        return nullptr;
+      }
     }
   }
   switch (root->boolop) {
@@ -495,6 +505,11 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
     case OR_EXPR: {
       result = new expression::ConjunctionExpression(
           StringToExpressionType("CONJUNCTION_OR"), left, right);
+      break;
+    }
+    case NOT_EXPR: {
+      result = new expression::OperatorExpression(StringToExpressionType(
+          "OPERATOR_NOT"), StringToTypeId("INVALID"), left, right);
       break;
     }
     default: {
@@ -767,12 +782,29 @@ parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
 // Please refer to parser/parsenode.h for the definition of
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
-  parser::SelectStatement* result = new parser::SelectStatement();
-  result->select_list = TargetTransform(root->targetList);
-  result->from_table = FromTransform(root->fromClause);
-  result->group_by = GroupByTransform(root->groupClause, root->havingClause);
-  result->order = OrderByTransform(root->sortClause);
-  result->where_clause = WhereTransform(root->whereClause);
+  parser::SelectStatement* result;
+  LOG_INFO("Transform SELECT");
+  LOG_INFO("SET_OP=%d", root->op);
+  switch (root->op) {
+    case SETOP_NONE:
+      result = new parser::SelectStatement();
+      result->select_list = TargetTransform(root->targetList);
+      result->from_table = FromTransform(root->fromClause);
+      result->group_by = GroupByTransform(root->groupClause, root->havingClause);
+      result->order = OrderByTransform(root->sortClause);
+      result->where_clause = WhereTransform(root->whereClause);
+      break;
+    case SETOP_UNION:
+      result = reinterpret_cast<parser::SelectStatement*>(SelectTransform(root->larg));
+      result->union_select = reinterpret_cast<parser::SelectStatement*>(SelectTransform(root->rarg));
+      break;
+    default:
+      LOG_ERROR("Set operation %d not supported yet...\n", root->op);
+      throw NotImplementedException("...");
+  }
+
+  LOG_INFO("Transform SELECT finishes");
+
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
 
@@ -828,7 +860,7 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(
+parser::SQLStatementList* PostgresParser::ListTransform(
     List* root) {
   auto result = new parser::SQLStatementList();
   if (root == nullptr) {
@@ -839,7 +871,7 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::ListTransform(
     result->AddStatement(NodeTransform(cell));
   }
 
-  return std::move(std::unique_ptr<parser::SQLStatementList>(result));
+  return result;
 }
 
 std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(
@@ -890,12 +922,12 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
   return result;
 }
 
-PgQueryInternalParsetreeAndError PostgresParser::ParseSQLString(
+parser::SQLStatementList* PostgresParser::ParseSQLString(
     const char* text) {
-  return pg_query_parse(text);
+  return PgQueryInternalParsetreeTransform(pg_query_parse(text));
 }
 
-PgQueryInternalParsetreeAndError PostgresParser::ParseSQLString(
+parser::SQLStatementList* PostgresParser::ParseSQLString(
     const std::string& text) {
   return ParseSQLString(text.c_str());
 }
@@ -905,25 +937,29 @@ PostgresParser& PostgresParser::GetInstance() {
   return parser;
 }
 
-std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
-    const std::string& query_string) {
-  auto stmt = PostgresParser::ParseSQLString(query_string);
-
-  // when an error happends, the stme.stderr_buffer will be nullptr and
-  // corresponding error is in stmt.error
+parser::SQLStatementList* PostgresParser::PgQueryInternalParsetreeTransform(PgQueryInternalParsetreeAndError stmt){
   if (stmt.stderr_buffer == nullptr) {
     LOG_ERROR("%s at %d\n", stmt.error->message, stmt.error->cursorpos);
-    auto new_stmt = std::unique_ptr<parser::SQLStatementList>(
-        new parser::SQLStatementList());
+    auto new_stmt = new parser::SQLStatementList();
     new_stmt->is_valid = false;
     LOG_INFO("new_stmt valid is %d\n", new_stmt->is_valid);
-    return std::move(new_stmt);
+    return new_stmt;
   }
 
   delete stmt.stderr_buffer;
   auto transform_result = ListTransform(stmt.tree);
 
-  return std::move(transform_result);
+  return transform_result;
+}
+
+std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
+    const std::string& query_string) {
+  auto stmt = PostgresParser::ParseSQLString(query_string);
+
+  LOG_TRACE("Number of statements: %lu" ,stmt->GetStatements().size());
+
+  std::unique_ptr<parser::SQLStatementList> sql_stmt (stmt);
+  return std::move(sql_stmt);
 }
 
 }  // End pgparser namespace

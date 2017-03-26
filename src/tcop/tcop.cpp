@@ -25,6 +25,7 @@
 #include "expression/aggregate_expression.h"
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
+#include "common/exception.h"
 #include "parser/parser.h"
 #include "parser/select_statement.h"
 
@@ -35,6 +36,7 @@
 #include "planner/plan_util.h"
 
 #include <boost/algorithm/string.hpp>
+#include <include/parser/postgresparser.h>
 
 namespace peloton {
 namespace tcop {
@@ -274,7 +276,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   std::shared_ptr<Statement> statement(
       new Statement(statement_name, query_string));
   try {
-    auto &peloton_parser = parser::Parser::GetInstance();
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query_string);
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
