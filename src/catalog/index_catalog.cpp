@@ -100,7 +100,7 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool TableCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
+bool IndesCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   oid_t index_offset = 0;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -132,7 +132,7 @@ std::string TableCatalog::GetIndexName(oid_t index_oid,
   return index_name;
 }
 
-oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn) {
+oid_t IndesCatalog::GetTableOid(oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // table_oid
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -155,7 +155,7 @@ oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn) {
   return table_oid;
 }
 
-IndexType GetIndexType(oid_t index_oid, concurrency::Transaction *txn) {
+IndexType IndesCatalog::GetIndexType(oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({3});  // index_type
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -178,7 +178,7 @@ IndexType GetIndexType(oid_t index_oid, concurrency::Transaction *txn) {
   return index_type;
 }
 
-IndexConstraintType GetIndexConstraint(oid_t index_oid,
+IndexConstraintType IndesCatalog::GetIndexConstraint(oid_t index_oid,
                                        concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({4});  // index_constraint
   oid_t index_offset = 0;              // Index of index_oid
@@ -203,7 +203,7 @@ IndexConstraintType GetIndexConstraint(oid_t index_oid,
   return index_constraint;
 }
 
-bool IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
+bool IndesCatalog::IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({5});  // unique_keys
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -226,7 +226,7 @@ bool IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
   return unique_keys;
 }
 
-std::vector<oid_t> GetIndexOids(oid_t table_oid,
+std::vector<oid_t> IndesCatalog::GetIndexOids(oid_t table_oid,
                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 2;              // Index of table_oid
@@ -248,7 +248,7 @@ std::vector<oid_t> GetIndexOids(oid_t table_oid,
   return index_oids;
 }
 
-oid_t GetIndexOid(std::string &index_name, oid_t table_oid,
+oid_t IndesCatalog::GetIndexOid(std::string &index_name, oid_t table_oid,
                   concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 1;              // Index of index_name & table_oid
