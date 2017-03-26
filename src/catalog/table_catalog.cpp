@@ -54,16 +54,14 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> table_catalog_schema(
-      new catalog::Schema({table_id_column, table_name_column,
-                           database_id_column}));
+  std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
+      {table_id_column, table_name_column, database_id_column}));
 
   return table_catalog_schema;
 }
 
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
-                               oid_t database_oid,
-                               type::AbstractPool *pool,
+                               oid_t database_oid, type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -114,7 +112,7 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
 }
 
 oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
-                                       concurrency::Transaction *txn) {
+                                   concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // database_oid
   oid_t index_offset = 0;              // Index of table_oid
   std::vector<type::Value> values;
@@ -129,8 +127,8 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
       database_oid = result_tiles[0]
-                       ->GetValue(0, 0)
-                       .GetAs<oid_t>();  // After projection left 1 column
+                         ->GetValue(0, 0)
+                         .GetAs<oid_t>();  // After projection left 1 column
     }
   }
 
