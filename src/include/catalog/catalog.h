@@ -193,7 +193,7 @@ class Catalog {
   std::unordered_map<std::string, FunctionData> functions_;
 
   // The pool for new varlen tuple fields
-  std::unique_ptr<type::AbstractPool> pool_ = new type::EphemeralPool();
+  std::unique_ptr<type::AbstractPool> pool_;
 
   std::mutex catalog_mutex;
 };

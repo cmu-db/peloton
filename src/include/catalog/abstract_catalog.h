@@ -46,7 +46,7 @@ namespace catalog {
 
 class AbstractCatalog {
  public:
-  virtual static AbstractCatalog *GetInstance(
+  virtual AbstractCatalog *GetInstance(
       storage::Database *pg_catalog = nullptr,
       type::AbstractPool *pool = nullptr) = 0;
 
