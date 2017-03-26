@@ -95,24 +95,24 @@ class Catalog {
                          IndexType index_type);
 
   // Get a index with the oids of index, table, and database.
-  index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
-                                const oid_t index_oid) const;
+  index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
+                                oid_t index_oid) const;
   // Drop a database
-  ResultType DropDatabaseWithName(std::string &database_name,
+  ResultType DropDatabaseWithName(const std::string &database_name,
                                   concurrency::Transaction *txn);
 
   // Drop a database with its oid
-  ResultType DropDatabaseWithOid(const oid_t database_oid,
+  ResultType DropDatabaseWithOid(oid_t database_oid,
                                  concurrency::Transaction *txn);
 
   // Drop a table
-  ResultType DropTable(std::string database_name, std::string table_name,
+  ResultType DropTable(const std::string &database_name, const std::string &table_name,
                        concurrency::Transaction *txn);
   // Drop a table, use this one in the future
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::Transaction *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(const oid_t index_oid);
+  ResultType DropIndex(oid_t index_oid);
 
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(oid_t db_oid) const;
@@ -126,15 +126,15 @@ class Catalog {
   storage::Database *GetDatabaseWithName(const std::string &db_name) const;
 
   // Find a database using vector offset
-  storage::Database *GetDatabaseWithOffset(const oid_t database_offset) const;
+  storage::Database *GetDatabaseWithOffset(oid_t database_offset) const;
 
   // Get table from a database with its name
-  storage::DataTable *GetTableWithName(std::string database_name,
-                                       std::string table_name);
+  storage::DataTable *GetTableWithName(const std::string &database_name,
+                                       const std::string &table_name);
 
   // Get table from a database with its oid
-  storage::DataTable *GetTableWithOid(const oid_t database_oid,
-                                      const oid_t table_oid) const;
+  storage::DataTable *GetTableWithOid(oid_t database_oid,
+                                      oid_t table_oid) const;
 
   // Get the number of databases currently in the catalog
   oid_t GetDatabaseCount();
