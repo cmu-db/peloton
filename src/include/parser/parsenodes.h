@@ -341,3 +341,76 @@ typedef struct UpdateStmt
   List	   *returningList;	/* list of expressions to return */
   WithClause *withClause;		/* WITH clause */
 } UpdateStmt;
+
+typedef enum ObjectType
+{
+  OBJECT_AGGREGATE,
+  OBJECT_AMOP,
+  OBJECT_AMPROC,
+  OBJECT_ATTRIBUTE,			/* type's attribute, when distinct from column */
+  OBJECT_CAST,
+  OBJECT_COLUMN,
+  OBJECT_COLLATION,
+  OBJECT_CONVERSION,
+  OBJECT_DATABASE,
+  OBJECT_DEFAULT,
+  OBJECT_DEFACL,
+  OBJECT_DOMAIN,
+  OBJECT_DOMCONSTRAINT,
+  OBJECT_EVENT_TRIGGER,
+  OBJECT_EXTENSION,
+  OBJECT_FDW,
+  OBJECT_FOREIGN_SERVER,
+  OBJECT_FOREIGN_TABLE,
+  OBJECT_FUNCTION,
+  OBJECT_INDEX,
+  OBJECT_LANGUAGE,
+  OBJECT_LARGEOBJECT,
+  OBJECT_MATVIEW,
+  OBJECT_OPCLASS,
+  OBJECT_OPERATOR,
+  OBJECT_OPFAMILY,
+  OBJECT_POLICY,
+  OBJECT_ROLE,
+  OBJECT_RULE,
+  OBJECT_SCHEMA,
+  OBJECT_SEQUENCE,
+  OBJECT_TABCONSTRAINT,
+  OBJECT_TABLE,
+  OBJECT_TABLESPACE,
+  OBJECT_TRANSFORM,
+  OBJECT_TRIGGER,
+  OBJECT_TSCONFIGURATION,
+  OBJECT_TSDICTIONARY,
+  OBJECT_TSPARSER,
+  OBJECT_TSTEMPLATE,
+  OBJECT_TYPE,
+  OBJECT_USER_MAPPING,
+  OBJECT_VIEW
+} ObjectType;
+
+typedef enum DropBehavior
+{
+  DROP_RESTRICT,				/* drop fails if any dependent objects */
+  DROP_CASCADE				/* remove dependent objects too */
+} DropBehavior;
+
+typedef struct DropStmt
+{
+  NodeTag		type;
+  List	   *objects;		/* list of sublists of names (as Values) */
+  List	   *arguments;		/* list of sublists of arguments (as Values) */
+  ObjectType	removeType;		/* object type */
+  DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+  bool		missing_ok;		/* skip error if object is missing? */
+  bool		concurrent;		/* drop index concurrently? */
+} DropStmt;
+
+typedef struct TruncateStmt
+{
+  NodeTag		type;
+  List	   *relations;		/* relations (RangeVars) to be truncated */
+  bool		restart_seqs;	/* restart owned sequences? */
+  DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+} TruncateStmt;
+

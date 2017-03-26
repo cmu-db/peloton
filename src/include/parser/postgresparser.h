@@ -133,6 +133,12 @@ class PostgresParser {
   // transform helper for update statement
   static std::vector<parser::UpdateClause*>* UpdateTargetTransform(List* root);
 
+  // transform helper for drop statement
+  static parser::DropStatement* DropTransform(DropStmt* root);
+
+  // transform helper for truncate statement
+  static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
+
 };
 
 }  // End parser namespace

@@ -633,6 +633,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
     data_type = ColumnDefinition::DataType::DOUBLE;
   } else if ((strcmp(name, "real") == 0) || (strcmp(name, "float4") == 0)) {
     data_type = ColumnDefinition::DataType::FLOAT;
+  } else if (strcmp(name, "text") == 0) {
+    data_type = ColumnDefinition::DataType::TEXT;
   } else {
     LOG_ERROR("Column DataType %s not supported yet...\n", name);
     throw NotImplementedException("...");
@@ -702,6 +704,27 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
     }
   }
   return reinterpret_cast<parser::SQLStatement*>(result);
+}
+
+parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
+  auto res = new DropStatement(DropStatement::EntityType::kTable);
+  for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
+    res->missing = root->missing_ok;
+    auto table_info = new TableInfo{};
+    table_info->table_name = reinterpret_cast<value*>(cell->data.ptr_value)->val.str;
+    res->table_info_ = table_info;
+    break;
+  }
+  return res;
+}
+
+parser::DeleteStatement* PostgresParser::TruncateTransform(TruncateStmt *root) {
+  auto result = new DeleteStatement();
+  for (auto cell = root->relations->head; cell != nullptr; cell = cell->next) {
+    result->table_ref = RangeVarTransform(reinterpret_cast<RangeVar*>(cell->data.ptr_value));
+    break;
+  }
+  return result;
 }
 
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
@@ -856,6 +879,12 @@ parser::SQLStatement* PostgresParser::NodeTransform(ListCell* stmt) {
       result = InsertTransform((InsertStmt*)stmt->data.ptr_value);
       break;
     }
+    case T_DropStmt:
+      result = DropTransform((DropStmt*)stmt->data.ptr_value);
+      break;
+    case T_TruncateStmt:
+      result = TruncateTransform((TruncateStmt*)stmt->data.ptr_value);
+      break;
     default: {
       LOG_ERROR("Statement of type %d not supported yet...\n",
                 (reinterpret_cast<List*>(stmt->data.ptr_value))->type);
