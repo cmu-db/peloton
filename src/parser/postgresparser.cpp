@@ -790,6 +790,7 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
       result = new parser::SelectStatement();
       result->select_list = TargetTransform(root->targetList);
       result->from_table = FromTransform(root->fromClause);
+      result->select_distinct = root->distinctClause != NULL ? true : false;
       result->group_by = GroupByTransform(root->groupClause, root->havingClause);
       result->order = OrderByTransform(root->sortClause);
       result->where_clause = WhereTransform(root->whereClause);
