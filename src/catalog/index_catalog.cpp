@@ -108,7 +108,7 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-std::string TableCatalog::GetIndexName(oid_t index_oid,
+std::string IndexCatalog::GetIndexName(oid_t index_oid,
                                        concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // index_name
   oid_t index_offset = 0;              // Index of index_oid
