@@ -48,7 +48,7 @@ class TableCatalog : public AbstractCatalog {
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetDatabaseoid(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(const std::string &table_name,
-                    const std::string &database_oid,
+                    oid_t database_oid,
                     concurrency::Transaction *txn);
   std::vector<oid_t> GetTableOids(oid_t database_oid,
                                   concurrency::Transaction *txn);
