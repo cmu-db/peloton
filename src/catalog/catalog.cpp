@@ -37,6 +37,7 @@ Catalog::Catalog() {
   // 2) insert pg_catalog into pg_database, catalog tables into pg_table
   // 3) create necessary indexes, insert into pg_index
   // When logging is enabled, this should be changed
+  pool_ = new type::EphemeralPool();
   InitializeCatalog();
 
   // Create metrics table in default database
