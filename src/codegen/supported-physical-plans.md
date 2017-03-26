@@ -80,6 +80,10 @@ AbstractPlan
 +- AbstractPlan.AbstractScan
 |  |
 |  +- AbstractPlan.AbstractScan.SeqScanPlan
+|  |    table         : DataTable # just compare pointer
+|  |    predicate     : AbstractExpression # ok
+|  |    column_ids    : [oid_t]
+|  |    is_for_update : bool
 |  |
 |  +- (Unsupported Plans)
 | 
