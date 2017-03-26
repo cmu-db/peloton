@@ -378,59 +378,6 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 // DROP
 //===----------------------------------------------------------------------===//
 
-ResultType Catalog::DropIndex(oid_t index_oid) {
-  // find table_oid by looking up pg_index using index_oid
-  // txn is nullptr, one sentence Transaction
-  oid_t table_oid =
-      IndexCatalog::GetInstance()->GetTableidByOid(index_oid, nullptr);
-  if (table_oid == INVALID_OID) {
-    LOG_TRACE(
-        "Cannot find the table to create the index. Return RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-
-  // find database_oid by looking up pg_table using table_oid
-  // txn is nullptr, one sentence Transaction
-  oid_t database_oid =
-      TableCatalog::GetInstance()->GetDatabaseOid(table_oid, nullptr);
-
-  auto database = GetDatabaseWithOid(database_oid);
-  if (database != nullptr) {
-    LOG_TRACE("Cannot find database");
-    return ResultType::FAILURE;
-  }
-
-  auto table = database->GetTableWithOid(table_oid);
-  if (table == nullptr) {
-    LOG_TRACE(
-        "Cannot find the table to create the index. Return RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-  // drop index in actual table
-  table->DropIndexWithOid(index_oid);
-
-  // drop record in index catalog table
-  IndexCatalog::GetInstance()->DeleteIndex(index_oid, nullptr);
-
-  LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
-  return ResultType::SUCCESS;
-}
-
-index::Index *Catalog::GetIndexWithOid(oid_t database_oid,
-                                       oid_t table_oid,
-                                       oid_t index_oid) const {
-  // Lookup table
-  auto table = GetTableWithOid(database_oid, table_oid);
-
-  // Lookup index
-  if (table != nullptr) {
-    auto index = table->GetIndexWithOid(index_oid);
-    return index.get();
-  }
-
-  return nullptr;
-}
-
 // Drop a database, only for test purposes
 ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
                                          concurrency::Transaction *txn) {
@@ -545,6 +492,48 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   return ResultType::SUCCESS;
 }
 
+ResultType Catalog::DropIndex(oid_t index_oid) {
+  // find table_oid by looking up pg_index using index_oid
+  // txn is nullptr, one sentence Transaction
+  oid_t table_oid =
+      IndexCatalog::GetInstance()->GetTableidByOid(index_oid, nullptr);
+  if (table_oid == INVALID_OID) {
+    LOG_TRACE(
+        "Cannot find the table to create the index. Return RESULT_FAILURE.");
+    return ResultType::FAILURE;
+  }
+
+  // find database_oid by looking up pg_table using table_oid
+  // txn is nullptr, one sentence Transaction
+  oid_t database_oid =
+      TableCatalog::GetInstance()->GetDatabaseOid(table_oid, nullptr);
+
+  auto database = GetDatabaseWithOid(database_oid);
+  if (database != nullptr) {
+    LOG_TRACE("Cannot find database");
+    return ResultType::FAILURE;
+  }
+
+  auto table = database->GetTableWithOid(table_oid);
+  if (table == nullptr) {
+    LOG_TRACE(
+        "Cannot find the table to create the index. Return RESULT_FAILURE.");
+    return ResultType::FAILURE;
+  }
+  // drop index in actual table
+  table->DropIndexWithOid(index_oid);
+
+  // drop record in index catalog table
+  IndexCatalog::GetInstance()->DeleteIndex(index_oid, nullptr);
+
+  LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
+  return ResultType::SUCCESS;
+}
+
+//===--------------------------------------------------------------------===//
+// HELPERS
+//===--------------------------------------------------------------------===//
+
 // Only used for testing
 bool Catalog::HasDatabase(oid_t db_oid) const {
   return (GetDatabaseWithOid(db_oid) != nullptr);
@@ -605,6 +594,21 @@ storage::DataTable *Catalog::GetTableWithOid(oid_t database_oid,
   if (database != nullptr) {
     auto table = database->GetTableWithOid(table_oid);
     return table;
+  }
+
+  return nullptr;
+}
+
+index::Index *Catalog::GetIndexWithOid(oid_t database_oid,
+                                       oid_t table_oid,
+                                       oid_t index_oid) const {
+  // Lookup table
+  auto table = GetTableWithOid(database_oid, table_oid);
+
+  // Lookup index
+  if (table != nullptr) {
+    auto index = table->GetIndexWithOid(index_oid);
+    return index.get();
   }
 
   return nullptr;
