@@ -14,11 +14,11 @@
 // pg_table
 //
 // Schema: (column: column_name)
-// 0: table_oid (pkey), 1: table_name, 2: database_oid, 3: database_name
+// 0: table_oid (pkey), 1: table_name, 2: database_oid
 //
 // Indexes: (index offset: indexed columns)
 // 0: table_oid (unique)
-// 1: table_name & database_name (unique)
+// 1: table_name & database_oid (unique)
 // 2: database_oid (non-unique)
 //
 //===----------------------------------------------------------------------===//
@@ -40,16 +40,15 @@ class TableCatalog : public AbstractCatalog {
 
   // Write related API
   bool InsertTable(oid_t table_oid, const std::string &table_name,
-                   oid_t database_oid, const std::string &database_name,
-                   type::AbstractPool *pool, concurrency::Transaction *txn);
+                   oid_t database_oid, type::AbstractPool *pool,
+                   concurrency::Transaction *txn);
   bool DeleteTable(oid_t table_oid, concurrency::Transaction *txn);
   bool DeleteTables(oid_t database_oid, concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
-  std::string GetDatabaseName(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(const std::string &table_name,
-                    const std::string &database_name,
+                    const std::string &database_oid,
                     concurrency::Transaction *txn);
   std::vector<oid_t> GetTableOids(oid_t database_oid,
                                   concurrency::Transaction *txn);

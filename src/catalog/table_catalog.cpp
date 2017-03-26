@@ -54,21 +54,15 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto database_name_column = catalog::Column(
-      type::Type::VARCHAR, max_name_size, "database_name", true);
-  database_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
-
   std::unique_ptr<catalog::Schema> table_catalog_schema(
       new catalog::Schema({table_id_column, table_name_column,
-                           database_id_column, database_name_column}));
+                           database_id_column}));
 
   return table_catalog_schema;
 }
 
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                oid_t database_oid,
-                               const std::string &database_name,
                                type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
   // Create the tuple first
@@ -78,12 +72,10 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
-  auto val3 = type::ValueFactory::GetVarcharValue(database_name, nullptr);
 
   tuple->SetValue(0, val0, pool);
   tuple->SetValue(1, val1, pool);
   tuple->SetValue(2, val2, pool);
-  tuple->SetValue(3, val3, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -130,41 +122,14 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
   return table_name;
 }
 
-std::string TableCatalog::GetDatabaseName(oid_t table_oid,
-                                          concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({2});  // database_name
-  oid_t index_offset = 0;              // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  std::string database_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      database_name =
-          result_tiles[0]
-              ->GetValue(0, 0)
-              .GetAs<std::string>();  // After projection left 1 column
-    }
-  }
-
-  return database_name;
-}
-
 oid_t TableCatalog::GetTableOid(const std::string &table_name,
-                                const std::string &database_name,
+                                const std::string &database_oid,
                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // table_oid
-  oid_t index_offset = 1;              // Index of table_name & database_name
+  oid_t index_offset = 1;              // Index of table_name & database_oid
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
 
   auto result = GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
@@ -172,7 +137,7 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_oid = INVALID_OID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_name & database_name is unique
+  PL_ASSERT(result_tiles.size() <= 1);  // table_name & database_oid is unique
   if (result_tiles.size() != 0) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {

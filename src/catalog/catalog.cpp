@@ -57,8 +57,7 @@ void Catalog::InitializeCatalog() {
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get());
   auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get());
   IndexCatalog::GetInstance(pg_catalog, pool_.get());
-  //  ColumnCatalog::GetInstance();
-  // Called implicitly
+  //  ColumnCatalog::GetInstance(); // Called implicitly
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
@@ -88,7 +87,7 @@ void Catalog::InitializeCatalog() {
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<std::string>({1, 3}), TABLE_CATALOG_NAME + "_SKEY",
+              std::vector<std::string>({1, 2}), TABLE_CATALOG_NAME + "_SKEY",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
               std::vector<std::string>({2}), TABLE_CATALOG_NAME + "_SKEY",
@@ -122,7 +121,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 
   storage::Database *database = new storage::Database(database_oid);
 
-  // TODO: This should be deprecated
+  // TODO: This should be deprecated, dbname should only exists in pg_db
   database->setDBName(database_name);
 
   {
@@ -141,15 +140,14 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 void Catalog::AddDatabase(storage::Database *database) {
   std::lock_guard<std::mutex> lock(catalog_mutex);
   databases_.push_back(database);
-  std::string database_name;
   DatabaseCatalog::GetInstance()->InsertDatabase(
-      database->GetOid() | static_cast<oid_t>(type::CatalogType::DATABASE),
-      database_name, pool_.get(), nullptr);
+      database->GetOid(), database->GetDBName(), pool_.get(),
+      nullptr);  // I guess this can pass tests
 }
 
 // Create a table in a database
-ResultType Catalog::CreateTable(std::string database_name,
-                                std::string table_name,
+ResultType Catalog::CreateTable(const std::string &database_name,
+                                const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
                                 concurrency::Transaction *txn) {
   LOG_TRACE("Creating table %s in database %s", table_name.c_str(),
@@ -572,8 +570,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
   return nullptr;
 }
 
-// Find a database using its name. TODO: This should be deprecated
-// GetOidByName(string database_name, Transaction *txn)
+// Find a database using its name. TODO: This should be deprecated, all methods
+// getting database should be private to catalog
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string database_name) const {
   oid_t database_oid =
