@@ -550,6 +550,10 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       left_expr = ConstTransform(reinterpret_cast<A_Const*>(root->lexpr));
       break;
     }
+    case T_A_Expr: {
+      left_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->lexpr));
+      break;
+    }
     default: {
       LOG_ERROR("Left expr of type %d not supported yet...\n",
                 root->lexpr->type);
@@ -565,6 +569,10 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
     }
     case T_A_Const: {
       right_expr = ConstTransform(reinterpret_cast<A_Const*>(root->rexpr));
+      break;
+    }
+    case T_A_Expr: {
+      right_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->rexpr));
       break;
     }
     default: {
