@@ -35,44 +35,55 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
   const std::string not_null_constraint_name = "not_null";
   const std::string primary_key_constraint_name = "primary_key";
 
-  auto index_id_column = catalog::Column(type::Type::INTEGER,
-                                   type::Type::GetTypeSize(type::Type::INTEGER),
-                                   "index_oid", true);
+  auto index_id_column = catalog::Column(
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "index_oid", true);
+  index_id_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
   index_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::PRIMARY, primary_key_constraint_name));
-  id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto index_name_column = catalog::Column(type::Type::VARCHAR, max_name_size, "index_name", true);
+  auto index_name_column =
+      catalog::Column(type::Type::VARCHAR, max_name_size, "index_name", true);
   index_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto table_id_column = catalog::Column(type::Type::INTEGER,
-                                         type::Type::GetTypeSize(type::Type::INTEGER),
-                                         "table_oid", true);
+  auto table_id_column = catalog::Column(
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "table_oid", true);
   table_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto database_id_column = catalog::Column(type::Type::INTEGER,
-                                            type::Type::GetTypeSize(type::Type::INTEGER),
-                                            "database_oid", true);
+  auto database_id_column = catalog::Column(
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "database_oid", true);
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  auto unique_keys = catalog::Column(type::Type::BOOLEAN,
-                                            type::Type::GetTypeSize(type::Type::BOOLEAN),
-                                            "unique_keys", true);
-  std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema( {
-      id_column, index_name_column, table_id_column , database_id_column, unique_keys}));
+  auto index_type_column = catalog::Column(
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "index_type", true);
+  index_type_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  auto index_constraint_column = catalog::Column(
+      type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+      "index_constraint", true);
+
+  auto unique_keys = catalog::Column(
+      type::Type::BOOLEAN, type::Type::GetTypeSize(type::Type::BOOLEAN),
+      "unique_keys", true);
+  std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema(
+      {index_id_column, index_name_column, table_id_column, database_id_column,
+       index_type_column, index_constraint_column, unique_keys}));
   return index_schema;
 }
 
-bool IndexCatalog::InsertIndex(oid_t index_oid,
-                               const std::string &index_name,
-                               oid_t table_oid,
-                               oid_t database_oid,
-                               bool unique_keys
-                               type::AbstractPool *pool,
+bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
+                               oid_t table_oid, oid_t database_oid,
+                               IndexType index_type,
+                               IndexConstraintType index_constraint,
+                               bool unique_keys type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -82,13 +93,17 @@ bool IndexCatalog::InsertIndex(oid_t index_oid,
   auto val1 = type::ValueFactory::GetVarcharValue(index_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val3 = type::ValueFactory::GetIntegerValue(database_oid);
-  auto val4 = type::ValueFactory::GetBooleanValue(unique_keys);
+  auto val4 = type::ValueFactory::GetIntegerValue(index_type);
+  auto val5 = type::ValueFactory::GetIntegerValue(index_constraint);
+  auto val6 = type::ValueFactory::GetBooleanValue(unique_keys);
 
   tuple->SetValue(0, val0, pool);
   tuple->SetValue(1, val1, pool);
   tuple->SetValue(2, val2, pool);
   tuple->SetValue(3, val3, pool);
   tuple->SetValue(4, val4, pool);
+  tuple->SetValue(5, val5, pool);
+  tuple->SetValue(6, val6, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -103,7 +118,7 @@ bool TableCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
 }
 
 bool TableCatalog::DeleteIndexes(oid_t table_oid, oid_t database_oid,
-                                concurrency::Transaction *txn) {
+                                 concurrency::Transaction *txn) {
   oid_t index_offset = 2;  // Index of table_oid & database_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -151,8 +166,8 @@ oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
       table_oid = result_tiles[0]
-                       ->GetValue(0, 0)
-                       .GetAs<oid_t>();  // After projection left 1 column
+                      ->GetValue(0, 0)
+                      .GetAs<oid_t>();  // After projection left 1 column
     }
   }
 
@@ -174,16 +189,64 @@ oid_t GetDatabaseOid(oid_t index_oid, concurrency::Transaction *txn) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
       database_oid = result_tiles[0]
-                       ->GetValue(0, 0)
-                       .GetAs<oid_t>();  // After projection left 1 column
+                         ->GetValue(0, 0)
+                         .GetAs<oid_t>();  // After projection left 1 column
     }
   }
 
   return database_oid;
 }
 
-oid_t GetUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({4});  // unique_keys
+IndexType GetIndexType(oid_t index_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({4});  // index_type
+  oid_t index_offset = 0;              // Index of index_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  IndexType index_type;
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      index_type = result_tiles[0]
+                       ->GetValue(0, 0)
+                       .GetAs<IndexType>();  // After projection left 1 column
+    }
+  }
+
+  return index_type;
+}
+
+IndexConstraintType GetIndexConstraint(oid_t index_oid,
+                                       concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({4});  // index_constraint
+  oid_t index_offset = 0;              // Index of index_oid
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+
+  IndexConstraintType index_constraint;
+  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
+  if (result_tiles.size() != 0) {
+    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
+    if (result_tiles[0]->GetTupleCount() != 0) {
+      index_constraint =
+          result_tiles[0]
+              ->GetValue(0, 0)
+              .GetAs<IndexConstraintType>();  // After projection left 1 column
+    }
+  }
+
+  return index_constraint;
+}
+
+bool IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
+  std::vector<oid_t> column_ids({6});  // unique_keys
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -197,15 +260,16 @@ oid_t GetUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
     PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
     if (result_tiles[0]->GetTupleCount() != 0) {
       unique_keys = result_tiles[0]
-                       ->GetValue(0, 0)
-                       .GetAs<bool>();  // After projection left 1 column
+                        ->GetValue(0, 0)
+                        .GetAs<bool>();  // After projection left 1 column
     }
   }
 
   return unique_keys;
 }
 
-std::vector<oid_t> GetIndexOids(oid_t table_oid, oid_t database_oid, concurrency::Transaction *txn) {
+std::vector<oid_t> GetIndexOids(oid_t table_oid, oid_t database_oid,
+                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 2;              // Index of table_oid & database_oid
   std::vector<type::Value> values;
@@ -226,7 +290,6 @@ std::vector<oid_t> GetIndexOids(oid_t table_oid, oid_t database_oid, concurrency
 
   return index_oids;
 }
-
 
 }  // End catalog namespace
 }  // End peloton namespace

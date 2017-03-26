@@ -14,7 +14,8 @@
 // pg_index
 //
 // Schema: (column: column_name)
-// 0: index_oid (pkey), 1: index_name, 2: table_oid, 3: database_oid, 4: unique_keys
+// 0: index_oid (pkey), 1: index_name, 2: table_oid, 3: database_oid, 4:
+// index_type, 5: index_constraint, 6: unique_keys
 //
 // Indexes: (index offset: indexed columns)
 // 0: index_oid (unique)
@@ -39,17 +40,24 @@ class IndexCatalog : public AbstractCatalog {
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
   // Write related API
-  bool InsertIndex(oid_t index_oid, std::string &index_name, oid_t table_oid, oid_t database_oid, bool unique_keys);
+  bool InsertIndex(oid_t index_oid, std::string &index_name, oid_t table_oid,
+                   oid_t database_oid, IndexType index_type,
+                   IndexConstraintType index_constraint, bool unique_keys);
   bool DeleteIndex(oid_t index_oid, concurrency::Transaction *txn);
-  bool DeleteIndexes(oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
+  bool DeleteIndexes(oid_t database_oid, oid_t table_oid,
+                     concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetIndexName(oid_t index_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(oid_t index_oid, concurrency::Transaction *txn);
   oid_t GetDatabaseOid(oid_t index_oid, concurrency::Transaction *txn);
-  bool GetUniquekeys(oid_t index_oid, concurrency::Transaction *txn);
+  IndexType GetIndexType(oid_t index_oid, concurrency::Transaction *txn);
+  IndexConstraintType GetIndexConstraint(oid_t index_oid,
+                                         concurrency::Transaction *txn);
+  bool IsUniquekeys(oid_t index_oid, concurrency::Transaction *txn);
 
-  std::vector<oid_t> GetIndexOids(oid_t table_oid, oid_t database_oid, concurrency::Transaction *txn);
+  std::vector<oid_t> GetIndexOids(oid_t table_oid, oid_t database_oid,
+                                  concurrency::Transaction *txn);
 
  private:
   IndexCatalog();
