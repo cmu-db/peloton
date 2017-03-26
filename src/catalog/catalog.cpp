@@ -82,31 +82,31 @@ void Catalog::InitializeCatalog() {
   // btree!!)
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
-              std::vector<oid_t>({1}), DATABASE_CATALOG_NAME + "_skey0",
+              std::vector<std::string>({"database_name"}), DATABASE_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<oid_t>({1, 2}), TABLE_CATALOG_NAME + "_skey0",
+              std::vector<std::string>({"table_name", "database_oid"}), TABLE_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
-              std::vector<oid_t>({2}), TABLE_CATALOG_NAME + "_skey1",
+              std::vector<std::string>({"database_oid"}), TABLE_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
-              std::vector<oid_t>({1, 2}),
+              std::vector<std::string>({"index_name", "table_oid"}),
               INDEX_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
-              std::vector<oid_t>({2}), INDEX_CATALOG_NAME + "_skey1",
+              std::vector<std::string>({"table_oid"}), INDEX_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<oid_t>({0, 2}), COLUMN_CATALOG_NAME + "_skey0",
+              std::vector<std::string>({"table_oid", "column_offset"}), COLUMN_CATALOG_NAME + "_skey0",
               true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
-              std::vector<oid_t>({0}), COLUMN_CATALOG_NAME + "_skey1",
+              std::vector<std::string>({"table_oid"}), COLUMN_CATALOG_NAME + "_skey1",
               false, IndexType::BWTREE);
 }
 
