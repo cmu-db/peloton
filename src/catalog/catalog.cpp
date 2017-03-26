@@ -199,7 +199,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
         table_oid, table_name, database_oid, database_name, pool_.get(), txn);
 
     // Create the primary key index for that table if there's primary key
-    // TODO:Update pg_index, pg_attribute at the same time
+    // Update pg_index, pg_attribute at the same time
     bool has_primary_key = false;
 
     for (auto &column : schema_columns) {
@@ -250,18 +250,24 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
 
-    std::string index_name = table->GetName() + "_PKEY";
+    std::string index_name = table->GetName() + "_pkey";
 
     bool unique_keys = true;
+    oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
 
     index_metadata = new index::IndexMetadata(
-        StringUtil::Upper(index_name), GetNextOid(), table->GetOid(),
-        database->GetOid(), IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
-        schema, key_schema, key_attrs, unique_keys);
+        index_name.c_str(), index_oid, table->GetOid(), database->GetOid(),
+        IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema, key_schema,
+        key_attrs, unique_keys);
 
     std::shared_ptr<index::Index> pkey_index(
         index::IndexFactory::GetIndex(index_metadata));
     table->AddIndex(pkey_index);
+
+    // insert index record into index_catalog(pg_index) table
+    IndexCatalog::GetInstance()->InsertIndex(
+        index_oid, index_name.c_str(), table->GetOid(), database->GetOid(),
+        IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, unique_keys);
 
     LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
               pkey_index->GetName().c_str(), table->GetName().c_str());
@@ -312,6 +318,16 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
+  // check if table already has index with same name
+  auto search = IndexCatalog::GetInstance()->GetIndexOid(
+      index_name, table->GetOid(), nullptr);
+
+  if (search != nullptr) {
+    LOG_TRACE(
+        "Cannot create index on same table with same name Return "
+        "RESULT_FAILURE.");
+    return ResultType::FAILURE;
+  }
   std::vector<oid_t> key_attrs;
   catalog::Schema *key_schema = nullptr;
   index::IndexMetadata *index_metadata = nullptr;
@@ -356,17 +372,19 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
       index::IndexFactory::GetIndex(index_metadata));
   table->AddIndex(key_index);
 
-  // Add index to catalog
-  // TODO: add more columns into index catalog
-  IndexCatalog::GetInstance()->Insert(index_oid, index_name, table_oid,
-                                      database_oid, unique_keys, pool_.get(),
-                                      txn);
+  // insert index record into index_catalog(pg_index) table
+  IndexCatalog::GetInstance()->InsertIndex(
+      index_oid, index_name.c_str(), table->GetOid(), database->GetOid(),
+      index_type, IndexConstraintType::DEFAULT, true);
 
   LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
   return ResultType::SUCCESS;
 }
 
-ResultType Catalog::DropIndex(const oid_t database_oid, const oid_t index_oid) {
+ResultType Catalog::DropIndex(oid_t index_oid) {
+  oid database_oid =
+      IndexCatalog::GetInstance()->GetDatabaseOid(index_oid, nullptr);
+
   auto database = GetDatabaseWithOid(database_oid);
   if (database != nullptr) {
     LOG_TRACE("Cannot find database");
@@ -393,7 +411,7 @@ ResultType Catalog::DropIndex(const oid_t database_oid, const oid_t index_oid) {
   table->DropIndexWithOid(index_oid);
 
   // TODO:drop tuple in index catalog
-  // IndexCatalog::GetInstance()->DeleteByOid(index_oid, nullptr);
+  IndexCatalog::GetInstance()->DeleteIndex(index_oid, nullptr);
 
   LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
   return ResultType::SUCCESS;
@@ -440,7 +458,7 @@ ResultType Catalog::DropDatabaseWithOid(const oid_t database_oid,
   auto table_oids =
       TableCatalog::GetInstance()->GetTableOids(database_oid, txn);
   for (auto table_oid : table_oids) {
-    DropTableWithOid(database_oid, table_oid, txn);
+    DropTable(database_oid, table_oid, txn);
   }
 
   // Drop database record in catalog
@@ -491,36 +509,30 @@ ResultType Catalog::DropTable(std::string database_name, std::string table_name,
   LOG_TRACE("Found table!");
   oid_t table_oid = table->GetOid();
 
-  // drop actual data table
-  // requires lock in DropTableWithOid() methods
-  // cleanup schema, foreign keys, tile_groups, also delete Indexes that belong
-  // to the table
+  // 1. drop all the indexes on actual table, and drop index records in pg_index
+  // 2. drop all the columns records in pg_attribute
+  // 3. drop table record in pg_table
+  // 4. delete actual table(storage level), cleanup schema, foreign keys,
+  // tile_groups
   LOG_TRACE("Deleting table!");
-  // TODO: data_table has DropIndexes(), but indexTuner also has
-  // DropIndexes(table)
-  table->DropIndexes();
-  database->DropTableWithOid(table_oid);
+  // STEP 1, read index_oids from pg_index, and iterate through
+  auto index_oids =
+      IndexCatalog::GetInstance()->GetIndexOids(table_oid, database_oid, txn);
+  for (oid_t index_oid : index_oids) DropIndex(index_oid);
 
-  // change metadata
-  LOG_TRACE("Deleting tuple from catalog!");
-  // delete record in pg_table
+  // STEP 2
+  ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
+  // STEP 3
   TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // delete records in pg_attribute
-  auto &schema_columns = table->GetSchema()->GetColumns();
-  for (auto &column : schema_columns) {
-    // std::string column_name = column.GetName();
-    ColumnCatalog::GetInstance()->DeleteColumn(table_oid, column.GetName(),
-                                               txn);
-  }
-  // TODO: delete records in pg_index
+  // STEP 4
+  database->DropTableWithOid(table_oid);
 
   return ResultType::SUCCESS;
 }
 
-// Drop a table, CHANGING
-ResultType Catalog::DropTableWithOid(const oid_t database_oid,
-                                     const oid_t table_oid,
-                                     concurrency::Transaction *txn) {
+// Drop a table, using database_oid and table_oid
+ResultType Catalog::DropTable(const oid_t database_oid, const oid_t table_oid,
+                              concurrency::Transaction *txn) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
 
   storage::Database *database = GetDatabaseWithOid(database_oid);
@@ -537,28 +549,24 @@ ResultType Catalog::DropTableWithOid(const oid_t database_oid,
 
   LOG_TRACE("Found table!");
 
-  // drop actual data table
-  // requires lock in DropTableWithOid() methods
-  // cleanup schema, foreign keys, tile_groups, also delete Indexes that belong
-  // to the table
-  LOG_TRACE("Deleting table!");
-  // TODO: data_table has DropIndexes(), but indexTuner also has
-  // DropIndexes(table), do we need mutex lock when droping index??
-  table->DropIndexes();
-  database->DropTableWithOid(table_oid);
+  // 1. drop all the indexes on actual table, and drop index records in pg_index
+  // 2. drop all the columns records in pg_attribute
+  // 3. drop table record in pg_table
+  // 4. delete actual table(storage level), cleanup schema, foreign keys,
+  // tile_groups
 
-  // change metadata
-  LOG_TRACE("Deleting tuple from catalog!");
-  // delete record in pg_table
+  LOG_TRACE("Deleting table!");
+  // STEP 1, read index_oids from pg_index, and iterate through
+  auto index_oids =
+      IndexCatalog::GetInstance()->GetIndexOids(table_oid, database_oid, txn);
+  for (oid_t index_oid : index_oids) DropIndex(index_oid);
+
+  // STEP 2
+  ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
+  // STEP 3
   TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // delete records in pg_attribute
-  auto &schema_columns = table->GetSchema()->GetColumns();
-  for (auto &column : schema_columns) {
-    // std::string column_name = column.GetName();
-    ColumnCatalog::GetInstance()->DeleteColumn(table_oid, column.GetName(),
-                                               txn);
-  }
-  // TODO: delete records in pg_index
+  // STEP 4
+  database->DropTableWithOid(table_oid);
 
   return ResultType::SUCCESS;
 }
@@ -575,8 +583,8 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
   return nullptr;
 }
 
-// Find a database using its name. TODO: This should be deprecated, all methods
-// getting database should be private to catalog
+// Find a database using its name. TODO: This should be deprecated, all
+// methods getting database should be private to catalog
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string database_name) const {
   oid_t database_oid =
@@ -686,8 +694,9 @@ std::unique_ptr<storage::DataTable> Catalog::CreateMetricsCatalog(
   }
 
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
-      database_id, GetNextOid(), schema, table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog));
+      database_id, TableCatalog::GetInstance()->GetNextOid(), schema,
+      table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
+      is_catalog));
 
   return table;
 }

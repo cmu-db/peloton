@@ -79,7 +79,8 @@ class Catalog {
   void AddDatabase(storage::Database *database);
 
   // Create a table in a database
-  ResultType CreateTable(const std::string &database_name, const std::string &table_name,
+  ResultType CreateTable(const std::string &database_name,
+                         const std::string &table_name,
                          std::unique_ptr<catalog::Schema>,
                          concurrency::Transaction *txn);
 
@@ -92,11 +93,6 @@ class Catalog {
                          std::vector<std::string> index_attr,
                          std::string index_name, bool unique,
                          IndexType index_type);
-
-  ResultType CreateIndex(const std::string &database_name,
-                         const std::string &table_name,
-                         std::vector<oid_t> index_attr, std::string index_name,
-                         bool unique, IndexType index_type);
 
   // Get a index with the oids of index, table, and database.
   index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
@@ -113,10 +109,10 @@ class Catalog {
   ResultType DropTable(std::string database_name, std::string table_name,
                        concurrency::Transaction *txn);
   // Drop a table, use this one in the future
-  ResultType DropTableWithOid(oid_t database_oid, oid_t table_oid,
-                              concurrency::Transaction *txn);
+  ResultType DropTable(oid_t database_oid, oid_t table_oid,
+                       concurrency::Transaction *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(const oid_t database_oid, const oid_t index_oid);
+  ResultType DropIndex(const oid_t index_oid);
 
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(const oid_t db_oid) const;
