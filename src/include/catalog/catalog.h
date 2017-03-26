@@ -115,15 +115,15 @@ class Catalog {
   ResultType DropIndex(const oid_t index_oid);
 
   // Returns true if the catalog contains the given database with the id
-  bool HasDatabase(const oid_t db_oid) const;
+  bool HasDatabase(oid_t db_oid) const;
 
   // Find a database using its id
   // return nullptr if not found
-  storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
+  storage::Database *GetDatabaseWithOid(oid_t db_oid) const;
 
   // Find a database using its name
   // return nullptr if not found
-  storage::Database *GetDatabaseWithName(const std::string db_name) const;
+  storage::Database *GetDatabaseWithName(const std::string &db_name) const;
 
   // Find a database using vector offset
   storage::Database *GetDatabaseWithOffset(const oid_t database_offset) const;

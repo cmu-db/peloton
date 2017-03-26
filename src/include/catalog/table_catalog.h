@@ -43,7 +43,6 @@ class TableCatalog : public AbstractCatalog {
                    oid_t database_oid, type::AbstractPool *pool,
                    concurrency::Transaction *txn);
   bool DeleteTable(oid_t table_oid, concurrency::Transaction *txn);
-  bool DeleteTables(oid_t database_oid, concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);

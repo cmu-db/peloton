@@ -89,15 +89,6 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-bool TableCatalog::DeleteTables(oid_t database_oid,
-                                concurrency::Transaction *txn) {
-  oid_t index_offset = 2;  // Index of database_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  return DeleteWithIndexScan(index_offset, values, txn);
-}
-
 std::string TableCatalog::GetTableName(oid_t table_oid,
                                        concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({1});  // table_name
