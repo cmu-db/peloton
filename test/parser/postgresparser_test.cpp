@@ -511,27 +511,28 @@ TEST_F(PostgresParserTests, InsertTest) {
 
 TEST_F(PostgresParserTests, CreateTest) {
   std::string query = "CREATE TABLE Persons ("
-                      "id int NOT NULL, age int, name varchar(255),"
-                      "PRIMARY KEY (id, age));"
+                      "id int NOT NULL, age int PRIMARY KEY, name varchar(255),"
+                      "PRIMARY KEY (id));";
 
   auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree(query).release();
   EXPECT_TRUE(stmt_list->is_valid);
-  auto create_stmt = stmt_list->GetStatement(0);
+  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check column definition
-  EXPECT_TRUE(create_stmt->columns->size, 3);
+  EXPECT_EQ(create_stmt->columns->size(), 3);
   // Check First column
-  auto column = create_stmt->column->at(0);
+  auto column = create_stmt->columns->at(0);
   EXPECT_TRUE(column->not_null);
   EXPECT_TRUE(column->primary);
   EXPECT_EQ(std::string(column->name), "id");
-  EXPECT_EQ(column->type, type::Type::INTEGER);
+  EXPECT_EQ(type::Type::SMALLINT, column->type);
   // Check Second column
-  column = create_stmt->column->at(0);
+  column = create_stmt->columns->at(1);
   EXPECT_FALSE(column->not_null);
   EXPECT_TRUE(column->primary);
   // Check Third column
+  column = create_stmt->columns->at(2);
   EXPECT_FALSE(column->primary);
   EXPECT_EQ(column->varlen, 255);
   

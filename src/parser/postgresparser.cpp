@@ -13,6 +13,7 @@
 #include <include/parser/pg_list.h>
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -627,6 +628,7 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
                     ->val.str);
   parser::ColumnDefinition* result = nullptr;
 
+  // Transform column type
   if ((strcmp(name, "int") == 0) || (strcmp(name, "int4") == 0)) {
     data_type = ColumnDefinition::DataType::INT;
   } else if (strcmp(name, "varchar") == 0) {
@@ -652,6 +654,7 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
     throw NotImplementedException("...");
   }
 
+  // Transform Varchar len
   result = new ColumnDefinition(strdup(root->colname), data_type);
   if (type_name->typmods) {
     Node* node =
@@ -671,8 +674,18 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
       throw NotImplementedException("...");
     }
   }
-  result->not_null = root->is_not_null;
-//  result->primary = root->
+  
+  // Transform Per-column constraints
+  if (root->constraints) {
+    for (auto cell = root->constraints->head; cell != nullptr; cell=cell->next) {
+      auto constraint = reinterpret_cast<Constraint*>(cell->data.ptr_value);
+      if (constraint->contype == CONSTR_PRIMARY)
+        result->primary = true;
+      else if (constraint->contype == CONSTR_NOTNULL)
+        result->not_null = true;
+    }
+  }
+
   return result;
 }
 
@@ -681,6 +694,7 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
 // Please refer to parser/parsenode.h for the definition of
 // CreateStmt parsenodes.
 parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
+  LOG_INFO("Parsing Create Stmt\n");
   UNUSED_ATTRIBUTE CreateStmt* temp = root;
   parser::CreateStatement* result =
       new CreateStatement(CreateStatement::CreateType::kTable);
@@ -697,6 +711,8 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   if (root->tableElts->length > 0) {
     result->columns = new std::vector<ColumnDefinition*>();
   }
+  
+  std::unordered_set<std::string> primary_keys;
   for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
     if ((node->type) == T_ColumnDef) {
@@ -710,6 +726,18 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         temp->table_info_->database_name = strdup(relation->catalogname);
       };
       result->columns->push_back(temp);
+    } else if (node->type == T_Constraint) {
+      auto constraint = reinterpret_cast<Constraint*>(node);
+      if (constraint->contype != CONSTR_PRIMARY) {
+        // TODO: Add other constraints. Only support PRIAMRY Constraint now.
+        LOG_ERROR("Constraint of type %d not supported yet", node->type);
+        throw NotImplementedException("");
+      }
+
+      for (auto key_cell = constraint->keys->head; key_cell != nullptr;
+           key_cell = key_cell->next) {
+        primary_keys.emplace(reinterpret_cast<value*>(key_cell->data.ptr_value)->val.str);
+      }
     } else {
       LOG_ERROR("tableElt of type %d not supported yet...", node->type);
       delete result->table_info_;
@@ -718,8 +746,12 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
     }
   }
   
-  // Transform constraints. Only support PRIAMRY now.
-  // TODO: Add other constraints later
+  // Enforce Primary Keys
+  for (auto column : *result->columns) {
+    if (primary_keys.find(std::string(column->name)) != primary_keys.end()) {
+      column->primary = true;
+    }
+  }
   
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
