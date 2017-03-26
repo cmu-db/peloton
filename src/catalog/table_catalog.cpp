@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
 #include "catalog/table_catalog.h"
 
 namespace peloton {

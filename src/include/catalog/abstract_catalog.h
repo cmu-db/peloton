@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "catalog/catalog.h"
 #include "catalog/column.h"
 #include "catalog/schema.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -29,13 +28,8 @@
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
-#include "storage/data_table.h"
-#include "storage/data_table.h"
-#include "storage/database.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
-#include "storage/table_factory.h"
-#include "storage/tuple.h"
 #include "storage/tuple.h"
 #include "type/catalog_type.h"
 #include "type/types.h"
