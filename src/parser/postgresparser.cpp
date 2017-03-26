@@ -671,6 +671,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
       throw NotImplementedException("...");
     }
   }
+  result->not_null = root->is_not_null;
+//  result->primary = root->
   return result;
 }
 
@@ -715,6 +717,10 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       throw NotImplementedException(".");
     }
   }
+  
+  // Transform constraints. Only support PRIAMRY now.
+  // TODO: Add other constraints later
+  
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
 

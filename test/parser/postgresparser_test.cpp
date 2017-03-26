@@ -510,25 +510,32 @@ TEST_F(PostgresParserTests, InsertTest) {
 }
 
 TEST_F(PostgresParserTests, CreateTest) {
-  std::vector<std::string> queries;
+  std::string query = "CREATE TABLE Persons ("
+                      "id int NOT NULL, age int, name varchar(255),"
+                      "PRIMARY KEY (id, age));"
 
-  // Select with complicated where, tests both BoolExpr and AExpr
-  queries.push_back("CREATE TABLE Persons ("
-                     "PersonID int, LastName varchar(255));");
-//  queries.push_back("CREATE INDEX idx_pname ON Persons (LastName, FirstName);");
   auto parser = parser::PostgresParser::GetInstance();
-  // Parsing
-  UNUSED_ATTRIBUTE int ii = 0;
-  for (auto query : queries) {
-    auto stmt_list = parser.BuildParseTree(query).release();
-    EXPECT_TRUE(stmt_list->is_valid);
-    if (stmt_list->is_valid == false) {
-      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
-                stmt_list->error_line, stmt_list->error_col);
-    }
-    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    delete stmt_list;
-  }
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  auto create_stmt = stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check column definition
+  EXPECT_TRUE(create_stmt->columns->size, 3);
+  // Check First column
+  auto column = create_stmt->column->at(0);
+  EXPECT_TRUE(column->not_null);
+  EXPECT_TRUE(column->primary);
+  EXPECT_EQ(std::string(column->name), "id");
+  EXPECT_EQ(column->type, type::Type::INTEGER);
+  // Check Second column
+  column = create_stmt->column->at(0);
+  EXPECT_FALSE(column->not_null);
+  EXPECT_TRUE(column->primary);
+  // Check Third column
+  EXPECT_FALSE(column->primary);
+  EXPECT_EQ(column->varlen, 255);
+  
+  delete stmt_list;
 }
 
 TEST_F(PostgresParserTests, InsertIntoSelectTest) {
