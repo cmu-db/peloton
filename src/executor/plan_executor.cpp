@@ -339,7 +339,10 @@ executor::AbstractExecutor *BuildExecutorTree(
       LOG_TRACE("Adding Copy Executer");
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
-
+    case PlanNodeType::POPULATE_INDEX:
+      LOG_TRACE("Adding PopulateIndex Executor");
+      child_executor = new executor::PopulateIndexExecutor(plan, executor_context);
+      break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",
                 PlanNodeTypeToString(plan_node_type).c_str());
