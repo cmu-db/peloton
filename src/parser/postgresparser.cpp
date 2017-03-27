@@ -807,7 +807,7 @@ std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     ResTarget* target = (ResTarget*)(cell->data.ptr_value);
-    result->push_back(target->name);
+    result->push_back(strdup(target->name));
   }
 
   return result;
