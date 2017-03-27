@@ -261,8 +261,9 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
 // This function takes in a Postgres ParamRef parsenode and transfer into
 // a Peloton tuple value expression.
 expression::AbstractExpression* PostgresParser::ParamRefTransform(ParamRef *root) {
-  LOG_INFO("Parameter number: %d", root->number);
-  return new expression::ParameterValueExpression(root->number-1);
+//  LOG_INFO("Parameter number: %d", root->number);
+  expression::AbstractExpression* res = new expression::ParameterValueExpression(root->number-1);
+  return res;
 }
 
 
@@ -866,7 +867,7 @@ parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt *root) {
   auto res = new PrepareStatement();
   res->name = strdup(root->name);
   auto stmt_list = new SQLStatementList();
-  stmt_list->statements.emplace_back(NodeTransform(root->query));
+  stmt_list->statements.push_back(NodeTransform(root->query));
   res->query = stmt_list;
   return res;
 }
@@ -920,7 +921,7 @@ PostgresParser::ValueListsTransform(List* root) {
       if (expr->type == T_ParamRef)
         cur_result->push_back(ParamRefTransform((ParamRef*)expr));
       else if (expr->type == T_Const)
-        cur_result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
+        cur_result->push_back(ConstTransform((A_Const*)expr));
 
     }
 

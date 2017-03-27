@@ -42,7 +42,8 @@ struct InsertStatement : SQLStatement {
     if (insert_values) {
       for (auto tuple : *insert_values) {
         for (auto expr : *tuple) {
-          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
+          // Why?
+//          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
             delete expr;
         }
         delete tuple;
