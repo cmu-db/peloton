@@ -49,6 +49,9 @@ const std::string SQLStatement::GetInfo() const {
     case StatementType::CREATE:
       GetCreateStatementInfo((CreateStatement*)this, indent);
       break;
+    case StatementType::DELETE:
+      GetDeleteStatementInfo((DeleteStatement*)this, indent);
+      break;
     default:
       break;
   }

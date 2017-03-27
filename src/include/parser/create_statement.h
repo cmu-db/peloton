@@ -172,8 +172,12 @@ struct CreateStatement : TableRefStatement {
       delete index_attrs;
     }
 
-    free(index_name);
-    free(database_name);
+    if (index_name) {
+      free(index_name);
+    }
+    if (database_name) {
+      free(database_name);
+    }
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

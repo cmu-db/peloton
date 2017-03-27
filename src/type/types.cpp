@@ -646,13 +646,13 @@ ExpressionType StringToExpressionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return ExpressionType::INVALID;
-  } else if (upper_str == "OPERATOR_PLUS") {
+  } else if (upper_str == "OPERATOR_PLUS" || upper_str == "+") {
     return ExpressionType::OPERATOR_PLUS;
-  } else if (upper_str == "OPERATOR_MINUS") {
+  } else if (upper_str == "OPERATOR_MINUS" || upper_str == "-") {
     return ExpressionType::OPERATOR_MINUS;
-  } else if (upper_str == "OPERATOR_MULTIPLY") {
+  } else if (upper_str == "OPERATOR_MULTIPLY" || upper_str == "*") {
     return ExpressionType::OPERATOR_MULTIPLY;
-  } else if (upper_str == "OPERATOR_DIVIDE") {
+  } else if (upper_str == "OPERATOR_DIVIDE" || upper_str == "/") {
     return ExpressionType::OPERATOR_DIVIDE;
   } else if (upper_str == "OPERATOR_CONCAT") {
     return ExpressionType::OPERATOR_CONCAT;
@@ -668,21 +668,21 @@ ExpressionType StringToExpressionType(const std::string& str) {
     return ExpressionType::OPERATOR_EXISTS;
   } else if (upper_str == "OPERATOR_UNARY_MINUS") {
     return ExpressionType::OPERATOR_UNARY_MINUS;
-  } else if (upper_str == "COMPARE_EQUAL") {
+  } else if (upper_str == "COMPARE_EQUAL" || upper_str == "=") {
     return ExpressionType::COMPARE_EQUAL;
-  } else if (upper_str == "COMPARE_NOTEQUAL") {
+  } else if (upper_str == "COMPARE_NOTEQUAL" || upper_str == "!=") {
     return ExpressionType::COMPARE_NOTEQUAL;
-  } else if (upper_str == "COMPARE_LESSTHAN") {
+  } else if (upper_str == "COMPARE_LESSTHAN" || upper_str == "<") {
     return ExpressionType::COMPARE_LESSTHAN;
-  } else if (upper_str == "COMPARE_GREATERTHAN") {
+  } else if (upper_str == "COMPARE_GREATERTHAN" || upper_str == ">") {
     return ExpressionType::COMPARE_GREATERTHAN;
-  } else if (upper_str == "COMPARE_LESSTHANOREQUALTO") {
+  } else if (upper_str == "COMPARE_LESSTHANOREQUALTO" || upper_str == "<=") {
     return ExpressionType::COMPARE_LESSTHANOREQUALTO;
-  } else if (upper_str == "COMPARE_GREATERTHANOREQUALTO") {
+  } else if (upper_str == "COMPARE_GREATERTHANOREQUALTO" || upper_str == ">=") {
     return ExpressionType::COMPARE_GREATERTHANOREQUALTO;
-  } else if (upper_str == "COMPARE_LIKE") {
+  } else if (upper_str == "COMPARE_LIKE" || upper_str == "~~") {
     return ExpressionType::COMPARE_LIKE;
-  } else if (upper_str == "COMPARE_NOTLIKE") {
+  } else if (upper_str == "COMPARE_NOTLIKE" || upper_str == "!~~") {
     return ExpressionType::COMPARE_NOTLIKE;
   } else if (upper_str == "COMPARE_IN") {
     return ExpressionType::COMPARE_IN;
@@ -1031,6 +1031,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     case PlanNodeType::MOCK: {
       return ("MOCK");
+    }
+    case PlanNodeType::POPULATE_INDEX: {
+      return ("POPULATE_INDEX");
     }
     default: {
       throw ConversionException(
