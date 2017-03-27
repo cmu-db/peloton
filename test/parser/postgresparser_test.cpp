@@ -540,24 +540,29 @@ TEST_F(PostgresParserTests, CreateTest) {
 }
 
 TEST_F(PostgresParserTests, TransactionTest) {
+  auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree("BEGIN TRANSACTION;").release();
+  auto transac_stmt = (parser::TransactionStatement*)stmt_list->GetStatement(0);
   EXPECT_TRUE(stmt_list->is_valid);
-  EXPECT_EQ(parser::TransactionStatement::kBegin);
+  EXPECT_EQ(parser::TransactionStatement::kBegin, transac_stmt->type);
   delete stmt_list;
   
   stmt_list = parser.BuildParseTree("BEGIN;").release();
+  transac_stmt = (parser::TransactionStatement*)stmt_list->GetStatement(0);
   EXPECT_TRUE(stmt_list->is_valid);
-  EXPECT_EQ(parser::TransactionStatement::kBegin);
+  EXPECT_EQ(parser::TransactionStatement::kBegin, transac_stmt->type);
   delete stmt_list;
   
   stmt_list = parser.BuildParseTree("COMMIT TRANSACTION;").release();
+  transac_stmt = (parser::TransactionStatement*)stmt_list->GetStatement(0);
   EXPECT_TRUE(stmt_list->is_valid);
-  EXPECT_EQ(parser::TransactionStatement::kCommit);
+  EXPECT_EQ(parser::TransactionStatement::kCommit, transac_stmt->type);
   delete stmt_list;
   
   stmt_list = parser.BuildParseTree("ROLLBACK;").release();
+  transac_stmt = (parser::TransactionStatement*)stmt_list->GetStatement(0);
   EXPECT_TRUE(stmt_list->is_valid);
-  EXPECT_EQ(parser::TransactionStatement::kRollback);
+  EXPECT_EQ(parser::TransactionStatement::kRollback, transac_stmt->type);
   delete stmt_list;
 }
   

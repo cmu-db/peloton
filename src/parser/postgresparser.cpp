@@ -954,20 +954,17 @@ parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
 }
 
 // Transform Postgres TransacStmt into Peloton TransactionStmt
-parser::TransactionStatement* TransactionTransform(TransactionStmt* root) {
-  int commandType = -1;
+parser::TransactionStatement* PostgresParser::TransactionTransform(TransactionStmt* root) {
   if (root->kind == TRANS_STMT_BEGIN) {
-    commandType = TransactionStatement::kBegin;
+    return new parser::TransactionStatement(TransactionStatement::kBegin);
   } else if (root->kind == TRANS_STMT_COMMIT) {
-    commandType = TransactionStatement::kCommit;
+    return new parser::TransactionStatement(TransactionStatement::kCommit);
   } else if (root->kind == TRANS_STMT_ROLLBACK) {
-    commandType = TransactionStatement::kRollback;
+    return new parser::TransactionStatement(TransactionStatement::kRollback);
   } else {
-    LOG_ERROR("Commmand type %d not supported yet.\n", commandType);
+    LOG_ERROR("Commmand type %d not supported yet.\n", root->kind);
     throw NotImplementedException("");
   }
-  parser::TransactionStatement* result = new parser::TransactionStatement(commandType);
-  return result;
 }
 
 
