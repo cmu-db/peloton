@@ -33,3 +33,4 @@
 #include "executor/append_executor.h"
 #include "executor/projection_executor.h"
 #include "executor/copy_executor.h"
+#include "executor/populate_index_executor.h"
