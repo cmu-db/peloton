@@ -453,6 +453,28 @@ typedef struct UpdateStmt
   WithClause *withClause;		/* WITH clause */
 } UpdateStmt;
 
+typedef enum TransactionStmtKind
+{
+  TRANS_STMT_BEGIN,
+  TRANS_STMT_START,			/* semantically identical to BEGIN */
+  TRANS_STMT_COMMIT,
+  TRANS_STMT_ROLLBACK,
+  TRANS_STMT_SAVEPOINT,
+  TRANS_STMT_RELEASE,
+  TRANS_STMT_ROLLBACK_TO,
+  TRANS_STMT_PREPARE,
+  TRANS_STMT_COMMIT_PREPARED,
+  TRANS_STMT_ROLLBACK_PREPARED
+} TransactionStmtKind;
+
+typedef struct TransactionStmt
+{
+  NodeTag		type;
+  TransactionStmtKind kind;	/* see above */
+  List	   *options;		/* for BEGIN/START and savepoint commands */
+  char	   *gid;			/* for two-phase-commit related commands */
+} TransactionStmt;
+
 typedef enum ObjectType
 {
   OBJECT_AGGREGATE,

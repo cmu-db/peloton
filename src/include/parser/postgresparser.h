@@ -141,6 +141,9 @@ class PostgresParser {
 
   // transform helper for truncate statement
   static parser::DeleteStatement* TruncateTransform(TruncateStmt* root);
+  
+  // transform helper for transaction statement
+  static parser::TransactionStatement* TransactionTransform(TransactionStmt* root);
 
   // transform helper for execute statement
   static parser::ExecuteStatement* ExecuteTransform(ExecuteStmt* root);

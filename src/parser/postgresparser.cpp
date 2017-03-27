@@ -857,7 +857,6 @@ PostgresParser::ValueListsTransform(List* root) {
 
 // This function takes in the paramlist of a Postgres ExecuteStmt
 // parsenode and transfers it into Peloton AbstractExpression.
-
 std::vector<expression::AbstractExpression*>*
 PostgresParser::ParamListTransform(List* root) {
   std::vector<expression::AbstractExpression*>* result =
@@ -954,6 +953,23 @@ parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
   return (parser::SQLStatement*)result;
 }
 
+// Transform Postgres TransacStmt into Peloton TransactionStmt
+parser::TransactionStatement* TransactionTransform(TransactionStmt* root) {
+  int commandType = -1;
+  if (root->kind == TRANS_STMT_BEGIN) {
+    commandType = TransactionStatement::kBegin;
+  } else if (root->kind == TRANS_STMT_COMMIT) {
+    commandType = TransactionStatement::kCommit;
+  } else if (root->kind == TRANS_STMT_ROLLBACK) {
+    commandType = TransactionStatement::kRollback;
+  } else {
+    LOG_ERROR("Commmand type %d not supported yet.\n", commandType);
+    throw NotImplementedException("");
+  }
+  parser::TransactionStatement* result = new parser::TransactionStatement(commandType);
+  return result;
+}
+
 
 // This function transfers a single Postgres statement into
 // a Peloton SQLStatement object. It checks the type of
@@ -962,37 +978,34 @@ parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
 parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
   parser::SQLStatement* result = nullptr;
   switch (stmt->type) {
-    case T_SelectStmt: {
+    case T_SelectStmt:
       result =
           SelectTransform(reinterpret_cast<SelectStmt*>(stmt));
       break;
-    }
-    case T_CreateStmt: {
+    case T_CreateStmt:
       result =
           CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
       break;
-    }
-    case T_IndexStmt: {
+    case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
       break;
-    }
-    case T_UpdateStmt: {
+    case T_UpdateStmt:
       result = UpdateTransform((UpdateStmt*)stmt);
       break;
-    }
-    case T_DeleteStmt: {
+    case T_DeleteStmt:
       result = DeleteTransform((DeleteStmt*)stmt);
       break;
-    }
-    case T_InsertStmt: {
+    case T_InsertStmt:
       result = InsertTransform((InsertStmt*)stmt);
       break;
-    }
     case T_DropStmt:
       result = DropTransform((DropStmt*)stmt);
       break;
     case T_TruncateStmt:
       result = TruncateTransform((TruncateStmt*)stmt);
+      break;
+    case T_TransactionStmt:
+      result = TransactionTransform((TransactionStmt*)stmt);
       break;
     case T_ExecuteStmt:
       result = ExecuteTransform((ExecuteStmt*)stmt);
