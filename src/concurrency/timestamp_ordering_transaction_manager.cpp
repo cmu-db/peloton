@@ -378,7 +378,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 void TimestampOrderingTransactionManager::PerformUpdate(
     Transaction *const current_txn, const ItemPointer &old_location,
     const ItemPointer &new_location) {
-  PL_ASSERT(current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY);
+  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   LOG_TRACE("Performing Write old tuple %u %u", old_location.block,
             old_location.offset);
@@ -473,7 +473,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
 void TimestampOrderingTransactionManager::PerformUpdate(
     Transaction *const current_txn, const ItemPointer &location) {
-  PL_ASSERT(current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY);
+  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -503,7 +503,7 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 void TimestampOrderingTransactionManager::PerformDelete(
     Transaction *const current_txn, const ItemPointer &old_location,
     const ItemPointer &new_location) {
-  PL_ASSERT(current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY);
+  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   LOG_TRACE("Performing Delete");
 
@@ -594,7 +594,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 void TimestampOrderingTransactionManager::PerformDelete(
     Transaction *const current_txn, const ItemPointer &location) {
-  PL_ASSERT(current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY);
+  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -785,8 +785,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
     Transaction *const current_txn) {
-  // It's impossible that a pre-declared read-only transaction aborts
-  PL_ASSERT(current_txn->GetIsolationLevel() == IsolationLevelType::READ_ONLY);
+  // a pre-declared read-only transaction will never abort.
+  PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
