@@ -599,3 +599,10 @@ typedef struct CreatedbStmt
   char	   *dbname;			/* name of database to create */
   List	   *options;		/* List of DefElem nodes */
 } CreatedbStmt;
+
+typedef struct ParamRef
+{
+  NodeTag		type;
+  int			number;			/* the number of the parameter */
+  int			location;		/* token location, or -1 if unknown */
+} ParamRef;

@@ -104,7 +104,7 @@ TEST_F(ParserTests, BasicTest) {
   queries.push_back("DROP TABLE students;");
 
   // PREPARE
-//  queries.push_back("PREPARE prep_inst AS INSERT INTO test VALUES (?, ?, ?);");
+  queries.push_back("PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
   queries.push_back("EXECUTE prep_inst(1, 2, 3);");
   queries.push_back("EXECUTE prep;");
 

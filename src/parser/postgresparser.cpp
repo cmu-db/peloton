@@ -258,6 +258,14 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
   return result;
 }
 
+// This function takes in a Postgres ParamRef parsenode and transfer into
+// a Peloton tuple value expression.
+expression::AbstractExpression* PostgresParser::ParamRefTransform(ParamRef *root) {
+  LOG_INFO("Parameter number: %d", root->number);
+  return new expression::ParameterValueExpression(root->number-1);
+}
+
+
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
 // TODO: having clause is not handled yet, depends on AExprTransform
@@ -475,6 +483,9 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
       left = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
       break;
     }
+    case T_ParamRef:
+      left = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
+      break;
     default: {
       LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
       return nullptr;
@@ -493,9 +504,12 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
         break;
       }
       case T_ColumnRef: {
-        left = ColumnRefTransform(reinterpret_cast<ColumnRef *>(node));
+        right = ColumnRefTransform(reinterpret_cast<ColumnRef *>(node));
         break;
       }
+      case T_ParamRef:
+        right = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
+        break;
       default: {
         LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
         return nullptr;
@@ -517,10 +531,6 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
       result = new expression::OperatorExpression(StringToExpressionType(
           "OPERATOR_NOT"), StringToTypeId("INVALID"), left, right);
       break;
-    }
-    default: {
-      LOG_ERROR("NOT_EXPR not supported yet...\n");
-      return nullptr;
     }
   }
   return result;
@@ -560,6 +570,9 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       left_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->lexpr));
       break;
     }
+    case T_ParamRef:
+      left_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->lexpr));
+      break;
     default: {
       LOG_ERROR("Left expr of type %d not supported yet...\n",
                 root->lexpr->type);
@@ -581,8 +594,11 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
       right_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->rexpr));
       break;
     }
+    case T_ParamRef:
+      right_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->rexpr));
+      break;
     default: {
-      LOG_ERROR("Left expr of type %d not supported yet...\n",
+      LOG_ERROR("Right expr of type %d not supported yet...\n",
                 root->rexpr->type);
       return nullptr;
     }
@@ -900,7 +916,12 @@ PostgresParser::ValueListsTransform(List* root) {
 
     List* target = (List*)(value_list->data.ptr_value);
     for (auto cell = target->head; cell != NULL; cell = cell->next) {
-      cur_result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
+      auto expr = reinterpret_cast<Expr*>(cell->data.ptr_value);
+      if (expr->type == T_ParamRef)
+        cur_result->push_back(ParamRefTransform((ParamRef*)expr));
+      else if (expr->type == T_Const)
+        cur_result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
+
     }
 
     result->push_back(cur_result);

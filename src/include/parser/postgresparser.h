@@ -93,6 +93,10 @@ class PostgresParser {
   // transform helper for function calls
   static expression::AbstractExpression* FuncCallTransform(FuncCall* root);
 
+  // transform helper for parameter refs
+  static expression::AbstractExpression* ParamRefTransform(ParamRef* root);
+
+
   // transform helper for group by clauses
   static parser::GroupByDescription* GroupByTransform(List* root, Node* having);
 
