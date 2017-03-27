@@ -59,7 +59,7 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::Transaction *txn);
 
-  const std::vector<executor::LogicalTile *> &
+  std::unique_ptr<std::vector<executor::LogicalTile *>>
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
                          std::vector<type::Value> values,
                          concurrency::Transaction *txn);
