@@ -109,7 +109,8 @@ class Catalog {
                                  concurrency::Transaction *txn);
 
   // Drop a table
-  ResultType DropTable(const std::string &database_name, const std::string &table_name,
+  ResultType DropTable(const std::string &database_name,
+                       const std::string &table_name,
                        concurrency::Transaction *txn);
   // Drop a table, use this one in the future
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
@@ -184,8 +185,6 @@ class Catalog {
   Catalog();
 
   void InitializeCatalog(void);
-
-
 
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;

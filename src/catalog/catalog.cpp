@@ -66,17 +66,13 @@ void Catalog::InitializeCatalog() {
 
   // Insert catalog tables into pg_table
   pg_table->InsertTable(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID,
-                        pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
   pg_table->InsertTable(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID,
-                        pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
   pg_table->InsertTable(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
-                        CATALOG_DATABASE_OID,
-                        pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
   pg_table->InsertTable(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                        CATALOG_DATABASE_OID,
-                        pool_.get(), nullptr);
+                        CATALOG_DATABASE_OID, pool_.get(), nullptr);
 
   // Create indexes on catalog tables, insert them into pg_index
   // TODO: This should be hash index rather than tree index?? (but postgres use
@@ -84,31 +80,38 @@ void Catalog::InitializeCatalog() {
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
               std::vector<std::string>({"database_name"}),
-              std::string(DATABASE_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
+              std::string(DATABASE_CATALOG_NAME) + "_skey0", true,
+              IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
               std::vector<std::string>({"table_name", "database_oid"}),
-              std::string(TABLE_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
+              std::string(TABLE_CATALOG_NAME) + "_skey0", true,
+              IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
               std::vector<std::string>({"database_oid"}),
-              std::string(TABLE_CATALOG_NAME) + "_skey1", false, IndexType::BWTREE);
+              std::string(TABLE_CATALOG_NAME) + "_skey1", false,
+              IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
               std::vector<std::string>({"index_name", "table_oid"}),
-              std::string(INDEX_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
+              std::string(INDEX_CATALOG_NAME) + "_skey0", true,
+              IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
               std::vector<std::string>({"table_oid"}),
-              std::string(INDEX_CATALOG_NAME) + "_skey1", false, IndexType::BWTREE);
+              std::string(INDEX_CATALOG_NAME) + "_skey1", false,
+              IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
               std::vector<std::string>({"table_oid", "column_offset"}),
-              std::string(COLUMN_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
+              std::string(COLUMN_CATALOG_NAME) + "_skey0", true,
+              IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
               std::vector<std::string>({"table_oid"}),
-              std::string(COLUMN_CATALOG_NAME) + "_skey1", false, IndexType::BWTREE);
+              std::string(COLUMN_CATALOG_NAME) + "_skey1", false,
+              IndexType::BWTREE);
 }
 
 //===----------------------------------------------------------------------===//
@@ -302,7 +305,8 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   // check if table already has index with same name
   auto pg_index = IndexCatalog::GetInstance();
-  if (pg_index->GetIndexOid(index_name, table->GetOid(), nullptr) != INVALID_OID) {
+  if (pg_index->GetIndexOid(index_name, table->GetOid(), nullptr) !=
+      INVALID_OID) {
     LOG_TRACE(
         "Cannot create index on same table with same name Return "
         "RESULT_FAILURE.");
@@ -337,14 +341,12 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   // Check if unique index or not
   if (unique_keys == false) {
     index_metadata = new index::IndexMetadata(
-        index_name, index_oid, table->GetOid(), database->GetOid(),
-        index_type, IndexConstraintType::DEFAULT, schema, key_schema, key_attrs,
-        true);
+        index_name, index_oid, table->GetOid(), database->GetOid(), index_type,
+        IndexConstraintType::DEFAULT, schema, key_schema, key_attrs, true);
   } else {
     index_metadata = new index::IndexMetadata(
-        index_name, index_oid, table->GetOid(), database->GetOid(),
-        index_type, IndexConstraintType::UNIQUE, schema, key_schema, key_attrs,
-        true);
+        index_name, index_oid, table->GetOid(), database->GetOid(), index_type,
+        IndexConstraintType::UNIQUE, schema, key_schema, key_attrs, true);
   }
 
   // Add index to table
@@ -598,9 +600,7 @@ index::Index *Catalog::GetIndexWithOid(oid_t database_oid, oid_t table_oid,
 
 oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
-Catalog::~Catalog() {
-  delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
-}
+Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
 
 //===--------------------------------------------------------------------===//
 // DEPRECATED
