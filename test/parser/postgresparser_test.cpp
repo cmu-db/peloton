@@ -538,6 +538,28 @@ TEST_F(PostgresParserTests, CreateTest) {
   
   delete stmt_list;
 }
+
+TEST_F(PostgresParserTests, TransactionTest) {
+  auto stmt_list = parser.BuildParseTree("BEGIN TRANSACTION;").release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  EXPECT_EQ(parser::TransactionStatement::kBegin);
+  delete stmt_list;
+  
+  stmt_list = parser.BuildParseTree("BEGIN;").release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  EXPECT_EQ(parser::TransactionStatement::kBegin);
+  delete stmt_list;
+  
+  stmt_list = parser.BuildParseTree("COMMIT TRANSACTION;").release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  EXPECT_EQ(parser::TransactionStatement::kCommit);
+  delete stmt_list;
+  
+  stmt_list = parser.BuildParseTree("ROLLBACK;").release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  EXPECT_EQ(parser::TransactionStatement::kRollback);
+  delete stmt_list;
+}
   
 TEST_F(PostgresParserTests, CreateIndexTest) {
   std::string query = "CREATE UNIQUE INDEX IDX_ORDER ON "
