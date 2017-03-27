@@ -30,14 +30,14 @@ Catalog *Catalog::GetInstance(void) {
   return global_catalog.get();
 }
 
-Catalog::Catalog() {
+Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // Initialization of catalog, including:
   // 1) create pg_catalog database, create catalog tables, add them into
   // pg_catalog database, insert columns into pg_attribute
   // 2) insert pg_catalog into pg_database, catalog tables into pg_table
   // 3) create necessary indexes, insert into pg_index
   // When logging is enabled, this should be changed
-  pool_(new type::EphemeralPool());
+  // pool_(new type::EphemeralPool());
   InitializeCatalog();
 
   // Create metrics table in default database
@@ -600,8 +600,6 @@ oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
 Catalog::~Catalog() {
   delete GetDatabaseWithName(CATALOG_DATABASE_NAME);
-
-  pool_.release();
 }
 
 //===--------------------------------------------------------------------===//

@@ -33,6 +33,8 @@ namespace catalog {
 
 class IndexCatalog : public AbstractCatalog {
  public:
+  ~IndexCatalog();
+
   // Global Singleton
   static IndexCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
                                    type::AbstractPool *pool = nullptr);
@@ -60,8 +62,6 @@ class IndexCatalog : public AbstractCatalog {
 
  private:
   IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
-
-  ~IndexCatalog();
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
