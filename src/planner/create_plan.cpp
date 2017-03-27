@@ -42,6 +42,12 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   if (parse_tree->type == parse_tree->CreateType::kTable) {
     create_type = CreateType::TABLE;
     for (auto col : *parse_tree->columns) {
+      // TODO: Currently, the parser will parse the foreign key constraint and
+      // put it into a ColumnDefinition. Later when we implement constraint
+      // we may need to change this. Just skip foreign key constraint for now
+      if (col->type == parser::ColumnDefinition::FOREIGN)
+        continue;
+        
       type::Type::TypeId val = col->GetValueType(col->type);
 
       LOG_TRACE("Column name: %s; Is primary key: %d", col->name, col->primary);

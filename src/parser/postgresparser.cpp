@@ -733,7 +733,8 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
     } else if (node->type == T_Constraint) {
       auto constraint = reinterpret_cast<Constraint*>(node);
       if (constraint->contype != CONSTR_PRIMARY) {
-        // TODO: Add other constraints. Only support PRIAMRY Constraint now.
+        
+      } else {
         LOG_ERROR("Constraint of type %d not supported yet", node->type);
         throw NotImplementedException("");
       }

@@ -511,8 +511,9 @@ TEST_F(PostgresParserTests, InsertTest) {
 
 TEST_F(PostgresParserTests, CreateTest) {
   std::string query = "CREATE TABLE Persons ("
-                      "id int NOT NULL, age int PRIMARY KEY, name varchar(255),"
-                      "PRIMARY KEY (id));";
+    "id INT NOT NULL, age INT PRIMARY KEY, name VARCHAR(255) UNIQUE, c_id INT,"
+    "PRIMARY KEY (id),"
+    "FOREIGN KEY (country_id) REFERENCES country (cid));";
 
   auto parser = parser::PostgresParser::GetInstance();
   auto stmt_list = parser.BuildParseTree(query).release();
@@ -535,6 +536,13 @@ TEST_F(PostgresParserTests, CreateTest) {
   column = create_stmt->columns->at(2);
   EXPECT_FALSE(column->primary);
   EXPECT_EQ(column->varlen, 255);
+  EXPECT_TRUE(column->unique);
+  
+  // Check Foreigh Key Constraint
+  column = create_stmt->columns->at(3);
+  EXPECT_EQ("c_id", std::string(column->foreign_key_source->at(0)));
+  EXPECT_EQ("cid", std::string(column->foreign_key_sink->at(0)));
+  EXPECT_EQ("country", std::string(column->table_info_->table_name));
   
   delete stmt_list;
 }
