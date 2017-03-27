@@ -18,8 +18,7 @@ namespace catalog {
 AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
                                  std::string catalog_table_name,
                                  catalog::Schema *catalog_table_schema,
-                                 storage::Database *pg_catalog,
-                                 type::AbstractPool *pool) {
+                                 storage::Database *pg_catalog) {
   // Create catalog_table_
   catalog_table_ =
       std::shared_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
@@ -28,18 +27,6 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
 
   // Add catalog_table_ into pg_catalog database
   pg_catalog->AddTable(catalog_table_.get());
-
-  // Insert columns into pg_attribute, note that insertion does not require
-  // indexes on pg_attribute
-  ColumnCatalog *pg_attribute =
-      catalog_table_oid == COLUMN_CATALOG_OID
-          ? this
-          : ColumnCatalog::GetInstance(pg_catalog, pool);
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(catalog_table_oid, column.GetName(),
-                               column.GetOffset(), column.GetType(), true,
-                               column.GetConstraints(), pool, nullptr);
-  }
 
   // Index construction and inserting contents of pg_database, pg_table,
   // pg_index should leave to catalog's constructor
