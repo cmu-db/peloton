@@ -66,7 +66,6 @@ struct ColumnDefinition {
       for (auto key : *foreign_key_sink) free(key);
       delete foreign_key_sink;
     }
-
     free(name);
     delete table_info_;
   }

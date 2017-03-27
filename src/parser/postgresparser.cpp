@@ -688,6 +688,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->primary = true;
       else if (constraint->contype == CONSTR_NOTNULL)
         result->not_null = true;
+      else if (constraint->contype == CONSTR_UNIQUE)
+        result->unique = true;
     }
   }
 
@@ -720,6 +722,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
     if ((node->type) == T_ColumnDef) {
+      // Transform Regular Column
       ColumnDefinition* temp =
           ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
       temp->table_info_ = new parser::TableInfo();
@@ -731,17 +734,36 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       };
       result->columns->push_back(temp);
     } else if (node->type == T_Constraint) {
+      // Transform Constraints
       auto constraint = reinterpret_cast<Constraint*>(node);
-      if (constraint->contype != CONSTR_PRIMARY) {
-        
+      if (constraint->contype == CONSTR_PRIMARY) {
+        for (auto key_cell = constraint->keys->head; key_cell != nullptr;
+             key_cell = key_cell->next) {
+          primary_keys.emplace(reinterpret_cast<value*>(key_cell->data.ptr_value)->val.str);
+        }
+      } else if (constraint->contype == CONSTR_FOREIGN) {
+        auto col = new ColumnDefinition(ColumnDefinition::FOREIGN);
+        col->table_info_ = new TableInfo();
+        col->foreign_key_source = new std::vector<char*>();
+        col->foreign_key_sink = new std::vector<char*>();
+        // Transform foreign key attributes
+        for (auto attr_cell = constraint->fk_attrs->head; attr_cell != nullptr;
+             attr_cell = attr_cell->next) {
+          value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
+          col->foreign_key_source->push_back(strdup(attr_val->val.str));
+        }
+        // Transform Primary key attributes
+        for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
+             attr_cell = attr_cell->next) {
+          value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
+          col->foreign_key_sink->push_back(strdup(attr_val->val.str));
+        }
+        // Update Reference Table
+        col->table_info_->table_name = strdup(constraint->pktable->relname);
+        result->columns->push_back(col);
       } else {
         LOG_ERROR("Constraint of type %d not supported yet", node->type);
         throw NotImplementedException("");
-      }
-
-      for (auto key_cell = constraint->keys->head; key_cell != nullptr;
-           key_cell = key_cell->next) {
-        primary_keys.emplace(reinterpret_cast<value*>(key_cell->data.ptr_value)->val.str);
       }
     } else {
       LOG_ERROR("tableElt of type %d not supported yet...", node->type);
@@ -753,6 +775,9 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   
   // Enforce Primary Keys
   for (auto column : *result->columns) {
+    // Skip Foreign Key Constraint
+    if (column->name == nullptr)
+      continue;
     if (primary_keys.find(std::string(column->name)) != primary_keys.end()) {
       column->primary = true;
     }
