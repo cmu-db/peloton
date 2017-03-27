@@ -538,6 +538,26 @@ TEST_F(PostgresParserTests, CreateTest) {
   
   delete stmt_list;
 }
+  
+TEST_F(PostgresParserTests, CreateIndexTest) {
+  std::string query = "CREATE INDEX IDX_ORDER ON "
+      "oorder (O_W_ID, O_D_ID);";
+  
+  auto parser = parser::PostgresParser::GetInstance();
+  auto stmt_list = parser.BuildParseTree(query).release();
+  EXPECT_TRUE(stmt_list->is_valid);
+  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check attributes
+  EXPECT_EQ(parser::CreateStatement::kIndex, create_stmt->type);
+  EXPECT_EQ("idx_order", std::string(create_stmt->index_name));
+  EXPECT_EQ("oorder", std::string(create_stmt->table_info_->table_name));
+  EXPECT_TRUE(create_stmt->unique);
+  EXPECT_EQ("o_w_id", std::string(create_stmt->index_attrs->at(0)));
+  EXPECT_EQ("o_d_id", std::string(create_stmt->index_attrs->at(1)));
+  
+  delete stmt_list;
+}
 
 TEST_F(PostgresParserTests, InsertIntoSelectTest) {
   std::vector<std::string> queries;

@@ -763,6 +763,16 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
+  
+// This function takes in a Postgres IndexStmt parsenode
+// and transfers into a Peloton CreateStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// IndexStmt parsenodes.
+parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
+  parser::CreateStatement* result = new parser::CreateStatement(CreateStatement::kIndex);
+
+  return result;
+}
 
 parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
   auto res = new DropStatement(DropStatement::EntityType::kTable);
@@ -944,6 +954,7 @@ parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
   return (parser::SQLStatement*)result;
 }
 
+
 // This function transfers a single Postgres statement into
 // a Peloton SQLStatement object. It checks the type of
 // Postgres parsenode of the input and call the corresponding
@@ -959,6 +970,10 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
     case T_CreateStmt: {
       result =
           CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
+      break;
+    }
+    case T_IndexStmt: {
+      result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
       break;
     }
     case T_UpdateStmt: {

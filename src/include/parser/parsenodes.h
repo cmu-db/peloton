@@ -241,6 +241,42 @@ typedef struct TypeName
   int     location;   /* token location, or -1 if unknown */
 } TypeName;
 
+typedef struct IndexElem
+{
+  NodeTag		type;
+  char	   *name;			/* name of attribute to index, or NULL */
+  Node	   *expr;			/* expression to index, or NULL */
+  char	   *indexcolname;	/* name for index column; NULL = default */
+  List	   *collation;		/* name of collation; NIL = default */
+  List	   *opclass;		/* name of desired opclass; NIL = default */
+  SortByDir	ordering;		/* ASC/DESC/default */
+  SortByNulls nulls_ordering; /* FIRST/LAST/default */
+} IndexElem;
+
+typedef struct IndexStmt
+{
+  NodeTag		type;
+  char	   *idxname;		/* name of new index, or NULL for default */
+  RangeVar   *relation;		/* relation to build index on */
+  char	   *accessMethod;	/* name of access method (eg. btree) */
+  char	   *tableSpace;		/* tablespace, or NULL for default */
+  List	   *indexParams;	/* columns to index: a list of IndexElem */
+  List	   *options;		/* WITH clause options: a list of DefElem */
+  Node	   *whereClause;	/* qualification (partial-index predicate) */
+  List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
+  char	   *idxcomment;		/* comment to apply to index, or NULL */
+  Oid			indexOid;		/* OID of an existing index, if any */
+  Oid			oldNode;		/* relfilenode of existing storage, if any */
+  bool		unique;			/* is index unique? */
+  bool		primary;		/* is index a primary key? */
+  bool		isconstraint;	/* is it for a pkey/unique constraint? */
+  bool		deferrable;		/* is the constraint DEFERRABLE? */
+  bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
+  bool		transformed;	/* true when transformIndexStmt is finished */
+  bool		concurrent;		/* should this be a concurrent index build? */
+  bool		if_not_exists;	/* just do nothing if index already exists? */
+} IndexStmt;
+
 typedef struct ColumnDef
 {
 NodeTag		type;

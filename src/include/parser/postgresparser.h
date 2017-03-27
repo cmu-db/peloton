@@ -104,6 +104,9 @@ class PostgresParser {
 
   // transform helper for create statements
   static parser::SQLStatement* CreateTransform(CreateStmt* root);
+  
+  // transform helper for create index statements
+  static parser::SQLStatement* CreateIndexTransform(IndexStmt* root);
 
   // transform helper for column name (for insert statement)
   static std::vector<char*>* ColumnNameTransform(List* root);
