@@ -136,15 +136,16 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
 parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
   parser::TableRef* result =
       new parser::TableRef(StringToTableReferenceType("name"));
+  result->table_info_ = new parser::TableInfo();
 
   if (root->schemaname) {
     result->schema = strdup(root->schemaname);
+    result->table_info_->database_name = strdup(root->schemaname);
   }
 
   // parse alias
   result->alias = AliasTransform(root->alias);
 
-  result->table_info_ = new parser::TableInfo();
 
   if (root->relname) {
     result->table_info_->table_name = strdup(root->relname);
@@ -654,6 +655,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
     data_type = ColumnDefinition::DataType::DECIMAL;
   } else if (strcmp(name, "text") == 0) {
     data_type = ColumnDefinition::DataType::TEXT;
+  } else if (strcmp(name, "tinyint") == 0) {
+    data_type = ColumnDefinition::DataType::TINYINT;
   } else {
     LOG_ERROR("Column DataType %s not supported yet...\n", name);
     throw NotImplementedException("...");
