@@ -51,7 +51,6 @@ char* PostgresParser::AliasTransform(Alias* root) {
 // BoolExprTransform.
 parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   parser::JoinDefinition* result = nullptr;
-  LOG_INFO("Tranfrom JOIN");
 
   // Natrual join is not supported
   if ((root->jointype > 4) || (root->isNatural)) {
@@ -126,8 +125,6 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
       throw NotImplementedException("...");
     }
   }
-  LOG_INFO("Tranfrom JOIN finishes");
-
   return result;
 }
 
@@ -178,7 +175,6 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(RangeSubselect *root) 
 // TODO: support select from multiple sources, nested queries, various joins
 parser::TableRef* PostgresParser::FromTransform(List* root) {
   // now support select from only one sources
-  LOG_INFO("Tranfrom FROM");
   parser::TableRef* result = nullptr;
   Node* node;
   if (root->length > 1) {
@@ -224,7 +220,6 @@ parser::TableRef* PostgresParser::FromTransform(List* root) {
     }
     default: { LOG_ERROR("From Type %d not supported yet...", node->type); }
   }
-  LOG_INFO("Tranfrom FROM finishes");
 
   return result;
 }
@@ -462,7 +457,6 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
   expression::AbstractExpression* result = nullptr;
   expression::AbstractExpression* left = nullptr;
   expression::AbstractExpression* right = nullptr;
-  LOG_INFO("BoolExpr arg length %d\n", root->args->length);
   // transform the left argument
   Node* node = reinterpret_cast<Node*>(root->args->head->data.ptr_value);
   switch (node->type) {
@@ -702,7 +696,6 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
 // Please refer to parser/parsenode.h for the definition of
 // CreateStmt parsenodes.
 parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
-  LOG_INFO("Parsing Create Stmt\n");
   UNUSED_ATTRIBUTE CreateStmt* temp = root;
   parser::CreateStatement* result =
       new CreateStatement(CreateStatement::CreateType::kTable);
@@ -770,7 +763,16 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
 // IndexStmt parsenodes.
 parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
   parser::CreateStatement* result = new parser::CreateStatement(CreateStatement::kIndex);
-
+  result->unique = root->unique;
+  result->index_attrs = new std::vector<char*>;
+  for (auto cell = root->indexParams->head; cell != nullptr; cell = cell->next) {
+    char* index_attr = reinterpret_cast<IndexElem*>(cell->data.ptr_value)->name;
+    result->index_attrs->push_back(strdup(index_attr));
+  }
+  result->index_type = IndexType::BWTREE;
+  result->table_info_ = new TableInfo();
+  result->table_info_->table_name = strdup(root->relation->relname);
+  result->index_name = strdup(root->idxname);
   return result;
 }
 
@@ -910,8 +912,6 @@ parser::SQLStatement* PostgresParser::InsertTransform(InsertStmt* root) {
 // SelectStmt parsenodes.
 parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
   parser::SelectStatement* result;
-  LOG_INFO("Transform SELECT");
-  LOG_INFO("SET_OP=%d", root->op);
   switch (root->op) {
     case SETOP_NONE:
       result = new parser::SelectStatement();
@@ -937,8 +937,6 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
       LOG_ERROR("Set operation %d not supported yet...\n", root->op);
       throw NotImplementedException("...");
   }
-
-  LOG_INFO("Transform SELECT finishes");
 
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
@@ -1094,7 +1092,6 @@ parser::SQLStatementList* PostgresParser::PgQueryInternalParsetreeTransform(PgQu
     LOG_ERROR("%s at %d\n", stmt.error->message, stmt.error->cursorpos);
     auto new_stmt = new parser::SQLStatementList();
     new_stmt->is_valid = false;
-    LOG_INFO("new_stmt valid is %d\n", new_stmt->is_valid);
     return new_stmt;
   }
 

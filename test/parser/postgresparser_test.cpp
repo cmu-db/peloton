@@ -540,7 +540,7 @@ TEST_F(PostgresParserTests, CreateTest) {
 }
   
 TEST_F(PostgresParserTests, CreateIndexTest) {
-  std::string query = "CREATE INDEX IDX_ORDER ON "
+  std::string query = "CREATE UNIQUE INDEX IDX_ORDER ON "
       "oorder (O_W_ID, O_D_ID);";
   
   auto parser = parser::PostgresParser::GetInstance();
