@@ -32,6 +32,8 @@ namespace catalog {
 
 class TableCatalog : public AbstractCatalog {
  public:
+  ~TableCatalog();
+
   // Global Singleton
   static TableCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
                                    type::AbstractPool *pool = nullptr);
@@ -57,8 +59,6 @@ class TableCatalog : public AbstractCatalog {
 
  private:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
-
-  ~TableCatalog();
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
