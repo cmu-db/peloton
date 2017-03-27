@@ -19,8 +19,15 @@ namespace catalog {
 DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
                                               type::AbstractPool *pool) {
   static std::unique_ptr<DatabaseCatalog> database_catalog(
-      new DatabaseCatalog(pg_catalog));
+      new DatabaseCatalog(pg_catalog, pool));
 
+  return database_catalog.get();
+}
+
+DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
+                                 type::AbstractPool *pool)
+    : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
+                      InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
@@ -29,14 +36,7 @@ DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
                                column.GetOffset(), column.GetType(), true,
                                column.GetConstraints(), pool, nullptr);
   }
-
-  return database_catalog.get();
 }
-
-DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
-                                 type::AbstractPool)
-    : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {}
 
 DatabaseCatalog::~DatabaseCatalog() {}
 

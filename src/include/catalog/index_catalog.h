@@ -59,7 +59,7 @@ class IndexCatalog : public AbstractCatalog {
                                   concurrency::Transaction *txn);
 
  private:
-  IndexCatalog(storage::Database *pg_catalog);
+  IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   ~IndexCatalog();
 

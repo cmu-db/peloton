@@ -40,7 +40,7 @@ class DatabaseCatalog : public AbstractCatalog {
   // Write related API
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
                       type::AbstractPool *pool, concurrency::Transaction *txn);
-  void DeleteDatabase(oid_t database_oid, concurrency::Transaction *txn);
+  bool DeleteDatabase(oid_t database_oid, concurrency::Transaction *txn);
 
   // Read-only API
   std::string GetDatabaseName(oid_t database_oid,
@@ -49,7 +49,7 @@ class DatabaseCatalog : public AbstractCatalog {
                        concurrency::Transaction *txn);
 
  private:
-  DatabaseCatalog(storage::Database *pg_catalog);
+  DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   ~DatabaseCatalog();
 

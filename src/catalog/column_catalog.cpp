@@ -15,24 +15,24 @@
 namespace peloton {
 namespace catalog {
 
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool) {
+ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog, type::AbstractPool *pool) {
   static std::unique_ptr<ColumnCatalog> column_catalog(
-      new ColumnCatalog(pg_catalog));
+      new ColumnCatalog(pg_catalog, pool));
 
-  // Insert columns into pg_attribute, note that insertion does not require
-  // indexes on pg_attribute
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    InsertColumn(catalog_table_oid, column.GetName(),
-                               column.GetOffset(), column.GetType(), true,
-                               column.GetConstraints(), pool, nullptr);
-  }
   return column_catalog.get();
 }
 
-ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog)
+ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {}
+                      InitializeSchema().release(), pg_catalog) {
+  // Insert columns into pg_attribute, note that insertion does not require
+  // indexes on pg_attribute
+  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
+    InsertColumn(COLUMN_CATALOG_OID, column.GetName(),
+                 column.GetOffset(), column.GetType(), true,
+                 column.GetConstraints(), pool, nullptr);
+  }
+}
 
 ColumnCatalog::~ColumnCatalog() {}
 
@@ -95,7 +95,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
 bool ColumnCatalog::InsertColumn(
     oid_t table_oid, const std::string &column_name, oid_t column_offset,
     type::Type::TypeId column_type, bool is_inlined,
-    std::vector<ConstraintType> constraints, type::AbstractPool *pool,
+    const std::vector<Constraint> &constraints, type::AbstractPool *pool,
     concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -109,10 +109,10 @@ bool ColumnCatalog::InsertColumn(
   auto val4 = type::ValueFactory::GetBooleanValue(is_inlined);
   bool is_primary = false, is_not_null = false;
   for (auto constraint : constraints) {
-    if (constraint == ConstraintType::PRIMARY) {
+    if (constraint.GetType() == ConstraintType::PRIMARY) {
       is_primary = true;
-    } else if (constraint == ConstraintType::NOT_NULL ||
-               constraint == ConstraintType::NOTNULL) {
+    } else if (constraint.GetType() == ConstraintType::NOT_NULL ||
+               constraint.GetType() == ConstraintType::NOTNULL) {
       is_not_null = true;
     }
   }

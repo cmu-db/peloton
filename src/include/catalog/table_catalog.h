@@ -46,7 +46,7 @@ class TableCatalog : public AbstractCatalog {
 
   // Read-only API
   std::string GetTableName(oid_t table_oid, concurrency::Transaction *txn);
-  oid_t GetDatabaseoid(oid_t table_oid, concurrency::Transaction *txn);
+  oid_t GetDatabaseOid(oid_t table_oid, concurrency::Transaction *txn);
   oid_t GetTableOid(const std::string &table_name,
                     oid_t database_oid,
                     concurrency::Transaction *txn);
@@ -56,7 +56,7 @@ class TableCatalog : public AbstractCatalog {
                                          concurrency::Transaction *txn);
 
  private:
-  TableCatalog(storage::Database *pg_catalog);
+  TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
   ~TableCatalog();
 

@@ -71,6 +71,9 @@ class Catalog {
   // Global Singleton
   static Catalog *GetInstance(void);
 
+  // Deconstruct the catalog database when destroying the catalog.
+  ~Catalog();
+
   // Create a database
   ResultType CreateDatabase(const std::string &database_name,
                             concurrency::Transaction *txn);
@@ -182,8 +185,7 @@ class Catalog {
 
   void InitializeCatalog(void);
 
-  // Deconstruct the catalog database when destroying the catalog.
-  ~Catalog();
+
 
   // A vector of the database pointers in the catalog
   std::vector<storage::Database *> databases_;

@@ -66,16 +66,16 @@ void Catalog::InitializeCatalog() {
 
   // Insert catalog tables into pg_table
   pg_table->InsertTable(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
+                        CATALOG_DATABASE_OID,
                         pool_.get(), nullptr);
   pg_table->InsertTable(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
+                        CATALOG_DATABASE_OID,
                         pool_.get(), nullptr);
   pg_table->InsertTable(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
+                        CATALOG_DATABASE_OID,
                         pool_.get(), nullptr);
   pg_table->InsertTable(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
+                        CATALOG_DATABASE_OID,
                         pool_.get(), nullptr);
 
   // Create indexes on catalog tables, insert them into pg_index
@@ -183,7 +183,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   bool adapt_table = false;
   oid_t database_oid = database->GetOid();
   oid_t table_oid = pg_table->GetNextOid();
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
+  table = storage::TableFactory::GetDataTable(
       database_oid, table_oid, schema.release(), table_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
   database->AddTable(table);
@@ -239,7 +239,7 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
 
     index_metadata = new index::IndexMetadata(
-        index_name.c_str(), index_oid, table->GetOid(), database->GetOid(),
+        index_name, index_oid, table->GetOid(), database->GetOid(),
         IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema, key_schema,
         key_attrs, unique_keys);
 
@@ -249,7 +249,7 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
 
     // insert index record into index_catalog(pg_index) table
     IndexCatalog::GetInstance()->InsertIndex(
-        index_oid, index_name.c_str(), table->GetOid(), IndexType::BWTREE,
+        index_oid, index_name, table->GetOid(), IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, unique_keys);
 
     LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
@@ -302,7 +302,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   // check if table already has index with same name
   auto pg_index = IndexCatalog::GetInstance();
-  if (pg_index->GetIndexOid(index_name, table->GetOid(), nullptr) != nullptr) {
+  if (pg_index->GetIndexOid(index_name, table->GetOid(), nullptr) != INVALID_OID) {
     LOG_TRACE(
         "Cannot create index on same table with same name Return "
         "RESULT_FAILURE.");
@@ -337,12 +337,12 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   // Check if unique index or not
   if (unique_keys == false) {
     index_metadata = new index::IndexMetadata(
-        index_name.c_str(), index_oid, table->GetOid(), database->GetOid(),
+        index_name, index_oid, table->GetOid(), database->GetOid(),
         index_type, IndexConstraintType::DEFAULT, schema, key_schema, key_attrs,
         true);
   } else {
     index_metadata = new index::IndexMetadata(
-        index_name.c_str(), index_oid, table->GetOid(), database->GetOid(),
+        index_name, index_oid, table->GetOid(), database->GetOid(),
         index_type, IndexConstraintType::UNIQUE, schema, key_schema, key_attrs,
         true);
   }
@@ -353,7 +353,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   table->AddIndex(key_index);
 
   // Insert index record into pg_index table
-  IndexCatalog::GetInstance()->InsertIndex(index_oid, index_name.c_str(),
+  IndexCatalog::GetInstance()->InsertIndex(index_oid, index_name,
                                            table->GetOid(), index_type,
                                            IndexConstraintType::DEFAULT, true);
 
@@ -375,13 +375,7 @@ ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  // Drop database record in catalog
-  LOG_TRACE("Deleting tuple from catalog");
-  if (!DatabaseCatalog::GetInstance()->DeleteDatabase(database_oid, txn)) {
-    LOG_TRACE("Database tuple is not found!");
-    return ResultType::FAILURE;
-  }
-  return ResultType::SUCCESS;
+  return DropDatabaseWithOid(database_oid, txn);
 }
 
 // Drop a database with its oid
@@ -406,10 +400,10 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
   bool found_database = false;
   std::lock_guard<std::mutex> lock(catalog_mutex);
   for (auto it = databases_.begin(); it != databases_.end(); ++it) {
-    if (it->GetOid() == database_oid) {
+    if ((*it)->GetOid() == database_oid) {
       LOG_TRACE("Deleting database object in database vector");
       delete (*it);
-      databases_.erase(database);
+      databases_.erase(it);
       found_database = true;
       break;
     }
@@ -454,7 +448,7 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   }
 
   storage::DataTable *table = database->GetTableWithOid(table_oid);
-  if (database == nullptr) {
+  if (table == nullptr) {
     LOG_TRACE("Can't Found Table!");
     return ResultType::FAILURE;
   }
@@ -486,7 +480,7 @@ ResultType Catalog::DropIndex(oid_t index_oid) {
   // find table_oid by looking up pg_index using index_oid
   // txn is nullptr, one sentence Transaction
   oid_t table_oid =
-      IndexCatalog::GetInstance()->GetTableidByOid(index_oid, nullptr);
+      IndexCatalog::GetInstance()->GetTableOid(index_oid, nullptr);
   if (table_oid == INVALID_OID) {
     LOG_TRACE(
         "Cannot find the table to create the index. Return RESULT_FAILURE.");
@@ -539,7 +533,7 @@ storage::Database *Catalog::GetDatabaseWithOid(oid_t db_oid) const {
 // Find a database using its name. TODO: This should be deprecated, all
 // methods getting database should be private to catalog
 storage::Database *Catalog::GetDatabaseWithName(
-    const std::string database_name) const {
+    const std::string &database_name) const {
   oid_t database_oid =
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, nullptr);
   return GetDatabaseWithOid(database_oid);
