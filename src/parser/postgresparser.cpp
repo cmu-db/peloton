@@ -1146,6 +1146,10 @@ std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(
             AExprTransform(reinterpret_cast<A_Expr*>(target->val));
         break;
       }
+      case T_ParamRef:
+        update_clause->value =
+            ParamRefTransform(reinterpret_cast<ParamRef*>(target->val));
+        break;
       default: {
         LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
       }
