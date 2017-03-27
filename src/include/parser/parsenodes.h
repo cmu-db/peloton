@@ -592,3 +592,10 @@ typedef struct CopyStmt
   char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
   List	   *options;		/* List of DefElem nodes */
 } CopyStmt;
+
+typedef struct CreatedbStmt
+{
+  NodeTag		type;
+  char	   *dbname;			/* name of database to create */
+  List	   *options;		/* List of DefElem nodes */
+} CreatedbStmt;

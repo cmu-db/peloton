@@ -367,6 +367,9 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
               std::stod(std::string(val.val.str))));
       break;
     }
+    case T_Null:
+      result = new expression::ConstantValueExpression(
+          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INVALID));
     default: {
       LOG_ERROR("Value type %d not supported yet...\n", val.type);
     }
@@ -776,6 +779,16 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
   return result;
 }
 
+// This function takes in a Postgres CreatedbStmt parsenode
+// and transfers into a Peloton CreateStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// CreatedbStmt parsenodes.
+parser::SQLStatement* PostgresParser::CreateDbTransform(CreatedbStmt *root) {
+  parser::CreateStatement* result = new parser::CreateStatement(CreateStatement::kDatabase);
+  result->database_name = strdup(root->dbname);
+  return result;
+}
+
 parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
   auto res = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
@@ -1028,6 +1041,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
     case T_CopyStmt:
       result = CopyTransform((CopyStmt*)stmt);
       break;
+    case T_CreatedbStmt:
+      result = CreateDbTransform((CreatedbStmt*)stmt);
+      break;
     default: {
       LOG_ERROR("Statement of type %d not supported yet...\n",
                 stmt->type);
@@ -1124,8 +1140,8 @@ parser::SQLStatementList* PostgresParser::PgQueryInternalParsetreeTransform(PgQu
     new_stmt->is_valid = false;
     return new_stmt;
   }
-
   delete stmt.stderr_buffer;
+
   auto transform_result = ListTransform(stmt.tree);
 
   return transform_result;
