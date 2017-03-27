@@ -118,10 +118,10 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 // @param   txn           Transaction
 // @return  Vector of logical tiles
 const std::vector<std::unique_ptr<executor::LogicalTile>>
-    &AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
-                                             oid_t index_offset,
-                                             std::vector<type::Value> values,
-                                             concurrency::Transaction *txn) {
+AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
+                                        oid_t index_offset,
+                                        std::vector<type::Value> values,
+                                        concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
 
