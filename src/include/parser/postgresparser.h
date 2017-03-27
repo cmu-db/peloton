@@ -156,6 +156,9 @@ class PostgresParser {
   // transform helper for execute statement
   static parser::PrepareStatement* PrepareTransform(PrepareStmt* root);
 
+  // transform helper for execute statement
+  static parser::CopyStatement* CopyTransform(CopyStmt* root);
+
 };
 
 }  // End parser namespace

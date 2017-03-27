@@ -814,7 +814,22 @@ parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt *root) {
   stmt_list->statements.emplace_back(NodeTransform(root->query));
   res->query = stmt_list;
   return res;
+}
 
+//TODO: Only support COPY TABLE TO FILE and DELIMITER option
+parser::CopyStatement* PostgresParser::CopyTransform(CopyStmt *root) {
+  auto res = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
+  res->cpy_table = RangeVarTransform(root->relation);
+  res->file_path = strdup(root->filename);
+  for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
+    auto def_elem = reinterpret_cast<DefElem*>(cell->data.ptr_value);
+    if (strcmp(def_elem->defname, "delimiter") == 0) {
+      auto delimiter = reinterpret_cast<value*>(def_elem->arg)->val.str;
+      res->delimiter = *delimiter;
+      break;
+    }
+  }
+  return res;
 }
 
 std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
@@ -1009,6 +1024,9 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
       break;
     case T_PrepareStmt:
       result = PrepareTransform((PrepareStmt*)stmt);
+      break;
+    case T_CopyStmt:
+      result = CopyTransform((CopyStmt*)stmt);
       break;
     default: {
       LOG_ERROR("Statement of type %d not supported yet...\n",

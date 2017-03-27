@@ -562,4 +562,33 @@ typedef struct PrepareStmt
   Node	   *query;			/* The query itself (as a raw parsetree) */
 } PrepareStmt;
 
+typedef enum DefElemAction
+{
+  DEFELEM_UNSPEC,				/* no action given */
+  DEFELEM_SET,
+  DEFELEM_ADD,
+  DEFELEM_DROP
+} DefElemAction;
 
+typedef struct DefElem
+{
+  NodeTag		type;
+  char	   *defnamespace;	/* NULL if unqualified name */
+  char	   *defname;
+  Node	   *arg;			/* a (Value *) or a (TypeName *) */
+  DefElemAction defaction;	/* unspecified action, or SET/ADD/DROP */
+  int			location;		/* parse location, or -1 if none/unknown */
+} DefElem;
+
+typedef struct CopyStmt
+{
+  NodeTag		type;
+  RangeVar   *relation;		/* the relation to copy */
+  Node	   *query;			/* the SELECT query to copy */
+  List	   *attlist;		/* List of column names (as Strings), or NIL
+								 * for all columns */
+  bool		is_from;		/* TO or FROM */
+  bool		is_program;		/* is 'filename' a program to popen? */
+  char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
+  List	   *options;		/* List of DefElem nodes */
+} CopyStmt;
