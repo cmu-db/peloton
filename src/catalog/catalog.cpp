@@ -37,7 +37,7 @@ Catalog::Catalog() {
   // 2) insert pg_catalog into pg_database, catalog tables into pg_table
   // 3) create necessary indexes, insert into pg_index
   // When logging is enabled, this should be changed
-  pool_ = new type::EphemeralPool();
+  pool_(new type::EphemeralPool());
   InitializeCatalog();
 
   // Create metrics table in default database
@@ -84,31 +84,31 @@ void Catalog::InitializeCatalog() {
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, DATABASE_CATALOG_NAME,
               std::vector<std::string>({"database_name"}),
-              DATABASE_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
+              std::string(DATABASE_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
               std::vector<std::string>({"table_name", "database_oid"}),
-              TABLE_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
+              std::string(TABLE_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, TABLE_CATALOG_NAME,
               std::vector<std::string>({"database_oid"}),
-              TABLE_CATALOG_NAME + "_skey1", false, IndexType::BWTREE);
+              std::string(TABLE_CATALOG_NAME) + "_skey1", false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
               std::vector<std::string>({"index_name", "table_oid"}),
-              INDEX_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
+              std::string(INDEX_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME,
               std::vector<std::string>({"table_oid"}),
-              INDEX_CATALOG_NAME + "_skey1", false, IndexType::BWTREE);
+              std::string(INDEX_CATALOG_NAME) + "_skey1", false, IndexType::BWTREE);
 
   CreatePrimaryIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
               std::vector<std::string>({"table_oid", "column_offset"}),
-              COLUMN_CATALOG_NAME + "_skey0", true, IndexType::BWTREE);
+              std::string(COLUMN_CATALOG_NAME) + "_skey0", true, IndexType::BWTREE);
   CreateIndex(CATALOG_DATABASE_NAME, COLUMN_CATALOG_NAME,
               std::vector<std::string>({"table_oid"}),
-              COLUMN_CATALOG_NAME + "_skey1", false, IndexType::BWTREE);
+              std::string(COLUMN_CATALOG_NAME) + "_skey1", false, IndexType::BWTREE);
 }
 
 //===----------------------------------------------------------------------===//

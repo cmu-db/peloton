@@ -46,7 +46,7 @@ class AbstractCatalog {
  protected:
   AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema,
-                  storage::Database *pg_catalog, type::AbstractPool *pool);
+                  storage::Database *pg_catalog);
 
   virtual ~AbstractCatalog() {}
 

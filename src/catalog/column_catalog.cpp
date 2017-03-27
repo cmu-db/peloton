@@ -18,14 +18,21 @@ namespace catalog {
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
                                           type::AbstractPool *pool) {
   static std::unique_ptr<ColumnCatalog> column_catalog(
-      new ColumnCatalog(pg_catalog, pool));
+      new ColumnCatalog(pg_catalog));
+
+  // Insert columns into pg_attribute, note that insertion does not require
+  // indexes on pg_attribute
+  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
+    InsertColumn(catalog_table_oid, column.GetName(),
+                               column.GetOffset(), column.GetType(), true,
+                               column.GetConstraints(), pool, nullptr);
+  }
   return column_catalog.get();
 }
 
-ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
-                             type::AbstractPool *pool)
+ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog, pool) {}
+                      InitializeSchema().release(), pg_catalog) {}
 
 ColumnCatalog::~ColumnCatalog() {}
 

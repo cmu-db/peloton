@@ -49,7 +49,7 @@ class DatabaseCatalog : public AbstractCatalog {
                        concurrency::Transaction *txn);
 
  private:
-  DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
+  DatabaseCatalog(storage::Database *pg_catalog);
 
   ~DatabaseCatalog();
 

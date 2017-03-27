@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/table_catalog.h"
+#include "catalog/column_catalog.h"
 
 namespace peloton {
 namespace catalog {
@@ -18,14 +19,23 @@ namespace catalog {
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool) {
   static std::unique_ptr<TableCatalog> table_catalog(
-      new TableCatalog(pg_catalog, pool));
+      new TableCatalog(pg_catalog));
+
+  // Insert columns into pg_attribute, note that insertion does not require
+  // indexes on pg_attribute
+  ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
+  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
+    pg_attribute->InsertColumn(catalog_table_oid, column.GetName(),
+                               column.GetOffset(), column.GetType(), true,
+                               column.GetConstraints(), pool, nullptr);
+  }
+
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool)
+TableCatalog::TableCatalog(storage::Database *pg_catalog)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog, pool) {}
+                      InitializeSchema().release(), pg_catalog) {}
 
 TableCatalog::~TableCatalog() {}
 
