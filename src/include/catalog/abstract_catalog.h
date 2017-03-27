@@ -42,12 +42,12 @@ class AbstractCatalog {
  public:
   virtual oid_t GetNextOid(void) = 0;
 
+  virtual ~AbstractCatalog() {}
+
  protected:
   AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
                   catalog::Schema *catalog_table_schema,
                   storage::Database *pg_catalog);
-
-  virtual ~AbstractCatalog() {}
 
   // Construct catalog_table_ schema
   virtual std::unique_ptr<catalog::Schema> InitializeSchema() = 0;
@@ -59,7 +59,7 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::Transaction *txn);
 
-  const std::vector<std::unique_ptr<executor::LogicalTile>>
+  const std::vector<executor::LogicalTile *> &
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
                          std::vector<type::Value> values,
                          concurrency::Transaction *txn);

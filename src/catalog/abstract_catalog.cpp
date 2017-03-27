@@ -117,7 +117,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 // @param   values        Values for search
 // @param   txn           Transaction
 // @return  Vector of logical tiles
-const std::vector<std::unique_ptr<executor::LogicalTile>>
+const std::vector<executor::LogicalTile *>&
 AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
@@ -153,17 +153,17 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
 
   // Execute
   index_scan_executor.Init();
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+  std::unique_ptr<std::vector<executor::LogicalTile *>> result_tiles = new std::vector<executor::LogicalTile *>>();
 
   while (index_scan_executor.Execute()) {
-    result_tiles.emplace_back(index_scan_executor.GetOutput());
+    result_tiles->push_back(index_scan_executor.GetOutput());
   }
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
   }
 
-  return result_tiles;
+  return result_tiles.release();
 }
 
 }  // End catalog namespace
