@@ -392,14 +392,16 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
   expression::AbstractExpression* result = nullptr;
   std::string type_string =
       (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str;
-  type_string = "AGGREGATE_" + type_string;
 
+  type_string = "AGGREGATE_" + type_string;
+  
   if (root->agg_star) {
     expression::AbstractExpression* children = new expression::StarExpression();
     result = new expression::AggregateExpression(
         StringToExpressionType(type_string), false, children);
   } else {
     if (root->args->length < 2) {
+      //auto children_expr_list = TargetTransform(root->args);
       ColumnRef* temp =
           reinterpret_cast<ColumnRef*>(root->args->head->data.ptr_value);
       expression::AbstractExpression* children = ColumnRefTransform(temp);
@@ -648,6 +650,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
     data_type = ColumnDefinition::DataType::DOUBLE;
   } else if ((strcmp(name, "real") == 0) || (strcmp(name, "float4") == 0)) {
     data_type = ColumnDefinition::DataType::FLOAT;
+  } else if (strcmp(name, "numeric") == 0) {
+    data_type = ColumnDefinition::DataType::DECIMAL;
   } else if (strcmp(name, "text") == 0) {
     data_type = ColumnDefinition::DataType::TEXT;
   } else {
