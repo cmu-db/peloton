@@ -104,10 +104,11 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_offsets, expr_types, values, runtime_keys);
 
-  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
-                                         column_offsets, index_scan_desc);
+  std::unique_ptr<planner::IndexScanPlan> index_scan_node(
+      new planner::IndexScanPlan(catalog_table_.get(), nullptr, column_offsets,
+                                 index_scan_desc));
 
-  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+  executor::IndexScanExecutor index_scan_executor(index_scan_node.get(),
                                                   context.get());
 
   // Parent-Child relationship
@@ -129,11 +130,11 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 // @param   values        Values for search
 // @param   txn           Transaction
 // @return  Vector of logical tiles
-std::vector<std::unique_ptr<executor::LogicalTile>> const &
-AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
-                                        oid_t index_offset,
-                                        std::vector<type::Value> values,
-                                        concurrency::Transaction *txn) {
+const std::vector<std::unique_ptr<executor::LogicalTile>>
+    &AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
+                                             oid_t index_offset,
+                                             std::vector<type::Value> values,
+                                             concurrency::Transaction *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
 
