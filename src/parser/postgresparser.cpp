@@ -781,7 +781,9 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     res->missing = root->missing_ok;
     auto table_info = new TableInfo{};
-    table_info->table_name = strdup(reinterpret_cast<value*>(cell->data.ptr_value)->val.str);
+    auto table_list = reinterpret_cast<List*>(cell->data.ptr_value);
+    LOG_INFO("%d", ((Node *)(table_list->head->data.ptr_value))->type);
+    table_info->table_name = strdup(reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
     res->table_info_ = table_info;
     break;
   }
