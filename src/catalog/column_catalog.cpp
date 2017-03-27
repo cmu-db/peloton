@@ -162,8 +162,7 @@ oid_t ColumnCatalog::GetColumnOffset(oid_t table_oid,
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto result_tiles = std::move(GetResultWithIndexScan(column_ids, index_offset, values, txn));
 
   oid_t column_offset = INVALID_OID;
   PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_name is unique
