@@ -99,8 +99,8 @@ std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
-  PL_ASSERT((*result_tiles).size() <= 1);  // database_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // database_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       database_name =
@@ -125,8 +125,8 @@ oid_t DatabaseCatalog::GetDatabaseOid(const std::string &database_name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t database_oid = INVALID_OID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // database_name is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // database_name is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       database_oid = (*result_tiles)[0]

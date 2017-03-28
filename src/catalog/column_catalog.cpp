@@ -168,8 +168,8 @@ oid_t ColumnCatalog::GetColumnOffset(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t column_offset = INVALID_OID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid & column_name is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_offset = (*result_tiles)[0]
@@ -193,9 +193,9 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_offset,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string column_name;
-  PL_ASSERT((*result_tiles).size() <=
+  PL_ASSERT(result_tiles->size() <=
             1);  // table_oid & column_offset is unique
-  if ((*result_tiles).size() != 0) {
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_name =
@@ -222,8 +222,8 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid & column_name is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_name is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_type =
@@ -249,9 +249,9 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT((*result_tiles).size() <=
+  PL_ASSERT(result_tiles->size() <=
             1);  // table_oid & column_offset is unique
-  if ((*result_tiles).size() != 0) {
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_type =

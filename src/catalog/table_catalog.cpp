@@ -106,8 +106,8 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string table_name;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       table_name = (*result_tiles)[0]
@@ -130,8 +130,8 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t database_oid = INVALID_OID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       database_oid = (*result_tiles)[0]
@@ -159,9 +159,9 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_oid = INVALID_OID;
-  PL_ASSERT((*result_tiles).size() <=
+  PL_ASSERT(result_tiles->size() <=
             1);  // table_name & database_oid is unique
-  if ((*result_tiles).size() != 0) {
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       table_oid = (*result_tiles)[0]
