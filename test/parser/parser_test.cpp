@@ -198,8 +198,8 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_EQ(stmt->group_by->columns->size(), 1);
 
   // Order By
-  EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
-  EXPECT_EQ(stmt->order->expr->GetExpressionType(),
+  EXPECT_EQ(stmt->order->types->at(0), parser::kOrderDesc);
+  EXPECT_EQ(stmt->order->exprs->at(0)->GetExpressionType(),
             ExpressionType::AGGREGATE_SUM);
 
   // Limit

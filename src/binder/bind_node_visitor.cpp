@@ -75,7 +75,8 @@ void BindNodeVisitor::Visit(const parser::GroupByDescription *node) {
   if (node->having != nullptr) node->having->Accept(this);
 }
 void BindNodeVisitor::Visit(const parser::OrderDescription *node) {
-  if (node->expr != nullptr) node->expr->Accept(this);
+  for (auto expr : *(node->exprs))
+    if (expr != nullptr) expr->Accept(this);
 }
 
 void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {

@@ -129,7 +129,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   // Check Order By
   LOG_INFO("Checking order by");
-  tupleExpr = (expression::TupleValueExpression*)selectStmt->order->expr;
+  tupleExpr = (expression::TupleValueExpression*)selectStmt->order->exprs->at(0);
   EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 0));  // a1
 
   // Check alias ambiguous

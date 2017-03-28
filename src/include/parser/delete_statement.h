@@ -31,42 +31,22 @@ struct DeleteStatement : SQLStatement {
         table_ref(nullptr), expr(nullptr) {};
 
   virtual ~DeleteStatement() {
-    // FIXME The following line should be removed
-    //       when the old parser gets obsolete
-    delete table_info_;
 
     delete table_ref;
     delete expr;
   }
 
   std::string GetTableName() const {
-    // FIXME The following two lines should be removed
-    //       when the old parser gets obsolete
-    if (table_info_ != nullptr)
-      return table_info_->table_name;
-
     return table_ref->GetTableName();
   }
 
   std::string GetDatabaseName() const {
-    // FIXME The following four lines should be removed
-    //       when the old parser gets obsolete
-    if (table_info_ != nullptr) {
-      if (table_info_->database_name == nullptr)
-        return DEFAULT_DB_NAME;
-      return table_info_->database_name;
-    }
-
     return table_ref->GetDatabaseName();
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
-
-  // FIXME The following line should be removed
-  //       when the old parser gets obsolete
-  parser::TableInfo* table_info_ = nullptr;
 
   parser::TableRef* table_ref;
   expression::AbstractExpression* expr;

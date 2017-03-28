@@ -14,7 +14,6 @@
 
 #include "parser/statements.h"
 #include "parser/pg_query.h"
-#include "parser/parser.h"
 #include "parser/parsenodes.h"
 
 namespace peloton {

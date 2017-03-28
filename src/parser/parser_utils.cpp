@@ -161,11 +161,16 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
 
   if (stmt->order != NULL) {
     inprint("-> OrderBy:", num_indent + 1);
-    GetExpressionInfo(stmt->order->expr, num_indent + 2);
-    if (stmt->order->type == kOrderAsc)
-      inprint("ascending", num_indent + 2);
-    else
-      inprint("descending", num_indent + 2);
+    for (size_t idx = 0; idx<stmt->order->exprs->size(); idx++) {
+      auto expr = stmt->order->exprs->at(idx);
+      auto type = stmt->order->types->at(idx);
+      GetExpressionInfo(expr, num_indent + 2);
+      if (type == kOrderAsc)
+        inprint("ascending", num_indent + 2);
+      else
+        inprint("descending", num_indent + 2);
+
+    }
   }
 
   if (stmt->group_by != NULL) {

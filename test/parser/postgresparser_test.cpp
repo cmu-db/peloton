@@ -18,7 +18,6 @@
 #include "common/macros.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
-#include "parser/parser.h"
 #include "parser/postgresparser.h"
 
 namespace peloton {
@@ -103,28 +102,112 @@ TEST_F(PostgresParserTests, GroupByTest) {
 }
 
 TEST_F(PostgresParserTests, OrderByTest) {
-  std::vector<std::string> queries;
-
-  // Select with order by clause
-  queries.push_back("SELECT * FROM foo ORDER BY id;");
-  queries.push_back("SELECT * FROM foo ORDER BY id ASC;");
-  queries.push_back("SELECT * FROM foo ORDER BY id DESC;");
-  // queries.push_back("SELECT * FROM foo ORDER BY id, name;");
 
   auto parser = parser::PostgresParser::GetInstance();
-  // Parsing
-  UNUSED_ATTRIBUTE int ii = 0;
-  for (auto query : queries) {
-    auto stmt_list = parser.BuildParseTree(query).release();
-    EXPECT_TRUE(stmt_list->is_valid);
-    if (stmt_list->is_valid == false) {
-      LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
-                stmt_list->error_line, stmt_list->error_col);
-    }
-    // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    LOG_INFO("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    delete stmt_list;
-  }
+  // SELECT * FROM foo ORDER BY id;
+  std::string query = "SELECT * FROM foo ORDER BY id;";
+  auto stmt_list = parser.BuildParseTree(query).release();
+  auto sql_stmt = stmt_list->statements[0];
+  EXPECT_EQ(sql_stmt->GetType(), StatementType::SELECT);
+  auto select_stmt = (parser::SelectStatement*)(sql_stmt);
+  auto order_by = select_stmt->order;
+  EXPECT_NE(order_by, nullptr);
+  EXPECT_NE(order_by->types, nullptr);
+  EXPECT_NE(order_by->exprs, nullptr);
+
+  EXPECT_EQ(order_by->types->size(), 1);
+  EXPECT_EQ(order_by->exprs->size(), 1);
+  EXPECT_EQ(order_by->types->at(0),parser::OrderType::kOrderAsc);
+  auto expr = order_by->exprs->at(0);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "id");
+  delete stmt_list;
+
+  // SELECT * FROM foo ORDER BY id ASC;
+  query = "SELECT * FROM foo ORDER BY id ASC;";
+  stmt_list = parser.BuildParseTree(query).release();
+  sql_stmt = stmt_list->statements[0];
+  EXPECT_EQ(sql_stmt->GetType(), StatementType::SELECT);
+  select_stmt = (parser::SelectStatement*)(sql_stmt);
+  order_by = select_stmt->order;
+  EXPECT_NE(order_by, nullptr);
+  EXPECT_NE(order_by->types, nullptr);
+  EXPECT_NE(order_by->exprs, nullptr);
+
+  EXPECT_EQ(order_by->types->size(), 1);
+  EXPECT_EQ(order_by->exprs->size(), 1);
+  EXPECT_EQ(order_by->types->at(0),parser::OrderType::kOrderAsc);
+  expr = order_by->exprs->at(0);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "id");
+  delete stmt_list;
+
+  // SELECT * FROM foo ORDER BY id DESC;
+  query = "SELECT * FROM foo ORDER BY id DESC;";
+  stmt_list = parser.BuildParseTree(query).release();
+  sql_stmt = stmt_list->statements[0];
+  EXPECT_EQ(sql_stmt->GetType(), StatementType::SELECT);
+  select_stmt = (parser::SelectStatement*)(sql_stmt);
+  order_by = select_stmt->order;
+  EXPECT_NE(order_by, nullptr);
+  EXPECT_NE(order_by->types, nullptr);
+  EXPECT_NE(order_by->exprs, nullptr);
+
+  EXPECT_EQ(order_by->types->size(), 1);
+  EXPECT_EQ(order_by->exprs->size(), 1);
+  EXPECT_EQ(order_by->types->at(0),parser::OrderType::kOrderDesc);
+  expr = order_by->exprs->at(0);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "id");
+  delete stmt_list;
+
+  // SELECT * FROM foo ORDER BY id, name;
+  query = "SELECT * FROM foo ORDER BY id, name;";
+  stmt_list = parser.BuildParseTree(query).release();
+  sql_stmt = stmt_list->statements[0];
+  EXPECT_EQ(sql_stmt->GetType(), StatementType::SELECT);
+  select_stmt = (parser::SelectStatement*)(sql_stmt);
+  order_by = select_stmt->order;
+  EXPECT_NE(order_by, nullptr);
+  EXPECT_NE(order_by->types, nullptr);
+  EXPECT_NE(order_by->exprs, nullptr);
+
+  EXPECT_EQ(order_by->types->size(), 2);
+  EXPECT_EQ(order_by->exprs->size(), 2);
+  EXPECT_EQ(order_by->types->at(0),parser::OrderType::kOrderAsc);
+  expr = order_by->exprs->at(0);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "id");
+  expr = order_by->exprs->at(1);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "name");
+  delete stmt_list;
+
+  // SELECT * FROM foo ORDER BY id, name;
+  query = "SELECT * FROM foo ORDER BY id, name DESC;";
+  stmt_list = parser.BuildParseTree(query).release();
+  sql_stmt = stmt_list->statements[0];
+  EXPECT_EQ(sql_stmt->GetType(), StatementType::SELECT);
+  select_stmt = (parser::SelectStatement*)(sql_stmt);
+  order_by = select_stmt->order;
+  EXPECT_NE(order_by, nullptr);
+  EXPECT_NE(order_by->types, nullptr);
+  EXPECT_NE(order_by->exprs, nullptr);
+
+  EXPECT_EQ(order_by->types->size(), 2);
+  EXPECT_EQ(order_by->exprs->size(), 2);
+  EXPECT_EQ(order_by->types->at(0),parser::OrderType::kOrderAsc);
+  expr = order_by->exprs->at(0);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "id");
+  EXPECT_EQ(order_by->types->at(1),parser::OrderType::kOrderDesc);
+  expr = order_by->exprs->at(1);
+  EXPECT_EQ(expr->GetExpressionType(), ExpressionType::VALUE_TUPLE);
+  EXPECT_EQ(((expression::TupleValueExpression*)expr)->GetColumnName(), "name");
+  delete stmt_list;
+
+
+
 }
 
 TEST_F(PostgresParserTests, ConstTest) {

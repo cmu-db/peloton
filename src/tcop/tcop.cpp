@@ -26,7 +26,6 @@
 #include "expression/expression_util.h"
 #include "optimizer/simple_optimizer.h"
 #include "common/exception.h"
-#include "parser/parser.h"
 #include "parser/select_statement.h"
 
 #include "catalog/catalog.h"

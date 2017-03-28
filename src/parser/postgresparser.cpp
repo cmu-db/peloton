@@ -320,39 +320,36 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
     return nullptr;
   }
 
-  if (order->length > 1) {
-    throw NotImplementedException(
-        "Order by multiple keys not supported yet...\n");
-  }
-  // std::vector<parser::OrderDescription>* result =
-  //   new std::vector<parser::OrderDescription>();
-
   parser::OrderDescription* result = new OrderDescription();
+  std::vector<OrderType>* types = new std::vector<OrderType>();
+  std::vector<expression::AbstractExpression*>* exprs =
+      new std::vector<expression::AbstractExpression*>();
 
   for (auto cell = order->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
     if (temp->type == T_SortBy) {
       SortBy *sort = reinterpret_cast<SortBy *>(temp);
       Node *target = sort->node;
-      result->type = parser::OrderType::kOrderAsc;
+      if (sort->sortby_dir == SORTBY_ASC || sort->sortby_dir == SORTBY_DEFAULT)
+        types->push_back(parser::kOrderAsc);
       if (sort->sortby_dir == SORTBY_DESC)
-        result->type = parser::OrderType::kOrderDesc;
+        types->push_back(parser::kOrderDesc);
       switch (target->type) {
-        case T_ColumnRef:result->expr = ColumnRefTransform(reinterpret_cast<ColumnRef *>(target));
+        case T_ColumnRef:exprs->push_back(ColumnRefTransform(reinterpret_cast<ColumnRef *>(target)));
           break;
-        case T_FuncCall:result->expr = FuncCallTransform(reinterpret_cast<FuncCall *>(target));
+        case T_FuncCall:exprs->push_back(FuncCallTransform(reinterpret_cast<FuncCall *>(target)));
           break;
-        case T_A_Expr:result->expr = AExprTransform(reinterpret_cast<A_Expr *>(target));
+        case T_A_Expr:exprs->push_back(AExprTransform(reinterpret_cast<A_Expr *>(target)));
           break;
         default:LOG_ERROR("SortBy type %d not supported...", target->type);
           throw new NotImplementedException("...");
       }
-
     } else {
       LOG_ERROR("ORDER BY list member type %d\n", temp->type);
     }
-    break;
   }
+  result->exprs = exprs;
+  result->types = types;
   return result;
 }
 // This function takes in a Posgres value parsenode and transfers it into

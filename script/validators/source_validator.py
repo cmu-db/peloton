@@ -67,7 +67,7 @@ SKIP_FILES_LIST = [
     "src/wire/protocol.cpp",
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
-    "src/include/parser/sql_scanner.h",
+    # "src/include/parser/sql_scanner.h",
     "src/parser/parser_utils.cpp",
     "src/include/parser/sql_statement.h",
     "src/include/parser/create_statement.h",
