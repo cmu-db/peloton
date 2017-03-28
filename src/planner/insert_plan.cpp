@@ -103,6 +103,7 @@ InsertPlan::InsertPlan(
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;
+        int param_index = 0;
         auto &table_columns = table_schema->GetColumns();
         auto query_columns = columns;
         for (catalog::Column const &elem : table_columns) {
@@ -132,10 +133,11 @@ InsertPlan::InsertPlan(
             if (values->at(pos)->GetExpressionType() ==
                 ExpressionType::VALUE_PARAMETER) {
               std::tuple<oid_t, oid_t, oid_t> pair =
-                  std::make_tuple(tuple_idx, col_cntr, pos);
+                  std::make_tuple(tuple_idx, col_cntr, param_index);
               parameter_vector_->push_back(pair);
               params_value_type_->push_back(
                   table_schema->GetColumn(col_cntr).GetType());
+              ++param_index;
             } else {
               expression::ConstantValueExpression *const_expr_elem =
                   dynamic_cast<expression::ConstantValueExpression *>(
