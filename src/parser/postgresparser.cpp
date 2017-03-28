@@ -381,7 +381,8 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
     }
     case T_Null:
       result = new expression::ConstantValueExpression(
-          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INVALID));
+          type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
+      break;
     default: { LOG_ERROR("Value type %d not supported yet...\n", val.type); }
   }
   return result;
