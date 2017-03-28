@@ -555,7 +555,7 @@ TEST_F(PostgresParserTests, InsertTest) {
   std::vector<std::string> queries;
 
   // Insert multiple tuples into the table
-  queries.push_back("INSERT INTO foo VALUES (1, 2, 3), (4, 5, 6);");
+  queries.push_back("INSERT INTO foo VALUES (NULL, 2, 3), (4, 5, 6);");
 
   auto parser = parser::PostgresParser::GetInstance();
   UNUSED_ATTRIBUTE int ii = 0;
@@ -575,7 +575,11 @@ TEST_F(PostgresParserTests, InsertTest) {
     EXPECT_EQ("foo", insert_stmt->GetTableName());
     EXPECT_TRUE(insert_stmt->insert_values != nullptr);
     EXPECT_EQ(2, insert_stmt->insert_values->size());
-
+    
+    // Test NULL Value parsing
+    EXPECT_TRUE(((expression::ConstantValueExpression *)
+                 insert_stmt->insert_values->at(0)->at(0))->GetValue().IsNull());
+    // Test normal value
     type::Value five = type::ValueFactory::GetIntegerValue(5);
     type::CmpBool res = five.CompareEquals(
         ((expression::ConstantValueExpression *)

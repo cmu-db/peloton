@@ -363,27 +363,25 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
 expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
   expression::AbstractExpression* result = nullptr;
   switch (val.type) {
-    case T_Integer: {
+    case T_Integer:
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetIntegerValue((int32_t)val.val.ival));
       break;
-    }
-    case T_String: {
+    case T_String:
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetVarcharValue(std::string(val.val.str)));
       break;
-    }
-    case T_Float: {
+    case T_Float:
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetDecimalValue(
               std::stod(std::string(val.val.str))));
       break;
-    }
     case T_Null:
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetNullValueByType(type::Type::TypeId::INTEGER));
       break;
-    default: { LOG_ERROR("Value type %d not supported yet...\n", val.type); }
+    default:
+      LOG_ERROR("Value type %d not supported yet...\n", val.type);
   }
   return result;
 }
