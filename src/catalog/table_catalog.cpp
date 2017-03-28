@@ -23,14 +23,15 @@ TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
   return table_catalog.get();
 }
 
-TableCatalog::TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool)
+TableCatalog::TableCatalog(storage::Database *pg_catalog,
+                           type::AbstractPool *pool)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(catalog_table_oid, column.GetName(),
+    pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(),
                                column.GetOffset(), column.GetType(), true,
                                column.GetConstraints(), pool, nullptr);
   }
@@ -105,11 +106,11 @@ std::string TableCatalog::GetTableName(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string table_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      table_name = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      table_name = (*result_tiles)[0]
                        ->GetValue(0, 0)
                        .GetAs<std::string>();  // After projection left 1 column
     }
@@ -129,11 +130,11 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t database_oid;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      database_oid = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      database_oid = (*result_tiles)[0]
                          ->GetValue(0, 0)
                          .GetAs<oid_t>();  // After projection left 1 column
     }
@@ -158,11 +159,12 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_oid = INVALID_OID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_name & database_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      table_oid = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <=
+            1);  // table_name & database_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      table_oid = (*result_tiles)[0]
                       ->GetValue(0, 0)
                       .GetAs<oid_t>();  // After projection left 1 column
     }
@@ -182,7 +184,7 @@ std::vector<oid_t> TableCatalog::GetTableOids(oid_t database_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<oid_t> table_ids;
-  for (auto tile : result_tiles) {
+  for (auto tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       table_ids.emplace_back(
           tile->GetValue(tuple_id, 0)
@@ -204,7 +206,7 @@ std::vector<std::string> TableCatalog::GetTableNames(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<std::string> table_names;
-  for (auto tile : result_tiles) {
+  for (auto tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       table_names.emplace_back(
           tile->GetValue(tuple_id, 0)

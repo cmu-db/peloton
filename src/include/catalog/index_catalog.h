@@ -44,7 +44,8 @@ class IndexCatalog : public AbstractCatalog {
   // Write related API
   bool InsertIndex(oid_t index_oid, std::string &index_name, oid_t table_oid,
                    IndexType index_type, IndexConstraintType index_constraint,
-                   bool unique_keys);
+                   bool unique_keys, type::AbstractPool *pool,
+                   concurrency::Transaction *txn);
   bool DeleteIndex(oid_t index_oid, concurrency::Transaction *txn);
 
   // Read-only API
