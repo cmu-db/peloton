@@ -467,71 +467,52 @@ std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
 expression::AbstractExpression* PostgresParser::BoolExprTransform(
     BoolExpr* root) {
   expression::AbstractExpression* result = nullptr;
-  expression::AbstractExpression* left = nullptr;
-  expression::AbstractExpression* right = nullptr;
-  // transform the left argument
-  Node* node = reinterpret_cast<Node*>(root->args->head->data.ptr_value);
-  switch (node->type) {
-    case T_BoolExpr: {
-      left = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
-      break;
-    }
-    case T_A_Expr: {
-      left = AExprTransform(reinterpret_cast<A_Expr*>(node));
-      break;
-    }
-    case T_ColumnRef: {
-      left = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
-      break;
-    }
-    case T_ParamRef:
-      left = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
-      break;
-    default: {
-      LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
-      return nullptr;
-    }
-  }
-  if (root->args->length > 1) {
-    // transform the right argument
-    node = reinterpret_cast<Node *>(root->args->head->next->data.ptr_value);
+  expression::AbstractExpression* next = nullptr;
+  for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+    Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
     switch (node->type) {
       case T_BoolExpr: {
-        right = BoolExprTransform(reinterpret_cast<BoolExpr *>(node));
+        next = BoolExprTransform(reinterpret_cast<BoolExpr*>(node));
         break;
       }
       case T_A_Expr: {
-        right = AExprTransform(reinterpret_cast<A_Expr *>(node));
+        next = AExprTransform(reinterpret_cast<A_Expr*>(node));
         break;
       }
       case T_ColumnRef: {
-        right = ColumnRefTransform(reinterpret_cast<ColumnRef *>(node));
+        next = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node));
         break;
       }
       case T_ParamRef:
-        right = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
+        next = ParamRefTransform(reinterpret_cast<ParamRef*>(node));
         break;
       default: {
         LOG_ERROR("BoolExpr arg type %d not suported yet...\n", node->type);
         return nullptr;
       }
     }
-  }
-  switch (root->boolop) {
-    case AND_EXPR: {
-      result = new expression::ConjunctionExpression(
-          StringToExpressionType("CONJUNCTION_AND"), left, right);
-      break;
-    }
-    case OR_EXPR: {
-      result = new expression::ConjunctionExpression(
-          StringToExpressionType("CONJUNCTION_OR"), left, right);
-      break;
-    }
-    case NOT_EXPR: {
-      result = new expression::OperatorExpression(StringToExpressionType(
-          "OPERATOR_NOT"), StringToTypeId("INVALID"), left, right);
-      break;
+    switch (root->boolop) {
+      case AND_EXPR: {
+        if (result == nullptr)
+          result = next;
+        else
+          result = new expression::ConjunctionExpression(
+            StringToExpressionType("CONJUNCTION_AND"), result, next);
+        break;
+      }
+      case OR_EXPR: {
+        if (result == nullptr)
+          result = next;
+        else
+          result = new expression::ConjunctionExpression(
+             StringToExpressionType("CONJUNCTION_OR"), result, next);
+        break;
+      }
+      case NOT_EXPR: {
+        result = new expression::OperatorExpression(StringToExpressionType(
+            "OPERATOR_NOT"), StringToTypeId("INVALID"), next, nullptr);
+        break;
+      }
     }
   }
   return result;
