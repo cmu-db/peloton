@@ -33,11 +33,14 @@ void inprint(UNUSED_ATTRIBUTE float val, UNUSED_ATTRIBUTE uint num_indent) {
   LOG_TRACE("%f", val);
 }
 
-void inprint(UNUSED_ATTRIBUTE const char* val, UNUSED_ATTRIBUTE uint num_indent) {
+void inprint(UNUSED_ATTRIBUTE const char* val,
+             UNUSED_ATTRIBUTE uint num_indent) {
   LOG_TRACE("%s", val);
 }
 
-void inprint(UNUSED_ATTRIBUTE const char* val, UNUSED_ATTRIBUTE const char* val2, UNUSED_ATTRIBUTE uint num_indent) {
+void inprint(UNUSED_ATTRIBUTE const char* val,
+             UNUSED_ATTRIBUTE const char* val2,
+             UNUSED_ATTRIBUTE uint num_indent) {
   LOG_TRACE("%s -> %s", val, val2);
 }
 
@@ -104,7 +107,8 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
     return;
   }
 
-  LOG_TRACE("-> Expr Type :: %s", ExpressionTypeToString(expr->GetExpressionType()).c_str());
+  LOG_TRACE("-> Expr Type :: %s",
+            ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
   switch (expr->GetExpressionType()) {
     case ExpressionType::STAR:
@@ -112,8 +116,10 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
       break;
     case ExpressionType::VALUE_TUPLE:
       inprint((expr)->GetInfo().data(), num_indent);
-      inprint(((expression::TupleValueExpression*)expr)->GetTableName().data(), num_indent);
-      inprint(((expression::TupleValueExpression*)expr)->GetColumnName().data(), num_indent);
+      inprint(((expression::TupleValueExpression*)expr)->GetTableName().data(),
+              num_indent);
+      inprint(((expression::TupleValueExpression*)expr)->GetColumnName().data(),
+              num_indent);
       break;
     case ExpressionType::COMPARE_GREATERTHAN:
       inprint((expr)->GetInfo().data(), num_indent);
@@ -161,7 +167,7 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
 
   if (stmt->order != NULL) {
     inprint("-> OrderBy:", num_indent + 1);
-    for (size_t idx = 0; idx<stmt->order->exprs->size(); idx++) {
+    for (size_t idx = 0; idx < stmt->order->exprs->size(); idx++) {
       auto expr = stmt->order->exprs->at(idx);
       auto type = stmt->order->types->at(idx);
       GetExpressionInfo(expr, num_indent + 2);
@@ -169,7 +175,6 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
         inprint("ascending", num_indent + 2);
       else
         inprint("descending", num_indent + 2);
-
     }
   }
 
@@ -241,7 +246,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   switch (stmt->type) {
     case InsertType::VALUES:
       inprint("-> Values", num_indent + 1);
-      for (auto value_item : *stmt->insert_values){
+      for (auto value_item : *stmt->insert_values) {
         // TODO this is a debugging method which is currently unused.
         for (expression::AbstractExpression* expr : *value_item) {
           GetExpressionInfo(expr, num_indent + 2);
@@ -257,16 +262,16 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
 }
 
 void GetDeleteStatementInfo(DeleteStatement* stmt, uint num_indent) {
-   stmt = stmt;
-   num_indent = num_indent;
+  stmt = stmt;
+  num_indent = num_indent;
 }
 
-std::string CharsToStringDestructive(char * str) {
+std::string CharsToStringDestructive(char* str) {
   // this should not make an extra copy because of the return value optimization
   // ..hopefully
-  if (str == nullptr){
+  if (str == nullptr) {
     return "";
-  }else{
+  } else {
     std::string ret_string(str);
     delete str;
     return ret_string;

@@ -28,7 +28,6 @@ namespace test {
 class ParserTests : public PelotonTest {};
 
 TEST_F(ParserTests, BasicTest) {
-
   std::vector<std::string> queries;
 
   // SELECT statement
@@ -104,7 +103,8 @@ TEST_F(ParserTests, BasicTest) {
   queries.push_back("DROP TABLE students;");
 
   // PREPARE
-  queries.push_back("PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
+  queries.push_back(
+      "PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
   queries.push_back("EXECUTE prep_inst(1, 2, 3);");
   queries.push_back("EXECUTE prep;");
 
@@ -361,8 +361,8 @@ TEST_F(ParserTests, IndexTest) {
       " ON security (s_co_id, s_issue);");
 
   // TODO: The executor and the new parser should support DROP index and DROP db
-//  queries.push_back("DROP INDEX i_security ON security;");
-//  queries.push_back("DROP DATABASE i_security;");
+  //  queries.push_back("DROP INDEX i_security ON security;");
+  //  queries.push_back("DROP DATABASE i_security;");
 
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;

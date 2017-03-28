@@ -90,7 +90,8 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   if (root->larg->type == T_RangeVar) {
     result->left = RangeVarTransform(reinterpret_cast<RangeVar*>(root->larg));
   } else if (root->larg->type == T_RangeSubselect) {
-    result->left = RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg));
+    result->left =
+        RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg));
   } else {
     LOG_ERROR("Join arg type %d not supported yet...\n", root->larg->type);
     delete result;
@@ -99,7 +100,8 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   if (root->rarg->type == T_RangeVar) {
     result->right = RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg));
   } else if (root->rarg->type == T_RangeSubselect) {
-    result->right = RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg));
+    result->right =
+        RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg));
   } else {
     LOG_ERROR("Join arg type %d not supported yet...\n", root->larg->type);
     delete result;
@@ -143,7 +145,6 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
   // parse alias
   result->alias = AliasTransform(root->alias);
 
-
   if (root->relname) {
     result->table_info_->table_name = strdup(root->relname);
   }
@@ -156,12 +157,12 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
 
 // This function takes in a single Postgres RangeVar parsenode and transfer
 // it into a Peloton TableRef object.
-parser::TableRef* PostgresParser::RangeSubselectTransform(RangeSubselect *root) {
+parser::TableRef* PostgresParser::RangeSubselectTransform(
+    RangeSubselect* root) {
   auto result = new parser::TableRef(StringToTableReferenceType("select"));
   result->select = reinterpret_cast<parser::SelectStatement*>(
       SelectTransform(reinterpret_cast<SelectStmt*>(root->subquery)));
-  result->alias =
-      AliasTransform(root->alias);
+  result->alias = AliasTransform(root->alias);
   if (result->select == nullptr) {
     delete result;
     result = nullptr;
@@ -237,9 +238,8 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
             (reinterpret_cast<value*>(fields->head->data.ptr_value))->val.str));
       } else {
         result = new expression::TupleValueExpression(
-            std::string(
-                (reinterpret_cast<value*>(fields->head->next->data.ptr_value))
-                    ->val.str),
+            std::string((reinterpret_cast<value*>(
+                             fields->head->next->data.ptr_value))->val.str),
             std::string((reinterpret_cast<value*>(fields->head->data.ptr_value))
                             ->val.str));
       }
@@ -260,12 +260,13 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
 
 // This function takes in a Postgres ParamRef parsenode and transfer into
 // a Peloton tuple value expression.
-expression::AbstractExpression* PostgresParser::ParamRefTransform(ParamRef *root) {
-//  LOG_INFO("Parameter number: %d", root->number);
-  expression::AbstractExpression* res = new expression::ParameterValueExpression(root->number-1);
+expression::AbstractExpression* PostgresParser::ParamRefTransform(
+    ParamRef* root) {
+  //  LOG_INFO("Parameter number: %d", root->number);
+  expression::AbstractExpression* res =
+      new expression::ParameterValueExpression(root->number - 1);
   return res;
 }
-
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
 // transfers into a Peloton GroupByDescription object.
@@ -328,20 +329,25 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
   for (auto cell = order->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
     if (temp->type == T_SortBy) {
-      SortBy *sort = reinterpret_cast<SortBy *>(temp);
-      Node *target = sort->node;
+      SortBy* sort = reinterpret_cast<SortBy*>(temp);
+      Node* target = sort->node;
       if (sort->sortby_dir == SORTBY_ASC || sort->sortby_dir == SORTBY_DEFAULT)
         types->push_back(parser::kOrderAsc);
-      if (sort->sortby_dir == SORTBY_DESC)
-        types->push_back(parser::kOrderDesc);
+      if (sort->sortby_dir == SORTBY_DESC) types->push_back(parser::kOrderDesc);
       switch (target->type) {
-        case T_ColumnRef:exprs->push_back(ColumnRefTransform(reinterpret_cast<ColumnRef *>(target)));
+        case T_ColumnRef:
+          exprs->push_back(
+              ColumnRefTransform(reinterpret_cast<ColumnRef*>(target)));
           break;
-        case T_FuncCall:exprs->push_back(FuncCallTransform(reinterpret_cast<FuncCall *>(target)));
+        case T_FuncCall:
+          exprs->push_back(
+              FuncCallTransform(reinterpret_cast<FuncCall*>(target)));
           break;
-        case T_A_Expr:exprs->push_back(AExprTransform(reinterpret_cast<A_Expr *>(target)));
+        case T_A_Expr:
+          exprs->push_back(AExprTransform(reinterpret_cast<A_Expr*>(target)));
           break;
-        default:LOG_ERROR("SortBy type %d not supported...", target->type);
+        default:
+          LOG_ERROR("SortBy type %d not supported...", target->type);
           throw new NotImplementedException("...");
       }
     } else {
@@ -376,9 +382,7 @@ expression::AbstractExpression* PostgresParser::ValueTransform(value val) {
     case T_Null:
       result = new expression::ConstantValueExpression(
           type::ValueFactory::GetNullValueByType(type::Type::TypeId::INVALID));
-    default: {
-      LOG_ERROR("Value type %d not supported yet...\n", val.type);
-    }
+    default: { LOG_ERROR("Value type %d not supported yet...\n", val.type); }
   }
   return result;
 }
@@ -399,14 +403,14 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
       (reinterpret_cast<value*>(root->funcname->head->data.ptr_value))->val.str;
 
   type_string = "AGGREGATE_" + type_string;
-  
+
   if (root->agg_star) {
     expression::AbstractExpression* children = new expression::StarExpression();
     result = new expression::AggregateExpression(
         StringToExpressionType(type_string), false, children);
   } else {
     if (root->args->length < 2) {
-      //auto children_expr_list = TargetTransform(root->args);
+      // auto children_expr_list = TargetTransform(root->args);
       ColumnRef* temp =
           reinterpret_cast<ColumnRef*>(root->args->head->data.ptr_value);
       expression::AbstractExpression* children = ColumnRefTransform(temp);
@@ -452,8 +456,7 @@ std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
         LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
       }
     }
-    if (target->name != nullptr)
-      expr->alias = target->name;
+    if (target->name != nullptr) expr->alias = target->name;
     result->push_back(expr);
   }
   return result;
@@ -494,7 +497,7 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
           result = next;
         else
           result = new expression::ConjunctionExpression(
-            StringToExpressionType("CONJUNCTION_AND"), result, next);
+              StringToExpressionType("CONJUNCTION_AND"), result, next);
         break;
       }
       case OR_EXPR: {
@@ -502,12 +505,13 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
           result = next;
         else
           result = new expression::ConjunctionExpression(
-             StringToExpressionType("CONJUNCTION_OR"), result, next);
+              StringToExpressionType("CONJUNCTION_OR"), result, next);
         break;
       }
       case NOT_EXPR: {
-        result = new expression::OperatorExpression(StringToExpressionType(
-            "OPERATOR_NOT"), StringToTypeId("INVALID"), next, nullptr);
+        result = new expression::OperatorExpression(
+            StringToExpressionType("OPERATOR_NOT"), StringToTypeId("INVALID"),
+            next, nullptr);
         break;
       }
     }
@@ -674,10 +678,11 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
       throw NotImplementedException("...");
     }
   }
-  
+
   // Transform Per-column constraints
   if (root->constraints) {
-    for (auto cell = root->constraints->head; cell != nullptr; cell=cell->next) {
+    for (auto cell = root->constraints->head; cell != nullptr;
+         cell = cell->next) {
       auto constraint = reinterpret_cast<Constraint*>(cell->data.ptr_value);
       if (constraint->contype == CONSTR_PRIMARY)
         result->primary = true;
@@ -712,7 +717,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   if (root->tableElts->length > 0) {
     result->columns = new std::vector<ColumnDefinition*>();
   }
-  
+
   std::unordered_set<std::string> primary_keys;
   for (auto cell = root->tableElts->head; cell != nullptr; cell = cell->next) {
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
@@ -734,7 +739,8 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       if (constraint->contype == CONSTR_PRIMARY) {
         for (auto key_cell = constraint->keys->head; key_cell != nullptr;
              key_cell = key_cell->next) {
-          primary_keys.emplace(reinterpret_cast<value*>(key_cell->data.ptr_value)->val.str);
+          primary_keys.emplace(
+              reinterpret_cast<value*>(key_cell->data.ptr_value)->val.str);
         }
       } else if (constraint->contype == CONSTR_FOREIGN) {
         auto col = new ColumnDefinition(ColumnDefinition::FOREIGN);
@@ -767,29 +773,30 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
       throw NotImplementedException(".");
     }
   }
-  
+
   // Enforce Primary Keys
   for (auto column : *result->columns) {
     // Skip Foreign Key Constraint
-    if (column->name == nullptr)
-      continue;
+    if (column->name == nullptr) continue;
     if (primary_keys.find(std::string(column->name)) != primary_keys.end()) {
       column->primary = true;
     }
   }
-  
+
   return reinterpret_cast<parser::SQLStatement*>(result);
 }
-  
+
 // This function takes in a Postgres IndexStmt parsenode
 // and transfers into a Peloton CreateStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
 // IndexStmt parsenodes.
 parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
-  parser::CreateStatement* result = new parser::CreateStatement(CreateStatement::kIndex);
+  parser::CreateStatement* result =
+      new parser::CreateStatement(CreateStatement::kIndex);
   result->unique = root->unique;
   result->index_attrs = new std::vector<char*>;
-  for (auto cell = root->indexParams->head; cell != nullptr; cell = cell->next) {
+  for (auto cell = root->indexParams->head; cell != nullptr;
+       cell = cell->next) {
     char* index_attr = reinterpret_cast<IndexElem*>(cell->data.ptr_value)->name;
     result->index_attrs->push_back(strdup(index_attr));
   }
@@ -804,8 +811,9 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
 // and transfers into a Peloton CreateStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
 // CreatedbStmt parsenodes.
-parser::SQLStatement* PostgresParser::CreateDbTransform(CreatedbStmt *root) {
-  parser::CreateStatement* result = new parser::CreateStatement(CreateStatement::kDatabase);
+parser::SQLStatement* PostgresParser::CreateDbTransform(CreatedbStmt* root) {
+  parser::CreateStatement* result =
+      new parser::CreateStatement(CreateStatement::kDatabase);
   result->database_name = strdup(root->dbname);
   return result;
 }
@@ -816,24 +824,26 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
     res->missing = root->missing_ok;
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List*>(cell->data.ptr_value);
-    LOG_INFO("%d", ((Node *)(table_list->head->data.ptr_value))->type);
-    table_info->table_name = strdup(reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
+    LOG_INFO("%d", ((Node*)(table_list->head->data.ptr_value))->type);
+    table_info->table_name = strdup(
+        reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
     res->table_info_ = table_info;
     break;
   }
   return res;
 }
 
-parser::DeleteStatement* PostgresParser::TruncateTransform(TruncateStmt *root) {
+parser::DeleteStatement* PostgresParser::TruncateTransform(TruncateStmt* root) {
   auto result = new DeleteStatement();
   for (auto cell = root->relations->head; cell != nullptr; cell = cell->next) {
-    result->table_ref = RangeVarTransform(reinterpret_cast<RangeVar*>(cell->data.ptr_value));
+    result->table_ref =
+        RangeVarTransform(reinterpret_cast<RangeVar*>(cell->data.ptr_value));
     break;
   }
   return result;
 }
 
-parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt *root) {
+parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt* root) {
   auto result = new ExecuteStatement();
   result->name = strdup(root->name);
   if (root->params != nullptr)
@@ -841,7 +851,7 @@ parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt *root) {
   return result;
 }
 
-parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt *root) {
+parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt* root) {
   auto res = new PrepareStatement();
   res->name = strdup(root->name);
   auto stmt_list = new SQLStatementList();
@@ -850,8 +860,8 @@ parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt *root) {
   return res;
 }
 
-//TODO: Only support COPY TABLE TO FILE and DELIMITER option
-parser::CopyStatement* PostgresParser::CopyTransform(CopyStmt *root) {
+// TODO: Only support COPY TABLE TO FILE and DELIMITER option
+parser::CopyStatement* PostgresParser::CopyTransform(CopyStmt* root) {
   auto res = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
   res->cpy_table = RangeVarTransform(root->relation);
   res->file_path = strdup(root->filename);
@@ -914,15 +924,12 @@ PostgresParser::ParamListTransform(List* root) {
   std::vector<expression::AbstractExpression*>* result =
       new std::vector<expression::AbstractExpression*>();
 
-
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
   }
 
-
   return result;
 }
-
 
 // This function takes in a Postgres InsertStmt parsenode
 // and transfers into a Peloton InsertStatement.
@@ -971,11 +978,13 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
       result->select_list = TargetTransform(root->targetList);
       result->from_table = FromTransform(root->fromClause);
       result->select_distinct = root->distinctClause != NULL ? true : false;
-      result->group_by = GroupByTransform(root->groupClause, root->havingClause);
+      result->group_by =
+          GroupByTransform(root->groupClause, root->havingClause);
       result->order = OrderByTransform(root->sortClause);
       result->where_clause = WhereTransform(root->whereClause);
       if (root->limitCount != nullptr) {
-        int64_t limit = reinterpret_cast<A_Const*>(root->limitCount)->val.val.ival;
+        int64_t limit =
+            reinterpret_cast<A_Const*>(root->limitCount)->val.val.ival;
         int64_t offset = 0;
         if (root->limitOffset != nullptr)
           offset = reinterpret_cast<A_Const*>(root->limitOffset)->val.val.ival;
@@ -983,8 +992,10 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
       }
       break;
     case SETOP_UNION:
-      result = reinterpret_cast<parser::SelectStatement*>(SelectTransform(root->larg));
-      result->union_select = reinterpret_cast<parser::SelectStatement*>(SelectTransform(root->rarg));
+      result = reinterpret_cast<parser::SelectStatement*>(
+          SelectTransform(root->larg));
+      result->union_select = reinterpret_cast<parser::SelectStatement*>(
+          SelectTransform(root->rarg));
       break;
     default:
       LOG_ERROR("Set operation %d not supported yet...\n", root->op);
@@ -1006,7 +1017,8 @@ parser::SQLStatement* PostgresParser::DeleteTransform(DeleteStmt* root) {
 }
 
 // Transform Postgres TransacStmt into Peloton TransactionStmt
-parser::TransactionStatement* PostgresParser::TransactionTransform(TransactionStmt* root) {
+parser::TransactionStatement* PostgresParser::TransactionTransform(
+    TransactionStmt* root) {
   if (root->kind == TRANS_STMT_BEGIN) {
     return new parser::TransactionStatement(TransactionStatement::kBegin);
   } else if (root->kind == TRANS_STMT_COMMIT) {
@@ -1019,7 +1031,6 @@ parser::TransactionStatement* PostgresParser::TransactionTransform(TransactionSt
   }
 }
 
-
 // This function transfers a single Postgres statement into
 // a Peloton SQLStatement object. It checks the type of
 // Postgres parsenode of the input and call the corresponding
@@ -1028,12 +1039,10 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
   parser::SQLStatement* result = nullptr;
   switch (stmt->type) {
     case T_SelectStmt:
-      result =
-          SelectTransform(reinterpret_cast<SelectStmt*>(stmt));
+      result = SelectTransform(reinterpret_cast<SelectStmt*>(stmt));
       break;
     case T_CreateStmt:
-      result =
-          CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
+      result = CreateTransform(reinterpret_cast<CreateStmt*>(stmt));
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt*>(stmt));
@@ -1069,8 +1078,7 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
       result = CreateDbTransform((CreatedbStmt*)stmt);
       break;
     default: {
-      LOG_ERROR("Statement of type %d not supported yet...\n",
-                stmt->type);
+      LOG_ERROR("Statement of type %d not supported yet...\n", stmt->type);
       throw NotImplementedException("...");
     }
   }
@@ -1080,15 +1088,14 @@ parser::SQLStatement* PostgresParser::NodeTransform(Node* stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList* PostgresParser::ListTransform(
-    List* root) {
+parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
   auto result = new parser::SQLStatementList();
   if (root == nullptr) {
     return nullptr;
   }
   LOG_TRACE("%d statements in total\n", (root->length));
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
-    result->AddStatement(NodeTransform((Node*) cell->data.ptr_value));
+    result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
   }
 
   return result;
@@ -1146,8 +1153,7 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
   return result;
 }
 
-parser::SQLStatementList* PostgresParser::ParseSQLString(
-    const char* text) {
+parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   return PgQueryInternalParsetreeTransform(pg_query_parse(text));
 }
 
@@ -1161,7 +1167,8 @@ PostgresParser& PostgresParser::GetInstance() {
   return parser;
 }
 
-parser::SQLStatementList* PostgresParser::PgQueryInternalParsetreeTransform(PgQueryInternalParsetreeAndError stmt){
+parser::SQLStatementList* PostgresParser::PgQueryInternalParsetreeTransform(
+    PgQueryInternalParsetreeAndError stmt) {
   if (stmt.stderr_buffer == nullptr) {
     LOG_ERROR("%s at %d\n", stmt.error->message, stmt.error->cursorpos);
     auto new_stmt = new parser::SQLStatementList();
@@ -1179,9 +1186,9 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
-  LOG_TRACE("Number of statements: %lu" ,stmt->GetStatements().size());
+  LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
 
-  std::unique_ptr<parser::SQLStatementList> sql_stmt (stmt);
+  std::unique_ptr<parser::SQLStatementList> sql_stmt(stmt);
   return std::move(sql_stmt);
 }
 
