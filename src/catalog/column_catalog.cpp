@@ -15,22 +15,24 @@
 namespace peloton {
 namespace catalog {
 
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog, type::AbstractPool *pool) {
+ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
+                                          type::AbstractPool *pool) {
   static std::unique_ptr<ColumnCatalog> column_catalog(
       new ColumnCatalog(pg_catalog, pool));
 
   return column_catalog.get();
 }
 
-ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool)
+ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
+                             type::AbstractPool *pool)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    InsertColumn(COLUMN_CATALOG_OID, column.GetName(),
-                 column.GetOffset(), column.GetType(), true,
-                 column.GetConstraints(), pool, nullptr);
+    InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column.GetOffset(),
+                 column.GetType(), true, column.GetConstraints(), pool,
+                 nullptr);
   }
 }
 
@@ -162,14 +164,15 @@ oid_t ColumnCatalog::GetColumnOffset(oid_t table_oid,
   values.push_back(
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
-  auto result_tiles = std::move(GetResultWithIndexScan(column_ids, index_offset, values, txn));
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t column_offset = INVALID_OID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_name is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      column_offset = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid & column_name is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      column_offset = (*result_tiles)[0]
                           ->GetValue(0, 0)
                           .GetAs<oid_t>();  // After projection left 1 column
     }
@@ -190,12 +193,13 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_offset,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string column_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
+  PL_ASSERT((*result_tiles).size() <=
+            1);  // table_oid & column_offset is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_name =
-          result_tiles[0]
+          (*result_tiles)[0]
               ->GetValue(0, 0)
               .GetAs<std::string>();  // After projection left 1 column
     }
@@ -218,12 +222,12 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_name is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid & column_name is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_type =
-          result_tiles[0]
+          (*result_tiles)[0]
               ->GetValue(0, 0)
               .GetAs<type::Type::TypeId>();  // After projection left 1 column
     }
@@ -245,12 +249,13 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid & column_offset is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
+  PL_ASSERT((*result_tiles).size() <=
+            1);  // table_oid & column_offset is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
       column_type =
-          result_tiles[0]
+          (*result_tiles)[0]
               ->GetValue(0, 0)
               .GetAs<type::Type::TypeId>();  // After projection left 1 column
     }

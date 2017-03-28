@@ -32,7 +32,7 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
   // indexes on pg_attribute
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(catalog_table_oid, column.GetName(),
+    pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
                                column.GetOffset(), column.GetType(), true,
                                column.GetConstraints(), pool, nullptr);
   }
@@ -99,12 +99,12 @@ std::string DatabaseCatalog::GetDatabaseName(oid_t database_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string database_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // database_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
+  PL_ASSERT((*result_tiles).size() <= 1);  // database_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
       database_name =
-          result_tiles[0]
+          (*result_tiles)[0]
               ->GetValue(0, 0)
               .GetAs<std::string>();  // After projection left 1 column
     }
@@ -125,11 +125,11 @@ oid_t DatabaseCatalog::GetDatabaseOid(const std::string &database_name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t database_oid = INVALID_OID;
-  PL_ASSERT(result_tiles.size() <= 1);  // database_name is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      database_oid = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // database_name is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      database_oid = (*result_tiles)[0]
                          ->GetValue(0, 0)
                          .GetAs<oid_t>();  // After projection left 1 column
     }

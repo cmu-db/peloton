@@ -24,14 +24,15 @@ IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
   return index_catalog.get();
 }
 
-IndexCatalog::IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool)
+IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
+                           type::AbstractPool *pool)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(catalog_table_oid, column.GetName(),
+    pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(),
                                column.GetOffset(), column.GetType(), true,
                                column.GetConstraints(), pool, nullptr);
   }
@@ -84,7 +85,7 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
 bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
                                oid_t table_oid, IndexType index_type,
                                IndexConstraintType index_constraint,
-                               bool unique_keys type::AbstractPool *pool,
+                               bool unique_keys, type::AbstractPool *pool,
                                concurrency::Transaction *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
@@ -127,11 +128,11 @@ std::string IndexCatalog::GetIndexName(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string index_name;
-  PL_ASSERT(result_tiles.size() <= 1);  // index_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      index_name = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // index_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      index_name = (*result_tiles)[0]
                        ->GetValue(0, 0)
                        .GetAs<std::string>();  // After projection left 1 column
     }
@@ -140,7 +141,8 @@ std::string IndexCatalog::GetIndexName(oid_t index_oid,
   return index_name;
 }
 
-oid_t IndexCatalog::GetTableOid(oid_t index_oid, concurrency::Transaction *txn) {
+oid_t IndexCatalog::GetTableOid(oid_t index_oid,
+                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({2});  // table_oid
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -150,11 +152,11 @@ oid_t IndexCatalog::GetTableOid(oid_t index_oid, concurrency::Transaction *txn) 
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_oid;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      table_oid = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      table_oid = (*result_tiles)[0]
                       ->GetValue(0, 0)
                       .GetAs<oid_t>();  // After projection left 1 column
     }
@@ -163,7 +165,8 @@ oid_t IndexCatalog::GetTableOid(oid_t index_oid, concurrency::Transaction *txn) 
   return table_oid;
 }
 
-IndexType IndexCatalog::GetIndexType(oid_t index_oid, concurrency::Transaction *txn) {
+IndexType IndexCatalog::GetIndexType(oid_t index_oid,
+                                     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({3});  // index_type
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -173,11 +176,11 @@ IndexType IndexCatalog::GetIndexType(oid_t index_oid, concurrency::Transaction *
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   IndexType index_type;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      index_type = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      index_type = (*result_tiles)[0]
                        ->GetValue(0, 0)
                        .GetAs<IndexType>();  // After projection left 1 column
     }
@@ -186,8 +189,8 @@ IndexType IndexCatalog::GetIndexType(oid_t index_oid, concurrency::Transaction *
   return index_type;
 }
 
-IndexConstraintType IndexCatalog::GetIndexConstraint(oid_t index_oid,
-                                       concurrency::Transaction *txn) {
+IndexConstraintType IndexCatalog::GetIndexConstraint(
+    oid_t index_oid, concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({4});  // index_constraint
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -197,12 +200,12 @@ IndexConstraintType IndexCatalog::GetIndexConstraint(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   IndexConstraintType index_constraint;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
       index_constraint =
-          result_tiles[0]
+          (*result_tiles)[0]
               ->GetValue(0, 0)
               .GetAs<IndexConstraintType>();  // After projection left 1 column
     }
@@ -211,7 +214,8 @@ IndexConstraintType IndexCatalog::GetIndexConstraint(oid_t index_oid,
   return index_constraint;
 }
 
-bool IndexCatalog::IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) {
+bool IndexCatalog::IsUniqueKeys(oid_t index_oid,
+                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({5});  // unique_keys
   oid_t index_offset = 0;              // Index of index_oid
   std::vector<type::Value> values;
@@ -221,11 +225,11 @@ bool IndexCatalog::IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) 
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   bool unique_keys = false;
-  PL_ASSERT(result_tiles.size() <= 1);  // table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      unique_keys = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      unique_keys = (*result_tiles)[0]
                         ->GetValue(0, 0)
                         .GetAs<bool>();  // After projection left 1 column
     }
@@ -235,7 +239,7 @@ bool IndexCatalog::IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn) 
 }
 
 std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
-                                concurrency::Transaction *txn) {
+                                              concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 2;              // Index of table_oid
   std::vector<type::Value> values;
@@ -245,7 +249,7 @@ std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<oid_t> index_oids;
-  for (auto tile : result_tiles) {
+  for (auto tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       index_oids.emplace_back(
           tile->GetValue(tuple_id, 0)
@@ -257,7 +261,7 @@ std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
 }
 
 oid_t IndexCatalog::GetIndexOid(std::string &index_name, oid_t table_oid,
-                  concurrency::Transaction *txn) {
+                                concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 1;              // Index of index_name & table_oid
   std::vector<type::Value> values;
@@ -269,11 +273,11 @@ oid_t IndexCatalog::GetIndexOid(std::string &index_name, oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   bool index_oid = false;
-  PL_ASSERT(result_tiles.size() <= 1);  // index_name & table_oid is unique
-  if (result_tiles.size() != 0) {
-    PL_ASSERT(result_tiles[0]->GetTupleCount() <= 1);
-    if (result_tiles[0]->GetTupleCount() != 0) {
-      index_oid = result_tiles[0]
+  PL_ASSERT((*result_tiles).size() <= 1);  // index_name & table_oid is unique
+  if ((*result_tiles).size() != 0) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    if ((*result_tiles)[0]->GetTupleCount() != 0) {
+      index_oid = (*result_tiles)[0]
                       ->GetValue(0, 0)
                       .GetAs<oid_t>();  // After projection left 1 column
     }
