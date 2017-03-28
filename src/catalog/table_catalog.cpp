@@ -129,7 +129,7 @@ oid_t TableCatalog::GetDatabaseOid(oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  oid_t database_oid;
+  oid_t database_oid = INVALID_OID;
   PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
   if ((*result_tiles).size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
