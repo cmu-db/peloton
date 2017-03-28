@@ -433,31 +433,31 @@ std::vector<expression::AbstractExpression*>* PostgresParser::TargetTransform(
       new std::vector<expression::AbstractExpression*>();
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
     ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
+    expression::AbstractExpression* expr;
     switch (target->val->type) {
       case T_ColumnRef: {
-        result->push_back(
-            ColumnRefTransform(reinterpret_cast<ColumnRef*>(target->val)));
+        expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(target->val));
         break;
       }
       case T_A_Const: {
-        result->push_back(
-            ConstTransform(reinterpret_cast<A_Const*>(target->val)));
+        expr = ConstTransform(reinterpret_cast<A_Const*>(target->val));
         break;
       }
       case T_FuncCall: {
-        result->push_back(
-            FuncCallTransform(reinterpret_cast<FuncCall*>(target->val)));
+        expr = FuncCallTransform(reinterpret_cast<FuncCall*>(target->val));
         break;
       }
       case T_A_Expr: {
-        result->push_back(
-            AExprTransform(reinterpret_cast<A_Expr*>(target->val)));
+        expr = AExprTransform(reinterpret_cast<A_Expr*>(target->val));
         break;
       }
       default: {
         LOG_ERROR("Target type %d not suported yet...\n", target->val->type);
       }
     }
+    if (target->name != nullptr)
+      expr->alias = target->name;
+    result->push_back(expr);
   }
   return result;
 }
