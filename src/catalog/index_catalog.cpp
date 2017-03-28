@@ -129,8 +129,8 @@ std::string IndexCatalog::GetIndexName(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string index_name;
-  PL_ASSERT((*result_tiles).size() <= 1);  // index_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // index_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       index_name = (*result_tiles)[0]
@@ -153,8 +153,8 @@ oid_t IndexCatalog::GetTableOid(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_oid = INVALID_OID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       table_oid = (*result_tiles)[0]
@@ -177,8 +177,8 @@ IndexType IndexCatalog::GetIndexType(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   IndexType index_type = IndexType::INVALID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       index_type = static_cast<IndexType>(
@@ -202,8 +202,8 @@ IndexConstraintType IndexCatalog::GetIndexConstraint(
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   IndexConstraintType index_constraint = IndexConstraintType::INVALID;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       index_constraint = static_cast<IndexConstraintType>(
@@ -227,8 +227,8 @@ bool IndexCatalog::IsUniqueKeys(oid_t index_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   bool unique_keys = false;
-  PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       unique_keys = (*result_tiles)[0]
@@ -275,8 +275,8 @@ oid_t IndexCatalog::GetIndexOid(std::string &index_name, oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   bool index_oid = false;
-  PL_ASSERT((*result_tiles).size() <= 1);  // index_name & table_oid is unique
-  if ((*result_tiles).size() != 0) {
+  PL_ASSERT(result_tiles->size() <= 1);  // index_name & table_oid is unique
+  if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
       index_oid = (*result_tiles)[0]
