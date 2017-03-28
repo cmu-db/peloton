@@ -16,6 +16,7 @@
 #include <vector>
 #include <thread>
 
+#include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "type/types.h"

@@ -48,5 +48,5 @@ private:
   static int checkpointing_thread_count_;
 };
 
-} // namespace gc
+} // namespace logging
 } // namespace peloton

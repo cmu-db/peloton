@@ -47,7 +47,7 @@ struct GarbageContext {
 
 class TransactionLevelGCManager : public GCManager {
 public:
-  TransactionLevelGCManager(int thread_count) 
+  TransactionLevelGCManager(const int thread_count) 
     : gc_thread_count_(thread_count),
       reclaim_maps_(thread_count) {
 
@@ -63,7 +63,7 @@ public:
 
   virtual ~TransactionLevelGCManager() { }
 
-  static TransactionLevelGCManager& GetInstance(int thread_count = 1) {
+  static TransactionLevelGCManager& GetInstance(const int thread_count = 1) {
     static TransactionLevelGCManager gc_manager(thread_count);
     return gc_manager;
   }
