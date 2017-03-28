@@ -16,8 +16,8 @@
 #include "catalog/manager.h"
 #include "statistics/stats_aggregator.h"
 #include "logging/log_manager.h"
-#include "logging/records/transaction_record.h"
 #include "gc/gc_manager_factory.h"
+#include "storage/tile_group.h"
 
 
 namespace peloton {
@@ -41,8 +41,8 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
   
   } else if (type == IsolationLevelType::SNAPSHOT) {
     
-    auto &log_manager = logging::LogManager::GetInstance();
-    log_manager.PrepareLogging();
+    // auto &log_manager = logging::LogManager::GetInstance();
+    // log_manager.PrepareLogging();
 
     // transaction processing with decentralized epoch manager
     begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, true);
@@ -55,8 +55,8 @@ Transaction *TransactionManager::BeginTransaction(const size_t thread_id, const 
     // - READ_COMMITTED, or
     // - READ_UNCOMMITTED.
   
-    auto &log_manager = logging::LogManager::GetInstance();
-    log_manager.PrepareLogging();
+    // auto &log_manager = logging::LogManager::GetInstance();
+    // log_manager.PrepareLogging();
 
     // transaction processing with decentralized epoch manager
     begin_cid = EpochManagerFactory::GetInstance().EnterEpoch(thread_id, false);
@@ -83,7 +83,7 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
   if (current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
 
     // logging logic
-    auto &log_manager = logging::LogManager::GetInstance();
+    // auto &log_manager = logging::LogManager::GetInstance();
 
     if (current_txn->GetResult() == ResultType::SUCCESS) {
       if (current_txn->IsGCSetEmpty() != true) {
@@ -92,13 +92,13 @@ void TransactionManager::EndTransaction(Transaction *current_txn) {
       }
       // Log the transaction's commit
       // For time stamp ordering, every transaction only has one timestamp
-      log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
+      // log_manager.LogCommitTransaction(current_txn->GetBeginCommitId());
     } else {
       if (current_txn->IsGCSetEmpty() != true) {
         gc::GCManagerFactory::GetInstance().
             RecycleTransaction(current_txn->GetGCSetPtr(), GetNextCommitId());
       }
-      log_manager.DoneLogging();
+      // log_manager.DoneLogging();
     }
   }
 

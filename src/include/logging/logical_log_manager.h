@@ -28,12 +28,12 @@ class LogicalLogManager : public LogManager {
   LogicalLogManager(LogicalLogManager &&) = delete;
   LogicalLogManager &operator=(LogicalLogManager &&) = delete;
 
-  LogicalLogManager() {}
+  LogicalLogManager(int thread_count) : logger_thread_count_(thread_count) {}
 
   virtual ~LogicalLogManager() {}
 
-  static LogicalLogManager &GetInstance() {
-    static LogicalLogManager log_manager;
+  static LogicalLogManager &GetInstance(const int thread_count = 1) {
+    static LogicalLogManager log_manager(thread_count);
     return log_manager;
   }
 
@@ -58,6 +58,9 @@ class LogicalLogManager : public LogManager {
   virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) {}
   
   virtual void LogDelete(const ItemPointer & UNUSED_ATTRIBUTE) {}
+
+ private:
+  int logger_thread_count_;
 
 };
 

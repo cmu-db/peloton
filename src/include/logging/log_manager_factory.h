@@ -12,21 +12,23 @@
 
 #pragma once
 
+#include "logging/log_manager.h"
+#include "logging/logical_log_manager.h"
 
 namespace peloton {
 namespace logging {
 
-class CheckpointManagerFactory {
+class LogManagerFactory {
  public:
 
-  static CheckpointManager& GetInstance() {
+  static LogManager& GetInstance() {
     switch (logging_type_) {
 
       case LoggingType::ON:
-        return LogicalCheckpointManager::GetInstance(logging_thread_count_);
+        return LogicalLogManager::GetInstance(logging_thread_count_);
       
       default:
-        return CheckpointManager::GetInstance();
+        return LogManager::GetInstance();
     }
   }
 
@@ -47,5 +49,6 @@ private:
 
   static int logging_thread_count_;
 };
-} // namespace gc
+
+} // namespace logging
 } // namespace peloton
