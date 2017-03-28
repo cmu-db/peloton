@@ -312,9 +312,13 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
   location_ptrs.clear();
 
   // FORWARD SCAN
+  // DVANAKEN: 2017-03-06
+  // This test used to expect '0' result, but since we removed Index::Compare()
+  // it now returns '1' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
                   ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(location_ptrs.size(), 1);
   location_ptrs.clear();
 
   index->ScanTest(
@@ -324,18 +328,26 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
+  // DVANAKEN: 2017-03-06
+  // This test used to expect '0' result, but since we removed Index::Compare()
+  // it now returns '1' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
       ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(location_ptrs.size(), 1);
   location_ptrs.clear();
 
+  // DVANAKEN: 2017-03-06
+  // This test used to expect '0' result, but since we removed Index::Compare()
+  // it now returns '1' results. We have to rely on the IndexScanExecutor
+  // to do the final filtering.
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_GREATERTHAN, ExpressionType::COMPARE_EQUAL},
       ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(location_ptrs.size(), 1);
   location_ptrs.clear();
 
   delete index->GetMetadata()->GetTupleSchema();

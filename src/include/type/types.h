@@ -78,15 +78,6 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-enum class GarbageCollectionType {
-  INVALID = INVALID_TYPE_ID,
-  OFF = 1,  // turn off GC
-  ON = 2    // turn on GC
-};
 
 //===--------------------------------------------------------------------===//
 // Value types
@@ -410,13 +401,36 @@ enum class VisibilityType {
 
 enum class IsolationLevelType {
   INVALID = INVALID_TYPE_ID,
-  FULL = 1,            // full serializability
-  SNAPSHOT = 2,        // snapshot isolation
-  REPEATABLE_READ = 3  // repeatable read
+  SERIALIZABLE = 1,     // serializable
+  SNAPSHOT = 2,         // snapshot isolation
+  REPEATABLE_READS = 2, // repeatable reads
+  READ_COMMITTED = 3,   // read committed
+  READ_UNCOMMITTED = 4, // read uncommitted
+  READ_ONLY = 5         // read only
+};
+
+//===--------------------------------------------------------------------===//
+// Conflict Avoidance types
+//===--------------------------------------------------------------------===//
+
+enum class ConflictAvoidanceType {
+  INVALID = INVALID_TYPE_ID,
+  WAIT = 1,     // wait-based
+  ABORT = 2,    // abort-based
 };
 
 //===--------------------------------------------------------------------===//
 // Garbage Collection Types
+//===--------------------------------------------------------------------===//
+
+enum class GarbageCollectionType {
+  INVALID = INVALID_TYPE_ID,
+  OFF = 1,  // turn off GC
+  ON = 2    // turn on GC
+};
+
+//===--------------------------------------------------------------------===//
+// Backend Types
 //===--------------------------------------------------------------------===//
 
 enum class BackendType {
@@ -533,6 +547,7 @@ enum class PlanNodeType {
   // DDL Nodes
   DROP = 33,
   CREATE = 34,
+  POPULATE_INDEX = 35,
 
   // Communication Nodes
   SEND = 40,

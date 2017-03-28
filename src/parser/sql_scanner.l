@@ -209,13 +209,13 @@ BWTREE		TOKEN(BWTREE)
 [-+*/(){},.;<>=^%:?]	{ return yytext[0]; }
 
 
-[0-9]+"."[0-9]* |
+\-?[0-9]+"."[0-9]* |
 "."[0-9]*	{
 	yylval->fval = atof(yytext);
 	return SQL_FLOATVAL;
 }
 
-[0-9]+	{
+\-?[0-9]+	{
 	yylval->ival = atol(yytext);
 	return SQL_INTVAL;
 }

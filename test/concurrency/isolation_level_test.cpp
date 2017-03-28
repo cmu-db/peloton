@@ -346,7 +346,7 @@ void ReadSkewTest() {
 }
 
 // Look at the SSI paper (http://drkp.net/papers/ssi-vldb12.pdf).
-// This is an anomaly involving three transactions (one of them is a readonly
+// This is an anomaly involving three transactions (one of them is a read-only
 // transaction).
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -392,7 +392,7 @@ void SIAnomalyTest1() {
 TEST_F(IsolationLevelTests, SerializableTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        test_type, IsolationLevelType::FULL);
+        test_type, IsolationLevelType::SERIALIZABLE);
     DirtyWriteTest();
     DirtyReadTest();
     FuzzyReadTest();
@@ -411,7 +411,7 @@ TEST_F(IsolationLevelTests, StressTest) {
 
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
-        test_type, IsolationLevelType::FULL);
+        test_type, IsolationLevelType::SERIALIZABLE);
     std::unique_ptr<storage::DataTable> table(
         TestingTransactionUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

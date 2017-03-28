@@ -54,10 +54,11 @@ bool UpdateExecutor::DInit() {
   return true;
 }
 
-bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
+bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner,
+                                             storage::TileGroup *tile_group, 
+                                             storage::TileGroupHeader *tile_group_header,
                                              oid_t physical_tuple_id,
-                                             ItemPointer &old_location,
-                                             storage::TileGroup *tile_group) {
+                                             ItemPointer &old_location) {
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -81,7 +82,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
     if (is_owner == false) {
       // If the ownership is acquire inside this update executor, we
       // release it here
-      transaction_manager.YieldOwnership(current_txn, tile_group_id,
+      transaction_manager.YieldOwnership(current_txn, tile_group_header,
                                          physical_tuple_id);
     }
     transaction_manager.SetTransactionResult(current_txn,
@@ -108,9 +109,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
       target_table_->InsertTuple(&new_tuple, current_txn, &index_entry_ptr);
 
   // it is possible that some concurrent transactions have inserted the
-  // same
-  // tuple.
-  // in this case, abort the transaction.
+  // same tuple. In this case, abort the transaction.
   if (location.block == INVALID_OID) {
     transaction_manager.SetTransactionResult(current_txn,
                                              peloton::ResultType::FAILURE);
@@ -121,6 +120,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(bool is_owner, oid_t tile_group_id,
 
   return true;
 }
+
 /**
  * @brief updates a set of columns
  * @return true on success, false otherwise.
@@ -175,8 +175,9 @@ bool UpdateExecutor::DExecute() {
       if (update_node.GetUpdatePrimaryKey()) {
         // Update primary key
         ret =
-            PerformUpdatePrimaryKey(is_owner, tile_group_id, physical_tuple_id,
-                                    old_location, tile_group);
+            PerformUpdatePrimaryKey(is_owner, tile_group, 
+                                    tile_group_header, physical_tuple_id,
+                                    old_location);
 
         // Examine the result
         if (ret == true) {
@@ -202,8 +203,7 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.PerformUpdate(current_txn, old_location);
       }
     }
-    // if we have already got the
-    // ownership
+    // if we have already obtained the ownership
     else {
       // Skip the IsOwnable and AcquireOwnership if we have already got the
       // ownership
@@ -228,9 +228,9 @@ bool UpdateExecutor::DExecute() {
 
         if (update_node.GetUpdatePrimaryKey()) {
           // Update primary key
-          ret = PerformUpdatePrimaryKey(is_owner, tile_group_id,
-                                        physical_tuple_id, old_location,
-                                        tile_group);
+          ret = PerformUpdatePrimaryKey(is_owner, tile_group, 
+                                        tile_group_header, physical_tuple_id, 
+                                        old_location);
 
           if (ret == true) {
             executor_context_->num_processed += 1;  // updated one
@@ -260,8 +260,7 @@ bool UpdateExecutor::DExecute() {
 
           // perform projection from old version to new version.
           // this triggers in-place update, and we do not need to allocate
-          // another
-          // version.
+          // another version.
           project_info_->Evaluate(&new_tuple, &old_tuple, nullptr,
                                   executor_context_);
 
@@ -285,7 +284,7 @@ bool UpdateExecutor::DExecute() {
             if (is_owner == false) {
               // If the ownership is acquire inside this update executor, we
               // release it here
-              transaction_manager.YieldOwnership(current_txn, tile_group_id,
+              transaction_manager.YieldOwnership(current_txn, tile_group_header,
                                                  physical_tuple_id);
             }
             transaction_manager.SetTransactionResult(current_txn,

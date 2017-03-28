@@ -42,9 +42,14 @@ class Transaction;
 
 class TransactionManager {
  public:
-  TransactionManager() {
+  TransactionManager(
+      const IsolationLevelType level, 
+      const ConflictAvoidanceType conflict) {
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
     maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
+
+    default_isolation_level_ = level;
+    conflict_avoidance_ = conflict;
   }
 
   virtual ~TransactionManager() {}
@@ -60,14 +65,14 @@ class TransactionManager {
   cid_t GetCurrentCommitId() { return next_cid_.load(); }
 
   // This method is used for avoiding concurrent inserts.
-  virtual bool IsOccupied(
+  bool IsOccupied(
       Transaction *const current_txn, 
-      const void *position_ptr) = 0;
+      const void *position_ptr);
 
-  virtual VisibilityType IsVisible(
+  VisibilityType IsVisible(
       Transaction *const current_txn, 
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id) = 0;
+      const oid_t &tuple_id);
 
   // This method test whether the current transaction is the owner of a tuple.
   virtual bool IsOwner(
@@ -96,7 +101,8 @@ class TransactionManager {
   // This method is used by executor to yield ownership after the acquired ownership.
   virtual void YieldOwnership(
       Transaction *const current_txn, 
-      const oid_t &tile_group_id, 
+      // const oid_t &tile_group_id, 
+      const storage::TileGroupHeader *const tile_group_header, 
       const oid_t &tuple_id) = 0;
 
   // The index_entry_ptr is the address of the head node of the version chain, 
@@ -132,13 +138,14 @@ class TransactionManager {
 
   void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
-  virtual Transaction *BeginTransaction(const size_t thread_id = 0) = 0;
+  Transaction *BeginTransaction(const IsolationLevelType type) {
+    return BeginTransaction(0, type);
+  }
 
-  virtual Transaction *BeginReadonlyTransaction(const size_t thread_id = 0) = 0;
+  Transaction *BeginTransaction(const size_t thread_id = 0, 
+                                const IsolationLevelType type = default_isolation_level_);
 
-  virtual void EndTransaction(Transaction *current_txn) = 0;
-
-  virtual void EndReadonlyTransaction(Transaction *current_txn) = 0;
+  void EndTransaction(Transaction *current_txn);
 
   virtual ResultType CommitTransaction(Transaction *const current_txn) = 0;
 
@@ -167,6 +174,10 @@ class TransactionManager {
   // first value is exclusive, last value is inclusive
   std::pair<cid_t, cid_t> dirty_range_ =
       std::make_pair(INVALID_CID, INVALID_CID);
+
+ protected:
+  static IsolationLevelType default_isolation_level_;
+  static ConflictAvoidanceType conflict_avoidance_;
 
  private:
   std::atomic<cid_t> next_cid_;
