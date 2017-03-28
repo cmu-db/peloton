@@ -238,8 +238,6 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   delete values;
   delete insert_plan;
   delete insert_statement;
-  delete parameter_expr_1;
-  delete parameter_expr_2;
 }
 
 }  // End test namespace

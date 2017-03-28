@@ -901,11 +901,9 @@ PostgresParser::ValueListsTransform(List* root) {
       auto expr = reinterpret_cast<Expr*>(cell->data.ptr_value);
       if (expr->type == T_ParamRef)
         cur_result->push_back(ParamRefTransform((ParamRef*)expr));
-      else if (expr->type == T_Const)
+      else if (expr->type == T_A_Const)
         cur_result->push_back(ConstTransform((A_Const*)expr));
-
     }
-
     result->push_back(cur_result);
   }
 
