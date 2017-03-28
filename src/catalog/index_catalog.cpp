@@ -152,7 +152,7 @@ oid_t IndexCatalog::GetTableOid(oid_t index_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  oid_t table_oid;
+  oid_t table_oid = INVALID_OID;
   PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
   if ((*result_tiles).size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
@@ -176,7 +176,7 @@ IndexType IndexCatalog::GetIndexType(oid_t index_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  IndexType index_type;
+  IndexType index_type = IndexType::INVALID;
   PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
   if ((*result_tiles).size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
@@ -201,7 +201,7 @@ IndexConstraintType IndexCatalog::GetIndexConstraint(
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  IndexConstraintType index_constraint;
+  IndexConstraintType index_constraint = IndexConstraintType::INVALID;
   PL_ASSERT((*result_tiles).size() <= 1);  // table_oid is unique
   if ((*result_tiles).size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
