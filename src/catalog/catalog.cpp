@@ -253,7 +253,7 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     // insert index record into index_catalog(pg_index) table
     IndexCatalog::GetInstance()->InsertIndex(
         index_oid, index_name, table->GetOid(), IndexType::BWTREE,
-        IndexConstraintType::PRIMARY_KEY, unique_keys);
+        IndexConstraintType::PRIMARY_KEY, unique_keys, pool_.get(), nullptr);
 
     LOG_TRACE("Successfully created primary key index '%s' for table '%s'",
               pkey_index->GetName().c_str(), table->GetName().c_str());
@@ -355,9 +355,9 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   table->AddIndex(key_index);
 
   // Insert index record into pg_index table
-  IndexCatalog::GetInstance()->InsertIndex(index_oid, index_name,
-                                           table->GetOid(), index_type,
-                                           IndexConstraintType::DEFAULT, true);
+  IndexCatalog::GetInstance()->InsertIndex(
+      index_oid, index_name, table->GetOid(), index_type,
+      IndexConstraintType::DEFAULT, true, pool_.get(), nullptr);
 
   LOG_TRACE("Successfully add index for table %s", table->GetName().c_str());
   return ResultType::SUCCESS;

@@ -94,8 +94,9 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   auto val0 = type::ValueFactory::GetIntegerValue(index_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(index_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(table_oid);
-  auto val3 = type::ValueFactory::GetIntegerValue(index_type);
-  auto val4 = type::ValueFactory::GetIntegerValue(index_constraint);
+  auto val3 = type::ValueFactory::GetIntegerValue(static_cast<int>(index_type));
+  auto val4 =
+      type::ValueFactory::GetIntegerValue(static_cast<int>(index_constraint));
   auto val5 = type::ValueFactory::GetBooleanValue(unique_keys);
 
   tuple->SetValue(0, val0, pool);
@@ -180,9 +181,10 @@ IndexType IndexCatalog::GetIndexType(oid_t index_oid,
   if ((*result_tiles).size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      index_type = (*result_tiles)[0]
-                       ->GetValue(0, 0)
-                       .GetAs<IndexType>();  // After projection left 1 column
+      index_type = static_cast<IndexType>(
+          (*result_tiles)[0]
+              ->GetValue(0, 0)
+              .GetAs<int>());  // After projection left 1 column
     }
   }
 
@@ -204,10 +206,10 @@ IndexConstraintType IndexCatalog::GetIndexConstraint(
   if ((*result_tiles).size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      index_constraint =
+      index_constraint = static_cast<IndexConstraintType>(
           (*result_tiles)[0]
               ->GetValue(0, 0)
-              .GetAs<IndexConstraintType>();  // After projection left 1 column
+              .GetAs<int>());  // After projection left 1 column
     }
   }
 
