@@ -59,13 +59,12 @@ class AbstractCatalog {
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::Transaction *txn);
 
-  std::unique_ptr<std::vector<executor::LogicalTile *>>
-  GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
-                         std::vector<type::Value> values,
-                         concurrency::Transaction *txn);
+  std::unique_ptr<std::vector<executor::LogicalTile *>> GetResultWithIndexScan(
+      std::vector<oid_t> column_offsets, oid_t index_offset,
+      std::vector<type::Value> values, concurrency::Transaction *txn);
 
   // Maximum column name size for catalog schemas
-  const size_t max_name_size = 32;
+  static const size_t max_name_size = 32;
 
   // Local oid (without catalog type mask) starts from START_OID + OID_OFFSET
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);
