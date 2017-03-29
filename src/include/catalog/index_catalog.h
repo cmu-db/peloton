@@ -42,10 +42,10 @@ class IndexCatalog : public AbstractCatalog {
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
   // Write related API
-  bool InsertIndex(oid_t index_oid, const std::string &index_name, oid_t table_oid,
-                   IndexType index_type, IndexConstraintType index_constraint,
-                   bool unique_keys, type::AbstractPool *pool,
-                   concurrency::Transaction *txn);
+  bool InsertIndex(oid_t index_oid, const std::string &index_name,
+                   oid_t table_oid, IndexType index_type,
+                   IndexConstraintType index_constraint, bool unique_keys,
+                   type::AbstractPool *pool, concurrency::Transaction *txn);
   bool DeleteIndex(oid_t index_oid, concurrency::Transaction *txn);
 
   // Read-only API
@@ -55,7 +55,7 @@ class IndexCatalog : public AbstractCatalog {
   IndexConstraintType GetIndexConstraint(oid_t index_oid,
                                          concurrency::Transaction *txn);
   bool IsUniqueKeys(oid_t index_oid, concurrency::Transaction *txn);
-  oid_t GetIndexOid(std::string &index_name, oid_t table_oid,
+  oid_t GetIndexOid(const std::string &index_name, oid_t table_oid,
                     concurrency::Transaction *txn);
 
   std::vector<oid_t> GetIndexOids(oid_t table_oid,

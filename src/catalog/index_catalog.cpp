@@ -262,7 +262,7 @@ std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
   return index_oids;
 }
 
-oid_t IndexCatalog::GetIndexOid(std::string &index_name, oid_t table_oid,
+oid_t IndexCatalog::GetIndexOid(const std::string &index_name, oid_t table_oid,
                                 concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids({0});  // index_oid
   oid_t index_offset = 1;              // Index of index_name & table_oid

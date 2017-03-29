@@ -90,12 +90,17 @@ class Catalog {
   // Create the primary key index for a table
   ResultType CreatePrimaryIndex(const std::string &database_name,
                                 const std::string &table_name);
+  ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid);
 
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
-                         std::vector<std::string> index_attr,
-                         std::string index_name, bool unique,
-                         IndexType index_type);
+                         const std::vector<std::string> &index_attr,
+                         const std::string &index_name, bool unique,
+                         IndexType index_type, bool is_catalog = false);
+  ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
+                         const std::vector<std::string> &index_attr,
+                         const std::string &index_name, bool unique,
+                         IndexType index_type, bool is_catalog = false);
 
   // Get a index with the oids of index, table, and database.
   index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
