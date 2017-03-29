@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "gtest/gtest.h"
+#include "common/logger.h"
 #include "common/harness.h"
 #include "task/worker_pool.h"
 
@@ -23,7 +24,7 @@ class WorkerPoolTest : public PelotonTest {};
 
 static void blah(UNUSED_ATTRIBUTE void* args){
   sleep(2);
-  printf("whatup\n");
+  LOG_INFO("Yingun smells...");
 }
 
 TEST_F(WorkerPoolTest, BasicTest){
