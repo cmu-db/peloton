@@ -89,18 +89,24 @@ class Catalog {
 
   // Create the primary key index for a table
   ResultType CreatePrimaryIndex(const std::string &database_name,
-                                const std::string &table_name);
-  ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid);
+                                const std::string &table_name,
+                                concurrency::Transaction *txn = nullptr);
+  ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
+                                concurrency::Transaction *txn = nullptr);
 
   ResultType CreateIndex(const std::string &database_name,
                          const std::string &table_name,
                          const std::vector<std::string> &index_attr,
                          const std::string &index_name, bool unique,
-                         IndexType index_type, bool is_catalog = false);
+                         IndexType index_type,
+                         concurrency::Transaction *txn = nullptr,
+                         bool is_catalog = false);
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<std::string> &index_attr,
                          const std::string &index_name, bool unique,
-                         IndexType index_type, bool is_catalog = false);
+                         IndexType index_type,
+                         concurrency::Transaction *txn = nullptr,
+                         bool is_catalog = false);
 
   // Get a index with the oids of index, table, and database.
   index::Index *GetIndexWithOid(oid_t database_oid, oid_t table_oid,
@@ -121,7 +127,8 @@ class Catalog {
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::Transaction *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(oid_t index_oid);
+  ResultType DropIndex(oid_t index_oid,
+                       concurrency::Transaction *txn = nullptr);
 
   // Returns true if the catalog contains the given database with the id
   bool HasDatabase(oid_t db_oid) const;
