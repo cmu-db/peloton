@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iostream>
@@ -57,7 +56,7 @@ class Database : public Printable {
   storage::DataTable *GetTableWithOid(const oid_t table_oid) const;
 
   // Throw CatalogException if such table is not found
-  storage::DataTable *GetTableWithName(const std::string table_name) const;
+  storage::DataTable *GetTableWithName(const std::string &table_name) const;
 
   oid_t GetTableCount() const;
 
@@ -70,7 +69,7 @@ class Database : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
   std::string GetDBName();
-  void setDBName(const std::string& database_name);
+  void setDBName(const std::string &database_name);
 
  protected:
   //===--------------------------------------------------------------------===//

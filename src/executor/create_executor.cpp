@@ -55,8 +55,8 @@ bool CreateExecutor::DExecute() {
     } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
-      LOG_TRACE("Result is: %s", ResultTypeToString(
-                current_txn->GetResult()).c_str());
+      LOG_TRACE("Result is: %s",
+                ResultTypeToString(current_txn->GetResult()).c_str());
     }
   }
 
@@ -71,7 +71,7 @@ bool CreateExecutor::DExecute() {
 
     ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
         DEFAULT_DB_NAME, table_name, index_attrs, index_name, unique_flag,
-        index_type);
+        index_type, current_txn);
     current_txn->SetResult(result);
 
     if (current_txn->GetResult() == ResultType::SUCCESS) {
@@ -79,8 +79,8 @@ bool CreateExecutor::DExecute() {
     } else if (current_txn->GetResult() == ResultType::FAILURE) {
       LOG_TRACE("Creating table failed!");
     } else {
-      LOG_TRACE("Result is: %s", ResultTypeToString(
-                current_txn->GetResult()).c_str());
+      LOG_TRACE("Result is: %s",
+                ResultTypeToString(current_txn->GetResult()).c_str());
     }
   }
   return false;

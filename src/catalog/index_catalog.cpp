@@ -274,7 +274,7 @@ oid_t IndexCatalog::GetIndexOid(const std::string &index_name, oid_t table_oid,
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
-  bool index_oid = false;
+  oid_t index_oid = INVALID_OID;
   PL_ASSERT(result_tiles->size() <= 1);  // index_name & table_oid is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
