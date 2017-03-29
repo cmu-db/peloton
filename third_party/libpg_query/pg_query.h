@@ -44,6 +44,9 @@ typedef struct {
 extern "C" {
 #endif
 
+void print_pg_parse_tree(List* node);
+void* pg_query_parse_init();
+void pg_query_parse_finish(void* ctx);
 PgQueryNormalizeResult pg_query_normalize(const char* input);
 PgQueryInternalParsetreeAndError pg_query_parse(const char* input);
 PgQueryPlpgsqlParseResult pg_query_parse_plpgsql(const char* input);
@@ -51,7 +54,7 @@ PgQueryPlpgsqlParseResult pg_query_parse_plpgsql(const char* input);
 PgQueryFingerprintResult pg_query_fingerprint(const char* input);
 
 void pg_query_free_normalize_result(PgQueryNormalizeResult result);
-void pg_query_free_parse_result(PgQueryParseResult result);
+void pg_query_free_parse_result(PgQueryInternalParsetreeAndError result);
 void pg_query_free_plpgsql_parse_result(PgQueryPlpgsqlParseResult result);
 void pg_query_free_fingerprint_result(PgQueryFingerprintResult result);
 

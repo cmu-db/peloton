@@ -10,11 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/parser/pg_list.h>
 #include <iostream>
 #include <string>
 #include <unordered_set>
-#include <include/parser/pg_query.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -25,6 +23,8 @@
 #include "expression/operator_expression.h"
 #include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "parser/pg_query.h"
+#include "parser/pg_list.h"
 #include "parser/postgresparser.h"
 #include "type/types.h"
 #include "type/value_factory.h"
@@ -1152,35 +1152,33 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
   return result;
 }
 
-parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
-  return PgQueryInternalParsetreeTransform(pg_query_parse(text));
-}
-
+// Call postgres's parser and start transforming it into Peloton's parse tree
 parser::SQLStatementList* PostgresParser::ParseSQLString(
     const std::string& text) {
-  return ParseSQLString(text.c_str());
+  auto ctx = pg_query_parse_init();
+  auto result = pg_query_parse(text.c_str());
+  if (result.error) {
+    // Parse Error
+    LOG_ERROR("%s at %d\n", result.error->message, result.error->cursorpos);
+    auto new_stmt = new parser::SQLStatementList();
+    new_stmt->is_valid = false;
+    pg_query_parse_finish(ctx);
+    pg_query_free_parse_result(result);
+    return new_stmt;
+  }
+  // DEBUG only. Comment this out in release mode
+  print_pg_parse_tree(result.tree);
+  auto transform_result = ListTransform(result.tree);
+  pg_query_parse_finish(ctx);
+  pg_query_free_parse_result(result);
+  return transform_result;
 }
 
 PostgresParser& PostgresParser::GetInstance() {
   static PostgresParser parser;
   return parser;
 }
-
-parser::SQLStatementList* PostgresParser::PgQueryInternalParsetreeTransform(
-    PgQueryInternalParsetreeAndError stmt) {
-  if (stmt.stderr_buffer == nullptr) {
-    LOG_ERROR("%s at %d\n", stmt.error->message, stmt.error->cursorpos);
-    auto new_stmt = new parser::SQLStatementList();
-    new_stmt->is_valid = false;
-    return new_stmt;
-  }
-  delete stmt.stderr_buffer;
-
-  auto transform_result = ListTransform(stmt.tree);
-
-  return transform_result;
-}
-
+  
 std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
