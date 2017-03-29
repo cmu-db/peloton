@@ -66,7 +66,7 @@ void PelotonInit::Initialize() {
 
   // initialize the catalog and add the default database, so we don't do this on
   // the first query
-  catalog::Catalog::GetInstance();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 }
 
 void PelotonInit::Shutdown() {
