@@ -652,6 +652,8 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
     data_type = ColumnDefinition::DataType::TEXT;
   } else if (strcmp(name, "tinyint") == 0) {
     data_type = ColumnDefinition::DataType::TINYINT;
+  } else if (strcmp(name, "varbinary") == 0) {
+    data_type = ColumnDefinition::DataType::VARBINARY;
   } else {
     LOG_ERROR("Column DataType %s not supported yet...\n", name);
     throw NotImplementedException("...");
