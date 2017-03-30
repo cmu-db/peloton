@@ -43,7 +43,7 @@ char* PostgresParser::AliasTransform(Alias* root) {
     return nullptr;
   }
 
-  return strdup(root->aliasname);
+  return cstrdup(root->aliasname);
 }
 
 // This function takes a Postgres JoinExpr parsenode and transfers it to a
@@ -138,19 +138,19 @@ parser::TableRef* PostgresParser::RangeVarTransform(RangeVar* root) {
   result->table_info_ = new parser::TableInfo();
 
   if (root->schemaname) {
-    result->schema = strdup(root->schemaname);
-    result->table_info_->database_name = strdup(root->schemaname);
+    result->schema = cstrdup(root->schemaname);
+    result->table_info_->database_name = cstrdup(root->schemaname);
   }
 
   // parse alias
   result->alias = AliasTransform(root->alias);
 
   if (root->relname) {
-    result->table_info_->table_name = strdup(root->relname);
+    result->table_info_->table_name = cstrdup(root->relname);
   }
 
   if (root->catalogname) {
-    result->table_info_->database_name = strdup(root->catalogname);
+    result->table_info_->database_name = cstrdup(root->catalogname);
   }
   return result;
 }
@@ -658,7 +658,7 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
   }
 
   // Transform Varchar len
-  result = new ColumnDefinition(strdup(root->colname), data_type);
+  result = new ColumnDefinition(cstrdup(root->colname), data_type);
   if (type_name->typmods) {
     Node* node =
         reinterpret_cast<Node*>(type_name->typmods->head->data.ptr_value);
@@ -707,10 +707,10 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
   result->table_info_ = new parser::TableInfo();
 
   if (relation->relname) {
-    result->table_info_->table_name = strdup(relation->relname);
+    result->table_info_->table_name = cstrdup(relation->relname);
   }
   if (relation->catalogname) {
-    result->table_info_->database_name = strdup(relation->catalogname);
+    result->table_info_->database_name = cstrdup(relation->catalogname);
   };
 
   if (root->tableElts->length > 0) {
@@ -726,10 +726,10 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
           ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
       temp->table_info_ = new parser::TableInfo();
       if (relation->relname) {
-        temp->table_info_->table_name = strdup(relation->relname);
+        temp->table_info_->table_name = cstrdup(relation->relname);
       }
       if (relation->catalogname) {
-        temp->table_info_->database_name = strdup(relation->catalogname);
+        temp->table_info_->database_name = cstrdup(relation->catalogname);
       };
       result->columns->push_back(temp);
     } else if (node->type == T_Constraint) {
@@ -750,16 +750,16 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
         for (auto attr_cell = constraint->fk_attrs->head; attr_cell != nullptr;
              attr_cell = attr_cell->next) {
           value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
-          col->foreign_key_source->push_back(strdup(attr_val->val.str));
+          col->foreign_key_source->push_back(cstrdup(attr_val->val.str));
         }
         // Transform Primary key attributes
         for (auto attr_cell = constraint->pk_attrs->head; attr_cell != nullptr;
              attr_cell = attr_cell->next) {
           value* attr_val = reinterpret_cast<value*>(attr_cell->data.ptr_value);
-          col->foreign_key_sink->push_back(strdup(attr_val->val.str));
+          col->foreign_key_sink->push_back(cstrdup(attr_val->val.str));
         }
         // Update Reference Table
-        col->table_info_->table_name = strdup(constraint->pktable->relname);
+        col->table_info_->table_name = cstrdup(constraint->pktable->relname);
         result->columns->push_back(col);
       } else {
         LOG_ERROR("Constraint of type %d not supported yet", node->type);
@@ -797,12 +797,12 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
   for (auto cell = root->indexParams->head; cell != nullptr;
        cell = cell->next) {
     char* index_attr = reinterpret_cast<IndexElem*>(cell->data.ptr_value)->name;
-    result->index_attrs->push_back(strdup(index_attr));
+    result->index_attrs->push_back(cstrdup(index_attr));
   }
   result->index_type = IndexType::BWTREE;
   result->table_info_ = new TableInfo();
-  result->table_info_->table_name = strdup(root->relation->relname);
-  result->index_name = strdup(root->idxname);
+  result->table_info_->table_name = cstrdup(root->relation->relname);
+  result->index_name = cstrdup(root->idxname);
   return result;
 }
 
@@ -813,7 +813,7 @@ parser::SQLStatement* PostgresParser::CreateIndexTransform(IndexStmt* root) {
 parser::SQLStatement* PostgresParser::CreateDbTransform(CreatedbStmt* root) {
   parser::CreateStatement* result =
       new parser::CreateStatement(CreateStatement::kDatabase);
-  result->database_name = strdup(root->dbname);
+  result->database_name = cstrdup(root->dbname);
   return result;
 }
 
@@ -824,7 +824,7 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List*>(cell->data.ptr_value);
     LOG_INFO("%d", ((Node*)(table_list->head->data.ptr_value))->type);
-    table_info->table_name = strdup(
+    table_info->table_name = cstrdup(
         reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str);
     res->table_info_ = table_info;
     break;
@@ -844,7 +844,7 @@ parser::DeleteStatement* PostgresParser::TruncateTransform(TruncateStmt* root) {
 
 parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt* root) {
   auto result = new ExecuteStatement();
-  result->name = strdup(root->name);
+  result->name = cstrdup(root->name);
   if (root->params != nullptr)
     result->parameters = ParamListTransform(root->params);
   return result;
@@ -852,7 +852,7 @@ parser::ExecuteStatement* PostgresParser::ExecuteTransform(ExecuteStmt* root) {
 
 parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt* root) {
   auto res = new PrepareStatement();
-  res->name = strdup(root->name);
+  res->name = cstrdup(root->name);
   auto stmt_list = new SQLStatementList();
   stmt_list->statements.push_back(NodeTransform(root->query));
   res->query = stmt_list;
@@ -863,7 +863,7 @@ parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt* root) {
 parser::CopyStatement* PostgresParser::CopyTransform(CopyStmt* root) {
   auto res = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
   res->cpy_table = RangeVarTransform(root->relation);
-  res->file_path = strdup(root->filename);
+  res->file_path = cstrdup(root->filename);
   for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
     auto def_elem = reinterpret_cast<DefElem*>(cell->data.ptr_value);
     if (strcmp(def_elem->defname, "delimiter") == 0) {
@@ -882,7 +882,7 @@ std::vector<char*>* PostgresParser::ColumnNameTransform(List* root) {
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     ResTarget* target = (ResTarget*)(cell->data.ptr_value);
-    result->push_back(strdup(target->name));
+    result->push_back(cstrdup(target->name));
   }
 
   return result;
@@ -1106,7 +1106,7 @@ std::vector<parser::UpdateClause*>* PostgresParser::UpdateTargetTransform(
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();
     ResTarget* target = (ResTarget*)(cell->data.ptr_value);
-    update_clause->column = strdup(target->name);
+    update_clause->column = cstrdup(target->name);
     switch (target->val->type) {
       case T_ColumnRef: {
         update_clause->value =

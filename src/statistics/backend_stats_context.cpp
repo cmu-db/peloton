@@ -225,6 +225,14 @@ void BackendStatsContext::InitQueryMetric(
       QUERY_METRIC, statement->GetQueryString(), params, DEFAULT_DB_ID));
 }
 
+void BackendStatsContext::InitQueryMetric(
+    const std::string query_string,
+    const std::shared_ptr<QueryMetric::QueryParams> params) {
+  // TODO currently all queries belong to DEFAULT_DB
+  ongoing_query_metric_.reset(new QueryMetric(
+      QUERY_METRIC, query_string, params, DEFAULT_DB_ID));
+}
+
 //===--------------------------------------------------------------------===//
 // HELPER FUNCTIONS
 //===--------------------------------------------------------------------===//

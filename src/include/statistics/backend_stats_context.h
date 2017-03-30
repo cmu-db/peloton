@@ -115,6 +115,10 @@ class BackendStatsContext {
   void InitQueryMetric(const std::shared_ptr<Statement> statement,
                        const std::shared_ptr<QueryMetric::QueryParams> params);
 
+  // Initialize the query stat
+  void InitQueryMetric(const std::string query_string,
+                       const std::shared_ptr<QueryMetric::QueryParams> params);
+
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS
   //===--------------------------------------------------------------------===//

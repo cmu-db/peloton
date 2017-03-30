@@ -126,18 +126,24 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
   txn_manager.CommitTransaction(txn);
 }
 
-std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
-                                                         std::string val) {
-  std::shared_ptr<Statement> statement;
+std::string TestingStatsUtil::GetInsertStmtStr(int id, std::string val) {
   std::string sql =
       "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
-      "(" +
-      std::to_string(id) + ",'" + val + "');";
+          "(" +
+          std::to_string(id) + ",'" + val + "');";
   LOG_TRACE("Query: %s", sql.c_str());
+  return sql;
+}
+
+std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
+                                                           std::string val) {
+  std::shared_ptr<Statement> statement;
+  std::string sql = GetInsertStmtStr(id, val);
   statement.reset(new Statement("INSERT", sql));
   ParseAndPlan(statement.get(), sql);
   return statement;
 }
+
 
 std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
   std::shared_ptr<Statement> statement;

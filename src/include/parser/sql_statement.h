@@ -31,8 +31,10 @@ namespace parser {
 
 struct TableInfo {
   ~TableInfo() {
-    delete[] table_name;
-    delete[] database_name;
+    if (table_name != nullptr)
+      delete[] table_name;
+    if (database_name != nullptr)
+      delete[] database_name;
   }
   char* table_name = nullptr;
   ;

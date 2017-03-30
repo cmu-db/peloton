@@ -53,6 +53,14 @@ class PostgresParser {
       const std::string& query_string);
 
  private:
+  // helper for c_str copy
+  static char* cstrdup(const char* c_str) {
+    char* new_str = new char[strlen(c_str) + 1];
+    strcpy(new_str, c_str);
+    return new_str;
+  }
+
+  // tansform helper for internal parse tree
   static parser::SQLStatementList*
     PgQueryInternalParsetreeTransform(PgQueryInternalParsetreeAndError stmt);
 

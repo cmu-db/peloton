@@ -53,7 +53,7 @@ endif()
 # Create a new pre-processor macro __PELOTONFILE__ that has a truncated 
 # path to reduce the size of the debug log messages.
 # Source: http://stackoverflow.com/a/16658858
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__PELOTONFILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__PELOTONFILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"' -fsanitize=address")
 
 # ---[ Color diagnostics
 

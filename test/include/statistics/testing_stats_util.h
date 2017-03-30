@@ -61,6 +61,10 @@ class TestingStatsUtil {
   static std::shared_ptr<Statement> GetInsertStmt(int id = 1,
                                                   std::string val = "hello");
 
+  //FIXME: This is just a hack to avoid calling the parser in multithreaded manner
+  // in stats_test. This should be fixed after the memory leak for the parser is fixed
+  static std::string GetInsertStmtStr(int id = 1, std::string val = "hello");
+
   static std::shared_ptr<Statement> GetDeleteStmt();
 
   static std::shared_ptr<Statement> GetUpdateStmt();
