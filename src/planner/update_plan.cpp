@@ -55,7 +55,7 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 
 //  Initializes the update plan without adding any child nodes and
 //  retrieves column ids for the child scan plan.
-void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
+void UpdatePlan::BuildInitialUpdatePlan(const parser::UpdateStatement *parse_tree,
                                         std::vector<oid_t> &column_ids) {
   LOG_TRACE("Creating an Update Plan");
   auto t_ref = parse_tree->table;
@@ -110,7 +110,7 @@ void UpdatePlan::BuildInitialUpdatePlan(parser::UpdateStatement *parse_tree,
 }
 
 // Creates the update plan with sequential scan.
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
+UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree)
     : update_primary_key_(false) {
   std::vector<oid_t> column_ids;
   BuildInitialUpdatePlan(parse_tree, column_ids);
@@ -132,7 +132,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree)
 }
 
 // Creates the update plan with index scan.
-UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree,
+UpdatePlan::UpdatePlan(const parser::UpdateStatement *parse_tree,
                        std::vector<oid_t> &key_column_ids,
                        std::vector<ExpressionType> &expr_types,
                        std::vector<type::Value> &values, oid_t &index_id)

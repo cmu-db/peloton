@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
 #include "optimizer/column.h"
-#include "optimizer/property.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -22,7 +21,8 @@ namespace optimizer {
 // Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
-  PropertyColumns(std::vector<Column *> columns);
+  PropertyColumns(std::vector<expression::TupleValueExpression *> column_exprs);
+  PropertyColumns(bool is_star_expr);
 
   PropertyType Type() const override;
 
@@ -32,12 +32,16 @@ class PropertyColumns : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
-  inline Column *GetColumn(int idx) const { return columns_[idx]; }
+  inline expression::TupleValueExpression *GetColumn(int idx) const {
+    return column_exprs_[idx];
+  }
 
-  inline size_t GetSize() const { return columns_.size(); }
+  inline size_t GetSize() const { return column_exprs_.size(); }
+  inline bool IsStarExpressionInColumn() const { return is_star_; }
 
  private:
-  std::vector<Column *> columns_;
+  std::vector<expression::TupleValueExpression *> column_exprs_;
+  bool is_star_;
 };
 
 // Specifies the output expressions of the query
@@ -67,7 +71,7 @@ class PropertyProjection : public Property {
 // Specifies the required sorting order of the query
 class PropertySort : public Property {
  public:
-  PropertySort(std::vector<Column *> sort_columns,
+  PropertySort(std::vector<expression::TupleValueExpression *> sort_columns,
                std::vector<bool> sort_ascending);
 
   PropertyType Type() const override;
@@ -78,9 +82,17 @@ class PropertySort : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
+  inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
+
+  inline expression::TupleValueExpression *GetSortColumn(int idx) const {
+    return sort_columns_[idx];
+  }
+
+  inline bool GetSortAscending(int idx) const { return sort_ascending_[idx]; }
+
  private:
-  std::vector<Column *> sort_columns;
-  std::vector<bool> sort_ascending;
+  std::vector<expression::TupleValueExpression *> sort_columns_;
+  std::vector<bool> sort_ascending_;
 };
 
 // Specifies the predicate that the tuples returned by the query should satisfy

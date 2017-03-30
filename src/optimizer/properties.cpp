@@ -17,10 +17,13 @@
 namespace peloton {
 namespace optimizer {
 
-PropertyColumns::PropertyColumns(std::vector<Column *> columns)
-    : columns_(std::move(columns)) {
+PropertyColumns::PropertyColumns(
+    std::vector<expression::TupleValueExpression *> column_exprs)
+    : column_exprs_(std::move(column_exprs)), is_star_(false) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
+
+PropertyColumns::PropertyColumns(bool is_star_expr) : is_star_(is_star_expr) {}
 
 PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
@@ -30,12 +33,14 @@ bool PropertyColumns::operator>=(const Property &r) const {
   const PropertyColumns &r_columns =
       *reinterpret_cast<const PropertyColumns *>(&r);
 
+  if (is_star_ != r_columns.is_star_) return false;
+
   // check that every column in the right hand side property exists in the left
   // hand side property
-  for (auto column : columns_) {
+  for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
-    for (auto r_column : r_columns.columns_) {
-      if (column->ID() == r_column->ID()) {
+    for (auto column : column_exprs_) {
+      if (column->GetBoundOid() == r_column->GetBoundOid()) {
         has_column = true;
         break;
       }
@@ -49,10 +54,11 @@ bool PropertyColumns::operator>=(const Property &r) const {
 hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
-
-  // hash columns
-  for (Column *col : columns_) {
-    hash = util::CombineHashes(hash, col->Hash());
+  hash = util::CombineHashes(hash, util::Hash<bool>(&is_star_));
+  for (auto col : column_exprs_) {
+    auto bound_oid = col->GetBoundOid();
+    hash = util::CombineHashes(
+        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&bound_oid));
   }
   return hash;
 }
@@ -61,9 +67,10 @@ void PropertyColumns::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyColumns *)this);
 }
 
-PropertySort::PropertySort(std::vector<Column *> sort_columns,
-                           std::vector<bool> sort_ascending)
-    : sort_columns(sort_columns), sort_ascending(sort_ascending) {}
+PropertySort::PropertySort(
+    std::vector<expression::TupleValueExpression *> sort_columns,
+    std::vector<bool> sort_ascending)
+    : sort_columns_(sort_columns), sort_ascending_(sort_ascending) {}
 
 PropertyType PropertySort::Type() const { return PropertyType::SORT; }
 
@@ -73,11 +80,11 @@ bool PropertySort::operator>=(const Property &r) const {
   const PropertySort &r_sort = *reinterpret_cast<const PropertySort *>(&r);
 
   // All the sorting orders in r must be satisfied
-  size_t num_sort_columns = r_sort.sort_columns.size();
-  PL_ASSERT(num_sort_columns == r_sort.sort_ascending.size());
+  size_t num_sort_columns = r_sort.sort_columns_.size();
+  PL_ASSERT(num_sort_columns == r_sort.sort_ascending_.size());
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    if (sort_columns[i]->ID() != r_sort.sort_columns[i]->ID()) return false;
-    if (sort_ascending[i] != r_sort.sort_ascending[i]) return false;
+    if (sort_columns_[i] != r_sort.sort_columns_[i]) return false;
+    if (sort_ascending_[i] != r_sort.sort_ascending_[i]) return false;
   }
 
   return true;
@@ -88,10 +95,12 @@ hash_t PropertySort::Hash() const {
   hash_t hash = Property::Hash();
 
   // hash sorting columns
-  size_t num_sort_columns = sort_columns.size();
+  size_t num_sort_columns = sort_columns_.size();
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    hash = util::CombineHashes(hash, sort_columns[i]->Hash());
-    hash = util::CombineHashes(hash, sort_ascending[i]);
+    auto bound_oid = sort_columns_[i]->GetBoundOid();
+    hash = util::CombineHashes(
+        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&bound_oid));
+    hash = util::CombineHashes(hash, sort_ascending_[i]);
   }
   return hash;
 }
@@ -123,7 +132,7 @@ void PropertyPredicate::Accept(PropertyVisitor *v) const {
 }
 
 PropertyProjection::PropertyProjection(
-    std::vector<std::unique_ptr<expression::AbstractExpression> > expressions)
+    std::vector<std::unique_ptr<expression::AbstractExpression>> expressions)
     : expressions_(std::move(expressions)){};
 
 PropertyType PropertyProjection::Type() const { return PropertyType::PROJECT; }

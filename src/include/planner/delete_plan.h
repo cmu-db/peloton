@@ -48,7 +48,7 @@ class DeletePlan : public AbstractPlan {
   explicit DeletePlan(storage::DataTable *table, bool truncate);
 
   explicit DeletePlan(storage::DataTable *table,
-                      expression::AbstractExpression *predicate);
+                      const expression::AbstractExpression *predicate);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DELETE; }
 
