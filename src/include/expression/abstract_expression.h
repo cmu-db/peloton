@@ -106,6 +106,10 @@ class AbstractExpression : public Printable {
     return os.str();
   }
 
+  inline virtual bool Equals(AbstractExpression* expr) {
+    return this->exp_type_ == expr->exp_type_;
+  }
+  
   virtual AbstractExpression *Copy() const = 0;
 
   inline AbstractExpression *CopyUtil(
