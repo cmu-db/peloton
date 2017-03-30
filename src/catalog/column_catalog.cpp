@@ -11,6 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column_catalog.h"
+#include "type/catalog_type.h"
+#include "type/types.h"
+#include "index/index_factory.h"
 
 namespace peloton {
 namespace catalog {
@@ -34,6 +37,40 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                  column.GetType(), true, column.GetConstraints(), pool,
                  nullptr);
   }
+
+  AddIndex({0, 1}, COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
+           IndexConstraintType::UNIQUE);
+  AddIndex({2}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
+           IndexConstraintType::DEFAULT);
+}
+
+void ColumnCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
+                             oid_t index_oid, const std::string &index_name,
+                             IndexConstraintType index_constraint) {
+  auto schema = catalog_table_->GetSchema();
+  auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique_keys = (index_constraint == IndexConstraintType::PRIMARY_KEY) ||
+                     (index_constraint == IndexConstraintType::UNIQUE);
+
+  auto index_metadata = new index::IndexMetadata(
+      index_name, index_oid, catalog_table_->GetOid(), CATALOG_DATABASE_OID,
+      IndexType::BWTREE, index_constraint, schema, key_schema, key_attrs,
+      unique_keys);
+
+  std::shared_ptr<index::Index> key_index(
+      index::IndexFactory::GetIndex(index_metadata));
+  catalog_table_->AddIndex(key_index);
+
+  // insert index record into index_catalog(pg_index) table
+  // IndexCatalog::GetInstance()->InsertIndex(
+  //     index_oid, index_name, COLUMN_CATALOG_OID, IndexType::BWTREE,
+  //     index_constraint, unique_keys, pool_.get(), nullptr);
+
+  LOG_DEBUG("Successfully created primary key index '%s' for table '%s'",
+            index_name.c_str(), COLUMN_CATALOG_NAME);
 }
 
 ColumnCatalog::~ColumnCatalog() {}
@@ -193,8 +230,7 @@ std::string ColumnCatalog::GetColumnName(oid_t table_oid, oid_t column_offset,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::string column_name;
-  PL_ASSERT(result_tiles->size() <=
-            1);  // table_oid & column_offset is unique
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
@@ -249,8 +285,7 @@ type::Type::TypeId ColumnCatalog::GetColumnType(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   type::Type::TypeId column_type = type::Type::TypeId::INVALID;
-  PL_ASSERT(result_tiles->size() <=
-            1);  // table_oid & column_offset is unique
+  PL_ASSERT(result_tiles->size() <= 1);  // table_oid & column_offset is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {

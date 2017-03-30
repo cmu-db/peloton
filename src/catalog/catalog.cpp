@@ -66,7 +66,6 @@ void Catalog::InitializeCatalog() {
   CreatePrimaryIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID);
   CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID);
   CreatePrimaryIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID);
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, COLUMN_CATALOG_OID);
 
   CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
               std::vector<std::string>({"database_name"}),
@@ -91,14 +90,19 @@ void Catalog::InitializeCatalog() {
               std::string(INDEX_CATALOG_NAME) + "_skey1", false,
               IndexType::BWTREE, nullptr, true);
 
-  CreateIndex(CATALOG_DATABASE_OID, COLUMN_CATALOG_OID,
-              std::vector<std::string>({"table_oid", "column_offset"}),
-              std::string(COLUMN_CATALOG_NAME) + "_skey0", true,
-              IndexType::BWTREE, nullptr, true);
-  CreateIndex(CATALOG_DATABASE_OID, COLUMN_CATALOG_OID,
-              std::vector<std::string>({"table_oid"}),
-              std::string(COLUMN_CATALOG_NAME) + "_skey1", false,
-              IndexType::BWTREE, nullptr, true);
+  // actual index already added in column_catalog constructor
+  IndexCatalog::GetInstance()->InsertIndex(
+      COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
+      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true, pool_.get(),
+      nullptr);
+  IndexCatalog::GetInstance()->InsertIndex(
+      COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
+      COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
+      pool_.get(), nullptr);
+  IndexCatalog::GetInstance()->InsertIndex(
+      COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
+      COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      false, pool_.get(), nullptr);
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
@@ -499,19 +503,15 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       key_schema = catalog::Schema::CopySchema(schema, key_attrs);
       key_schema->SetIndexedColumns(key_attrs);
       oid_t index_oid = pg_index->GetNextOid();
+      IndexConstraintType index_constraint = unique_keys
+                                                 ? IndexConstraintType::UNIQUE
+                                                 : IndexConstraintType::DEFAULT;
 
       // Check if unique index or not
-      if (unique_keys == false) {
-        index_metadata = new index::IndexMetadata(
-            index_name, index_oid, table->GetOid(), database->GetOid(),
-            index_type, IndexConstraintType::DEFAULT, schema, key_schema,
-            key_attrs, true);
-      } else {
-        index_metadata = new index::IndexMetadata(
-            index_name, index_oid, table->GetOid(), database->GetOid(),
-            index_type, IndexConstraintType::UNIQUE, schema, key_schema,
-            key_attrs, true);
-      }
+      index_metadata = new index::IndexMetadata(
+          index_name, index_oid, table->GetOid(), database->GetOid(),
+          index_type, index_constraint, schema, key_schema, key_attrs,
+          unique_keys);
 
       // Add index to table
       std::shared_ptr<index::Index> key_index(
@@ -520,11 +520,11 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 
       // Insert index record into pg_index table
       IndexCatalog::GetInstance()->InsertIndex(
-          index_oid, index_name, table->GetOid(), index_type,
-          IndexConstraintType::DEFAULT, true, pool_.get(), txn);
+          index_oid, index_name, table->GetOid(), index_type, index_constraint,
+          unique_keys, pool_.get(), txn);
 
-      LOG_DEBUG("Successfully add index for table %s",
-                table->GetName().c_str());
+      LOG_DEBUG("Successfully add index for table %s contains %d indexes",
+                table->GetName().c_str(), (int)table->GetValidIndexCount());
 
       if (single_statement_txn) {
         txn_manager.CommitTransaction(txn);
@@ -666,6 +666,7 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
         // STEP 1, read index_oids from pg_index, and iterate through
         auto index_oids =
             IndexCatalog::GetInstance()->GetIndexOids(table_oid, txn);
+        LOG_DEBUG("dropping %d indexes", (int)index_oids.size());
         for (oid_t index_oid : index_oids) DropIndex(index_oid, txn);
 
         // STEP 2
@@ -724,7 +725,7 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
       // drop record in index catalog table
       IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
 
-      LOG_DEBUG("Successfully add index for table %s",
+      LOG_DEBUG("Successfully drop index %d for table %s", index_oid,
                 table->GetName().c_str());
 
       if (single_statement_txn) {
