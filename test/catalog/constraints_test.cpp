@@ -36,21 +36,11 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "parser/parser.h"
-#include "optimizer/simple_optimizer.h"
-#include "executor/logical_tile_factory.h"
-#include "executor/plan_executor.h"
-#include "executor/seq_scan_executor.h"
-#include "executor/update_executor.h"
-#include "planner/plan_util.h"
 
 #define NOTNULL_TEST
-#define MULTI_NOTNULL_TEST
 #define CHECK_TEST
-#define DEFAULT_TEST
-//#define PRIMARY_UNIQUEKEY_TEST
-//#define FOREIGHN_KEY_TEST
-#define UNIQUE_TEST
-#define MULTI_UNIQUE_TEST
+#define PRIMARY_UNIQUEKEY_TEST
+#define FOREIGHN_KEY_TEST
 
 namespace peloton {
 namespace test {
@@ -190,16 +180,6 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   }
   EXPECT_FALSE(hasException);
 
-  // Test2: insert not a valid column violate the constraint
-  hasException = false;
-  try {
-    ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
-  } catch (ConstraintException e) {
-    hasException = true;
-  }
-  EXPECT_TRUE(hasException);
-
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
@@ -232,9 +212,9 @@ TEST_F(ConstraintsTests, CHECKTest) {
   delete stmt_list;
   */
 
-  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
+  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false);
   auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
-  type::Value tmp_value = type::Value(type::Type::INTEGER, 0);
+  type::Value tmp_value = type::Value(type::Type::INTEGER, 10);
   constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
   column1.AddConstraint(constraints);
   std::cout << "****" << constraints.GetInfo() << std::endl;
@@ -255,7 +235,9 @@ TEST_F(ConstraintsTests, CHECKTest) {
   bool hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
+        txn, data_table.get(),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 0)));
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -265,7 +247,9 @@ TEST_F(ConstraintsTests, CHECKTest) {
   hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
+        txn, data_table.get(),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(-1, 1)));
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -277,40 +261,6 @@ TEST_F(ConstraintsTests, CHECKTest) {
 }
 #endif
 
-TEST_F(ConstraintsTests, DEFAULTTEST) {
-  std::unique_ptr<storage::DataTable> data_table(
-    ConstraintsTestsUtil::CreateAndPopulateTable());
-
-  auto schema = data_table->GetSchema();
-
-  catalog::Constraint constraint(ConstraintType::DEFAULT, "Default Constraint");
-  auto v = type::ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1));
-  constraint.addDefaultValue(v);
-  schema->AddConstraint(1, constraint);
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  // begin this transaction
-  auto txn = txn_manager.BeginTransaction();
-
-  ConstraintsTestsUtil::ExecuteInsert(
-    txn, data_table.get(),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 0)),
-    type::ValueFactory::GetNullValueByType(type::Type::INTEGER),
-    type::ValueFactory::GetIntegerValue(
-      ConstraintsTestsUtil::PopulatedValue(15, 2)),
-    type::ValueFactory::GetVarcharValue(
-      std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
-
-
-
-  txn_manager.CommitTransaction(txn);
-  delete data_table.release();
-
-}
-
-<<<<<<< HEAD
 #ifdef UNIQUE_TEST
 TEST_F(ConstraintsTests, UNIQUETest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -466,8 +416,6 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
 }
 #endif
 
-=======
->>>>>>> eac8479... Added default_value pointer in constraint.h.
 /*
 #ifdef PRIMARY_UNIQUEKEY_TEST
 TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
