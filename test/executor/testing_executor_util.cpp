@@ -119,12 +119,22 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
                                                not_null_constraint_name));
       return column;
     } break;
-	
-	case 4: {
-		auto column = catalog::Column(type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER), "COL_E", is_inlined);
-		column.AddConstraint(catalog::Constraint(ConstraintType::DEFAULT, not_null_constraint_name));
-	} break;
-    
+
+    case 4: {
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_E", is_inlined);
+      column.AddConstraint(catalog::Constraint(ConstraintType::DEFAULT,
+                                               not_null_constraint_name));
+    } break;
+
+    case 115: {
+      auto column = catalog::Column(
+          type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),
+          "COL_CHECK", is_inlined);
+      column.AddConstraint(catalog::Constraint(
+          ConstraintType::CHECK, not_null_constraint_name, "CHECK COL_A > 0"));
+    } break;
 
     default: {
       throw ExecutorException("Invalid column index : " +

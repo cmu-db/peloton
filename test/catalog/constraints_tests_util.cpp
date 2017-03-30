@@ -105,6 +105,17 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
       return column;
     } break;
 
+    case 114: {
+      auto column = catalog::Column(type::Type::INTEGER,
+                                    25,  // Column length.
+                                    "COL_D",
+                                    !is_inlined);  // inlined.
+
+      column.AddConstraint(
+          catalog::Constraint(ConstraintType::CHECK, not_null_constraint_name));
+      return column;
+    }
+
     default: {
       throw ExecutorException("Invalid column index : " +
                               std::to_string(index));
