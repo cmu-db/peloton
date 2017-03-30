@@ -277,6 +277,27 @@ class ConstraintsTestsUtil {
   };
 
   /** @brief Insert a tupl with 4 columns' value specified */
+  static bool ExecuteOneInsert(concurrency::Transaction *transaction,
+                               storage::DataTable *table,
+                               const type::Value &col1) {
+    std::unique_ptr<executor::ExecutorContext> context(
+        new executor::ExecutorContext(transaction));
+
+    // Make tuple
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(table->GetSchema(), true));
+
+    auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+    tuple->SetValue(0, col1, testing_pool);
+    auto project_info = MakeProjectInfoFromTuple(tuple.get());
+
+    // Insert
+    planner::InsertPlan node(table, std::move(project_info));
+    executor::InsertExecutor executor(&node, context.get());
+    return executor.Execute();
+  };
+
+  /** @brief Insert a tupl with 4 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
                             storage::DataTable *table, const type::Value &col1,
                             const type::Value &col2, const type::Value &col3,
