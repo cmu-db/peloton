@@ -34,15 +34,15 @@ namespace gc {
 
 
 struct GarbageContext {
-  GarbageContext() : timestamp_(INVALID_CID) {}
+  GarbageContext() : epoch_id_(INVALID_EID) {}
   GarbageContext(std::shared_ptr<GCSet> gc_set, 
-                 const cid_t &timestamp) {
+                 const eid_t &epoch_id) {
     gc_set_ = gc_set;
-    timestamp_ = timestamp;
+    epoch_id_ = epoch_id;
   }
 
   std::shared_ptr<GCSet> gc_set_;
-  cid_t timestamp_;
+  eid_t epoch_id_;
 };
 
 class TransactionLevelGCManager : public GCManager {
@@ -91,7 +91,7 @@ public:
     this->is_running_ = false;
   }
 
-  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) override;
+  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set, const eid_t &epoch_id, const size_t &thread_id) override;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
@@ -116,17 +116,17 @@ public:
 
 private:
 
-  inline unsigned int HashToThread(const cid_t &ts) {
-    return (unsigned int)ts % gc_thread_count_;
+  inline unsigned int HashToThread(const size_t &thread_id) {
+    return (unsigned int)thread_id % gc_thread_count_;
   }
 
   void ClearGarbage(int thread_id);
 
   void Running(const int &thread_id);
 
-  int Unlink(const int &thread_id, const cid_t &max_cid);
+  int Unlink(const int &thread_id, const eid_t &expired_eid);
 
-  int Reclaim(const int &thread_id, const cid_t &max_cid);
+  int Reclaim(const int &thread_id, const eid_t &expired_eid);
 
   void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
 

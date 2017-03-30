@@ -51,8 +51,6 @@ TEST_F(TransactionTests, TransactionTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     LaunchParallelTest(8, TransactionTest, &txn_manager);
-
-    LOG_INFO("next Commit Id :: %lu", txn_manager.GetNextCommitId());
   }
 }
 

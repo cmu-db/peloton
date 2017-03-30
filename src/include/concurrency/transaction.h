@@ -54,13 +54,17 @@ class Transaction : public Printable {
     txn_id_ = begin_cid;
     
     begin_cid_ = begin_cid;
+
     end_cid_ = MAX_CID;
+
+    epoch_id_ = begin_cid_ >> 32;
     
     thread_id_ = thread_id;
 
     isolation_level_ = isolation;
 
     is_written_ = false;
+    
     insert_count_ = 0;
     
     gc_set_.reset(new GCSet());
@@ -80,7 +84,9 @@ class Transaction : public Printable {
 
   inline cid_t GetEndCommitId() const { return end_cid_; }
 
-  inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
+  inline eid_t GetEpochId() const { return epoch_id_; }
+
+  inline void SetEndCommitId(const cid_t end_cid) { end_cid_ = end_cid; }
 
   void RecordRead(const ItemPointer &);
 
@@ -131,11 +137,17 @@ class Transaction : public Printable {
   // thread id
   size_t thread_id_;
 
-  // start commit id
+  // begin commit id
+  // this id determines which tuple versions the transaction can access.
   cid_t begin_cid_;
 
   // end commit id
+  // this id determines the id attached to the tuple version written by the transaction.
   cid_t end_cid_;
+
+  // epoch id can be extracted from begin commit id.
+  // GC manager uses this id to check whether a version is still visible.
+  eid_t epoch_id_;
 
   ReadWriteSet rw_set_;
 

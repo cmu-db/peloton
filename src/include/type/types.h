@@ -1049,11 +1049,15 @@ typedef uint64_t cid_t;
 
 static const cid_t INVALID_CID = 0;
 
-static const cid_t READ_ONLY_START_CID = 1;
-
-static const cid_t START_CID = 2;
-
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
+
+// For epoch id
+
+typedef uint64_t eid_t;
+
+static const cid_t INVALID_EID = 0;
+
+static const cid_t MAX_EID = std::numeric_limits<eid_t>::max();
 
 // For epoch
 static const size_t EPOCH_LENGTH = 40;

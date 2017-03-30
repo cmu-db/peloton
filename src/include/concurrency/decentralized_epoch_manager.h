@@ -35,7 +35,7 @@ public:
   DecentralizedEpochManager() : 
     current_global_epoch_(1), 
     next_txn_id_(0),
-    current_global_epoch_snapshot_(1),
+    snapshot_global_epoch_(1),
     is_running_(false) {
       // register a default thread for handling catalog stuffs.
       RegisterThread(0);
@@ -88,23 +88,23 @@ public:
   // a transaction enters epoch with thread id
   virtual cid_t EnterEpoch(const size_t thread_id, const bool is_snapshot_read) override;
 
-  virtual void ExitEpoch(const size_t thread_id, const cid_t begin_cid) override;
+  virtual void ExitEpoch(const size_t thread_id, const eid_t epoch_id) override;
 
 
-  virtual cid_t GetMaxCommittedCid() override {
-    uint64_t max_committed_eid = GetMaxCommittedEpochId();
+  virtual cid_t GetExpiredCid() override {
+    uint64_t max_committed_eid = GetExpiredEpochId();
     return (max_committed_eid << 32) | 0xFFFFFFFF;
   }
 
-  virtual uint64_t GetMaxCommittedEpochId() override;
+  virtual eid_t GetExpiredEpochId() override;
+
+  virtual eid_t GetNextEpochId() override {
+    return current_global_epoch_ + 1;
+  }
 
 private:
 
-  inline uint64_t ExtractEpochId(const cid_t cid) {
-    return (cid >> 32);
-  }
-
-  inline uint64_t GetCurrentGlobalEpoch() {
+  inline eid_t GetCurrentGlobalEpoch() {
     return current_global_epoch_.load();
   }
 
@@ -132,10 +132,12 @@ private:
   std::unordered_map<int, std::unique_ptr<LocalEpoch>> local_epochs_;
   
   // the global epoch reflects the true time of the system.
-  std::atomic<uint64_t> current_global_epoch_;
+  std::atomic<eid_t> current_global_epoch_;
   std::atomic<uint32_t> next_txn_id_;
   
-  uint64_t current_global_epoch_snapshot_;
+  // snapshot epoch is an epoch where the corresponding tuples may be still
+  // visible to on-the-fly transactions
+  eid_t snapshot_global_epoch_;
 
   bool is_running_;
 
