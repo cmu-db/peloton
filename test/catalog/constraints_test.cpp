@@ -290,6 +290,18 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
   }
   EXPECT_FALSE(hasException);
 
+  // Test2: insert not a valid column violate the constraint
+  hasException = false;
+  try {
+    ConstraintsTestsUtil::ExecuteOneInsert(
+        txn, data_table.get(),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(-1, 1)));
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   delete data_table.release();
