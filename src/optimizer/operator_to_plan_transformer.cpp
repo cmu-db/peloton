@@ -75,20 +75,18 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
       if (output_columns_ != nullptr)
         output_columns_->emplace_back(std::make_tuple(db_id, table_id, i));
     }
-  }
-  else {
+  } else {
     for (size_t column_idx = 0; column_idx < column_prop->GetSize();
          column_idx++) {
       auto col = column_prop->GetColumn(column_idx);
-      oid_t id = std::get<2>(col->bound_obj_id_);
+      oid_t id = std::get<2>(col->GetBoundOid());
       column_ids.push_back(id);
 
       // record output column mapping
       if (output_columns_ != nullptr)
-        output_columns_->emplace_back(col->bound_obj_id_);
+        output_columns_->emplace_back(col->GetBoundOid());
     }
   }
-
 
   output_plan_.reset(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
@@ -156,7 +154,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
-
   // Get child plan
   PL_ASSERT(children_plans_.size() == 1);
 
@@ -169,7 +166,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     // is the sort column
     for (oid_t child_col_id = 0;
          child_col_id < children_output_columns_[0].size(); ++child_col_id) {
-      if (col->bound_obj_id_ == children_output_columns_[0][child_col_id]) {
+      if (col->GetBoundOid() == children_output_columns_[0][child_col_id]) {
         sort_col_ids.emplace_back(child_col_id);
         break;
       }
@@ -193,10 +190,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
          child_col_id < children_output_columns_[0].size(); ++child_col_id) {
       column_ids.emplace_back(child_col_id);
       if (output_columns_ != nullptr)
-        output_columns_->emplace_back(children_output_columns_[0][child_col_id]);
+        output_columns_->emplace_back(
+            children_output_columns_[0][child_col_id]);
     }
-  }
-  else {
+  } else {
     for (size_t column_idx = 0; column_idx < column_prop->GetSize();
          column_idx++) {
       auto col = column_prop->GetColumn(column_idx);
@@ -204,11 +201,11 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
       // to column offset
       for (oid_t child_col_id = 0;
            child_col_id < children_output_columns_[0].size(); ++child_col_id) {
-        if (col->bound_obj_id_ == children_output_columns_[0][child_col_id]) {
+        if (col->GetBoundOid() == children_output_columns_[0][child_col_id]) {
           column_ids.emplace_back(child_col_id);
           // record output column mapping
           if (output_columns_ != nullptr)
-            output_columns_->emplace_back(col->bound_obj_id_);
+            output_columns_->emplace_back(col->GetBoundOid());
           break;
         }
       }
@@ -241,17 +238,16 @@ void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
   std::unique_ptr<planner::AbstractPlan> insert_plan(
-      new planner::InsertPlan(op->target_table, op->columns,
-                              op->values));
+      new planner::InsertPlan(op->target_table, op->columns, op->values));
   output_plan_ = std::move(insert_plan);
 }
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   // TODO: Support index scan
-  auto scan_plan = (planner::AbstractScan*)children_plans_[0].get();
+  auto scan_plan = (planner::AbstractScan *)children_plans_[0].get();
   PL_ASSERT(scan_plan != nullptr);
 
   // Add predicates
-  const expression::AbstractExpression* predicates = scan_plan->GetPredicate();
+  const expression::AbstractExpression *predicates = scan_plan->GetPredicate();
   std::unique_ptr<planner::AbstractPlan> delete_plan(
       new planner::DeletePlan(op->target_table, predicates));
 

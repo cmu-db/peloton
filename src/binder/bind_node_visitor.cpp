@@ -110,7 +110,7 @@ void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
-  if (!expr->is_bound_) {
+  if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
     std::tuple<oid_t, oid_t> table_id_tuple;
 
@@ -142,7 +142,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     }
 
     expr->SetBoundObjectId(col_pos_tuple);
-    expr->is_bound_ = true;
+    expr->SetIsBound();
   }
 }
 

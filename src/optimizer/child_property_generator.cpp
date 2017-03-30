@@ -55,16 +55,14 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
     auto columns_prop_ptr = columns_prop->As<PropertyColumns>();
     if (columns_prop_ptr->IsStarExpressionInColumn()) {
       provided_property.AddProperty(columns_prop);
-    }
-    else {
-
+    } else {
       std::vector<expression::TupleValueExpression *> column_exprs;
       for (size_t i = 0; i < columns_prop_ptr->GetSize(); ++i)
         column_exprs.push_back(columns_prop_ptr->GetColumn(i));
 
       // Add sort column to output property if needed
-      auto sort_prop =
-          requirements_.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+      auto sort_prop = requirements_.GetPropertyOfType(PropertyType::SORT)
+                           ->As<PropertySort>();
       // column_exprs.empty() if
       // the sql is 'SELECT *'
       if (sort_prop != nullptr && !column_exprs.empty()) {
@@ -73,7 +71,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
           bool found = false;
           if (columns_prop_ptr != nullptr) {
             for (auto &col : column_exprs) {
-              if (sort_col->bound_obj_id_ == col->bound_obj_id_) {
+              if (sort_col->GetBoundOid() == col->GetBoundOid()) {
                 found = true;
                 break;
               }
@@ -105,7 +103,7 @@ void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalInsert *){};
 void ChildPropertyGenerator::Visit(const PhysicalUpdate *){};
-void ChildPropertyGenerator::Visit(const PhysicalDelete *){
+void ChildPropertyGenerator::Visit(const PhysicalDelete *) {
   // Let child fulfil all the required properties
   std::vector<PropertySet> child_input_properties{requirements_};
 

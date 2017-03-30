@@ -40,7 +40,7 @@ bool PropertyColumns::operator>=(const Property &r) const {
   for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
     for (auto column : column_exprs_) {
-      if (column->bound_obj_id_ == r_column->bound_obj_id_) {
+      if (column->GetBoundOid() == r_column->GetBoundOid()) {
         has_column = true;
         break;
       }
@@ -56,8 +56,9 @@ hash_t PropertyColumns::Hash() const {
   hash_t hash = Property::Hash();
   hash = util::CombineHashes(hash, util::Hash<bool>(&is_star_));
   for (auto col : column_exprs_) {
+    auto bound_oid = col->GetBoundOid();
     hash = util::CombineHashes(
-        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&col->bound_obj_id_));
+        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&bound_oid));
   }
   return hash;
 }
@@ -96,9 +97,9 @@ hash_t PropertySort::Hash() const {
   // hash sorting columns
   size_t num_sort_columns = sort_columns_.size();
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    hash =
-        util::CombineHashes(hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(
-                                      &(sort_columns_[i]->bound_obj_id_)));
+    auto bound_oid = sort_columns_[i]->GetBoundOid();
+    hash = util::CombineHashes(
+        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&bound_oid));
     hash = util::CombineHashes(hash, sort_ascending_[i]);
   }
   return hash;
