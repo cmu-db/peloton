@@ -495,8 +495,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(
-    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
+                                               UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -800,7 +800,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_oid) {
 
   for (std::size_t index_itr = 0; index_itr < index_count; index_itr++) {
     index = indexes_.Find(index_itr);
-    if (index->GetOid() == index_oid) {
+    if (index && index->GetOid() == index_oid) {
       break;
     }
   }
