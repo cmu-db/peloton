@@ -257,10 +257,55 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx,
     default: {
       // TODO: throw an exception
       std::cout << "Operator NOT SUPPORT" << std::endl;
+
       return false;
     }
   }
 
+  return true;
+}
+
+bool DataTable::CheckExp(const storage::Tuple *tuple) const {
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    std::pair<ExpressionType, type::Value> exp =
+        schema->AllowExpConstrain(column_itr);
+    if (exp.first == ExpressionType::INVALID) continue;
+    type::Value cur = tuple->GetValue(column_itr);
+    switch (exp.first) {
+      case ExpressionType::COMPARE_EQUAL: {
+        if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
+        break;
+      }
+      case ExpressionType::COMPARE_NOTEQUAL: {
+        if (cur.CompareEquals(exp.second) == type::CMP_TRUE) return false;
+        break;
+      }
+      case ExpressionType::COMPARE_LESSTHAN: {
+        if (cur.CompareGreaterThanEquals(exp.second) == type::CMP_TRUE)
+          return false;
+        break;
+      }
+      case ExpressionType::COMPARE_GREATERTHAN: {
+        if (cur.CompareLessThanEquals(exp.second) == type::CMP_TRUE)
+          return false;
+        break;
+      }
+      case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
+        if (cur.CompareGreaterThan(exp.second) == type::CMP_TRUE) return false;
+        break;
+      }
+      case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+        if (cur.CompareLessThan(exp.second) == type::CMP_TRUE) return false;
+        break;
+      }
+      default: {
+        // TODO: throw an exception
+        std::cout << "Operator NOT SUPPORT" << std::endl;
+        return false;
+      }
+    }
+  }
   return true;
 }
 
