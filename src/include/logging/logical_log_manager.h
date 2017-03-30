@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// log_manager.h
+// logical_log_manager.h
 //
-// Identification: src/include/logging/log_manager.h
+// Identification: src/include/logging/logical_log_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,7 +18,7 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// log Manager
+// logical log Manager
 //===--------------------------------------------------------------------===//
 
 class LogicalLogManager : public LogManager {
@@ -37,32 +37,32 @@ class LogicalLogManager : public LogManager {
     return log_manager;
   }
 
-  virtual void Reset() { is_running_ = false; }
+  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) override {}
 
-  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartLogging() override {}
 
-  virtual void StartLogging() {}
+  virtual void StopLogging() override {}
 
-  virtual void StopLogging() {}
+  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) override {}
 
-  virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
+  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) override {}
 
-  virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
+  virtual size_t GetTableCount() override { return 0; }
 
-  virtual size_t GetTableCount() { return 0; }
+  virtual void LogBegin() override {}
 
-  virtual void LogBegin() {}
+  virtual void LogEnd() override {}
 
-  virtual void LogInsert(const ItemPointer & UNUSED_ATTRIBUTE) {}
+  virtual void LogInsert(const ItemPointer & UNUSED_ATTRIBUTE) override {}
   
-  virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) {}
+  virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) override {}
   
-  virtual void LogDelete(const ItemPointer & UNUSED_ATTRIBUTE) {}
+  virtual void LogDelete(const ItemPointer & UNUSED_ATTRIBUTE) override { }
 
  private:
   int logger_thread_count_;
 
 };
 
-}  // namespace gc
+}  // namespace logging
 }  // namespace peloton

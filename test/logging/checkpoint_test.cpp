@@ -135,8 +135,8 @@
 // //   txn_manager.CommitTransaction(txn);
 
 // //   auto cid = txn_manager.GetNextCommitId() - 1;
-// //   LOG_INFO("Scan with cid = %d. MaxCommittedCid = %d", (int)cid,
-// //            (int)txn_manager.GetMaxCommittedCid());
+// //   LOG_INFO("Scan with cid = %d. GetExpiredEpochIdCid = %d", (int)cid,
+// //            (int)txn_manager.GetExpiredCid());
 // //   auto schema = target_table->GetSchema();
 // //   std::vector<oid_t> column_ids;
 // //   column_ids.resize(schema->GetColumnCount());

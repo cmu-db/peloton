@@ -33,9 +33,9 @@ void GCManager::CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple
       for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
         const catalog::Schema &schema = tg->tile_schemas[tile_itr];
 
-          tile_col_count = schema.GetColumnCount();
+        tile_col_count = schema.GetColumnCount();
 
-          storage::Tile *tile = tg->GetTile(tile_itr);
+        storage::Tile *tile = tg->GetTile(tile_itr);
         PL_ASSERT(tile);
         for (oid_t tile_col_itr = 0; tile_col_itr < tile_col_count; ++tile_col_itr) {
             type_id = schema.GetType(tile_col_itr);

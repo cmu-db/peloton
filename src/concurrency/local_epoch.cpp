@@ -16,7 +16,7 @@
 namespace peloton {
 namespace concurrency {
 
-  bool LocalEpoch::EnterEpoch(const uint64_t epoch_id, const bool is_snapshot_read) {
+  bool LocalEpoch::EnterEpoch(const eid_t epoch_id, const bool is_snapshot_read) {
 
     epoch_lock_.Lock();
 
@@ -58,7 +58,7 @@ namespace concurrency {
     return true;
   }
 
-  void LocalEpoch::ExitEpoch(const uint64_t epoch_id) {
+  void LocalEpoch::ExitEpoch(const eid_t epoch_id) {
     epoch_lock_.Lock();
 
     PL_ASSERT(epoch_map_.find(epoch_id) != epoch_map_.end());
@@ -79,7 +79,7 @@ namespace concurrency {
     epoch_lock_.Unlock();
   }
 
-  uint64_t LocalEpoch::GetMaxCommittedEpochId(const uint64_t epoch_id) {
+  uint64_t LocalEpoch::GetExpiredEpochId(const uint64_t epoch_id) {
     epoch_lock_.Lock();
     // there's no epoch in this thread.
     // which indicates that this thread is used or GC'd for some time.

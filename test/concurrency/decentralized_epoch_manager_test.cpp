@@ -45,23 +45,25 @@ TEST_F(DecentralizedEpochManagerTests, SingleThreadTest) {
   // create a transaction at epoch 2.
   cid_t txn_id = epoch_manager.EnterEpoch(0, false);
 
+  eid_t epoch_id = txn_id >> 32;
+
   // we should expect that the tail is 1.
-  uint64_t tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  uint64_t tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(1, tail_epoch_id);
 
   epoch_manager.Reset(3);
 
   // we should expect that the tail is 1.
-  tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(1, tail_epoch_id);
   
-  epoch_manager.ExitEpoch(0, txn_id);
+  epoch_manager.ExitEpoch(0, epoch_id);
 
   epoch_manager.Reset(4);
 
-  tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(3, tail_epoch_id);
 
@@ -89,8 +91,10 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   // create a transaction at epoch 2.
   cid_t txn_id1 = epoch_manager.EnterEpoch(0, false);
 
+  eid_t epoch_id1 = txn_id1 >> 32;
+
   // we should expect that the tail is 1.
-  uint64_t tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  uint64_t tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(1, tail_epoch_id);
 
@@ -99,23 +103,25 @@ TEST_F(DecentralizedEpochManagerTests, MultipleThreadsTest) {
   // create a transaction at epoch 3.
   cid_t txn_id2 = epoch_manager.EnterEpoch(1, false);
 
+  eid_t epoch_id2 = txn_id2 >> 32;
+
   // we should expect that the tail is 1.
-  tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(1, tail_epoch_id);
   
-  epoch_manager.ExitEpoch(0, txn_id1);
+  epoch_manager.ExitEpoch(0, epoch_id1);
 
   epoch_manager.Reset(5);
 
-  tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   // we still have one thread running at epoch 3.
   EXPECT_EQ(2, tail_epoch_id);
 
-  epoch_manager.ExitEpoch(1, txn_id2);
+  epoch_manager.ExitEpoch(1, epoch_id2);
 
-  tail_epoch_id = epoch_manager.GetMaxCommittedEpochId();
+  tail_epoch_id = epoch_manager.GetExpiredEpochId();
 
   EXPECT_EQ(4, tail_epoch_id);
 

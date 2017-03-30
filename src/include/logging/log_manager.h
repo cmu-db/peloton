@@ -44,9 +44,9 @@ class LogManager {
     return log_manager;
   }
 
-  virtual void Reset() { is_running_ = false; }
+  void Reset() { is_running_ = false; }
 
-  // Get status of whether logging thread is running or not
+  // Get status of whether logging threads are running or not
   bool GetStatus() { return this->is_running_; }
 
   virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
@@ -63,6 +63,8 @@ class LogManager {
 
   virtual void LogBegin() {}
 
+  virtual void LogEnd() {}
+
   virtual void LogInsert(const ItemPointer & UNUSED_ATTRIBUTE) {}
   
   virtual void LogUpdate(const ItemPointer & UNUSED_ATTRIBUTE) {}
@@ -73,5 +75,5 @@ class LogManager {
   volatile bool is_running_;
 };
 
-}  // namespace gc
+}  // namespace logging
 }  // namespace peloton

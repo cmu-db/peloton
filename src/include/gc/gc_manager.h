@@ -71,7 +71,8 @@ class GCManager {
   virtual size_t GetTableCount() { return 0; }
 
   virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set UNUSED_ATTRIBUTE, 
-                                   const cid_t &timestamp UNUSED_ATTRIBUTE) {}
+                                  const eid_t &epoch_id UNUSED_ATTRIBUTE, 
+                                  const size_t &thread_id UNUSED_ATTRIBUTE) {}
 
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);

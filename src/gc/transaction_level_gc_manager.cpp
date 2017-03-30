@@ -11,11 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "gc/transaction_level_gc_manager.h"
+
 #include "storage/tuple.h"
 #include "storage/database.h"
 #include "storage/tile_group.h"
 #include "catalog/manager.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "concurrency/epoch_manager_factory.h"
 #include "common/container_tuple.h"
 
 namespace peloton {
@@ -50,18 +52,19 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
   PL_ASSERT(is_running_ == true);
   uint32_t backoff_shifts = 0;
   while (true) {
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto max_cid = txn_manager.GetMaxCommittedCid();
+    auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+    
+    auto expired_eid = epoch_manager.GetExpiredEpochId();
     
     // When the DBMS has started working but it never processes any transaction,
-    // we may see max_cid == MAX_CID.
-    if (max_cid == MAX_CID) {
+    // we may see expired_eid == MAX_EID.
+    if (expired_eid == MAX_EID) {
       continue;
     }
 
-    int reclaimed_count = Reclaim(thread_id, max_cid);
+    int reclaimed_count = Reclaim(thread_id, expired_eid);
 
-    int unlinked_count = Unlink(thread_id, max_cid);
+    int unlinked_count = Unlink(thread_id, expired_eid);
 
     if (is_running_ == false) {
       return;
@@ -81,13 +84,13 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 
-void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, const cid_t &timestamp) {
+void TransactionLevelGCManager::RecycleTransaction(std::shared_ptr<GCSet> gc_set, const eid_t &epoch_id, const size_t &thread_id) {
   // Add the garbage context to the lock-free queue
-  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, timestamp));
-  unlink_queues_[HashToThread(gc_context->timestamp_)]->Enqueue(gc_context);
+  std::shared_ptr<GarbageContext> gc_context(new GarbageContext(gc_set, epoch_id));
+  unlink_queues_[HashToThread(thread_id)]->Enqueue(gc_context);
 }
 
-int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid) {
+int TransactionLevelGCManager::Unlink(const int &thread_id, const eid_t &expired_eid) {
   
   int tuple_counter = 0;
 
@@ -97,8 +100,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-    [this, &garbages, &tuple_counter, max_cid](const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
-      bool res = garbage_ctx->timestamp_ < max_cid;
+    [this, &garbages, &tuple_counter, expired_eid](const std::shared_ptr<GarbageContext>& garbage_ctx) -> bool {
+      bool res = garbage_ctx->epoch_id_ < expired_eid;
       if (res == true) {
         DeleteFromIndexes(garbage_ctx);
         // Add to the garbage map
@@ -118,7 +121,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
       break;
     }
 
-    if (garbage_ctx->timestamp_ < max_cid) {
+    if (garbage_ctx->epoch_id_ < expired_eid) {
 
       // as the max timestamp of committed transactions is larger than the gc's timestamp,
       // it means that no active transactions can read it.
@@ -135,27 +138,28 @@ int TransactionLevelGCManager::Unlink(const int &thread_id, const cid_t &max_cid
     }
   }  // end for
 
-  auto safe_max_cid = concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
+  eid_t safe_expired_eid = concurrency::EpochManagerFactory::GetInstance().GetNextEpochId();
+
   for(auto& item : garbages){
-      reclaim_maps_[thread_id].insert(std::make_pair(safe_max_cid, item));
+      reclaim_maps_[thread_id].insert(std::make_pair(safe_expired_eid, item));
   }
   LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
   return tuple_counter;
 }
 
 // executed by a single thread. so no synchronization is required.
-int TransactionLevelGCManager::Reclaim(const int &thread_id, const cid_t &max_cid) {
+int TransactionLevelGCManager::Reclaim(const int &thread_id, const eid_t &expired_eid) {
   int gc_counter = 0;
 
   // we delete garbage in the free list
   auto garbage_ctx_entry = reclaim_maps_[thread_id].begin();
   while (garbage_ctx_entry != reclaim_maps_[thread_id].end()) {
-    const cid_t garbage_ts = garbage_ctx_entry->first;
+    const eid_t garbage_eid = garbage_ctx_entry->first;
     auto garbage_ctx = garbage_ctx_entry->second;
 
-    // if the timestamp of the garbage is older than the current max_cid,
+    // if the timestamp of the garbage is older than the current expired_eid,
     // recycle it
-    if (garbage_ts < max_cid) {
+    if (garbage_eid < expired_eid) {
       AddToRecycleMap(garbage_ctx);
 
       // Remove from the original map
