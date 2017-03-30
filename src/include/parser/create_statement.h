@@ -54,20 +54,19 @@ struct ColumnDefinition {
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
-      for (auto key : *primary_key) free(key);
+      for (auto key : *primary_key) delete[] (key);
       delete primary_key;
     }
 
     if (foreign_key_source) {
-      for (auto key : *foreign_key_source) free(key);
+      for (auto key : *foreign_key_source) delete[] (key);
       delete foreign_key_source;
     }
     if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) free(key);
+      for (auto key : *foreign_key_sink) delete[] (key);
       delete foreign_key_sink;
     }
-
-    free(name);
+    delete[] name;
     delete table_info_;
   }
 
@@ -168,15 +167,15 @@ struct CreateStatement : TableRefStatement {
     }
 
     if (index_attrs) {
-      for (auto attr : *index_attrs) free(attr);
+      for (auto attr : *index_attrs) delete[] (attr);
       delete index_attrs;
     }
 
     if (index_name) {
-      free(index_name);
+      delete[] (index_name);
     }
     if (database_name) {
-      free(database_name);
+      delete[] (database_name);
     }
   }
 

@@ -21,7 +21,7 @@
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "optimizer/simple_optimizer.h"
-#include "parser/parser.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
@@ -43,7 +43,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(database_name,
                                                                  table_name);
   std::unique_ptr<Statement> statement;
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
   bridge::peloton_status status;
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
@@ -111,7 +111,7 @@ TEST_F(DeleteTests, VariousOperations) {
   statement.reset(new Statement(
       "INSERT",
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');"));
-  auto& peloton_parser = parser::Parser::GetInstance();
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");

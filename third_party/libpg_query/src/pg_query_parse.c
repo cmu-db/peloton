@@ -9,8 +9,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define PARSE_STRING 1
-
 PgQueryInternalParsetreeAndError pg_query_raw_parse(const char* input)
 {
 	PgQueryInternalParsetreeAndError result = {0};
@@ -85,32 +83,32 @@ PgQueryInternalParsetreeAndError pg_query_raw_parse(const char* input)
 	return result;
 }
 
-PgQueryInternalParsetreeAndError pg_query_parse(const char* input)
-{
-	MemoryContext ctx = NULL;
-	PgQueryInternalParsetreeAndError parsetree_and_error;
-
-	ctx = pg_query_enter_memory_context("pg_query_parse");
-
-	parsetree_and_error = pg_query_raw_parse(input);
-
-// If you want to enable the reference for Postgres parse tree,
-// set the PARSE_STRING flag above to be 1.
-#if PARSE_STRING == 1
-	printf("%s\n", pg_query_nodes_to_json(parsetree_and_error.tree));
-#endif
-
-	// pg_query_exit_memory_context(ctx);
-
-	return parsetree_and_error;
+// This should be called before pg_query_parse
+void* pg_query_parse_init() {
+  return pg_query_enter_memory_context("pg_query_parse");
 }
 
-void pg_query_free_parse_result(PgQueryParseResult result)
+PgQueryInternalParsetreeAndError pg_query_parse(const char* input)
+{
+	return pg_query_raw_parse(input);
+}
+
+// DEBUG: print the json representation of parse tree
+void print_pg_parse_tree(List* tree) {
+  char* tree_json = pg_query_nodes_to_json(tree);
+  printf("%s\n", tree_json);
+  pfree(tree_json);
+}
+
+// This should be called after pg_query_parse
+void pg_query_parse_finish(void* ctx) {
+  pg_query_exit_memory_context((MemoryContext)ctx);
+}
+
+void pg_query_free_parse_result(PgQueryInternalParsetreeAndError result)
 {
   if (result.error) {
 		pg_query_free_error(result.error);
   }
-
-  free(result.parse_tree);
   free(result.stderr_buffer);
 }

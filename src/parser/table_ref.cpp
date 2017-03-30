@@ -18,8 +18,8 @@ namespace parser {
 
 TableRef::~TableRef() {
   delete table_info_;
-  free(alias);
-  free(schema);
+  delete[] alias;
+  delete[] schema;
 
   delete select;
   delete join;

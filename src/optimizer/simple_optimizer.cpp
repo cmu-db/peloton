@@ -183,7 +183,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If query is 'select *', the column will be already added.
       if (select_stmt->order != nullptr && !is_star) {
         expression::ExpressionUtil::TransformExpression(
-            column_ids, select_stmt->order->expr, schema, needs_projection);
+            column_ids, select_stmt->order->exprs->at(0), schema, needs_projection);
       }
 
       // Check if there are any aggregate functions
@@ -1445,14 +1445,14 @@ std::unique_ptr<planner::AbstractPlan> SimpleOptimizer::CreateOrderByPlan(
     }
   }
   std::vector<bool> flags;
-  if (select_stmt->order->type == 0) {
+  if (select_stmt->order->types->at(0) == 0) {
     flags.push_back(false);
   } else {
     flags.push_back(true);
   }
   std::vector<oid_t> key;
   std::string sort_col_name(
-      ((expression::TupleValueExpression*)select_stmt->order->expr)
+      ((expression::TupleValueExpression*)select_stmt->order->exprs->at(0))
           ->GetColumnName());
   for (size_t column_ctr = 0; column_ctr < schema_columns.size();
        column_ctr++) {

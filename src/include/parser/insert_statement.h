@@ -30,29 +30,25 @@ struct InsertStatement : SQLStatement {
         type(type),
         columns(NULL),
         insert_values(NULL),
-        select(NULL),
-        table_ref_(nullptr) {}
+        select(NULL) {}
 
   virtual ~InsertStatement() {
     if (columns) {
-      for (auto col : *columns) free(col);
+      for (auto col : *columns) delete[] col;
       delete columns;
     }
 
     if (insert_values) {
       for (auto tuple : *insert_values) {
         for (auto expr : *tuple) {
-          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
+          // Why?
+//          if (expr->GetExpressionType() != ExpressionType::VALUE_PARAMETER)
             delete expr;
         }
         delete tuple;
       }
       delete insert_values;
     }
-
-    // FIXME: This is here for compilation purpose. Need to remove after the
-    // Hyrise parser is removed!!!
-    delete table_info_;
 
     delete select;
 
@@ -62,19 +58,10 @@ struct InsertStatement : SQLStatement {
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   inline std::string GetTableName() const {
-    if (table_info_ != nullptr)
-      return table_info_->table_name;
-    else
-      return table_ref_->GetTableName();
+    return table_ref_->GetTableName();
   }
   inline std::string GetDatabaseName() const {
-    if (table_info_ != nullptr) {
-      if (table_info_->database_name == nullptr) {
-        return DEFAULT_DB_NAME;
-      }
-      return table_info_->database_name;
-    } else
-      return table_ref_->GetDatabaseName();
+    return table_ref_->GetDatabaseName();
   }
 
   InsertType type;
@@ -82,10 +69,6 @@ struct InsertStatement : SQLStatement {
   std::vector<std::vector<peloton::expression::AbstractExpression*>*>*
       insert_values;
   SelectStatement* select;
-
-  // FIXME: This is here for compilation purpose. Need to remove after the
-  // Hyrise parser is removed!!!
-  TableInfo* table_info_ = nullptr;
 
   // Which table are we inserting into
   TableRef* table_ref_;

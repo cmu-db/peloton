@@ -15,6 +15,7 @@
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
+#include <vector>
 
 namespace peloton {
 namespace parser {
@@ -28,15 +29,21 @@ namespace parser {
 typedef enum { kOrderAsc, kOrderDesc } OrderType;
 
 struct OrderDescription {
-  OrderDescription(OrderType type, expression::AbstractExpression* expr)
-      : type(type), expr(expr) {}
+  OrderDescription() {}
 
-  virtual ~OrderDescription() { delete expr; }
+  virtual ~OrderDescription() {
+    delete types;
+
+    for (auto expr : *exprs)
+      delete expr;
+
+    delete exprs;
+  }
 
   void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
 
-  OrderType type;
-  expression::AbstractExpression* expr;
+  std::vector<OrderType>* types;
+  std::vector<expression::AbstractExpression*>* exprs;
 };
 
 /**
