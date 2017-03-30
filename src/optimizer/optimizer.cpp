@@ -30,6 +30,9 @@
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/create_plan.h"
+#include "planner/drop_plan.h"
+#include "binder/bind_node_visitor.h"
 
 namespace peloton {
 namespace optimizer {
@@ -39,6 +42,10 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
   logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
+  physical_implementation_rules_.emplace_back(new LogicalLimitToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
+  physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
   physical_implementation_rules_.emplace_back(new GetToScan());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
@@ -50,12 +57,26 @@ Optimizer::Optimizer() {
 
 std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const std::unique_ptr<parser::SQLStatementList> &parse_tree_list) {
+
+  LOG_DEBUG("Enter new optimizer...");
+
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
   std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   auto parse_tree = parse_tree_list->GetStatements().at(0);
+
+  // Handle ddl statement
+  bool is_ddl_stmt;
+  auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt);
+  if (is_ddl_stmt) {
+    return std::move(ddl_plan);
+  }
+
+  // Run binder
+  auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>();
+  bind_node_visitor->BindNameToNode(parse_tree);
 
   // Generate initial operator tree from query tree
   std::shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree);
@@ -77,14 +98,46 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   if (best_plan == nullptr) return nullptr;
 
+  // Reset memo after finishing the optimization
+  Reset();
 
-//  return std::shared_ptr<planner::AbstractPlan>(best_plan.release());
+  LOG_DEBUG("Exit new optimizer...");
+
+  //  return std::shared_ptr<planner::AbstractPlan>(best_plan.release());
   return std::move(best_plan);
 }
 
 void Optimizer::Reset() {
   memo_ = std::move(Memo());
   column_manager_ = std::move(ColumnManager());
+}
+
+std::unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
+    parser::SQLStatement *tree, bool& is_ddl_stmt) {
+  std::unique_ptr<planner::AbstractPlan> ddl_plan;
+  is_ddl_stmt = true;
+  auto stmt_type = tree->GetType();
+  switch (stmt_type) {
+    case StatementType::DROP: {
+      LOG_TRACE("Adding Drop plan...");
+      std::unique_ptr<planner::AbstractPlan> drop_plan(
+          new planner::DropPlan((parser::DropStatement *) tree));
+      ddl_plan = std::move(drop_plan);
+    }
+      break;
+
+    case StatementType::CREATE: {
+      LOG_TRACE("Adding Create plan...");
+      std::unique_ptr<planner::AbstractPlan> create_plan(
+          new planner::CreatePlan((parser::CreateStatement *) tree));
+      ddl_plan = std::move(create_plan);
+    }
+      break;
+    default:is_ddl_stmt = false;
+  }
+
+  return std::move(ddl_plan);
+
 }
 
 std::shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
@@ -104,14 +157,20 @@ PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
 
 std::unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
     std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
-    std::vector<PropertySet> &required_input_props) {
+    std::vector<PropertySet> &required_input_props,
+    std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
+    std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
+        children_output_columns,
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns) {
   OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(plan, &requirements,
-                                         &required_input_props);
+  return transformer.ConvertOpExpression(
+      plan, &requirements, &required_input_props, children_plans,
+      children_output_columns, output_columns);
 }
 
 std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
-    GroupID id, PropertySet requirements) {
+    GroupID id, PropertySet requirements,
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns) {
   LOG_TRACE("Choosing best plan for group %d", id);
 
   Group *group = memo_.GetGroupByID(id);
@@ -126,16 +185,28 @@ std::unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
       std::move(gexpr->GetInputProperties(requirements));
   PL_ASSERT(required_input_props.size() == child_groups.size());
 
+  // Derive chidren plans first
+  // because they may be useful
+  // in the derivation of root plan
+  // Also keep propagate global column id
+  // for column id to column offset mapping
+  std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans;
+  std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>>
+      children_output_columns;
+  for (size_t i = 0; i < child_groups.size(); ++i) {
+    std::vector<std::tuple<oid_t, oid_t, oid_t>> child_output_columns = {};
+    children_plans.push_back(ChooseBestPlan(
+        child_groups[i], required_input_props[i], &child_output_columns));
+    children_output_columns.push_back(std::move(child_output_columns));
+  }
+
+  // Derive root plan
   std::shared_ptr<OperatorExpression> op =
       std::make_shared<OperatorExpression>(gexpr->Op());
 
-  auto plan =
-      OptimizerPlanToPlannerPlan(op, requirements, required_input_props);
-
-  for (size_t i = 0; i < child_groups.size(); ++i) {
-    auto child_plan = ChooseBestPlan(child_groups[i], required_input_props[i]);
-    plan->AddChild(std::move(child_plan));
-  }
+  auto plan = OptimizerPlanToPlannerPlan(
+      op, requirements, required_input_props, children_plans,
+      children_output_columns, output_columns);
 
   return plan;
 }
@@ -208,7 +279,8 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
     // enforce missing properties
     for (auto property : requirements.Properties()) {
       if (output_properties.HasProperty(*property) == false) {
-        gexpr = EnforceProperty(gexpr, output_properties, property);
+        gexpr =
+            EnforceProperty(gexpr, output_properties, property, requirements);
         group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                                  output_properties);
       }
@@ -224,7 +296,7 @@ void Optimizer::OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
 
 std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
     std::shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
-    const std::shared_ptr<Property> property) {
+    const std::shared_ptr<Property> property, PropertySet &requirements) {
   // new child input is the old output
   auto child_input_properties = std::vector<PropertySet>();
   child_input_properties.push_back(output_properties);
@@ -234,6 +306,10 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   auto child_costs = std::vector<double>();
   child_costs.push_back(gexpr->GetCost(output_properties));
 
+  // if (property->Type() == PropertyType::SORT) {
+  //  LOG_DEBUG("Enforcing Sort");
+  //}
+
   PropertyEnforcer enforcer(column_manager_);
   auto enforced_expr =
       enforcer.EnforceProperty(gexpr, &output_properties, property);
@@ -241,12 +317,20 @@ std::shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   std::shared_ptr<GroupExpression> enforced_gexpr;
   RecordTransformedExpression(enforced_expr, enforced_gexpr,
                               gexpr->GetGroupID());
-
+  // LOG_DEBUG("Leaving Enforce");
   // new output property would have the enforced Property
   output_properties.AddProperty(std::shared_ptr<Property>(property));
 
   DeriveCostAndStats(enforced_gexpr, output_properties, child_input_properties,
                      child_stats, child_costs);
+
+  // If requirements is fulfilled
+  // set cost and stats for it
+  if (output_properties >= requirements) {
+    DeriveCostAndStats(enforced_gexpr, requirements, child_input_properties,
+                       child_stats, child_costs);
+  }
+
   return enforced_gexpr;
 }
 
@@ -391,7 +475,6 @@ std::vector<GroupID> Optimizer::MemoTransformedChildren(
   for (std::shared_ptr<OperatorExpression> child : expr->Children()) {
     child_groups.push_back(MemoTransformedExpression(child));
   }
-
   return child_groups;
 }
 

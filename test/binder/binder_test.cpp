@@ -89,49 +89,49 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   LOG_INFO("Checking select list");
   auto tupleExpr =
       (expression::TupleValueExpression*)(*selectStmt->select_list)[0];
-  EXPECT_EQ(tupleExpr->bound_obj_id,
+  EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   tupleExpr = (expression::TupleValueExpression*)(*selectStmt->select_list)[1];
-  EXPECT_EQ(tupleExpr->bound_obj_id,
+  EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
 
   // Check join condition
   LOG_INFO("Checking join condition");
   tupleExpr = (expression::TupleValueExpression*)
                   selectStmt->from_table->join->condition->GetChild(0);
-  EXPECT_EQ(tupleExpr->bound_obj_id,
+  EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // a.a1
   tupleExpr = (expression::TupleValueExpression*)
                   selectStmt->from_table->join->condition->GetChild(1);
-  EXPECT_EQ(tupleExpr->bound_obj_id,
+  EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 0));  // b.b1
 
   // Check Where clause
   LOG_INFO("Checking where clause");
   tupleExpr =
       (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(0);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 0));  // a1
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
 
   // Check Group By and Having
   LOG_INFO("Checking group by");
   tupleExpr =
       (expression::TupleValueExpression*)selectStmt->group_by->columns->at(0);
-  EXPECT_EQ(tupleExpr->bound_obj_id,
+  EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   tupleExpr =
       (expression::TupleValueExpression*)selectStmt->group_by->columns->at(1);
-  EXPECT_EQ(tupleExpr->bound_obj_id,
+  EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   tupleExpr =
       (expression::TupleValueExpression*)selectStmt->group_by->having->GetChild(
           0);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 0));  // a1
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
 
   // Check Order By
   LOG_INFO("Checking order by");
   tupleExpr = (expression::TupleValueExpression*)selectStmt->order->exprs->at(0);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 0));  // a1
-
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
+  
   // Check alias ambiguous
   LOG_INFO("Checking duplicate alias and table name.");
   binder.reset(new binder::BindNodeVisitor());
@@ -154,10 +154,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   LOG_INFO("Checking where clause");
   tupleExpr =
       (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(0);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 0));  // a1
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));  // a1
   tupleExpr =
       (expression::TupleValueExpression*)selectStmt->where_clause->GetChild(1);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 1));  // a1
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 1));  // a1
 
   // Test alias and select_list
   LOG_INFO("Checking select_list and table alias binding");
@@ -168,10 +168,10 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   binder->BindNameToNode(selectStmt);
   tupleExpr =
       (expression::TupleValueExpression*)(selectStmt->select_list->at(0));
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableA_oid, 0));
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableA_oid, 0));
   tupleExpr =
       (expression::TupleValueExpression*)(selectStmt->select_list->at(1));
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableB_oid, 1));
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
   // Delete the test database
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, nullptr);
@@ -201,12 +201,12 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto tupleExpr =
       (expression::TupleValueExpression*)deleteStmt->expr->GetChild(0)
           ->GetChild(1);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableB_oid, 0));
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 0));
 
   LOG_INFO("Checking second condition in where clause");
   tupleExpr = (expression::TupleValueExpression*)deleteStmt->expr->GetChild(1)
                   ->GetChild(0);
-  EXPECT_EQ(tupleExpr->bound_obj_id, make_tuple(db_oid, tableB_oid, 1));
+  EXPECT_EQ(tupleExpr->GetBoundOid(), make_tuple(db_oid, tableB_oid, 1));
 
   // Delete the test database
   catalog_ptr->DropDatabaseWithName(DEFAULT_DB_NAME, nullptr);

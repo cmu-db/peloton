@@ -42,6 +42,8 @@ class CostAndStatsCalculator : public OperatorVisitor {
 
   void Visit(const PhysicalScan *) override;
   void Visit(const PhysicalProject *) override;
+  void Visit(const PhysicalOrderBy *) override;
+  void Visit(const PhysicalLimit *) override;
   void Visit(const PhysicalFilter *) override;
   void Visit(const PhysicalInnerNLJoin *) override;
   void Visit(const PhysicalLeftNLJoin *) override;
@@ -51,6 +53,9 @@ class CostAndStatsCalculator : public OperatorVisitor {
   void Visit(const PhysicalLeftHashJoin *) override;
   void Visit(const PhysicalRightHashJoin *) override;
   void Visit(const PhysicalOuterHashJoin *) override;
+  void Visit(const PhysicalInsert *) override;
+  void Visit(const PhysicalDelete *) override;
+  void Visit(const PhysicalUpdate *) override;
 
  private:
   ColumnManager &manager_;

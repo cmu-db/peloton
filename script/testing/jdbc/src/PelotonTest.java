@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.Properties;
 
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:54321/";
+  private final String url = "jdbc:postgresql://localhost:15721/";
   private final String username = "postgres";
   private final String pass = "postgres";
   private final int LOG_LEVEL = 0;

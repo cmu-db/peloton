@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/abstract_optimizer.h"
 
 namespace peloton {
@@ -20,5 +19,5 @@ AbstractOptimizer::AbstractOptimizer(){};
 
 AbstractOptimizer::~AbstractOptimizer(){};
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
