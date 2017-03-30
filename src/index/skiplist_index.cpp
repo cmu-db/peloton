@@ -21,9 +21,9 @@ namespace peloton {
 namespace index {
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-SKIPLIST_INDEX_TYPE::SkipListIndex(IndexMetadata *metadata)
+SKIPLIST_INDEX_TYPE::SkipListIndex(catalog::IndexCatalogObject *index_catalog_object)
     :  // Base class
-      Index{metadata},
+      Index{index_catalog_object},
       // Key "less than" relation comparator
       comparator{},
       // Key equality checker

@@ -760,7 +760,7 @@ void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
   indexes_.Append(index);
 
   // Add index column info
-  auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
+  auto index_columns_ = index->GetIndexCatalogObject()->GetKeyAttrs();
   std::set<oid_t> index_columns_set(index_columns_.begin(),
                                     index_columns_.end());
 

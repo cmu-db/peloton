@@ -267,5 +267,28 @@ std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
   tuple->SetValue(3, val4, pool);
   return std::move(tuple);
 }
+
+/**
+ * Generate an index catalog tuple
+ * Input: The table schema, the index_catalog_object
+ * Returns: The generated tuple
+ */
+std::unique_ptr<storage::Tuple> GetIndexCatalogTuple(
+    const catalog::Schema *schema, const catalog::IndexCatalogObject *index_catalog_object, type::AbstractPool *pool) {
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+  auto val1 = type::ValueFactory::GetIntegerValue(index_catalog_object->GetOid());
+  auto val2 = type::ValueFactory::GetVarcharValue(index_catalog_object->GetName(), nullptr);
+  auto val3 = type::ValueFactory::GetIntegerValue(index_catalog_object->table_oid);
+  auto val4 = type::ValueFactory::GetIntegerValue(index_catalog_object->database_oid);
+  auto val5 = type::ValueFactory::GetBooleanValue(index_catalog_object->HasUniqueKeys());
+
+  tuple->SetValue(0, val1, pool);
+  tuple->SetValue(1, val2, pool);
+  tuple->SetValue(2, val3, pool);
+  tuple->SetValue(3, val4, pool);
+  tuple->SetValue(4, val5, pool);
+  return std::move(tuple);
+}
+
 }
 }

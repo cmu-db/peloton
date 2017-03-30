@@ -21,9 +21,9 @@ namespace peloton {
 namespace index {
 
 BWTREE_TEMPLATE_ARGUMENTS
-BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata)
+BWTREE_INDEX_TYPE::BWTreeIndex(catalog::IndexCatalogObject *index_catalog_object)
     :  // Base class
-      Index{metadata},
+      Index{index_catalog_object},
       // Key "less than" relation comparator
       comparator{},
       // Key equality checker
@@ -56,7 +56,7 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
   bool ret = container.Insert(index_key, value);
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
+    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(index_catalog_object);
   }
 
   return ret;
@@ -80,7 +80,7 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
-        delete_count, metadata);
+        delete_count, index_catalog_object);
   }
   return ret;
 }
@@ -109,7 +109,7 @@ bool BWTREE_INDEX_TYPE::CondInsertEntry(
   }
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
+    stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(index_catalog_object);
   }
 
   return ret;
@@ -184,7 +184,7 @@ void BWTREE_INDEX_TYPE::Scan(
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
+        result.size(), index_catalog_object);
   }
 
   return;
@@ -251,7 +251,7 @@ void BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
+        result.size(), index_catalog_object);
   }
   return;
 }
@@ -267,7 +267,7 @@ void BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
 
   if (FLAGS_stats_mode != STATS_TYPE_INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
-        result.size(), metadata);
+        result.size(), index_catalog_object);
   }
 
   return;

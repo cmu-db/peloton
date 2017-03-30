@@ -55,6 +55,10 @@ std::unique_ptr<storage::Tuple> GetTableCatalogTuple(
     const catalog::Schema *schema, oid_t table_id, std::string table_name,
     oid_t database_id, std::string database_name, type::AbstractPool *pool);
 
+std::unique_ptr<storage::Tuple> GetIndexCatalogTuple(
+    const catalog::Schema *schema, const catalog::IndexCatalogObject *index_catalog_object,
+    type::AbstractPool *pool);
+
 std::unique_ptr<storage::Tuple> GetDatabaseMetricsCatalogTuple(
     const catalog::Schema *schema, oid_t database_id, int64_t commit,
     int64_t abort, int64_t time);

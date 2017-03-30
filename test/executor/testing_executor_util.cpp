@@ -349,7 +349,7 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
     // This will be created for each index on the table
     // and the metadata is passed as part of the index construction paratemter
     // list
-    index::IndexMetadata *index_metadata;
+    catalog::IndexCatalogObject *index_catalog_object;
 
     // Whether keys should be unique. For primary key this must be true;
     // for secondary keys this might be true as an extra constraint
@@ -369,13 +369,13 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
 
     unique = true;
 
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
     std::shared_ptr<index::Index> pkey_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
 
     table->AddIndex(pkey_index);
 
@@ -388,12 +388,12 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
     key_schema->SetIndexedColumns(key_attrs);
 
     unique = false;
-    index_metadata = new index::IndexMetadata(
+    index_catalog_object = new catalog::IndexCatalogObject(
         "secondary_btree_index", 124, INVALID_OID, INVALID_OID,
         IndexType::BWTREE, IndexConstraintType::DEFAULT, tuple_schema,
         key_schema, key_attrs, unique);
     std::shared_ptr<index::Index> sec_index(
-        index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_catalog_object));
 
     table->AddIndex(sec_index);
   }

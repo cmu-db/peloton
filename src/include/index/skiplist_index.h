@@ -47,7 +47,7 @@ class SkipListIndex : public Index {
                            KeyEqualityChecker, ValueEqualityChecker>;
 
  public:
-  SkipListIndex(IndexMetadata *metadata);
+  SkipListIndex(catalog::IndexCatalogObject *index_catalog_object);
 
   ~SkipListIndex();
 
