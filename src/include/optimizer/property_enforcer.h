@@ -16,6 +16,7 @@
 #include "optimizer/operator_expression.h"
 #include "optimizer/property_visitor.h"
 
+
 namespace peloton {
 namespace optimizer {
 

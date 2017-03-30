@@ -37,11 +37,11 @@ class PropertyColumns : public Property {
   }
 
   inline size_t GetSize() const { return column_exprs_.size(); }
-  inline bool IsStarExpressionInColumn() const { return is_star; }
+  inline bool IsStarExpressionInColumn() const { return is_star_; }
 
  private:
   std::vector<expression::TupleValueExpression *> column_exprs_;
-  bool is_star;
+  bool is_star_;
 };
 
 // Specifies the output expressions of the query
@@ -82,17 +82,17 @@ class PropertySort : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
-  inline size_t GetSortColumnSize() const { return sort_columns.size(); }
+  inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
 
   inline expression::TupleValueExpression *GetSortColumn(int idx) const {
-    return sort_columns[idx];
+    return sort_columns_[idx];
   }
 
-  inline bool GetSortAscending(int idx) const { return sort_ascending[idx]; }
+  inline bool GetSortAscending(int idx) const { return sort_ascending_[idx]; }
 
  private:
-  std::vector<expression::TupleValueExpression *> sort_columns;
-  std::vector<bool> sort_ascending;
+  std::vector<expression::TupleValueExpression *> sort_columns_;
+  std::vector<bool> sort_ascending_;
 };
 
 // Specifies the predicate that the tuples returned by the query should satisfy

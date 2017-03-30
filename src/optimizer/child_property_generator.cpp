@@ -42,14 +42,6 @@ void ChildPropertyGenerator::Visit(const PhysicalLimit *) {
 
 void ChildPropertyGenerator::Visit(const PhysicalScan *) {
   PropertySet provided_property;
-  /*for (auto &property : requirements_.Properties()) {
-    if (property->Type() == PropertyType::PREDICATE ||
-        property->Type() == PropertyType::COLUMNS) {
-      provided_property.AddProperty(property);
-    }
-  }*/
-  // LOG_DEBUG("Deriving Child Properties");
-
 
   auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS);
   auto predicate_prop =
@@ -81,7 +73,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
           bool found = false;
           if (columns_prop_ptr != nullptr) {
             for (auto &col : column_exprs) {
-              if (sort_col->bound_obj_id == col->bound_obj_id) {
+              if (sort_col->bound_obj_id_ == col->bound_obj_id_) {
                 found = true;
                 break;
               }
@@ -91,10 +83,6 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
           if (!found) column_exprs.push_back(sort_col);
         }
       }
-      // for (auto &column_expr : column_exprs) {
-      //  oid_t id = std::get<2>(column_expr->bound_obj_id);
-      //  LOG_DEBUG("output column %u", id);
-      //}
 
       provided_property.AddProperty(
           std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));

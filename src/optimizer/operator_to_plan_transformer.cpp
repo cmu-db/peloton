@@ -48,7 +48,7 @@ OperatorToPlanTransformer::ConvertOpExpression(
 
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   std::vector<oid_t> column_ids;
-  // LOG_DEBUG("PhysicalScan");
+
   // Scan predicates
   auto predicate_prop =
       requirements_->GetPropertyOfType(PropertyType::PREDICATE)
@@ -80,18 +80,16 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     for (size_t column_idx = 0; column_idx < column_prop->GetSize();
          column_idx++) {
       auto col = column_prop->GetColumn(column_idx);
-      oid_t id = std::get<2>(col->bound_obj_id);
+      oid_t id = std::get<2>(col->bound_obj_id_);
       column_ids.push_back(id);
 
       // record output column mapping
       if (output_columns_ != nullptr)
-        output_columns_->emplace_back(col->bound_obj_id);
+        output_columns_->emplace_back(col->bound_obj_id_);
     }
   }
 
-  // for (auto &col : column_ids) {
-  //  LOG_DEBUG("Output Col : %u", col);
-  //}
+
   output_plan_.reset(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
 }
@@ -101,7 +99,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
                           ->As<PropertyProjection>();
   (void)project_prop;
   size_t project_list_size = project_prop->GetProjectionListSize();
-  // LOG_DEBUG("PhysicalProject");
 
   // expressions to evaluate
   TargetList tl = TargetList();
@@ -159,37 +156,30 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
-  // LOG_DEBUG("PhysicalOrderBy");
 
   // Get child plan
   PL_ASSERT(children_plans_.size() == 1);
 
-  auto sort_prop = op->property_sort;
   std::vector<oid_t> sort_col_ids;
   std::vector<bool> sort_flags;
-  for (size_t column_idx = 0; column_idx < sort_prop->GetSortColumnSize();
-       column_idx++) {
-    auto col = sort_prop->GetSortColumn(column_idx);
+  for (auto &col : op->sort_columns) {
     // Check which column
     // in the table produced
     // by the child operator
     // is the sort column
     for (oid_t child_col_id = 0;
          child_col_id < children_output_columns_[0].size(); ++child_col_id) {
-      if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
+      if (col->bound_obj_id_ == children_output_columns_[0][child_col_id]) {
         sort_col_ids.emplace_back(child_col_id);
         break;
       }
     }
-
-    // Planner use desc flag
-    sort_flags.push_back(sort_prop->GetSortAscending(column_idx) ^ 1);
-    // if (sort_prop->GetSortAscending(column_idx))
-    //  LOG_DEBUG("Sort Order : ASC");
   }
-  // for (auto &sort_col : sort_col_ids) {
-  //  LOG_DEBUG("Sort Col : %u", sort_col);
-  //}
+
+  for (auto asc_flag : op->sort_ascending) {
+    // Planner use desc flag
+    sort_flags.push_back(asc_flag ^ 1);
+  }
 
   std::vector<oid_t> column_ids;
   // Get output columns
@@ -214,19 +204,17 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
       // to column offset
       for (oid_t child_col_id = 0;
            child_col_id < children_output_columns_[0].size(); ++child_col_id) {
-        if (col->bound_obj_id == children_output_columns_[0][child_col_id]) {
+        if (col->bound_obj_id_ == children_output_columns_[0][child_col_id]) {
           column_ids.emplace_back(child_col_id);
           // record output column mapping
           if (output_columns_ != nullptr)
-            output_columns_->emplace_back(col->bound_obj_id);
+            output_columns_->emplace_back(col->bound_obj_id_);
           break;
         }
       }
     }
   }
-  // for (auto &col : column_ids) {
-  //  LOG_DEBUG("Output Col : %u", col);
-  //}
+
   std::unique_ptr<planner::AbstractPlan> order_by_plan(
       new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
 

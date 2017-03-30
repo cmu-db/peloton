@@ -131,9 +131,9 @@ Operator LogicalLimit::make(int64_t limit, int64_t offset) {
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
-    storage::DataTable* target_table,
-    std::vector<char*>* columns,
-    std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values) {
+    storage::DataTable *target_table, std::vector<char *> *columns,
+    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+        values) {
   LogicalInsert *insert_op = new LogicalInsert;
   insert_op->target_table = target_table;
   insert_op->columns = columns;
@@ -144,8 +144,8 @@ Operator LogicalInsert::make(
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
-Operator LogicalDelete::make(storage::DataTable* target_table) {
-  LogicalDelete* delete_op = new LogicalDelete;
+Operator LogicalDelete::make(storage::DataTable *target_table) {
+  LogicalDelete *delete_op = new LogicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
 }
@@ -153,8 +153,8 @@ Operator LogicalDelete::make(storage::DataTable* target_table) {
 //===--------------------------------------------------------------------===//
 // Update
 //===--------------------------------------------------------------------===//
-Operator LogicalUpdate::make(const parser::UpdateStatement* update_stmt) {
-  LogicalUpdate* update_op = new LogicalUpdate;
+Operator LogicalUpdate::make(const parser::UpdateStatement *update_stmt) {
+  LogicalUpdate *update_op = new LogicalUpdate;
   update_op->update_stmt = update_stmt;
   return Operator(update_op);
 }
@@ -193,9 +193,12 @@ Operator PhysicalProject::make() {
 //===--------------------------------------------------------------------===//
 // OrderBy
 //===--------------------------------------------------------------------===//
-Operator PhysicalOrderBy::make(const PropertySort *property) {
+Operator PhysicalOrderBy::make(
+    std::vector<expression::TupleValueExpression *> &sort_columns,
+    std::vector<bool> &sort_ascending) {
   PhysicalOrderBy *order_by = new PhysicalOrderBy;
-  order_by->property_sort = property;
+  order_by->sort_columns = sort_columns;
+  order_by->sort_ascending = sort_ascending;
   return Operator(order_by);
 }
 
@@ -284,9 +287,10 @@ Operator PhysicalOuterHashJoin::make() {
 //===--------------------------------------------------------------------===//
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
-Operator PhysicalInsert::make(storage::DataTable* target_table,
-                              std::vector<char*>* columns,
-                              std::vector<std::vector<peloton::expression::AbstractExpression*>*>* values) {
+Operator PhysicalInsert::make(
+    storage::DataTable *target_table, std::vector<char *> *columns,
+    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+        values) {
   PhysicalInsert *insert_op = new PhysicalInsert;
   insert_op->target_table = target_table;
   insert_op->columns = columns;
@@ -297,7 +301,7 @@ Operator PhysicalInsert::make(storage::DataTable* target_table,
 //===--------------------------------------------------------------------===//
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
-Operator PhysicalDelete::make(storage::DataTable* target_table) {
+Operator PhysicalDelete::make(storage::DataTable *target_table) {
   PhysicalDelete *delete_op = new PhysicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -306,7 +310,7 @@ Operator PhysicalDelete::make(storage::DataTable* target_table) {
 //===--------------------------------------------------------------------===//
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
-Operator PhysicalUpdate::make(const parser::UpdateStatement* update_stmt) {
+Operator PhysicalUpdate::make(const parser::UpdateStatement *update_stmt) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->update_stmt = update_stmt;
   return Operator(update);
@@ -359,7 +363,6 @@ void OperatorNode<LogicalDelete>::Accept(
 template <>
 void OperatorNode<LogicalUpdate>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-
 
 //===--------------------------------------------------------------------===//
 template <>
@@ -418,14 +421,11 @@ template <>
 std::string OperatorNode<PhysicalOuterHashJoin>::name_ =
     "PhysicalOuterHashJoin";
 template <>
-std::string OperatorNode<PhysicalInsert>::name_ =
-    "PhysicalInsert";
+std::string OperatorNode<PhysicalInsert>::name_ = "PhysicalInsert";
 template <>
-std::string OperatorNode<PhysicalDelete>::name_ =
-    "PhysicalDelete";
+std::string OperatorNode<PhysicalDelete>::name_ = "PhysicalDelete";
 template <>
-std::string OperatorNode<PhysicalUpdate>::name_ =
-    "PhysicalUpdate";
+std::string OperatorNode<PhysicalUpdate>::name_ = "PhysicalUpdate";
 
 //===--------------------------------------------------------------------===//
 template <>

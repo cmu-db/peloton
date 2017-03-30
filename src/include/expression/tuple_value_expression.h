@@ -82,20 +82,20 @@ class TupleValueExpression : public AbstractExpression {
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
 
   // Binder stuff
-  bool is_bound = false;
-  std::tuple<oid_t, oid_t, oid_t> bound_obj_id;
+  bool is_bound_ = false;
+  std::tuple<oid_t, oid_t, oid_t> bound_obj_id_;
 
   void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple) {
-    bound_obj_id = col_pos_tuple;
+    bound_obj_id_ = col_pos_tuple;
   }
 
-  virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
  protected:
   TupleValueExpression(const TupleValueExpression &other)
       : AbstractExpression(other),
-        is_bound(other.is_bound),
-        bound_obj_id(other.bound_obj_id),
+        is_bound_(other.is_bound_),
+        bound_obj_id_(other.bound_obj_id_),
         value_idx_(other.value_idx_),
         tuple_idx_(other.tuple_idx_),
         table_name_(other.table_name_),

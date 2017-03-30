@@ -201,9 +201,11 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 //===--------------------------------------------------------------------===//
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
  public:
-  static Operator make(const PropertySort *property);
+  static Operator make(std::vector<expression::TupleValueExpression *> &sort_columns,
+                       std::vector<bool> &sort_ascending);
 
-  const PropertySort *property_sort;
+  std::vector<expression::TupleValueExpression *> sort_columns;
+  std::vector<bool> sort_ascending;
 };
 
 //===--------------------------------------------------------------------===//
