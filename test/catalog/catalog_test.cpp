@@ -34,10 +34,10 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
   EXPECT_NE(database, nullptr);
 
   // Check metric tables
-  auto db_metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
-  EXPECT_NE(db_metric_table, nullptr);
+  //   auto db_metric_table = database->GetTableWithName(DATABASE_METRIC_NAME);
+  //   EXPECT_NE(db_metric_table, nullptr);
 }
-
+//
 TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -120,7 +120,13 @@ TEST_F(CatalogTests, DroppingTable) {
             3);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  oid_t database_oid =
+      catalog::Catalog::GetInstance()->GetDatabaseWithName("EMP_DB")->GetOid();
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
+
+  oid_t department_table_oid =
+      catalog::TableCatalog::GetInstance()->GetTableOid("department_table",
+                                                        database_oid, txn);
   txn_manager.CommitTransaction(txn);
   //  catalog::Catalog::GetInstance()->PrintCatalogs();
   EXPECT_EQ(catalog::Catalog::GetInstance()
@@ -128,23 +134,31 @@ TEST_F(CatalogTests, DroppingTable) {
                 ->GetTableCount(),
             2);
 
+  EXPECT_EQ(department_table_oid, INVALID_OID);
+
   // Try to drop again
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
+  ResultType result = catalog::Catalog::GetInstance()->DropTable(
+      "EMP_DB", "department_table", txn);
   txn_manager.CommitTransaction(txn);
+
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("EMP_DB")
                 ->GetTableCount(),
             2);
 
+  EXPECT_EQ(result, ResultType::FAILURE);
+
   // Drop a table that does not exist
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn);
+  result =
+      catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName("EMP_DB")
                 ->GetTableCount(),
             2);
+  EXPECT_EQ(result, ResultType::FAILURE);
 
   // Drop the other table
   txn = txn_manager.BeginTransaction();
