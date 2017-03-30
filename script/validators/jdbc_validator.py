@@ -26,7 +26,7 @@ PELOTON_BIN = os.path.join(PELOTON_DIR, "build/bin/peloton")
 # Path to JDBC test script
 PELOTON_JDBC_SCRIPT_DIR = os.path.join(PELOTON_DIR, "script/testing/jdbc")
 
-PELOTON_PORT = 54321
+PELOTON_PORT = 15721
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
