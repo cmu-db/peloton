@@ -35,19 +35,11 @@
 #include "common/harness.h"
 #include "common/macros.h"
 #include "common/logger.h"
-#include "optimizer/simple_optimizer.h"
-#include "executor/logical_tile_factory.h"
-#include "executor/plan_executor.h"
-#include "executor/seq_scan_executor.h"
-#include "executor/update_executor.h"
-#include "planner/plan_util.h"
-#include "parser/postgresparser.h"
+#include "parser/parser.h"
 
 #define NOTNULL_TEST
-#define MULTI_NOTNULL_TEST
 #define CHECK_TEST
-#define DEFAULT_TEST
-//#define PRIMARY_UNIQUEKEY_TEST
+#define PRIMARY_UNIQUEKEY_TEST
 #define FOREIGHN_KEY_TEST
 #define FOREIGHN_MULTI_KEY_TEST
 #define UNIQUE_TEST
@@ -212,6 +204,81 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 
   delete data_table.release();
 
+}
+#endif
+
+#ifdef CHECK_TEST
+TEST_F(ConstraintsTests, CHECKTest) {
+  // First, generate the table with index
+  // this table has 15 rows:
+  //  int(primary)  int   double  var(22) (unique)
+  //  0             1     2       "3"
+  //  10            11    12      "13"
+  //  20            21    22      "23"
+  //  .....
+  //  140           141   142     "143"
+
+  /*
+  std::string cmd = "select A > 0 FROM TEST_TABLE;";
+  parser::SQLStatementList* stmt_list =
+  parser::Parser::ParseSQLString(cmd.c_str());
+  EXPECT_TRUE(stmt_list->is_valid);
+  if (stmt_list->is_valid == false) {
+    std::cout << "Message: " << stmt_list->parser_msg << ",line: " <<
+  stmt_list->error_line << " ,col:" << stmt_list->error_col << std::endl;
+  }
+  std::cout << stmt_list->GetStatements().size() << " " <<
+  stmt_list->GetStatements().at(0)->GetType()<< std::endl;
+  std::cout << "xxxxxxxxx" << stmt_list->GetInfo().c_str() << std::endl;
+  delete stmt_list;
+  */
+
+  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false);
+  auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
+  type::Value tmp_value = type::Value(type::Type::INTEGER, 10);
+  constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
+  column1.AddConstraint(constraints);
+  std::cout << "****" << constraints.GetInfo() << std::endl;
+  catalog::Schema *table_schema = new catalog::Schema({column1});
+  std::string table_name("TEST_TABLE");
+  bool own_schema = true;
+  bool adapt_table = false;
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, table_schema, table_name,
+      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+  std::unique_ptr<storage::DataTable> data_table(table);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // begin this transaction
+  auto txn = txn_manager.BeginTransaction();
+  // Test1: insert a tuple with column  meet the constraint requirment
+  bool hasException = false;
+  try {
+    ConstraintsTestsUtil::ExecuteOneInsert(
+        txn, data_table.get(),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 0)));
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // Test2: insert not a valid column violate the constraint
+  hasException = false;
+  try {
+    ConstraintsTestsUtil::ExecuteOneInsert(
+        txn, data_table.get(),
+        type::ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(-1, 1)));
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  // commit this transaction
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
 }
 #endif
 
