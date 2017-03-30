@@ -1154,9 +1154,9 @@ parser::UpdateStatement* PostgresParser::UpdateTransform(
 
 // Call postgres's parser and start transforming it into Peloton's parse tree
 parser::SQLStatementList* PostgresParser::ParseSQLString(
-    const std::string& text) {
+    const char* text) {
   auto ctx = pg_query_parse_init();
-  auto result = pg_query_parse(text.c_str());
+  auto result = pg_query_parse(text);
   if (result.error) {
     // Parse Error
     LOG_ERROR("%s at %d\n", result.error->message, result.error->cursorpos);
@@ -1174,6 +1174,11 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(
   pg_query_parse_finish(ctx);
   pg_query_free_parse_result(result);
   return transform_result;
+}
+
+parser::SQLStatementList* PostgresParser::ParseSQLString(
+    const std::string& sql) {
+  return ParseSQLString(sql.c_str());
 }
 
 PostgresParser& PostgresParser::GetInstance() {
