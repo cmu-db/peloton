@@ -178,7 +178,7 @@ void QueryToOperatorTransformer::Visit(
       op->GetDatabaseName(), op->GetTableName());
   auto table_scan =
       std::make_shared<OperatorExpression>(
-          LogicalGet::make(target_table, op->table_info_->table_name));
+          LogicalGet::make(target_table, op->GetTableName()));
   auto delete_expr =
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);

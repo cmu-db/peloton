@@ -89,13 +89,20 @@ void QueryPropertyExtractor::Visit(const parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(const parser::JoinDefinition *) {}
 void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
-  // TODO: the parser node only support order by one column
-  bool sort_ascending = false;
-  if (node->type == parser::kOrderAsc) sort_ascending = true;
+  // TODO: Only support order by base table columns
+  std::vector<bool> sort_ascendings;
+  std::vector<expression::TupleValueExpression*> sort_cols;
+  auto len = node->exprs->size();
+  for (size_t idx = 0; idx < len; idx++) {
+    auto expr = node->exprs->at(idx);
+    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
+      continue;
+    sort_cols.emplace_back(reinterpret_cast<expression::TupleValueExpression*>(expr));
+    sort_ascendings.push_back(node->types->at(idx) == parser::kOrderAsc);
+  }
 
-  auto sort_column_expr = (expression::TupleValueExpression *)node->expr;
   property_set_.AddProperty(std::shared_ptr<PropertySort>(
-      new PropertySort({sort_column_expr}, {sort_ascending})));
+      new PropertySort(sort_cols, sort_ascendings)));
 }
 void QueryPropertyExtractor::Visit(const parser::LimitDescription *) {}
 
