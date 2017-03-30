@@ -45,24 +45,12 @@ class TransactionManager {
   TransactionManager(
       const IsolationLevelType level, 
       const ConflictAvoidanceType conflict) {
-    next_cid_ = ATOMIC_VAR_INIT(START_CID);
-    maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
 
     default_isolation_level_ = level;
     conflict_avoidance_ = conflict;
   }
 
   virtual ~TransactionManager() {}
-
-  cid_t GetNextCommitId() {
-    cid_t temp_cid = next_cid_++;
-    // wait if we do not yet have a grant for this commit id
-    while (temp_cid > maximum_grant_cid_.load())
-      ;
-    return temp_cid;
-  }
-
-  cid_t GetCurrentCommitId() { return next_cid_.load(); }
 
   // This method is used for avoiding concurrent inserts.
   bool IsOccupied(
@@ -133,11 +121,6 @@ class TransactionManager {
     current_txn->SetResult(result);
   }
 
-  // for use by recovery
-  void SetNextCid(cid_t cid) { next_cid_ = cid; }
-
-  void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
-
   Transaction *BeginTransaction(const IsolationLevelType type) {
     return BeginTransaction(0, type);
   }
@@ -151,15 +134,11 @@ class TransactionManager {
 
   virtual ResultType AbortTransaction(Transaction *const current_txn) = 0;
 
-  void ResetStates() {
-    next_cid_ = START_CID;
-  }
-
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a
   // precise value.
-  cid_t GetMaxCommittedCid() {
-    return EpochManagerFactory::GetInstance().GetMaxCommittedCid();
+  cid_t GetExpiredCid() {
+    return EpochManagerFactory::GetInstance().GetExpiredCid();
   }
 
   void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {
@@ -178,10 +157,6 @@ class TransactionManager {
  protected:
   static IsolationLevelType default_isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-
- private:
-  std::atomic<cid_t> next_cid_;
-  std::atomic<cid_t> maximum_grant_cid_;
 
 };
 }  // End storage namespace

@@ -18,6 +18,7 @@
 #include "common/platform.h"
 #include "concurrency/transaction.h"
 #include "gc/gc_manager_factory.h"
+#include "logging/log_manager_factory.h"
 
 namespace peloton {
 namespace concurrency {
@@ -641,8 +642,10 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //// handle other isolation levels
   //////////////////////////////////////////////////////////
 
-
   auto &manager = catalog::Manager::GetInstance();
+  auto &log_manager = logging::LogManager::GetInstance();
+
+  log_manager.StartLogging();
   
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetBeginCommitId();
@@ -704,6 +707,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // add to gc set.
         gc_set->operator[](tile_group_id)[tuple_slot] = false;
 
+        log_manager.LogUpdate(new_version);
+
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -735,6 +740,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // recycle new version (which is an empty version), do not delete from index
         gc_set->operator[](new_version.block)[new_version.offset] = false;
 
+        log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
+
       } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
@@ -748,6 +755,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // nothing to be added to gc set.
+
+        log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -771,6 +780,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   }
 
   ResultType result = current_txn->GetResult();
+
+  log_manager.LogEnd();
 
   EndTransaction(current_txn);
 

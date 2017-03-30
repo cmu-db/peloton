@@ -45,11 +45,13 @@ public:
 
   virtual cid_t EnterEpoch(const size_t thread_id, const bool is_snapshot_read) = 0;
 
-  virtual void ExitEpoch(const size_t thread_id, const cid_t begin_cid) = 0;
+  virtual void ExitEpoch(const size_t thread_id, const eid_t epoch_id) = 0;
 
-  virtual cid_t GetMaxCommittedCid() = 0;
+  virtual eid_t GetNextEpochId() = 0;
 
-  virtual uint64_t GetMaxCommittedEpochId() = 0;
+  virtual eid_t GetExpiredEpochId() = 0;
+
+  virtual cid_t GetExpiredCid() = 0;
 
 };
 
