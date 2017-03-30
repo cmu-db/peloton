@@ -54,8 +54,8 @@ void Database::AddTable(storage::DataTable *table, bool is_catalog) {
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   for (auto table : tables)
     if (table->GetOid() == table_oid) return table;
-  // throw CatalogException("Table with oid = " + std::to_string(table_oid) + "
-  // is not found");
+  throw CatalogException("Table with oid = " + std::to_string(table_oid) +
+                         "is not found");
   return nullptr;
 }
 
@@ -63,7 +63,7 @@ storage::DataTable *Database::GetTableWithName(
     const std::string &table_name) const {
   for (auto table : tables)
     if (table->GetName() == table_name) return table;
-  // throw CatalogException("Table '" + table_name + "' does not exist");
+  throw CatalogException("Table '" + table_name + "' does not exist");
   return nullptr;
 }
 

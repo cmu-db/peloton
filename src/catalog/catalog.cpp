@@ -182,51 +182,53 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  auto database = GetDatabaseWithOid(database_oid);
-  if (database == nullptr) {
+  try {
+    auto database = GetDatabaseWithOid(database_oid);
+
+    // Check duplicate column names
+    std::set<std::string> column_names;
+    auto columns = schema.get()->GetColumns();
+
+    for (auto column : columns) {
+      auto column_name = column.GetName();
+      if (column_names.count(column_name) == 1) {
+        LOG_DEBUG("Found a column with the same name. Return RESULT_FAILURE");
+        return ResultType::FAILURE;
+      }
+      column_names.insert(column_name);
+    }
+
+    // Create actual table
+    auto pg_table = TableCatalog::GetInstance();
+    table_oid = pg_table->GetNextOid();
+    bool own_schema = true;
+    bool adapt_table = false;
+    auto table = storage::TableFactory::GetDataTable(
+        database_oid, table_oid, schema.release(), table_name,
+        DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+    database->AddTable(table);
+
+    // Update pg_table with this table info
+    pg_table->InsertTable(table_oid, table_name, database_oid, pool_.get(),
+                          txn);
+
+    for (auto column : table->GetSchema()->GetColumns()) {
+      ColumnCatalog::GetInstance()->InsertColumn(
+          table_oid, column.GetName(), column.GetOffset(), column.GetType(),
+          column.IsInlined(), column.GetConstraints(), pool_.get(), txn);
+    }
+
+    CreatePrimaryIndex(database_name, table_name, txn);
+
+    if (single_statement_txn) {
+      txn_manager.CommitTransaction(txn);
+    }
+
+    return ResultType::SUCCESS;
+  } catch (CatalogException &e) {
     LOG_DEBUG("Can't found database. Return RESULT_FAILURE");
     return ResultType::FAILURE;
   }
-
-  // Check duplicate column names
-  std::set<std::string> column_names;
-  auto columns = schema.get()->GetColumns();
-
-  for (auto column : columns) {
-    auto column_name = column.GetName();
-    if (column_names.count(column_name) == 1) {
-      LOG_DEBUG("Found a column with the same name. Return RESULT_FAILURE");
-      return ResultType::FAILURE;
-    }
-    column_names.insert(column_name);
-  }
-
-  // Create actual table
-  auto pg_table = TableCatalog::GetInstance();
-  table_oid = pg_table->GetNextOid();
-  bool own_schema = true;
-  bool adapt_table = false;
-  auto table = storage::TableFactory::GetDataTable(
-      database_oid, table_oid, schema.release(), table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-  database->AddTable(table);
-
-  // Update pg_table with this table info
-  pg_table->InsertTable(table_oid, table_name, database_oid, pool_.get(), txn);
-
-  for (auto column : table->GetSchema()->GetColumns()) {
-    ColumnCatalog::GetInstance()->InsertColumn(
-        table_oid, column.GetName(), column.GetOffset(), column.GetType(),
-        column.IsInlined(), column.GetConstraints(), pool_.get(), txn);
-  }
-
-  CreatePrimaryIndex(database_name, table_name, txn);
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return ResultType::SUCCESS;
 }
 
 ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
@@ -260,67 +262,68 @@ ResultType Catalog::CreatePrimaryIndex(const std::string &database_name,
     return ResultType::FAILURE;
   }
 
-  storage::Database *database = GetDatabaseWithOid(database_oid);
-  if (database == nullptr) {
+  try {
+    auto database = GetDatabaseWithOid(database_oid);
+    try {
+      auto table = database->GetTableWithOid(table_oid);
+
+      std::vector<oid_t> key_attrs;
+      catalog::Schema *key_schema = nullptr;
+      index::IndexMetadata *index_metadata = nullptr;
+      auto schema = table->GetSchema();
+
+      // Find primary index attributes
+      int column_idx = 0;
+      auto &schema_columns = schema->GetColumns();
+      for (auto &column : schema_columns) {
+        if (column.IsPrimary()) {
+          key_attrs.push_back(column_idx);
+        }
+        column_idx++;
+      }
+
+      if (key_attrs.empty()) return ResultType::FAILURE;
+
+      key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+      key_schema->SetIndexedColumns(key_attrs);
+
+      std::string index_name = table->GetName() + "_pkey";
+
+      bool unique_keys = true;
+      oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
+
+      index_metadata = new index::IndexMetadata(
+          index_name, index_oid, table->GetOid(), database->GetOid(),
+          IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema,
+          key_schema, key_attrs, unique_keys);
+
+      std::shared_ptr<index::Index> pkey_index(
+          index::IndexFactory::GetIndex(index_metadata));
+      table->AddIndex(pkey_index);
+
+      // insert index record into index_catalog(pg_index) table
+      IndexCatalog::GetInstance()->InsertIndex(
+          index_oid, index_name, table->GetOid(), IndexType::BWTREE,
+          IndexConstraintType::PRIMARY_KEY, unique_keys, pool_.get(), txn);
+
+      LOG_DEBUG("Successfully created primary key index '%s' for table '%s'",
+                pkey_index->GetName().c_str(), table->GetName().c_str());
+
+      if (single_statement_txn) {
+        txn_manager.CommitTransaction(txn);
+      }
+
+      return ResultType::SUCCESS;
+    } catch (CatalogException &e) {
+      LOG_DEBUG(
+          "Cannot find the table to create the primary key index. Return "
+          "RESULT_FAILURE.");
+      return ResultType::FAILURE;
+    }
+  } catch (CatalogException &e) {
     LOG_DEBUG("Could not find a database with name %s", database_name.c_str());
     return ResultType::FAILURE;
   }
-
-  auto table = database->GetTableWithOid(table_oid);
-  if (table == nullptr) {
-    LOG_DEBUG(
-        "Cannot find the table to create the primary key index. Return "
-        "RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-
-  std::vector<oid_t> key_attrs;
-  catalog::Schema *key_schema = nullptr;
-  index::IndexMetadata *index_metadata = nullptr;
-  auto schema = table->GetSchema();
-
-  // Find primary index attributes
-  int column_idx = 0;
-  auto &schema_columns = schema->GetColumns();
-  for (auto &column : schema_columns) {
-    if (column.IsPrimary()) {
-      key_attrs.push_back(column_idx);
-    }
-    column_idx++;
-  }
-
-  if (key_attrs.empty()) return ResultType::FAILURE;
-
-  key_schema = catalog::Schema::CopySchema(schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
-
-  std::string index_name = table->GetName() + "_pkey";
-
-  bool unique_keys = true;
-  oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
-
-  index_metadata = new index::IndexMetadata(
-      index_name, index_oid, table->GetOid(), database->GetOid(),
-      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema, key_schema,
-      key_attrs, unique_keys);
-
-  std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetIndex(index_metadata));
-  table->AddIndex(pkey_index);
-
-  // insert index record into index_catalog(pg_index) table
-  IndexCatalog::GetInstance()->InsertIndex(
-      index_oid, index_name, table->GetOid(), IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, unique_keys, pool_.get(), txn);
-
-  LOG_DEBUG("Successfully created primary key index '%s' for table '%s'",
-            pkey_index->GetName().c_str(), table->GetName().c_str());
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return ResultType::SUCCESS;
 }
 
 ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
@@ -335,67 +338,68 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 
   LOG_DEBUG("Trying to create primary index for table %d", (int)table_oid);
 
-  storage::Database *database = GetDatabaseWithOid(database_oid);
-  if (database == nullptr) {
+  try {
+    auto database = GetDatabaseWithOid(database_oid);
+    try {
+      auto table = database->GetTableWithOid(table_oid);
+
+      std::vector<oid_t> key_attrs;
+      catalog::Schema *key_schema = nullptr;
+      index::IndexMetadata *index_metadata = nullptr;
+      auto schema = table->GetSchema();
+
+      // Find primary index attributes
+      int column_idx = 0;
+      auto &schema_columns = schema->GetColumns();
+      for (auto &column : schema_columns) {
+        if (column.IsPrimary()) {
+          key_attrs.push_back(column_idx);
+        }
+        column_idx++;
+      }
+
+      if (key_attrs.empty()) return ResultType::FAILURE;
+
+      key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+      key_schema->SetIndexedColumns(key_attrs);
+
+      std::string index_name = table->GetName() + "_pkey";
+
+      bool unique_keys = true;
+      oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
+
+      index_metadata = new index::IndexMetadata(
+          index_name, index_oid, table->GetOid(), database->GetOid(),
+          IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema,
+          key_schema, key_attrs, unique_keys);
+
+      std::shared_ptr<index::Index> pkey_index(
+          index::IndexFactory::GetIndex(index_metadata));
+      table->AddIndex(pkey_index);
+
+      // insert index record into index_catalog(pg_index) table
+      IndexCatalog::GetInstance()->InsertIndex(
+          index_oid, index_name, table->GetOid(), IndexType::BWTREE,
+          IndexConstraintType::PRIMARY_KEY, unique_keys, pool_.get(), txn);
+
+      LOG_DEBUG("Successfully created primary key index '%s' for table '%s'",
+                pkey_index->GetName().c_str(), table->GetName().c_str());
+
+      if (single_statement_txn) {
+        txn_manager.CommitTransaction(txn);
+      }
+
+      return ResultType::SUCCESS;
+    } catch (CatalogException &e) {
+      LOG_DEBUG(
+          "Cannot find the table to create the primary key index. Return "
+          "RESULT_FAILURE.");
+      return ResultType::FAILURE;
+    }
+  } catch (CatalogException &e) {
     LOG_DEBUG("Could not find a database with oid %d", (int)database_oid);
     return ResultType::FAILURE;
   }
-
-  auto table = database->GetTableWithOid(table_oid);
-  if (table == nullptr) {
-    LOG_DEBUG(
-        "Cannot find the table to create the primary key index. Return "
-        "RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-
-  std::vector<oid_t> key_attrs;
-  catalog::Schema *key_schema = nullptr;
-  index::IndexMetadata *index_metadata = nullptr;
-  auto schema = table->GetSchema();
-
-  // Find primary index attributes
-  int column_idx = 0;
-  auto &schema_columns = schema->GetColumns();
-  for (auto &column : schema_columns) {
-    if (column.IsPrimary()) {
-      key_attrs.push_back(column_idx);
-    }
-    column_idx++;
-  }
-
-  if (key_attrs.empty()) return ResultType::FAILURE;
-
-  key_schema = catalog::Schema::CopySchema(schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
-
-  std::string index_name = table->GetName() + "_pkey";
-
-  bool unique_keys = true;
-  oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
-
-  index_metadata = new index::IndexMetadata(
-      index_name, index_oid, table->GetOid(), database->GetOid(),
-      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, schema, key_schema,
-      key_attrs, unique_keys);
-
-  std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetIndex(index_metadata));
-  table->AddIndex(pkey_index);
-
-  // insert index record into index_catalog(pg_index) table
-  IndexCatalog::GetInstance()->InsertIndex(
-      index_oid, index_name, table->GetOid(), IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, unique_keys, pool_.get(), txn);
-
-  LOG_DEBUG("Successfully created primary key index '%s' for table '%s'",
-            pkey_index->GetName().c_str(), table->GetName().c_str());
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return ResultType::SUCCESS;
 }
 
 ResultType Catalog::CreateIndex(const std::string &database_name,
@@ -455,85 +459,90 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
     txn = txn_manager.BeginTransaction();
   }
 
-  auto database = GetDatabaseWithOid(database_oid);
-  if (database == nullptr) {
+  try {
+    auto database = GetDatabaseWithOid(database_oid);
+    try {
+      auto table = database->GetTableWithOid(table_oid);
+
+      // check if table already has index with same name
+      auto pg_index = IndexCatalog::GetInstance();
+      if (!is_catalog &&
+          pg_index->GetIndexOid(index_name, table->GetOid(), txn) !=
+              INVALID_OID) {
+        LOG_DEBUG(
+            "Cannot create index on same table with same name Return "
+            "RESULT_FAILURE.");
+        return ResultType::FAILURE;
+      }
+      std::vector<oid_t> key_attrs;
+      catalog::Schema *key_schema = nullptr;
+      index::IndexMetadata *index_metadata = nullptr;
+      auto schema = table->GetSchema();
+
+      // check if index attributes are in table
+      auto &columns = schema->GetColumns();
+      for (auto &attr : index_attr) {
+        for (oid_t i = 0; i < columns.size(); ++i) {
+          if (attr == columns[i].column_name) {
+            key_attrs.push_back(i);
+          }
+        }
+      }
+
+      // Check for mismatch between key attributes and attributes
+      // that came out of the parser
+      if (key_attrs.size() != index_attr.size()) {
+        LOG_DEBUG("Some columns are missing");
+        return ResultType::FAILURE;
+      }
+
+      key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+      key_schema->SetIndexedColumns(key_attrs);
+      oid_t index_oid = pg_index->GetNextOid();
+
+      // Check if unique index or not
+      if (unique_keys == false) {
+        index_metadata = new index::IndexMetadata(
+            index_name, index_oid, table->GetOid(), database->GetOid(),
+            index_type, IndexConstraintType::DEFAULT, schema, key_schema,
+            key_attrs, true);
+      } else {
+        index_metadata = new index::IndexMetadata(
+            index_name, index_oid, table->GetOid(), database->GetOid(),
+            index_type, IndexConstraintType::UNIQUE, schema, key_schema,
+            key_attrs, true);
+      }
+
+      // Add index to table
+      std::shared_ptr<index::Index> key_index(
+          index::IndexFactory::GetIndex(index_metadata));
+      table->AddIndex(key_index);
+
+      // Insert index record into pg_index table
+      IndexCatalog::GetInstance()->InsertIndex(
+          index_oid, index_name, table->GetOid(), index_type,
+          IndexConstraintType::DEFAULT, true, pool_.get(), txn);
+
+      LOG_DEBUG("Successfully add index for table %s",
+                table->GetName().c_str());
+
+      if (single_statement_txn) {
+        txn_manager.CommitTransaction(txn);
+      }
+
+      return ResultType::SUCCESS;
+    } catch (CatalogException &e) {
+      LOG_DEBUG(
+          "Cannot find the table to create the primary key index. Return "
+          "RESULT_FAILURE.");
+      return ResultType::FAILURE;
+    }
+  } catch (CatalogException &e) {
     LOG_DEBUG(
         "Cannot find the database to create the primary key index. Return "
         "RESULT_FAILURE.");
     return ResultType::FAILURE;
   }
-
-  auto table = database->GetTableWithOid(table_oid);
-  if (table == nullptr) {
-    LOG_DEBUG(
-        "Cannot find the table to create the primary key index. Return "
-        "RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-
-  // check if table already has index with same name
-  auto pg_index = IndexCatalog::GetInstance();
-  if (!is_catalog &&
-      pg_index->GetIndexOid(index_name, table->GetOid(), txn) != INVALID_OID) {
-    LOG_DEBUG(
-        "Cannot create index on same table with same name Return "
-        "RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-  std::vector<oid_t> key_attrs;
-  catalog::Schema *key_schema = nullptr;
-  index::IndexMetadata *index_metadata = nullptr;
-  auto schema = table->GetSchema();
-
-  // check if index attributes are in table
-  auto &columns = schema->GetColumns();
-  for (auto &attr : index_attr) {
-    for (oid_t i = 0; i < columns.size(); ++i) {
-      if (attr == columns[i].column_name) {
-        key_attrs.push_back(i);
-      }
-    }
-  }
-
-  // Check for mismatch between key attributes and attributes
-  // that came out of the parser
-  if (key_attrs.size() != index_attr.size()) {
-    LOG_DEBUG("Some columns are missing");
-    return ResultType::FAILURE;
-  }
-
-  key_schema = catalog::Schema::CopySchema(schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
-  oid_t index_oid = pg_index->GetNextOid();
-
-  // Check if unique index or not
-  if (unique_keys == false) {
-    index_metadata = new index::IndexMetadata(
-        index_name, index_oid, table->GetOid(), database->GetOid(), index_type,
-        IndexConstraintType::DEFAULT, schema, key_schema, key_attrs, true);
-  } else {
-    index_metadata = new index::IndexMetadata(
-        index_name, index_oid, table->GetOid(), database->GetOid(), index_type,
-        IndexConstraintType::UNIQUE, schema, key_schema, key_attrs, true);
-  }
-
-  // Add index to table
-  std::shared_ptr<index::Index> key_index(
-      index::IndexFactory::GetIndex(index_metadata));
-  table->AddIndex(key_index);
-
-  // Insert index record into pg_index table
-  IndexCatalog::GetInstance()->InsertIndex(
-      index_oid, index_name, table->GetOid(), index_type,
-      IndexConstraintType::DEFAULT, true, pool_.get(), txn);
-
-  LOG_DEBUG("Successfully add index for table %s", table->GetName().c_str());
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return ResultType::SUCCESS;
 }
 
 //===----------------------------------------------------------------------===//
@@ -638,43 +647,48 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
 
   LOG_DEBUG("Dropping table %d from database %d", database_oid, table_oid);
 
-  storage::Database *database = GetDatabaseWithOid(database_oid);
-  if (database == nullptr) {
-    LOG_DEBUG("Can't Found database!");
+  try {
+    auto database = GetDatabaseWithOid(database_oid);
+    try {
+      auto table = database->GetTableWithOid(table_oid);
+
+      if (table != nullptr) {
+        LOG_DEBUG("Found table!");
+
+        // 1. drop all the indexes on actual table, and drop index records in
+        // pg_index
+        // 2. drop all the columns records in pg_attribute
+        // 3. drop table record in pg_table
+        // 4. delete actual table(storage level), cleanup schema, foreign keys,
+        // tile_groups
+
+        LOG_DEBUG("Deleting table!");
+        // STEP 1, read index_oids from pg_index, and iterate through
+        auto index_oids =
+            IndexCatalog::GetInstance()->GetIndexOids(table_oid, txn);
+        for (oid_t index_oid : index_oids) DropIndex(index_oid, txn);
+
+        // STEP 2
+        ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
+        // STEP 3
+        TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
+        // STEP 4
+        database->DropTableWithOid(table_oid);
+
+        if (single_statement_txn) {
+          txn_manager.CommitTransaction(txn);
+        }
+      }
+
+      return ResultType::SUCCESS;
+    } catch (CatalogException &e) {
+      LOG_DEBUG("Can't Found Table!");
+      return ResultType::FAILURE;
+    }
+  } catch (CatalogException &e) {
+    LOG_DEBUG("Can't found database. Return RESULT_FAILURE");
     return ResultType::FAILURE;
   }
-
-  storage::DataTable *table = database->GetTableWithOid(table_oid);
-  if (table == nullptr) {
-    LOG_DEBUG("Can't Found Table!");
-    return ResultType::FAILURE;
-  }
-
-  LOG_DEBUG("Found table!");
-
-  // 1. drop all the indexes on actual table, and drop index records in pg_index
-  // 2. drop all the columns records in pg_attribute
-  // 3. drop table record in pg_table
-  // 4. delete actual table(storage level), cleanup schema, foreign keys,
-  // tile_groups
-
-  LOG_DEBUG("Deleting table!");
-  // STEP 1, read index_oids from pg_index, and iterate through
-  auto index_oids = IndexCatalog::GetInstance()->GetIndexOids(table_oid, txn);
-  for (oid_t index_oid : index_oids) DropIndex(index_oid, txn);
-
-  // STEP 2
-  ColumnCatalog::GetInstance()->DeleteColumns(table_oid, txn);
-  // STEP 3
-  TableCatalog::GetInstance()->DeleteTable(table_oid, txn);
-  // STEP 4
-  database->DropTableWithOid(table_oid);
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return ResultType::SUCCESS;
 }
 
 ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
@@ -700,31 +714,33 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
   oid_t database_oid =
       TableCatalog::GetInstance()->GetDatabaseOid(table_oid, txn);
 
-  auto database = GetDatabaseWithOid(database_oid);
-  if (database == nullptr) {
-    LOG_DEBUG("Cannot find database");
+  try {
+    auto database = GetDatabaseWithOid(database_oid);
+    try {
+      auto table = database->GetTableWithOid(table_oid);
+      // drop index in actual table
+      table->DropIndexWithOid(index_oid);
+
+      // drop record in index catalog table
+      IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
+
+      LOG_DEBUG("Successfully add index for table %s",
+                table->GetName().c_str());
+
+      if (single_statement_txn) {
+        txn_manager.CommitTransaction(txn);
+      }
+
+      return ResultType::SUCCESS;
+    } catch (CatalogException &e) {
+      LOG_DEBUG(
+          "Cannot find the table to create the index. Return RESULT_FAILURE.");
+      return ResultType::FAILURE;
+    }
+  } catch (CatalogException &e) {
+    LOG_DEBUG("Can't found database. Return RESULT_FAILURE");
     return ResultType::FAILURE;
   }
-
-  auto table = database->GetTableWithOid(table_oid);
-  if (table == nullptr) {
-    LOG_DEBUG(
-        "Cannot find the table to create the index. Return RESULT_FAILURE.");
-    return ResultType::FAILURE;
-  }
-  // drop index in actual table
-  table->DropIndexWithOid(index_oid);
-
-  // drop record in index catalog table
-  IndexCatalog::GetInstance()->DeleteIndex(index_oid, txn);
-
-  LOG_DEBUG("Successfully add index for table %s", table->GetName().c_str());
-
-  if (single_statement_txn) {
-    txn_manager.CommitTransaction(txn);
-  }
-
-  return ResultType::SUCCESS;
 }
 
 //===--------------------------------------------------------------------===//
@@ -733,13 +749,17 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
 
 // Only used for testing
 bool Catalog::HasDatabase(oid_t db_oid) const {
-  return (GetDatabaseWithOid(db_oid) != nullptr);
+  for (auto database : databases_)
+    if (database->GetOid() == db_oid) return (true);
+  return (false);
 }
 
 // Find a database using its id
-storage::Database *Catalog::GetDatabaseWithOid(oid_t db_oid) const {
+storage::Database *Catalog::GetDatabaseWithOid(oid_t database_oid) const {
   for (auto database : databases_)
-    if (database->GetOid() == db_oid) return database;
+    if (database->GetOid() == database_oid) return database;
+  throw CatalogException("Database with oid = " + std::to_string(database_oid) +
+                         " is not found");
   return nullptr;
 }
 
