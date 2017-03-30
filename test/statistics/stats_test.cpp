@@ -70,10 +70,10 @@ void TransactionTest(storage::Database *database, storage::DataTable *table,
   auto index_metadata = table->GetIndex(0)->GetMetadata();
   auto db_oid = database->GetOid();
   auto context = stats::BackendStatsContext::GetInstance();
-  auto stmt_str = TestingStatsUtil::GetInsertStmtStr();
+  auto stmt = TestingStatsUtil::GetInsertStmt();
 
   for (oid_t txn_itr = 1; txn_itr <= NUM_ITERATION; txn_itr++) {
-    context->InitQueryMetric(stmt_str, nullptr);
+    context->InitQueryMetric(stmt, nullptr);
 
     if (thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);

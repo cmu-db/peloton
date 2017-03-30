@@ -38,3 +38,42 @@
         fun:exit
         fun:(below main)
 }
+
+{
+   Handles leaks in libpg_query
+       Memcheck:Leak
+       match-leak-kinds: definite
+       fun:malloc
+       fun:MemoryContextCreate
+       fun:AllocSetContextCreate
+       fun:MemoryContextInit
+       fun:pg_query_init
+       fun:pg_query_enter_memory_context
+       fun:_ZN7peloton6parser14PostgresParser14ParseSQLStringERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton6parser14PostgresParser14BuildParseTreeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton4test16TestingStatsUtil12ParseAndPlanEPNS_9StatementENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton4test16TestingStatsUtil13GetInsertStmtEiNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton4test15TransactionTestEPNS_7storage8DatabaseEPNS1_9DataTableEm
+       fun:_ZNSt12_Bind_simpleIFPFvPN7peloton7storage8DatabaseEPNS1_9DataTableEmES3_S5_mEE9_M_invokeIILm0ELm1ELm2EEEEvSt12_Index_tupleIIXspT_EEE
+}
+
+{
+   Handles leaks in libpg_query
+       Memcheck:Leak
+       match-leak-kinds: definite
+       fun:malloc
+       fun:AllocSetAlloc
+       fun:MemoryContextAlloc
+       fun:MemoryContextCreate
+       fun:AllocSetContextCreate
+       fun:MemoryContextInit
+       fun:pg_query_init
+       fun:pg_query_enter_memory_context
+       fun:_ZN7peloton6parser14PostgresParser14ParseSQLStringERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton6parser14PostgresParser14BuildParseTreeERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton4test16TestingStatsUtil12ParseAndPlanEPNS_9StatementENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+       fun:_ZN7peloton4test16TestingStatsUtil13GetInsertStmtEiNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+}
+
+
+
