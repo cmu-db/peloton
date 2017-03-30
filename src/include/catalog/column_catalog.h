@@ -34,11 +34,12 @@ namespace catalog {
 class ColumnCatalog : public AbstractCatalog {
  public:
   // Global Singleton
-  static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr, type::AbstractPool *pool = nullptr);
+  static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
+                                    type::AbstractPool *pool = nullptr);
 
   ~ColumnCatalog();
 
-  inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
+  inline oid_t GetNextOid() { return oid_++ | COLUMN_OID_MASK; }
 
   // Write related API
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
@@ -55,9 +56,9 @@ class ColumnCatalog : public AbstractCatalog {
   std::string GetColumnName(oid_t table_oid, oid_t column_offset,
                             concurrency::Transaction *txn);
   type::Type::TypeId GetColumnType(oid_t table_oid, std::string column_name,
-                             concurrency::Transaction *txn);
+                                   concurrency::Transaction *txn);
   type::Type::TypeId GetColumnType(oid_t table_oid, oid_t column_offset,
-                             concurrency::Transaction *txn);
+                                   concurrency::Transaction *txn);
 
  private:
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);

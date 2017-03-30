@@ -37,7 +37,7 @@ class DatabaseCatalog : public AbstractCatalog {
   static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
                                       type::AbstractPool *pool = nullptr);
 
-  inline oid_t GetNextOid() { return oid_++ | COLUMN_OID_MASK; }
+  inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
   // Write related API
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
