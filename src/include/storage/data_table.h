@@ -280,6 +280,8 @@ class DataTable : public AbstractTable {
 
   bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
+  bool CheckExp(const storage::Tuple *tupe) const;
+
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   bool SetDefaults(storage::Tuple *tuple);
