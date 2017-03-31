@@ -125,7 +125,7 @@ TEST_F(ExpressionTests, HashTest) {
       ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left3, right3);
   LOG_INFO("Hash(tree3)=%ld", root3->Hash());
 
-  EXPECT_NE(root1->Hash(), root2->Hash());
+  EXPECT_EQUAL(root1->Hash(), root3->Hash());
 
   delete root1;
   delete root2;

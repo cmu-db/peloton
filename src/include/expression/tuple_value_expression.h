@@ -72,7 +72,8 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual bool Equals(AbstractExpression *expr) override {
-    if (!AbstractExpression::Equals(expr)) return false;
+    if (exp_type_ != expr->GetExpressionType())
+      return false;
     auto tup_expr = (TupleValueExpression *) expr;
     return bound_obj_id_ == tup_expr->bound_obj_id_;
   }
