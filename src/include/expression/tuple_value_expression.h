@@ -70,13 +70,12 @@ class TupleValueExpression : public AbstractExpression {
   AbstractExpression *Copy() const override {
     return new TupleValueExpression(*this);
   }
-  
-  virtual bool Equals(AbstractExpression* expr) override {
-    if (!AbstractExpression::Equals(expr))
-      return false;
-    auto tup_expr = (TupleValueExpression*)expr;
-    return table_name_ == tup_expr->table_name_
-           && col_name_ == tup_expr->col_name_;
+
+  virtual bool Equals(AbstractExpression *expr) override {
+    if (!AbstractExpression::Equals(expr)) return false;
+    auto tup_expr = (TupleValueExpression *)expr;
+    return table_name_ == tup_expr->table_name_ &&
+           col_name_ == tup_expr->col_name_;
   }
 
   int GetColumnId() const { return value_idx_; }
@@ -95,7 +94,9 @@ class TupleValueExpression : public AbstractExpression {
 
   bool GetIsBound() const { return is_bound_; }
 
-  std::tuple<oid_t, oid_t, oid_t>& GetBoundOid() const { return bound_obj_id_; }
+  const std::tuple<oid_t, oid_t, oid_t> &GetBoundOid() const {
+    return bound_obj_id_;
+  }
 
   void SetIsBound() { is_bound_ = true; }
 

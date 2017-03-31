@@ -106,10 +106,16 @@ class AbstractExpression : public Printable {
     return os.str();
   }
 
-  inline virtual bool Equals(AbstractExpression* expr) {
-    return this->exp_type_ == expr->exp_type_;
+  virtual bool Equals(AbstractExpression *expr) {
+    if (exp_type_ != expr->exp_type_ ||
+        children_.size() != expr->children_.size())
+      return false;
+    for (unsigned i = 0; i < children_.size(); i++) {
+      if (!children_[i]->Equals(expr->children_[i].get())) return false;
+    }
+    return true;
   }
-  
+
   virtual AbstractExpression *Copy() const = 0;
 
   inline AbstractExpression *CopyUtil(
@@ -183,4 +189,4 @@ class AbstractExpression : public Printable {
 };
 
 }  // End expression namespace
-}  // End peloton namespace 
+}  // End peloton namespace

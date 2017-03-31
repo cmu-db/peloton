@@ -36,6 +36,13 @@ class ConstantValueExpression : public AbstractExpression {
     return value_;
   }
 
+  virtual bool Equals(AbstractExpression *expr) override {
+    // Check if expression have the same type
+    if (!AbstractExpression::Equals(expr)) return false;
+    auto const_expr = (ConstantValueExpression *)expr;
+    return value_.CompareEquals(const_expr->value_);
+  }
+
   type::Value GetValue() const { return value_; }
 
   bool HasParameter() const override { return false; }
