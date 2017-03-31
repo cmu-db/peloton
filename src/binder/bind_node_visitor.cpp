@@ -142,7 +142,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
         throw Exception("Cannot find column " + col_name);
     }
 
-    expr->SetBoundObjectId(col_pos_tuple);
+    expr->SetBoundOid(col_pos_tuple);
     expr->SetIsBound();
   }
 }

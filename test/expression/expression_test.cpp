@@ -60,21 +60,26 @@ TEST_F(ExpressionTests, FunctionExpressionTest) {
 
 TEST_F(ExpressionTests, EqualityTest) {
   // First tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
+  std::tuple<oid_t, oid_t, oid_t> bound_oid1(1, 1, 1);
   auto left1 = new expression::TupleValueExpression("a", "A");
+  left1->SetBoundOid(bound_oid1);
   auto right1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
   auto root1 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left1, right1);
   // Second tree operator_expr(-) -> (tup_expr(A.b), const_expr(2))
+  std::tuple<oid_t, oid_t, oid_t> bound_oid2(1, 1, 0);
   auto left2 = new expression::TupleValueExpression("b", "A");
+  left2->SetBoundOid(bound_oid2);
   auto right2 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
   auto root2 = new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::Type::INVALID, left2, right2);
   EXPECT_FALSE(root1->Equals(root2));
 
-  // Third tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
-  auto left3 = new expression::TupleValueExpression("a", "A");
+  // Third tree operator_expr(-) -> (tup_expr(a.a), const_expr(2))
+  auto left3 = new expression::TupleValueExpression("a", "a");
+  left3->SetBoundOid(bound_oid1);
   auto right3 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(2));
   auto root3 = new expression::OperatorExpression(

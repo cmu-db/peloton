@@ -74,8 +74,7 @@ class TupleValueExpression : public AbstractExpression {
   virtual bool Equals(AbstractExpression *expr) override {
     if (!AbstractExpression::Equals(expr)) return false;
     auto tup_expr = (TupleValueExpression *) expr;
-    return table_name_ == tup_expr->table_name_ &&
-        col_name_ == tup_expr->col_name_;
+    return bound_obj_id_ == tup_expr->bound_obj_id_;
   }
 
   virtual hash_t Hash() const {
@@ -95,10 +94,6 @@ class TupleValueExpression : public AbstractExpression {
   std::string GetColumnName() const { return col_name_; }
 
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
-
-  void SetBoundObjectId(std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple) {
-    bound_obj_id_ = col_pos_tuple;
-  }
 
   bool GetIsBound() const { return is_bound_; }
 
