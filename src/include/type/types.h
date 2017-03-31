@@ -1131,6 +1131,18 @@ typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 typedef std::vector<DirectMap> DirectMapList;
 
 //===--------------------------------------------------------------------===//
+// Optimizer typedefs
+//===--------------------------------------------------------------------===//
+namespace expression {
+  class AbstractExpression;
+  class ExprHasher;
+  class ExprEqualCmp;
+}
+// Mapping of Expression -> Column Offset created by operator on previous level
+typedef std::unordered_map<expression::AbstractExpression*, int, expression::ExprHasher,
+expression::ExprEqualCmp> ExprMap;
+
+//===--------------------------------------------------------------------===//
 // Wire protocol typedefs
 //===--------------------------------------------------------------------===//
 #define SOCKET_BUFFER_SIZE 8192

@@ -95,9 +95,7 @@ class Optimizer : public AbstractOptimizer {
       std::shared_ptr<OperatorExpression> plan, PropertySet &requirements,
       std::vector<PropertySet> &required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-      std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
-          children_output_columns,
-      std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns);
+      std::vector<ExprMap>& children_expr_map, ExprMap *output_expr_map);
 
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties
@@ -105,11 +103,13 @@ class Optimizer : public AbstractOptimizer {
    * id: the id of the group to produce the best physical
    * requirements: the set of properties the produced physical operator tree
    *     must satisfy
+   * output_expr_map: The map of expression generate by this group to their 
+   * corresponding offsets
    * return: the lowest cost tree of physical plan nodes
    */
   std::unique_ptr<planner::AbstractPlan> ChooseBestPlan(
       GroupID id, PropertySet requirements,
-      std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns = nullptr);
+      ExprMap *output_expr_map = nullptr);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
    *     most optimal physical operator tree and place it in the memo. After

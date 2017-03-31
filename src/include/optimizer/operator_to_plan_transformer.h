@@ -38,9 +38,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
       std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
       std::vector<PropertySet> *required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-      std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>> &
-          children_output_columns,
-      std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns);
+      std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
 
   void Visit(const PhysicalScan *op) override;
 
@@ -84,9 +82,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   PropertySet *requirements_;
   std::vector<PropertySet> *required_input_props_;
 
-  std::vector<std::vector<std::tuple<oid_t, oid_t, oid_t>>>
-      children_output_columns_;
-  std::vector<std::tuple<oid_t, oid_t, oid_t>> *output_columns_;
+  std::vector<ExprMap> children_expr_map_;
+  ExprMap* output_expr_map_;
 };
 
 } /* namespace optimizer */
