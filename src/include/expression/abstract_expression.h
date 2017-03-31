@@ -115,6 +115,7 @@ class AbstractExpression : public Printable {
       if (!children_[i]->Equals(expr->children_[i].get())) return false;
     }
     return true;
+  }
 
   virtual hash_t Hash() const {
     hash_t hash = peloton::Hash(&exp_type_);

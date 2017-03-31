@@ -73,9 +73,10 @@ class TupleValueExpression : public AbstractExpression {
 
   virtual bool Equals(AbstractExpression *expr) override {
     if (!AbstractExpression::Equals(expr)) return false;
-    auto tup_expr = (TupleValueExpression *)expr;
+    auto tup_expr = (TupleValueExpression *) expr;
     return table_name_ == tup_expr->table_name_ &&
-           col_name_ == tup_expr->col_name_;
+        col_name_ == tup_expr->col_name_;
+  }
 
   virtual hash_t Hash() const {
     hash_t hash = peloton::Hash(&exp_type_);
