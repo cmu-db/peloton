@@ -26,7 +26,7 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
           catalog_table_name, DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
 
   // Add catalog_table_ into pg_catalog database
-  pg_catalog->AddTable(catalog_table_.get());
+  pg_catalog->AddTable(catalog_table_.get(), true);
 
   // Index construction and inserting contents of pg_database, pg_table,
   // pg_index should leave to catalog's constructor
@@ -153,7 +153,8 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
 
   // Execute
   index_scan_executor.Init();
-  std::unique_ptr<std::vector<executor::LogicalTile *>> result_tiles(new std::vector<executor::LogicalTile *>());
+  std::unique_ptr<std::vector<executor::LogicalTile *>> result_tiles(
+      new std::vector<executor::LogicalTile *>());
 
   while (index_scan_executor.Execute()) {
     result_tiles->push_back(index_scan_executor.GetOutput());
