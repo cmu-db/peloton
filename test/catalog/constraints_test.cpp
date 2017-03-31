@@ -38,6 +38,7 @@
 #include "parser/parser.h"
 
 #define NOTNULL_TEST
+#define MULTI_NOTNULL_TEST
 #define CHECK_TEST
 #define PRIMARY_UNIQUEKEY_TEST
 #define FOREIGHN_KEY_TEST
@@ -263,6 +264,84 @@ TEST_F(ConstraintsTests, MULTINOTNULLTest) {
 }
 #endif
 
+#ifdef MULTI_NOTNULL_TEST
+TEST_F(ConstraintsTests, MULTINOTNULLTest) {
+  auto column1 = catalog::Column(type::Type::INTEGER,
+                                 type::Type::GetTypeSize(type::Type::INTEGER),
+                                 "A", false, 0);
+  auto column2 = catalog::Column(type::Type::VARCHAR, 25, "B", false, 1);
+  // std::cout << "xxxxxx column idx " << column1.GetOffset() << std::endl;
+  // std::cout << "xxxxxx column idx " << column2.GetOffset() << std::endl;
+
+  std::vector<oid_t> cols;
+  cols.push_back(0);
+  cols.push_back(1);
+
+  std::vector<catalog::Column> columns;
+  columns.push_back(column1);
+  columns.push_back(column2);
+
+  auto mc = catalog::MultiConstraint(ConstraintType::NOTNULL, "c1", cols);
+  std::cout << "**** MULTI CONSTRAINTS ****" << mc.GetInfo() << std::endl;
+  catalog::Schema *table_schema = new catalog::Schema(columns);
+  table_schema->AddMultiConstraints(mc);
+  std::string table_name("TEST_TABLE");
+  bool own_schema = true;
+  bool adapt_table = false;
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, table_schema, table_name,
+      TESTS_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+  std::unique_ptr<storage::DataTable> data_table(table);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // begin this transaction
+  auto txn = txn_manager.BeginTransaction();
+
+  // two columns are both NULL
+  bool hasException = false;
+  try {
+    std::vector<type::Value> ccs;
+    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
+    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
+
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  // one column is NULL
+  hasException = false;
+  try {
+    std::vector<type::Value> ccs;
+    ccs.push_back(type::ValueFactory::GetNullValueByType(type::Type::INTEGER));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_TRUE(hasException);
+
+  // two columns are not NULL
+  hasException = false;
+  try {
+    std::vector<type::Value> ccs;
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+    ccs.push_back(type::ValueFactory::GetIntegerValue(10));
+
+    ConstraintsTestsUtil::ExecuteMultiInsert(txn, data_table.get(), ccs);
+  } catch (ConstraintException e) {
+    hasException = true;
+  }
+  EXPECT_FALSE(hasException);
+
+  // commit this transaction
+  txn_manager.CommitTransaction(txn);
+  delete data_table.release();
+}
+#endif
+
 #ifdef CHECK_TEST
 TEST_F(ConstraintsTests, CHECKTest) {
   // First, generate the table with index
@@ -289,9 +368,9 @@ TEST_F(ConstraintsTests, CHECKTest) {
   delete stmt_list;
   */
 
-  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false);
+  auto column1 = catalog::Column(type::Type::INTEGER, 25, "A", false, 0);
   auto constraints = catalog::Constraint(ConstraintType::CHECK, "check1");
-  type::Value tmp_value = type::Value(type::Type::INTEGER, 10);
+  type::Value tmp_value = type::Value(type::Type::INTEGER, 0);
   constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
   column1.AddConstraint(constraints);
   std::cout << "****" << constraints.GetInfo() << std::endl;
@@ -312,9 +391,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
   bool hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(15, 0)));
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(10));
   } catch (ConstraintException e) {
     hasException = true;
   }
@@ -324,9 +401,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
   hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(-1, 1)));
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
   } catch (ConstraintException e) {
     hasException = true;
   }
