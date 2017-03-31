@@ -37,7 +37,6 @@ class Constraint : public Printable {
       : constraint_type(type),
         constraint_name(constraint_name),
         check_cmd(check_cmd) {}
-  typedef std::pair<ExpressionType, type::Value> ExpConstrain;
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
