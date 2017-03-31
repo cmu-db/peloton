@@ -1133,7 +1133,7 @@ class ExprHasher;
 class ExprEqualCmp;
 }
 // Mapping of Expression -> Column Offset created by operator on previous level
-typedef std::unordered_map<expression::AbstractExpression *, int,
+typedef std::unordered_map<expression::AbstractExpression *, size_t,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprMap;
 
