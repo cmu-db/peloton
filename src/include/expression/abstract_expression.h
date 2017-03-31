@@ -21,6 +21,7 @@
 #include "type/types.h"
 #include "type/value_factory.h"
 #include "common/sql_node_visitor.h"
+#include "common/hash_util.h"
 
 namespace peloton {
 
@@ -114,6 +115,14 @@ class AbstractExpression : public Printable {
       if (!children_[i]->Equals(expr->children_[i].get())) return false;
     }
     return true;
+
+  virtual hash_t Hash() const {
+    hash_t hash = peloton::Hash(&exp_type_);
+    for (size_t i = 0; i < GetChildrenSize(); i++) {
+      auto child = GetChild(i);
+      hash = CombineHashes(hash, child->Hash());
+    }
+    return hash;
   }
 
   virtual AbstractExpression *Copy() const = 0;

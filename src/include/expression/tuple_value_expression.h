@@ -76,6 +76,13 @@ class TupleValueExpression : public AbstractExpression {
     auto tup_expr = (TupleValueExpression *)expr;
     return table_name_ == tup_expr->table_name_ &&
            col_name_ == tup_expr->col_name_;
+
+  virtual hash_t Hash() const {
+    hash_t hash = peloton::Hash(&exp_type_);
+    hash = CombineHashes(hash, peloton::Hash(&(std::get<0>(bound_obj_id_))));
+    hash = CombineHashes(hash, peloton::Hash(&(std::get<1>(bound_obj_id_))));
+    hash = CombineHashes(hash, peloton::Hash(&(std::get<2>(bound_obj_id_))));
+    return hash;
   }
 
   int GetColumnId() const { return value_idx_; }

@@ -53,6 +53,11 @@ class ConstantValueExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
+  virtual hash_t Hash() const {
+    hash_t hash = peloton::Hash(&exp_type_);
+    return CombineHashes(hash, value_.Hash());
+  }
+
  protected:
   ConstantValueExpression(const ConstantValueExpression &other)
       : AbstractExpression(other), value_(other.value_) {}
