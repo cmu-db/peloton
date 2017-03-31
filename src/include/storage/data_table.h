@@ -266,8 +266,9 @@ class DataTable : public AbstractTable {
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
 
-
-  bool CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+  bool CheckNotNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+                          std::vector<oid_t> cols) const;
 
   bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 

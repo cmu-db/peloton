@@ -124,15 +124,26 @@ DataTable::~DataTable() {
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
-bool DataTable::CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const {
-	if (tuple->IsNull(column_idx)) {
-      LOG_TRACE(
-          "%u th attribute in the tuple was NULL. It is non-nullable "
-          "attribute.",
-          column_itr);
-      return true;
-	}
-	return false;
+bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
+                              oid_t column_idx) const {
+  if (tuple->IsNull(column_idx)) {
+    LOG_TRACE(
+        "%u th attribute in the tuple was NULL. It is non-nullable "
+        "attribute.",
+        column_itr);
+    return false;
+  }
+  return true;
+}
+
+bool DataTable::MultiCheckNotNulls(const storage::Tuple *tuple,
+                                   std::vector<oid_t> cols) const {
+  for (auto col : cols) {
+    if (tuple->IsNull(col)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // Set the default values for corresponding columns
@@ -152,70 +163,117 @@ bool DataTable::SetDefaults(storage::Tuple *tuple) {
 }
 
 bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
-    std::pair<ExpressionType, type::Value> exp =
-        schema->AllowExpConstrain(column_idx);
-    if (exp.first == ExpressionType::INVALID) // not have check constrain
-			return true;
-    type::Value cur = tuple->GetValue(column_idx);
-    switch (exp.first) {
-      case ExpressionType::COMPARE_EQUAL: {
-        if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
-        break;
-      }
-      case ExpressionType::COMPARE_NOTEQUAL: {
-        if (cur.CompareEquals(exp.second) == type::CMP_TRUE) return false;
-        break;
-      }
-      case ExpressionType::COMPARE_LESSTHAN: {
-        if (cur.CompareGreaterThanEquals(exp.second) == type::CMP_TRUE)
-          return false;
-        break;
-      }
-      case ExpressionType::COMPARE_GREATERTHAN: {
-        if (cur.CompareLessThanEquals(exp.second) == type::CMP_TRUE)
-          return false;
-        break;
-      }
-      case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
-        if (cur.CompareGreaterThan(exp.second) == type::CMP_TRUE) return false;
-        break;
-      }
-      case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
-        if (cur.CompareLessThan(exp.second) == type::CMP_TRUE) return false;
-        break;
-      }
-      default: {
-        // TODO: throw an exception
-        std::cout << "Operator NOT SUPPORT" << std::endl;
-        return false;
-      }
+  std::pair<ExpressionType, type::Value> exp =
+      schema->AllowExpConstrain(column_idx);
+  if (exp.first == ExpressionType::INVALID)  // not have check constrain
+    return true;
+  type::Value cur = tuple->GetValue(column_idx);
+  switch (exp.first) {
+    case ExpressionType::COMPARE_EQUAL: {
+      if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
     }
-
-		return true;
+    case ExpressionType::COMPARE_NOTEQUAL: {
+      if (cur.CompareEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_LESSTHAN: {
+      if (cur.CompareGreaterThanEquals(exp.second) == type::CMP_TRUE)
+        return false;
+      break;
+    }
+    case ExpressionType::COMPARE_GREATERTHAN: {
+      if (cur.CompareLessThanEquals(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
+      if (cur.CompareGreaterThan(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+      if (cur.CompareLessThan(exp.second) == type::CMP_TRUE) return false;
+      break;
+    }
+    default: {
+      // TODO: throw an exception
+      std::cout << "Operator NOT SUPPORT" << std::endl;
+      return false;
+    }
+  }
+  return true;
 }
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
-
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-		if (schema->AllowNull(column_itr) == false) {
-			if (CheckNulls(tuple, column_itr)) {
-						LOG_TRACE("Not NULL constraint violated");
-						throw ConstraintException("Not NULL constraint violated : " +
-																			std::string(tuple->GetInfo()));
-						return false;
-				}
-			}
-			if (CheckExp(tuple, column_itr) == false) {
-						LOG_TRACE("CHECK EXPRESSION constraint violated");
-						throw ConstraintException("CHECK EXPRESSION constraint violated : " +
-																			std::string(tuple->GetInfo()));
-						return false;
-			}
-		}
-    
+    if (schema->AllowNull(column_itr) == false) {
+      if (CheckNotNulls(tuple, column_itr) == false) {
+        LOG_TRACE("Not NULL constraint violated");
+        throw ConstraintException("Not NULL constraint violated : " +
+                                  std::string(tuple->GetInfo()));
+        return false;
+      }
+    }
+    if (CheckExp(tuple, column_itr) == false) {
+      LOG_TRACE("CHECK EXPRESSION constraint violated");
+      throw ConstraintException("CHECK EXPRESSION constraint violated : " +
+                                std::string(tuple->GetInfo()));
+      return false;
+    }
+  }
+  std::vector<catalog::MultiConstraint> multi_constraints;
+  multi_constraints = schema->GetMultiConstraints();
+  for (auto mc : multi_constraints) {
+    // TODO multi constraints check
+    std::cout << mc.GetInfo();
+    std::vector<oid_t> cols = mc.GetCols();
+    ConstraintType type = mc.GetType();
+    if (cols.size() <= 0) continue;
+    switch (type) {
+      case ConstraintType::NOT_NULL:
+      case ConstraintType::NOTNULL: {
+        // TODO check not null for multi columns
+        if (MultiCheckNotNulls(tuple, cols) == false) {
+          LOG_TRACE("CHECK MULTI columns NOT NULL constraint violated");
+          throw ConstraintException(
+              "CHECK MULTI columns NOT NULL constraint violated : " +
+              std::string(tuple->GetInfo()));
+          return false;
+        }
+        break;
+      }
+      case ConstraintType::DEFAULT: {
+        break;
+      }
+      case ConstraintType::CHECK: {
+        break;
+      }
+      case ConstraintType::PRIMARY: {
+        break;
+      }
+      case ConstraintType::INVALID: {
+        break;
+      }
+      case ConstraintType::UNIQUE: {
+        break;
+      }
+      case ConstraintType::FOREIGN: {
+        break;
+      }
+      case ConstraintType::EXCLUSION: {
+        break;
+      }
+      default: {
+        throw ConstraintException(
+            "MULTI COLUMN constraints TYPE NOT supported:" +
+            std::string(tuple->GetInfo()));
+        return false;
+      }
+    }
+
+  }
   return true;
 }
 
