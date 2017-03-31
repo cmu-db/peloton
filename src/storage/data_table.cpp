@@ -382,13 +382,12 @@ bool DataTable::SetDefaults(storage::Tuple *tuple) {
   return true;
 }
 
-bool DataTable::CheckExp(const storage::Tuple *tuple) const {
-  oid_t column_count = schema->GetColumnCount();
-  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
     std::pair<ExpressionType, type::Value> exp =
-        schema->AllowExpConstrain(column_itr);
-    if (exp.first == ExpressionType::INVALID) continue;
-    type::Value cur = tuple->GetValue(column_itr);
+        schema->AllowExpConstrain(column_idx);
+    if (exp.first == ExpressionType::INVALID) // not have check constrain
+			return true;
+    type::Value cur = tuple->GetValue(column_idx);
     switch (exp.first) {
       case ExpressionType::COMPARE_EQUAL: {
         if (cur.CompareNotEquals(exp.second) == type::CMP_TRUE) return false;
@@ -422,9 +421,9 @@ bool DataTable::CheckExp(const storage::Tuple *tuple) const {
         return false;
       }
     }
-  }
-  return true;
+		return true;
 }
+
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
@@ -791,7 +790,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 						return false;
 			}
 		}
-    
   return true;
 }
 
