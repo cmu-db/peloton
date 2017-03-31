@@ -270,11 +270,7 @@ class DataTable : public AbstractTable {
 
   bool CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const;
 
-  bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
-                std::pair<ExpressionType, type::Value> exp) const;
-  bool CheckUnique(const storage::Tuple *tuple, oid_t column_idx) const;
-
-  bool CheckExp(const storage::Tuple *tupe) const;
+  bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
