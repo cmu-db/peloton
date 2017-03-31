@@ -29,8 +29,8 @@ namespace codegen {
 Value::Value() : Value(type::Type::TypeId::INVALID) {}
 
 Value::Value(type::Type::TypeId type, llvm::Value *val, llvm::Value *length,
-             llvm::Value *null)
-    : type_(type), value_(val), length_(length), null_(null) {}
+             llvm::Value *is_null)
+    : type_(type), value_(val), length_(length), null_(is_null) {}
 
 //===----------------------------------------------------------------------===//
 // COMPARISONS
@@ -209,44 +209,6 @@ void Value::ValuesForMaterialization(llvm::Value *&val,
   len = GetType() == type::Type::TypeId::VARCHAR ? GetLength() : nullptr;
 }
 
-//===----------------------------------------------------------------------===//
-// Return the types of this value suitable for materialization.  The types
-// should be such that
-//===----------------------------------------------------------------------===//
-void Value::TypeForMaterialization(CodeGen &codegen,
-                                   type::Type::TypeId value_type,
-                                   llvm::Type *&val_type,
-                                   llvm::Type *&len_type) {
-  PL_ASSERT(value_type != type::Type::TypeId::INVALID);
-  switch (value_type) {
-    case type::Type::TypeId::BOOLEAN:
-      val_type = codegen.BoolType();
-      break;
-    case type::Type::TypeId::TINYINT:
-      val_type = codegen.Int8Type();
-      break;
-    case type::Type::TypeId::SMALLINT:
-      val_type = codegen.Int16Type();
-      break;
-    case type::Type::TypeId::INTEGER:
-      val_type = codegen.Int32Type();
-      break;
-    case type::Type::TypeId::BIGINT:
-      val_type = codegen.Int64Type();
-      break;
-    case type::Type::TypeId::DECIMAL:
-      val_type = codegen.DoubleType();
-      break;
-    case type::Type::TypeId::VARCHAR:
-      val_type = codegen.CharPtrType();
-      len_type = codegen.Int32Type();
-      break;
-    default: {
-      throw Exception{"Can't materialized type: " + TypeIdToString(value_type)};
-    }
-  }
-}
-
 // Return the value that can be
 Value Value::ValueFromMaterialization(type::Type::TypeId type, llvm::Value *val,
                                       llvm::Value *len) {
@@ -301,41 +263,6 @@ Value Value::BuildPHI(
     }
     return Value{type, phi, nullptr};
   }
-}
-
-//===----------------------------------------------------------------------===//
-// Create a conditional branch to throw a divide by zero exception
-//===----------------------------------------------------------------------===//
-void Value::CreateCheckDivideByZeroException(CodeGen &codegen,
-                                             const codegen::Value &divisor) {
-  // Check if divisor is zero
-  Value zero{type::Type::TypeId::INTEGER, codegen.Const32(0)};
-  If val_is_zero{codegen, zero.CompareEq(codegen, divisor).GetValue()};
-  {
-    // Throw DivideByZeroException
-    codegen.CallFunc(
-        RuntimeFunctionsProxy::_ThrowDivideByZeroException::GetFunction(
-            codegen),
-        {});
-  }
-  val_is_zero.EndIf();
-}
-
-//===----------------------------------------------------------------------===//
-// Create a conditional branch to throw an overflow exception
-//===----------------------------------------------------------------------===//
-void Value::CreateCheckOverflowException(CodeGen &codegen,
-                                         llvm::Value *overflow_bit) {
-  // Generate if statement to check for overflow
-  If has_overflow{codegen,
-                  codegen->CreateICmpEQ(overflow_bit, codegen.ConstBool(1))};
-  {
-    // Throw overflow exception if the overflow bit is set
-    codegen.CallFunc(
-        RuntimeFunctionsProxy::_ThrowOverflowException::GetFunction(codegen),
-        {});
-  }
-  has_overflow.EndIf();
 }
 
 }  // namespace codegen

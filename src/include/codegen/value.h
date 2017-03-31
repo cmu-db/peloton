@@ -28,7 +28,7 @@ class Value {
   // Constructor that provides the type and the value
   Value();
   Value(type::Type::TypeId type, llvm::Value *value = nullptr,
-        llvm::Value *length = nullptr, llvm::Value *null = nullptr);
+        llvm::Value *length = nullptr, llvm::Value *is_null = nullptr);
 
   // Get the SQL type
   type::Type::TypeId GetType() const { return type_; }
@@ -84,11 +84,6 @@ class Value {
   // Return the a representation of this value suitable for materialization
   void ValuesForMaterialization(llvm::Value *&val, llvm::Value *&len) const;
 
-  // Return the types of this value suitable for materialization.
-  static void TypeForMaterialization(CodeGen &codegen, type::Type::TypeId type,
-                                     llvm::Type *&val_type,
-                                     llvm::Type *&len_type);
-
   // Return a value that can be constructed from the provided type and value
   // registers
   static Value ValueFromMaterialization(type::Type::TypeId type,
@@ -102,29 +97,8 @@ class Value {
   friend class CompactStorage;
   friend class UpdateableStorage;
 
-  // Stores the value and type info for two operands after type promotion
-  struct OpPromotionMetadata {
-    llvm::Value *lhs_val;
-    llvm::Value *rhs_val;
-    llvm::Type *llvm_type;
-    type::Type::TypeId value_type;
-  };
-
-  // Return the type promoted LLVM values for the <lhs,rhs> operands
-  static OpPromotionMetadata PromoteOperands(CodeGen &codegen, const Value &lhs,
-                                             const Value &rhs);
-
   // Generate a hash for the given value
   void ValuesForHash(llvm::Value *&val, llvm::Value *&len) const;
-
- private:
-  // Create a conditional branch to throw a divide by zero exception
-  static void CreateCheckDivideByZeroException(CodeGen &codegen,
-                                               const codegen::Value &divisor);
-
-  // Create a conditional branch to throw an overflow exception
-  static void CreateCheckOverflowException(CodeGen &codegen,
-                                           llvm::Value *overflow_bit);
 
  private:
   // The SQL type

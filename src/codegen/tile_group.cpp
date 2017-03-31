@@ -18,10 +18,10 @@
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/scan_consumer.h"
 #include "codegen/tile_group_proxy.h"
+#include "codegen/type.h"
 #include "codegen/varlen.h"
 #include "codegen/vector.h"
 #include "codegen/vectorized_loop.h"
-#include "common/exception.h"
 
 namespace peloton {
 namespace codegen {
@@ -129,71 +129,39 @@ std::vector<TileGroup::ColumnLayout> TileGroup::GetColumnLayouts(
 codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
                                      const TileGroup::ColumnLayout &layout,
                                      uint32_t vector_size) const {
-  // TODO: Handle nullable cols
   // TODO: Move much of this logic into codegen::Value::InitFromTupleStorage ?
 
   // We're calculating: col[tid] = col_start + (tid + col_stride)
   llvm::Value *col_address =
       codegen->CreateInBoundsGEP(codegen.ByteType(), layout.col_start_ptr,
                                  codegen->CreateMul(tid, layout.col_stride));
-  llvm::Value *length = nullptr;
-  llvm::Value *val = nullptr;
 
+  // Column metadata
   const auto &column = schema_.GetColumn(layout.col_id);
-  if (column.GetType() == type::Type::TypeId::VARCHAR ||
-      column.GetType() == type::Type::TypeId::VARBINARY) {
-    if (column.IsInlined()) {
-      // When the source is inlined, the format is that the first byte is
-      // the length, and bytes (up to 63 bytes) is the actual string.
-      length = codegen->CreateZExtOrBitCast(codegen->CreateLoad(col_address),
-                                            codegen.Int32Type());
-      val = codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(), col_address,
-                                                sizeof(char));
+
+  // The value, length and is_null check
+  llvm::Value *val = nullptr, *length = nullptr, *is_null = nullptr;
+
+  // If it's a varchar, handle specially
+  if (Type::HasVariableLength(column.GetType())) {
+    PL_ASSERT(!column.IsInlined());
+
+    if (schema_.AllowNull(layout.col_id)) {
+      codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
+                                       is_null);
     } else {
-      // When the source is not inlined, the storage location is a Varlen*
-      // that points to a length-prefixed value
-      auto *varlen_type = VarlenProxy::GetType(codegen);
-      auto *varlen_ptr = codegen->CreateLoad(codegen->CreateBitCast(
-          col_address, varlen_type->getPointerTo()->getPointerTo()));
-
-      // Get the object length and object value from the varlen
-      codegen::Varlen varlen{varlen_ptr};
-      auto ret = varlen.GetObjectAndLength(codegen);
-
-      val = ret.first;
-      length = ret.second;
+      codegen::Varlen::SafeGetPtrAndLength(codegen, col_address, val, length);
     }
+    PL_ASSERT(val != nullptr && length != nullptr);
+
   } else {
-    llvm::Type *col_type = nullptr;
-    switch (column.GetType()) {
-      case type::Type::TypeId::TINYINT: {
-        col_type = codegen.Int8Type();
-        break;
-      }
-      case type::Type::TypeId::SMALLINT: {
-        col_type = codegen.Int16Type();
-        break;
-      }
-      case type::Type::TypeId::DATE:
-      case type::Type::TypeId::INTEGER: {
-        col_type = codegen.Int32Type();
-        break;
-      }
-      case type::Type::TypeId::TIMESTAMP:
-      case type::Type::TypeId::BIGINT: {
-        col_type = codegen.Int64Type();
-        break;
-      }
-      case type::Type::TypeId::DECIMAL: {
-        col_type = codegen.DoubleType();
-        break;
-      }
-      default: {
-        std::string message = "Can't access non-varchar numeric type [" +
-                              std::to_string(column.GetType()) + "]";
-        throw Exception{message};
-      }
-    }
+    // Get the LLVM type of the column
+    llvm::Type *col_type = nullptr, *col_len_type = nullptr;
+    Type::GetTypeForMaterialization(codegen, column.GetType(), col_type,
+                                    col_len_type);
+    PL_ASSERT(col_type != nullptr);
+    PL_ASSERT(col_len_type == nullptr);
+
     if (vector_size > 1) {
       llvm::Type *vector_type = llvm::VectorType::get(col_type, vector_size);
       val = codegen->CreateAlignedLoad(
@@ -202,16 +170,24 @@ codegen::Value TileGroup::LoadColumn(CodeGen &codegen, llvm::Value *tid,
     } else {
       val = codegen->CreateLoad(col_type, col_address);
     }
+
+    if (schema_.AllowNull(layout.col_id)) {
+      llvm::Value *null_vall = Type::GetNullValue(codegen, column.GetType());
+      if (Type::IsIntegral(column.GetType())) {
+        is_null = codegen->CreateICmpEQ(null_vall, val);
+      } else {
+        is_null = codegen->CreateFCmpOEQ(null_vall, val);
+      }
+    }
   }
 
-  if (length != nullptr) {
-    length->setName(column.GetName() + "_len");
-  }
-  PL_ASSERT(val != nullptr);
+  // Names
   val->setName(column.GetName());
+  if (length != nullptr) length->setName(column.GetName() + ".len");
+  if (is_null != nullptr) is_null->setName(column.GetName() + ".null");
 
-  // We're done
-  return codegen::Value{column.GetType(), val, length};
+  // Return the value
+  return codegen::Value{column.GetType(), val, length, is_null};
 }
 
 //===----------------------------------------------------------------------===//

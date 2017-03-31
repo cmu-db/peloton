@@ -13,6 +13,7 @@
 #include "codegen/type.h"
 
 #include "codegen/values_runtime_proxy.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -924,6 +925,70 @@ bool Type::IsIntegral(type::Type::TypeId type_id) {
       return true;
     default:
       return false;
+  }
+}
+
+void Type::GetTypeForMaterialization(CodeGen &codegen,
+                                     type::Type::TypeId type_id,
+                                     llvm::Type *&val_type,
+                                     llvm::Type *&len_type) {
+  PL_ASSERT(type_id != type::Type::TypeId::INVALID);
+  switch (type_id) {
+    case type::Type::TypeId::BOOLEAN:
+      val_type = codegen.BoolType();
+      break;
+    case type::Type::TypeId::TINYINT:
+      val_type = codegen.Int8Type();
+      break;
+    case type::Type::TypeId::SMALLINT:
+      val_type = codegen.Int16Type();
+      break;
+    case type::Type::TypeId::DATE:
+    case type::Type::TypeId::INTEGER:
+      val_type = codegen.Int32Type();
+      break;
+    case type::Type::TypeId::TIMESTAMP:
+    case type::Type::TypeId::BIGINT:
+      val_type = codegen.Int64Type();
+      break;
+    case type::Type::TypeId::DECIMAL:
+      val_type = codegen.DoubleType();
+      break;
+    case type::Type::TypeId::VARBINARY:
+    case type::Type::TypeId::VARCHAR:
+      val_type = codegen.CharPtrType();
+      len_type = codegen.Int32Type();
+      break;
+    default: {
+      throw Exception{TypeIdToString(type_id) + " not materializable type"};
+    }
+  }
+}
+
+llvm::Value *Type::GetNullValue(CodeGen &codegen, type::Type::TypeId type_id) {
+  switch (type_id) {
+    case type::Type::TypeId::BOOLEAN:
+      return codegen.ConstBool(type::PELOTON_BOOLEAN_NULL);
+    case type::Type::TypeId::TINYINT:
+      return codegen.Const8(type::PELOTON_INT8_NULL);
+    case type::Type::TypeId::SMALLINT:
+      return codegen.Const16(type::PELOTON_INT16_NULL);
+    case type::Type::TypeId::INTEGER:
+      return codegen.Const32(type::PELOTON_INT32_NULL);
+    case type::Type::TypeId::BIGINT:
+      return codegen.Const64(type::PELOTON_INT64_NULL);
+    case type::Type::TypeId::DECIMAL:
+      return codegen.ConstDouble(type::PELOTON_DECIMAL_NULL);
+    case type::Type::TypeId::TIMESTAMP:
+      return codegen.Const64(type::PELOTON_TIMESTAMP_NULL);
+    case type::Type::TypeId::VARBINARY:
+    case type::Type::TypeId::VARCHAR:
+      return codegen.Null(codegen.Int8Type());
+    default: {
+      auto msg = StringUtil::Format("Unknown Type '%d' for GetNullValue",
+                                    static_cast<uint32_t>(type_id));
+      throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
+    }
   }
 }
 

@@ -12,6 +12,8 @@
 
 #include "codegen/compact_storage.h"
 
+#include "codegen/type.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -32,8 +34,8 @@ llvm::Type *CompactStorage::Setup(
   for (uint32_t i = 0; i < types_.size(); i++) {
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
-    codegen::Value::TypeForMaterialization(codegen, types_[i], val_type,
-                                           len_type);
+    Type::GetTypeForMaterialization(codegen, types_[i], val_type, len_type);
+
     // Create an slot metadata entry for the value
     uint32_t val_type_size = codegen.SizeOf(val_type);
     storage_format_.emplace_back(EntryInfo{val_type, i, false, val_type_size});
@@ -58,7 +60,7 @@ llvm::Type *CompactStorage::Setup(
 }
 
 //===----------------------------------------------------------------------===//
-// StoreValues the given values into the provided storage area
+// Stores the given values into the provided storage area
 //===----------------------------------------------------------------------===//
 llvm::Value *CompactStorage::StoreValues(
     CodeGen &codegen, llvm::Value *ptr,

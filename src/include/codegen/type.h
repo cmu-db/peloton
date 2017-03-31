@@ -114,6 +114,14 @@ class Type {
   // Is the given type an integral type (i.e., tinyint to bigint)
   static bool IsIntegral(type::Type::TypeId type_id);
 
+  static llvm::Value *GetNullValue(CodeGen &codegen,
+                                   type::Type::TypeId type_id);
+
+  static void GetTypeForMaterialization(CodeGen &codegen,
+                                        type::Type::TypeId type_id,
+                                        llvm::Type *&val_type,
+                                        llvm::Type *&len_type);
+
   // Lookup comparison handler for the given type
   static const Comparison *GetComparison(type::Type::TypeId type_id);
 

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "codegen/codegen.h"
+#include "codegen/if.h"
 #include "codegen/runtime_functions_proxy.h"
 #include "codegen/varlen_proxy.h"
 
@@ -21,28 +22,53 @@ namespace codegen {
 
 class Varlen {
  public:
-  // Constructor
-  Varlen(llvm::Value *varlen_ptr) : varlen_ptr_(varlen_ptr) {}
-
   // Get the length and the pointer to the variable length object
-  std::pair<llvm::Value *, llvm::Value *> GetObjectAndLength(CodeGen &codegen) {
+  static void SafeGetPtrAndLength(CodeGen &codegen, llvm::Value *varlen_ptr_ptr,
+                                  llvm::Value *&data_ptr, llvm::Value *&len) {
+    // Load the Varlen** to get a Varlen*
     auto *varlen_type = VarlenProxy::GetType(codegen);
-    PL_ASSERT(varlen_ptr_->getType()->isPointerTy() &&
-              varlen_ptr_->getType()->getContainedType(0) == varlen_type);
+    auto *varlen_ptr = codegen->CreateLoad(codegen->CreateBitCast(
+        varlen_ptr_ptr, varlen_type->getPointerTo()->getPointerTo()));
 
+    // The first four bytes are the length, load it here
     auto *len_ptr =
-        codegen->CreateConstInBoundsGEP2_32(varlen_type, varlen_ptr_, 0, 0);
-    auto *data_ptr =
-        codegen->CreateConstInBoundsGEP2_32(varlen_type, varlen_ptr_, 0, 1);
+        codegen->CreateConstInBoundsGEP2_32(varlen_type, varlen_ptr, 0, 0);
+    len = codegen->CreateLoad(codegen.Int32Type(), len_ptr);
 
-    auto *len = codegen->CreateLoad(codegen.Int32Type(), len_ptr);
-    //auto *data = codegen->CreateLoad(codegen.CharPtrType(), data_ptr);
-
-    return std::make_pair(data_ptr, len);
+    // The four bytes after the start is where the (contiguous) data is
+    data_ptr =
+        codegen->CreateConstInBoundsGEP2_32(varlen_type, varlen_ptr, 0, 1);
   }
 
- private:
-  llvm::Value *varlen_ptr_;
+  // Get the length and the pointer to the variable length object
+  static void GetPtrAndLength(CodeGen &codegen, llvm::Value *varlen_ptr_ptr,
+                              llvm::Value *&data_ptr, llvm::Value *&len,
+                              llvm::Value *&is_null) {
+    // In order to load the components of the Varlen*, we need to do a null
+    // check on the Varlen** argument first, to avoid loading garbage/segfault
+
+    is_null = codegen->CreateICmpEQ(
+        varlen_ptr_ptr,
+        Type::GetNullValue(codegen, type::Type::TypeId::VARCHAR));
+
+    llvm::Value *null_data = nullptr, *null_len = nullptr;
+    If varlen_is_null{codegen, is_null};
+    {
+      // The pointer is null
+      null_data = codegen.NullPtr(codegen.Int8Type()->getPointerTo());
+      null_len = codegen.Const32(0);
+    }
+    varlen_is_null.ElseBlock();
+    {
+      // The pointer is not null, safely load the data and length values
+      SafeGetPtrAndLength(codegen, varlen_ptr_ptr, data_ptr, len);
+    }
+    varlen_is_null.EndIf();
+
+    // Build PHI nodes for the data pointer and length
+    data_ptr = varlen_is_null.BuildPHI(null_data, data_ptr);
+    len = varlen_is_null.BuildPHI(null_len, len);
+  }
 };
 
 }  // namespace codegen
