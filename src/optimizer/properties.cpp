@@ -18,7 +18,7 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(
-    std::vector<expression::TupleValueExpression *> column_exprs)
+    std::vector<expression::AbstractExpression *> column_exprs)
     : column_exprs_(std::move(column_exprs)), is_star_(false) {
   LOG_TRACE("Size of column property: %ld", columns_.size());
 }
@@ -40,7 +40,7 @@ bool PropertyColumns::operator>=(const Property &r) const {
   for (auto r_column : r_columns.column_exprs_) {
     bool has_column = false;
     for (auto column : column_exprs_) {
-      if (column->GetBoundOid() == r_column->GetBoundOid()) {
+      if (column->Equals(r_column)) {
         has_column = true;
         break;
       }
@@ -55,10 +55,8 @@ hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
   hash = util::CombineHashes(hash, util::Hash<bool>(&is_star_));
-  for (auto col : column_exprs_) {
-    auto bound_oid = col->GetBoundOid();
-    hash = util::CombineHashes(
-        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&bound_oid));
+  for (auto expr : column_exprs_) {
+    hash = util::CombineHashes(hash, expr->Hash());
   }
   return hash;
 }
@@ -68,7 +66,7 @@ void PropertyColumns::Accept(PropertyVisitor *v) const {
 }
 
 PropertySort::PropertySort(
-    std::vector<expression::TupleValueExpression *> sort_columns,
+    std::vector<expression::AbstractExpression *> sort_columns,
     std::vector<bool> sort_ascending)
     : sort_columns_(sort_columns), sort_ascending_(sort_ascending) {}
 
@@ -97,9 +95,7 @@ hash_t PropertySort::Hash() const {
   // hash sorting columns
   size_t num_sort_columns = sort_columns_.size();
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    auto bound_oid = sort_columns_[i]->GetBoundOid();
-    hash = util::CombineHashes(
-        hash, util::Hash<std::tuple<oid_t, oid_t, oid_t>>(&bound_oid));
+    hash = util::CombineHashes(hash, sort_columns_[i]->Hash());
     hash = util::CombineHashes(hash, sort_ascending_[i]);
   }
   return hash;

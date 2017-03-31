@@ -202,10 +202,10 @@ class PhysicalProject : public OperatorNode<PhysicalProject> {
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
  public:
   static Operator make(
-      std::vector<expression::TupleValueExpression *> &sort_columns,
+      std::vector<expression::AbstractExpression *> &sort_exprs,
       std::vector<bool> &sort_ascending);
 
-  std::vector<expression::TupleValueExpression *> sort_columns;
+  std::vector<expression::AbstractExpression *> sort_exprs;
   std::vector<bool> sort_ascending;
 };
 

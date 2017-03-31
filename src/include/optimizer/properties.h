@@ -21,7 +21,7 @@ namespace optimizer {
 // Specifies which columns should the executor return
 class PropertyColumns : public Property {
  public:
-  PropertyColumns(std::vector<expression::TupleValueExpression *> column_exprs);
+  PropertyColumns(std::vector<expression::AbstractExpression *> column_exprs);
   PropertyColumns(bool is_star_expr);
 
   PropertyType Type() const override;
@@ -32,7 +32,7 @@ class PropertyColumns : public Property {
 
   void Accept(PropertyVisitor *v) const override;
 
-  inline expression::TupleValueExpression *GetColumn(int idx) const {
+  inline expression::AbstractExpression *GetColumn(int idx) const {
     return column_exprs_[idx];
   }
 
@@ -40,7 +40,7 @@ class PropertyColumns : public Property {
   inline bool IsStarExpressionInColumn() const { return is_star_; }
 
  private:
-  std::vector<expression::TupleValueExpression *> column_exprs_;
+  std::vector<expression::AbstractExpression *> column_exprs_;
   bool is_star_;
 };
 
@@ -71,7 +71,7 @@ class PropertyProjection : public Property {
 // Specifies the required sorting order of the query
 class PropertySort : public Property {
  public:
-  PropertySort(std::vector<expression::TupleValueExpression *> sort_columns,
+  PropertySort(std::vector<expression::AbstractExpression *> sort_columns,
                std::vector<bool> sort_ascending);
 
   PropertyType Type() const override;
@@ -84,14 +84,14 @@ class PropertySort : public Property {
 
   inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
 
-  inline expression::TupleValueExpression *GetSortColumn(int idx) const {
+  inline expression::AbstractExpression *GetSortColumn(int idx) const {
     return sort_columns_[idx];
   }
 
   inline bool GetSortAscending(int idx) const { return sort_ascending_[idx]; }
 
  private:
-  std::vector<expression::TupleValueExpression *> sort_columns_;
+  std::vector<expression::AbstractExpression *> sort_columns_;
   std::vector<bool> sort_ascending_;
 };
 

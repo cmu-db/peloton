@@ -194,10 +194,10 @@ Operator PhysicalProject::make() {
 // OrderBy
 //===--------------------------------------------------------------------===//
 Operator PhysicalOrderBy::make(
-    std::vector<expression::TupleValueExpression *> &sort_columns,
+    std::vector<expression::AbstractExpression *> &sort_exprs,
     std::vector<bool> &sort_ascending) {
   PhysicalOrderBy *order_by = new PhysicalOrderBy;
-  order_by->sort_columns = sort_columns;
+  order_by->sort_exprs = sort_exprs;
   order_by->sort_ascending = sort_ascending;
   return Operator(order_by);
 }

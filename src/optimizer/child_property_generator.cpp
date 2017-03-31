@@ -56,7 +56,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
     if (columns_prop_ptr->IsStarExpressionInColumn()) {
       provided_property.AddProperty(columns_prop);
     } else {
-      std::vector<expression::TupleValueExpression *> column_exprs;
+      std::vector<expression::AbstractExpression *> column_exprs;
       for (size_t i = 0; i < columns_prop_ptr->GetSize(); ++i)
         column_exprs.push_back(columns_prop_ptr->GetColumn(i));
 
@@ -71,7 +71,7 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
           bool found = false;
           if (columns_prop_ptr != nullptr) {
             for (auto &col : column_exprs) {
-              if (sort_col->GetBoundOid() == col->GetBoundOid()) {
+              if (sort_col->Equals(col)) {
                 found = true;
                 break;
               }

@@ -40,7 +40,7 @@ void PropertyEnforcer::Visit(const PropertyProjection *) {
 }
 
 void PropertyEnforcer::Visit(const PropertySort *property) {
-  std::vector<expression::TupleValueExpression *> sort_columns;
+  std::vector<expression::AbstractExpression *> sort_columns;
   std::vector<bool> sort_ascending;
   size_t column_size = property->GetSortColumnSize();
   for (size_t i = 0; i < column_size; ++i) {

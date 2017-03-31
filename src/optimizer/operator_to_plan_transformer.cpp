@@ -156,76 +156,57 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
-  (void)op;
-  //  // Get child plan
-  //  PL_ASSERT(children_plans_.size() == 1);
-  //
-  //  std::vector<oid_t> sort_col_ids;
-  //  std::vector<bool> sort_flags;
-  //  for (auto &col : op->sort_columns) {
-  //    // Check which column
-  //    // in the table produced
-  //    // by the child operator
-  //    // is the sort column
-  //    for (oid_t child_col_id = 0;
-  //         child_col_id < children_output_columns_[0].size(); ++child_col_id)
-  //         {
-  //      if (col->GetBoundOid() == children_output_columns_[0][child_col_id]) {
-  //        sort_col_ids.emplace_back(child_col_id);
-  //        break;
-  //      }
-  //    }
-  //  }
-  //
-  //  for (auto asc_flag : op->sort_ascending) {
-  //    // Planner use desc flag
-  //    sort_flags.push_back(asc_flag ^ 1);
-  //  }
-  //
-  //  std::vector<oid_t> column_ids;
-  //  // Get output columns
-  //  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-  //                         ->As<PropertyColumns>();
-  //
-  //  PL_ASSERT(column_prop != nullptr);
-  //
-  //  if (column_prop->IsStarExpressionInColumn()) {
-  //    for (oid_t child_col_id = 0;
-  //         child_col_id < children_output_columns_[0].size(); ++child_col_id)
-  //         {
-  //      column_ids.emplace_back(child_col_id);
-  //      if (output_columns_ != nullptr)
-  //        output_columns_->emplace_back(
-  //            children_output_columns_[0][child_col_id]);
-  //    }
-  //  } else {
-  //    for (size_t column_idx = 0; column_idx < column_prop->GetSize();
-  //         column_idx++) {
-  //      auto col = column_prop->GetColumn(column_idx);
-  //      // transform global column
-  //      // to column offset
-  //      for (oid_t child_col_id = 0;
-  //           child_col_id < children_output_columns_[0].size();
-  //           ++child_col_id) {
-  //        if (col->GetBoundOid() == children_output_columns_[0][child_col_id])
-  //        {
-  //          column_ids.emplace_back(child_col_id);
-  //          // record output column mapping
-  //          if (output_columns_ != nullptr)
-  //            output_columns_->emplace_back(col->GetBoundOid());
-  //          break;
-  //        }
-  //      }
-  //    }
-  //  }
-  //
-  //  std::unique_ptr<planner::AbstractPlan> order_by_plan(
-  //      new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
-  //
-  //  // Add child
-  //  order_by_plan->AddChild(std::move(children_plans_[0]));
-  //  output_plan_ = std::move(order_by_plan);
+  // Get child plan
+  PL_ASSERT(children_plans_.size() == 1);
+  PL_ASSERT(children_expr_map_.size() == 1);
+
+  std::vector<oid_t> sort_col_ids;
+  std::vector<bool> sort_flags;
+
+  auto sort_columns_size = op->sort_exprs.size();
+  auto &sort_exprs = op->sort_exprs;
+  auto &sort_ascending = op->sort_ascending;
+
+  for (size_t idx = 0; idx < sort_columns_size; ++idx) {
+    sort_col_ids.push_back(children_expr_map_[0][sort_exprs[idx]]);
+    // planner use desc flag
+    sort_flags.push_back(sort_ascending[idx] ^ 1);
+  }
+
+  std::vector<oid_t> column_ids;
+  // Get output columns
+  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                         ->As<PropertyColumns>();
+
+  PL_ASSERT(column_prop != nullptr);
+  PL_ASSERT(output_expr_map_ != nullptr);
+
+  // construct output column offset & output expr map
+  if (column_prop->IsStarExpressionInColumn()) {
+    // if SELECT *, add all exprs to output column
+    for (auto &expr_idx_pair : children_expr_map_[0]) {
+      auto &expr = expr_idx_pair.first;
+      auto &idx = expr_idx_pair.second;
+      (*output_expr_map_)[expr] = idx;
+      column_ids[idx] = idx;
+    }
+  } else {
+    auto output_column_size = column_prop->GetSize();
+    for (oid_t idx = 0; idx < output_column_size; ++idx) {
+      auto output_expr = column_prop->GetColumn(idx);
+      column_ids.push_back(children_expr_map_[0][output_expr]);
+      (*output_expr_map_)[output_expr] = idx;
+    }
+  }
+
+  std::unique_ptr<planner::AbstractPlan> order_by_plan(
+      new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
+
+  // Add child
+  order_by_plan->AddChild(std::move(children_plans_[0]));
+  output_plan_ = std::move(order_by_plan);
 }
+
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *) {}

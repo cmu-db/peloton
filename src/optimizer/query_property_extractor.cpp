@@ -54,15 +54,15 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     property_set_.AddProperty(
         std::shared_ptr<PropertyColumns>(new PropertyColumns(true)));
   } else {
-    std::vector<expression::TupleValueExpression *> column_exprs;
+    std::vector<expression::AbstractExpression *> column_exprs;
 
     // Transform output expressions
     for (auto col : *select_stmt->select_list) {
       expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
                                                       needs_projection);
-      if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-        column_exprs.emplace_back(
-            reinterpret_cast<expression::TupleValueExpression *>(col));
+      //if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      //  column_exprs.emplace_back(
+      //      reinterpret_cast<expression::TupleValueExpression *>(col));
     }
     property_set_.AddProperty(
         std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
@@ -90,13 +90,11 @@ void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
   // TODO: Only support order by base table columns
   std::vector<bool> sort_ascendings;
-  std::vector<expression::TupleValueExpression*> sort_cols;
+  std::vector<expression::AbstractExpression*> sort_cols;
   auto len = node->exprs->size();
   for (size_t idx = 0; idx < len; idx++) {
-    auto expr = node->exprs->at(idx);
-    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
-      continue;
-    sort_cols.emplace_back(reinterpret_cast<expression::TupleValueExpression*>(expr));
+    auto &expr = node->exprs->at(idx);
+    sort_cols.emplace_back(expr);
     sort_ascendings.push_back(node->types->at(idx) == parser::kOrderAsc);
   }
 
@@ -115,7 +113,7 @@ void QueryPropertyExtractor::Visit(const parser::DeleteStatement *op) {
         new PropertyPredicate(op->expr->Copy())));
   }
   property_set_.AddProperty(std::shared_ptr<PropertyColumns>(
-      new PropertyColumns(std::vector<expression::TupleValueExpression *>())));
+      new PropertyColumns(std::vector<expression::AbstractExpression *>())));
 }
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}
