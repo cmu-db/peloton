@@ -12,6 +12,8 @@
 
 #include "codegen/updateable_storage.h"
 
+#include "codegen/type.h"
+
 namespace peloton {
 namespace codegen {
 
@@ -35,8 +37,8 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
   for (uint32_t i = 0; i < types_.size(); i++) {
     llvm::Type *val_type = nullptr;
     llvm::Type *len_type = nullptr;
-    codegen::Value::TypeForMaterialization(codegen, types_[i], val_type,
-                                           len_type);
+    Type::GetTypeForMaterialization(codegen, types_[i], val_type, len_type);
+
     // Create an entry for the value and add the type to the struct type we're
     // constructing
     uint32_t val_type_size = codegen.SizeOf(val_type);
