@@ -86,7 +86,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           new planner::CreatePlan((parser::CreateStatement*)parse_tree2);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       child_plan = std::move(child_CreatePlan);
-      //If creating index, populate with existing data first.
+      // If creating index, populate with existing data first.
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement*)parse_tree2;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
@@ -96,12 +96,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         for (auto column_name : create_plan->GetIndexAttributes()) {
           column_ids.push_back(schema->GetColumnID(column_name));
         }
-        //Create a plan to retrieve data
+        // Create a plan to retrieve data
         std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan =
             CreateScanPlan(target_table, column_ids, nullptr, false);
         child_SeqScanPlan->AddChild(std::move(child_plan));
         child_plan = std::move(child_SeqScanPlan);
-        //Create a plan to add data to index
+        // Create a plan to add data to index
         std::unique_ptr<planner::AbstractPlan> child_PopulateIndexPlan(
             new planner::PopulateIndexPlan(target_table, column_ids));
         child_PopulateIndexPlan->AddChild(std::move(child_plan));

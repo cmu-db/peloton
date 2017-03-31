@@ -65,7 +65,6 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list) {
-
   LOG_DEBUG("Enter new optimizer...");
 
   // Base Case
@@ -121,7 +120,7 @@ void Optimizer::Reset() {
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
-    parser::SQLStatement *tree, bool& is_ddl_stmt) {
+    parser::SQLStatement *tree, bool &is_ddl_stmt) {
   unique_ptr<planner::AbstractPlan> ddl_plan;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
@@ -129,23 +128,21 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
-          new planner::DropPlan((parser::DropStatement *) tree));
+          new planner::DropPlan((parser::DropStatement *)tree));
       ddl_plan = move(drop_plan);
-    }
-      break;
+    } break;
 
     case StatementType::CREATE: {
       LOG_TRACE("Adding Create plan...");
       unique_ptr<planner::AbstractPlan> create_plan(
-          new planner::CreatePlan((parser::CreateStatement *) tree));
+          new planner::CreatePlan((parser::CreateStatement *)tree));
       ddl_plan = move(create_plan);
-    }
-      break;
-    default:is_ddl_stmt = false;
+    } break;
+    default:
+      is_ddl_stmt = false;
   }
 
   return move(ddl_plan);
-
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
@@ -169,19 +166,17 @@ unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
   OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(
-      plan, &requirements, &required_input_props, children_plans,
-      children_expr_map, output_expr_map);
+  return transformer.ConvertOpExpression(plan, &requirements,
+                                         &required_input_props, children_plans,
+                                         children_expr_map, output_expr_map);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
-    GroupID id, PropertySet requirements,
-    ExprMap* output_expr_map) {
+    GroupID id, PropertySet requirements, ExprMap *output_expr_map) {
   LOG_TRACE("Choosing best plan for group %d", id);
 
   Group *group = memo_.GetGroupByID(id);
-  shared_ptr<GroupExpression> gexpr =
-      group->GetBestExpression(requirements);
+  shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
@@ -197,8 +192,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   vector<ExprMap> children_expr_map;
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
-    children_plans.push_back(ChooseBestPlan(child_groups[i],
-       required_input_props[i], &child_expr_map));
+    children_plans.push_back(ChooseBestPlan(
+        child_groups[i], required_input_props[i], &child_expr_map));
     children_expr_map.push_back(move(child_expr_map));
   }
 
@@ -206,9 +201,9 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   shared_ptr<OperatorExpression> op =
       make_shared<OperatorExpression>(gexpr->Op());
 
-  auto plan = OptimizerPlanToPlannerPlan(
-      op, requirements, required_input_props, children_plans,
-      children_expr_map, output_expr_map);
+  auto plan = OptimizerPlanToPlannerPlan(op, requirements, required_input_props,
+                                         children_plans, children_expr_map,
+                                         output_expr_map);
 
   return plan;
 }
@@ -220,8 +215,7 @@ void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
   // Whether required properties have already been optimized for the group
   if (group->GetBestExpression(requirements) != nullptr) return;
 
-  const vector<shared_ptr<GroupExpression>> exprs =
-      group->GetExpressions();
+  const vector<shared_ptr<GroupExpression>> exprs = group->GetExpressions();
   for (size_t i = 0; i < exprs.size(); ++i) {
     if (exprs[i]->Op().IsPhysical()) OptimizeExpression(exprs[i], requirements);
   }
@@ -235,9 +229,8 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
   // Only optimize and cost physical expression
   PL_ASSERT(gexpr->Op().IsPhysical());
 
-  vector<pair<PropertySet, vector<PropertySet>>>
-      output_input_property_pairs =
-          move(DeriveChildProperties(gexpr, requirements));
+  vector<pair<PropertySet, vector<PropertySet>>> output_input_property_pairs =
+      move(DeriveChildProperties(gexpr, requirements));
 
   size_t num_property_pairs = output_input_property_pairs.size();
 
@@ -336,19 +329,16 @@ shared_ptr<GroupExpression> Optimizer::EnforceProperty(
   return enforced_gexpr;
 }
 
-vector<pair<PropertySet, vector<PropertySet>>>
-Optimizer::DeriveChildProperties(shared_ptr<GroupExpression> gexpr,
-                                 PropertySet requirements) {
+vector<pair<PropertySet, vector<PropertySet>>> Optimizer::DeriveChildProperties(
+    shared_ptr<GroupExpression> gexpr, PropertySet requirements) {
   ChildPropertyGenerator converter(column_manager_);
   return move(converter.GetProperties(gexpr, requirements));
 }
 
 void Optimizer::DeriveCostAndStats(
-    shared_ptr<GroupExpression> gexpr,
-    const PropertySet &output_properties,
+    shared_ptr<GroupExpression> gexpr, const PropertySet &output_properties,
     const vector<PropertySet> &input_properties_list,
-    vector<shared_ptr<Stats>> child_stats,
-    vector<double> child_costs) {
+    vector<shared_ptr<Stats>> child_stats, vector<double> child_costs) {
   CostAndStatsCalculator calculator(column_manager_);
   calculator.CalculateCostAndStats(gexpr, &output_properties,
                                    &input_properties_list, child_stats,
@@ -490,14 +480,13 @@ GroupID Optimizer::MemoTransformedExpression(
 }
 
 bool Optimizer::RecordTransformedExpression(
-    shared_ptr<OperatorExpression> expr,
-    shared_ptr<GroupExpression> &gexpr) {
+    shared_ptr<OperatorExpression> expr, shared_ptr<GroupExpression> &gexpr) {
   return RecordTransformedExpression(expr, gexpr, UNDEFINED_GROUP);
 }
 
-bool Optimizer::RecordTransformedExpression(
-    shared_ptr<OperatorExpression> expr,
-    shared_ptr<GroupExpression> &gexpr, GroupID target_group) {
+bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
+                                            shared_ptr<GroupExpression> &gexpr,
+                                            GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
   return memo_.InsertExpression(gexpr, target_group);
 }

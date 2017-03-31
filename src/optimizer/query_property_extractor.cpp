@@ -53,8 +53,7 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
       ExpressionType::STAR) {
     property_set_.AddProperty(
         std::shared_ptr<PropertyColumns>(new PropertyColumns(true)));
-  }
-  else {
+  } else {
     std::vector<expression::TupleValueExpression *> column_exprs;
 
     // Transform output expressions
@@ -110,16 +109,13 @@ void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::InsertStatement *op) {}
-void QueryPropertyExtractor::Visit(
-    const parser::DeleteStatement *op) {
-  if (op->expr != nullptr) {  
+void QueryPropertyExtractor::Visit(const parser::DeleteStatement *op) {
+  if (op->expr != nullptr) {
     property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
         new PropertyPredicate(op->expr->Copy())));
   }
-  property_set_.AddProperty(
-      std::shared_ptr<PropertyColumns>(
-          new PropertyColumns(std::vector<expression::TupleValueExpression *>())));
-
+  property_set_.AddProperty(std::shared_ptr<PropertyColumns>(
+      new PropertyColumns(std::vector<expression::TupleValueExpression *>())));
 }
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE const parser::DropStatement *op) {}

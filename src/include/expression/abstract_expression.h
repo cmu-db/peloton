@@ -106,11 +106,9 @@ class AbstractExpression : public Printable {
 
     return os.str();
   }
-  
+
   // TODO: implement this
-  virtual int Hash() {
-    return 0;
-  }
+  virtual int Hash() { return 0; }
 
   virtual bool Equals(AbstractExpression *expr) {
     if (exp_type_ != expr->exp_type_ ||
@@ -205,16 +203,17 @@ class AbstractExpression : public Printable {
 
 // Equality Comparator class for Abstract Expression
 class ExprEqualCmp {
-public:
-  inline bool operator() (AbstractExpression* expr1, AbstractExpression* expr2) const {
+ public:
+  inline bool operator()(AbstractExpression *expr1,
+                         AbstractExpression *expr2) const {
     return expr1->Equals(expr2);
   }
 };
-  
+
 // Hasher class for Abstract Expression
 class ExprHasher {
-public:
-  inline size_t operator() (AbstractExpression* expr) const {
+ public:
+  inline size_t operator()(AbstractExpression *expr) const {
     return expr->Hash();
   }
 };

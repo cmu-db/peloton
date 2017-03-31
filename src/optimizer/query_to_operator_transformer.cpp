@@ -52,7 +52,7 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   }
   if (op->limit != nullptr) {
     // When offset is not specified in the query, parser will set offset to -1
-    if (op->limit->offset == -1)
+    if (op->limit->offset == -1) 
       op->limit->offset = 0;
     auto limit = std::make_shared<OperatorExpression>(
         LogicalLimit::make(op->limit->limit, op->limit->offset));
@@ -160,20 +160,17 @@ void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
 
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
-void QueryToOperatorTransformer::Visit(
-    const parser::InsertStatement *op) {
-  storage::DataTable* target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          op->GetDatabaseName(), op->GetTableName());
+void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
+  storage::DataTable *target_table =
+      catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(),
+                                                        op->GetTableName());
 
-  auto insert_expr =
-      std::make_shared<OperatorExpression>(
-          LogicalInsert::make(target_table, op->columns, op->insert_values));
+  auto insert_expr = std::make_shared<OperatorExpression>(
+      LogicalInsert::make(target_table, op->columns, op->insert_values));
 
   output_expr = insert_expr;
 }
-void QueryToOperatorTransformer::Visit(
-    const parser::DeleteStatement *op) {
+void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->GetDatabaseName(), op->GetTableName());
   auto table_scan =
@@ -187,7 +184,8 @@ void QueryToOperatorTransformer::Visit(
   // n their respective objects given a set of schemas.
   // Otherwise tuple_idx will equals to -1 for scan plan, causing error.
   if (op->expr != nullptr) {
-    expression::ExpressionUtil::TransformExpression(target_table->GetSchema(), op->expr);
+    expression::ExpressionUtil::TransformExpression(target_table->GetSchema(),
+                                                    op->expr);
   }
 
   output_expr = delete_expr;
@@ -200,12 +198,9 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::ExecuteStatement *op) {}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
-void QueryToOperatorTransformer::Visit(
-    const parser::UpdateStatement *op) {
-
+void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->table->GetDatabaseName(),
-      op->table->GetTableName());
+      op->table->GetDatabaseName(), op->table->GetTableName());
 
   auto update_clauses = op->updates;
 
@@ -214,14 +209,12 @@ void QueryToOperatorTransformer::Visit(
     auto columnID = target_table->GetSchema()->GetColumnID(clause->column);
     auto column = target_table->GetSchema()->GetColumn(columnID);
 
-    if (clause_expr->GetExpressionType() ==
-        ExpressionType::VALUE_CONSTANT) {
-      auto value = static_cast<const expression::ConstantValueExpression*>(
-          clause_expr)
-          ->GetValue()
-          .CastAs(column.GetType());
-      auto value_expression =
-          new expression::ConstantValueExpression(value);
+    if (clause_expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+      auto value =
+          static_cast<const expression::ConstantValueExpression *>(clause_expr)
+              ->GetValue()
+              .CastAs(column.GetType());
+      auto value_expression = new expression::ConstantValueExpression(value);
 
       delete clause->value;
       clause->value = value_expression;
@@ -233,7 +226,7 @@ void QueryToOperatorTransformer::Visit(
 
         if (child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
           auto value =
-              static_cast<const expression::ConstantValueExpression*>(child)
+              static_cast<const expression::ConstantValueExpression *>(child)
                   ->GetValue()
                   .CastAs(column.GetType());
           auto value_expression =
@@ -246,8 +239,7 @@ void QueryToOperatorTransformer::Visit(
   }
 
   auto update_expr =
-      std::make_shared<OperatorExpression>(
-          LogicalUpdate::make(op));
+      std::make_shared<OperatorExpression>(LogicalUpdate::make(op));
 
   output_expr = update_expr;
 }

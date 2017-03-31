@@ -59,15 +59,15 @@ void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalLeftHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalRightHashJoin *){};
 void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin *){};
-void CostAndStatsCalculator::Visit(const PhysicalInsert *){
+void CostAndStatsCalculator::Visit(const PhysicalInsert *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };
-void CostAndStatsCalculator::Visit(const PhysicalDelete *){
+void CostAndStatsCalculator::Visit(const PhysicalDelete *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };
-void CostAndStatsCalculator::Visit(const PhysicalUpdate *){
+void CostAndStatsCalculator::Visit(const PhysicalUpdate *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
 };

@@ -760,7 +760,7 @@ enum class PostgresConstraintType {
 
 enum class ConstraintType {
   INVALID = INVALID_TYPE_ID,  // invalid
-  NOT_NULL = 1,              // notnull
+  NOT_NULL = 1,               // notnull
   NOTNULL = 2,                // notnull
   DEFAULT = 3,                // default
   CHECK = 4,                  // check
@@ -826,8 +826,10 @@ enum class LoggerMappingStrategyType {
   MANUAL = 3
 };
 std::string LoggerMappingStrategyTypeToString(LoggerMappingStrategyType type);
-LoggerMappingStrategyType StringToLoggerMappingStrategyType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const LoggerMappingStrategyType &type);
+LoggerMappingStrategyType StringToLoggerMappingStrategyType(
+    const std::string &str);
+std::ostream &operator<<(std::ostream &os,
+                         const LoggerMappingStrategyType &type);
 
 enum class CheckpointType {
   INVALID = INVALID_TYPE_ID,
@@ -853,16 +855,12 @@ enum class LoggingStatusType {
 };
 std::string LoggingStatusTypeToString(LoggingStatusType type);
 LoggingStatusType StringToLoggingStatusType(const std::string &str);
-std::ostream& operator<<(std::ostream& os, const LoggingStatusType& type);
+std::ostream &operator<<(std::ostream &os, const LoggingStatusType &type);
 
-enum class LoggerType {
-  INVALID = INVALID_TYPE_ID,
-  FRONTEND = 1,
-  BACKEND = 2
-};
+enum class LoggerType { INVALID = INVALID_TYPE_ID, FRONTEND = 1, BACKEND = 2 };
 std::string LoggerTypeToString(LoggerType type);
 LoggerType StringToLoggerType(const std::string &str);
-std::ostream& operator<<(std::ostream& os, const LoggerType& type);
+std::ostream &operator<<(std::ostream &os, const LoggerType &type);
 
 enum LogRecordType {
   LOGRECORD_TYPE_INVALID = INVALID_TYPE_ID,
@@ -951,10 +949,7 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum class TupleSerializationFormat {
-  NATIVE = 0,
-  DR = 1
-};
+enum class TupleSerializationFormat { NATIVE = 0, DR = 1 };
 
 // ------------------------------------------------------------------
 // Entity types
@@ -1068,8 +1063,7 @@ typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
 
 // block -> offset -> is_index_deletion
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    GCSet;
+typedef std::unordered_map<oid_t, std::unordered_map<oid_t, bool>> GCSet;
 
 //===--------------------------------------------------------------------===//
 // File Handle
@@ -1134,13 +1128,14 @@ typedef std::vector<DirectMap> DirectMapList;
 // Optimizer typedefs
 //===--------------------------------------------------------------------===//
 namespace expression {
-  class AbstractExpression;
-  class ExprHasher;
-  class ExprEqualCmp;
+class AbstractExpression;
+class ExprHasher;
+class ExprEqualCmp;
 }
 // Mapping of Expression -> Column Offset created by operator on previous level
-typedef std::unordered_map<expression::AbstractExpression*, int, expression::ExprHasher,
-expression::ExprEqualCmp> ExprMap;
+typedef std::unordered_map<expression::AbstractExpression *, int,
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprMap;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

@@ -72,8 +72,6 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalUpdate *) override;
 
-
-
  private:
   void VisitOpExpression(std::shared_ptr<OperatorExpression> op);
 
@@ -83,7 +81,7 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   std::vector<PropertySet> *required_input_props_;
 
   std::vector<ExprMap> children_expr_map_;
-  ExprMap* output_expr_map_;
+  ExprMap *output_expr_map_;
 };
 
 } /* namespace optimizer */
