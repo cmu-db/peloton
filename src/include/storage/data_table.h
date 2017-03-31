@@ -266,9 +266,10 @@ class DataTable : public AbstractTable {
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
 
-  bool CheckNulls(const storage::Tuple *tuple) const;
 
-  bool CheckExp(const storage::Tuple *tupe) const;
+  bool CheckNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+
+  bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
