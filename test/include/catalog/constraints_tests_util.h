@@ -255,6 +255,29 @@ class ConstraintsTestsUtil {
     return executor.Execute();
   };
 
+  /** @brief Insert a tupl with 1 columns' value specified */
+  static bool ExecuteMultiInsert(concurrency::Transaction *transaction,
+                                 storage::DataTable *table,
+                                 std::vector<type::Value> cols) {
+    std::unique_ptr<executor::ExecutorContext> context(
+        new executor::ExecutorContext(transaction));
+
+    // Make tuple
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(table->GetSchema(), true));
+
+    auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+    for (int i = 0; i < int(cols.size()); i++) {
+      tuple->SetValue(i, cols[i], testing_pool);
+    }
+
+    auto project_info = MakeProjectInfoFromTuple(tuple.get());
+    // Insert
+    planner::InsertPlan node(table, std::move(project_info));
+    executor::InsertExecutor executor(&node, context.get());
+    return executor.Execute();
+  };
+
   /** @brief Insert a tupl with 4 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
                             storage::DataTable *table, const type::Value &col1,
