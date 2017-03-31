@@ -13,7 +13,9 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "catalog/column.h"
+#include "catalog/multi_constraint.h"
 #include "common/printable.h"
 #include "type/type.h"
 #include "boost/algorithm/string.hpp"
@@ -201,6 +203,14 @@ class Schema : public Printable {
     }
   }
 
+  inline void AddMultiConstraints(const catalog::MultiConstraint &mc) {
+    multi_constraints.push_back(mc);
+  }
+
+  inline std::vector<MultiConstraint> GetMultiConstraints() {
+    return multi_constraints;
+  }
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
@@ -213,6 +223,9 @@ class Schema : public Printable {
 
   // keeps track of unlined columns
   std::vector<oid_t> uninlined_columns;
+
+  // keeps multi_constraints
+  std::vector<MultiConstraint> multi_constraints;
 
   // keep these in sync with the vectors above
   oid_t column_count = INVALID_OID;
