@@ -30,6 +30,13 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
+  AddIndex({0, 1}, COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
+           IndexConstraintType::UNIQUE);
+  AddIndex({2}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
+           IndexConstraintType::DEFAULT);
+
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
@@ -37,13 +44,6 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                  column.GetType(), true, column.GetConstraints(), pool,
                  nullptr);
   }
-
-  AddIndex({0, 1}, COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
-           IndexConstraintType::PRIMARY_KEY);
-  AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
-           IndexConstraintType::UNIQUE);
-  AddIndex({2}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
-           IndexConstraintType::DEFAULT);
 }
 
 void ColumnCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
