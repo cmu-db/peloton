@@ -35,7 +35,7 @@ void Query::Execute(concurrency::Transaction &txn, char *consumer_arg,
   PL_ASSERT(parameter_size % 8 == 0);
 
   // Allocate some space for the function arguments
-  std::unique_ptr<char> param_data{new char[parameter_size]};
+  std::unique_ptr<char[]> param_data{new char[parameter_size]};
 
   // Grab an non-owning pointer to the space
   char *param = param_data.get();
