@@ -1119,9 +1119,7 @@ TEST_F(ConstraintsTests, MULTIUNIQUETest) {
   hasException = false;
   try {
     ConstraintsTestsUtil::ExecuteOneInsert(
-        txn, data_table.get(),
-        type::ValueFactory::GetIntegerValue(
-            ConstraintsTestsUtil::PopulatedValue(-1, 1)));
+        txn, data_table.get(), type::ValueFactory::GetIntegerValue(-1));
   } catch (ConstraintException e) {
     hasException = true;
   }
