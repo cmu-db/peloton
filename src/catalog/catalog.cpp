@@ -470,9 +470,8 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 
       // check if table already has index with same name
       auto pg_index = IndexCatalog::GetInstance();
-      if (!is_catalog &&
-          pg_index->GetIndexOid(index_name, table->GetOid(), txn) !=
-              INVALID_OID) {
+      if (!is_catalog && pg_index->GetIndexOid(index_name, table->GetOid(),
+                                               txn) != INVALID_OID) {
         LOG_DEBUG(
             "Cannot create index on same table with same name Return "
             "RESULT_FAILURE.");
@@ -519,9 +518,9 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
       table->AddIndex(key_index);
 
       // Insert index record into pg_index table
-      IndexCatalog::GetInstance()->InsertIndex(
-          index_oid, index_name, table->GetOid(), index_type, index_constraint,
-          unique_keys, pool_.get(), txn);
+      IndexCatalog::GetInstance()->InsertIndex(index_oid, index_name, table_oid,
+                                               index_type, index_constraint,
+                                               unique_keys, pool_.get(), txn);
 
       LOG_DEBUG("Successfully add index for table %s contains %d indexes",
                 table->GetName().c_str(), (int)table->GetValidIndexCount());
