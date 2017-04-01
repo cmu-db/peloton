@@ -54,7 +54,7 @@ std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_name_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "index_name", true);
+      catalog::Column(type::Type::VARCHAR, max_name_size, "index_name", false);
   index_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 

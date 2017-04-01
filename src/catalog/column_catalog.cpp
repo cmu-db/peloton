@@ -88,7 +88,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_name_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "column_name", true);
+      catalog::Column(type::Type::VARCHAR, max_name_size, "column_name", false);
   column_name_column.AddConstraint(catalog::Constraint(
       ConstraintType::PRIMARY, primary_key_constraint_name));
   column_name_column.AddConstraint(
@@ -101,7 +101,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_type_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "column_type", true);
+      catalog::Column(type::Type::VARCHAR, max_name_size, "column_type", false);
   column_type_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
