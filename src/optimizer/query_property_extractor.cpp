@@ -60,9 +60,8 @@ void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
     for (auto col : *select_stmt->select_list) {
       expression::ExpressionUtil::TransformExpression(column_ids, col, schema,
                                                       needs_projection);
-      //if (col->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      //  column_exprs.emplace_back(
-      //      reinterpret_cast<expression::TupleValueExpression *>(col));
+      column_exprs.emplace_back(
+          reinterpret_cast<expression::TupleValueExpression *>(col));
     }
     property_set_.AddProperty(
         std::shared_ptr<PropertyColumns>(new PropertyColumns(column_exprs)));
@@ -90,7 +89,7 @@ void QueryPropertyExtractor::Visit(const parser::GroupByDescription *) {}
 void QueryPropertyExtractor::Visit(const parser::OrderDescription *node) {
   // TODO: Only support order by base table columns
   std::vector<bool> sort_ascendings;
-  std::vector<expression::AbstractExpression*> sort_cols;
+  std::vector<expression::AbstractExpression *> sort_cols;
   auto len = node->exprs->size();
   for (size_t idx = 0; idx < len; idx++) {
     auto &expr = node->exprs->at(idx);

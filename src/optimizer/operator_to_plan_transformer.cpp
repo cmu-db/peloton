@@ -98,6 +98,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
 
       // Set column offset
       auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
+      LOG_DEBUG("col : %u", col_id);
       column_ids.push_back(col_id);
       if (output_expr_map_ != nullptr)
         (*output_expr_map_)[output_expr] = col_id;
