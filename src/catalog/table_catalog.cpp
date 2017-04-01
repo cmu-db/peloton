@@ -53,7 +53,7 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto table_name_column =
-      catalog::Column(type::Type::VARCHAR, max_name_size, "table_name", true);
+      catalog::Column(type::Type::VARCHAR, max_name_size, "table_name", false);
   table_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 

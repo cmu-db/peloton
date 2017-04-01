@@ -54,7 +54,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(
-      type::Type::VARCHAR, max_name_size, "database_name", true);
+      type::Type::VARCHAR, max_name_size, "database_name", false);
   database_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
