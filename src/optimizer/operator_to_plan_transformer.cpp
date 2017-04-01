@@ -22,30 +22,39 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/limit_plan.h"
-//#include <tuple>
+
+using std::vector;
+using std::make_pair;
+using std::string;
+using std::to_string;
+using std::unique_ptr;
+using std::shared_ptr;
+using std::move;
+using std::make_tuple;
+using std::make_pair;
 
 namespace peloton {
 namespace optimizer {
 
 OperatorToPlanTransformer::OperatorToPlanTransformer() {}
 
-std::unique_ptr<planner::AbstractPlan>
+unique_ptr<planner::AbstractPlan>
 OperatorToPlanTransformer::ConvertOpExpression(
-    std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
-    std::vector<PropertySet> *required_input_props,
-    std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-    std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
+    shared_ptr<OperatorExpression> plan, PropertySet *requirements,
+    vector<PropertySet> *required_input_props,
+    vector<unique_ptr<planner::AbstractPlan>> &children_plans,
+    vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
   requirements_ = requirements;
   required_input_props_ = required_input_props;
-  children_plans_ = std::move(children_plans);
-  children_expr_map_ = std::move(children_expr_map);
+  children_plans_ = move(children_plans);
+  children_expr_map_ = move(children_expr_map);
   output_expr_map_ = output_expr_map;
   VisitOpExpression(plan);
-  return std::move(output_plan_);
+  return move(output_plan_);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
-  std::vector<oid_t> column_ids;
+  vector<oid_t> column_ids;
 
   // Scan predicates
   auto predicate_prop =
@@ -78,8 +87,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
             new expression::TupleValueExpression("");
 
         // Set bound oid for each output column
-        std::tuple<oid_t, oid_t, oid_t> bound_oid =
-            std::make_tuple(db_id, table_id, idx);
+        auto bound_oid = make_tuple(db_id, table_id, idx);
         col_expr->SetBoundOid(bound_oid);
         col_expr->SetIsBound();
         (*output_expr_map_)[reinterpret_cast<expression::AbstractExpression *>(
@@ -103,60 +111,53 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     }
   }
 
-  std::unique_ptr<planner::AbstractPlan> seq_scan_plan(
+  unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
 
-  output_plan_ = std::move(seq_scan_plan);
+  output_plan_ = move(seq_scan_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
-  //  auto project_prop =
-  //  requirements_->GetPropertyOfType(PropertyType::PROJECT)
-  //                          ->As<PropertyProjection>();
-  //  size_t project_list_size = project_prop->GetProjectionListSize();
-  //
-  //  // expressions to evaluate
-  //  TargetList tl = TargetList();
-  //  // columns which can be returned directly
-  //  DirectMapList dml = DirectMapList();
-  //  // schema of the projections output
-  //  std::vector<catalog::Column> columns;
-  //
-  //  for (size_t project_idx = 0; project_idx < project_list_size;
-  //  project_idx++) {
-  //    auto expr = project_prop->GetProjection(project_idx);
-  //    std::string column_name;
-  //
-  //    // if the root of the expression is a column value we can
-  //    // just do a direct mapping
-  //    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-  //      auto tup_expr = (expression::TupleValueExpression *)expr;
-  //      column_name = tup_expr->GetColumnName();
-  //      dml.push_back(
-  //          DirectMap(project_idx, std::make_pair(0,
-  //          tup_expr->GetColumnId())));
-  //    }
-  //    // otherwise we need to evaluat the expression
-  //    else {
-  //      column_name = "expr" + std::to_string(project_idx);
-  //      tl.push_back(Target(project_idx, expr->Copy()));
-  //    }
-  //    columns.push_back(catalog::Column(
-  //        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
-  //        column_name));
-  //  }
-  //
-  //  // build the projection plan node and insert aboce the scan
-  //  std::unique_ptr<planner::ProjectInfo> proj_info(
-  //      new planner::ProjectInfo(std::move(tl), std::move(dml)));
-  //  std::shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
-  //  std::unique_ptr<planner::AbstractPlan> project_plan(
-  //      new planner::ProjectionPlan(std::move(proj_info), schema_ptr));
-  //
-  //  PL_ASSERT(children_plans_.size() == 1);
-  //  project_plan->AddChild(std::move(children_plans_[0]));
-  //
-  //  output_plan_ = std::move(project_plan);
+    auto project_prop =
+    requirements_->GetPropertyOfType(PropertyType::PROJECT)
+                            ->As<PropertyProjection>();
+    size_t proj_list_size = project_prop->GetProjectionListSize();
+  
+    // expressions to evaluate
+    TargetList tl = TargetList();
+    // columns which can be returned directly
+    DirectMapList dml = DirectMapList();
+    // schema of the projections output
+    vector<catalog::Column> columns;
+  
+    for (size_t project_idx = 0; project_idx < proj_list_size; project_idx++) {
+      auto expr = project_prop->GetProjection(project_idx);
+      expression::ExpressionUtil::EvaluateExpression(children_expr_map_[0], expr);
+      // For TupleValueExpr, we can just do a direct mapping.
+      if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto tup_expr = (expression::TupleValueExpression *)expr;
+        dml.push_back(
+            DirectMap(project_idx, make_pair(0,tup_expr->GetColumnId())));
+      } else {
+        // For more complex expression, we need to do evaluation in Executor
+        tl.push_back(Target(project_idx, expr->Copy()));
+      }
+      columns.push_back(catalog::Column(
+          expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+          expr->GetExpressionName()));
+    }
+  
+    // build the projection plan node and insert aboce the scan
+    unique_ptr<planner::ProjectInfo> proj_info(
+        new planner::ProjectInfo(move(tl), move(dml)));
+    shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
+    unique_ptr<planner::AbstractPlan> project_plan(
+        new planner::ProjectionPlan(move(proj_info), schema_ptr));
+  
+    PL_ASSERT(children_plans_.size() == 1);
+    project_plan->AddChild(move(children_plans_[0]));
+  
+    output_plan_ = move(project_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
@@ -167,10 +168,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *op) {
   //  if (output_columns_ != nullptr)
   //    *output_columns_ = children_output_columns_[0];
   //
-  //  std::unique_ptr<planner::AbstractPlan> limit_plan(
+  //  unique_ptr<planner::AbstractPlan> limit_plan(
   //      new planner::LimitPlan(op->limit, op->offset));
-  //  limit_plan->AddChild(std::move(children_plans_[0]));
-  //  output_plan_ = std::move(limit_plan);
+  //  limit_plan->AddChild(move(children_plans_[0]));
+  //  output_plan_ = move(limit_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
@@ -178,8 +179,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   PL_ASSERT(children_plans_.size() == 1);
   PL_ASSERT(children_expr_map_.size() == 1);
 
-  std::vector<oid_t> sort_col_ids;
-  std::vector<bool> sort_flags;
+  vector<oid_t> sort_col_ids;
+  vector<bool> sort_flags;
 
   auto sort_columns_size = op->sort_exprs.size();
   auto &sort_exprs = op->sort_exprs;
@@ -191,7 +192,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     sort_flags.push_back(sort_ascending[idx] ^ 1);
   }
 
-  std::vector<oid_t> column_ids;
+  vector<oid_t> column_ids;
   // Get output columns
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
@@ -220,12 +221,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     }
   }
 
-  std::unique_ptr<planner::AbstractPlan> order_by_plan(
+  unique_ptr<planner::AbstractPlan> order_by_plan(
       new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
 
   // Add child
-  order_by_plan->AddChild(std::move(children_plans_[0]));
-  output_plan_ = std::move(order_by_plan);
+  order_by_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(order_by_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
@@ -246,9 +247,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
-  std::unique_ptr<planner::AbstractPlan> insert_plan(
+  unique_ptr<planner::AbstractPlan> insert_plan(
       new planner::InsertPlan(op->target_table, op->columns, op->values));
-  output_plan_ = std::move(insert_plan);
+  output_plan_ = move(insert_plan);
 }
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   // TODO: Support index scan
@@ -257,22 +258,22 @@ void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
 
   // Add predicates
   const expression::AbstractExpression *predicates = scan_plan->GetPredicate();
-  std::unique_ptr<planner::AbstractPlan> delete_plan(
+  unique_ptr<planner::AbstractPlan> delete_plan(
       new planner::DeletePlan(op->target_table, predicates));
 
   // Add child
-  delete_plan->AddChild(std::move(children_plans_[0]));
-  output_plan_ = std::move(delete_plan);
+  delete_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(delete_plan);
 }
 void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   // TODO: Support index scan
-  std::unique_ptr<planner::AbstractPlan> update_plan(
+  unique_ptr<planner::AbstractPlan> update_plan(
       new planner::UpdatePlan(op->update_stmt));
-  output_plan_ = std::move(update_plan);
+  output_plan_ = move(update_plan);
 }
 
 void OperatorToPlanTransformer::VisitOpExpression(
-    std::shared_ptr<OperatorExpression> op) {
+    shared_ptr<OperatorExpression> op) {
   op->Op().Accept(this);
 }
 
