@@ -415,22 +415,22 @@ std::ostream& operator<<(std::ostream& os, const StatementType& type) {
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ExpressionTypeToString(ExpressionType type) {
+std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
   switch (type) {
     case ExpressionType::INVALID: {
       return ("INVALID");
     }
     case ExpressionType::OPERATOR_PLUS: {
-      return ("OPERATOR_PLUS");
+      return short_str ? "+" : ("OPERATOR_PLUS");
     }
     case ExpressionType::OPERATOR_MINUS: {
-      return ("OPERATOR_MINUS");
+      return short_str ? "-" : ("OPERATOR_MINUS");
     }
     case ExpressionType::OPERATOR_MULTIPLY: {
-      return ("OPERATOR_MULTIPLY");
+      return short_str ? "*" : ("OPERATOR_MULTIPLY");
     }
     case ExpressionType::OPERATOR_DIVIDE: {
-      return ("OPERATOR_DIVIDE");
+      return short_str ? "/" : ("OPERATOR_DIVIDE");
     }
     case ExpressionType::OPERATOR_CONCAT: {
       return ("OPERATOR_CONCAT");
@@ -454,28 +454,28 @@ std::string ExpressionTypeToString(ExpressionType type) {
       return ("OPERATOR_UNARY_MINUS");
     }
     case ExpressionType::COMPARE_EQUAL: {
-      return ("COMPARE_EQUAL");
+      return short_str ? "=" : ("COMPARE_EQUAL");
     }
     case ExpressionType::COMPARE_NOTEQUAL: {
-      return ("COMPARE_NOTEQUAL");
+      return short_str ? "!=" : ("COMPARE_NOTEQUAL");
     }
     case ExpressionType::COMPARE_LESSTHAN: {
-      return ("COMPARE_LESSTHAN");
+      return short_str ? "<" : ("COMPARE_LESSTHAN");
     }
     case ExpressionType::COMPARE_GREATERTHAN: {
-      return ("COMPARE_GREATERTHAN");
+      return short_str ? ">" : ("COMPARE_GREATERTHAN");
     }
     case ExpressionType::COMPARE_LESSTHANOREQUALTO: {
-      return ("COMPARE_LESSTHANOREQUALTO");
+      return short_str ? "<=" : ("COMPARE_LESSTHANOREQUALTO");
     }
     case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
-      return ("COMPARE_GREATERTHANOREQUALTO");
+      return short_str ? ">=" : ("COMPARE_GREATERTHANOREQUALTO");
     }
     case ExpressionType::COMPARE_LIKE: {
-      return ("COMPARE_LIKE");
+      return short_str ? "~~" : ("COMPARE_LIKE");
     }
     case ExpressionType::COMPARE_NOTLIKE: {
-      return ("COMPARE_NOTLIKE");
+      return short_str ? "!~~" : ("COMPARE_NOTLIKE");
     }
     case ExpressionType::COMPARE_IN: {
       return ("COMPARE_IN");
