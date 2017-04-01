@@ -30,6 +30,14 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute, note that insertion does not require
   // indexes on pg_attribute
+
+  AddIndex({0}, INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey",
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex({1, 2}, INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
+           IndexConstraintType::UNIQUE);
+  AddIndex({2}, INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
+           IndexConstraintType::DEFAULT);
+
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(),

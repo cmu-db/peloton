@@ -167,5 +167,32 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
   return result_tiles;
 }
 
+void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
+                             oid_t index_oid, const std::string &index_name,
+                             IndexConstraintType index_constraint) {
+  auto schema = catalog_table_->GetSchema();
+  auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique_keys = (index_constraint == IndexConstraintType::PRIMARY_KEY) ||
+                     (index_constraint == IndexConstraintType::UNIQUE);
+
+  auto index_metadata = new index::IndexMetadata(
+      index_name, index_oid, catalog_table_->GetOid(), CATALOG_DATABASE_OID,
+      IndexType::BWTREE, index_constraint, schema, key_schema, key_attrs,
+      unique_keys);
+
+  std::shared_ptr<index::Index> key_index(
+      index::IndexFactory::GetIndex(index_metadata));
+  catalog_table_->AddIndex(key_index);
+
+  // insert index record into index_catalog(pg_index) table
+  // IndexCatalog::GetInstance()->InsertIndex(
+  //     index_oid, index_name, COLUMN_CATALOG_OID, IndexType::BWTREE,
+  //     index_constraint, unique_keys, pool_.get(), nullptr);
+
+  LOG_INFO("Successfully created primary key index '%s' for table '%s'",
+           index_name.c_str(), COLUMN_CATALOG_NAME);
+}
+
 }  // End catalog namespace
 }  // End peloton namespace

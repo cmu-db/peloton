@@ -63,10 +63,6 @@ class ColumnCatalog : public AbstractCatalog {
  private:
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool);
 
-  void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
-                const std::string &index_name,
-                IndexConstraintType index_constraint);
-
   std::unique_ptr<catalog::Schema> InitializeSchema();
 };
 

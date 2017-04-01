@@ -34,6 +34,7 @@
 #include "type/catalog_type.h"
 #include "type/types.h"
 #include "type/value_factory.h"
+#include "index/index_factory.h"
 
 namespace peloton {
 namespace catalog {
@@ -62,6 +63,10 @@ class AbstractCatalog {
   std::unique_ptr<std::vector<executor::LogicalTile *>> GetResultWithIndexScan(
       std::vector<oid_t> column_offsets, oid_t index_offset,
       std::vector<type::Value> values, concurrency::Transaction *txn);
+
+  void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
+                const std::string &index_name,
+                IndexConstraintType index_constraint);
 
   // Maximum column name size for catalog schemas
   static const size_t max_name_size = 32;
