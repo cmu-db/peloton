@@ -54,9 +54,9 @@ bool PropertyColumns::operator>=(const Property &r) const {
 hash_t PropertyColumns::Hash() const {
   // hash the type
   hash_t hash = Property::Hash();
-  hash = util::CombineHashes(hash, util::Hash<bool>(&is_star_));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<bool>(&is_star_));
   for (auto expr : column_exprs_) {
-    hash = util::CombineHashes(hash, expr->Hash());
+    hash = HashUtil::CombineHashes(hash, expr->Hash());
   }
   return hash;
 }
@@ -95,8 +95,8 @@ hash_t PropertySort::Hash() const {
   // hash sorting columns
   size_t num_sort_columns = sort_columns_.size();
   for (size_t i = 0; i < num_sort_columns; ++i) {
-    hash = util::CombineHashes(hash, sort_columns_[i]->Hash());
-    hash = util::CombineHashes(hash, sort_ascending_[i]);
+    hash = HashUtil::CombineHashes(hash, sort_columns_[i]->Hash());
+    hash = HashUtil::CombineHashes(hash, sort_ascending_[i]);
   }
   return hash;
 }

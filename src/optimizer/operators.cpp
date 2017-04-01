@@ -48,7 +48,7 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
 hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table->GetOid();
-  hash = util::CombineHashes(hash, util::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
   return hash;
 }
 
@@ -178,7 +178,7 @@ bool PhysicalScan::operator==(const BaseOperatorNode &node) {
 hash_t PhysicalScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   oid_t table_oid = table_->GetOid();
-  hash = util::CombineHashes(hash, util::Hash<oid_t>(&table_oid));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash<oid_t>(&table_oid));
   return hash;
 }
 

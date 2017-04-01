@@ -79,10 +79,13 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual hash_t Hash() const {
-    hash_t hash = peloton::Hash(&exp_type_);
-    hash = CombineHashes(hash, peloton::Hash(&(std::get<0>(bound_obj_id_))));
-    hash = CombineHashes(hash, peloton::Hash(&(std::get<1>(bound_obj_id_))));
-    hash = CombineHashes(hash, peloton::Hash(&(std::get<2>(bound_obj_id_))));
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    hash = HashUtil::CombineHashes(
+        hash, HashUtil::Hash(&(std::get<0>(bound_obj_id_))));
+    hash = HashUtil::CombineHashes(
+        hash, HashUtil::Hash(&(std::get<1>(bound_obj_id_))));
+    hash = HashUtil::CombineHashes(
+        hash, HashUtil::Hash(&(std::get<2>(bound_obj_id_))));
     return hash;
   }
 

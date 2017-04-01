@@ -14,6 +14,7 @@
 
 #include "optimizer/property_set.h"
 #include "optimizer/util.h"
+#include "util/hash_util.h"
 
 #include <memory>
 #include <string>
@@ -87,7 +88,7 @@ struct BaseOperatorNode {
 
   virtual hash_t Hash() const {
     OpType t = type();
-    return util::Hash(&t);
+    return HashUtil::Hash(&t);
   }
 
   virtual bool operator==(const BaseOperatorNode &r) {

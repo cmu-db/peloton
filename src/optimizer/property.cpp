@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/property.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -19,7 +20,7 @@ Property::~Property() {}
 
 hash_t Property::Hash() const {
   PropertyType t = Type();
-  return util::Hash(&t);
+  return HashUtil::Hash(&t);
 }
 
 bool Property::operator>=(const Property &r) const {

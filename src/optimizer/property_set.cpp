@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "util/hash_util.h"
 #include "optimizer/property_set.h"
 #include "common/logger.h"
 
@@ -63,9 +64,9 @@ bool PropertySet::operator==(const PropertySet &r) const {
 
 hash_t PropertySet::Hash() const {
   size_t prop_size = properties_.size();
-  hash_t hash = util::Hash<size_t>(&prop_size);
+  hash_t hash = HashUtil::Hash<size_t>(&prop_size);
   for (auto &prop : properties_) {
-    hash = util::CombineHashes(hash, prop->Hash());
+    hash = HashUtil::CombineHashes(hash, prop->Hash());
   }
   return hash;
 }
