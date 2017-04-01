@@ -363,6 +363,18 @@ class ExpressionUtil {
 
  public:
   /**
+   * Walks an expression trees and find all TupleValueExprs in the tree
+   */
+  static void GetTupleValueExprs(ExprSet& tup_exprs, AbstractExpression *expr) {
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      GetTupleValueExprs(tup_exprs, expr->GetModifiableChild(i));
+    
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
+      tup_exprs.insert(expr);
+  }
+  
+  /**
    * Walks an expression trees. Set the value_idx for the leaf tuple_value_expr
    * Set the correct expression name. Deduce the return value type
    * of expression. Set the function ptr for function expression.

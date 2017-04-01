@@ -143,7 +143,6 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     }
 
     expr->SetBoundOid(col_pos_tuple);
-    expr->SetIsBound();
   }
 }
 

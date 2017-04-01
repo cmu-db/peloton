@@ -104,11 +104,14 @@ class TupleValueExpression : public AbstractExpression {
   const std::tuple<oid_t, oid_t, oid_t> &GetBoundOid() const {
     return bound_obj_id_;
   }
-
-  void SetIsBound() { is_bound_ = true; }
-
+  void SetBoundOid(oid_t db_id, oid_t table_id, oid_t col_id) {
+    bound_obj_id_ = std::make_tuple(db_id, table_id, col_id);
+    is_bound_ = true;
+  }
+  
   void SetBoundOid(std::tuple<oid_t, oid_t, oid_t> &bound_oid) {
     bound_obj_id_ = bound_oid;
+    is_bound_ = true;
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
