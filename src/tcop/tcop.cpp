@@ -411,6 +411,11 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
+    case type::Type::BOOLEAN: {
+      field_type = PostgresValueType::BOOLEAN;
+      field_size = 1;
+      break;
+    }
     case type::Type::INTEGER: {
       field_type = PostgresValueType::INTEGER;
       field_size = 4;
