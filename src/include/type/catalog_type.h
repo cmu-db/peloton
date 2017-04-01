@@ -57,6 +57,11 @@ namespace type {
 #define COLUMN_CATALOG_SKEY0_OID (1 | INDEX_OID_MASK)
 #define COLUMN_CATALOG_SKEY1_OID (2 | INDEX_OID_MASK)
 
+// Reserved pg_index index oid
+#define INDEX_CATALOG_PKEY_OID (3 | INDEX_OID_MASK)
+#define INDEX_CATALOG_SKEY0_OID (4 | INDEX_OID_MASK)
+#define INDEX_CATALOG_SKEY1_OID (5 | INDEX_OID_MASK)
+
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24
 

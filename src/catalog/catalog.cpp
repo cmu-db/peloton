@@ -64,17 +64,6 @@ void Catalog::InitializeCatalog() {
   // TODO: This should be hash index rather than tree index?? (but postgres use
   // btree!!)
 
-  //TODO:
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID);
-  CreateIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID,
-              std::vector<std::string>({"index_name", "table_oid"}),
-              std::string(INDEX_CATALOG_NAME) + "_skey0", true,
-              IndexType::BWTREE, nullptr, true);
-  CreateIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID,
-              std::vector<std::string>({"table_oid"}),
-              std::string(INDEX_CATALOG_NAME) + "_skey1", false,
-              IndexType::BWTREE, nullptr, true);
-
   CreatePrimaryIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID);
   CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID);
 
@@ -92,7 +81,7 @@ void Catalog::InitializeCatalog() {
               std::string(TABLE_CATALOG_NAME) + "_skey1", false,
               IndexType::BWTREE, nullptr, true);
 
-  // actual index already added in column_catalog constructor
+  // actual index already added in column_catalog, index_catalog constructor
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true, pool_.get(),
@@ -104,6 +93,19 @@ void Catalog::InitializeCatalog() {
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      false, pool_.get(), nullptr);
+
+  IndexCatalog::GetInstance()->InsertIndex(
+      INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
+      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true, pool_.get(),
+      nullptr);
+  IndexCatalog::GetInstance()->InsertIndex(
+      INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
+      INDEX_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
+      pool_.get(), nullptr);
+  IndexCatalog::GetInstance()->InsertIndex(
+      INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
+      INDEX_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, pool_.get(), nullptr);
 
   // Insert pg_catalog database into pg_database
