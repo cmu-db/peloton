@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "type/value.h"
-#include <include/type/value.h>
+#include "common/logger.h"
 
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
@@ -363,9 +363,17 @@ const std::string Value::GetInfo() const {
 }
 
 bool Value::CheckComparable(const Value &o) const {
+  LOG_TRACE("Checking whether '%s' is comparable to '%s'",
+            TypeIdToString(GetTypeId()).c_str(),
+            TypeIdToString(o.GetTypeId()).c_str());
   switch (GetTypeId()) {
     case Type::BOOLEAN:
-      if (o.GetTypeId() == Type::BOOLEAN) return true;
+      switch (o.GetTypeId()) {
+        case Type::BOOLEAN:
+        case Type::VARCHAR:
+          return (true);
+        default:break;
+      } // SWITCH
       break;
     case Type::TINYINT:
     case Type::SMALLINT:
@@ -381,7 +389,7 @@ bool Value::CheckComparable(const Value &o) const {
           return true;
         default:
           break;
-      }
+      } // SWITCH
       break;
     case Type::VARCHAR:
       if (o.GetTypeId() == Type::VARCHAR) return true;
@@ -394,7 +402,7 @@ bool Value::CheckComparable(const Value &o) const {
       break;
     default:
       break;
-  }
+  } // SWITCH
   return false;
 }
 
