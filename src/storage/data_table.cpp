@@ -224,7 +224,6 @@ bool DataTable::SetDefaults(storage::Tuple *tuple) {
   return true;
 }
 
-
 bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   std::pair<ExpressionType, type::Value> exp =
       schema->AllowExpConstrain(column_idx);
@@ -265,27 +264,68 @@ bool DataTable::CheckExp(const storage::Tuple *tuple, oid_t column_idx) const {
   }
   return true;
 }
+/*
+bool DataTable::CheckUniq(const storage::Tuple *tuple, oid_t column_idx) const {
+
+  return true;
+}*/
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    if (schema->AllowNull(column_itr) == false) {
-      if (CheckNotNulls(tuple, column_itr) == false) {
-        LOG_TRACE("Not NULL constraint violated");
-        throw ConstraintException("Not NULL constraint violated : " +
-                                  std::string(tuple->GetInfo()));
-        return false;
+    std::vector<catalog::Constraint> column_cons =
+        schema->GetColumn(column_itr).GetConstraints();
+    for (auto cons : column_cons) {
+      ConstraintType type = cons.GetType();
+      switch (type) {
+        case ConstraintType::NOTNULL:
+        case ConstraintType::NOT_NULL: {
+          if (CheckNotNulls(tuple, column_itr) == false) {
+            LOG_TRACE("Not NULL constraint violated");
+            throw ConstraintException("Not NULL constraint violated : " +
+                                      std::string(tuple->GetInfo()));
+            return false;
+          }
+          break;
+        }
+        case ConstraintType::CHECK: {
+          std::pair<ExpressionType, type::Value> exp = cons.GetExp();
+          if (CheckExp(tuple, column_itr, exp) == false) {
+            LOG_TRACE("CHECK EXPRESSION constraint violated");
+            throw ConstraintException(
+                "CHECK EXPRESSION constraint violated : " +
+                std::string(tuple->GetInfo()));
+            return false;
+          }
+          break;
+        }
+        case ConstraintType::UNIQUE: {
+          break;
+        }
+        case ConstraintType::DEFAULT: {
+          break;
+        }
+        case ConstraintType::PRIMARY: {
+          break;
+        }
+        case ConstraintType::FOREIGN: {
+          break;
+        }
+        case ConstraintType::EXCLUSION: {
+          break;
+        }
+        default: {
+          LOG_TRACE("Constraint type not supported");
+          throw ConstraintException("Constraint type not supported : " +
+                                    std::string(tuple->GetInfo()));
+          return false;
+        }
       }
     }
-    if (CheckExp(tuple, column_itr) == false) {
-      LOG_TRACE("CHECK EXPRESSION constraint violated");
-      throw ConstraintException("CHECK EXPRESSION constraint violated : " +
-                                std::string(tuple->GetInfo()));
-      return false;
-    }
   }
+
   std::vector<catalog::MultiConstraint> multi_constraints;
   multi_constraints = schema->GetMultiConstraints();
   for (auto mc : multi_constraints) {
