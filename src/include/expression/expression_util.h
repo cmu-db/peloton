@@ -363,6 +363,57 @@ class ExpressionUtil {
 
  public:
   /**
+   * Walks an expression trees. Set the value_idx for the leaf tuple_value_expr
+   * Set the correct expression name. Deduce the return value type
+   * of expression. Set the function ptr for function expression.
+   *
+   * Plz notice: this function should only be used in the optimizer.
+   * The following version TransformExpression will eventually be depracated
+   */
+  static void EvaluateExpression(const ExprMap& expr_map, AbstractExpression *expr) {
+    // To evaluate the return type, we need a bottom up approach.
+    size_t children_size = expr->GetChildrenSize();
+    for (size_t i = 0; i < children_size; i++)
+      EvaluateExpression(expr_map, expr->GetModifiableChild(i));
+    
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      auto tup_expr = (expression::TupleValueExpression*) expr;
+      auto iter = expr_map.find(tup_expr);
+      // Copy the return value type from the tuple_value_expr in previous level
+      assert(iter->first->GetValueType() != type::Type::INVALID);
+      auto return_type = iter->first->GetValueType();
+      // Point to the correct column returned in the logical tuple underneath
+      tup_expr->SetTupleValueExpressionParams(return_type, iter->second, 0);
+      // Set the expression name
+      if (tup_expr->alias.empty())
+        tup_expr->expr_name_ = tup_expr->GetColumnName();
+    } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
+      auto func_expr = (expression::FunctionExpression *) expr;
+      // Check and set the function ptr
+      auto catalog = catalog::Catalog::GetInstance();
+      const catalog::FunctionData &func_data =
+      catalog->GetFunction(func_expr->func_name_);
+      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+                                                 func_data.return_type_,
+                                                 func_data.argument_types_);
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+      auto const_expr = (expression::ConstantValueExpression*) expr;
+      const_expr->expr_name_ = const_expr->GetValue().ToString();
+    } else {
+      expr->DeduceExpressionType();
+      // Set the expression name
+      auto op_str = ExpressionTypeToString(expr->GetExpressionType(), true);
+      PL_ASSERT(children_size <= 2);
+      if (children_size == 2) {
+        expr->expr_name_ = expr->GetChild(0)->expr_name_ + " " +
+          op_str + " " + expr->GetChild(1)->expr_name_;
+      } else if (children_size == 1) {
+        expr->expr_name_ = op_str + " " + expr->GetChild(0)->expr_name_;
+      }
+    }
+  }
+  
+  /**
    * Walks an expression tree and fills in information about
    * columns and functions in their respective objects given a
    * set of schemas.

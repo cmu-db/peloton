@@ -279,7 +279,7 @@ enum class ExpressionType {
   //===--------------------------------------------------------------------===//
   CAST = 900
 };
-std::string ExpressionTypeToString(ExpressionType type);
+std::string ExpressionTypeToString(ExpressionType type, bool short_str = false);
 ExpressionType StringToExpressionType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ExpressionType &type);
 ExpressionType ParserExpressionNameToExpressionType(const std::string &str);

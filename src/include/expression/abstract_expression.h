@@ -89,9 +89,9 @@ class AbstractExpression : public Printable {
 
   /** accessors */
 
-  ExpressionType GetExpressionType() const { return exp_type_; }
+  inline ExpressionType GetExpressionType() const { return exp_type_; }
 
-  type::Type::TypeId GetValueType() const { return return_value_type_; }
+  inline type::Type::TypeId GetValueType() const { return return_value_type_; }
 
   virtual void DeduceExpressionType() {}
 
