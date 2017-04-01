@@ -11,9 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column_catalog.h"
+#include "index/index_factory.h"
 #include "type/catalog_type.h"
 #include "type/types.h"
-#include "index/index_factory.h"
 
 namespace peloton {
 namespace catalog {
@@ -41,8 +41,8 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   // indexes on pg_attribute
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column.GetOffset(),
-                 column.GetType(), true, column.GetConstraints(), pool,
-                 nullptr);
+                 column.GetType(), column.IsInlined(), column.GetConstraints(),
+                 pool, nullptr);
   }
 }
 

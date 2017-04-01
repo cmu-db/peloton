@@ -32,8 +32,9 @@ TableCatalog::TableCatalog(storage::Database *pg_catalog,
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(),
-                               column.GetOffset(), column.GetType(), true,
-                               column.GetConstraints(), pool, nullptr);
+                               column.GetOffset(), column.GetType(),
+                               column.IsInlined(), column.GetConstraints(),
+                               pool, nullptr);
   }
 }
 
@@ -159,8 +160,7 @@ oid_t TableCatalog::GetTableOid(const std::string &table_name,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   oid_t table_oid = INVALID_OID;
-  PL_ASSERT(result_tiles->size() <=
-            1);  // table_name & database_oid is unique
+  PL_ASSERT(result_tiles->size() <= 1);  // table_name & database_oid is unique
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {

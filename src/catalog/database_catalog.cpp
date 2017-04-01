@@ -33,8 +33,9 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
   ColumnCatalog *pg_attribute = ColumnCatalog::GetInstance(pg_catalog, pool);
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
-                               column.GetOffset(), column.GetType(), true,
-                               column.GetConstraints(), pool, nullptr);
+                               column.GetOffset(), column.GetType(),
+                               column.IsInlined(), column.GetConstraints(),
+                               pool, nullptr);
   }
 }
 
