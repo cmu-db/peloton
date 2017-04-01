@@ -82,7 +82,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
             std::make_tuple(db_id, table_id, idx);
         col_expr->SetBoundOid(bound_oid);
         col_expr->SetIsBound();
-
         (*output_expr_map_)[reinterpret_cast<expression::AbstractExpression *>(
             col_expr)] = idx;
 
@@ -92,16 +91,16 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
+      
       auto output_expr = column_prop->GetColumn(idx);
       auto output_tvexpr =
           reinterpret_cast<expression::TupleValueExpression *>(output_expr);
 
       // Set column offset
       auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
-      LOG_DEBUG("col : %u", col_id);
       column_ids.push_back(col_id);
       if (output_expr_map_ != nullptr)
-        (*output_expr_map_)[output_expr] = col_id;
+        (*output_expr_map_)[output_expr] = idx;
     }
   }
 
@@ -210,6 +209,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
 
   for (size_t idx = 0; idx < sort_columns_size; ++idx) {
     sort_col_ids.push_back(children_expr_map_[0][sort_exprs[idx]]);
+    LOG_DEBUG("Order Column %u", children_expr_map_[0][sort_exprs[idx]]);
     // planner use desc flag
     sort_flags.push_back(sort_ascending[idx] ^ 1);
   }
@@ -220,17 +220,19 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
                          ->As<PropertyColumns>();
 
   PL_ASSERT(column_prop != nullptr);
-  PL_ASSERT(output_expr_map_ != nullptr);
 
   // construct output column offset & output expr map
   if (column_prop->IsStarExpressionInColumn()) {
     // if SELECT *, add all exprs to output column
+    column_ids.resize(children_expr_map_[0].size());
+    LOG_DEBUG("column size : %zu", column_ids.size());
     for (auto &expr_idx_pair : children_expr_map_[0]) {
       auto &expr = expr_idx_pair.first;
       auto &idx = expr_idx_pair.second;
       if (output_expr_map_ != nullptr)
         (*output_expr_map_)[expr] = idx;
       column_ids[idx] = idx;
+      LOG_DEBUG("Output Column %u", idx);
     }
   } else {
     auto output_column_size = column_prop->GetSize();

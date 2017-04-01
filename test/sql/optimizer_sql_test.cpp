@@ -37,6 +37,93 @@ void CreateAndLoadTable() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
 }
 
+TEST_F(OptimizerSQLTests, SelectOrderByTest) {
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
+
+  CreateAndLoadTable();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  // Something wrong with column property.
+  std::string query("SELECT b from test order by c");
+
+  // check for plan node type
+  auto select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+
+  // test order by
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  // Check the return value
+  // Should be: 11, 22
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+  query = "SELECT a from test order by c desc";
+
+  // check for plan node type
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+
+  // test order by
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  // Check the return value
+  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
+
+
+  // Something wrong with column property.
+  query = "SELECT * from test order by c";
+
+  // check for plan node type
+  select_plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
+  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
+  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
+            PlanNodeType::SEQSCAN);
+
+  // test order by
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
+  // Check the return value
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
+  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
+  EXPECT_EQ(12, result.size());
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 8));
+  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 9));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 10));
+  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 11));
+
+  // free the database just created
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
 
@@ -119,92 +206,6 @@ TEST_F(OptimizerSQLTests, SelectProjectionTest) {
   // Should be: 27, 332
   EXPECT_EQ("27", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("332", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  // free the database just created
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-}
-
-TEST_F(OptimizerSQLTests, SelectOrderByTest) {
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, nullptr);
-
-  CreateAndLoadTable();
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_changed;
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-      new optimizer::Optimizer());
-
-  // Something wrong with column property.
-  std::string query("SELECT b from test order by c");
-
-  // check for plan node type
-  auto select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
-  // test order by
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  // Should be: 11, 22
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-  query = "SELECT a from test order by c desc";
-
-  // check for plan node type
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
-  // test order by
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 1));
-
-
-  // Something wrong with column property.
-  query = "SELECT * from test order by c";
-
-  // check for plan node type
-  select_plan =
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query);
-  EXPECT_EQ(select_plan->GetPlanNodeType(), PlanNodeType::ORDERBY);
-  EXPECT_EQ(select_plan->GetChildren()[0]->GetPlanNodeType(),
-            PlanNodeType::SEQSCAN);
-
-  // test order by
-  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, query, result, tuple_descriptor, rows_changed, error_message);
-  // Check the return value
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
-  //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4, 00, 555);");
-  EXPECT_EQ(12, result.size());
-  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
-  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 3));
-  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 4));
-  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 5));
-  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 6));
-  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 7));
-  EXPECT_EQ("444", TestingSQLUtil::GetResultValueAsString(result, 8));
-  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 9));
-  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 10));
-  EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 11));
 
   // free the database just created
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
