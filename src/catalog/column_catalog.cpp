@@ -34,7 +34,7 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
            IndexConstraintType::PRIMARY_KEY);
   AddIndex({0, 2}, COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
            IndexConstraintType::UNIQUE);
-  AddIndex({2}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
+  AddIndex({0}, COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
 
   // Insert columns into pg_attribute, note that insertion does not require
@@ -69,8 +69,8 @@ void ColumnCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
   //     index_oid, index_name, COLUMN_CATALOG_OID, IndexType::BWTREE,
   //     index_constraint, unique_keys, pool_.get(), nullptr);
 
-  LOG_DEBUG("Successfully created primary key index '%s' for table '%s'",
-            index_name.c_str(), COLUMN_CATALOG_NAME);
+  LOG_INFO("Successfully created primary key index '%s' for table '%s'",
+           index_name.c_str(), COLUMN_CATALOG_NAME);
 }
 
 ColumnCatalog::~ColumnCatalog() {}
