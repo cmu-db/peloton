@@ -63,9 +63,20 @@ void Catalog::InitializeCatalog() {
   // Create indexes on catalog tables, insert them into pg_index
   // TODO: This should be hash index rather than tree index?? (but postgres use
   // btree!!)
+
+  //TODO:
+  CreatePrimaryIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID);
+  CreateIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID,
+              std::vector<std::string>({"index_name", "table_oid"}),
+              std::string(INDEX_CATALOG_NAME) + "_skey0", true,
+              IndexType::BWTREE, nullptr, true);
+  CreateIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID,
+              std::vector<std::string>({"table_oid"}),
+              std::string(INDEX_CATALOG_NAME) + "_skey1", false,
+              IndexType::BWTREE, nullptr, true);
+
   CreatePrimaryIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID);
   CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID);
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID);
 
   CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
               std::vector<std::string>({"database_name"}),
@@ -79,15 +90,6 @@ void Catalog::InitializeCatalog() {
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               std::vector<std::string>({"database_oid"}),
               std::string(TABLE_CATALOG_NAME) + "_skey1", false,
-              IndexType::BWTREE, nullptr, true);
-
-  CreateIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID,
-              std::vector<std::string>({"index_name", "table_oid"}),
-              std::string(INDEX_CATALOG_NAME) + "_skey0", true,
-              IndexType::BWTREE, nullptr, true);
-  CreateIndex(CATALOG_DATABASE_OID, INDEX_CATALOG_OID,
-              std::vector<std::string>({"table_oid"}),
-              std::string(INDEX_CATALOG_NAME) + "_skey1", false,
               IndexType::BWTREE, nullptr, true);
 
   // actual index already added in column_catalog constructor
