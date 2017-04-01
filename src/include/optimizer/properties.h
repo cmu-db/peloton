@@ -31,6 +31,8 @@ class PropertyColumns : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
+  
+  std::string ToString() const override;
 
   inline expression::AbstractExpression *GetColumn(int idx) const {
     return column_exprs_[idx];
@@ -57,6 +59,8 @@ class PropertyProjection : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
+  
+  std::string ToString() const override;
 
   inline size_t GetProjectionListSize() const { return expressions_.size(); }
 
@@ -81,6 +85,8 @@ class PropertySort : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
+  
+  std::string ToString() const override;
 
   inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
 
@@ -107,6 +113,8 @@ class PropertyPredicate : public Property {
   bool operator>=(const Property &r) const override;
 
   void Accept(PropertyVisitor *v) const override;
+  
+  std::string ToString() const override;
 
   inline expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();

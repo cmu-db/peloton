@@ -23,13 +23,6 @@ namespace optimizer {
 
 class PropertyVisitor;
 
-enum class PropertyType {
-  SORT,
-  COLUMNS,
-  PREDICATE,
-  PROJECT,
-};
-
 /*
  * Physical properties are those fields that can be directly added to the plan,
  * and don't need to perform transformations on.
@@ -52,6 +45,8 @@ class Property {
   virtual bool operator>=(const Property &r) const;
 
   virtual void Accept(PropertyVisitor *v) const = 0;
+  
+  virtual std::string ToString() const;
 
   template <typename T>
   const T *As() const {

@@ -61,6 +61,14 @@ bool PropertySet::operator>=(const PropertySet &r) const {
 bool PropertySet::operator==(const PropertySet &r) const {
   return *this >= r && r >= *this;
 }
+  
+std::string PropertySet::ToString() const {
+  std::string str = "PropertySet:\n";
+  for (auto& property : properties_) {
+    str += property->ToString();
+  }
+  return str;
+}
 
 hash_t PropertySet::Hash() const {
   size_t prop_size = properties_.size();

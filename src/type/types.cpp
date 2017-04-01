@@ -2370,6 +2370,25 @@ std::ostream& operator<<(std::ostream& os, const RWType& type) {
   os << RWTypeToString(type);
   return os;
 }
+//===--------------------------------------------------------------------===//
+// Optimizer
+//===--------------------------------------------------------------------===//
+std::string PropertyTypeToString(PropertyType type) {
+  switch (type) {
+    case PropertyType::SORT:
+      return "SORT";
+    case PropertyType::COLUMNS:
+      return "COLUMNS";
+    case PropertyType::PREDICATE:
+      return "PREDICATE";
+    case PropertyType::PROJECT:
+      return "PROJECT";
+    default:
+      throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
+                                                   static_cast<int>(type)));
+  }
+  return "INVALID";
+}
 
 //===--------------------------------------------------------------------===//
 // Network Message types

@@ -17,7 +17,11 @@ namespace peloton {
 namespace optimizer {
 
 Property::~Property() {}
-
+  
+std::string Property::ToString() const {
+  return PropertyTypeToString(Type());
+}
+  
 hash_t Property::Hash() const {
   PropertyType t = Type();
   return HashUtil::Hash(&t);

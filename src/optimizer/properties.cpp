@@ -64,6 +64,20 @@ hash_t PropertyColumns::Hash() const {
 void PropertyColumns::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyColumns *)this);
 }
+  
+std::string PropertyColumns::ToString() const {
+  std::string str = PropertyTypeToString(Type()) + ": ";
+  for (auto column_expr : column_exprs_) {
+    if (column_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      str += ((expression::TupleValueExpression*)column_expr)->GetColumnName();
+      str += " ";
+    } else {
+      // TODO: Add support for other expression
+      str += "expr ";
+    }
+  }
+  return str + "\n";
+}
 
 PropertySort::PropertySort(
     std::vector<expression::AbstractExpression *> sort_columns,
@@ -104,6 +118,10 @@ hash_t PropertySort::Hash() const {
 void PropertySort::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertySort *)this);
 }
+  
+std::string PropertySort::ToString() const {
+  return PropertyTypeToString(Type()) + "\n";
+}
 
 PropertyPredicate::PropertyPredicate(expression::AbstractExpression *predicate)
     : predicate_(predicate){};
@@ -127,6 +145,10 @@ void PropertyPredicate::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyPredicate *)this);
 }
 
+std::string PropertyPredicate::ToString() const {
+  return PropertyTypeToString(Type()) + "\n";
+}
+
 PropertyProjection::PropertyProjection(
     std::vector<std::unique_ptr<expression::AbstractExpression>> expressions)
     : expressions_(std::move(expressions)){};
@@ -143,6 +165,10 @@ hash_t PropertyProjection::Hash() const { return Property::Hash(); }
 
 void PropertyProjection::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyProjection *)this);
+}
+  
+std::string PropertyProjection::ToString() const {
+  return PropertyTypeToString(Type()) + "\n";
 }
 
 } /* namespace optimizer */

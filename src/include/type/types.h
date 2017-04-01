@@ -1127,8 +1127,15 @@ typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 typedef std::vector<DirectMap> DirectMapList;
 
 //===--------------------------------------------------------------------===//
-// Optimizer typedefs
+// Optimizer
 //===--------------------------------------------------------------------===//
+enum class PropertyType {
+  SORT,
+  COLUMNS,
+  PREDICATE,
+  PROJECT,
+};
+  
 namespace expression {
 class AbstractExpression;
 class ExprHasher;
@@ -1139,6 +1146,12 @@ class ExprEqualCmp;
 typedef std::unordered_map<expression::AbstractExpression *, unsigned,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprMap;
+// Used in optimizer to speed up expression comparsion
+typedef std::unordered_set<expression::AbstractExpression *,
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprSet;
+  
+std::string PropertyTypeToString(PropertyType type);
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

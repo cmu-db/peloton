@@ -40,6 +40,8 @@ class PropertySet {
   bool operator>=(const PropertySet &r) const;
 
   bool operator==(const PropertySet &r) const;
+  
+  std::string ToString() const;
 
  private:
   std::vector<std::shared_ptr<Property>> properties_;
