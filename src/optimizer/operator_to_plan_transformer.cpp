@@ -84,8 +84,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
         col_expr->SetIsBound();
         (*output_expr_map_)[reinterpret_cast<expression::AbstractExpression *>(
             col_expr)] = idx;
-
-        column_ids.push_back(idx);
+        
       }
     }
   } else {
@@ -104,31 +103,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     }
   }
 
-  //  // Add col_ids for SELECT *
-  //  if (column_prop->IsStarExpressionInColumn()) {
-  //    size_t col_num = op->table_->GetSchema()->GetColumnCount();
-  //    auto db_id = op->table_->GetDatabaseOid();
-  //    oid_t table_id = op->table_->GetOid();
-  //    for (oid_t i = 0; i < col_num; ++i) {
-  //      column_ids.push_back(i);
-  //      if (output_columns_ != nullptr)
-  //        output_columns_->emplace_back(std::make_tuple(db_id, table_id, i));
-  //    }
-  //  } else {
-  //    for (size_t column_idx = 0; column_idx < column_prop->GetSize();
-  //         column_idx++) {
-  //      auto col = column_prop->GetColumn(column_idx);
-  //      oid_t id = std::get<2>(col->GetBoundOid());
-  //      column_ids.push_back(id);
-  //
-  //      // record output column mapping
-  //      if (output_columns_ != nullptr)
-  //        output_columns_->emplace_back(col->GetBoundOid());
-  //    }
-  //  }
-
-  output_plan_.reset(
+  std::unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
+
+  output_plan_ = std::move(seq_scan_plan);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
@@ -209,7 +187,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
 
   for (size_t idx = 0; idx < sort_columns_size; ++idx) {
     sort_col_ids.push_back(children_expr_map_[0][sort_exprs[idx]]);
-    LOG_DEBUG("Order Column %u", children_expr_map_[0][sort_exprs[idx]]);
     // planner use desc flag
     sort_flags.push_back(sort_ascending[idx] ^ 1);
   }
@@ -225,15 +202,14 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   if (column_prop->IsStarExpressionInColumn()) {
     // if SELECT *, add all exprs to output column
     column_ids.resize(children_expr_map_[0].size());
-    LOG_DEBUG("column size : %zu", column_ids.size());
     for (auto &expr_idx_pair : children_expr_map_[0]) {
       auto &expr = expr_idx_pair.first;
-      auto &idx = expr_idx_pair.second;
+      oid_t &idx = expr_idx_pair.second;
       if (output_expr_map_ != nullptr)
         (*output_expr_map_)[expr] = idx;
       column_ids[idx] = idx;
-      LOG_DEBUG("Output Column %u", idx);
     }
+ 
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
