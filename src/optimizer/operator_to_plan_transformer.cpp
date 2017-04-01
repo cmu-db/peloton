@@ -45,25 +45,65 @@ OperatorToPlanTransformer::ConvertOpExpression(
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
-  (void)op;
-  //  std::vector<oid_t> column_ids;
-  //
-  //  // Scan predicates
-  //  auto predicate_prop =
-  //      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-  //          ->As<PropertyPredicate>();
-  //
-  //  expression::AbstractExpression *predicate = nullptr;
-  //  if (predicate_prop != nullptr) {
-  //    predicate = predicate_prop->GetPredicate()->Copy();
-  //  }
-  //
-  //  // Scan columns
-  //  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-  //                         ->As<PropertyColumns>();
-  //
-  //  PL_ASSERT(column_prop != nullptr);
-  //
+  std::vector<oid_t> column_ids;
+
+  // Scan predicates
+  auto predicate_prop =
+      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
+          ->As<PropertyPredicate>();
+
+  expression::AbstractExpression *predicate = nullptr;
+  if (predicate_prop != nullptr) {
+    predicate = predicate_prop->GetPredicate()->Copy();
+  }
+  // Scan columns
+  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                         ->As<PropertyColumns>();
+
+  PL_ASSERT(column_prop != nullptr);
+
+  if (column_prop->IsStarExpressionInColumn()) {
+    // if SELECT *, add all exprs to output column
+    size_t num_col = op->table_->GetSchema()->GetColumnCount();
+
+    auto db_id = op->table_->GetDatabaseOid();
+    oid_t table_id = op->table_->GetOid();
+    for (oid_t idx = 0; idx < num_col; ++idx) {
+      column_ids.push_back(idx);
+      // The root plan node doesn't need
+      // the expr_map
+      if (output_expr_map_ != nullptr) {
+        // We don't need column name in optimizer
+        expression::TupleValueExpression *col_expr =
+            new expression::TupleValueExpression("");
+
+        // Set bound oid for each output column
+        std::tuple<oid_t, oid_t, oid_t> bound_oid =
+            std::make_tuple(db_id, table_id, idx);
+        col_expr->SetBoundOid(bound_oid);
+        col_expr->SetIsBound();
+
+        (*output_expr_map_)[reinterpret_cast<expression::AbstractExpression *>(
+            col_expr)] = idx;
+
+        column_ids.push_back(idx);
+      }
+    }
+  } else {
+    auto output_column_size = column_prop->GetSize();
+    for (oid_t idx = 0; idx < output_column_size; ++idx) {
+      auto output_expr = column_prop->GetColumn(idx);
+      auto output_tvexpr =
+          reinterpret_cast<expression::TupleValueExpression *>(output_expr);
+
+      // Set column offset
+      auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
+      column_ids.push_back(col_id);
+      if (output_expr_map_ != nullptr)
+        (*output_expr_map_)[output_expr] = col_id;
+    }
+  }
+
   //  // Add col_ids for SELECT *
   //  if (column_prop->IsStarExpressionInColumn()) {
   //    size_t col_num = op->table_->GetSchema()->GetColumnCount();
@@ -86,9 +126,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
   //        output_columns_->emplace_back(col->GetBoundOid());
   //    }
   //  }
-  //
-  //  output_plan_.reset(
-  //      new planner::SeqScanPlan(op->table_, predicate, column_ids));
+
+  output_plan_.reset(
+      new planner::SeqScanPlan(op->table_, predicate, column_ids));
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
@@ -187,7 +227,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     for (auto &expr_idx_pair : children_expr_map_[0]) {
       auto &expr = expr_idx_pair.first;
       auto &idx = expr_idx_pair.second;
-      (*output_expr_map_)[expr] = idx;
+      if (output_expr_map_ != nullptr)
+        (*output_expr_map_)[expr] = idx;
       column_ids[idx] = idx;
     }
   } else {
@@ -195,7 +236,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
       auto output_expr = column_prop->GetColumn(idx);
       column_ids.push_back(children_expr_map_[0][output_expr]);
-      (*output_expr_map_)[output_expr] = idx;
+      if (output_expr_map_ != nullptr)
+        (*output_expr_map_)[output_expr] = idx;
     }
   }
 
