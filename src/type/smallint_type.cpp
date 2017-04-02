@@ -342,46 +342,35 @@ Value SmallintType::Copy(const Value& val) const {
 
 Value SmallintType::CastAs(const Value& val,
     const Type::TypeId type_id) const {
+
   switch (type_id) {
   case Type::TINYINT: {
-    if (val.IsNull())
-      return ValueFactory::GetTinyIntValue(PELOTON_INT8_NULL);
-    if (val.GetAs<int16_t>() > PELOTON_INT8_MAX
-        || val.GetAs<int16_t>() < PELOTON_INT8_MIN)
+    if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
+    if (val.GetAs<int16_t>() > PELOTON_INT8_MAX ||
+        val.GetAs<int16_t>() < PELOTON_INT8_MIN)
       throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
           "Numeric value out of range.");
     return ValueFactory::GetTinyIntValue((int8_t) val.GetAs<int16_t>());
-
   }
   case Type::SMALLINT: {
-    if (val.IsNull())
-      return ValueFactory::GetSmallIntValue(PELOTON_INT16_NULL);
+    if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return val.Copy();
   }
   case Type::INTEGER:
   case Type::PARAMETER_OFFSET: {
-    if (val.IsNull())
-      return Value(type_id, PELOTON_INT32_NULL);
-
-    Value(type_id, (int32_t) val.GetAs<int16_t>());
-
+    if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
+    return Value(type_id, (int32_t) val.GetAs<int16_t>());
   }
   case Type::BIGINT: {
-    if (val.IsNull())
-      return ValueFactory::GetBigIntValue(PELOTON_INT64_NULL);
-
+    if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return ValueFactory::GetBigIntValue((int64_t) val.GetAs<int16_t>());
-
   }
   case Type::DECIMAL: {
-    if (val.IsNull())
-      return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
-
+    if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return ValueFactory::GetDecimalValue((double) val.GetAs<int16_t>());
   }
   case Type::VARCHAR:
-    if (val.IsNull())
-      return ValueFactory::GetVarcharValue(nullptr, 0);
+    if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
     return ValueFactory::GetVarcharValue(val.ToString());
   default:
     break;
