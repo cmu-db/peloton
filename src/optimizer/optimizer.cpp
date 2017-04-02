@@ -101,8 +101,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Find least cost plan for root group
   OptimizeGroup(root_id, properties);
 
-  auto best_plan = ChooseBestPlan(root_id, properties);
-
+  ExprMap output_expr_map;
+  auto best_plan = ChooseBestPlan(root_id, properties, &output_expr_map);
   if (best_plan == nullptr) return nullptr;
 
   // Reset memo after finishing the optimization
@@ -262,12 +262,10 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       best_child_costs.push_back(best_expression->GetCost(input_properties));
     }
 
-    // Perform costing
-    DeriveCostAndStats(gexpr, output_properties, input_properties_list,
-                       best_child_stats, best_child_costs);
-
     Group *group = this->memo_.GetGroupByID(gexpr->GetGroupID());
     // Add to group as potential best cost
+    DeriveCostAndStats(gexpr, output_properties, input_properties_list,
+                       best_child_stats, best_child_costs);
     group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                              output_properties);
 
@@ -276,11 +274,16 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
       if (output_properties.HasProperty(*property) == false) {
         gexpr =
             EnforceProperty(gexpr, output_properties, property, requirements);
+        DeriveCostAndStats(gexpr, output_properties, input_properties_list,
+                           best_child_stats, best_child_costs);
         group->SetExpressionCost(gexpr, gexpr->GetCost(output_properties),
                                  output_properties);
       }
     }
-
+    
+    // Perform costing
+    DeriveCostAndStats(gexpr, requirements, input_properties_list,
+                       best_child_stats, best_child_costs);
     // After the enforcement it must have met the property requirements, so
     // notice here we set the best cost plan for 'requirements' instead of
     // 'output_properties'
