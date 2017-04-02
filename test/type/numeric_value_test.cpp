@@ -29,7 +29,7 @@ class NumericValueTests : public PelotonTest {};
 
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 #define SEED 233
-#define TEST_NUM 1
+#define TEST_NUM 100
 
 int8_t RANDOM8() {
   return ((rand() % (SCHAR_MAX * 2 - 1)) - (SCHAR_MAX - 1));
@@ -706,7 +706,7 @@ TEST_F(NumericValueTests, NullValueTest) {
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
-  
+
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Modulo(
     type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Modulo(
