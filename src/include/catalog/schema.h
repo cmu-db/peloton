@@ -172,7 +172,7 @@ class Schema : public Printable {
     }
     return true;
   }
-
+  /*
   inline std::pair<ExpressionType, type::Value> AllowExpConstrain(
       const oid_t column_id) const {
     std::string column_name = columns[column_id].GetName();
@@ -186,6 +186,7 @@ class Schema : public Printable {
     return tmp;
     // return std::pair<ExpressionType, type::Value>();
   }
+  */
 
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,

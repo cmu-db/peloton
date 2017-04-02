@@ -270,6 +270,7 @@ class DataTable : public AbstractTable {
 
   bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
                 std::pair<ExpressionType, type::Value> exp) const;
+  bool CheckUnique(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
@@ -304,6 +305,10 @@ class DataTable : public AbstractTable {
   static size_t default_active_tilegroup_count_;
 
   static size_t default_active_indirection_array_count_;
+
+  void AddUNIQUEIndex();
+
+  void AddMultiUNIQUEIndex();
 
  private:
   //===--------------------------------------------------------------------===//
