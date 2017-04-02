@@ -130,7 +130,7 @@ void CheckCompare2(T x, double y, type::Type::TypeId xtype) {
 
 // Compare decimal and integer
 template<class T>
-void CheckCompare3(double x, T y, type::Type::TypeId ytype ) {
+void CheckCompare3(double x, T y, type::Type::TypeId ytype) {
   type::Value v1 = type::ValueFactory::GetDecimalValue(x);
   type::Value v2 = type::Value(ytype, y);
   if (x == y)
@@ -145,6 +145,19 @@ void CheckCompare3(double x, T y, type::Type::TypeId ytype ) {
 void CheckCompare4(double x, double y) {
   type::Value v1 = type::ValueFactory::GetDecimalValue(x);
   type::Value v2 = type::ValueFactory::GetDecimalValue(y);
+  if (x == y)
+    CheckEqual(v1, v2);
+  else if (x < y)
+    CheckLessThan(v1, v2);
+  else if (x > y)
+    CheckGreaterThan(v1, v2);
+}
+
+// Compare number with varchar
+template<class T>
+void CheckCompare5(T x, T y, type::Type::TypeId xtype) {
+  type::Value v1 = type::Value(xtype, x);
+  type::Value v2 = type::ValueFactory::GetVarcharValue(type::Value(xtype, y).ToString());
   if (x == y)
     CheckEqual(v1, v2);
   else if (x < y)
@@ -380,39 +393,80 @@ void CheckMath4(double x, double y) {
   }
 }
 
-TEST_F(NumericValueTests, ComparisonTest) {
+TEST_F(NumericValueTests, TinyIntComparisonTest) {
   std::srand(SEED);
-
   for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int8_t, int8_t>(RANDOM8(), RANDOM8(), type::Type::TINYINT, type::Type::TINYINT);
     CheckCompare1<int8_t, int16_t>(RANDOM8(), RANDOM16(), type::Type::TINYINT, type::Type::SMALLINT);
     CheckCompare1<int8_t, int32_t>(RANDOM8(), RANDOM32(), type::Type::TINYINT, type::Type::INTEGER);
     CheckCompare1<int8_t, int64_t>(RANDOM8(), RANDOM64(), type::Type::TINYINT, type::Type::BIGINT);
     CheckCompare2<int8_t>(RANDOM8(), RANDOM_DECIMAL(), type::Type::TINYINT);
+    CheckCompare3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::Type::TINYINT);
 
+    int8_t v0 = RANDOM8();
+    int8_t v1 = v0 + 1;
+    int8_t v2 = v0 - 1;
+    CheckCompare5<int8_t>(v0, v0, type::Type::TINYINT);
+    CheckCompare5<int8_t>(v0, v1, type::Type::TINYINT);
+    CheckCompare5<int8_t>(v0, v2, type::Type::TINYINT);
+  }
+}
+
+TEST_F(NumericValueTests, SmallIntComparisonTest) {
+  std::srand(SEED);
+  for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int16_t, int8_t>(RANDOM16(), RANDOM8(), type::Type::SMALLINT, type::Type::TINYINT);
     CheckCompare1<int16_t, int16_t>(RANDOM16(), RANDOM16(), type::Type::SMALLINT, type::Type::SMALLINT);
     CheckCompare1<int16_t, int32_t>(RANDOM16(), RANDOM32(), type::Type::SMALLINT, type::Type::INTEGER);
     CheckCompare1<int16_t, int64_t>(RANDOM16(), RANDOM64(), type::Type::SMALLINT, type::Type::BIGINT);
     CheckCompare2<int16_t>(RANDOM16(), RANDOM_DECIMAL(), type::Type::SMALLINT);
+    CheckCompare3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::Type::SMALLINT);
 
+    int16_t v0 = RANDOM16();
+    int16_t v1 = v0 + 1;
+    int16_t v2 = v0 - 1;
+    CheckCompare5<int16_t>(v0, v0, type::Type::SMALLINT);
+    CheckCompare5<int16_t>(v0, v1, type::Type::SMALLINT);
+    CheckCompare5<int16_t>(v0, v2, type::Type::SMALLINT);
+  }
+}
+
+TEST_F(NumericValueTests, IntComparisonTest) {
+  std::srand(SEED);
+  for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int32_t, int8_t>(RANDOM32(), RANDOM8(), type::Type::INTEGER, type::Type::TINYINT);
     CheckCompare1<int32_t, int16_t>(RANDOM32(), RANDOM16(), type::Type::INTEGER, type::Type::SMALLINT);
     CheckCompare1<int32_t, int32_t>(RANDOM32(), RANDOM32(), type::Type::INTEGER, type::Type::INTEGER);
     CheckCompare1<int32_t, int64_t>(RANDOM32(), RANDOM64(), type::Type::INTEGER, type::Type::BIGINT);
     CheckCompare2<int32_t>(RANDOM32(), RANDOM_DECIMAL(), type::Type::INTEGER);
+    CheckCompare3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::Type::INTEGER);
 
+    int32_t v0 = RANDOM32();
+    int32_t v1 = v0 + 1;
+    int32_t v2 = v0 - 1;
+    CheckCompare5<int32_t>(v0, v0, type::Type::INTEGER);
+    CheckCompare5<int32_t>(v0, v1, type::Type::INTEGER);
+    CheckCompare5<int32_t>(v0, v2, type::Type::INTEGER);
+  }
+}
+
+TEST_F(NumericValueTests, BigIntComparisonTest) {
+  std::srand(SEED);
+  for (int i = 0; i < TEST_NUM; i++) {
     CheckCompare1<int64_t, int8_t>(RANDOM64(), RANDOM8(), type::Type::BIGINT, type::Type::TINYINT);
     CheckCompare1<int64_t, int16_t>(RANDOM64(), RANDOM16(), type::Type::BIGINT, type::Type::SMALLINT);
     CheckCompare1<int64_t, int32_t>(RANDOM64(), RANDOM32(), type::Type::BIGINT, type::Type::INTEGER);
     CheckCompare1<int64_t, int64_t>(RANDOM64(), RANDOM64(), type::Type::BIGINT, type::Type::BIGINT);
     CheckCompare2<int64_t>(RANDOM64(), RANDOM_DECIMAL(), type::Type::BIGINT);
-
-    CheckCompare3<int8_t>(RANDOM_DECIMAL(), RANDOM8(), type::Type::TINYINT);
-    CheckCompare3<int16_t>(RANDOM_DECIMAL(), RANDOM16(), type::Type::SMALLINT);
-    CheckCompare3<int32_t>(RANDOM_DECIMAL(), RANDOM32(), type::Type::INTEGER);
     CheckCompare3<int64_t>(RANDOM_DECIMAL(), RANDOM64(), type::Type::BIGINT);
     CheckCompare4(RANDOM_DECIMAL(), RANDOM_DECIMAL());
+
+    int64_t v0 = RANDOM64();
+    int64_t v1 = v0 + 1;
+    int64_t v2 = v0 - 1;
+    CheckCompare5<int64_t>(v0, v0, type::Type::BIGINT);
+    CheckCompare5<int64_t>(v0, v1, type::Type::BIGINT);
+    CheckCompare5<int64_t>(v0, v2, type::Type::BIGINT);
   }
 }
 

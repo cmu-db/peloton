@@ -226,6 +226,8 @@ Value VarlenType::CastAs(const Value &val, const Type::TypeId type_id) const {
       return ValueFactory::CastAsSmallInt(val);
     case Type::INTEGER:
       return ValueFactory::CastAsInteger(val);
+    case Type::BIGINT:
+      return ValueFactory::CastAsBigInt(val);
     case Type::TIMESTAMP:
       return ValueFactory::CastAsTimestamp(val);
     case Type::VARCHAR:
