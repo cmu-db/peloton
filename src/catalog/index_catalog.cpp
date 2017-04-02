@@ -260,7 +260,7 @@ std::vector<oid_t> IndexCatalog::GetIndexOids(oid_t table_oid,
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::vector<oid_t> index_oids;
-  for (auto tile : (*result_tiles)) {
+  for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       index_oids.emplace_back(
           tile->GetValue(tuple_id, 0)

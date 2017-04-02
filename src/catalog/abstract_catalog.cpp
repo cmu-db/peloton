@@ -20,13 +20,12 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
                                  catalog::Schema *catalog_table_schema,
                                  storage::Database *pg_catalog) {
   // Create catalog_table_
-  catalog_table_ =
-      std::shared_ptr<storage::DataTable>(storage::TableFactory::GetDataTable(
-          CATALOG_DATABASE_OID, catalog_table_oid, catalog_table_schema,
-          catalog_table_name, DEFAULT_TUPLES_PER_TILEGROUP, true, false, true));
+  catalog_table_ = storage::TableFactory::GetDataTable(
+      CATALOG_DATABASE_OID, catalog_table_oid, catalog_table_schema,
+      catalog_table_name, DEFAULT_TUPLES_PER_TILEGROUP, true, false, true);
 
   // Add catalog_table_ into pg_catalog database
-  pg_catalog->AddTable(catalog_table_.get(), true);
+  pg_catalog->AddTable(catalog_table_, true);
 
   // Index construction and inserting contents of pg_database, pg_table,
   // pg_index should leave to catalog's constructor
@@ -44,7 +43,7 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  planner::InsertPlan node(catalog_table_.get(), std::move(tuple));
+  planner::InsertPlan node(catalog_table_, std::move(tuple));
   executor::InsertExecutor executor(&node, context.get());
   executor.Init();
   bool status = executor.Execute();
@@ -75,7 +74,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
       new executor::ExecutorContext(txn));
 
   // Delete node
-  planner::DeletePlan delete_node(catalog_table_.get(), false);
+  planner::DeletePlan delete_node(catalog_table_, false);
   executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Index scan as child node
@@ -92,7 +91,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
       index, key_column_offsets, expr_types, values, runtime_keys);
 
   std::unique_ptr<planner::IndexScanPlan> index_scan_node(
-      new planner::IndexScanPlan(catalog_table_.get(), nullptr, column_offsets,
+      new planner::IndexScanPlan(catalog_table_, nullptr, column_offsets,
                                  index_scan_desc));
 
   executor::IndexScanExecutor index_scan_executor(index_scan_node.get(),
@@ -117,7 +116,7 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 // @param   values        Values for search
 // @param   txn           Transaction
 // @return  Vector of logical tiles
-std::unique_ptr<std::vector<executor::LogicalTile *>>
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
@@ -145,7 +144,7 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_offsets, expr_types, values, runtime_keys);
 
-  planner::IndexScanPlan index_scan_node(catalog_table_.get(), nullptr,
+  planner::IndexScanPlan index_scan_node(catalog_table_, nullptr,
                                          column_offsets, index_scan_desc);
 
   executor::IndexScanExecutor index_scan_executor(&index_scan_node,
@@ -153,11 +152,12 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
 
   // Execute
   index_scan_executor.Init();
-  std::unique_ptr<std::vector<executor::LogicalTile *>> result_tiles(
-      new std::vector<executor::LogicalTile *>());
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+      result_tiles(new std::vector<std::unique_ptr<executor::LogicalTile>>());
 
   while (index_scan_executor.Execute()) {
-    result_tiles->push_back(index_scan_executor.GetOutput());
+    result_tiles->push_back(std::unique_ptr<executor::LogicalTile>(
+        index_scan_executor.GetOutput()));
   }
 
   if (single_statement_txn) {
@@ -168,8 +168,8 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
 }
 
 void AbstractCatalog::AddIndex(const std::vector<oid_t> &key_attrs,
-                             oid_t index_oid, const std::string &index_name,
-                             IndexConstraintType index_constraint) {
+                               oid_t index_oid, const std::string &index_name,
+                               IndexConstraintType index_constraint) {
   auto schema = catalog_table_->GetSchema();
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);

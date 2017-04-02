@@ -100,13 +100,13 @@ void Catalog::InitializeCatalog() {
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true, pool_.get(),
       nullptr);
   IndexCatalog::GetInstance()->InsertIndex(
-      INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0",
-      INDEX_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
-      pool_.get(), nullptr);
+      INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
+      IndexType::BWTREE, IndexConstraintType::UNIQUE, true, pool_.get(),
+      nullptr);
   IndexCatalog::GetInstance()->InsertIndex(
-      INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
-      INDEX_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
-      false, pool_.get(), nullptr);
+      INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
+      IndexType::BWTREE, IndexConstraintType::DEFAULT, false, pool_.get(),
+      nullptr);
 
   // Insert pg_catalog database into pg_database
   pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
@@ -474,8 +474,9 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 
       // check if table already has index with same name
       auto pg_index = IndexCatalog::GetInstance();
-      if (!is_catalog && pg_index->GetIndexOid(index_name, table->GetOid(),
-                                               txn) != INVALID_OID) {
+      if (!is_catalog &&
+          pg_index->GetIndexOid(index_name, table->GetOid(), txn) !=
+              INVALID_OID) {
         LOG_DEBUG(
             "Cannot create index on same table with same name Return "
             "RESULT_FAILURE.");
@@ -835,7 +836,11 @@ index::Index *Catalog::GetIndexWithOid(oid_t database_oid, oid_t table_oid,
 
 oid_t Catalog::GetDatabaseCount() { return databases_.size(); }
 
-Catalog::~Catalog() { delete GetDatabaseWithName(CATALOG_DATABASE_NAME); }
+Catalog::~Catalog() {
+  LOG_TRACE("Deleting databases");
+  for (auto database : databases_) delete database;
+  LOG_TRACE("Finish deleting database");
+}
 
 //===--------------------------------------------------------------------===//
 // DEPRECATED
