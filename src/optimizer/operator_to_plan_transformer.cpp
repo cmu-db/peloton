@@ -57,35 +57,15 @@ OperatorToPlanTransformer::ConvertOpExpression(
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
-  vector<oid_t> column_ids;
-
-  // Scan predicates
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-
-  expression::AbstractExpression *predicate = nullptr;
-  if (predicate_prop != nullptr) {
-    predicate = predicate_prop->GetPredicate()->Copy();
-  }
-  // Scan columns
+  // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                         ->As<PropertyColumns>();
-
-  PL_ASSERT(column_prop != nullptr);
-
+      ->As<PropertyColumns>();
+  vector<oid_t> column_ids;
   if (column_prop->IsStarExpressionInColumn()) {
-    // if SELECT *, add all exprs to output column
-    auto db_id = op->table_->GetDatabaseOid();
-    oid_t table_id = op->table_->GetOid();
     size_t num_col = op->table_->GetSchema()->GetColumnCount();
-    for (oid_t col_id = 0; col_id < num_col; ++col_id) {
+    for (oid_t col_id = 0; col_id < num_col; ++col_id)
       column_ids.push_back(col_id);
-      // Only bound_obj_id is needed for expr_map
-      auto col_expr = new expression::TupleValueExpression("");
-      col_expr->SetBoundOid(db_id, table_id, col_id);
-      (*output_expr_map_)[(expression::TupleValueExpression*)col_expr] = col_id;
-    }
+    GenerateTableExprMap(*output_expr_map_, op->table_);
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
@@ -101,9 +81,22 @@ void OperatorToPlanTransformer::Visit(const PhysicalScan *op) {
     }
   }
   
+  // Add Scan Predicates
+  // Ideally, predicate should be taken out as a separate operator. Since
+  // now the predicate is coupled with scan, we need to evaluate predicate here
+  auto predicate_prop = requirements_->GetPropertyOfType(PropertyType::PREDICATE)
+    ->As<PropertyPredicate>();
+  expression::AbstractExpression *predicate = nullptr;
+  if (predicate_prop != nullptr) {
+    ExprMap table_expr_map;
+    GenerateTableExprMap(table_expr_map, op->table_);
+    predicate = predicate_prop->GetPredicate()->Copy();
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map, predicate);
+  }
+  
+  // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
-
   output_plan_ = move(seq_scan_plan);
 }
 
@@ -174,6 +167,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *op) {
   auto &sort_exprs = op->sort_exprs;
   auto &sort_ascending = op->sort_ascending;
 
+  // When executor support order by expression, we need to call EvaluateExpr
+  // expression::ExpressionUtil::EvaluateExpression(expr_map, sort_expr);
+  
   for (size_t idx = 0; idx < sort_columns_size; ++idx) {
     sort_col_ids.push_back(children_expr_map_[0][sort_exprs[idx]]);
     // planner use desc flag
@@ -348,17 +344,20 @@ void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalRightHashJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalOuterHashJoin *) {}
+  
 void OperatorToPlanTransformer::Visit(const PhysicalInsert *op) {
   unique_ptr<planner::AbstractPlan> insert_plan(
       new planner::InsertPlan(op->target_table, op->columns, op->values));
   output_plan_ = move(insert_plan);
 }
+  
 void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   // TODO: Support index scan
   auto scan_plan = (planner::AbstractScan *)children_plans_[0].get();
   PL_ASSERT(scan_plan != nullptr);
 
-  // Add predicates
+  // Add predicates. The predicate should already be evaluated in Scan.
+  // Currently, the delete executor does not use predicate at all.
   const expression::AbstractExpression *predicates = scan_plan->GetPredicate();
   unique_ptr<planner::AbstractPlan> delete_plan(
       new planner::DeletePlan(op->target_table, predicates));
@@ -367,13 +366,46 @@ void OperatorToPlanTransformer::Visit(const PhysicalDelete *op) {
   delete_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(delete_plan);
 }
+  
 void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   // TODO: Support index scan
+  ExprMap table_expr_map;
+  auto db_name = op->update_stmt->table->GetDatabaseName();
+  auto table_name = op->update_stmt->table->GetTableName();
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(db_name, table_name);
+  GenerateTableExprMap(table_expr_map, table);
+  
+  // Evaluate update expression
+  for (auto update : *op->update_stmt->updates) {
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map, update->value);
+  }
+  // Evaluate predicate if any
+  if (op->update_stmt->where != nullptr) {
+    expression::ExpressionUtil::EvaluateExpression(table_expr_map, op->update_stmt->where);
+  }
+
   unique_ptr<planner::AbstractPlan> update_plan(
-      new planner::UpdatePlan(op->update_stmt));
+          new planner::UpdatePlan(op->update_stmt));
   output_plan_ = move(update_plan);
 }
 
+  
+/************************* Private Functions *******************************/
+// Generate expr map for all the columns in the given table. Used to evaluate
+// the predicate.
+void OperatorToPlanTransformer::GenerateTableExprMap(ExprMap& expr_map,
+                                                     storage::DataTable* table) {
+  auto db_id = table->GetDatabaseOid();
+  oid_t table_id = table->GetOid();
+  size_t num_col = table->GetSchema()->GetColumnCount();
+  for (oid_t col_id = 0; col_id < num_col; ++col_id) {
+    // Only bound_obj_id is needed for expr_map
+    auto col_expr = new expression::TupleValueExpression("");
+    col_expr->SetBoundOid(db_id, table_id, col_id);
+    expr_map[col_expr] = col_id;
+  }
+}
+  
 void OperatorToPlanTransformer::VisitOpExpression(
     shared_ptr<OperatorExpression> op) {
   op->Op().Accept(this);

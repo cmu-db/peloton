@@ -179,14 +179,6 @@ void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);
 
-  // Fills in information about columns and functions i
-  // n their respective objects given a set of schemas.
-  // Otherwise tuple_idx will equals to -1 for scan plan, causing error.
-  if (op->expr != nullptr) {
-    expression::ExpressionUtil::TransformExpression(target_table->GetSchema(),
-                                                    op->expr);
-  }
-
   output_expr = delete_expr;
 }
 void QueryToOperatorTransformer::Visit(

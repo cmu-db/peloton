@@ -29,17 +29,9 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 }
 
 void QueryPropertyExtractor::Visit(const parser::SelectStatement *select_stmt) {
-  // Get table pointer, id, and schema.
-  storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          select_stmt->from_table->GetDatabaseName(),
-          select_stmt->from_table->GetTableName());
-  auto &schema = *target_table->GetSchema();
-
   // Add predicate property
   auto predicate = select_stmt->where_clause;
   if (predicate != nullptr) {
-    expression::ExpressionUtil::TransformExpression(&schema, predicate);
     property_set_.AddProperty(std::shared_ptr<PropertyPredicate>(
         new PropertyPredicate(predicate->Copy())));
   }

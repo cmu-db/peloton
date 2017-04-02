@@ -84,6 +84,9 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
+  for (auto update : *node->updates)
+    update->value->Accept(this);
+    
 
   // TODO: Update columns are not bound because they are char*
   // not TupleValueExpression in update_statement.h

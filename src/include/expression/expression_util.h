@@ -389,13 +389,10 @@ class ExpressionUtil {
       EvaluateExpression(expr_map, expr->GetModifiableChild(i));
     
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      // Point to the correct column returned in the logical tuple underneath
       auto tup_expr = (expression::TupleValueExpression*) expr;
       auto iter = expr_map.find(tup_expr);
-      // Copy the return value type from the tuple_value_expr in previous level
-      assert(iter->first->GetValueType() != type::Type::INVALID);
-      auto return_type = iter->first->GetValueType();
-      // Point to the correct column returned in the logical tuple underneath
-      tup_expr->SetTupleValueExpressionParams(return_type, iter->second, 0);
+      tup_expr->SetValueIdx(iter->second);
       // Set the expression name
       if (tup_expr->alias.empty())
         tup_expr->expr_name_ = tup_expr->GetColumnName();

@@ -67,15 +67,6 @@ void ChildPropertyGenerator::Visit(const PhysicalScan *) {
       for (size_t i = 0; i < columns_prop_ptr->GetSize(); ++i)
         column_set.insert(columns_prop_ptr->GetColumn(i));
       
-      // Insert all missing TupleValueExpressions in the Predicate
-      auto predicate_prop = requirements_.GetPropertyOfType(PropertyType::PREDICATE)
-                           ->As<PropertyPredicate>();
-      if (predicate_prop != nullptr) {
-        expression::ExpressionUtil::GetTupleValueExprs(column_set,
-             predicate_prop->GetPredicate());
-      }
-      
-      
       // Insert all missing TupleValueExpressions in Sort expressions
       auto sort_prop = requirements_.GetPropertyOfType(PropertyType::SORT)
                            ->As<PropertySort>();

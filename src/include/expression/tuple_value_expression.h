@@ -60,6 +60,7 @@ class TupleValueExpression : public AbstractExpression {
     }
   }
 
+  // TODO: Delete this when TransformExpression is completely depracated
   void SetTupleValueExpressionParams(type::Type::TypeId type_id, int value_idx,
                                      int tuple_idx) {
     return_value_type_ = type_id;
@@ -69,6 +70,11 @@ class TupleValueExpression : public AbstractExpression {
   
   inline void SetValueType(type::Type::TypeId type_id) {
     return_value_type_ = type_id;
+  }
+  
+  inline void SetValueIdx(int value_idx, int tuple_idx = 0) {
+    value_idx_ = value_idx;
+    tuple_idx_ = tuple_idx;
   }
 
   AbstractExpression *Copy() const override {
