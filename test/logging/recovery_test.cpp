@@ -10,26 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <dirent.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/mman.h>
-#include <dirent.h>
 
+#include "catalog/catalog.h"
+#include "common/harness.h"
 #include "executor/testing_executor_util.h"
 #include "logging/testing_logging_util.h"
-#include "common/harness.h"
-#include "catalog/catalog.h"
 
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile_factory.h"
-#include "storage/data_table.h"
-#include "storage/tile.h"
-#include "logging/loggers/wal_frontend_logger.h"
-#include "logging/log_manager.h"
-#include "logging/logging_util.h"
 #include "index/index.h"
+#include "logging/log_manager.h"
+#include "logging/loggers/wal_frontend_logger.h"
+#include "logging/logging_util.h"
+#include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
+#include "storage/tile.h"
 
 #include "executor/mock_executor.h"
 
@@ -78,13 +78,15 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
 
     // In case of random, make sure this column has duplicated values
     tuple->SetValue(
-        1, type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(
-               random ? std::rand() % (num_rows / 3) : populate_value, 1)),
+        1,
+        type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(
+            random ? std::rand() % (num_rows / 3) : populate_value, 1)),
         testing_pool);
 
     tuple->SetValue(
-        2, type::ValueFactory::GetDecimalValue(TestingExecutorUtil::PopulatedValue(
-               random ? std::rand() : populate_value, 2)),
+        2,
+        type::ValueFactory::GetDecimalValue(TestingExecutorUtil::PopulatedValue(
+            random ? std::rand() : populate_value, 2)),
         testing_pool);
 
     // In case of random, make sure this column has duplicated values
@@ -123,7 +125,7 @@ TEST_F(RecoveryTests, RestartTest) {
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
       TestingLoggingUtil::BuildTuples(recovery_table, num_rows + 2, mutate,
-                                    random);
+                                      random);
 
   std::vector<logging::TupleRecord> records =
       TestingLoggingUtil::BuildTupleRecordsForRestartTest(
@@ -261,7 +263,8 @@ TEST_F(RecoveryTests, RestartTest) {
   for (int i = 1; i <= 2; i++) {
     struct stat stat_buf;
     EXPECT_NE(stat((dir_name + "/" + std::string("peloton_log_") +
-                    std::to_string(i) + std::string(".log")).c_str(),
+                    std::to_string(i) + std::string(".log"))
+                       .c_str(),
                    &stat_buf),
               0);
   }
@@ -407,9 +410,9 @@ TEST_F(RecoveryTests, BasicDeleteTest) {
 TEST_F(RecoveryTests, OutOfOrderCommitTest) {
   auto recovery_table = TestingExecutorUtil::CreateTable(1024);
   auto catalog = catalog::Catalog::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  catalog->AddDatabase(&db);
-  db.AddTable(recovery_table);
+  storage::Database *db = new storage::Database(DEFAULT_DB_ID);
+  catalog->AddDatabase(db);
+  db->AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
