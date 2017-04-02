@@ -13,10 +13,18 @@ class HistogramTests : public PelotonTest {};
 
 TEST_F(HistogramTests, SimpleHistogramTest) {
 
-  EXPECT_EQ(1, 1);
+  Histogram h{5};
+	for (int i = 1; i <= 10; i++) {
+		h.Update(i);
+	}
+	h.Print();
+
+	std::cout << h.Sum(3) << std::endl;
+	std::cout << h.Sum(3.5) << std::endl;
+	std::cout << h.Sum(4) << std::endl;
+
+  h.Uniform(4);
 }
-
-
 
 } /* namespace test */
 } /* namespace peloton */
