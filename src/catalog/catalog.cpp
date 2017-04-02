@@ -587,7 +587,6 @@ ResultType Catalog::DropTable(const std::string &database_name,
       DatabaseCatalog::GetInstance()->GetDatabaseOid(database_name, txn);
   if (database_oid == INVALID_OID) {
     LOG_TRACE("Cannot find database  %s!", database_name.c_str());
-
     return ResultType::FAILURE;
   }
 
@@ -716,7 +715,6 @@ storage::Database *Catalog::GetDatabaseWithName(
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
   }
-
   return GetDatabaseWithOid(database_oid);
 }
 
